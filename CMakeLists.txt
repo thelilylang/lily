@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 set(BASE_SRC
+	src/base/alloc.c
     src/base/vec.c)
 
 add_library(lily_base STATIC ${BASE_SRC})
