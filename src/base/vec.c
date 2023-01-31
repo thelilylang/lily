@@ -28,6 +28,13 @@ Vec* from__Vec(void **buffer, Usize len) {
 	return v;
 }
 
+void grow__Vec(Vec *self, Usize new_capacity) {
+	if (new_capacity <= self->capacity) return;
+
+	self->buffer = realloc(self->buffer, 8 * new_capacity);
+	self->capacity = new_capacity;
+}
+
 void __free__Vec(Vec *self) {
 	free(self->buffer);
 	free(self);
