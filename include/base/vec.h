@@ -29,7 +29,7 @@
 #include <stdbool.h>
 
 typedef struct Vec {
-	void **items;
+	void **buffer;
 	Usize len;
 	Usize capacity;
 	Usize default_capacity;
@@ -37,8 +37,20 @@ typedef struct Vec {
 
 /**
  *
- * @brief construct Vec type.
+ * @brief Construct Vec type.
  */
 Vec* __new__Vec();
+
+/**
+ *
+ * @brief Construct Vec type with default buffer items.
+ */
+Vec* from__Vec(void **buffer, Usize len);
+
+/**
+ *
+ * @brief Free Vec type.
+ */
+void __free__Vec(Vec *self);
 
 #endif // LILY_BASE_VEC_H
