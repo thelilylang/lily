@@ -25,4 +25,20 @@
 #ifndef LILY_BASE_VEC_H
 #define LILY_BASE_VEC_H
 
+#include <base/types.h>
+#include <stdbool.h>
+
+typedef struct Vec {
+	void **items;
+	Usize len;
+	Usize capacity;
+	Usize default_capacity;
+} Vec;
+
+/**
+ *
+ * @brief construct Vec type.
+ */
+Vec* __new__Vec();
+
 #endif // LILY_BASE_VEC_H
