@@ -55,6 +55,13 @@ Vec* from__Vec(void **buffer, Usize len);
 void grow__Vec(Vec *self, Usize new_capacity);
 
 /**
+ * 
+ * @brief Ungrow Vec buffer.
+ * @param new_capacity New buffer capacity.
+ */
+void ungrow__Vec(Vec *self, Usize new_capacity);
+
+/**
  *
  * @brief Free Vec type.
  */
