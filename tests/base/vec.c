@@ -32,6 +32,20 @@ static void test_from__Vec() {
 	FREE(Vec, v);
 }
 
+static void test_pop__Vec() {
+    Vec *v = NEW(Vec);
+
+    push__Vec(v, (int*)1);
+    push__Vec(v, (int*)2);
+    push__Vec(v, (int*)3);
+
+	ASSERT(pop__Vec(v) == (int*)3);
+	ASSERT(pop__Vec(v) == (int*)2);
+	ASSERT(pop__Vec(v) == (int*)1);
+
+    FREE(Vec, v);
+}
+
 static void test_push__Vec() {
 	Vec *v = NEW(Vec);
 

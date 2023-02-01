@@ -5,6 +5,7 @@
 int main() {
 	test_new__Vec();
 	test_from__Vec();
+	test_pop__Vec();
 	test_push__Vec();
 
 	puts("\x1b[32mAll tests pass\x1b[0m");
