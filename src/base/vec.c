@@ -66,6 +66,7 @@ void* remove__Vec(Vec *self, Usize index) {
 	ASSERT(index < self->len);
 
 	void* item = self->buffer[index--];
+	self->len -= 1;
 
 	// Align the rest of the buffer
 	for (Usize i = 0; i < self->len; i++) {
