@@ -36,6 +36,11 @@
 
 #define PTR_SIZE sizeof(void*)
 
+#define FREE_BUFFER_ITEMS(buffer, len, type) \
+	for (Usize i = 0; i < len; i++) { \
+		__free__##type(buffer[i]); \
+	}
+
 #define CAST(type, expr) ((type)(expr))
 
 #define TODO(msg) { \
