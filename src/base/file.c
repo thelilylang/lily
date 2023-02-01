@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#define _GNU_SOURCE
+
+#include <base/assert.h>
 #include <base/file.h>
 #include <base/platform.h>
 #include <base/macros.h>
@@ -74,4 +77,31 @@ char* get_extension__Path(const char *path) {
 	}
 
 	return extension;
+}
+
+char* read_file__Path(const char *path) {
+	ASSERT(is_directory__Path(path) == false);
+
+	FILE *file = fopen(path, "r");
+	char *content = malloc(1);
+
+	if (file == NULL) {
+		fprintf(stderr, "Could not open file \"%s\"", path);
+	}
+
+	char *line = NULL;
+	size_t len = 0;
+	ssize_t read;
+
+	while ((read = getline(&line, &len, file) != -1)) {
+		content = realloc(content, strlen(content) + strlen(line) + 1);
+		strcat(content, line);
+	}
+
+	fclose(file);
+	free(line);
+
+	content[strlen(content)] = '\0';
+
+	return content;
 }

@@ -39,4 +39,10 @@ bool is_directory__Path(const char *path);
  */
 char* get_extension__Path(const char *path);
 
+/**
+ *
+ * @brief Read file content.
+ */
+char* read_file__Path(const char *path);
+
 #endif // LILY_BASE_FILE_H
