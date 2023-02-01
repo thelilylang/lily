@@ -1,5 +1,6 @@
 #include "string.c"
 #include "vec.c"
+#include "hash_map.c"
 
 #include <stdio.h>
 
@@ -16,6 +17,8 @@ int main() {
 	test_from__String();
 	test_pop__String();
 	test_push__String();
+
+	test_new__HashMap();
 
 	puts("\x1b[32mAll tests pass\x1b[0m");
 }
