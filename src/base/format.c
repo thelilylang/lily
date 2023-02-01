@@ -31,74 +31,76 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *format(const char *fmt, ...) {
-  va_list vl;
-  char *res = malloc(1);
-  Usize buffer_size = 0;
-  Usize len = strlen(fmt);
+char *
+format(const char *fmt, ...)
+{
+    va_list vl;
+    char *res = malloc(1);
+    Usize buffer_size = 0;
+    Usize len = strlen(fmt);
 
-  res[0] = '\0';
-  va_start(vl, fmt);
+    res[0] = '\0';
+    va_start(vl, fmt);
 
-  for (Usize i = 0; i < len; i++) {
-    switch (fmt[i]) {
-    case '{':
-      switch (fmt[i + 1]) {
-      case 's': {
-        char *s = va_arg(vl, char *);
-        res = realloc(res, buffer_size + strlen(s) + 1);
+    for (Usize i = 0; i < len; i++) {
+        switch (fmt[i]) {
+            case '{':
+                switch (fmt[i + 1]) {
+                    case 's': {
+                        char *s = va_arg(vl, char *);
+                        res = realloc(res, buffer_size + strlen(s) + 1);
 
-        for (Usize i = 0; i < strlen(s); i++) {
-          res[buffer_size] = s[i];
-          res[++buffer_size] = '\0';
+                        for (Usize i = 0; i < strlen(s); i++) {
+                            res[buffer_size] = s[i];
+                            res[++buffer_size] = '\0';
+                        }
+
+                        if (fmt[i + 2] == 'a') {
+                            free(s);
+                            i += 3;
+                        } else
+                            i += 2;
+
+                        break;
+                    }
+                    case 'd':
+                        break;
+                    case 'f':
+                        break;
+                    case 'c':
+                        break;
+                    case 'b':
+                        break;
+                    case 'p':
+                        break;
+                    case 'x':
+                        break;
+                    case 'o':
+                        break;
+                    case 'u':
+                        break;
+                    case 'S':
+                        break;
+                    case '{':
+                        break;
+                    default:
+                        FAILED("unknown specifier");
+                }
+
+                if ((fmt[i - 2] != '{' && fmt[i - 1] != '{') && fmt[i] != '}') {
+                    FAILED("expected `}`");
+                } else
+                    i++;
+
+                break;
+            default:
+                res = realloc(res, buffer_size + 2);
+                res[buffer_size] = fmt[i];
+                res[++buffer_size] = '\0';
         }
-
-        if (fmt[i + 2] == 'a') {
-          free(s);
-          i += 3;
-        } else
-          i += 2;
-
-        break;
-      }
-      case 'd':
-        break;
-      case 'f':
-        break;
-      case 'c':
-        break;
-      case 'b':
-        break;
-      case 'p':
-        break;
-      case 'x':
-        break;
-      case 'o':
-        break;
-      case 'u':
-        break;
-      case 'S':
-        break;
-      case '{':
-        break;
-      default:
-        FAILED("unknown specifier");
-      }
-
-      if ((fmt[i - 2] != '{' && fmt[i - 1] != '{') && fmt[i] != '}') {
-        FAILED("expected `}`");
-      } else
-        i++;
-
-      break;
-    default:
-      res = realloc(res, buffer_size + 2);
-      res[buffer_size] = fmt[i];
-      res[++buffer_size] = '\0';
     }
-  }
 
-  va_end(vl);
+    va_end(vl);
 
-  return res;
+    return res;
 }

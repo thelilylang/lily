@@ -28,8 +28,8 @@
 #if defined(__linux__)
 #define OS_NAME "linux"
 #define LILY_LINUX_OS
-#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||   \
-    defined(__bsdi__) || defined(__DragonFly__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
+  defined(__bsdi__) || defined(__DragonFly__)
 #define OS_NAME "BSD"
 #define LILY_BSD_OS
 #elif defined(__APPLE__) && defined(__MACH__)

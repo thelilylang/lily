@@ -27,60 +27,69 @@
 
 #include <base/types.h>
 
-typedef struct String {
-  char *buffer;
-  Usize len;
-  Usize capacity;
-  Usize default_capacity;
+typedef struct String
+{
+    char *buffer;
+    Usize len;
+    Usize capacity;
+    Usize default_capacity;
 } String;
 
 /**
  *
  * @brief Construct String type.
  */
-String *__new__String();
+String *
+__new__String();
 
 /**
  *
  * @brief Construct String type with default buffer items.
  */
-String *from__String(char *buffer);
+String *
+from__String(char *buffer);
 
 /**
  *
  * @brief Get item from String.
  */
-char get__String(String *self, Usize index);
+char
+get__String(String *self, Usize index);
 
 /**
  *
  * @brief Grow String buffer.
  * @param new_capacity New buffer capacity.
  */
-void grow__String(String *self, Usize new_capacity);
+void
+grow__String(String *self, Usize new_capacity);
 
 /**
  *
  * @brief Remove last item from String.
  */
-char pop__String(String *self);
+char
+pop__String(String *self);
 
 /**
  *
  * @brief Push char to String.
  */
-void push__String(String *self, char item);
+void
+push__String(String *self, char item);
 
 /**
  *
  * @brief Ungrow String buffer.
  */
-void ungrow__String(String *self);
+void
+ungrow__String(String *self);
 
 /**
  *
  * @brief Free String buffer.
  */
-void __free__String(String *self);
+void
+__free__String(String *self);
 
 #endif // LILY_BASE_STRING_H

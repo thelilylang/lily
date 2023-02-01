@@ -31,60 +31,70 @@
  *
  * @brief Convert to string an Int8.
  */
-Int8 atoi__Int8(const char *s);
+Int8
+atoi__Int8(const char *s);
 
 /**
  *
  * @brief Convert to string an Int16.
  */
-Int16 atoi__Int16(const char *s);
+Int16
+atoi__Int16(const char *s);
 
 /**
  *
  * @brief Convert to string an Int32.
  */
-Int32 atoi__Int32(const char *s);
+Int32
+atoi__Int32(const char *s);
 
 /**
  *
  * @brief convert to string an int64.
  */
-Int64 atoi__Int64(const char *s);
+Int64
+atoi__Int64(const char *s);
 
 /**
  *
  * @brief Convert to string an Uint8.
  */
-Uint8 atoi__Uint8(const char *s);
+Uint8
+atoi__Uint8(const char *s);
 
 /**
  *
  * @brief Convert to string an Uint16.
  */
-Uint16 atoi__Uint16(const char *s);
+Uint16
+atoi__Uint16(const char *s);
 
 /**
  *
  * @brief convert to string an Uint32.
  */
-Uint32 atoi__Uint32(const char *s);
+Uint32
+atoi__Uint32(const char *s);
 
 /**
  *
  * @brief convert to string an Uint64.
  */
-Uint64 atoi__Uint64(const char *s);
+Uint64
+atoi__Uint64(const char *s);
 
 /**
  *
  * @brief convert to string an Isize.
  */
-Isize atoi__Isize(const char *s);
+Isize
+atoi__Isize(const char *s);
 
 /**
  *
  * @brief convert to string a Usize.
  */
-Usize atoi__Usize(const char *s);
+Usize
+atoi__Usize(const char *s);
 
 #endif // LILY_BASE_ATOI_H

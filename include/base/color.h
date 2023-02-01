@@ -39,39 +39,46 @@
  *
  * @return the formatted char* in red color.
  */
-char *red__Color(char *s);
+char *
+red__Color(char *s);
 
 /**
  *
  * @return the formatted char* in green color.
  */
-char *green__Color(char *s);
+char *
+green__Color(char *s);
 
 /**
  *
  * @return the formatted char* in yellow color.
  */
-char *yellow__Color(char *s);
+char *
+yellow__Color(char *s);
 
 /**
  * @return the formatted char* in blue color.
  */
-char *blue__Color(char *s);
+char *
+blue__Color(char *s);
 
 /**
  *
  * @return the formatted char* in magenta color.
  */
-char *magenta__Color(char *s);
+char *
+magenta__Color(char *s);
 
 /**
  * @return the formatted char* in cyan color.
  */
-char *cyan__Color(char *s);
+char *
+cyan__Color(char *s);
 
 /**
  * @return the formatted char* in bold style.
  */
-char *bold__Style(char *s);
+char *
+bold__Style(char *s);
 
 #endif // LILY_BASE_COLOR_H
