@@ -12,6 +12,7 @@ add_compile_options(-Wall -O3)
 set(BASE_SRC
 	src/base/color.c
 	src/base/file.c
+	src/base/format.c
 	src/base/hash_map.c
 	src/base/string.c
   	src/base/vec.c)
