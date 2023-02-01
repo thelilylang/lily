@@ -67,6 +67,12 @@ void grow__Vec(Vec *self, Usize new_capacity);
 void push__Vec(Vec *self, void *item);
 
 /**
+ *
+ * @brief Remove item from Vec buffer.
+ */
+void* remove__Vec(Vec *self, Usize index);
+
+/**
  * 
  * @brief Ungrow Vec buffer.
  * @param new_capacity New buffer capacity.

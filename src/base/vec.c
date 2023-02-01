@@ -52,6 +52,23 @@ void push__Vec(Vec *self, void *item) {
 	self->buffer[self->len++] = item;
 }
 
+void* remove__Vec(Vec *self, Usize index) {
+	ASSERT(index < self->len);
+
+	void* item = self->buffer[index--];
+
+	// Align the rest of the buffer
+	for (Usize i = 0; i < self->len; i++) {
+		self->buffer[i] = self->buffer[i + 1];
+	}
+
+	if (self->len <= self->capacity / 2) {
+		ungrow__Vec(self, self->capacity / 2);
+	}
+
+	return item;
+}
+
 void ungrow__Vec(Vec *self, Usize new_capacity) {
 	if (new_capacity >= self->capacity) return;
 
