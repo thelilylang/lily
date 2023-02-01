@@ -11,17 +11,18 @@ set(BASE_SRC
 	src/base/color.c
 	src/base/file.c
 	src/base/string.c
-  src/base/vec.c)
+  	src/base/vec.c)
 
 add_library(lily_base STATIC ${BASE_SRC})
 target_include_directories(lily_base PUBLIC include)
 
+add_executable(lily src/bin/main.c)
+target_link_libraries(lily lily_base)
+
 add_executable(test_base tests/base/base.c)
 target_link_libraries(test_base lily_base)
-target_include_directories(lily_base PUBLIC include)
 
 add_test(NAME test_base COMMAND test_base)
 
 add_executable(bench_vec benchmarks/base/vec.c)
 target_link_libraries(bench_vec lily_base)
-target_include_directories(bench_vec PUBLIC include)
