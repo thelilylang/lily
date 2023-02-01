@@ -10,7 +10,8 @@ add_compile_options(-Wall -O3)
 set(BASE_SRC
 	src/base/color.c
 	src/base/file.c
-    src/base/vec.c)
+	src/base/string.c
+  src/base/vec.c)
 
 add_library(lily_base STATIC ${BASE_SRC})
 target_include_directories(lily_base PUBLIC include)
