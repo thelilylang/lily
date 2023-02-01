@@ -1,5 +1,7 @@
 #include <stdlib.h>
+#include <stdio.h>
 
+#include <base/assert.h>
 #include <base/vec.h>
 
 Vec* __new__Vec() {
@@ -26,6 +28,12 @@ Vec* from__Vec(void **buffer, Usize len) {
 	}
 
 	return v;
+}
+
+void* get__Vec(Vec *self, Usize index) {
+	ASSERT(index < self->len);
+
+	return self->buffer[index];
 }
 
 void grow__Vec(Vec *self, Usize new_capacity) {

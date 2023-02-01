@@ -49,6 +49,12 @@ Vec* from__Vec(void **buffer, Usize len);
 
 /**
  *
+ * @brief Get item from Vec.
+ */
+void* get__Vec(Vec *self, Usize index);
+
+/**
+ *
  * @brief Grow Vec buffer.
  * @param new_capacity New buffer capacity.
  */
