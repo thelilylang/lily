@@ -72,6 +72,16 @@ void grow__String(String *self, Usize new_capacity) {
 	self->capacity = new_capacity;
 }
 
+void push__String(String *self, char item) {
+	if (!self->capacity)
+		grow__String(self, self->default_capacity);
+	else if (self->len == self->capacity - 1)
+		grow__String(self, self->capacity * 2);
+	
+	self->buffer[self->len] = item;
+	self->buffer[self->len++] = '\0';
+}
+
 void __free__String(String *self) {
 	free(self->buffer);
 	free(self);

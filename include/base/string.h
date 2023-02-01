@@ -61,6 +61,12 @@ void grow__String(String *self, Usize new_capacity);
 
 /**
  *
+ * @brief Push char to String.
+ */
+void push__String(String *self, char item);
+
+/**
+ *
  * @brief Free String buffer.
  */
 void __free__String(String *self);
