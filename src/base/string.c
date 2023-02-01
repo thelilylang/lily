@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-#include "base/vec.h"
 #include <base/assert.h>
 #include <base/string.h>
 
