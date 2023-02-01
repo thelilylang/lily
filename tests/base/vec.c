@@ -107,3 +107,19 @@ void test_remove__Vec() {
 
 	FREE(Vec, v);
 }
+
+void test_reverse__Vec() {
+	Vec *v = NEW(Vec);
+
+	push__Vec(v, (int*)1);
+	push__Vec(v, (int*)2);
+	push__Vec(v, (int*)3);
+
+	reverse__Vec(v);
+
+	ASSERT(v->buffer[0] == (int*)3);
+	ASSERT(v->buffer[1] == (int*)2);
+	ASSERT(v->buffer[2] == (int*)1);
+	
+	FREE(Vec, v);
+}
