@@ -29,6 +29,7 @@
 	do { \
 		if (a != b) { \
 			printf("ASSERT_EQ failed: (%s:%d)", __FILE__, __LINE__); \
+			exit(1); \
 		} \
 	} while (0)
 
@@ -36,6 +37,7 @@
 	do { \
 		if (a == b) { \
 			printf("ASSERT_NEQ failed: (%s:%d)", __FILE__, __LINE__); \
+			exit(1); \
 		} \
 	} while (0)
 
@@ -43,6 +45,7 @@
 	do { \
 		if (!(a)) { \
 			printf("ASSERT failed: (%s:%d)", __FILE__, __LINE__); \
+			exit(1); \
 		} \
 	} while (0)
 
