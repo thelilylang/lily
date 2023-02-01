@@ -30,7 +30,7 @@
 #include <base/macros.h>
 
 Vec* __new__Vec() {
-	Vec* v = malloc(sizeof(struct Vec));
+	Vec* v = malloc(sizeof(Vec));
 
 	v->buffer = NULL;
 	v->len = 0;
