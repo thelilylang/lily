@@ -16,6 +16,22 @@ static void test_new__Vec() {
 	FREE(Vec, v);
 }
 
+static void test_from__Vec() {
+	int* buffer[5] = {(int*)0, (int*)1, (int*)2, (int*)3, (int*)4};
+	Vec *v = from__Vec((void**)buffer, 5);
+
+	ASSERT(v->buffer != NULL);
+	ASSERT(v->len == 5);
+	ASSERT(v->capacity == 10);
+	ASSERT(v->default_capacity == 5);
+
+	for (Usize i = 5; i--;) {
+		ASSERT(v->buffer[i] == buffer[i]);
+	}
+
+	FREE(Vec, v);
+}
+
 static void test_push__Vec() {
 	Vec *v = NEW(Vec);
 
