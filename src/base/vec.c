@@ -37,10 +37,20 @@ void* get__Vec(Vec *self, Usize index) {
 }
 
 void grow__Vec(Vec *self, Usize new_capacity) {
-	if (new_capacity <= self->capacity) return;
+	ASSERT(new_capacity >= self->capacity);
 
 	self->buffer = realloc(self->buffer, 8 * new_capacity);
 	self->capacity = new_capacity;
+}
+
+void* pop__Vec(Vec *self) {
+	ASSERT(self->len > 0);
+
+	void *item = self->buffer[--self->len];
+
+	ungrow__Vec(self);
+
+	return item;
 }
 
 void push__Vec(Vec *self, void *item) {
@@ -62,18 +72,16 @@ void* remove__Vec(Vec *self, Usize index) {
 		self->buffer[i] = self->buffer[i + 1];
 	}
 
-	if (self->len <= self->capacity / 2) {
-		ungrow__Vec(self, self->capacity / 2);
-	}
+	ungrow__Vec(self);
 
 	return item;
 }
 
-void ungrow__Vec(Vec *self, Usize new_capacity) {
-	if (new_capacity >= self->capacity) return;
-
-	self->buffer = realloc(self->buffer, 8 * new_capacity);
-	self->capacity = new_capacity;
+void ungrow__Vec(Vec *self) {
+	if (self->len <= self->capacity / 2) {
+		self->capacity /= 2;
+		self->buffer = realloc(self->buffer, 8 * self->capacity);
+	}
 }
 
 void __free__Vec(Vec *self) {
