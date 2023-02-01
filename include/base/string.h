@@ -73,6 +73,12 @@ void push__String(String *self, char item);
 
 /**
  *
+ * @brief Ungrow String buffer.
+ */
+void ungrow__String(String *self);
+
+/**
+ *
  * @brief Free String buffer.
  */
 void __free__String(String *self);

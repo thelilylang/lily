@@ -75,8 +75,11 @@ char pop__String(String *self) {
 	ASSERT(self->len > 0);
 
 	char c = self->buffer[self->len - 1];
+
 	self->buffer[self->len - 1] = '\0';
 	self->len--;
+
+	ungrow__String(self);
 
 	return c;
 }
@@ -89,6 +92,13 @@ void push__String(String *self, char item) {
 	
 	self->buffer[self->len] = item;
 	self->buffer[++self->len] = '\0';
+}
+
+void ungrow__String(String *self) {
+	if (self->len + 1 <= self->capacity / 2) {
+		self->capacity /= 2;
+		self->buffer = realloc(self->buffer, self->capacity);
+	}
 }
 
 void __free__String(String *self) {
