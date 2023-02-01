@@ -22,9 +22,12 @@
  * SOFTWARE.
  */
 
+#include "base/vec.h"
+#include <base/assert.h>
 #include <base/string.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 String* __new__String() {
@@ -54,6 +57,19 @@ String* from__String(char *buffer) {
 	s->buffer[s->len] = '\0';
 
 	return s;
+}
+
+char get__String(String *self, Usize index) {
+	ASSERT(index < self->len);
+
+	return self->buffer[index];
+}
+
+void grow__String(String *self, Usize new_capacity) {
+	ASSERT(new_capacity >= self->capacity);
+
+	self->buffer = realloc(self->buffer, new_capacity);
+	self->capacity = new_capacity;
 }
 
 void __free__String(String *self) {

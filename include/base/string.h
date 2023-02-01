@@ -48,6 +48,19 @@ String* from__String(char *buffer);
 
 /**
  *
+ * @brief Get item from String.
+ */
+char get__String(String *self, Usize index);
+
+/**
+ *
+ * @brief Grow String buffer.
+ * @param new_capacity New buffer capacity.
+ */
+void grow__String(String *self, Usize new_capacity);
+
+/**
+ *
  * @brief Free String buffer.
  */
 void __free__String(String *self);
