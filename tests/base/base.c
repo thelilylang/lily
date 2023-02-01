@@ -8,6 +8,7 @@ int main() {
 	test_get__Vec();
 	test_pop__Vec();
 	test_push__Vec();
+	test_remove__Vec();
 
 	puts("\x1b[32mAll tests pass\x1b[0m");
 }

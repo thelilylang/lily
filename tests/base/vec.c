@@ -77,3 +77,33 @@ static void test_push__Vec() {
 
 	FREE(Vec, v);
 }
+
+static void test_remove__Vec() {
+	Vec *v = NEW(Vec);
+
+	push__Vec(v, (int*)1);
+	push__Vec(v, (int*)2);
+	push__Vec(v, (int*)3);
+	push__Vec(v, (int*)4);
+	push__Vec(v, (int*)5);
+	push__Vec(v, (int*)6);
+
+	ASSERT(remove__Vec(v, 3) == (int*)4);;
+
+	ASSERT(v->len == 5);
+	ASSERT(v->buffer[0] == (int*)1);
+	ASSERT(v->buffer[1] == (int*)2);
+	ASSERT(v->buffer[2] == (int*)3);
+	ASSERT(v->buffer[3] == (int*)5);
+	ASSERT(v->buffer[4] == (int*)6);
+
+	ASSERT(remove__Vec(v, 0) == (int*)1);
+
+	ASSERT(v->len == 4);
+	ASSERT(v->buffer[0] == (int*)2);
+	ASSERT(v->buffer[1] == (int*)3);
+	ASSERT(v->buffer[2] == (int*)5);
+	ASSERT(v->buffer[3] == (int*)6);
+
+	FREE(Vec, v);
+}
