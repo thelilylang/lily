@@ -72,6 +72,16 @@ void grow__String(String *self, Usize new_capacity) {
 	self->capacity = new_capacity;
 }
 
+char pop__String(String *self) {
+	ASSERT(self->len > 0);
+
+	char c = self->buffer[self->len - 1];
+	self->buffer[self->len - 1] = '\0';
+	self->len--;
+
+	return c;
+}
+
 void push__String(String *self, char item) {
 	if (!self->capacity)
 		grow__String(self, self->default_capacity);

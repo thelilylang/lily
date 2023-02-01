@@ -61,6 +61,12 @@ void grow__String(String *self, Usize new_capacity);
 
 /**
  *
+ * @brief Remove last item from String.
+ */
+char pop__String(String *self);
+
+/**
+ *
  * @brief Push char to String.
  */
 void push__String(String *self, char item);
