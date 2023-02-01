@@ -27,6 +27,7 @@
 
 #include <base/assert.h>
 #include <base/vec.h>
+#include <base/macros.h>
 
 Vec* __new__Vec() {
 	Vec* v = malloc(sizeof(struct Vec));
@@ -45,7 +46,7 @@ Vec* from__Vec(void **buffer, Usize len) {
 	v->default_capacity = len;
 	v->len = len;
 	v->capacity = len * 2;
-	v->buffer = malloc(8 * v->capacity);
+	v->buffer = malloc(PTR_SIZE * v->capacity);
 
 	for (Usize i = len; i--;) {
 		v->buffer[i] = buffer[i];
@@ -63,7 +64,7 @@ void* get__Vec(Vec *self, Usize index) {
 void grow__Vec(Vec *self, Usize new_capacity) {
 	ASSERT(new_capacity >= self->capacity);
 
-	self->buffer = realloc(self->buffer, 8 * new_capacity);
+	self->buffer = realloc(self->buffer, PTR_SIZE * new_capacity);
 	self->capacity = new_capacity;
 }
 
@@ -119,7 +120,7 @@ void reverse__Vec(Vec *self) {
 void ungrow__Vec(Vec *self) {
 	if (self->len <= self->capacity / 2) {
 		self->capacity /= 2;
-		self->buffer = realloc(self->buffer, 8 * self->capacity);
+		self->buffer = realloc(self->buffer, PTR_SIZE * self->capacity);
 	}
 }
 
