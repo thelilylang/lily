@@ -1,6 +1,7 @@
 #include "string.c"
 #include "vec.c"
 #include "hash_map.c"
+#include "format.c"
 
 #include <stdio.h>
 
@@ -23,6 +24,10 @@ int main() {
 	// Test HashMap
 	test_new__HashMap();
 	test_insert__HashMap();
+
+	// Test format
+	test_format_s_specifier();
+	test_format_sa_specifier();
 
 	puts("\x1b[32mAll tests pass\x1b[0m");
 }
