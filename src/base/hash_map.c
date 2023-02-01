@@ -56,7 +56,7 @@ void* insert__HashMap(HashMap *self, void *key, void *value) {
 }
 
 void __free__HashMap(HashMap *self) {
-	free(self->key);
-	free(self->value);
+	FREE(Vec, self->key);
+	FREE(Vec, self->value);
 	free(self);
 }
