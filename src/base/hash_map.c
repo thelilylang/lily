@@ -40,8 +40,11 @@ HashMap* __new__HashMap() {
 void* insert__HashMap(HashMap *self, void *key, void *value) {	
 	for (int i = 0; i < self->len; i++) {
 		if (self->key->buffer[i] == key) {
+			void *old_value = self->value->buffer[i];
+
 			self->value->buffer[i] = value;
-			return value;
+
+			return old_value;
 		}
 	}
 
@@ -49,7 +52,7 @@ void* insert__HashMap(HashMap *self, void *key, void *value) {
 	push__Vec(self->value, value);
 	self->len++;
 
-	return value;
+	return NULL;
 }
 
 void __free__HashMap(HashMap *self) {
