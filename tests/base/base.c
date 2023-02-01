@@ -14,6 +14,7 @@ int main() {
 
 	test_new__String();
 	test_from__String();
+	test_pop__String();
 	test_push__String();
 
 	puts("\x1b[32mAll tests pass\x1b[0m");

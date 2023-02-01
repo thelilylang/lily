@@ -32,6 +32,18 @@ void test_from__String() {
 	FREE(String, s);
 }
 
+void test_pop__String() {
+	String *s = from__String("Hello");
+
+	ASSERT(pop__String(s) == 'o');
+	ASSERT(pop__String(s) == 'l');
+	ASSERT(pop__String(s) == 'l');
+	ASSERT(pop__String(s) == 'e');
+	ASSERT(pop__String(s) == 'H');
+
+	FREE(String, s);
+}
+
 void test_push__String() {
 	String *s = NEW(String);
 
@@ -51,4 +63,6 @@ void test_push__String() {
 	ASSERT(s->buffer[3] == 'l');
 	ASSERT(s->buffer[4] == 'o');
 	ASSERT(s->buffer[5] == '\0');
+
+	FREE(String, s);
 }
