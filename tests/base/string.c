@@ -10,7 +10,7 @@ void test_new__String() {
 
 	ASSERT(s->len == 0);
 	ASSERT(s->capacity == 0);
-	ASSERT(s->default_capacity = 4);
+	ASSERT(s->default_capacity == 4);
 
 	FREE(String, s);
 }
