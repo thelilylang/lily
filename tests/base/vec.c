@@ -22,12 +22,18 @@ static void test_push__Vec() {
 	push__Vec(v, (int*)1);
 	push__Vec(v, (int*)2);
 	push__Vec(v, (int*)3);
+	push__Vec(v, (int*)4);
+	push__Vec(v, (int*)5);
+	push__Vec(v, (int*)6);
 
-	ASSERT(v->len == 3);
-	ASSERT(v->capacity == 4);
-	ASSERT(get__Vec(v, 0) == (int*)1);
-	ASSERT(get__Vec(v, 1) == (int*)2);
-	ASSERT(get__Vec(v, 2) == (int*)3);
+	ASSERT(v->len == 6);
+	ASSERT(v->capacity == 8);
+	ASSERT(v->buffer[0] == (int*)1);
+	ASSERT(v->buffer[1] == (int*)2);
+	ASSERT(v->buffer[2] == (int*)3);
+	ASSERT(v->buffer[3] == (int*)4);
+	ASSERT(v->buffer[4] == (int*)5);
+	ASSERT(v->buffer[5] == (int*)6);
 
 	FREE(Vec, v);
 }
