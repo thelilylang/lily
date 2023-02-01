@@ -34,28 +34,31 @@
 #define LOCAL
 #undef LOCAL
 
-#define PTR_SIZE sizeof(void*)
+#define PTR_SIZE sizeof(void *)
 
-#define FREE_BUFFER_ITEMS(buffer, len, type) \
-	for (Usize i = 0; i < len; i++) { \
-		__free__##type(buffer[i]); \
-	}
+#define FREE_BUFFER_ITEMS(buffer, len, type)                                   \
+  for (Usize i = 0; i < len; i++) {                                            \
+    __free__##type(buffer[i]);                                                 \
+  }
 
 #define CAST(type, expr) ((type)(expr))
 
-#define TODO(msg) { \
-	printf("TODO: %s (%s:%d)", msg, __FILE__, __LINE__); \
-	exit(1); \
-}
+#define TODO(msg)                                                              \
+  {                                                                            \
+    printf("TODO: %s (%s:%d)", msg, __FILE__, __LINE__);                       \
+    exit(1);                                                                   \
+  }
 
-#define FAILED(msg) { \
-	printf("FAILED: %s (%s:%d)", msg, __FILE__, __LINE__); \
-	exit(1); \
-}
+#define FAILED(msg)                                                            \
+  {                                                                            \
+    printf("FAILED: %s (%s:%d)", msg, __FILE__, __LINE__);                     \
+    exit(1);                                                                   \
+  }
 
-#define UNREACHABLE(msg) { \
-	printf("UNREACHABLE: %s (%s:%d)", msg, __FILE__, __LINE__); \
-	exit(1); \
-}
+#define UNREACHABLE(msg)                                                       \
+  {                                                                            \
+    printf("UNREACHABLE: %s (%s:%d)", msg, __FILE__, __LINE__);                \
+    exit(1);                                                                   \
+  }
 
 #endif // LILY_BASE_MACROS_H

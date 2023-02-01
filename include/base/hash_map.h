@@ -25,27 +25,28 @@
 #ifndef LILY_BASE_HASH_MAP_H
 #define LILY_BASE_HASH_MAP_H
 
-#include <base/vec.h>
 #include <base/types.h>
+#include <base/vec.h>
 
 typedef struct HashMap {
-	Vec *key;
-	Vec *value;
-	Usize len;
+  Vec *key;
+  Vec *value;
+  Usize len;
 } HashMap;
 
 /**
  *
  * @brief Construct HashMap type.
  */
-HashMap* __new__HashMap();
+HashMap *__new__HashMap();
 
 /**
  *
  * @brief Insert key-value pair into HashMap.
- * @return If the key already exists, return the value of the key, otherwise return NULL.
+ * @return If the key already exists, return the value of the key, otherwise
+ * return NULL.
  */
-void* insert__HashMap(HashMap *self, void *key, void *value);
+void *insert__HashMap(HashMap *self, void *key, void *value);
 
 /**
  *

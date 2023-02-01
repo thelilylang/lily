@@ -25,83 +25,83 @@
 #include <base/assert.h>
 #include <base/string.h>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-String* __new__String() {
-	String *s = malloc(sizeof(String));
+String *__new__String() {
+  String *s = malloc(sizeof(String));
 
-	s->buffer = malloc(1);
-	s->buffer[0] = '\0';
-	s->len = 0;
-	s->capacity = 0;
-	s->default_capacity = 4;
+  s->buffer = malloc(1);
+  s->buffer[0] = '\0';
+  s->len = 0;
+  s->capacity = 0;
+  s->default_capacity = 4;
 
-	return s;
+  return s;
 }
 
-String* from__String(char *buffer) {
-	String *s = malloc(sizeof(String));
+String *from__String(char *buffer) {
+  String *s = malloc(sizeof(String));
 
-	s->capacity = strlen(buffer) * 2;
-	s->default_capacity = s->capacity;
-	s->buffer = malloc(s->capacity);
-	s->len = strlen(buffer);	
+  s->capacity = strlen(buffer) * 2;
+  s->default_capacity = s->capacity;
+  s->buffer = malloc(s->capacity);
+  s->len = strlen(buffer);
 
-	for (int i = 0; i < s->len; i++) {
-		s->buffer[i] = buffer[i];
-	}
+  for (int i = 0; i < s->len; i++) {
+    s->buffer[i] = buffer[i];
+  }
 
-	s->buffer[s->len] = '\0';
+  s->buffer[s->len] = '\0';
 
-	return s;
+  return s;
 }
 
 char get__String(String *self, Usize index) {
-	ASSERT(index < self->len);
+  ASSERT(index < self->len);
 
-	return self->buffer[index];
+  return self->buffer[index];
 }
 
 void grow__String(String *self, Usize new_capacity) {
-	ASSERT(new_capacity >= self->capacity);
+  ASSERT(new_capacity >= self->capacity);
 
-	self->buffer = realloc(self->buffer, new_capacity);
-	self->capacity = new_capacity;
+  self->buffer = realloc(self->buffer, new_capacity);
+  self->capacity = new_capacity;
 }
 
 char pop__String(String *self) {
-	ASSERT(self->len > 0);
+  ASSERT(self->len > 0);
 
-	char c = self->buffer[self->len - 1];
+  char c = self->buffer[self->len - 1];
 
-	self->buffer[self->len - 1] = '\0';
-	self->len--;
+  self->buffer[self->len - 1] = '\0';
+  self->len--;
 
-	ungrow__String(self);
+  ungrow__String(self);
 
-	return c;
+  return c;
 }
 
 void push__String(String *self, char item) {
-	if (!self->capacity)
-		grow__String(self, self->default_capacity);
-	else if (self->len == self->capacity - 1)
-		grow__String(self, self->capacity * 2);
-	
-	self->buffer[self->len] = item;
-	self->buffer[++self->len] = '\0';
+  if (!self->capacity)
+    grow__String(self, self->default_capacity);
+  else if (self->len == self->capacity - 1)
+    grow__String(self, self->capacity * 2);
+
+  self->buffer[self->len] = item;
+  self->buffer[++self->len] = '\0';
 }
 
 void ungrow__String(String *self) {
-	if (self->len + 1 <= self->capacity / 2) {
-		self->capacity /= 2;
-		self->buffer = realloc(self->buffer, self->capacity);
-	}
+  if (self->len + 1 <= self->capacity / 2) {
+    self->capacity /= 2;
+    self->buffer = realloc(self->buffer, self->capacity);
+  }
 }
 
 void __free__String(String *self) {
-	free(self->buffer);
-	free(self);
+  free(self->buffer);
+  free(self);
 }

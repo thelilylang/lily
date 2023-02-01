@@ -22,109 +22,109 @@
  * SOFTWARE.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <base/assert.h>
-#include <base/vec.h>
 #include <base/macros.h>
+#include <base/vec.h>
 
-Vec* __new__Vec() {
-	Vec* v = malloc(sizeof(Vec));
+Vec *__new__Vec() {
+  Vec *v = malloc(sizeof(Vec));
 
-	v->buffer = NULL;
-	v->len = 0;
-	v->capacity = 0;
-	v->default_capacity = 4;
+  v->buffer = NULL;
+  v->len = 0;
+  v->capacity = 0;
+  v->default_capacity = 4;
 
-	return v;
+  return v;
 }
 
-Vec* from__Vec(void **buffer, Usize len) {
-	Vec* v = __new__Vec();
+Vec *from__Vec(void **buffer, Usize len) {
+  Vec *v = __new__Vec();
 
-	v->default_capacity = len;
-	v->len = len;
-	v->capacity = len * 2;
-	v->buffer = malloc(PTR_SIZE * v->capacity);
+  v->default_capacity = len;
+  v->len = len;
+  v->capacity = len * 2;
+  v->buffer = malloc(PTR_SIZE * v->capacity);
 
-	for (Usize i = len; i--;) {
-		v->buffer[i] = buffer[i];
-	}
+  for (Usize i = len; i--;) {
+    v->buffer[i] = buffer[i];
+  }
 
-	return v;
+  return v;
 }
 
-void* get__Vec(Vec *self, Usize index) {
-	ASSERT(index < self->len);
+void *get__Vec(Vec *self, Usize index) {
+  ASSERT(index < self->len);
 
-	return self->buffer[index];
+  return self->buffer[index];
 }
 
 void grow__Vec(Vec *self, Usize new_capacity) {
-	ASSERT(new_capacity >= self->capacity);
+  ASSERT(new_capacity >= self->capacity);
 
-	self->buffer = realloc(self->buffer, PTR_SIZE * new_capacity);
-	self->capacity = new_capacity;
+  self->buffer = realloc(self->buffer, PTR_SIZE * new_capacity);
+  self->capacity = new_capacity;
 }
 
-void* pop__Vec(Vec *self) {
-	ASSERT(self->len > 0);
+void *pop__Vec(Vec *self) {
+  ASSERT(self->len > 0);
 
-	void *item = self->buffer[--self->len];
+  void *item = self->buffer[--self->len];
 
-	ungrow__Vec(self);
+  ungrow__Vec(self);
 
-	return item;
+  return item;
 }
 
 void push__Vec(Vec *self, void *item) {
-	if (!self->capacity)
-		grow__Vec(self, self->default_capacity);
-	else if (self->len == self->capacity)
-		grow__Vec(self, self->capacity * 2);
+  if (!self->capacity)
+    grow__Vec(self, self->default_capacity);
+  else if (self->len == self->capacity)
+    grow__Vec(self, self->capacity * 2);
 
-	self->buffer[self->len++] = item;
+  self->buffer[self->len++] = item;
 }
 
-void* remove__Vec(Vec *self, Usize index) {
-	ASSERT(index < self->len);
+void *remove__Vec(Vec *self, Usize index) {
+  ASSERT(index < self->len);
 
-	void* item = self->buffer[index];
-	self->len -= 1;
+  void *item = self->buffer[index];
+  self->len -= 1;
 
-	// Align the rest of the buffer
-	for (Usize i = index; i < self->len; i++) {
-		self->buffer[i] = self->buffer[i + 1];
-	}
+  // Align the rest of the buffer
+  for (Usize i = index; i < self->len; i++) {
+    self->buffer[i] = self->buffer[i + 1];
+  }
 
-	ungrow__Vec(self);
+  ungrow__Vec(self);
 
-	return item;
+  return item;
 }
 
 void reverse__Vec(Vec *self) {
-	Usize i = 0;
-	Usize j = self->len - 1;
+  Usize i = 0;
+  Usize j = self->len - 1;
 
-	while (i < j) {
-		void* tmp = self->buffer[i];
-		self->buffer[i] = self->buffer[j];
-		self->buffer[j] = tmp;
+  while (i < j) {
+    void *tmp = self->buffer[i];
+    self->buffer[i] = self->buffer[j];
+    self->buffer[j] = tmp;
 
-		i++;
-		j--;
-	}
+    i++;
+    j--;
+  }
 }
 
 void ungrow__Vec(Vec *self) {
-	if (self->len <= self->capacity / 2) {
-		self->capacity /= 2;
-		self->buffer = realloc(self->buffer, PTR_SIZE * self->capacity);
-	}
+  if (self->len <= self->capacity / 2) {
+    self->capacity /= 2;
+    self->buffer = realloc(self->buffer, PTR_SIZE * self->capacity);
+  }
 }
 
 void __free__Vec(Vec *self) {
-	free(self->buffer);
-	free(self);
+  free(self->buffer);
+  free(self);
 }

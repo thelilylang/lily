@@ -26,14 +26,14 @@
 
 #include <base/assert.h>
 #include <base/file.h>
-#include <base/platform.h>
 #include <base/macros.h>
+#include <base/platform.h>
 #include <base/types.h>
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <dirent.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if defined(LILY_WINDOWS_OS)
@@ -42,66 +42,69 @@
 
 bool is_directory__Path(const char *path) {
 #if defined(LILY_WINDOWS_OS)
-	DWORD dwAttrib = GetFileAttributes(path);
+  DWORD dwAttrib = GetFileAttributes(path);
 
-	return (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+  return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+          (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 #else
-	DIR *dir = opendir(path);
+  DIR *dir = opendir(path);
 
-	if (ENOENT == errno || dir == NULL) {
-		return false;
-	}
+  if (ENOENT == errno || dir == NULL) {
+    return false;
+  }
 
-	closedir(dir);
+  closedir(dir);
 #endif
 
-	return true;
+  return true;
 }
 
-char* get_extension__Path(const char *path) {
-	bool extension_started = false;
-	Usize size = 1;
-	char *extension = malloc(1);
-	Usize len = strlen(path);
+char *get_extension__Path(const char *path) {
+  bool extension_started = false;
+  Usize size = 1;
+  char *extension = malloc(1);
+  Usize len = strlen(path);
 
-	for (Usize i = 0; i < len; i++) {
-		if (path[i] == '.' && path[i + 1 < len ? i + 1 : i] != '.' && path[i + 1 < len ? i + 1 : i] != '/' && path[i + 1 < len ? i + 1 : i] != '\\') {
-			extension_started = true;
-		}
+  for (Usize i = 0; i < len; i++) {
+    if (path[i] == '.' && path[i + 1 < len ? i + 1 : i] != '.' &&
+        path[i + 1 < len ? i + 1 : i] != '/' &&
+        path[i + 1 < len ? i + 1 : i] != '\\') {
+      extension_started = true;
+    }
 
-		if (extension_started) {
-			extension = realloc(extension, size + 1);
-			extension[size - 1] = path[i];
-			extension[size++] = '\0';
-		}
-	}
+    if (extension_started) {
+      extension = realloc(extension, size + 1);
+      extension[size - 1] = path[i];
+      extension[size++] = '\0';
+    }
+  }
 
-	return extension;
+  return extension;
 }
 
-char* read_file__Path(const char *path) {
-	ASSERT(is_directory__Path(path) == false);
+char *read_file__Path(const char *path) {
+  ASSERT(is_directory__Path(path) == false);
 
-	FILE *file = fopen(path, "r");
-	char *content = malloc(1);
+  FILE *file = fopen(path, "r");
+  char *content = malloc(1);
 
-	if (file == NULL) {
-		fprintf(stderr, "Could not open file \"%s\"", path);
-	}
+  if (file == NULL) {
+    fprintf(stderr, "Could not open file \"%s\"", path);
+  }
 
-	char *line = NULL;
-	size_t len = 0;
-	ssize_t read;
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
 
-	while ((read = getline(&line, &len, file) != -1)) {
-		content = realloc(content, strlen(content) + strlen(line) + 1);
-		strcat(content, line);
-	}
+  while ((read = getline(&line, &len, file) != -1)) {
+    content = realloc(content, strlen(content) + strlen(line) + 1);
+    strcat(content, line);
+  }
 
-	fclose(file);
-	free(line);
+  fclose(file);
+  free(line);
 
-	content[strlen(content)] = '\0';
+  content[strlen(content)] = '\0';
 
-	return content;
+  return content;
 }

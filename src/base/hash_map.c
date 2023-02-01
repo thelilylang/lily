@@ -27,36 +27,36 @@
 
 #include <stdlib.h>
 
-HashMap* __new__HashMap() {
-	HashMap *hm = malloc(sizeof(HashMap));
+HashMap *__new__HashMap() {
+  HashMap *hm = malloc(sizeof(HashMap));
 
-	hm->key = NEW(Vec);
-	hm->value = NEW(Vec);
-	hm->len = 0;
+  hm->key = NEW(Vec);
+  hm->value = NEW(Vec);
+  hm->len = 0;
 
-	return hm;
+  return hm;
 }
 
-void* insert__HashMap(HashMap *self, void *key, void *value) {	
-	for (int i = 0; i < self->len; i++) {
-		if (self->key->buffer[i] == key) {
-			void *old_value = self->value->buffer[i];
+void *insert__HashMap(HashMap *self, void *key, void *value) {
+  for (int i = 0; i < self->len; i++) {
+    if (self->key->buffer[i] == key) {
+      void *old_value = self->value->buffer[i];
 
-			self->value->buffer[i] = value;
+      self->value->buffer[i] = value;
 
-			return old_value;
-		}
-	}
+      return old_value;
+    }
+  }
 
-	push__Vec(self->key, key);
-	push__Vec(self->value, value);
-	self->len++;
+  push__Vec(self->key, key);
+  push__Vec(self->value, value);
+  self->len++;
 
-	return NULL;
+  return NULL;
 }
 
 void __free__HashMap(HashMap *self) {
-	FREE(Vec, self->key);
-	FREE(Vec, self->value);
-	free(self);
+  FREE(Vec, self->key);
+  FREE(Vec, self->value);
+  free(self);
 }

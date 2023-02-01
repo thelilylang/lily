@@ -28,23 +28,23 @@
 #include <base/types.h>
 
 typedef struct String {
-	char *buffer;
-	Usize len;
-	Usize capacity;
-	Usize default_capacity;
+  char *buffer;
+  Usize len;
+  Usize capacity;
+  Usize default_capacity;
 } String;
 
 /**
  *
  * @brief Construct String type.
  */
-String* __new__String();
+String *__new__String();
 
 /**
  *
  * @brief Construct String type with default buffer items.
  */
-String* from__String(char *buffer);
+String *from__String(char *buffer);
 
 /**
  *

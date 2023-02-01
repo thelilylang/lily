@@ -29,29 +29,29 @@
 #include <stdbool.h>
 
 typedef struct Vec {
-	void **buffer;
-	Usize len;
-	Usize capacity;
-	Usize default_capacity;
+  void **buffer;
+  Usize len;
+  Usize capacity;
+  Usize default_capacity;
 } Vec;
 
 /**
  *
  * @brief Construct Vec type.
  */
-Vec* __new__Vec();
+Vec *__new__Vec();
 
 /**
  *
  * @brief Construct Vec type with default buffer items.
  */
-Vec* from__Vec(void **buffer, Usize len);
+Vec *from__Vec(void **buffer, Usize len);
 
 /**
  *
  * @brief Get item from Vec.
  */
-void* get__Vec(Vec *self, Usize index);
+void *get__Vec(Vec *self, Usize index);
 
 /**
  *
@@ -64,7 +64,7 @@ void grow__Vec(Vec *self, Usize new_capacity);
  *
  * @brief Remove the last item from Vec.
  */
-void* pop__Vec(Vec *self);
+void *pop__Vec(Vec *self);
 
 /**
  *
@@ -76,7 +76,7 @@ void push__Vec(Vec *self, void *item);
  *
  * @brief Remove item from Vec buffer.
  */
-void* remove__Vec(Vec *self, Usize index);
+void *remove__Vec(Vec *self, Usize index);
 
 /**
  *
@@ -85,7 +85,7 @@ void* remove__Vec(Vec *self, Usize index);
 void reverse__Vec(Vec *self);
 
 /**
- * 
+ *
  * @brief Ungrow Vec buffer.
  * @param new_capacity New buffer capacity.
  */

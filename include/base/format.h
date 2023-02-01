@@ -43,6 +43,6 @@
  * - {S}: Dynamic String (base/string.h)
  * - {Sr}: Raw dynamic string (free it after use) (base/string.h)
  */
-char* format(const char* fmt, ...);
+char *format(const char *fmt, ...);
 
 #endif // LILY_BASE_FORMAT_H
