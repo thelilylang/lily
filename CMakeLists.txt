@@ -14,3 +14,9 @@ target_include_directories(lily_base PUBLIC include)
 add_executable(test_base tests/base/base.c)
 target_link_libraries(test_base lily_base)
 target_include_directories(lily_base PUBLIC include)
+
+add_test(NAME test_base COMMAND test_base)
+
+add_executable(bench_vec benchmarks/base/vec.c)
+target_link_libraries(bench_vec lily_base)
+target_include_directories(bench_vec PUBLIC include)
