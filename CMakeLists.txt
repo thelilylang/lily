@@ -10,3 +10,7 @@ set(BASE_SRC
 
 add_library(lily_base STATIC ${BASE_SRC})
 target_include_directories(lily_base PUBLIC include)
+
+add_executable(test_base tests/base/base.c)
+target_link_libraries(test_base lily_base)
+target_include_directories(lily_base PUBLIC include)
