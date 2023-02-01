@@ -69,7 +69,7 @@ void* remove__Vec(Vec *self, Usize index) {
 	self->len -= 1;
 
 	// Align the rest of the buffer
-	for (Usize i = 0; i < self->len; i++) {
+	for (Usize i = index; i < self->len; i++) {
 		self->buffer[i] = self->buffer[i + 1];
 	}
 
