@@ -79,7 +79,7 @@ void push__String(String *self, char item) {
 		grow__String(self, self->capacity * 2);
 	
 	self->buffer[self->len] = item;
-	self->buffer[self->len++] = '\0';
+	self->buffer[++self->len] = '\0';
 }
 
 void __free__String(String *self) {
