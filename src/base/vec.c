@@ -78,6 +78,20 @@ void* remove__Vec(Vec *self, Usize index) {
 	return item;
 }
 
+void reverse__Vec(Vec *self) {
+	Usize i = 0;
+	Usize j = self->len - 1;
+
+	while (i < j) {
+		void* tmp = self->buffer[i];
+		self->buffer[i] = self->buffer[j];
+		self->buffer[j] = tmp;
+
+		i++;
+		j--;
+	}
+}
+
 void ungrow__Vec(Vec *self) {
 	if (self->len <= self->capacity / 2) {
 		self->capacity /= 2;

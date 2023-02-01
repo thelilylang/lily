@@ -79,6 +79,12 @@ void push__Vec(Vec *self, void *item);
 void* remove__Vec(Vec *self, Usize index);
 
 /**
+ *
+ * @brief Reverse Vec buffer.
+ */
+void reverse__Vec(Vec *self);
+
+/**
  * 
  * @brief Ungrow Vec buffer.
  * @param new_capacity New buffer capacity.
