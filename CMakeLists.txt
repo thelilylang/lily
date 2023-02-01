@@ -33,4 +33,7 @@ if (DEBUG)
 
 	add_executable(bench_string benchmarks/base/string.c)
 	target_link_libraries(bench_string lily_base)
+
+	add_executable(bench_hash_map benchmarks/base/hash_map.c)
+	target_link_libraries(bench_hash_map lily_base)
 endif()
