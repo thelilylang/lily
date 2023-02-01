@@ -40,4 +40,10 @@ typedef struct HashMap {
  */
 HashMap* __new__HashMap();
 
+/**
+ *
+ * @brief Free HashMap type.
+ */
+void __free__HashMap(HashMap *self);
+
 #endif // LILY_BASE_HASH_MAP_H

@@ -36,3 +36,9 @@ HashMap* __new__HashMap() {
 
 	return hm;
 }
+
+void __free__HashMap(HashMap *self) {
+	free(self->key);
+	free(self->value);
+	free(self);
+}
