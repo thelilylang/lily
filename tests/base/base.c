@@ -22,6 +22,7 @@ int main() {
 
 	// Test HashMap
 	test_new__HashMap();
+	test_insert__HashMap();
 
 	puts("\x1b[32mAll tests pass\x1b[0m");
 }
