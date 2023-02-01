@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void test_new__Vec() {
+void test_new__Vec() {
 	Vec *v = NEW(Vec);
 
 	ASSERT(v->buffer == NULL);
@@ -16,7 +16,7 @@ static void test_new__Vec() {
 	FREE(Vec, v);
 }
 
-static void test_from__Vec() {
+void test_from__Vec() {
 	int* buffer[5] = {(int*)0, (int*)1, (int*)2, (int*)3, (int*)4};
 	Vec *v = from__Vec((void**)buffer, 5);
 
@@ -32,7 +32,7 @@ static void test_from__Vec() {
 	FREE(Vec, v);
 }
 
-static void test_get__Vec() {
+void test_get__Vec() {
 	Vec *v = NEW(Vec);
 
 	push__Vec(v, (int*)1);
@@ -42,7 +42,7 @@ static void test_get__Vec() {
 	FREE(Vec, v);
 }
 
-static void test_pop__Vec() {
+void test_pop__Vec() {
     Vec *v = NEW(Vec);
 
     push__Vec(v, (int*)1);
@@ -56,7 +56,7 @@ static void test_pop__Vec() {
     FREE(Vec, v);
 }
 
-static void test_push__Vec() {
+void test_push__Vec() {
 	Vec *v = NEW(Vec);
 
 	push__Vec(v, (int*)1);
@@ -78,7 +78,7 @@ static void test_push__Vec() {
 	FREE(Vec, v);
 }
 
-static void test_remove__Vec() {
+void test_remove__Vec() {
 	Vec *v = NEW(Vec);
 
 	push__Vec(v, (int*)1);
