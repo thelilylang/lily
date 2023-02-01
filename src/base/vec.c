@@ -35,6 +35,15 @@ void grow__Vec(Vec *self, Usize new_capacity) {
 	self->capacity = new_capacity;
 }
 
+void push__Vec(Vec *self, void *item) {
+	if (!self->capacity)
+		grow__Vec(self, self->default_capacity);
+	else if (self->len == self->capacity)
+		grow__Vec(self, self->capacity * 2);
+
+	self->buffer[self->len++] = item;
+}
+
 void ungrow__Vec(Vec *self, Usize new_capacity) {
 	if (new_capacity >= self->capacity) return;
 

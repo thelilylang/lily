@@ -55,6 +55,12 @@ Vec* from__Vec(void **buffer, Usize len);
 void grow__Vec(Vec *self, Usize new_capacity);
 
 /**
+ *
+ * @brief Push item to Vec buffer.
+ */
+void push__Vec(Vec *self, void *item);
+
+/**
  * 
  * @brief Ungrow Vec buffer.
  * @param new_capacity New buffer capacity.
