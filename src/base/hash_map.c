@@ -37,6 +37,21 @@ HashMap* __new__HashMap() {
 	return hm;
 }
 
+void* insert__HashMap(HashMap *self, void *key, void *value) {	
+	for (int i = 0; i < self->len; i++) {
+		if (self->key->buffer[i] == key) {
+			self->value->buffer[i] = value;
+			return value;
+		}
+	}
+
+	push__Vec(self->key, key);
+	push__Vec(self->value, value);
+	self->len++;
+
+	return value;
+}
+
 void __free__HashMap(HashMap *self) {
 	free(self->key);
 	free(self->value);

@@ -42,6 +42,13 @@ HashMap* __new__HashMap();
 
 /**
  *
+ * @brief Insert key-value pair into HashMap.
+ * @return If the key already exists, return the value of the key, otherwise return NULL.
+ */
+void* insert__HashMap(HashMap *self, void *key, void *value);
+
+/**
+ *
  * @brief Free HashMap type.
  */
 void __free__HashMap(HashMap *self);
