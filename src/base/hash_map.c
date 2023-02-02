@@ -40,14 +40,15 @@ __new__HashMap()
 }
 
 void *
-get__HashMap(HashMap *self, void *key) {
-	for (int i = 0; i < self->len; i++) {
-		if (self->key->buffer[i] == key) {
-			return self->value->buffer[i];
-		}
-	}
+get__HashMap(HashMap *self, void *key)
+{
+    for (int i = 0; i < self->len; i++) {
+        if (self->key->buffer[i] == key) {
+            return self->value->buffer[i];
+        }
+    }
 
-	return NULL;
+    return NULL;
 }
 
 void *
