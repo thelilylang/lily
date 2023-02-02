@@ -47,7 +47,7 @@
 #define DESTRUCTOR(name, ...) void __free__##name(__VA_ARGS__)
 
 #define VARIANT_CONSTRUCTOR(type, name, variant, ...) \
-    type __new__##name__##variant(__VA_ARG__)
+    type __new__##name__##variant(__VA_ARGS__)
 
 #define TODO(msg)                                            \
     {                                                        \
