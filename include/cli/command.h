@@ -38,6 +38,6 @@ enum Command
   COMMAND_TO, // lily to <options>
   COMMAND_VERSION, // lily version
   COMMAND_ERROR
-} Command;
+};
 
 #endif // LILY_CLI_COMMAND_H
