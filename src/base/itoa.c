@@ -24,76 +24,109 @@
 
 #include <base/itoa.h>
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define __itoa__(v, base)                 \
-    char *buffer = malloc(1);             \
-    int buffer_size = 0;                  \
-    buffer[0] = '\0';                     \
-    if (v == 0) {                     \
-      buffer = realloc(buffer, buffer_size + 2); \
-      buffer[buffer_size] = '0';		       \
-      buffer[++buffer_size] = '\0'; \
-      return buffer; \
-    } \
-    if (base == 10) {                     \
-        if (v < 0) {                      \
-            buffer = realloc(buffer, 2);  \
-            buffer[0] = '-';              \
-            buffer[++buffer_size] = '\0'; \
-            v = -v;                       \
-        }                                 \
-		while (v > 0) { \
-			buffer = realloc(buffer, buffer_size + 2); \
-			buffer[buffer_size] = (v % 10) + '0'; \
-			buffer[++buffer_size] = '\0'; \
-			v /= 10; \
-		} \
-	} \
-	for (int i = 0; i < buffer_size / 2; i++) { \
-		char tmp = buffer[i]; \
-		buffer[i] = buffer[buffer_size - i - 1]; \
-		buffer[buffer_size - i - 1] = tmp; \
-	} \
-	return buffer
+#define __itoa__(v, base)                              \
+    char *buffer = malloc(1);                          \
+    int buffer_size = 0;                               \
+    if (v == 0) {                                      \
+        buffer = realloc(buffer, buffer_size + 2);     \
+        buffer[buffer_size] = '0';                     \
+        buffer[++buffer_size] = '\0';                  \
+        return buffer;                                 \
+    }                                                  \
+    buffer[0] = '\0';                                  \
+    if (v < 0) {                                       \
+        buffer = realloc(buffer, 2);                   \
+        buffer[0] = '-';                               \
+        buffer[++buffer_size] = '\0';                  \
+        v = -v;                                        \
+    }                                                  \
+    if (base == 10) {                                  \
+        while (v > 0) {                                \
+            buffer = realloc(buffer, buffer_size + 2); \
+            buffer[buffer_size] = (v % 10) + '0';      \
+            buffer[++buffer_size] = '\0';              \
+            v /= 10;                                   \
+        }                                              \
+    } else if (base == 2) {                            \
+        while (v > 0) {                                \
+            buffer = realloc(buffer, buffer_size + 2); \
+            buffer[buffer_size] = (v % 2) + '0';       \
+            buffer[++buffer_size] = '\0';              \
+            v /= 2;                                    \
+        }                                              \
+    } else if (base == 8) {                            \
+        while (v > 0) {                                \
+            buffer = realloc(buffer, buffer_size + 2); \
+            buffer[buffer_size] = (v % 8) + '0';       \
+            buffer[++buffer_size] = '\0';              \
+            v /= 8;                                    \
+        }                                              \
+    } else if (base == 16) {                           \
+        while (v > 0) {                                \
+            buffer = realloc(buffer, buffer_size + 2); \
+	    int n = (v % 16) + '0';		       \
+	    if (n > '9')			       \
+	      buffer[buffer_size] = n + 7;	       \
+	    else				       \
+	      buffer[buffer_size] = n;		       \
+	    buffer[++buffer_size] = '\0';	       \
+	    v /= 16;				       \
+      }						       \
+    }						       \
+    for (int i = 0; i < buffer_size / 2; i++) {        \
+        char tmp = buffer[i];                          \
+        buffer[i] = buffer[buffer_size - i - 1];       \
+        buffer[buffer_size - i - 1] = tmp;             \
+    }                                                  \
+    return buffer
 
 char *
-itoa__Int8(Int8 v, int base) {
-	__itoa__(v, base);
+itoa__Int8(Int8 v, int base)
+{
+    __itoa__(v, base);
 }
 
 char *
-itoa__Uint8(Uint8 v, int base) {
-	__itoa__(v, base);
+itoa__Uint8(Uint8 v, int base)
+{
+    __itoa__(v, base);
 }
 
 char *
-itoa__Int16(Int16 v, int base) {
-	__itoa__(v, base);
+itoa__Int16(Int16 v, int base)
+{
+    __itoa__(v, base);
 }
 
 char *
-itoa__Uint16(Uint16 v, int base) {
-	__itoa__(v, base);
+itoa__Uint16(Uint16 v, int base)
+{
+    __itoa__(v, base);
 }
 
 char *
-itoa__Int32(Int32 v, int base) {
-	__itoa__(v, base);
+itoa__Int32(Int32 v, int base)
+{
+    __itoa__(v, base);
 }
 
 char *
-itoa__Uint32(Uint32 v, int base) {
-	__itoa__(v, base);
+itoa__Uint32(Uint32 v, int base)
+{
+    __itoa__(v, base);
 }
 
 char *
-itoa__Int64(Int64 v, int base) {
-	__itoa__(v, base);
+itoa__Int64(Int64 v, int base)
+{
+    __itoa__(v, base);
 }
 
 char *
-itoa__Uint64(Uint64 v, int base) {
-	__itoa__(v, base);
+itoa__Uint64(Uint64 v, int base)
+{
+    __itoa__(v, base);
 }
