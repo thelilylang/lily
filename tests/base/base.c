@@ -1,6 +1,7 @@
 #include "atoi.c"
 #include "format.c"
 #include "hash_map.c"
+#include "hash_set.c"
 #include "itoa.c"
 #include "string.c"
 #include "vec.c"
@@ -29,6 +30,9 @@ main()
     test_new__HashMap();
     test_get__HashMap();
     test_insert__HashMap();
+
+    // Test HashSet
+    test_new__HashSet();
 
     // Test format
     test_format_s_specifier();
