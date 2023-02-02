@@ -22,13 +22,14 @@
  * SOFTWARE.
  */
 
-#include "cli/command.h"
+#include <base/new.h>
+
+#include <cli/command.h>
 #include <cli/parse_command.h>
 
 #include <string.h>
 
-ParseCommand
-__new__ParseCommand(char *command, char **options)
+CONSTRUCTOR(ParseCommand, ParseCommand, char *command, char **options)
 {
   enum Command command_kind;
   
