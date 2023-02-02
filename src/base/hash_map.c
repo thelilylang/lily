@@ -27,8 +27,7 @@
 
 #include <stdlib.h>
 
-HashMap *
-__new__HashMap()
+CONSTRUCTOR(HashMap *, HashMap)
 {
     HashMap *hm = malloc(sizeof(HashMap));
 
@@ -71,8 +70,7 @@ insert__HashMap(HashMap *self, void *key, void *value)
     return NULL;
 }
 
-void
-__free__HashMap(HashMap *self)
+DESTRUCTOR(HashMap, HashMap *self)
 {
     FREE(Vec, self->keys);
     FREE(Vec, self->values);

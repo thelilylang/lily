@@ -27,8 +27,7 @@
 
 #include <stdlib.h>
 
-HashSet *
-__new__HashSet()
+CONSTRUCTOR(HashSet *, HashSet)
 {
     HashSet *hs = malloc(sizeof(HashSet));
 
@@ -65,8 +64,7 @@ insert__HashSet(HashSet *self, void *value)
     return true;
 }
 
-void
-__free__HashSet(HashSet *self)
+DESTRUCTOR(HashSet, HashSet *self)
 {
     FREE(Vec, self->values);
     free(self);

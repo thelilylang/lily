@@ -25,7 +25,9 @@
 #ifndef LILY_BASE_VEC_H
 #define LILY_BASE_VEC_H
 
+#include <base/macros.h>
 #include <base/types.h>
+
 #include <stdbool.h>
 
 typedef struct Vec
@@ -40,8 +42,7 @@ typedef struct Vec
  *
  * @brief Construct Vec type.
  */
-Vec *
-__new__Vec();
+CONSTRUCTOR(Vec *, Vec);
 
 /**
  *
@@ -105,7 +106,6 @@ ungrow__Vec(Vec *self);
  *
  * @brief Free Vec type.
  */
-void
-__free__Vec(Vec *self);
+DESTRUCTOR(Vec, Vec *self);
 
 #endif // LILY_BASE_VEC_H

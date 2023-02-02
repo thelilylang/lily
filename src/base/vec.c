@@ -29,8 +29,7 @@
 #include <base/macros.h>
 #include <base/vec.h>
 
-Vec *
-__new__Vec()
+CONSTRUCTOR(Vec *, Vec)
 {
     Vec *v = malloc(sizeof(Vec));
 
@@ -142,8 +141,7 @@ ungrow__Vec(Vec *self)
     }
 }
 
-void
-__free__Vec(Vec *self)
+DESTRUCTOR(Vec, Vec *self)
 {
     free(self->buffer);
     free(self);

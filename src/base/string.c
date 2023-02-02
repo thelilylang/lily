@@ -23,14 +23,14 @@
  */
 
 #include <base/assert.h>
+#include <base/macros.h>
 #include <base/string.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-String *
-__new__String()
+CONSTRUCTOR(String *, String)
 {
     String *s = malloc(sizeof(String));
 
@@ -115,8 +115,7 @@ ungrow__String(String *self)
     }
 }
 
-void
-__free__String(String *self)
+DESTRUCTOR(String, String *self)
 {
     free(self->buffer);
     free(self);

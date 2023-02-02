@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_HASH_SET_H
 #define LILY_BASE_HASH_SET_H
 
+#include <base/macros.h>
 #include <base/types.h>
 #include <base/vec.h>
 
@@ -40,8 +41,7 @@ typedef struct HashSet
  *
  * @brief Construct HashSet type.
  */
-HashSet *
-__new__HashSet();
+CONSTRUCTOR(HashSet *, HashSet);
 
 /**
  *
@@ -63,7 +63,6 @@ insert__HashSet(HashSet *self, void *value);
  *
  * @brief Free HashSet type.
  */
-void
-__free__HashSet(HashSet *self);
+DESTRUCTOR(HashSet, HashSet *self);
 
 #endif // LILY_BASE_HASH_SET_H

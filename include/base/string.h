@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_STRING_H
 #define LILY_BASE_STRING_H
 
+#include <base/macros.h>
 #include <base/types.h>
 
 typedef struct String
@@ -39,8 +40,7 @@ typedef struct String
  *
  * @brief Construct String type.
  */
-String *
-__new__String();
+CONSTRUCTOR(String *, String);
 
 /**
  *
@@ -89,7 +89,6 @@ ungrow__String(String *self);
  *
  * @brief Free String buffer.
  */
-void
-__free__String(String *self);
+DESTRUCTOR(String, String *self);
 
 #endif // LILY_BASE_STRING_H

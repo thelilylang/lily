@@ -39,8 +39,7 @@ typedef struct HashMap
  *
  * @brief Construct HashMap type.
  */
-HashMap *
-__new__HashMap();
+CONSTRUCTOR(HashMap *, HashMap);
 
 /**
  *
@@ -63,7 +62,6 @@ insert__HashMap(HashMap *self, void *key, void *value);
  *
  * @brief Free HashMap type.
  */
-void
-__free__HashMap(HashMap *self);
+DESTRUCTOR(HashMap, HashMap *self);
 
 #endif // LILY_BASE_HASH_MAP_H
