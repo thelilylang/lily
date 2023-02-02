@@ -49,6 +49,15 @@
 #define VARIANT_CONSTRUCTOR(type, name, variant, ...) \
     type __new__##name__##variant(__VA_ARGS__)
 
+#define VARIANT_DESTRUCTOR(type, name, variant, ...) \
+    type __new__##name__##variant(__VA_ARGS__)
+
+#define DBG(msg)                                              \
+    {                                                         \
+        printf("DEBUG: %s (%s:%d)", msg, __FILE__, __LINE__); \
+        exit(1);                                              \
+    }
+
 #define TODO(msg)                                            \
     {                                                        \
         printf("TODO: %s (%s:%d)", msg, __FILE__, __LINE__); \
