@@ -49,8 +49,8 @@
 #define VARIANT_CONSTRUCTOR(type, name, variant, ...) \
     type __new__##name__##variant(__VA_ARGS__)
 
-#define VARIANT_DESTRUCTOR(type, name, variant, ...) \
-    type __new__##name__##variant(__VA_ARGS__)
+#define VARIANT_DESTRUCTOR(name, variant, ...) \
+    void __new__##name__##variant(__VA_ARGS__)
 
 #define DBG(msg)                                              \
     {                                                         \
