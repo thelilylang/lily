@@ -22,7 +22,28 @@
  * SOFTWARE.
  */
 
+#include <base/new.h>
+
+#include <cli/parse_command.h>
+#include <cli/emit.h>
+#include <cli/help.h>
+
+#include <stdio.h>
+
 int
-main()
+main(int argc, char **argv)
 {
+  if (argc > 1) {
+    char *command = argv[2];
+    char *options[argc - 2];
+
+    // 1. Get the rest of argv
+    for (int i = argc; i > 2; --i)
+      options[argc - i] = argv[i];
+
+    ParseCommand parse_command = NEW(ParseCommand, command, options);
+  } else {
+    EMIT_ERROR("expected command");
+    printf("%s\n", HELP);
+  }
 }
