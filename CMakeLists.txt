@@ -20,8 +20,49 @@ set(BASE_SRC
 	src/base/string.c
   	src/base/vec.c)
 
+set(CLI_SRC
+	src/cli/command.c
+	src/cli/emit.c
+	src/cli/parse_command.c
+	src/cli/parse_config.c
+	src/cli/config/build.c
+	src/cli/config/cc.c
+	src/cli/config/compile.c
+	src/cli/config/cpp.c
+	src/cli/config/init.c
+	src/cli/config/new.c
+	src/cli/config/run.c
+	src/cli/config/test.c
+	src/cli/config/to.c
+	src/cli/option/build.c
+	src/cli/option/cc.c
+	src/cli/option/compile.c
+	src/cli/option/cpp.c
+	src/cli/option/init.c
+	src/cli/option/new.c
+	src/cli/option/run.c
+	src/cli/option/test.c
+	src/cli/option/to.c)
+
+set(COMMAND_SRC
+	src/command/build/build.c
+	src/command/cc/cc.c
+	src/command/compile/compile.c
+	src/command/cpp/cpp.c
+	src/command/init/init.c
+	src/command/new/new.c
+	src/command/run/run.c
+	src/command/test/test.c
+	src/command/to/to.c)
+
 add_library(lily_base STATIC ${BASE_SRC})
 target_include_directories(lily_base PUBLIC include)
+
+add_library(lily_cli STATIC ${CLI_SRC})
+target_link_libraries(lily_cli lily_base)
+
+add_library(lily_command STATIC ${COMMAND_SRC})
+target_link_libraries(lily_command lily_base)
 
 add_executable(lily src/bin/main.c)
 target_link_libraries(lily lily_base)
