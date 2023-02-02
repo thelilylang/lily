@@ -1,3 +1,4 @@
+#include "atoi.c"
 #include "format.c"
 #include "hash_map.c"
 #include "string.c"
@@ -30,6 +31,9 @@ main()
     // Test format
     test_format_s_specifier();
     test_format_sa_specifier();
+
+    // Test atoi
+    test_atoi();
 
     puts("\x1b[32mAll tests pass\x1b[0m");
 }
