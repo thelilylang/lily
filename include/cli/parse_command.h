@@ -25,6 +25,8 @@
 #ifndef LILY_CLI_PARSE_COMMAND_H
 #define LILY_CLI_PARSE_COMMAND_H
 
+#include <base/macros.h>
+
 #include <cli/command.h>
 
 typedef struct ParseCommand
@@ -38,7 +40,6 @@ typedef struct ParseCommand
  *
  * @brief Construct ParseCommand type.
  */
-ParseCommand
-__new__ParseCommand(char *command, char **options);
+CONSTRUCTOR(ParseCommand, ParseCommand, char *command, char **options);
 
 #endif // LILY_CLI_PARSE_COMMAND_H
