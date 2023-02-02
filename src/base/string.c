@@ -32,7 +32,7 @@
 
 CONSTRUCTOR(String *, String)
 {
-  String *self = malloc(sizeof(String));
+    String *self = malloc(sizeof(String));
 
     self->buffer = malloc(1);
     self->buffer[0] = '\0';

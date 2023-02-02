@@ -27,8 +27,8 @@
 
 #include <base/assert.h>
 #include <base/macros.h>
-#include <base/vec.h>
 #include <base/new.h>
+#include <base/vec.h>
 
 CONSTRUCTOR(Vec *, Vec)
 {
@@ -45,7 +45,7 @@ CONSTRUCTOR(Vec *, Vec)
 Vec *
 from__Vec(void **buffer, Usize len)
 {
-  Vec *self = malloc(sizeof(Vec));
+    Vec *self = malloc(sizeof(Vec));
 
     self->default_capacity = len;
     self->len = len;
