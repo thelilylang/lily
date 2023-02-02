@@ -59,13 +59,13 @@ add_library(lily_base STATIC ${BASE_SRC})
 target_include_directories(lily_base PUBLIC include)
 
 add_library(lily_cli STATIC ${CLI_SRC})
-target_link_libraries(lily_cli lily_base)
+target_link_libraries(lily_cli lily_base lily_command)
 
 add_library(lily_command STATIC ${COMMAND_SRC})
 target_link_libraries(lily_command lily_base)
 
 add_executable(lily src/bin/main.c)
-target_link_libraries(lily lily_base)
+target_link_libraries(lily lily_base lily_cli)
 
 if (DEBUG)
 	add_executable(test_base tests/base/base.c)
