@@ -15,6 +15,7 @@ set(BASE_SRC
 	src/base/file.c
 	src/base/format.c
 	src/base/hash_map.c
+	src/base/itoa.c
 	src/base/string.c
   	src/base/vec.c)
 
