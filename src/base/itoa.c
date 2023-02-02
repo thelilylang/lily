@@ -67,15 +67,15 @@
     } else if (base == 16) {                           \
         while (v > 0) {                                \
             buffer = realloc(buffer, buffer_size + 2); \
-	    int n = (v % 16) + '0';		       \
-	    if (n > '9')			       \
-	      buffer[buffer_size] = n + 7;	       \
-	    else				       \
-	      buffer[buffer_size] = n;		       \
-	    buffer[++buffer_size] = '\0';	       \
-	    v /= 16;				       \
-      }						       \
-    }						       \
+            int n = (v % 16) + '0';                    \
+            if (n > '9')                               \
+                buffer[buffer_size] = n + 7;           \
+            else                                       \
+                buffer[buffer_size] = n;               \
+            buffer[++buffer_size] = '\0';              \
+            v /= 16;                                   \
+        }                                              \
+    }                                                  \
     for (int i = 0; i < buffer_size / 2; i++) {        \
         char tmp = buffer[i];                          \
         buffer[i] = buffer[buffer_size - i - 1];       \
