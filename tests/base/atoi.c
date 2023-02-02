@@ -1,6 +1,5 @@
 #include <base/assert.h>
 #include <base/atoi.h>
-#include <base/new.h>
 
 #include <stdio.h>
 #include <stdlib.h>

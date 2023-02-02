@@ -1,6 +1,7 @@
 #include "atoi.c"
 #include "format.c"
 #include "hash_map.c"
+#include "itoa.c"
 #include "string.c"
 #include "vec.c"
 
@@ -34,6 +35,12 @@ main()
 
     // Test atoi
     test_atoi();
+
+    // Test itoa
+    test_itoa_base_10();
+    test_itoa_base_2();
+    test_itoa_base_8();
+    test_itoa_base_16();
 
     puts("\x1b[32mAll tests pass\x1b[0m");
 }
