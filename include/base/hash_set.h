@@ -32,8 +32,8 @@
 
 typedef struct HashSet
 {
-  Vec *values;
-  Usize len;
+    Vec *values;
+    Usize len;
 } HashSet;
 
 /**

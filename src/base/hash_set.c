@@ -30,37 +30,37 @@
 HashSet *
 __new__HashSet()
 {
-  HashSet *hs = malloc(sizeof(HashSet));
+    HashSet *hs = malloc(sizeof(HashSet));
 
-  hs->values = NEW(Vec);
-  hs->len = 0;
+    hs->values = NEW(Vec);
+    hs->len = 0;
 
-  return hs;
+    return hs;
 }
 
 void *
 get__HashSet(HashSet *self, void *value)
 {
-  for (Usize i = 0; i < self->len; i++) {
-    if (self->values->buffer[i] == value) {
-      return self->values->buffer[i];
+    for (Usize i = 0; i < self->len; i++) {
+        if (self->values->buffer[i] == value) {
+            return self->values->buffer[i];
+        }
     }
-  }
 
-  return NULL;
+    return NULL;
 }
 
 bool
 insert__HashSet(HashSet *self, void *value)
 {
-  for (Usize i = 0; i < self->len; i++) {
-    if (self->values->buffer[i] == value) {
-      return false;
+    for (Usize i = 0; i < self->len; i++) {
+        if (self->values->buffer[i] == value) {
+            return false;
+        }
     }
-  }
 
-  push__Vec(self->values, value);
-  self->len++;
+    push__Vec(self->values, value);
+    self->len++;
 
-  return true;
+    return true;
 }
