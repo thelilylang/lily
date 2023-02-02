@@ -43,6 +43,11 @@
 
 #define CAST(type, expr) ((type)(expr))
 
+#define CONSTRUCTOR(name, ...) name __new__##name(__VA_ARG__)
+#define DESTRUCTOR(name, ...) void __free__##name(__VA_ARG__)
+
+#define VARIANT_CONSTRUCTOR(name, variant, ...) name __new__##name__##variant(__VA_ARG__)
+
 #define TODO(msg)                                            \
     {                                                        \
         printf("TODO: %s (%s:%d)", msg, __FILE__, __LINE__); \
