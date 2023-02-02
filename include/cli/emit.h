@@ -25,10 +25,10 @@
 #ifndef LILY_CLI_EMIT_H
 #define LILY_CLI_EMIT_H
 
-#define HELP(msg) printf("\x1b[33mhelp\x1b[0m: %s\n", msg)
+#define EMIT_HELP(msg) printf("\x1b[33mhelp\x1b[0m: %s\n", msg)
 
-#define ERROR(msg) printf("\x1b[31merror\x1b[0m: %s\n", msg)
+#define EMIT_ERROR(msg) printf("\x1b[31merror\x1b[0m: %s\n", msg)
 
-#define NOTE(msg) printf("\x1b[31mnote\x1b[0m: %s\n", msg)
+#define EMIT_NOTE(msg) printf("\x1b[31mnote\x1b[0m: %s\n", msg)
 
 #endif // LILY_CLI_EMIT_H
