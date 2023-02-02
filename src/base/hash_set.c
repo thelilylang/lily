@@ -64,3 +64,10 @@ insert__HashSet(HashSet *self, void *value)
 
     return true;
 }
+
+void
+__free__HashSet(HashSet *self)
+{
+    FREE(Vec, self->values);
+    free(self);
+}

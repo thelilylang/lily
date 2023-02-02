@@ -59,4 +59,11 @@ get__HashSet(HashSet *self, void *value);
 bool
 insert__HashSet(HashSet *self, void *value);
 
+/**
+ *
+ * @brief Free HashSet type.
+ */
+void
+__free__HashSet(HashSet *self);
+
 #endif // LILY_BASE_HASH_SET_H
