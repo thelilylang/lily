@@ -32,34 +32,34 @@
 
 CONSTRUCTOR(String *, String)
 {
-    String *s = malloc(sizeof(String));
+  String *self = malloc(sizeof(String));
 
-    s->buffer = malloc(1);
-    s->buffer[0] = '\0';
-    s->len = 0;
-    s->capacity = 0;
-    s->default_capacity = 4;
+    self->buffer = malloc(1);
+    self->buffer[0] = '\0';
+    self->len = 0;
+    self->capacity = 0;
+    self->default_capacity = 4;
 
-    return s;
+    return self;
 }
 
 String *
 from__String(char *buffer)
 {
-    String *s = malloc(sizeof(String));
+    String *self = malloc(sizeof(String));
 
-    s->capacity = strlen(buffer) * 2;
-    s->default_capacity = s->capacity;
-    s->buffer = malloc(s->capacity);
-    s->len = strlen(buffer);
+    self->capacity = strlen(buffer) * 2;
+    self->default_capacity = self->capacity;
+    self->buffer = malloc(self->capacity);
+    self->len = strlen(buffer);
 
-    for (int i = 0; i < s->len; i++) {
-        s->buffer[i] = buffer[i];
+    for (int i = 0; i < self->len; i++) {
+        self->buffer[i] = buffer[i];
     }
 
-    s->buffer[s->len] = '\0';
+    self->buffer[self->len] = '\0';
 
-    return s;
+    return self;
 }
 
 char

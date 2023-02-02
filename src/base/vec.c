@@ -28,34 +28,35 @@
 #include <base/assert.h>
 #include <base/macros.h>
 #include <base/vec.h>
+#include <base/new.h>
 
 CONSTRUCTOR(Vec *, Vec)
 {
-    Vec *v = malloc(sizeof(Vec));
+    Vec *self = malloc(sizeof(Vec));
 
-    v->buffer = NULL;
-    v->len = 0;
-    v->capacity = 0;
-    v->default_capacity = 4;
+    self->buffer = NULL;
+    self->len = 0;
+    self->capacity = 0;
+    self->default_capacity = 4;
 
-    return v;
+    return self;
 }
 
 Vec *
 from__Vec(void **buffer, Usize len)
 {
-    Vec *v = __new__Vec();
+  Vec *self = malloc(sizeof(Vec));
 
-    v->default_capacity = len;
-    v->len = len;
-    v->capacity = len * 2;
-    v->buffer = malloc(PTR_SIZE * v->capacity);
+    self->default_capacity = len;
+    self->len = len;
+    self->capacity = len * 2;
+    self->buffer = malloc(PTR_SIZE * self->capacity);
 
     for (Usize i = len; i--;) {
-        v->buffer[i] = buffer[i];
+        self->buffer[i] = buffer[i];
     }
 
-    return v;
+    return self;
 }
 
 void *

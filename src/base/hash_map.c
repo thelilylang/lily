@@ -29,13 +29,13 @@
 
 CONSTRUCTOR(HashMap *, HashMap)
 {
-    HashMap *hm = malloc(sizeof(HashMap));
+    HashMap *self = malloc(sizeof(HashMap));
 
-    hm->keys = NEW(Vec);
-    hm->values = NEW(Vec);
-    hm->len = 0;
+    self->keys = NEW(Vec);
+    self->values = NEW(Vec);
+    self->len = 0;
 
-    return hm;
+    return self;
 }
 
 void *

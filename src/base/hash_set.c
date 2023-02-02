@@ -29,12 +29,12 @@
 
 CONSTRUCTOR(HashSet *, HashSet)
 {
-    HashSet *hs = malloc(sizeof(HashSet));
+    HashSet *self = malloc(sizeof(HashSet));
 
-    hs->values = NEW(Vec);
-    hs->len = 0;
+    self->values = NEW(Vec);
+    self->len = 0;
 
-    return hs;
+    return self;
 }
 
 void *
