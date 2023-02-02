@@ -44,6 +44,14 @@ __new__HashMap();
 
 /**
  *
+ * @brief Get value by key.
+ * @return If the key does not exist, return NULL.
+ */
+void *
+get__HashMap(HashMap *self, void *key);
+
+/**
+ *
  * @brief Insert key-value pair into HashMap.
  * @return If the key already exists, return the value of the key, otherwise
  * return NULL.
