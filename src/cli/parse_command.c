@@ -24,7 +24,6 @@
 
 #include <base/new.h>
 
-#include <cli/command.h>
 #include <cli/parse_command.h>
 
 #include <string.h>
