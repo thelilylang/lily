@@ -1,20 +1,23 @@
 #include <base/atoi.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define __atoi__(type, s)                  \
     type res = 0;                          \
     int i = 0;                             \
+    bool is_neg = false;                   \
     if (s[i] == '-') {                     \
-        res = -1;                          \
         i++;                               \
+        is_neg = true;                     \
     }                                      \
     while (s[i]) {                         \
-        if (res < 0)                       \
-            res = res * 10 + (s[i] - '0'); \
-        else                               \
+        if (is_neg)                        \
             res = res * 10 - (s[i] - '0'); \
+        else                               \
+            res = res * 10 + (s[i] - '0'); \
+        i++;                               \
     }                                      \
     return res
 
