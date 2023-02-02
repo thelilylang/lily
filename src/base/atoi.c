@@ -3,19 +3,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define __atoi__(type, s)               \
-    type res = 0;                       \
-    int i = 0;                          \
-    if (s[i] == '-') {                  \
-        res = -1;                       \
-        i++;                            \
-    }                                   \
-    while (s[i]) {                      \
-        if (res < 0)                    \
-            res = res * 10 + (int)s[i]; \
-        else                            \
-            res = res * 10 - (int)s[i]; \
-    }                                   \
+#define __atoi__(type, s)                  \
+    type res = 0;                          \
+    int i = 0;                             \
+    if (s[i] == '-') {                     \
+        res = -1;                          \
+        i++;                               \
+    }                                      \
+    while (s[i]) {                         \
+        if (res < 0)                       \
+            res = res * 10 + (s[i] - '0'); \
+        else                               \
+            res = res * 10 - (s[i] - '0'); \
+    }                                      \
     return res
 
 Int8
