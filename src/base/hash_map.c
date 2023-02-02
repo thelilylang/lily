@@ -32,8 +32,8 @@ __new__HashMap()
 {
     HashMap *hm = malloc(sizeof(HashMap));
 
-    hm->key = NEW(Vec);
-    hm->value = NEW(Vec);
+    hm->keys = NEW(Vec);
+    hm->values = NEW(Vec);
     hm->len = 0;
 
     return hm;
@@ -43,8 +43,8 @@ void *
 get__HashMap(HashMap *self, void *key)
 {
     for (int i = 0; i < self->len; i++) {
-        if (self->key->buffer[i] == key) {
-            return self->value->buffer[i];
+        if (self->keys->buffer[i] == key) {
+            return self->values->buffer[i];
         }
     }
 
@@ -55,17 +55,17 @@ void *
 insert__HashMap(HashMap *self, void *key, void *value)
 {
     for (int i = 0; i < self->len; i++) {
-        if (self->key->buffer[i] == key) {
-            void *old_value = self->value->buffer[i];
+        if (self->keys->buffer[i] == key) {
+            void *old_value = self->values->buffer[i];
 
-            self->value->buffer[i] = value;
+            self->values->buffer[i] = value;
 
             return old_value;
         }
     }
 
-    push__Vec(self->key, key);
-    push__Vec(self->value, value);
+    push__Vec(self->keys, key);
+    push__Vec(self->values, value);
     self->len++;
 
     return NULL;
@@ -74,7 +74,7 @@ insert__HashMap(HashMap *self, void *key, void *value)
 void
 __free__HashMap(HashMap *self)
 {
-    FREE(Vec, self->key);
-    FREE(Vec, self->value);
+    FREE(Vec, self->keys);
+    FREE(Vec, self->values);
     free(self);
 }

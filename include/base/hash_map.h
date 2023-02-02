@@ -30,8 +30,8 @@
 
 typedef struct HashMap
 {
-    Vec *key;
-    Vec *value;
+    Vec *keys;
+    Vec *values;
     Usize len;
 } HashMap;
 
