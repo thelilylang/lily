@@ -60,7 +60,7 @@
     "Usage: lily to [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
     "Print to's help"
 
-#define HELP                                                                   \
+#define MAIN_HELP                                                              \
     "Usage: lily [command] [options]\n\nCommands:\n\n  build           Build " \
     "project\n  cc              C compiler\n  c++             C++ compiler\n " \
     " compile         Compile file\n  help            Print help command "     \
