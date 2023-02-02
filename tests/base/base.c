@@ -15,8 +15,8 @@ main()
     test_atoi();
 
     // Test format
-    test_format_s_specifier();
-    test_format_sa_specifier();
+    test_s_specifier__Format();
+    test_sa_specifier__Format();
 
     // Test HashMap
     test_new__HashMap();
