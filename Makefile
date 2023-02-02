@@ -8,3 +8,5 @@ format:
 	@clang-format -i ./include/base/*.h
 	@clang-format -i ./src/base/*.c
 	@clang-format -i ./src/bin/*.c
+	@clang-format -i ./benchmarks/base/*.c
+	@clang-format -i ./tests/base/*.c
