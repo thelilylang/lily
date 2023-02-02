@@ -27,6 +27,7 @@ main()
 
     // Test HashMap
     test_new__HashMap();
+    test_get__HashMap();
     test_insert__HashMap();
 
     // Test format
