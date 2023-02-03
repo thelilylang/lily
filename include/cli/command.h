@@ -35,6 +35,7 @@ enum Command
   COMMAND_INIT, // lily init <options>
   COMMAND_NEW, // lily new <options>
   COMMAND_RUN, // lily run <options>
+  COMMAND_TEST, // lily test <options>
   COMMAND_TO, // lily to <options>
   COMMAND_VERSION, // lily version
   COMMAND_ERROR
