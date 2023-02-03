@@ -56,6 +56,10 @@
     "Usage: lily run [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
     "Print run's help"
 
+#define TEST_HELP \
+	"Usage: lily test [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
+    "Print test's help"
+
 #define TO_HELP                                                             \
     "Usage: lily to [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
     "Print to's help"
