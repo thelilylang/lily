@@ -26,19 +26,20 @@
 #define LILY_CLI_OPTION_BUILD_H
 
 #include <base/macros.h>
+#include <base/vec.h>
 
 enum BuildOptionKind
 {
-    BUILD_OPTION_ERROR,
-    BUILD_OPTION_HELP,   // -h, --help
-    BUILD_OPTION_VERBOSE // -v
-} kind;
+    BUILD_OPTION_KIND_ERROR,
+    BUILD_OPTION_KIND_HELP,   // -h, --help
+    BUILD_OPTION_KIND_VERBOSE // -v
+};
 
 typedef struct BuildOption
 {
   enum BuildOptionKind kind;
   union {
-    char *error;
+    const char *error;
   };
 } BuildOption;
 
@@ -52,13 +53,14 @@ CONSTRUCTOR(BuildOption *, BuildOption, enum BuildOptionKind kind);
  *
  * @brief Construct BuildOption type (BUILD_OPTION_ERROR).
  */
-VARIANT_CONSTRUCTOR(BuildOption *, BuildOption, error, char *error);
+VARIANT_CONSTRUCTOR(BuildOption *, BuildOption, error, const char *error);
 
 /**
  *
- * @brief Free BuildOption type (BUILD_OPTION_ERROR).
+ * @brief Convert each option in BuildOption struct.
+ * @return Return a Vec<BuildOption*>*.
  */
-VARIANT_DESTRUCTOR(BuildOption, error, BuildOption* self);
+Vec *parse__BuildOption(const char **options, const Usize options_size);
 
 /**
  *

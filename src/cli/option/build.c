@@ -25,8 +25,15 @@
 #include <base/new.h>
 
 #include <cli/option/build.h>
+#include <cli/emit.h>
 
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+// Convert option in BuildOption struct.
+static BuildOption *
+get__BuildOption(const char *option);  
 
 CONSTRUCTOR(BuildOption *, BuildOption, enum BuildOptionKind kind)
 {
@@ -37,29 +44,46 @@ CONSTRUCTOR(BuildOption *, BuildOption, enum BuildOptionKind kind)
   return self;
 }
 
-VARIANT_CONSTRUCTOR(BuildOption *, BuildOption, error, char *error)
+VARIANT_CONSTRUCTOR(BuildOption *, BuildOption, error, const char *error)
 {
   BuildOption *self = malloc(sizeof(BuildOption));
 
-  self->kind = kind;
+  self->kind = BUILD_OPTION_KIND_ERROR;
   self->error = error;
 
   return self;
 }
 
-VARIANT_DESTRUCTOR(BuildOption, error, BuildOption* self)
+BuildOption *
+get__BuildOption(const char *option)
 {
-  free(self->error);
-  free(self);
+  if (!strcmp(option, "-h") || !strcmp(option, "--help"))
+    return NEW(BuildOption, BUILD_OPTION_KIND_HELP);
+  else if (!strcmp(option, "-v"))
+    return NEW(BuildOption, BUILD_OPTION_KIND_VERBOSE);
+  else
+    return NEW_VARIANT(BuildOption, error, option);
+}
+
+Vec *parse__BuildOption(const char **options, const Usize options_size)
+{
+  Vec *res = NEW(Vec);
+
+  for (Usize i = 0; i < options_size; i++) {
+    if (options[i][0] == '-') {
+      push__Vec(res, get__BuildOption(options[i]));
+    } else {
+      EMIT_ERROR("expected option");
+      EMIT_NOTE("an option must be start by `-`");
+      EMIT_HELP("please see the help of build command");
+      exit(1);
+    }
+  }
+  
+  return res;
 }
 
 DESTRUCTOR(BuildOption, BuildOption *self)
 {
-  switch (self->kind) {
-  case BUILD_OPTION_ERROR:
-    FREE_VARIANT(BuildOption, error, self);
-    break;
-  default:
-    free(self);
-  }
+  free(self);
 }
