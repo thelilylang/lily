@@ -1,5 +1,5 @@
-#include <base/new.h>
 #include <base/macros.h>
+#include <base/new.h>
 
 #include <cli/parse_config.h>
 
@@ -75,7 +75,7 @@ parse_cc__ParseConfig(const Option *op)
         }
     }
 
-	filename = "";
+    filename = "";
 
     return NEW_VARIANT(Config, cc, NEW(CcConfig, filename));
 }
@@ -123,7 +123,7 @@ parse_compile__ParseConfig(const Option *op)
         }
     }
 
-	filename = "";
+    filename = "";
 
     return NEW_VARIANT(Config,
                        compile,
@@ -154,7 +154,7 @@ parse_cpp__ParseConfig(const Option *op)
         }
     }
 
-	filename = "";
+    filename = "";
 
     return NEW_VARIANT(Config, cpp, NEW(CppConfig, filename));
 }
@@ -162,7 +162,7 @@ parse_cpp__ParseConfig(const Option *op)
 Config
 parse_init__ParseConfig(const Option *op)
 {
-	const char *path;
+    const char *path;
 
     for (Usize i = 0; i < op->init->len; i++) {
         switch (CAST(InitOption *, get__Vec(op->init, i))->kind) {
@@ -174,7 +174,7 @@ parse_init__ParseConfig(const Option *op)
         }
     }
 
-	path = "";
+    path = "";
 
     return NEW_VARIANT(Config, init, NEW(InitConfig, path));
 }
@@ -182,19 +182,19 @@ parse_init__ParseConfig(const Option *op)
 Config
 parse_new__ParseConfig(const Option *op)
 {
-	const char *name;
+    const char *name;
 
     for (Usize i = 0; i < op->new->len; i++) {
-        switch (CAST(NewOption*, get__Vec(op->new, i))->kind) {
+        switch (CAST(NewOption *, get__Vec(op->new, i))->kind) {
             case NEW_OPTION_KIND_NAME:
-                name = CAST(NewOption*, get__Vec(op->new, i))->name;
+                name = CAST(NewOption *, get__Vec(op->new, i))->name;
                 break;
             default:
                 break;
         }
     }
 
-	name = "";
+    name = "";
 
     return NEW_VARIANT(Config, new, NEW(NewConfig, name));
 }
@@ -213,8 +213,8 @@ parse_run__ParseConfig(const Option *op)
                 break;
         }
     }
-	
-	filename = "";
+
+    filename = "";
 
     return NEW_VARIANT(Config, run, NEW(RunConfig, filename));
 }
@@ -234,7 +234,7 @@ parse_test__ParseConfig(const Option *op)
         }
     }
 
-	filename = "";
+    filename = "";
 
     return NEW_VARIANT(Config, test, NEW(TestConfig, filename));
 }
@@ -254,35 +254,34 @@ parse_to__ParseConfig(const Option *op)
         }
     }
 
-	filename = "";
+    filename = "";
 
     return NEW_VARIANT(Config, to, NEW(ToConfig, filename));
-
 }
 
 Config
 run__ParseConfig(const Option *op)
 {
-	switch (op->kind) {
-		case CONFIG_KIND_BUILD:
-			return parse_build__ParseConfig(op);
-		case CONFIG_KIND_CC:
-			return parse_cc__ParseConfig(op);
-		case CONFIG_KIND_COMPILE:
-			return parse_compile__ParseConfig(op);
-		case CONFIG_KIND_CPP:
-			return parse_cpp__ParseConfig(op);
-		case CONFIG_KIND_INIT:
-			return parse_init__ParseConfig(op);
-		case CONFIG_KIND_NEW:
-			return parse_new__ParseConfig(op);
-		case CONFIG_KIND_RUN:
-			return parse_run__ParseConfig(op);
-		case CONFIG_KIND_TEST:
-			return parse_test__ParseConfig(op);
-		case CONFIG_KIND_TO:
-			return parse_to__ParseConfig(op);
-		default:
-			UNREACHABLE("unknown config");
-	}
+    switch (op->kind) {
+        case CONFIG_KIND_BUILD:
+            return parse_build__ParseConfig(op);
+        case CONFIG_KIND_CC:
+            return parse_cc__ParseConfig(op);
+        case CONFIG_KIND_COMPILE:
+            return parse_compile__ParseConfig(op);
+        case CONFIG_KIND_CPP:
+            return parse_cpp__ParseConfig(op);
+        case CONFIG_KIND_INIT:
+            return parse_init__ParseConfig(op);
+        case CONFIG_KIND_NEW:
+            return parse_new__ParseConfig(op);
+        case CONFIG_KIND_RUN:
+            return parse_run__ParseConfig(op);
+        case CONFIG_KIND_TEST:
+            return parse_test__ParseConfig(op);
+        case CONFIG_KIND_TO:
+            return parse_to__ParseConfig(op);
+        default:
+            UNREACHABLE("unknown config");
+    }
 }
