@@ -52,13 +52,13 @@ CONSTRUCTOR(NewOption *, NewOption, enum NewOptionKind kind);
 
 /**
  *
- * @brief Construct CompileOption type (INIT_OPTION_KIND_ERROR).
+ * @brief Construct CompileOption type (NEW_OPTION_KIND_ERROR).
  */
 VARIANT_CONSTRUCTOR(NewOption *, NewOption, error, const char *error);
 
 /**
  *
- * @brief Construct NewOption type (INIT_OPTION_KIND_NAME).
+ * @brief Construct NewOption type (NEW_OPTION_KIND_NAME).
  */
 VARIANT_CONSTRUCTOR(NewOption *, NewOption, name, const char *name);
 
