@@ -24,26 +24,36 @@
 
 #include <base/new.h>
 
-#include <cli/parse_command.h>
 #include <cli/emit.h>
 #include <cli/help.h>
+#include <cli/parse_command.h>
 
 #include <stdio.h>
 
 int
 main(int argc, char **argv)
 {
-  if (argc > 1) {
-    char *command = argv[2];
-    char *options[argc - 2];
+    if (argc > 1) {
+        char *command = argv[1];
+        char *options[argc - 2];
 
-    // 1. Get the rest of argv
-    for (int i = argc; i > 2; --i)
-      options[argc - i] = argv[i];
+        // 1. Get the rest of argv
+		for (int i = argc; i >= 2; --i)
+			options[argc - i - 1] = argv[i];
 
-    ParseCommand parse_command = NEW(ParseCommand, command, options);
-  } else {
-    EMIT_ERROR("expected command");
-    printf("%s\n", HELP);
-  }
+		// 2. Parse comand
+        ParseCommand parse_command =
+          NEW(ParseCommand, command, (const char **)options, argc - 2);
+
+		Option option = run__ParseCommand(parse_command);
+
+		FREE(Option, option);
+    } else {
+        EMIT_ERROR("expected command");
+        printf("%s\n", HELP);
+
+		return 1;
+    }
+
+	return 0;
 }
