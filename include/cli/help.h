@@ -28,12 +28,12 @@
 #define BUILD_HELP                               \
     "Usage: lily build [options] [FILENAME]\n\n" \
     "Options:\n\n"                               \
-    "-h, --help      Print build's help"
+    "  -h, --help      Print build's help"
 
 #define CC_HELP                               \
     "Usage: lily cc [options] [FILENAME]\n\n" \
     "Options:\n\n"                            \
-    "-h, --help      Print cc's help"
+    "  -h, --help      Print cc's help"
 
 #define COMPILE_HELP                               \
     "Usage: lily compile [options] [FILENAME]\n\n" \
@@ -43,40 +43,54 @@
     "  --dump-tc       Dump typecheck output\n"    \
     "  --run-scanner   Run only the scanner\n"     \
     "  --run-parser    Run only the parser\n"      \
-    "  --run-tc     Run only the typecheck\n"      \
+    "  --run-tc        Run only the typecheck\n"   \
     "  -h, --help      Print compile's help\n"
 
-#define CPP_HELP                                                             \
-    "Usage: lily c++ [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
-    "Print c++'s help"
+#define CPP_HELP                               \
+    "Usage: lily c++ [options] [FILENAME]\n\n" \
+    "Options:\n\n"                             \
+    "  -h, --help      Print c++'s help"
 
-#define INIT_HELP                                                         \
-    "Usage: lily init [options] [PATH]\n\nOptions:\n\n  -h, --help      " \
-    "Print init's help"
+#define INIT_HELP                           \
+    "Usage: lily init [options] [PATH]\n\n" \
+    "Options:\n\n"                          \
+    "  -h, --help      Print init's help"
 
-#define NEW_HELP                                                               \
-    "Usage: lily new [options] [NAME]\n\nOptions:\n\n  -h, --help      Print " \
-    "new's help"
+#define NEW_HELP                           \
+    "Usage: lily new [options] [NAME]\n\n" \
+    "Options:\n\n"                         \
+    "  -h, --help      Print new's help"
 
-#define RUN_HELP                                                             \
-    "Usage: lily run [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
-    "Print run's help"
+#define RUN_HELP                               \
+    "Usage: lily run [options] [FILENAME]\n\n" \
+    "Options:\n\n"                             \
+    "  -h, --help      Print run's help"
 
-#define TEST_HELP                                                             \
-    "Usage: lily test [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
-    "Print test's help"
+#define TEST_HELP                               \
+    "Usage: lily test [options] [FILENAME]\n\n" \
+    "Options:\n\n"                              \
+    "  -h, --help      Print test's help"
 
-#define TO_HELP                                                             \
-    "Usage: lily to [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
-    "Print to's help"
+#define TO_HELP                               \
+    "Usage: lily to [options] [FILENAME]\n\n" \
+    "Options:\n\n"                            \
+    "  -h, --help      Print to's help"
 
-#define HELP                                                                   \
-    "Usage: lily [command] [options]\n\nCommands:\n\n  build           Build " \
-    "project\n  cc              C compiler\n  c++             C++ compiler\n " \
-    " compile         Compile file\n  help            Print help command "     \
-    "usage\n  init            Init project\n  new             New project\n  " \
-    "run             Run file\n  to              Transpile to...\n  version  " \
-    "       Print version\n\nGeneral Options:\n\n  -h, --help      Print "     \
-    "help command usage\n  -v, --version   Print version"
+#define HELP                                       \
+    "Usage: lily [command] [options]\n\n"          \
+    "Commands:\n\n"                                \
+    "  build           Build project\n"            \
+    "  cc              C compiler\n"               \
+    "  c++             C++ compiler\n"             \
+    "  compile         Compile file\n"             \
+    "  help            Print help command usage\n" \
+    "  init            Init project\n"             \
+    "  new             New project\n"              \
+    "  run             Run file\n"                 \
+    "  to              Transpile to...\n"          \
+    "  version         Print version\n\n"          \
+    "General Options:\n\n"                         \
+    "  -h, --help      Print help command usage\n" \
+    "  -v, --version   Print version"
 
 #endif // LILY_CLI_HELP_H
