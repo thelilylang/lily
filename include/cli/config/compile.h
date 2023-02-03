@@ -28,7 +28,7 @@
 
 typedef struct CompileConfig
 {
-    char *filename;
+    const char *filename;
     bool run_scanner;
     bool run_parser;
     bool run_typecheck;
@@ -45,7 +45,7 @@ typedef struct CompileConfig
  */
 inline CONSTRUCTOR(CompileConfig,
                    CompileConfig,
-                   char *filename,
+                   const char *filename,
                    bool run_scanner,
                    bool run_parser,
                    bool run_typecheck,
