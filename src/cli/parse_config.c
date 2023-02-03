@@ -1,6 +1,7 @@
 #include <base/macros.h>
 #include <base/new.h>
 
+#include <cli/emit.h>
 #include <cli/parse_config.h>
 
 #include <stdio.h>
@@ -42,6 +43,12 @@ parse_test__ParseConfig(const Option *op);
 static Config
 parse_to__ParseConfig(const Option *op);
 
+#define CHECK_IF_INPUT_IS_ALREADY_SET(input)                         \
+    if (input[0]) {                                                  \
+        EMIT_ERROR("input (filename, path or name) is already set"); \
+        exit(1);                                                     \
+    }
+
 Config
 parse_build__ParseConfig(const Option *op)
 {
@@ -63,19 +70,19 @@ parse_build__ParseConfig(const Option *op)
 Config
 parse_cc__ParseConfig(const Option *op)
 {
-    const char *filename;
+    char *filename = "";
 
     for (Usize i = 0; i < op->cc->len; i++) {
         switch (CAST(CcOption *, get__Vec(op->cc, i))->kind) {
             case CC_OPTION_KIND_FILENAME:
-                filename = CAST(CcOption *, get__Vec(op->cc, i))->filename;
+                CHECK_IF_INPUT_IS_ALREADY_SET(filename);
+                filename =
+                  (char *)CAST(CcOption *, get__Vec(op->cc, i))->filename;
                 break;
             default:
                 break;
         }
     }
-
-    filename = "";
 
     return NEW_VARIANT(Config, cc, NEW(CcConfig, filename));
 }
@@ -83,7 +90,7 @@ parse_cc__ParseConfig(const Option *op)
 Config
 parse_compile__ParseConfig(const Option *op)
 {
-    const char *filename;
+    char *filename = "";
     bool dump_scanner = false, dump_parser = false, dump_typecheck = false,
          dump_ir = false;
     bool run_scanner = false, run_parser = false, run_typecheck = false,
@@ -104,7 +111,9 @@ parse_compile__ParseConfig(const Option *op)
                 dump_typecheck = true;
                 break;
             case COMPILE_OPTION_KIND_FILENAME:
-                filename = CAST(CcOption *, get__Vec(op->compile, i))->filename;
+                CHECK_IF_INPUT_IS_ALREADY_SET(filename);
+                filename =
+                  (char *)CAST(CcOption *, get__Vec(op->compile, i))->filename;
                 break;
             case COMPILE_OPTION_KIND_RUN_IR:
                 run_ir = true;
@@ -123,8 +132,6 @@ parse_compile__ParseConfig(const Option *op)
         }
     }
 
-    filename = "";
-
     return NEW_VARIANT(Config,
                        compile,
                        NEW(CompileConfig,
@@ -142,19 +149,19 @@ parse_compile__ParseConfig(const Option *op)
 Config
 parse_cpp__ParseConfig(const Option *op)
 {
-    const char *filename;
+    char *filename = "";
 
     for (Usize i = 0; i < op->cpp->len; i++) {
         switch (CAST(CppOption *, get__Vec(op->cpp, i))->kind) {
             case CPP_OPTION_KIND_FILENAME:
-                filename = CAST(CppOption *, get__Vec(op->cpp, i))->filename;
+                CHECK_IF_INPUT_IS_ALREADY_SET(filename);
+                filename =
+                  (char *)CAST(CppOption *, get__Vec(op->cpp, i))->filename;
                 break;
             default:
                 break;
         }
     }
-
-    filename = "";
 
     return NEW_VARIANT(Config, cpp, NEW(CppConfig, filename));
 }
@@ -162,19 +169,18 @@ parse_cpp__ParseConfig(const Option *op)
 Config
 parse_init__ParseConfig(const Option *op)
 {
-    const char *path;
+    char *path = "";
 
     for (Usize i = 0; i < op->init->len; i++) {
         switch (CAST(InitOption *, get__Vec(op->init, i))->kind) {
             case INIT_OPTION_KIND_PATH:
-                path = CAST(InitOption *, get__Vec(op->init, i))->path;
+                CHECK_IF_INPUT_IS_ALREADY_SET(path);
+                path = (char *)CAST(InitOption *, get__Vec(op->init, i))->path;
                 break;
             default:
                 break;
         }
     }
-
-    path = "";
 
     return NEW_VARIANT(Config, init, NEW(InitConfig, path));
 }
@@ -182,19 +188,18 @@ parse_init__ParseConfig(const Option *op)
 Config
 parse_new__ParseConfig(const Option *op)
 {
-    const char *name;
+    char *name = "";
 
     for (Usize i = 0; i < op->new->len; i++) {
         switch (CAST(NewOption *, get__Vec(op->new, i))->kind) {
             case NEW_OPTION_KIND_NAME:
-                name = CAST(NewOption *, get__Vec(op->new, i))->name;
+                CHECK_IF_INPUT_IS_ALREADY_SET(name);
+                name = (char *)CAST(NewOption *, get__Vec(op->new, i))->name;
                 break;
             default:
                 break;
         }
     }
-
-    name = "";
 
     return NEW_VARIANT(Config, new, NEW(NewConfig, name));
 }
@@ -202,19 +207,19 @@ parse_new__ParseConfig(const Option *op)
 Config
 parse_run__ParseConfig(const Option *op)
 {
-    const char *filename;
+    char *filename = "";
 
     for (Usize i = 0; i < op->run->len; i++) {
         switch (CAST(RunOption *, get__Vec(op->run, i))->kind) {
             case RUN_OPTION_KIND_FILENAME:
-                filename = CAST(RunOption *, get__Vec(op->run, i))->filename;
+                CHECK_IF_INPUT_IS_ALREADY_SET(filename);
+                filename =
+                  (char *)CAST(RunOption *, get__Vec(op->run, i))->filename;
                 break;
             default:
                 break;
         }
     }
-
-    filename = "";
 
     return NEW_VARIANT(Config, run, NEW(RunConfig, filename));
 }
@@ -222,19 +227,19 @@ parse_run__ParseConfig(const Option *op)
 Config
 parse_test__ParseConfig(const Option *op)
 {
-    const char *filename;
+    char *filename = "";
 
     for (Usize i = 0; i < op->test->len; i++) {
         switch (CAST(TestOption *, get__Vec(op->test, i))->kind) {
             case TEST_OPTION_KIND_FILENAME:
-                filename = CAST(TestOption *, get__Vec(op->test, i))->filename;
+                CHECK_IF_INPUT_IS_ALREADY_SET(filename);
+                filename =
+                  (char *)CAST(TestOption *, get__Vec(op->test, i))->filename;
                 break;
             default:
                 break;
         }
     }
-
-    filename = "";
 
     return NEW_VARIANT(Config, test, NEW(TestConfig, filename));
 }
@@ -242,19 +247,19 @@ parse_test__ParseConfig(const Option *op)
 Config
 parse_to__ParseConfig(const Option *op)
 {
-    const char *filename;
+    char *filename = "";
 
     for (Usize i = 0; i < op->to->len; i++) {
         switch (CAST(ToOption *, get__Vec(op->to, i))->kind) {
             case TO_OPTION_KIND_FILENAME:
-                filename = CAST(ToOption *, get__Vec(op->to, i))->filename;
+                CHECK_IF_INPUT_IS_ALREADY_SET(filename);
+                filename =
+                  (char *)CAST(ToOption *, get__Vec(op->to, i))->filename;
                 break;
             default:
                 break;
         }
     }
-
-    filename = "";
 
     return NEW_VARIANT(Config, to, NEW(ToConfig, filename));
 }
