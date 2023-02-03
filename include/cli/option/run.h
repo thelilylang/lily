@@ -48,19 +48,19 @@ typedef struct RunOption
  *
  * @brief Construct RunOption type.
  */
-CONSTRUCTOR(RunOption *, NewOption, enum RunOptionKind kind);
+CONSTRUCTOR(RunOption *, RunOption, enum RunOptionKind kind);
 
 /**
  *
  * @brief Construct CompileOption type (RUN_OPTION_KIND_ERROR).
  */
-VARIANT_CONSTRUCTOR(RunOption *, NewOption, error, const char *error);
+VARIANT_CONSTRUCTOR(RunOption *, RunOption, error, const char *error);
 
 /**
  *
  * @brief Construct RunOption type (RUN_OPTION_KIND_FILENAME).
  */
-VARIANT_CONSTRUCTOR(RunOption *, NewOption, filename, const char *filename);
+VARIANT_CONSTRUCTOR(RunOption *, RunOption, filename, const char *filename);
 
 /**
  *
