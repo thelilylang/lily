@@ -12,7 +12,6 @@ format:
 	@clang-format -i ./src/base/*.c
 	@clang-format -i ./src/bin/*.c
 	@clang-format -i ./src/cli/*.c
-	@clang-format -i ./src/cli/config/*.c
 	@clang-format -i ./src/cli/option/*.c
 	@clang-format -i ./benchmarks/base/*.c
 	@clang-format -i ./tests/base/*.c
