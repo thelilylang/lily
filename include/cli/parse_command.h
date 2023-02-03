@@ -26,13 +26,16 @@
 #define LILY_CLI_PARSE_COMMAND_H
 
 #include <base/macros.h>
+#include <base/types.h>
 
 #include <cli/command.h>
+#include <cli/option.h>
 
 typedef struct ParseCommand
 {
-  char *command;
-  char **options;
+  const char *command;
+  const char **options;
+  const Usize options_size;
   enum Command command_kind;
 } ParseCommand;
 
@@ -40,6 +43,12 @@ typedef struct ParseCommand
  *
  * @brief Construct ParseCommand type.
  */
-CONSTRUCTOR(ParseCommand, ParseCommand, char *command, char **options);
+CONSTRUCTOR(ParseCommand, ParseCommand, const char *command, const char **options, const Usize options_size);
+
+/**
+ *
+ * @brief Run parse command.
+ */
+Option run__ParseCommand(ParseCommand self);
 
 #endif // LILY_CLI_PARSE_COMMAND_H

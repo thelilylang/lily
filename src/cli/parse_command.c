@@ -22,13 +22,23 @@
  * SOFTWARE.
  */
 
+#include <base/format.h>
 #include <base/new.h>
 
+#include <cli/emit.h>
+#include <cli/help.h>
 #include <cli/parse_command.h>
+#include <cli/version.h>
 
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-CONSTRUCTOR(ParseCommand, ParseCommand, char *command, char **options)
+static void help();
+static void version();
+static void error(ParseCommand self);
+
+CONSTRUCTOR(ParseCommand, ParseCommand, const char *command, const char **options, const Usize options_size)
 {
   enum Command command_kind;
   
@@ -58,6 +68,96 @@ CONSTRUCTOR(ParseCommand, ParseCommand, char *command, char **options)
   return (ParseCommand){
     .command = command,
     .options = options,
+	.options_size = options_size,
     .command_kind = command_kind,
   };
+}
+
+#define PARSE_COMMAND(option_type, parse, l_name, u_name) \
+	static Option parse_##l_name##__ParseCommand(ParseCommand self) { \
+		if (self.options_size == 0) { \
+			puts(u_name##_HELP); \
+			exit(0); \
+		} else { \
+			Vec *options = parse(self.options, self.options_size); \
+			for (Usize i = 0; i < options->len; i++) { \
+				option_type op = get__Vec(options, i); \
+				switch (op->kind) { \
+					case u_name##_OPTION_KIND_ERROR: {\
+						char *msg = format("unknown option `{s}`", op->error); \
+						EMIT_ERROR(msg); \
+						free(msg); \
+						break; \
+					} \
+					case u_name##_OPTION_KIND_HELP: \
+						puts(u_name##_HELP); \
+						exit(0); \
+						break; \
+					default: \
+						break; \
+				} \
+			} \
+			return NEW_VARIANT(Option, l_name, options); \
+		} \
+	}
+
+PARSE_COMMAND(BuildOption*, parse__BuildOption, build, BUILD);
+PARSE_COMMAND(CcOption*, parse__CcOption, cc, CC);
+PARSE_COMMAND(CompileOption*, parse__CompileOption, compile, COMPILE);
+PARSE_COMMAND(CppOption*, parse__CppOption, cpp, CPP);
+PARSE_COMMAND(InitOption*, parse__InitOption, init, INIT);
+PARSE_COMMAND(NewOption*, parse__NewOption, new, NEW);
+PARSE_COMMAND(RunOption*, parse__RunOption, run, RUN);
+PARSE_COMMAND(TestOption*, parse__TestOption, test, TEST);
+PARSE_COMMAND(ToOption*, parse__ToOption, to, TO);
+
+void help() {
+	puts(HELP);
+	exit(0);
+}
+
+void version() {
+	printf("lily v%s", VERSION);
+	exit(0);
+}
+
+void error(ParseCommand self)
+{
+	char *msg = format("unknown command `{s}`", self.command);
+
+	EMIT_ERROR(msg);
+
+	free(msg);
+	exit(1);
+}
+
+Option run__ParseCommand(ParseCommand self) {
+	switch (self.command_kind) {
+		case COMMAND_BUILD:
+			return parse_build__ParseCommand(self);
+		case COMMAND_CC:
+			return parse_cc__ParseCommand(self);
+		case COMMAND_COMPILE:
+			return parse_compile__ParseCommand(self);
+		case COMMAND_CPP:
+			return parse_cpp__ParseCommand(self);
+		case COMMAND_ERROR:
+			error(self);
+		case COMMAND_HELP:
+			help();
+		case COMMAND_INIT:
+			return parse_init__ParseCommand(self);
+		case COMMAND_NEW:
+			return parse_new__ParseCommand(self);
+		case COMMAND_RUN:
+			return parse_run__ParseCommand(self);
+		case COMMAND_TEST:
+			return parse_test__ParseCommand(self);
+		case COMMAND_TO:
+			return parse_to__ParseCommand(self);
+		case COMMAND_VERSION:
+			version();
+		default:
+			UNREACHABLE("unknown variant");
+	}
 }
