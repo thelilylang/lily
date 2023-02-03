@@ -22,7 +22,6 @@ set(BASE_SRC
 
 set(CLI_SRC
 	src/cli/command.c
-	src/cli/emit.c
 	src/cli/option.c
 	src/cli/parse_command.c
 	src/cli/parse_config.c
