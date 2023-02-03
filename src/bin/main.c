@@ -50,7 +50,7 @@ main(int argc, char **argv)
         FREE(Option, option);
     } else {
         EMIT_ERROR("expected command");
-        printf("%s\n", HELP);
+        puts(HELP);
 
         return 1;
     }
