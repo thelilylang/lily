@@ -22,18 +22,10 @@ set(BASE_SRC
 
 set(CLI_SRC
 	src/cli/command.c
+	src/cli/config.c
 	src/cli/option.c
 	src/cli/parse_command.c
 	src/cli/parse_config.c
-	src/cli/config/build.c
-	src/cli/config/cc.c
-	src/cli/config/compile.c
-	src/cli/config/cpp.c
-	src/cli/config/init.c
-	src/cli/config/new.c
-	src/cli/config/run.c
-	src/cli/config/test.c
-	src/cli/config/to.c
 	src/cli/option/build.c
 	src/cli/option/cc.c
 	src/cli/option/compile.c
