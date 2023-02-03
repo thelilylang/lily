@@ -83,3 +83,8 @@ parse__CppOption(const char **options, const Usize options_size)
 
 	return res;
 }
+
+DESTRUCTOR(CppOption, CppOption *self)
+{
+	free(self);
+}

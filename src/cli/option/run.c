@@ -83,3 +83,8 @@ parse__RunOption(const char **options, const Usize options_size)
 
 	return res;
 }
+
+DESTRUCTOR(RunOption, RunOption *self)
+{
+	free(self);
+}

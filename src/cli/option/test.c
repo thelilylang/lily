@@ -83,3 +83,8 @@ parse__TestOption(const char **options, const Usize options_size)
 
 	return res;
 }
+
+DESTRUCTOR(TestOption, TestOption *self)
+{
+	free(self);
+}
