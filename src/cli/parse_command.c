@@ -39,7 +39,7 @@ help();
 static void
 version();
 static void
-error(ParseCommand self);
+error(const ParseCommand *self);
 
 CONSTRUCTOR(ParseCommand,
             ParseCommand,
@@ -83,13 +83,13 @@ CONSTRUCTOR(ParseCommand,
 }
 
 #define PARSE_COMMAND(option_type, parse, l_name, u_name)                      \
-    static Option parse_##l_name##__ParseCommand(ParseCommand self)            \
+    static Option parse_##l_name##__ParseCommand(const ParseCommand *self)     \
     {                                                                          \
-        if (self.options_size == 0) {                                          \
+        if (self->options_size == 0) {                                         \
             puts(u_name##_HELP);                                               \
             exit(0);                                                           \
         } else {                                                               \
-            Vec *options = parse(self.options, self.options_size);             \
+            Vec *options = parse(self->options, self->options_size);           \
             for (Usize i = 0; i < options->len; i++) {                         \
                 option_type op = get__Vec(options, i);                         \
                 switch (op->kind) {                                            \
@@ -136,9 +136,9 @@ version()
 }
 
 void
-error(ParseCommand self)
+error(const ParseCommand *self)
 {
-    char *msg = format("unknown command `{s}`", self.command);
+    char *msg = format("unknown command `{s}`", self->command);
 
     EMIT_ERROR(msg);
 
@@ -147,9 +147,9 @@ error(ParseCommand self)
 }
 
 Option
-run__ParseCommand(ParseCommand self)
+run__ParseCommand(const ParseCommand *self)
 {
-    switch (self.command_kind) {
+    switch (self->command_kind) {
         case COMMAND_BUILD:
             return parse_build__ParseCommand(self);
         case COMMAND_CC:

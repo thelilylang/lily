@@ -54,6 +54,6 @@ CONSTRUCTOR(ParseCommand,
  * @brief Run parse command.
  */
 Option
-run__ParseCommand(ParseCommand self);
+run__ParseCommand(const ParseCommand *self);
 
 #endif // LILY_CLI_PARSE_COMMAND_H
