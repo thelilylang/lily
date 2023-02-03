@@ -51,7 +51,7 @@ CONSTRUCTOR(BuildOption *, BuildOption, enum BuildOptionKind kind);
 
 /**
  *
- * @brief Construct BuildOption type (BUILD_OPTION_ERROR).
+ * @brief Construct BuildOption type (BUILD_OPTION_KIND_ERROR).
  */
 VARIANT_CONSTRUCTOR(BuildOption *, BuildOption, error, const char *error);
 
@@ -60,7 +60,8 @@ VARIANT_CONSTRUCTOR(BuildOption *, BuildOption, error, const char *error);
  * @brief Convert each option in BuildOption struct.
  * @return Return a Vec<BuildOption*>*.
  */
-Vec *parse__BuildOption(const char **options, const Usize options_size);
+Vec *
+parse__BuildOption(const char **options, const Usize options_size);
 
 /**
  *
