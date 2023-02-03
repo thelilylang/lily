@@ -33,22 +33,27 @@
 
 typedef struct ParseCommand
 {
-  const char *command;
-  const char **options;
-  const Usize options_size;
-  enum Command command_kind;
+    const char *command;
+    const char **options;
+    const Usize options_size;
+    enum Command command_kind;
 } ParseCommand;
 
 /**
  *
  * @brief Construct ParseCommand type.
  */
-CONSTRUCTOR(ParseCommand, ParseCommand, const char *command, const char **options, const Usize options_size);
+CONSTRUCTOR(ParseCommand,
+            ParseCommand,
+            const char *command,
+            const char **options,
+            const Usize options_size);
 
 /**
  *
  * @brief Run parse command.
  */
-Option run__ParseCommand(ParseCommand self);
+Option
+run__ParseCommand(ParseCommand self);
 
 #endif // LILY_CLI_PARSE_COMMAND_H

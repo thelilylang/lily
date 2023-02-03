@@ -33,58 +33,61 @@
 static CppOption *
 get__CppOption(const char *option);
 
-CONSTRUCTOR(CppOption *, CppOption, enum CppOptionKind kind) {
-	CppOption *self = malloc(sizeof(CppOption));
+CONSTRUCTOR(CppOption *, CppOption, enum CppOptionKind kind)
+{
+    CppOption *self = malloc(sizeof(CppOption));
 
-	self->kind = kind;
+    self->kind = kind;
 
-	return self;
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(CppOption *, CppOption, error, const char *error) {
-	CppOption *self = malloc(sizeof(CppOption));
+VARIANT_CONSTRUCTOR(CppOption *, CppOption, error, const char *error)
+{
+    CppOption *self = malloc(sizeof(CppOption));
 
-	self->kind = CPP_OPTION_KIND_ERROR;
-	self->error = error;
+    self->kind = CPP_OPTION_KIND_ERROR;
+    self->error = error;
 
-	return self;
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(CppOption *, CppOption, filename, const char *filename) {
-	CppOption *self = malloc(sizeof(CppOption));
+VARIANT_CONSTRUCTOR(CppOption *, CppOption, filename, const char *filename)
+{
+    CppOption *self = malloc(sizeof(CppOption));
 
-	self->kind = CPP_OPTION_KIND_FILENAME;
-	self->filename = filename;
+    self->kind = CPP_OPTION_KIND_FILENAME;
+    self->filename = filename;
 
-	return self;
+    return self;
 }
 
 CppOption *
 get__CppOption(const char *option)
 {
-	if (!strcmp(option, "-h") || !strcmp(option, "--help"))
-		return NEW(CppOption, CPP_OPTION_KIND_HELP);
-	else
-		return NEW_VARIANT(CppOption, error, option);
+    if (!strcmp(option, "-h") || !strcmp(option, "--help"))
+        return NEW(CppOption, CPP_OPTION_KIND_HELP);
+    else
+        return NEW_VARIANT(CppOption, error, option);
 }
 
 Vec *
 parse__CppOption(const char **options, const Usize options_size)
 {
-	Vec *res = NEW(Vec);
+    Vec *res = NEW(Vec);
 
-	for (Usize i = 0; i < options_size; i++) {
-		if (options[i][0] == '-') {
-			push__Vec(res, get__CppOption(options[i]));
-		} else {
-			push__Vec(res, NEW_VARIANT(CppOption, filename, options[i]));
-		}
-	}
+    for (Usize i = 0; i < options_size; i++) {
+        if (options[i][0] == '-') {
+            push__Vec(res, get__CppOption(options[i]));
+        } else {
+            push__Vec(res, NEW_VARIANT(CppOption, filename, options[i]));
+        }
+    }
 
-	return res;
+    return res;
 }
 
 DESTRUCTOR(CppOption, CppOption *self)
 {
-	free(self);
+    free(self);
 }

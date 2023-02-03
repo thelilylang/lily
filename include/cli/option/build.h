@@ -37,10 +37,11 @@ enum BuildOptionKind
 
 typedef struct BuildOption
 {
-  enum BuildOptionKind kind;
-  union {
-    const char *error;
-  };
+    enum BuildOptionKind kind;
+    union
+    {
+        const char *error;
+    };
 } BuildOption;
 
 /**

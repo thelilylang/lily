@@ -37,11 +37,12 @@ enum NewOptionKind
 
 typedef struct NewOption
 {
-  enum NewOptionKind kind;
-  union {
-    const char *error;
-    const char *name;
-  };
+    enum NewOptionKind kind;
+    union
+    {
+        const char *error;
+        const char *name;
+    };
 } NewOption;
 
 /**

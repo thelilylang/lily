@@ -37,11 +37,12 @@ enum InitOptionKind
 
 typedef struct InitOption
 {
-  enum InitOptionKind kind;
-  union {
-    const char *error;
-    const char *path;
-  };
+    enum InitOptionKind kind;
+    union
+    {
+        const char *error;
+        const char *path;
+    };
 } InitOption;
 
 /**

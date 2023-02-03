@@ -45,11 +45,12 @@ enum CompileOptionKind
 
 typedef struct CompileOption
 {
-  enum CompileOptionKind kind;
-  union {
-    const char *error;
-    const char *filename;
-  };
+    enum CompileOptionKind kind;
+    union
+    {
+        const char *error;
+        const char *filename;
+    };
 } CompileOption;
 
 /**

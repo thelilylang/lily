@@ -27,18 +27,18 @@
 
 enum Command
 {
-  COMMAND_BUILD, // lily build <options>
-  COMMAND_CC, // lily cc <options>
-  COMMAND_CPP, // lily cpp <options>
-  COMMAND_COMPILE, // lily compile <options>
-  COMMAND_HELP, // lily help
-  COMMAND_INIT, // lily init <options>
-  COMMAND_NEW, // lily new <options>
-  COMMAND_RUN, // lily run <options>
-  COMMAND_TEST, // lily test <options>
-  COMMAND_TO, // lily to <options>
-  COMMAND_VERSION, // lily version
-  COMMAND_ERROR
+    COMMAND_BUILD,   // lily build <options>
+    COMMAND_CC,      // lily cc <options>
+    COMMAND_CPP,     // lily cpp <options>
+    COMMAND_COMPILE, // lily compile <options>
+    COMMAND_HELP,    // lily help
+    COMMAND_INIT,    // lily init <options>
+    COMMAND_NEW,     // lily new <options>
+    COMMAND_RUN,     // lily run <options>
+    COMMAND_TEST,    // lily test <options>
+    COMMAND_TO,      // lily to <options>
+    COMMAND_VERSION, // lily version
+    COMMAND_ERROR
 };
 
 #endif // LILY_CLI_COMMAND_H

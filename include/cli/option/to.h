@@ -37,11 +37,12 @@ enum ToOptionKind
 
 typedef struct ToOption
 {
-  enum ToOptionKind kind;
-  union {
-    const char *error;
-    const char *filename;
-  };
+    enum ToOptionKind kind;
+    union
+    {
+        const char *error;
+        const char *filename;
+    };
 } ToOption;
 
 /**

@@ -33,58 +33,61 @@
 static ToOption *
 get__ToOption(const char *option);
 
-CONSTRUCTOR(ToOption *, ToOption, enum ToOptionKind kind) {
-	ToOption *self = malloc(sizeof(ToOption));
+CONSTRUCTOR(ToOption *, ToOption, enum ToOptionKind kind)
+{
+    ToOption *self = malloc(sizeof(ToOption));
 
-	self->kind = kind;
+    self->kind = kind;
 
-	return self;
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(ToOption *, ToOption, error, const char *error) {
-	ToOption *self = malloc(sizeof(ToOption));
+VARIANT_CONSTRUCTOR(ToOption *, ToOption, error, const char *error)
+{
+    ToOption *self = malloc(sizeof(ToOption));
 
-	self->kind = TO_OPTION_KIND_ERROR;
-	self->error = error;
+    self->kind = TO_OPTION_KIND_ERROR;
+    self->error = error;
 
-	return self;
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(ToOption *, ToOption, filename, const char *filename) {
-	ToOption *self = malloc(sizeof(ToOption));
+VARIANT_CONSTRUCTOR(ToOption *, ToOption, filename, const char *filename)
+{
+    ToOption *self = malloc(sizeof(ToOption));
 
-	self->kind = TO_OPTION_KIND_FILENAME;
-	self->filename = filename;
+    self->kind = TO_OPTION_KIND_FILENAME;
+    self->filename = filename;
 
-	return self;
+    return self;
 }
 
 ToOption *
 get__ToOption(const char *option)
 {
-	if (!strcmp(option, "-h") || !strcmp(option, "--help"))
-		return NEW(ToOption, TO_OPTION_KIND_HELP);
-	else
-		return NEW_VARIANT(ToOption, error, option);
+    if (!strcmp(option, "-h") || !strcmp(option, "--help"))
+        return NEW(ToOption, TO_OPTION_KIND_HELP);
+    else
+        return NEW_VARIANT(ToOption, error, option);
 }
 
 Vec *
 parse__ToOption(const char **options, const Usize options_size)
 {
-	Vec *res = NEW(Vec);
+    Vec *res = NEW(Vec);
 
-	for (Usize i = 0; i < options_size; i++) {
-		if (options[i][0] == '-') {
-			push__Vec(res, get__ToOption(options[i]));
-		} else {
-			push__Vec(res, NEW_VARIANT(ToOption, filename, options[i]));
-		}
-	}
+    for (Usize i = 0; i < options_size; i++) {
+        if (options[i][0] == '-') {
+            push__Vec(res, get__ToOption(options[i]));
+        } else {
+            push__Vec(res, NEW_VARIANT(ToOption, filename, options[i]));
+        }
+    }
 
-	return res;
+    return res;
 }
 
 DESTRUCTOR(ToOption, ToOption *self)
 {
-	free(self);
+    free(self);
 }

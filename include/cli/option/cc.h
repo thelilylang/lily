@@ -37,11 +37,12 @@ enum CcOptionKind
 
 typedef struct CcOption
 {
-  enum CcOptionKind kind;
-  union {
-    const char *error;
-    const char *filename;
-  };
+    enum CcOptionKind kind;
+    union
+    {
+        const char *error;
+        const char *filename;
+    };
 } CcOption;
 
 /**

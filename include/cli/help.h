@@ -25,20 +25,26 @@
 #ifndef LILY_CLI_HELP_H
 #define LILY_CLI_HELP_H
 
-#define BUILD_HELP                                                           \
-    "Usage: lily build [options] [FILENAME]\n\nOptions:\n\n-h, --help      " \
-    "Print build's help"
+#define BUILD_HELP                               \
+    "Usage: lily build [options] [FILENAME]\n\n" \
+    "Options:\n\n"                               \
+    "-h, --help      Print build's help"
 
-#define CC_HELP                                                             \
-    "Usage: lily cc [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
-    "Print cc's help"
+#define CC_HELP                               \
+    "Usage: lily cc [options] [FILENAME]\n\n" \
+    "Options:\n\n"                            \
+    "-h, --help      Print cc's help"
 
-#define COMPILE_HELP                                                           \
-    "Usage: lily compile [options] [FILENAME]\n\nOptions:\n\n  "               \
-    "--dump-scanner  Dump scanner output\n  --dump-parser   Dump parser "      \
-    "output\n  --dump-tc       Dump typecheck output\n  --run-scanner   Run "  \
-    "only the scanner\n  --run-parser    Run only the parser\n  --run-tc     " \
-    "   Run only the typecheck\n  -h, --help      Print compile's help\n"
+#define COMPILE_HELP                               \
+    "Usage: lily compile [options] [FILENAME]\n\n" \
+    "Options:\n\n"                                 \
+    "  --dump-scanner  Dump scanner output\n"      \
+    "  --dump-parser   Dump parser output\n"       \
+    "  --dump-tc       Dump typecheck output\n"    \
+    "  --run-scanner   Run only the scanner\n"     \
+    "  --run-parser    Run only the parser\n"      \
+    "  --run-tc     Run only the typecheck\n"      \
+    "  -h, --help      Print compile's help\n"
 
 #define CPP_HELP                                                             \
     "Usage: lily c++ [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
@@ -56,8 +62,8 @@
     "Usage: lily run [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
     "Print run's help"
 
-#define TEST_HELP \
-	"Usage: lily test [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
+#define TEST_HELP                                                             \
+    "Usage: lily test [options] [FILENAME]\n\nOptions:\n\n  -h, --help      " \
     "Print test's help"
 
 #define TO_HELP                                                             \

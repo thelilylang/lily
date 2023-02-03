@@ -33,58 +33,61 @@
 static InitOption *
 get__InitOption(const char *option);
 
-CONSTRUCTOR(InitOption *, InitOption, enum InitOptionKind kind) {
-	InitOption *self = malloc(sizeof(InitOption));
+CONSTRUCTOR(InitOption *, InitOption, enum InitOptionKind kind)
+{
+    InitOption *self = malloc(sizeof(InitOption));
 
-	self->kind = kind;
+    self->kind = kind;
 
-	return self;
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(InitOption *, InitOption, error, const char *error) {
-	InitOption *self = malloc(sizeof(InitOption));
+VARIANT_CONSTRUCTOR(InitOption *, InitOption, error, const char *error)
+{
+    InitOption *self = malloc(sizeof(InitOption));
 
-	self->kind = INIT_OPTION_KIND_ERROR;
-	self->error = error;
+    self->kind = INIT_OPTION_KIND_ERROR;
+    self->error = error;
 
-	return self;
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(InitOption *, InitOption, path, const char *path) {
-	InitOption *self = malloc(sizeof(InitOption));
+VARIANT_CONSTRUCTOR(InitOption *, InitOption, path, const char *path)
+{
+    InitOption *self = malloc(sizeof(InitOption));
 
-	self->kind = INIT_OPTION_KIND_PATH;
-	self->path = path;
+    self->kind = INIT_OPTION_KIND_PATH;
+    self->path = path;
 
-	return self;
+    return self;
 }
 
 InitOption *
 get__InitOption(const char *option)
 {
-	if (!strcmp(option, "-h") || !strcmp(option, "--help"))
-		return NEW(InitOption, INIT_OPTION_KIND_HELP);
-	else
-		return NEW_VARIANT(InitOption, error, option);
+    if (!strcmp(option, "-h") || !strcmp(option, "--help"))
+        return NEW(InitOption, INIT_OPTION_KIND_HELP);
+    else
+        return NEW_VARIANT(InitOption, error, option);
 }
 
 Vec *
 parse__InitOption(const char **options, const Usize options_size)
 {
-	Vec *res = NEW(Vec);
+    Vec *res = NEW(Vec);
 
-	for (Usize i = 0; i < options_size; i++) {
-		if (options[i][0] == '-') {
-			push__Vec(res, get__InitOption(options[i]));
-		} else {
-			push__Vec(res, NEW_VARIANT(InitOption, path, options[i]));
-		}
-	}
+    for (Usize i = 0; i < options_size; i++) {
+        if (options[i][0] == '-') {
+            push__Vec(res, get__InitOption(options[i]));
+        } else {
+            push__Vec(res, NEW_VARIANT(InitOption, path, options[i]));
+        }
+    }
 
-	return res;
+    return res;
 }
 
 DESTRUCTOR(InitOption, InitOption *self)
 {
-	free(self);
+    free(self);
 }

@@ -33,58 +33,61 @@
 static NewOption *
 get__NewOption(const char *option);
 
-CONSTRUCTOR(NewOption *, NewOption, enum NewOptionKind kind) {
-	NewOption *self = malloc(sizeof(NewOption));
+CONSTRUCTOR(NewOption *, NewOption, enum NewOptionKind kind)
+{
+    NewOption *self = malloc(sizeof(NewOption));
 
-	self->kind = kind;
+    self->kind = kind;
 
-	return self;
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(NewOption *, NewOption, error, const char *error) {
-	NewOption *self = malloc(sizeof(NewOption));
+VARIANT_CONSTRUCTOR(NewOption *, NewOption, error, const char *error)
+{
+    NewOption *self = malloc(sizeof(NewOption));
 
-	self->kind = NEW_OPTION_KIND_ERROR;
-	self->error = error;
+    self->kind = NEW_OPTION_KIND_ERROR;
+    self->error = error;
 
-	return self;
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(NewOption *, NewOption, name, const char *name) {
-	NewOption *self = malloc(sizeof(NewOption));
+VARIANT_CONSTRUCTOR(NewOption *, NewOption, name, const char *name)
+{
+    NewOption *self = malloc(sizeof(NewOption));
 
-	self->kind = NEW_OPTION_KIND_NAME;
-	self->name = name;
+    self->kind = NEW_OPTION_KIND_NAME;
+    self->name = name;
 
-	return self;
+    return self;
 }
 
 NewOption *
 get__NewOption(const char *option)
 {
-	if (!strcmp(option, "-h") || !strcmp(option, "--help"))
-		return NEW(NewOption, NEW_OPTION_KIND_HELP);
-	else
-		return NEW_VARIANT(NewOption, error, option);
+    if (!strcmp(option, "-h") || !strcmp(option, "--help"))
+        return NEW(NewOption, NEW_OPTION_KIND_HELP);
+    else
+        return NEW_VARIANT(NewOption, error, option);
 }
 
 Vec *
 parse__NewOption(const char **options, const Usize options_size)
 {
-	Vec *res = NEW(Vec);
+    Vec *res = NEW(Vec);
 
-	for (Usize i = 0; i < options_size; i++) {
-		if (options[i][0] == '-') {
-			push__Vec(res, get__NewOption(options[i]));
-		} else {
-			push__Vec(res, NEW_VARIANT(NewOption, name, options[i]));
-		}
-	}
+    for (Usize i = 0; i < options_size; i++) {
+        if (options[i][0] == '-') {
+            push__Vec(res, get__NewOption(options[i]));
+        } else {
+            push__Vec(res, NEW_VARIANT(NewOption, name, options[i]));
+        }
+    }
 
-	return res;
+    return res;
 }
 
 DESTRUCTOR(NewOption, NewOption *self)
 {
-	free(self);
+    free(self);
 }

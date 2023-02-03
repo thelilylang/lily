@@ -37,11 +37,12 @@ enum TestOptionKind
 
 typedef struct TestOption
 {
-  enum TestOptionKind kind;
-  union {
-    const char *error;
-    const char *filename;
-  };
+    enum TestOptionKind kind;
+    union
+    {
+        const char *error;
+        const char *filename;
+    };
 } TestOption;
 
 /**

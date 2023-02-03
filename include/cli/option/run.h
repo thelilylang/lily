@@ -37,11 +37,12 @@ enum RunOptionKind
 
 typedef struct RunOption
 {
-  enum RunOptionKind kind;
-  union {
-    const char *error;
-    const char *filename;
-  };
+    enum RunOptionKind kind;
+    union
+    {
+        const char *error;
+        const char *filename;
+    };
 } RunOption;
 
 /**

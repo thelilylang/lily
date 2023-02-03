@@ -33,58 +33,61 @@
 static RunOption *
 get__RunOption(const char *option);
 
-CONSTRUCTOR(RunOption *, RunOption, enum RunOptionKind kind) {
-	RunOption *self = malloc(sizeof(RunOption));
+CONSTRUCTOR(RunOption *, RunOption, enum RunOptionKind kind)
+{
+    RunOption *self = malloc(sizeof(RunOption));
 
-	self->kind = kind;
+    self->kind = kind;
 
-	return self;
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(RunOption *, RunOption, error, const char *error) {
-	RunOption *self = malloc(sizeof(RunOption));
+VARIANT_CONSTRUCTOR(RunOption *, RunOption, error, const char *error)
+{
+    RunOption *self = malloc(sizeof(RunOption));
 
-	self->kind = RUN_OPTION_KIND_ERROR;
-	self->error = error;
+    self->kind = RUN_OPTION_KIND_ERROR;
+    self->error = error;
 
-	return self;
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(RunOption *, RunOption, filename, const char *filename) {
-	RunOption *self = malloc(sizeof(RunOption));
+VARIANT_CONSTRUCTOR(RunOption *, RunOption, filename, const char *filename)
+{
+    RunOption *self = malloc(sizeof(RunOption));
 
-	self->kind = RUN_OPTION_KIND_FILENAME;
-	self->filename = filename;
+    self->kind = RUN_OPTION_KIND_FILENAME;
+    self->filename = filename;
 
-	return self;
+    return self;
 }
 
 RunOption *
 get__RunOption(const char *option)
 {
-	if (!strcmp(option, "-h") || !strcmp(option, "--help"))
-		return NEW(RunOption, RUN_OPTION_KIND_HELP);
-	else
-		return NEW_VARIANT(RunOption, error, option);
+    if (!strcmp(option, "-h") || !strcmp(option, "--help"))
+        return NEW(RunOption, RUN_OPTION_KIND_HELP);
+    else
+        return NEW_VARIANT(RunOption, error, option);
 }
 
 Vec *
 parse__RunOption(const char **options, const Usize options_size)
 {
-	Vec *res = NEW(Vec);
+    Vec *res = NEW(Vec);
 
-	for (Usize i = 0; i < options_size; i++) {
-		if (options[i][0] == '-') {
-			push__Vec(res, get__RunOption(options[i]));
-		} else {
-			push__Vec(res, NEW_VARIANT(RunOption, filename, options[i]));
-		}
-	}
+    for (Usize i = 0; i < options_size; i++) {
+        if (options[i][0] == '-') {
+            push__Vec(res, get__RunOption(options[i]));
+        } else {
+            push__Vec(res, NEW_VARIANT(RunOption, filename, options[i]));
+        }
+    }
 
-	return res;
+    return res;
 }
 
 DESTRUCTOR(RunOption, RunOption *self)
 {
-	free(self);
+    free(self);
 }

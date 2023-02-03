@@ -35,59 +35,59 @@ get__CcOption(const char *option);
 
 CONSTRUCTOR(CcOption *, CcOption, enum CcOptionKind kind)
 {
-  CcOption *self = malloc(sizeof(CcOption));
+    CcOption *self = malloc(sizeof(CcOption));
 
-  self->kind = kind;
+    self->kind = kind;
 
-  return self;
+    return self;
 }
 
 VARIANT_CONSTRUCTOR(CcOption *, CcOption, error, const char *error)
 {
-  CcOption *self = malloc(sizeof(CcOption));
+    CcOption *self = malloc(sizeof(CcOption));
 
-  self->kind = CC_OPTION_KIND_ERROR;
-  self->error = error;
+    self->kind = CC_OPTION_KIND_ERROR;
+    self->error = error;
 
-  return self;
+    return self;
 }
 
 VARIANT_CONSTRUCTOR(CcOption *, CcOption, filename, const char *filename)
 {
-  CcOption *self = malloc(sizeof(CcOption));
+    CcOption *self = malloc(sizeof(CcOption));
 
-  self->kind = CC_OPTION_KIND_FILENAME;
-  self->filename = filename;
+    self->kind = CC_OPTION_KIND_FILENAME;
+    self->filename = filename;
 
-  return self;
+    return self;
 }
 
 CcOption *
 get__CcOption(const char *option)
 {
-  if (!strcmp(option, "-h") || !strcmp(option, "--help"))
-    return NEW(CcOption, CC_OPTION_KIND_HELP);
-  else
-    return NEW_VARIANT(CcOption, error, option);
+    if (!strcmp(option, "-h") || !strcmp(option, "--help"))
+        return NEW(CcOption, CC_OPTION_KIND_HELP);
+    else
+        return NEW_VARIANT(CcOption, error, option);
 }
 
 Vec *
 parse__CcOption(const char **options, const Usize options_size)
 {
-  Vec *res = NEW(Vec);
+    Vec *res = NEW(Vec);
 
-  for (Usize i = 0; i < options_size; i++) {
-    if (options[i][0] == '-') {
-      push__Vec(res, get__CcOption(options[i]));
-    } else {
-      push__Vec(res, NEW_VARIANT(CcOption, filename, options[i]));
+    for (Usize i = 0; i < options_size; i++) {
+        if (options[i][0] == '-') {
+            push__Vec(res, get__CcOption(options[i]));
+        } else {
+            push__Vec(res, NEW_VARIANT(CcOption, filename, options[i]));
+        }
     }
-  }
 
-  return res;
+    return res;
 }
 
 DESTRUCTOR(CcOption, CcOption *self)
 {
-  free(self);
+    free(self);
 }
