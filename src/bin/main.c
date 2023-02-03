@@ -38,22 +38,22 @@ main(int argc, char **argv)
         char *options[argc - 2];
 
         // 1. Get the rest of argv
-		for (int i = argc; i >= 2; --i)
-			options[argc - i - 1] = argv[i];
+        for (int i = argc; i >= 2; --i)
+            options[argc - i - 1] = argv[i];
 
-		// 2. Parse comand
+        // 2. Parse comand
         ParseCommand parse_command =
           NEW(ParseCommand, command, (const char **)options, argc - 2);
 
-		Option option = run__ParseCommand(parse_command);
+        Option option = run__ParseCommand(parse_command);
 
-		FREE(Option, option);
+        FREE(Option, option);
     } else {
         EMIT_ERROR("expected command");
         printf("%s\n", HELP);
 
-		return 1;
+        return 1;
     }
 
-	return 0;
+    return 0;
 }
