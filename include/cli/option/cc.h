@@ -32,7 +32,7 @@ enum CcOptionKind
 {
     CC_OPTION_KIND_ERROR,
     CC_OPTION_KIND_FILENAME,
-    CC_OPTION_KIND_HELP,
+    CC_OPTION_KIND_HELP, // -h, --help
 };
 
 typedef struct CcOption
