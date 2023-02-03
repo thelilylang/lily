@@ -35,7 +35,7 @@ int
 main(int argc, char **argv)
 {
     if (argc > 1) {
-        char *command = argv[1];
+        const char *command = argv[1];
         char *options[argc - 2];
 
         // 1. Get the rest of argv
@@ -43,11 +43,11 @@ main(int argc, char **argv)
             options[argc - i - 1] = argv[i];
 
         // 2. Parse comand
-        ParseCommand parse_command =
+        const ParseCommand parse_command =
           NEW(ParseCommand, command, (const char **)options, argc - 2);
 
-        Option option = run__ParseCommand(parse_command);
-		Config config = run__ParseConfig(&option);
+        const Option option = run__ParseCommand(&parse_command);
+        const Config config = run__ParseConfig(&option);
 
         FREE(Option, option);
     } else {
