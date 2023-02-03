@@ -27,6 +27,7 @@
 #include <cli/emit.h>
 #include <cli/help.h>
 #include <cli/parse_command.h>
+#include <cli/parse_config.h>
 
 #include <stdio.h>
 
@@ -46,6 +47,7 @@ main(int argc, char **argv)
           NEW(ParseCommand, command, (const char **)options, argc - 2);
 
         Option option = run__ParseCommand(parse_command);
+		Config config = run__ParseConfig(&option);
 
         FREE(Option, option);
     } else {
