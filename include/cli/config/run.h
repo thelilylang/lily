@@ -26,14 +26,14 @@
 
 typedef struct RunConfig
 {
-    char *filename;
+    const char *filename;
 } RunConfig;
 
 /**
  *
  * @brief Construct RunConfig type.
  */
-inline CONSTRUCTOR(RunConfig, RunConfig, char *filename)
+inline CONSTRUCTOR(RunConfig, RunConfig, const char *filename)
 {
     return (RunConfig){ .filename = filename };
 }

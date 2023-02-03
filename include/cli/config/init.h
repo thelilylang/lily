@@ -26,14 +26,14 @@
 
 typedef struct InitConfig
 {
-    char *path;
+    const char *path;
 } InitConfig;
 
 /**
  *
  * @brief Construct InitConfig type.
  */
-inline CONSTRUCTOR(InitConfig, InitConfig, char *path)
+inline CONSTRUCTOR(InitConfig, InitConfig, const char *path)
 {
     return (InitConfig){ .path = path };
 }

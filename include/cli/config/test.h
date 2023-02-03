@@ -26,14 +26,14 @@
 
 typedef struct TestConfig
 {
-    char *filename;
+    const char *filename;
 } TestConfig;
 
 /**
  *
  * @brief Construct TestConfig type.
  */
-inline CONSTRUCTOR(TestConfig, TestConfig, char *filename)
+inline CONSTRUCTOR(TestConfig, TestConfig, const char *filename)
 {
     return (TestConfig){ .filename = filename };
 }

@@ -26,14 +26,14 @@
 
 typedef struct NewConfig
 {
-    char *name;
+    const char *name;
 } NewConfig;
 
 /**
  *
  * @brief Construct NewConfig type.
  */
-inline CONSTRUCTOR(NewConfig, NewConfig, char *name)
+inline CONSTRUCTOR(NewConfig, NewConfig, const char *name)
 {
     return (NewConfig){ .name = name };
 }
