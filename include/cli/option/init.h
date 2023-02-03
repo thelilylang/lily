@@ -31,7 +31,7 @@
 enum InitOptionKind
 {
     INIT_OPTION_KIND_ERROR,
-    INIT_OPTION_KIND_FILENAME,
+    INIT_OPTION_KIND_PATH,
     INIT_OPTION_KIND_HELP // -h, --help
 };
 
@@ -40,7 +40,7 @@ typedef struct InitOption
   enum InitOptionKind kind;
   union {
     const char *error;
-    const char *filename;
+    const char *path;
   };
 } InitOption;
 
@@ -58,9 +58,9 @@ VARIANT_CONSTRUCTOR(InitOption *, InitOption, error, const char *error);
 
 /**
  *
- * @brief Construct InitOption type (INIT_OPTION_KIND_FILENAME).
+ * @brief Construct InitOption type (INIT_OPTION_KIND_PATH).
  */
-VARIANT_CONSTRUCTOR(InitOption *, InitOption, filename, const char *filename);
+VARIANT_CONSTRUCTOR(InitOption *, InitOption, path, const char *path);
 
 /**
  *

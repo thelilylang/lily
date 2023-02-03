@@ -50,11 +50,11 @@ VARIANT_CONSTRUCTOR(InitOption *, InitOption, error, const char *error) {
 	return self;
 }
 
-VARIANT_CONSTRUCTOR(InitOption *, InitOption, filename, const char *filename) {
+VARIANT_CONSTRUCTOR(InitOption *, InitOption, path, const char *path) {
 	InitOption *self = malloc(sizeof(InitOption));
 
-	self->kind = INIT_OPTION_KIND_FILENAME;
-	self->filename = filename;
+	self->kind = INIT_OPTION_KIND_PATH;
+	self->path = path;
 
 	return self;
 }
@@ -77,7 +77,7 @@ parse__InitOption(const char **options, const Usize options_size)
 		if (options[i][0] == '-') {
 			push__Vec(res, get__InitOption(options[i]));
 		} else {
-			push__Vec(res, NEW_VARIANT(InitOption, filename, options[i]));
+			push__Vec(res, NEW_VARIANT(InitOption, path, options[i]));
 		}
 	}
 
