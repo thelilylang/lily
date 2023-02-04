@@ -23,13 +23,50 @@
  */
 
 #include <base/format.h>
+#include <base/itoa.h>
 #include <base/macros.h>
 #include <base/types.h>
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define PUSH_STR(s)                                  \
+    res = realloc(res, buffer_size + strlen(s) + 1); \
+    for (Usize i = 0; s[i++];) {                     \
+        res[buffer_size] = s[i - 1];                 \
+        res[++buffer_size] = '\0';                   \
+    }
+
+#define REV_STR(s, size)                 \
+    for (int i = 0; i < size / 2; i++) { \
+        char tmp = s[i];                 \
+        s[i] = s[size - i - 1];          \
+        s[size - i - 1] = tmp;           \
+    }
+
+#define PUSH_INT(i, base)                    \
+    while (i > 0) {                          \
+        res = realloc(res, buffer_size + 2); \
+        res[buffer_size] = (i % base) + '0'; \
+        res[++buffer_size] = '\0';           \
+        i /= base;                           \
+    }                                        \
+    int size = strlen(res);                  \
+    REV_STR(res, size);
+
+#define PUSH_INT_BASE_16(i)                     \
+    while (i > 0) {                             \
+        res = realloc(res, buffer_size + 2);    \
+        int n = (i % 16) + '0';                 \
+        res[buffer_size] = n > '9' ? n + 7 : n; \
+        res[++buffer_size] = '\0';              \
+        i /= 16;                                \
+    }                                           \
+    int size = strlen(res);                     \
+    REV_STR(res, size);
 
 char *
 format(const char *fmt, ...)
@@ -48,12 +85,8 @@ format(const char *fmt, ...)
                 switch (fmt[i + 1]) {
                     case 's': {
                         char *s = va_arg(vl, char *);
-                        res = realloc(res, buffer_size + strlen(s) + 1);
 
-                        for (Usize i = 0; i < strlen(s); i++) {
-                            res[buffer_size] = s[i];
-                            res[++buffer_size] = '\0';
-                        }
+                        PUSH_STR(s);
 
                         if (fmt[i + 2] == 'a') {
                             free(s);
@@ -63,25 +96,151 @@ format(const char *fmt, ...)
 
                         break;
                     }
-                    case 'd':
+                    case 'd': {
+                        int d = va_arg(vl, int);
+
+                        switch (fmt[i + 2]) {
+                            case ':':
+                                switch (fmt[i + 3]) {
+                                    case 'b': {
+                                        PUSH_INT(d, 2);
+
+                                        break;
+                                    }
+                                    case 'o': {
+                                        PUSH_INT(d, 8);
+
+                                        break;
+                                    }
+                                    case 'x': {
+                                        PUSH_INT_BASE_16(d);
+
+                                        break;
+                                    }
+                                    default:
+                                        FAILED("unknown sepecifier");
+                                }
+
+                                i += 4;
+
+                                break;
+                            default:
+                                PUSH_INT(d, 10);
+
+                                i += 2;
+                        }
+
                         break;
+                    }
                     case 'f':
                         break;
-                    case 'c':
+                    case 'c': {
+                        char c = va_arg(vl, int);
+                        res = realloc(res, buffer_size + 2);
+
+                        res[buffer_size] = c;
+                        res[++buffer_size] = '\0';
+
+                        i += 2;
+
                         break;
-                    case 'b':
+                    }
+                    case 'b': {
+                        bool b = va_arg(vl, int);
+
+                        if (b) {
+                            res = realloc(res, buffer_size + 5);
+
+                            res[buffer_size++] = 't';
+                            res[buffer_size++] = 'r';
+                            res[buffer_size++] = 'u';
+                            res[buffer_size++] = 'e';
+                            res[buffer_size] = '\0';
+                        } else {
+                            res = realloc(res, buffer_size + 6);
+                            ;
+
+                            res[buffer_size++] = 'f';
+                            res[buffer_size++] = 'a';
+                            res[buffer_size++] = 'l';
+                            res[buffer_size++] = 's';
+                            res[buffer_size++] = 'e';
+                            res[buffer_size] = '\0';
+                        }
+
+                        i += 2;
+
                         break;
+                    }
                     case 'p':
                         break;
-                    case 'x':
+                    case 'x': {
+                        char *s = itoa__Int32(va_arg(vl, int), 16);
+
+                        PUSH_STR(s);
+
+                        free(s);
+
+                        i += 2;
+
                         break;
-                    case 'o':
+                    }
+                    case 'o': {
+                        char *s = itoa__Int32(va_arg(vl, int), 8);
+
+                        PUSH_STR(s);
+
+                        free(s);
+
+                        i += 2;
+
                         break;
-                    case 'u':
+                    }
+                    case 'u': {
+                        int d = va_arg(vl, unsigned int);
+
+                        switch (fmt[i + 2]) {
+                            case ':':
+                                switch (fmt[i + 3]) {
+                                    case 'b': {
+                                        PUSH_INT(d, 2);
+
+                                        break;
+                                    }
+                                    case 'o': {
+                                        PUSH_INT(d, 8);
+
+                                        break;
+                                    }
+                                    case 'x': {
+                                        PUSH_INT_BASE_16(d);
+
+                                        break;
+                                    }
+                                    default:
+                                        FAILED("unknown sepecifier");
+                                }
+
+                                i += 4;
+
+                                break;
+                            default:
+                                PUSH_INT(d, 10);
+
+                                i += 2;
+                        }
+
                         break;
+                    }
                     case 'S':
                         break;
                     case '{':
+                        res = realloc(res, buffer_size + 2);
+                        res[buffer_size] = '{';
+                        res[++buffer_size] = '\0';
+
+                        i += 2;
+
                         break;
                     default:
                         FAILED("unknown specifier");
