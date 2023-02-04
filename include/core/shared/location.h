@@ -30,7 +30,7 @@
 
 typedef struct Location
 {
-    char *filename;
+    const char *filename;
     Usize start_line;
     Usize end_line;
     Usize start_column;
@@ -43,7 +43,7 @@ typedef struct Location
  */
 inline CONSTRUCTOR(Location,
                    Location,
-                   char *filename,
+                   const char *filename,
                    Usize start_line,
                    Usize end_line,
                    Usize start_column,
