@@ -25,8 +25,9 @@
 #ifndef LILY_CORE_CPP_ERROR_H
 #define LILY_CORE_CPP_ERROR_H
 
-enum CppError {
-	CPP_ERROR_UNEXPECTED_TOKEN
+enum CppError
+{
+    CPP_ERROR_UNEXPECTED_TOKEN
 };
 
 #endif // LILY_CORE_CPP_ERROR_H

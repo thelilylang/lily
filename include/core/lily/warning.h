@@ -25,8 +25,9 @@
 #ifndef LILY_CORE_LILY_WARNING_H
 #define LILY_CORE_LILY_WARNING_H
 
-enum LilyWarning {
-	LILY_WARNING_UNUSED_PAREN
+enum LilyWarning
+{
+    LILY_WARNING_UNUSED_PAREN
 };
 
 #endif // LILY_CORE_LILY_WARNING_H

@@ -25,8 +25,9 @@
 #ifndef LILY_CORE_LILY_ERROR_H
 #define LILY_CORE_LILY_ERROR_H
 
-enum LilyError {
-	LILY_ERROR_UNEXPECTED_TOKEN
+enum LilyError
+{
+    LILY_ERROR_UNEXPECTED_TOKEN
 };
 
 #endif // LILY_CORE_LILY_ERROR_H

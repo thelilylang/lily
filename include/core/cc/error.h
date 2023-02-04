@@ -25,8 +25,9 @@
 #ifndef LILY_CORE_CC_ERROR_H
 #define LILY_CORE_CC_ERROR_H
 
-enum CcError {
-	CC_ERROR_UNEXPECTED_TOKEN
+enum CcError
+{
+    CC_ERROR_UNEXPECTED_TOKEN
 };
 
 #endif // LILY_CORE_CC_ERROR_H

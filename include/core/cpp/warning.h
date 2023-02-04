@@ -25,8 +25,9 @@
 #ifndef LILY_CORE_CPP_WARNING_H
 #define LILY_CORE_CPP_WARNING_H
 
-enum CppWarning {
-	CPP_WARNING_UNUSED_PAREN
+enum CppWarning
+{
+    CPP_WARNING_UNUSED_PAREN
 };
 
 #endif // LILY_CORE_CPP_WARNING_H
