@@ -59,9 +59,9 @@ test_d_octal_specifier__Format()
 void
 test_d_hex_specifier__Format()
 {
-	char *s = format("{d:x}", 20);
+    char *s = format("{d:x}", 20);
 
-	ASSERT(strcmp(s, "14") == 0);
+    ASSERT(strcmp(s, "14") == 0);
 
-	free(s);
+    free(s);
 }
