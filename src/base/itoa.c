@@ -68,10 +68,7 @@
         while (v > 0) {                                \
             buffer = realloc(buffer, buffer_size + 2); \
             int n = (v % 16) + '0';                    \
-            if (n > '9')                               \
-                buffer[buffer_size] = n + 7;           \
-            else                                       \
-                buffer[buffer_size] = n;               \
+            buffer[buffer_size] = n > '9' ? n + 7 : n; \
             buffer[++buffer_size] = '\0';              \
             v /= 16;                                   \
         }                                              \
