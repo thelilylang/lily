@@ -175,6 +175,8 @@ set(CORE_SRC
 	src/core/lily/ir/cpp/generator.c
 	src/core/lily/ir/llvm/generator.c
 	src/core/lily/ir/llvm/linker.c
+	src/core/lily/package/library.c
+	src/core/lily/package/package.c
 	src/core/lily/analysis.c
 	src/core/lily/ast.c
 	src/core/lily/checked.c
