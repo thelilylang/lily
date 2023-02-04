@@ -21,6 +21,8 @@ format:
 	${CLANG_FORMAT} ./include/command/run/*.h
 	${CLANG_FORMAT} ./include/command/test/*.h
 	${CLANG_FORMAT} ./include/command/to/*.h
+	${CLANG_FORMAT} ./include/core/cc/*.h
+	${CLANG_FORMAT} ./include/core/cpp/*.h
 	${CLANG_FORMAT} ./include/core/lily/*.h
 	${CLANG_FORMAT} ./include/core/lily/ast/*.h
 	${CLANG_FORMAT} ./include/core/lily/ast/decl/*.h
@@ -56,6 +58,8 @@ format:
 	${CLANG_FORMAT} ./src/command/run/*.c
 	${CLANG_FORMAT} ./src/command/test/*.c
 	${CLANG_FORMAT} ./src/command/to/*.c
+	${CLANG_FORMAT} ./src/core/cc/*.c
+	${CLANG_FORMAT} ./src/core/cpp/*.c
 	${CLANG_FORMAT} ./src/core/lily/*.c
 	${CLANG_FORMAT} ./src/core/lily/ast/*.c
 	${CLANG_FORMAT} ./src/core/lily/ast/decl/*.c
