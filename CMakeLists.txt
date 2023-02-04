@@ -189,7 +189,6 @@ set(CORE_SRC
 	src/core/lily/warning.c
 	src/core/shared/cursor.c
 	src/core/shared/diagnostic.c
-	src/core/shared/file.c
 	src/core/shared/location.c
 	src/core/shared/source.c)
 
