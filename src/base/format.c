@@ -23,7 +23,6 @@
  */
 
 #include <base/format.h>
-#include <base/itoa.h>
 #include <base/macros.h>
 #include <base/types.h>
 
@@ -48,6 +47,12 @@
     }
 
 #define PUSH_INT(i, base)                    \
+    if (i < 0) {                             \
+        res = realloc(res, buffer_size + 2); \
+        res[buffer_size] = '-';              \
+        res[++buffer_size] = '\0';           \
+        i = -i;                              \
+    }                                        \
     while (i > 0) {                          \
         res = realloc(res, buffer_size + 2); \
         res[buffer_size] = (i % base) + '0'; \
@@ -58,6 +63,12 @@
     REV_STR(res, size);
 
 #define PUSH_INT_BASE_16(i)                     \
+    if (i < 0) {                                \
+        res = realloc(res, buffer_size + 2);    \
+        res[buffer_size] = '-';                 \
+        res[++buffer_size] = '\0';              \
+        i = -i;                                 \
+    }                                           \
     while (i > 0) {                             \
         res = realloc(res, buffer_size + 2);    \
         int n = (i % 16) + '0';                 \
@@ -174,28 +185,6 @@ format(const char *fmt, ...)
                     }
                     case 'p':
                         break;
-                    case 'x': {
-                        char *s = itoa__Int32(va_arg(vl, int), 16);
-
-                        PUSH_STR(s);
-
-                        free(s);
-
-                        i += 2;
-
-                        break;
-                    }
-                    case 'o': {
-                        char *s = itoa__Int32(va_arg(vl, int), 8);
-
-                        PUSH_STR(s);
-
-                        free(s);
-
-                        i += 2;
-
-                        break;
-                    }
                     case 'u': {
                         int d = va_arg(vl, unsigned int);
 
