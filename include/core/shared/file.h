@@ -27,9 +27,10 @@
 
 #include <base/macros.h>
 
-typedef struct File {
-	const char *filename;
-	char *content;
+typedef struct File
+{
+    const char *filename;
+    char *content;
 } File;
 
 /**
@@ -38,10 +39,7 @@ typedef struct File {
  */
 inline CONSTRUCTOR(File, File, const char *filename, char *content)
 {
-	return (File){
-		.filename = filename,
-		.content = content
-	};
+    return (File){ .filename = filename, .content = content };
 }
 
 /**

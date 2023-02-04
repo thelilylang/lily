@@ -28,5 +28,5 @@
 
 DESTRUCTOR(File, File self)
 {
-	free(self.content);
+    free(self.content);
 }
