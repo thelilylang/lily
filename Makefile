@@ -42,6 +42,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/ir/cpp/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/ir/llvm/*.h
 	${CLANG_FORMAT} ./include/core/lily/package/*.h	
+	${CLANG_FORMAT} ./include/core/shared/*.h
 	${CLANG_FORMAT} ./src/base/*.c
 	${CLANG_FORMAT} ./src/bin/*.c
 	${CLANG_FORMAT} ./src/cli/*.c
@@ -75,6 +76,7 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/ir/cpp/generator/*.c
 	${CLANG_FORMAT} ./src/core/lily/ir/llvm/*.c
 	${CLANG_FORMAT} ./src/core/lily/package/*.c
+	${CLANG_FORMAT} ./src/core/shared/*.c
 	${CLANG_FORMAT} ./benchmarks/base/*.c
 	${CLANG_FORMAT} ./tests/base/*.c
 
