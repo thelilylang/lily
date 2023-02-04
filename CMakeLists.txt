@@ -47,17 +47,164 @@ set(COMMAND_SRC
 	src/command/test/test.c
 	src/command/to/to.c)
 
+set(CORE_SRC
+	src/core/lily/ast/decl/alias.c
+	src/core/lily/ast/decl/class.c
+	src/core/lily/ast/decl/enum.c
+	src/core/lily/ast/decl/enum_object.c
+	src/core/lily/ast/decl/function.c
+	src/core/lily/ast/decl/macro.c
+	src/core/lily/ast/decl/method.c
+	src/core/lily/ast/decl/module.c
+	src/core/lily/ast/decl/property.c
+	src/core/lily/ast/decl/record.c
+	src/core/lily/ast/decl/record_object.c
+	src/core/lily/ast/decl/trait.c
+	src/core/lily/ast/expr/access.c
+	src/core/lily/ast/expr/array.c
+	src/core/lily/ast/expr/binary.c
+	src/core/lily/ast/expr/call.c
+	src/core/lily/ast/expr/cast.c
+	src/core/lily/ast/expr/identifier.c
+	src/core/lily/ast/expr/identifier_macro.c
+	src/core/lily/ast/expr/lambda.c
+	src/core/lily/ast/expr/literal.c
+	src/core/lily/ast/expr/tuple.c
+	src/core/lily/ast/expr/unary.c
+	src/core/lily/ast/stmt/asm.c
+	src/core/lily/ast/stmt/await.c
+	src/core/lily/ast/stmt/block.c
+	src/core/lily/ast/stmt/defer.c
+	src/core/lily/ast/stmt/drop.c
+	src/core/lily/ast/stmt/for.c
+	src/core/lily/ast/stmt/if.c
+	src/core/lily/ast/stmt/match.c
+	src/core/lily/ast/stmt/next.c
+	src/core/lily/ast/stmt/return.c
+	src/core/lily/ast/stmt/variable.c
+	src/core/lily/ast/stmt/while.c
+	src/core/lily/ast/data_type.c
+	src/core/lily/ast/decl.c
+	src/core/lily/ast/expr.c
+	src/core/lily/ast/stmt.c
+	src/core/lily/checked/decl/alias.c
+	src/core/lily/checked/decl/class.c
+	src/core/lily/checked/decl/enum.c
+	src/core/lily/checked/decl/enum_object.c
+	src/core/lily/checked/decl/function.c
+	src/core/lily/checked/decl/macro.c
+	src/core/lily/checked/decl/method.c
+	src/core/lily/checked/decl/property.c
+	src/core/lily/checked/decl/record.c
+	src/core/lily/checked/decl/record_object.c
+	src/core/lily/checked/expr/access.c
+	src/core/lily/checked/expr/array.c
+	src/core/lily/checked/expr/binary.c
+	src/core/lily/checked/expr/call.c
+	src/core/lily/checked/expr/cast.c
+	src/core/lily/checked/expr/identifier.c
+	src/core/lily/checked/expr/identifier_macro.c
+	src/core/lily/checked/expr/lambda.c
+	src/core/lily/checked/expr/literal.c
+	src/core/lily/checked/expr/tuple.c
+	src/core/lily/checked/expr/unary.c
+	src/core/lily/checked/stmt/asm.c
+	src/core/lily/checked/stmt/await.c
+	src/core/lily/checked/stmt/block.c
+	src/core/lily/checked/stmt/break.c
+	src/core/lily/checked/stmt/defer.c
+	src/core/lily/checked/stmt/drop.c
+	src/core/lily/checked/stmt/for.c
+	src/core/lily/checked/stmt/if.c
+	src/core/lily/checked/stmt/match.c
+	src/core/lily/checked/stmt/next.c
+	src/core/lily/checked/stmt/return.c
+	src/core/lily/checked/stmt/variable.c
+	src/core/lily/checked/stmt/while.c
+	src/core/lily/checked/data_type.c
+	src/core/lily/checked/decl.c
+	src/core/lily/checked/expr.c
+	src/core/lily/checked/stmt.c
+	src/core/lily/ir/cc/builder/constant.c
+	src/core/lily/ir/cc/builder/enum.c
+	src/core/lily/ir/cc/builder/function/condition.c
+	src/core/lily/ir/cc/builder/function/function.c
+	src/core/lily/ir/cc/builder/function/loop.c
+	src/core/lily/ir/cc/builder/function/switch.c
+	src/core/lily/ir/cc/builder/function/variable.c
+	src/core/lily/ir/cc/builder/macro.c
+	src/core/lily/ir/cc/builder/struct.c
+	src/core/lily/ir/cc/builder/typedef.c
+	src/core/lily/ir/cc/builder/union.c
+	src/core/lily/ir/cc/builder.c
+	src/core/lily/ir/cc/generator/alias.c
+	src/core/lily/ir/cc/generator/class.c
+	src/core/lily/ir/cc/generator/constant.c
+	src/core/lily/ir/cc/generator/enum.c
+	src/core/lily/ir/cc/generator/enum_object.c
+	src/core/lily/ir/cc/generator/error.c
+	src/core/lily/ir/cc/generator/function.c
+	src/core/lily/ir/cc/generator/macro.c
+	src/core/lily/ir/cc/generator/record.c
+	src/core/lily/ir/cc/generator/record_object.c
+	src/core/lily/ir/cc/generator.c
+	src/core/lily/ir/cpp/builder/class/attribute.c
+	src/core/lily/ir/cpp/builder/class/class.c
+	src/core/lily/ir/cpp/builder/class/method.c
+	src/core/lily/ir/cpp/builder/constant.c
+	src/core/lily/ir/cpp/builder/function/condition.c
+	src/core/lily/ir/cpp/builder/function/function.c
+	src/core/lily/ir/cpp/builder/function/loop.c
+	src/core/lily/ir/cpp/builder/function/switch.c
+	src/core/lily/ir/cpp/builder/function/variable.c
+	src/core/lily/ir/cpp/builder/namespace.c
+	src/core/lily/ir/cpp/builder/struct.c
+	src/core/lily/ir/cpp/builder/typedef.c
+	src/core/lily/ir/cpp/builder/union.c
+	src/core/lily/ir/cpp/builder.c
+	src/core/lily/ir/cpp/generator/alias.c
+	src/core/lily/ir/cpp/generator/class.c
+	src/core/lily/ir/cpp/generator/constant.c
+	src/core/lily/ir/cpp/generator/enum.c
+	src/core/lily/ir/cpp/generator/enum_object.c
+	src/core/lily/ir/cpp/generator/error.c
+	src/core/lily/ir/cpp/generator/function.c
+	src/core/lily/ir/cpp/generator/macro.c
+	src/core/lily/ir/cpp/generator/record.c
+	src/core/lily/ir/cpp/generator/record_object.c
+	src/core/lily/ir/cpp/generator.c
+	src/core/lily/ir/llvm/generator.c
+	src/core/lily/ir/llvm/linker.c
+	src/core/lily/analysis.c
+	src/core/lily/ast.c
+	src/core/lily/checked.c
+	src/core/lily/error.c
+	src/core/lily/ir.c
+	src/core/lily/package.c
+	src/core/lily/parser.c
+	src/core/lily/scanner.c
+	src/core/lily/token.c
+	src/core/lily/warning.c
+	src/core/shared/cursor.c
+	src/core/shared/diagnostic.c
+	src/core/shared/file.c
+	src/core/shared/location.c
+	src/core/shared/source.c)
+
 add_library(lily_base STATIC ${BASE_SRC})
 target_include_directories(lily_base PUBLIC include)
 
 add_library(lily_cli STATIC ${CLI_SRC})
-target_link_libraries(lily_cli lily_base lily_command)
+target_link_libraries(lily_cli lily_base)
 
 add_library(lily_command STATIC ${COMMAND_SRC})
-target_link_libraries(lily_command lily_base)
+target_link_libraries(lily_command lily_base lily_cli lily_core)
+
+add_library(lily_core STATIC ${CORE_SRC})
+target_link_libraries(lily_core lily_base)
 
 add_executable(lily src/bin/main.c)
-target_link_libraries(lily lily_base lily_cli)
+target_link_libraries(lily lily_base lily_cli lily_command)
 
 if (DEBUG)
 	add_executable(test_base tests/base/base.c)
