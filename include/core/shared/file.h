@@ -27,6 +27,8 @@
 
 #include <base/macros.h>
 
+#include <stdlib.h>
+
 typedef struct File
 {
     const char *filename;
@@ -46,6 +48,9 @@ inline CONSTRUCTOR(File, File, const char *filename, char *content)
  *
  * @brief Free File type.
  */
-DESTRUCTOR(File, File self);
+inline DESTRUCTOR(File, const File *self)
+{
+	free(self->content);
+}
 
 #endif // LILY_CORE_SHARED_FILE_H
