@@ -32,8 +32,8 @@
 
 typedef struct Source
 {
-	Cursor cursor;
-	File file;
+    Cursor cursor;
+    File file;
 } Source;
 
 /**
@@ -42,10 +42,7 @@ typedef struct Source
  */
 inline CONSTRUCTOR(Source, Source, Cursor cursor, File file)
 {
-	return (Source){
-		.cursor = cursor,
-		.file = file
-	};
+    return (Source){ .cursor = cursor, .file = file };
 }
 
 /**
@@ -66,8 +63,9 @@ previous_char__Source(Source *self);
  *
  * @brief Free Source type.
  */
-inline DESTRUCTOR(Source, Source *self) {
-	FREE(File, &self->file);
+inline DESTRUCTOR(Source, Source *self)
+{
+    FREE(File, &self->file);
 }
 
 #endif // LILY_CORE_SHARED_SOURCE_H
