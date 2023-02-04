@@ -77,3 +77,6 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/package/*.c
 	${CLANG_FORMAT} ./benchmarks/base/*.c
 	${CLANG_FORMAT} ./tests/base/*.c
+
+clean:
+	@rm -rf build
