@@ -17,6 +17,9 @@ main()
     // Test format
     test_s_specifier__Format();
     test_sa_specifier__Format();
+    test_d_specifier__Format();
+    test_d_binary_sepecifier__Format();
+    test_d_octal_specifier__Format();
 
     // Test HashMap
     test_new__HashMap();
