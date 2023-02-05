@@ -25,9 +25,34 @@
 #ifndef LILY_CORE_CC_WARNING_H
 #define LILY_CORE_CC_WARNING_H
 
-enum CcWarning
+#include <base/macros.h>
+
+enum CcWarningKind
 {
-    CC_WARNING_UNUSED_PAREN
+    CC_WARNING_KIND_UNUSED_PAREN
 };
+
+typedef struct CcWarning
+{
+    enum CcWarningKind kind;
+    union
+    {};
+} CcWarning;
+
+/**
+ *
+ * @brief Construct CppWarning.
+ */
+inline CONSTRUCTOR(CcWarning, CcWarning, enum CcWarningKind kind)
+{
+    return (CcWarning){ .kind = kind };
+}
+
+/**
+ *
+ * @brief Convert CcWarning in str.
+ */
+char *
+to_string__CcWarning(const CcWarning *self);
 
 #endif // LILY_CORE_CC_WARNING_H

@@ -25,9 +25,34 @@
 #ifndef LILY_CORE_LILY_WARNING_H
 #define LILY_CORE_LILY_WARNING_H
 
-enum LilyWarning
+#include <base/macros.h>
+
+enum LilyWarningKind
 {
-    LILY_WARNING_UNUSED_PAREN
+    LILY_WARNING_KIND_UNUSED_PAREN
 };
+
+typedef struct LilyWarning
+{
+    enum LilyWarningKind kind;
+    union
+    {};
+} LilyWarning;
+
+/**
+ *
+ * @brief Construct LilyWarning.
+ */
+inline CONSTRUCTOR(LilyWarning, LilyWarning, enum LilyWarningKind kind)
+{
+    return (LilyWarning){ .kind = kind };
+}
+
+/**
+ *
+ * @brief Convert LilyWarning in str.
+ */
+char *
+to_string__LilyWarning(const LilyWarning *self);
 
 #endif // LILY_CORE_LILY_WARNING_H

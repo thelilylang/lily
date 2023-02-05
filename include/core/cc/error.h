@@ -25,9 +25,49 @@
 #ifndef LILY_CORE_CC_ERROR_H
 #define LILY_CORE_CC_ERROR_H
 
-enum CcError
+#include <base/macros.h>
+
+enum CcErrorKind
 {
-    CC_ERROR_UNEXPECTED_TOKEN
+    CC_ERROR_KIND_UNEXPECTED_TOKEN
 };
+
+typedef struct CcError
+{
+    enum CcErrorKind kind;
+    union
+    {
+        char *unexpected_token;
+    };
+} CcError;
+
+/**
+ *
+ * @brief Construct CcError.
+ */
+inline CONSTRUCTOR(CcError, CcError, enum CcErrorKind kind)
+{
+    return (CcError){ .kind = kind };
+}
+
+/**
+ *
+ * @brief Construct CcError (CC_ERROR_KIND_UNEXPECTED_TOKEN).
+ */
+inline VARIANT_CONSTRUCTOR(CcError,
+                           CcError,
+                           unexpected_token,
+                           char *unexpected_token)
+{
+    return (CcError){ .kind = CC_ERROR_KIND_UNEXPECTED_TOKEN,
+                      .unexpected_token = unexpected_token };
+}
+
+/**
+ *
+ * @brief Convert CcError in str.
+ */
+char *
+to_string__CcError(const CcError *self);
 
 #endif // LILY_CORE_CC_ERROR_H

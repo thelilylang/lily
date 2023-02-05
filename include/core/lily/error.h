@@ -25,9 +25,49 @@
 #ifndef LILY_CORE_LILY_ERROR_H
 #define LILY_CORE_LILY_ERROR_H
 
-enum LilyError
+#include <base/macros.h>
+
+enum LilyErrorKind
 {
-    LILY_ERROR_UNEXPECTED_TOKEN
+    LILY_ERROR_KIND_UNEXPECTED_TOKEN
 };
+
+typedef struct LilyError
+{
+    enum LilyErrorKind kind;
+    union
+    {
+        char *unexpected_token;
+    };
+} LilyError;
+
+/**
+ *
+ * @brief Construct LilyError.
+ */
+inline CONSTRUCTOR(LilyError, LilyError, enum LilyErrorKind kind)
+{
+    return (LilyError){ .kind = kind };
+}
+
+/**
+ *
+ * @brief Construct LilyError (LILY_ERROR_KIND_UNEXPECTED_TOKEN).
+ */
+inline VARIANT_CONSTRUCTOR(LilyError,
+                           LilyError,
+                           unexpected_token,
+                           char *unexpected_token)
+{
+    return (LilyError){ .kind = LILY_ERROR_KIND_UNEXPECTED_TOKEN,
+                        .unexpected_token = unexpected_token };
+}
+
+/**
+ *
+ * @brief Convert LilyError in str.
+ */
+char *
+to_string__LilyError(const LilyError *self);
 
 #endif // LILY_CORE_LILY_ERROR_H

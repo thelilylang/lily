@@ -25,9 +25,49 @@
 #ifndef LILY_CORE_CPP_ERROR_H
 #define LILY_CORE_CPP_ERROR_H
 
-enum CppError
+#include <base/macros.h>
+
+enum CppErrorKind
 {
-    CPP_ERROR_UNEXPECTED_TOKEN
+    CPP_ERROR_KIND_UNEXPECTED_TOKEN
 };
+
+typedef struct CppError
+{
+    enum CppErrorKind kind;
+    union
+    {
+        char *unexpected_token;
+    };
+} CppError;
+
+/**
+ *
+ * @brief Construct CppError.
+ */
+inline CONSTRUCTOR(CppError, CppError, enum CppErrorKind kind)
+{
+    return (CppError){ .kind = kind };
+}
+
+/**
+ *
+ * @brief Construct CppError (CPP_ERROR_KIND_UNEXPECTED_TOKEN).
+ */
+inline VARIANT_CONSTRUCTOR(CppError,
+                           CppError,
+                           unexpected_token,
+                           char *unexpected_token)
+{
+    return (CppError){ .kind = CPP_ERROR_KIND_UNEXPECTED_TOKEN,
+                       .unexpected_token = unexpected_token };
+}
+
+/**
+ *
+ * @brief Convert CppError in str.
+ */
+char *
+to_string__CppError(const CppError *self);
 
 #endif // LILY_CORE_CPP_ERROR_H
