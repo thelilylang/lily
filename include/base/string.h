@@ -100,6 +100,15 @@ repeat__String(char *s, Usize n);
 
 /**
  *
+ * @brief Split string.
+ * @return A char* array.
+ * @note The result and its items can be free.
+ */
+char **
+split__String(String *self, char separator);
+
+/**
+ *
  * @brief Ungrow String buffer.
  */
 void

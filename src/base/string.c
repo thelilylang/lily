@@ -127,6 +127,38 @@ repeat__String(char *s, Usize n)
     return res;
 }
 
+char **
+split__String(String *self, char separator)
+{
+    char **res = malloc(PTR_SIZE);
+    Usize res_size = 0;
+
+    for (Usize i = 0; i < self->len; i++) {
+        char *item = malloc(1);
+        item[0] = '\0';
+        Usize item_size = 0;
+
+        while (self->buffer[i]) {
+            if (self->buffer[i] != separator) {
+                item = realloc(item, item_size + 2);
+                item[item_size] = self->buffer[i++];
+                item[++item_size] = '\0';
+            } else {
+                break;
+            }
+        }
+
+        if (res_size == 0)
+            res[res_size++] = item;
+        else {
+            res = realloc(res, PTR_SIZE * ++res_size);
+            res[res_size - 1] = item;
+        }
+    }
+
+    return res;
+}
+
 void
 ungrow__String(String *self)
 {
