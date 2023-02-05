@@ -3,6 +3,7 @@
 #include "hash_map.c"
 #include "hash_set.c"
 #include "itoa.c"
+#include "str.c"
 #include "string.c"
 #include "vec.c"
 
@@ -37,9 +38,13 @@ main()
     test_itoa_base_8();
     test_itoa_base_16();
 
+    // Test Str
+    test_split__Str();
+
     // Test String
     test_new__String();
     test_from__String();
+    test_split__String();
     test_pop__String();
     test_push__String();
 
