@@ -44,6 +44,12 @@ CONSTRUCTOR(String *, String)
     return self;
 }
 
+void
+append__String(String *self, const String *other)
+{
+    push_str__String(self, other->buffer);
+}
+
 String *
 from__String(char *buffer)
 {

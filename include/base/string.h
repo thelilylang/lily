@@ -34,6 +34,12 @@
         free(s);                   \
     }
 
+#define APPEND_AND_FREE(self, s) \
+    {                            \
+        append__String(self, s); \
+        FREE(String, s);         \
+    }
+
 typedef struct String
 {
     char *buffer;
@@ -47,6 +53,13 @@ typedef struct String
  * @brief Construct String type.
  */
 CONSTRUCTOR(String *, String);
+
+/**
+ *
+ * @brief Append String.
+ */
+void
+append__String(String *self, const String *other);
 
 /**
  *
