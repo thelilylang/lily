@@ -50,6 +50,7 @@ set(COMMAND_SRC
 
 set(CORE_SRC
 	src/core/cc/error.c
+	src/core/cc/token.c
 	src/core/cc/warning.c
 	src/core/cpp/error.c
 	src/core/cpp/warning.c
