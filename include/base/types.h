@@ -27,7 +27,7 @@
 
 #include <stdint.h>
 
-#if __clang_major__ >= 15
+#if __clang_major__ > 15
 typedef _BitInt(8) Int8;
 typedef _BitInt(16) Int16;
 typedef _BitInt(32) Int32;
@@ -66,5 +66,8 @@ typedef uint32_t Usize;
 #endif
 
 #endif
+
+typedef float Float32;
+typedef double Float64;
 
 #endif // LILY_BASE_TYPES_H
