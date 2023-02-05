@@ -40,7 +40,6 @@ CONSTRUCTOR(String *, String)
     self->buffer[0] = '\0';
     self->len = 0;
     self->capacity = 0;
-    self->default_capacity = 4;
 
     return self;
 }
@@ -61,7 +60,6 @@ format__String(char *fmt, ...)
     self->buffer = buffer;
     self->len = len;
     self->capacity = len;
-    self->default_capacity = len;
 
     return self;
 }
@@ -72,7 +70,6 @@ from__String(char *buffer)
     String *self = malloc(sizeof(String));
 
     self->capacity = strlen(buffer) * 2;
-    self->default_capacity = self->capacity;
     self->buffer = malloc(self->capacity);
     self->len = strlen(buffer);
 
@@ -121,7 +118,7 @@ void
 push__String(String *self, char item)
 {
     if (!self->capacity)
-        grow__String(self, self->default_capacity);
+        grow__String(self, STRING_DEFAULT_CAPACITY);
     else if (self->len >= self->capacity - 1)
         grow__String(self, self->capacity * 2);
 

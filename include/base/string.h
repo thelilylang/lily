@@ -28,6 +28,8 @@
 #include <base/macros.h>
 #include <base/types.h>
 
+#define STRING_DEFAULT_CAPACITY 4
+
 #define PUSH_STR_AND_FREE(self, s) \
     {                              \
         push_str__String(self, s); \
@@ -45,7 +47,6 @@ typedef struct String
     char *buffer;
     Usize len;
     Usize capacity;
-    Usize default_capacity;
 } String;
 
 /**
