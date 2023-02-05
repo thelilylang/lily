@@ -49,6 +49,10 @@ set(COMMAND_SRC
 	src/command/to/to.c)
 
 set(CORE_SRC
+	src/core/cc/error.c
+	src/core/cc/warning.c
+	src/core/cpp/error.c
+	src/core/cpp/warning.c
 	src/core/lily/ast/decl/alias.c
 	src/core/lily/ast/decl/class.c
 	src/core/lily/ast/decl/enum.c
