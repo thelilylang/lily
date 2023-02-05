@@ -56,16 +56,12 @@ format__String(char *fmt, ...)
 {
     char *buffer = format(fmt);
     Usize len = strlen(buffer);
-    Usize capacity = len * 2;
-
-    buffer = realloc(buffer, capacity);
-
     String *self = malloc(sizeof(String));
 
     self->buffer = buffer;
     self->len = len;
-    self->capacity = capacity;
-    self->default_capacity = capacity;
+    self->capacity = len;
+    self->default_capacity = len;
 
     return self;
 }
