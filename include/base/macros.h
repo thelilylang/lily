@@ -53,7 +53,6 @@
     void __free__##name##__##variant(__VA_ARGS__)
 
 #define LEN(arr, item) (((int)sizeof(arr) / sizeof(item)) + 1)
-#define SIZE(arr, item) ((int)sizeof(arr) / sizeof(item))
 
 #define DBG(msg)                                              \
     {                                                         \
