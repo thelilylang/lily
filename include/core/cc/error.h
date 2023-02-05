@@ -65,6 +65,20 @@ inline VARIANT_CONSTRUCTOR(CcError,
 
 /**
  *
+ * @brief Convert CcError in msg.
+ */
+char *
+to_msg__CcError(const CcError *self);
+
+/**
+ *
+ * @brief Convert CcError in code.
+ */
+char *
+to_code__CcError(const CcError *self);
+
+/**
+ *
  * @brief Convert CcError in str.
  */
 char *

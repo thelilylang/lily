@@ -30,7 +30,7 @@
 #include <stdlib.h>
 
 char *
-to_string__LilyError(const LilyError *self)
+to_msg__LilyError(const LilyError *self)
 {
     switch (self->kind) {
         case LILY_ERROR_KIND_UNEXPECTED_TOKEN:
@@ -38,4 +38,22 @@ to_string__LilyError(const LilyError *self)
         default:
             UNREACHABLE("unknown variant");
     }
+}
+
+char *
+to_code__LilyError(const LilyError *self)
+{
+    switch (self->kind) {
+        case LILY_ERROR_KIND_UNEXPECTED_TOKEN:
+            return "0001";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+char *
+to_string__LilyError(const LilyError *self)
+{
+    return format(
+      "error[{s}]: {sa}", to_code__LilyError(self), to_msg__LilyError(self));
 }

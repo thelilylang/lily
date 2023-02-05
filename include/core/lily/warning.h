@@ -50,6 +50,20 @@ inline CONSTRUCTOR(LilyWarning, LilyWarning, enum LilyWarningKind kind)
 
 /**
  *
+ * @brief Convert LilyWarning in msg.
+ */
+char *
+to_msg__LilyWarning(const LilyWarning *self);
+
+/**
+ *
+ * @brief Convert LilyWarning in code.
+ */
+char *
+to_code__LilyWarning(const LilyWarning *self);
+
+/**
+ *
  * @brief Convert LilyWarning in str.
  */
 char *

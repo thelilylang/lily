@@ -30,7 +30,7 @@
 #include <stdlib.h>
 
 char *
-to_string__CcError(const CcError *self)
+to_msg__CcError(const CcError *self)
 {
     switch (self->kind) {
         case CC_ERROR_KIND_UNEXPECTED_TOKEN:
@@ -38,4 +38,22 @@ to_string__CcError(const CcError *self)
         default:
             UNREACHABLE("unknown variant");
     }
+}
+
+char *
+to_code__CcError(const CcError *self)
+{
+    switch (self->kind) {
+        case CC_ERROR_KIND_UNEXPECTED_TOKEN:
+            return "0001";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+char *
+to_string__CcError(const CcError *self)
+{
+    return format(
+      "error[{s}]: {sa}", to_code__CcError(self), to_msg__CcError(self));
 }

@@ -65,6 +65,20 @@ inline VARIANT_CONSTRUCTOR(LilyError,
 
 /**
  *
+ * @brief Convert LilyError in msg.
+ */
+char *
+to_msg__LilyError(const LilyError *self);
+
+/**
+ *
+ * @brief Convert LilyError in code.
+ */
+char *
+to_code__LilyError(const LilyError *self);
+
+/**
+ *
  * @brief Convert LilyError in str.
  */
 char *

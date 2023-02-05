@@ -30,7 +30,7 @@
 #include <stdlib.h>
 
 char *
-to_string__CppError(const CppError *self)
+to_msg__CppError(const CppError *self)
 {
     switch (self->kind) {
         case CPP_ERROR_KIND_UNEXPECTED_TOKEN:
@@ -38,4 +38,22 @@ to_string__CppError(const CppError *self)
         default:
             UNREACHABLE("unknown variant");
     }
+}
+
+char *
+to_code__CppError(const CppError *self)
+{
+    switch (self->kind) {
+        case CPP_ERROR_KIND_UNEXPECTED_TOKEN:
+            return "0001";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+char *
+to_string__CppError(const CppError *self)
+{
+    return format(
+      "error[{s}]: {sa}", to_code__CppError(self), to_msg__CppError(self));
 }

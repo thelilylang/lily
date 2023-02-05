@@ -50,6 +50,20 @@ inline CONSTRUCTOR(CcWarning, CcWarning, enum CcWarningKind kind)
 
 /**
  *
+ * @brief Convert CcWarning in msg.
+ */
+char *
+to_msg__CcWarning(const CcWarning *self);
+
+/**
+ *
+ * @brief Convert CcWarning in code.
+ */
+char *
+to_code__CcWarning(const CcWarning *self);
+
+/**
+ *
  * @brief Convert CcWarning in str.
  */
 char *

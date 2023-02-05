@@ -30,7 +30,7 @@
 #include <stdlib.h>
 
 char *
-to_string__CppWarning(const CppWarning *self)
+to_msg__CppWarning(const CppWarning *self)
 {
     switch (self->kind) {
         case CPP_WARNING_KIND_UNUSED_PAREN:
@@ -38,4 +38,23 @@ to_string__CppWarning(const CppWarning *self)
         default:
             UNREACHABLE("unknown variant");
     }
+}
+
+char *
+to_code__CppWarning(const CppWarning *self)
+{
+    switch (self->kind) {
+        case CPP_WARNING_KIND_UNUSED_PAREN:
+            return "0001";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+char *
+to_string__CppWarning(const CppWarning *self)
+{
+    return format("warning[{s}]: {sa}",
+                  to_code__CppWarning(self),
+                  to_msg__CppWarning(self));
 }

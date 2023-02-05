@@ -65,6 +65,20 @@ inline VARIANT_CONSTRUCTOR(CppError,
 
 /**
  *
+ * @brief Convert CppError in msg.
+ */
+char *
+to_msg__CppError(const CppError *self);
+
+/**
+ *
+ * @brief Convert CppError in code.
+ */
+char *
+to_code__CppError(const CppError *self);
+
+/**
+ *
  * @brief Convert CppError in str.
  */
 char *
