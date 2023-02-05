@@ -52,6 +52,9 @@
 #define VARIANT_DESTRUCTOR(name, variant, ...) \
     void __free__##name##__##variant(__VA_ARGS__)
 
+#define LEN(arr, item) (((int)sizeof(arr) / sizeof(item)) + 1)
+#define SIZE(arr, item) ((int)sizeof(arr) / sizeof(item))
+
 #define DBG(msg)                                              \
     {                                                         \
         printf("DEBUG: %s (%s:%d)", msg, __FILE__, __LINE__); \
