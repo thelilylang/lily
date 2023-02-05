@@ -80,6 +80,13 @@ push__String(String *self, char item);
 
 /**
  *
+ * @brief Push str to String.
+ */
+void
+push_str__String(String *self, char *s);
+
+/**
+ *
  * @brief Ungrow String buffer.
  */
 void

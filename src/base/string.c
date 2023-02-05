@@ -107,6 +107,14 @@ push__String(String *self, char item)
 }
 
 void
+push_str__String(String *self, char *s)
+{
+    for (Usize i = 0; s[i++];) {
+        push__String(self, s[i - 1]);
+    }
+}
+
+void
 ungrow__String(String *self)
 {
     if (self->len + 1 <= self->capacity / 2) {
