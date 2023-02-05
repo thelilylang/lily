@@ -12,7 +12,6 @@ test_new__String()
 
     ASSERT(s->len == 0);
     ASSERT(s->capacity == 0);
-    ASSERT(s->default_capacity == 4);
 
     FREE(String, s);
 }
@@ -24,7 +23,6 @@ test_from__String()
 
     ASSERT(s->len == 5);
     ASSERT(s->capacity == 10);
-    ASSERT(s->default_capacity == 10);
 
     ASSERT(s->buffer[0] == 'H');
     ASSERT(s->buffer[1] == 'e');
@@ -80,7 +78,6 @@ test_push__String()
 
     ASSERT(s->len == 5);
     ASSERT(s->capacity == 8);
-    ASSERT(s->default_capacity == 4);
 
     ASSERT(s->buffer[0] == 'H');
     ASSERT(s->buffer[1] == 'e');
