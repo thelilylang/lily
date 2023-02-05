@@ -68,6 +68,16 @@ test_d_hex_specifier__Format()
 }
 
 void
+test_f_specifier__Format()
+{
+    char *s = format("{f}", 2.2);
+ 
+    ASSERT(strcmp(s, "2.200000") == 0);
+
+    free(s);
+}
+
+void
 test_S_specifier__Format()
 {
     String *string = from__String("hello");

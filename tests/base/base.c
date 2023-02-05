@@ -21,6 +21,7 @@ main()
     test_d_specifier__Format();
     test_d_binary_sepecifier__Format();
     test_d_octal_specifier__Format();
+    test_f_specifier__Format();
     test_S_specifier__Format();
     test_Sr_specifier__Format();
 
