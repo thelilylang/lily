@@ -34,6 +34,9 @@
 #include <stdio.h>
 #include <string.h>
 
+// Free DiagnosticLevel type.
+static DESTRUCTOR(DiagnosticLevel, const DiagnosticLevel *self);
+
 // Free DiagnosticDetail type.
 static inline DESTRUCTOR(DiagnosticDetail, const DiagnosticDetail *self);
 
@@ -53,8 +56,8 @@ static DESTRUCTOR(DiagnosticLevelUtil, const DiagnosticLevelUtil *self);
 // Construct DiagnosticReferencingItem type.
 static inline CONSTRUCTOR(DiagnosticReferencingItem,
                           DiagnosticReferencingItem,
-                          char *msg,
-                          char *detail_msg,
+                          String *msg,
+                          String *detail_msg,
                           const DiagnosticDetail *detail,
                           const File *file);
 
@@ -158,19 +161,36 @@ static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
     }                                                                         \
     free(split);
 
+DESTRUCTOR(DiagnosticLevel, const DiagnosticLevel *self)
+{
+    switch (self->kind) {
+        case DIAGNOSTIC_LEVEL_KIND_CC_NOTE:
+            FREE(String, self->cc_note);
+            break;
+        case DIAGNOSTIC_LEVEL_KIND_CPP_NOTE:
+            FREE(String, self->cpp_note);
+            break;
+        case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE:
+            FREE(String, self->lily_note);
+            break;
+        default:
+            break;
+    }
+}
+
 DESTRUCTOR(DiagnosticDetail, const DiagnosticDetail *self)
 {
     for (Usize i = 0; i < self->lines->len; i++)
         free(self->lines->buffer[i]);
 
     FREE(Vec, self->lines);
-    free(self->msg);
+    FREE(String, self->msg);
 }
 
 CONSTRUCTOR(DiagnosticLevelUtil,
             DiagnosticLevelUtil,
-            Vec *helps,
-            Vec *notes,
+            Vec *helps, // Vec<String*>*
+            Vec *notes, // Vec<String*>*
             const Location *location)
 {
     return (DiagnosticLevelUtil){ .helps = helps,
@@ -186,7 +206,7 @@ to_string__DiagnosticLevelUtil(const DiagnosticLevelUtil *self)
     for (Usize i = 0; i < self->helps->len; i++) {
         PUSH_STR_AND_FREE(
           res,
-          format("{Sr} {sa}: {s}\n",
+          format("{Sr} {sa}: {S}\n",
                  repeat__String(
                    " ", calc_usize_length(self->location->end_line) + 1),
                  GREEN("- help"),
@@ -196,7 +216,7 @@ to_string__DiagnosticLevelUtil(const DiagnosticLevelUtil *self)
     for (Usize i = 0; i < self->notes->len; i++) {
         PUSH_STR_AND_FREE(
           res,
-          format("{Sr} {sa}: {s}\n",
+          format("{Sr} {sa}: {S}\n",
                  repeat__String(
                    " ", calc_usize_length(self->location->end_line) + 1),
                  CYAN("- note"),
@@ -209,11 +229,11 @@ to_string__DiagnosticLevelUtil(const DiagnosticLevelUtil *self)
 DESTRUCTOR(DiagnosticLevelUtil, const DiagnosticLevelUtil *self)
 {
     for (Usize i = self->helps->len; --i;) {
-        free(self->helps->buffer[i]);
+        FREE(String, self->helps->buffer[i]);
     }
 
     for (Usize i = self->notes->len; --i;) {
-        free(self->notes->buffer[i]);
+        FREE(String, self->notes->buffer[i]);
     }
 
     FREE(Vec, self->helps);
@@ -222,8 +242,8 @@ DESTRUCTOR(DiagnosticLevelUtil, const DiagnosticLevelUtil *self)
 
 CONSTRUCTOR(DiagnosticReferencingItem,
             DiagnosticReferencingItem,
-            char *msg,
-            char *detail_msg,
+            String *msg,
+            String *detail_msg,
             const DiagnosticDetail *detail,
             const File *file)
 {
@@ -241,7 +261,7 @@ to_string__DiagnosticReferencingItem(const DiagnosticReferencingItem *self,
 {
     String *res = NEW(String);
 
-    PUSH_STR_AND_FREE(res, format("{sa} {s}", BLUE("--------> "), self->msg));
+    PUSH_STR_AND_FREE(res, format("{sa} {S}", BLUE("--------> "), self->msg));
     APPEND_AND_FREE(res, to_string__DiagnosticDetail(&self->detail, level));
 
     return res;
@@ -478,7 +498,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const CcError err,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg)
+                    String *detail_msg)
 {
     LINES(location, file);
 
@@ -500,10 +520,10 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     simple_cc_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg)
+                    String *detail_msg)
 {
     LINES(location, file);
 
@@ -528,7 +548,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const CcWarning warning,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg)
+                    String *detail_msg)
 {
     LINES(location, file);
 
@@ -553,7 +573,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const CppError err,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg)
+                    String *detail_msg)
 {
     LINES(location, file);
 
@@ -575,10 +595,10 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     simple_cpp_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg)
+                    String *detail_msg)
 {
     LINES(location, file);
 
@@ -603,7 +623,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const CppWarning warning,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg)
+                    String *detail_msg)
 {
     LINES(location, file);
 
@@ -629,7 +649,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const LilyError err,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg)
+                    String *detail_msg)
 {
     LINES(location, file);
 
@@ -651,10 +671,10 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     simple_lily_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg)
+                    String *detail_msg)
 {
     LINES(location, file);
 
@@ -679,7 +699,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const LilyWarning warning,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg)
+                    String *detail_msg)
 {
 
     LINES(location, file);
@@ -726,7 +746,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     referencing_cc_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *items,
                     Vec *notes,
                     Vec *helps)
@@ -795,7 +815,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     referencing_cpp_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *items,
                     Vec *notes,
                     Vec *helps)
@@ -865,7 +885,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     referencing_lily_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *items,
                     Vec *notes,
                     Vec *helps)
@@ -923,7 +943,7 @@ to_string__Diagnostic(const Diagnostic *self)
             PUSH_STR_AND_FREE(res, to_string__CcError(&self->level.cc_error));
             break;
         case DIAGNOSTIC_LEVEL_KIND_CC_NOTE:
-            PUSH_STR_AND_FREE(res, format("note: {s}", self->level.cc_note));
+            PUSH_STR_AND_FREE(res, format("note: {S}", self->level.cc_note));
             break;
         case DIAGNOSTIC_LEVEL_KIND_CC_WARNING:
             PUSH_STR_AND_FREE(res,
@@ -933,7 +953,7 @@ to_string__Diagnostic(const Diagnostic *self)
             PUSH_STR_AND_FREE(res, to_string__CppError(&self->level.cpp_error));
             break;
         case DIAGNOSTIC_LEVEL_KIND_CPP_NOTE:
-            PUSH_STR_AND_FREE(res, format("note: {s}", self->level.cpp_note));
+            PUSH_STR_AND_FREE(res, format("note: {S}", self->level.cpp_note));
             break;
         case DIAGNOSTIC_LEVEL_KIND_CPP_WARNING:
             PUSH_STR_AND_FREE(res,
@@ -944,7 +964,7 @@ to_string__Diagnostic(const Diagnostic *self)
                               to_string__LilyError(&self->level.lily_error));
             break;
         case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE:
-            PUSH_STR_AND_FREE(res, format("note: {s}", self->level.lily_note));
+            PUSH_STR_AND_FREE(res, format("note: {S}", self->level.lily_note));
             break;
         case DIAGNOSTIC_LEVEL_KIND_LILY_WARNING:
             PUSH_STR_AND_FREE(
@@ -1018,4 +1038,5 @@ emit__Diagnostic(Diagnostic self, Usize *count_error)
 DESTRUCTOR(Diagnostic, const Diagnostic *self)
 {
     FREE(DiagnosticLevelFormat, &self->level_format);
+    FREE(DiagnosticLevel, &self->level);
 }

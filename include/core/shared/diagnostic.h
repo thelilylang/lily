@@ -61,13 +61,13 @@ typedef struct DiagnosticLevel
     union
     {
         CcError cc_error;
-        char *cc_note;
+        String *cc_note;
         CcWarning cc_warning;
         CppError cpp_error;
-        char *cpp_note;
+        String *cpp_note;
         CppWarning cpp_warning;
         LilyError lily_error;
-        char *lily_note;
+        String *lily_note;
         LilyWarning lily_warning;
     };
 } DiagnosticLevel;
@@ -92,7 +92,7 @@ inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
 inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
                            DiagnosticLevel,
                            cc_note,
-                           char *cc_note)
+                           String *cc_note)
 {
     return (DiagnosticLevel){ .kind = DIAGNOSTIC_LEVEL_KIND_CC_NOTE,
                               .cc_note = cc_note };
@@ -131,7 +131,7 @@ inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
 inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
                            DiagnosticLevel,
                            cpp_note,
-                           char *cpp_note)
+                           String *cpp_note)
 {
     return (DiagnosticLevel){ .kind = DIAGNOSTIC_LEVEL_KIND_CPP_NOTE,
                               .cpp_note = cpp_note };
@@ -170,7 +170,7 @@ inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
 inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
                            DiagnosticLevel,
                            lily_note,
-                           char *lily_note)
+                           String *lily_note)
 {
     return (DiagnosticLevel){ .kind = DIAGNOSTIC_LEVEL_KIND_LILY_NOTE,
                               .lily_note = lily_note };
@@ -192,7 +192,7 @@ inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
 typedef struct DiagnosticDetail
 {
     Vec *lines; // Vec<char*>*
-    char *msg;
+    String *msg;
     const Location *location;
 } DiagnosticDetail;
 
@@ -203,7 +203,7 @@ typedef struct DiagnosticDetail
 inline CONSTRUCTOR(DiagnosticDetail,
                    DiagnosticDetail,
                    Vec *lines,
-                   char *msg,
+                   String *msg,
                    const Location *location)
 {
     return (
@@ -212,14 +212,14 @@ inline CONSTRUCTOR(DiagnosticDetail,
 
 typedef struct DiagnosticLevelUtil
 {
-    Vec *helps; // Vec<char*>*
-    Vec *notes; // Vec<char*>*
+    Vec *helps; // Vec<String*>*
+    Vec *notes; // Vec<String*>*
     const Location *location;
 } DiagnosticLevelUtil;
 
 typedef struct DiagnosticReferencingItem
 {
-    char *msg;
+    String *msg;
     const DiagnosticDetail detail;
 } DiagnosticReferencingItem;
 
@@ -294,7 +294,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const CcError err,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg);
+                    String *detail_msg);
 
 /**
  *
@@ -305,10 +305,10 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     simple_cc_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg);
+                    String *detail_msg);
 
 /**
  *
@@ -322,7 +322,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const CcWarning warning,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg);
+                    String *detail_msg);
 
 /**
  *
@@ -336,7 +336,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const CppError err,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg);
+                    String *detail_msg);
 
 /**
  *
@@ -347,10 +347,10 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     simple_cpp_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg);
+                    String *detail_msg);
 
 /**
  *
@@ -364,7 +364,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const CppWarning warning,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg);
+                    String *detail_msg);
 
 /**
  *
@@ -378,7 +378,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const LilyError err,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg);
+                    String *detail_msg);
 
 /**
  *
@@ -389,10 +389,10 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     simple_lily_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg);
+                    String *detail_msg);
 
 /**
  *
@@ -406,7 +406,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const LilyWarning warning,
                     Vec *helps,
                     Vec *notes,
-                    char *detail_msg);
+                    String *detail_msg);
 
 /**
  *
@@ -431,7 +431,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     referencing_cc_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *items,
                     Vec *notes,
                     Vec *helps);
@@ -473,7 +473,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     referencing_cpp_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *items,
                     Vec *notes,
                     Vec *helps);
@@ -515,7 +515,7 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     referencing_lily_note,
                     const File *file,
                     const Location *location,
-                    char *note,
+                    String *note,
                     Vec *items,
                     Vec *notes,
                     Vec *helps);
