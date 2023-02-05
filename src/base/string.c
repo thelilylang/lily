@@ -122,7 +122,7 @@ push__String(String *self, char item)
 {
     if (!self->capacity)
         grow__String(self, self->default_capacity);
-    else if (self->len == self->capacity - 1)
+    else if (self->len >= self->capacity - 1)
         grow__String(self, self->capacity * 2);
 
     self->buffer[self->len] = item;
