@@ -144,6 +144,24 @@ format(const char *fmt, ...)
                         break;
                     }
                     case 'f':
+                        // TODO: use ftoa function instead sprintf
+                        switch (fmt[i + 2]) {
+                            case '.':
+                                TODO("add more precision option");
+                                break;
+                            default: {
+                                Float64 f = va_arg(vl, Float64);
+                                char s[24];
+
+                                sprintf(s, "%f", f);
+
+                                PUSH_STR(s);
+
+                                i += 2;
+
+                                break;
+                            }
+                        }
                         break;
                     case 'c': {
                         char c = va_arg(vl, int);
