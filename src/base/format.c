@@ -24,6 +24,8 @@
 
 #include <base/format.h>
 #include <base/macros.h>
+#include <base/new.h>
+#include <base/string.h>
 #include <base/types.h>
 
 #include <stdarg.h>
@@ -88,7 +90,7 @@ format(const char *fmt, ...)
     res[0] = '\0';
     va_start(vl, fmt);
 
-    for (Usize i = 0; i < len; i++) {
+    for (Usize i = 0; i < len;) {
         switch (fmt[i]) {
             case '{':
                 switch (fmt[i + 1]) {
@@ -219,8 +221,23 @@ format(const char *fmt, ...)
 
                         break;
                     }
-                    case 'S':
+                    case 'S': {
+                        String *s = va_arg(vl, String *);
+
+                        res = realloc(res, buffer_size + s->len + 1);
+                        buffer_size += s->len;
+
+                        strcat(res, s->buffer);
+
+                        if (fmt[i + 2] == 'r') {
+                            FREE(String, s);
+                            i += 3;
+                        } else {
+                            i += 2;
+                        }
+
                         break;
+                    }
                     case '{':
                         res = realloc(res, buffer_size + 2);
                         res[buffer_size] = '{';
@@ -243,6 +260,7 @@ format(const char *fmt, ...)
                 res = realloc(res, buffer_size + 2);
                 res[buffer_size] = fmt[i];
                 res[++buffer_size] = '\0';
+                i++;
         }
     }
 
