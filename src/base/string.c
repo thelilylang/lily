@@ -23,6 +23,7 @@
  */
 
 #include <base/assert.h>
+#include <base/format.h>
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/string.h>
@@ -48,6 +49,25 @@ void
 append__String(String *self, const String *other)
 {
     push_str__String(self, other->buffer);
+}
+
+String *
+format__String(char *fmt, ...)
+{
+    char *buffer = format(fmt);
+    Usize len = strlen(buffer);
+    Usize capacity = len * 2;
+
+    buffer = realloc(buffer, capacity);
+
+    String *self = malloc(sizeof(String));
+
+    self->buffer = buffer;
+    self->len = len;
+    self->capacity = capacity;
+    self->default_capacity = capacity;
+
+    return self;
 }
 
 String *

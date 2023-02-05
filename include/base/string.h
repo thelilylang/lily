@@ -63,6 +63,13 @@ append__String(String *self, const String *other);
 
 /**
  *
+ * @brief A format way for String.
+ */
+String *
+format__String(char *fmt, ...);
+
+/**
+ *
  * @brief Construct String type with default buffer items.
  */
 String *
