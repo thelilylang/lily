@@ -28,6 +28,12 @@
 #include <base/macros.h>
 #include <base/types.h>
 
+#define PUSH_STR_AND_FREE(self, s) \
+    {                              \
+        push_str__String(self, s); \
+        free(s);                   \
+    }
+
 typedef struct String
 {
     char *buffer;
@@ -84,6 +90,13 @@ push__String(String *self, char item);
  */
 void
 push_str__String(String *self, char *s);
+
+/**
+ *
+ * @brief Repeat n times a str.
+ */
+String *
+repeat__String(char *s, Usize n);
 
 /**
  *

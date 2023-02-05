@@ -24,6 +24,7 @@
 
 #include <base/assert.h>
 #include <base/macros.h>
+#include <base/new.h>
 #include <base/string.h>
 
 #include <stdio.h>
@@ -112,6 +113,18 @@ push_str__String(String *self, char *s)
     for (Usize i = 0; s[i++];) {
         push__String(self, s[i - 1]);
     }
+}
+
+String *
+repeat__String(char *s, Usize n)
+{
+    String *res = NEW(String);
+
+    for (Usize i = 0; i < n; i++) {
+        push_str__String(res, s);
+    }
+
+    return res;
 }
 
 void
