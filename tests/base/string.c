@@ -37,6 +37,23 @@ test_from__String()
 }
 
 void
+test_split__String()
+{
+    String *s = from__String("Hello\nWorld");
+    char **split = split__String(s, '\n');
+
+    ASSERT(!strcmp(split[0], "Hello"));
+    ASSERT(!strcmp(split[1], "World"));
+
+    FREE(String, s);
+
+    for (Usize i = 0; i < (Usize)LEN(split, *split); i++)
+        free(split[i]);
+
+    free(split);
+}
+
+void
 test_pop__String()
 {
     String *s = from__String("Hello");
