@@ -34,50 +34,48 @@
 
 #define PUSH_STR(s)                                  \
     res = realloc(res, buffer_size + strlen(s) + 1); \
-    for (Usize i = 0; s[i++];) {                     \
-        res[buffer_size] = s[i - 1];                 \
+    for (Usize j = 0; s[j++];) {                     \
+        res[buffer_size] = s[j - 1];                 \
         res[++buffer_size] = '\0';                   \
     }
 
 #define REV_STR(s, size)                 \
-    for (int i = 0; i < size / 2; i++) { \
-        char tmp = s[i];                 \
-        s[i] = s[size - i - 1];          \
-        s[size - i - 1] = tmp;           \
+    for (int j = 0; j < size / 2; j++) { \
+        char tmp = s[j];                 \
+        s[j] = s[size - j - 1];          \
+        s[size - j - 1] = tmp;           \
     }
 
-#define PUSH_INT(i, base)                    \
-    if (i < 0) {                             \
+#define PUSH_INT(d, base)                    \
+    if (d < 0) {                             \
         res = realloc(res, buffer_size + 2); \
         res[buffer_size] = '-';              \
         res[++buffer_size] = '\0';           \
-        i = -i;                              \
+        d = -d;                              \
     }                                        \
-    while (i > 0) {                          \
+    while (d > 0) {                          \
         res = realloc(res, buffer_size + 2); \
-        res[buffer_size] = (i % base) + '0'; \
+        res[buffer_size] = (d % base) + '0'; \
         res[++buffer_size] = '\0';           \
-        i /= base;                           \
+        d /= base;                           \
     }                                        \
-    int size = strlen(res);                  \
-    REV_STR(res, size);
+    REV_STR(res, buffer_size);
 
-#define PUSH_INT_BASE_16(i)                     \
-    if (i < 0) {                                \
+#define PUSH_INT_BASE_16(d)                     \
+    if (d < 0) {                                \
         res = realloc(res, buffer_size + 2);    \
         res[buffer_size] = '-';                 \
         res[++buffer_size] = '\0';              \
-        i = -i;                                 \
+        d = -d;                                 \
     }                                           \
-    while (i > 0) {                             \
+    while (d > 0) {                             \
         res = realloc(res, buffer_size + 2);    \
-        int n = (i % 16) + '0';                 \
+        int n = (d % 16) + '0';                 \
         res[buffer_size] = n > '9' ? n + 7 : n; \
         res[++buffer_size] = '\0';              \
-        i /= 16;                                \
+        d /= 16;                                \
     }                                           \
-    int size = strlen(res);                     \
-    REV_STR(res, size);
+    REV_STR(res, buffer_size);
 
 char *
 format(const char *fmt, ...)
@@ -129,7 +127,7 @@ format(const char *fmt, ...)
                                         break;
                                     }
                                     default:
-                                        FAILED("unknown sepecifier");
+                                        FAILED("unknown specifier");
                                 }
 
                                 i += 4;
@@ -207,7 +205,7 @@ format(const char *fmt, ...)
                                         break;
                                     }
                                     default:
-                                        FAILED("unknown sepecifier");
+                                        FAILED("unknown specifier");
                                 }
 
                                 i += 4;
