@@ -93,6 +93,7 @@ read_file__Path(const char *path)
 
     FILE *file = fopen(path, "r");
     char *content = malloc(1);
+    content[0] = '\0';
 
     if (file == NULL) {
         fprintf(stderr, "Could not open file \"%s\"", path);
@@ -103,7 +104,7 @@ read_file__Path(const char *path)
     ssize_t read;
 
     while ((read = getline(&line, &len, file) != -1)) {
-        content = realloc(content, strlen(content) + strlen(line) + 1);
+        content = realloc(content, strlen(content) + len + 1);
         strcat(content, line);
     }
 
