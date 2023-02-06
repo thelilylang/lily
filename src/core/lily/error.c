@@ -43,6 +43,8 @@ to_msg__LilyError(const LilyError *self)
             return "unclosed comment block";
         case LILY_ERROR_KIND_INVALID_CHAR_LITERAL:
             return "invalid char literal";
+        case LILY_ERROR_KIND_UNCLOSED_STRING_LITERAL:
+            return "unclosed string literal";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -62,6 +64,8 @@ to_code__LilyError(const LilyError *self)
             return "0004";
         case LILY_ERROR_KIND_INVALID_CHAR_LITERAL:
             return "0005";
+        case LILY_ERROR_KIND_UNCLOSED_STRING_LITERAL:
+            return "0006";
         default:
             UNREACHABLE("unknown variant");
     }
