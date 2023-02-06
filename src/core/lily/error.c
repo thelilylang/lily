@@ -34,13 +34,15 @@ to_msg__LilyError(const LilyError *self)
 {
     switch (self->kind) {
         case LILY_ERROR_KIND_UNEXPECTED_TOKEN:
-            return format("unexpected token");
+            return "unexpected token";
         case LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL:
-            return format("unclosed char literal");
+            return "unclosed char literal";
         case LILY_ERROR_KIND_INVALID_ESCAPE:
-            return format("invalid escape");
+            return "invalid escape";
         case LILY_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
-            return format("unclosed comment block");
+            return "unclosed comment block";
+        case LILY_ERROR_KIND_INVALID_CHAR_LITERAL:
+            return "invalid char literal";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -58,6 +60,8 @@ to_code__LilyError(const LilyError *self)
             return "0003";
         case LILY_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
             return "0004";
+        case LILY_ERROR_KIND_INVALID_CHAR_LITERAL:
+            return "0005";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -66,6 +70,14 @@ to_code__LilyError(const LilyError *self)
 char *
 to_string__LilyError(const LilyError *self)
 {
-    return format(
-      "error[{s}]: {sa}", to_code__LilyError(self), to_msg__LilyError(self));
+    char *msg = to_msg__LilyError(self);
+    char *res = format(
+      "error[{s}]: {sa}", msg, to_msg__LilyError(self));
+
+    switch (self->kind) {
+        default:
+            break;
+    }
+
+    return res;
 }
