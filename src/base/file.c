@@ -89,14 +89,18 @@ get_extension__Path(const char *path)
 char *
 read_file__Path(const char *path)
 {
-    ASSERT(is_directory__Path(path) == false);
+    if (is_directory__Path(path)) {
+        printf("\x1b[31merror\x1b[0m: the file is a directory: `%s`\n", path);
+        exit(1);
+    }
 
     FILE *file = fopen(path, "r");
     char *content = malloc(1);
     content[0] = '\0';
 
-    if (file == NULL) {
-        fprintf(stderr, "Could not open file \"%s\"", path);
+    if (!file) {
+        printf("\x1b[31merror\x1b[0m: could not open file: `%s`\n", path);
+        exit(1);
     }
 
     char *line = NULL;
