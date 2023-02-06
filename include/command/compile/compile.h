@@ -27,6 +27,7 @@
 
 #include <cli/config.h>
 
-void run__Compile(const CompileConfig *config);
+void
+run__Compile(const CompileConfig *config);
 
 #endif // LILY_COMMAND_COMPILE_COMPILE_H

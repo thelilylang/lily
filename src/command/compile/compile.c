@@ -33,7 +33,8 @@
 #include <stdio.h>
 #include <string.h>
 
-void run__Compile(const CompileConfig *config)
+void
+run__Compile(const CompileConfig *config)
 {
     char *content = read_file__Path(config->filename);
     char *file_ext = get_extension__Path(config->filename);
@@ -43,10 +44,10 @@ void run__Compile(const CompileConfig *config)
         exit(1);
     }
 
-    Source source = NEW(Source, NEW(Cursor, content), NEW(File, config->filename, content));
-    Scanner scanner = NEW(Scanner, &source);
+    const File file = NEW(File, config->filename, content);
+    Scanner scanner = NEW(Scanner, NEW(Source, NEW(Cursor, content), &file));
 
-    printf("%s\n", scanner.source->file.content);
+    printf("%s\n", scanner.source.file->content);
 
     free(file_ext);
     free(content);
