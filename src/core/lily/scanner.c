@@ -102,6 +102,9 @@ scan_identifier__Scanner(Scanner *self);
 static char *
 scan_char__Scanner(Scanner *self);
 
+static String *
+scan_string__Scanner(Scanner *self);
+
 enum LilyTokenKind
 get_keyword(char *id)
 {
@@ -665,6 +668,50 @@ scan_char__Scanner(Scanner *self)
       &self->count_error);
 
     return NULL;
+}
+
+static String *
+scan_string__Scanner(Scanner *self)
+{
+    Location location_error = default__Location(self->source.file->name);
+    String *res = NEW(String);
+
+    start__Location(
+      &location_error, self->source.cursor.line, self->source.cursor.column);
+    next_char__Source(&self->source);
+
+    while (self->source.cursor.current != '\"') {
+        if (self->source.cursor.position >
+            strlen(self->source.file->content) - 2) {
+            end__Location(&location_error,
+                          self->source.cursor.line,
+                          self->source.cursor.column);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->source.file,
+                &location_error,
+                NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_STRING_LITERAL),
+                init__Vec(
+                  1, from__String("add `\"` to the end of string literal")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            FREE(String, res);
+
+            return NULL;
+        }
+
+        next_char__Source(&self->source);
+
+        push__String(
+          res, self->source.file->content[self->source.cursor.position - 1]);
+    }
+
+    return res;
 }
 
 void
