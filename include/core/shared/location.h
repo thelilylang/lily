@@ -58,6 +58,21 @@ inline CONSTRUCTOR(Location,
 
 /**
  *
+ * @brief Construct Location type with default value on start_line, end_line,
+ * start_column, end_column.
+ */
+inline Location
+default__Location(const char *filename)
+{
+    return (Location){ .filename = filename,
+                       .start_line = 1,
+                       .end_line = 1,
+                       .start_column = 1,
+                       .end_column = 1 };
+}
+
+/**
+ *
  * @brief Set start_line and start_column.
  */
 void
