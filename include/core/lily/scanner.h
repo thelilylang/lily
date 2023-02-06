@@ -33,31 +33,30 @@
 #include <core/shared/diagnostic.h>
 #include <core/shared/source.h>
 
-typedef struct Scanner {
+typedef struct Scanner
+{
     Vec *tokens; // Vec<LilyToken*>*
     Location location;
-    Source *source;
+    Source source;
     Usize count_error;
 } Scanner;
 
 /**
- * 
+ *
  * @brief Construct Scanner type.
-*/
-inline CONSTRUCTOR(Scanner, Scanner, Source *source)
+ */
+inline CONSTRUCTOR(Scanner, Scanner, Source source)
 {
-    return (Scanner){
-        .tokens = NEW(Vec),
-        .location = default__Location(source->file.name),
-        .source = source,
-        .count_error = 0
-    };
+    return (Scanner){ .tokens = NEW(Vec),
+                      .location = default__Location(source.file->name),
+                      .source = source,
+                      .count_error = 0 };
 }
 
 /**
- * 
+ *
  * @brief Free Scanner type.
-*/
+ */
 DESTRUCTOR(Scanner, const Scanner *self);
 
 #endif // LILY_CORE_LILY_SCANNER_H

@@ -24,6 +24,405 @@
 
 #include <core/lily/scanner.h>
 
+#include <ctype.h>
+#include <string.h>
+
+// Get keyword from id.
+static enum LilyTokenKind
+get_keyword(char *id);
+
+static void
+skip_space__Scanner(Scanner *self);
+
+// Next char n times.
+static void
+jump__Scanner(Scanner *self, Usize n);
+
+// Assign to line and column to start_line and start_column Location's field.
+static void
+start_token__Scanner(Scanner *self, Usize line, Usize column);
+
+// Assign to line and column to end_line and end_column Location's field.
+static void
+end_token__Scanner(Scanner *self, Usize line, Usize column);
+
+// Get character at position + n.
+static char *
+peek_char__Scanner(const Scanner *self, Usize n);
+
+// Next char according the token.
+static void
+next_char_by_token__Scanner(Scanner *self, LilyToken *token);
+
+// Push token to tokens.
+static inline void
+push_token__Scanner(Scanner *self, LilyToken *token);
+
+// Check if current is a digit.
+static inline bool
+is_digit__Scanner(const Scanner *self);
+
+// Check if current can be an identifier.
+static inline bool
+is_ident__Scanner(const Scanner *self);
+
+// Check if current can be an hexadecimal.
+static inline bool
+is_hex__Scanner(const Scanner *self);
+
+// Check if current can be an octal.
+static inline bool
+is_oct__Scanner(const Scanner *self);
+
+// Check if current can be a binary.
+static inline bool
+is_bin__Scanner(const Scanner *self);
+
+// Check if current can be a number.
+static inline bool
+is_num__Scanner(const Scanner *self);
+
+enum LilyTokenKind
+get_keyword(char *id)
+{
+    if (!strcmp(id, "alias"))
+        return LILY_TOKEN_KIND_KEYWORD_ALIAS;
+    else if (!strcmp(id, "and"))
+        return LILY_TOKEN_KIND_KEYWORD_AND;
+    else if (!strcmp(id, "as"))
+        return LILY_TOKEN_KIND_KEYWORD_AS;
+    else if (!strcmp(id, "asm"))
+        return LILY_TOKEN_KIND_KEYWORD_ASM;
+    else if (!strcmp(id, "async"))
+        return LILY_TOKEN_KIND_KEYWORD_ASYNC;
+    else if (!strcmp(id, "await"))
+        return LILY_TOKEN_KIND_KEYWORD_AWAIT;
+    else if (!strcmp(id, "begin"))
+        return LILY_TOKEN_KIND_KEYWORD_BEGIN;
+    else if (!strcmp(id, "break"))
+        return LILY_TOKEN_KIND_KEYWORD_BREAK;
+    else if (!strcmp(id, "cast"))
+        return LILY_TOKEN_KIND_KEYWORD_CAST;
+    else if (!strcmp(id, "catch"))
+        return LILY_TOKEN_KIND_KEYWORD_CATCH;
+    else if (!strcmp(id, "class"))
+        return LILY_TOKEN_KIND_KEYWORD_CLASS;
+    else if (!strcmp(id, "comptime"))
+        return LILY_TOKEN_KIND_KEYWORD_COMPTIME;
+    else if (!strcmp(id, "do"))
+        return LILY_TOKEN_KIND_KEYWORD_DO;
+    else if (!strcmp(id, "drop"))
+        return LILY_TOKEN_KIND_KEYWORD_DROP;
+    else if (!strcmp(id, "elif"))
+        return LILY_TOKEN_KIND_KEYWORD_ELIF;
+    else if (!strcmp(id, "else"))
+        return LILY_TOKEN_KIND_KEYWORD_ELSE;
+    else if (!strcmp(id, "end"))
+        return LILY_TOKEN_KIND_KEYWORD_END;
+    else if (!strcmp(id, "enum"))
+        return LILY_TOKEN_KIND_KEYWORD_ENUM;
+    else if (!strcmp(id, "error"))
+        return LILY_TOKEN_KIND_KEYWORD_ERROR;
+    else if (!strcmp(id, "false"))
+        return LILY_TOKEN_KIND_KEYWORD_FALSE;
+    else if (!strcmp(id, "for"))
+        return LILY_TOKEN_KIND_KEYWORD_FOR;
+    else if (!strcmp(id, "fun"))
+        return LILY_TOKEN_KIND_KEYWORD_FUN;
+    else if (!strcmp(id, "global"))
+        return LILY_TOKEN_KIND_KEYWORD_GLOBAL;
+    else if (!strcmp(id, "if"))
+        return LILY_TOKEN_KIND_KEYWORD_IF;
+    else if (!strcmp(id, "impl"))
+        return LILY_TOKEN_KIND_KEYWORD_IMPL;
+    else if (!strcmp(id, "import"))
+        return LILY_TOKEN_KIND_KEYWORD_IMPORT;
+    else if (!strcmp(id, "in"))
+        return LILY_TOKEN_KIND_KEYWORD_IN;
+    else if (!strcmp(id, "inherit"))
+        return LILY_TOKEN_KIND_KEYWORD_INHERIT;
+    else if (!strcmp(id, "is"))
+        return LILY_TOKEN_KIND_KEYWORD_IS;
+    else if (!strcmp(id, "macro"))
+        return LILY_TOKEN_KIND_KEYWORD_MACRO;
+    else if (!strcmp(id, "match"))
+        return LILY_TOKEN_KIND_KEYWORD_MATCH;
+    else if (!strcmp(id, "module"))
+        return LILY_TOKEN_KIND_KEYWORD_MODULE;
+    else if (!strcmp(id, "mut"))
+        return LILY_TOKEN_KIND_KEYWORD_MUT;
+    else if (!strcmp(id, "next"))
+        return LILY_TOKEN_KIND_KEYWORD_NEXT;
+    else if (!strcmp(id, "nil"))
+        return LILY_TOKEN_KIND_KEYWORD_NIL;
+    else if (!strcmp(id, "none"))
+        return LILY_TOKEN_KIND_KEYWORD_NONE;
+    else if (!strcmp(id, "not"))
+        return LILY_TOKEN_KIND_KEYWORD_NOT;
+    else if (!strcmp(id, "object"))
+        return LILY_TOKEN_KIND_KEYWORD_object;
+    else if (!strcmp(id, "Object"))
+        return LILY_TOKEN_KIND_KEYWORD_OBJECT;
+    else if (!strcmp(id, "or"))
+        return LILY_TOKEN_KIND_KEYWORD_OR;
+    else if (!strcmp(id, "package"))
+        return LILY_TOKEN_KIND_KEYWORD_PACKAGE;
+    else if (!strcmp(id, "pub"))
+        return LILY_TOKEN_KIND_KEYWORD_PUB;
+    else if (!strcmp(id, "raise"))
+        return LILY_TOKEN_KIND_KEYWORD_RAISE;
+    else if (!strcmp(id, "record"))
+        return LILY_TOKEN_KIND_KEYWORD_RECORD;
+    else if (!strcmp(id, "ref"))
+        return LILY_TOKEN_KIND_KEYWORD_REF;
+    else if (!strcmp(id, "req"))
+        return LILY_TOKEN_KIND_KEYWORD_REQ;
+    else if (!strcmp(id, "return"))
+        return LILY_TOKEN_KIND_KEYWORD_RETURN;
+    else if (!strcmp(id, "self"))
+        return LILY_TOKEN_KIND_KEYWORD_self;
+    else if (!strcmp(id, "Self"))
+        return LILY_TOKEN_KIND_KEYWORD_SELF;
+    else if (!strcmp(id, "test"))
+        return LILY_TOKEN_KIND_KEYWORD_TEST;
+    else if (!strcmp(id, "trace"))
+        return LILY_TOKEN_KIND_KEYWORD_TRACE;
+    else if (!strcmp(id, "trait"))
+        return LILY_TOKEN_KIND_KEYWORD_TRAIT;
+    else if (!strcmp(id, "true"))
+        return LILY_TOKEN_KIND_KEYWORD_TRUE;
+    else if (!strcmp(id, "try"))
+        return LILY_TOKEN_KIND_KEYWORD_TRY;
+    else if (!strcmp(id, "type"))
+        return LILY_TOKEN_KIND_KEYWORD_TYPE;
+    else if (!strcmp(id, "undef"))
+        return LILY_TOKEN_KIND_KEYWORD_UNDEF;
+    else if (!strcmp(id, "unsafe"))
+        return LILY_TOKEN_KIND_KEYWORD_UNSAFE;
+    else if (!strcmp(id, "val"))
+        return LILY_TOKEN_KIND_KEYWORD_VAL;
+    else if (!strcmp(id, "when"))
+        return LILY_TOKEN_KIND_KEYWORD_WHEN;
+    else if (!strcmp(id, "while"))
+        return LILY_TOKEN_KIND_KEYWORD_WHILE;
+    else if (!strcmp(id, "xor"))
+        return LILY_TOKEN_KIND_KEYWORD_XOR;
+    else
+        return LILY_TOKEN_KIND_IDENTIFIER_NORMAL;
+}
+
+void
+skip_space__Scanner(Scanner *self)
+{
+    while (isspace(self->source.cursor.current) &&
+           self->source.cursor.position <
+             strlen(self->source.file->content) - 1) {
+        next_char__Source(&self->source);
+    }
+}
+
+void
+jump__Scanner(Scanner *self, Usize n)
+{
+    for (Usize i = 0; i < n; i++)
+        next_char__Source(&self->source);
+}
+
+void
+start_token__Scanner(Scanner *self, Usize line, Usize column)
+{
+    self->location.start_line = line;
+    self->location.start_column = column;
+}
+
+void
+end_token__Scanner(Scanner *self, Usize line, Usize column)
+{
+    self->location.end_line = line;
+    self->location.end_column = column;
+}
+
+char *
+peek_char__Scanner(const Scanner *self, Usize n)
+{
+    if (self->source.cursor.position < strlen(self->source.file->content) - 1) {
+        return self->source.file->content[self->source.cursor.position + n];
+    }
+
+    return NULL;
+}
+
+void
+next_char_by_token__Scanner(Scanner *self, LilyToken *token)
+{
+    switch (token->kind) {
+        case LILY_TOKEN_KIND_COMMENT_BLOCK:
+        case LILY_TOKEN_KIND_COMMENT_DOC:
+        case LILY_TOKEN_KIND_COMMENT_LINE:
+            return;
+        case LILY_TOKEN_KIND_NOT_EQ:
+        case LILY_TOKEN_KIND_XOR_EQ:
+        case LILY_TOKEN_KIND_L_BRACE:
+        case LILY_TOKEN_KIND_L_HOOK:
+        case LILY_TOKEN_KIND_L_PAREN:
+        case LILY_TOKEN_KIND_R_BRACE:
+        case LILY_TOKEN_KIND_R_HOOK:
+        case LILY_TOKEN_KIND_R_PAREN:
+        case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+        case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
+        case LILY_TOKEN_KIND_KEYWORD_ALIAS:
+        case LILY_TOKEN_KIND_KEYWORD_AND:
+        case LILY_TOKEN_KIND_KEYWORD_AS:
+        case LILY_TOKEN_KIND_KEYWORD_ASM:
+        case LILY_TOKEN_KIND_KEYWORD_ASYNC:
+        case LILY_TOKEN_KIND_KEYWORD_AWAIT:
+        case LILY_TOKEN_KIND_KEYWORD_BEGIN:
+        case LILY_TOKEN_KIND_KEYWORD_BREAK:
+        case LILY_TOKEN_KIND_KEYWORD_CAST:
+        case LILY_TOKEN_KIND_KEYWORD_CATCH:
+        case LILY_TOKEN_KIND_KEYWORD_CLASS:
+        case LILY_TOKEN_KIND_KEYWORD_COMPTIME:
+        case LILY_TOKEN_KIND_KEYWORD_DO:
+        case LILY_TOKEN_KIND_KEYWORD_DROP:
+        case LILY_TOKEN_KIND_KEYWORD_ELIF:
+        case LILY_TOKEN_KIND_KEYWORD_ELSE:
+        case LILY_TOKEN_KIND_KEYWORD_END:
+        case LILY_TOKEN_KIND_KEYWORD_ENUM:
+        case LILY_TOKEN_KIND_KEYWORD_ERROR:
+        case LILY_TOKEN_KIND_KEYWORD_FALSE:
+        case LILY_TOKEN_KIND_KEYWORD_FOR:
+        case LILY_TOKEN_KIND_KEYWORD_FUN:
+        case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
+        case LILY_TOKEN_KIND_KEYWORD_IF:
+        case LILY_TOKEN_KIND_KEYWORD_IMPL:
+        case LILY_TOKEN_KIND_KEYWORD_IMPORT:
+        case LILY_TOKEN_KIND_KEYWORD_IN:
+        case LILY_TOKEN_KIND_KEYWORD_INHERIT:
+        case LILY_TOKEN_KIND_KEYWORD_IS:
+        case LILY_TOKEN_KIND_KEYWORD_MACRO:
+        case LILY_TOKEN_KIND_KEYWORD_MATCH:
+        case LILY_TOKEN_KIND_KEYWORD_MODULE:
+        case LILY_TOKEN_KIND_KEYWORD_MUT:
+        case LILY_TOKEN_KIND_KEYWORD_NEXT:
+        case LILY_TOKEN_KIND_KEYWORD_NIL:
+        case LILY_TOKEN_KIND_KEYWORD_NONE:
+        case LILY_TOKEN_KIND_KEYWORD_NOT:
+        case LILY_TOKEN_KIND_KEYWORD_object:
+        case LILY_TOKEN_KIND_KEYWORD_OBJECT:
+        case LILY_TOKEN_KIND_KEYWORD_OR:
+        case LILY_TOKEN_KIND_KEYWORD_PACKAGE:
+        case LILY_TOKEN_KIND_KEYWORD_PUB:
+        case LILY_TOKEN_KIND_KEYWORD_RAISE:
+        case LILY_TOKEN_KIND_KEYWORD_RECORD:
+        case LILY_TOKEN_KIND_KEYWORD_REF:
+        case LILY_TOKEN_KIND_KEYWORD_REQ:
+        case LILY_TOKEN_KIND_KEYWORD_RETURN:
+        case LILY_TOKEN_KIND_KEYWORD_self:
+        case LILY_TOKEN_KIND_KEYWORD_SELF:
+        case LILY_TOKEN_KIND_KEYWORD_TEST:
+        case LILY_TOKEN_KIND_KEYWORD_TRACE:
+        case LILY_TOKEN_KIND_KEYWORD_TRAIT:
+        case LILY_TOKEN_KIND_KEYWORD_TRUE:
+        case LILY_TOKEN_KIND_KEYWORD_TRY:
+        case LILY_TOKEN_KIND_KEYWORD_TYPE:
+        case LILY_TOKEN_KIND_KEYWORD_UNDEF:
+        case LILY_TOKEN_KIND_KEYWORD_UNSAFE:
+        case LILY_TOKEN_KIND_KEYWORD_VAL:
+        case LILY_TOKEN_KIND_KEYWORD_WHEN:
+        case LILY_TOKEN_KIND_KEYWORD_WHILE:
+        case LILY_TOKEN_KIND_KEYWORD_XOR:
+        case LILY_TOKEN_KIND_LITERAL_BIT_CHAR:
+        case LILY_TOKEN_KIND_LITERAL_BIT_STRING:
+        case LILY_TOKEN_KIND_LITERAL_CHAR:
+        case LILY_TOKEN_KIND_LITERAL_FLOAT:
+        case LILY_TOKEN_KIND_LITERAL_INT:
+        case LILY_TOKEN_KIND_LITERAL_STRING:
+            next_char__Source(&self->source);
+            return;
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
+            jump__Scanner(self, 3);
+            return;
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
+            jump__Scanner(self, 4);
+            return;
+        default: {
+            String *token_s = to_string__LilyToken(token);
+
+            jump__Scanner(self, token_s->len);
+
+            FREE(String, token_s);
+        }
+    }
+}
+
+void
+push_token__Scanner(Scanner *self, LilyToken *token)
+{
+    push__Vec(self->tokens, token);
+}
+
+bool
+is_digit__Scanner(const Scanner *self)
+{
+    return isdigit(self->source.cursor.current);
+}
+
+bool
+is_ident__Scanner(const Scanner *self)
+{
+    return is_digit__Scanner(self) || isalpha(self->source.cursor.current) ||
+           self->source.cursor.current == '_';
+}
+
+bool
+is_hex__Scanner(const Scanner *self)
+{
+    return is_digit__Scanner(self) ||
+           (self->source.cursor.current >= 'a' &&
+            self->source.cursor.current <= 'f') ||
+           (self->source.cursor.current >= 'A' &&
+            self->source.cursor.current <= 'f') ||
+           self->source.cursor.current == '_';
+}
+
+bool
+is_oct__Scanner(const Scanner *self)
+{
+    return (self->source.cursor.current >= '0' &&
+            self->source.cursor.current <= '7') ||
+           self->source.cursor.current == '_';
+}
+
+bool
+is_bin__Scanner(const Scanner *self)
+{
+    return (self->source.cursor.current >= '0' &&
+            self->source.cursor.current <= '1') ||
+           self->source.cursor.current == '_';
+}
+
+bool
+is_num__Scanner(const Scanner *self)
+{
+    return is_digit__Scanner(self) ||
+           (self->source.cursor.current == '.' &&
+            peek_char__Scanner(self, 1) != '.') ||
+           self->source.cursor.current == 'e' ||
+           self->source.cursor.current == 'E' ||
+           self->source.cursor.current == '_';
+}
+
 DESTRUCTOR(Scanner, const Scanner *self)
 {
     FREE_BUFFER_ITEMS(self->tokens->buffer, self->tokens->len, LilyToken);
