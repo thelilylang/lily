@@ -440,6 +440,13 @@ VARIANT_CONSTRUCTOR(LilyToken *,
 
 /**
  *
+ * @brief Convert LilyToken in String.
+ */
+String *
+to_string__LilyToken(LilyToken *self);
+
+/**
+ *
  * @brief Free LilyToken type.
  */
 DESTRUCTOR(LilyToken, LilyToken *self);

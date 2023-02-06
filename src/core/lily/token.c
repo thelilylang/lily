@@ -26,7 +26,9 @@
 
 #include <core/lily/token.h>
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Free LilyToken type (LILY_TOKEN_KIND_COMMENT_DOC).
 static inline VARIANT_DESTRUCTOR(LilyToken, comment_doc, LilyToken *self);
@@ -389,6 +391,303 @@ VARIANT_CONSTRUCTOR(LilyToken *,
     self->literal_suffix_usize = literal_suffix_usize;
 
     return self;
+}
+
+String *
+to_string__LilyToken(LilyToken *self)
+{
+    switch (self->kind) {
+        case LILY_TOKEN_KIND_AMPERSAND_EQ:
+            return from__String("&=");
+        case LILY_TOKEN_KIND_AMPERSAND:
+            return from__String("&");
+        case LILY_TOKEN_KIND_ARROW:
+            return from__String("->");
+        case LILY_TOKEN_KIND_AT:
+            return from__String("@");
+        case LILY_TOKEN_KIND_BANG:
+            return from__String("!");
+        case LILY_TOKEN_KIND_BAR_EQ:
+            return from__String("|=");
+        case LILY_TOKEN_KIND_BAR_R_SHIFT:
+            return from__String("|>");
+        case LILY_TOKEN_KIND_BAR:
+            return from__String("|");
+        case LILY_TOKEN_KIND_COLON_COLON:
+            return from__String("::");
+        case LILY_TOKEN_KIND_COLON:
+            return from__String(":");
+        case LILY_TOKEN_KIND_COMMA:
+            return from__String(",");
+        case LILY_TOKEN_KIND_COMMENT_BLOCK:
+            return from__String("COMMENT(BLOCK)");
+        case LILY_TOKEN_KIND_COMMENT_DOC:
+            return format__String("COMMENT(DOC({S}))", self->comment_doc);
+        case LILY_TOKEN_KIND_COMMENT_LINE:
+            return from__String("COMMENT(LINE)");
+        case LILY_TOKEN_KIND_DOLLAR:
+            return from__String("$");
+        case LILY_TOKEN_KIND_DOT_DOT_DOT:
+            return from__String("...");
+        case LILY_TOKEN_KIND_DOT_DOT:
+            return from__String("..");
+        case LILY_TOKEN_KIND_DOT_INTERROGATION:
+            return from__String("?");
+        case LILY_TOKEN_KIND_DOT_STAR:
+            return from__String(".*");
+        case LILY_TOKEN_KIND_DOT:
+            return from__String(".");
+        case LILY_TOKEN_KIND_EOF:
+            return from__String("EOF");
+        case LILY_TOKEN_KIND_EQ_EQ:
+            return from__String("==");
+        case LILY_TOKEN_KIND_EQ:
+            return from__String("=");
+        case LILY_TOKEN_KIND_FAT_ARROW:
+            return from__String("=>");
+        case LILY_TOKEN_KIND_HASHTAG:
+            return from__String("#");
+        case LILY_TOKEN_KIND_HAT_EQ:
+            return from__String("^=");
+        case LILY_TOKEN_KIND_HAT:
+            return from__String("^");
+        case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
+            return format__String("{{{{{S}}}", self->identifier_macro);
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            return format__String("{S}", self->identifier_normal);
+        case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
+            return format__String("`{S}`", self->identifier_operator);
+        case LILY_TOKEN_KIND_INTERROGATION:
+            return from__String("?");
+        case LILY_TOKEN_KIND_INVERSE_ARROW:
+            return from__String("<-");
+        case LILY_TOKEN_KIND_KEYWORD_ALIAS:
+            return from__String("alias");
+        case LILY_TOKEN_KIND_KEYWORD_AND:
+            return from__String("and");
+        case LILY_TOKEN_KIND_KEYWORD_AS:
+            return from__String("as");
+        case LILY_TOKEN_KIND_KEYWORD_ASM:
+            return from__String("asm");
+        case LILY_TOKEN_KIND_KEYWORD_ASYNC:
+            return from__String("async");
+        case LILY_TOKEN_KIND_KEYWORD_AWAIT:
+            return from__String("await");
+        case LILY_TOKEN_KIND_KEYWORD_BEGIN:
+            return from__String("begin");
+        case LILY_TOKEN_KIND_KEYWORD_BREAK:
+            return from__String("break");
+        case LILY_TOKEN_KIND_KEYWORD_CAST:
+            return from__String("cast");
+        case LILY_TOKEN_KIND_KEYWORD_CATCH:
+            return from__String("catch");
+        case LILY_TOKEN_KIND_KEYWORD_CLASS:
+            return from__String("class");
+        case LILY_TOKEN_KIND_KEYWORD_COMPTIME:
+            return from__String("comptime");
+        case LILY_TOKEN_KIND_KEYWORD_DO:
+            return from__String("do");
+        case LILY_TOKEN_KIND_KEYWORD_DROP:
+            return from__String("drop");
+        case LILY_TOKEN_KIND_KEYWORD_ELIF:
+            return from__String("elif");
+        case LILY_TOKEN_KIND_KEYWORD_ELSE:
+            return from__String("else");
+        case LILY_TOKEN_KIND_KEYWORD_END:
+            return from__String("end");
+        case LILY_TOKEN_KIND_KEYWORD_ENUM:
+            return from__String("enum");
+        case LILY_TOKEN_KIND_KEYWORD_ERROR:
+            return from__String("error");
+        case LILY_TOKEN_KIND_KEYWORD_FALSE:
+            return from__String("false");
+        case LILY_TOKEN_KIND_KEYWORD_FOR:
+            return from__String("for");
+        case LILY_TOKEN_KIND_KEYWORD_FUN:
+            return from__String("fun");
+        case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
+            return from__String("global");
+        case LILY_TOKEN_KIND_KEYWORD_IF:
+            return from__String("if");
+        case LILY_TOKEN_KIND_KEYWORD_IMPL:
+            return from__String("impl");
+        case LILY_TOKEN_KIND_KEYWORD_IMPORT:
+            return from__String("import");
+        case LILY_TOKEN_KIND_KEYWORD_IN:
+            return from__String("in");
+        case LILY_TOKEN_KIND_KEYWORD_INHERIT:
+            return from__String("inherit");
+        case LILY_TOKEN_KIND_KEYWORD_IS:
+            return from__String("is");
+        case LILY_TOKEN_KIND_KEYWORD_MACRO:
+            return from__String("macro");
+        case LILY_TOKEN_KIND_KEYWORD_MATCH:
+            return from__String("match");
+        case LILY_TOKEN_KIND_KEYWORD_MODULE:
+            return from__String("module");
+        case LILY_TOKEN_KIND_KEYWORD_MUT:
+            return from__String("mut");
+        case LILY_TOKEN_KIND_KEYWORD_NEXT:
+            return from__String("next");
+        case LILY_TOKEN_KIND_KEYWORD_NIL:
+            return from__String("nil");
+        case LILY_TOKEN_KIND_KEYWORD_NONE:
+            return from__String("none");
+        case LILY_TOKEN_KIND_KEYWORD_NOT:
+            return from__String("not");
+        case LILY_TOKEN_KIND_KEYWORD_object:
+            return from__String("object");
+        case LILY_TOKEN_KIND_KEYWORD_OBJECT:
+            return from__String("Object");
+        case LILY_TOKEN_KIND_KEYWORD_OR:
+            return from__String("or");
+        case LILY_TOKEN_KIND_KEYWORD_PACKAGE:
+            return from__String("package");
+        case LILY_TOKEN_KIND_KEYWORD_PUB:
+            return from__String("pub");
+        case LILY_TOKEN_KIND_KEYWORD_RAISE:
+            return from__String("raise");
+        case LILY_TOKEN_KIND_KEYWORD_RECORD:
+            return from__String("record");
+        case LILY_TOKEN_KIND_KEYWORD_REF:
+            return from__String("ref");
+        case LILY_TOKEN_KIND_KEYWORD_RETURN:
+            return from__String("return");
+        case LILY_TOKEN_KIND_KEYWORD_self:
+            return from__String("self");
+        case LILY_TOKEN_KIND_KEYWORD_SELF:
+            return from__String("Self");
+        case LILY_TOKEN_KIND_KEYWORD_TEST:
+            return from__String("test");
+        case LILY_TOKEN_KIND_KEYWORD_TRACE:
+            return from__String("trace");
+        case LILY_TOKEN_KIND_KEYWORD_TRAIT:
+            return from__String("trait");
+        case LILY_TOKEN_KIND_KEYWORD_TRUE:
+            return from__String("true");
+        case LILY_TOKEN_KIND_KEYWORD_TRY:
+            return from__String("try");
+        case LILY_TOKEN_KIND_KEYWORD_TYPE:
+            return from__String("type");
+        case LILY_TOKEN_KIND_KEYWORD_UNDEF:
+            return from__String("undef");
+        case LILY_TOKEN_KIND_KEYWORD_UNSAFE:
+            return from__String("unsafe");
+        case LILY_TOKEN_KIND_KEYWORD_VAL:
+            return from__String("val");
+        case LILY_TOKEN_KIND_KEYWORD_WHEN:
+            return from__String("when");
+        case LILY_TOKEN_KIND_KEYWORD_WHILE:
+            return from__String("while");
+        case LILY_TOKEN_KIND_KEYWORD_XOR:
+            return from__String("xor");
+        case LILY_TOKEN_KIND_L_BRACE:
+            return from__String("{");
+        case LILY_TOKEN_KIND_L_HOOK:
+            return from__String("[");
+        case LILY_TOKEN_KIND_L_PAREN:
+            return from__String("(");
+        case LILY_TOKEN_KIND_L_SHIFT_EQ:
+            return from__String("<=");
+        case LILY_TOKEN_KIND_L_SHIFT_L_SHIFT_EQ:
+            return from__String("<<=");
+        case LILY_TOKEN_KIND_L_SHIFT_L_SHIFT:
+            return from__String("<<");
+        case LILY_TOKEN_KIND_L_SHIFT:
+            return from__String("<");
+        case LILY_TOKEN_KIND_LITERAL_BIT_CHAR:
+            return format__String("b\'{c}\'", self->literal_bit_char);
+        case LILY_TOKEN_KIND_LITERAL_BIT_STRING:
+            return format__String("b\"{s}\"", (char *)self->literal_bit_string);
+        case LILY_TOKEN_KIND_LITERAL_CHAR:
+            return format__String("b'{c}'", self->literal_bit_char);
+        case LILY_TOKEN_KIND_LITERAL_FLOAT:
+            return format__String("{S}", self->literal_float);
+        case LILY_TOKEN_KIND_LITERAL_INT:
+            return format__String("{S}", self->literal_int);
+        case LILY_TOKEN_KIND_LITERAL_STRING:
+            return format__String("\"{S}\"", self->literal_string);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
+            return format__String("{f}", self->literal_suffix_float32);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
+            return format__String("{f}", self->literal_suffix_float64);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
+            return format__String("{d}", self->literal_suffix_int16);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
+            return format__String("{d}", self->literal_suffix_int32);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
+            return format__String("{d}", self->literal_suffix_int64);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
+            return format__String("{d}", self->literal_suffix_int8);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
+            return format__String("{d}", self->literal_suffix_isize);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
+            return format__String("{d}", self->literal_suffix_uint16);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
+            return format__String("{d}", self->literal_suffix_uint32);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
+            return format__String("{d}", self->literal_suffix_uint64);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
+            return format__String("{d}", self->literal_suffix_uint8);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
+            return format__String("{d}", self->literal_suffix_usize);
+        case LILY_TOKEN_KIND_MINUS_EQ:
+            return from__String("-=");
+        case LILY_TOKEN_KIND_MINUS_MINUS_EQ:
+            return from__String("--=");
+        case LILY_TOKEN_KIND_MINUS_MINUS:
+            return from__String("--");
+        case LILY_TOKEN_KIND_MINUS:
+            return from__String("-");
+        case LILY_TOKEN_KIND_NOT_EQ:
+            return from__String("not=");
+        case LILY_TOKEN_KIND_PERCENTAGE_EQ:
+            return from__String("%=");
+        case LILY_TOKEN_KIND_PERCENTAGE:
+            return from__String("%");
+        case LILY_TOKEN_KIND_PLUS_EQ:
+            return from__String("+=");
+        case LILY_TOKEN_KIND_PLUS_PLUS_EQ:
+            return from__String("++=");
+        case LILY_TOKEN_KIND_PLUS_PLUS:
+            return from__String("++");
+        case LILY_TOKEN_KIND_PLUS:
+            return from__String("+");
+        case LILY_TOKEN_KIND_R_BRACE:
+            return from__String("}");
+        case LILY_TOKEN_KIND_R_HOOK:
+            return from__String("]");
+        case LILY_TOKEN_KIND_R_PAREN:
+            return from__String(")");
+        case LILY_TOKEN_KIND_R_SHIFT_EQ:
+            return from__String(">=");
+        case LILY_TOKEN_KIND_R_SHIFT_R_SHIFT_EQ:
+            return from__String(">>=");
+        case LILY_TOKEN_KIND_R_SHIFT_R_SHIFT:
+            return from__String(">>");
+        case LILY_TOKEN_KIND_R_SHIFT:
+            return from__String(">");
+        case LILY_TOKEN_KIND_SEMICOLON:
+            return from__String(";");
+        case LILY_TOKEN_KIND_SLASH_EQ:
+            return from__String("/=");
+        case LILY_TOKEN_KIND_SLASH:
+            return from__String("/");
+        case LILY_TOKEN_KIND_STAR_EQ:
+            return from__String("*=");
+        case LILY_TOKEN_KIND_STAR_STAR_EQ:
+            return from__String("**=");
+        case LILY_TOKEN_KIND_STAR_STAR:
+            return from__String("**");
+        case LILY_TOKEN_KIND_STAR:
+            return from__String("*");
+        case LILY_TOKEN_KIND_WAVE_EQ:
+            return from__String("~=");
+        case LILY_TOKEN_KIND_WAVE:
+            return from__String("~");
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 VARIANT_DESTRUCTOR(LilyToken, comment_doc, LilyToken *self)
