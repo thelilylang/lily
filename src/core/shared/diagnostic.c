@@ -184,7 +184,9 @@ DESTRUCTOR(DiagnosticDetail, const DiagnosticDetail *self)
         free(self->lines->buffer[i]);
 
     FREE(Vec, self->lines);
-    FREE(String, self->msg);
+
+    if (self->msg)
+        FREE(String, self->msg);
 }
 
 CONSTRUCTOR(DiagnosticLevelUtil,
@@ -203,24 +205,28 @@ to_string__DiagnosticLevelUtil(const DiagnosticLevelUtil *self)
 {
     String *res = NEW(String);
 
-    for (Usize i = 0; i < self->helps->len; i++) {
-        PUSH_STR_AND_FREE(
-          res,
-          format("{Sr} {sa}: {S}\n",
-                 repeat__String(
-                   " ", calc_usize_length(self->location->end_line) + 1),
-                 GREEN("- help"),
-                 self->helps->buffer[i]));
+    if (self->helps) {
+        for (Usize i = 0; i < self->helps->len; i++) {
+            PUSH_STR_AND_FREE(
+              res,
+              format("{Sr} {sa}: {S}\n",
+                     repeat__String(
+                       " ", calc_usize_length(self->location->end_line) + 1),
+                     GREEN("- help"),
+                     self->helps->buffer[i]));
+        }
     }
 
-    for (Usize i = 0; i < self->notes->len; i++) {
-        PUSH_STR_AND_FREE(
-          res,
-          format("{Sr} {sa}: {S}\n",
-                 repeat__String(
-                   " ", calc_usize_length(self->location->end_line) + 1),
-                 CYAN("- note"),
-                 self->notes->buffer[i]));
+    if (self->notes) {
+        for (Usize i = 0; i < self->notes->len; i++) {
+            PUSH_STR_AND_FREE(
+              res,
+              format("{Sr} {sa}: {S}\n",
+                     repeat__String(
+                       " ", calc_usize_length(self->location->end_line) + 1),
+                     CYAN("- note"),
+                     self->notes->buffer[i]));
+        }
     }
 
     return res;
@@ -228,16 +234,15 @@ to_string__DiagnosticLevelUtil(const DiagnosticLevelUtil *self)
 
 DESTRUCTOR(DiagnosticLevelUtil, const DiagnosticLevelUtil *self)
 {
-    for (Usize i = self->helps->len; --i;) {
-        FREE(String, self->helps->buffer[i]);
+    if (self->helps) {
+        FREE_BUFFER_ITEMS(self->helps->buffer, self->helps->len, String);
+        FREE(Vec, self->helps);
     }
 
-    for (Usize i = self->notes->len; --i;) {
-        FREE(String, self->notes->buffer[i]);
+    if (self->notes) {
+        FREE_BUFFER_ITEMS(self->notes->buffer, self->notes->len, String);
+        FREE(Vec, self->notes);
     }
-
-    FREE(Vec, self->helps);
-    FREE(Vec, self->notes);
 }
 
 CONSTRUCTOR(DiagnosticReferencingItem,
@@ -270,7 +275,10 @@ to_string__DiagnosticReferencingItem(const DiagnosticReferencingItem *self,
 DESTRUCTOR(DiagnosticReferencingItem, DiagnosticReferencingItem *self)
 {
     FREE(DiagnosticDetail, &self->detail);
-    free(self->msg);
+
+    if (self->msg)
+        FREE(String, self->msg);
+
     free(self);
 }
 
@@ -482,7 +490,11 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
             FREE(String, repeat);
         }
 
-        PUSH_STR_AND_FREE(res, format("~ {s}\n", self->msg));
+        if (self->msg) {
+            PUSH_STR_AND_FREE(res, format("~ {s}\n", self->msg));
+        } else {
+            push_str__String(res, "~\n");
+        }
     } else {
         TODO("make diagnostic with one more line");
     }
