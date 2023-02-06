@@ -47,7 +47,7 @@ run__Compile(const CompileConfig *config)
     const File file = NEW(File, config->filename, content);
     Scanner scanner = NEW(Scanner, NEW(Source, NEW(Cursor, content), &file));
 
-    printf("%s\n", scanner.source.file->content);
+    run__Scanner(&scanner, config->dump_scanner);
 
     free(file_ext);
     free(content);
