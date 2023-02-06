@@ -71,8 +71,7 @@ char *
 to_string__LilyError(const LilyError *self)
 {
     char *msg = to_msg__LilyError(self);
-    char *res = format(
-      "error[{s}]: {sa}", msg, to_msg__LilyError(self));
+    char *res = format("error[{s}]: {sa}", msg, to_msg__LilyError(self));
 
     switch (self->kind) {
         default:
