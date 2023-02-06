@@ -70,4 +70,6 @@ typedef uint32_t Usize;
 typedef float Float32;
 typedef double Float64;
 
+typedef uintptr_t Uptr;
+
 #endif // LILY_BASE_TYPES_H
