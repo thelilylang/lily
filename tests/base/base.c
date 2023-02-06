@@ -50,6 +50,7 @@ main()
     test_push__String();
 
     // Test Vec
+    test_init__Vec();
     test_new__Vec();
     test_from__Vec();
     test_get__Vec();

@@ -6,6 +6,21 @@
 #include <stdlib.h>
 
 void
+test_init__Vec()
+{
+    Vec *v = init__Vec(3, (int*)0, (int*)1, (int*)2);
+
+    ASSERT(v->len == 3);
+    ASSERT(v->capacity == 4);
+
+    ASSERT(v->buffer[0] == (int*)0);
+    ASSERT(v->buffer[1] == (int*)1);
+    ASSERT(v->buffer[2] == (int*)2);
+
+    FREE(Vec, v);
+}
+
+void
 test_new__Vec()
 {
     Vec *v = NEW(Vec);
