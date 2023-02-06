@@ -1,0 +1,7 @@
+
+---
+Checks: 'clang-diagnostic-*'
+WarningsAsErrors: true
+HeaderFilterRegex: ''
+AnalyzeTemporaryDtors: false
+FormatStyle: Mozilla 
