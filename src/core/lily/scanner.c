@@ -99,6 +99,9 @@ scan_comment_doc__Scanner(Scanner *self);
 static String *
 scan_identifier__Scanner(Scanner *self);
 
+static char *
+scan_char__Scanner(Scanner *self);
+
 enum LilyTokenKind
 get_keyword(char *id)
 {
@@ -597,12 +600,71 @@ scan_identifier__Scanner(Scanner *self)
 
     while (is_ident__Scanner(self)) {
         next_char__Source(&self->source);
-        push__String(id, self->source.file->content[self->source.cursor.position - 1]);
+        push__String(
+          id, self->source.file->content[self->source.cursor.position - 1]);
     }
 
     previous_char__Source(&self->source);
 
     return id;
+}
+
+char *
+scan_char__Scanner(Scanner *self)
+{
+    Location location_error = default__Location(self->source.file->name);
+
+    start__Location(
+      &location_error, self->source.cursor.line, self->source.cursor.column);
+    next_char__Source(&self->source);
+
+    if (self->source.cursor.current != '\'') {
+        next_char__Source(&self->source);
+
+        char target = self->source.cursor.current;
+        char *character = get_character__Scanner(
+          self, self->source.file->content[self->source.cursor.position - 1]);
+
+        end__Location(&location_error,
+                      self->source.cursor.line,
+                      self->source.cursor.column);
+
+        if (target != '\'' && self->source.cursor.current != '\'') {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->source.file,
+                &location_error,
+                NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL),
+                init__Vec(
+                  1, from__String("please close this char literal with `\"`")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            return NULL;
+        }
+
+        return character;
+    }
+
+    end__Location(
+      &location_error, self->source.cursor.line, self->source.cursor.column);
+
+    emit__Diagnostic(
+      NEW_VARIANT(
+        Diagnostic,
+        simple_lily_error,
+        self->source.file,
+        &location_error,
+        NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL),
+        init__Vec(1, from__String("please close this char literal with `\"`")),
+        NULL,
+        from__String("unexpected token here: `'`")),
+      &self->count_error);
+
+    return NULL;
 }
 
 void
