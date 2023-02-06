@@ -23,6 +23,7 @@
  */
 
 #include <core/lily/scanner.h>
+#include <core/shared/diagnostic.h>
 
 #include <ctype.h>
 #include <string.h>
@@ -81,6 +82,10 @@ is_bin__Scanner(const Scanner *self);
 // Check if current can be a number.
 static inline bool
 is_num__Scanner(const Scanner *self);
+
+// Get escape character and other character.
+static String *
+get_character__Scanner(Scanner *self, char previous);
 
 enum LilyTokenKind
 get_keyword(char *id)
@@ -246,7 +251,8 @@ char *
 peek_char__Scanner(const Scanner *self, Usize n)
 {
     if (self->source.cursor.position < strlen(self->source.file->content) - 1) {
-        return self->source.file->content[self->source.cursor.position + n];
+        return (char *)(Uptr)
+          self->source.file->content[self->source.cursor.position + n];
     }
 
     return NULL;
@@ -417,10 +423,96 @@ is_num__Scanner(const Scanner *self)
 {
     return is_digit__Scanner(self) ||
            (self->source.cursor.current == '.' &&
-            peek_char__Scanner(self, 1) != '.') ||
+            peek_char__Scanner(self, 1) != (char *)'.') ||
            self->source.cursor.current == 'e' ||
            self->source.cursor.current == 'E' ||
            self->source.cursor.current == '_';
+}
+
+String *
+get_character__Scanner(Scanner *self, char previous)
+{
+    String *res = NULL;
+    Location location_error = default__Location(self->source.file->name);
+
+    start__Location(
+      &location_error, self->source.cursor.line, self->source.cursor.column);
+
+    switch (previous) {
+        case '\\':
+            switch (self->source.cursor.current) {
+                case 'n':
+                    res = from__String("\\n");
+                    break;
+                case 't':
+                    res = from__String("\\t");
+                    break;
+                case 'r':
+                    res = from__String("\\r");
+                    break;
+                case 'b':
+                    res = from__String("\\b");
+                    break;
+                case '\\':
+                    res = from__String("\\");
+                    break;
+                case '\'':
+                    res = from__String("'");
+                    break;
+                case '\"':
+                    res = from__String("\"");
+                    break;
+                default:
+                    end__Location(&location_error,
+                                  self->source.cursor.line,
+                                  self->source.cursor.column);
+
+                    if (self->source.cursor.position >=
+                        strlen(self->source.file->content) - 1) {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->source.file,
+                            &location_error,
+                            NEW(LilyError,
+                                LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL),
+                            NULL,
+                            NULL,
+                            NULL),
+                          &self->count_error);
+                    } else {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->source.file,
+                            &location_error,
+                            NEW(LilyError, LILY_ERROR_KIND_INVALID_ESCAPE),
+                            NULL,
+                            NULL,
+                            NULL),
+                          &self->count_error);
+                    }
+
+                    return NULL;
+            }
+            break;
+        default:
+            res = format__String("{c}", previous);
+            break;
+    }
+
+    if (previous == '\\') {
+        next_char__Source(&self->source);
+    }
+
+    return res;
+}
+
+void
+run__Scanner(Scanner *self, bool dump_scanner)
+{
 }
 
 DESTRUCTOR(Scanner, const Scanner *self)
