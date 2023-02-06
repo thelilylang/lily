@@ -37,6 +37,10 @@ to_msg__LilyError(const LilyError *self)
             return format("unexpected token");
         case LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL:
             return format("unclosed char literal");
+        case LILY_ERROR_KIND_INVALID_ESCAPE:
+            return format("invalid escape");
+        case LILY_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
+            return format("unclosed comment block");
         default:
             UNREACHABLE("unknown variant");
     }
@@ -50,6 +54,10 @@ to_code__LilyError(const LilyError *self)
             return "0001";
         case LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL:
             return "0002";
+        case LILY_ERROR_KIND_INVALID_ESCAPE:
+            return "0003";
+        case LILY_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
+            return "0004";
         default:
             UNREACHABLE("unknown variant");
     }
