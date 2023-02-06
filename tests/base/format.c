@@ -71,7 +71,7 @@ void
 test_f_specifier__Format()
 {
     char *s = format("{f}", 2.2);
- 
+
     ASSERT(strcmp(s, "2.200000") == 0);
 
     free(s);
