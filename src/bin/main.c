@@ -29,6 +29,8 @@
 #include <cli/parse_command.h>
 #include <cli/parse_config.h>
 
+#include <command/compile.h>
+
 #include <stdio.h>
 
 int
@@ -48,6 +50,14 @@ main(int argc, char **argv)
 
         const Option option = run__ParseCommand(&parse_command);
         const Config config = run__ParseConfig(&option);
+
+        switch (config.kind) {
+            case CONFIG_KIND_COMPILE:
+                run__Compile(&config.compile);
+                break;
+            default:
+                break;
+        }
 
         FREE(Option, option);
     } else {
