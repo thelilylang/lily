@@ -52,9 +52,9 @@ Vec *
 from__Vec(void **buffer, Usize len);
 
 /**
- * 
+ *
  * @brief Initialize Vec with `...` parameter.
-*/
+ */
 Vec *
 init__Vec(Usize len, ...);
 

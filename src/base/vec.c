@@ -27,9 +27,9 @@
 #include <base/new.h>
 #include <base/vec.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 
 CONSTRUCTOR(Vec *, Vec)
 {
@@ -69,7 +69,7 @@ init__Vec(Usize len, ...)
     va_start(vl, len);
 
     for (Usize i = 0; i < len; i++) {
-        push__Vec(self, va_arg(vl, void*));
+        push__Vec(self, va_arg(vl, void *));
     }
 
     va_end(vl);
