@@ -934,7 +934,7 @@ to_string__Diagnostic(const Diagnostic *self)
 
     PUSH_STR_AND_FREE(res,
                       format("{s}:{d}:{d}: ",
-                             self->file->filename,
+                             self->file->name,
                              self->location->start_line,
                              self->location->start_column));
 

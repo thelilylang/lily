@@ -31,7 +31,7 @@
 
 typedef struct File
 {
-    const char *filename;
+    const char *name;
     char *content;
 } File;
 
@@ -39,9 +39,9 @@ typedef struct File
  *
  * @brief Construct File type.
  */
-inline CONSTRUCTOR(File, File, const char *filename, char *content)
+inline CONSTRUCTOR(File, File, const char *name, char *content)
 {
-    return (File){ .filename = filename, .content = content };
+    return (File){ .name = name, .content = content };
 }
 
 /**
