@@ -84,5 +84,46 @@ format:
 	${CLANG_FORMAT} ./benchmarks/base/*.c
 	${CLANG_FORMAT} ./tests/base/*.c
 
+profile:
+	@mkdir -p build && cd build && cmake .. -G Ninja && ninja
+	@mkdir -p build/profile
+	@gcc -Wall -O3 -pg -L build/ -llily_base -llily_cli -llily_command -I include -o build/profile/lily \
+		src/bin/main.c \
+		src/base/*.c \
+		src/cli/option/*.c \
+		src/cli/*.c \
+		src/command/build/*.c \
+		src/command/cc/*.c \
+		src/command/compile/*.c \
+		src/command/cpp/*.c \
+		src/command/init/*.c \
+		src/command/new/*.c \
+		src/command/run/*.c \
+		src/command/test/*.c \
+		src/command/to/*.c \
+		src/core/cc/*.c \
+		src/core/cpp/*.c \
+		src/core/lily/ast/decl/*.c \
+		src/core/lily/ast/expr/*.c \
+		src/core/lily/ast/stmt/*.c \
+		src/core/lily/ast/*.c \
+		src/core/lily/checked/decl/*.c \
+		src/core/lily/checked/expr/*.c \
+		src/core/lily/checked/stmt/*.c \
+		src/core/lily/checked/*.c \
+		src/core/lily/ir/cc/builder/function/*.c \
+		src/core/lily/ir/cc/builder/*.c \
+		src/core/lily/ir/cc/generator/*.c \
+		src/core/lily/ir/cc/*.c \
+		src/core/lily/ir/cpp/builder/*.c \
+		src/core/lily/ir/cpp/builder/class/*.c \
+		src/core/lily/ir/cpp/builder/function/*.c \
+		src/core/lily/ir/cpp/generator/*.c \
+		src/core/lily/ir/cpp/*.c \
+		src/core/lily/ir/llvm/*.c \
+		src/core/lily/package/*.c \
+		src/core/lily/*.c \
+		src/core/shared/*.c
+
 clean:
 	@rm -rf build
