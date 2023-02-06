@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(lily)
+project(lily C)
 
 set(DEBUG 1) # 0 for release, 1 for debug
 
