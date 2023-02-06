@@ -22,13 +22,14 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <base/assert.h>
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/vec.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
 CONSTRUCTOR(Vec *, Vec)
 {
@@ -55,6 +56,23 @@ from__Vec(void **buffer, Usize len)
     for (Usize i = len; i--;) {
         self->buffer[i] = buffer[i];
     }
+
+    return self;
+}
+
+Vec *
+init__Vec(Usize len, ...)
+{
+    Vec *self = NEW(Vec);
+    va_list vl;
+
+    va_start(vl, len);
+
+    for (Usize i = 0; i < len; i++) {
+        push__Vec(self, va_arg(vl, void*));
+    }
+
+    va_end(vl);
 
     return self;
 }
