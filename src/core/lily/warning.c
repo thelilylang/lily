@@ -34,7 +34,7 @@ to_msg__LilyWarning(const LilyWarning *self)
 {
     switch (self->kind) {
         case LILY_WARNING_KIND_UNUSED_PAREN:
-            return format("unused paren");
+            return "unused paren";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -54,7 +54,13 @@ to_code__LilyWarning(const LilyWarning *self)
 char *
 to_string__LilyWarning(const LilyWarning *self)
 {
-    return format("warning[{s}]: {sa}",
-                  to_code__LilyWarning(self),
-                  to_msg__LilyWarning(self));
+    char *msg = to_msg__LilyWarning(self);
+    char *res = format("warning[{s}]: {s}", to_code__LilyWarning(self), msg);
+
+    switch (self->kind) {
+        default:
+            break;
+    }
+
+    return res;
 }

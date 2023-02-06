@@ -34,7 +34,7 @@ to_msg__CcWarning(const CcWarning *self)
 {
     switch (self->kind) {
         case CC_WARNING_KIND_UNUSED_PAREN:
-            return format("unused paren");
+            return "unused paren";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -54,6 +54,13 @@ to_code__CcWarning(const CcWarning *self)
 char *
 to_string__CcWarning(const CcWarning *self)
 {
-    return format(
-      "warning[{s}]: {sa}", to_code__CcWarning(self), to_msg__CcWarning(self));
+    char *msg = to_msg__CcWarning(self);
+    char *res = format("warning[{s}]: {s}", to_code__CcWarning(self), msg);
+
+    switch (self->kind) {
+        default:
+            break;
+    }
+
+    return res;
 }

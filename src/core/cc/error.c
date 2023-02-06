@@ -54,6 +54,16 @@ to_code__CcError(const CcError *self)
 char *
 to_string__CcError(const CcError *self)
 {
-    return format(
-      "error[{s}]: {sa}", to_code__CcError(self), to_msg__CcError(self));
+    char *msg = to_msg__CcError(self);
+    char *res = format("error[{s}]: {s}", to_code__CcError(self), msg);
+
+    switch (self->kind) {
+        case CC_ERROR_KIND_UNEXPECTED_TOKEN:
+            free(msg);
+            break;
+        default:
+            break;
+    }
+
+    return res;
 }

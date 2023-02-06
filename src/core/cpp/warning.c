@@ -34,7 +34,7 @@ to_msg__CppWarning(const CppWarning *self)
 {
     switch (self->kind) {
         case CPP_WARNING_KIND_UNUSED_PAREN:
-            return format("unused paren");
+            return "unused paren";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -54,7 +54,13 @@ to_code__CppWarning(const CppWarning *self)
 char *
 to_string__CppWarning(const CppWarning *self)
 {
-    return format("warning[{s}]: {sa}",
-                  to_code__CppWarning(self),
-                  to_msg__CppWarning(self));
+    char *msg = to_msg__CppWarning(self);
+    char *res = format("warning[{s}]: {s}", to_code__CppWarning(self), msg);
+
+    switch (self->kind) {
+        default:
+            break;
+    }
+
+    return res;
 }

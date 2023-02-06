@@ -34,7 +34,7 @@ to_msg__LilyError(const LilyError *self)
 {
     switch (self->kind) {
         case LILY_ERROR_KIND_UNEXPECTED_TOKEN:
-            return "unexpected token";
+            return format("unexpected token: `{s}`", self->unexpected_token);
         case LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL:
             return "unclosed char literal";
         case LILY_ERROR_KIND_INVALID_ESCAPE:
@@ -71,9 +71,12 @@ char *
 to_string__LilyError(const LilyError *self)
 {
     char *msg = to_msg__LilyError(self);
-    char *res = format("error[{s}]: {sa}", msg, to_msg__LilyError(self));
+    char *res = format("error[{s}]: {s}", to_code__LilyError(self), msg);
 
     switch (self->kind) {
+        case LILY_ERROR_KIND_UNEXPECTED_TOKEN:
+            free(msg);
+            break;
         default:
             break;
     }

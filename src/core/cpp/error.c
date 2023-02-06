@@ -54,6 +54,16 @@ to_code__CppError(const CppError *self)
 char *
 to_string__CppError(const CppError *self)
 {
-    return format(
-      "error[{s}]: {sa}", to_code__CppError(self), to_msg__CppError(self));
+    char *msg = to_msg__CppError(self);
+    char *res = format("error[{s}]: {s}", to_code__CppError(self), msg);
+
+    switch (self->kind) {
+        case CPP_ERROR_KIND_UNEXPECTED_TOKEN:
+            free(msg);
+            break;
+        default:
+            break;
+    }
+
+    return res;
 }
