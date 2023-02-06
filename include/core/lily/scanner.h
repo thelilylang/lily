@@ -55,6 +55,13 @@ inline CONSTRUCTOR(Scanner, Scanner, Source source)
 
 /**
  *
+ * @brief Run the scanner.
+ */
+void
+run__Scanner(Scanner *self, bool dump_scanner);
+
+/**
+ *
  * @brief Free Scanner type.
  */
 DESTRUCTOR(Scanner, const Scanner *self);

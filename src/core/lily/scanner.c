@@ -87,6 +87,15 @@ is_num__Scanner(const Scanner *self);
 static String *
 get_character__Scanner(Scanner *self, char previous);
 
+static void
+skip_comment_line__Scanner(Scanner *self);
+
+static void
+skip_comment_block__Scanner(Scanner *self);
+
+static String *
+scan_comment_doc__Scanner(Scanner *self);
+
 enum LilyTokenKind
 get_keyword(char *id)
 {
@@ -508,6 +517,74 @@ get_character__Scanner(Scanner *self, char previous)
     }
 
     return res;
+}
+
+void
+skip_comment_line__Scanner(Scanner *self)
+{
+    while (self->source.cursor.current != '\n') {
+        next_char__Source(&self->source);
+    }
+}
+
+void
+skip_comment_block__Scanner(Scanner *self)
+{
+    Location location_error = default__Location(self->source.file->name);
+
+    start__Location(
+      &location_error, self->source.cursor.line, self->source.cursor.column);
+
+    while (self->source.cursor.current != '*' ||
+           peek_char__Scanner(self, 1) != (char *)'/') {
+        if (self->source.cursor.position >=
+            strlen(self->source.file->content) - 2) {
+            end__Location(&location_error,
+                          self->source.cursor.line,
+                          self->source.cursor.column);
+
+            {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->source.file,
+                    &location_error,
+                    NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_COMMENT_BLOCK),
+                    init__Vec(
+                      1, from__String("close comment multi line with `*/`")),
+                    NULL,
+                    NULL),
+                  &self->count_error);
+            }
+        }
+
+        next_char__Source(&self->source);
+    }
+
+    jump__Scanner(self, 2);
+}
+
+String *
+scan_comment_doc__Scanner(Scanner *self)
+{
+    String *doc = NEW(String);
+
+    while (self->source.cursor.current != '\n') {
+        next_char__Source(&self->source);
+
+        if (self->source.cursor.position >=
+            strlen(self->source.file->content) - 1) {
+            break;
+        }
+
+        push__String(
+          doc, self->source.file->content[self->source.cursor.position - 1]);
+    }
+
+    previous_char__Source(&self->source);
+
+    return doc;
 }
 
 void
