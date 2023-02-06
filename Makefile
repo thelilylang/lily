@@ -84,6 +84,7 @@ format:
 	${CLANG_FORMAT} ./benchmarks/base/*.c
 	${CLANG_FORMAT} ./tests/base/*.c
 
+# TODO: try to port -pg on CMake config
 profile:
 	@mkdir -p build && cd build && cmake .. -G Ninja && ninja
 	@mkdir -p build/profile
