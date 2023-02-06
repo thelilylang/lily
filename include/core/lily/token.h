@@ -179,6 +179,7 @@ enum LilyTokenKind
     LILY_TOKEN_KIND_STAR,
     LILY_TOKEN_KIND_WAVE_EQ,
     LILY_TOKEN_KIND_WAVE,
+    LILY_TOKEN_KIND_XOR_EQ
 };
 
 typedef struct LilyToken

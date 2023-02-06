@@ -685,6 +685,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String("~=");
         case LILY_TOKEN_KIND_WAVE:
             return from__String("~");
+        case LILY_TOKEN_KIND_XOR_EQ:
+            return from__String("xor=");
         default:
             UNREACHABLE("unknown variant");
     }
