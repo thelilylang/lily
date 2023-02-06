@@ -49,8 +49,11 @@ main(int argc, char **argv)
           NEW(ParseCommand, command, (const char **)options, argc - 2);
 
         const Option option = run__ParseCommand(&parse_command);
+
+        // 3. Parse config
         const Config config = run__ParseConfig(&option);
 
+        // 4. Run command
         switch (config.kind) {
             case CONFIG_KIND_COMPILE:
                 run__Compile(&config.compile);
