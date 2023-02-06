@@ -105,9 +105,8 @@ read_file__Path(const char *path)
 
     char *line = NULL;
     size_t len = 0;
-    ssize_t read;
 
-    while ((read = getline(&line, &len, file) != -1)) {
+    while (getline(&line, &len, file) != -1) {
         content = realloc(content, strlen(content) + len + 1);
         strcat(content, line);
     }
