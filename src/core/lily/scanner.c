@@ -96,6 +96,9 @@ skip_comment_block__Scanner(Scanner *self);
 static String *
 scan_comment_doc__Scanner(Scanner *self);
 
+static String *
+scan_identifier__Scanner(Scanner *self);
+
 enum LilyTokenKind
 get_keyword(char *id)
 {
@@ -585,6 +588,21 @@ scan_comment_doc__Scanner(Scanner *self)
     previous_char__Source(&self->source);
 
     return doc;
+}
+
+static String *
+scan_identifier__Scanner(Scanner *self)
+{
+    String *id = NEW(String);
+
+    while (is_ident__Scanner(self)) {
+        next_char__Source(&self->source);
+        push__String(id, self->source.file->content[self->source.cursor.position - 1]);
+    }
+
+    previous_char__Source(&self->source);
+
+    return id;
 }
 
 void
