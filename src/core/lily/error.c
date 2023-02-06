@@ -35,6 +35,8 @@ to_msg__LilyError(const LilyError *self)
     switch (self->kind) {
         case LILY_ERROR_KIND_UNEXPECTED_TOKEN:
             return format("unexpected token");
+        case LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL:
+            return format("unclosed char literal");
         default:
             UNREACHABLE("unknown variant");
     }
@@ -46,6 +48,8 @@ to_code__LilyError(const LilyError *self)
     switch (self->kind) {
         case LILY_ERROR_KIND_UNEXPECTED_TOKEN:
             return "0001";
+        case LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL:
+            return "0002";
         default:
             UNREACHABLE("unknown variant");
     }
