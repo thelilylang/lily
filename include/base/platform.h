@@ -25,6 +25,12 @@
 #ifndef LILY_BASE_PLATFORM_H
 #define LILY_BASE_PLATFORM_H
 
+#if defined(__x86_64__) || defined(_WIN64) || defined(__arm64__) || defined(__ppc64_)
+#define PLATFORM_64
+#else
+#define PLATFORM_32
+#endif
+
 #if defined(__linux__)
 #define OS_NAME "linux"
 #define LILY_LINUX_OS
