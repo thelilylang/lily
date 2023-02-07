@@ -45,6 +45,22 @@ to_msg__LilyError(const LilyError *self)
             return "invalid char literal";
         case LILY_ERROR_KIND_UNCLOSED_STRING_LITERAL:
             return "unclosed string literal";
+        case LILY_ERROR_KIND_INT8_OUT_OF_RANGE:
+            return "Int8 is out of range";
+        case LILY_ERROR_KIND_INT16_OUT_OF_RANGE:
+            return "Int16 is out of range";
+        case LILY_ERROR_KIND_INT32_OUT_OF_RANGE:
+            return "Int32 is out of range";
+        case LILY_ERROR_KIND_INT64_OUT_OF_RANGE:
+            return "Int64 is out of range";
+        case LILY_ERROR_KIND_UINT8_OUT_OF_RANGE:
+            return "Uint8 is out of range";
+        case LILY_ERROR_KIND_UINT16_OUT_OF_RANGE:
+            return "Uint16 is out of range";
+        case LILY_ERROR_KIND_UINT32_OUT_OF_RANGE:
+            return "Uint32 is out of range";
+        case LILY_ERROR_KIND_UINT64_OUT_OF_RANGE:
+            return "Uint64 is out of range";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -66,6 +82,22 @@ to_code__LilyError(const LilyError *self)
             return "0005";
         case LILY_ERROR_KIND_UNCLOSED_STRING_LITERAL:
             return "0006";
+        case LILY_ERROR_KIND_INT8_OUT_OF_RANGE:
+            return "0007";
+        case LILY_ERROR_KIND_INT16_OUT_OF_RANGE:
+            return "0008";
+        case LILY_ERROR_KIND_INT32_OUT_OF_RANGE:
+            return "0009";
+        case LILY_ERROR_KIND_INT64_OUT_OF_RANGE:
+            return "0010";
+        case LILY_ERROR_KIND_UINT8_OUT_OF_RANGE:
+            return "0011";
+        case LILY_ERROR_KIND_UINT16_OUT_OF_RANGE:
+            return "0012";
+        case LILY_ERROR_KIND_UINT32_OUT_OF_RANGE:
+            return "0013";
+        case LILY_ERROR_KIND_UINT64_OUT_OF_RANGE:
+            return "0014";
         default:
             UNREACHABLE("unknown variant");
     }
