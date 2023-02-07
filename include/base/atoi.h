@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_ATOI_H
 #define LILY_BASE_ATOI_H
 
+#include <base/platform.h>
 #include <base/types.h>
 
 // MAX: 127
@@ -135,6 +136,14 @@
              x[12] <= '7' && x[13] <= '0' && x[14] <= '9' && x[15] <= '5' &&   \
              x[16] <= '5' && x[17] <= '1' && x[18] <= '6' && x[19] <= '1' &&   \
              x[20] <= '5' && !x[21])
+
+#if defined(PLATFORM_64)
+#define CHECK_ISIZE_OVERFLOW_FROM_STRING(x) CHECK_INT64_OVERFLOW_FROM_STRING(x)
+#define CHECK_USIZE_OVERFLOW_FROM_STRING(x) CHECK_UINT64_OVERFLOW_FROM_STRING(x)
+#else
+#define CHECK_ISIZE_OVERFLOW_FROM_STRING(x) CHECK_INT32_OVERFLOW_FROM_STRING(x)
+#define CHECK_USIZE_OVERFLOW_FROM_STRING(x) CHECK_UINT32_OVERFLOW_FROM_STRING(x)
+#endif
 
 /**
  *
