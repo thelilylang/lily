@@ -37,10 +37,9 @@
         return buffer;                                 \
     }                                                  \
     buffer[0] = '\0';                                  \
+    int is_neg = 0;                                    \
     if (v < 0) {                                       \
-        buffer = realloc(buffer, 2);                   \
-        buffer[0] = '-';                               \
-        buffer[++buffer_size] = '\0';                  \
+        is_neg = 1;                                    \
         v = -v;                                        \
     }                                                  \
     if (base == 10) {                                  \
@@ -72,6 +71,12 @@
             buffer[++buffer_size] = '\0';              \
             v /= 16;                                   \
         }                                              \
+    }                                                  \
+    if (is_neg) {                                      \
+        buffer = realloc(buffer, buffer_size + 2);     \
+        buffer[buffer_size] = '-';                     \
+        buffer[++buffer_size] = '\0';                  \
+        v = -v;                                        \
     }                                                  \
     for (int i = 0; i < buffer_size / 2; i++) {        \
         char tmp = buffer[i];                          \
