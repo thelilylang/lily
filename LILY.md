@@ -281,6 +281,20 @@ fun add(x, y) when x < 0 = x + y;
 fun add(x, y) = raise InvalidArgument("error")
 ```
 
+or
+
+```lily
+when $x > 0:
+fun add(x, y) = x + y;
+
+when $x < 0:
+fun add(x, y) = y;
+
+fun add(x, y) = 0;
+```
+
+NOTE: The dollar sign tells the compiler that the symbol it is looking for is a parameter so it must wait before analysis it.
+
 #### On method (only in trait)
 
 ```lily
