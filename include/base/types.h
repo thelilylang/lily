@@ -25,6 +25,8 @@
 #ifndef LILY_BASE_TYPES_H
 #define LILY_BASE_TYPES_H
 
+#include <base/platform.h>
+
 #include <stdint.h>
 
 #if __clang_major__ > 15
@@ -38,7 +40,7 @@ typedef unsigned _BitInt(16) Uint16;
 typedef unsigned _BitInt(32) Uint32;
 typedef unsigned _BitInt(64) Uint64;
 
-#if defined(__x86_64__) || defined(_WIN64)
+#if defined(PLATFORM_64)
 typedef _BitInt(64) Isize;
 typedef unsigned _BitInt(64) Usize;
 #else
@@ -57,7 +59,7 @@ typedef uint16_t Uint16;
 typedef uint32_t Uint32;
 typedef uint64_t Uint64;
 
-#if defined(__x86_64__) || defined(_WIN64)
+#if defined(PLATFORM_64)
 typedef int64_t Isize;
 typedef uint64_t Usize;
 #else
