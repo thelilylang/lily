@@ -23,7 +23,9 @@
  */
 
 #include <base/itoa.h>
+#include <base/macros.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -71,6 +73,8 @@
             buffer[++buffer_size] = '\0';              \
             v /= 16;                                   \
         }                                              \
+    } else {                                           \
+        UNREACHABLE("unknown base");                   \
     }                                                  \
     if (is_neg) {                                      \
         buffer = realloc(buffer, buffer_size + 2);     \
@@ -85,9 +89,37 @@
     }                                                  \
     return buffer
 
+#define GET_MIN_INT_VALUE(x)         \
+    int size = strlen(x);            \
+    char *buffer = malloc(size + 1); \
+    for (int i = size; i--;) {       \
+        buffer[i] = x[i];            \
+    }                                \
+    buffer[size] = '\0';             \
+    return buffer
+
 char *
 itoa__Int8(Int8 v, int base)
 {
+    if (v == INT8_MIN) {
+        switch (base) {
+            case 2: {
+                GET_MIN_INT_VALUE("-10000000");
+            }
+            case 8: {
+                GET_MIN_INT_VALUE("-200");
+            }
+            case 10: {
+                GET_MIN_INT_VALUE("-128");
+            }
+            case 16: {
+                GET_MIN_INT_VALUE("-80");
+            }
+            default:
+                UNREACHABLE("unknown base");
+        }
+    }
+
     __itoa__(v, base);
 }
 
@@ -100,6 +132,25 @@ itoa__Uint8(Uint8 v, int base)
 char *
 itoa__Int16(Int16 v, int base)
 {
+    if (v == INT16_MIN) {
+        switch (base) {
+            case 2: {
+                GET_MIN_INT_VALUE("-1000000000000000");
+            }
+            case 8: {
+                GET_MIN_INT_VALUE("100000");
+            }
+            case 10: {
+                GET_MIN_INT_VALUE("32768");
+            }
+            case 16: {
+                GET_MIN_INT_VALUE("8000");
+            }
+            default: 
+                UNREACHABLE("unknown base");
+        }
+    }
+
     __itoa__(v, base);
 }
 
@@ -112,6 +163,25 @@ itoa__Uint16(Uint16 v, int base)
 char *
 itoa__Int32(Int32 v, int base)
 {
+    if (v == INT32_MIN) {
+        switch (base) {
+            case 2: {
+                GET_MIN_INT_VALUE("-10000000000000000000000000000000");
+            }
+            case 8: {
+                GET_MIN_INT_VALUE("20000000000");
+            }
+            case 10: {
+                GET_MIN_INT_VALUE("-2147483628");
+            }
+            case 16: {
+                GET_MIN_INT_VALUE("-80000000");
+            }
+            default:
+                UNREACHABLE("unknown base");
+        }
+    } 
+
     __itoa__(v, base);
 }
 
@@ -124,6 +194,25 @@ itoa__Uint32(Uint32 v, int base)
 char *
 itoa__Int64(Int64 v, int base)
 {
+    if (v == INT64_MIN) {
+        switch (base) {
+            case 2: {
+                GET_MIN_INT_VALUE("-1000000000000000000000000000000000000000000000000000000000000000");
+            }
+            case 8: {
+                GET_MIN_INT_VALUE("-1000000000000000000000");
+            }
+            case 10: {
+                GET_MIN_INT_VALUE("-9223372036854775808");
+            }
+            case 16: {
+                GET_MIN_INT_VALUE("-8000000000000000");
+            }
+            default: 
+                UNREACHABLE("unknown base");
+        }
+    }
+
     __itoa__(v, base);
 }
 
