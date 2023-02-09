@@ -146,7 +146,7 @@ itoa__Int16(Int16 v, int base)
             case 16: {
                 GET_MIN_INT_VALUE("8000");
             }
-            default: 
+            default:
                 UNREACHABLE("unknown base");
         }
     }
@@ -180,7 +180,7 @@ itoa__Int32(Int32 v, int base)
             default:
                 UNREACHABLE("unknown base");
         }
-    } 
+    }
 
     __itoa__(v, base);
 }
@@ -197,7 +197,8 @@ itoa__Int64(Int64 v, int base)
     if (v == INT64_MIN) {
         switch (base) {
             case 2: {
-                GET_MIN_INT_VALUE("-1000000000000000000000000000000000000000000000000000000000000000");
+                GET_MIN_INT_VALUE("-1000000000000000000000000000000000000000000"
+                                  "000000000000000000000");
             }
             case 8: {
                 GET_MIN_INT_VALUE("-1000000000000000000000");
@@ -208,7 +209,7 @@ itoa__Int64(Int64 v, int base)
             case 16: {
                 GET_MIN_INT_VALUE("-8000000000000000");
             }
-            default: 
+            default:
                 UNREACHABLE("unknown base");
         }
     }
