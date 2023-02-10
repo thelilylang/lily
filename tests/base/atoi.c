@@ -2,11 +2,11 @@
 #include <base/atoi.h>
 #include <base/itoa.h>
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <limits.h>
 
 #define ATOI_DEBUG_INT8_RANDOM_TEST
 #undef ATOI_DEBUG_INT8_RANDOM_TEST
@@ -376,6 +376,234 @@ test_check_uint8_overflow__Atoi()
     ASSERT(!CHECK_UINT8_OVERFLOW_FROM_STRING("2777", 8));
     ASSERT(!CHECK_UINT8_OVERFLOW_FROM_STRING("-1", 10));
     ASSERT(!CHECK_UINT8_OVERFLOW_FROM_STRING("FFF", 16));
+
+    {
+        time_t tt;
+        srand((unsigned)time(&tt));
+
+        for (int i = 0; i < 1'000; i++) {
+            Uint8 np = rand() % 255;
+
+            char *np_s_2 = itoa__Uint8(np, 2);
+            char *np_s_8 = itoa__Uint8(np, 8);
+            char *np_s_10 = itoa__Uint8(np, 10);
+            char *np_s_16 = itoa__Uint8(np, 16);
+
+#ifdef ATOI_DEBUG_UINT8_RANDOM_TEST
+            puts("Base 2");
+            printf("np_s: %s\n", np_s_2);
+            printf("np_s: %d\n", CHECK_UINT8_OVERFLOW_FROM_STRING(np_s_2, 2));
+
+            puts("Base 8");
+            printf("np_s: %s\n", np_s_8);
+            printf("np_s: %d\n", CHECK_UINT8_OVERFLOW_FROM_STRING(np_s_8, 8));
+
+            puts("Base 10");
+            printf("np_s: %s\n", np_s_10);
+            printf("np_s: %d\n", CHECK_UINT8_OVERFLOW_FROM_STRING(np_s_10, 10));
+
+            puts("Base 16");
+            printf("np_s: %s\n", np_s_16);
+            printf("np_s: %d\n", CHECK_UINT8_OVERFLOW_FROM_STRING(np_s_16, 16));
+#endif
+
+            ASSERT(CHECK_UINT8_OVERFLOW_FROM_STRING(np_s_2, 2));
+            ASSERT(CHECK_UINT8_OVERFLOW_FROM_STRING(np_s_8, 8));
+            ASSERT(CHECK_UINT8_OVERFLOW_FROM_STRING(np_s_10, 10));
+            ASSERT(CHECK_UINT8_OVERFLOW_FROM_STRING(np_s_16, 16));
+
+            free(np_s_2);
+            free(np_s_8);
+            free(np_s_10);
+            free(np_s_16);
+        }
+    }
+}
+
+void
+test_check_uint16_overflow__Atoi()
+{
+    ASSERT(CHECK_UINT16_OVERFLOW_FROM_STRING("1111111111111100", 2));
+    ASSERT(CHECK_UINT16_OVERFLOW_FROM_STRING("1777", 8));
+    ASSERT(CHECK_UINT16_OVERFLOW_FROM_STRING("63893", 10));
+    ASSERT(CHECK_UINT16_OVERFLOW_FROM_STRING("ABCD", 16));
+
+    ASSERT(!CHECK_UINT16_OVERFLOW_FROM_STRING("111111111111111111111", 2));
+    ASSERT(!CHECK_UINT16_OVERFLOW_FROM_STRING("222222", 8));
+    ASSERT(!CHECK_UINT16_OVERFLOW_FROM_STRING("-100", 10));
+    ASSERT(!CHECK_UINT16_OVERFLOW_FROM_STRING("ABCDEFABC", 16));
+
+    {
+        time_t tt;
+        srand((unsigned)time(&tt));
+
+        for (int i = 0; i < 1'000; i++) {
+            Uint16 np = rand() % 65535;
+
+            char *np_s_2 = itoa__Uint16(np, 2);
+            char *np_s_8 = itoa__Uint16(np, 8);
+            char *np_s_10 = itoa__Uint16(np, 10);
+            char *np_s_16 = itoa__Uint16(np, 16);
+
+#ifdef ATOI_DEBUG_UINT16_RANDOM_TEST
+            puts("Base 2");
+            printf("np_s: %s\n", np_s_2);
+            printf("np_s: %d\n", CHECK_UINT16_OVERFLOW_FROM_STRING(np_s_2, 2));
+
+            puts("Base 8");
+            printf("np_s: %s\n", np_s_8);
+            printf("np_s: %d\n", CHECK_UINT16_OVERFLOW_FROM_STRING(np_s_8, 8));
+
+            puts("Base 10");
+            printf("np_s: %s\n", np_s_10);
+            printf("np_s: %d\n",
+                   CHECK_UINT16_OVERFLOW_FROM_STRING(np_s_10, 10));
+
+            puts("Base 16");
+            printf("np_s: %s\n", np_s_16);
+            printf("np_s: %d\n",
+                   CHECK_UINT16_OVERFLOW_FROM_STRING(np_s_16, 16));
+#endif
+
+            ASSERT(CHECK_UINT16_OVERFLOW_FROM_STRING(np_s_2, 2));
+            ASSERT(CHECK_UINT16_OVERFLOW_FROM_STRING(np_s_8, 8));
+            ASSERT(CHECK_UINT16_OVERFLOW_FROM_STRING(np_s_10, 10));
+            ASSERT(CHECK_UINT16_OVERFLOW_FROM_STRING(np_s_16, 16));
+
+            free(np_s_2);
+            free(np_s_8);
+            free(np_s_10);
+            free(np_s_16);
+        }
+    }
+}
+
+void
+test_check_uint32_overflow__Atoi()
+{
+    ASSERT(CHECK_UINT32_OVERFLOW_FROM_STRING("111111111111111111111111100", 2));
+    ASSERT(CHECK_UINT32_OVERFLOW_FROM_STRING("177777", 8));
+    ASSERT(CHECK_UINT32_OVERFLOW_FROM_STRING("5000000", 10));
+    ASSERT(CHECK_UINT32_OVERFLOW_FROM_STRING("FFFA", 16));
+
+    ASSERT(!CHECK_UINT32_OVERFLOW_FROM_STRING(
+      "11111111111111111111111111111111111111111111111111", 2));
+    ASSERT(!CHECK_UINT32_OVERFLOW_FROM_STRING("222222222222222222222", 8));
+    ASSERT(!CHECK_UINT32_OVERFLOW_FROM_STRING("-100", 10));
+    ASSERT(
+      !CHECK_UINT32_OVERFLOW_FROM_STRING("FFFFFFFFFFFFFFFFFFFFFFFFFF", 16));
+
+    {
+        time_t tt;
+        srand((unsigned)time(&tt));
+
+        for (int i = 0; i < 1'000; i++) {
+            Uint32 np = rand() % UINT32_MAX;
+
+            char *np_s_2 = itoa__Uint32(np, 2);
+            char *np_s_8 = itoa__Uint32(np, 8);
+            char *np_s_10 = itoa__Uint32(np, 10);
+            char *np_s_16 = itoa__Uint32(np, 16);
+
+#ifdef ATOI_DEBUG_UINT32_RANDOM_TEST
+            puts("Base 2");
+            printf("np_s: %s\n", np_s_2);
+            printf("np_s: %d\n", CHECK_UINT32_OVERFLOW_FROM_STRING(np_s_2, 2));
+
+            puts("Base 8");
+            printf("np_s: %s\n", np_s_8);
+            printf("np_s: %d\n", CHECK_UINT32_OVERFLOW_FROM_STRING(np_s_8, 8));
+
+            puts("Base 10");
+            printf("np_s: %s\n", np_s_10);
+            printf("np_s: %d\n",
+                   CHECK_UINT32_OVERFLOW_FROM_STRING(np_s_10, 10));
+
+            puts("Base 16");
+            printf("np_s: %s\n", np_s_16);
+            printf("np_s: %d\n",
+                   CHECK_UINT32_OVERFLOW_FROM_STRING(np_s_16, 16));
+#endif
+
+            ASSERT(CHECK_UINT32_OVERFLOW_FROM_STRING(np_s_2, 2));
+            ASSERT(CHECK_UINT32_OVERFLOW_FROM_STRING(np_s_8, 8));
+            ASSERT(CHECK_UINT32_OVERFLOW_FROM_STRING(np_s_10, 10));
+            ASSERT(CHECK_UINT32_OVERFLOW_FROM_STRING(np_s_16, 16));
+
+            free(np_s_2);
+            free(np_s_8);
+            free(np_s_10);
+            free(np_s_16);
+        }
+    }
+}
+
+void
+test_check_uint64_overflow__Atoi()
+{
+    ASSERT(CHECK_UINT64_OVERFLOW_FROM_STRING("111111111111111111111111100", 2));
+    ASSERT(CHECK_UINT64_OVERFLOW_FROM_STRING("177777", 8));
+    ASSERT(CHECK_UINT64_OVERFLOW_FROM_STRING("5000000", 10));
+    ASSERT(CHECK_UINT64_OVERFLOW_FROM_STRING("FFFA", 16));
+
+    ASSERT(!CHECK_UINT64_OVERFLOW_FROM_STRING(
+      "111111111111111111111111111111111111111111111111111111111111111111111111"
+      "11111111111111111111111111111111111111111111111111111111111111111111111"
+      "1",
+      2));
+    ASSERT(
+      !CHECK_UINT64_OVERFLOW_FROM_STRING("2222222222222222222222222222222222222"
+                                         "222222222222222222222222222222222222",
+                                         8));
+    ASSERT(!CHECK_UINT64_OVERFLOW_FROM_STRING("-100", 10));
+    ASSERT(!CHECK_UINT64_OVERFLOW_FROM_STRING(
+      "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+      "FFFFFFFFFF",
+      16));
+
+    {
+        time_t tt;
+        srand((unsigned)time(&tt));
+
+        for (int i = 0; i < 1'000; i++) {
+            Uint64 np = rand() % UINT64_MAX;
+
+            char *np_s_2 = itoa__Uint64(np, 2);
+            char *np_s_8 = itoa__Uint64(np, 8);
+            char *np_s_10 = itoa__Uint64(np, 10);
+            char *np_s_16 = itoa__Uint64(np, 16);
+
+#ifdef ATOI_DEBUG_UINT64_RANDOM_TEST
+            puts("Base 2");
+            printf("np_s: %s\n", np_s_2);
+            printf("np_s: %d\n", CHECK_UINT64_OVERFLOW_FROM_STRING(np_s_2, 2));
+
+            puts("Base 8");
+            printf("np_s: %s\n", np_s_8);
+            printf("np_s: %d\n", CHECK_UINT64_OVERFLOW_FROM_STRING(np_s_8, 8));
+
+            puts("Base 10");
+            printf("np_s: %s\n", np_s_10);
+            printf("np_s: %d\n",
+                   CHECK_UINT64_OVERFLOW_FROM_STRING(np_s_10, 10));
+
+            puts("Base 16");
+            printf("np_s: %s\n", np_s_16);
+            printf("np_s: %d\n",
+                   CHECK_UINT64_OVERFLOW_FROM_STRING(np_s_16, 16));
+#endif
+
+            ASSERT(CHECK_UINT64_OVERFLOW_FROM_STRING(np_s_2, 2));
+            ASSERT(CHECK_UINT64_OVERFLOW_FROM_STRING(np_s_8, 8));
+            ASSERT(CHECK_UINT64_OVERFLOW_FROM_STRING(np_s_10, 10));
+            ASSERT(CHECK_UINT64_OVERFLOW_FROM_STRING(np_s_16, 16));
+
+            free(np_s_2);
+            free(np_s_8);
+            free(np_s_10);
+            free(np_s_16);
+        }
+    }
 }
 
 void
