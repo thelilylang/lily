@@ -28,22 +28,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define __atoi__(type, s)                  \
-    type res = 0;                          \
-    int i = 0;                             \
-    bool is_neg = false;                   \
-    if (s[i] == '-') {                     \
-        i++;                               \
-        is_neg = true;                     \
-    }                                      \
-    while (s[i]) {                         \
-        if (is_neg)                        \
-            res = res * 10 - (s[i] - '0'); \
-        else                               \
-            res = res * 10 + (s[i] - '0'); \
-        i++;                               \
-    }                                      \
-    return res
+#define __atoi__(type, s)              \
+    type res = 0;                      \
+    int i = 0;                         \
+    bool is_neg = false;               \
+    if (s[i] == '-') {                 \
+        i++;                           \
+        is_neg = true;                 \
+    }                                  \
+    while (s[i]) {                     \
+        res = res * 10 + (s[i] - '0'); \
+        i++;                           \
+    }                                  \
+    return is_neg ? -res : res
 
 Int8
 atoi__Int8(const char *s)
