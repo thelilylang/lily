@@ -10,6 +10,8 @@ set(CMAKE_C_EXTENSIONS OFF)
 add_compile_options(-Wall -O3)
 
 set(BASE_SRC
+	src/base/alloc.c
+	src/base/atof.c
 	src/base/atoi.c
 	src/base/color.c
 	src/base/file.c
