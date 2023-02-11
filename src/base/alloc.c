@@ -54,7 +54,7 @@ emalloc__Alloc(Usize size)
 
 void *
 erealloc__Alloc(void *p, Usize size)
-{ 
+{
     void *new_p = realloc(p, size);
 
     if (!new_p) {

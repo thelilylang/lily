@@ -67,28 +67,28 @@
 
 #define LEN(arr, item) (((int)sizeof(arr) / sizeof(item)) + 1)
 
-#define DBG(msg)                                              \
-    {                                                         \
+#define DBG(msg)                                                \
+    {                                                           \
         printf("DEBUG: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
-        exit(1);                                              \
+        exit(1);                                                \
     }
 
-#define TODO(msg)                                            \
-    {                                                        \
-        printf("TODO: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
-        exit(1);                                             \
-    }
-
-#define FAILED(msg)                                            \
+#define TODO(msg)                                              \
     {                                                          \
-        printf("FAILED: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
+        printf("TODO: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
         exit(1);                                               \
     }
 
-#define UNREACHABLE(msg)                                            \
-    {                                                               \
+#define FAILED(msg)                                              \
+    {                                                            \
+        printf("FAILED: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
+        exit(1);                                                 \
+    }
+
+#define UNREACHABLE(msg)                                              \
+    {                                                                 \
         printf("UNREACHABLE: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
-        exit(1);                                                    \
+        exit(1);                                                      \
     }
 
 #endif // LILY_BASE_MACROS_H

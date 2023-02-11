@@ -35,11 +35,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define PUSH_STR(s)                                  \
+#define PUSH_STR(s)                                       \
     res = lily_realloc(res, buffer_size + strlen(s) + 1); \
-    for (Usize j = 0; s[j++];) {                     \
-        res[buffer_size] = s[j - 1];                 \
-        res[++buffer_size] = '\0';                   \
+    for (Usize j = 0; s[j++];) {                          \
+        res[buffer_size] = s[j - 1];                      \
+        res[++buffer_size] = '\0';                        \
     }
 
 #define REV_STR(s, size)                 \
@@ -49,35 +49,35 @@
         s[size - j - 1] = tmp;           \
     }
 
-#define PUSH_INT(d, base)                    \
-    if (d < 0) {                             \
+#define PUSH_INT(d, base)                         \
+    if (d < 0) {                                  \
         res = lily_realloc(res, buffer_size + 2); \
-        res[buffer_size] = '-';              \
-        res[++buffer_size] = '\0';           \
-        d = -d;                              \
-    }                                        \
-    while (d > 0) {                          \
+        res[buffer_size] = '-';                   \
+        res[++buffer_size] = '\0';                \
+        d = -d;                                   \
+    }                                             \
+    while (d > 0) {                               \
         res = lily_realloc(res, buffer_size + 2); \
-        res[buffer_size] = (d % base) + '0'; \
-        res[++buffer_size] = '\0';           \
-        d /= base;                           \
-    }                                        \
+        res[buffer_size] = (d % base) + '0';      \
+        res[++buffer_size] = '\0';                \
+        d /= base;                                \
+    }                                             \
     REV_STR(res, buffer_size);
 
-#define PUSH_INT_BASE_16(d)                     \
-    if (d < 0) {                                \
-        res = lily_realloc(res, buffer_size + 2);    \
-        res[buffer_size] = '-';                 \
-        res[++buffer_size] = '\0';              \
-        d = -d;                                 \
-    }                                           \
-    while (d > 0) {                             \
-        res = lily_realloc(res, buffer_size + 2);    \
-        int n = (d % 16) + '0';                 \
-        res[buffer_size] = n > '9' ? n + 7 : n; \
-        res[++buffer_size] = '\0';              \
-        d /= 16;                                \
-    }                                           \
+#define PUSH_INT_BASE_16(d)                       \
+    if (d < 0) {                                  \
+        res = lily_realloc(res, buffer_size + 2); \
+        res[buffer_size] = '-';                   \
+        res[++buffer_size] = '\0';                \
+        d = -d;                                   \
+    }                                             \
+    while (d > 0) {                               \
+        res = lily_realloc(res, buffer_size + 2); \
+        int n = (d % 16) + '0';                   \
+        res[buffer_size] = n > '9' ? n + 7 : n;   \
+        res[++buffer_size] = '\0';                \
+        d /= 16;                                  \
+    }                                             \
     REV_STR(res, buffer_size);
 
 char *

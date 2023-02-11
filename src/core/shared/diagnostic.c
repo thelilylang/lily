@@ -149,14 +149,14 @@ static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
         push__Vec(lines, split[location->start_line - 1]);                    \
         for (Usize i = 0; i < LEN(split, *split); i++) {                      \
             if (i != location->start_line - 1)                                \
-                lily_free(split[i]);                                               \
+                lily_free(split[i]);                                          \
         }                                                                     \
     } else {                                                                  \
         push__Vec(lines, split[location->start_line - 1]);                    \
         push__Vec(lines, split[location->end_line - 1]);                      \
         for (Usize i = 0; i < LEN(split, *split); i++) {                      \
             if (i != location->start_line - 1 && i != location->end_line - 1) \
-                lily_free(split[i]);                                               \
+                lily_free(split[i]);                                          \
         }                                                                     \
     }                                                                         \
     lily_free(split);

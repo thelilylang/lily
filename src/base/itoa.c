@@ -30,73 +30,73 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define __itoa__(v, base)                              \
+#define __itoa__(v, base)                                   \
     char *buffer = lily_malloc(1);                          \
-    int buffer_size = 0;                               \
-    if (v == 0) {                                      \
+    int buffer_size = 0;                                    \
+    if (v == 0) {                                           \
         buffer = lily_realloc(buffer, buffer_size + 2);     \
-        buffer[buffer_size] = '0';                     \
-        buffer[++buffer_size] = '\0';                  \
-        return buffer;                                 \
-    }                                                  \
-    buffer[0] = '\0';                                  \
-    int is_neg = 0;                                    \
-    if (v < 0) {                                       \
-        is_neg = 1;                                    \
-        v = -v;                                        \
-    }                                                  \
-    if (base == 10) {                                  \
-        while (v > 0) {                                \
+        buffer[buffer_size] = '0';                          \
+        buffer[++buffer_size] = '\0';                       \
+        return buffer;                                      \
+    }                                                       \
+    buffer[0] = '\0';                                       \
+    int is_neg = 0;                                         \
+    if (v < 0) {                                            \
+        is_neg = 1;                                         \
+        v = -v;                                             \
+    }                                                       \
+    if (base == 10) {                                       \
+        while (v > 0) {                                     \
             buffer = lily_realloc(buffer, buffer_size + 2); \
-            buffer[buffer_size] = (v % 10) + '0';      \
-            buffer[++buffer_size] = '\0';              \
-            v /= 10;                                   \
-        }                                              \
-    } else if (base == 2) {                            \
-        while (v > 0) {                                \
+            buffer[buffer_size] = (v % 10) + '0';           \
+            buffer[++buffer_size] = '\0';                   \
+            v /= 10;                                        \
+        }                                                   \
+    } else if (base == 2) {                                 \
+        while (v > 0) {                                     \
             buffer = lily_realloc(buffer, buffer_size + 2); \
-            buffer[buffer_size] = (v % 2) + '0';       \
-            buffer[++buffer_size] = '\0';              \
-            v /= 2;                                    \
-        }                                              \
-    } else if (base == 8) {                            \
-        while (v > 0) {                                \
+            buffer[buffer_size] = (v % 2) + '0';            \
+            buffer[++buffer_size] = '\0';                   \
+            v /= 2;                                         \
+        }                                                   \
+    } else if (base == 8) {                                 \
+        while (v > 0) {                                     \
             buffer = lily_realloc(buffer, buffer_size + 2); \
-            buffer[buffer_size] = (v % 8) + '0';       \
-            buffer[++buffer_size] = '\0';              \
-            v /= 8;                                    \
-        }                                              \
-    } else if (base == 16) {                           \
-        while (v > 0) {                                \
+            buffer[buffer_size] = (v % 8) + '0';            \
+            buffer[++buffer_size] = '\0';                   \
+            v /= 8;                                         \
+        }                                                   \
+    } else if (base == 16) {                                \
+        while (v > 0) {                                     \
             buffer = lily_realloc(buffer, buffer_size + 2); \
-            int n = (v % 16) + '0';                    \
-            buffer[buffer_size] = n > '9' ? n + 7 : n; \
-            buffer[++buffer_size] = '\0';              \
-            v /= 16;                                   \
-        }                                              \
-    } else {                                           \
-        UNREACHABLE("unknown base");                   \
-    }                                                  \
-    if (is_neg) {                                      \
+            int n = (v % 16) + '0';                         \
+            buffer[buffer_size] = n > '9' ? n + 7 : n;      \
+            buffer[++buffer_size] = '\0';                   \
+            v /= 16;                                        \
+        }                                                   \
+    } else {                                                \
+        UNREACHABLE("unknown base");                        \
+    }                                                       \
+    if (is_neg) {                                           \
         buffer = lily_realloc(buffer, buffer_size + 2);     \
-        buffer[buffer_size] = '-';                     \
-        buffer[++buffer_size] = '\0';                  \
-        v = -v;                                        \
-    }                                                  \
-    for (int i = 0; i < buffer_size / 2; i++) {        \
-        char tmp = buffer[i];                          \
-        buffer[i] = buffer[buffer_size - i - 1];       \
-        buffer[buffer_size - i - 1] = tmp;             \
-    }                                                  \
+        buffer[buffer_size] = '-';                          \
+        buffer[++buffer_size] = '\0';                       \
+        v = -v;                                             \
+    }                                                       \
+    for (int i = 0; i < buffer_size / 2; i++) {             \
+        char tmp = buffer[i];                               \
+        buffer[i] = buffer[buffer_size - i - 1];            \
+        buffer[buffer_size - i - 1] = tmp;                  \
+    }                                                       \
     return buffer
 
-#define GET_MIN_INT_VALUE(x)         \
-    int size = strlen(x);            \
+#define GET_MIN_INT_VALUE(x)              \
+    int size = strlen(x);                 \
     char *buffer = lily_malloc(size + 1); \
-    for (int i = size; i--;) {       \
-        buffer[i] = x[i];            \
-    }                                \
-    buffer[size] = '\0';             \
+    for (int i = size; i--;) {            \
+        buffer[i] = x[i];                 \
+    }                                     \
+    buffer[size] = '\0';                  \
     return buffer
 
 char *

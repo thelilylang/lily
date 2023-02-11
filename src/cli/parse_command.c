@@ -97,7 +97,7 @@ CONSTRUCTOR(ParseCommand,
                     case u_name##_OPTION_KIND_ERROR: {                         \
                         char *msg = format("unknown option `{s}`", op->error); \
                         EMIT_ERROR(msg);                                       \
-                        lily_free(msg);                                             \
+                        lily_free(msg);                                        \
                         break;                                                 \
                     }                                                          \
                     case u_name##_OPTION_KIND_HELP:                            \
