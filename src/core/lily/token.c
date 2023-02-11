@@ -221,7 +221,6 @@ VARIANT_CONSTRUCTOR(LilyToken *,
     self->literal_int_8 = literal_int_8;
 
     return self;
-
 }
 
 VARIANT_CONSTRUCTOR(LilyToken *,
@@ -843,7 +842,7 @@ DESTRUCTOR(LilyToken, LilyToken *self)
             break;
         case LILY_TOKEN_KIND_LITERAL_INT_16:
             FREE_VARIANT(LilyToken, literal_int_16, self);
-            break; 
+            break;
         case LILY_TOKEN_KIND_LITERAL_STRING:
             FREE_VARIANT(LilyToken, literal_string, self);
             break;
