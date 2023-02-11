@@ -115,7 +115,7 @@ scan_hex__Scanner(Scanner *self);
 static LilyToken *
 scan_oct__Scanner(Scanner *self);
 
-#if defined(PLATFORM_64)
+#ifdef PLATFORM_64
 #define ISIZE_OUT_OF_RANGE_HELP               \
     "the range of the Isize type is "         \
     "between -9_223_372_036_854_775_808 and " \
@@ -134,6 +134,7 @@ scan_oct__Scanner(Scanner *self);
 #endif
 
 #define SCAN_LITERAL_SUFFIX(value, base, is_int)                               \
+    LilyToken *token_res = NULL;                                               \
     {                                                                          \
         end__Location(&location_error,                                         \
                       self->source.cursor.line,                                \
@@ -160,12 +161,14 @@ scan_oct__Scanner(Scanner *self);
                     NULL,                                                      \
                     NULL),                                                     \
                   &self->count_error);                                         \
+                FREE(String, res);                                             \
+                return NULL;                                                   \
             }                                                                  \
                                                                                \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_int8,                            \
-                               clone__Location(&self->location),               \
-                               atoi__Int8(value, base));                       \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_int8,                       \
+                                    clone__Location(&self->location),          \
+                                    atoi__Int8(value, base));                  \
         } else if (c1 == (char *)'I' && c2 == (char *)'1' &&                   \
                    c3 == (char *)'6' && is_int) {                              \
             if (!CHECK_INT16_OVERFLOW_FROM_STRING(value, base)) {              \
@@ -182,12 +185,14 @@ scan_oct__Scanner(Scanner *self);
                     NULL,                                                      \
                     NULL),                                                     \
                   &self->count_error);                                         \
+                FREE(String, res);                                             \
+                return NULL;                                                   \
             }                                                                  \
                                                                                \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_int16,                           \
-                               clone__Location(&self->location),               \
-                               atoi__Int16(value, base));                      \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_int16,                      \
+                                    clone__Location(&self->location),          \
+                                    atoi__Int16(value, base));                 \
         } else if (c1 == (char *)'I' && c2 == (char *)'3' &&                   \
                    c3 == (char *)'2' && is_int) {                              \
             if (!CHECK_INT32_OVERFLOW_FROM_STRING(value, base)) {              \
@@ -205,12 +210,14 @@ scan_oct__Scanner(Scanner *self);
                     NULL,                                                      \
                     NULL),                                                     \
                   &self->count_error);                                         \
+                FREE(String, res);                                             \
+                return NULL;                                                   \
             }                                                                  \
                                                                                \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_int32,                           \
-                               clone__Location(&self->location),               \
-                               atoi__Int32(value, base));                      \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_int32,                      \
+                                    clone__Location(&self->location),          \
+                                    atoi__Int32(value, base));                 \
         } else if (c1 == (char *)'I' && c2 == (char *)'6' &&                   \
                    c3 == (char *)'4' && is_int) {                              \
             if (!CHECK_INT64_OVERFLOW_FROM_STRING(value, base)) {              \
@@ -229,12 +236,14 @@ scan_oct__Scanner(Scanner *self);
                     NULL,                                                      \
                     NULL),                                                     \
                   &self->count_error);                                         \
+                FREE(String, res);                                             \
+                return NULL;                                                   \
             }                                                                  \
                                                                                \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_int64,                           \
-                               clone__Location(&self->location),               \
-                               atoi__Int64(value, base));                      \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_int64,                      \
+                                    clone__Location(&self->location),          \
+                                    atoi__Int64(value, base));                 \
         } else if (c1 == (char *)'I' && c2 == (char *)'z' && is_int) {         \
             if (!CHECK_ISIZE_OVERFLOW_FROM_STRING(value, base)) {              \
                 emit__Diagnostic(                                              \
@@ -248,12 +257,14 @@ scan_oct__Scanner(Scanner *self);
                     NULL,                                                      \
                     NULL),                                                     \
                   &self->count_error);                                         \
+                FREE(String, res);                                             \
+                return NULL;                                                   \
             }                                                                  \
                                                                                \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_isize,                           \
-                               clone__Location(&self->location),               \
-                               atoi__Isize(value, base));                      \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_isize,                      \
+                                    clone__Location(&self->location),          \
+                                    atoi__Isize(value, base));                 \
         } else if (c1 == (char *)'U' && c2 == (char *)'8' && is_int) {         \
             if (!CHECK_UINT8_OVERFLOW_FROM_STRING(value, base)) {              \
                 emit__Diagnostic(                                              \
@@ -269,12 +280,14 @@ scan_oct__Scanner(Scanner *self);
                     NULL,                                                      \
                     NULL),                                                     \
                   &self->count_error);                                         \
+                FREE(String, res);                                             \
+                return NULL;                                                   \
             }                                                                  \
                                                                                \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_uint8,                           \
-                               clone__Location(&self->location),               \
-                               atoi__Uint8(value, base));                      \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_uint8,                      \
+                                    clone__Location(&self->location),          \
+                                    atoi__Uint8(value, base));                 \
         } else if (c1 == (char *)'U' && c2 == (char *)'1' &&                   \
                    c3 == (char *)'6' && is_int) {                              \
             if (!CHECK_UINT16_OVERFLOW_FROM_STRING(value, base)) {             \
@@ -291,12 +304,14 @@ scan_oct__Scanner(Scanner *self);
                     NULL,                                                      \
                     NULL),                                                     \
                   &self->count_error);                                         \
+                FREE(String, res);                                             \
+                return NULL;                                                   \
             }                                                                  \
                                                                                \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_uint16,                          \
-                               clone__Location(&self->location),               \
-                               atoi__Uint16(value, base));                     \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_uint16,                     \
+                                    clone__Location(&self->location),          \
+                                    atoi__Uint16(value, base));                \
         } else if (c1 == (char *)'U' && c2 == (char *)'3' &&                   \
                    c3 == (char *)'2' && is_int) {                              \
             if (!CHECK_UINT32_OVERFLOW_FROM_STRING(value, base)) {             \
@@ -313,12 +328,14 @@ scan_oct__Scanner(Scanner *self);
                     NULL,                                                      \
                     NULL),                                                     \
                   &self->count_error);                                         \
+                FREE(String, res);                                             \
+                return NULL;                                                   \
             }                                                                  \
                                                                                \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_uint32,                          \
-                               clone__Location(&self->location),               \
-                               atoi__Uint32(value, base));                     \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_uint32,                     \
+                                    clone__Location(&self->location),          \
+                                    atoi__Uint32(value, base));                \
         } else if (c1 == (char *)'U' && c2 == (char *)'6' &&                   \
                    c3 == (char *)'4' && is_int) {                              \
             if (!CHECK_UINT64_OVERFLOW_FROM_STRING(value, base)) {             \
@@ -336,12 +353,14 @@ scan_oct__Scanner(Scanner *self);
                     NULL,                                                      \
                     NULL),                                                     \
                   &self->count_error);                                         \
+                FREE(String, res);                                             \
+                return NULL;                                                   \
             }                                                                  \
                                                                                \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_uint64,                          \
-                               clone__Location(&self->location),               \
-                               atoi__Uint64(value, base));                     \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_uint64,                     \
+                                    clone__Location(&self->location),          \
+                                    atoi__Uint64(value, base));                \
         } else if (c1 == (char *)'U' && c2 == (char *)'z' && is_int) {         \
             if (!CHECK_USIZE_OVERFLOW_FROM_STRING(value, base)) {              \
                 emit__Diagnostic(                                              \
@@ -355,30 +374,32 @@ scan_oct__Scanner(Scanner *self);
                     NULL,                                                      \
                     NULL),                                                     \
                   &self->count_error);                                         \
+                FREE(String, res);                                             \
+                return NULL;                                                   \
             }                                                                  \
                                                                                \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_usize,                           \
-                               clone__Location(&self->location),               \
-                               atoi__Usize(value, base));                      \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_usize,                      \
+                                    clone__Location(&self->location),          \
+                                    atoi__Usize(value, base));                 \
         } else if (c1 == (char *)'F' && c2 == (char *)'3' &&                   \
                    c3 == (char *)'2') {                                        \
             /*                                                                 \
             TODO: Check if the float is overflow/underflow.                    \
             */                                                                 \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_float32,                         \
-                               clone__Location(&self->location),               \
-                               atof__Float32(value));                          \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_float32,                    \
+                                    clone__Location(&self->location),          \
+                                    atof__Float32(value));                     \
         } else if (c1 == (char *)'F' && c2 == (char *)'6' &&                   \
                    c3 == (char *)'4') {                                        \
             /*                                                                 \
             TODO: Check if the float is overflow/underflow.                    \
             */                                                                 \
-            return NEW_VARIANT(LilyToken,                                      \
-                               literal_suffix_float64,                         \
-                               clone__Location(&self->location),               \
-                               atof__Float64(value));                          \
+            token_res = NEW_VARIANT(LilyToken,                                 \
+                                    literal_suffix_float64,                    \
+                                    clone__Location(&self->location),          \
+                                    atof__Float64(value));                     \
         } else if (c1 == (char *)'I' || c1 == (char *)'U' ||                   \
                    c1 == (char *)'F') {                                        \
             emit__Diagnostic(                                                  \
@@ -397,6 +418,8 @@ scan_oct__Scanner(Scanner *self);
                                        "suffix on a float literal")),          \
                 NULL),                                                         \
               &self->count_error);                                             \
+            FREE(String, res);                                                 \
+            return NULL;                                                       \
         }                                                                      \
     }
 
@@ -1072,7 +1095,15 @@ scan_hex__Scanner(Scanner *self)
         return NULL;
     }
 
+    previous_char__Source(&self->source);
+
     SCAN_LITERAL_SUFFIX(res->buffer, 16, true);
+
+    if (token_res) {
+        FREE(String, res);
+
+        return token_res;
+    }
 
     return NEW_VARIANT(
       LilyToken, literal_int_16, clone__Location(&self->location), res);
@@ -1081,7 +1112,47 @@ scan_hex__Scanner(Scanner *self)
 LilyToken *
 scan_oct__Scanner(Scanner *self)
 {
+    Location location_error = default__Location(self->source.file->name);
     String *res = NEW(String);
+
+    start__Location(
+      &location_error, self->source.cursor.line, self->source.cursor.column);
+
+    while (is_oct__Scanner(self)) {
+        push__String(res, self->source.cursor.current);
+        next_char__Source(&self->source);
+    }
+
+    if (is_empty__String(res)) {
+        end__Location(&location_error,
+                      self->source.cursor.line,
+                      self->source.cursor.column);
+
+        emit__Diagnostic(
+          NEW_VARIANT(Diagnostic,
+                      simple_lily_error,
+                      self->source.file,
+                      &location_error,
+                      NEW(LilyError, LILY_ERROR_KIND_INVALID_OCTAL_LITERAL),
+                      init__Vec(1, from__String("e.g. 0o22, 0o56")),
+                      NULL,
+                      from__String("add a digit 0 to 7")),
+          &self->count_error);
+
+        FREE(String, res);
+
+        return NULL;
+    }
+
+    previous_char__Source(&self->source);
+
+    SCAN_LITERAL_SUFFIX(res->buffer, 8, true);
+
+    if (token_res) {
+        FREE(String, res);
+
+        return token_res;
+    }
 
     return NEW_VARIANT(
       LilyToken, literal_int_8, clone__Location(&self->location), res);
