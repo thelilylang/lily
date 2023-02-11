@@ -609,6 +609,9 @@ test_check_uint64_overflow__Atoi()
 void
 test_atoi__Atoi()
 {
-    ASSERT(atoi__Int32("123") == 123);
-    ASSERT(atoi__Int32("-123") == -123);
+    ASSERT(atoi__Int32("11", 2) == 3);
+    ASSERT(atoi__Int32("77", 8) == 63);
+    ASSERT(atoi__Int32("123", 10) == 123);
+    ASSERT(atoi__Int32("-123", 10) == -123);
+    ASSERT(atoi__Int32("FF", 16) == 255);
 }
