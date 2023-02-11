@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_SHARED_FILE_H
 #define LILY_CORE_SHARED_FILE_H
 
+#include <base/alloc.h>
 #include <base/macros.h>
 
 #include <stdlib.h>
