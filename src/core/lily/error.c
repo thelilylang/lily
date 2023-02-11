@@ -61,6 +61,10 @@ to_msg__LilyError(const LilyError *self)
             return "Uint32 is out of range";
         case LILY_ERROR_KIND_UINT64_OUT_OF_RANGE:
             return "Uint64 is out of range";
+        case LILY_ERROR_KIND_ISIZE_OUT_OF_RANGE:
+            return "Isize is ouf of range";
+        case LILY_ERROR_KIND_USIZE_OUT_OF_RANGE:
+            return "Usize is ouf of range";
         case LILY_ERROR_KIND_INVALID_LITERAL_SUFFIX:
             return "invalid literal suffix";
         default:
@@ -100,8 +104,12 @@ to_code__LilyError(const LilyError *self)
             return "0013";
         case LILY_ERROR_KIND_UINT64_OUT_OF_RANGE:
             return "0014";
-        case LILY_ERROR_KIND_INVALID_LITERAL_SUFFIX:
+        case LILY_ERROR_KIND_ISIZE_OUT_OF_RANGE:
             return "0015";
+        case LILY_ERROR_KIND_USIZE_OUT_OF_RANGE:
+            return "0016";
+        case LILY_ERROR_KIND_INVALID_LITERAL_SUFFIX:
+            return "0017";
         default:
             UNREACHABLE("unknown variant");
     }
