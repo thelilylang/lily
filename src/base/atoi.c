@@ -148,7 +148,7 @@ atoi_safe__Int8(const char *s, int base)
 
     __atoi__(Int8, s, base);
 
-    return SOME((Int8*)(Uptr)res);
+    return SOME((Int8 *)(Uptr)res);
 }
 
 Optional *
@@ -160,7 +160,7 @@ atoi_safe__Int16(const char *s, int base)
 
     __atoi__(Int16, s, base);
 
-    return SOME((Int8*)(Uptr)res);
+    return SOME((Int8 *)(Uptr)res);
 }
 
 Optional *
@@ -172,7 +172,7 @@ atoi_safe__Int32(const char *s, int base)
 
     __atoi__(Int32, s, base);
 
-    return SOME((Int32*)(Uptr)res);
+    return SOME((Int32 *)(Uptr)res);
 }
 
 Optional *
@@ -184,7 +184,7 @@ atoi_safe__Int64(const char *s, int base)
 
     __atoi__(Int64, s, base);
 
-    return SOME((Int64*)(Uptr)res);
+    return SOME((Int64 *)(Uptr)res);
 }
 
 Optional *
@@ -196,7 +196,7 @@ atoi_safe__Uint8(const char *s, int base)
 
     __atoi__(Uint8, s, base);
 
-    return SOME((Uint8*)(Uptr)res);
+    return SOME((Uint8 *)(Uptr)res);
 }
 
 Optional *
@@ -208,7 +208,7 @@ atoi_safe__Uint16(const char *s, int base)
 
     __atoi__(Uint16, s, base);
 
-    return SOME((Uint16*)(Uptr)res);
+    return SOME((Uint16 *)(Uptr)res);
 }
 
 Optional *
@@ -220,7 +220,7 @@ atoi_safe__Uint32(const char *s, int base)
 
     __atoi__(Uint32, s, base);
 
-    return SOME((Uint32*)(Uptr)res);
+    return SOME((Uint32 *)(Uptr)res);
 }
 
 Optional *
@@ -232,7 +232,7 @@ atoi_safe__Uint64(const char *s, int base)
 
     __atoi__(Uint64, s, base);
 
-    return SOME((Uint64*)(Uptr)res);
+    return SOME((Uint64 *)(Uptr)res);
 }
 
 Optional *
@@ -244,7 +244,7 @@ atoi_safe__Isize(const char *s, int base)
 
     __atoi__(Isize, s, base);
 
-    return SOME((Isize*)(Uptr)res);
+    return SOME((Isize *)(Uptr)res);
 }
 
 Optional *
@@ -256,5 +256,5 @@ atoi_safe__Usize(const char *s, int base)
 
     __atoi__(Usize, s, base);
 
-    return SOME((Usize*)(Uptr)res);
+    return SOME((Usize *)(Uptr)res);
 }
