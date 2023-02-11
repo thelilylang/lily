@@ -34,7 +34,7 @@ ecalloc__Alloc(Usize n, Usize size)
     void *p = calloc(n, size);
 
     if (!p) {
-        FAILED("(ecalloc): impossible to alloc more bytes");
+        perror("(ecalloc): Try to allocate");
     }
 
     return p;
@@ -46,7 +46,7 @@ emalloc__Alloc(Usize size)
     void *p = malloc(size);
 
     if (!p) {
-        FAILED("(emalloc): impossible to alloc more bytes");
+        perror("(emalloc): Try to allocate");
     }
 
     return p;
@@ -54,25 +54,21 @@ emalloc__Alloc(Usize size)
 
 void *
 erealloc__Alloc(void *p, Usize size)
-{
-    if (!p) {
-        FAILED("(erealloc): the pointer is NULL");
+{ 
+    void *new_p = realloc(p, size);
+
+    if (!new_p) {
+        perror("(erealloc): Try to allocate");
     }
 
-    p = realloc(p, size);
-
-    if (!p) {
-        FAILED("(erealloc): impossible to alloc more bytes");
-    }
-
-    return p;
+    return new_p;
 }
 
 void
 efree__Alloc(void *p)
 {
     if (!p) {
-        FAILED("(efree): the pointer is NULL");
+        perror("(efree): Try to free");
     }
 
     free(p);
