@@ -34,6 +34,16 @@
 #define LOCAL
 #undef LOCAL
 
+#if defined(__GNUC__)
+#define GCC_VERSION \
+    (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+#elif defined(__clang_major__)
+#define CLANG_VERSION \
+    (__clang_major__ * 1000 + __clang_minor__ * 100 + __clang_patchlevel__)
+#else
+#error "unknown compiler, please add a support for this compiler."
+#endif
+
 #define PTR_SIZE sizeof(void *)
 
 #define FREE_BUFFER_ITEMS(buffer, len, type) \
