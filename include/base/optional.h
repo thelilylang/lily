@@ -25,9 +25,12 @@
 #ifndef LILY_BASE_OPTIONAL_H
 #define LILY_BASE_OPTIONAL_H
 
+#include <base/assert.h>
 #include <base/macros.h>
+#include <base/new.h>
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 typedef struct Optional
@@ -54,6 +57,14 @@ VARIANT_CONSTRUCTOR(Optional *, Optional, some, void *some);
  * @brief Construct Optional type (OPTIONAL_NONE).
  */
 VARIANT_CONSTRUCTOR(Optional *, Optional, none);
+
+inline void *
+get__Optional(const Optional *self)
+{
+    ASSERT(self->some);
+
+    return self->some;
+}
 
 /**
  *
