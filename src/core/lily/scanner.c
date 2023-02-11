@@ -135,7 +135,7 @@ scan_oct__Scanner(Scanner *self);
 
 #define SCAN_LITERAL_SUFFIX(value, base, is_int)                               \
     {                                                                          \
-        LilyToken *token_res = NULL;                                               \
+        LilyToken *token_res = NULL;                                           \
         end__Location(&location_error,                                         \
                       self->source.cursor.line,                                \
                       self->source.cursor.column);                             \
@@ -421,11 +421,11 @@ scan_oct__Scanner(Scanner *self);
             FREE(String, res);                                                 \
             return NULL;                                                       \
         }                                                                      \
-\
-        if (token_res) { \
-            FREE(String, res); \
-            return token_res; \
-        } \
+                                                                               \
+        if (token_res) {                                                       \
+            FREE(String, res);                                                 \
+            return token_res;                                                  \
+        }                                                                      \
     }
 
 enum LilyTokenKind
