@@ -48,8 +48,17 @@ static inline VARIANT_DESTRUCTOR(LilyToken,
 // Free LilyToken type (LILY_TOKEN_KIND_LITERAL_FLOAT).
 static inline VARIANT_DESTRUCTOR(LilyToken, literal_float, LilyToken *self);
 
-// Free LilyToken type (LILY_TOKEN_KIND_LITERAL_INT).
-static inline VARIANT_DESTRUCTOR(LilyToken, literal_int, LilyToken *self);
+// Free LilyToken type (LILY_TOKEN_KIND_LITERAL_INT_2).
+static inline VARIANT_DESTRUCTOR(LilyToken, literal_int_2, LilyToken *self);
+
+// Free LilyToken type (LILY_TOKEN_KIND_LITERAL_INT_8).
+static inline VARIANT_DESTRUCTOR(LilyToken, literal_int_8, LilyToken *self);
+
+// Free LilyToken type (LILY_TOKEN_KIND_LITERAL_INT_10).
+static inline VARIANT_DESTRUCTOR(LilyToken, literal_int_10, LilyToken *self);
+
+// Free LilyToken type (LILY_TOKEN_KIND_LITERAL_INT_16).
+static inline VARIANT_DESTRUCTOR(LilyToken, literal_int_16, LilyToken *self);
 
 // Free LilyToken type (LILY_TOKEN_KIND_LITERAL_STRING).
 static inline VARIANT_DESTRUCTOR(LilyToken, literal_string, LilyToken *self);
@@ -186,15 +195,61 @@ VARIANT_CONSTRUCTOR(LilyToken *,
 
 VARIANT_CONSTRUCTOR(LilyToken *,
                     LilyToken,
-                    literal_int,
+                    literal_int_2,
                     Location location,
-                    String *literal_int)
+                    String *literal_int_2)
 {
     LilyToken *self = lily_malloc(sizeof(LilyToken));
 
-    self->kind = LILY_TOKEN_KIND_LITERAL_INT;
+    self->kind = LILY_TOKEN_KIND_LITERAL_INT_2;
     self->location = location;
-    self->literal_int = literal_int;
+    self->literal_int_2 = literal_int_2;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    literal_int_8,
+                    Location location,
+                    String *literal_int_8)
+{
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
+
+    self->kind = LILY_TOKEN_KIND_LITERAL_INT_8;
+    self->location = location;
+    self->literal_int_8 = literal_int_8;
+
+    return self;
+
+}
+
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    literal_int_10,
+                    Location location,
+                    String *literal_int_10)
+{
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
+
+    self->kind = LILY_TOKEN_KIND_LITERAL_INT_10;
+    self->location = location;
+    self->literal_int_10 = literal_int_10;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    literal_int_16,
+                    Location location,
+                    String *literal_int_16)
+{
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
+
+    self->kind = LILY_TOKEN_KIND_LITERAL_INT_16;
+    self->location = location;
+    self->literal_int_16 = literal_int_16;
 
     return self;
 }
@@ -604,8 +659,14 @@ to_string__LilyToken(LilyToken *self)
             return format__String("b'{c}'", self->literal_bit_char);
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
             return format__String("{S}", self->literal_float);
-        case LILY_TOKEN_KIND_LITERAL_INT:
-            return format__String("{S}", self->literal_int);
+        case LILY_TOKEN_KIND_LITERAL_INT_2:
+            return format__String("0b{S}", self->literal_int_2);
+        case LILY_TOKEN_KIND_LITERAL_INT_8:
+            return format__String("0o{S}", self->literal_int_8);
+        case LILY_TOKEN_KIND_LITERAL_INT_10:
+            return format__String("{S}", self->literal_int_10);
+        case LILY_TOKEN_KIND_LITERAL_INT_16:
+            return format__String("0x{S}", self->literal_int_16);
         case LILY_TOKEN_KIND_LITERAL_STRING:
             return format__String("\"{S}\"", self->literal_string);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
@@ -723,9 +784,27 @@ VARIANT_DESTRUCTOR(LilyToken, literal_float, LilyToken *self)
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyToken, literal_int, LilyToken *self)
+VARIANT_DESTRUCTOR(LilyToken, literal_int_2, LilyToken *self)
 {
-    FREE(String, self->literal_int);
+    FREE(String, self->literal_int_2);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyToken, literal_int_8, LilyToken *self)
+{
+    FREE(String, self->literal_int_8);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyToken, literal_int_10, LilyToken *self)
+{
+    FREE(String, self->literal_int_10);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyToken, literal_int_16, LilyToken *self)
+{
+    FREE(String, self->literal_int_16);
     lily_free(self);
 }
 
@@ -753,9 +832,18 @@ DESTRUCTOR(LilyToken, LilyToken *self)
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
             FREE_VARIANT(LilyToken, literal_float, self);
             break;
-        case LILY_TOKEN_KIND_LITERAL_INT:
-            FREE_VARIANT(LilyToken, literal_int, self);
+        case LILY_TOKEN_KIND_LITERAL_INT_2:
+            FREE_VARIANT(LilyToken, literal_int_2, self);
             break;
+        case LILY_TOKEN_KIND_LITERAL_INT_8:
+            FREE_VARIANT(LilyToken, literal_int_8, self);
+            break;
+        case LILY_TOKEN_KIND_LITERAL_INT_10:
+            FREE_VARIANT(LilyToken, literal_int_10, self);
+            break;
+        case LILY_TOKEN_KIND_LITERAL_INT_16:
+            FREE_VARIANT(LilyToken, literal_int_16, self);
+            break; 
         case LILY_TOKEN_KIND_LITERAL_STRING:
             FREE_VARIANT(LilyToken, literal_string, self);
             break;

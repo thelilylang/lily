@@ -138,7 +138,10 @@ enum LilyTokenKind
     LILY_TOKEN_KIND_LITERAL_BIT_STRING,
     LILY_TOKEN_KIND_LITERAL_CHAR,
     LILY_TOKEN_KIND_LITERAL_FLOAT,
-    LILY_TOKEN_KIND_LITERAL_INT,
+    LILY_TOKEN_KIND_LITERAL_INT_2,
+    LILY_TOKEN_KIND_LITERAL_INT_8,
+    LILY_TOKEN_KIND_LITERAL_INT_10,
+    LILY_TOKEN_KIND_LITERAL_INT_16,
     LILY_TOKEN_KIND_LITERAL_STRING,
     LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32,
     LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64,
@@ -196,7 +199,10 @@ typedef struct LilyToken
         Uint8 *literal_bit_string;
         char literal_char;
         String *literal_float;
-        String *literal_int;
+        String *literal_int_2;
+        String *literal_int_8;
+        String *literal_int_10;
+        String *literal_int_16;
         String *literal_string;
         Float32 literal_suffix_float32;
         Float64 literal_suffix_float64;
@@ -301,13 +307,43 @@ VARIANT_CONSTRUCTOR(LilyToken *,
 
 /**
  *
- * @brief Construct LilyToken type (LILY_TOKEN_KIND_LITERAL_INT).
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_LITERAL_INT_2).
  */
 VARIANT_CONSTRUCTOR(LilyToken *,
                     LilyToken,
-                    literal_int,
+                    literal_int_2,
                     Location location,
-                    String *literal_int);
+                    String *literal_int_2);
+
+/**
+ *
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_LITERAL_INT_8).
+ */
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    literal_int_8,
+                    Location location,
+                    String *literal_int_8);
+
+/**
+ *
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_LITERAL_INT_10).
+ */
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    literal_int_10,
+                    Location location,
+                    String *literal_int_10);
+
+/**
+ *
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_LITERAL_INT_16).
+ */
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    literal_int_16,
+                    Location location,
+                    String *literal_int_16);
 
 /**
  *
