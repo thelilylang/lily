@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_ATOI_H
 #define LILY_BASE_ATOI_H
 
+#include <base/optional.h>
 #include <base/platform.h>
 #include <base/types.h>
 
@@ -695,7 +696,7 @@ atoi__Int32(const char *s, int base);
 
 /**
  *
- * @brief convert a string to int64.
+ * @brief convert a string to Int64.
  */
 Int64
 atoi__Int64(const char *s, int base);
@@ -745,71 +746,80 @@ atoi__Usize(const char *s, int base);
 /**
  *
  * @brief Convert a string to Int8.
+ * @return Optional<Int8*>*
  */
-Int8
+Optional *
 atoi_safe__Int8(const char *s, int base);
 
 /**
  *
  * @brief Convert a string to Int16.
+ * @return Optional<Int16*>*
  */
-Int16
+Optional *
 atoi_safe__Int16(const char *s, int base);
 
 /**
  *
  * @brief Convert a string to Int32.
+ * @return Optional<Int32*>*
  */
-Int32
+Optional *
 atoi_safe__Int32(const char *s, int base);
 
 /**
  *
- * @brief convert a string to int64.
+ * @brief convert a string to Int64.
+ * @return Optional<Int64*>*
  */
-Int64
+Optional *
 atoi_safe__Int64(const char *s, int base);
 
 /**
  *
  * @brief Convert a string to Uint8.
+ * @return Optional<Uint8*>*
  */
-Uint8
+Optional *
 atoi_safe__Uint8(const char *s, int base);
 
 /**
  *
  * @brief Convert a string to Uint16.
+ * @return Optional<Uint16*>*
  */
-Uint16
+Optional *
 atoi_safe__Uint16(const char *s, int base);
 
 /**
  *
  * @brief convert a string to Uint32.
+ * @return Optional<Uint32*>*
  */
-Uint32
+Optional *
 atoi_safe__Uint32(const char *s, int base);
 
 /**
  *
  * @brief convert a string to Uint64.
+ * @return Optional<Uint64*>*
  */
-Uint64
+Optional *
 atoi_safe__Uint64(const char *s, int base);
 
 /**
  *
  * @brief convert a string to Isize.
+ * @return Optional<Isize*>*
  */
-Isize
+Optional *
 atoi_safe__Isize(const char *s, int base);
 
 /**
  *
  * @brief convert a string to Usize.
  */
-Usize
+Optional *
 atoi_safe__Usize(const char *s, int base);
 
 #endif // LILY_BASE_ATOI_H
