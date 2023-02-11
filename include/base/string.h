@@ -98,7 +98,7 @@ grow__String(String *self, Usize new_capacity);
  * @brief Return true if the string is empty otherwise return false.
  */
 inline bool
-is_empty__String(String *self)
+is_empty__String(const String *self)
 {
     return self->len == 0;
 }
