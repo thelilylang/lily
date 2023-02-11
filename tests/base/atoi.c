@@ -615,3 +615,24 @@ test_atoi__Atoi()
     ASSERT(atoi__Int32("-123", 10) == -123);
     ASSERT(atoi__Int32("FF", 16) == 255);
 }
+
+void
+test_atoi_safe__Atoi()
+{
+    {
+        Optional *op = atoi_safe__Int8("500", 10);
+
+        ASSERT(is_none__Optional(op));
+
+        FREE(Optional, op);
+    }
+
+    {
+        Optional *op = atoi_safe__Int8("100", 10);
+
+        ASSERT(is_some__Optional(op));
+        ASSERT(op->some == (Int8 *)100);
+
+        FREE(Optional, op);
+    }
+}

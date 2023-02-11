@@ -13,7 +13,6 @@ int
 main()
 {
     // Test atoi
-    test_atoi__Atoi();
     test_check_int8_overflow__Atoi();
     test_check_int16_overflow__Atoi();
     test_check_int32_overflow__Atoi();
@@ -22,6 +21,8 @@ main()
     test_check_uint16_overflow__Atoi();
     test_check_uint32_overflow__Atoi();
     test_check_uint64_overflow__Atoi();
+    test_atoi__Atoi();
+    test_atoi_safe__Atoi();
 
     // Test format
     test_s_specifier__Format();
