@@ -68,6 +68,8 @@ to_msg__LilyError(const LilyError *self)
             return "Usize is ouf of range";
         case LILY_ERROR_KIND_INVALID_LITERAL_SUFFIX:
             return "invalid literal suffix";
+        case LILY_ERROR_KIND_INVALID_HEXADECIMAL_LITERAL:
+            return "invalid hexadecimal literal";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -111,6 +113,8 @@ to_code__LilyError(const LilyError *self)
             return "0016";
         case LILY_ERROR_KIND_INVALID_LITERAL_SUFFIX:
             return "0017";
+        case LILY_ERROR_KIND_INVALID_HEXADECIMAL_LITERAL:
+            return "0018";
         default:
             UNREACHABLE("unknown variant");
     }
