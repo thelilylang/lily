@@ -26,9 +26,9 @@
 #include <base/macros.h>
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #define __atoi__(type, s, base)                      \
     type res = 0;                                    \
