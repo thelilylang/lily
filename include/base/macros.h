@@ -25,14 +25,17 @@
 #ifndef LILY_BASE_MACROS_H
 #define LILY_BASE_MACROS_H
 
-#define DEBUG
-#undef DEBUG
+#define ENV_DEBUG
+#undef ENV_DEBUG
 
-#define INSTALL
-#undef INSTALL
+#define ENV_INSTALL
+#undef ENV_INSTALL
 
-#define LOCAL
-#undef LOCAL
+#define ENV_LOCAL
+#undef ENV_LOCAL
+
+#define ENV_SAFE
+#undef ENV_SAFE
 
 #if defined(__GNUC__)
 #define GCC_VERSION \
