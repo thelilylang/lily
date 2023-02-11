@@ -132,6 +132,10 @@ scan_hex__Scanner(Scanner *self);
 
 #define SCAN_LITERAL_SUFFIX(value, base, is_int)                               \
     {                                                                          \
+        end__Location(&location_error,                                         \
+                      self->source.cursor.line,                                \
+                      self->source.cursor.column);                             \
+                                                                               \
         char *c1 = peek_char__Scanner(self, 1);                                \
                                                                                \
         char *c2 = peek_char__Scanner(self, 2);                                \
@@ -1005,8 +1009,19 @@ scan_string__Scanner(Scanner *self)
 
         next_char__Source(&self->source);
 
-        push__String(
-          res, self->source.file->content[self->source.cursor.position - 1]);
+        {
+            String *c = get_character__Scanner(
+              self,
+              self->source.file->content[self->source.cursor.position - 1]);
+
+            if (!c) {
+                FREE(String, res);
+
+                return NULL;
+            }
+
+            APPEND_AND_FREE(res, c);
+        }
     }
 
     return res;
@@ -1016,7 +1031,7 @@ LilyToken *
 scan_hex__Scanner(Scanner *self)
 {
     Location location_error = default__Location(self->source.file->name);
-    String *res = from__String("0x");
+    String *res = NEW(String);
 
     start__Location(
       &location_error, self->source.cursor.line, self->source.cursor.column);
@@ -1026,7 +1041,32 @@ scan_hex__Scanner(Scanner *self)
         next_char__Source(&self->source);
     }
 
+    if (is_empty__String(res)) {
+        end__Location(&location_error,
+                      self->source.cursor.line,
+                      self->source.cursor.column);
+
+        emit__Diagnostic(
+          NEW_VARIANT(
+            Diagnostic,
+            simple_lily_error,
+            self->source.file,
+            &location_error,
+            NEW(LilyError, LILY_ERROR_KIND_INVALID_HEXADECIMAL_LITERAL),
+            init__Vec(1, from__String("e.g. 0xff, 0xFF")),
+            NULL,
+            from__String("add a digit 0 to 9 or a letter a (A) to f (F)")),
+          &self->count_error);
+
+        FREE(String, res);
+
+        return NULL;
+    }
+
     SCAN_LITERAL_SUFFIX(res->buffer, 16, true);
+
+    return NEW_VARIANT(
+      LilyToken, literal_int, clone__Location(&self->location), res);
 }
 
 void
