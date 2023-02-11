@@ -112,6 +112,9 @@ scan_string__Scanner(Scanner *self);
 static LilyToken *
 scan_hex__Scanner(Scanner *self);
 
+static LilyToken *
+scan_oct__Scanner(Scanner *self);
+
 #if defined(PLATFORM_64)
 #define ISIZE_OUT_OF_RANGE_HELP               \
     "the range of the Isize type is "         \
@@ -652,7 +655,10 @@ next_char_by_token__Scanner(Scanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_LITERAL_BIT_STRING:
         case LILY_TOKEN_KIND_LITERAL_CHAR:
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
-        case LILY_TOKEN_KIND_LITERAL_INT:
+        case LILY_TOKEN_KIND_LITERAL_INT_2:
+        case LILY_TOKEN_KIND_LITERAL_INT_8:
+        case LILY_TOKEN_KIND_LITERAL_INT_10:
+        case LILY_TOKEN_KIND_LITERAL_INT_16:
         case LILY_TOKEN_KIND_LITERAL_STRING:
             next_char__Source(&self->source);
             return;
@@ -1037,6 +1043,9 @@ scan_hex__Scanner(Scanner *self)
       &location_error, self->source.cursor.line, self->source.cursor.column);
 
     while (is_hex__Scanner(self)) {
+        if (self->source.cursor.current == '_')
+            continue;
+
         push__String(res, self->source.cursor.current);
         next_char__Source(&self->source);
     }
@@ -1066,7 +1075,16 @@ scan_hex__Scanner(Scanner *self)
     SCAN_LITERAL_SUFFIX(res->buffer, 16, true);
 
     return NEW_VARIANT(
-      LilyToken, literal_int, clone__Location(&self->location), res);
+      LilyToken, literal_int_16, clone__Location(&self->location), res);
+}
+
+LilyToken *
+scan_oct__Scanner(Scanner *self)
+{
+    String *res = NEW(String);
+
+    return NEW_VARIANT(
+      LilyToken, literal_int_8, clone__Location(&self->location), res);
 }
 
 void
