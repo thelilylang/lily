@@ -23,81 +23,108 @@
  */
 
 #include <base/atoi.h>
+#include <base/macros.h>
 
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
-#define __atoi__(type, s)              \
-    type res = 0;                      \
-    int i = 0;                         \
-    bool is_neg = false;               \
-    if (s[i] == '-') {                 \
-        i++;                           \
-        is_neg = true;                 \
-    }                                  \
-    while (s[i]) {                     \
-        res = res * 10 + (s[i] - '0'); \
-        i++;                           \
-    }                                  \
+#define __atoi__(type, s, base)                      \
+    type res = 0;                                    \
+    int i = 0;                                       \
+    bool is_neg = false;                             \
+    if (s[i] == '-') {                               \
+        i++;                                         \
+        is_neg = true;                               \
+    }                                                \
+    if (base == 2) {                                 \
+        while (s[i]) {                               \
+            res = res * 2 + (s[i] - '0');            \
+            i++;                                     \
+        }                                            \
+    } else if (base == 8) {                          \
+        while (s[i]) {                               \
+            res = res * 8 + (s[i] - '0');            \
+            i++;                                     \
+        }                                            \
+    } else if (base == 10) {                         \
+        while (s[i]) {                               \
+            res = res * 10 + (s[i] - '0');           \
+            i++;                                     \
+        }                                            \
+    } else if (base == 16) {                         \
+        while (s[i]) {                               \
+            if (s[i] >= 'a' && s[i] <= 'f') {        \
+                res = res * 16 + (s[i] - 87);        \
+            } else if (s[i] >= 'A' && s[i] <= 'F') { \
+                res = res * 16 + (s[i] - 55);        \
+            } else {                                 \
+                res = res * 16 + (s[i] - '0');       \
+            }                                        \
+            i++;                                     \
+        }                                            \
+    } else {                                         \
+        UNREACHABLE("unknown base");                 \
+    }                                                \
     return is_neg ? -res : res
 
 Int8
-atoi__Int8(const char *s)
+atoi__Int8(const char *s, int base)
 {
-    __atoi__(Int8, s);
+    __atoi__(Int8, s, base);
 }
 
 Int16
-atoi__Int16(const char *s)
+atoi__Int16(const char *s, int base)
 {
-    __atoi__(Int16, s);
+    __atoi__(Int16, s, base);
 }
 
 Int32
-atoi__Int32(const char *s)
+atoi__Int32(const char *s, int base)
 {
-    __atoi__(Int32, s);
+    __atoi__(Int32, s, base);
 }
 
 Int64
-atoi__Int64(const char *s)
+atoi__Int64(const char *s, int base)
 {
-    __atoi__(Int64, s);
+    __atoi__(Int64, s, base);
 }
 
 Uint8
-atoi__Uint8(const char *s)
+atoi__Uint8(const char *s, int base)
 {
-    __atoi__(Uint8, s);
+    __atoi__(Uint8, s, base);
 }
 
 Uint16
-atoi__Uint16(const char *s)
+atoi__Uint16(const char *s, int base)
 {
-    __atoi__(Uint16, s);
+    __atoi__(Uint16, s, base);
 }
 
 Uint32
-atoi__Uint32(const char *s)
+atoi__Uint32(const char *s, int base)
 {
-    __atoi__(Uint32, s);
+    __atoi__(Uint32, s, base);
 }
 
 Uint64
-atoi__Uint64(const char *s)
+atoi__Uint64(const char *s, int base)
 {
-    __atoi__(Uint64, s);
+    __atoi__(Uint64, s, base);
 }
 
 Isize
-atoi__Isize(const char *s)
+atoi__Isize(const char *s, int base)
 {
-    __atoi__(Isize, s);
+    __atoi__(Isize, s, base);
 }
 
 Usize
-atoi__Usize(const char *s)
+atoi__Usize(const char *s, int base)
 {
-    __atoi__(Usize, s);
+    __atoi__(Usize, s, base);
 }
