@@ -69,25 +69,25 @@
 
 #define DBG(msg)                                              \
     {                                                         \
-        printf("DEBUG: %s (%s:%d)", msg, __FILE__, __LINE__); \
+        printf("DEBUG: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
         exit(1);                                              \
     }
 
 #define TODO(msg)                                            \
     {                                                        \
-        printf("TODO: %s (%s:%d)", msg, __FILE__, __LINE__); \
+        printf("TODO: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
         exit(1);                                             \
     }
 
 #define FAILED(msg)                                            \
     {                                                          \
-        printf("FAILED: %s (%s:%d)", msg, __FILE__, __LINE__); \
+        printf("FAILED: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
         exit(1);                                               \
     }
 
 #define UNREACHABLE(msg)                                            \
     {                                                               \
-        printf("UNREACHABLE: %s (%s:%d)", msg, __FILE__, __LINE__); \
+        printf("UNREACHABLE: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
         exit(1);                                                    \
     }
 
