@@ -35,7 +35,10 @@
 #undef ENV_LOCAL
 
 #define ENV_SAFE
+
+#ifdef ENV_DEBUG
 #undef ENV_SAFE
+#endif
 
 #if defined(__GNUC__)
 #define GCC_VERSION \
