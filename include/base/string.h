@@ -28,6 +28,8 @@
 #include <base/macros.h>
 #include <base/types.h>
 
+#include <stdbool.h>
+
 #define STRING_DEFAULT_CAPACITY 4
 
 #define PUSH_STR_AND_FREE(self, s) \
@@ -90,6 +92,16 @@ get__String(String *self, Usize index);
  */
 void
 grow__String(String *self, Usize new_capacity);
+
+/**
+ *
+ * @brief Return true if the string is empty otherwise return false.
+ */
+inline bool
+is_empty__String(String *self)
+{
+    return self->len == 0;
+}
 
 /**
  *
