@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/new.h>
 
 #include <cli/option/compile.h>
@@ -35,7 +36,7 @@ get__CompileOption(const char *option);
 
 CONSTRUCTOR(CompileOption *, CompileOption, enum CompileOptionKind kind)
 {
-    CompileOption *self = malloc(sizeof(CompileOption));
+    CompileOption *self = lily_malloc(sizeof(CompileOption));
 
     self->kind = kind;
 
@@ -44,7 +45,7 @@ CONSTRUCTOR(CompileOption *, CompileOption, enum CompileOptionKind kind)
 
 VARIANT_CONSTRUCTOR(CompileOption *, CompileOption, error, const char *error)
 {
-    CompileOption *self = malloc(sizeof(CompileOption));
+    CompileOption *self = lily_malloc(sizeof(CompileOption));
 
     self->kind = COMPILE_OPTION_KIND_ERROR;
     self->error = error;
@@ -57,7 +58,7 @@ VARIANT_CONSTRUCTOR(CompileOption *,
                     filename,
                     const char *filename)
 {
-    CompileOption *self = malloc(sizeof(CompileOption));
+    CompileOption *self = lily_malloc(sizeof(CompileOption));
 
     self->kind = COMPILE_OPTION_KIND_FILENAME;
     self->filename = filename;
@@ -108,5 +109,5 @@ parse__CompileOption(const char **options, const Usize options_size)
 
 DESTRUCTOR(CompileOption, CompileOption *self)
 {
-    free(self);
+    lily_free(self);
 }

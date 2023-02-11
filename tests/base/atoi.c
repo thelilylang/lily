@@ -102,14 +102,14 @@ test_check_int8_overflow__Atoi()
             ASSERT(CHECK_INT8_OVERFLOW_FROM_STRING(np_s_16, 16));
             ASSERT(CHECK_INT8_OVERFLOW_FROM_STRING(nn_s_16, 16));
 
-            free(np_s_2);
-            free(nn_s_2);
-            free(np_s_8);
-            free(nn_s_8);
-            free(np_s_10);
-            free(nn_s_10);
-            free(np_s_16);
-            free(nn_s_16);
+            lily_free(np_s_2);
+            lily_free(nn_s_2);
+            lily_free(np_s_8);
+            lily_free(nn_s_8);
+            lily_free(np_s_10);
+            lily_free(nn_s_10);
+            lily_free(np_s_16);
+            lily_free(nn_s_16);
         }
     }
 }
@@ -185,14 +185,14 @@ test_check_int16_overflow__Atoi()
             ASSERT(CHECK_INT16_OVERFLOW_FROM_STRING(np_s_16, 16));
             ASSERT(CHECK_INT16_OVERFLOW_FROM_STRING(nn_s_16, 16));
 
-            free(np_s_2);
-            free(nn_s_2);
-            free(np_s_8);
-            free(nn_s_8);
-            free(np_s_10);
-            free(nn_s_10);
-            free(np_s_16);
-            free(nn_s_16);
+            lily_free(np_s_2);
+            lily_free(nn_s_2);
+            lily_free(np_s_8);
+            lily_free(nn_s_8);
+            lily_free(np_s_10);
+            lily_free(nn_s_10);
+            lily_free(np_s_16);
+            lily_free(nn_s_16);
         }
     }
 }
@@ -269,14 +269,14 @@ test_check_int32_overflow__Atoi()
             ASSERT(CHECK_INT32_OVERFLOW_FROM_STRING(np_s_16, 16));
             ASSERT(CHECK_INT32_OVERFLOW_FROM_STRING(nn_s_16, 16));
 
-            free(np_s_2);
-            free(nn_s_2);
-            free(np_s_8);
-            free(nn_s_8);
-            free(np_s_10);
-            free(nn_s_10);
-            free(np_s_16);
-            free(nn_s_16);
+            lily_free(np_s_2);
+            lily_free(nn_s_2);
+            lily_free(np_s_8);
+            lily_free(nn_s_8);
+            lily_free(np_s_10);
+            lily_free(nn_s_10);
+            lily_free(np_s_16);
+            lily_free(nn_s_16);
         }
     }
 }
@@ -351,14 +351,14 @@ test_check_int64_overflow__Atoi()
             ASSERT(CHECK_INT64_OVERFLOW_FROM_STRING(np_s_16, 16));
             ASSERT(CHECK_INT64_OVERFLOW_FROM_STRING(nn_s_16, 16));
 
-            free(np_s_2);
-            free(nn_s_2);
-            free(np_s_8);
-            free(nn_s_8);
-            free(np_s_10);
-            free(nn_s_10);
-            free(np_s_16);
-            free(nn_s_16);
+            lily_free(np_s_2);
+            lily_free(nn_s_2);
+            lily_free(np_s_8);
+            lily_free(nn_s_8);
+            lily_free(np_s_10);
+            lily_free(nn_s_10);
+            lily_free(np_s_16);
+            lily_free(nn_s_16);
         }
     }
 }
@@ -412,10 +412,10 @@ test_check_uint8_overflow__Atoi()
             ASSERT(CHECK_UINT8_OVERFLOW_FROM_STRING(np_s_10, 10));
             ASSERT(CHECK_UINT8_OVERFLOW_FROM_STRING(np_s_16, 16));
 
-            free(np_s_2);
-            free(np_s_8);
-            free(np_s_10);
-            free(np_s_16);
+            lily_free(np_s_2);
+            lily_free(np_s_8);
+            lily_free(np_s_10);
+            lily_free(np_s_16);
         }
     }
 }
@@ -470,10 +470,10 @@ test_check_uint16_overflow__Atoi()
             ASSERT(CHECK_UINT16_OVERFLOW_FROM_STRING(np_s_10, 10));
             ASSERT(CHECK_UINT16_OVERFLOW_FROM_STRING(np_s_16, 16));
 
-            free(np_s_2);
-            free(np_s_8);
-            free(np_s_10);
-            free(np_s_16);
+            lily_free(np_s_2);
+            lily_free(np_s_8);
+            lily_free(np_s_10);
+            lily_free(np_s_16);
         }
     }
 }
@@ -530,10 +530,10 @@ test_check_uint32_overflow__Atoi()
             ASSERT(CHECK_UINT32_OVERFLOW_FROM_STRING(np_s_10, 10));
             ASSERT(CHECK_UINT32_OVERFLOW_FROM_STRING(np_s_16, 16));
 
-            free(np_s_2);
-            free(np_s_8);
-            free(np_s_10);
-            free(np_s_16);
+            lily_free(np_s_2);
+            lily_free(np_s_8);
+            lily_free(np_s_10);
+            lily_free(np_s_16);
         }
     }
 }
@@ -598,10 +598,10 @@ test_check_uint64_overflow__Atoi()
             ASSERT(CHECK_UINT64_OVERFLOW_FROM_STRING(np_s_10, 10));
             ASSERT(CHECK_UINT64_OVERFLOW_FROM_STRING(np_s_16, 16));
 
-            free(np_s_2);
-            free(np_s_8);
-            free(np_s_10);
-            free(np_s_16);
+            lily_free(np_s_2);
+            lily_free(np_s_8);
+            lily_free(np_s_10);
+            lily_free(np_s_16);
         }
     }
 }

@@ -50,7 +50,7 @@ inline CONSTRUCTOR(File, File, const char *name, char *content)
  */
 inline DESTRUCTOR(File, const File *self)
 {
-    free(self->content);
+    lily_free(self->content);
 }
 
 #endif // LILY_CORE_SHARED_FILE_H

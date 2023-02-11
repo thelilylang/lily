@@ -33,7 +33,7 @@
 #define PUSH_STR_AND_FREE(self, s) \
     {                              \
         push_str__String(self, s); \
-        free(s);                   \
+        lily_free(s);                   \
     }
 
 #define APPEND_AND_FREE(self, s) \

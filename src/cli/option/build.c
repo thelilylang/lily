@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/new.h>
 
 #include <cli/emit.h>
@@ -37,7 +38,7 @@ get__BuildOption(const char *option);
 
 CONSTRUCTOR(BuildOption *, BuildOption, enum BuildOptionKind kind)
 {
-    BuildOption *self = malloc(sizeof(BuildOption));
+    BuildOption *self = lily_malloc(sizeof(BuildOption));
 
     self->kind = kind;
 
@@ -46,7 +47,7 @@ CONSTRUCTOR(BuildOption *, BuildOption, enum BuildOptionKind kind)
 
 VARIANT_CONSTRUCTOR(BuildOption *, BuildOption, error, const char *error)
 {
-    BuildOption *self = malloc(sizeof(BuildOption));
+    BuildOption *self = lily_malloc(sizeof(BuildOption));
 
     self->kind = BUILD_OPTION_KIND_ERROR;
     self->error = error;
@@ -86,5 +87,5 @@ parse__BuildOption(const char **options, const Usize options_size)
 
 DESTRUCTOR(BuildOption, BuildOption *self)
 {
-    free(self);
+    lily_free(self);
 }

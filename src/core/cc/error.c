@@ -59,7 +59,7 @@ to_string__CcError(const CcError *self)
 
     switch (self->kind) {
         case CC_ERROR_KIND_UNEXPECTED_TOKEN:
-            free(msg);
+            lily_free(msg);
             break;
         default:
             break;

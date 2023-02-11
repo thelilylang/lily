@@ -24,6 +24,7 @@
 
 #define _GNU_SOURCE
 
+#include <base/alloc.h>
 #include <base/assert.h>
 #include <base/file.h>
 #include <base/macros.h>
@@ -66,7 +67,7 @@ get_extension__Path(const char *path)
 {
     bool extension_started = false;
     Usize size = 1;
-    char *extension = malloc(1);
+    char *extension = lily_malloc(1);
     Usize len = strlen(path);
 
     for (Usize i = 0; i < len; i++) {
@@ -95,7 +96,7 @@ read_file__Path(const char *path)
     }
 
     FILE *file = fopen(path, "r");
-    char *content = malloc(1);
+    char *content = lily_malloc(1);
     content[0] = '\0';
 
     if (!file) {
@@ -112,7 +113,7 @@ read_file__Path(const char *path)
     }
 
     fclose(file);
-    free(line);
+    lily_free(line);
 
     content[strlen(content)] = '\0';
 

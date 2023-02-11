@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/macros.h>
 #include <base/str.h>
 #include <base/types.h>
@@ -33,17 +34,17 @@ char **
 split__Str(const char *self, char separator)
 {
 
-    char **res = malloc(PTR_SIZE);
+    char **res = lily_malloc(PTR_SIZE);
     Usize res_size = 0;
 
     for (Usize i = 0; i < strlen(self); i++) {
-        char *item = malloc(1);
+        char *item = lily_malloc(1);
         item[0] = '\0';
         Usize item_size = 0;
 
         while (self[i]) {
             if (self[i] != separator) {
-                item = realloc(item, item_size + 2);
+                item = lily_realloc(item, item_size + 2);
                 item[item_size] = self[i++];
                 item[++item_size] = '\0';
             } else {
@@ -54,7 +55,7 @@ split__Str(const char *self, char separator)
         if (res_size == 0)
             res[res_size++] = item;
         else {
-            res = realloc(res, PTR_SIZE * ++res_size);
+            res = lily_realloc(res, PTR_SIZE * ++res_size);
             res[res_size - 1] = item;
         }
     }

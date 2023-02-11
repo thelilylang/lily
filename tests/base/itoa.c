@@ -14,8 +14,8 @@ test_itoa_base_10()
     ASSERT(strcmp(res, "0") == 0);
     ASSERT(strcmp(res2, "20") == 0);
 
-    free(res);
-    free(res2);
+    lily_free(res);
+    lily_free(res2);
 }
 
 void
@@ -27,8 +27,8 @@ test_itoa_base_2()
     ASSERT(strcmp(res, "0") == 0);
     ASSERT(strcmp(res2, "10100") == 0);
 
-    free(res);
-    free(res2);
+    lily_free(res);
+    lily_free(res2);
 }
 
 void
@@ -40,8 +40,8 @@ test_itoa_base_8()
     ASSERT(strcmp(res, "0") == 0);
     ASSERT(strcmp(res2, "24") == 0);
 
-    free(res);
-    free(res2);
+    lily_free(res);
+    lily_free(res2);
 }
 
 void
@@ -55,7 +55,7 @@ test_itoa_base_16()
     ASSERT(strcmp(res2, "14") == 0);
     ASSERT(strcmp(res3, "5A") == 0);
 
-    free(res);
-    free(res2);
-    free(res3);
+    lily_free(res);
+    lily_free(res2);
+    lily_free(res3);
 }

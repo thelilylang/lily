@@ -22,11 +22,12 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/optional.h>
 
 VARIANT_CONSTRUCTOR(Optional *, Optional, some, void *some)
 {
-    Optional *self = malloc(sizeof(Optional));
+    Optional *self = lily_malloc(sizeof(Optional));
 
     self->some = some;
     self->state = 1;
@@ -36,7 +37,7 @@ VARIANT_CONSTRUCTOR(Optional *, Optional, some, void *some)
 
 VARIANT_CONSTRUCTOR(Optional *, Optional, none)
 {
-    Optional *self = malloc(sizeof(Optional));
+    Optional *self = lily_malloc(sizeof(Optional));
 
     self->state = 0;
 

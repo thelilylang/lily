@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/new.h>
 
 #include <cli/option/new.h>
@@ -35,7 +36,7 @@ get__NewOption(const char *option);
 
 CONSTRUCTOR(NewOption *, NewOption, enum NewOptionKind kind)
 {
-    NewOption *self = malloc(sizeof(NewOption));
+    NewOption *self = lily_malloc(sizeof(NewOption));
 
     self->kind = kind;
 
@@ -44,7 +45,7 @@ CONSTRUCTOR(NewOption *, NewOption, enum NewOptionKind kind)
 
 VARIANT_CONSTRUCTOR(NewOption *, NewOption, error, const char *error)
 {
-    NewOption *self = malloc(sizeof(NewOption));
+    NewOption *self = lily_malloc(sizeof(NewOption));
 
     self->kind = NEW_OPTION_KIND_ERROR;
     self->error = error;
@@ -54,7 +55,7 @@ VARIANT_CONSTRUCTOR(NewOption *, NewOption, error, const char *error)
 
 VARIANT_CONSTRUCTOR(NewOption *, NewOption, name, const char *name)
 {
-    NewOption *self = malloc(sizeof(NewOption));
+    NewOption *self = lily_malloc(sizeof(NewOption));
 
     self->kind = NEW_OPTION_KIND_NAME;
     self->name = name;
@@ -89,5 +90,5 @@ parse__NewOption(const char **options, const Usize options_size)
 
 DESTRUCTOR(NewOption, NewOption *self)
 {
-    free(self);
+    lily_free(self);
 }

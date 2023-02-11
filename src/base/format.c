@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/format.h>
 #include <base/macros.h>
 #include <base/new.h>
@@ -35,7 +36,7 @@
 #include <string.h>
 
 #define PUSH_STR(s)                                  \
-    res = realloc(res, buffer_size + strlen(s) + 1); \
+    res = lily_realloc(res, buffer_size + strlen(s) + 1); \
     for (Usize j = 0; s[j++];) {                     \
         res[buffer_size] = s[j - 1];                 \
         res[++buffer_size] = '\0';                   \
@@ -50,13 +51,13 @@
 
 #define PUSH_INT(d, base)                    \
     if (d < 0) {                             \
-        res = realloc(res, buffer_size + 2); \
+        res = lily_realloc(res, buffer_size + 2); \
         res[buffer_size] = '-';              \
         res[++buffer_size] = '\0';           \
         d = -d;                              \
     }                                        \
     while (d > 0) {                          \
-        res = realloc(res, buffer_size + 2); \
+        res = lily_realloc(res, buffer_size + 2); \
         res[buffer_size] = (d % base) + '0'; \
         res[++buffer_size] = '\0';           \
         d /= base;                           \
@@ -65,13 +66,13 @@
 
 #define PUSH_INT_BASE_16(d)                     \
     if (d < 0) {                                \
-        res = realloc(res, buffer_size + 2);    \
+        res = lily_realloc(res, buffer_size + 2);    \
         res[buffer_size] = '-';                 \
         res[++buffer_size] = '\0';              \
         d = -d;                                 \
     }                                           \
     while (d > 0) {                             \
-        res = realloc(res, buffer_size + 2);    \
+        res = lily_realloc(res, buffer_size + 2);    \
         int n = (d % 16) + '0';                 \
         res[buffer_size] = n > '9' ? n + 7 : n; \
         res[++buffer_size] = '\0';              \
@@ -83,7 +84,7 @@ char *
 format(const char *fmt, ...)
 {
     va_list vl;
-    char *res = malloc(1);
+    char *res = lily_malloc(1);
     Usize buffer_size = 0;
     Usize len = strlen(fmt);
 
@@ -100,7 +101,7 @@ format(const char *fmt, ...)
                         PUSH_STR(s);
 
                         if (fmt[i + 2] == 'a') {
-                            free(s);
+                            lily_free(s);
                             i += 3;
                         } else
                             i += 2;
@@ -165,7 +166,7 @@ format(const char *fmt, ...)
                         break;
                     case 'c': {
                         char c = va_arg(vl, int);
-                        res = realloc(res, buffer_size + 2);
+                        res = lily_realloc(res, buffer_size + 2);
 
                         res[buffer_size] = c;
                         res[++buffer_size] = '\0';
@@ -178,7 +179,7 @@ format(const char *fmt, ...)
                         bool b = va_arg(vl, int);
 
                         if (b) {
-                            res = realloc(res, buffer_size + 5);
+                            res = lily_realloc(res, buffer_size + 5);
 
                             res[buffer_size++] = 't';
                             res[buffer_size++] = 'r';
@@ -186,7 +187,7 @@ format(const char *fmt, ...)
                             res[buffer_size++] = 'e';
                             res[buffer_size] = '\0';
                         } else {
-                            res = realloc(res, buffer_size + 6);
+                            res = lily_realloc(res, buffer_size + 6);
                             ;
 
                             res[buffer_size++] = 'f';
@@ -242,7 +243,7 @@ format(const char *fmt, ...)
                     case 'S': {
                         String *s = va_arg(vl, String *);
 
-                        res = realloc(res, buffer_size + s->len + 1);
+                        res = lily_realloc(res, buffer_size + s->len + 1);
                         buffer_size += s->len;
 
                         strcat(res, s->buffer);
@@ -257,7 +258,7 @@ format(const char *fmt, ...)
                         break;
                     }
                     case '{':
-                        res = realloc(res, buffer_size + 2);
+                        res = lily_realloc(res, buffer_size + 2);
                         res[buffer_size] = '{';
                         res[++buffer_size] = '\0';
 
@@ -275,7 +276,7 @@ format(const char *fmt, ...)
 
                 break;
             default:
-                res = realloc(res, buffer_size + 2);
+                res = lily_realloc(res, buffer_size + 2);
                 res[buffer_size] = fmt[i];
                 res[++buffer_size] = '\0';
                 i++;

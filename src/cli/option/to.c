@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/new.h>
 
 #include <cli/option/to.h>
@@ -35,7 +36,7 @@ get__ToOption(const char *option);
 
 CONSTRUCTOR(ToOption *, ToOption, enum ToOptionKind kind)
 {
-    ToOption *self = malloc(sizeof(ToOption));
+    ToOption *self = lily_malloc(sizeof(ToOption));
 
     self->kind = kind;
 
@@ -44,7 +45,7 @@ CONSTRUCTOR(ToOption *, ToOption, enum ToOptionKind kind)
 
 VARIANT_CONSTRUCTOR(ToOption *, ToOption, error, const char *error)
 {
-    ToOption *self = malloc(sizeof(ToOption));
+    ToOption *self = lily_malloc(sizeof(ToOption));
 
     self->kind = TO_OPTION_KIND_ERROR;
     self->error = error;
@@ -54,7 +55,7 @@ VARIANT_CONSTRUCTOR(ToOption *, ToOption, error, const char *error)
 
 VARIANT_CONSTRUCTOR(ToOption *, ToOption, filename, const char *filename)
 {
-    ToOption *self = malloc(sizeof(ToOption));
+    ToOption *self = lily_malloc(sizeof(ToOption));
 
     self->kind = TO_OPTION_KIND_FILENAME;
     self->filename = filename;
@@ -89,5 +90,5 @@ parse__ToOption(const char **options, const Usize options_size)
 
 DESTRUCTOR(ToOption, ToOption *self)
 {
-    free(self);
+    lily_free(self);
 }

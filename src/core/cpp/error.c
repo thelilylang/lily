@@ -59,7 +59,7 @@ to_string__CppError(const CppError *self)
 
     switch (self->kind) {
         case CPP_ERROR_KIND_UNEXPECTED_TOKEN:
-            free(msg);
+            lily_free(msg);
             break;
         default:
             break;

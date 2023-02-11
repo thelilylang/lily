@@ -22,6 +22,10 @@
  * SOFTWARE.
  */
 
+#include <base/atof.h>
+#include <base/atoi.h>
+
+#include <core/lily/error.h>
 #include <core/lily/scanner.h>
 #include <core/shared/diagnostic.h>
 
@@ -104,6 +108,290 @@ scan_char__Scanner(Scanner *self);
 
 static String *
 scan_string__Scanner(Scanner *self);
+
+static LilyToken *
+scan_hex__Scanner(Scanner *self);
+
+#if defined(PLATFORM_64)
+#define ISIZE_OUT_OF_RANGE_HELP               \
+    "the range of the Isize type is "         \
+    "between -9_223_372_036_854_775_808 and " \
+    "9_223_372_036_854_775_807"
+#define USIZE_OUT_OF_RANGE_HELP       \
+    "the range of the Usize type is " \
+    "between 0 and "                  \
+    "18_446_744_073_709_551_615"
+#else
+#define ISIZE_OUT_OF_RANGE_HELP       \
+    "the range of the Isize type is " \
+    "between -2_147_483_648 and 2_147_483_647"
+#define USIZE_OUT_OF_RANGE_HELP       \
+    "the range of the Usize type is " \
+    "between 0 and 4_294_967_295"
+#endif
+
+#define SCAN_LITERAL_SUFFIX(value, base, is_int)                               \
+    {                                                                          \
+        char *c1 = peek_char__Scanner(self, 1);                                \
+                                                                               \
+        char *c2 = peek_char__Scanner(self, 2);                                \
+                                                                               \
+        char *c3 = peek_char__Scanner(self, 3);                                \
+                                                                               \
+        if (c1 == (char *)'I' && c2 == (char *)'8' && is_int) {                \
+            if (!CHECK_INT8_OVERFLOW_FROM_STRING(value, base)) {               \
+                emit__Diagnostic(                                              \
+                  NEW_VARIANT(                                                 \
+                    Diagnostic,                                                \
+                    simple_lily_error,                                         \
+                    self->source.file,                                         \
+                    &location_error,                                           \
+                    NEW(LilyError, LILY_ERROR_KIND_INT8_OUT_OF_RANGE),         \
+                    init__Vec(1,                                               \
+                              from__String("the range of the Int8 type is "    \
+                                           "between -128 and 127")),           \
+                    NULL,                                                      \
+                    NULL),                                                     \
+                  &self->count_error);                                         \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_int8,                            \
+                               clone__Location(&self->location),               \
+                               atoi__Int8(value, base));                       \
+        } else if (c1 == (char *)'I' && c2 == (char *)'1' &&                   \
+                   c3 == (char *)'6' && is_int) {                              \
+            if (!CHECK_INT16_OVERFLOW_FROM_STRING(value, base)) {              \
+                emit__Diagnostic(                                              \
+                  NEW_VARIANT(                                                 \
+                    Diagnostic,                                                \
+                    simple_lily_error,                                         \
+                    self->source.file,                                         \
+                    &location_error,                                           \
+                    NEW(LilyError, LILY_ERROR_KIND_INT16_OUT_OF_RANGE),        \
+                    init__Vec(1,                                               \
+                              from__String("the range of the Int16 type is "   \
+                                           "between -32_768 and 32_767")),     \
+                    NULL,                                                      \
+                    NULL),                                                     \
+                  &self->count_error);                                         \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_int16,                           \
+                               clone__Location(&self->location),               \
+                               atoi__Int16(value, base));                      \
+        } else if (c1 == (char *)'I' && c2 == (char *)'3' &&                   \
+                   c3 == (char *)'2' && is_int) {                              \
+            if (!CHECK_INT32_OVERFLOW_FROM_STRING(value, base)) {              \
+                emit__Diagnostic(                                              \
+                  NEW_VARIANT(                                                 \
+                    Diagnostic,                                                \
+                    simple_lily_error,                                         \
+                    self->source.file,                                         \
+                    &location_error,                                           \
+                    NEW(LilyError, LILY_ERROR_KIND_INT32_OUT_OF_RANGE),        \
+                    init__Vec(1,                                               \
+                              from__String(                                    \
+                                "the range of the Int32 type is "              \
+                                "between -2_147_483_648 and 2_147_483_647")),  \
+                    NULL,                                                      \
+                    NULL),                                                     \
+                  &self->count_error);                                         \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_int32,                           \
+                               clone__Location(&self->location),               \
+                               atoi__Int32(value, base));                      \
+        } else if (c1 == (char *)'I' && c2 == (char *)'6' &&                   \
+                   c3 == (char *)'4' && is_int) {                              \
+            if (!CHECK_INT64_OVERFLOW_FROM_STRING(value, base)) {              \
+                emit__Diagnostic(                                              \
+                  NEW_VARIANT(                                                 \
+                    Diagnostic,                                                \
+                    simple_lily_error,                                         \
+                    self->source.file,                                         \
+                    &location_error,                                           \
+                    NEW(LilyError, LILY_ERROR_KIND_INT64_OUT_OF_RANGE),        \
+                    init__Vec(                                                 \
+                      1,                                                       \
+                      from__String("the range of the Int64 type is "           \
+                                   "between -9_223_372_036_854_775_808 and "   \
+                                   "9_223_372_036_854_775_807")),              \
+                    NULL,                                                      \
+                    NULL),                                                     \
+                  &self->count_error);                                         \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_int64,                           \
+                               clone__Location(&self->location),               \
+                               atoi__Int64(value, base));                      \
+        } else if (c1 == (char *)'I' && c2 == (char *)'z' && is_int) {         \
+            if (!CHECK_ISIZE_OVERFLOW_FROM_STRING(value, base)) {              \
+                emit__Diagnostic(                                              \
+                  NEW_VARIANT(                                                 \
+                    Diagnostic,                                                \
+                    simple_lily_error,                                         \
+                    self->source.file,                                         \
+                    &location_error,                                           \
+                    NEW(LilyError, LILY_ERROR_KIND_INT64_OUT_OF_RANGE),        \
+                    init__Vec(1, from__String(ISIZE_OUT_OF_RANGE_HELP)),       \
+                    NULL,                                                      \
+                    NULL),                                                     \
+                  &self->count_error);                                         \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_isize,                           \
+                               clone__Location(&self->location),               \
+                               atoi__Isize(value, base));                      \
+        } else if (c1 == (char *)'U' && c2 == (char *)'8' && is_int) {         \
+            if (!CHECK_UINT8_OVERFLOW_FROM_STRING(value, base)) {              \
+                emit__Diagnostic(                                              \
+                  NEW_VARIANT(                                                 \
+                    Diagnostic,                                                \
+                    simple_lily_error,                                         \
+                    self->source.file,                                         \
+                    &location_error,                                           \
+                    NEW(LilyError, LILY_ERROR_KIND_UINT8_OUT_OF_RANGE),        \
+                    init__Vec(1,                                               \
+                              from__String("the range of the Uint8 type is "   \
+                                           "between 0 and 255")),              \
+                    NULL,                                                      \
+                    NULL),                                                     \
+                  &self->count_error);                                         \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_uint8,                           \
+                               clone__Location(&self->location),               \
+                               atoi__Uint8(value, base));                      \
+        } else if (c1 == (char *)'U' && c2 == (char *)'1' &&                   \
+                   c3 == (char *)'6' && is_int) {                              \
+            if (!CHECK_UINT16_OVERFLOW_FROM_STRING(value, base)) {             \
+                emit__Diagnostic(                                              \
+                  NEW_VARIANT(                                                 \
+                    Diagnostic,                                                \
+                    simple_lily_error,                                         \
+                    self->source.file,                                         \
+                    &location_error,                                           \
+                    NEW(LilyError, LILY_ERROR_KIND_UINT16_OUT_OF_RANGE),       \
+                    init__Vec(1,                                               \
+                              from__String("the range of the Uint16 type is "  \
+                                           "between 0 and 65_535")),           \
+                    NULL,                                                      \
+                    NULL),                                                     \
+                  &self->count_error);                                         \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_uint16,                          \
+                               clone__Location(&self->location),               \
+                               atoi__Uint16(value, base));                     \
+        } else if (c1 == (char *)'U' && c2 == (char *)'3' &&                   \
+                   c3 == (char *)'2' && is_int) {                              \
+            if (!CHECK_UINT32_OVERFLOW_FROM_STRING(value, base)) {             \
+                emit__Diagnostic(                                              \
+                  NEW_VARIANT(                                                 \
+                    Diagnostic,                                                \
+                    simple_lily_error,                                         \
+                    self->source.file,                                         \
+                    &location_error,                                           \
+                    NEW(LilyError, LILY_ERROR_KIND_UINT32_OUT_OF_RANGE),       \
+                    init__Vec(1,                                               \
+                              from__String("the range of the Uint32 type is "  \
+                                           "between 0 and 4_294_967_295")),    \
+                    NULL,                                                      \
+                    NULL),                                                     \
+                  &self->count_error);                                         \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_uint32,                          \
+                               clone__Location(&self->location),               \
+                               atoi__Uint32(value, base));                     \
+        } else if (c1 == (char *)'U' && c2 == (char *)'6' &&                   \
+                   c3 == (char *)'4' && is_int) {                              \
+            if (!CHECK_UINT64_OVERFLOW_FROM_STRING(value, base)) {             \
+                emit__Diagnostic(                                              \
+                  NEW_VARIANT(                                                 \
+                    Diagnostic,                                                \
+                    simple_lily_error,                                         \
+                    self->source.file,                                         \
+                    &location_error,                                           \
+                    NEW(LilyError, LILY_ERROR_KIND_UINT64_OUT_OF_RANGE),       \
+                    init__Vec(1,                                               \
+                              from__String(                                    \
+                                "the range of the Uint64 type is "             \
+                                "between 0 and 18_446_744_073_709_551_615")),  \
+                    NULL,                                                      \
+                    NULL),                                                     \
+                  &self->count_error);                                         \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_uint64,                          \
+                               clone__Location(&self->location),               \
+                               atoi__Uint64(value, base));                     \
+        } else if (c1 == (char *)'U' && c2 == (char *)'z' && is_int) {         \
+            if (!CHECK_USIZE_OVERFLOW_FROM_STRING(value, base)) {              \
+                emit__Diagnostic(                                              \
+                  NEW_VARIANT(                                                 \
+                    Diagnostic,                                                \
+                    simple_lily_error,                                         \
+                    self->source.file,                                         \
+                    &location_error,                                           \
+                    NEW(LilyError, LILY_ERROR_KIND_USIZE_OUT_OF_RANGE),        \
+                    init__Vec(1, from__String(USIZE_OUT_OF_RANGE_HELP)),       \
+                    NULL,                                                      \
+                    NULL),                                                     \
+                  &self->count_error);                                         \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_usize,                           \
+                               clone__Location(&self->location),               \
+                               atoi__Usize(value, base));                      \
+        } else if (c1 == (char *)'F' && c2 == (char *)'3' &&                   \
+                   c3 == (char *)'2') {                                        \
+            /*                                                                 \
+            TODO: Check if the float is overflow/underflow.                    \
+            */                                                                 \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_float32,                         \
+                               clone__Location(&self->location),               \
+                               atof__Float32(value));                          \
+        } else if (c1 == (char *)'F' && c2 == (char *)'6' &&                   \
+                   c3 == (char *)'4') {                                        \
+            /*                                                                 \
+            TODO: Check if the float is overflow/underflow.                    \
+            */                                                                 \
+            return NEW_VARIANT(LilyToken,                                      \
+                               literal_suffix_float64,                         \
+                               clone__Location(&self->location),               \
+                               atof__Float64(value));                          \
+        } else if (c1 == (char *)'I' || c1 == (char *)'U' ||                   \
+                   c1 == (char *)'F') {                                        \
+            emit__Diagnostic(                                                  \
+              NEW_VARIANT(                                                     \
+                Diagnostic,                                                    \
+                simple_lily_error,                                             \
+                self->source.file,                                             \
+                &location_error,                                               \
+                NEW(LilyError, LILY_ERROR_KIND_INVALID_LITERAL_SUFFIX),        \
+                init__Vec(1,                                                   \
+                          from__String(                                        \
+                            "here is the valid literal suffix: I8, I16, I32, " \
+                            "I64, U8, U16, U32, U64, F32, F64, Uz, Iz")),      \
+                init__Vec(1,                                                   \
+                          from__String("it is not possible to use an integer " \
+                                       "suffix on a float literal")),          \
+                NULL),                                                         \
+              &self->count_error);                                             \
+        }                                                                      \
+    }
 
 enum LilyTokenKind
 get_keyword(char *id)
@@ -625,7 +913,7 @@ scan_char__Scanner(Scanner *self)
         next_char__Source(&self->source);
 
         char target = self->source.cursor.current;
-        char *character = get_character__Scanner(
+        String *character = get_character__Scanner(
           self, self->source.file->content[self->source.cursor.position - 1]);
 
         end__Location(&location_error,
@@ -646,10 +934,20 @@ scan_char__Scanner(Scanner *self)
                 NULL),
               &self->count_error);
 
+            FREE(String, character);
+
             return NULL;
         }
 
-        return character;
+        if (character) {
+            char *res = (char *)(Uptr)character->buffer[0];
+
+            FREE(String, character);
+
+            return res;
+        }
+
+        return NULL;
     }
 
     end__Location(
@@ -712,6 +1010,23 @@ scan_string__Scanner(Scanner *self)
     }
 
     return res;
+}
+
+LilyToken *
+scan_hex__Scanner(Scanner *self)
+{
+    Location location_error = default__Location(self->source.file->name);
+    String *res = from__String("0x");
+
+    start__Location(
+      &location_error, self->source.cursor.line, self->source.cursor.column);
+
+    while (is_hex__Scanner(self)) {
+        push__String(res, self->source.cursor.current);
+        next_char__Source(&self->source);
+    }
+
+    SCAN_LITERAL_SUFFIX(res->buffer, 16, true);
 }
 
 void

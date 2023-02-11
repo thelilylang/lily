@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/file.h>
 
 #include <cli/emit.h>
@@ -49,7 +50,7 @@ run__Compile(const CompileConfig *config)
 
     run__Scanner(&scanner, config->dump_scanner);
 
-    free(file_ext);
-    free(content);
+    lily_free(file_ext);
+    lily_free(content);
     FREE(Scanner, &scanner);
 }

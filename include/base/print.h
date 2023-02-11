@@ -34,14 +34,14 @@
     {                                       \
         char *f = format(fmt, __VA_ARGS__); \
         printf("%s", f);                    \
-        free(f);                            \
+        lily_free(f);                            \
     }
 
 #define PRINTLN(fmt, ...)                   \
     {                                       \
         char *f = format(fmt, __VA_ARGS__); \
         puts(f);                            \
-        free(f);                            \
+        lily_free(f);                            \
     }
 
 #endif // LILY_BASE_PRINT_H

@@ -17,7 +17,7 @@ test_split__Str()
     ASSERT(!strcmp(split[1], "World"));
 
     for (Usize i = 0; i < (Usize)LEN(split, *split); i++)
-        free(split[i]);
+        lily_free(split[i]);
 
-    free(split);
+    lily_free(split);
 }

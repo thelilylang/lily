@@ -149,17 +149,17 @@ static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
         push__Vec(lines, split[location->start_line - 1]);                    \
         for (Usize i = 0; i < LEN(split, *split); i++) {                      \
             if (i != location->start_line - 1)                                \
-                free(split[i]);                                               \
+                lily_free(split[i]);                                               \
         }                                                                     \
     } else {                                                                  \
         push__Vec(lines, split[location->start_line - 1]);                    \
         push__Vec(lines, split[location->end_line - 1]);                      \
         for (Usize i = 0; i < LEN(split, *split); i++) {                      \
             if (i != location->start_line - 1 && i != location->end_line - 1) \
-                free(split[i]);                                               \
+                lily_free(split[i]);                                               \
         }                                                                     \
     }                                                                         \
-    free(split);
+    lily_free(split);
 
 DESTRUCTOR(DiagnosticLevel, const DiagnosticLevel *self)
 {
@@ -181,7 +181,7 @@ DESTRUCTOR(DiagnosticLevel, const DiagnosticLevel *self)
 DESTRUCTOR(DiagnosticDetail, const DiagnosticDetail *self)
 {
     for (Usize i = 0; i < self->lines->len; i++)
-        free(self->lines->buffer[i]);
+        lily_free(self->lines->buffer[i]);
 
     FREE(Vec, self->lines);
 
@@ -279,7 +279,7 @@ DESTRUCTOR(DiagnosticReferencingItem, DiagnosticReferencingItem *self)
     if (self->msg)
         FREE(String, self->msg);
 
-    free(self);
+    lily_free(self);
 }
 
 CONSTRUCTOR(DiagnosticReferencing,

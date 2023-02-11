@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/new.h>
 
 #include <core/lily/token.h>
@@ -55,7 +56,7 @@ static inline VARIANT_DESTRUCTOR(LilyToken, literal_string, LilyToken *self);
 
 CONSTRUCTOR(LilyToken *, LilyToken, enum LilyTokenKind kind, Location location)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = kind;
     self->location = location;
@@ -69,7 +70,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     String *comment_doc)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_COMMENT_DOC;
     self->location = location;
@@ -84,7 +85,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     String *identifier_macro)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_IDENTIFIER_MACRO;
     self->location = location;
@@ -99,7 +100,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     String *identifier_normal)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_IDENTIFIER_NORMAL;
     self->location = location;
@@ -114,7 +115,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     String *identifier_operator)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_IDENTIFIER_OPERATOR;
     self->location = location;
@@ -129,7 +130,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Uint8 literal_bit_char)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_BIT_CHAR;
     self->location = location;
@@ -144,7 +145,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Uint8 *literal_bit_string)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_BIT_STRING;
     self->location = location;
@@ -159,7 +160,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     char literal_char)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_CHAR;
     self->location = location;
@@ -174,7 +175,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     String *literal_float)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_FLOAT;
     self->location = location;
@@ -189,7 +190,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     String *literal_int)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_INT;
     self->location = location;
@@ -204,7 +205,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     String *literal_string)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_STRING;
     self->location = location;
@@ -219,7 +220,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Float32 literal_suffix_float32)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32;
     self->location = location;
@@ -234,7 +235,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Float64 literal_suffix_float64)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64;
     self->location = location;
@@ -249,7 +250,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Int16 literal_suffix_int16)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16;
     self->location = location;
@@ -264,7 +265,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Int32 literal_suffix_int32)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32;
     self->location = location;
@@ -279,7 +280,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Int64 literal_suffix_int64)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64;
     self->location = location;
@@ -294,7 +295,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Int8 literal_suffix_int8)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8;
     self->location = location;
@@ -309,7 +310,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Isize literal_suffix_isize)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE;
     self->location = location;
@@ -324,7 +325,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Uint16 literal_suffix_uint16)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16;
     self->location = location;
@@ -339,7 +340,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Uint32 literal_suffix_uint32)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32;
     self->location = location;
@@ -354,7 +355,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Uint64 literal_suffix_uint64)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64;
     self->location = location;
@@ -369,7 +370,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Uint8 literal_suffix_uint8)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8;
     self->location = location;
@@ -384,7 +385,7 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     Location location,
                     Usize literal_suffix_usize)
 {
-    LilyToken *self = malloc(sizeof(LilyToken));
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
 
     self->kind = LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE;
     self->location = location;
@@ -695,43 +696,43 @@ to_string__LilyToken(LilyToken *self)
 VARIANT_DESTRUCTOR(LilyToken, comment_doc, LilyToken *self)
 {
     FREE(String, self->comment_doc);
-    free(self);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyToken, identifier_macro, LilyToken *self)
 {
     FREE(String, self->identifier_macro);
-    free(self);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyToken, identifier_operator, LilyToken *self)
 {
     FREE(String, self->identifier_operator);
-    free(self);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyToken, identifier_normal, LilyToken *self)
 {
     FREE(String, self->identifier_normal);
-    free(self);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyToken, literal_float, LilyToken *self)
 {
     FREE(String, self->literal_float);
-    free(self);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyToken, literal_int, LilyToken *self)
 {
     FREE(String, self->literal_int);
-    free(self);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyToken, literal_string, LilyToken *self)
 {
     FREE(String, self->literal_string);
-    free(self);
+    lily_free(self);
 }
 
 DESTRUCTOR(LilyToken, LilyToken *self)
@@ -759,6 +760,6 @@ DESTRUCTOR(LilyToken, LilyToken *self)
             FREE_VARIANT(LilyToken, literal_string, self);
             break;
         default:
-            free(self);
+            lily_free(self);
     }
 }

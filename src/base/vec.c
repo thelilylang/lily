@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/assert.h>
 #include <base/macros.h>
 #include <base/new.h>
@@ -33,7 +34,7 @@
 
 CONSTRUCTOR(Vec *, Vec)
 {
-    Vec *self = malloc(sizeof(Vec));
+    Vec *self = lily_malloc(sizeof(Vec));
 
     self->buffer = NULL;
     self->len = 0;
@@ -46,12 +47,12 @@ CONSTRUCTOR(Vec *, Vec)
 Vec *
 from__Vec(void **buffer, Usize len)
 {
-    Vec *self = malloc(sizeof(Vec));
+    Vec *self = lily_malloc(sizeof(Vec));
 
     self->default_capacity = len;
     self->len = len;
     self->capacity = len * 2;
-    self->buffer = malloc(PTR_SIZE * self->capacity);
+    self->buffer = lily_malloc(PTR_SIZE * self->capacity);
 
     for (Usize i = len; i--;) {
         self->buffer[i] = buffer[i];
@@ -90,7 +91,7 @@ grow__Vec(Vec *self, Usize new_capacity)
 {
     ASSERT(new_capacity >= self->capacity);
 
-    self->buffer = realloc(self->buffer, PTR_SIZE * new_capacity);
+    self->buffer = lily_realloc(self->buffer, PTR_SIZE * new_capacity);
     self->capacity = new_capacity;
 }
 
@@ -156,12 +157,12 @@ ungrow__Vec(Vec *self)
 {
     if (self->len <= self->capacity / 2) {
         self->capacity /= 2;
-        self->buffer = realloc(self->buffer, PTR_SIZE * self->capacity);
+        self->buffer = lily_realloc(self->buffer, PTR_SIZE * self->capacity);
     }
 }
 
 DESTRUCTOR(Vec, Vec *self)
 {
-    free(self->buffer);
-    free(self);
+    lily_free(self->buffer);
+    lily_free(self);
 }

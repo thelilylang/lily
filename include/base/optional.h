@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_OPTIONAL_H
 #define LILY_BASE_OPTIONAL_H
 
+#include <base/alloc.h>
 #include <base/assert.h>
 #include <base/macros.h>
 #include <base/new.h>
@@ -92,7 +93,7 @@ is_none__Optional(const Optional *self)
  */
 inline DESTRUCTOR(Optional, Optional *self)
 {
-    free(self);
+    lily_free(self);
 }
 
 #define SOME(x) NEW_VARIANT(Optional, some, x)

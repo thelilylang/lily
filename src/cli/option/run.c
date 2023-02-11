@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/new.h>
 
 #include <cli/option/run.h>
@@ -35,7 +36,7 @@ get__RunOption(const char *option);
 
 CONSTRUCTOR(RunOption *, RunOption, enum RunOptionKind kind)
 {
-    RunOption *self = malloc(sizeof(RunOption));
+    RunOption *self = lily_malloc(sizeof(RunOption));
 
     self->kind = kind;
 
@@ -44,7 +45,7 @@ CONSTRUCTOR(RunOption *, RunOption, enum RunOptionKind kind)
 
 VARIANT_CONSTRUCTOR(RunOption *, RunOption, error, const char *error)
 {
-    RunOption *self = malloc(sizeof(RunOption));
+    RunOption *self = lily_malloc(sizeof(RunOption));
 
     self->kind = RUN_OPTION_KIND_ERROR;
     self->error = error;
@@ -54,7 +55,7 @@ VARIANT_CONSTRUCTOR(RunOption *, RunOption, error, const char *error)
 
 VARIANT_CONSTRUCTOR(RunOption *, RunOption, filename, const char *filename)
 {
-    RunOption *self = malloc(sizeof(RunOption));
+    RunOption *self = lily_malloc(sizeof(RunOption));
 
     self->kind = RUN_OPTION_KIND_FILENAME;
     self->filename = filename;
@@ -89,5 +90,5 @@ parse__RunOption(const char **options, const Usize options_size)
 
 DESTRUCTOR(RunOption, RunOption *self)
 {
-    free(self);
+    lily_free(self);
 }

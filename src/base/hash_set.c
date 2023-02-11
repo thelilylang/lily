@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/hash_set.h>
 #include <base/new.h>
 
@@ -29,7 +30,7 @@
 
 CONSTRUCTOR(HashSet *, HashSet)
 {
-    HashSet *self = malloc(sizeof(HashSet));
+    HashSet *self = lily_malloc(sizeof(HashSet));
 
     self->values = NEW(Vec);
     self->len = 0;
@@ -67,5 +68,5 @@ insert__HashSet(HashSet *self, void *value)
 DESTRUCTOR(HashSet, HashSet *self)
 {
     FREE(Vec, self->values);
-    free(self);
+    lily_free(self);
 }

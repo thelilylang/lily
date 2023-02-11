@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/hash_map.h>
 #include <base/new.h>
 
@@ -29,7 +30,7 @@
 
 CONSTRUCTOR(HashMap *, HashMap)
 {
-    HashMap *self = malloc(sizeof(HashMap));
+    HashMap *self = lily_malloc(sizeof(HashMap));
 
     self->keys = NEW(Vec);
     self->values = NEW(Vec);
@@ -74,5 +75,5 @@ DESTRUCTOR(HashMap, HashMap *self)
 {
     FREE(Vec, self->keys);
     FREE(Vec, self->values);
-    free(self);
+    lily_free(self);
 }

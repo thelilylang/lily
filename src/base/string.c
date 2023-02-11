@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/assert.h>
 #include <base/format.h>
 #include <base/macros.h>
@@ -34,9 +35,9 @@
 
 CONSTRUCTOR(String *, String)
 {
-    String *self = malloc(sizeof(String));
+    String *self = lily_malloc(sizeof(String));
 
-    self->buffer = malloc(1);
+    self->buffer = lily_malloc(1);
     self->buffer[0] = '\0';
     self->len = 0;
     self->capacity = 0;
@@ -55,7 +56,7 @@ format__String(char *fmt, ...)
 {
     char *buffer = format(fmt);
     Usize len = strlen(buffer);
-    String *self = malloc(sizeof(String));
+    String *self = lily_malloc(sizeof(String));
 
     self->buffer = buffer;
     self->len = len;
@@ -67,10 +68,10 @@ format__String(char *fmt, ...)
 String *
 from__String(char *buffer)
 {
-    String *self = malloc(sizeof(String));
+    String *self = lily_malloc(sizeof(String));
 
     self->capacity = strlen(buffer) * 2;
-    self->buffer = malloc(self->capacity);
+    self->buffer = lily_malloc(self->capacity);
     self->len = strlen(buffer);
 
     for (int i = 0; i < self->len; i++) {
@@ -95,7 +96,7 @@ grow__String(String *self, Usize new_capacity)
 {
     ASSERT(new_capacity >= self->capacity);
 
-    self->buffer = realloc(self->buffer, new_capacity);
+    self->buffer = lily_realloc(self->buffer, new_capacity);
     self->capacity = new_capacity;
 }
 
@@ -149,17 +150,17 @@ repeat__String(char *s, Usize n)
 char **
 split__String(String *self, char separator)
 {
-    char **res = malloc(PTR_SIZE);
+    char **res = lily_malloc(PTR_SIZE);
     Usize res_size = 0;
 
     for (Usize i = 0; i < self->len; i++) {
-        char *item = malloc(1);
+        char *item = lily_malloc(1);
         item[0] = '\0';
         Usize item_size = 0;
 
         while (self->buffer[i]) {
             if (self->buffer[i] != separator) {
-                item = realloc(item, item_size + 2);
+                item = lily_realloc(item, item_size + 2);
                 item[item_size] = self->buffer[i++];
                 item[++item_size] = '\0';
             } else {
@@ -170,7 +171,7 @@ split__String(String *self, char separator)
         if (res_size == 0)
             res[res_size++] = item;
         else {
-            res = realloc(res, PTR_SIZE * ++res_size);
+            res = lily_realloc(res, PTR_SIZE * ++res_size);
             res[res_size - 1] = item;
         }
     }
@@ -183,12 +184,12 @@ ungrow__String(String *self)
 {
     if (self->len + 1 <= self->capacity / 2) {
         self->capacity /= 2;
-        self->buffer = realloc(self->buffer, self->capacity);
+        self->buffer = lily_realloc(self->buffer, self->capacity);
     }
 }
 
 DESTRUCTOR(String, String *self)
 {
-    free(self->buffer);
-    free(self);
+    lily_free(self->buffer);
+    lily_free(self);
 }

@@ -1,3 +1,5 @@
+#include <base/alloc.h>
+
 #include "atoi.c"
 #include "format.c"
 #include "hash_map.c"

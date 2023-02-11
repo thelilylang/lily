@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/format.h>
 #include <base/new.h>
 
@@ -96,7 +97,7 @@ CONSTRUCTOR(ParseCommand,
                     case u_name##_OPTION_KIND_ERROR: {                         \
                         char *msg = format("unknown option `{s}`", op->error); \
                         EMIT_ERROR(msg);                                       \
-                        free(msg);                                             \
+                        lily_free(msg);                                             \
                         break;                                                 \
                     }                                                          \
                     case u_name##_OPTION_KIND_HELP:                            \
@@ -142,7 +143,7 @@ error(const ParseCommand *self)
 
     EMIT_ERROR(msg);
 
-    free(msg);
+    lily_free(msg);
     exit(1);
 }
 

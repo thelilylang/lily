@@ -123,7 +123,7 @@ to_string__LilyError(const LilyError *self)
 
     switch (self->kind) {
         case LILY_ERROR_KIND_UNEXPECTED_TOKEN:
-            free(msg);
+            lily_free(msg);
             break;
         default:
             break;

@@ -14,7 +14,7 @@ test_s_specifier__Format()
 
     ASSERT(strcmp(s, "Hello") == 0);
 
-    free(s);
+    lily_free(s);
 }
 
 void
@@ -24,7 +24,7 @@ test_sa_specifier__Format()
 
     ASSERT(strcmp(s, "Hello") == 0);
 
-    free(s);
+    lily_free(s);
 }
 
 void
@@ -34,7 +34,7 @@ test_d_specifier__Format()
 
     ASSERT(strcmp(s, "40") == 0);
 
-    free(s);
+    lily_free(s);
 }
 
 void
@@ -44,7 +44,7 @@ test_d_binary_sepecifier__Format()
 
     ASSERT(strcmp(s, "10100") == 0);
 
-    free(s);
+    lily_free(s);
 }
 
 void
@@ -54,7 +54,7 @@ test_d_octal_specifier__Format()
 
     ASSERT(strcmp(s, "24") == 0);
 
-    free(s);
+    lily_free(s);
 }
 
 void
@@ -64,7 +64,7 @@ test_d_hex_specifier__Format()
 
     ASSERT(strcmp(s, "14") == 0);
 
-    free(s);
+    lily_free(s);
 }
 
 void
@@ -74,7 +74,7 @@ test_f_specifier__Format()
 
     ASSERT(strcmp(s, "2.200000") == 0);
 
-    free(s);
+    lily_free(s);
 }
 
 void
@@ -86,7 +86,7 @@ test_S_specifier__Format()
     ASSERT(strcmp(s, "hello world") == 0);
 
     FREE(String, string);
-    free(s);
+    lily_free(s);
 }
 
 void
@@ -97,5 +97,5 @@ test_Sr_specifier__Format()
 
     ASSERT(strcmp(s, "hello world") == 0);
 
-    free(s);
+    lily_free(s);
 }
