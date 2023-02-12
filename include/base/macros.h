@@ -70,7 +70,9 @@
 #ifdef ENV_DEBUG
 #define IMPL_FOR_DEBUG(name, struct_name, ...) \
     name##__Debug__##struct_name(__VA_ARGS__)
-#define CALL_DEBUG(name, ...) debug__##name(__VA_ARGS__)
+#define CALL_DEBUG_IMPL(name, struct_name, ...) \
+    name##__Debug__##struct_name(__VA_ARGS__)
+#define CALL_DEBUG(name, ...) debug__Debug__##name(__VA_ARGS__)
 #endif
 
 #define DBG(msg)                                                \
