@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_TOKEN_H
 #define LILY_CORE_LILY_TOKEN_H
 
+#include <base/macros.h>
 #include <base/string.h>
 #include <base/types.h>
 
@@ -477,10 +478,21 @@ VARIANT_CONSTRUCTOR(LilyToken *,
 
 /**
  *
- * @brief Convert LilyToken in String.
+ * @brief Convert LilyToken in String (without Location).
+ * @note This function is only used to show the token in the parser.
  */
 String *
 to_string__LilyToken(LilyToken *self);
+
+/**
+ *
+ * @brief Convert LilyTokenKind in String.
+ * @note This function is only used to debug the scanner.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self);
+#endif
 
 /**
  *
