@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_PRINT_H
 #define LILY_BASE_PRINT_H
 
+#include <base/alloc.h>
 #include <base/format.h>
 
 #include <stdio.h>
