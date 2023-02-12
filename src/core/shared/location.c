@@ -24,6 +24,11 @@
 
 #include <core/shared/location.h>
 
+#ifdef ENV_DEBUG
+#include <base/format.h>
+#include <base/print.h>
+#endif
+
 void
 start__Location(Location *self, Usize line, Usize column)
 {
@@ -46,3 +51,24 @@ set_all__Location(Location *self, const Location *other)
     self->end_line = other->end_line;
     self->end_column = other->end_column;
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, Location, const Location *self)
+{
+    return format(
+      "Location{{ filename = {s}, start_line = {d}, end_line = {d}, "
+      "start_column = {d}, end_column = {d} }",
+      self->filename,
+      self->start_line,
+      self->end_line,
+      self->start_column,
+      self->end_column);
+}
+
+void
+IMPL_FOR_DEBUG(debug, Location, const Location *self)
+{
+    PRINTLN("{sa}", CALL_DEBUG_IMPL(to_string, Location, self));
+}
+#endif

@@ -107,4 +107,24 @@ clone__Location(const Location *self)
                        .end_column = self->end_column };
 }
 
+/**
+ *
+ * @brief Convert Location in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, Location, const Location *self);
+#endif
+
+/**
+ *
+ * @brief Print debug Location struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, Location, const Location *self);
+#endif
+
 #endif // LILY_CORE_SHARED_LOCATION_H
