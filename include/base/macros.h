@@ -67,6 +67,12 @@
 
 #define LEN(arr, item) (((int)sizeof(arr) / sizeof(item)) + 1)
 
+#ifdef ENV_DEBUG
+#define IMPL_FOR_DEBUG(name, struct_name, ...) \
+    name##__Debug__##struct_name(__VA_ARGS__)
+#define CALL_DEBUG(name, ...) debug__##name(__VA_ARGS__)
+#endif
+
 #define DBG(msg)                                                \
     {                                                           \
         printf("DEBUG: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
