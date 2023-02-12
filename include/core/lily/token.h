@@ -487,11 +487,21 @@ to_string__LilyToken(LilyToken *self);
 /**
  *
  * @brief Convert LilyTokenKind in String.
- * @note This function is only used to debug the scanner.
+ * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self);
+#endif
+
+/**
+ *
+ * @brief Convert LilyToken in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyToken, LilyToken *self);
 #endif
 
 /**
