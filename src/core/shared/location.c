@@ -56,14 +56,13 @@ set_all__Location(Location *self, const Location *other)
 char *
 IMPL_FOR_DEBUG(to_string, Location, const Location *self)
 {
-    return format(
-      "Location{{ filename = {s}, start_line = {d}, end_line = {d}, "
-      "start_column = {d}, end_column = {d} }",
-      self->filename,
-      self->start_line,
-      self->end_line,
-      self->start_column,
-      self->end_column);
+    return format("Location{{ filename = {s}, start_line = {d}, end_line = "
+                  "{d}, start_column = {d}, end_column = {d} }",
+                  self->filename,
+                  self->start_line,
+                  self->end_line,
+                  self->start_column,
+                  self->end_column);
 }
 
 void
