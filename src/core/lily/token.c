@@ -32,6 +32,7 @@
 
 #ifdef ENV_DEBUG
 #include <base/format.h>
+#include <base/print.h>
 #endif
 
 // Free LilyToken type (LILY_TOKEN_KIND_COMMENT_DOC).
@@ -1075,7 +1076,7 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
 }
 
 char *
-IMPL_FOR_DEBUG(to_string, LilyToken, LilyToken *self)
+IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
 {
     switch (self->kind) {
         case LILY_TOKEN_KIND_COMMENT_DOC:
@@ -1229,10 +1230,17 @@ IMPL_FOR_DEBUG(to_string, LilyToken, LilyToken *self)
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_usize);
         default:
-            return format("LilyToken{{ kind = {s}, location = {sa} }",
-                          CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
-                          CALL_DEBUG_IMPL(to_string, Location, &self->location));
+            return format(
+              "LilyToken{{ kind = {s}, location = {sa} }",
+              CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+              CALL_DEBUG_IMPL(to_string, Location, &self->location));
     }
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyToken, const LilyToken *self)
+{
+    PRINTLN("{sa}", CALL_DEBUG_IMPL(to_string, LilyToken, self));
 }
 #endif
 
