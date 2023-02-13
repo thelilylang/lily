@@ -72,6 +72,10 @@ to_msg__LilyError(const LilyError *self)
             return "invalid hexadecimal literal";
         case LILY_ERROR_KIND_INVALID_OCTAL_LITERAL:
             return "invalid octal literal";
+        case LILY_ERROR_KIND_INVALID_BIN_LITERAL:
+            return "invalid binary literal";
+        case LILY_ERROR_KIND_INVALID_FLOAT_LITERAL:
+            return "invalid float literal";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -119,6 +123,10 @@ to_code__LilyError(const LilyError *self)
             return "0018";
         case LILY_ERROR_KIND_INVALID_OCTAL_LITERAL:
             return "0019";
+        case LILY_ERROR_KIND_INVALID_BIN_LITERAL:
+            return "0020";
+        case LILY_ERROR_KIND_INVALID_FLOAT_LITERAL:
+            return "0021";
         default:
             UNREACHABLE("unknown variant");
     }
