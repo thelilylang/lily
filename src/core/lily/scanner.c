@@ -133,7 +133,7 @@ static LilyToken *
 get_closing__Scanner(Scanner *self, char target);
 
 static LilyToken *
-get_token(Scanner *self);
+get_token__Scanner(Scanner *self);
 
 #ifdef PLATFORM_64
 #define ISIZE_OUT_OF_RANGE_HELP               \
@@ -1382,7 +1382,7 @@ get_closing__Scanner(Scanner *self, char target)
 }
 
 LilyToken *
-get_token(Scanner *self)
+get_token__Scanner(Scanner *self)
 {
     char *c1 = peek_char__Scanner(self, 1);
     char *c2 = peek_char__Scanner(self, 2);
@@ -1591,11 +1591,57 @@ get_token(Scanner *self)
         default:
             return NULL;
     }
+
+    return NULL;
 }
 
 void
 run__Scanner(Scanner *self, bool dump_scanner)
 {
+    Usize content_len = strlen(self->source.file->content);
+
+    if (content_len > 1) {
+        while (self->source.cursor.position < content_len - 1) {
+            skip_space__Scanner(self);
+
+            if (self->source.cursor.position >= content_len - 1) {
+                break;
+            }
+
+            LilyToken *token = get_token__Scanner(self);
+
+            if (token) {
+                String *token_s = to_string__LilyToken(token);
+
+                if (token_s->len == 1) {
+                    end_token__Scanner(self, self->source.cursor.line, self->source.cursor.column);
+                    set_all__Location(&token->location, &self->location);
+                    next_char_by_token__Scanner(self, token);
+                } else if (token_s->len > 1) {
+                    next_char_by_token__Scanner(self, token);
+                    previous_char__Source(&self->source);
+                    end_token__Scanner(self, self->source.cursor.line, self->source.cursor.column);
+                    next_char__Source(&self->source);
+                    set_all__Location(&token->location, &self->location);
+                }
+
+                switch (token->kind) {
+                    case LILY_TOKEN_KIND_COMMENT_LINE:
+                    case LILY_TOKEN_KIND_COMMENT_BLOCK:
+                        break;
+                    default:
+                        push_token__Scanner(self, token);
+                }
+
+                FREE(String, token_s);
+
+                if (self->source.cursor.position >= content_len - 1) {
+                    break;
+                }
+            }
+        }
+    }
+
     start_token__Scanner(
       self, self->source.cursor.line, self->source.cursor.column);
     end_token__Scanner(
@@ -1615,6 +1661,10 @@ run__Scanner(Scanner *self, bool dump_scanner)
         CALL_DEBUG(LilyToken, get__Vec(self->tokens, i));
     }
 #endif
+
+    if (self->count_error > 0) {
+        exit(1);
+    }
 }
 
 DESTRUCTOR(Scanner, const Scanner *self)
