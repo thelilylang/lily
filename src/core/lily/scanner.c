@@ -126,6 +126,15 @@ scan_num__Scanner(Scanner *self);
 static LilyToken *
 get_num__Scanner(Scanner *self);
 
+static bool
+skip_and_verify__Scanner(Scanner *self, char target);
+
+static LilyToken *
+get_closing__Scanner(Scanner *self, char target);
+
+static LilyToken *
+get_token(Scanner *self);
+
 #ifdef PLATFORM_64
 #define ISIZE_OUT_OF_RANGE_HELP               \
     "the range of the Isize type is "         \
@@ -1330,6 +1339,257 @@ get_num__Scanner(Scanner *self)
         }
         default:
             return scan_num__Scanner(self);
+    }
+}
+
+bool
+skip_and_verify__Scanner(Scanner *self, char target)
+{
+    skip_space__Scanner(self);
+    return self->source.cursor.current != target;
+}
+
+LilyToken *
+get_closing__Scanner(Scanner *self, char target)
+{
+    Location location_error = clone__Location(&self->location);
+
+    skip_space__Scanner(self);
+
+    while (skip_and_verify__Scanner(self, target)) {
+        if (self->source.cursor.position >=
+            strlen(self->source.file->content) - 1) {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->source.file,
+                &location_error,
+                NEW(LilyError, LILY_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER),
+                NULL,
+                NULL,
+                from__String("expected closing delimiter after this token, "
+                             "such as `)`, `}` or `]`")),
+              &self->count_error);
+
+            return NULL;
+        }
+
+        // LilyToken *token = get
+    }
+
+    return NULL;
+}
+
+LilyToken *
+get_token(Scanner *self)
+{
+    char *c1 = peek_char__Scanner(self, 1);
+    char *c2 = peek_char__Scanner(self, 2);
+
+    start_token__Scanner(
+      self, self->source.cursor.line, self->source.cursor.column);
+
+    switch (self->source.cursor.current) {
+        case '&':
+            if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_AMPERSAND_EQ,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_AMPERSAND,
+                       clone__Location(&self->location));
+        case '@':
+            return NEW(
+              LilyToken, LILY_TOKEN_KIND_AT, clone__Location(&self->location));
+        case '!':
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_BANG,
+                       clone__Location(&self->location));
+        case '|':
+            if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_BAR_EQ,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'>') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_BAR_R_SHIFT,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(
+              LilyToken, LILY_TOKEN_KIND_BAR, clone__Location(&self->location));
+        case ':':
+            if (c1 == (char *)':') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_COLON_COLON,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'$') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_DOLLAR,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_COLON_EQ,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_COLON,
+                       clone__Location(&self->location));
+        case ',':
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_COMMA,
+                       clone__Location(&self->location));
+        case '$':
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_DOLLAR,
+                       clone__Location(&self->location));
+        case '.':
+            if (c1 == (char *)'.' && c2 == (char *)'.') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_DOT_DOT_DOT,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'.') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_DOT_DOT,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'?') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_DOT_INTERROGATION,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'*') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_DOT_STAR,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(
+              LilyToken, LILY_TOKEN_KIND_DOT, clone__Location(&self->location));
+        case '=':
+            if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_EQ_EQ,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'>') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_FAT_ARROW,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(
+              LilyToken, LILY_TOKEN_KIND_EQ, clone__Location(&self->location));
+        case '#':
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_HASHTAG,
+                       clone__Location(&self->location));
+        case '^':
+            if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_HAT_EQ,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(
+              LilyToken, LILY_TOKEN_KIND_HAT, clone__Location(&self->location));
+        case '?':
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_INTERROGATION,
+                       clone__Location(&self->location));
+        case '{':
+        case '[':
+        case '(':
+            break;
+        case '<':
+            if (c1 == (char *)'<' && c2 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_L_SHIFT_L_SHIFT_EQ,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'<') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_L_SHIFT_L_SHIFT,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_L_SHIFT_EQ,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_L_SHIFT,
+                       clone__Location(&self->location));
+        case '-':
+            if (c1 == (char *)'-' && c2 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_MINUS_MINUS_EQ,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_MINUS_EQ,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'-') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_MINUS_MINUS,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_MINUS,
+                       clone__Location(&self->location));
+        case '%':
+            if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_PERCENTAGE_EQ,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_PERCENTAGE,
+                       clone__Location(&self->location));
+        case '+':
+            if (c1 == (char *)'+' && c2 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_PLUS_PLUS_EQ,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_PLUS_EQ,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'+') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_PLUS_PLUS,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_PLUS,
+                       clone__Location(&self->location));
+        case '}':
+        case ']':
+        case ')':
+            return NULL;
+        case '>':
+            if (c1 == (char *)'>' && c2 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_R_SHIFT_R_SHIFT_EQ,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'>') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_R_SHIFT_R_SHIFT,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_R_SHIFT_EQ,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_R_SHIFT,
+                       clone__Location(&self->location));
+        default:
+            return NULL;
     }
 }
 
