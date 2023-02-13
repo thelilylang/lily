@@ -24,8 +24,10 @@
 
 #include <base/atof.h>
 #include <base/atoi.h>
+#include <base/print.h>
 
 #include <core/lily/error.h>
+#include <core/lily/lily.h>
 #include <core/lily/scanner.h>
 #include <core/shared/diagnostic.h>
 
@@ -114,6 +116,12 @@ scan_hex__Scanner(Scanner *self);
 
 static LilyToken *
 scan_oct__Scanner(Scanner *self);
+
+static LilyToken *
+scan_bin__Scanner(Scanner *self);
+
+static LilyToken *
+scan_num__Scanner(Scanner *self);
 
 #ifdef PLATFORM_64
 #define ISIZE_OUT_OF_RANGE_HELP               \
@@ -1151,9 +1159,174 @@ scan_oct__Scanner(Scanner *self)
       LilyToken, literal_int_8, clone__Location(&self->location), res);
 }
 
+LilyToken *
+scan_bin__Scanner(Scanner *self)
+{
+    Location location_error = default__Location(self->source.file->name);
+    String *res = NEW(String);
+
+    start__Location(
+      &location_error, self->source.cursor.line, self->source.cursor.column);
+
+    while (is_bin__Scanner(self)) {
+        push__String(res, self->source.cursor.current);
+        next_char__Source(&self->source);
+    }
+
+    if (is_empty__String(res)) {
+        end__Location(&location_error,
+                      self->source.cursor.line,
+                      self->source.cursor.column);
+
+        emit__Diagnostic(
+          NEW_VARIANT(Diagnostic,
+                      simple_lily_error,
+                      self->source.file,
+                      &location_error,
+                      NEW(LilyError, LILY_ERROR_KIND_INVALID_BIN_LITERAL),
+                      init__Vec(1, from__String("e.g. 0b0101, 0b011011")),
+                      NULL,
+                      from__String("add a digit 0 to 1")),
+          &self->count_error);
+
+        FREE(String, res);
+
+        return NULL;
+    }
+
+    previous_char__Source(&self->source);
+
+    SCAN_LITERAL_SUFFIX(res->buffer, 16, true);
+
+    return NEW_VARIANT(
+      LilyToken, literal_int_16, clone__Location(&self->location), res);
+}
+
+LilyToken *
+scan_num__Scanner(Scanner *self)
+{
+    String *res = NEW(String);
+    bool is_float = false;
+    Location location_error = default__Location(self->source.file->name);
+
+    start__Location(
+      &location_error, self->source.cursor.line, self->source.cursor.column);
+
+    while (is_num__Scanner(self)) {
+        if (self->source.cursor.current == '.' && !is_float) {
+            is_float = true;
+        } else if (self->source.cursor.current == '.' && is_float) {
+            start__Location(&location_error,
+                            self->source.cursor.line,
+                            self->source.cursor.column);
+            end__Location(&location_error,
+                          self->source.cursor.line,
+                          self->source.cursor.column);
+
+            next_char__Source(&self->source);
+
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->source.file,
+                          &location_error,
+                          NEW(LilyError, LILY_ERROR_KIND_INVALID_FLOAT_LITERAL),
+                          NULL,
+                          NULL,
+                          from__String("in a float literal it is forbidden to "
+                                       "add more than one `.`")),
+              &self->count_error);
+
+            FREE(String, res);
+
+            return NULL;
+        }
+
+        if ((self->source.cursor.current == 'e' ||
+             self->source.cursor.current == 'E') &&
+            !is_float) {
+            push__String(res, self->source.cursor.current);
+            is_float = true;
+            next_char__Source(&self->source);
+
+            if (self->source.cursor.current == '-' ||
+                self->source.cursor.current == '+') {
+                push__String(res, self->source.cursor.current);
+                next_char__Source(&self->source);
+            }
+        } else if ((self->source.cursor.current == 'e' ||
+                    self->source.cursor.current == 'E') &&
+                   is_float) {
+            start__Location(&location_error,
+                            self->source.cursor.line,
+                            self->source.cursor.column);
+            end__Location(&location_error,
+                          self->source.cursor.line,
+                          self->source.cursor.column);
+
+            next_char__Source(&self->source);
+
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->source.file,
+                          &location_error,
+                          NEW(LilyError, LILY_ERROR_KIND_INVALID_FLOAT_LITERAL),
+                          NULL,
+                          NULL,
+                          from__String("in a float literal it is forbidden to "
+                                       "add more than one `e` or `E`")),
+              &self->count_error);
+
+            FREE(String, res);
+
+            return NULL;
+        }
+
+        push__String(res, self->source.cursor.current);
+        next_char__Source(&self->source);
+    }
+
+    previous_char__Source(&self->source);
+
+    if (is_float) {
+        end__Location(&location_error,
+                      self->source.cursor.line,
+                      self->source.cursor.column);
+        SCAN_LITERAL_SUFFIX(res->buffer, 10, false);
+
+        return NEW_VARIANT(
+          LilyToken, literal_float, clone__Location(&self->location), res);
+    }
+
+    SCAN_LITERAL_SUFFIX(res->buffer, 10, true);
+
+    return NEW_VARIANT(
+      LilyToken, literal_int_10, clone__Location(&self->location), res);
+}
+
 void
 run__Scanner(Scanner *self, bool dump_scanner)
 {
+    start_token__Scanner(
+      self, self->source.cursor.line, self->source.cursor.column);
+    end_token__Scanner(
+      self, self->source.cursor.line, self->source.cursor.column);
+    push__Vec(
+      self->tokens,
+      NEW(LilyToken, LILY_TOKEN_KIND_EOF, clone__Location(&self->location)));
+
+#ifndef DEBUG_SCANNER
+    if (dump_scanner) {
+        for (Usize i = 0; i < self->tokens->len; i++) {
+            PRINTLN("{Sr}", to_string__LilyToken(get__Vec(self->tokens, i)));
+        }
+    }
+#else
+    for (Usize i = 0; i < self->tokens->len; i++) {
+        CALL_DEBUG(LilyToken, get__Vec(self->tokens, i));
+    }
+#endif
 }
 
 DESTRUCTOR(Scanner, const Scanner *self)
