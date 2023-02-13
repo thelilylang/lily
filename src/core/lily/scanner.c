@@ -123,6 +123,9 @@ scan_bin__Scanner(Scanner *self);
 static LilyToken *
 scan_num__Scanner(Scanner *self);
 
+static LilyToken *
+get_num__Scanner(Scanner *self);
+
 #ifdef PLATFORM_64
 #define ISIZE_OUT_OF_RANGE_HELP               \
     "the range of the Isize type is "         \
@@ -1303,6 +1306,31 @@ scan_num__Scanner(Scanner *self)
 
     return NEW_VARIANT(
       LilyToken, literal_int_10, clone__Location(&self->location), res);
+}
+
+LilyToken *
+get_num__Scanner(Scanner *self)
+{
+    switch (self->source.cursor.current) {
+        case '0': {
+            char *c1 = peek_char__Scanner(self, 1);
+
+            if (c1 == (char *)'x') {
+                jump__Scanner(self, 2);
+                return scan_hex__Scanner(self);
+            } else if (c1 == (char *)'o') {
+                jump__Scanner(self, 2);
+                return scan_oct__Scanner(self);
+            } else if (c1 == (char *)'b') {
+                jump__Scanner(self, 2);
+                return scan_bin__Scanner(self);
+            } else {
+                return scan_num__Scanner(self);
+            }
+        }
+        default:
+            return scan_num__Scanner(self);
+    }
 }
 
 void
