@@ -24,6 +24,7 @@
 
 #include <base/alloc.h>
 #include <base/format.h>
+#include <base/itoa.h>
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/string.h>
@@ -42,43 +43,10 @@
         res[++buffer_size] = '\0';                        \
     }
 
-#define REV_STR(s, size)                 \
-    for (int j = 0; j < size / 2; j++) { \
-        char tmp = s[j];                 \
-        s[j] = s[size - j - 1];          \
-        s[size - j - 1] = tmp;           \
-    }
-
-#define PUSH_INT(d, base)                         \
-    if (d < 0) {                                  \
-        res = lily_realloc(res, buffer_size + 2); \
-        res[buffer_size] = '-';                   \
-        res[++buffer_size] = '\0';                \
-        d = -d;                                   \
-    }                                             \
-    while (d > 0) {                               \
-        res = lily_realloc(res, buffer_size + 2); \
-        res[buffer_size] = (d % base) + '0';      \
-        res[++buffer_size] = '\0';                \
-        d /= base;                                \
-    }                                             \
-    REV_STR(res, buffer_size);
-
-#define PUSH_INT_BASE_16(d)                       \
-    if (d < 0) {                                  \
-        res = lily_realloc(res, buffer_size + 2); \
-        res[buffer_size] = '-';                   \
-        res[++buffer_size] = '\0';                \
-        d = -d;                                   \
-    }                                             \
-    while (d > 0) {                               \
-        res = lily_realloc(res, buffer_size + 2); \
-        int n = (d % 16) + '0';                   \
-        res[buffer_size] = n > '9' ? n + 7 : n;   \
-        res[++buffer_size] = '\0';                \
-        d /= 16;                                  \
-    }                                             \
-    REV_STR(res, buffer_size);
+#define PUSH_INT(d, base)             \
+    char *d_s = itoa__Int32(d, base); \
+    PUSH_STR(d_s);                    \
+    lily_free(d_s);
 
 char *
 format(const char *fmt, ...)
@@ -125,7 +93,7 @@ format(const char *fmt, ...)
                                         break;
                                     }
                                     case 'x': {
-                                        PUSH_INT_BASE_16(d);
+                                        PUSH_INT(d, 16);
 
                                         break;
                                     }
@@ -221,7 +189,7 @@ format(const char *fmt, ...)
                                         break;
                                     }
                                     case 'x': {
-                                        PUSH_INT_BASE_16(d);
+                                        PUSH_INT(d, 16);
 
                                         break;
                                     }
@@ -262,7 +230,7 @@ format(const char *fmt, ...)
                         res[buffer_size] = '{';
                         res[++buffer_size] = '\0';
 
-                        i += 2;
+                        i += 1;
 
                         break;
                     default:
