@@ -45,6 +45,6 @@ void
 previous__Cursor(Cursor *cursor, char current)
 {
     cursor->position--;
-    cursor->column = 1;
+    cursor->column--;
     cursor->current = current;
 }
