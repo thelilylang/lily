@@ -1545,10 +1545,35 @@ get_closing__Scanner(Scanner *self, char target)
             return NULL;
         }
 
-        // LilyToken *token = get
+        LilyToken *token = get_token__Scanner(self);
+
+        end_token__Scanner(self, self->source.cursor.line, self->source.cursor.column);
+        next_char_by_token__Scanner(self, token);
+
+        switch (token->kind) {
+            case LILY_TOKEN_KIND_L_PAREN:
+            case LILY_TOKEN_KIND_L_BRACE:
+            case LILY_TOKEN_KIND_L_HOOK:
+                break;
+            default:
+                set_all__Location(&token->location, &self->location);
+        }
+
+        push_token__Scanner(self, token);
     }
 
-    return NULL;
+    start_token__Scanner(self, self->source.cursor.line, self->source.cursor.column);
+
+    switch (target) {
+        case ')':
+            return NEW(LilyToken, LILY_TOKEN_KIND_R_PAREN, clone__Location(&self->location));
+        case '}':
+            return NEW(LilyToken, LILY_TOKEN_KIND_R_BRACE, clone__Location(&self->location));
+        case ']':
+            return NEW(LilyToken, LILY_TOKEN_KIND_R_HOOK, clone__Location(&self->location));
+        default:
+            UNREACHABLE("this way is not possible");
+    }
 }
 
 LilyToken *
@@ -1670,8 +1695,48 @@ get_token__Scanner(Scanner *self)
                        clone__Location(&self->location));
         case '{':
         case '[':
-        case '(':
-            break;
+        case '(': {
+            char match = self->source.cursor.current;
+
+            end_token__Scanner(
+              self, self->source.cursor.line, self->source.cursor.column);
+
+            LilyToken *token = NULL;
+
+            switch (match) {
+                case '{':
+                    token = NEW(LilyToken,
+                                LILY_TOKEN_KIND_L_BRACE,
+                                clone__Location(&self->location));
+                    break;
+                case '[':
+                    token = NEW(LilyToken,
+                                LILY_TOKEN_KIND_L_HOOK,
+                                clone__Location(&self->location));
+                    break;
+                case '(':
+                    token = NEW(LilyToken,
+                                LILY_TOKEN_KIND_L_PAREN,
+                                clone__Location(&self->location));
+                    break;
+                default:
+                    UNREACHABLE("this way is not possible");
+            }
+
+            next_char_by_token__Scanner(self, token);
+            push_token__Scanner(self, token);
+
+            switch (match) {
+                case '{':
+                    return get_closing__Scanner(self, '}');
+                case '[':
+                    return get_closing__Scanner(self, ']');
+                case '(':
+                    return get_closing__Scanner(self, ')');
+                default:
+                    UNREACHABLE("this way is not possible");
+            }
+        }
         case '<':
             if (c1 == (char *)'<' && c2 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1738,8 +1803,31 @@ get_token__Scanner(Scanner *self)
                        clone__Location(&self->location));
         case '}':
         case ']':
-        case ')':
+        case ')': {
+            char match = self->source.cursor.current;
+
+            end_token__Scanner(
+              self, self->source.cursor.line, self->source.cursor.column);
+            next_char__Source(&self->source);
+
+            Location location_error = clone__Location(&self->location);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->source.file,
+                &location_error,
+                NEW(LilyError, LILY_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER),
+                init__Vec(1,
+                          format__String("remove this `{c}`",
+                                         match)),
+                NULL,
+                NULL),
+              &self->count_error);
+
             return NULL;
+        }
         case '>':
             if (c1 == (char *)'>' && c2 == (char *)'=') {
                 return NEW(LilyToken,
