@@ -143,23 +143,23 @@ to_string__Diagnostic(const Diagnostic *self);
 static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
 
 #define LINES(location, file)                                                 \
-    char **split = split__Str(file->content, '\n');                           \
+    Vec *split = split__Str(file->content, '\n');                             \
     Vec *lines = NEW(Vec);                                                    \
     if (location->start_line == location->end_line) {                         \
-        push__Vec(lines, split[location->start_line - 1]);                    \
-        for (Usize i = 0; i < LEN(split, *split); i++) {                      \
+        push__Vec(lines, get__Vec(split, location->start_line - 1));          \
+        for (Usize i = 0; i < split->len; i++) {                              \
             if (i != location->start_line - 1)                                \
-                lily_free(split[i]);                                          \
+                lily_free(split->buffer[i]);                                  \
         }                                                                     \
     } else {                                                                  \
-        push__Vec(lines, split[location->start_line - 1]);                    \
-        push__Vec(lines, split[location->end_line - 1]);                      \
-        for (Usize i = 0; i < LEN(split, *split); i++) {                      \
-            if (i != location->start_line - 1 && i != location->end_line - 1) \
-                lily_free(split[i]);                                          \
+        push__Vec(lines, get__Vec(split, location->start_line - 1));          \
+        push__Vec(lines, get__Vec(split, location->end_line - 1));            \
+        for (Usize i = 0; i < split->len; i++) {                              \
+            if (i != location->start_line - 1 || i != location->end_line - 1) \
+                lily_free(split->buffer[i]);                                  \
         }                                                                     \
     }                                                                         \
-    lily_free(split);
+    FREE(Vec, split);
 
 DESTRUCTOR(DiagnosticLevel, const DiagnosticLevel *self)
 {
@@ -207,13 +207,14 @@ to_string__DiagnosticLevelUtil(const DiagnosticLevelUtil *self)
 
     if (self->helps) {
         for (Usize i = 0; i < self->helps->len; i++) {
-            PUSH_STR_AND_FREE(
-              res,
+            char *s =
               format("{Sr} {sa}: {S}\n",
                      repeat__String(
                        " ", calc_usize_length(self->location->end_line) + 1),
                      GREEN("- help"),
-                     self->helps->buffer[i]));
+                     self->helps->buffer[i]);
+
+            PUSH_STR_AND_FREE(res, s);
         }
     }
 
@@ -359,18 +360,27 @@ to_string__DiagnosticLevelFormat(const DiagnosticLevelFormat *self,
     String *res = NEW(String);
 
     switch (self->kind) {
-        case DIAGNOSTIC_LEVEL_FORMAT_KIND_SIMPLE:
-            APPEND_AND_FREE(res, to_string__Simple(&self->simple, level));
-            APPEND_AND_FREE(
-              res, to_string__DiagnosticLevelUtil(&self->simple.level_util));
+        case DIAGNOSTIC_LEVEL_FORMAT_KIND_SIMPLE: {
+            String *simple = to_string__Simple(&self->simple, level);
+            String *level_util =
+              to_string__DiagnosticLevelUtil(&self->simple.level_util);
+
+            APPEND_AND_FREE(res, simple);
+            APPEND_AND_FREE(res, level_util);
+
             break;
-        case DIAGNOSTIC_LEVEL_FORMAT_KIND_REFERENCING:
-            APPEND_AND_FREE(
-              res, to_string__DiagnosticReferencing(&self->referencing, level));
-            APPEND_AND_FREE(
-              res,
-              to_string__DiagnosticLevelUtil(&self->referencing.level_util));
+        }
+        case DIAGNOSTIC_LEVEL_FORMAT_KIND_REFERENCING: {
+            String *referencing =
+              to_string__DiagnosticReferencing(&self->referencing, level);
+            String *level_util =
+              to_string__DiagnosticLevelUtil(&self->referencing.level_util);
+
+            APPEND_AND_FREE(res, referencing);
+            APPEND_AND_FREE(res, level_util);
+
             break;
+        }
         default:
             UNREACHABLE("unknown variant");
     }
@@ -426,8 +436,11 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
     String *res = NEW(String);
     Usize line_number_length = calc_usize_length(self->location->end_line);
 
-    PUSH_STR_AND_FREE(
-      res, format("|{Sr}", repeat__String(" ", line_number_length + 1)));
+    {
+        char *s = format(
+          "{Sr}{sa}\n", repeat__String(" ", line_number_length + 1), BLUE("|"));
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     if (self->lines->len == 1) {
         char *line = format(" {s}", CAST(char *, get__Vec(self->lines, 0)));
@@ -440,29 +453,45 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
                 break;
         }
 
-        PUSH_STR_AND_FREE(res,
-                          format("\x1b[34m{d} |\x1b[0m {Sr}",
-                                 self->location->start_line,
-                                 repeat__String(" ", line_number_length - 1)));
-        PUSH_STR_AND_FREE(res, format("{sa}\n", line));
-        PUSH_STR_AND_FREE(res,
-                          format("{Sr} {sa}",
-                                 repeat__String(" ", line_number_length),
-                                 BLUE("|")));
+        {
+            char *s = format("\x1b[34m{d} |\x1b[0m {Sr}",
+                             self->location->start_line,
+                             repeat__String(" ", line_number_length - 1));
 
-        for (Usize i = 0; line[i++];) {
-            if (isspace(line[i - 1])) {
-                push__String(res, line[i - 1]);
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        {
+            char *s = format("{s}\n", line);
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        {
+            char *s = format(
+              "{Sr} {sa}", repeat__String(" ", line_number_length), BLUE("|"));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        for (Usize i = 0; i < strlen(line); i++) {
+            if (isspace(line[i])) {
+                push__String(res, line[i]);
             } else {
                 break;
             }
         }
 
-        PUSH_STR_AND_FREE(
-          res,
-          format("{Sr}",
-                 repeat__String(
-                   " ", self->location->start_column - count_whitespace)));
+        free(line);
+
+        {
+            char *s =
+              format("{Sr}",
+                     repeat__String(
+                       " ", self->location->start_column - count_whitespace));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
 
         {
             String *repeat = repeat__String("^",
@@ -472,26 +501,36 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
             switch (level->kind) {
                 case DIAGNOSTIC_LEVEL_KIND_CC_ERROR:
                 case DIAGNOSTIC_LEVEL_KIND_CPP_ERROR:
-                case DIAGNOSTIC_LEVEL_KIND_LILY_ERROR:
-                    PUSH_STR_AND_FREE(res, RED(repeat->buffer));
+                case DIAGNOSTIC_LEVEL_KIND_LILY_ERROR: {
+                    char *red = RED(repeat->buffer);
+                    PUSH_STR_AND_FREE(res, red);
+
                     break;
+                }
                 case DIAGNOSTIC_LEVEL_KIND_CC_NOTE:
                 case DIAGNOSTIC_LEVEL_KIND_CPP_NOTE:
-                case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE:
-                    PUSH_STR_AND_FREE(res, CYAN(repeat->buffer));
+                case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE: {
+                    char *cyan = CYAN(repeat->buffer);
+                    PUSH_STR_AND_FREE(res, cyan);
+
                     break;
+                }
                 case DIAGNOSTIC_LEVEL_KIND_CC_WARNING:
                 case DIAGNOSTIC_LEVEL_KIND_CPP_WARNING:
-                case DIAGNOSTIC_LEVEL_KIND_LILY_WARNING:
-                    PUSH_STR_AND_FREE(res, YELLOW(repeat->buffer));
+                case DIAGNOSTIC_LEVEL_KIND_LILY_WARNING: {
+                    char *yellow = YELLOW(repeat->buffer);
+                    PUSH_STR_AND_FREE(res, yellow);
+
                     break;
+                }
             }
 
             FREE(String, repeat);
         }
 
         if (self->msg) {
-            PUSH_STR_AND_FREE(res, format("~ {s}\n", self->msg));
+            char *s = format("~ {S}\n", self->msg);
+            PUSH_STR_AND_FREE(res, s);
         } else {
             push_str__String(res, "~\n");
         }
@@ -944,51 +983,91 @@ to_string__Diagnostic(const Diagnostic *self)
 {
     String *res = NEW(String);
 
-    PUSH_STR_AND_FREE(res,
-                      format("{s}:{d}:{d}: ",
-                             self->file->name,
-                             self->location->start_line,
-                             self->location->start_column));
+    {
+        char *s = format("{s}:{d}:{d}: ",
+                         self->file->name,
+                         self->location->start_line,
+                         self->location->start_column);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     switch (self->level.kind) {
-        case DIAGNOSTIC_LEVEL_KIND_CC_ERROR:
-            PUSH_STR_AND_FREE(res, to_string__CcError(&self->level.cc_error));
+        case DIAGNOSTIC_LEVEL_KIND_CC_ERROR: {
+            char *s = to_string__CcError(&self->level.cc_error);
+
+            PUSH_STR_AND_FREE(res, s);
+
             break;
-        case DIAGNOSTIC_LEVEL_KIND_CC_NOTE:
-            PUSH_STR_AND_FREE(res, format("note: {S}", self->level.cc_note));
+        }
+        case DIAGNOSTIC_LEVEL_KIND_CC_NOTE: {
+            char *s = format("note: {S}", self->level.cc_note);
+
+            PUSH_STR_AND_FREE(res, s);
+
             break;
-        case DIAGNOSTIC_LEVEL_KIND_CC_WARNING:
-            PUSH_STR_AND_FREE(res,
-                              to_string__CcWarning(&self->level.cc_warning));
+        }
+        case DIAGNOSTIC_LEVEL_KIND_CC_WARNING: {
+            char *s = to_string__CcWarning(&self->level.cc_warning);
+
+            PUSH_STR_AND_FREE(res, s);
+
             break;
-        case DIAGNOSTIC_LEVEL_KIND_CPP_ERROR:
-            PUSH_STR_AND_FREE(res, to_string__CppError(&self->level.cpp_error));
+        }
+        case DIAGNOSTIC_LEVEL_KIND_CPP_ERROR: {
+            char *s = to_string__CppError(&self->level.cpp_error);
+
+            PUSH_STR_AND_FREE(res, s);
+
             break;
-        case DIAGNOSTIC_LEVEL_KIND_CPP_NOTE:
-            PUSH_STR_AND_FREE(res, format("note: {S}", self->level.cpp_note));
+        }
+        case DIAGNOSTIC_LEVEL_KIND_CPP_NOTE: {
+            char *s = format("note: {S}", self->level.cpp_note);
+
+            PUSH_STR_AND_FREE(res, s);
+
             break;
-        case DIAGNOSTIC_LEVEL_KIND_CPP_WARNING:
-            PUSH_STR_AND_FREE(res,
-                              to_string__CppWarning(&self->level.cpp_warning));
+        }
+        case DIAGNOSTIC_LEVEL_KIND_CPP_WARNING: {
+            char *s = to_string__CppWarning(&self->level.cpp_warning);
+
+            PUSH_STR_AND_FREE(res, s);
+
             break;
-        case DIAGNOSTIC_LEVEL_KIND_LILY_ERROR:
-            PUSH_STR_AND_FREE(res,
-                              to_string__LilyError(&self->level.lily_error));
+        }
+        case DIAGNOSTIC_LEVEL_KIND_LILY_ERROR: {
+            char *s = to_string__LilyError(&self->level.lily_error);
+
+            PUSH_STR_AND_FREE(res, s);
+
             break;
-        case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE:
-            PUSH_STR_AND_FREE(res, format("note: {S}", self->level.lily_note));
+        }
+        case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE: {
+            char *s = format("note: {S}", self->level.lily_note);
+
+            PUSH_STR_AND_FREE(res, s);
+
             break;
-        case DIAGNOSTIC_LEVEL_KIND_LILY_WARNING:
-            PUSH_STR_AND_FREE(
-              res, to_string__LilyWarning(&self->level.lily_warning));
+        }
+        case DIAGNOSTIC_LEVEL_KIND_LILY_WARNING: {
+            char *s = to_string__LilyWarning(&self->level.lily_warning);
+
+            PUSH_STR_AND_FREE(res, s);
+
             break;
+        }
         default:
             UNREACHABLE("unknown variant");
     }
 
     push__String(res, '\n');
-    APPEND_AND_FREE(
-      res, to_string__DiagnosticLevelFormat(&self->level_format, &self->level));
+
+    {
+        String *s =
+          to_string__DiagnosticLevelFormat(&self->level_format, &self->level);
+
+        APPEND_AND_FREE(res, s);
+    }
 
     return res;
 }
