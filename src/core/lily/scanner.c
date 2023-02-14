@@ -1927,6 +1927,7 @@ run__Scanner(Scanner *self, bool dump_scanner)
                 switch (token->kind) {
                     case LILY_TOKEN_KIND_COMMENT_LINE:
                     case LILY_TOKEN_KIND_COMMENT_BLOCK:
+                        FREE(LilyToken, token);
                         break;
                     default:
                         push_token__Scanner(self, token);
