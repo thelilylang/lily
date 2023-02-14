@@ -1,5 +1,6 @@
 #include <base/assert.h>
 #include <base/macros.h>
+#include <base/new.h>
 #include <base/str.h>
 #include <base/types.h>
 
@@ -10,14 +11,15 @@
 void
 test_split__Str()
 {
-    char *s = "Hello\nWorld";
-    char **split = split__Str(s, '\n');
+    char *s = "Hello\nWorld\nHi";
+    Vec *split = split__Str(s, '\n');
 
-    ASSERT(!strcmp(split[0], "Hello"));
-    ASSERT(!strcmp(split[1], "World"));
+    ASSERT(!strcmp(split->buffer[0], "Hello"));
+    ASSERT(!strcmp(split->buffer[1], "World"));
+    ASSERT(!strcmp(split->buffer[2], "Hi"));
 
-    for (Usize i = 0; i < (Usize)LEN(split, *split); i++)
-        lily_free(split[i]);
+    for (Usize i = 0; i < split->len; i++)
+        lily_free(split->buffer[i]);
 
-    lily_free(split);
+    FREE(Vec, split);
 }
