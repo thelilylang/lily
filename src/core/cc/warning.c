@@ -56,7 +56,8 @@ char *
 to_string__CcWarning(const CcWarning *self)
 {
     char *msg = to_msg__CcWarning(self);
-    char *res = format("{sa}[{s}]: {s}", YELLOW("warning"), to_code__CcWarning(self), msg);
+    char *res = format(
+      "{sa}[{s}]: {s}", YELLOW("warning"), to_code__CcWarning(self), msg);
 
     switch (self->kind) {
         default:

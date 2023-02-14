@@ -56,7 +56,8 @@ char *
 to_string__LilyWarning(const LilyWarning *self)
 {
     char *msg = to_msg__LilyWarning(self);
-    char *res = format("{sa}[{s}]: {s}", YELLOW("warning"), to_code__LilyWarning(self), msg);
+    char *res = format(
+      "{sa}[{s}]: {s}", YELLOW("warning"), to_code__LilyWarning(self), msg);
 
     switch (self->kind) {
         default:

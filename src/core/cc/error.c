@@ -57,7 +57,8 @@ char *
 to_string__CcError(const CcError *self)
 {
     char *msg = to_msg__CcError(self);
-    char *res = format("{sa}[{s}]: {s}", RED("error"), to_code__CcError(self), msg);
+    char *res =
+      format("{sa}[{s}]: {s}", RED("error"), to_code__CcError(self), msg);
 
     switch (self->kind) {
         case CC_ERROR_KIND_UNEXPECTED_TOKEN:
