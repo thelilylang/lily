@@ -486,7 +486,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
             char *s =
               format("{Sr}",
                      repeat__String(
-                       " ", self->location->start_column - count_whitespace));
+                       " ", self->location->start_column - count_whitespace + 1));
 
             PUSH_STR_AND_FREE(res, s);
         }
@@ -527,10 +527,10 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
         }
 
         if (self->msg) {
-            char *s = format("~ {S}\n", self->msg);
+            char *s = format(" {S}\n", self->msg);
             PUSH_STR_AND_FREE(res, s);
         } else {
-            push_str__String(res, "~\n");
+            push_str__String(res, "\n");
         }
 
         lily_free(line);
