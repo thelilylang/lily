@@ -679,29 +679,29 @@ to_string__LilyToken(LilyToken *self)
         case LILY_TOKEN_KIND_LITERAL_STRING:
             return format__String("\"{S}\"", self->literal_string);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
-            return format__String("{f}", self->literal_suffix_float32);
+            return format__String("{f}F32", self->literal_suffix_float32);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
-            return format__String("{f}", self->literal_suffix_float64);
+            return format__String("{f}F64", self->literal_suffix_float64);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
-            return format__String("{d}", self->literal_suffix_int16);
+            return format__String("{d}I16", self->literal_suffix_int16);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
-            return format__String("{d}", self->literal_suffix_int32);
+            return format__String("{d}I32", self->literal_suffix_int32);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
-            return format__String("{d}", self->literal_suffix_int64);
+            return format__String("{d}I64", self->literal_suffix_int64);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
-            return format__String("{d}", self->literal_suffix_int8);
+            return format__String("{d}I8", self->literal_suffix_int8);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
-            return format__String("{d}", self->literal_suffix_isize);
+            return format__String("{d}Iz", self->literal_suffix_isize);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
-            return format__String("{d}", self->literal_suffix_uint16);
+            return format__String("{d}U16", self->literal_suffix_uint16);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
-            return format__String("{d}", self->literal_suffix_uint32);
+            return format__String("{d}U32", self->literal_suffix_uint32);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
-            return format__String("{d}", self->literal_suffix_uint64);
+            return format__String("{d}U64", self->literal_suffix_uint64);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
-            return format__String("{d}", self->literal_suffix_uint8);
+            return format__String("{d}U8", self->literal_suffix_uint8);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
-            return format__String("{d}", self->literal_suffix_usize);
+            return format__String("{d}Uz", self->literal_suffix_usize);
         case LILY_TOKEN_KIND_MINUS_EQ:
             return from__String("-=");
         case LILY_TOKEN_KIND_MINUS_MINUS_EQ:
