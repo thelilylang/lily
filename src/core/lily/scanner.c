@@ -34,6 +34,70 @@
 #include <ctype.h>
 #include <string.h>
 
+/*
+  ____
+ / ___|    ___    __ _   _ __    _ __     ___   _ __
+ \___ \   / __|  / _` | | '_ \  | '_ \   / _ \ | '__|
+  ___) | | (__  | (_| | | | | | | | | | |  __/ | |
+ |____/   \___|  \__,_| |_| |_| |_| |_|  \___| |_|
+
+The scanner phase turns the characters into tokens.
+
+Features:
+
+1. The scanner handles other types of errors such as the failure
+to close parentheses, brackets and braces.
+
+Example: (
+
+Output:
+./Example.lily:1:1: error[0009]: unmatched closing
+  |
+1 | (
+  | ^
+help: consider add closing: `)`, `}` or `]`
+
+2. The scanner manages to get escapes in string or in char.
+
+Example: "\n"
+
+Output: no errors
+
+Example: "\w"
+
+Output:
+./Example.lily:1:3: error[0012]: invalid escape
+  |
+1 | "\w"
+  |   ^
+
+3. The scanner also manages the analysis of documentation comments.
+
+4. The scanner also handles all syntactic errors in the literals.
+
+    4.1 The scanner also handles the following syntax for floats.
+
+    Example: 4.
+    Output: no errors
+
+Example:
+"hello"
+3.3
+4.
+3e+3
+3E+3
+22
+0xff
+0xFF
+0o23
+0b0101
+'c'
+'\n'
+"\n"
+
+Output: no errors
+ */
+
 // Get keyword from id.
 static enum LilyTokenKind
 get_keyword(char *id);
@@ -788,6 +852,8 @@ next_char_by_token__Scanner(Scanner *self, LilyToken *token)
             return;
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
             jump__Scanner(self, 3);
             return;
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
@@ -795,11 +861,9 @@ next_char_by_token__Scanner(Scanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
-        case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
-        case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
             jump__Scanner(self, 4);
             return;
         default: {
