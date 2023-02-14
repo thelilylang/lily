@@ -25,13 +25,15 @@
 #ifndef LILY_BASE_STR_H
 #define LILY_BASE_STR_H
 
+#include <base/vec.h>
+
 /**
  *
  * @brief Split str.
- * @return A char* array.
+ * @return Vec<char*>*.
  * @note The result and its items can be free.
  */
-char **
+Vec *
 split__Str(const char *self, char separator);
 
 #endif // LILY_BASE_STR_H

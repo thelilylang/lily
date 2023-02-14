@@ -24,18 +24,18 @@
 
 #include <base/alloc.h>
 #include <base/macros.h>
+#include <base/new.h>
 #include <base/str.h>
 #include <base/types.h>
 
 #include <stdlib.h>
 #include <string.h>
 
-char **
+Vec *
 split__Str(const char *self, char separator)
 {
 
-    char **res = lily_malloc(PTR_SIZE);
-    Usize res_size = 0;
+    Vec *res = NEW(Vec);
 
     for (Usize i = 0; i < strlen(self); i++) {
         char *item = lily_malloc(1);
@@ -52,12 +52,7 @@ split__Str(const char *self, char separator)
             }
         }
 
-        if (res_size == 0)
-            res[res_size++] = item;
-        else {
-            res = lily_realloc(res, PTR_SIZE * ++res_size);
-            res[res_size - 1] = item;
-        }
+        push__Vec(res, item);
     }
 
     return res;
