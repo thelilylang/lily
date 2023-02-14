@@ -248,6 +248,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
+                jump__Scanner(self, 3); \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -272,6 +273,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
+                jump__Scanner(self, 4); \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -297,6 +299,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
+                jump__Scanner(self, 4); \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -323,6 +326,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
+                jump__Scanner(self, 4); \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -344,6 +348,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
+                jump__Scanner(self, 3); \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -367,6 +372,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
+                jump__Scanner(self, 3); \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -391,6 +397,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
+                jump__Scanner(self, 4); \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -415,6 +422,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
+                jump__Scanner(self, 4); \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -440,6 +448,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
+                jump__Scanner(self, 4); \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -461,6 +470,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
+                jump__Scanner(self, 3); \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -828,7 +838,7 @@ is_hex__Scanner(const Scanner *self)
            (self->source.cursor.current >= 'a' &&
             self->source.cursor.current <= 'f') ||
            (self->source.cursor.current >= 'A' &&
-            self->source.cursor.current <= 'f') ||
+            self->source.cursor.current <= 'F') ||
            self->source.cursor.current == '_';
 }
 
@@ -1156,6 +1166,16 @@ scan_hex__Scanner(Scanner *self)
     start__Location(
       &location_error, self->source.cursor.line, self->source.cursor.column);
 
+    if (self->source.cursor.current == '0') {
+        while (self->source.cursor.current == '0') {
+            next_char__Source(&self->source);
+        }
+
+        if (!is_hex__Scanner(self)) {
+            push__String(res, '0');
+        }
+    }
+
     while (is_hex__Scanner(self)) {
         if (self->source.cursor.current == '_')
             continue;
@@ -1203,6 +1223,16 @@ scan_oct__Scanner(Scanner *self)
     start__Location(
       &location_error, self->source.cursor.line, self->source.cursor.column);
 
+    if (self->source.cursor.current == '0') {
+        while (self->source.cursor.current == '0') {
+            next_char__Source(&self->source);
+        }
+
+        if (!is_oct__Scanner(self)) {
+            push__String(res, '0');
+        }
+    }
+
     while (is_oct__Scanner(self)) {
         push__String(res, self->source.cursor.current);
         next_char__Source(&self->source);
@@ -1245,6 +1275,16 @@ scan_bin__Scanner(Scanner *self)
 
     start__Location(
       &location_error, self->source.cursor.line, self->source.cursor.column);
+
+    if (self->source.cursor.current == '0') {
+        while (self->source.cursor.current == '0') {
+            next_char__Source(&self->source);
+        }
+
+        if (!is_bin__Scanner(self)) {
+            push__String(res, '0');
+        }
+    }
 
     while (is_bin__Scanner(self)) {
         push__String(res, self->source.cursor.current);
@@ -1661,13 +1701,13 @@ get_token__Scanner(Scanner *self)
             }
 
             while (self->source.cursor.current != '0') {
-                next_char__Source(self);
+                next_char__Source(&self->source);
             }
 
             if (self->source.cursor.current != '.' &&
                 !(self->source.cursor.current >= '1' &&
                   self->source.cursor.current <= '9')) {
-                previous_char__Source(self);
+                previous_char__Source(&self->source);
                 return NEW_VARIANT(LilyToken,
                                    literal_int_10,
                                    clone__Location(&self->location),
@@ -1712,10 +1752,10 @@ run__Scanner(Scanner *self, bool dump_scanner)
                     next_char_by_token__Scanner(self, token);
                 } else if (token_s->len > 1) {
                     next_char_by_token__Scanner(self, token);
-                    previous_char__Source(&self->source);
                     end_token__Scanner(self,
                                        self->source.cursor.line,
                                        self->source.cursor.column);
+                    previous_char__Source(&self->source);
                     next_char__Source(&self->source);
                     set_all__Location(&token->location, &self->location);
                 }
