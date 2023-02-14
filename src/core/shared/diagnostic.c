@@ -533,7 +533,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
             push_str__String(res, "~\n");
         }
 
-        free(line);
+        lily_free(line);
     } else {
         TODO("make diagnostic with one more line");
     }
