@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/color.h>
 #include <base/format.h>
 
 #include <core/lily/error.h>
@@ -140,7 +141,7 @@ char *
 to_string__LilyError(const LilyError *self)
 {
     char *msg = to_msg__LilyError(self);
-    char *res = format("error[{s}]: {s}", to_code__LilyError(self), msg);
+    char *res = format("{sa}[{s}]: {s}", RED("error"), to_code__LilyError(self), msg);
 
     switch (self->kind) {
         case LILY_ERROR_KIND_UNEXPECTED_TOKEN:

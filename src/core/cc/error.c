@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/color.h>
 #include <base/format.h>
 
 #include <core/cc/error.h>
@@ -56,7 +57,7 @@ char *
 to_string__CcError(const CcError *self)
 {
     char *msg = to_msg__CcError(self);
-    char *res = format("error[{s}]: {s}", to_code__CcError(self), msg);
+    char *res = format("{sa}[{s}]: {s}", RED("error"), to_code__CcError(self), msg);
 
     switch (self->kind) {
         case CC_ERROR_KIND_UNEXPECTED_TOKEN:

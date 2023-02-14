@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/color.h>
 #include <base/format.h>
 
 #include <core/cpp/warning.h>
@@ -55,7 +56,7 @@ char *
 to_string__CppWarning(const CppWarning *self)
 {
     char *msg = to_msg__CppWarning(self);
-    char *res = format("warning[{s}]: {s}", to_code__CppWarning(self), msg);
+    char *res = format("{sa}[{s}]: {s}", YELLOW("warning"), to_code__CppWarning(self), msg);
 
     switch (self->kind) {
         default:
