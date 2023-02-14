@@ -135,6 +135,72 @@ get_closing__Scanner(Scanner *self, char target);
 static LilyToken *
 get_token__Scanner(Scanner *self);
 
+#define IS_ZERO '0'
+
+#define IS_DIGIT_WITHOUT_ZERO \
+    '1' : case '2':           \
+    case '3':                 \
+    case '4':                 \
+    case '5':                 \
+    case '6':                 \
+    case '7':                 \
+    case '8':                 \
+    case '9'
+
+#define IS_ID       \
+    'a' : case 'b': \
+    case 'c':       \
+    case 'd':       \
+    case 'e':       \
+    case 'f':       \
+    case 'g':       \
+    case 'h':       \
+    case 'i':       \
+    case 'j':       \
+    case 'k':       \
+    case 'l':       \
+    case 'm':       \
+    case 'n':       \
+    case 'o':       \
+    case 'p':       \
+    case 'q':       \
+    case 'r':       \
+    case 's':       \
+    case 't':       \
+    case 'u':       \
+    case 'v':       \
+    case 'w':       \
+    case 'x':       \
+    case 'y':       \
+    case 'z':       \
+    case 'A':       \
+    case 'B':       \
+    case 'C':       \
+    case 'D':       \
+    case 'E':       \
+    case 'F':       \
+    case 'G':       \
+    case 'H':       \
+    case 'I':       \
+    case 'J':       \
+    case 'K':       \
+    case 'L':       \
+    case 'M':       \
+    case 'N':       \
+    case 'O':       \
+    case 'P':       \
+    case 'Q':       \
+    case 'R':       \
+    case 'S':       \
+    case 'T':       \
+    case 'U':       \
+    case 'V':       \
+    case 'W':       \
+    case 'X':       \
+    case 'Y':       \
+    case 'Z':       \
+    case '_'
+
 #ifdef PLATFORM_64
 #define ISIZE_OUT_OF_RANGE_HELP               \
     "the range of the Isize type is "         \
@@ -1588,6 +1654,31 @@ get_token__Scanner(Scanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_R_SHIFT,
                        clone__Location(&self->location));
+        case IS_ZERO:
+            if (c1 == (char *)'x' || c1 == (char *)'o' || c1 == (char *)'b' ||
+                c1 == (char *)'.') {
+                return get_num__Scanner(self);
+            }
+
+            while (self->source.cursor.current != '0') {
+                next_char__Source(self);
+            }
+
+            if (self->source.cursor.current != '.' &&
+                !(self->source.cursor.current >= '1' &&
+                  self->source.cursor.current <= '9')) {
+                previous_char__Source(self);
+                return NEW_VARIANT(LilyToken,
+                                   literal_int_10,
+                                   clone__Location(&self->location),
+                                   from__String("0"));
+            }
+
+            return get_num__Scanner(self);
+        case IS_DIGIT_WITHOUT_ZERO:
+            break;
+        case IS_ID:
+            break;
         default:
             return NULL;
     }
@@ -1614,13 +1705,17 @@ run__Scanner(Scanner *self, bool dump_scanner)
                 String *token_s = to_string__LilyToken(token);
 
                 if (token_s->len == 1) {
-                    end_token__Scanner(self, self->source.cursor.line, self->source.cursor.column);
+                    end_token__Scanner(self,
+                                       self->source.cursor.line,
+                                       self->source.cursor.column);
                     set_all__Location(&token->location, &self->location);
                     next_char_by_token__Scanner(self, token);
                 } else if (token_s->len > 1) {
                     next_char_by_token__Scanner(self, token);
                     previous_char__Source(&self->source);
-                    end_token__Scanner(self, self->source.cursor.line, self->source.cursor.column);
+                    end_token__Scanner(self,
+                                       self->source.cursor.line,
+                                       self->source.cursor.column);
                     next_char__Source(&self->source);
                     set_all__Location(&token->location, &self->location);
                 }
