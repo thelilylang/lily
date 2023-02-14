@@ -482,8 +482,6 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
             }
         }
 
-        free(line);
-
         {
             char *s =
               format("{Sr}",
@@ -534,6 +532,8 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
         } else {
             push_str__String(res, "~\n");
         }
+
+        free(line);
     } else {
         TODO("make diagnostic with one more line");
     }
