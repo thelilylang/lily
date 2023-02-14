@@ -248,7 +248,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__Scanner(self, 3); \
+                jump__Scanner(self, 3);                                        \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -273,7 +273,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__Scanner(self, 4); \
+                jump__Scanner(self, 4);                                        \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -299,7 +299,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__Scanner(self, 4); \
+                jump__Scanner(self, 4);                                        \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -326,7 +326,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__Scanner(self, 4); \
+                jump__Scanner(self, 4);                                        \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -348,7 +348,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__Scanner(self, 3); \
+                jump__Scanner(self, 3);                                        \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -372,7 +372,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__Scanner(self, 3); \
+                jump__Scanner(self, 3);                                        \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -397,7 +397,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__Scanner(self, 4); \
+                jump__Scanner(self, 4);                                        \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -422,7 +422,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__Scanner(self, 4); \
+                jump__Scanner(self, 4);                                        \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -448,7 +448,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__Scanner(self, 4); \
+                jump__Scanner(self, 4);                                        \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -470,7 +470,7 @@ get_token__Scanner(Scanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__Scanner(self, 3); \
+                jump__Scanner(self, 3);                                        \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -1694,6 +1694,66 @@ get_token__Scanner(Scanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_R_SHIFT,
                        clone__Location(&self->location));
+        case ';':
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_SEMICOLON,
+                       clone__Location(&self->location));
+        case '/':
+            if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_SLASH_EQ,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'*') {
+                jump__Scanner(self, 2);
+                skip_comment_block__Scanner(self);
+
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_COMMENT_BLOCK,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'/' && c2 == (char *)'/') {
+                jump__Scanner(self, 3);
+
+                String *doc = scan_comment_doc__Scanner(self);
+
+                return NEW_VARIANT(LilyToken,
+                                   comment_doc,
+                                   clone__Location(&self->location),
+                                   doc);
+            } else if (c1 == (char *)'/') {
+                skip_comment_line__Scanner(self);
+
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_COMMENT_LINE,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_SLASH,
+                       clone__Location(&self->location));
+        case '\'': {
+            char *res = scan_char__Scanner(self);
+
+            if (res) {
+                return NEW_VARIANT(LilyToken,
+                                   literal_char,
+                                   clone__Location(&self->location),
+                                   (char)(Uptr)res);
+            }
+
+            return NULL;
+        }
+        case '\"': {
+            String *res = scan_string__Scanner(self);
+
+            if (res) {
+                return NEW_VARIANT(LilyToken,
+                                   literal_string,
+                                   clone__Location(&self->location),
+                                   res);
+            }
+
+            return NULL;
+        }
         case IS_ZERO:
             if (c1 == (char *)'x' || c1 == (char *)'o' || c1 == (char *)'b' ||
                 c1 == (char *)'.') {
@@ -1716,9 +1776,49 @@ get_token__Scanner(Scanner *self)
 
             return get_num__Scanner(self);
         case IS_DIGIT_WITHOUT_ZERO:
-            break;
-        case IS_ID:
-            break;
+            return get_num__Scanner(self);
+        case IS_ID: {
+            String *id = scan_identifier__Scanner(self);
+            enum LilyTokenKind kind = get_keyword(id->buffer);
+
+            switch (kind) {
+                case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                    return NEW_VARIANT(LilyToken,
+                                       identifier_normal,
+                                       clone__Location(&self->location),
+                                       id);
+                case LILY_TOKEN_KIND_KEYWORD_NOT:
+                    if (peek_char__Scanner(self, 1) == (char *)'=') {
+                        next_char__Source(&self->source);
+
+                        FREE(String, id);
+
+                        return NEW(LilyToken,
+                                   LILY_TOKEN_KIND_NOT_EQ,
+                                   clone__Location(&self->location));
+                    }
+
+                    goto keyword;
+                case LILY_TOKEN_KIND_KEYWORD_XOR:
+                    if (peek_char__Scanner(self, 1) == (char *)'=') {
+                        next_char__Source(&self->source);
+
+                        FREE(String, id);
+
+                        return NEW(LilyToken,
+                                   LILY_TOKEN_KIND_XOR_EQ,
+                                   clone__Location(&self->location));
+                    }
+
+                    goto keyword;
+                default:
+                keyword : {
+                    FREE(String, id);
+                    return NEW(
+                      LilyToken, kind, clone__Location(&self->location));
+                }
+            }
+        }
         default:
             return NULL;
     }
