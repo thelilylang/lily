@@ -1071,7 +1071,7 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
         case LILY_TOKEN_KIND_XOR_EQ:
             return "LILY_TOKEN_KIND_XOR_EQ";
         default:
-            UNREACHABLE("unknown variants");
+            UNREACHABLE("unknown variant");
     }
 }
 
