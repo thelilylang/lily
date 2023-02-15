@@ -22,4 +22,11 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
+
 #include <core/lily/ast/expr.h>
+
+DESTRUCTOR(LilyAstExpr, LilyAstExpr *self)
+{
+    lily_free(self);
+}

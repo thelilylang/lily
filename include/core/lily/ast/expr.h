@@ -63,4 +63,10 @@ typedef struct LilyAstExpr
     };
 } LilyAstExpr;
 
+/**
+ *
+ * @brief Free LilyAstExpr type.
+ */
+DESTRUCTOR(LilyAstExpr, LilyAstExpr *self);
+
 #endif // LILY_CORE_LILY_AST_EXPR_H
