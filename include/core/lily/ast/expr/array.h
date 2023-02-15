@@ -30,41 +30,41 @@
 #include <base/string.h>
 #include <base/vec.h>
 
-typedef struct LilyAstArray
+typedef struct LilyAstExprArray
 {
     Vec *items; // Vec<LilyAstExpr*>*
-} LilyAstArray;
+} LilyAstExprArray;
 
 /**
  *
- * @brief Construct LilyAstArray type.
+ * @brief Construct LilyAstExprArray type.
  */
-inline CONSTRUCTOR(LilyAstArray, LilyAstArray, Vec *items)
+inline CONSTRUCTOR(LilyAstExprArray, LilyAstExprArray, Vec *items)
 {
-    return (LilyAstArray){ .items = items };
+    return (LilyAstExprArray){ .items = items };
 }
 
 /**
  *
- * @brief Convert LilyAstArray in String.
+ * @brief Convert LilyAstExprArray in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstArray, const LilyAstArray *self);
+IMPL_FOR_DEBUG(to_string, LilyAstExprArray, const LilyAstExprArray *self);
 #endif
 
 /**
  * 
- * @brief Convert LilyAstArray in String.
+ * @brief Convert LilyAstExprArray in String.
 */
 String *
-to_string__LilyAstArray(const LilyAstArray *self);
+to_string__LilyAstExprArray(const LilyAstExprArray *self);
 
 /**
  *
- * @brief Free LilyAstArray type.
+ * @brief Free LilyAstExprArray type.
  */
-DESTRUCTOR(LilyAstArray, LilyAstArray *self);
+DESTRUCTOR(LilyAstExprArray, LilyAstExprArray *self);
 
 #endif // LILY_CORE_LILY_AST_EXPR_ARRAY_H

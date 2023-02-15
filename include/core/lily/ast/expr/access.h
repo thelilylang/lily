@@ -31,134 +31,134 @@
 
 typedef struct LilyAstExpr LilyAstExpr;
 
-enum LilyAstAccessKind
+enum LilyAstExprAccessKind
 {
-    LILY_AST_ACCESS_KIND_GLOBAL,
-    LILY_AST_ACCESS_KIND_HOOK,
-    LILY_AST_ACCESS_KIND_OBJECT,
-    LILY_AST_ACCESS_KIND_PATH,
-    LILY_AST_ACCESS_KIND_PROPERTY_INIT,
-    LILY_AST_ACCESS_KIND_SELF,
+    LILY_AST_ACCESS_EXPR_KIND_GLOBAL,
+    LILY_AST_ACCESS_EXPR_KIND_HOOK,
+    LILY_AST_ACCESS_EXPR_KIND_OBJECT,
+    LILY_AST_ACCESS_EXPR_KIND_PATH,
+    LILY_AST_ACCESS_EXPR_KIND_PROPERTY_INIT,
+    LILY_AST_ACCESS_EXPR_KIND_SELF,
 };
 
-typedef struct LilyAstAccessHook
+typedef struct LilyAstExprAccessHook
 {
     LilyAstExpr *access;
     LilyAstExpr *id;
-} LilyAstAccessHook;
+} LilyAstExprAccessHook;
 
 /**
  *
- * @brief Construct LilyAstAccessHook type.
+ * @brief Construct LilyAstExprAccessHook type.
  */
-inline CONSTRUCTOR(LilyAstAccessHook,
-                   LilyAstAccessHook,
+inline CONSTRUCTOR(LilyAstExprAccessHook,
+                   LilyAstExprAccessHook,
                    LilyAstExpr *access,
                    LilyAstExpr *id)
 {
-    return (LilyAstAccessHook){ .access = access, .id = id };
+    return (LilyAstExprAccessHook){ .access = access, .id = id };
 }
 
 /**
  *
- * @brief Convert LilyAstAccessHook in string.
+ * @brief Convert LilyAstExprAccessHook in string.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyAstAccessHook, const LilyAstAccessHook *self);
+IMPL_FOR_DEBUG(to_string, LilyAstExprAccessHook, const LilyAstExprAccessHook *self);
 #endif
 
-typedef struct LilyAstAccess
+typedef struct LilyAstExprAccess
 {
-    enum LilyAstAccessKind kind;
+    enum LilyAstExprAccessKind kind;
     union
     {
         LilyAstExpr *global;
-        LilyAstAccessHook hook;
+        LilyAstExprAccessHook hook;
         Vec *object; // Vec<LilyAstDataType*>*
         Vec *path;   // Vec<LilyAstExpr*>*
         LilyAstExpr *property_init;
         LilyAstExpr *self;
     };
-} LilyAstAccess;
+} LilyAstExprAccess;
 
 /**
  *
- * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_GLOBAL).
+ * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_GLOBAL).
  */
-VARIANT_CONSTRUCTOR(LilyAstAccess *,
-                    LilyAstAccess,
+VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
+                    LilyAstExprAccess,
                     global,
                     LilyAstExpr *global);
 
 /**
  *
- * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_HOOK).
+ * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_HOOK).
  */
-VARIANT_CONSTRUCTOR(LilyAstAccess *,
-                    LilyAstAccess,
+VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
+                    LilyAstExprAccess,
                     hook,
-                    LilyAstAccessHook hook);
+                    LilyAstExprAccessHook hook);
 
 /**
  *
- * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_OBJECT).
+ * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_OBJECT).
  */
-VARIANT_CONSTRUCTOR(LilyAstAccess *, LilyAstAccess, object, Vec *object);
+VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, object, Vec *object);
 
 /**
  *
- * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_PATH).
+ * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_PATH).
  */
-VARIANT_CONSTRUCTOR(LilyAstAccess *, LilyAstAccess, path, Vec *path);
+VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, path, Vec *path);
 
 /**
  *
- * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_PROPERTY_INIT).
+ * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_PROPERTY_INIT).
  */
-VARIANT_CONSTRUCTOR(LilyAstAccess *,
-                    LilyAstAccess,
+VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
+                    LilyAstExprAccess,
                     property_init,
                     LilyAstExpr *property_init);
 
 /**
  *
- * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_SELF).
+ * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_SELF).
  */
-VARIANT_CONSTRUCTOR(LilyAstAccess *, LilyAstAccess, self, LilyAstExpr *self_);
+VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, self, LilyAstExpr *self_);
 
 /**
  *
- * @brief Convert LilyAstAccessKind in string.
+ * @brief Convert LilyAstExprAccessKind in string.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyAstAccessKind, enum LilyAstAccessKind self);
+IMPL_FOR_DEBUG(to_string, LilyAstExprAccessKind, enum LilyAstExprAccessKind self);
 #endif
 
 /**
  *
- * @brief Convert LilyAstAccess in String.
+ * @brief Convert LilyAstExprAccess in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstAccess, const LilyAstAccess *self);
+IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self);
 #endif
 
 /**
  *
- * @brief Convert LilyAstAccess in String.
+ * @brief Convert LilyAstExprAccess in String.
  */
 String *
-to_string__LilyAstAccess(const LilyAstAccess *self);
+to_string__LilyAstExprAccess(const LilyAstExprAccess *self);
 
 /**
  *
- * @brief Free LilyAstAccess type.
+ * @brief Free LilyAstExprAccess type.
  */
-DESTRUCTOR(LilyAstAccess, LilyAstAccess *self);
+DESTRUCTOR(LilyAstExprAccess, LilyAstExprAccess *self);
 
 #endif // LILY_CORE_LILY_AST_EXPR_ACCESS_H

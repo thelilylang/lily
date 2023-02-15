@@ -27,9 +27,9 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstArray, const LilyAstArray *self)
+IMPL_FOR_DEBUG(to_string, LilyAstExprArray, const LilyAstExprArray *self)
 {
-    String *res = from__String("LilyAstArray{ items = { ");
+    String *res = from__String("LilyAstExprArray{ items = { ");
 
     for (Usize i = 0; i < self->items->len; i++) {
         String *s = to_string__Debug__LilyAstExpr(get__Vec(self->items, i));
@@ -48,7 +48,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstArray, const LilyAstArray *self)
 #endif
 
 String *
-to_string__LilyAstArray(const LilyAstArray *self)
+to_string__LilyAstExprArray(const LilyAstExprArray *self)
 {
     String *res = from__String("[");
     
@@ -67,7 +67,7 @@ to_string__LilyAstArray(const LilyAstArray *self)
     return res;
 }
 
-DESTRUCTOR(LilyAstArray, LilyAstArray *self)
+DESTRUCTOR(LilyAstExprArray, LilyAstExprArray *self)
 {
     FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, LilyAstExpr);
     FREE(Vec, self->items);

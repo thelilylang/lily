@@ -65,7 +65,7 @@ typedef struct LilyAstExpr
     Location location;
     union
     {
-        LilyAstAccess access;
+        LilyAstExprAccess access;
     };
 } LilyAstExpr;
 
