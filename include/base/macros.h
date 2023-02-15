@@ -65,7 +65,7 @@
 #define VARIANT_DESTRUCTOR(name, variant, ...) \
     void __free__##name##__##variant(__VA_ARGS__)
 
-#define LEN(arr, item) (((int)sizeof(arr) / sizeof(item)) + 1)
+#define LEN(arr, item) (((int)sizeof(arr) / sizeof(item)))
 
 #ifdef ENV_DEBUG
 #define IMPL_FOR_DEBUG(name, struct_name, ...) \
