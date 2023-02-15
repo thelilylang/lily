@@ -191,8 +191,8 @@ inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
 
 typedef struct DiagnosticDetail
 {
-    Vec *lines; // Vec<char*>*
-    String *msg;
+    Vec *lines;  // Vec<char*>*
+    String *msg; // String*?
     const Location *location;
 } DiagnosticDetail;
 
@@ -212,8 +212,8 @@ inline CONSTRUCTOR(DiagnosticDetail,
 
 typedef struct DiagnosticLevelUtil
 {
-    Vec *helps; // Vec<String*>*
-    Vec *notes; // Vec<String*>*
+    Vec *helps; // Vec<String*>*?
+    Vec *notes; // Vec<String*>*?
     const Location *location;
 } DiagnosticLevelUtil;
 
