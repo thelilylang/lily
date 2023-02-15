@@ -76,20 +76,28 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstDataTypeLambda,
                const LilyAstDataTypeLambda *self)
 {
-    String *res = from__String("LilyAstDataTypeLambda{ params = { ");
+    String *res = from__String("LilyAstDataTypeLambda{ params = ");
 
-    for (Usize i = 0; i < self->params->len; i++) {
-        String *s = format__String(
-          "{Sr}, ",
-          to_string__Debug__LilyAstDataType(get__Vec(self->params, i)));
+    if (self->params) {
+        push_str__String(res, "{ ");
 
-        APPEND_AND_FREE(res, s);
+        for (Usize i = 0; i < self->params->len; i++) {
+            String *s = format__String(
+              "{Sr}, ",
+              to_string__Debug__LilyAstDataType(get__Vec(self->params, i)));
+
+            APPEND_AND_FREE(res, s);
+        }
+    } else {
+        push_str__String(res, "NULL");
     }
 
     {
-        String *s =
-          format__String("}, return_type = {Sr} }",
-                         to_string__Debug__LilyAstDataType(self->return_type));
+        String *s = format__String(
+          "}, return_type = {Sr} }",
+          self->return_type
+            ? to_string__Debug__LilyAstDataType(self->return_type)
+            : from__String("NULL"));
 
         APPEND_AND_FREE(res, s);
     }
@@ -100,9 +108,14 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyAstDataTypeLambda, const LilyAstDataTypeLambda *self)
 {
-    FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, LilyAstDataType);
-    FREE(Vec, self->params);
-    FREE(LilyAstDataType, self->return_type);
+    if (self->params) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyAstDataType);
+        FREE(Vec, self->params);
+    }
+
+    if (self->return_type)
+        FREE(LilyAstDataType, self->return_type);
 }
 
 #ifdef ENV_DEBUG
@@ -136,20 +149,25 @@ IMPL_FOR_DEBUG(to_string,
               "LilyAstDataTypeArray{{ kind = {s}, data_type = {Sr}, size = {d} "
               "}",
               to_string__Debug__LilyAstDataTypeArrayKind(self->kind),
-              to_string__Debug__LilyAstDataType(self->data_type),
+              self->data_type
+                ? to_string__Debug__LilyAstDataType(self->data_type)
+                : from__String("NULL"),
               self->size);
         default:
             return format(
               "LilyAstDataTypeArray{{ kind = {s}, data_type = {Sr} }",
               to_string__Debug__LilyAstDataTypeArrayKind(self->kind),
-              to_string__Debug__LilyAstDataType(self->data_type));
+              self->data_type
+                ? to_string__Debug__LilyAstDataType(self->data_type)
+                : from__String("NULL"));
     }
 }
 #endif
 
 DESTRUCTOR(LilyAstDataTypeArray, const LilyAstDataTypeArray *self)
 {
-    FREE(LilyAstDataType, self->data_type);
+    if (self->data_type)
+        FREE(LilyAstDataType, self->data_type);
 }
 
 #ifdef ENV_DEBUG
@@ -161,17 +179,21 @@ IMPL_FOR_DEBUG(to_string,
     String *res = format__String(
       "LilyAstDataTypeCustom{{ name = {S}, generics = {{ ", self->name);
 
-    for (Usize i = 0; i < self->generics->len; i++) {
-        char *s = format(
-          "{Sr}, ",
-          to_string__Debug__LilyAstDataType(get__Vec(self->generics, i)));
+    if (self->generics) {
+        for (Usize i = 0; i < self->generics->len; i++) {
+            char *s = format(
+              "{Sr}, ",
+              to_string__Debug__LilyAstDataType(get__Vec(self->generics, i)));
 
-        push_str__String(res, s);
+            push_str__String(res, s);
 
-        lily_free(s);
+            lily_free(s);
+        }
+
+        push__String(res, '}');
+    } else {
+        push__String(res, "NULL }");
     }
-
-    push__String(res, '}');
 
     return res;
 }
@@ -179,9 +201,12 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyAstDataTypeCustom, const LilyAstDataTypeCustom *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->generics->buffer, self->generics->len, LilyAstDataType);
-    FREE(Vec, self->generics);
+    if (self->generics) {
+        FREE_BUFFER_ITEMS(
+          self->generics->buffer, self->generics->len, LilyAstDataType);
+        FREE(Vec, self->generics);
+    }
+
     FREE(String, self->name);
 }
 
@@ -518,6 +543,176 @@ IMPL_FOR_DEBUG(debug, LilyAstDataType, const LilyAstDataType *self)
     PRINTLN("{Sr}", to_string__Debug__LilyAstDataType(self));
 }
 #endif
+
+String *
+to_string__LilyAstDataType(const LilyAstDataType *self)
+{
+    switch (self->kind) {
+        case LILY_AST_DATA_TYPE_KIND_ANY:
+            return from__String("Any");
+        case LILY_AST_DATA_TYPE_KIND_ARRAY: {
+            String *res = NEW(String);
+
+            switch (self->array.kind) {
+                case LILY_AST_DATA_TYPE_ARRAY_KIND_DYNAMIC:
+                    push_str__String(res, "[_]");
+                    break;
+                case LILY_AST_DATA_TYPE_ARRAY_KIND_MULTI_POINTERS:
+                    push_str__String(res, "[*]");
+                    break;
+                case LILY_AST_DATA_TYPE_ARRAY_KIND_SIZED: {
+                    String *s = format__String("[{d}]", self->array.size);
+
+                    APPEND_AND_FREE(res, s);
+
+                    break;
+                }
+                case LILY_AST_DATA_TYPE_ARRAY_KIND_UNDETERMINED:
+                    push_str__String(res, "[?]");
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+
+            if (self->array.data_type) {
+                String *s = to_string__LilyAstDataType(self);
+
+                APPEND_AND_FREE(res, s);
+            }
+
+            return res;
+        }
+        case LILY_AST_DATA_TYPE_KIND_BIT_CHAR:
+            return from__String("BitChar");
+        case LILY_AST_DATA_TYPE_KIND_BIT_STR:
+            return from__String("BitStr");
+        case LILY_AST_DATA_TYPE_KIND_BOOL:
+            return from__String("Bool");
+        case LILY_AST_DATA_TYPE_KIND_CHAR:
+            return from__String("Char");
+        case LILY_AST_DATA_TYPE_KIND_CUSTOM: {
+            String *res = format__String("{S}", self->custom.name);
+
+            if (self->custom.generics) {
+                push__String(res, '[');
+
+                for (Usize i = 0; i < self->custom.generics->len; i++) {
+                    String *s = to_string__LilyAstDataType(
+                      get__Vec(self->custom.generics, i));
+
+                    APPEND_AND_FREE(res, s);
+
+                    if (i != self->custom.generics->len - 1) {
+                        push_str__String(s, ", ");
+                    }
+                }
+            }
+
+            return res;
+        }
+        case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
+            return format__String("{Sr}!",
+                                  to_string__LilyAstDataType(self->exception));
+        case LILY_AST_DATA_TYPE_KIND_FLOAT32:
+            return from__String("Float32");
+        case LILY_AST_DATA_TYPE_KIND_FLOAT64:
+            return from__String("Float64");
+        case LILY_AST_DATA_TYPE_KIND_INT16:
+            return from__String("Int16");
+        case LILY_AST_DATA_TYPE_KIND_INT32:
+            return from__String("Int32");
+        case LILY_AST_DATA_TYPE_KIND_INT64:
+            return from__String("Int64");
+        case LILY_AST_DATA_TYPE_KIND_INT8:
+            return from__String("Int8");
+        case LILY_AST_DATA_TYPE_KIND_ISIZE:
+            return from__String("Isize");
+        case LILY_AST_DATA_TYPE_KIND_LAMBDA: {
+            String *res = from__String("fun(");
+
+            if (self->lambda.params) {
+                for (Usize i = 0; i < self->lambda.params->len; i++) {
+                    String *s = to_string__LilyAstDataType(
+                      get__Vec(self->lambda.params, i));
+
+                    APPEND_AND_FREE(res, s);
+
+                    if (i != self->lambda.params->len - 1) {
+                        push_str__String(res, ", ");
+                    }
+                }
+            }
+
+            push__String(res, ')');
+
+            if (self->lambda.return_type) {
+                push__String(res, ' ');
+
+                String *s =
+                  to_string__LilyAstDataType(self->lambda.return_type);
+
+                APPEND_AND_FREE(res, s);
+            }
+
+            return res;
+        }
+        case LILY_AST_DATA_TYPE_KIND_MUT:
+            return format__String("mut {Sr}",
+                                  to_string__LilyAstDataType(self->mut));
+        case LILY_AST_DATA_TYPE_KIND_NEVER:
+            return from__String("Never");
+        case LILY_AST_DATA_TYPE_KIND_OBJECT:
+            return from__String("Object");
+        case LILY_AST_DATA_TYPE_KIND_OPTIONAL:
+            return format__String("{Sr}?",
+                                  to_string__LilyAstDataType(self->optional));
+        case LILY_AST_DATA_TYPE_KIND_PTR:
+            return format__String("{Sr}*",
+                                  to_string__LilyAstDataType(self->ptr));
+        case LILY_AST_DATA_TYPE_KIND_REF:
+            return format__String("ref {Sr}",
+                                  to_string__LilyAstDataType(self->ref));
+        case LILY_AST_DATA_TYPE_KIND_SELF:
+            return from__String("Self");
+        case LILY_AST_DATA_TYPE_KIND_STR:
+            return from__String("Str");
+        case LILY_AST_DATA_TYPE_KIND_TRACE:
+            return format__String("trace {Sr}",
+                                  to_string__LilyAstDataType(self->trace));
+        case LILY_AST_DATA_TYPE_KIND_TUPLE: {
+            String *res = from__String("(");
+
+            for (Usize i = 0; i < self->tuple->len; i++) {
+                String *s =
+                  to_string__LilyAstDataType(get__Vec(self->tuple, i));
+
+                APPEND_AND_FREE(res, s);
+
+                if (i != self->tuple->len - 1) {
+                    push_str__String(res, ", ");
+                }
+            }
+
+            push__String(res, ')');
+
+            return res;
+        }
+        case LILY_AST_DATA_TYPE_KIND_UINT16:
+            return from__String("Uint16");
+        case LILY_AST_DATA_TYPE_KIND_UINT32:
+            return from__String("Uint32");
+        case LILY_AST_DATA_TYPE_KIND_UINT64:
+            return from__String("Uint64");
+        case LILY_AST_DATA_TYPE_KIND_UINT8:
+            return from__String("Uint8");
+        case LILY_AST_DATA_TYPE_KIND_UNIT:
+            return from__String("Unit");
+        case LILY_AST_DATA_TYPE_KIND_USIZE:
+            return from__String("Usize");
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
 
 VARIANT_DESTRUCTOR(LilyAstDataType, array, LilyAstDataType *self)
 {

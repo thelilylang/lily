@@ -72,8 +72,8 @@ typedef struct LilyAstDataType LilyAstDataType;
 
 typedef struct LilyAstDataTypeLambda
 {
-    Vec *params; // Vec<LilyAstDataType*>*
-    LilyAstDataType *return_type;
+    Vec *params;                  // Vec<LilyAstDataType*>*?
+    LilyAstDataType *return_type; // LilyAstDatatType*?
 } LilyAstDataTypeLambda;
 
 /**
@@ -112,7 +112,7 @@ enum LilyAstDataTypeArrayKind
 typedef struct LilyAstDataTypeArray
 {
     enum LilyAstDataTypeArrayKind kind;
-    LilyAstDataType *data_type;
+    LilyAstDataType *data_type; // LilyAstDataType*?
     union
     {
         Usize size;
@@ -174,7 +174,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyAstDataTypeCustom
 {
     String *name;
-    Vec *generics; // Vec<LilyAstDataType*>*
+    Vec *generics; // Vec<LilyAstDataType*>*?
 } LilyAstDataTypeCustom;
 
 /**
@@ -357,6 +357,13 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataType, const LilyAstDataType *self);
 void
 IMPL_FOR_DEBUG(debug, LilyAstDataType, const LilyAstDataType *self);
 #endif
+
+/**
+ *
+ * @brief Convert LilyAstDataType in String.
+ */
+String *
+to_string__LilyAstDataType(const LilyAstDataType *self);
 
 /**
  *
