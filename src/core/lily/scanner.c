@@ -997,6 +997,8 @@ get_character__Scanner(Scanner *self, char previous)
                             NULL,
                             NULL),
                           &self->count_error);
+
+                        next_char__Source(&self->source);
                     }
 
                     return NULL;
@@ -1127,12 +1129,14 @@ scan_char__Scanner(Scanner *self)
                 &location_error,
                 NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL),
                 init__Vec(
-                  1, from__String("please close this char literal with `\"`")),
+                  1, from__String("please close this char literal with `\'`")),
                 NULL,
                 NULL),
               &self->count_error);
 
-            FREE(String, character);
+            if (character) {
+                FREE(String, character);
+            }
 
             return NULL;
         }
