@@ -37,4 +37,30 @@
 #include <core/lily/ast/expr/tuple.h>
 #include <core/lily/ast/expr/unary.h>
 
+enum LilyAstExprKind
+{
+    LILY_AST_EXPR_KIND_ACCESS,
+    LILY_AST_EXPR_KIND_ARRAY,
+    LILY_AST_EXPR_KIND_BINARY,
+    LILY_AST_EXPR_KIND_CALL,
+    LILY_AST_EXPR_KIND_IDENTIFIER,
+    LILY_AST_EXPR_KIND_IDENTIFIER_MACRO,
+    LILY_AST_EXPR_KIND_LAMBDA,
+    LILY_AST_EXPR_KIND_LITERAL,
+    LILY_AST_EXPR_KIND_SELF,
+    LILY_AST_EXPR_KIND_TUPLE,
+    LILY_AST_EXPR_KIND_UNARY,
+    LILY_AST_EXPR_KIND_GROUPING,
+    LILY_AST_EXPR_KIND_WILDCARD
+};
+
+typedef struct LilyAstExpr
+{
+    enum LilyAstExprKind kind;
+    union
+    {
+        LilyAstAccess access;
+    };
+} LilyAstExpr;
+
 #endif // LILY_CORE_LILY_AST_EXPR_H
