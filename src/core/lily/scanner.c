@@ -1547,7 +1547,8 @@ get_closing__Scanner(Scanner *self, char target)
 
         LilyToken *token = get_token__Scanner(self);
 
-        end_token__Scanner(self, self->source.cursor.line, self->source.cursor.column);
+        end_token__Scanner(
+          self, self->source.cursor.line, self->source.cursor.column);
         next_char_by_token__Scanner(self, token);
 
         switch (token->kind) {
@@ -1562,15 +1563,22 @@ get_closing__Scanner(Scanner *self, char target)
         push_token__Scanner(self, token);
     }
 
-    start_token__Scanner(self, self->source.cursor.line, self->source.cursor.column);
+    start_token__Scanner(
+      self, self->source.cursor.line, self->source.cursor.column);
 
     switch (target) {
         case ')':
-            return NEW(LilyToken, LILY_TOKEN_KIND_R_PAREN, clone__Location(&self->location));
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_R_PAREN,
+                       clone__Location(&self->location));
         case '}':
-            return NEW(LilyToken, LILY_TOKEN_KIND_R_BRACE, clone__Location(&self->location));
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_R_BRACE,
+                       clone__Location(&self->location));
         case ']':
-            return NEW(LilyToken, LILY_TOKEN_KIND_R_HOOK, clone__Location(&self->location));
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_R_HOOK,
+                       clone__Location(&self->location));
         default:
             UNREACHABLE("this way is not possible");
     }
@@ -1819,9 +1827,7 @@ get_token__Scanner(Scanner *self)
                 self->source.file,
                 &location_error,
                 NEW(LilyError, LILY_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER),
-                init__Vec(1,
-                          format__String("remove this `{c}`",
-                                         match)),
+                init__Vec(1, format__String("remove this `{c}`", match)),
                 NULL,
                 NULL),
               &self->count_error);
