@@ -48,7 +48,7 @@ class EnumDebugGenerator:
             res += f"\t\treturn \"{p_variant}\";\n"
 
         res += "\tdefault:\n"
-        res += "\t\tUNREACHABLE(\"unknown variants\");\n"
+        res += "\t\tUNREACHABLE(\"unknown variant\");\n"
         res += "}"
 
         return res
