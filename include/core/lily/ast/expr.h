@@ -66,6 +66,7 @@ typedef struct LilyAstExpr
     union
     {
         LilyAstExprAccess access;
+        LilyAstExprArray array;
     };
 } LilyAstExpr;
 
