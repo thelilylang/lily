@@ -192,7 +192,7 @@ IMPL_FOR_DEBUG(to_string,
 
         push__String(res, '}');
     } else {
-        push__String(res, "NULL }");
+        push_str__String(res, "NULL }");
     }
 
     return res;
