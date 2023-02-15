@@ -23,8 +23,13 @@
  */
 
 #include <base/alloc.h>
+#include <base/format.h>
+#include <base/print.h>
 
 #include <core/lily/ast/data_type.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 // Free LilyAstDataTypeLambda type.
 static DESTRUCTOR(LilyAstDataTypeLambda, const LilyAstDataTypeLambda *self);
@@ -65,17 +70,112 @@ static VARIANT_DESTRUCTOR(LilyAstDataType, trace, LilyAstDataType *self);
 // Free LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_TUPLE).
 static VARIANT_DESTRUCTOR(LilyAstDataType, tuple, LilyAstDataType *self);
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDataTypeLambda,
+               const LilyAstDataTypeLambda *self)
+{
+    String *res = from__String("LilyAstDataTypeLambda{ params = { ");
+
+    for (Usize i = 0; i < self->params->len; i++) {
+        String *s = format__String(
+          "{Sr}, ",
+          to_string__Debug__LilyAstDataType(get__Vec(self->params, i)));
+
+        APPEND_AND_FREE(res, s);
+    }
+
+    {
+        String *s =
+          format__String("}, return_type = {Sr} }",
+                         to_string__Debug__LilyAstDataType(self->return_type));
+
+        APPEND_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyAstDataTypeLambda, const LilyAstDataTypeLambda *self)
 {
     FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, LilyAstDataType);
     FREE(Vec, self->params);
-    FREE(LilyAstDataType, self->ret_type);
+    FREE(LilyAstDataType, self->return_type);
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDataTypeArrayKind,
+               enum LilyAstDataTypeArrayKind self)
+{
+    switch (self) {
+        case LILY_AST_DATA_TYPE_ARRAY_KIND_DYNAMIC:
+            return "LILY_AST_DATA_TYPE_ARRAY_KIND_DYNAMIC";
+        case LILY_AST_DATA_TYPE_ARRAY_KIND_MULTI_POINTERS:
+            return "LILY_AST_DATA_TYPE_ARRAY_KIND_MULTI_POINTERS";
+        case LILY_AST_DATA_TYPE_ARRAY_KIND_SIZED:
+            return "LILY_AST_DATA_TYPE_ARRAY_KIND_SIZED";
+        case LILY_AST_DATA_TYPE_ARRAY_KIND_UNDETERMINED:
+            return "LILY_AST_DATA_TYPE_ARRAY_KIND_UNDETERMINED";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDataTypeArray,
+               const LilyAstDataTypeArray *self)
+{
+    switch (self->kind) {
+        case LILY_AST_DATA_TYPE_ARRAY_KIND_SIZED:
+            return format(
+              "LilyAstDataTypeArray{{ kind = {s}, data_type = {Sr}, size = {d} "
+              "}",
+              to_string__Debug__LilyAstDataTypeArrayKind(self->kind),
+              to_string__Debug__LilyAstDataType(self->data_type),
+              self->size);
+        default:
+            return format(
+              "LilyAstDataTypeArray{{ kind = {s}, data_type = {Sr} }",
+              to_string__Debug__LilyAstDataTypeArrayKind(self->kind),
+              to_string__Debug__LilyAstDataType(self->data_type));
+    }
+}
+#endif
 
 DESTRUCTOR(LilyAstDataTypeArray, const LilyAstDataTypeArray *self)
 {
     FREE(LilyAstDataType, self->data_type);
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDataTypeCustom,
+               const LilyAstDataTypeCustom *self)
+{
+    String *res = format__String(
+      "LilyAstDataTypeCustom{{ name = {S}, generics = {{ ", self->name);
+
+    for (Usize i = 0; i < self->generics->len; i++) {
+        char *s = format(
+          "{Sr}, ",
+          to_string__Debug__LilyAstDataType(get__Vec(self->generics, i)));
+
+        push_str__String(res, s);
+
+        lily_free(s);
+    }
+
+    push__String(res, '}');
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyAstDataTypeCustom, const LilyAstDataTypeCustom *self)
 {
@@ -247,6 +347,177 @@ VARIANT_CONSTRUCTOR(LilyAstDataType *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstDataTypeKind, enum LilyAstDataTypeKind self)
+{
+    switch (self) {
+        case LILY_AST_DATA_TYPE_KIND_ANY:
+            return "LILY_AST_DATA_TYPE_KIND_ANY";
+        case LILY_AST_DATA_TYPE_KIND_ARRAY:
+            return "LILY_AST_DATA_TYPE_KIND_ARRAY";
+        case LILY_AST_DATA_TYPE_KIND_BIT_CHAR:
+            return "LILY_AST_DATA_TYPE_KIND_BIT_CHAR";
+        case LILY_AST_DATA_TYPE_KIND_BIT_STR:
+            return "LILY_AST_DATA_TYPE_KIND_BIT_STR";
+        case LILY_AST_DATA_TYPE_KIND_BOOL:
+            return "LILY_AST_DATA_TYPE_KIND_BOOL";
+        case LILY_AST_DATA_TYPE_KIND_CHAR:
+            return "LILY_AST_DATA_TYPE_KIND_CHAR";
+        case LILY_AST_DATA_TYPE_KIND_CUSTOM:
+            return "LILY_AST_DATA_TYPE_KIND_CUSTOM";
+        case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
+            return "LILY_AST_DATA_TYPE_KIND_EXCEPTION";
+        case LILY_AST_DATA_TYPE_KIND_FLOAT32:
+            return "LILY_AST_DATA_TYPE_KIND_FLOAT32";
+        case LILY_AST_DATA_TYPE_KIND_FLOAT64:
+            return "LILY_AST_DATA_TYPE_KIND_FLOAT64";
+        case LILY_AST_DATA_TYPE_KIND_INT16:
+            return "LILY_AST_DATA_TYPE_KIND_INT16";
+        case LILY_AST_DATA_TYPE_KIND_INT32:
+            return "LILY_AST_DATA_TYPE_KIND_INT32";
+        case LILY_AST_DATA_TYPE_KIND_INT64:
+            return "LILY_AST_DATA_TYPE_KIND_INT64";
+        case LILY_AST_DATA_TYPE_KIND_INT8:
+            return "LILY_AST_DATA_TYPE_KIND_INT8";
+        case LILY_AST_DATA_TYPE_KIND_ISIZE:
+            return "LILY_AST_DATA_TYPE_KIND_ISIZE";
+        case LILY_AST_DATA_TYPE_KIND_LAMBDA:
+            return "LILY_AST_DATA_TYPE_KIND_LAMBDA";
+        case LILY_AST_DATA_TYPE_KIND_MUT:
+            return "LILY_AST_DATA_TYPE_KIND_MUT";
+        case LILY_AST_DATA_TYPE_KIND_NEVER:
+            return "LILY_AST_DATA_TYPE_KIND_NEVER";
+        case LILY_AST_DATA_TYPE_KIND_OBJECT:
+            return "LILY_AST_DATA_TYPE_KIND_OBJECT";
+        case LILY_AST_DATA_TYPE_KIND_OPTIONAL:
+            return "LILY_AST_DATA_TYPE_KIND_OPTIONAL";
+        case LILY_AST_DATA_TYPE_KIND_PTR:
+            return "LILY_AST_DATA_TYPE_KIND_PTR";
+        case LILY_AST_DATA_TYPE_KIND_REF:
+            return "LILY_AST_DATA_TYPE_KIND_REF";
+        case LILY_AST_DATA_TYPE_KIND_SELF:
+            return "LILY_AST_DATA_TYPE_KIND_SELF";
+        case LILY_AST_DATA_TYPE_KIND_STR:
+            return "LILY_AST_DATA_TYPE_KIND_STR";
+        case LILY_AST_DATA_TYPE_KIND_TRACE:
+            return "LILY_AST_DATA_TYPE_KIND_TRACE";
+        case LILY_AST_DATA_TYPE_KIND_TUPLE:
+            return "LILY_AST_DATA_TYPE_KIND_TUPLE";
+        case LILY_AST_DATA_TYPE_KIND_UINT16:
+            return "LILY_AST_DATA_TYPE_KIND_UINT16";
+        case LILY_AST_DATA_TYPE_KIND_UINT32:
+            return "LILY_AST_DATA_TYPE_KIND_UINT32";
+        case LILY_AST_DATA_TYPE_KIND_UINT64:
+            return "LILY_AST_DATA_TYPE_KIND_UINT64";
+        case LILY_AST_DATA_TYPE_KIND_UINT8:
+            return "LILY_AST_DATA_TYPE_KIND_UINT8";
+        case LILY_AST_DATA_TYPE_KIND_UNIT:
+            return "LILY_AST_DATA_TYPE_KIND_UNIT";
+        case LILY_AST_DATA_TYPE_KIND_USIZE:
+            return "LILY_AST_DATA_TYPE_KIND_USIZE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstDataType, const LilyAstDataType *self)
+{
+    switch (self->kind) {
+        case LILY_AST_DATA_TYPE_KIND_ARRAY:
+            return format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa}, array = {Sr} }",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataTypeArray(&self->array));
+        case LILY_AST_DATA_TYPE_KIND_CUSTOM:
+            return format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa}, custom = {Sr} }",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataTypeCustom(&self->custom));
+        case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
+            return format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa}, exception = {Sr} "
+              "}",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataType(self->exception));
+        case LILY_AST_DATA_TYPE_KIND_LAMBDA:
+            return format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa}, lambda = {Sr} }",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataTypeLambda(&self->lambda));
+        case LILY_AST_DATA_TYPE_KIND_MUT:
+            return format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa}, mut = {Sr} "
+              "}",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataType(self->mut));
+        case LILY_AST_DATA_TYPE_KIND_OPTIONAL:
+            return format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa}, optional = {Sr} "
+              "}",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataType(self->optional));
+        case LILY_AST_DATA_TYPE_KIND_PTR:
+            return format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa}, ptr = {Sr} "
+              "}",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataType(self->ptr));
+        case LILY_AST_DATA_TYPE_KIND_REF:
+            return format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa}, ref = {Sr} "
+              "}",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataType(self->ref));
+        case LILY_AST_DATA_TYPE_KIND_TRACE:
+            return format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa}, trace = {Sr} "
+              "}",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataType(self->trace));
+        case LILY_AST_DATA_TYPE_KIND_TUPLE: {
+            String *res = format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa}, tuple = {{ ",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location));
+
+            for (Usize i = 0; i < self->tuple->len; i++) {
+                String *s = format__String(
+                  "{Sr}, ",
+                  to_string__Debug__LilyAstDataType(get__Vec(self->tuple, i)));
+
+                APPEND_AND_FREE(res, s);
+            }
+
+            push_str__String(res, "} }");
+
+            return res;
+        }
+        default:
+            return format__String(
+              "LilyAstDataType{ kind = {s}, location = {sa} }",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location));
+    }
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyAstDataType, const LilyAstDataType *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyAstDataType(self));
+}
+#endif
 
 VARIANT_DESTRUCTOR(LilyAstDataType, array, LilyAstDataType *self)
 {

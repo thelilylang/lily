@@ -73,7 +73,7 @@ typedef struct LilyAstDataType LilyAstDataType;
 typedef struct LilyAstDataTypeLambda
 {
     Vec *params; // Vec<LilyAstDataType*>*
-    LilyAstDataType *ret_type;
+    LilyAstDataType *return_type;
 } LilyAstDataTypeLambda;
 
 /**
@@ -83,10 +83,23 @@ typedef struct LilyAstDataTypeLambda
 inline CONSTRUCTOR(LilyAstDataTypeLambda,
                    LilyAstDataTypeLambda,
                    Vec *params,
-                   LilyAstDataType *ret_type)
+                   LilyAstDataType *return_type)
 {
-    return (LilyAstDataTypeLambda){ .params = params, .ret_type = ret_type };
+    return (LilyAstDataTypeLambda){ .params = params,
+                                    .return_type = return_type };
 }
+
+/**
+ *
+ * @brief Convert LilyAstDataTypeLambda in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDataTypeLambda,
+               const LilyAstDataTypeLambda *self);
+#endif
 
 enum LilyAstDataTypeArrayKind
 {
@@ -134,6 +147,30 @@ inline VARIANT_CONSTRUCTOR(LilyAstDataTypeArray,
                                    .size = size };
 }
 
+/**
+ *
+ * @brief Convert LilyAstDataTypeArrayKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDataTypeArrayKind,
+               enum LilyAstDataTypeArrayKind self);
+#endif
+
+/**
+ *
+ * @brief Convert LilyAstDataTypeArray in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDataTypeArray,
+               const LilyAstDataTypeArray *self);
+#endif
+
 typedef struct LilyAstDataTypeCustom
 {
     String *name;
@@ -151,6 +188,18 @@ inline CONSTRUCTOR(LilyAstDataTypeCustom,
 {
     return (LilyAstDataTypeCustom){ .name = name, .generics = generics };
 }
+
+/**
+ *
+ * @brief Convert LilyAstDataTypeCustom in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDataTypeCustom,
+               const LilyAstDataTypeCustom *self);
+#endif
 
 struct LilyAstDataType
 {
@@ -278,6 +327,36 @@ VARIANT_CONSTRUCTOR(LilyAstDataType *,
                     tuple,
                     Location location,
                     Vec *tuple);
+
+/**
+ *
+ * @brief Convert LilyAstDataTypeKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstDataTypeKind, enum LilyAstDataTypeKind self);
+#endif
+
+/**
+ *
+ * @brief Convert LilyAstDataType in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstDataType, const LilyAstDataType *self);
+#endif
+
+/**
+ *
+ * @brief Print debug LilyAstDataType struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyAstDataType, const LilyAstDataType *self);
+#endif
 
 /**
  *
