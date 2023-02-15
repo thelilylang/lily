@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/format.h>
 #include <base/new.h>
 
 #include <core/lily/ast/data_type.h>
@@ -52,6 +53,16 @@ static VARIANT_DESTRUCTOR(LilyAstAccess, property_init, LilyAstAccess *self);
 
 // Free LilyAstAccess type (LILY_AST_ACCESS_KIND_SELF).
 static VARIANT_DESTRUCTOR(LilyAstAccess, self, LilyAstAccess *self);
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstAccessHook, const LilyAstAccessHook *self)
+{
+    return format("LilyAstAccessHook{{ access = {Sr}, id = {Sr} }",
+                  to_string__LilyAstExpr(self->access),
+                  to_string__LilyAstExpr(self->id));
+}
+#endif
 
 DESTRUCTOR(LilyAstAccessHook, const LilyAstAccessHook *self)
 {
@@ -123,6 +134,149 @@ VARIANT_CONSTRUCTOR(LilyAstAccess *, LilyAstAccess, self, LilyAstExpr *self_)
     self->self = self_;
 
     return self;
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstAccessKind, enum LilyAstAccessKind self)
+{
+    switch (self) {
+        case LILY_AST_ACCESS_KIND_GLOBAL:
+            return "LILY_AST_ACCESS_KIND_GLOBAL";
+        case LILY_AST_ACCESS_KIND_HOOK:
+            return "LILY_AST_ACCESS_KIND_HOOK";
+        case LILY_AST_ACCESS_KIND_OBJECT:
+            return "LILY_AST_ACCESS_KIND_OBJECT";
+        case LILY_AST_ACCESS_KIND_PATH:
+            return "LILY_AST_ACCESS_KIND_PATH";
+        case LILY_AST_ACCESS_KIND_PROPERTY_INIT:
+            return "LILY_AST_ACCESS_KIND_PROPERTY_INIT";
+        case LILY_AST_ACCESS_KIND_SELF:
+            return "LILY_AST_ACCESS_KIND_SELF";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstAccess, const LilyAstAccess *self)
+{
+    switch (self->kind) {
+        case LILY_AST_ACCESS_KIND_GLOBAL:
+            return format__String(
+              "LilyAstAccess{{ kind = {s}, global = {Sr} }",
+              to_string__Debug__LilyAstAccessKind(self->kind),
+              to_string__Debug__LilyAstExpr(self->global));
+        case LILY_AST_ACCESS_KIND_HOOK:
+            return format__String(
+              "LilyAstAccess{{ kind = {s}, hook = {sa} }",
+              to_string__Debug__LilyAstAccessKind(self->kind),
+              to_string__Debug__LilyAstAccessHook(&self->hook));
+        case LILY_AST_ACCESS_KIND_OBJECT: {
+            String *res =
+              format__String("LilyAstAccess{{ kind = {s}, object = {{ ");
+
+            for (Usize i = 0; i < self->object->len; i++) {
+                String *s =
+                  to_string__Debug__LilyAstDataType(get__Vec(self->object, i));
+
+                APPEND_AND_FREE(res, s);
+
+                if (i != self->object->len - 1) {
+                    push_str__String(res, ", ");
+                }
+            }
+
+            push__String(res, '}');
+
+            return res;
+        }
+        case LILY_AST_ACCESS_KIND_PATH: {
+            String *res =
+              format__String("LilyAstAccess{{ kind = {s}, path = {{ ");
+
+            for (Usize i = 0; i < self->path->len; i++) {
+                String *s =
+                  to_string__Debug__LilyAstExpr(get__Vec(self->path, i));
+
+                APPEND_AND_FREE(res, s);
+
+                if (i != self->path->len - 1) {
+                    push_str__String(res, ", ");
+                }
+            }
+
+            push__String(res, '}');
+
+            return res;
+        }
+        case LILY_AST_ACCESS_KIND_PROPERTY_INIT:
+            return format__String(
+              "LilyAstAccess{{ kind = {s}, property_init = {Sr} }",
+              to_string__Debug__LilyAstAccessKind(self->kind),
+              to_string__Debug__LilyAstExpr(self->property_init));
+        case LILY_AST_ACCESS_KIND_SELF:
+            return format__String(
+              "LilyAstAccess{{ kind = {s}, self = {Sr} }",
+              to_string__Debug__LilyAstAccessKind(self->kind),
+              to_string__Debug__LilyAstExpr(self->self));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+String *
+to_string__LilyAstAccess(const LilyAstAccess *self)
+{
+    switch (self->kind) {
+        case LILY_AST_ACCESS_KIND_GLOBAL:
+            return format__String("global.{Sr}",
+                                  to_string__LilyAstExpr(self->global));
+        case LILY_AST_ACCESS_KIND_HOOK:
+            return format__String("{Sr}[{Sr}]",
+                                  to_string__LilyAstExpr(self->hook.access),
+                                  to_string__LilyAstExpr(self->hook.id));
+        case LILY_AST_ACCESS_KIND_OBJECT: {
+            String *res = NEW(String);
+
+            for (Usize i = 0; i < self->object->len; i++) {
+                String *s = to_string__LilyAstAccess(get__Vec(self->object, i));
+
+                push__String(res, '@');
+                APPEND_AND_FREE(res, s);
+
+                if (i != self->object->len - 1) {
+                    push__String(res, '.');
+                }
+            }
+
+            return res;
+        }
+        case LILY_AST_ACCESS_KIND_PATH: {
+            String *res = NEW(String);
+
+            for (Usize i = 0; i < self->path->len; i++) {
+                String *s = to_string__LilyAstAccess(get__Vec(self->path, i));
+
+                APPEND_AND_FREE(res, s);
+
+                if (i != self->path->len - 1) {
+                    push__String(res, '.');
+                }
+            }
+
+            return res;
+        }
+        case LILY_AST_ACCESS_KIND_PROPERTY_INIT:
+            return format__String("@.{Sr}",
+                                  to_string__LilyAstExpr(self->property_init));
+        case LILY_AST_ACCESS_KIND_SELF:
+            return format__String("self.{Sr}",
+                                  to_string__LilyAstExpr(self->self));
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 VARIANT_DESTRUCTOR(LilyAstAccess, global, LilyAstAccess *self)

@@ -26,6 +26,7 @@
 #define LILY_CORE_LILY_AST_EXPR_ACCESS_H
 
 #include <base/macros.h>
+#include <base/string.h>
 #include <base/vec.h>
 
 typedef struct LilyAstExpr LilyAstExpr;
@@ -57,6 +58,16 @@ inline CONSTRUCTOR(LilyAstAccessHook,
 {
     return (LilyAstAccessHook){ .access = access, .id = id };
 }
+
+/**
+ *
+ * @brief Convert LilyAstAccessHook in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstAccessHook, const LilyAstAccessHook *self);
+#endif
 
 typedef struct LilyAstAccess
 {
@@ -116,6 +127,33 @@ VARIANT_CONSTRUCTOR(LilyAstAccess *,
  * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_SELF).
  */
 VARIANT_CONSTRUCTOR(LilyAstAccess *, LilyAstAccess, self, LilyAstExpr *self_);
+
+/**
+ *
+ * @brief Convert LilyAstAccessKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstAccessKind, enum LilyAstAccessKind self);
+#endif
+
+/**
+ *
+ * @brief Convert LilyAstAccess in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstAccess, const LilyAstAccess *self);
+#endif
+
+/**
+ *
+ * @brief Convert LilyAstAccess in String.
+ */
+String *
+to_string__LilyAstAccess(const LilyAstAccess *self);
 
 /**
  *
