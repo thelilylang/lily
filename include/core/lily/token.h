@@ -486,7 +486,7 @@ to_string__LilyToken(LilyToken *self);
 
 /**
  *
- * @brief Convert LilyTokenKind in String.
+ * @brief Convert LilyTokenKind in string.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
@@ -496,7 +496,7 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self);
 
 /**
  *
- * @brief Convert LilyToken in String.
+ * @brief Convert LilyToken in string.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
