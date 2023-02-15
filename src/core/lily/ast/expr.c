@@ -26,6 +26,58 @@
 
 #include <core/lily/ast/expr.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstExprKind, enum LilyAstExprKind self)
+{
+    switch (self) {
+        case LILY_AST_EXPR_KIND_ACCESS:
+            return "LILY_AST_EXPR_KIND_ACCESS";
+        case LILY_AST_EXPR_KIND_ARRAY:
+            return "LILY_AST_EXPR_KIND_ARRAY";
+        case LILY_AST_EXPR_KIND_BINARY:
+            return "LILY_AST_EXPR_KIND_BINARY";
+        case LILY_AST_EXPR_KIND_CALL:
+            return "LILY_AST_EXPR_KIND_CALL";
+        case LILY_AST_EXPR_KIND_IDENTIFIER:
+            return "LILY_AST_EXPR_KIND_IDENTIFIER";
+        case LILY_AST_EXPR_KIND_IDENTIFIER_MACRO:
+            return "LILY_AST_EXPR_KIND_IDENTIFIER_MACRO";
+        case LILY_AST_EXPR_KIND_LAMBDA:
+            return "LILY_AST_EXPR_KIND_LAMBDA";
+        case LILY_AST_EXPR_KIND_LITERAL:
+            return "LILY_AST_EXPR_KIND_LITERAL";
+        case LILY_AST_EXPR_KIND_SELF:
+            return "LILY_AST_EXPR_KIND_SELF";
+        case LILY_AST_EXPR_KIND_TUPLE:
+            return "LILY_AST_EXPR_KIND_TUPLE";
+        case LILY_AST_EXPR_KIND_UNARY:
+            return "LILY_AST_EXPR_KIND_UNARY";
+        case LILY_AST_EXPR_KIND_GROUPING:
+            return "LILY_AST_EXPR_KIND_GROUPING";
+        case LILY_AST_EXPR_KIND_WILDCARD:
+            return "LILY_AST_EXPR_KIND_WILDCARD";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstExpr, const LilyAstExpr *self)
+{
+    TODO("implements");
+}
+#endif
+
+String *
+to_string__LilyAstExpr(const LilyAstExpr *self)
+{
+    TODO("implements");
+}
+
 DESTRUCTOR(LilyAstExpr, LilyAstExpr *self)
 {
     lily_free(self);

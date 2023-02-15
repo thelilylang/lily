@@ -25,6 +25,9 @@
 #ifndef LILY_CORE_LILY_AST_EXPR_H
 #define LILY_CORE_LILY_AST_EXPR_H
 
+#include <base/macros.h>
+#include <base/string.h>
+
 #include <core/lily/ast/expr/access.h>
 #include <core/lily/ast/expr/array.h>
 #include <core/lily/ast/expr/binary.h>
@@ -36,6 +39,8 @@
 #include <core/lily/ast/expr/literal.h>
 #include <core/lily/ast/expr/tuple.h>
 #include <core/lily/ast/expr/unary.h>
+
+#include <core/shared/location.h>
 
 enum LilyAstExprKind
 {
@@ -57,11 +62,39 @@ enum LilyAstExprKind
 typedef struct LilyAstExpr
 {
     enum LilyAstExprKind kind;
+    Location location;
     union
     {
         LilyAstAccess access;
     };
 } LilyAstExpr;
+
+/**
+ *
+ * @brief Convert LilyAstExprKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstExprKind, enum LilyAstExprKind self);
+#endif
+
+/**
+ *
+ * @brief Convert LilyAstExpr in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstExpr, const LilyAstExpr *self);
+#endif
+
+/**
+ *
+ * @brief Convert LilyAstExpr in String.
+ */
+String *
+to_string__LilyAstExpr(const LilyAstExpr *self);
 
 /**
  *
