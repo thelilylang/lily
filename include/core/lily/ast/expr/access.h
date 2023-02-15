@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_AST_EXPR_ACCESS_H
 #define LILY_CORE_LILY_AST_EXPR_ACCESS_H
 
+#include <base/macros.h>
 #include <base/vec.h>
 
 typedef struct LilyAstExpr LilyAstExpr;
@@ -45,6 +46,18 @@ typedef struct LilyAstAccessHook
     LilyAstExpr *id;
 } LilyAstAccessHook;
 
+/**
+ *
+ * @brief Construct LilyAstAccessHook type.
+ */
+inline CONSTRUCTOR(LilyAstAccessHook,
+                   LilyAstAccessHook,
+                   LilyAstExpr *access,
+                   LilyAstExpr *id)
+{
+    return (LilyAstAccessHook){ .access = access, .id = id };
+}
+
 typedef struct LilyAstAccess
 {
     enum LilyAstAccessKind kind;
@@ -58,5 +71,56 @@ typedef struct LilyAstAccess
         LilyAstExpr *self;
     };
 } LilyAstAccess;
+
+/**
+ *
+ * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_GLOBAL).
+ */
+VARIANT_CONSTRUCTOR(LilyAstAccess *,
+                    LilyAstAccess,
+                    global,
+                    LilyAstExpr *global);
+
+/**
+ *
+ * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_HOOK).
+ */
+VARIANT_CONSTRUCTOR(LilyAstAccess *,
+                    LilyAstAccess,
+                    hook,
+                    LilyAstAccessHook hook);
+
+/**
+ *
+ * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_OBJECT).
+ */
+VARIANT_CONSTRUCTOR(LilyAstAccess *, LilyAstAccess, object, Vec *object);
+
+/**
+ *
+ * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_PATH).
+ */
+VARIANT_CONSTRUCTOR(LilyAstAccess *, LilyAstAccess, path, Vec *path);
+
+/**
+ *
+ * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_PROPERTY_INIT).
+ */
+VARIANT_CONSTRUCTOR(LilyAstAccess *,
+                    LilyAstAccess,
+                    property_init,
+                    LilyAstExpr *property_init);
+
+/**
+ *
+ * @brief Construct LilyAstAccess (LILY_AST_ACCESS_KIND_SELF).
+ */
+VARIANT_CONSTRUCTOR(LilyAstAccess *, LilyAstAccess, self, LilyAstExpr *self_);
+
+/**
+ *
+ * @brief Free LilyAstAccess type.
+ */
+DESTRUCTOR(LilyAstAccess, LilyAstAccess *self);
 
 #endif // LILY_CORE_LILY_AST_EXPR_ACCESS_H
