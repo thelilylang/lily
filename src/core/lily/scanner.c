@@ -1981,8 +1981,27 @@ get_token__Scanner(Scanner *self)
                 }
             }
         }
-        default:
+        default: {
+            Location location_error = clone__Location(&self->location);
+
+            end__Location(&location_error, self->source.cursor.line, self->source.cursor.column);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->source.file,
+                &location_error,
+                NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_CHARACTER),
+                init__Vec(1, format__String("remove this character `{c}`", self->source.cursor.current)),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            next_char__Source(&self->source);
+
             return NULL;
+        }
     }
 
     return NULL;
