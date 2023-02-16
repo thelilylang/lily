@@ -79,6 +79,8 @@ to_msg__LilyError(const LilyError *self)
             return "invalid float literal";
         case LILY_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER:
             return "mismatched closing delimiter";
+        case LILY_ERROR_KIND_UNEXPECTED_CHARACTER:
+            return "unexpected character";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -132,6 +134,8 @@ to_code__LilyError(const LilyError *self)
             return "0021";
         case LILY_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER:
             return "0022";
+        case LILY_ERROR_KIND_UNEXPECTED_CHARACTER:
+            return "0023";
         default:
             UNREACHABLE("unknown variant");
     }
