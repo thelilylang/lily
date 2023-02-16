@@ -55,9 +55,9 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprArray, const LilyAstExprArray *self);
 #endif
 
 /**
- * 
+ *
  * @brief Convert LilyAstExprArray in String.
-*/
+ */
 String *
 to_string__LilyAstExprArray(const LilyAstExprArray *self);
 
