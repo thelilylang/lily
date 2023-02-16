@@ -67,6 +67,7 @@ typedef struct LilyAstExpr
     {
         LilyAstExprAccess access;
         LilyAstExprArray array;
+        LilyAstExprBinary binary;
     };
 } LilyAstExpr;
 
