@@ -1393,6 +1393,7 @@ scan_num__Scanner(Scanner *self)
 {
     String *res = NEW(String);
     bool is_float = false;
+    bool is_scientific = false;
     Location location_error = default__Location(self->source.file->name);
 
     start__Location(
@@ -1430,9 +1431,9 @@ scan_num__Scanner(Scanner *self)
 
         if ((self->source.cursor.current == 'e' ||
              self->source.cursor.current == 'E') &&
-            !is_float) {
+            !is_scientific) {
             push__String(res, self->source.cursor.current);
-            is_float = true;
+            is_scientific = true;
             next_char__Source(&self->source);
 
             if (self->source.cursor.current == '-' ||
@@ -1442,7 +1443,7 @@ scan_num__Scanner(Scanner *self)
             }
         } else if ((self->source.cursor.current == 'e' ||
                     self->source.cursor.current == 'E') &&
-                   is_float) {
+                   is_scientific) {
             start__Location(&location_error,
                             self->source.cursor.line,
                             self->source.cursor.column);
@@ -1475,7 +1476,7 @@ scan_num__Scanner(Scanner *self)
 
     previous_char__Source(&self->source);
 
-    if (is_float) {
+    if (is_float || is_scientific) {
         end__Location(&location_error,
                       self->source.cursor.line,
                       self->source.cursor.column);
