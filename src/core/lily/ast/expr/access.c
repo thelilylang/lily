@@ -49,14 +49,18 @@ static VARIANT_DESTRUCTOR(LilyAstExprAccess, object, LilyAstExprAccess *self);
 static VARIANT_DESTRUCTOR(LilyAstExprAccess, path, LilyAstExprAccess *self);
 
 // Free LilyAstExprAccess type (LILY_AST_ACCESS_EXPR_KIND_PROPERTY_INIT).
-static VARIANT_DESTRUCTOR(LilyAstExprAccess, property_init, LilyAstExprAccess *self);
+static VARIANT_DESTRUCTOR(LilyAstExprAccess,
+                          property_init,
+                          LilyAstExprAccess *self);
 
 // Free LilyAstExprAccess type (LILY_AST_ACCESS_EXPR_KIND_SELF).
 static VARIANT_DESTRUCTOR(LilyAstExprAccess, self, LilyAstExprAccess *self);
 
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyAstExprAccessHook, const LilyAstExprAccessHook *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprAccessHook,
+               const LilyAstExprAccessHook *self)
 {
     return format("LilyAstExprAccessHook{{ access = {Sr}, id = {Sr} }",
                   to_string__LilyAstExpr(self->access),
@@ -70,7 +74,10 @@ DESTRUCTOR(LilyAstExprAccessHook, const LilyAstExprAccessHook *self)
     FREE(LilyAstExpr, self->id);
 }
 
-VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, global, LilyAstExpr *global)
+VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
+                    LilyAstExprAccess,
+                    global,
+                    LilyAstExpr *global)
 {
     LilyAstExprAccess *self = lily_malloc(sizeof(LilyAstExpr));
 
@@ -126,7 +133,10 @@ VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, self, LilyAstExpr *self_)
+VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
+                    LilyAstExprAccess,
+                    self,
+                    LilyAstExpr *self_)
 {
     LilyAstExprAccess *self = lily_malloc(sizeof(LilyAstExprAccess));
 
@@ -138,7 +148,9 @@ VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, self, LilyAstExpr *s
 
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyAstExprAccessKind, enum LilyAstExprAccessKind self)
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprAccessKind,
+               enum LilyAstExprAccessKind self)
 {
     switch (self) {
         case LILY_AST_ACCESS_EXPR_KIND_GLOBAL:
@@ -241,7 +253,8 @@ to_string__LilyAstExprAccess(const LilyAstExprAccess *self)
             String *res = NEW(String);
 
             for (Usize i = 0; i < self->object->len; i++) {
-                String *s = to_string__LilyAstExprAccess(get__Vec(self->object, i));
+                String *s =
+                  to_string__LilyAstExprAccess(get__Vec(self->object, i));
 
                 push__String(res, '@');
                 APPEND_AND_FREE(res, s);
@@ -257,7 +270,8 @@ to_string__LilyAstExprAccess(const LilyAstExprAccess *self)
             String *res = NEW(String);
 
             for (Usize i = 0; i < self->path->len; i++) {
-                String *s = to_string__LilyAstExprAccess(get__Vec(self->path, i));
+                String *s =
+                  to_string__LilyAstExprAccess(get__Vec(self->path, i));
 
                 APPEND_AND_FREE(res, s);
 

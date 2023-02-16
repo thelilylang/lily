@@ -66,7 +66,9 @@ inline CONSTRUCTOR(LilyAstExprAccessHook,
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyAstExprAccessHook, const LilyAstExprAccessHook *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprAccessHook,
+               const LilyAstExprAccessHook *self);
 #endif
 
 typedef struct LilyAstExprAccess
@@ -105,7 +107,10 @@ VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
  *
  * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_OBJECT).
  */
-VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, object, Vec *object);
+VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
+                    LilyAstExprAccess,
+                    object,
+                    Vec *object);
 
 /**
  *
@@ -126,7 +131,10 @@ VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
  *
  * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_SELF).
  */
-VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, self, LilyAstExpr *self_);
+VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
+                    LilyAstExprAccess,
+                    self,
+                    LilyAstExpr *self_);
 
 /**
  *
@@ -135,7 +143,9 @@ VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, self, LilyAstExpr *s
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyAstExprAccessKind, enum LilyAstExprAccessKind self);
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprAccessKind,
+               enum LilyAstExprAccessKind self);
 #endif
 
 /**
