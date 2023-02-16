@@ -45,7 +45,7 @@ test_split__String()
 
     FREE(String, s);
 
-    for (Usize i = 0; i < (Usize)LEN(split, *split); i++)
+    for (Usize i = 0; i < 2; i++)
         lily_free(split[i]);
 
     lily_free(split);
