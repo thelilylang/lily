@@ -33,12 +33,12 @@ typedef struct LilyAstExpr LilyAstExpr;
 
 enum LilyAstExprAccessKind
 {
-    LILY_AST_ACCESS_EXPR_KIND_GLOBAL,
-    LILY_AST_ACCESS_EXPR_KIND_HOOK,
-    LILY_AST_ACCESS_EXPR_KIND_OBJECT,
-    LILY_AST_ACCESS_EXPR_KIND_PATH,
-    LILY_AST_ACCESS_EXPR_KIND_PROPERTY_INIT,
-    LILY_AST_ACCESS_EXPR_KIND_SELF,
+    LILY_AST_EXPR_ACCESS_KIND_GLOBAL,
+    LILY_AST_EXPR_ACCESS_KIND_HOOK,
+    LILY_AST_EXPR_ACCESS_KIND_OBJECT,
+    LILY_AST_EXPR_ACCESS_KIND_PATH,
+    LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT,
+    LILY_AST_EXPR_ACCESS_KIND_SELF,
 };
 
 typedef struct LilyAstExprAccessHook
@@ -87,7 +87,7 @@ typedef struct LilyAstExprAccess
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_GLOBAL).
+ * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_GLOBAL).
  */
 VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
                     LilyAstExprAccess,
@@ -96,7 +96,7 @@ VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_HOOK).
+ * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_HOOK).
  */
 VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
                     LilyAstExprAccess,
@@ -105,7 +105,7 @@ VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_OBJECT).
+ * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_OBJECT).
  */
 VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
                     LilyAstExprAccess,
@@ -114,13 +114,13 @@ VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_PATH).
+ * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_PATH).
  */
 VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, path, Vec *path);
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_PROPERTY_INIT).
+ * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT).
  */
 VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
                     LilyAstExprAccess,
@@ -129,7 +129,7 @@ VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_ACCESS_EXPR_KIND_SELF).
+ * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_SELF).
  */
 VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
                     LilyAstExprAccess,
