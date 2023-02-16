@@ -188,7 +188,7 @@ to_string__LilyAstExprBinary(const LilyAstExprBinary *self)
         case LILY_AST_EXPR_BINARY_KIND_GREATER:
             push_str__String(res, " > ");
             break;
-        case LILY_AST_EXPR_BINARY_KIND_L_SHIFT:
+        case LILY_AST_EXPR_BINARY_KIND_BIT_L_SHIFT:
             push_str__String(res, " << ");
             break;
         case LILY_AST_EXPR_BINARY_KIND_LESS_EQ:
@@ -209,7 +209,7 @@ to_string__LilyAstExprBinary(const LilyAstExprBinary *self)
         case LILY_AST_EXPR_BINARY_KIND_OR:
             push_str__String(res, " or ");
             break;
-        case LILY_AST_EXPR_BINARY_KIND_R_SHIFT:
+        case LILY_AST_EXPR_BINARY_KIND_BIT_R_SHIFT:
             push_str__String(res, " >> ");
             break;
         case LILY_AST_EXPR_BINARY_KIND_RANGE:
@@ -245,8 +245,8 @@ to_precedence__LilyAstExprBinary(const LilyAstExprBinary *self)
         case LILY_AST_EXPR_BINARY_KIND_ADD:
         case LILY_AST_EXPR_BINARY_KIND_SUB:
             return 90;
-        case LILY_AST_EXPR_BINARY_KIND_L_SHIFT:
-        case LILY_AST_EXPR_BINARY_KIND_R_SHIFT:
+        case LILY_AST_EXPR_BINARY_KIND_BIT_L_SHIFT:
+        case LILY_AST_EXPR_BINARY_KIND_BIT_R_SHIFT:
             return 85;
         case LILY_AST_EXPR_BINARY_KIND_LESS:
         case LILY_AST_EXPR_BINARY_KIND_LESS_EQ:
@@ -272,6 +272,82 @@ to_precedence__LilyAstExprBinary(const LilyAstExprBinary *self)
             return 40;
         default:
             return 35;
+    }
+}
+
+enum LilyAstExprBinaryKind
+from_token__LilyAstExprBinary(const LilyToken *token)
+{
+    switch (token->kind) {
+        case LILY_TOKEN_KIND_PLUS:
+            return LILY_AST_EXPR_BINARY_KIND_ADD;
+        case LILY_TOKEN_KIND_KEYWORD_AND:
+            return LILY_AST_EXPR_BINARY_KIND_AND;
+        case LILY_TOKEN_KIND_PLUS_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_ADD;
+        case LILY_TOKEN_KIND_AMPERSAND_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_AND;
+        case LILY_TOKEN_KIND_L_SHIFT_L_SHIFT_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT;
+        case LILY_TOKEN_KIND_BAR_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_OR;
+        case LILY_TOKEN_KIND_R_SHIFT_R_SHIFT_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT;
+        case LILY_TOKEN_KIND_SLASH_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_DIV;
+        case LILY_TOKEN_KIND_STAR_STAR_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_EXP;
+        case LILY_TOKEN_KIND_PERCENTAGE_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_MOD;
+        case LILY_TOKEN_KIND_STAR_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_MUL;
+        case LILY_TOKEN_KIND_MINUS_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_SUB;
+        case LILY_TOKEN_KIND_XOR_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN_XOR;
+        case LILY_TOKEN_KIND_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_ASSIGN;
+        case LILY_TOKEN_KIND_AMPERSAND:
+            return LILY_AST_EXPR_BINARY_KIND_BIT_AND;
+        case LILY_TOKEN_KIND_BAR:
+            return LILY_AST_EXPR_BINARY_KIND_BIT_OR;
+        case LILY_TOKEN_KIND_BAR_R_SHIFT:
+            return LILY_AST_EXPR_BINARY_KIND_CHAIN;
+        case LILY_TOKEN_KIND_SLASH:
+            return LILY_AST_EXPR_BINARY_KIND_DIV;
+        case LILY_TOKEN_KIND_EQ_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_EQ;
+        case LILY_TOKEN_KIND_STAR_STAR:
+            return LILY_AST_EXPR_BINARY_KIND_EXP;
+        case LILY_TOKEN_KIND_R_SHIFT_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_GREATER_EQ;
+        case LILY_TOKEN_KIND_R_SHIFT:
+            return LILY_AST_EXPR_BINARY_KIND_GREATER;
+        case LILY_TOKEN_KIND_L_SHIFT_L_SHIFT:
+            return LILY_AST_EXPR_BINARY_KIND_BIT_L_SHIFT;
+        case LILY_TOKEN_KIND_L_SHIFT_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_LESS_EQ;
+        case LILY_TOKEN_KIND_L_SHIFT:
+            return LILY_AST_EXPR_BINARY_KIND_LESS;
+        case LILY_TOKEN_KIND_PERCENTAGE:
+            return LILY_AST_EXPR_BINARY_KIND_MOD;
+        case LILY_TOKEN_KIND_STAR:
+            return LILY_AST_EXPR_BINARY_KIND_MUL;
+        case LILY_TOKEN_KIND_NOT_EQ:
+            return LILY_AST_EXPR_BINARY_KIND_NOT_EQ;
+        case LILY_TOKEN_KIND_KEYWORD_OR:
+            return LILY_AST_EXPR_BINARY_KIND_OR;
+        case LILY_TOKEN_KIND_R_SHIFT_R_SHIFT:
+            return LILY_AST_EXPR_BINARY_KIND_BIT_R_SHIFT;
+        case LILY_TOKEN_KIND_DOT_DOT:
+            return LILY_AST_EXPR_BINARY_KIND_RANGE;
+        case LILY_TOKEN_KIND_MINUS:
+            return LILY_AST_EXPR_BINARY_KIND_SUB;
+        case LILY_TOKEN_KIND_KEYWORD_XOR:
+            return LILY_AST_EXPR_BINARY_KIND_XOR;
+        default:
+            UNREACHABLE(
+              "impossible to convert this token in LilyAstExprBinaryKind");
     }
 }
 

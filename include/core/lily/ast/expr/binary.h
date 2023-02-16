@@ -28,6 +28,8 @@
 #include <base/macros.h>
 #include <base/string.h>
 
+#include <core/lily/token.h>
+
 #define MAX_LILY_AST_EXPR_BINARY_PRECEDENCE 100
 
 typedef struct LilyAstExpr LilyAstExpr;
@@ -56,14 +58,14 @@ enum LilyAstExprBinaryKind
     LILY_AST_EXPR_BINARY_KIND_EXP,                // **
     LILY_AST_EXPR_BINARY_KIND_GREATER_EQ,         // >=
     LILY_AST_EXPR_BINARY_KIND_GREATER,            // >
-    LILY_AST_EXPR_BINARY_KIND_L_SHIFT,            // <<
+    LILY_AST_EXPR_BINARY_KIND_BIT_L_SHIFT,        // <<
     LILY_AST_EXPR_BINARY_KIND_LESS_EQ,            // <=
     LILY_AST_EXPR_BINARY_KIND_LESS,               // <
     LILY_AST_EXPR_BINARY_KIND_MOD,                // %
     LILY_AST_EXPR_BINARY_KIND_MUL,                // *
     LILY_AST_EXPR_BINARY_KIND_NOT_EQ,             // not=
     LILY_AST_EXPR_BINARY_KIND_OR,                 // or
-    LILY_AST_EXPR_BINARY_KIND_R_SHIFT,            // >>
+    LILY_AST_EXPR_BINARY_KIND_BIT_R_SHIFT,        // >>
     LILY_AST_EXPR_BINARY_KIND_RANGE,              // ..
     LILY_AST_EXPR_BINARY_KIND_SUB,                // -
     LILY_AST_EXPR_BINARY_KIND_XOR,                // xor
@@ -120,10 +122,17 @@ to_string__LilyAstExprBinary(const LilyAstExprBinary *self);
 
 /**
  *
- * @brief Convert LilyAstExprBinary in precedence.
+ * @brief Convert LilyAstExprBinary in precedence (Uint8).
  */
 Uint8
 to_precedence__LilyAstExprBinary(const LilyAstExprBinary *self);
+
+/**
+ *
+ * @brief Convert LilyToken in LilyAstExprBinaryKind.
+ */
+enum LilyAstExprBinaryKind
+from_token__LilyAstExprBinary(const LilyToken *token);
 
 /**
  *
