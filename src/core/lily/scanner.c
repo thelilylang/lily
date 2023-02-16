@@ -1382,7 +1382,7 @@ scan_bin__Scanner(Scanner *self)
 
     previous_char__Source(&self->source);
 
-    SCAN_LITERAL_SUFFIX(res->buffer, 16, true);
+    SCAN_LITERAL_SUFFIX(res->buffer, 2, true);
 
     return NEW_VARIANT(
       LilyToken, literal_int_16, clone__Location(&self->location), res);
