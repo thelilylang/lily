@@ -22,15 +22,11 @@
  * SOFTWARE.
  */
 
-#include <base/alloc.h>
 #include <base/new.h>
 
 #include <cli/config/compile.h>
 
 #include <core/lily/package.h>
-
-#include <stdio.h>
-#include <string.h>
 
 void
 run__Compile(const CompileConfig *config)
