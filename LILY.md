@@ -91,6 +91,11 @@ object Person class =
 end
 ```
 
+You can add an instruction to generate a `Get` or `Set` or both for this property.
+```lily
+@name Str = "Hello" :: get, set;
+```
+
 Create static property with `@@`.
 
 ```lily
@@ -251,6 +256,30 @@ end
 ```lily
 import "std"
 import "std.io.*" as io
+```
+
+## Use
+
+```lily
+import "std.io.*" as io
+
+module X =
+    use io.x.y.z // like using namespace
+
+    // z.
+    // ...
+end
+```
+
+## Include
+
+```lily
+module X =
+end
+
+module Y =
+    include X
+end
 ```
 
 ## Package
@@ -724,3 +753,69 @@ end
 - Exception
 - Optional
 - Never
+
+## List of keywords
+
+```
+alias
+and
+as
+asm
+async
+await
+begin
+break
+cast
+catch
+class
+comptime
+do
+drop
+elif
+else
+end
+enum
+error
+false
+for
+fun
+global
+if
+impl
+include
+inherit
+is
+macro
+match
+module
+mut
+next
+nil
+none
+not
+object
+Object
+or
+package
+pub
+raise
+record
+ref
+req
+return
+self
+Self
+test
+trace
+trait
+true
+try
+type
+undef
+unsafe
+use
+val
+when
+while
+xor
+```
