@@ -96,6 +96,14 @@ grow__Vec(Vec *self, Usize new_capacity)
 }
 
 void *
+last__Vec(Vec *self)
+{
+    ASSERT(self->len > 0);
+
+    return self->buffer[self->len - 1];
+}
+
+void *
 pop__Vec(Vec *self)
 {
     ASSERT(self->len > 0);

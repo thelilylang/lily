@@ -74,6 +74,13 @@ void
 grow__Vec(Vec *self, Usize new_capacity);
 
 /**
+ * 
+ * @brief Get the last item of the Vec.
+*/
+void *
+last__Vec(Vec *self);
+
+/**
  *
  * @brief Remove the last item from Vec.
  */
