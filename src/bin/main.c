@@ -55,10 +55,24 @@ main(int argc, char **argv)
 
         // 4. Run command
         switch (config.kind) {
+            case CONFIG_KIND_BUILD:
+                break;
+            case CONFIG_KIND_CC:
+                break;
             case CONFIG_KIND_COMPILE:
                 run__Compile(&config.compile);
                 break;
-            default:
+            case CONFIG_KIND_CPP:
+                break;
+            case CONFIG_KIND_INIT:
+                break;
+            case CONFIG_KIND_NEW:
+                break;
+            case CONFIG_KIND_RUN:
+                break;
+            case CONFIG_KIND_TEST:
+                break;
+            case CONFIG_KIND_TO:
                 break;
         }
 
