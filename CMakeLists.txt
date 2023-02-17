@@ -191,6 +191,8 @@ set(CORE_SRC
 	src/core/lily/ir.c
 	src/core/lily/package.c
 	src/core/lily/parser.c
+	src/core/lily/precompile.c
+	src/core/lily/preparser.c
 	src/core/lily/scanner.c
 	src/core/lily/token.c
 	src/core/lily/warning.c
