@@ -23,13 +23,11 @@
  */
 
 #include <base/alloc.h>
-#include <base/file.h>
+#include <base/new.h>
 
-#include <cli/emit.h>
+#include <cli/config/compile.h>
 
-#include <command/compile/compile.h>
-
-#include <core/lily/scanner.h>
+#include <core/lily/package.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -37,21 +35,8 @@
 void
 run__Compile(const CompileConfig *config)
 {
-    char *content = read_file__Path(config->filename);
-    char *file_ext = get_extension__Path(config->filename);
+    LilyPackage *pkg =
+      build__LilyPackage(config, from__String("main"), LILY_VISIBILITY_PUBLIC);
 
-    if (strcmp(file_ext, ".lily")) {
-        EMIT_ERROR("bad extension, expected `.lily`");
-        exit(1);
-    }
-
-    const File file = NEW(File, config->filename, content);
-    LilyScanner scanner =
-      NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &file));
-
-    run__LilyScanner(&scanner, config->dump_scanner);
-
-    lily_free(file_ext);
-    lily_free(content);
-    FREE(LilyScanner, &scanner);
+    FREE(LilyPackage, pkg);
 }
