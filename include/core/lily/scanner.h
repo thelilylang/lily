@@ -48,9 +48,9 @@ typedef struct LilyScanner
 inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source)
 {
     return (LilyScanner){ .tokens = NEW(Vec),
-                      .location = default__Location(source.file->name),
-                      .source = source,
-                      .count_error = 0 };
+                          .location = default__Location(source.file->name),
+                          .source = source,
+                          .count_error = 0 };
 }
 
 /**

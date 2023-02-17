@@ -290,11 +290,11 @@ get_token__LilyScanner(LilyScanner *self);
                       self->source.cursor.line,                                \
                       self->source.cursor.column);                             \
                                                                                \
-        char *c1 = peek_char__LilyScanner(self, 1);                                \
+        char *c1 = peek_char__LilyScanner(self, 1);                            \
                                                                                \
-        char *c2 = peek_char__LilyScanner(self, 2);                                \
+        char *c2 = peek_char__LilyScanner(self, 2);                            \
                                                                                \
-        char *c3 = peek_char__LilyScanner(self, 3);                                \
+        char *c3 = peek_char__LilyScanner(self, 3);                            \
                                                                                \
         if (c1 == (char *)'I' && c2 == (char *)'8' && is_int) {                \
             if (!CHECK_INT8_OVERFLOW_FROM_STRING(value, base)) {               \
@@ -312,7 +312,7 @@ get_token__LilyScanner(LilyScanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__LilyScanner(self, 3);                                        \
+                jump__LilyScanner(self, 3);                                    \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -337,7 +337,7 @@ get_token__LilyScanner(LilyScanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__LilyScanner(self, 4);                                        \
+                jump__LilyScanner(self, 4);                                    \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -363,7 +363,7 @@ get_token__LilyScanner(LilyScanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__LilyScanner(self, 4);                                        \
+                jump__LilyScanner(self, 4);                                    \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -390,7 +390,7 @@ get_token__LilyScanner(LilyScanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__LilyScanner(self, 4);                                        \
+                jump__LilyScanner(self, 4);                                    \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -412,7 +412,7 @@ get_token__LilyScanner(LilyScanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__LilyScanner(self, 3);                                        \
+                jump__LilyScanner(self, 3);                                    \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -436,7 +436,7 @@ get_token__LilyScanner(LilyScanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__LilyScanner(self, 3);                                        \
+                jump__LilyScanner(self, 3);                                    \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -461,7 +461,7 @@ get_token__LilyScanner(LilyScanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__LilyScanner(self, 4);                                        \
+                jump__LilyScanner(self, 4);                                    \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -486,7 +486,7 @@ get_token__LilyScanner(LilyScanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__LilyScanner(self, 4);                                        \
+                jump__LilyScanner(self, 4);                                    \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -512,7 +512,7 @@ get_token__LilyScanner(LilyScanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__LilyScanner(self, 4);                                        \
+                jump__LilyScanner(self, 4);                                    \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -534,7 +534,7 @@ get_token__LilyScanner(LilyScanner *self);
                     NULL),                                                     \
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
-                jump__LilyScanner(self, 3);                                        \
+                jump__LilyScanner(self, 3);                                    \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -891,7 +891,8 @@ is_digit__LilyScanner(const LilyScanner *self)
 bool
 is_ident__LilyScanner(const LilyScanner *self)
 {
-    return is_digit__LilyScanner(self) || isalpha(self->source.cursor.current) ||
+    return is_digit__LilyScanner(self) ||
+           isalpha(self->source.cursor.current) ||
            self->source.cursor.current == '_';
 }
 
@@ -2032,15 +2033,15 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
 
                 if (token_s->len == 1) {
                     end_token__LilyScanner(self,
-                                       self->source.cursor.line,
-                                       self->source.cursor.column);
+                                           self->source.cursor.line,
+                                           self->source.cursor.column);
                     set_all__Location(&token->location, &self->location);
                     next_char_by_token__LilyScanner(self, token);
                 } else if (token_s->len > 1) {
                     next_char_by_token__LilyScanner(self, token);
                     end_token__LilyScanner(self,
-                                       self->source.cursor.line,
-                                       self->source.cursor.column);
+                                           self->source.cursor.line,
+                                           self->source.cursor.column);
                     previous_char__Source(&self->source);
                     next_char__Source(&self->source);
                     set_all__Location(&token->location, &self->location);

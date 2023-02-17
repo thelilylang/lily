@@ -46,7 +46,8 @@ run__Compile(const CompileConfig *config)
     }
 
     const File file = NEW(File, config->filename, content);
-    LilyScanner scanner = NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &file));
+    LilyScanner scanner =
+      NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &file));
 
     run__LilyScanner(&scanner, config->dump_scanner);
 
