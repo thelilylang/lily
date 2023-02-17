@@ -46,11 +46,11 @@ run__Compile(const CompileConfig *config)
     }
 
     const File file = NEW(File, config->filename, content);
-    Scanner scanner = NEW(Scanner, NEW(Source, NEW(Cursor, content), &file));
+    LilyScanner scanner = NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &file));
 
-    run__Scanner(&scanner, config->dump_scanner);
+    run__LilyScanner(&scanner, config->dump_scanner);
 
     lily_free(file_ext);
     lily_free(content);
-    FREE(Scanner, &scanner);
+    FREE(LilyScanner, &scanner);
 }
