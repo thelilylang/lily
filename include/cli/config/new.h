@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#ifndef LILY_CLI_CONFIG_NEW_H
+#define LILY_CLI_CONFIG_NEW_H
+
 #include <base/macros.h>
 
 typedef struct NewConfig
@@ -37,3 +40,5 @@ inline CONSTRUCTOR(NewConfig, NewConfig, const char *name)
 {
     return (NewConfig){ .name = name };
 }
+
+#endif // LILY_CLI_CONFIG_NEW_H

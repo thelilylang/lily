@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#ifndef LILY_CLI_CONFIG_TEST_H
+#define LILY_CLI_CONFIG_TEST_H
+
 #include <base/macros.h>
 
 typedef struct TestConfig
@@ -37,3 +40,5 @@ inline CONSTRUCTOR(TestConfig, TestConfig, const char *filename)
 {
     return (TestConfig){ .filename = filename };
 }
+
+#endif // LILY_CLI_CONFIG_TEST_H

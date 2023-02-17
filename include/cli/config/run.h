@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#ifndef LILY_CLI_CONFIG_RUN_H
+#define LILY_CLI_CONFIG_RUN_H
+
 #include <base/macros.h>
 
 typedef struct RunConfig
@@ -37,3 +40,5 @@ inline CONSTRUCTOR(RunConfig, RunConfig, const char *filename)
 {
     return (RunConfig){ .filename = filename };
 }
+
+#endif // LILY_CLI_CONFIG_RUN_H

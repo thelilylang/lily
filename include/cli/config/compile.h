@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#ifndef LILY_CLI_CONFIG_COMPILE_H
+#define LILY_CLI_CONFIG_COMPILE_H
+
 #include <base/macros.h>
 
 #include <stdbool.h>
@@ -65,3 +68,5 @@ inline CONSTRUCTOR(CompileConfig,
                             .dump_typecheck = dump_typecheck,
                             .dump_ir = dump_ir };
 }
+
+#endif // LILY_CLI_CONFIG_COMPILE_H

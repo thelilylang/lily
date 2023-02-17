@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#ifndef LILY_CLI_CONFIG_CPP_H
+#define LILY_CLI_CONFIG_CPP_H
+
 #include <base/macros.h>
 
 typedef struct CppConfig
@@ -37,3 +40,5 @@ inline CONSTRUCTOR(CppConfig, CppConfig, const char *filename)
 {
     return (CppConfig){ .filename = filename };
 }
+
+#endif // #ifndef LILY_CLI_CONFIG_CPP_H

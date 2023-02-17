@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#ifndef LILY_CLI_CONFIG_INIT_H
+#define LILY_CLI_CONFIG_INIT_H
+
 #include <base/macros.h>
 
 typedef struct InitConfig
@@ -37,3 +40,5 @@ inline CONSTRUCTOR(InitConfig, InitConfig, const char *path)
 {
     return (InitConfig){ .path = path };
 }
+
+#endif // LILY_CLI_CONFIG_INIT_H

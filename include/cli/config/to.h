@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#ifndef LILY_CLI_CONFIG_TO_H
+#define LILY_CLI_CONFIG_TO_H
+
 #include <base/macros.h>
 
 typedef struct ToConfig
@@ -37,3 +40,5 @@ inline CONSTRUCTOR(ToConfig, ToConfig, const char *filename)
 {
     return (ToConfig){ .filename = filename };
 }
+
+#endif // LILY_CLI_CONFIG_TO_H
