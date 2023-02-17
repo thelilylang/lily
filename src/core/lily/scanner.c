@@ -645,6 +645,8 @@ get_keyword(char *id)
         return LILY_TOKEN_KIND_KEYWORD_IMPORT;
     else if (!strcmp(id, "in"))
         return LILY_TOKEN_KIND_KEYWORD_IN;
+    else if (!strcmp(id, "include"))
+        return LILY_TOKEN_KIND_KEYWORD_INCLUDE;
     else if (!strcmp(id, "inherit"))
         return LILY_TOKEN_KIND_KEYWORD_INHERIT;
     else if (!strcmp(id, "is"))
@@ -705,6 +707,8 @@ get_keyword(char *id)
         return LILY_TOKEN_KIND_KEYWORD_UNDEF;
     else if (!strcmp(id, "unsafe"))
         return LILY_TOKEN_KIND_KEYWORD_UNSAFE;
+    else if (!strcmp(id, "use"))
+        return LILY_TOKEN_KIND_KEYWORD_USE;
     else if (!strcmp(id, "val"))
         return LILY_TOKEN_KIND_KEYWORD_VAL;
     else if (!strcmp(id, "when"))
@@ -805,6 +809,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_KEYWORD_IMPL:
         case LILY_TOKEN_KIND_KEYWORD_IMPORT:
         case LILY_TOKEN_KIND_KEYWORD_IN:
+        case LILY_TOKEN_KIND_KEYWORD_INCLUDE:
         case LILY_TOKEN_KIND_KEYWORD_INHERIT:
         case LILY_TOKEN_KIND_KEYWORD_IS:
         case LILY_TOKEN_KIND_KEYWORD_MACRO:
@@ -835,6 +840,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_KEYWORD_TYPE:
         case LILY_TOKEN_KIND_KEYWORD_UNDEF:
         case LILY_TOKEN_KIND_KEYWORD_UNSAFE:
+        case LILY_TOKEN_KIND_KEYWORD_USE:
         case LILY_TOKEN_KIND_KEYWORD_VAL:
         case LILY_TOKEN_KIND_KEYWORD_WHEN:
         case LILY_TOKEN_KIND_KEYWORD_WHILE:

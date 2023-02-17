@@ -578,6 +578,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String("import");
         case LILY_TOKEN_KIND_KEYWORD_IN:
             return from__String("in");
+        case LILY_TOKEN_KIND_KEYWORD_INCLUDE:
+            return from__String("include");
         case LILY_TOKEN_KIND_KEYWORD_INHERIT:
             return from__String("inherit");
         case LILY_TOKEN_KIND_KEYWORD_IS:
@@ -638,6 +640,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String("undef");
         case LILY_TOKEN_KIND_KEYWORD_UNSAFE:
             return from__String("unsafe");
+        case LILY_TOKEN_KIND_KEYWORD_USE:
+            return from__String("use");
         case LILY_TOKEN_KIND_KEYWORD_VAL:
             return from__String("val");
         case LILY_TOKEN_KIND_KEYWORD_WHEN:
@@ -890,6 +894,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_KEYWORD_IMPORT";
         case LILY_TOKEN_KIND_KEYWORD_IN:
             return "LILY_TOKEN_KIND_KEYWORD_IN";
+        case LILY_TOKEN_KIND_KEYWORD_INCLUDE:
+            return "LILY_TOKEN_KIND_KEYWORD_INCLUDE";
         case LILY_TOKEN_KIND_KEYWORD_INHERIT:
             return "LILY_TOKEN_KIND_KEYWORD_INHERIT";
         case LILY_TOKEN_KIND_KEYWORD_IS:
@@ -950,6 +956,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_KEYWORD_UNDEF";
         case LILY_TOKEN_KIND_KEYWORD_UNSAFE:
             return "LILY_TOKEN_KIND_KEYWORD_UNSAFE";
+        case LILY_TOKEN_KIND_KEYWORD_USE:
+            return "LILY_TOKEN_KIND_KEYWORD_USE";
         case LILY_TOKEN_KIND_KEYWORD_VAL:
             return "LILY_TOKEN_KIND_KEYWORD_VAL";
         case LILY_TOKEN_KIND_KEYWORD_WHEN:
