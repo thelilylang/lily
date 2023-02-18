@@ -31,8 +31,8 @@
 void
 run__Compile(const CompileConfig *config)
 {
-    LilyPackage *pkg =
-      build__LilyPackage(config, from__String("main"), LILY_VISIBILITY_PUBLIC);
+    LilyPackage *pkg = compile__LilyPackage(
+      config, from__String("main"), LILY_VISIBILITY_PUBLIC);
 
     FREE(LilyPackage, pkg);
 }
