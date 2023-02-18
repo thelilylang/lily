@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void
 test_new__String()
@@ -14,6 +15,24 @@ test_new__String()
     ASSERT(s->capacity == 0);
 
     FREE(String, s);
+}
+
+void
+test_clone__String()
+{
+    String *s = from__String("Hello");
+    String *clone = clone__String(s);
+
+    ASSERT(!strcmp(s->buffer, "Hello"));
+    ASSERT(!strcmp(clone->buffer, "Hello"));
+
+    push_str__String(clone, " World");
+
+    ASSERT(!strcmp(clone->buffer, "Hello World"));
+    ASSERT(!strcmp(s->buffer, "Hello"));
+
+    FREE(String, s);
+    FREE(String, clone);
 }
 
 void

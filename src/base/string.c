@@ -52,6 +52,21 @@ append__String(String *self, const String *other)
 }
 
 String *
+clone__String(String *self)
+{
+    char *buffer = lily_malloc(self->capacity);
+    memcpy(buffer, self->buffer, self->len + 1);
+
+    String *clone = lily_malloc(sizeof(String));
+
+    clone->buffer = buffer;
+    clone->capacity = self->capacity;
+    clone->len = self->len;
+
+    return clone;
+}
+
+String *
 format__String(char *fmt, ...)
 {
     char *buffer = format(fmt);

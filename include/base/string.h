@@ -66,6 +66,13 @@ append__String(String *self, const String *other);
 
 /**
  *
+ * @brief Clone String.
+ */
+String *
+clone__String(String *self);
+
+/**
+ *
  * @brief A format way for String.
  */
 String *
