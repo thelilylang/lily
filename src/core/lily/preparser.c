@@ -23,6 +23,7 @@
  */
 
 #include <core/lily/preparser.h>
+#include <core/lily/token.h>
 
 // Advance to the one position and update the current.
 static void
@@ -31,6 +32,41 @@ next_token__LilyPreparser(LilyPreparser *self);
 // Remove an item at the current position and update the current.
 static void
 eat_token__LilyPreparser(LilyPreparser *self);
+
+CONSTRUCTOR(LilyPreparserImport*, LilyPreparserImport, String *value, String *as)
+{
+    LilyPreparserImport *self = lily_malloc(sizeof(LilyPreparserImport));
+
+    self->value = value;
+    self->as = as;
+
+    return self;
+}
+
+DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self)
+{
+    FREE(String, self->value);
+    FREE(String, self->as);
+    lily_free(self);
+}
+
+CONSTRUCTOR(LilyPreparserMacro*, LilyPreparserMacro, String *name, Vec *tokens)
+{
+    LilyPreparserMacro *self = lily_malloc(sizeof(LilyPreparserMacro));
+
+    self->name = name;
+    self->tokens = tokens;
+
+    return self;
+}
+
+DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self)
+{
+    FREE(String, self->name);
+    FREE_BUFFER_ITEMS(self->tokens->buffer, self->tokens->len, LilyToken);
+    FREE(Vec, self->tokens);
+    lily_free(self);
+}
 
 void
 next_token__LilyPreparser(LilyPreparser *self)

@@ -26,9 +26,59 @@
 #define LILY_CORE_LILY_PREPARSER_H
 
 #include <base/macros.h>
+#include <base/string.h>
 
 #include <core/lily/scanner.h>
 #include <core/lily/token.h>
+#include <core/lily/visibility.h>
+
+typedef struct LilyPreparserImport
+{
+    String *value;
+    String *as;
+} LilyPreparserImport;
+
+/**
+ * 
+ * @brief Construct LilyPreparserImport type.
+*/
+CONSTRUCTOR(LilyPreparserImport*, LilyPreparserImport, String *value, String *as);
+
+/**
+ * 
+ * @brief Free LilyPreparserImport type.
+*/
+DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self);
+
+typedef struct LilyPreparserMacro
+{
+    String *name;
+    Vec *tokens; // Vec<LilyToken*>*
+} LilyPreparserMacro;
+
+/**
+ * 
+ * @brief Construct LilyPreparserMacro type.
+*/
+CONSTRUCTOR(LilyPreparserMacro*, LilyPreparserMacro, String *name, Vec *tokens);
+
+/**
+ * 
+ * @brief Free LilyPreparserMacro type.
+*/
+DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self);
+
+typedef struct LilyPreparserSubPackage
+{
+    enum LilyVisibility visibility;
+    String *name;
+} LilyPreparserSubPackage;
+
+typedef struct LilyPreparserPackage
+{
+    String *name;
+    Vec *sub_packages; // Vec<LilyPreparserSubPackage*>*
+} LilyPreparserPackage;
 
 typedef struct LilyPreparser
 {
