@@ -33,7 +33,10 @@ next_token__LilyPreparser(LilyPreparser *self);
 static void
 eat_token__LilyPreparser(LilyPreparser *self);
 
-CONSTRUCTOR(LilyPreparserImport*, LilyPreparserImport, String *value, String *as)
+CONSTRUCTOR(LilyPreparserImport *,
+            LilyPreparserImport,
+            String *value,
+            String *as)
 {
     LilyPreparserImport *self = lily_malloc(sizeof(LilyPreparserImport));
 
@@ -50,7 +53,7 @@ DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self)
     lily_free(self);
 }
 
-CONSTRUCTOR(LilyPreparserMacro*, LilyPreparserMacro, String *name, Vec *tokens)
+CONSTRUCTOR(LilyPreparserMacro *, LilyPreparserMacro, String *name, Vec *tokens)
 {
     LilyPreparserMacro *self = lily_malloc(sizeof(LilyPreparserMacro));
 
@@ -65,6 +68,44 @@ DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self)
     FREE(String, self->name);
     FREE_BUFFER_ITEMS(self->tokens->buffer, self->tokens->len, LilyToken);
     FREE(Vec, self->tokens);
+    lily_free(self);
+}
+
+CONSTRUCTOR(LilyPreparserSubPackage *,
+            LilyPreparserSubPackage,
+            enum LilyVisibility visibility,
+            String *name)
+{
+    LilyPreparserSubPackage *self =
+      lily_malloc(sizeof(LilyPreparserSubPackage));
+
+    self->name = name;
+    self->visibility = visibility;
+
+    return self;
+}
+
+DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self)
+{
+    FREE(String, self->name);
+    lily_free(self);
+}
+
+CONSTRUCTOR(LilyPreparserPackage*, LilyPreparserPackage, String *name, Vec *sub_packages)
+{
+    LilyPreparserPackage *self = lily_malloc(sizeof(LilyPreparserPackage));
+
+    self->name = name;
+    self->sub_packages = sub_packages;
+
+    return self;
+}
+
+DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self)
+{
+    FREE(String, self->name);
+    FREE_BUFFER_ITEMS(self->sub_packages->buffer, self->sub_packages->len, LilyPreparserSubPackage);
+    FREE(Vec, self->sub_packages);
     lily_free(self);
 }
 

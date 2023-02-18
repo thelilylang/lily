@@ -39,15 +39,18 @@ typedef struct LilyPreparserImport
 } LilyPreparserImport;
 
 /**
- * 
+ *
  * @brief Construct LilyPreparserImport type.
-*/
-CONSTRUCTOR(LilyPreparserImport*, LilyPreparserImport, String *value, String *as);
+ */
+CONSTRUCTOR(LilyPreparserImport *,
+            LilyPreparserImport,
+            String *value,
+            String *as);
 
 /**
- * 
+ *
  * @brief Free LilyPreparserImport type.
-*/
+ */
 DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self);
 
 typedef struct LilyPreparserMacro
@@ -57,28 +60,58 @@ typedef struct LilyPreparserMacro
 } LilyPreparserMacro;
 
 /**
- * 
+ *
  * @brief Construct LilyPreparserMacro type.
-*/
-CONSTRUCTOR(LilyPreparserMacro*, LilyPreparserMacro, String *name, Vec *tokens);
+ */
+CONSTRUCTOR(LilyPreparserMacro *,
+            LilyPreparserMacro,
+            String *name,
+            Vec *tokens);
 
 /**
- * 
+ *
  * @brief Free LilyPreparserMacro type.
-*/
+ */
 DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self);
 
 typedef struct LilyPreparserSubPackage
 {
-    enum LilyVisibility visibility;
     String *name;
+    enum LilyVisibility visibility;
 } LilyPreparserSubPackage;
+
+/**
+ *
+ * @brief Construct LilyPreparserSubPackage type.
+ */
+CONSTRUCTOR(LilyPreparserSubPackage *,
+            LilyPreparserSubPackage,
+            enum LilyVisibility visibility,
+            String *name);
+
+/**
+ * 
+ * @brief Free LilyPreparserSubPackage type.
+*/
+DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self);
 
 typedef struct LilyPreparserPackage
 {
     String *name;
     Vec *sub_packages; // Vec<LilyPreparserSubPackage*>*
 } LilyPreparserPackage;
+
+/**
+ * 
+ * @brief Construct LilyPreparserPackage type.
+*/
+CONSTRUCTOR(LilyPreparserPackage*, LilyPreparserPackage, String *name, Vec *sub_packages);
+
+/**
+ * 
+ * @brief Free LilyPreparserPackage type.
+*/
+DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self);
 
 typedef struct LilyPreparser
 {
