@@ -28,6 +28,7 @@
 #include <base/macros.h>
 #include <base/string.h>
 #include <base/types.h>
+#include <base/vec.h>
 
 #include <core/shared/location.h>
 
@@ -158,6 +159,7 @@ enum LilyTokenKind
     LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64,
     LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8,
     LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE,
+    LILY_TOKEN_KIND_MACRO_EXPAND,
     LILY_TOKEN_KIND_MINUS_EQ,
     LILY_TOKEN_KIND_MINUS_MINUS_EQ,
     LILY_TOKEN_KIND_MINUS_MINUS,
@@ -219,6 +221,7 @@ typedef struct LilyToken
         Uint64 literal_suffix_uint64;
         Uint8 literal_suffix_uint8;
         Usize literal_suffix_usize;
+        Vec *macro_expand; // Vec<LilyToken*>*
     };
 } LilyToken;
 
@@ -477,6 +480,16 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     literal_suffix_usize,
                     Location location,
                     Usize literal_suffix_usize);
+
+/**
+ *
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_MACRO_EXPAND).
+ */
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    macro_expand,
+                    Location location,
+                    Vec *macro_expand);
 
 /**
  *

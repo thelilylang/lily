@@ -452,6 +452,21 @@ VARIANT_CONSTRUCTOR(LilyToken *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    macro_expand,
+                    Location location,
+                    Vec *macro_expand)
+{
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
+
+    self->kind = LILY_TOKEN_KIND_MACRO_EXPAND;
+    self->location = location;
+    self->macro_expand = macro_expand;
+
+    return self;
+}
+
 String *
 to_string__LilyToken(LilyToken *self)
 {
@@ -706,6 +721,23 @@ to_string__LilyToken(LilyToken *self)
             return format__String("{d}U8", self->literal_suffix_uint8);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
             return format__String("{d}Uz", self->literal_suffix_usize);
+        case LILY_TOKEN_KIND_MACRO_EXPAND: {
+            String *res = from__String("{ ");
+
+            for (Usize i = 0; i < self->macro_expand->len; i++) {
+                String *s = to_string__LilyToken(get__Vec(self->macro_expand, i));
+
+                APPEND_AND_FREE(res, s);
+
+                if (i != self->macro_expand->len - 1) {
+                    push_str__String(res, ", ");
+                }
+            }
+
+            push_str__String(res, " }");
+
+            return res;
+        }
         case LILY_TOKEN_KIND_MINUS_EQ:
             return from__String("-=");
         case LILY_TOKEN_KIND_MINUS_MINUS_EQ:
@@ -1022,6 +1054,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8";
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
             return "LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE";
+        case LILY_TOKEN_KIND_MACRO_EXPAND:
+            return "LILY_TOKEN_KIND_MACRO_EXPAND";
         case LILY_TOKEN_KIND_MINUS_EQ:
             return "LILY_TOKEN_KIND_MINUS_EQ";
         case LILY_TOKEN_KIND_MINUS_MINUS_EQ:
@@ -1237,6 +1271,22 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_usize);
+        case LILY_TOKEN_KIND_MACRO_EXPAND: {
+            String *s = from__String("{ ");
+
+            for (Usize i = 0; i < self->macro_expand->len; i++) {
+                char *token_s = CALL_DEBUG_IMPL(to_string, LilyToken, get__Vec(self->macro_expand, i));
+
+                push_str__String(s, token_s);
+                lily_free(token_s);
+
+                if (i != self->macro_expand->len - 1) {
+                    push_str__String(s, ", ");
+                }
+            }
+
+            return format("LilyToken{{ kind = {s}, location = {sa}, macro_expand = {Sr} }", CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind), CALL_DEBUG_IMPL(to_string, Location, &self->location), s);
+        }
         default:
             return format(
               "LilyToken{{ kind = {s}, location = {sa} }",
