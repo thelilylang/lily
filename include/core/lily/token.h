@@ -221,7 +221,7 @@ typedef struct LilyToken
         Uint64 literal_suffix_uint64;
         Uint8 literal_suffix_uint8;
         Usize literal_suffix_usize;
-        Vec *macro_expand; // Vec<LilyToken*>*
+        Vec *macro_expand; // Vec<LilyToken*(&)>*
     };
 } LilyToken;
 

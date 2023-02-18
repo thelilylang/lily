@@ -68,7 +68,7 @@ static inline VARIANT_DESTRUCTOR(LilyToken, literal_int_16, LilyToken *self);
 static inline VARIANT_DESTRUCTOR(LilyToken, literal_string, LilyToken *self);
 
 // Free LilyToken type (LILY_TOKEN_KIND_MACRO_EXPAND).
-static VARIANT_DESTRUCTOR(LilyToken, macro_expand, LilyToken *self);
+static inline VARIANT_DESTRUCTOR(LilyToken, macro_expand, LilyToken *self);
 
 CONSTRUCTOR(LilyToken *, LilyToken, enum LilyTokenKind kind, Location location)
 {
@@ -1373,9 +1373,6 @@ VARIANT_DESTRUCTOR(LilyToken, literal_string, LilyToken *self)
 
 VARIANT_DESTRUCTOR(LilyToken, macro_expand, LilyToken *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->macro_expand->buffer, self->macro_expand->len, LilyToken);
-    FREE(Vec, self->macro_expand);
     lily_free(self);
 }
 
