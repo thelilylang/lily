@@ -42,11 +42,14 @@
 CONSTRUCTOR(LilyPackage *,
             LilyPackage,
             String *name,
-            enum LilyVisibility visibility)
+            enum LilyVisibility visibility,
+            Vec *public_macros)
 {
     LilyPackage *self = lily_malloc(sizeof(LilyPackage));
 
     self->name = name;
+    self->public_macros = public_macros;
+    self->private_macros = NEW(Vec);
     self->sub_packages = NEW(Vec);
     self->pacakge_dependencies = NEW(Vec);
     self->lib_dependencies = NEW(Vec);
@@ -58,9 +61,12 @@ CONSTRUCTOR(LilyPackage *,
 LilyPackage *
 build__LilyPackage(const CompileConfig *config,
                    String *name,
-                   enum LilyVisibility visibility)
+                   enum LilyVisibility visibility,
+                   Vec *public_macros)
 {
-    LilyPackage *self = NEW(LilyPackage, name, visibility);
+    LilyPackage *self = public_macros
+                          ? NEW(LilyPackage, name, visibility, NULL)
+                          : NEW(LilyPackage, name, visibility, NEW(Vec));
 
     char *content = read_file__Path(config->filename);
     char *file_ext = get_extension__Path(config->filename);
@@ -87,9 +93,23 @@ build__LilyPackage(const CompileConfig *config,
     return self;
 }
 
+LilyPackage *
+compile__LilyPackage(const CompileConfig *config,
+                     String *name,
+                     enum LilyVisibility visibility)
+{
+    return build__LilyPackage(config, name, visibility, NULL);
+}
+
 DESTRUCTOR(LilyPackage, LilyPackage *self)
 {
     FREE(String, self->name);
+
+    if (self->public_macros) {
+        FREE(Vec, self->public_macros);
+    }
+
+    FREE(Vec, self->private_macros);
     FREE_BUFFER_ITEMS(
       self->sub_packages->buffer, self->sub_packages->len, LilyPackage);
     FREE(Vec, self->sub_packages);

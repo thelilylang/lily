@@ -34,8 +34,9 @@
 typedef struct LilyPackage
 {
     String *name;
+    Vec *public_macros;  // Vec<LilyMacro*>*?
+    Vec *private_macros; // Vec<LilyMacro*>*
     // Import import
-    // Macro macro
     Vec *sub_packages;         // Vec<LilyPackage*>*
     Vec *pacakge_dependencies; // Vec<LilyPackage*>*
     Vec *lib_dependencies;     // Vec<LilyLibrary*>*
@@ -50,7 +51,8 @@ typedef struct LilyPackage
 CONSTRUCTOR(LilyPackage *,
             LilyPackage,
             String *name,
-            enum LilyVisibility visibility);
+            enum LilyVisibility visibility,
+            Vec *public_macros);
 
 /**
  *
@@ -59,7 +61,17 @@ CONSTRUCTOR(LilyPackage *,
 LilyPackage *
 build__LilyPackage(const CompileConfig *config,
                    String *name,
-                   enum LilyVisibility visibility);
+                   enum LilyVisibility visibility,
+                   Vec *public_macros);
+
+/**
+ *
+ * @brief Compile package.
+ */
+LilyPackage *
+compile__LilyPackage(const CompileConfig *config,
+                     String *name,
+                     enum LilyVisibility visibility);
 
 /**
  *
