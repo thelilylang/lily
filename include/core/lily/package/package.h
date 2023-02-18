@@ -34,8 +34,8 @@
 typedef struct LilyPackage
 {
     String *name;
-    Vec *public_macros;  // Vec<LilyMacro*>*?
-    Vec *private_macros; // Vec<LilyMacro*>*
+    Vec *public_macros;  // Vec<LilyPreparserMacro*>*?
+    Vec *private_macros; // Vec<LilyPreparserMacro*>*
     // Import import
     Vec *sub_packages;         // Vec<LilyPackage*>*
     Vec *pacakge_dependencies; // Vec<LilyPackage*>*
@@ -67,6 +67,7 @@ build__LilyPackage(const CompileConfig *config,
 /**
  *
  * @brief Compile package.
+ * @note Begin by the main package.
  */
 LilyPackage *
 compile__LilyPackage(const CompileConfig *config,
