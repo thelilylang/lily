@@ -728,7 +728,8 @@ to_string__LilyToken(LilyToken *self)
             String *res = from__String("{ ");
 
             for (Usize i = 0; i < self->macro_expand->len; i++) {
-                String *s = to_string__LilyToken(get__Vec(self->macro_expand, i));
+                String *s =
+                  to_string__LilyToken(get__Vec(self->macro_expand, i));
 
                 APPEND_AND_FREE(res, s);
 
@@ -1278,7 +1279,8 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
             String *s = from__String("{ ");
 
             for (Usize i = 0; i < self->macro_expand->len; i++) {
-                char *token_s = CALL_DEBUG_IMPL(to_string, LilyToken, get__Vec(self->macro_expand, i));
+                char *token_s = CALL_DEBUG_IMPL(
+                  to_string, LilyToken, get__Vec(self->macro_expand, i));
 
                 push_str__String(s, token_s);
                 lily_free(token_s);
@@ -1288,7 +1290,11 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
                 }
             }
 
-            return format("LilyToken{{ kind = {s}, location = {sa}, macro_expand = {Sr} }", CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind), CALL_DEBUG_IMPL(to_string, Location, &self->location), s);
+            return format(
+              "LilyToken{{ kind = {s}, location = {sa}, macro_expand = {Sr} }",
+              CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+              CALL_DEBUG_IMPL(to_string, Location, &self->location),
+              s);
         }
         default:
             return format(
@@ -1367,7 +1373,8 @@ VARIANT_DESTRUCTOR(LilyToken, literal_string, LilyToken *self)
 
 VARIANT_DESTRUCTOR(LilyToken, macro_expand, LilyToken *self)
 {
-    FREE_BUFFER_ITEMS(self->macro_expand->buffer, self->macro_expand->len, LilyToken);
+    FREE_BUFFER_ITEMS(
+      self->macro_expand->buffer, self->macro_expand->len, LilyToken);
     FREE(Vec, self->macro_expand);
     lily_free(self);
 }
