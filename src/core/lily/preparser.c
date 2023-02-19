@@ -40,6 +40,10 @@ next_token__LilyPreparser(LilyPreparser *self);
 static void
 eat_token__LilyPreparser(LilyPreparser *self);
 
+// Peek token at position + n.
+static LilyToken *
+peek_token(LilyPreparser *self, Usize n);
+
 // Combine next_token and eat_token function.
 static void
 eat_and_next_token__LilyPreparser(LilyPreparser *self);
@@ -154,6 +158,16 @@ eat_token__LilyPreparser(LilyPreparser *self)
         FREE(LilyToken, remove__Vec(self->scanner->tokens, self->position));
         self->current = get__Vec(self->scanner->tokens, self->position);
     }
+}
+
+LilyToken *
+peek_token(LilyPreparser *self, Usize n)
+{
+    if (self->position + n < self->position) {
+        return get__Vec(self->scanner->tokens, self->position + n);
+    }
+
+    return NULL;
 }
 
 void
@@ -285,6 +299,8 @@ run__LilyPreparser(LilyPreparser *self)
             case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
                 break;
             case LILY_TOKEN_KIND_COMMENT_DOC:
+                break;
+            case LILY_TOKEN_KIND_AT:
                 break;
             default: {
                 String *current_s = to_string__LilyToken(self->current);
