@@ -61,6 +61,23 @@ from__Vec(void **buffer, Usize len)
     return self;
 }
 
+void *
+get__Vec(Vec *self, Usize index)
+{
+    ASSERT(index < self->len);
+
+    return self->buffer[index];
+}
+
+void
+grow__Vec(Vec *self, Usize new_capacity)
+{
+    ASSERT(new_capacity >= self->capacity);
+
+    self->buffer = lily_realloc(self->buffer, PTR_SIZE * new_capacity);
+    self->capacity = new_capacity;
+}
+
 Vec *
 init__Vec(Usize len, ...)
 {
@@ -78,21 +95,23 @@ init__Vec(Usize len, ...)
     return self;
 }
 
-void *
-get__Vec(Vec *self, Usize index)
+void
+insert__Vec(Vec *self, void *item, Usize index)
 {
     ASSERT(index < self->len);
 
-    return self->buffer[index];
-}
+    void *move = self->buffer[index];
 
-void
-grow__Vec(Vec *self, Usize new_capacity)
-{
-    ASSERT(new_capacity >= self->capacity);
+    self->buffer[index] = item;
 
-    self->buffer = lily_realloc(self->buffer, PTR_SIZE * new_capacity);
-    self->capacity = new_capacity;
+    for (Usize i = index + 1; i < self->len; i++) {
+        void *tmp_move = move;
+        move = self->buffer[i];
+
+        self->buffer[i] = tmp_move;
+    }
+
+    push__Vec(self, move);
 }
 
 void *

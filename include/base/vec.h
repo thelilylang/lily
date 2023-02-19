@@ -53,13 +53,6 @@ from__Vec(void **buffer, Usize len);
 
 /**
  *
- * @brief Initialize Vec with `...` parameter.
- */
-Vec *
-init__Vec(Usize len, ...);
-
-/**
- *
  * @brief Get item from Vec.
  */
 void *
@@ -72,6 +65,20 @@ get__Vec(Vec *self, Usize index);
  */
 void
 grow__Vec(Vec *self, Usize new_capacity);
+
+/**
+ *
+ * @brief Initialize Vec with `...` parameter.
+ */
+Vec *
+init__Vec(Usize len, ...);
+
+/**
+ *
+ * @brief Insert an item at n index.
+ */
+void
+insert__Vec(Vec *self, void *item, Usize index);
 
 /**
  *
