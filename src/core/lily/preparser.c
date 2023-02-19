@@ -25,6 +25,7 @@
 #include <base/new.h>
 
 #include <core/lily/error.h>
+#include <core/lily/lily.h>
 #include <core/lily/preparser.h>
 #include <core/lily/token.h>
 #include <core/shared/diagnostic.h>
@@ -262,6 +263,13 @@ run__LilyPreparser(LilyPreparser *self)
 
         next_token__LilyPreparser(self);
     }
+
+#ifdef DEBUG_PREPARSER
+    puts("\n====Preparser====\n");
+    for (Usize i = 0; i < self->scanner->tokens->len; i++) {
+        CALL_DEBUG(LilyToken, get__Vec(self->scanner->tokens, i));
+    }
+#endif
 
     if (self->count_error > 0) {
         exit(1);

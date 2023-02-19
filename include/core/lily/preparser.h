@@ -118,7 +118,7 @@ DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self);
 
 typedef struct LilyPreparser
 {
-    const LilyScanner *scanner;
+    LilyScanner *scanner;
     Vec *imports; // Vec<LilyPreparserImport*>*
     LilyToken *current;
     Usize position;
@@ -129,7 +129,7 @@ typedef struct LilyPreparser
  *
  * @brief Construct LilyPreparser type.
  */
-inline CONSTRUCTOR(LilyPreparser, LilyPreparser, const LilyScanner *scanner)
+inline CONSTRUCTOR(LilyPreparser, LilyPreparser, LilyScanner *scanner)
 {
     return (LilyPreparser){ .scanner = scanner,
                             .imports = NEW(Vec),
