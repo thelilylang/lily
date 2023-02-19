@@ -33,6 +33,18 @@
 #undef DEBUG_SCANNER
 #endif
 
+#define DEBUG_PREPARSER
+
+#ifndef ENV_DEBUG
+#undef DEBUG_PREPARSER
+#endif
+
+#define DEBUG_PRECOMPILE
+
+#ifndef ENV_DEBUG
+#undef DEBUG_PRECOMPILE
+#endif
+
 #define DEBUG_PARSER
 
 #ifndef ENV_DEBUG
