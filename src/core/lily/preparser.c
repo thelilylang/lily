@@ -39,15 +39,16 @@ next_token__LilyPreparser(LilyPreparser *self);
 static void
 eat_token__LilyPreparser(LilyPreparser *self);
 
-// Preparse import.
+// Combine next_token and eat_token function.
+static void
+eat_and_next_token__LilyPreparser(LilyPreparser *self);
+
 static LilyPreparserImport *
 preparse_import__LilyPreparser(LilyPreparser *self);
 
-// Preparse macro.
 static LilyPreparserMacro *
 preparser_macro__LilyPreparser(LilyPreparser *self);
 
-// Preparse package.
 static LilyPreparserPackage *
 preparse_package__LilyPreparser(LilyPreparser *self);
 
@@ -157,18 +158,28 @@ eat_token__LilyPreparser(LilyPreparser *self)
     }
 }
 
+void
+eat_and_next_token__LilyPreparser(LilyPreparser *self)
+{
+    eat_token__LilyPreparser(self);
+
+    if (self->position < self->scanner->tokens->len) {
+        self->current = get__Vec(self->scanner->tokens, self->position);
+    }
+}
+
 LilyPreparserImport *
 preparse_import__LilyPreparser(LilyPreparser *self)
 {
     String *import_value = NULL;
     String *as_value = NULL;
 
-    next_token__LilyPreparser(self);
+    eat_and_next_token__LilyPreparser(self);
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_LITERAL_STRING:
             import_value = clone__String(self->current->literal_string);
-            next_token__LilyPreparser(self);
+            eat_and_next_token__LilyPreparser(self);
             break;
         default:
             emit__Diagnostic(
@@ -186,7 +197,7 @@ preparse_import__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_AS:
-            next_token__LilyPreparser(self);
+            eat_and_next_token__LilyPreparser(self);
 
             if (self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL) {
                 as_value = clone__String(self->current->identifier_normal);
