@@ -64,6 +64,22 @@ test_get__Vec()
 }
 
 void
+test_insert__Vec()
+{
+    Vec *v = init__Vec(4, (int *)1, (int *)2, (int *)4, (int *)5);
+
+    insert__Vec(v, (int *)3, 2);
+
+    ASSERT(v->buffer[0] == (int *)1);
+    ASSERT(v->buffer[1] == (int *)2);
+    ASSERT(v->buffer[2] == (int *)3);
+    ASSERT(v->buffer[3] == (int *)4);
+    ASSERT(v->buffer[4] == (int *)5);
+
+    FREE(Vec, v);
+}
+
+void
 test_pop__Vec()
 {
     Vec *v = NEW(Vec);

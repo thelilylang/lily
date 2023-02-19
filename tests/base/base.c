@@ -64,6 +64,7 @@ main()
     test_new__Vec();
     test_from__Vec();
     test_get__Vec();
+    test_insert__Vec();
     test_pop__Vec();
     test_push__Vec();
     test_remove__Vec();
