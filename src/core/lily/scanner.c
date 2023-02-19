@@ -2086,6 +2086,7 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
         }
     }
 #else
+    puts("====Scanner====\n");
     for (Usize i = 0; i < self->tokens->len; i++) {
         CALL_DEBUG(LilyToken, get__Vec(self->tokens, i));
     }
