@@ -297,12 +297,18 @@ run__LilyPreparser(LilyPreparser *self)
             case LILY_TOKEN_KIND_KEYWORD_TYPE:
                 break;
             case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                if (peek_token__LilyPreparser(self, 1)->kind ==
+                    LILY_TOKEN_KIND_BANG) {
+                } else {
+                    goto unexpected_token;
+                }
                 break;
             case LILY_TOKEN_KIND_COMMENT_DOC:
                 break;
             case LILY_TOKEN_KIND_AT:
                 break;
             default: {
+                unexpected_token: {
                 String *current_s = to_string__LilyToken(self->current);
 
                 emit__Diagnostic(
@@ -318,6 +324,7 @@ run__LilyPreparser(LilyPreparser *self)
                   &self->count_error);
 
                 FREE(String, current_s);
+                }
 
                 break;
             }
