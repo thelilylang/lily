@@ -91,7 +91,8 @@ build__LilyPackage(const CompileConfig *config,
     FREE(LilyScanner, &scanner);
 
     // ===============
-    FREE_BUFFER_ITEMS(preparser.imports->buffer, preparser.imports->len, LilyPreparserImport);
+    FREE_BUFFER_ITEMS(
+      preparser.imports->buffer, preparser.imports->len, LilyPreparserImport);
     FREE(Vec, preparser.imports);
     // ===============
 
