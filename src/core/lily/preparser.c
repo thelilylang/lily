@@ -42,7 +42,7 @@ eat_token__LilyPreparser(LilyPreparser *self);
 
 // Peek token at position + n.
 static LilyToken *
-peek_token__LilyPreparser(LilyPreparser *self, Usize n);
+peek_token__LilyPreparser(const LilyPreparser *self, Usize n);
 
 // Combine next_token and eat_token function.
 static void
@@ -161,7 +161,7 @@ eat_token__LilyPreparser(LilyPreparser *self)
 }
 
 LilyToken *
-peek_token__LilyPreparser(LilyPreparser *self, Usize n)
+peek_token__LilyPreparser(const LilyPreparser *self, Usize n)
 {
     if (self->position + n < self->position) {
         return get__Vec(self->scanner->tokens, self->position + n);
