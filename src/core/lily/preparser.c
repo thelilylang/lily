@@ -22,8 +22,14 @@
  * SOFTWARE.
  */
 
+#include <base/new.h>
+
+#include <core/lily/error.h>
 #include <core/lily/preparser.h>
 #include <core/lily/token.h>
+#include <core/shared/diagnostic.h>
+
+#include <stdio.h>
 
 // Advance to the one position and update the current.
 static void
@@ -32,6 +38,18 @@ next_token__LilyPreparser(LilyPreparser *self);
 // Remove an item at the current position and update the current.
 static void
 eat_token__LilyPreparser(LilyPreparser *self);
+
+// Preparse import.
+static LilyPreparserImport *
+preparse_import__LilyPreparser(LilyPreparser *self);
+
+// Preparse macro.
+static LilyPreparserMacro *
+preparser_macro__LilyPreparser(LilyPreparser *self);
+
+// Preparse package.
+static LilyPreparserPackage *
+preparse_package__LilyPreparser(LilyPreparser *self);
 
 CONSTRUCTOR(LilyPreparserImport *,
             LilyPreparserImport,
@@ -49,7 +67,11 @@ CONSTRUCTOR(LilyPreparserImport *,
 DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self)
 {
     FREE(String, self->value);
-    FREE(String, self->as);
+
+    if (self->as) {
+        FREE(String, self->as);
+    }
+
     lily_free(self);
 }
 
@@ -91,7 +113,10 @@ DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self)
     lily_free(self);
 }
 
-CONSTRUCTOR(LilyPreparserPackage*, LilyPreparserPackage, String *name, Vec *sub_packages)
+CONSTRUCTOR(LilyPreparserPackage *,
+            LilyPreparserPackage,
+            String *name,
+            Vec *sub_packages)
 {
     LilyPreparserPackage *self = lily_malloc(sizeof(LilyPreparserPackage));
 
@@ -104,7 +129,9 @@ CONSTRUCTOR(LilyPreparserPackage*, LilyPreparserPackage, String *name, Vec *sub_
 DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self)
 {
     FREE(String, self->name);
-    FREE_BUFFER_ITEMS(self->sub_packages->buffer, self->sub_packages->len, LilyPreparserSubPackage);
+    FREE_BUFFER_ITEMS(self->sub_packages->buffer,
+                      self->sub_packages->len,
+                      LilyPreparserSubPackage);
     FREE(Vec, self->sub_packages);
     lily_free(self);
 }
@@ -130,13 +157,90 @@ eat_token__LilyPreparser(LilyPreparser *self)
     }
 }
 
+LilyPreparserImport *
+preparse_import__LilyPreparser(LilyPreparser *self)
+{
+    String *import_value = NULL;
+    String *as_value = NULL;
+
+    next_token__LilyPreparser(self);
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_LITERAL_STRING:
+            import_value = clone__String(self->current->literal_string);
+            next_token__LilyPreparser(self);
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->scanner->source.file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IMPORT_VALUE),
+                          NULL,
+                          NULL,
+                          NULL),
+              &self->count_error);
+            return NULL;
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_AS:
+            next_token__LilyPreparser(self);
+
+            if (self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL) {
+                as_value = clone__String(self->current->identifier_normal);
+            } else {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->scanner->source.file,
+                    &self->current->location,
+                    NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_TOKEN),
+                    NULL,
+                    NULL,
+                    from__String("expected identifier after `as` keyword")),
+                  &self->count_error);
+
+                return NULL;
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    return NEW(LilyPreparserImport, import_value, as_value);
+}
+
+LilyPreparserMacro *
+preparser_macro__LilyPreparser(LilyPreparser *self)
+{
+    TODO("preparse macro");
+}
+
+LilyPreparserPackage *
+preparse_package__LilyPreparser(LilyPreparser *self)
+{
+    TODO("preparse package");
+}
+
 void
 run__LilyPreparser(LilyPreparser *self)
 {
     while (self->current->kind != LILY_TOKEN_KIND_EOF) {
         switch (self->current->kind) {
-            case LILY_TOKEN_KIND_KEYWORD_IMPORT:
+            case LILY_TOKEN_KIND_KEYWORD_IMPORT: {
+                LilyPreparserImport *import =
+                  preparse_import__LilyPreparser(self);
+
+                if (import) {
+                    push__Vec(self->imports, import);
+                }
+
                 break;
+            }
             case LILY_TOKEN_KIND_KEYWORD_MACRO:
                 break;
             case LILY_TOKEN_KIND_KEYWORD_PUB:
@@ -146,5 +250,9 @@ run__LilyPreparser(LilyPreparser *self)
         }
 
         next_token__LilyPreparser(self);
+    }
+
+    if (self->count_error > 0) {
+        exit(1);
     }
 }
