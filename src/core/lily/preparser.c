@@ -150,11 +150,8 @@ next_token__LilyPreparser(LilyPreparser *self)
 void
 eat_token__LilyPreparser(LilyPreparser *self)
 {
-    FREE(LilyToken, remove__Vec(self->scanner->tokens, self->position));
-
-    if (self->position >= self->scanner->tokens->len) {
-        self->current = last__Vec(self->scanner->tokens);
-    } else {
+    if (self->current->kind != LILY_TOKEN_KIND_EOF) {
+        FREE(LilyToken, remove__Vec(self->scanner->tokens, self->position));
         self->current = get__Vec(self->scanner->tokens, self->position);
     }
 }
@@ -229,7 +226,19 @@ preparse_import__LilyPreparser(LilyPreparser *self)
 LilyPreparserMacro *
 preparser_macro__LilyPreparser(LilyPreparser *self)
 {
-    TODO("preparse macro");
+    String *name = NULL;
+    Vec *tokens = NULL;
+
+    eat_and_next_token__LilyPreparser(self);
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            break;
+        default:
+            break;
+    }
+
+    return NEW(LilyPreparserMacro, name, tokens);
 }
 
 LilyPreparserPackage *
