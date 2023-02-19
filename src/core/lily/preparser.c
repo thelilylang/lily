@@ -200,17 +200,21 @@ preparse_import__LilyPreparser(LilyPreparser *self)
             if (self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL) {
                 as_value = clone__String(self->current->identifier_normal);
             } else {
+                String *current_s = to_string__LilyToken(self->current);
+
                 emit__Diagnostic(
                   NEW_VARIANT(
                     Diagnostic,
                     simple_lily_error,
                     self->scanner->source.file,
                     &self->current->location,
-                    NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_TOKEN),
+                    NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                     NULL,
                     NULL,
                     from__String("expected identifier after `as` keyword")),
                   &self->count_error);
+
+                FREE(String, current_s);
 
                 return NULL;
             }
@@ -264,10 +268,43 @@ run__LilyPreparser(LilyPreparser *self)
             }
             case LILY_TOKEN_KIND_KEYWORD_MACRO:
                 break;
+            case LILY_TOKEN_KIND_KEYWORD_PACKAGE:
+                break;
             case LILY_TOKEN_KIND_KEYWORD_PUB:
                 break;
-            default:
+            case LILY_TOKEN_KIND_KEYWORD_MODULE:
                 break;
+            case LILY_TOKEN_KIND_KEYWORD_TEST:
+                break;
+            case LILY_TOKEN_KIND_KEYWORD_FUN:
+                break;
+            case LILY_TOKEN_KIND_KEYWORD_object:
+                break;
+            case LILY_TOKEN_KIND_KEYWORD_TYPE:
+                break;
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                break;
+            case LILY_TOKEN_KIND_COMMENT_DOC:
+                break;
+            default: {
+                String *current_s = to_string__LilyToken(self->current);
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->scanner->source.file,
+                    &self->current->location,
+                    NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                    NULL,
+                    NULL,
+                    NULL),
+                  &self->count_error);
+
+                FREE(String, current_s);
+
+                break;
+            }
         }
 
         next_token__LilyPreparser(self);
