@@ -35,7 +35,7 @@
 typedef struct LilyPreparserImport
 {
     String *value;
-    String *as; // String?*
+    String *as; // String*?
 } LilyPreparserImport;
 
 /**
@@ -97,7 +97,7 @@ DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self);
 
 typedef struct LilyPreparserPackage
 {
-    String *name;
+    String *name;      // String*?
     Vec *sub_packages; // Vec<LilyPreparserSubPackage*>*
 } LilyPreparserPackage;
 
@@ -105,10 +105,7 @@ typedef struct LilyPreparserPackage
  *
  * @brief Construct LilyPreparserPackage type.
  */
-CONSTRUCTOR(LilyPreparserPackage *,
-            LilyPreparserPackage,
-            String *name,
-            Vec *sub_packages);
+CONSTRUCTOR(LilyPreparserPackage *, LilyPreparserPackage, String *name);
 
 /**
  *
@@ -121,6 +118,7 @@ typedef struct LilyPreparser
     LilyScanner *scanner;
     Vec *imports;       // Vec<LilyPreparserImport*>*
     Vec *public_macros; // Vec<LilyPreparserMacro*>*
+    LilyPreparserPackage *package;
     LilyToken *current;
     Usize position;
     Usize count_error;
@@ -130,11 +128,15 @@ typedef struct LilyPreparser
  *
  * @brief Construct LilyPreparser type.
  */
-inline CONSTRUCTOR(LilyPreparser, LilyPreparser, LilyScanner *scanner)
+inline CONSTRUCTOR(LilyPreparser,
+                   LilyPreparser,
+                   LilyScanner *scanner,
+                   String *package_name)
 {
     return (LilyPreparser){ .scanner = scanner,
                             .imports = NEW(Vec),
                             .public_macros = NEW(Vec),
+                            .package = NEW(LilyPreparserPackage, package_name),
                             .current = get__Vec(scanner->tokens, 0),
                             .position = 0,
                             .count_error = 0 };

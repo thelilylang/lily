@@ -127,22 +127,18 @@ DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self)
     lily_free(self);
 }
 
-CONSTRUCTOR(LilyPreparserPackage *,
-            LilyPreparserPackage,
-            String *name,
-            Vec *sub_packages)
+CONSTRUCTOR(LilyPreparserPackage *, LilyPreparserPackage, String *name)
 {
     LilyPreparserPackage *self = lily_malloc(sizeof(LilyPreparserPackage));
 
     self->name = name;
-    self->sub_packages = sub_packages;
+    self->sub_packages = NEW(Vec);
 
     return self;
 }
 
 DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self)
 {
-    FREE(String, self->name);
     FREE_BUFFER_ITEMS(self->sub_packages->buffer,
                       self->sub_packages->len,
                       LilyPreparserSubPackage);
@@ -433,7 +429,7 @@ run__LilyPreparser(LilyPreparser *self)
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
                 if (peeked) {
-                    if (peeked->kind == LILY_TOKEN_KIND_BANG) {
+                    if (peeked->kind != LILY_TOKEN_KIND_BANG) {
                     } else {
                         goto unexpected_token;
                     }
