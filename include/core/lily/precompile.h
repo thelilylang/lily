@@ -36,15 +36,18 @@ typedef struct LilyPrecompile
 } LilyPrecompile;
 
 /**
- * 
+ *
  * @brief Construct LilyPrecompile type.
-*/
-CONSTRUCTOR(LilyPrecompile, LilyPrecompile, const LilyPreparser *preparser, LilyPackage *package);
+ */
+CONSTRUCTOR(LilyPrecompile,
+            LilyPrecompile,
+            const LilyPreparser *preparser,
+            LilyPackage *package);
 
 /**
- * 
+ *
  * @brief Run the pre-compiler.
-*/
+ */
 void
 run__LilyPrecompile(LilyPrecompile *self);
 

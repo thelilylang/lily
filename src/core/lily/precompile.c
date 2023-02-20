@@ -22,19 +22,18 @@
  * SOFTWARE.
  */
 
-#include <core/lily/precompile.h>
 #include <core/lily/package/package.h>
+#include <core/lily/precompile.h>
 
-CONSTRUCTOR(LilyPrecompile, LilyPrecompile, const LilyPreparser *preparser, LilyPackage *package)
+CONSTRUCTOR(LilyPrecompile,
+            LilyPrecompile,
+            const LilyPreparser *preparser,
+            LilyPackage *package)
 {
-    return (LilyPrecompile){
-        .preparser = preparser,
-        .package = package
-    };
+    return (LilyPrecompile){ .preparser = preparser, .package = package };
 }
 
 void
 run__LilyPrecompile(LilyPrecompile *self)
 {
-
 }
