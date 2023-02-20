@@ -50,6 +50,8 @@ CONSTRUCTOR(LilyPackage *,
     self->name = name;
     self->public_macros = public_macros;
     self->private_macros = NEW(Vec);
+    self->public_imports = NEW(Vec);
+    self->private_imports = NEW(Vec);
     self->sub_packages = NEW(Vec);
     self->pacakge_dependencies = NEW(Vec);
     self->lib_dependencies = NEW(Vec);
@@ -140,10 +142,21 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(String, self->name);
 
     if (self->public_macros) {
+        // TODO: add free for buffer
         FREE(Vec, self->public_macros);
     }
 
+    // TODO: add free for buffer
     FREE(Vec, self->private_macros);
+
+    FREE_BUFFER_ITEMS(
+      self->public_imports->buffer, self->public_imports->len, LilyImport);
+    FREE(Vec, self->public_imports);
+
+    FREE_BUFFER_ITEMS(
+      self->private_imports->buffer, self->private_imports->len, LilyImport);
+    FREE(Vec, self->private_imports);
+
     FREE_BUFFER_ITEMS(
       self->sub_packages->buffer, self->sub_packages->len, LilyPackage);
     FREE(Vec, self->sub_packages);
