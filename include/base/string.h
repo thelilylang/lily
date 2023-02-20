@@ -27,6 +27,7 @@
 
 #include <base/macros.h>
 #include <base/types.h>
+#include <base/vec.h>
 
 #include <stdbool.h>
 
@@ -141,10 +142,10 @@ repeat__String(char *s, Usize n);
 /**
  *
  * @brief Split string.
- * @return A char* array.
+ * @return Vec<String*>*.
  * @note The result and its items can be free.
  */
-char **
+Vec *
 split__String(String *self, char separator);
 
 /**
