@@ -150,6 +150,13 @@ split__String(String *self, char separator);
 
 /**
  *
+ * @brief Take a slice of string at index to the end.
+ */
+String *
+take_slice__String(String *self, Usize index);
+
+/**
+ *
  * @brief Ungrow String buffer.
  */
 void

@@ -168,7 +168,7 @@ split__String(String *self, char separator)
     Vec *res = NEW(Vec);
 
     for (Usize i = 0; i < self->len; i++) {
-        String *item = NEW(String); 
+        String *item = NEW(String);
 
         while (self->buffer[i]) {
             if (self->buffer[i] != separator) {
@@ -179,6 +179,20 @@ split__String(String *self, char separator)
         }
 
         push__Vec(res, item);
+    }
+
+    return res;
+}
+
+String *
+take_slice__String(String *self, Usize index)
+{
+    ASSERT(index < self->len);
+
+    String *res = NEW(String);
+
+    for (Usize i = index; i < self->len; i++) {
+        push__String(res, self->buffer[i]);
     }
 
     return res;

@@ -1,7 +1,7 @@
 #include <base/assert.h>
+#include <base/macros.h>
 #include <base/new.h>
 #include <base/string.h>
-#include <base/macros.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,8 +60,8 @@ test_split__String()
     String *s = from__String("Hello\nWorld");
     Vec *split = split__String(s, '\n');
 
-    ASSERT(!strcmp(CAST(String*, split->buffer[0])->buffer, "Hello"));
-    ASSERT(!strcmp(CAST(String*, split->buffer[1])->buffer, "World"));
+    ASSERT(!strcmp(CAST(String *, split->buffer[0])->buffer, "Hello"));
+    ASSERT(!strcmp(CAST(String *, split->buffer[1])->buffer, "World"));
 
     FREE(String, s);
 
