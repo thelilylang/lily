@@ -28,6 +28,8 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+#include <cli/config/compile.h>
+
 #include <core/lily/package/library.h>
 #include <core/lily/visibility.h>
 

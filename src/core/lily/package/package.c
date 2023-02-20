@@ -92,6 +92,10 @@ build__LilyPackage(const CompileConfig *config,
         self->name = from__String("main");
     }
 
+    LilyPrecompile precompile = NEW(LilyPrecompile, &preparser, self);
+
+    run__LilyPrecompile(&precompile);
+
     lily_free(file_ext);
     lily_free(content);
     FREE(LilyScanner, &scanner);
