@@ -92,6 +92,87 @@ VARIANT_CONSTRUCTOR(LilyImportValue *, LilyImportValue, select, Vec *select)
     return self;
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyImportValueKind, enum LilyImportValueLKind kind)
+{
+    switch (self) {
+        case LILY_IMPORT_VALUE_KIND_BUILTIN:
+            return "LILY_IMPORT_VALUE_KIND_BUILTIN";
+        case LILY_IMPORT_VALUE_KIND_CORE:
+            return "LILY_IMPORT_VALUE_KIND_CORE";
+        case LILY_IMPORT_VALUE_KIND_FILE:
+            return "LILY_IMPORT_VALUE_KIND_FILE";
+        case LILY_IMPORT_VALUE_KIND_LIBRARY:
+            return "LILY_IMPORT_VALUE_KIND_LIBRARY";
+        case LILY_IMPORT_VALUE_KIND_PACKAGE:
+            return "LILY_IMPORT_VALUE_KIND_PACKAGE";
+        case LILY_IMPORT_VALUE_KIND_SELECT_ALL:
+            return "LILY_IMPORT_VALUE_KIND_SELECT_ALL";
+        case LILY_IMPORT_VALUE_KIND_SELECT:
+            return "LILY_IMPORT_VALUE_KIND_SELECT";
+        case LILY_IMPORT_VALUE_KIND_STD:
+            return "LILY_IMPORT_VALUE_KIND_STD";
+        case LILY_IMPORT_VALUE_KIND_URL:
+            return "LILY_IMPORT_VALUE_KIND_URL";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+String *
+IMPL_FOR_DEBUG(to_string, LilyImportValue, const LilyImportValue *self)
+{
+    switch (self->kind) {
+        case LILY_IMPORT_VALUE_KIND_FILE:
+            return format__String(
+              "LilyImportValue{{ kind = {s}, file = {S} }",
+              to_string__Debug__LilyImportValueKind(self->kind),
+              self->file);
+        case LILY_IMPORT_VALUE_KIND_LIBRARY:
+            return format__String(
+              "LilyImportValue{{ kind = {s}, library = {S} }",
+              to_string__Debug__LilyImportValueKind(self->kind),
+              self->library);
+        case LILY_IMPORT_VALUE_KIND_PACKAGE:
+            return format__String(
+              "LilyImportValue{{ kind = {s}, package = {S} }",
+              to_string__Debug__LilyImportValueKind(self->kind),
+              self->package);
+        case LILY_IMPORT_VALUE_KIND_SELECT: {
+            String *res =
+              format__String("LilyImportValue{{ kind = {s}, select = {{ ",
+                             to_string__Debug__LilyImportValueKind(self->kind));
+
+            for (Usize i = 0; i < self->select->len; i++) {
+                String *s =
+                  to_string__Debug__LilyImportValue(get__Vec(self->select, i));
+
+                APPEND_AND_FREE(res, s);
+
+                if (i != self->select->len - 1) {
+                    push_str__String(res, ", ");
+                }
+            }
+
+            push_str__String(res, " }");
+
+            return res;
+        }
+        default:
+            return format__String(
+              "LilyImportValue{{ kind = {s} }",
+              to_string__Debug__LilyImportValueKind(self->kind));
+    }
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyImportValue, const LilyImportValue *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyImportValue(self));
+}
+#endif
+
 VARIANT_DESTRUCTOR(LilyImportValue, file, LilyImportValue *self)
 {
     FREE(String, self->file);

@@ -92,6 +92,36 @@ VARIANT_CONSTRUCTOR(LilyImportValue *, LilyImportValue, select, Vec *select);
 
 /**
  *
+ * @brief Convert LilyImportValueKind in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyImportValueKind, enum LilyImportValueLKind kind);
+#endif
+
+/**
+ *
+ * @brief Convert LilyImportValue in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyImportValue, const LilyImportValue *self);
+#endif
+
+/**
+ *
+ * @brief Print debug LilyImportValue struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyImportValue, const LilyImportValue *self);
+#endif
+
+/**
+ *
  * @brief Free LilyImportValue type.
  */
 DESTRUCTOR(LilyImportValue, LilyImportValue *self);
