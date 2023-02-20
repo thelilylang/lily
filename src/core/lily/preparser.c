@@ -74,12 +74,14 @@ preparse_package__LilyPreparser(LilyPreparser *self);
 CONSTRUCTOR(LilyPreparserImport *,
             LilyPreparserImport,
             String *value,
-            String *as)
+            String *as,
+            Location location)
 {
     LilyPreparserImport *self = lily_malloc(sizeof(LilyPreparserImport));
 
     self->value = value;
     self->as = as;
+    self->location = location;
 
     return self;
 }
@@ -89,13 +91,13 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyPreparserImport, const LilyPreparserImport *self)
 {
     if (self->as) {
-        return format("LilyPreparserImport{{ value = {S}, as = {S} }",
+        return format("LilyPreparserImport{{ value = {S}, as = {S}, location = {sa} }",
                       self->value,
-                      self->as);
+                      self->as, to_string__Debug__Location(self->location));
     }
 
-    return format("LilyPreparserImport{{ value = {S}, as = NULL }",
-                  self->value);
+    return format("LilyPreparserImport{{ value = {S}, as = NULL, location = {sa} }",
+                  self->value, to_string__Debug__Location(self->location));
 }
 
 void
@@ -335,6 +337,7 @@ preparse_import__LilyPreparser(LilyPreparser *self)
 {
     String *import_value = NULL;
     String *as_value = NULL;
+    Location location = clone__Location(&self->current->location);
 
     eat_and_next_token__LilyPreparser(self);
 
@@ -389,6 +392,8 @@ preparse_import__LilyPreparser(LilyPreparser *self)
             break;
     }
 
+    end__Location(&location, self->current->location.end_line, self->current->location.end_column);
+
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
             eat_and_next_token__LilyPreparser(self);
@@ -412,7 +417,7 @@ preparse_import__LilyPreparser(LilyPreparser *self)
         }
     }
 
-    return NEW(LilyPreparserImport, import_value, as_value);
+    return NEW(LilyPreparserImport, import_value, as_value, location);
 }
 
 LilyPreparserMacro *

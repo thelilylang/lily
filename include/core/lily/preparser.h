@@ -36,6 +36,7 @@ typedef struct LilyPreparserImport
 {
     String *value;
     String *as; // String*?
+    Location location;
 } LilyPreparserImport;
 
 /**
@@ -45,7 +46,8 @@ typedef struct LilyPreparserImport
 CONSTRUCTOR(LilyPreparserImport *,
             LilyPreparserImport,
             String *value,
-            String *as);
+            String *as,
+            Location location);
 
 /**
  *
