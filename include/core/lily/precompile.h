@@ -97,7 +97,7 @@ VARIANT_CONSTRUCTOR(LilyImportValue *, LilyImportValue, select, Vec *select);
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyImportValueKind, enum LilyImportValueLKind kind);
+IMPL_FOR_DEBUG(to_string, LilyImportValueKind, enum LilyImportValueKind self);
 #endif
 
 /**

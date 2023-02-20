@@ -25,6 +25,10 @@
 #include <core/lily/package/package.h>
 #include <core/lily/precompile.h>
 
+#ifdef ENV_DEBUG
+#include <base/print.h>
+#endif
+
 // Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_FILE).
 static VARIANT_DESTRUCTOR(LilyImportValue, file, LilyImportValue *self);
 
@@ -94,7 +98,7 @@ VARIANT_CONSTRUCTOR(LilyImportValue *, LilyImportValue, select, Vec *select)
 
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyImportValueKind, enum LilyImportValueLKind kind)
+IMPL_FOR_DEBUG(to_string, LilyImportValueKind, enum LilyImportValueKind self)
 {
     switch (self) {
         case LILY_IMPORT_VALUE_KIND_BUILTIN:
