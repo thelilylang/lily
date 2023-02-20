@@ -25,9 +25,14 @@
 #include <core/lily/package/package.h>
 #include <core/lily/precompile.h>
 
+#include <string.h>
+
 #ifdef ENV_DEBUG
 #include <base/print.h>
 #endif
+
+// Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_ACCESS).
+static VARIANT_DESTRUCTOR(LilyImportValue, access, LilyImportValue *self);
 
 // Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_FILE).
 static VARIANT_DESTRUCTOR(LilyImportValue, file, LilyImportValue *self);
@@ -41,11 +46,25 @@ static VARIANT_DESTRUCTOR(LilyImportValue, package, LilyImportValue *self);
 // Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_SELECT).
 static VARIANT_DESTRUCTOR(LilyImportValue, select, LilyImportValue *self);
 
+static LilyImport *
+precompile_import__LilyPrecompile(LilyPrecompile *self,
+                                  const LilyPreparserImport *import);
+
 CONSTRUCTOR(LilyImportValue *, LilyImportValue, enum LilyImportValueKind kind)
 {
     LilyImportValue *self = lily_malloc(sizeof(LilyImportValue));
 
     self->kind = kind;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyImportValue *, LilyImportValue, access, String *access)
+{
+    LilyImportValue *self = lily_malloc(sizeof(LilyImportValue));
+
+    self->kind = LILY_IMPORT_VALUE_KIND_ACCCESS;
+    self->access = access;
 
     return self;
 }
@@ -101,6 +120,8 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyImportValueKind, enum LilyImportValueKind self)
 {
     switch (self) {
+        case LILY_IMPORT_VALUE_KIND_ACCCESS:
+            return "LILY_IMPORT_VALUE_KIND_ACCESS";
         case LILY_IMPORT_VALUE_KIND_BUILTIN:
             return "LILY_IMPORT_VALUE_KIND_BUILTIN";
         case LILY_IMPORT_VALUE_KIND_CORE:
@@ -128,6 +149,11 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyImportValue, const LilyImportValue *self)
 {
     switch (self->kind) {
+        case LILY_IMPORT_VALUE_KIND_ACCCESS:
+            return format__String(
+              "LilyImportValue{{ kind = {s}, access = {S} }",
+              to_string__Debug__LilyImportValueKind(self->kind),
+              self->access);
         case LILY_IMPORT_VALUE_KIND_FILE:
             return format__String(
               "LilyImportValue{{ kind = {s}, file = {S} }",
@@ -177,6 +203,12 @@ IMPL_FOR_DEBUG(debug, LilyImportValue, const LilyImportValue *self)
 }
 #endif
 
+VARIANT_DESTRUCTOR(LilyImportValue, access, LilyImportValue *self)
+{
+    FREE(String, self->access);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyImportValue, file, LilyImportValue *self)
 {
     FREE(String, self->file);
@@ -205,6 +237,9 @@ VARIANT_DESTRUCTOR(LilyImportValue, select, LilyImportValue *self)
 DESTRUCTOR(LilyImportValue, LilyImportValue *self)
 {
     switch (self->kind) {
+        case LILY_IMPORT_VALUE_KIND_ACCCESS:
+            FREE_VARIANT(LilyImportValue, access, self);
+            break;
         case LILY_IMPORT_VALUE_KIND_FILE:
             FREE_VARIANT(LilyImportValue, file, self);
             break;
@@ -245,10 +280,143 @@ CONSTRUCTOR(LilyPrecompile,
             const LilyPreparser *preparser,
             LilyPackage *package)
 {
-    return (LilyPrecompile){ .preparser = preparser, .package = package };
+    return (LilyPrecompile){ .preparser = preparser,
+                             .package = package,
+                             .count_error = 0 };
+}
+
+LilyImport *
+precompile_import__LilyPrecompile(LilyPrecompile *self,
+                                  const LilyPreparserImport *import)
+{
+    Vec *values = NEW(Vec);
+    Usize position = 0;
+
+    switch (get__String(import->value, position++)) {
+        case '@':
+            break;
+        default: {
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->preparser->scanner->source.file,
+                          &import->location,
+                          NEW(LilyError, LILY_ERROR_KIND_BAD_IMPORT_VALUE),
+                          NULL,
+                          NULL,
+                          from__String("import value must be start by `@`")),
+              &self->count_error);
+
+            return NULL;
+        }
+    }
+
+    {
+        String *name = NEW(String);
+
+        while (import->value->buffer[position] != ')' &&
+               import->value->buffer[position]) {
+            push__String(name, import->value->buffer[position++]);
+        }
+
+        if (!import->value->buffer[position++]) {
+            FREE(Vec, values);
+            FREE(String, name);
+
+            // ERROR: expected `(`
+
+            return NULL;
+        }
+
+        if (!strcmp(name->buffer, "builtin")) {
+            push__Vec(values,
+                      NEW(LilyImportValue, LILY_IMPORT_VALUE_KIND_BUILTIN));
+        } else if (!strcmp(name->buffer, "core")) {
+            push__Vec(values,
+                      NEW(LilyImportValue, LILY_IMPORT_VALUE_KIND_CORE));
+        } else if (!strcmp(name->buffer, "std")) {
+            push__Vec(values, NEW(LilyImportValue, LILY_IMPORT_VALUE_KIND_STD));
+        } else if (strcmp(name->buffer, "file") &&
+                   strcmp(name->buffer, "library") &&
+                   strcmp(name->buffer, "package")) {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->preparser->scanner->source.file,
+                &import->location,
+                NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_IMPORT_AT_FLAG),
+                init__Vec(1,
+                          from__String("expected `@builtin`, `@core`, `@file`, "
+                                       "`@library`, `@package`, `@std`")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            FREE(String, name);
+            FREE(Vec, values);
+
+            return NULL;
+        } else {
+            String *flag_value = NEW(String);
+
+            while (import->value->buffer[position] != ')' &&
+                   import->value->buffer[position]) {
+                push__String(flag_value, import->value->buffer[position++]);
+            }
+
+            if (!import->value->buffer[position++]) {
+                FREE(String, flag_value);
+                FREE(String, name);
+                FREE(Vec, values);
+
+                // ERROR: expected `)`
+
+                return NULL;
+            }
+
+            if (!strcmp(name->buffer, "file")) {
+                push__Vec(values,
+                          NEW_VARIANT(LilyImportValue, file, flag_value));
+            } else if (!strcmp(name->buffer, "library")) {
+                push__Vec(values,
+                          NEW_VARIANT(LilyImportValue, library, flag_value));
+            } else {
+                push__Vec(values,
+                          NEW_VARIANT(LilyImportValue, package, flag_value));
+            }
+        }
+
+        FREE(String, name);
+    }
+
+    // TODO: precompile the rest of the import
+    {
+        String *rest_import_value = take_slice__String(import->value, position);
+        Usize position = 0;
+
+        while (rest_import_value->buffer[position]) {
+            position++;
+        }
+
+        FREE(String, rest_import_value);
+    }
+
+    return NEW(LilyImport,
+               values,
+               clone__String(import->as)); // TODO: avoid clone__String
 }
 
 void
 run__LilyPrecompile(LilyPrecompile *self)
 {
+    // 1. Precompile all imports
+    for (Usize i = 0; i < self->preparser->public_imports->len; i++) {
+        LilyImport *import = precompile_import__LilyPrecompile(
+          self, get__Vec(self->preparser->public_imports, i));
+
+        if (import) {
+            push__Vec(self->package->public_imports, import);
+        }
+    }
 }

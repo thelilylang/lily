@@ -31,6 +31,7 @@ typedef struct LilyPackage LilyPackage;
 
 enum LilyImportValueKind
 {
+    LILY_IMPORT_VALUE_KIND_ACCCESS,
     LILY_IMPORT_VALUE_KIND_BUILTIN,
     LILY_IMPORT_VALUE_KIND_CORE,
     LILY_IMPORT_VALUE_KIND_FILE,
@@ -47,6 +48,7 @@ typedef struct LilyImportValue
     enum LilyImportValueKind kind;
     union
     {
+        String *access;
         String *file;
         String *library;
         String *package;
@@ -59,6 +61,12 @@ typedef struct LilyImportValue
  * @brief Construct LilyImportValue type.
  */
 CONSTRUCTOR(LilyImportValue *, LilyImportValue, enum LilyImportValueKind kind);
+
+/**
+ *
+ * @brief Construct LilyImportValue type (LILY_IMPORT_VALUE_KIND_ACCESS).
+ */
+VARIANT_CONSTRUCTOR(LilyImportValue *, LilyImportValue, access, String *access);
 
 /**
  *
@@ -148,6 +156,7 @@ typedef struct LilyPrecompile
 {
     const LilyPreparser *preparser;
     LilyPackage *package;
+    Usize count_error;
 } LilyPrecompile;
 
 /**
