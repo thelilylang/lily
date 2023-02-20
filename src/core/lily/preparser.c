@@ -65,9 +65,10 @@ static LilyPreparserImport *
 preparse_import__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserMacro *
-preparser_macro__LilyPreparser(LilyPreparser *self);
+preparse_macro__LilyPreparser(LilyPreparser *self);
 
-static LilyPreparserPackage *
+// NOTE: return 1 for success, 0 for failed.
+int
 preparse_package__LilyPreparser(LilyPreparser *self);
 
 CONSTRUCTOR(LilyPreparserImport *,
@@ -129,7 +130,8 @@ CONSTRUCTOR(LilyPreparserMacro *, LilyPreparserMacro, String *name, Vec *tokens)
 String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserMacro, const LilyPreparserMacro *self)
 {
-    String *res = format__String("LilyPreparserMacro{{ name = {S}, tokens = {{ ", self->name);
+    String *res = format__String(
+      "LilyPreparserMacro{{ name = {S}, tokens = {{ ", self->name);
 
     for (Usize i = 0; i < self->tokens->len; i++) {
         char *s = to_string__Debug__LilyToken(get__Vec(self->tokens, i));
@@ -316,11 +318,34 @@ preparse_import__LilyPreparser(LilyPreparser *self)
             break;
     }
 
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            eat_and_next_token__LilyPreparser(self);
+            break;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `;`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+        }
+    }
+
     return NEW(LilyPreparserImport, import_value, as_value);
 }
 
 LilyPreparserMacro *
-preparser_macro__LilyPreparser(LilyPreparser *self)
+preparse_macro__LilyPreparser(LilyPreparser *self)
 {
     String *name = NULL;
     Vec *tokens = NEW(Vec);
@@ -437,15 +462,199 @@ get_tokens : {
     return NEW(LilyPreparserMacro, name, tokens);
 }
 
-LilyPreparserPackage *
+int
 preparse_package__LilyPreparser(LilyPreparser *self)
 {
-    TODO("preparse package");
+    eat_and_next_token__LilyPreparser(self);
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            if (self->package->name) {
+                emit__Diagnostic(
+                  NEW_VARIANT(Diagnostic,
+                              simple_lily_error,
+                              self->scanner->source.file,
+                              &self->current->location,
+                              NEW(LilyError,
+                                  LILY_ERROR_KIND_PACKAGE_NAME_ALREADY_DEFINED),
+                              NULL,
+                              NULL,
+                              NULL),
+                  &self->count_error);
+
+                return 0;
+            } 
+
+            self->package->name =
+              clone__String(self->current->identifier_normal);
+            eat_and_next_token__LilyPreparser(self);
+
+            break;
+        default:
+            break; 
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_EQ:
+            eat_and_next_token__LilyPreparser(self);
+            break;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `=`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+
+            return 0;
+        }
+    }
+
+    while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+
+        String *sub_pkg_name = NULL;
+        enum LilyVisibility visibility = LILY_VISIBILITY_PRIVATE;
+
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_KEYWORD_PUB:
+                eat_and_next_token__LilyPreparser(self);
+                visibility = LILY_VISIBILITY_PUBLIC;
+
+                switch (self->current->kind) {
+                    case LILY_TOKEN_KIND_DOT:
+                        goto get_pkg_name;
+                    default:
+                        goto expected_dot;
+                }
+
+                break;
+            case LILY_TOKEN_KIND_DOT: {
+            get_pkg_name : {
+                eat_and_next_token__LilyPreparser(self);
+
+                switch (self->current->kind) {
+                    case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                        sub_pkg_name =
+                          clone__String(self->current->identifier_normal);
+                        eat_and_next_token__LilyPreparser(self);
+
+                        while (self->current->kind == LILY_TOKEN_KIND_DOT) {
+                            push_str__String(sub_pkg_name, ".");
+
+                            eat_and_next_token__LilyPreparser(self);
+
+                            switch (self->current->kind) {
+                                case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                                    push_str__String(
+                                      sub_pkg_name,
+                                      self->current->identifier_normal->buffer);
+                                    eat_and_next_token__LilyPreparser(self);
+
+                                    break;
+                                default:
+                                    goto expected_sub_pkg_name;
+                            }
+                        }
+
+                        if (self->current->kind !=
+                              LILY_TOKEN_KIND_KEYWORD_END &&
+                            self->current->kind == LILY_TOKEN_KIND_COMMA) {
+                            switch (self->current->kind) {
+                                case LILY_TOKEN_KIND_COMMA:
+                                    eat_and_next_token__LilyPreparser(self);
+                                    break;
+                                default: {
+                                    String *current_s =
+                                      to_string__LilyToken(self->current);
+
+                                    emit__Diagnostic(
+                                      NEW_VARIANT(
+                                        Diagnostic,
+                                        simple_lily_error,
+                                        self->scanner->source.file,
+                                        &self->current->location,
+                                        NEW_VARIANT(LilyError,
+                                                    unexpected_token,
+                                                    current_s->buffer),
+                                        NULL,
+                                        NULL,
+                                        from__String("expected `,`")),
+                                      &self->count_error);
+
+                                    FREE(String, current_s);
+                                }
+                            }
+                        }
+
+                        break;
+                    default:
+                    expected_sub_pkg_name : {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->scanner->source.file,
+                            &self->current->location,
+                            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                            NULL,
+                            NULL,
+                            from__String("expected sub-package name")),
+                          &self->count_error);
+
+                        return 0;
+                    }
+                }
+
+                break;
+            }
+            }
+            default: {
+            expected_dot : {
+                String *current_s = to_string__LilyToken(self->current);
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->scanner->source.file,
+                    &self->current->location,
+                    NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                    NULL,
+                    NULL,
+                    from__String("expected `.`")),
+                  &self->count_error);
+
+                FREE(String, current_s);
+
+                return 0;
+            }
+            }
+        }
+
+        push__Vec(self->package->sub_packages,
+                  NEW(LilyPreparserSubPackage, visibility, sub_pkg_name));
+    }
+
+    eat_and_next_token__LilyPreparser(self);
+
+    return 1;
 }
 
 void
 run__LilyPreparser(LilyPreparser *self)
 {
+    bool package_is_preparse = false;
+
     while (self->current->kind != LILY_TOKEN_KIND_EOF) {
         switch (self->current->kind) {
             case LILY_TOKEN_KIND_KEYWORD_IMPORT: {
@@ -459,8 +668,7 @@ run__LilyPreparser(LilyPreparser *self)
                 break;
             }
             case LILY_TOKEN_KIND_KEYWORD_MACRO: {
-                LilyPreparserMacro *macro =
-                  preparser_macro__LilyPreparser(self);
+                LilyPreparserMacro *macro = preparse_macro__LilyPreparser(self);
 
                 if (macro) {
                     push__Vec(self->private_macros, macro);
@@ -468,8 +676,32 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             }
-            case LILY_TOKEN_KIND_KEYWORD_PACKAGE:
+            case LILY_TOKEN_KIND_KEYWORD_PACKAGE: {
+                if (package_is_preparse) {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->scanner->source.file,
+                        &self->current->location,
+                        NEW(LilyError,
+                            LILY_ERROR_KIND_DUPLICATE_PACKAGE_DECLARATION),
+                        NULL,
+                        NULL,
+                        NULL),
+                      &self->count_error);
+
+                    goto exit_preparser;
+                }
+
+                if (!preparse_package__LilyPreparser(self)) {
+                    goto exit_preparser;
+                } else {
+                    package_is_preparse = true;
+                }
+
                 break;
+            }
             case LILY_TOKEN_KIND_KEYWORD_PUB:
                 break;
             case LILY_TOKEN_KIND_KEYWORD_MODULE:
@@ -525,6 +757,9 @@ run__LilyPreparser(LilyPreparser *self)
             }
         }
     }
+
+exit_preparser : {
+}
 
 #ifdef DEBUG_PREPARSER
     puts("\n====Preparser====\n");
