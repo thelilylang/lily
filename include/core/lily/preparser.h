@@ -131,6 +131,30 @@ CONSTRUCTOR(LilyPreparserSubPackage *,
 
 /**
  *
+ * @brief Convert LilyPreparserSubPackage in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserSubPackage,
+               const LilyPreparserSubPackage *self);
+#endif
+
+/**
+ *
+ * @brief Print debug LilyPreparserSubPackage struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug,
+               LilyPreparserSubPackage,
+               const LilyPreparserSubPackage *self);
+#endif
+
+/**
+ *
  * @brief Free LilyPreparserSubPackage type.
  */
 DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self);
@@ -146,6 +170,28 @@ typedef struct LilyPreparserPackage
  * @brief Construct LilyPreparserPackage type.
  */
 CONSTRUCTOR(LilyPreparserPackage *, LilyPreparserPackage, String *name);
+
+/**
+ *
+ * @brief Convert LilyPreparserPackage in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserPackage,
+               const LilyPreparserPackage *self);
+#endif
+
+/**
+ *
+ * @brief Print debug LilyPreparserPackage struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyPreparserPackage, const LilyPreparserPackage *self);
+#endif
 
 /**
  *

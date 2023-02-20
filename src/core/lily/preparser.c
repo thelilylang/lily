@@ -179,6 +179,35 @@ CONSTRUCTOR(LilyPreparserSubPackage *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserSubPackage,
+               const LilyPreparserSubPackage *self)
+{
+    switch (self->visibility) {
+        case LILY_VISIBILITY_PRIVATE:
+            return format("LilyPreparserSubPackage{{ name = {S}, visibility = "
+                          "LILY_VISIBILITY_PRIVATE }",
+                          self->name);
+        case LILY_VISIBILITY_PUBLIC:
+            return format("LilyPreparserSubPackage{{ name = {S}, visibility = "
+                          "LILY_VISIBILITY_PUBLIC }",
+                          self->name);
+        default:
+            UNREACHABLE("static visibility is not expected in this case");
+    }
+}
+
+void
+IMPL_FOR_DEBUG(debug,
+               LilyPreparserSubPackage,
+               const LilyPreparserSubPackage *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyPreparserSubPackage(self));
+}
+#endif
+
 DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self)
 {
     FREE(String, self->name);
@@ -194,6 +223,48 @@ CONSTRUCTOR(LilyPreparserPackage *, LilyPreparserPackage, String *name)
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserPackage,
+               const LilyPreparserPackage *self)
+{
+    String *res = NEW(String);
+
+    if (self->name) {
+        push_str__String(res, "LilyPreparserPackage{ name = ");
+        push_str__String(res, self->name->buffer);
+        push_str__String(res, ", sub_packages = { ");
+    } else {
+        push_str__String(
+          res, "LilyPreparserPackage{ name = NULL, sub_packages = { ");
+    }
+
+    for (Usize i = 0; i < self->sub_packages->len; i++) {
+        char *s = to_string__Debug__LilyPreparserSubPackage(
+          get__Vec(self->sub_packages, i));
+
+        push_str__String(res, s);
+
+        lily_free(s);
+
+        if (i != self->sub_packages->len - 1) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyPreparserPackage, const LilyPreparserPackage *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyPreparserPackage(self));
+}
+#endif
 
 DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self)
 {
@@ -483,7 +554,7 @@ preparse_package__LilyPreparser(LilyPreparser *self)
                   &self->count_error);
 
                 return 0;
-            } 
+            }
 
             self->package->name =
               clone__String(self->current->identifier_normal);
@@ -491,7 +562,7 @@ preparse_package__LilyPreparser(LilyPreparser *self)
 
             break;
         default:
-            break; 
+            break;
     }
 
     switch (self->current->kind) {
@@ -791,6 +862,10 @@ exit_preparser : {
     for (Usize i = 0; i < self->private_macros->len; i++) {
         CALL_DEBUG(LilyPreparserMacro, get__Vec(self->private_macros, i));
     }
+
+    puts("\n====Package====\n");
+
+    CALL_DEBUG(LilyPreparserPackage, self->package);
 #endif
 
     if (self->count_error > 0) {
