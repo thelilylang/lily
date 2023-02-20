@@ -163,7 +163,7 @@ eat_token__LilyPreparser(LilyPreparser *self)
 LilyToken *
 peek_token__LilyPreparser(const LilyPreparser *self, Usize n)
 {
-    if (self->position + n < self->position) {
+    if (self->position + n < self->scanner->tokens->len) {
         return get__Vec(self->scanner->tokens, self->position + n);
     }
 
@@ -296,19 +296,26 @@ run__LilyPreparser(LilyPreparser *self)
                 break;
             case LILY_TOKEN_KIND_KEYWORD_TYPE:
                 break;
-            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-                if (peek_token__LilyPreparser(self, 1)->kind ==
-                    LILY_TOKEN_KIND_BANG) {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+                if (peeked) {
+                    if (peeked->kind == LILY_TOKEN_KIND_BANG) {
+                    } else {
+                        goto unexpected_token;
+                    }
                 } else {
                     goto unexpected_token;
                 }
+
                 break;
+            }
             case LILY_TOKEN_KIND_COMMENT_DOC:
                 break;
             case LILY_TOKEN_KIND_AT:
                 break;
             default: {
-                unexpected_token: {
+            unexpected_token : {
                 String *current_s = to_string__LilyToken(self->current);
 
                 emit__Diagnostic(
@@ -324,9 +331,9 @@ run__LilyPreparser(LilyPreparser *self)
                   &self->count_error);
 
                 FREE(String, current_s);
-                }
+            }
 
-                break;
+            break;
             }
         }
 
