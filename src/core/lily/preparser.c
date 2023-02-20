@@ -91,13 +91,17 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyPreparserImport, const LilyPreparserImport *self)
 {
     if (self->as) {
-        return format("LilyPreparserImport{{ value = {S}, as = {S}, location = {sa} }",
-                      self->value,
-                      self->as, to_string__Debug__Location(self->location));
+        return format(
+          "LilyPreparserImport{{ value = {S}, as = {S}, location = {sa} }",
+          self->value,
+          self->as,
+          to_string__Debug__Location(self->location));
     }
 
-    return format("LilyPreparserImport{{ value = {S}, as = NULL, location = {sa} }",
-                  self->value, to_string__Debug__Location(self->location));
+    return format(
+      "LilyPreparserImport{{ value = {S}, as = NULL, location = {sa} }",
+      self->value,
+      to_string__Debug__Location(self->location));
 }
 
 void
@@ -392,7 +396,9 @@ preparse_import__LilyPreparser(LilyPreparser *self)
             break;
     }
 
-    end__Location(&location, self->current->location.end_line, self->current->location.end_column);
+    end__Location(&location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
