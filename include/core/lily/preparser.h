@@ -119,7 +119,8 @@ DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self);
 typedef struct LilyPreparser
 {
     LilyScanner *scanner;
-    Vec *imports; // Vec<LilyPreparserImport*>*
+    Vec *imports;       // Vec<LilyPreparserImport*>*
+    Vec *public_macros; // Vec<LilyPreparserMacro*>*
     LilyToken *current;
     Usize position;
     Usize count_error;
@@ -133,6 +134,7 @@ inline CONSTRUCTOR(LilyPreparser, LilyPreparser, LilyScanner *scanner)
 {
     return (LilyPreparser){ .scanner = scanner,
                             .imports = NEW(Vec),
+                            .public_macros = NEW(Vec),
                             .current = get__Vec(scanner->tokens, 0),
                             .position = 0,
                             .count_error = 0 };

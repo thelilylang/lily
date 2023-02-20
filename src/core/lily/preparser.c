@@ -40,6 +40,11 @@ next_token__LilyPreparser(LilyPreparser *self);
 static void
 eat_token__LilyPreparser(LilyPreparser *self);
 
+// Remove an item at the current position and update the current (without free
+// the token).
+static void
+eat_token_w_free__LilyPreparser(LilyPreparser *self);
+
 // Peek token at position + n.
 static LilyToken *
 peek_token__LilyPreparser(const LilyPreparser *self, Usize n);
@@ -47,6 +52,9 @@ peek_token__LilyPreparser(const LilyPreparser *self, Usize n);
 // Combine next_token and eat_token function.
 static void
 eat_and_next_token__LilyPreparser(LilyPreparser *self);
+
+static void
+eat_w_free_and_next_token__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserImport *
 preparse_import__LilyPreparser(LilyPreparser *self);
@@ -156,7 +164,14 @@ eat_token__LilyPreparser(LilyPreparser *self)
 {
     if (self->current->kind != LILY_TOKEN_KIND_EOF) {
         FREE(LilyToken, remove__Vec(self->scanner->tokens, self->position));
-        self->current = get__Vec(self->scanner->tokens, self->position);
+    }
+}
+
+void
+eat_token_w_free__LilyPreparser(LilyPreparser *self)
+{
+    if (self->current->kind != LILY_TOKEN_KIND_EOF) {
+        remove__Vec(self->scanner->tokens, self->position);
     }
 }
 
@@ -174,6 +189,16 @@ void
 eat_and_next_token__LilyPreparser(LilyPreparser *self)
 {
     eat_token__LilyPreparser(self);
+
+    if (self->position < self->scanner->tokens->len) {
+        self->current = get__Vec(self->scanner->tokens, self->position);
+    }
+}
+
+void
+eat_w_free_and_next_token__LilyPreparser(LilyPreparser *self)
+{
+    eat_token_w_free__LilyPreparser(self);
 
     if (self->position < self->scanner->tokens->len) {
         self->current = get__Vec(self->scanner->tokens, self->position);
@@ -245,16 +270,116 @@ LilyPreparserMacro *
 preparser_macro__LilyPreparser(LilyPreparser *self)
 {
     String *name = NULL;
-    Vec *tokens = NULL;
+    Vec *tokens = NEW(Vec);
 
     eat_and_next_token__LilyPreparser(self);
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+            eat_and_next_token__LilyPreparser(self);
             break;
         default:
-            break;
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->scanner->source.file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                          NULL,
+                          NULL,
+                          NULL),
+              &self->count_error);
+
+            return NULL;
     }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_EQ:
+            eat_and_next_token__LilyPreparser(self);
+            break;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `=`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+
+            return NULL;
+        }
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_BRACE:
+            eat_and_next_token__LilyPreparser(self);
+            break;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `{`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+
+            return NULL;
+        }
+    }
+
+get_tokens : {
+    while (self->current->kind != LILY_TOKEN_KIND_R_BRACE &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        push__Vec(tokens, self->current);
+        eat_w_free_and_next_token__LilyPreparser(self);
+    }
+
+    eat_and_next_token__LilyPreparser(self);
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            eat_and_next_token__LilyPreparser(self);
+            break;
+        case LILY_TOKEN_KIND_EOF: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `;` after `}` in macro declaration")),
+              &self->count_error);
+
+            FREE(String, current_s);
+
+            return NULL;
+        }
+        default:
+            goto get_tokens;
+    }
+}
 
     return NEW(LilyPreparserMacro, name, tokens);
 }
@@ -280,8 +405,16 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             }
-            case LILY_TOKEN_KIND_KEYWORD_MACRO:
+            case LILY_TOKEN_KIND_KEYWORD_MACRO: {
+                LilyPreparserMacro *macro =
+                  preparser_macro__LilyPreparser(self);
+
+                if (macro) {
+                    push__Vec(self->public_macros, macro);
+                }
+
                 break;
+            }
             case LILY_TOKEN_KIND_KEYWORD_PACKAGE:
                 break;
             case LILY_TOKEN_KIND_KEYWORD_PUB:
