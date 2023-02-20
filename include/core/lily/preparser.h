@@ -49,6 +49,26 @@ CONSTRUCTOR(LilyPreparserImport *,
 
 /**
  *
+ * @brief Convert LilyPreparserImport in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyPreparserImport, const LilyPreparserImport *self);
+#endif
+
+/**
+ *
+ * @brief Print debug LilyPreparserImport struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyPreparserImport, const LilyPreparserImport *self);
+#endif
+
+/**
+ *
  * @brief Free LilyPreparserImport type.
  */
 DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self);
@@ -116,8 +136,10 @@ DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self);
 typedef struct LilyPreparser
 {
     LilyScanner *scanner;
-    Vec *imports;       // Vec<LilyPreparserImport*>*
-    Vec *public_macros; // Vec<LilyPreparserMacro*>*
+    Vec *public_imports;  // Vec<LilyPreparserImport*>*
+    Vec *private_imports; // Vec<LilyPreparserImport*>*
+    Vec *public_macros;   // Vec<LilyPreparserMacro*>*
+    Vec *private_macros;  // Vec<LilyPreparserMacro*>*
     LilyPreparserPackage *package;
     LilyToken *current;
     Usize position;
@@ -134,8 +156,10 @@ inline CONSTRUCTOR(LilyPreparser,
                    String *package_name)
 {
     return (LilyPreparser){ .scanner = scanner,
-                            .imports = NEW(Vec),
+                            .public_imports = NEW(Vec),
+                            .private_imports = NEW(Vec),
                             .public_macros = NEW(Vec),
+                            .private_macros = NEW(Vec),
                             .package = NEW(LilyPreparserPackage, package_name),
                             .current = get__Vec(scanner->tokens, 0),
                             .position = 0,

@@ -32,6 +32,11 @@
 
 #include <stdio.h>
 
+#ifdef ENV_DEBUG
+#include <base/format.h>
+#include <base/print.h>
+#endif
+
 // Advance to the one position and update the current.
 static void
 next_token__LilyPreparser(LilyPreparser *self);
@@ -77,6 +82,27 @@ CONSTRUCTOR(LilyPreparserImport *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyPreparserImport, const LilyPreparserImport *self)
+{
+    if (self->as) {
+        return format("LilyPreparserImport{{ value = {S}, as = {S} }",
+                      self->value,
+                      self->as);
+    }
+
+    return format("LilyPreparserImport{{ value = {S}, as = NULL }",
+                  self->value);
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyPreparserImport, const LilyPreparserImport *self)
+{
+    PRINTLN("{sa}", to_string__Debug__LilyPreparserImport(self));
+}
+#endif
 
 DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self)
 {
@@ -397,7 +423,7 @@ run__LilyPreparser(LilyPreparser *self)
                   preparse_import__LilyPreparser(self);
 
                 if (import) {
-                    push__Vec(self->imports, import);
+                    push__Vec(self->private_imports, import);
                 }
 
                 break;
@@ -472,8 +498,21 @@ run__LilyPreparser(LilyPreparser *self)
 
 #ifdef DEBUG_PREPARSER
     puts("\n====Preparser====\n");
+
     for (Usize i = 0; i < self->scanner->tokens->len; i++) {
         CALL_DEBUG(LilyToken, get__Vec(self->scanner->tokens, i));
+    }
+
+    puts("\n====Preparser public imports====\n");
+
+    for (Usize i = 0; i < self->public_imports->len; i++) {
+        CALL_DEBUG(LilyPreparserImport, get__Vec(self->public_imports, i));
+    }
+
+    puts("\n====Preparser private imports====\n");
+
+    for (Usize i = 0; i < self->private_imports->len; i++) {
+        CALL_DEBUG(LilyPreparserImport, get__Vec(self->private_imports, i));
     }
 #endif
 
