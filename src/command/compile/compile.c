@@ -28,11 +28,13 @@
 
 #include <core/lily/package.h>
 
+#include <stdlib.h>
+
 void
 run__Compile(const CompileConfig *config)
 {
-    LilyPackage *pkg = compile__LilyPackage(
-      config, from__String("main"), LILY_VISIBILITY_PUBLIC);
+    LilyPackage *pkg =
+      compile__LilyPackage(config, NULL, LILY_VISIBILITY_PUBLIC);
 
     FREE(LilyPackage, pkg);
 }
