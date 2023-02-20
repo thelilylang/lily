@@ -90,6 +90,26 @@ CONSTRUCTOR(LilyPreparserMacro *,
 
 /**
  *
+ * @brief Convert LilyPreparserMacro in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserMacro, const LilyPreparserMacro *self);
+#endif
+
+/**
+ *
+ * @brief Print debug LilyPreparserMacro struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyPreparserMacro, const LilyPreparserMacro *self);
+#endif
+
+/**
+ *
  * @brief Free LilyPreparserMacro type.
  */
 DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self);

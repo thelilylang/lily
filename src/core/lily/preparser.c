@@ -125,6 +125,36 @@ CONSTRUCTOR(LilyPreparserMacro *, LilyPreparserMacro, String *name, Vec *tokens)
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserMacro, const LilyPreparserMacro *self)
+{
+    String *res = format__String("LilyPreparserMacro{{ name = {S}, tokens = {{ ", self->name);
+
+    for (Usize i = 0; i < self->tokens->len; i++) {
+        char *s = to_string__Debug__LilyToken(get__Vec(self->tokens, i));
+
+        push_str__String(res, s);
+
+        lily_free(s);
+
+        if (i != self->tokens->len - 1) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyPreparserMacro, const LilyPreparserMacro *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyPreparserMacro(self));
+}
+#endif
+
 DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self)
 {
     FREE(String, self->name);
@@ -433,7 +463,7 @@ run__LilyPreparser(LilyPreparser *self)
                   preparser_macro__LilyPreparser(self);
 
                 if (macro) {
-                    push__Vec(self->public_macros, macro);
+                    push__Vec(self->private_macros, macro);
                 }
 
                 break;
@@ -513,6 +543,18 @@ run__LilyPreparser(LilyPreparser *self)
 
     for (Usize i = 0; i < self->private_imports->len; i++) {
         CALL_DEBUG(LilyPreparserImport, get__Vec(self->private_imports, i));
+    }
+
+    puts("\n====Preparser public macros====\n");
+
+    for (Usize i = 0; i < self->public_macros->len; i++) {
+        CALL_DEBUG(LilyPreparserMacro, get__Vec(self->public_macros, i));
+    }
+
+    puts("\n====Preparser private macros====\n");
+
+    for (Usize i = 0; i < self->private_macros->len; i++) {
+        CALL_DEBUG(LilyPreparserMacro, get__Vec(self->private_macros, i));
     }
 #endif
 
