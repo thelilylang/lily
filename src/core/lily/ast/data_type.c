@@ -809,6 +809,6 @@ DESTRUCTOR(LilyAstDataType, LilyAstDataType *self)
             FREE_VARIANT(LilyAstDataType, tuple, self);
             break;
         default:
-            free(self);
+            lily_free(self);
     }
 }
