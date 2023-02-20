@@ -29,6 +29,91 @@
 
 typedef struct LilyPackage LilyPackage;
 
+enum LilyImportValueKind
+{
+    LILY_IMPORT_VALUE_KIND_BUILTIN,
+    LILY_IMPORT_VALUE_KIND_CORE,
+    LILY_IMPORT_VALUE_KIND_FILE,
+    LILY_IMPORT_VALUE_KIND_LIBRARY,
+    LILY_IMPORT_VALUE_KIND_PACKAGE,
+    LILY_IMPORT_VALUE_KIND_SELECT_ALL,
+    LILY_IMPORT_VALUE_KIND_SELECT,
+    LILY_IMPORT_VALUE_KIND_STD,
+    LILY_IMPORT_VALUE_KIND_URL,
+};
+
+typedef struct LilyImportValue
+{
+    enum LilyImportValueKind kind;
+    union
+    {
+        String *file;
+        String *library;
+        String *package;
+        Vec *select; // Vec<LilyImportValue*>*
+    };
+} LilyImportValue;
+
+/**
+ *
+ * @brief Construct LilyImportValue type.
+ */
+CONSTRUCTOR(LilyImportValue *, LilyImportValue, enum LilyImportValueKind kind);
+
+/**
+ *
+ * @brief Construct LilyImportValue type (LILY_IMPORT_VALUE_KIND_FILE).
+ */
+VARIANT_CONSTRUCTOR(LilyImportValue *, LilyImportValue, file, String *file);
+
+/**
+ *
+ * @brief Construct LilyImportValue type (LILY_IMPORT_VALUE_KIND_LIBRARY).
+ */
+VARIANT_CONSTRUCTOR(LilyImportValue *,
+                    LilyImportValue,
+                    library,
+                    String *library);
+
+/**
+ *
+ * @brief Construct LilyImportValue type (LILY_IMPORT_VALUE_KIND_PACKAGE).
+ */
+VARIANT_CONSTRUCTOR(LilyImportValue *,
+                    LilyImportValue,
+                    package,
+                    String *package);
+
+/**
+ *
+ * @brief Construct LilyImportValue type (LILY_IMPORT_VALUE_KIND_SELECT).
+ */
+VARIANT_CONSTRUCTOR(LilyImportValue *, LilyImportValue, select, Vec *select);
+
+/**
+ *
+ * @brief Free LilyImportValue type.
+ */
+DESTRUCTOR(LilyImportValue, LilyImportValue *self);
+
+typedef struct LilyImport
+{
+    Vec *values; // Vec<LilyImportValue*>*
+    String *as;
+} LilyImport;
+
+/**
+ *
+ * @brief Construct LilyImport type.
+ */
+CONSTRUCTOR(LilyImport *, LilyImport, Vec *values, String *as);
+
+/**
+ *
+ * @brief Free LilyImport type.
+ */
+DESTRUCTOR(LilyImport, LilyImport *self);
+
 typedef struct LilyPrecompile
 {
     const LilyPreparser *preparser;
