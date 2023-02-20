@@ -234,6 +234,7 @@ preparse_import__LilyPreparser(LilyPreparser *self)
 
             if (self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL) {
                 as_value = clone__String(self->current->identifier_normal);
+                eat_and_next_token__LilyPreparser(self);
             } else {
                 String *current_s = to_string__LilyToken(self->current);
 
@@ -460,13 +461,13 @@ run__LilyPreparser(LilyPreparser *self)
                   &self->count_error);
 
                 FREE(String, current_s);
+
+                eat_and_next_token__LilyPreparser(self);
             }
 
             break;
             }
         }
-
-        next_token__LilyPreparser(self);
     }
 
 #ifdef DEBUG_PREPARSER
