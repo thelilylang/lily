@@ -94,6 +94,11 @@ build__LilyPackage(const CompileConfig *config,
     FREE_BUFFER_ITEMS(
       preparser.imports->buffer, preparser.imports->len, LilyPreparserImport);
     FREE(Vec, preparser.imports);
+
+    FREE_BUFFER_ITEMS(preparser.public_macros->buffer,
+                      preparser.public_macros->len,
+                      LilyPreparserMacro);
+    FREE(Vec, preparser.public_macros);
     // ===============
 
     return self;
