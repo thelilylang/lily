@@ -65,8 +65,8 @@ build__LilyPackage(const CompileConfig *config,
                    Vec *public_macros)
 {
     LilyPackage *self = public_macros
-                          ? NEW(LilyPackage, name, visibility, NULL)
-                          : NEW(LilyPackage, name, visibility, NEW(Vec));
+                          ? NEW(LilyPackage, NULL, visibility, NULL)
+                          : NEW(LilyPackage, NULL, visibility, NEW(Vec));
 
     char *content = read_file__Path(config->filename);
     char *file_ext = get_extension__Path(config->filename);
@@ -82,9 +82,15 @@ build__LilyPackage(const CompileConfig *config,
 
     run__LilyScanner(&scanner, config->dump_scanner);
 
-    LilyPreparser preparser = NEW(LilyPreparser, &scanner);
+    LilyPreparser preparser = NEW(LilyPreparser, &scanner, name);
 
     run__LilyPreparser(&preparser);
+
+    if (preparser.package->name) {
+        self->name = preparser.package->name;
+    } else {
+        self->name = from__String("main");
+    }
 
     lily_free(file_ext);
     lily_free(content);
@@ -99,6 +105,8 @@ build__LilyPackage(const CompileConfig *config,
                       preparser.public_macros->len,
                       LilyPreparserMacro);
     FREE(Vec, preparser.public_macros);
+
+    FREE(LilyPreparserPackage, preparser.package);
     // ===============
 
     return self;
