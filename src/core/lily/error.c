@@ -89,6 +89,8 @@ to_msg__LilyError(const LilyError *self)
             return "duplicate package declaration";
         case LILY_ERROR_KIND_PACKAGE_NAME_ALREADY_DEFINED:
             return "package name is already defined";
+        case LILY_ERROR_KIND_BAD_IMPORT_VALUE:
+            return "bad import value";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -152,6 +154,8 @@ to_code__LilyError(const LilyError *self)
             return "0026";
         case LILY_ERROR_KIND_PACKAGE_NAME_ALREADY_DEFINED:
             return "0027";
+        case LILY_ERROR_KIND_BAD_IMPORT_VALUE:
+            return "0028";
         default:
             UNREACHABLE("unknown variant");
     }
