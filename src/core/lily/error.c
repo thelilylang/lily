@@ -85,6 +85,8 @@ to_msg__LilyError(const LilyError *self)
             return "expected import value";
         case LILY_ERROR_KIND_EXPECTED_IDENTIFIER:
             return "expected identifier";
+        case LILY_ERROR_KIND_DUPLICATE_PACKAGE_DECLARATION:
+            return "duplicate package declaration";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -144,6 +146,8 @@ to_code__LilyError(const LilyError *self)
             return "0024";
         case LILY_ERROR_KIND_EXPECTED_IDENTIFIER:
             return "0025";
+        case LILY_ERROR_KIND_DUPLICATE_PACKAGE_DECLARATION:
+            return "0026";
         default:
             UNREACHABLE("unknown variant");
     }
