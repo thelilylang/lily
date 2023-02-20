@@ -101,14 +101,25 @@ build__LilyPackage(const CompileConfig *config,
     FREE(LilyScanner, &scanner);
 
     // ===============
-    FREE_BUFFER_ITEMS(
-      preparser.imports->buffer, preparser.imports->len, LilyPreparserImport);
-    FREE(Vec, preparser.imports);
+    FREE_BUFFER_ITEMS(preparser.public_imports->buffer,
+                      preparser.public_imports->len,
+                      LilyPreparserImport);
+    FREE(Vec, preparser.public_imports);
+
+    FREE_BUFFER_ITEMS(preparser.private_imports->buffer,
+                      preparser.private_imports->len,
+                      LilyPreparserImport);
+    FREE(Vec, preparser.private_imports);
 
     FREE_BUFFER_ITEMS(preparser.public_macros->buffer,
                       preparser.public_macros->len,
                       LilyPreparserMacro);
     FREE(Vec, preparser.public_macros);
+
+    FREE_BUFFER_ITEMS(preparser.private_macros->buffer,
+                      preparser.private_macros->len,
+                      LilyPreparserMacro);
+    FREE(Vec, preparser.private_macros);
 
     FREE(LilyPreparserPackage, preparser.package);
     // ===============
