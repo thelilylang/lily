@@ -25,8 +25,27 @@
 #ifndef LILY_CORE_LILY_PRECOMPILE_H
 #define LILY_CORE_LILY_PRECOMPILE_H
 
+#include <core/lily/preparser.h>
+
+typedef struct LilyPackage LilyPackage;
+
 typedef struct LilyPrecompile
 {
+    const LilyPreparser *preparser;
+    LilyPackage *package;
 } LilyPrecompile;
+
+/**
+ * 
+ * @brief Construct LilyPrecompile type.
+*/
+CONSTRUCTOR(LilyPrecompile, LilyPrecompile, const LilyPreparser *preparser, LilyPackage *package);
+
+/**
+ * 
+ * @brief Run the pre-compiler.
+*/
+void
+run__LilyPrecompile(LilyPrecompile *self);
 
 #endif // LILY_CORE_LILY_PRECOMPILE_H
