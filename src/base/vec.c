@@ -26,6 +26,7 @@
 #include <base/assert.h>
 #include <base/macros.h>
 #include <base/new.h>
+#include <base/string.h>
 #include <base/vec.h>
 
 #include <stdarg.h>
@@ -122,8 +123,24 @@ insert__Vec(Vec *self, void *item, Usize index)
     push__Vec(self, move);
 }
 
+String *
+join__Vec(const Vec *self, char c)
+{
+    String *res = NEW(String);
+
+    for (Usize i = 0; i < self->len; i++) {
+        push_str__String(res, CAST(String *, self->buffer[i])->buffer);
+
+        if (i != self->len - 1) {
+            push__String(res, c);
+        }
+    }
+
+    return res;
+}
+
 void *
-last__Vec(Vec *self)
+last__Vec(const Vec *self)
 {
     ASSERT(self->len > 0);
 

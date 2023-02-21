@@ -30,6 +30,8 @@
 
 #include <stdbool.h>
 
+typedef struct String String;
+
 typedef struct Vec
 {
     void **buffer;
@@ -89,10 +91,18 @@ insert__Vec(Vec *self, void *item, Usize index);
 
 /**
  *
+ * @brief Join each item with c param.
+ * @param self Vec<String*>*
+ */
+String *
+join__Vec(const Vec *self, char c);
+
+/**
+ *
  * @brief Get the last item of the Vec.
  */
 void *
-last__Vec(Vec *self);
+last__Vec(const Vec *self);
 
 /**
  *
