@@ -22,9 +22,12 @@
  * SOFTWARE.
  */
 
+#include <base/macros.h>
+
 #include <core/lily/package/package.h>
 #include <core/lily/precompile.h>
 
+#include <ctype.h>
 #include <string.h>
 
 #ifdef ENV_DEBUG
@@ -45,6 +48,14 @@ static VARIANT_DESTRUCTOR(LilyImportValue, package, LilyImportValue *self);
 
 // Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_SELECT).
 static VARIANT_DESTRUCTOR(LilyImportValue, select, LilyImportValue *self);
+
+/// @return Vec<LilyImportValue>
+static Vec *
+precompile_import_access__LilyPrecompile(LilyPrecompile *self,
+                                         const String *import_value,
+                                         const Location *location,
+                                         Usize *position,
+                                         bool parse_selector);
 
 static LilyImport *
 precompile_import__LilyPrecompile(LilyPrecompile *self,
@@ -175,10 +186,22 @@ IMPL_FOR_DEBUG(to_string, LilyImportValue, const LilyImportValue *self)
                              to_string__Debug__LilyImportValueKind(self->kind));
 
             for (Usize i = 0; i < self->select->len; i++) {
-                String *s =
-                  to_string__Debug__LilyImportValue(get__Vec(self->select, i));
+                Vec *item = get__Vec(self->select, i);
 
-                APPEND_AND_FREE(res, s);
+                push_str__String(res, " { ");
+
+                for (Usize j = 0; j < item->len; j++) {
+                    String *s =
+                      to_string__Debug__LilyImportValue(get__Vec(item, j));
+
+                    APPEND_AND_FREE(res, s);
+
+                    if (j != item->len - 1) {
+                        push_str__String(res, ", ");
+                    }
+                }
+
+                push_str__String(res, " } ");
 
                 if (i != self->select->len - 1) {
                     push_str__String(res, ", ");
@@ -229,7 +252,13 @@ VARIANT_DESTRUCTOR(LilyImportValue, package, LilyImportValue *self)
 
 VARIANT_DESTRUCTOR(LilyImportValue, select, LilyImportValue *self)
 {
-    FREE_BUFFER_ITEMS(self->select->buffer, self->select->len, LilyImportValue);
+    for (Usize i = 0; i < self->select->len; i++) {
+        Vec *item = self->select->buffer[i];
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyImportValue);
+        FREE(Vec, item);
+    }
+
     FREE(Vec, self->select);
     lily_free(self);
 }
@@ -285,6 +314,140 @@ CONSTRUCTOR(LilyPrecompile,
                              .count_error = 0 };
 }
 
+#include <stdio.h>
+
+Vec *
+precompile_import_access__LilyPrecompile(LilyPrecompile *self,
+                                         const String *import_value,
+                                         const Location *location,
+                                         Usize *position,
+                                         bool parse_selector)
+{
+    Vec *values = NEW(Vec);
+
+    while (*position < import_value->len) {
+        if (isalpha(import_value->buffer[*position]) ||
+            import_value->buffer[*position] == '_') {
+            String *access = NEW(String);
+
+            while (
+              (isalpha(import_value->buffer[*position]) ||
+               import_value->buffer[*position] == '_') &&
+              (import_value->buffer[*position] != '.' ||
+               (import_value->buffer[*position] != ',' && parse_selector)) &&
+              import_value->buffer[*position]) {
+                push__String(access, import_value->buffer[*position]);
+                *position += 1;
+            }
+
+            push__Vec(values, NEW_VARIANT(LilyImportValue, access, access));
+        } else if (import_value->buffer[*position] == '{') {
+            *position += 1;
+
+            Vec *selector_res = NEW(Vec); // Vec<Vec<LilyImportValue*>*>*
+            Usize selector_position = 0;
+
+            while (import_value->buffer[*position] != '}' &&
+                   import_value->buffer[*position]) {
+                String *selector_value = NEW(String);
+
+                while ((import_value->buffer[*position] != '}' &&
+                        import_value->buffer[*position] != ',') &&
+                       import_value->buffer[*position]) {
+                    push__String(selector_value,
+                                 import_value->buffer[*position]);
+                    *position += 1;
+                }
+
+                if (!import_value->buffer[*position]) {
+                    goto expected_r_brace;
+                }
+
+                if (import_value->buffer[*position] != '}') {
+                    *position += 1;
+                }
+
+                Vec *selector_item = precompile_import_access__LilyPrecompile(
+                  self, selector_value, location, &selector_position, true);
+
+                if (selector_item) {
+                    push__Vec(selector_res, selector_item);
+                    FREE(String, selector_value);
+                } else {
+                    FREE(String, selector_value);
+
+                    return NULL;
+                }
+            }
+
+            if (!import_value->buffer[*position]) {
+                goto expected_r_brace;
+            } else {
+                *position += 1;
+                goto select_success_way;
+            }
+
+        expected_r_brace : {
+            if (!import_value->buffer[*position]) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->preparser->scanner->source.file,
+                    location,
+                    NEW(LilyError,
+                        LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE),
+                    NULL,
+                    NULL,
+                    from__String("expected `}` to close the selector")),
+                  &self->count_error);
+
+                return NULL;
+            }
+        }
+
+        select_success_way : {
+            push__Vec(values,
+                      NEW_VARIANT(LilyImportValue, select, selector_res));
+        }
+
+        } else if (import_value->buffer[*position] == '.' &&
+                   import_value->buffer[*position + 1] == '*') {
+            *position += 2;
+            push__Vec(values,
+                      NEW(LilyImportValue, LILY_IMPORT_VALUE_KIND_SELECT_ALL));
+        } else if (import_value->buffer[*position] == '.') {
+            *position += 1;
+        } else if (isspace(import_value->buffer[*position])) {
+            while (isspace(import_value->buffer[*position])) {
+                *position += 1;
+            }
+
+            continue;
+        } else {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->preparser->scanner->source.file,
+                location,
+                NEW(LilyError,
+                    LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE),
+                NULL,
+                NULL,
+                NULL),
+              &self->count_error);
+
+            FREE_BUFFER_ITEMS(values->buffer, values->len, LilyImportValue);
+            FREE(Vec, values);
+
+            return NULL;
+        }
+    }
+
+    return values;
+}
+
 LilyImport *
 precompile_import__LilyPrecompile(LilyPrecompile *self,
                                   const LilyPreparserImport *import)
@@ -314,18 +477,10 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
     {
         String *name = NEW(String);
 
-        while (import->value->buffer[position] != ')' &&
+        while (import->value->buffer[position] != '(' &&
+               import->value->buffer[position] != '.' &&
                import->value->buffer[position]) {
             push__String(name, import->value->buffer[position++]);
-        }
-
-        if (!import->value->buffer[position++]) {
-            FREE(Vec, values);
-            FREE(String, name);
-
-            // ERROR: expected `(`
-
-            return NULL;
         }
 
         if (!strcmp(name->buffer, "builtin")) {
@@ -358,6 +513,27 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
 
             return NULL;
         } else {
+            if (!import->value->buffer[position++]) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->preparser->scanner->source.file,
+                    &import->location,
+                    NEW(LilyError,
+                        LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE),
+                    NULL,
+                    NULL,
+                    from__String(
+                      "expected `(` after `@file`, `@library` or `@package`")),
+                  &self->count_error);
+
+                FREE(Vec, values);
+                FREE(String, name);
+
+                return NULL;
+            }
+
             String *flag_value = NEW(String);
 
             while (import->value->buffer[position] != ')' &&
@@ -366,11 +542,23 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
             }
 
             if (!import->value->buffer[position++]) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->preparser->scanner->source.file,
+                    &import->location,
+                    NEW(LilyError,
+                        LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE),
+                    NULL,
+                    NULL,
+                    from__String(
+                      "expected `)` after @file, @library, @package value")),
+                  &self->count_error);
+
                 FREE(String, flag_value);
                 FREE(String, name);
                 FREE(Vec, values);
-
-                // ERROR: expected `)`
 
                 return NULL;
             }
@@ -391,12 +579,19 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
     }
 
     // TODO: precompile the rest of the import
-    {
+    if (position < import->value->len) {
         String *rest_import_value = take_slice__String(import->value, position);
         Usize position = 0;
 
-        while (rest_import_value->buffer[position]) {
-            position++;
+        Vec *access = precompile_import_access__LilyPrecompile(
+          self, rest_import_value, &import->location, &position, false);
+
+        if (access) {
+            append__Vec(values, access);
+            FREE(Vec, access);
+        } else {
+            FREE(String, rest_import_value);
+            return NULL;
         }
 
         FREE(String, rest_import_value);
@@ -417,6 +612,15 @@ run__LilyPrecompile(LilyPrecompile *self)
 
         if (import) {
             push__Vec(self->package->public_imports, import);
+        }
+    }
+
+    for (Usize i = 0; i < self->preparser->private_imports->len; i++) {
+        LilyImport *import = precompile_import__LilyPrecompile(
+          self, get__Vec(self->preparser->private_imports, i));
+
+        if (import) {
+            push__Vec(self->package->private_imports, import);
         }
     }
 }

@@ -52,7 +52,7 @@ typedef struct LilyImportValue
         String *file;
         String *library;
         String *package;
-        Vec *select; // Vec<LilyImportValue*>*
+        Vec *select; // Vec<Vec<LilyImportValue*>*>*
     };
 } LilyImportValue;
 
