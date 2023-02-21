@@ -22,8 +22,7 @@
  * SOFTWARE.
  */
 
-#include <base/macros.h>
-
+#include <core/lily/lily.h>
 #include <core/lily/package/package.h>
 #include <core/lily/precompile.h>
 
@@ -296,6 +295,37 @@ CONSTRUCTOR(LilyImport *, LilyImport, Vec *values, String *as)
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyImport, const LilyImport *self)
+{
+    String *res = from__String("LilyImport{{ values = {{ ");
+
+    for (Usize i = 0; i < self->values->len; i++) {
+        String *s =
+          to_string__Debug__LilyImportValue(get__Vec(self->values, i));
+
+        APPEND_AND_FREE(res, s);
+
+        if (i != self->values->len - 1) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, " }, as = { ");
+    push_str__String(res, self->as->buffer);
+    push_str__String(res, " }");
+
+    return res;
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyImport, const LilyImport *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyImport(self));
+}
+#endif
+
 DESTRUCTOR(LilyImport, LilyImport *self)
 {
     FREE_BUFFER_ITEMS(self->values->buffer, self->values->len, LilyImportValue);
@@ -313,8 +343,6 @@ CONSTRUCTOR(LilyPrecompile,
                              .package = package,
                              .count_error = 0 };
 }
-
-#include <stdio.h>
 
 Vec *
 precompile_import_access__LilyPrecompile(LilyPrecompile *self,
@@ -370,8 +398,11 @@ precompile_import_access__LilyPrecompile(LilyPrecompile *self,
                 Vec *selector_item = precompile_import_access__LilyPrecompile(
                   self, selector_value, location, &selector_position, true);
 
-                if (selector_item) {
+                if (selector_item && selector_item->len > 0) {
                     push__Vec(selector_res, selector_item);
+                    FREE(String, selector_value);
+                } else if (selector_item) {
+                    FREE(Vec, selector_item);
                     FREE(String, selector_value);
                 } else {
                     FREE(String, selector_value);
@@ -622,4 +653,20 @@ run__LilyPrecompile(LilyPrecompile *self)
             push__Vec(self->package->private_imports, import);
         }
     }
+
+#ifdef DEBUG_PRECOMPILE
+    puts("\n====Precompile====\n");
+
+    puts("\n====Precompile public imports====\n");
+
+    for (Usize i = 0; i < self->package->public_imports->len; i++) {
+        CALL_DEBUG(LilyImport, get__Vec(self->package->public_imports, i));
+    }
+
+    puts("\n====Precompile private imports====\n");
+
+    for (Usize i = 0; i < self->package->private_imports->len; i++) {
+        CALL_DEBUG(LilyImport, get__Vec(self->package->private_imports, i));
+    }
+#endif
 }

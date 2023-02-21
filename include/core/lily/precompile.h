@@ -25,6 +25,8 @@
 #ifndef LILY_CORE_LILY_PRECOMPILE_H
 #define LILY_CORE_LILY_PRECOMPILE_H
 
+#include <base/macros.h>
+
 #include <core/lily/preparser.h>
 
 typedef struct LilyPackage LilyPackage;
@@ -145,6 +147,26 @@ typedef struct LilyImport
  * @brief Construct LilyImport type.
  */
 CONSTRUCTOR(LilyImport *, LilyImport, Vec *values, String *as);
+
+/**
+ *
+ * @brief Convert LilyImport in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyImport, const LilyImport *self);
+#endif
+
+/**
+ *
+ * @brief Print debug LilyImport struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyImport, const LilyImport *self);
+#endif
 
 /**
  *
