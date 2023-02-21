@@ -46,6 +46,13 @@ CONSTRUCTOR(Vec *, Vec);
 
 /**
  *
+ * @brief Append to the buffer an other vector.
+ */
+void
+append__Vec(Vec *self, const Vec *other);
+
+/**
+ *
  * @brief Construct Vec type with default buffer items.
  */
 Vec *

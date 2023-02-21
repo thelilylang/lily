@@ -44,6 +44,14 @@ CONSTRUCTOR(Vec *, Vec)
     return self;
 }
 
+void
+append__Vec(Vec *self, const Vec *other)
+{
+    for (Usize i = 0; i < other->len; i++) {
+        push__Vec(self, other->buffer[i]);
+    }
+}
+
 Vec *
 from__Vec(void **buffer, Usize len)
 {
