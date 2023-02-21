@@ -59,6 +59,9 @@ static LilyImport *
 precompile_import__LilyPrecompile(LilyPrecompile *self,
                                   const LilyPreparserImport *import);
 
+static inline LilyPackage *
+precompile_sub_package__LilyPrecompile(const LilyPreparserSubPackage *sub_pkg);
+
 CONSTRUCTOR(LilyImportValue *, LilyImportValue, enum LilyImportValueKind kind)
 {
     LilyImportValue *self = lily_malloc(sizeof(LilyImportValue));
@@ -356,11 +359,10 @@ precompile_import_access__LilyPrecompile(LilyPrecompile *self,
             import_value->buffer[*position] == '_') {
             String *access = NEW(String);
 
-            while (
-              (isalpha(import_value->buffer[*position]) ||
-               import_value->buffer[*position] == '_') &&
-              import_value->buffer[*position] != '.' &&
-              import_value->buffer[*position]) {
+            while ((isalpha(import_value->buffer[*position]) ||
+                    import_value->buffer[*position] == '_') &&
+                   import_value->buffer[*position] != '.' &&
+                   import_value->buffer[*position]) {
                 push__String(access, import_value->buffer[*position]);
                 *position += 1;
             }
@@ -629,6 +631,12 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
     return NEW(LilyImport, values, import->as);
 }
 
+LilyPackage *
+precompile_sub_package__LilyPrecompile(const LilyPreparserSubPackage *sub_pkg)
+{
+    return NEW(LilyPackage, sub_pkg->name, sub_pkg->visibility, NULL);
+}
+
 void
 run__LilyPrecompile(LilyPrecompile *self)
 {
@@ -653,7 +661,9 @@ run__LilyPrecompile(LilyPrecompile *self)
 
     // 2. Precompile all packages
     for (Usize i = 0; i < self->preparser->package->sub_packages->len; i++) {
-
+        push__Vec(self->package->sub_packages,
+                  precompile_sub_package__LilyPrecompile(
+                    get__Vec(self->preparser->package->sub_packages, i)));
     }
 
 #ifdef DEBUG_PRECOMPILE
@@ -669,6 +679,11 @@ run__LilyPrecompile(LilyPrecompile *self)
 
     for (Usize i = 0; i < self->package->private_imports->len; i++) {
         CALL_DEBUG(LilyImport, get__Vec(self->package->private_imports, i));
+    }
+
+    puts("\n====Precompile private imports====\n");
+
+    for (Usize i = 0; i < self->package->sub_packages; i++) {
     }
 #endif
 }
