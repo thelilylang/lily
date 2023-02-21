@@ -229,7 +229,7 @@ inline CONSTRUCTOR(LilyPreparser,
                             .public_macros = NEW(Vec),
                             .private_macros = NEW(Vec),
                             .package = NEW(LilyPreparserPackage, package_name),
-                            .current = get__Vec(scanner->tokens, 0),
+                            .current = NULL,
                             .position = 0,
                             .count_error = 0 };
 }

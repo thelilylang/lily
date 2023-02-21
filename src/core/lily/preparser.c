@@ -731,6 +731,8 @@ preparse_package__LilyPreparser(LilyPreparser *self)
 void
 run__LilyPreparser(LilyPreparser *self)
 {
+    self->current = get__Vec(self->scanner->tokens, 0);
+
     bool package_is_preparse = false;
 
     while (self->current->kind != LILY_TOKEN_KIND_EOF) {
