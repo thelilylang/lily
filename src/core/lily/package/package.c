@@ -31,9 +31,6 @@
 
 #include <core/lily/package/package.h>
 #include <core/lily/parser.h>
-#include <core/lily/precompile.h>
-#include <core/lily/preparser.h>
-#include <core/lily/scanner.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,8 +40,18 @@ CONSTRUCTOR(LilyPackage *,
             LilyPackage,
             String *name,
             enum LilyVisibility visibility,
-            Vec *public_macros)
+            Vec *public_macros,
+            char *filename,
+            enum LilyPackageStatus status)
 {
+    char *content = read_file__Path(filename);
+    char *file_ext = get_extension__Path(filename);
+
+    if (strcmp(file_ext, ".lily")) {
+        EMIT_ERROR("bad extension, expected `.lily`");
+        exit(1);
+    }
+
     LilyPackage *self = lily_malloc(sizeof(LilyPackage));
 
     self->name = name;
@@ -55,7 +62,15 @@ CONSTRUCTOR(LilyPackage *,
     self->sub_packages = NEW(Vec);
     self->pacakge_dependencies = NEW(Vec);
     self->lib_dependencies = NEW(Vec);
+    self->file = NEW(File, filename, content);
+    self->scanner =
+      NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &self->file));
+    self->preparser = NEW(LilyPreparser, &self->scanner, self->name);
+    self->precompile = NEW(LilyPrecompile, &self->preparser, self);
     self->visibility = visibility;
+    self->status = status;
+
+    lily_free(file_ext);
 
     return self;
 }
@@ -64,67 +79,32 @@ LilyPackage *
 build__LilyPackage(const CompileConfig *config,
                    String *name,
                    enum LilyVisibility visibility,
-                   Vec *public_macros)
+                   Vec *public_macros,
+                   enum LilyPackageStatus status)
 {
-    LilyPackage *self = public_macros
-                          ? NEW(LilyPackage, NULL, visibility, NULL)
-                          : NEW(LilyPackage, NULL, visibility, NEW(Vec));
+    LilyPackage *self = public_macros ? NEW(LilyPackage,
+                                            NULL,
+                                            visibility,
+                                            NULL,
+                                            (char *)config->filename,
+                                            status)
+                                      : NEW(LilyPackage,
+                                            NULL,
+                                            visibility,
+                                            NEW(Vec),
+                                            (char *)config->filename,
+                                            status);
 
-    char *content = read_file__Path(config->filename);
-    char *file_ext = get_extension__Path(config->filename);
+    run__LilyScanner(&self->scanner, config->dump_scanner);
+    run__LilyPreparser(&self->preparser);
 
-    if (strcmp(file_ext, ".lily")) {
-        EMIT_ERROR("bad extension, expected `.lily`");
-        exit(1);
-    }
-
-    const File file = NEW(File, config->filename, content);
-    LilyScanner scanner =
-      NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &file));
-
-    run__LilyScanner(&scanner, config->dump_scanner);
-
-    LilyPreparser preparser = NEW(LilyPreparser, &scanner, name);
-
-    run__LilyPreparser(&preparser);
-
-    if (preparser.package->name) {
-        self->name = preparser.package->name;
+    if (self->preparser.package->name) {
+        self->name = self->preparser.package->name;
     } else {
         self->name = from__String("main");
     }
 
-    LilyPrecompile precompile = NEW(LilyPrecompile, &preparser, self);
-
-    run__LilyPrecompile(&precompile);
-
-    lily_free(file_ext);
-    lily_free(content);
-    FREE(LilyScanner, &scanner);
-
-    // ===============
-    FREE_BUFFER_ITEMS(preparser.public_imports->buffer,
-                      preparser.public_imports->len,
-                      LilyPreparserImport);
-    FREE(Vec, preparser.public_imports);
-
-    FREE_BUFFER_ITEMS(preparser.private_imports->buffer,
-                      preparser.private_imports->len,
-                      LilyPreparserImport);
-    FREE(Vec, preparser.private_imports);
-
-    FREE_BUFFER_ITEMS(preparser.public_macros->buffer,
-                      preparser.public_macros->len,
-                      LilyPreparserMacro);
-    FREE(Vec, preparser.public_macros);
-
-    FREE_BUFFER_ITEMS(preparser.private_macros->buffer,
-                      preparser.private_macros->len,
-                      LilyPreparserMacro);
-    FREE(Vec, preparser.private_macros);
-
-    FREE(LilyPreparserPackage, preparser.package);
-    // ===============
+    run__LilyPrecompile(&self->precompile);
 
     return self;
 }
@@ -132,9 +112,10 @@ build__LilyPackage(const CompileConfig *config,
 LilyPackage *
 compile__LilyPackage(const CompileConfig *config,
                      String *name,
-                     enum LilyVisibility visibility)
+                     enum LilyVisibility visibility,
+                     enum LilyPackageStatus status)
 {
-    return build__LilyPackage(config, name, visibility, NULL);
+    return build__LilyPackage(config, name, visibility, NULL, status);
 }
 
 DESTRUCTOR(LilyPackage, LilyPackage *self)
@@ -162,5 +143,36 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(Vec, self->sub_packages);
     FREE(Vec, self->pacakge_dependencies);
     FREE(Vec, self->lib_dependencies);
+
+    if (self->status == LILY_PACKAGE_STATUS_NORMAL) {
+        lily_free(self->file.name);
+    }
+
+    FREE(File, &self->file);
+
+    FREE(LilyScanner, &self->scanner);
+
+    FREE_BUFFER_ITEMS(self->preparser.public_imports->buffer,
+                      self->preparser.public_imports->len,
+                      LilyPreparserImport);
+    FREE(Vec, self->preparser.public_imports);
+
+    FREE_BUFFER_ITEMS(self->preparser.private_imports->buffer,
+                      self->preparser.private_imports->len,
+                      LilyPreparserImport);
+    FREE(Vec, self->preparser.private_imports);
+
+    FREE_BUFFER_ITEMS(self->preparser.public_macros->buffer,
+                      self->preparser.public_macros->len,
+                      LilyPreparserMacro);
+    FREE(Vec, self->preparser.public_macros);
+
+    FREE_BUFFER_ITEMS(self->preparser.private_macros->buffer,
+                      self->preparser.private_macros->len,
+                      LilyPreparserMacro);
+    FREE(Vec, self->preparser.private_macros);
+
+    FREE(LilyPreparserPackage, self->preparser.package);
+
     lily_free(self);
 }

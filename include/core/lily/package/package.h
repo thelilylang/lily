@@ -31,7 +31,16 @@
 #include <cli/config/compile.h>
 
 #include <core/lily/package/library.h>
+#include <core/lily/precompile.h>
+#include <core/lily/preparser.h>
+#include <core/lily/scanner.h>
 #include <core/lily/visibility.h>
+
+enum LilyPackageStatus
+{
+    LILY_PACKAGE_STATUS_MAIN, // Contains the main function
+    LILY_PACKAGE_STATUS_NORMAL
+};
 
 typedef struct LilyPackage
 {
@@ -43,8 +52,13 @@ typedef struct LilyPackage
     Vec *sub_packages;         // Vec<LilyPackage*>*
     Vec *pacakge_dependencies; // Vec<LilyPackage*>*
     Vec *lib_dependencies;     // Vec<LilyLibrary*>*
+    File file;
+    LilyScanner scanner;       // LilyScanner?
+    LilyPreparser preparser;   // LilyPreparser?
+    LilyPrecompile precompile; // LilyPrecompile?
     // LilyLibrary library;
     enum LilyVisibility visibility;
+    enum LilyPackageStatus status;
 } LilyPackage;
 
 /**
@@ -55,7 +69,9 @@ CONSTRUCTOR(LilyPackage *,
             LilyPackage,
             String *name,
             enum LilyVisibility visibility,
-            Vec *public_macros);
+            Vec *public_macros,
+            char *filename,
+            enum LilyPackageStatus status);
 
 /**
  *
@@ -65,7 +81,8 @@ LilyPackage *
 build__LilyPackage(const CompileConfig *config,
                    String *name,
                    enum LilyVisibility visibility,
-                   Vec *public_macros);
+                   Vec *public_macros,
+                   enum LilyPackageStatus status);
 
 /**
  *
@@ -75,7 +92,8 @@ build__LilyPackage(const CompileConfig *config,
 LilyPackage *
 compile__LilyPackage(const CompileConfig *config,
                      String *name,
-                     enum LilyVisibility visibility);
+                     enum LilyVisibility visibility,
+                     enum LilyPackageStatus status);
 
 /**
  *
