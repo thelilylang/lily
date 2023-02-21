@@ -27,7 +27,6 @@
 
 #include <base/macros.h>
 #include <base/types.h>
-#include <base/vec.h>
 
 #include <stdbool.h>
 
@@ -44,6 +43,8 @@
         append__String(self, s); \
         FREE(String, s);         \
     }
+
+typedef struct Vec Vec;
 
 typedef struct String
 {

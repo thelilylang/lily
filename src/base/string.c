@@ -28,6 +28,7 @@
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/string.h>
+#include <base/vec.h>
 
 #include <stdio.h>
 #include <stdlib.h>
