@@ -631,7 +631,7 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
 
     return NEW(LilyImport,
                values,
-               clone__String(import->as)); // TODO: avoid clone__String
+               import->as);
 }
 
 void

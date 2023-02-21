@@ -114,11 +114,6 @@ IMPL_FOR_DEBUG(debug, LilyPreparserImport, const LilyPreparserImport *self)
 DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self)
 {
     FREE(String, self->value);
-
-    if (self->as) {
-        FREE(String, self->as);
-    }
-
     lily_free(self);
 }
 
