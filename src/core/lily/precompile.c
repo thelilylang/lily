@@ -629,9 +629,7 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
         FREE(String, rest_import_value);
     }
 
-    return NEW(LilyImport,
-               values,
-               import->as);
+    return NEW(LilyImport, values, import->as);
 }
 
 void
