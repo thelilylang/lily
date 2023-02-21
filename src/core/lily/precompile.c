@@ -578,7 +578,6 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
         FREE(String, name);
     }
 
-    // TODO: precompile the rest of the import
     if (position < import->value->len) {
         String *rest_import_value = take_slice__String(import->value, position);
         Usize position = 0;
