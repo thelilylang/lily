@@ -33,8 +33,32 @@
 void
 run__Compile(const CompileConfig *config)
 {
-    LilyPackage *pkg = compile__LilyPackage(
-      config, NULL, LILY_VISIBILITY_PUBLIC, LILY_PACKAGE_STATUS_MAIN);
+    char *default_path = NULL;
 
+    // Get the default path
+    {
+        String *filename_string = from__String((char *)config->filename);
+        Vec *filename_string_split = split__String(filename_string, '/');
+
+        FREE(String, pop__Vec(filename_string_split));
+
+        String *filename_string_joined = join__Vec(filename_string_split, '/');
+
+        default_path = filename_string_joined->buffer;
+
+        FREE(String, filename_string);
+        FREE_BUFFER_ITEMS(
+          filename_string_split->buffer, filename_string_split->len, String);
+        FREE(Vec, filename_string_split);
+        lily_free(filename_string_joined);
+    }
+
+    LilyPackage *pkg = compile__LilyPackage(config,
+                                            NULL,
+                                            LILY_VISIBILITY_PUBLIC,
+                                            LILY_PACKAGE_STATUS_MAIN,
+                                            default_path);
+
+    lily_free(default_path);
     FREE(LilyPackage, pkg);
 }

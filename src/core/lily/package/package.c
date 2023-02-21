@@ -42,7 +42,8 @@ CONSTRUCTOR(LilyPackage *,
             enum LilyVisibility visibility,
             Vec *public_macros,
             char *filename,
-            enum LilyPackageStatus status)
+            enum LilyPackageStatus status,
+            const char *default_path)
 {
     char *content = read_file__Path(filename);
     char *file_ext = get_extension__Path(filename);
@@ -66,9 +67,9 @@ CONSTRUCTOR(LilyPackage *,
     self->scanner =
       NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &self->file));
     self->preparser = NEW(LilyPreparser, &self->scanner, self->name);
-    self->precompile = NEW(LilyPrecompile, &self->preparser, self);
     self->visibility = visibility;
     self->status = status;
+    self->precompile = NEW(LilyPrecompile, &self->preparser, self, default_path); 
 
     lily_free(file_ext);
 
@@ -80,20 +81,23 @@ build__LilyPackage(const CompileConfig *config,
                    String *name,
                    enum LilyVisibility visibility,
                    Vec *public_macros,
-                   enum LilyPackageStatus status)
+                   enum LilyPackageStatus status,
+                   const char *default_path)
 {
     LilyPackage *self = public_macros ? NEW(LilyPackage,
                                             NULL,
                                             visibility,
                                             NULL,
                                             (char *)config->filename,
-                                            status)
+                                            status,
+                                            default_path)
                                       : NEW(LilyPackage,
                                             NULL,
                                             visibility,
                                             NEW(Vec),
                                             (char *)config->filename,
-                                            status);
+                                            status,
+                                            default_path);
 
     run__LilyScanner(&self->scanner, config->dump_scanner);
     run__LilyPreparser(&self->preparser);
@@ -113,9 +117,11 @@ LilyPackage *
 compile__LilyPackage(const CompileConfig *config,
                      String *name,
                      enum LilyVisibility visibility,
-                     enum LilyPackageStatus status)
+                     enum LilyPackageStatus status,
+                     const char *default_path)
 {
-    return build__LilyPackage(config, name, visibility, NULL, status);
+    return build__LilyPackage(
+      config, name, visibility, NULL, status, default_path);
 }
 
 DESTRUCTOR(LilyPackage, LilyPackage *self)
