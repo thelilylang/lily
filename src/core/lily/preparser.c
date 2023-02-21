@@ -95,13 +95,13 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserImport, const LilyPreparserImport *self)
           "LilyPreparserImport{{ value = {S}, as = {S}, location = {sa} }",
           self->value,
           self->as,
-          to_string__Debug__Location(self->location));
+          to_string__Debug__Location(&self->location));
     }
 
     return format(
       "LilyPreparserImport{{ value = {S}, as = NULL, location = {sa} }",
       self->value,
-      to_string__Debug__Location(self->location));
+      to_string__Debug__Location(&self->location));
 }
 
 void
@@ -450,6 +450,8 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
                           NULL,
                           NULL),
               &self->count_error);
+
+            FREE(Vec, tokens);
 
             return NULL;
     }
