@@ -59,7 +59,7 @@ static LilyImport *
 precompile_import__LilyPrecompile(LilyPrecompile *self,
                                   const LilyPreparserImport *import);
 
-static inline LilyPackage *
+static LilyPackage *
 precompile_sub_package__LilyPrecompile(const LilyPreparserSubPackage *sub_pkg);
 
 CONSTRUCTOR(LilyImportValue *, LilyImportValue, enum LilyImportValueKind kind)
@@ -634,7 +634,23 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
 LilyPackage *
 precompile_sub_package__LilyPrecompile(const LilyPreparserSubPackage *sub_pkg)
 {
-    return NEW(LilyPackage, sub_pkg->name, sub_pkg->visibility, NULL);
+    Vec *split_pkg_name = split__String(sub_pkg->name, '.');
+    String *pkg_filename = join__Vec(split_pkg_name, '/');
+
+    push_str__String(pkg_filename, ".lily");
+
+    LilyPackage *res = NEW(LilyPackage,
+                           sub_pkg->name,
+                           sub_pkg->visibility,
+                           NULL,
+                           pkg_filename->buffer,
+                           LILY_PACKAGE_STATUS_NORMAL);
+
+    FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
+    FREE(Vec, split_pkg_name);
+    lily_free(pkg_filename);
+
+    return res;
 }
 
 void
@@ -683,7 +699,7 @@ run__LilyPrecompile(LilyPrecompile *self)
 
     puts("\n====Precompile private imports====\n");
 
-    for (Usize i = 0; i < self->package->sub_packages; i++) {
+    for (Usize i = 0; i < self->package->sub_packages->len; i++) {
     }
 #endif
 }
