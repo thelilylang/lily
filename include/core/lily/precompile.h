@@ -179,16 +179,24 @@ typedef struct LilyPrecompile
     const LilyPreparser *preparser;
     LilyPackage *package;
     Usize count_error;
+    const char *default_path;
 } LilyPrecompile;
 
 /**
  *
  * @brief Construct LilyPrecompile type.
  */
-CONSTRUCTOR(LilyPrecompile,
-            LilyPrecompile,
-            const LilyPreparser *preparser,
-            LilyPackage *package);
+inline CONSTRUCTOR(LilyPrecompile,
+                   LilyPrecompile,
+                   const LilyPreparser *preparser,
+                   LilyPackage *package,
+                   const char *default_path)
+{
+    return (LilyPrecompile){ .preparser = preparser,
+                             .package = package,
+                             .count_error = 0,
+                             .default_path = default_path };
+}
 
 /**
  *
