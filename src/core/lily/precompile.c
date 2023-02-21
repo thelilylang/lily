@@ -53,8 +53,7 @@ static Vec *
 precompile_import_access__LilyPrecompile(LilyPrecompile *self,
                                          const String *import_value,
                                          const Location *location,
-                                         Usize *position,
-                                         bool parse_selector);
+                                         Usize *position);
 
 static LilyImport *
 precompile_import__LilyPrecompile(LilyPrecompile *self,
@@ -348,8 +347,7 @@ Vec *
 precompile_import_access__LilyPrecompile(LilyPrecompile *self,
                                          const String *import_value,
                                          const Location *location,
-                                         Usize *position,
-                                         bool parse_selector)
+                                         Usize *position)
 {
     Vec *values = NEW(Vec);
 
@@ -361,8 +359,7 @@ precompile_import_access__LilyPrecompile(LilyPrecompile *self,
             while (
               (isalpha(import_value->buffer[*position]) ||
                import_value->buffer[*position] == '_') &&
-              (import_value->buffer[*position] != '.' ||
-               (import_value->buffer[*position] != ',' && parse_selector)) &&
+              import_value->buffer[*position] != '.' &&
               import_value->buffer[*position]) {
                 push__String(access, import_value->buffer[*position]);
                 *position += 1;
@@ -396,7 +393,7 @@ precompile_import_access__LilyPrecompile(LilyPrecompile *self,
                 }
 
                 Vec *selector_item = precompile_import_access__LilyPrecompile(
-                  self, selector_value, location, &selector_position, true);
+                  self, selector_value, location, &selector_position);
 
                 if (selector_item && selector_item->len > 0) {
                     push__Vec(selector_res, selector_item);
@@ -614,7 +611,7 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
         Usize position = 0;
 
         Vec *access = precompile_import_access__LilyPrecompile(
-          self, rest_import_value, &import->location, &position, false);
+          self, rest_import_value, &import->location, &position);
 
         if (access) {
             append__Vec(values, access);
@@ -652,6 +649,11 @@ run__LilyPrecompile(LilyPrecompile *self)
         if (import) {
             push__Vec(self->package->private_imports, import);
         }
+    }
+
+    // 2. Precompile all packages
+    for (Usize i = 0; i < self->preparser->package->sub_packages->len; i++) {
+
     }
 
 #ifdef DEBUG_PRECOMPILE
