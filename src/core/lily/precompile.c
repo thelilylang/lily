@@ -618,9 +618,11 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
 
         if (access) {
             append__Vec(values, access);
+
             FREE(Vec, access);
         } else {
             FREE(String, rest_import_value);
+
             return NULL;
         }
 
