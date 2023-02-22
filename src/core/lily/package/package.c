@@ -62,7 +62,7 @@ CONSTRUCTOR(LilyPackage *,
         self->public_macros = NULL;
     }
 
-    self->private_macros = NEW(Vec);
+    self->private_macros = NULL;
     self->public_imports = NEW(Vec);
     self->private_imports = NEW(Vec);
     self->sub_packages = NEW(Vec);
@@ -202,7 +202,6 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(Vec, self->preparser.private_imports);
 
     FREE(Vec, self->preparser.public_macros);
-    FREE(Vec, self->preparser.private_macros);
 
     FREE(LilyPreparserPackage, self->preparser.package);
 

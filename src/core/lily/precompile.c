@@ -689,10 +689,7 @@ run__LilyPrecompile(LilyPrecompile *self,
                   remove__Vec(self->preparser->public_macros, 0));
     }
 
-    while (self->preparser->private_macros->len > 0) {
-        push__Vec(root_package->private_macros,
-                  remove__Vec(self->preparser->private_macros, 0));
-    }
+    self->package->private_macros = self->preparser->private_macros; 
 
     // 3. Check name conflict for macros.
     for (Usize i = 0; i < self->preparser->public_macros->len; i++) {
