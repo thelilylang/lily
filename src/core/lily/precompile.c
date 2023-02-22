@@ -683,9 +683,14 @@ run__LilyPrecompile(LilyPrecompile *self,
         }
     }
 
-    // 2. Add public_macros get in preparser in root_package's public_macros.
+    // 2. Add the public macros obtained by the preparer to the public macros of
+    // root_package.
+    while (self->preparser->public_macros->len > 0) {
+        push__Vec(root_package->public_macros,
+                  remove__Vec(self->preparser->public_macros, 0));
+    }
 
-    // 2. Check name conflict for macros.
+    // 3. Check name conflict for macros.
     for (Usize i = 0; i < self->preparser->public_macros->len; i++) {
         for (Usize j = i + 1; j < self->preparser->public_macros->len; j++) {
             if (CAST(LilyPreparserMacro *,
@@ -701,7 +706,7 @@ run__LilyPrecompile(LilyPrecompile *self,
     for (Usize i = 0; i < self->preparser->private_imports->len; i++) {
     }
 
-    // 3. Precompile all packages
+    // 4. Precompile all packages
     for (Usize i = 0; i < self->preparser->package->sub_packages->len; i++) {
         push__Vec(self->package->sub_packages,
                   precompile_sub_package__LilyPrecompile(
