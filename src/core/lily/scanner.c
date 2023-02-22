@@ -1772,6 +1772,10 @@ get_token__LilyScanner(LilyScanner *self)
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_L_SHIFT_EQ,
                            clone__Location(&self->location));
+            } else if (c1 == (char *)'-') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_INVERSE_ARROW,
+                           clone__Location(&self->location));
             }
 
             return NEW(LilyToken,
@@ -1789,6 +1793,10 @@ get_token__LilyScanner(LilyScanner *self)
             } else if (c1 == (char *)'-') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_MINUS_MINUS,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'>') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_ARROW,
                            clone__Location(&self->location));
             }
 
@@ -1901,6 +1909,35 @@ get_token__LilyScanner(LilyScanner *self)
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_SLASH,
+                       clone__Location(&self->location));
+        case '*':
+            if (c1 == (char *)'*' && c2 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_STAR_STAR_EQ,
+                           clone__Location(&self->location));
+            }
+            if (c1 == (char *)'*') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_STAR_STAR,
+                           clone__Location(&self->location));
+            } else if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_STAR_EQ,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_STAR,
+                       clone__Location(&self->location));
+        case '~':
+            if (c1 == (char *)'=') {
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_WAVE_EQ,
+                           clone__Location(&self->location));
+            }
+
+            return NEW(LilyToken,
+                       LILY_TOKEN_KIND_WAVE,
                        clone__Location(&self->location));
         case '\'': {
             char *res = scan_char__LilyScanner(self);
