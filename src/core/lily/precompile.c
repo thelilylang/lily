@@ -729,6 +729,44 @@ run__LilyPrecompile(LilyPrecompile *self,
         }
     }
 
+    for (Usize i = 0; i < self->preparser->private_macros->len; i++) {
+        for (Usize j = i + 1; j < self->preparser->private_macros->len; j++) {
+            if (CAST(LilyPreparserMacro *,
+                     get__Vec(self->preparser->private_macros, i))
+                  ->name == CAST(LilyPreparserMacro *,
+                                 get__Vec(self->preparser->private_macros, j))
+                              ->name) {
+                const Location *location_i =
+                  &CAST(LilyPreparserMacro *,
+                        get__Vec(self->preparser->private_macros, i))
+                     ->location;
+                const Location *location_j =
+                  &CAST(LilyPreparserMacro *,
+                        get__Vec(self->preparser->private_macros, j))
+                     ->location;
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    get_file_from_filename__LilyPackage(root_package,
+                                                        location_j->filename),
+                    location_j,
+                    NEW(LilyError, LILY_ERROR_KIND_NAME_CONFLICT),
+                    NULL,
+                    init__Vec(
+                      1,
+                      format__String(
+                        "a macro with the same name is defined at {s}:{d}:{d}",
+                        location_i->filename,
+                        location_i->start_line,
+                        location_i->start_column)),
+                    NULL),
+                  &self->count_error);
+            }
+        }
+    }
+
     for (Usize i = 0; i < self->preparser->private_imports->len; i++) {
     }
 
