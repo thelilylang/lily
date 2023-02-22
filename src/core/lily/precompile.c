@@ -62,7 +62,8 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
 static LilyPackage *
 precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                        const LilyPreparserSubPackage *sub_pkg,
-                                       const LilyDumpConfig *dump_config);
+                                       const LilyDumpConfig *dump_config,
+                                       LilyPackage *root_package);
 
 CONSTRUCTOR(LilyImportValue *, LilyImportValue, enum LilyImportValueKind kind)
 {
@@ -626,7 +627,8 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
 LilyPackage *
 precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                        const LilyPreparserSubPackage *sub_pkg,
-                                       const LilyDumpConfig *dump_config)
+                                       const LilyDumpConfig *dump_config,
+                                       LilyPackage *root_package)
 {
     Vec *split_pkg_name = split__String(sub_pkg->name, '.');
     String *pkg_filename_join = join__Vec(split_pkg_name, '/');
@@ -648,7 +650,7 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
 
     run__LilyScanner(&res->scanner, dump_config->dump_scanner);
     run__LilyPreparser(&res->preparser);
-    run__LilyPrecompile(&res->precompile, dump_config);
+    run__LilyPrecompile(&res->precompile, dump_config, root_package);
 
     FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
     FREE(Vec, split_pkg_name);
@@ -658,7 +660,9 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
 }
 
 void
-run__LilyPrecompile(LilyPrecompile *self, const LilyDumpConfig *dump_config)
+run__LilyPrecompile(LilyPrecompile *self,
+                    const LilyDumpConfig *dump_config,
+                    LilyPackage *root_package)
 {
     // 1. Precompile all imports
     for (Usize i = 0; i < self->preparser->public_imports->len; i++) {
@@ -679,13 +683,30 @@ run__LilyPrecompile(LilyPrecompile *self, const LilyDumpConfig *dump_config)
         }
     }
 
-    // 2. Precompile all packages
+    // 2. Check name conflict for macros.
+    for (Usize i = 0; i < self->preparser->public_macros->len; i++) {
+        for (Usize j = i + 1; j < self->preparser->public_macros->len; j++) {
+            if (CAST(LilyPreparserMacro *,
+                     get__Vec(self->preparser->public_macros, i))
+                  ->name == CAST(LilyPreparserMacro *,
+                                 get__Vec(self->preparser->public_macros, j))
+                              ->name) {
+                // ERROR: name conflict
+            }
+        }
+    }
+
+    for (Usize i = 0; i < self->preparser->private_imports->len; i++) {
+    }
+
+    // 3. Precompile all packages
     for (Usize i = 0; i < self->preparser->package->sub_packages->len; i++) {
         push__Vec(self->package->sub_packages,
                   precompile_sub_package__LilyPrecompile(
                     self,
                     get__Vec(self->preparser->package->sub_packages, i),
-                    dump_config));
+                    dump_config,
+                    root_package));
     }
 
 #ifdef DEBUG_PRECOMPILE

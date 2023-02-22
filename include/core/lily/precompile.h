@@ -204,6 +204,8 @@ inline CONSTRUCTOR(LilyPrecompile,
  * @brief Run the pre-compiler.
  */
 void
-run__LilyPrecompile(LilyPrecompile *self, const LilyDumpConfig *dump_config);
+run__LilyPrecompile(LilyPrecompile *self,
+                    const LilyDumpConfig *dump_config,
+                    LilyPackage *root_package);
 
 #endif // LILY_CORE_LILY_PRECOMPILE_H

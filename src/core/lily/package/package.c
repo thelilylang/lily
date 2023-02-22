@@ -115,7 +115,7 @@ build__LilyPackage(const CompileConfig *config,
                                      config->dump_typecheck,
                                      config->dump_ir);
 
-    run__LilyPrecompile(&self->precompile, &dump_config);
+    run__LilyPrecompile(&self->precompile, &dump_config, self);
 
     return self;
 }
