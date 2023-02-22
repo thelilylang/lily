@@ -158,11 +158,15 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(String, self->name);
 
     if (self->public_macros) {
-        // TODO: add free for buffer
+        FREE_BUFFER_ITEMS(self->public_macros->buffer,
+                          self->public_macros->len,
+                          LilyPreparserMacro);
         FREE(Vec, self->public_macros);
     }
 
-    // TODO: add free for buffer
+    FREE_BUFFER_ITEMS(self->private_macros->buffer,
+                      self->private_macros->len,
+                      LilyPreparserMacro);
     FREE(Vec, self->private_macros);
 
     FREE_BUFFER_ITEMS(
@@ -197,14 +201,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
                       LilyPreparserImport);
     FREE(Vec, self->preparser.private_imports);
 
-    FREE_BUFFER_ITEMS(self->preparser.public_macros->buffer,
-                      self->preparser.public_macros->len,
-                      LilyPreparserMacro);
     FREE(Vec, self->preparser.public_macros);
-
-    FREE_BUFFER_ITEMS(self->preparser.private_macros->buffer,
-                      self->preparser.private_macros->len,
-                      LilyPreparserMacro);
     FREE(Vec, self->preparser.private_macros);
 
     FREE(LilyPreparserPackage, self->preparser.package);

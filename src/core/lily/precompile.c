@@ -684,10 +684,14 @@ run__LilyPrecompile(LilyPrecompile *self,
 
     // 2. Add the public macros obtained by the preparer to the public macros of
     // root_package.
-    // FIXME: Add free on public_macros in the package DESTRUCTOR.
     while (self->preparser->public_macros->len > 0) {
         push__Vec(root_package->public_macros,
                   remove__Vec(self->preparser->public_macros, 0));
+    }
+
+    while (self->preparser->private_macros->len > 0) {
+        push__Vec(root_package->private_macros,
+                  remove__Vec(self->preparser->private_macros, 0));
     }
 
     // 3. Check name conflict for macros.
