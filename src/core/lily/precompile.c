@@ -684,6 +684,7 @@ run__LilyPrecompile(LilyPrecompile *self,
 
     // 2. Add the public macros obtained by the preparer to the public macros of
     // root_package.
+    // FIXME: Add free on public_macros in the package DESTRUCTOR.
     while (self->preparser->public_macros->len > 0) {
         push__Vec(root_package->public_macros,
                   remove__Vec(self->preparser->public_macros, 0));
@@ -697,7 +698,33 @@ run__LilyPrecompile(LilyPrecompile *self,
                   ->name == CAST(LilyPreparserMacro *,
                                  get__Vec(self->preparser->public_macros, j))
                               ->name) {
-                // ERROR: name conflict
+                const Location *location_i =
+                  &CAST(LilyPreparserMacro *,
+                        get__Vec(self->preparser->public_macros, i))
+                     ->location;
+                const Location *location_j =
+                  &CAST(LilyPreparserMacro *,
+                        get__Vec(self->preparser->public_macros, j))
+                     ->location;
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    get_file_from_filename__LilyPackage(root_package,
+                                                        location_j->filename),
+                    location_j,
+                    NEW(LilyError, LILY_ERROR_KIND_NAME_CONFLICT),
+                    NULL,
+                    init__Vec(
+                      1,
+                      format__String(
+                        "a macro with the same name is defined at {s}:{d}:{d}",
+                        location_i->filename,
+                        location_i->start_line,
+                        location_i->start_column)),
+                    NULL),
+                  &self->count_error);
             }
         }
     }
