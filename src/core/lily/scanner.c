@@ -2080,9 +2080,9 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
       NEW(LilyToken, LILY_TOKEN_KIND_EOF, clone__Location(&self->location)));
 
 #ifndef DEBUG_SCANNER
-    printf("====Scanner(%s)====\n", self->source.file->name);
-
     if (dump_scanner) {
+        printf("====Scanner(%s)====\n", self->source.file->name);
+
         for (Usize i = 0; i < self->tokens->len; i++) {
             PRINTLN("{Sr}", to_string__LilyToken(get__Vec(self->tokens, i)));
         }
