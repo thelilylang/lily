@@ -74,9 +74,9 @@ typedef struct LilyPackage
     Vec *package_dependencies; // Vec<LilyPackage*>*
     Vec *lib_dependencies;     // Vec<LilyLibrary*>*
     File file;
-    LilyScanner scanner;       // LilyScanner?
-    LilyPreparser preparser;   // LilyPreparser?
-    LilyPrecompile precompile; // LilyPrecompile?
+    LilyScanner scanner;       // LilyScanner
+    LilyPreparser preparser;   // LilyPreparser
+    LilyPrecompile precompile; // LilyPrecompile
     // LilyLibrary library;
     enum LilyVisibility visibility;
     enum LilyPackageStatus status;
