@@ -60,7 +60,9 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
                                   const LilyPreparserImport *import);
 
 static LilyPackage *
-precompile_sub_package__LilyPrecompile(const LilyPrecompile *self, const LilyPreparserSubPackage *sub_pkg);
+precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
+                                       const LilyPreparserSubPackage *sub_pkg,
+                                       const LilyDumpConfig *dump_config);
 
 CONSTRUCTOR(LilyImportValue *, LilyImportValue, enum LilyImportValueKind kind)
 {
@@ -622,13 +624,15 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
 }
 
 LilyPackage *
-precompile_sub_package__LilyPrecompile(const LilyPrecompile *self, const LilyPreparserSubPackage *sub_pkg)
+precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
+                                       const LilyPreparserSubPackage *sub_pkg,
+                                       const LilyDumpConfig *dump_config)
 {
     Vec *split_pkg_name = split__String(sub_pkg->name, '.');
     String *pkg_filename_join = join__Vec(split_pkg_name, '/');
     String *pkg_filename = NEW(String);
 
-    push_str__String(pkg_filename, (char*)self->default_path);
+    push_str__String(pkg_filename, (char *)self->default_path);
     push_str__String(pkg_filename, "/");
     APPEND_AND_FREE(pkg_filename, pkg_filename_join);
 
@@ -642,6 +646,10 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self, const LilyPre
                            LILY_PACKAGE_STATUS_NORMAL,
                            self->default_path);
 
+    run__LilyScanner(&res->scanner, dump_config->dump_scanner);
+    run__LilyPreparser(&res->preparser);
+    run__LilyPrecompile(&res->precompile, dump_config);
+
     FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
     FREE(Vec, split_pkg_name);
     lily_free(pkg_filename);
@@ -650,7 +658,7 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self, const LilyPre
 }
 
 void
-run__LilyPrecompile(LilyPrecompile *self)
+run__LilyPrecompile(LilyPrecompile *self, const LilyDumpConfig *dump_config)
 {
     // 1. Precompile all imports
     for (Usize i = 0; i < self->preparser->public_imports->len; i++) {
@@ -674,8 +682,10 @@ run__LilyPrecompile(LilyPrecompile *self)
     // 2. Precompile all packages
     for (Usize i = 0; i < self->preparser->package->sub_packages->len; i++) {
         push__Vec(self->package->sub_packages,
-                  precompile_sub_package__LilyPrecompile(self,
-                    get__Vec(self->preparser->package->sub_packages, i)));
+                  precompile_sub_package__LilyPrecompile(
+                    self,
+                    get__Vec(self->preparser->package->sub_packages, i),
+                    dump_config));
     }
 
 #ifdef DEBUG_PRECOMPILE
