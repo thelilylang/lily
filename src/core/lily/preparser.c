@@ -117,12 +117,17 @@ DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self)
     lily_free(self);
 }
 
-CONSTRUCTOR(LilyPreparserMacro *, LilyPreparserMacro, String *name, Vec *tokens)
+CONSTRUCTOR(LilyPreparserMacro *,
+            LilyPreparserMacro,
+            String *name,
+            Vec *tokens,
+            Location location)
 {
     LilyPreparserMacro *self = lily_malloc(sizeof(LilyPreparserMacro));
 
     self->name = name;
     self->tokens = tokens;
+    self->location = location;
 
     return self;
 }
@@ -425,6 +430,7 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
 {
     String *name = NULL;
     Vec *tokens = NEW(Vec);
+    Location location = clone__Location(&self->current->location);
 
     eat_and_next_token__LilyPreparser(self);
 
@@ -537,7 +543,11 @@ get_tokens : {
     }
 }
 
-    return NEW(LilyPreparserMacro, name, tokens);
+    end__Location(&location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
+
+    return NEW(LilyPreparserMacro, name, tokens, location);
 }
 
 int

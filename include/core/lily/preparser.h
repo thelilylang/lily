@@ -79,6 +79,7 @@ typedef struct LilyPreparserMacro
 {
     String *name;
     Vec *tokens; // Vec<LilyToken*>*
+    Location location;
 } LilyPreparserMacro;
 
 /**
@@ -88,7 +89,8 @@ typedef struct LilyPreparserMacro
 CONSTRUCTOR(LilyPreparserMacro *,
             LilyPreparserMacro,
             String *name,
-            Vec *tokens);
+            Vec *tokens,
+            Location location);
 
 /**
  *
