@@ -842,37 +842,41 @@ exit_preparser : {
 }
 
 #ifdef DEBUG_PREPARSER
-    puts("\n====Preparser====\n");
+    printf("\n====Preparser(%s)====\n", self->scanner->source.file->name);
 
     for (Usize i = 0; i < self->scanner->tokens->len; i++) {
         CALL_DEBUG(LilyToken, get__Vec(self->scanner->tokens, i));
     }
 
-    puts("\n====Preparser public imports====\n");
+    printf("\n====Preparser public imports(%s)====\n",
+           self->scanner->source.file->name);
 
     for (Usize i = 0; i < self->public_imports->len; i++) {
         CALL_DEBUG(LilyPreparserImport, get__Vec(self->public_imports, i));
     }
 
-    puts("\n====Preparser private imports====\n");
+    printf("\n====Preparser private imports(%s)====\n",
+           self->scanner->source.file->name);
 
     for (Usize i = 0; i < self->private_imports->len; i++) {
         CALL_DEBUG(LilyPreparserImport, get__Vec(self->private_imports, i));
     }
 
-    puts("\n====Preparser public macros====\n");
+    printf("\n====Preparser public macros(%s)====\n",
+           self->scanner->source.file->name);
 
     for (Usize i = 0; i < self->public_macros->len; i++) {
         CALL_DEBUG(LilyPreparserMacro, get__Vec(self->public_macros, i));
     }
 
-    puts("\n====Preparser private macros====\n");
+    printf("\n====Preparser private macros(%s)====\n",
+           self->scanner->source.file->name);
 
     for (Usize i = 0; i < self->private_macros->len; i++) {
         CALL_DEBUG(LilyPreparserMacro, get__Vec(self->private_macros, i));
     }
 
-    puts("\n====Package====\n");
+    printf("\n====Package(%s)====\n", self->scanner->source.file->name);
 
     CALL_DEBUG(LilyPreparserPackage, self->package);
 #endif

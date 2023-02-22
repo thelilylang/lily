@@ -689,21 +689,25 @@ run__LilyPrecompile(LilyPrecompile *self, const LilyDumpConfig *dump_config)
     }
 
 #ifdef DEBUG_PRECOMPILE
-    puts("\n====Precompile====\n");
+    printf("\n====Precompile(%s)====\n",
+           self->preparser->scanner->source.file->name);
 
-    puts("\n====Precompile public imports====\n");
+    printf("\n====Precompile public imports(%s)====\n",
+           self->preparser->scanner->source.file->name);
 
     for (Usize i = 0; i < self->package->public_imports->len; i++) {
         CALL_DEBUG(LilyImport, get__Vec(self->package->public_imports, i));
     }
 
-    puts("\n====Precompile private imports====\n");
+    printf("\n====Precompile private imports(%s)====\n",
+           self->preparser->scanner->source.file->name);
 
     for (Usize i = 0; i < self->package->private_imports->len; i++) {
         CALL_DEBUG(LilyImport, get__Vec(self->package->private_imports, i));
     }
 
-    puts("\n====Precompile private imports====\n");
+    printf("\n====Precompile private imports(%s)====\n",
+           self->preparser->scanner->source.file->name);
 
     for (Usize i = 0; i < self->package->sub_packages->len; i++) {
     }
