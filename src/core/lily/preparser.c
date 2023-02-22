@@ -152,7 +152,7 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserMacro, const LilyPreparserMacro *self)
     }
 
     push_str__String(res, " }, location = ");
-    
+
     char *location_s = to_string__Debug__Location(&self->location);
 
     push_str__String(res, location_s);
