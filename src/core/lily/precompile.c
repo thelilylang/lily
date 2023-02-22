@@ -643,7 +643,6 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
     LilyPackage *res = NEW(LilyPackage,
                            sub_pkg->name,
                            sub_pkg->visibility,
-                           NULL,
                            pkg_filename->buffer,
                            LILY_PACKAGE_STATUS_NORMAL,
                            self->default_path);

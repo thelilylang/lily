@@ -90,7 +90,6 @@ CONSTRUCTOR(LilyPackage *,
             LilyPackage,
             String *name,
             enum LilyVisibility visibility,
-            Vec *public_macros,
             char *filename,
             enum LilyPackageStatus status,
             const char *default_path);
@@ -103,7 +102,6 @@ LilyPackage *
 build__LilyPackage(const CompileConfig *config,
                    String *name,
                    enum LilyVisibility visibility,
-                   Vec *public_macros,
                    enum LilyPackageStatus status,
                    const char *default_path);
 
