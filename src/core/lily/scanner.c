@@ -1986,48 +1986,76 @@ get_token__LilyScanner(LilyScanner *self)
             return get_num__LilyScanner(self);
         case IS_DIGIT_WITHOUT_ZERO:
             return get_num__LilyScanner(self);
-        case IS_ID: {
-            String *id = scan_identifier__LilyScanner(self);
-            enum LilyTokenKind kind = get_keyword(id->buffer);
+        case IS_ID:
+            if (self->source.cursor.current == 'b' && c1 == (char *)'\'') {
+                next_char__Source(&self->source);
 
-            switch (kind) {
-                case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                char *res = scan_char__LilyScanner(self);
+
+                if (res) {
                     return NEW_VARIANT(LilyToken,
-                                       identifier_normal,
+                                       literal_bit_char,
                                        clone__Location(&self->location),
-                                       id);
-                case LILY_TOKEN_KIND_KEYWORD_NOT:
-                    if (peek_char__LilyScanner(self, 1) == (char *)'=') {
-                        next_char__Source(&self->source);
+                                       (char)(Uptr)res);
+                }
 
+                return NULL;
+            } else if (self->source.cursor.current == 'b' &&
+                       c1 == (char *)'\"') {
+                next_char__Source(&self->source);
+
+                String *res = scan_string__LilyScanner(self);
+
+                if (res) {
+                    return NEW_VARIANT(LilyToken,
+                                       literal_bit_string,
+                                       clone__Location(&self->location),
+                                       (Uint8 *)res);
+                }
+
+                return NULL;
+            } else {
+                String *id = scan_identifier__LilyScanner(self);
+                enum LilyTokenKind kind = get_keyword(id->buffer);
+
+                switch (kind) {
+                    case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                        return NEW_VARIANT(LilyToken,
+                                           identifier_normal,
+                                           clone__Location(&self->location),
+                                           id);
+                    case LILY_TOKEN_KIND_KEYWORD_NOT:
+                        if (peek_char__LilyScanner(self, 1) == (char *)'=') {
+                            next_char__Source(&self->source);
+
+                            FREE(String, id);
+
+                            return NEW(LilyToken,
+                                       LILY_TOKEN_KIND_NOT_EQ,
+                                       clone__Location(&self->location));
+                        }
+
+                        goto keyword;
+                    case LILY_TOKEN_KIND_KEYWORD_XOR:
+                        if (peek_char__LilyScanner(self, 1) == (char *)'=') {
+                            next_char__Source(&self->source);
+
+                            FREE(String, id);
+
+                            return NEW(LilyToken,
+                                       LILY_TOKEN_KIND_XOR_EQ,
+                                       clone__Location(&self->location));
+                        }
+
+                        goto keyword;
+                    default:
+                    keyword : {
                         FREE(String, id);
-
-                        return NEW(LilyToken,
-                                   LILY_TOKEN_KIND_NOT_EQ,
-                                   clone__Location(&self->location));
+                        return NEW(
+                          LilyToken, kind, clone__Location(&self->location));
                     }
-
-                    goto keyword;
-                case LILY_TOKEN_KIND_KEYWORD_XOR:
-                    if (peek_char__LilyScanner(self, 1) == (char *)'=') {
-                        next_char__Source(&self->source);
-
-                        FREE(String, id);
-
-                        return NEW(LilyToken,
-                                   LILY_TOKEN_KIND_XOR_EQ,
-                                   clone__Location(&self->location));
-                    }
-
-                    goto keyword;
-                default:
-                keyword : {
-                    FREE(String, id);
-                    return NEW(
-                      LilyToken, kind, clone__Location(&self->location));
                 }
             }
-        }
         default: {
             Location location_error = clone__Location(&self->location);
 
