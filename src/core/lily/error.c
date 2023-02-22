@@ -95,6 +95,8 @@ to_msg__LilyError(const LilyError *self)
             return "unknown import `@` flag";
         case LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE:
             return "unexpected character in import value";
+        case LILY_ERROR_KIND_NAME_CONFLICT:
+            return "name conflict";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -164,6 +166,8 @@ to_code__LilyError(const LilyError *self)
             return "0029";
         case LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE:
             return "0030";
+        case LILY_ERROR_KIND_NAME_CONFLICT:
+            return "0031";
         default:
             UNREACHABLE("unknown variant");
     }
