@@ -133,6 +133,26 @@ compile__LilyPackage(const CompileConfig *config,
     return build__LilyPackage(config, name, visibility, status, default_path);
 }
 
+const File *
+get_file_from_filename__LilyPackage(const LilyPackage *package,
+                                    const char *filename)
+{
+    if (filename == package->file.name) {
+        return &package->file;
+    }
+
+    for (Usize i = 0; i < package->sub_packages->len; i++) {
+        const File *f = get_file_from_filename__LilyPackage(
+          get__Vec(package->sub_packages, i), filename);
+
+        if (f) {
+            return f;
+        }
+    }
+
+    return NULL;
+}
+
 DESTRUCTOR(LilyPackage, LilyPackage *self)
 {
     FREE(String, self->name);

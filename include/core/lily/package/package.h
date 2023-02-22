@@ -117,6 +117,10 @@ compile__LilyPackage(const CompileConfig *config,
                      enum LilyPackageStatus status,
                      const char *default_path);
 
+const File *
+get_file_from_filename__LilyPackage(const LilyPackage *package,
+                                    const char *filename);
+
 /**
  *
  * @brief Free LilyPackage type.
