@@ -1559,20 +1559,22 @@ get_closing__LilyScanner(LilyScanner *self, char target)
 
         LilyToken *token = get_token__LilyScanner(self);
 
-        end_token__LilyScanner(
-          self, self->source.cursor.line, self->source.cursor.column);
-        next_char_by_token__LilyScanner(self, token);
+        if (token) {
+            end_token__LilyScanner(
+              self, self->source.cursor.line, self->source.cursor.column);
+            next_char_by_token__LilyScanner(self, token);
 
-        switch (token->kind) {
-            case LILY_TOKEN_KIND_L_PAREN:
-            case LILY_TOKEN_KIND_L_BRACE:
-            case LILY_TOKEN_KIND_L_HOOK:
-                break;
-            default:
-                set_all__Location(&token->location, &self->location);
+            switch (token->kind) {
+                case LILY_TOKEN_KIND_L_PAREN:
+                case LILY_TOKEN_KIND_L_BRACE:
+                case LILY_TOKEN_KIND_L_HOOK:
+                    break;
+                default:
+                    set_all__Location(&token->location, &self->location);
+            }
+
+            push_token__LilyScanner(self, token);
         }
-
-        push_token__LilyScanner(self, token);
     }
 
     start_token__LilyScanner(
