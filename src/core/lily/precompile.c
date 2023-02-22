@@ -78,7 +78,7 @@ VARIANT_CONSTRUCTOR(LilyImportValue *, LilyImportValue, access, String *access)
 {
     LilyImportValue *self = lily_malloc(sizeof(LilyImportValue));
 
-    self->kind = LILY_IMPORT_VALUE_KIND_ACCCESS;
+    self->kind = LILY_IMPORT_VALUE_KIND_ACCESS;
     self->access = access;
 
     return self;
@@ -135,7 +135,7 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyImportValueKind, enum LilyImportValueKind self)
 {
     switch (self) {
-        case LILY_IMPORT_VALUE_KIND_ACCCESS:
+        case LILY_IMPORT_VALUE_KIND_ACCESS:
             return "LILY_IMPORT_VALUE_KIND_ACCESS";
         case LILY_IMPORT_VALUE_KIND_BUILTIN:
             return "LILY_IMPORT_VALUE_KIND_BUILTIN";
@@ -164,7 +164,7 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyImportValue, const LilyImportValue *self)
 {
     switch (self->kind) {
-        case LILY_IMPORT_VALUE_KIND_ACCCESS:
+        case LILY_IMPORT_VALUE_KIND_ACCESS:
             return format__String(
               "LilyImportValue{{ kind = {s}, access = {S} }",
               to_string__Debug__LilyImportValueKind(self->kind),
@@ -270,7 +270,7 @@ VARIANT_DESTRUCTOR(LilyImportValue, select, LilyImportValue *self)
 DESTRUCTOR(LilyImportValue, LilyImportValue *self)
 {
     switch (self->kind) {
-        case LILY_IMPORT_VALUE_KIND_ACCCESS:
+        case LILY_IMPORT_VALUE_KIND_ACCESS:
             FREE_VARIANT(LilyImportValue, access, self);
             break;
         case LILY_IMPORT_VALUE_KIND_FILE:
@@ -682,6 +682,8 @@ run__LilyPrecompile(LilyPrecompile *self,
             push__Vec(self->package->private_imports, import);
         }
     }
+
+    // 2. Add public_macros get in preparser in root_package's public_macros.
 
     // 2. Check name conflict for macros.
     for (Usize i = 0; i < self->preparser->public_macros->len; i++) {

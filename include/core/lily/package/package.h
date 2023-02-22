@@ -71,7 +71,7 @@ typedef struct LilyPackage
     Vec *public_imports;       // Vec<LilyImport*>*
     Vec *private_imports;      // Vec<LilyImport*>*
     Vec *sub_packages;         // Vec<LilyPackage*>*
-    Vec *pacakge_dependencies; // Vec<LilyPackage*>*
+    Vec *package_dependencies; // Vec<LilyPackage*>*
     Vec *lib_dependencies;     // Vec<LilyLibrary*>*
     File file;
     LilyScanner scanner;       // LilyScanner?

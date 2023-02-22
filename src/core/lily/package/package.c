@@ -61,7 +61,7 @@ CONSTRUCTOR(LilyPackage *,
     self->public_imports = NEW(Vec);
     self->private_imports = NEW(Vec);
     self->sub_packages = NEW(Vec);
-    self->pacakge_dependencies = NEW(Vec);
+    self->package_dependencies = NEW(Vec);
     self->lib_dependencies = NEW(Vec);
     self->file = NEW(File, filename, content);
     self->scanner =
@@ -154,7 +154,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE_BUFFER_ITEMS(
       self->sub_packages->buffer, self->sub_packages->len, LilyPackage);
     FREE(Vec, self->sub_packages);
-    FREE(Vec, self->pacakge_dependencies);
+    FREE(Vec, self->package_dependencies);
     FREE(Vec, self->lib_dependencies);
 
     if (self->status == LILY_PACKAGE_STATUS_NORMAL) {
