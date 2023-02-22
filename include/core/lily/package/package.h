@@ -42,6 +42,27 @@ enum LilyPackageStatus
     LILY_PACKAGE_STATUS_NORMAL
 };
 
+typedef struct LilyDumpConfig
+{
+    bool dump_scanner;
+    bool dump_parser;
+    bool dump_typecheck;
+    bool dump_ir;
+} LilyDumpConfig;
+
+inline CONSTRUCTOR(LilyDumpConfig,
+                   LilyDumpConfig,
+                   bool dump_scanner,
+                   bool dump_parser,
+                   bool dump_typecheck,
+                   bool dump_ir)
+{
+    return (LilyDumpConfig){ .dump_scanner = dump_scanner,
+                             .dump_parser = dump_parser,
+                             .dump_typecheck = dump_typecheck,
+                             .dump_ir = dump_ir };
+}
+
 typedef struct LilyPackage
 {
     String *name;

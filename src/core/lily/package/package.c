@@ -69,7 +69,8 @@ CONSTRUCTOR(LilyPackage *,
     self->preparser = NEW(LilyPreparser, &self->scanner, self->name);
     self->visibility = visibility;
     self->status = status;
-    self->precompile = NEW(LilyPrecompile, &self->preparser, self, default_path); 
+    self->precompile =
+      NEW(LilyPrecompile, &self->preparser, self, default_path);
 
     lily_free(file_ext);
 
@@ -108,7 +109,13 @@ build__LilyPackage(const CompileConfig *config,
         self->name = from__String("main");
     }
 
-    run__LilyPrecompile(&self->precompile);
+    LilyDumpConfig dump_config = NEW(LilyDumpConfig,
+                                     config->dump_scanner,
+                                     config->dump_scanner,
+                                     config->dump_typecheck,
+                                     config->dump_ir);
+
+    run__LilyPrecompile(&self->precompile, &dump_config);
 
     return self;
 }
