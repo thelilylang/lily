@@ -800,6 +800,30 @@ run__LilyPreparser(LilyPreparser *self)
                 break;
             }
             case LILY_TOKEN_KIND_KEYWORD_PUB:
+                eat_and_next_token__LilyPreparser(self);
+
+                switch (self->current->kind) {
+                    case LILY_TOKEN_KIND_KEYWORD_FUN:
+                        break;
+                    case LILY_TOKEN_KIND_KEYWORD_TYPE:
+                        break;
+                    case LILY_TOKEN_KIND_KEYWORD_MACRO: {
+                        LilyPreparserMacro *macro =
+                          preparse_macro__LilyPreparser(self);
+
+                        if (macro) {
+                            push__Vec(self->public_macros, macro);
+                        }
+
+                        break;
+                    }
+                    case LILY_TOKEN_KIND_KEYWORD_object:
+                        break;
+                    default:
+                        // ERROR: unexpected keyword after `pub`
+                        break;
+                }
+
                 break;
             case LILY_TOKEN_KIND_KEYWORD_MODULE:
                 break;
