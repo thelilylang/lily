@@ -110,6 +110,9 @@ skip_alias__LilyPreparser(LilyPreparser *self);
 static void
 skip_preprocess__LilyPreparser(LilyPreparser *self);
 
+static void
+skip_when_condition__LilyPreparser(LilyPreparser *self);
+
 CONSTRUCTOR(LilyPreparserImport *,
             LilyPreparserImport,
             String *value,
@@ -850,6 +853,22 @@ skip_preprocess__LilyPreparser(LilyPreparser *self)
 }
 
 void
+skip_when_condition__LilyPreparser(LilyPreparser *self)
+{
+    // when <cond>:
+    while (self->current->kind != LILY_TOKEN_KIND_COLON &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        next_token__LilyPreparser(self);
+    }
+
+    if (self->current->kind == LILY_TOKEN_KIND_EOF) {
+        return;
+    }
+
+    next_token__LilyPreparser(self);
+}
+
+void
 run__LilyPreparser(LilyPreparser *self)
 {
     self->current = get__Vec(self->scanner->tokens, 0);
@@ -994,6 +1013,34 @@ run__LilyPreparser(LilyPreparser *self)
                 break;
             case LILY_TOKEN_KIND_AT:
                 skip_preprocess__LilyPreparser(self);
+
+                break;
+            case LILY_TOKEN_KIND_KEYWORD_WHEN:
+                skip_when_condition__LilyPreparser(self);
+
+                switch (self->current->kind) {
+                    case LILY_TOKEN_KIND_KEYWORD_FUN:
+                        break;
+                    case LILY_TOKEN_KIND_KEYWORD_PUB:
+                        break;
+                    case LILY_TOKEN_KIND_EOF:
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->scanner->source.file,
+                            &self->current->location,
+                            NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                            NULL,
+                            NULL,
+                            from__String(
+                              "expected `fun` or `pub` keyword after `:`")),
+                          &self->count_error);
+
+                        break;
+                    default:
+                        goto unexpected_token;
+                }
 
                 break;
             default: {
