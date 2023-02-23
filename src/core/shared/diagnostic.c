@@ -155,7 +155,7 @@ static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
         push__Vec(lines, get__Vec(split, location->start_line - 1));          \
         push__Vec(lines, get__Vec(split, location->end_line - 1));            \
         for (Usize i = 0; i < split->len; i++) {                              \
-            if (i != location->start_line - 1 || i != location->end_line - 1) \
+            if (i != location->start_line - 1 && i != location->end_line - 1) \
                 lily_free(split->buffer[i]);                                  \
         }                                                                     \
     }                                                                         \
@@ -220,13 +220,14 @@ to_string__DiagnosticLevelUtil(const DiagnosticLevelUtil *self)
 
     if (self->notes) {
         for (Usize i = 0; i < self->notes->len; i++) {
-            PUSH_STR_AND_FREE(
-              res,
+            char *s =
               format("{Sr} {sa}: {S}\n",
                      repeat__String(
                        " ", calc_usize_length(self->location->end_line) + 1),
                      CYAN("- note"),
-                     self->notes->buffer[i]));
+                     self->notes->buffer[i]);
+
+            PUSH_STR_AND_FREE(res, s);
         }
     }
 
@@ -535,7 +536,102 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
 
         lily_free(line);
     } else {
-        TODO("make diagnostic with one more line");
+        // printf("%s\n", CAST(char*, get__Vec(self->lines, 0)));
+        // printf("%s\n", CAST(char*, get__Vec(self->lines, 1)));
+        char *first_line =
+          format(" {s}", CAST(char *, get__Vec(self->lines, 0)));
+        char *last_line = format(" {s}", CAST(char *, last__Vec(self->lines)));
+
+        {
+            char *s = format("\x1b[34m{d}\x1b[0m{Sr}",
+                             self->location->start_line,
+                             repeat__String(" ", line_number_length));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        {
+            char *s = format("{sa} {s}", BLUE("|"), first_line);
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        {
+            char *s =
+              format("\n{Sr}",
+                     repeat__String(
+                       " ", self->location->start_column + line_number_length));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        switch (level->kind) {
+            case DIAGNOSTIC_LEVEL_KIND_CC_ERROR:
+            case DIAGNOSTIC_LEVEL_KIND_CPP_ERROR:
+            case DIAGNOSTIC_LEVEL_KIND_LILY_ERROR: {
+                char *red = RED("^");
+                PUSH_STR_AND_FREE(res, red);
+
+                break;
+            }
+            case DIAGNOSTIC_LEVEL_KIND_CC_NOTE:
+            case DIAGNOSTIC_LEVEL_KIND_CPP_NOTE:
+            case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE: {
+                char *cyan = CYAN("^");
+                PUSH_STR_AND_FREE(res, cyan);
+
+                break;
+            }
+            case DIAGNOSTIC_LEVEL_KIND_CC_WARNING:
+            case DIAGNOSTIC_LEVEL_KIND_CPP_WARNING:
+            case DIAGNOSTIC_LEVEL_KIND_LILY_WARNING: {
+                char *yellow = YELLOW("^");
+                PUSH_STR_AND_FREE(res, yellow);
+
+                break;
+            }
+        }
+
+        if (self->msg) {
+            char *s = format(" {S}\n", self->msg);
+            PUSH_STR_AND_FREE(res, s);
+        } else {
+            push_str__String(res, "\n");
+        }
+
+        {
+            char *s = format("\x1b[34m{Sr}\x1b[0m {sa} \x1b[34m{Sr}\x1b[0m\n",
+                             repeat__String("~", line_number_length),
+                             BLUE("|"),
+                             repeat__String("_", strlen(first_line)));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        {
+            char *s = format("{Sr} {sa}\n",
+                             repeat__String(" ", line_number_length),
+                             BLUE("|"));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        {
+            char *s = format("\x1b[34m{d}\x1b[0m{Sr}",
+                             self->location->end_line,
+                             repeat__String(" ", line_number_length - 1));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        {
+            char *s = format(" {sa} {s}\n", BLUE("|"), last_line);
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        lily_free(first_line);
+        lily_free(last_line);
     }
 
     return res;
