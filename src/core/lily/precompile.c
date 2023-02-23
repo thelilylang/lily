@@ -658,6 +658,7 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
     return res;
 }
 
+#include <stdio.h>
 void
 run__LilyPrecompile(LilyPrecompile *self,
                     const LilyDumpConfig *dump_config,
@@ -689,61 +690,66 @@ run__LilyPrecompile(LilyPrecompile *self,
                   remove__Vec(self->preparser->public_macros, 0));
     }
 
-    self->package->private_macros = self->preparser->private_macros; 
+    self->package->private_macros = self->preparser->private_macros;
 
     // 3. Check name conflict for macros.
-    for (Usize i = 0; i < self->preparser->public_macros->len; i++) {
-        for (Usize j = i + 1; j < self->preparser->public_macros->len; j++) {
-            if (CAST(LilyPreparserMacro *,
-                     get__Vec(self->preparser->public_macros, i))
-                  ->name == CAST(LilyPreparserMacro *,
-                                 get__Vec(self->preparser->public_macros, j))
-                              ->name) {
+    for (Usize i = 0; i < root_package->public_macros->len; i++) {
+        for (Usize j = i + 1; j < root_package->public_macros->len; j++) {
+            if (!strcmp(CAST(LilyPreparserMacro *,
+                             get__Vec(root_package->public_macros, i))
+                          ->name->buffer,
+                        CAST(LilyPreparserMacro *,
+                             get__Vec(root_package->public_macros, j))
+                          ->name->buffer)) {
                 const Location *location_i =
                   &CAST(LilyPreparserMacro *,
-                        get__Vec(self->preparser->public_macros, i))
+                        get__Vec(root_package->public_macros, i))
                      ->location;
                 const Location *location_j =
                   &CAST(LilyPreparserMacro *,
-                        get__Vec(self->preparser->public_macros, j))
+                        get__Vec(root_package->public_macros, j))
                      ->location;
 
-                emit__Diagnostic(
-                  NEW_VARIANT(
-                    Diagnostic,
-                    simple_lily_error,
-                    get_file_from_filename__LilyPackage(root_package,
-                                                        location_j->filename),
-                    location_j,
-                    NEW(LilyError, LILY_ERROR_KIND_NAME_CONFLICT),
-                    NULL,
-                    init__Vec(
-                      1,
-                      format__String(
-                        "a macro with the same name is defined at {s}:{d}:{d}",
-                        location_i->filename,
-                        location_i->start_line,
-                        location_i->start_column)),
-                    NULL),
-                  &self->count_error);
+                const File *file_j = get_file_from_filename__LilyPackage(
+                  root_package, location_j->filename);
+
+                if (file_j) {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        file_j,
+                        location_j,
+                        NEW(LilyError, LILY_ERROR_KIND_NAME_CONFLICT),
+                        NULL,
+                        init__Vec(1,
+                                  format__String("a macro with the same name "
+                                                 "is defined at {s}:{d}:{d}",
+                                                 location_i->filename,
+                                                 location_i->start_line,
+                                                 location_i->start_column)),
+                        NULL),
+                      &self->count_error);
+                }
             }
         }
     }
 
-    for (Usize i = 0; i < self->preparser->private_macros->len; i++) {
-        for (Usize j = i + 1; j < self->preparser->private_macros->len; j++) {
-            if (CAST(LilyPreparserMacro *,
-                     get__Vec(self->preparser->private_macros, i))
-                  ->name == CAST(LilyPreparserMacro *,
-                                 get__Vec(self->preparser->private_macros, j))
-                              ->name) {
+    for (Usize i = 0; i < self->package->private_macros->len; i++) {
+        for (Usize j = i + 1; j < self->package->private_macros->len; j++) {
+            if (!strcmp(CAST(LilyPreparserMacro *,
+                             get__Vec(self->package->private_macros, i))
+                          ->name->buffer,
+                        CAST(LilyPreparserMacro *,
+                             get__Vec(self->package->private_macros, j))
+                          ->name->buffer)) {
                 const Location *location_i =
                   &CAST(LilyPreparserMacro *,
-                        get__Vec(self->preparser->private_macros, i))
+                        get__Vec(self->package->private_macros, i))
                      ->location;
                 const Location *location_j =
                   &CAST(LilyPreparserMacro *,
-                        get__Vec(self->preparser->private_macros, j))
+                        get__Vec(self->package->private_macros, j))
                      ->location;
 
                 emit__Diagnostic(
@@ -767,20 +773,22 @@ run__LilyPrecompile(LilyPrecompile *self,
         }
     }
 
-    for (Usize i = 0; i < self->preparser->private_macros->len; i++) {
-        for (Usize j = 0; j < self->preparser->public_macros->len; j++) {
-            if (CAST(LilyPreparserMacro *,
-                     get__Vec(self->preparser->private_macros, i))
-                  ->name == CAST(LilyPreparserMacro *,
-                                 get__Vec(self->preparser->public_macros, j))
-                              ->name) {
+    for (Usize i = 0; i < self->package->private_macros->len; i++) {
+        for (Usize j = 0; j < root_package->public_macros->len; j++) {
+            if (!strcmp(CAST(LilyPreparserMacro *,
+                             get__Vec(self->preparser->private_macros, i))
+                          ->name->buffer,
+                        CAST(LilyPreparserMacro *,
+                             get__Vec(root_package->public_macros, j))
+                          ->name->buffer) &&
+                i <= j) {
                 const Location *location_i =
                   &CAST(LilyPreparserMacro *,
                         get__Vec(self->preparser->private_macros, i))
                      ->location;
                 const Location *location_j =
                   &CAST(LilyPreparserMacro *,
-                        get__Vec(self->preparser->public_macros, j))
+                        get__Vec(root_package->public_macros, j))
                      ->location;
 
                 emit__Diagnostic(
