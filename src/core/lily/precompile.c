@@ -812,7 +812,7 @@ run__LilyPrecompile(LilyPrecompile *self,
                       &self->count_error);
                 }
             }
-       }
+        }
     }
 
     // 4. Check imports.
