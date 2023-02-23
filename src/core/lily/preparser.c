@@ -68,8 +68,47 @@ static LilyPreparserMacro *
 preparse_macro__LilyPreparser(LilyPreparser *self);
 
 // NOTE: return 1 for success, 0 for failed.
-int
+static int
 preparse_package__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_module__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_test__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_fun__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_class__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_trait__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_record_object__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_enum_object__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_object__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_type__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_record__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_enum__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_alias__LilyPreparser(LilyPreparser *self);
+
+static void
+skip_preprocess__LilyPreparser(LilyPreparser *self);
 
 CONSTRUCTOR(LilyPreparserImport *,
             LilyPreparserImport,
@@ -746,6 +785,71 @@ preparse_package__LilyPreparser(LilyPreparser *self)
 }
 
 void
+skip_module__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_test__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_fun__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_class__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_trait__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_record_object__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_enum_object__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_object__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_type__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_record__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_enum__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_alias__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
+skip_preprocess__LilyPreparser(LilyPreparser *self)
+{
+}
+
+void
 run__LilyPreparser(LilyPreparser *self)
 {
     self->current = get__Vec(self->scanner->tokens, 0);
@@ -800,14 +904,36 @@ run__LilyPreparser(LilyPreparser *self)
                 break;
             }
             case LILY_TOKEN_KIND_KEYWORD_PUB:
-                eat_and_next_token__LilyPreparser(self);
-
                 switch (self->current->kind) {
+                    case LILY_TOKEN_KIND_KEYWORD_IMPORT:
+                        next_token__LilyPreparser(self);
+
+                        LilyPreparserImport *import =
+                          preparse_import__LilyPreparser(self);
+
+                        if (import) {
+                            push__Vec(self->public_imports, import);
+                        }
+
+                        break;
                     case LILY_TOKEN_KIND_KEYWORD_FUN:
+                        next_token__LilyPreparser(self);
+                        skip_fun__LilyPreparser(self);
+
+                        break;
+                    case LILY_TOKEN_KIND_KEYWORD_MODULE:
+                        next_token__LilyPreparser(self);
+                        skip_module__LilyPreparser(self);
+
                         break;
                     case LILY_TOKEN_KIND_KEYWORD_TYPE:
+                        next_token__LilyPreparser(self);
+                        skip_type__LilyPreparser(self);
+
                         break;
                     case LILY_TOKEN_KIND_KEYWORD_MACRO: {
+                        eat_and_next_token__LilyPreparser(self);
+
                         LilyPreparserMacro *macro =
                           preparse_macro__LilyPreparser(self);
 
@@ -818,6 +944,9 @@ run__LilyPreparser(LilyPreparser *self)
                         break;
                     }
                     case LILY_TOKEN_KIND_KEYWORD_object:
+                        next_token__LilyPreparser(self);
+                        skip_object__LilyPreparser(self);
+
                         break;
                     default:
                         // ERROR: unexpected keyword after `pub`
@@ -826,14 +955,24 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             case LILY_TOKEN_KIND_KEYWORD_MODULE:
+                skip_module__LilyPreparser(self);
+
                 break;
             case LILY_TOKEN_KIND_KEYWORD_TEST:
+                skip_test__LilyPreparser(self);
+
                 break;
             case LILY_TOKEN_KIND_KEYWORD_FUN:
+                skip_fun__LilyPreparser(self);
+
                 break;
             case LILY_TOKEN_KIND_KEYWORD_object:
+                skip_object__LilyPreparser(self);
+
                 break;
             case LILY_TOKEN_KIND_KEYWORD_TYPE:
+                skip_type__LilyPreparser(self);
+
                 break;
             case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
@@ -850,8 +989,12 @@ run__LilyPreparser(LilyPreparser *self)
                 break;
             }
             case LILY_TOKEN_KIND_COMMENT_DOC:
+                next_token__LilyPreparser(self);
+
                 break;
             case LILY_TOKEN_KIND_AT:
+                skip_preprocess__LilyPreparser(self);
+
                 break;
             default: {
             unexpected_token : {
