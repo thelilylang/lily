@@ -1020,8 +1020,22 @@ run__LilyPreparser(LilyPreparser *self)
 
                 switch (self->current->kind) {
                     case LILY_TOKEN_KIND_KEYWORD_FUN:
+                        skip_fun__LilyPreparser(self);
+
                         break;
                     case LILY_TOKEN_KIND_KEYWORD_PUB:
+                        next_token__LilyPreparser(self);
+
+                        switch (self->current->kind) {
+                            case LILY_TOKEN_KIND_KEYWORD_FUN:
+                                next_token__LilyPreparser(self);
+                                skip_fun__LilyPreparser(self);
+
+                                break;
+                            default:
+                                goto unexpected_token;
+                        }
+
                         break;
                     case LILY_TOKEN_KIND_EOF:
                         emit__Diagnostic(
