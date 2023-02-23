@@ -815,10 +815,16 @@ run__LilyPrecompile(LilyPrecompile *self,
        }
     }
 
-    for (Usize i = 0; i < self->preparser->private_imports->len; i++) {
+    // 4. Check imports.
+    for (Usize i = 0; i < self->package->private_imports->len; i++) {
+        // TODO: check private imports
     }
 
-    // 4. Precompile all packages
+    for (Usize i = 0; i < self->package->public_imports->len; i++) {
+        // TODO: check public imports
+    }
+
+    // 5. Precompile all packages
     for (Usize i = 0; i < self->preparser->package->sub_packages->len; i++) {
         push__Vec(self->package->sub_packages,
                   precompile_sub_package__LilyPrecompile(
