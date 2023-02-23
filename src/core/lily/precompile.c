@@ -790,27 +790,29 @@ run__LilyPrecompile(LilyPrecompile *self,
                   &CAST(LilyPreparserMacro *,
                         get__Vec(root_package->public_macros, j))
                      ->location;
+                const File *file_j = get_file_from_filename__LilyPackage(
+                  root_package, location_j->filename);
 
-                emit__Diagnostic(
-                  NEW_VARIANT(
-                    Diagnostic,
-                    simple_lily_error,
-                    get_file_from_filename__LilyPackage(root_package,
-                                                        location_j->filename),
-                    location_j,
-                    NEW(LilyError, LILY_ERROR_KIND_NAME_CONFLICT),
-                    NULL,
-                    init__Vec(
-                      1,
-                      format__String(
-                        "a macro with the same name is defined at {s}:{d}:{d}",
-                        location_i->filename,
-                        location_i->start_line,
-                        location_i->start_column)),
-                    NULL),
-                  &self->count_error);
+                if (file_j) {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        file_j,
+                        location_j,
+                        NEW(LilyError, LILY_ERROR_KIND_NAME_CONFLICT),
+                        NULL,
+                        init__Vec(1,
+                                  format__String("a macro with the same name "
+                                                 "is defined at {s}:{d}:{d}",
+                                                 location_i->filename,
+                                                 location_i->start_line,
+                                                 location_i->start_column)),
+                        NULL),
+                      &self->count_error);
+                }
             }
-        }
+       }
     }
 
     for (Usize i = 0; i < self->preparser->private_imports->len; i++) {
