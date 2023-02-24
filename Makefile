@@ -1,5 +1,9 @@
 CLANG_FORMAT = @clang-format -i
 
+build:
+	ninja -C build
+	ninja -C build/Debug
+
 configure:
 	@mkdir -p build && cd build && cmake .. -G Ninja
 
