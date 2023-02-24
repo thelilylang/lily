@@ -329,6 +329,47 @@ DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self)
     lily_free(self);
 }
 
+DESTRUCTOR(LilyPreparserModule, const LilyPreparserModule *self)
+{
+    // TODO: Free buffer items (self->body)
+    FREE(Vec, self->body);
+}
+
+DESTRUCTOR(LilyPreparserTest, const LilyPreparserTest *self)
+{
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyToken);
+    FREE(Vec, self->body);
+}
+
+DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
+{
+    for (Usize i = 0; i < self->generic_params->len; i++) {
+        Vec *item = get__Vec(self->generic_params, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->generic_params);
+
+    for (Usize i = 0; i < self->params->len; i++) {
+        Vec *item = get__Vec(self->params, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->params);
+
+    FREE_BUFFER_ITEMS(
+      self->return_data_type->buffer, self->return_data_type->len, LilyToken);
+    FREE(Vec, self->return_data_type);
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyToken);
+    FREE(Vec, self->body);
+    FREE_BUFFER_ITEMS(self->req->buffer, self->req->len, LilyToken);
+    FREE(Vec, self->req);
+    FREE_BUFFER_ITEMS(self->when->buffer, self->when->len, LilyToken);
+    FREE(Vec, self->when);
+}
+
 void
 next_token__LilyPreparser(LilyPreparser *self)
 {
@@ -790,6 +831,16 @@ preparse_package__LilyPreparser(LilyPreparser *self)
 void
 skip_module__LilyPreparser(LilyPreparser *self)
 {
+    // 1. Get the name
+
+    // 2. Preparse body.
+    while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        switch (self->current->kind) {
+            default:
+                break;
+        }
+    }
 }
 
 void
@@ -923,10 +974,10 @@ run__LilyPreparser(LilyPreparser *self)
                 break;
             }
             case LILY_TOKEN_KIND_KEYWORD_PUB:
+                eat_and_next_token__LilyPreparser(self);
+
                 switch (self->current->kind) {
                     case LILY_TOKEN_KIND_KEYWORD_IMPORT:
-                        next_token__LilyPreparser(self);
-
                         LilyPreparserImport *import =
                           preparse_import__LilyPreparser(self);
 
@@ -936,23 +987,18 @@ run__LilyPreparser(LilyPreparser *self)
 
                         break;
                     case LILY_TOKEN_KIND_KEYWORD_FUN:
-                        next_token__LilyPreparser(self);
                         skip_fun__LilyPreparser(self);
 
                         break;
                     case LILY_TOKEN_KIND_KEYWORD_MODULE:
-                        next_token__LilyPreparser(self);
                         skip_module__LilyPreparser(self);
 
                         break;
                     case LILY_TOKEN_KIND_KEYWORD_TYPE:
-                        next_token__LilyPreparser(self);
                         skip_type__LilyPreparser(self);
 
                         break;
                     case LILY_TOKEN_KIND_KEYWORD_MACRO: {
-                        eat_and_next_token__LilyPreparser(self);
-
                         LilyPreparserMacro *macro =
                           preparse_macro__LilyPreparser(self);
 
@@ -963,7 +1009,6 @@ run__LilyPreparser(LilyPreparser *self)
                         break;
                     }
                     case LILY_TOKEN_KIND_KEYWORD_object:
-                        next_token__LilyPreparser(self);
                         skip_object__LilyPreparser(self);
 
                         break;
