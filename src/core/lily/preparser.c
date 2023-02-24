@@ -370,6 +370,90 @@ DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
     FREE(Vec, self->when);
 }
 
+DESTRUCTOR(LilyPreparserClass, const LilyPreparserClass *self)
+{
+    for (Usize i = 0; i < self->generic_params->len; i++) {
+        Vec *item = get__Vec(self->generic_params, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->generic_params);
+
+    for (Usize i = 0; i < self->inherits->len; i++) {
+        Vec *item = get__Vec(self->inherits, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->inherits);
+
+    for (Usize i = 0; i < self->implements->len; i++) {
+        Vec *item = get__Vec(self->implements, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->implements);
+
+    for (Usize i = 0; i < self->body->len; i++) {
+        Vec *item = get__Vec(self->body, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->body);
+}
+
+DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self)
+{
+    for (Usize i = 0; i < self->generic_params->len; i++) {
+        Vec *item = get__Vec(self->generic_params, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->generic_params);
+
+    for (Usize i = 0; i < self->inherits->len; i++) {
+        Vec *item = get__Vec(self->inherits, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->inherits);
+
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyToken);
+    FREE(Vec, self->body);
+}
+
+DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self)
+{
+    for (Usize i = 0; i < self->generic_params->len; i++) {
+        Vec *item = get__Vec(self->generic_params, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->generic_params);
+
+    for (Usize i = 0; i < self->implements->len; i++) {
+        Vec *item = get__Vec(self->implements, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->implements);
+
+    for (Usize i = 0; i < self->body->len; i++) {
+        Vec *item = get__Vec(self->body, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+    FREE(Vec, self->body);
+}
+
 void
 next_token__LilyPreparser(LilyPreparser *self)
 {

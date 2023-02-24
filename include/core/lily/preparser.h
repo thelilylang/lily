@@ -323,6 +323,100 @@ typedef struct LilyPreparserClass
     enum LilyVisibility visibility;
 } LilyPreparserClass;
 
+/**
+ *
+ * @brief Construct LilyPreparserClass type.
+ */
+inline CONSTRUCTOR(LilyPreparserClass,
+                   LilyPreparserClass,
+                   String *name,
+                   Vec *generic_params,
+                   Vec *inherits,
+                   Vec *implements,
+                   Vec *body,
+                   enum LilyVisibility visibility)
+{
+    return (LilyPreparserClass){ .name = name,
+                                 .generic_params = generic_params,
+                                 .inherits = inherits,
+                                 .implements = implements,
+                                 .body = body };
+}
+
+/**
+ *
+ * @brief Free LilyPreparserClass type.
+ */
+DESTRUCTOR(LilyPreparserClass, const LilyPreparserClass *self);
+
+typedef struct LilyPreparserTrait
+{
+    String *name;
+    Vec *generic_params; // Vec<Vec<LilyToken*>*>*
+    Vec *inherits;       // Vec<Vec<LilyToken*>*>*
+    Vec *body;           // Vec<LilyToken*>*
+    enum LilyVisibility visibility;
+} LilyPreparserTrait;
+
+/**
+ *
+ * @brief Construct LilyPreparserTrait type.
+ */
+inline CONSTRUCTOR(LilyPreparserTrait,
+                   LilyPreparserTrait,
+                   String *name,
+                   Vec *generic_params,
+                   Vec *inherits,
+                   Vec *body,
+                   enum LilyVisibility visibility)
+{
+    return (LilyPreparserTrait){ .name = name,
+                                 .generic_params = generic_params,
+                                 .inherits = inherits,
+                                 .body = body,
+                                 .visibility = visibility };
+}
+
+/**
+ *
+ * @brief Free LilyPreparserTrait type.
+ */
+DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self);
+
+typedef struct LilyPreparserRecordObject
+{
+    String *name;
+    Vec *generic_params; // Vec<Vec<LilyToken*>*>*
+    Vec *implements;     // Vec<Vec<LilyToken*>*>*
+    Vec *body;           // Vec<Vec<LilyToken*>*>*
+    enum LilyVisibility visibility;
+} LilyPreparserRecordObject;
+
+/**
+ *
+ * @brief Construct LilyPreparserRecordObject type.
+ */
+inline CONSTRUCTOR(LilyPreparserRecordObject,
+                   LilyPreparserRecordObject,
+                   String *name,
+                   Vec *generic_params,
+                   Vec *implements,
+                   Vec *body,
+                   enum LilyVisibility visibility)
+{
+    return (LilyPreparserRecordObject){ .name = name,
+                                        .generic_params = generic_params,
+                                        .implements = implements,
+                                        .body = body,
+                                        .visibility = visibility };
+}
+
+/**
+ *
+ * @brief Free LilyPreparserRecordObject type.
+ */
+DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self);
+
 typedef struct LilyPreparser
 {
     LilyScanner *scanner;
