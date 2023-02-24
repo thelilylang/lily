@@ -41,16 +41,6 @@ typedef struct LilyPreparserImport
 
 /**
  *
- * @brief Construct LilyPreparserImport type.
- */
-CONSTRUCTOR(LilyPreparserImport *,
-            LilyPreparserImport,
-            String *value,
-            String *as,
-            Location location);
-
-/**
- *
  * @brief Convert LilyPreparserImport in string.
  * @note This function is only used to debug.
  */
@@ -84,16 +74,6 @@ typedef struct LilyPreparserMacro
 
 /**
  *
- * @brief Construct LilyPreparserMacro type.
- */
-CONSTRUCTOR(LilyPreparserMacro *,
-            LilyPreparserMacro,
-            String *name,
-            Vec *tokens,
-            Location location);
-
-/**
- *
  * @brief Convert LilyPreparserMacro in String.
  * @note This function is only used to debug.
  */
@@ -123,15 +103,6 @@ typedef struct LilyPreparserSubPackage
     String *name;
     enum LilyVisibility visibility;
 } LilyPreparserSubPackage;
-
-/**
- *
- * @brief Construct LilyPreparserSubPackage type.
- */
-CONSTRUCTOR(LilyPreparserSubPackage *,
-            LilyPreparserSubPackage,
-            enum LilyVisibility visibility,
-            String *name);
 
 /**
  *
@@ -171,12 +142,6 @@ typedef struct LilyPreparserPackage
 
 /**
  *
- * @brief Construct LilyPreparserPackage type.
- */
-CONSTRUCTOR(LilyPreparserPackage *, LilyPreparserPackage, String *name);
-
-/**
- *
  * @brief Convert LilyPreparserPackage in String.
  * @note This function is only used to debug.
  */
@@ -210,53 +175,11 @@ typedef struct LilyPreparserModule
     enum LilyVisibility visibility;
 } LilyPreparserModule;
 
-/**
- *
- * @brief Construct LilyPreparserModule type.
- */
-inline CONSTRUCTOR(LilyPreparserModule,
-                   LilyPreparserModule,
-                   String *name,
-                   Vec *body,
-                   enum LilyVisibility visibility)
-{
-    return (LilyPreparserModule){ .name = name,
-                                  .body = body,
-                                  .visibility = visibility };
-}
-
-/**
- *
- * @brief Free LilyPreparserModule type.
- */
-DESTRUCTOR(LilyPreparserModule, const LilyPreparserModule *self);
-
 typedef struct LilyPreparserTest
 {
     String *name;
     Vec *body; // Vec<LilyToken*>*
 } LilyPreparserTest;
-
-/**
- *
- * @brief Construct LilyPreparserTest type.
- */
-inline CONSTRUCTOR(LilyPreparserTest,
-                   LilyPreparserTest,
-                   String *name,
-                   Vec *body)
-{
-    return (LilyPreparserTest){
-        .name = name,
-        .body = body,
-    };
-}
-
-/**
- *
- * @brief Free LilyPreparserTest type.
- */
-DESTRUCTOR(LilyPreparserTest, const LilyPreparserTest *self);
 
 typedef struct LilyPreparserFun
 {
@@ -274,45 +197,6 @@ typedef struct LilyPreparserFun
     bool when_is_comptime;
 } LilyPreparserFun;
 
-/**
- *
- * @brief Construct LilyPreparserFun type.
- */
-inline CONSTRUCTOR(LilyPreparserFun,
-                   LilyPreparserFun,
-                   String *name,
-                   Vec *generic_params,
-                   Vec *params,
-                   Vec *return_data_type,
-                   Vec *body,
-                   Vec *req,
-                   Vec *when,
-                   enum LilyVisibility visibility,
-                   bool is_async,
-                   bool is_operator,
-                   bool req_is_comptime,
-                   bool when_is_comptime)
-{
-    return (LilyPreparserFun){ .name = name,
-                               .generic_params = generic_params,
-                               .params = params,
-                               .return_data_type = return_data_type,
-                               .body = body,
-                               .req = req,
-                               .when = when,
-                               .visibility = visibility,
-                               .is_async = is_async,
-                               .is_operator = is_operator,
-                               .req_is_comptime = req_is_comptime,
-                               .when_is_comptime = when_is_comptime };
-}
-
-/**
- *
- * @brief Free LilyPreparserFun type.
- */
-DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self);
-
 typedef struct LilyPreparserClass
 {
     String *name;
@@ -323,32 +207,6 @@ typedef struct LilyPreparserClass
     enum LilyVisibility visibility;
 } LilyPreparserClass;
 
-/**
- *
- * @brief Construct LilyPreparserClass type.
- */
-inline CONSTRUCTOR(LilyPreparserClass,
-                   LilyPreparserClass,
-                   String *name,
-                   Vec *generic_params,
-                   Vec *inherits,
-                   Vec *implements,
-                   Vec *body,
-                   enum LilyVisibility visibility)
-{
-    return (LilyPreparserClass){ .name = name,
-                                 .generic_params = generic_params,
-                                 .inherits = inherits,
-                                 .implements = implements,
-                                 .body = body };
-}
-
-/**
- *
- * @brief Free LilyPreparserClass type.
- */
-DESTRUCTOR(LilyPreparserClass, const LilyPreparserClass *self);
-
 typedef struct LilyPreparserTrait
 {
     String *name;
@@ -357,31 +215,6 @@ typedef struct LilyPreparserTrait
     Vec *body;           // Vec<LilyToken*>*
     enum LilyVisibility visibility;
 } LilyPreparserTrait;
-
-/**
- *
- * @brief Construct LilyPreparserTrait type.
- */
-inline CONSTRUCTOR(LilyPreparserTrait,
-                   LilyPreparserTrait,
-                   String *name,
-                   Vec *generic_params,
-                   Vec *inherits,
-                   Vec *body,
-                   enum LilyVisibility visibility)
-{
-    return (LilyPreparserTrait){ .name = name,
-                                 .generic_params = generic_params,
-                                 .inherits = inherits,
-                                 .body = body,
-                                 .visibility = visibility };
-}
-
-/**
- *
- * @brief Free LilyPreparserTrait type.
- */
-DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self);
 
 typedef struct LilyPreparserRecordObject
 {
@@ -392,30 +225,34 @@ typedef struct LilyPreparserRecordObject
     enum LilyVisibility visibility;
 } LilyPreparserRecordObject;
 
-/**
- *
- * @brief Construct LilyPreparserRecordObject type.
- */
-inline CONSTRUCTOR(LilyPreparserRecordObject,
-                   LilyPreparserRecordObject,
-                   String *name,
-                   Vec *generic_params,
-                   Vec *implements,
-                   Vec *body,
-                   enum LilyVisibility visibility)
+typedef struct LilyPreparserEnumObject
 {
-    return (LilyPreparserRecordObject){ .name = name,
-                                        .generic_params = generic_params,
-                                        .implements = implements,
-                                        .body = body,
-                                        .visibility = visibility };
-}
+    String *name;
+    Vec *generic_params; // Vec<Vec<LilyToken*>*>*
+    Vec *implements;     // Vec<Vec<LilyToken*>*>*
+    Vec *body;           // Vec<Vec<LilyToken*>*>*
+    enum LilyVisibility visibility;
+} LilyPreparserEnumObject;
 
-/**
- *
- * @brief Free LilyPreparserRecordObject type.
- */
-DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self);
+enum LilyPreparserObjectKind
+{
+    LILY_PREPARSER_OBJECT_KIND_CLASS,
+    LILY_PREPARSER_OBJECT_KIND_TRAIT,
+    LILY_PREPARSER_OBJECT_KIND_RECORD,
+    LILY_PREPARSER_OBJECT_KIND_ENUM
+};
+
+typedef struct LilyPreparserObject
+{
+    enum LilyPreparserObjectKind kind;
+    union
+    {
+        LilyPreparserClass class;
+        LilyPreparserTrait trait;
+        LilyPreparserRecordObject record;
+        LilyPreparserEnumObject enum_;
+    };
+} LilyPreparserObject;
 
 typedef struct LilyPreparser
 {
@@ -437,18 +274,7 @@ typedef struct LilyPreparser
 inline CONSTRUCTOR(LilyPreparser,
                    LilyPreparser,
                    LilyScanner *scanner,
-                   String *package_name)
-{
-    return (LilyPreparser){ .scanner = scanner,
-                            .public_imports = NEW(Vec),
-                            .private_imports = NEW(Vec),
-                            .public_macros = NEW(Vec),
-                            .private_macros = NEW(Vec),
-                            .package = NEW(LilyPreparserPackage, package_name),
-                            .current = NULL,
-                            .position = 0,
-                            .count_error = 0 };
-}
+                   String *package_name);
 
 /**
  *
