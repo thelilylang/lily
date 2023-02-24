@@ -203,6 +203,126 @@ IMPL_FOR_DEBUG(debug, LilyPreparserPackage, const LilyPreparserPackage *self);
  */
 DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self);
 
+typedef struct LilyPreparserModule
+{
+    String *name;
+    Vec *body; // Vec<LilyPreparserDecl*>*
+    enum LilyVisibility visibility;
+} LilyPreparserModule;
+
+/**
+ *
+ * @brief Construct LilyPreparserModule type.
+ */
+inline CONSTRUCTOR(LilyPreparserModule,
+                   LilyPreparserModule,
+                   String *name,
+                   Vec *body,
+                   enum LilyVisibility visibility)
+{
+    return (LilyPreparserModule){ .name = name,
+                                  .body = body,
+                                  .visibility = visibility };
+}
+
+/**
+ *
+ * @brief Free LilyPreparserModule type.
+ */
+DESTRUCTOR(LilyPreparserModule, const LilyPreparserModule *self);
+
+typedef struct LilyPreparserTest
+{
+    String *name;
+    Vec *body; // Vec<LilyToken*>*
+} LilyPreparserTest;
+
+/**
+ *
+ * @brief Construct LilyPreparserTest type.
+ */
+inline CONSTRUCTOR(LilyPreparserTest,
+                   LilyPreparserTest,
+                   String *name,
+                   Vec *body)
+{
+    return (LilyPreparserTest){
+        .name = name,
+        .body = body,
+    };
+}
+
+/**
+ *
+ * @brief Free LilyPreparserTest type.
+ */
+DESTRUCTOR(LilyPreparserTest, const LilyPreparserTest *self);
+
+typedef struct LilyPreparserFun
+{
+    String *name;
+    Vec *generic_params;   // Vec<Vec<LilyToken*>*>*
+    Vec *params;           // Vec<Vec<LilyToken*>*>*
+    Vec *return_data_type; // Vec<LilyToken*>*
+    Vec *body;             // Vec<LilyToken*>*
+    Vec *req;              // Vec<LilyToken*>*
+    Vec *when;             // Vec<LilyToken*>*
+    enum LilyVisibility visibility;
+    bool is_async;
+    bool is_operator;
+    bool req_is_comptime;
+    bool when_is_comptime;
+} LilyPreparserFun;
+
+/**
+ *
+ * @brief Construct LilyPreparserFun type.
+ */
+inline CONSTRUCTOR(LilyPreparserFun,
+                   LilyPreparserFun,
+                   String *name,
+                   Vec *generic_params,
+                   Vec *params,
+                   Vec *return_data_type,
+                   Vec *body,
+                   Vec *req,
+                   Vec *when,
+                   enum LilyVisibility visibility,
+                   bool is_async,
+                   bool is_operator,
+                   bool req_is_comptime,
+                   bool when_is_comptime)
+{
+    return (LilyPreparserFun){ .name = name,
+                               .generic_params = generic_params,
+                               .params = params,
+                               .return_data_type = return_data_type,
+                               .body = body,
+                               .req = req,
+                               .when = when,
+                               .visibility = visibility,
+                               .is_async = is_async,
+                               .is_operator = is_operator,
+                               .req_is_comptime = req_is_comptime,
+                               .when_is_comptime = when_is_comptime };
+}
+
+/**
+ *
+ * @brief Free LilyPreparserFun type.
+ */
+DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self);
+
+typedef struct LilyPreparserClass
+{
+    String *name;
+    Vec *generic_params; // Vec<Vec<LilyToken*>*>*
+    Vec *inherits;       // Vec<Vec<LilyToken*>*>*
+    Vec *implements;     // Vec<Vec<LilyToken*>*>*
+    Vec *body;           // Vec<Vec<LilyToken*>*>*
+    enum LilyVisibility visibility;
+} LilyPreparserClass;
+
 typedef struct LilyPreparser
 {
     LilyScanner *scanner;
