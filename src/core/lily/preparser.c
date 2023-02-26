@@ -192,6 +192,9 @@ static inline VARIANT_DESTRUCTOR(LilyPreparserObject,
                                  enum_,
                                  const LilyPreparserObject *self);
 
+// Free LilyPreparserObject type.
+static DESTRUCTOR(LilyPreparserObject, const LilyPreparserObject *self);
+
 // Construct LilyPreparserAlias type.
 static inline CONSTRUCTOR(LilyPreparserAlias,
                           LilyPreparserAlias,
@@ -255,6 +258,9 @@ static inline VARIANT_DESTRUCTOR(LilyPreparserType,
                                  record,
                                  const LilyPreparserType *self);
 
+// Free LilyPreparserType type.
+static DESTRUCTOR(LilyPreparserType, const LilyPreparserType *self);
+
 // Construct LilyPreparserConstantInfo type.
 static CONSTRUCTOR(LilyPreparserConstantInfo *,
                    LilyPreparserConstantInfo,
@@ -287,6 +293,62 @@ static inline VARIANT_DESTRUCTOR(LilyPreparserConstant,
 static VARIANT_DESTRUCTOR(LilyPreparserConstant,
                           multiple,
                           const LilyPreparserConstant *self);
+
+// Free LilyPreparserConstant type.
+static DESTRUCTOR(LilyPreparserConstant, const LilyPreparserConstant *self);
+
+// Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_CONSTANT).
+static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                           LilyPreparserDecl,
+                           constant,
+                           Location location,
+                           LilyPreparserConstant constant);
+
+// Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_FUN).
+static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                           LilyPreparserDecl,
+                           fun,
+                           Location location,
+                           LilyPreparserFun fun);
+
+// Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_MODULE).
+static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                           LilyPreparserDecl,
+                           module,
+                           Location location,
+                           LilyPreparserModule module);
+
+// Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_OBJECT).
+static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                           LilyPreparserDecl,
+                           object,
+                           Location location,
+                           LilyPreparserObject object);
+
+// Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_TYPE).
+static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                           LilyPreparserDecl,
+                           type,
+                           Location location,
+                           LilyPreparserType type);
+
+// Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_CONSTANT).
+static VARIANT_DESTRUCTOR(LilyPreparserDecl, constant, LilyPreparserDecl *self);
+
+// Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_FUN).
+static VARIANT_DESTRUCTOR(LilyPreparserDecl, fun, LilyPreparserDecl *self);
+
+// Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_MODULE).
+static VARIANT_DESTRUCTOR(LilyPreparserDecl, module, LilyPreparserDecl *self);
+
+// Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_OBJECT).
+static VARIANT_DESTRUCTOR(LilyPreparserDecl, object, LilyPreparserDecl *self);
+
+// Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_TYPE).
+static VARIANT_DESTRUCTOR(LilyPreparserDecl, type, LilyPreparserDecl *self);
+
+// Free LilyPreparserDecl type.
+static DESTRUCTOR(LilyPreparserDecl, LilyPreparserDecl *self);
 
 // Advance to the one position and update the current.
 static void
@@ -897,6 +959,26 @@ VARIANT_DESTRUCTOR(LilyPreparserObject, enum_, const LilyPreparserObject *self)
     FREE(LilyPreparserEnumObject, &self->enum_);
 }
 
+DESTRUCTOR(LilyPreparserObject, const LilyPreparserObject *self)
+{
+    switch (self->kind) {
+        case LILY_PREPARSER_OBJECT_KIND_CLASS:
+            FREE(LilyPreparserClass, &self->class);
+            break;
+        case LILY_PREPARSER_OBJECT_KIND_ENUM:
+            FREE(LilyPreparserEnumObject, &self->enum_);
+            break;
+        case LILY_PREPARSER_OBJECT_KIND_RECORD:
+            FREE(LilyPreparserRecordObject, &self->record);
+            break;
+        case LILY_PREPARSER_OBJECT_KIND_TRAIT:
+            FREE(LilyPreparserTrait, &self->trait);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 CONSTRUCTOR(LilyPreparserAlias,
             LilyPreparserAlias,
             String *name,
@@ -1004,6 +1086,23 @@ VARIANT_DESTRUCTOR(LilyPreparserType, record, const LilyPreparserType *self)
     FREE(LilyPreparserRecord, &self->record);
 }
 
+DESTRUCTOR(LilyPreparserType, const LilyPreparserType *self)
+{
+    switch (self->kind) {
+        case LILY_PREPARSER_TYPE_KIND_ALIAS:
+            FREE(LilyPreparserAlias, &self->alias);
+            break;
+        case LILY_PREPARSER_TYPE_KIND_ENUM:
+            FREE(LilyPreparserEnum, &self->enum_);
+            break;
+        case LILY_PREPARSER_TYPE_KIND_RECORD:
+            FREE(LilyPreparserRecord, &self->record);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 CONSTRUCTOR(LilyPreparserConstantInfo *,
             LilyPreparserConstantInfo,
             String *name,
@@ -1064,6 +1163,145 @@ VARIANT_DESTRUCTOR(LilyPreparserConstant,
     FREE_BUFFER_ITEMS(
       self->multiple->buffer, self->multiple->len, LilyPreparserConstantInfo);
     FREE(Vec, self->multiple);
+}
+
+DESTRUCTOR(LilyPreparserConstant, const LilyPreparserConstant *self)
+{
+    switch (self->kind) {
+        case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE:
+            FREE_VARIANT(LilyPreparserConstant, multiple, self);
+            break;
+        case LILY_PREPARSER_CONSTANT_KIND_SIMPLE:
+            FREE_VARIANT(LilyPreparserConstant, simple, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                    LilyPreparserDecl,
+                    constant,
+                    Location location,
+                    LilyPreparserConstant constant)
+{
+    LilyPreparserDecl *self = lily_malloc(sizeof(LilyPreparserDecl));
+
+    self->kind = LILY_PREPARSER_DECL_KIND_CONSTANT;
+    self->location = location;
+    self->constant = constant;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                    LilyPreparserDecl,
+                    fun,
+                    Location location,
+                    LilyPreparserFun fun)
+{
+    LilyPreparserDecl *self = lily_malloc(sizeof(LilyPreparserDecl));
+
+    self->kind = LILY_PREPARSER_DECL_KIND_FUN;
+    self->location = location;
+    self->fun = fun;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                    LilyPreparserDecl,
+                    module,
+                    Location location,
+                    LilyPreparserModule module)
+{
+    LilyPreparserDecl *self = lily_malloc(sizeof(LilyPreparserDecl));
+
+    self->kind = LILY_PREPARSER_DECL_KIND_MODULE;
+    self->location = location;
+    self->module = module;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                    LilyPreparserDecl,
+                    object,
+                    Location location,
+                    LilyPreparserObject object)
+{
+    LilyPreparserDecl *self = lily_malloc(sizeof(LilyPreparserDecl));
+
+    self->kind = LILY_PREPARSER_DECL_KIND_OBJECT;
+    self->location = location;
+    self->object = object;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                    LilyPreparserDecl,
+                    type,
+                    Location location,
+                    LilyPreparserType type)
+{
+    LilyPreparserDecl *self = lily_malloc(sizeof(LilyPreparserDecl));
+
+    self->kind = LILY_PREPARSER_DECL_KIND_TYPE;
+    self->location = location;
+    self->type = type;
+
+    return self;
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserDecl, constant, LilyPreparserDecl *self)
+{
+    FREE(LilyPreparserConstant, &self->constant);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserDecl, fun, LilyPreparserDecl *self)
+{
+    FREE(LilyPreparserFun, &self->fun);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserDecl, module, LilyPreparserDecl *self)
+{
+    FREE(LilyPreparserModule, &self->module);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserDecl, object, LilyPreparserDecl *self)
+{
+    FREE(LilyPreparserObject, &self->object);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserDecl, type, LilyPreparserDecl *self)
+{
+    FREE(LilyPreparserType, &self->type);
+    lily_free(self);
+}
+
+DESTRUCTOR(LilyPreparserDecl, LilyPreparserDecl *self)
+{
+    switch (self->kind) {
+        case LILY_PREPARSER_DECL_KIND_CONSTANT:
+            FREE_VARIANT(LilyPreparserDecl, constant, self);
+            break;
+        case LILY_PREPARSER_DECL_KIND_FUN:
+            FREE_VARIANT(LilyPreparserDecl, fun, self);
+            break;
+        case LILY_PREPARSER_DECL_KIND_MODULE:
+            FREE_VARIANT(LilyPreparserDecl, module, self);
+            break;
+        case LILY_PREPARSER_DECL_KIND_OBJECT:
+            FREE_VARIANT(LilyPreparserDecl, object, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 void
