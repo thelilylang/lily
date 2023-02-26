@@ -193,22 +193,37 @@ static inline VARIANT_DESTRUCTOR(LilyPreparserObject,
                                  const LilyPreparserObject *self);
 
 // Construct LilyPreparserConstantInfo type.
-static CONSTRUCTOR(LilyPreparserConstantInfo*, LilyPreparserConstantInfo, String *name, Vec *expr, Vec *data_type, enum LilyVisibility visibility);
+static CONSTRUCTOR(LilyPreparserConstantInfo *,
+                   LilyPreparserConstantInfo,
+                   String *name,
+                   Vec *expr,
+                   Vec *data_type,
+                   enum LilyVisibility visibility);
 
 // Free LilyPreparserConstantInfo type.
 static DESTRUCTOR(LilyPreparserConstantInfo, LilyPreparserConstantInfo *self);
 
 // Construct LilyPreparserConstant (LILY_PREPARSER_CONSTANT_KIND_SIMPLE).
-static inline VARIANT_CONSTRUCTOR(LilyPreparserConstant, LilyPreparserConstant, simple, LilyPreparserConstantInfo *simple);
+static inline VARIANT_CONSTRUCTOR(LilyPreparserConstant,
+                                  LilyPreparserConstant,
+                                  simple,
+                                  LilyPreparserConstantInfo *simple);
 
 // Construct LilyPreparserConstant (LILY_PREPARSER_CONSTANT_KIND_MULTIPLE).
-static inline VARIANT_CONSTRUCTOR(LilyPreparserConstant, LilyPreparserConstant, multiple, Vec *multiple);
+static inline VARIANT_CONSTRUCTOR(LilyPreparserConstant,
+                                  LilyPreparserConstant,
+                                  multiple,
+                                  Vec *multiple);
 
 // Free LilyPreparserConstant (LILY_PREPARSER_CONSTANT_KIND_SIMPLE).
-static inline VARIANT_DESTRUCTOR(LilyPreparserConstant, simple, const LilyPreparserConstant *self); 
+static inline VARIANT_DESTRUCTOR(LilyPreparserConstant,
+                                 simple,
+                                 const LilyPreparserConstant *self);
 
 // Free LilyPreparserConstant (LILY_PREPARSER_CONSTANT_KIND_MULTIPLE).
-static VARIANT_DESTRUCTOR(LilyPreparserConstant, multiple, const LilyPreparserConstant *self);
+static VARIANT_DESTRUCTOR(LilyPreparserConstant,
+                          multiple,
+                          const LilyPreparserConstant *self);
 
 // Advance to the one position and update the current.
 static void
@@ -819,52 +834,66 @@ VARIANT_DESTRUCTOR(LilyPreparserObject, enum_, const LilyPreparserObject *self)
     FREE(LilyPreparserEnumObject, &self->enum_);
 }
 
-CONSTRUCTOR(LilyPreparserConstantInfo*, LilyPreparserConstantInfo, String *name, Vec *expr, Vec *data_type, enum LilyVisibility visibility)
+CONSTRUCTOR(LilyPreparserConstantInfo *,
+            LilyPreparserConstantInfo,
+            String *name,
+            Vec *expr,
+            Vec *data_type,
+            enum LilyVisibility visibility)
 {
-	LilyPreparserConstantInfo *self = lily_malloc(sizeof(LilyPreparserConstantInfo));
+    LilyPreparserConstantInfo *self =
+      lily_malloc(sizeof(LilyPreparserConstantInfo));
 
-	self->name = name;
-	self->expr = expr;
-	self->data_type = data_type;
-	self->visibility = visibility;
+    self->name = name;
+    self->expr = expr;
+    self->data_type = data_type;
+    self->visibility = visibility;
 
-	return self;
+    return self;
 }
 
 DESTRUCTOR(LilyPreparserConstantInfo, LilyPreparserConstantInfo *self)
 {
-	FREE_BUFFER_ITEMS(self->expr->buffer, self->expr->len, LilyToken);
-	FREE(Vec, self->expr);
-	FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
-	FREE(Vec, self->data_type);
-	lily_free(self);
+    FREE_BUFFER_ITEMS(self->expr->buffer, self->expr->len, LilyToken);
+    FREE(Vec, self->expr);
+    FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
+    FREE(Vec, self->data_type);
+    lily_free(self);
 }
 
-VARIANT_CONSTRUCTOR(LilyPreparserConstant, LilyPreparserConstant, simple, LilyPreparserConstantInfo *simple)
+VARIANT_CONSTRUCTOR(LilyPreparserConstant,
+                    LilyPreparserConstant,
+                    simple,
+                    LilyPreparserConstantInfo *simple)
 {
-	return (LilyPreparserConstant){
-		.kind = LILY_PREPARSER_CONSTANT_KIND_SIMPLE,
-		.simple = simple
-	};
+    return (LilyPreparserConstant){ .kind = LILY_PREPARSER_CONSTANT_KIND_SIMPLE,
+                                    .simple = simple };
 }
 
-VARIANT_CONSTRUCTOR(LilyPreparserConstant, LilyPreparserConstant, multiple, Vec *multiple)
+VARIANT_CONSTRUCTOR(LilyPreparserConstant,
+                    LilyPreparserConstant,
+                    multiple,
+                    Vec *multiple)
 {
-	return (LilyPreparserConstant){
-		.kind = LILY_PREPARSER_CONSTANT_KIND_MULTIPLE,
-		.multiple = multiple
-	};
+    return (LilyPreparserConstant){ .kind =
+                                      LILY_PREPARSER_CONSTANT_KIND_MULTIPLE,
+                                    .multiple = multiple };
 }
 
-VARIANT_DESTRUCTOR(LilyPreparserConstant, simple, const LilyPreparserConstant *self)
+VARIANT_DESTRUCTOR(LilyPreparserConstant,
+                   simple,
+                   const LilyPreparserConstant *self)
 {
-	FREE(LilyPreparserConstantInfo, self->simple);
+    FREE(LilyPreparserConstantInfo, self->simple);
 }
 
-VARIANT_DESTRUCTOR(LilyPreparserConstant, multiple, const LilyPreparserConstant *self)
+VARIANT_DESTRUCTOR(LilyPreparserConstant,
+                   multiple,
+                   const LilyPreparserConstant *self)
 {
-	FREE_BUFFER_ITEMS(self->multiple->buffer, self->multiple->len, LilyPreparserConstantInfo);
-	FREE(Vec, self->multiple);
+    FREE_BUFFER_ITEMS(
+      self->multiple->buffer, self->multiple->len, LilyPreparserConstantInfo);
+    FREE(Vec, self->multiple);
 }
 
 void

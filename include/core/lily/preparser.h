@@ -254,24 +254,28 @@ typedef struct LilyPreparserObject
     };
 } LilyPreparserObject;
 
-typedef struct LilyPreparserConstantInfo {
-	String *name;
-	Vec *expr; // Vec<LilyToken*>*
-	Vec *data_type; // Vec<LilyToken*>*
-	enum LilyVisibility visibility;
+typedef struct LilyPreparserConstantInfo
+{
+    String *name;
+    Vec *expr;      // Vec<LilyToken*>*
+    Vec *data_type; // Vec<LilyToken*>*
+    enum LilyVisibility visibility;
 } LilyPreparserConstantInfo;
 
-enum LilyPreparserConstantKind {
-	LILY_PREPARSER_CONSTANT_KIND_SIMPLE,
-	LILY_PREPARSER_CONSTANT_KIND_MULTIPLE
+enum LilyPreparserConstantKind
+{
+    LILY_PREPARSER_CONSTANT_KIND_SIMPLE,
+    LILY_PREPARSER_CONSTANT_KIND_MULTIPLE
 };
 
-typedef struct LilyPreparserConstant {
-	enum LilyPreparserConstantKind kind;
-	union {
-		LilyPreparserConstantInfo *simple;
-		Vec *multiple; // Vec<LilyPreparserConstantInfo*>*
-	};
+typedef struct LilyPreparserConstant
+{
+    enum LilyPreparserConstantKind kind;
+    union
+    {
+        LilyPreparserConstantInfo *simple;
+        Vec *multiple; // Vec<LilyPreparserConstantInfo*>*
+    };
 } LilyPreparserConstant;
 
 typedef struct LilyPreparser
