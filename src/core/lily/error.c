@@ -99,6 +99,8 @@ to_msg__LilyError(const LilyError *self)
             return "name conflict";
         case LILY_ERROR_KIND_EOF_NOT_EXPECTED:
             return "EOF is not expected";
+        case LILY_ERROR_KIND_EXPECTED_MODULE_IDENTIFIER:
+            return "expected module identifier";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -172,6 +174,8 @@ to_code__LilyError(const LilyError *self)
             return "0031";
         case LILY_ERROR_KIND_EOF_NOT_EXPECTED:
             return "0032";
+        case LILY_ERROR_KIND_EXPECTED_MODULE_IDENTIFIER:
+            return "0033";
         default:
             UNREACHABLE("unknown variant");
     }
