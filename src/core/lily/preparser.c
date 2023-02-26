@@ -192,6 +192,69 @@ static inline VARIANT_DESTRUCTOR(LilyPreparserObject,
                                  enum_,
                                  const LilyPreparserObject *self);
 
+// Construct LilyPreparserAlias type.
+static inline CONSTRUCTOR(LilyPreparserAlias,
+                          LilyPreparserAlias,
+                          String *name,
+                          Vec *data_type,
+                          enum LilyVisibility visibility);
+
+// Free LilyPreparserAlias type.
+static DESTRUCTOR(LilyPreparserAlias, const LilyPreparserAlias *self);
+
+// Construct LilyPreparserEnum type.
+static inline CONSTRUCTOR(LilyPreparserEnum,
+                          LilyPreparserEnum,
+                          String *name,
+                          Vec *variants,
+                          enum LilyVisibility visibility);
+
+// Free LilyPreparserEnum type.
+static DESTRUCTOR(LilyPreparserEnum, const LilyPreparserEnum *self);
+
+// Construct LilyPreparserRecord type.
+static inline CONSTRUCTOR(LilyPreparserRecord,
+                          LilyPreparserRecord,
+                          String *name,
+                          Vec *fields,
+                          enum LilyVisibility visibility);
+
+// Free LilyPreparserRecord type.
+static DESTRUCTOR(LilyPreparserRecord, const LilyPreparserRecord *self);
+
+// Construct LilyPreparserType type (LILY_PREPARSER_TYPE_KIND_ALIAS).
+static inline VARIANT_CONSTRUCTOR(LilyPreparserType,
+                                  LilyPreparserType,
+                                  alias,
+                                  LilyPreparserAlias alias);
+
+// Construct LilyPreparserType type (LILY_PREPARSER_TYPE_KIND_ENUM).
+static inline VARIANT_CONSTRUCTOR(LilyPreparserType,
+                                  LilyPreparserType,
+                                  enum_,
+                                  LilyPreparserEnum enum_);
+
+// Construct LilyPreparserType type (LILY_PREPARSER_TYPE_KIND_RECORD).
+static inline VARIANT_CONSTRUCTOR(LilyPreparserType,
+                                  LilyPreparserType,
+                                  record,
+                                  LilyPreparserRecord record);
+
+// Free LilyPreparserType type (LILY_PREPARSER_TYPE_KIND_ALIAS).
+static inline VARIANT_DESTRUCTOR(LilyPreparserType,
+                                 alias,
+                                 const LilyPreparserType *self);
+
+// Free LilyPreparserType type (LILY_PREPARSER_TYPE_KIND_ENUM).
+static inline VARIANT_DESTRUCTOR(LilyPreparserType,
+                                 enum_,
+                                 const LilyPreparserType *self);
+
+// Free LilyPreparserType type (LILY_PREPARSER_TYPE_KIND_RECORD).
+static inline VARIANT_DESTRUCTOR(LilyPreparserType,
+                                 record,
+                                 const LilyPreparserType *self);
+
 // Construct LilyPreparserConstantInfo type.
 static CONSTRUCTOR(LilyPreparserConstantInfo *,
                    LilyPreparserConstantInfo,
@@ -832,6 +895,113 @@ VARIANT_DESTRUCTOR(LilyPreparserObject, record, const LilyPreparserObject *self)
 VARIANT_DESTRUCTOR(LilyPreparserObject, enum_, const LilyPreparserObject *self)
 {
     FREE(LilyPreparserEnumObject, &self->enum_);
+}
+
+CONSTRUCTOR(LilyPreparserAlias,
+            LilyPreparserAlias,
+            String *name,
+            Vec *data_type,
+            enum LilyVisibility visibility)
+{
+    return (LilyPreparserAlias){ .name = name,
+                                 .data_type = data_type,
+                                 .visibility = visibility };
+}
+
+DESTRUCTOR(LilyPreparserAlias, const LilyPreparserAlias *self)
+{
+    FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
+    FREE(Vec, self->data_type);
+}
+
+CONSTRUCTOR(LilyPreparserEnum,
+            LilyPreparserEnum,
+            String *name,
+            Vec *variants,
+            enum LilyVisibility visibility)
+{
+    return (LilyPreparserEnum){ .name = name,
+                                .variants = variants,
+                                .visibility = visibility };
+}
+
+DESTRUCTOR(LilyPreparserEnum, const LilyPreparserEnum *self)
+{
+    for (Usize i = 0; i < self->variants->len; i++) {
+        Vec *item = get__Vec(self->variants, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+
+    FREE(Vec, self->variants);
+}
+
+CONSTRUCTOR(LilyPreparserRecord,
+            LilyPreparserRecord,
+            String *name,
+            Vec *fields,
+            enum LilyVisibility visibility)
+{
+    return (LilyPreparserRecord){ .name = name,
+                                  .fields = fields,
+                                  .visibility = visibility };
+}
+
+DESTRUCTOR(LilyPreparserRecord, const LilyPreparserRecord *self)
+{
+    for (Usize i = 0; i < self->fields->len; i++) {
+        Vec *item = get__Vec(self->fields, i);
+
+        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+        FREE(Vec, item);
+    }
+
+    FREE(Vec, self->fields);
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserType,
+                    LilyPreparserType,
+                    alias,
+                    LilyPreparserAlias alias)
+{
+    return (LilyPreparserType){
+        .alias = alias,
+        .kind = LILY_PREPARSER_TYPE_KIND_ALIAS,
+    };
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserType,
+                    LilyPreparserType,
+                    enum_,
+                    LilyPreparserEnum enum_)
+{
+    return (LilyPreparserType){ .kind = LILY_PREPARSER_TYPE_KIND_ENUM,
+                                .enum_ = enum_ };
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserType,
+                    LilyPreparserType,
+                    record,
+                    LilyPreparserRecord record)
+{
+    return (LilyPreparserType){ .kind = LILY_PREPARSER_TYPE_KIND_RECORD,
+                                .record = record };
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserType, alias, const LilyPreparserType *self)
+{
+    FREE(LilyPreparserAlias, &self->alias);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserType, enum_, const LilyPreparserType *self)
+{
+    FREE(LilyPreparserEnum, &self->enum_);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserType, record, const LilyPreparserType *self)
+{
+    FREE(LilyPreparserRecord, &self->record);
 }
 
 CONSTRUCTOR(LilyPreparserConstantInfo *,
