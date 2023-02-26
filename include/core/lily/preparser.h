@@ -347,6 +347,7 @@ typedef struct LilyPreparser
     Vec *private_imports; // Vec<LilyPreparserImport*>*
     Vec *public_macros;   // Vec<LilyPreparserMacro*>*
     Vec *private_macros;  // Vec<LilyPreparserMacro*>*
+    Vec *decls;           // Vec<LilyPreparserDecl*>*
     LilyPreparserPackage *package;
     LilyToken *current;
     Usize position;
@@ -368,5 +369,11 @@ inline CONSTRUCTOR(LilyPreparser,
  */
 void
 run__LilyPreparser(LilyPreparser *self);
+
+/**
+ *
+ * @brief Free LilyPreparser type.
+ */
+DESTRUCTOR(LilyPreparser, const LilyPreparser *self);
 
 #endif // LILY_CORE_LILY_PREPARSER_H

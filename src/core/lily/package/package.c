@@ -190,20 +190,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(File, &self->file);
 
     FREE(LilyScanner, &self->scanner);
-
-    FREE_BUFFER_ITEMS(self->preparser.public_imports->buffer,
-                      self->preparser.public_imports->len,
-                      LilyPreparserImport);
-    FREE(Vec, self->preparser.public_imports);
-
-    FREE_BUFFER_ITEMS(self->preparser.private_imports->buffer,
-                      self->preparser.private_imports->len,
-                      LilyPreparserImport);
-    FREE(Vec, self->preparser.private_imports);
-
-    FREE(Vec, self->preparser.public_macros);
-
-    FREE(LilyPreparserPackage, self->preparser.package);
+    FREE(LilyPreparser, &self->preparser);
 
     lily_free(self);
 }
