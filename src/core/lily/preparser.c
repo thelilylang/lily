@@ -1915,14 +1915,14 @@ parse_module_name : {
         }
     }
 
+    end__Location(&module_location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
+
     if (self->current->kind == LILY_TOKEN_KIND_EOF) {
         FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserDecl);
         FREE(Vec, body);
         FREE(String, name);
-
-        end__Location(&module_location,
-                      self->current->location.end_line,
-                      self->current->location.end_column);
 
         emit__Diagnostic(
           NEW_VARIANT(
@@ -1940,10 +1940,6 @@ parse_module_name : {
     } else {
 		next_token__LilyPreparser(self);
 	}
-
-    end__Location(&module_location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
 
     return NEW_VARIANT(LilyPreparserDecl,
                        module,
