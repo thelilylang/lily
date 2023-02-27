@@ -184,6 +184,7 @@ typedef struct LilyPreparserTest
 typedef struct LilyPreparserFun
 {
     String *name;
+    String *object_impl;   // String*?
     Vec *generic_params;   // Vec<Vec<LilyToken*>*>*
     Vec *params;           // Vec<Vec<LilyToken*>*>*
     Vec *return_data_type; // Vec<LilyToken*>*

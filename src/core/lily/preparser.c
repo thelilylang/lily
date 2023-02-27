@@ -83,6 +83,7 @@ static DESTRUCTOR(LilyPreparserTest, const LilyPreparserTest *self);
 static inline CONSTRUCTOR(LilyPreparserFun,
                           LilyPreparserFun,
                           String *name,
+                          String *object_impl,
                           Vec *generic_params,
                           Vec *params,
                           Vec *return_data_type,
@@ -688,6 +689,7 @@ DESTRUCTOR(LilyPreparserTest, const LilyPreparserTest *self)
 CONSTRUCTOR(LilyPreparserFun,
             LilyPreparserFun,
             String *name,
+            String *object_impl,
             Vec *generic_params,
             Vec *params,
             Vec *return_data_type,
@@ -701,6 +703,7 @@ CONSTRUCTOR(LilyPreparserFun,
             bool when_is_comptime)
 {
     return (LilyPreparserFun){ .name = name,
+                               .object_impl = object_impl,
                                .generic_params = generic_params,
                                .params = params,
                                .return_data_type = return_data_type,
@@ -1820,45 +1823,86 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_PUB:
+            visibility_decl = LILY_VISIBILITY_PUBLIC;
+
             next_token__LilyPreparser(self);
 
             switch (self->current->kind) {
-                default:
-                    break;
+                case LILY_TOKEN_KIND_KEYWORD_TYPE:
+                    return preparse_type__LilyPreparser(self);
+                case LILY_TOKEN_KIND_KEYWORD_MODULE:
+                    return preparse_module__LilyPreparser(self);
+                case LILY_TOKEN_KIND_KEYWORD_FUN:
+                    return preparse_fun__LilyPreparser(self);
+                case LILY_TOKEN_KIND_KEYWORD_object:
+                    return preparse_object__LilyPreparser(self);
+                default: {
+                    String *current_s = to_string__LilyToken(self->current);
+
+                    emit__Diagnostic(NEW_VARIANT(Diagnostic,
+                                                 simple_lily_error,
+                                                 self->scanner->source.file,
+                                                 &self->current->location,
+                                                 NEW_VARIANT(LilyError,
+                                                             unexpected_token,
+                                                             current_s->buffer),
+                                                 NULL,
+                                                 NULL,
+                                                 NULL),
+                                     &self->count_error);
+
+                    FREE(String, current_s);
+
+                    return NULL;
+                }
             }
             break;
         case LILY_TOKEN_KIND_KEYWORD_TYPE:
             return preparse_type__LilyPreparser(self);
-            break;
         case LILY_TOKEN_KIND_KEYWORD_MODULE:
-            break;
+            return preparse_module__LilyPreparser(self);
         case LILY_TOKEN_KIND_KEYWORD_FUN:
-            break;
+            return preparse_fun__LilyPreparser(self);
         case LILY_TOKEN_KIND_KEYWORD_object:
-            break;
+            return preparse_object__LilyPreparser(self);
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            break;
-        default:
+            next_token__LilyPreparser(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_BANG:
+                    break;
+                default:
+                    return NULL;
+            }
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
             emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          self->scanner->source.file,
-                          &self->current->location,
-                          NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_TOKEN),
-                          NULL,
-                          NULL,
-                          NULL),
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                NULL),
               &self->count_error);
+
+            FREE(String, current_s);
 
             next_token__LilyPreparser(self);
 
             return NULL;
+        }
     }
 }
 
 LilyPreparserDecl *
 preparse_module__LilyPreparser(LilyPreparser *self)
 {
+    next_token__LilyPreparser(self);
+
     String *name = NULL;
     Vec *body = NEW(Vec);
 
@@ -1876,9 +1920,12 @@ parse_module_name : {
                 eat_w_free_and_next_token__LilyPreparser(self);
             }
 
-            if (self->current->kind == LILY_TOKEN_KIND_DOT) {
-                next_token__LilyPreparser(self);
-                goto parse_module_name;
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_DOT:
+                    next_token__LilyPreparser(self);
+                    goto parse_module_name;
+                default:
+                    break;
             }
 
             break;
@@ -1902,6 +1949,7 @@ parse_module_name : {
 }
 
     Location module_location = location;
+    enum LilyVisibility module_visibility = visibility_decl;
 
     // 2. Preparse body.
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
@@ -1938,13 +1986,13 @@ parse_module_name : {
 
         return NULL;
     } else {
-		next_token__LilyPreparser(self);
-	}
+        next_token__LilyPreparser(self);
+    }
 
     return NEW_VARIANT(LilyPreparserDecl,
                        module,
                        module_location,
-                       NEW(LilyPreparserModule, name, body, visibility_decl));
+                       NEW(LilyPreparserModule, name, body, module_visibility));
 }
 
 void
@@ -1955,6 +2003,150 @@ preparse_test__LilyPreparser(LilyPreparser *self)
 LilyPreparserDecl *
 preparse_fun__LilyPreparser(LilyPreparser *self)
 {
+    next_token__LilyPreparser(self);
+
+    String *object_impl = NULL;
+    String *name = NULL;
+    Vec *generic_params = NEW(Vec); // Vec<Vec<LilyToken*>*>*
+
+    // 1. Get name's object implementation
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_AT:
+            next_token__LilyPreparser(self);
+
+        parse_object_impl_name : {
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                    if (object_impl) {
+                        push__String(object_impl, '.');
+                        push_str__String(
+                          object_impl,
+                          self->current->identifier_normal->buffer);
+                        next_token__LilyPreparser(self);
+                    } else {
+                        object_impl = self->current->identifier_normal;
+                        eat_w_free_and_next_token__LilyPreparser(self);
+                    }
+
+                    switch (self->current->kind) {
+                        case LILY_TOKEN_KIND_DOT:
+                            next_token__LilyPreparser(self);
+                            goto parse_object_impl_name;
+                        default:
+                            break;
+                    }
+
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->scanner->source.file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                        NULL,
+                        NULL,
+                        from__String("expected identifier after `@` or `.`")),
+                      &self->count_error);
+                    break;
+            }
+        }
+
+        break;
+        default:
+            break;
+    }
+
+    // 2. Get fun Name
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = self->current->identifier_normal;
+            eat_w_free_and_next_token__LilyPreparser(self);
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_FUN_IDENTIFIER),
+                NULL,
+                NULL,
+                NULL),
+              &self->count_error);
+            break;
+    }
+
+    // 3. Get generic param(s)
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_HOOK:
+            next_token__LilyPreparser(self);
+
+            Vec *item = NEW(Vec);
+
+            while (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
+                if (self->current->kind == LILY_TOKEN_KIND_COMMA &&
+                    item->len == 0) {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->scanner->source.file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        NULL),
+                      &self->count_error);
+
+					next_token__LilyPreparser(self);
+                } else if (self->current->kind == LILY_TOKEN_KIND_COMMA) {
+                    push__Vec(generic_params, item);
+                    item = NEW(Vec);
+
+                    next_token__LilyPreparser(self);
+                } else {
+                    push__Vec(item, self->current);
+                    eat_w_free_and_next_token__LilyPreparser(self);
+                }
+            }
+
+			next_token__LilyPreparser(self);
+
+            break;
+        default:
+            break;
+    }
+
+    // 4. Get fun param(s)
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_PAREN:
+            break;
+        default:
+            break;
+    }
+
+    // 5. Get when and req condition
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_WHEN:
+            break;
+        case LILY_TOKEN_KIND_KEYWORD_REQ:
+            break;
+        case LILY_TOKEN_KIND_KEYWORD_COMPTIME:
+            break;
+        default:
+            break;
+    }
+
+    // 6. Get body of fun.
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_EQ:
+            break;
+        default:
+            break;
+    }
 }
 
 LilyPreparserDecl *
@@ -2061,6 +2253,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             }
+
             case LILY_TOKEN_KIND_KEYWORD_MACRO: {
                 LilyPreparserMacro *macro = preparse_macro__LilyPreparser(self);
 
@@ -2070,6 +2263,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             }
+
             case LILY_TOKEN_KIND_KEYWORD_PACKAGE: {
                 if (package_is_preparse) {
                     emit__Diagnostic(
@@ -2096,6 +2290,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             }
+
             case LILY_TOKEN_KIND_KEYWORD_PUB:
                 visibility_decl = LILY_VISIBILITY_PUBLIC;
 
@@ -2112,6 +2307,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                         break;
                     }
+
                     case LILY_TOKEN_KIND_KEYWORD_FUN: {
                         LilyPreparserDecl *fun =
                           preparse_fun__LilyPreparser(self);
@@ -2122,6 +2318,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                         break;
                     }
+
                     case LILY_TOKEN_KIND_KEYWORD_MODULE: {
                         LilyPreparserDecl *module =
                           preparse_module__LilyPreparser(self);
@@ -2132,6 +2329,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                         break;
                     }
+
                     case LILY_TOKEN_KIND_KEYWORD_TYPE: {
                         LilyPreparserDecl *type =
                           preparse_type__LilyPreparser(self);
@@ -2142,6 +2340,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                         break;
                     }
+
                     case LILY_TOKEN_KIND_KEYWORD_MACRO: {
                         LilyPreparserMacro *macro =
                           preparse_macro__LilyPreparser(self);
@@ -2152,6 +2351,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                         break;
                     }
+
                     case LILY_TOKEN_KIND_KEYWORD_object: {
                         LilyPreparserDecl *object =
                           preparse_object__LilyPreparser(self);
@@ -2162,6 +2362,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                         break;
                     }
+
                     default:
                         // ERROR: unexpected keyword after `pub`
                         break;
@@ -2170,6 +2371,7 @@ run__LilyPreparser(LilyPreparser *self)
                 visibility_decl = LILY_VISIBILITY_PRIVATE;
 
                 break;
+
             case LILY_TOKEN_KIND_KEYWORD_MODULE: {
                 LilyPreparserDecl *module =
                   preparse_module__LilyPreparser(self);
@@ -2180,10 +2382,12 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             }
+
             case LILY_TOKEN_KIND_KEYWORD_TEST:
                 preparse_test__LilyPreparser(self);
 
                 break;
+
             case LILY_TOKEN_KIND_KEYWORD_FUN: {
                 LilyPreparserDecl *fun = preparse_fun__LilyPreparser(self);
 
@@ -2193,6 +2397,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             }
+
             case LILY_TOKEN_KIND_KEYWORD_object: {
                 LilyPreparserDecl *object =
                   preparse_object__LilyPreparser(self);
@@ -2203,6 +2408,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             }
+
             case LILY_TOKEN_KIND_KEYWORD_TYPE: {
                 LilyPreparserDecl *type = preparse_type__LilyPreparser(self);
 
@@ -2212,6 +2418,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             }
+
             case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
@@ -2226,14 +2433,17 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
             }
+
             case LILY_TOKEN_KIND_COMMENT_DOC:
                 next_token__LilyPreparser(self);
 
                 break;
+
             case LILY_TOKEN_KIND_HASHTAG:
                 preparse_preprocess__LilyPreparser(self);
 
                 break;
+
             case LILY_TOKEN_KIND_KEYWORD_WHEN:
                 preparse_when_condition__LilyPreparser(self);
 
@@ -2248,6 +2458,7 @@ run__LilyPreparser(LilyPreparser *self)
 
                         break;
                     }
+
                     case LILY_TOKEN_KIND_KEYWORD_PUB:
                         next_token__LilyPreparser(self);
 
@@ -2269,6 +2480,7 @@ run__LilyPreparser(LilyPreparser *self)
                         }
 
                         break;
+
                     case LILY_TOKEN_KIND_EOF:
                         emit__Diagnostic(
                           NEW_VARIANT(
@@ -2289,6 +2501,7 @@ run__LilyPreparser(LilyPreparser *self)
                 }
 
                 break;
+
             default: {
             unexpected_token : {
                 String *current_s = to_string__LilyToken(self->current);
