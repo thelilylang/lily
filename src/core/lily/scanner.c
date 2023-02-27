@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-#include "core/shared/source.h"
 #include <base/atof.h>
 #include <base/atoi.h>
 #include <base/print.h>
@@ -1610,6 +1609,7 @@ get_token__LilyScanner(LilyScanner *self)
       self, self->source.cursor.line, self->source.cursor.column);
 
     switch (self->source.cursor.current) {
+        // &= &
         case '&':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1620,13 +1620,18 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_AMPERSAND,
                        clone__Location(&self->location));
+
+        // @
         case '@':
             return NEW(
               LilyToken, LILY_TOKEN_KIND_AT, clone__Location(&self->location));
+
+        // !
         case '!':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_BANG,
                        clone__Location(&self->location));
+        // |= |> |
         case '|':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1640,6 +1645,8 @@ get_token__LilyScanner(LilyScanner *self)
 
             return NEW(
               LilyToken, LILY_TOKEN_KIND_BAR, clone__Location(&self->location));
+
+        // :: :$ := :
         case ':':
             if (c1 == (char *)':') {
                 return NEW(LilyToken,
@@ -1658,10 +1665,14 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_COLON,
                        clone__Location(&self->location));
+
+        // ,
         case ',':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_COMMA,
                        clone__Location(&self->location));
+
+        // $<id>
         case '$':
             if ((c1 >= (char *)'a' && c1 <= (char *)'z') ||
                 (c1 >= (char *)'A' && c1 <= (char *)'Z') || c1 == (char *)'_') {
@@ -1678,6 +1689,8 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_DOLLAR,
                        clone__Location(&self->location));
+
+        // ... .. . .? .* .
         case '.':
             if (c1 == (char *)'.' && c2 == (char *)'.') {
                 return NEW(LilyToken,
@@ -1699,6 +1712,8 @@ get_token__LilyScanner(LilyScanner *self)
 
             return NEW(
               LilyToken, LILY_TOKEN_KIND_DOT, clone__Location(&self->location));
+
+        // == => =
         case '=':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1712,10 +1727,14 @@ get_token__LilyScanner(LilyScanner *self)
 
             return NEW(
               LilyToken, LILY_TOKEN_KIND_EQ, clone__Location(&self->location));
+
+        // #
         case '#':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_HASHTAG,
                        clone__Location(&self->location));
+
+        // ^= ^
         case '^':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1725,10 +1744,14 @@ get_token__LilyScanner(LilyScanner *self)
 
             return NEW(
               LilyToken, LILY_TOKEN_KIND_HAT, clone__Location(&self->location));
+
+        // ?
         case '?':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_INTERROGATION,
                        clone__Location(&self->location));
+
+        // {} [] ()
         case '{':
         case '[':
         case '(': {
@@ -1773,6 +1796,8 @@ get_token__LilyScanner(LilyScanner *self)
                     UNREACHABLE("this way is not possible");
             }
         }
+
+        // <<= << <= <- <
         case '<':
             if (c1 == (char *)'<' && c2 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1795,6 +1820,8 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_L_SHIFT,
                        clone__Location(&self->location));
+
+        // --= -= -- -> -
         case '-':
             if (c1 == (char *)'-' && c2 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1817,6 +1844,8 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_MINUS,
                        clone__Location(&self->location));
+
+        // %= %
         case '%':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1827,6 +1856,8 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_PERCENTAGE,
                        clone__Location(&self->location));
+
+        // ++= += ++ +
         case '+':
             if (c1 == (char *)'+' && c2 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1845,6 +1876,7 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_PLUS,
                        clone__Location(&self->location));
+
         case '}':
         case ']':
         case ')': {
@@ -1870,6 +1902,8 @@ get_token__LilyScanner(LilyScanner *self)
 
             return NULL;
         }
+
+        // >>= >> >= >
         case '>':
             if (c1 == (char *)'>' && c2 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1888,10 +1922,14 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_R_SHIFT,
                        clone__Location(&self->location));
+
+        // ;
         case ';':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_SEMICOLON,
                        clone__Location(&self->location));
+
+        // /= <COMMENT_BLOCK> <COMMENT_DOC> <COMMENT_LINE> /
         case '/':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1924,6 +1962,8 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_SLASH,
                        clone__Location(&self->location));
+
+        // **= ** *= *
         case '*':
             if (c1 == (char *)'*' && c2 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1943,6 +1983,8 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_STAR,
                        clone__Location(&self->location));
+
+        // ~= ~
         case '~':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
@@ -1953,6 +1995,8 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_WAVE,
                        clone__Location(&self->location));
+
+        // char literal
         case '\'': {
             char *res = scan_char__LilyScanner(self);
 
@@ -1965,6 +2009,8 @@ get_token__LilyScanner(LilyScanner *self)
 
             return NULL;
         }
+
+        // string literal
         case '\"': {
             String *res = scan_string__LilyScanner(self);
 
@@ -1977,6 +2023,8 @@ get_token__LilyScanner(LilyScanner *self)
 
             return NULL;
         }
+
+        // number
         case IS_ZERO:
             if (c1 == (char *)'x' || c1 == (char *)'o' || c1 == (char *)'b' ||
                 c1 == (char *)'.') {
@@ -1998,8 +2046,12 @@ get_token__LilyScanner(LilyScanner *self)
             }
 
             return get_num__LilyScanner(self);
+
+        // number
         case IS_DIGIT_WITHOUT_ZERO:
             return get_num__LilyScanner(self);
+
+        // bit char literal, bit string literal <id> xor= not= <keyword>
         case IS_ID:
             if (self->source.cursor.current == 'b' && c1 == (char *)'\'') {
                 next_char__Source(&self->source);
@@ -2070,6 +2122,7 @@ get_token__LilyScanner(LilyScanner *self)
                     }
                 }
             }
+
         default: {
             Location location_error = clone__Location(&self->location);
 
