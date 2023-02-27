@@ -63,6 +63,7 @@ enum LilyTokenKind
     LILY_TOKEN_KIND_HASHTAG,
     LILY_TOKEN_KIND_HAT_EQ,
     LILY_TOKEN_KIND_HAT,
+    LILY_TOKEN_KIND_IDENTIFIER_DOLLAR,
     LILY_TOKEN_KIND_IDENTIFIER_MACRO,
     LILY_TOKEN_KIND_IDENTIFIER_NORMAL,
     LILY_TOKEN_KIND_IDENTIFIER_OPERATOR,
@@ -197,6 +198,7 @@ typedef struct LilyToken
     union
     {
         String *comment_doc;
+        String *identifier_dollar;
         String *identifier_macro;
         String *identifier_normal;
         String *identifier_operator;
@@ -240,6 +242,16 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     comment_doc,
                     Location location,
                     String *comment_doc);
+
+/**
+ *
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_IDENTIFIER_DOLLAR).
+ */
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    identifier_dollar,
+                    Location location,
+                    String *identifier_dollar);
 
 /**
  *

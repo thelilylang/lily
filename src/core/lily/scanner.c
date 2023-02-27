@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include "core/shared/source.h"
 #include <base/atof.h>
 #include <base/atoi.h>
 #include <base/print.h>
@@ -782,6 +783,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
         case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
+        case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
         case LILY_TOKEN_KIND_KEYWORD_ALIAS:
         case LILY_TOKEN_KIND_KEYWORD_AND:
         case LILY_TOKEN_KIND_KEYWORD_AS:
@@ -1661,6 +1663,18 @@ get_token__LilyScanner(LilyScanner *self)
                        LILY_TOKEN_KIND_COMMA,
                        clone__Location(&self->location));
         case '$':
+            if ((c1 >= (char *)'a' && c1 <= (char *)'z') ||
+                (c1 >= (char *)'A' && c1 <= (char *)'Z') || c1 == (char *)'_') {
+                next_char__Source(&self->source);
+
+                String *id = scan_identifier__LilyScanner(self);
+
+                return NEW_VARIANT(LilyToken,
+                                   identifier_dollar,
+                                   clone__Location(&self->location),
+                                   id);
+            }
+
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_DOLLAR,
                        clone__Location(&self->location));

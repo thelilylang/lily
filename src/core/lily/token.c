@@ -38,6 +38,9 @@
 // Free LilyToken type (LILY_TOKEN_KIND_COMMENT_DOC).
 static inline VARIANT_DESTRUCTOR(LilyToken, comment_doc, LilyToken *self);
 
+// Free LilyToken type (LILY_TOKEN_KIND_IDENTIFIER_DOLLAR).
+static inline VARIANT_DESTRUCTOR(LilyToken, identifier_dollar, LilyToken *self);
+
 // Free LilyToken type (LILY_TOKEN_KIND_IDENTIFIER_MACRO).
 static inline VARIANT_DESTRUCTOR(LilyToken, identifier_macro, LilyToken *self);
 
@@ -91,6 +94,21 @@ VARIANT_CONSTRUCTOR(LilyToken *,
     self->kind = LILY_TOKEN_KIND_COMMENT_DOC;
     self->location = location;
     self->comment_doc = comment_doc;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    identifier_dollar,
+                    Location location,
+                    String *identifier_dollar)
+{
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
+
+    self->kind = LILY_TOKEN_KIND_IDENTIFIER_DOLLAR;
+    self->location = location;
+    self->identifier_dollar = identifier_dollar;
 
     return self;
 }
@@ -532,6 +550,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String("^=");
         case LILY_TOKEN_KIND_HAT:
             return from__String("^");
+        case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
+            return format__String("${S}", self->identifier_dollar);
         case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
             return format__String("{{{{{S}}}", self->identifier_macro);
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
@@ -866,6 +886,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_HAT_EQ";
         case LILY_TOKEN_KIND_HAT:
             return "LILY_TOKEN_KIND_HAT";
+        case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
+            return "LILY_TOKEN_KIND_IDENTIFIER_DOLLAR";
         case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
             return "LILY_TOKEN_KIND_IDENTIFIER_MACRO";
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
@@ -1131,9 +1153,15 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
               CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->comment_doc);
+        case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "identifier_dollar = {S} }",
+                          CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->identifier_dollar);
         case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
-                          "identifier_normal = {{{{{S}}} }",
+                          "identifier_macro = {S} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->identifier_macro);
@@ -1145,7 +1173,7 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
                           self->identifier_normal);
         case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
-                          "identifier_operator = `{S}` }",
+                          "identifier_operator = {S} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->identifier_operator);
@@ -1317,6 +1345,12 @@ VARIANT_DESTRUCTOR(LilyToken, comment_doc, LilyToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyToken, identifier_dollar, LilyToken *self)
+{
+    FREE(String, self->identifier_dollar);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyToken, identifier_macro, LilyToken *self)
 {
     FREE(String, self->identifier_macro);
@@ -1381,6 +1415,9 @@ DESTRUCTOR(LilyToken, LilyToken *self)
     switch (self->kind) {
         case LILY_TOKEN_KIND_COMMENT_DOC:
             FREE_VARIANT(LilyToken, comment_doc, self);
+            break;
+        case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
+            FREE_VARIANT(LilyToken, identifier_dollar, self);
             break;
         case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
             FREE_VARIANT(LilyToken, identifier_macro, self);
