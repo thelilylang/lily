@@ -181,6 +181,77 @@ typedef struct LilyPreparserTest
     Vec *body; // Vec<LilyToken*>*
 } LilyPreparserTest;
 
+typedef struct LilyPreparserFunBodyItemExpr
+{
+    Vec *tokens; // Vec<LilyToken*>*
+} LilyPreparserFunBodyItemExpr;
+
+typedef struct LilyPreparserFunBodyItemStmtBlock
+{
+    Vec *block; // Vec<LilyPreparserFunBodyItem*>*
+} LilyPreparserFunBodyItemStmtBlock;
+
+typedef struct LilyPreparserFunBodyItemStmtFor
+{
+    Vec *expr;  // Vec<LilyToken*>*
+    Vec *block; // Vec<LilyPreparserFunBodyItem*>*
+} LilyPreparserFunBodyItemStmtFor;
+
+typedef struct LilyPreparserFunBodyItemStmtIf
+{
+    Vec *if_expr;     // Vec<LilyToken*>*
+    Vec *if_block;    // Vec<LilyToken*>*
+    Vec *elif_exprs;  // Vec<Vec<LilyToken*>*?
+    Vec *elif_blocks; // Vec<Vec<LilyPreparserFunBodyItem*>*>*?
+    Vec *else_block;  // Vec<LilyPreparserFunBodyItem>*?
+} LilyPreparserFunBodyItemStmtIf;
+
+typedef struct LilyPreparserFunBodyItemStmtMatch
+{
+    Vec *expr;     // Vec<LilyToken*>*
+    Vec *patterns; // Vec<Vec<LilyToken*>*
+    Vec *blocks;   // Vec<Vec<LilyPreparserFunBodyItem*>*>*
+} LilyPreparserFunBodyItemStmtMatch;
+
+typedef struct LilyPreparserFunBodyItemStmtTry
+{
+    Vec *block;       // Vec<LilyPreparserFunBodyItem*>*
+    Vec *catch_expr;  // Vec<LilyToken*>*?
+    Vec *catch_block; // Vec<LilyPreparserFunBodyItem*>*?
+} LilyPreparserFunBodyItemStmtTry;
+
+typedef struct LilyPreparserFunBodyItemStmtWhile
+{
+    Vec *expr;  // Vec<LilyToken*>*
+    Vec *block; // Vec<LilyPreparserFunBodyItem*>*
+} LilyPreparserFunBodyItemStmtWhile;
+
+enum LilyPreparserFunBodyItemKind
+{
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPR,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE
+};
+
+typedef struct LilyPreparserFunBodyItem
+{
+    enum LilyPreparserFunBodyItemKind kind;
+    union
+    {
+        LilyPreparserFunBodyItemExpr expr;
+        LilyPreparserFunBodyItemStmtBlock stmt_block;
+        LilyPreparserFunBodyItemStmtFor stmt_for;
+        LilyPreparserFunBodyItemStmtIf stmt_if;
+        LilyPreparserFunBodyItemStmtMatch stmt_match;
+        LilyPreparserFunBodyItemStmtTry stmt_try;
+        LilyPreparserFunBodyItemStmtWhile stmt_while;
+    };
+} LilyPreparserFunBodyItem;
+
 typedef struct LilyPreparserFun
 {
     String *name;
@@ -189,8 +260,8 @@ typedef struct LilyPreparserFun
     Vec *params;           // Vec<Vec<LilyToken*>*>*
     Vec *return_data_type; // Vec<LilyToken*>*
     Vec *body;             // Vec<LilyToken*>*
-    Vec *req;              // Vec<LilyToken*>*
-    Vec *when;             // Vec<LilyToken*>*
+    Vec *req;              // Vec<Vec<LilyToken*>*>*
+    Vec *when;             // Vec<Vec<LilyToken*>*>*
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
