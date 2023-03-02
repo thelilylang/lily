@@ -179,7 +179,7 @@ The class can take an inheritance and an other class can take this class in inhe
 I think it's important to implement that in record object, enum object or class, because it's an avandage to implement that in a programming language.
 
 ```lily
-@[derive(Eq)]
+#[derive(Eq)]
 object App class =
 end
 ```
@@ -222,7 +222,7 @@ end
 - id -> identifier: `x`
 - dt -> data type: `Int32`
 - tt -> token
-- stmt -> statement: `val x := 32`
+- stmt -> statement: `val x := 32;`
 - expr -> expression: `x + 230`
 - path -> path: `X.Y.Z`
 - patt -> pattern: `_`
@@ -372,8 +372,8 @@ end
 
 ```lily
 fun main =
-    val x Int32 := 30
-    val y Int32 := 100
+    val x Int32 := 30;
+    val y Int32 := 100;
 end
 ```
 
@@ -460,8 +460,8 @@ object Foo class =
 end
 
 fun main() =
-    val a Foo := Foo.new()
-    drop val b Foo* := Foo.new()
+    val a Foo := Foo.new();
+    drop val b Foo* := Foo.new();
 end
 ```
 
@@ -471,7 +471,7 @@ end
 fun main =
     for i in 0..10 do ();
 
-    mut i := 0
+    mut i := 0;
     while i < 10 do i += 1;
 end
 ```
@@ -480,7 +480,7 @@ end
 
 ```lily
 fun main =
-    mut a := 30
+    mut a := 30;
 
     if a < 4 do
         a += 40
@@ -494,10 +494,10 @@ end
 
 ```lily
 fun main =
-    val x := true
-    val y := 10
+    val x := true;
+    val y := 10;
 
-    match x do
+    match x do 
         true ? y > 10 => true,
         false ? y < 10 => true,
         _ => false
@@ -511,7 +511,7 @@ Static array
 
 ```lily
 fun main =
-    val arr [3]Int32 := [1, 2, 3]
+    val arr [3]Int32 := [1, 2, 3];
 end
 ```
 
@@ -524,7 +524,7 @@ NOTE: It's like `va_arg` in C.
 
 ```lily
 fun main =
-    val arr [?]Int32 := [1, 2, 3, 4]
+    val arr [?]Int32 := [1, 2, 3, 4];
 end
 ```
 
@@ -532,7 +532,7 @@ Dynamic array
 
 ```lily
 fun main =
-    drop val arr [_]Int32 := []
+    drop val arr [_]Int32 := [];
     Array.append(ref arr, [1, 2, 3]) // append new elements
 end
 ```
@@ -545,7 +545,7 @@ NOTE: only available in unsafe mode
 
 ```lily
 fun main =
-    val arr [*]Int32 := [1, 2, 3, 4, 5] // [*]Int32 it same than Int32* in C
+    val arr [*]Int32 := [1, 2, 3, 4, 5]; // [*]Int32 it same than Int32* in C
 end
 ```
 
@@ -553,7 +553,7 @@ end
 
 ```lily
 fun main =
-    val tuple (Int32, Int32) := (1, 2)
+    val tuple (Int32, Int32) := (1, 2);
 end
 ```
 
@@ -570,17 +570,17 @@ I think `move` value is better than copy value because it avoid to write program
 
 ```lily
 fun main =
-    drop val x Int32* := Ptr.new(20) // you must specifie drop except when you precise to the compiler that the drops are automaticly manage by the compiler
-    val y Int32* := nil // error in safe mode
+    drop val x Int32* := Ptr.new(20); // you must specifie drop except when you precise to the compiler that the drops are automaticly manage by the compiler
+    val y Int32* := nil; // error in safe mode
 
     unsafe =
-        val y Int32* := nil // ok in unsafe mode
+        val y Int32* := nil; // ok in unsafe mode
         // The compiler emit an error if the Pointer is used with nil value
         // In the runtime the compiler verify if the pointer is null 
     end
 
     begin =
-        val y Int32* := Ptr.new(100)
+        val y Int32* := Ptr.new(100);
         drop y // drop at this point
         // after this point the compiler shadows the reference of y in this scope
         drop y <- Ptr.new(200) // reassign a drop ptr value
@@ -601,8 +601,8 @@ end
 fun add(x ref Int32) ref Int32 = x;
 
 fun main =
-    val x Int32 := 20
-    ref val y Int32 := add(ref x) // Int32 -> ref Int32 = Int32* in C
+    val x Int32 := 20;
+    ref val y Int32 := add(ref x); // Int32 -> ref Int32 = Int32* in C
     // the value (x) is available in this scope, so the value (y) is available
     // or
     // val y ref Int32 := add(&x)
@@ -617,7 +617,7 @@ This syntax is better than C because the embiguity with the Pointer type is very
 
 ```lily
 fun add() ref Int32 =
-    val x := 30
+    val x := 30;
     ref x
 end
 ```
@@ -643,8 +643,8 @@ fun get_name(p ref Person) ref Str =
 end
 
 fun main =
-    val p := Person { name: "John", age: 20 }
-    ref val name := ref p |> get_name 
+    val p := Person { name: "John", age: 20 };
+    ref val name := ref p |> get_name; 
     // both reference values are available in the actual scope
 end
 ```
@@ -659,8 +659,8 @@ end
 fun add(x trace Int32*) trace Int32* = x;
 
 fun main =
-    val x Int32* := Ptr.new(100)
-    trace val y Int32* := add(trace x)
+    val x Int32* := Ptr.new(100);
+    trace val y Int32* := add(trace x);
 end
 ```
 
@@ -672,10 +672,10 @@ end
 fun add(x Int32) = x;
 
 fun main =
-    val x Int32 := 30
-    val y Int32 := add(x) // the value of x is moved
+    val x Int32 := 30;
+    val y Int32 := add(x); // the value of x is moved
 
-    val z = x // now you cannot move `x` in z variable because it has been move previously
+    val z = x; // now you cannot move `x` in z variable because it has been move previously
 end
 ```
 
@@ -687,10 +687,10 @@ Compiler option:
 When you pass `allow-auto-drop` as compile option, you can disable auto drop in a specific section of code with preprocess `disable_auto_drop`.
 
 ```lily
-@[disable_auto_drop]
+#[disable_auto_drop]
 fun main =
 end
-@[end]
+#[end]
 ```
 
 ## Garbage collector (interpreter)
