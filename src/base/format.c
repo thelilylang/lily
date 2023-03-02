@@ -104,10 +104,11 @@ format(const char *fmt, ...)
                                 i += 4;
 
                                 break;
-                            default:
+                            default: {
                                 PUSH_INT(d, 10);
 
                                 i += 2;
+                            }
                         }
 
                         break;
@@ -200,10 +201,11 @@ format(const char *fmt, ...)
                                 i += 4;
 
                                 break;
-                            default:
+                            default: {
                                 PUSH_INT(d, 10);
 
                                 i += 2;
+                            }
                         }
 
                         break;
