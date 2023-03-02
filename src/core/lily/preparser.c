@@ -937,6 +937,32 @@ CONSTRUCTOR(LilyPreparserModule,
                                   .visibility = visibility };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserModule, const LilyPreparserModule *self)
+{
+    String *res = format__String("LilyPreparserModule{{ name = {S}, body = {{ ",
+                                 self->name);
+
+    for (Usize i = 0; i < self->body->len; i++) {
+        String *s =
+          to_string__Debug__LilyPreparserDecl(get__Vec(self->body, i));
+
+        APPEND_AND_FREE(res, s);
+
+        if (i != self->body->len - 1) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, " }, visibility = ");
+    push_str__String(res, to_string__Debug__LilyVisibility(self->visibility));
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserModule, const LilyPreparserModule *self)
 {
     FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyPreparserDecl);
@@ -963,6 +989,30 @@ CONSTRUCTOR(LilyPreparserFunBodyItemExprs,
 {
     return (LilyPreparserFunBodyItemExprs){ .tokens = tokens };
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemExprs,
+               const LilyPreparserFunBodyItemExprs *self)
+{
+    String *res = from__String("LilyPreparserFunBodyItemExprs{ tokens = { ");
+
+    for (Usize i = 0; i < self->tokens->len; i++) {
+        String *s = to_string__Debug__LilyToken(get__Vec(self->tokens, i));
+
+        APPEND_AND_FREE(res, s);
+
+        if (i != self->tokens->len - 1) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, " } }");
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyPreparserFunBodyItemExprs,
            const LilyPreparserFunBodyItemExprs *self)
@@ -1998,15 +2048,19 @@ DESTRUCTOR(LilyPreparserDecl, LilyPreparserDecl *self)
         case LILY_PREPARSER_DECL_KIND_CONSTANT:
             FREE_VARIANT(LilyPreparserDecl, constant, self);
             break;
+
         case LILY_PREPARSER_DECL_KIND_FUN:
             FREE_VARIANT(LilyPreparserDecl, fun, self);
             break;
+
         case LILY_PREPARSER_DECL_KIND_MODULE:
             FREE_VARIANT(LilyPreparserDecl, module, self);
             break;
+
         case LILY_PREPARSER_DECL_KIND_OBJECT:
             FREE_VARIANT(LilyPreparserDecl, object, self);
             break;
+
         default:
             UNREACHABLE("unknown variant");
     }
@@ -2088,6 +2142,7 @@ is_start_a_new_block__LilyPreparser(const LilyPreparser *self)
         case LILY_TOKEN_KIND_COMMENT_DOC:
         case LILY_TOKEN_KIND_HASHTAG:
             return true;
+
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
             LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
@@ -2095,10 +2150,11 @@ is_start_a_new_block__LilyPreparser(const LilyPreparser *self)
                 if (peeked->kind == LILY_TOKEN_KIND_BANG) {
                     return true;
                 }
-            } else {
-                return false;
             }
+
+            return false;
         }
+
         default:
             return false;
     }
@@ -3125,6 +3181,110 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
                                        bool is_ref,
                                        bool is_drop)
 {
+    String *name = NULL;
+    Vec *data_type = NULL;
+
+    // 1. Get the name of the variable.
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = self->current->identifier_normal;
+            eat_w_free_and_next_token__LilyPreparser(self);
+            break;
+        default: {
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->scanner->source.file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                          NULL,
+                          NULL,
+                          from__String("expected name of variable")),
+              &self->count_error);
+
+            return;
+        }
+    }
+
+    // 2. Get the data type of the variable (optional).
+    if (self->current->kind != LILY_TOKEN_KIND_COLON_EQ) {
+        data_type = NEW(Vec);
+
+        while (self->current->kind != LILY_TOKEN_KIND_COLON_EQ &&
+               self->current->kind != LILY_TOKEN_KIND_EOF) {
+            push__Vec(data_type, self->current);
+            eat_w_free_and_next_token__LilyPreparser(self);
+        }
+
+        if (self->current->kind == LILY_TOKEN_KIND_EOF) {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                NULL,
+                NULL,
+                from__String(
+                  "expected `:=` after the data type of the variable")),
+              &self->count_error);
+
+            FREE(String, name);
+            FREE_BUFFER_ITEMS(data_type->buffer, data_type->len, LilyToken);
+            FREE(Vec, data_type);
+
+            return;
+        }
+    }
+
+    // 3. Get if `:=` token is present before expression.
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_COLON_EQ:
+            next_token__LilyPreparser(self);
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_TOKEN),
+                NULL,
+                NULL,
+                from__String(
+                  "expected `:=` before the expresion of the variable")),
+              &self->count_error);
+
+            FREE(String, name);
+
+            return;
+    }
+
+    // 4. Preparse expression.
+    Vec *expr = NEW(Vec);
+
+    while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        push__Vec(expr, self->current);
+        eat_w_free_and_next_token__LilyPreparser(self);
+    }
+
+    LilyPreparserFunBodyItem *item =
+      NEW_VARIANT(LilyPreparserFunBodyItem,
+                  stmt_var,
+                  NEW(LilyPreparserFunBodyItemStmtVariable,
+                      name,
+                      data_type,
+                      expr,
+                      is_mut,
+                      is_trace,
+                      is_ref,
+                      is_drop));
+
+    push__Vec(body, item);
 }
 
 Vec *
@@ -3189,7 +3349,7 @@ preparse_body__LilyPreparser(LilyPreparser *self,
 
             /*
                 match <expr> do
-                    <pattern> [? cond] => <stmt | expr,>
+                    <pattern> [? <expr>] => <stmt | expr,>
                 end
             */
             case LILY_TOKEN_KIND_KEYWORD_MATCH:
@@ -3199,7 +3359,7 @@ preparse_body__LilyPreparser(LilyPreparser *self,
             /*
                 try <expr> do
                 [catch <expr> do <block>]
-                end 
+                end
             */
             case LILY_TOKEN_KIND_KEYWORD_TRY:
                 preparse_try_block__LilyPreparser(self, body);

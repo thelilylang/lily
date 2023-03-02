@@ -175,9 +175,22 @@ typedef struct LilyPreparserModule
     enum LilyVisibility visibility;
 } LilyPreparserModule;
 
+/**
+ *
+ * @brief Convert LilyPreparserModule in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserModule, const LilyPreparserModule *self);
+#endif
+
 typedef struct LilyPreparserTest
 {
     String *name;
+    // TODO: change data type of body (Vec<LilyToken*>* ->
+    // Vec<LilyPreparserFunBodyItem*>*)
+    // TODO: update its constructor and its destructor.
     Vec *body; // Vec<LilyToken*>*
 } LilyPreparserTest;
 
@@ -185,6 +198,18 @@ typedef struct LilyPreparserFunBodyItemExprs
 {
     Vec *tokens; // Vec<LilyToken*>*
 } LilyPreparserFunBodyItemExprs;
+
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemExprs in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemExprs,
+               const LilyPreparserFunBodyItemExprs *self);
+#endif
 
 typedef struct LilyPreparserFunBodyItemStmtBlock
 {
