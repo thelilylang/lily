@@ -220,6 +220,17 @@ typedef struct LilyPreparserFunBodyItemStmtTry
     Vec *catch_block; // Vec<LilyPreparserFunBodyItem*>*?
 } LilyPreparserFunBodyItemStmtTry;
 
+typedef struct LilyPreparserFunBodyItemStmtVariable
+{
+    String *name;
+    Vec *data_type; // Vec<LilyToken*>*?
+    Vec *expr;      // Vec<LilyToken*>*
+    bool is_mut;
+    bool is_trace;
+    bool is_ref;
+    bool is_drop;
+} LilyPreparserFunBodyItemStmtVariable;
+
 typedef struct LilyPreparserFunBodyItemStmtWhile
 {
     Vec *expr;  // Vec<LilyToken*>*
@@ -234,9 +245,11 @@ enum LilyPreparserFunBodyItemKind
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE
 };
 
+// LilyPreparserFunBodyItem is used for body of functions and methods.
 typedef struct LilyPreparserFunBodyItem
 {
     enum LilyPreparserFunBodyItemKind kind;
@@ -248,6 +261,7 @@ typedef struct LilyPreparserFunBodyItem
         LilyPreparserFunBodyItemStmtIf stmt_if;
         LilyPreparserFunBodyItemStmtMatch stmt_match;
         LilyPreparserFunBodyItemStmtTry stmt_try;
+        LilyPreparserFunBodyItemStmtVariable stmt_var;
         LilyPreparserFunBodyItemStmtWhile stmt_while;
     };
 } LilyPreparserFunBodyItem;
