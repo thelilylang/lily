@@ -79,14 +79,14 @@ static inline CONSTRUCTOR(LilyPreparserTest,
 // Free LilyPreparserTest type.
 static DESTRUCTOR(LilyPreparserTest, const LilyPreparserTest *self);
 
-// Construct LilyPreparserFunBodyItemExpr type.
-static inline CONSTRUCTOR(LilyPreparserFunBodyItemExpr,
-                          LilyPreparserFunBodyItemExpr,
+// Construct LilyPreparserFunBodyItemExprs type.
+static inline CONSTRUCTOR(LilyPreparserFunBodyItemExprs,
+                          LilyPreparserFunBodyItemExprs,
                           Vec *tokens);
 
-// Free LilyPreparserFunBodyItemExpr type.
-static DESTRUCTOR(LilyPreparserFunBodyItemExpr,
-                  const LilyPreparserFunBodyItemExpr *self);
+// Free LilyPreparserFunBodyItemExprs type.
+static DESTRUCTOR(LilyPreparserFunBodyItemExprs,
+                  const LilyPreparserFunBodyItemExprs *self);
 
 // Construct LilyPreparserFunBodyItemStmtBlock type.
 static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtBlock,
@@ -168,11 +168,11 @@ static DESTRUCTOR(LilyPreparserFunBodyItemStmtWhile,
                   const LilyPreparserFunBodyItemStmtWhile *self);
 
 // Construct LilyPreparserFunBodyItem type
-// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPR).
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS).
 static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            LilyPreparserFunBodyItem,
                            expr,
-                           LilyPreparserFunBodyItemExpr expr);
+                           LilyPreparserFunBodyItemExprs expr);
 
 // Construct LilyPreparserFunBodyItem type
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK).
@@ -223,7 +223,7 @@ static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            stmt_while,
                            LilyPreparserFunBodyItemStmtWhile stmt_while);
 
-// Free LilyPreparserFunBodyItem type (LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPR).
+// Free LilyPreparserFunBodyItem type (LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS).
 static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                           expr,
                           LilyPreparserFunBodyItem *self);
@@ -598,39 +598,39 @@ preparse_module__LilyPreparser(LilyPreparser *self);
 static void
 preparse_test__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the `if` block must be closed.
+/// @brief Check if the `if` block could be closed.
 static inline bool
 must_close_if_block__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the `else` block must be closed.
+/// @brief Check if the `else` block could be closed.
 static inline bool
 must_close_else_block__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the `for` block must be closed.
+/// @brief Check if the `for` block could be closed.
 static inline bool
 must_close_for_block__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the `match` block must be closed.
+/// @brief Check if the `match` block could be closed.
 static inline bool
 must_close_match_block__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the `while` block must be closed.
+/// @brief Check if the `while` block could be closed.
 static inline bool
 must_close_while_block__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the `try` block must be closed.
+/// @brief Check if the `try` block could be closed.
 static inline bool
 must_close_try_block__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the `catch` block must be closed.
+/// @brief Check if the `catch` block could be closed.
 static inline bool
 must_close_catch_block__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the basic block must be closed.
+/// @brief Check if the basic block could be closed.
 static inline bool
 must_close_basic_block__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the basic brace block must be closed.
+/// @brief Check if the basic brace block could be closed.
 static inline bool
 must_close_basic_brace_block__LilyPreparser(LilyPreparser *self);
 
@@ -956,15 +956,15 @@ DESTRUCTOR(LilyPreparserTest, const LilyPreparserTest *self)
     FREE(Vec, self->body);
 }
 
-CONSTRUCTOR(LilyPreparserFunBodyItemExpr,
-            LilyPreparserFunBodyItemExpr,
+CONSTRUCTOR(LilyPreparserFunBodyItemExprs,
+            LilyPreparserFunBodyItemExprs,
             Vec *tokens)
 {
-    return (LilyPreparserFunBodyItemExpr){ .tokens = tokens };
+    return (LilyPreparserFunBodyItemExprs){ .tokens = tokens };
 }
 
-DESTRUCTOR(LilyPreparserFunBodyItemExpr,
-           const LilyPreparserFunBodyItemExpr *self)
+DESTRUCTOR(LilyPreparserFunBodyItemExprs,
+           const LilyPreparserFunBodyItemExprs *self)
 {
     FREE_BUFFER_ITEMS(self->tokens->buffer, self->tokens->len, LilyToken);
     FREE(Vec, self->tokens);
@@ -1173,12 +1173,12 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtWhile,
 VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                     LilyPreparserFunBodyItem,
                     expr,
-                    LilyPreparserFunBodyItemExpr expr)
+                    LilyPreparserFunBodyItemExprs expr)
 {
     LilyPreparserFunBodyItem *self =
       lily_malloc(sizeof(LilyPreparserFunBodyItem));
 
-    self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPR;
+    self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS;
     self->expr = expr;
 
     return self;
@@ -1286,7 +1286,7 @@ VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                    expr,
                    LilyPreparserFunBodyItem *self)
 {
-    FREE(LilyPreparserFunBodyItemExpr, &self->expr);
+    FREE(LilyPreparserFunBodyItemExprs, &self->expr);
     lily_free(self);
 }
 
@@ -1349,7 +1349,7 @@ VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 DESTRUCTOR(LilyPreparserFunBodyItem, LilyPreparserFunBodyItem *self)
 {
     switch (self->kind) {
-        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPR:
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS:
             FREE_VARIANT(LilyPreparserFunBodyItem, expr, self);
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:

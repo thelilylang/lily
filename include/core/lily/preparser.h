@@ -181,10 +181,10 @@ typedef struct LilyPreparserTest
     Vec *body; // Vec<LilyToken*>*
 } LilyPreparserTest;
 
-typedef struct LilyPreparserFunBodyItemExpr
+typedef struct LilyPreparserFunBodyItemExprs
 {
     Vec *tokens; // Vec<LilyToken*>*
-} LilyPreparserFunBodyItemExpr;
+} LilyPreparserFunBodyItemExprs;
 
 typedef struct LilyPreparserFunBodyItemStmtBlock
 {
@@ -239,7 +239,7 @@ typedef struct LilyPreparserFunBodyItemStmtWhile
 
 enum LilyPreparserFunBodyItemKind
 {
-    LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPR,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF,
@@ -255,7 +255,7 @@ typedef struct LilyPreparserFunBodyItem
     enum LilyPreparserFunBodyItemKind kind;
     union
     {
-        LilyPreparserFunBodyItemExpr expr;
+        LilyPreparserFunBodyItemExprs expr;
         LilyPreparserFunBodyItemStmtBlock stmt_block;
         LilyPreparserFunBodyItemStmtFor stmt_for;
         LilyPreparserFunBodyItemStmtIf stmt_if;
