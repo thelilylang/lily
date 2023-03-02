@@ -260,7 +260,7 @@ static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 
 // Free LilyPreparserFunBodyItem type
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE).
-static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItemStmtVariable,
+static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                           stmt_var,
                           LilyPreparserFunBodyItem *self);
 
@@ -626,6 +626,14 @@ preparse_basic_block__LilyPreparser(LilyPreparser *self, Vec *body);
 
 static void
 preparse_basic_brace_block__LilyPreparser(LilyPreparser *self, Vec *body);
+
+static void
+preparse_variable_block__LilyPreparser(LilyPreparser *self,
+                                       Vec *body,
+                                       bool is_mut,
+                                       bool is_trace,
+                                       bool is_ref,
+                                       bool is_drop);
 
 // Preparse body for function and method.
 /// @param must_close Param to add different to stop the preparser of the body.
@@ -1294,7 +1302,7 @@ VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyPreparserFunBodyItemStmtVariable,
+VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                    stmt_var,
                    LilyPreparserFunBodyItem *self)
 {
@@ -2825,6 +2833,16 @@ preparse_basic_brace_block__LilyPreparser(LilyPreparser *self, Vec *body)
 {
 }
 
+void
+preparse_variable_block__LilyPreparser(LilyPreparser *self,
+                                       Vec *body,
+                                       bool is_mut,
+                                       bool is_trace,
+                                       bool is_ref,
+                                       bool is_drop)
+{
+}
+
 Vec *
 preparse_body__LilyPreparser(LilyPreparser *self,
                              bool (*must_close)(LilyPreparser *))
@@ -2872,6 +2890,64 @@ preparse_body__LilyPreparser(LilyPreparser *self,
 
             case LILY_TOKEN_KIND_KEYWORD_WHILE:
                 preparse_while_block__LilyPreparser(self, body);
+                break;
+
+            case LILY_TOKEN_KIND_KEYWORD_REF: {
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+                if (peeked) {
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_KEYWORD_VAL:
+                            preparse_variable_block__LilyPreparser(
+                              self, body, false, false, true, false);
+                            break;
+                        case LILY_TOKEN_KIND_KEYWORD_MUT:
+                            preparse_variable_block__LilyPreparser(
+                              self, body, true, false, true, false);
+                            break;
+                        default:
+                            goto preparse_expr;
+                    }
+                } else {
+                    goto preparse_expr;
+                }
+
+                break;
+            }
+
+            case LILY_TOKEN_KIND_KEYWORD_MUT:
+                preparse_variable_block__LilyPreparser(
+                  self, body, true, false, false, false);
+                break;
+
+            case LILY_TOKEN_KIND_KEYWORD_TRACE: {
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+                if (peeked) {
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_KEYWORD_VAL:
+                            preparse_variable_block__LilyPreparser(
+                              self, body, false, true, false, false);
+                            break;
+
+                        case LILY_TOKEN_KIND_KEYWORD_MUT:
+                            preparse_variable_block__LilyPreparser(
+                              self, body, true, true, false, false);
+                            break;
+
+                        default:
+                            goto preparse_expr;
+                    }
+                } else {
+                    goto preparse_expr;
+                }
+
+                break;
+            }
+
+            case LILY_TOKEN_KIND_KEYWORD_VAL:
+                preparse_variable_block__LilyPreparser(
+                  self, body, false, false, false, false);
                 break;
 
             default:
