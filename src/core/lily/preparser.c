@@ -598,13 +598,41 @@ preparse_module__LilyPreparser(LilyPreparser *self);
 static void
 preparse_test__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the if block must be closed.
+/// @brief Check if the `if` block must be closed.
 static inline bool
 must_close_if_block__LilyPreparser(LilyPreparser *self);
 
-/// @brief Check if the if block must be closed.
+/// @brief Check if the `else` block must be closed.
 static inline bool
 must_close_else_block__LilyPreparser(LilyPreparser *self);
+
+/// @brief Check if the `for` block must be closed.
+static inline bool
+must_close_for_block__LilyPreparser(LilyPreparser *self);
+
+/// @brief Check if the `match` block must be closed.
+static inline bool
+must_close_match_block__LilyPreparser(LilyPreparser *self);
+
+/// @brief Check if the `while` block must be closed.
+static inline bool
+must_close_while_block__LilyPreparser(LilyPreparser *self);
+
+/// @brief Check if the `try` block must be closed.
+static inline bool
+must_close_try_block__LilyPreparser(LilyPreparser *self);
+
+/// @brief Check if the `catch` block must be closed.
+static inline bool
+must_close_catch_block__LilyPreparser(LilyPreparser *self);
+
+/// @brief Check if the basic block must be closed.
+static inline bool
+must_close_basic_block__LilyPreparser(LilyPreparser *self);
+
+/// @brief Check if the basic brace block must be closed.
+static inline bool
+must_close_basic_brace_block__LilyPreparser(LilyPreparser *self);
 
 static void
 preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body);
@@ -2687,6 +2715,55 @@ must_close_else_block__LilyPreparser(LilyPreparser *self)
            self->current->kind == LILY_TOKEN_KIND_EOF;
 }
 
+bool
+must_close_for_block__LilyPreparser(LilyPreparser *self)
+{
+    return self->current->kind == LILY_TOKEN_KIND_KEYWORD_END ||
+           self->current->kind == LILY_TOKEN_KIND_EOF;
+}
+
+bool
+must_close_match_block__LilyPreparser(LilyPreparser *self)
+{
+    return self->current->kind == LILY_TOKEN_KIND_KEYWORD_END ||
+           self->current->kind == LILY_TOKEN_KIND_EOF;
+}
+
+bool
+must_close_while_block__LilyPreparser(LilyPreparser *self)
+{
+    return self->current->kind == LILY_TOKEN_KIND_KEYWORD_END ||
+           self->current->kind == LILY_TOKEN_KIND_EOF;
+}
+
+bool
+must_close_try_block__LilyPreparser(LilyPreparser *self)
+{
+    return self->current->kind == LILY_TOKEN_KIND_KEYWORD_CATCH ||
+           self->current->kind == LILY_TOKEN_KIND_KEYWORD_END ||
+           self->current->kind == LILY_TOKEN_KIND_EOF;
+}
+
+bool
+must_close_catch_block__LilyPreparser(LilyPreparser *self)
+{
+    return self->current->kind == LILY_TOKEN_KIND_KEYWORD_END ||
+           self->current->kind == LILY_TOKEN_KIND_EOF;
+}
+
+bool
+must_close_basic_block__LilyPreparser(LilyPreparser *self)
+{
+    return self->current->kind == LILY_TOKEN_KIND_KEYWORD_END ||
+           self->current->kind == LILY_TOKEN_KIND_EOF;
+}
+
+bool
+must_close_basic_brace_block__LilyPreparser(LilyPreparser *self)
+{
+    return self->current->kind == LILY_TOKEN_KIND_R_HOOK;
+}
+
 void
 preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
 {
@@ -2855,11 +2932,14 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
                 if (peeked) {
-                    if (peeked->kind == LILY_TOKEN_KIND_L_BRACE) {
-                        jump__LilyPreparser(self, 2);
-                        preparse_basic_brace_block__LilyPreparser(self, body);
-                    } else {
-                        goto preparse_expr;
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_L_BRACE:
+                            jump__LilyPreparser(self, 2);
+                            preparse_basic_brace_block__LilyPreparser(self,
+                                                                      body);
+
+                        default:
+                            goto preparse_expr;
                     }
                 } else {
                     goto preparse_expr;
@@ -2898,13 +2978,21 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                 if (peeked) {
                     switch (peeked->kind) {
                         case LILY_TOKEN_KIND_KEYWORD_VAL:
+                            jump__LilyPreparser(self, 2);
+
                             preparse_variable_block__LilyPreparser(
                               self, body, false, false, true, false);
+
                             break;
+
                         case LILY_TOKEN_KIND_KEYWORD_MUT:
+                            jump__LilyPreparser(self, 2);
+
                             preparse_variable_block__LilyPreparser(
                               self, body, true, false, true, false);
+
                             break;
+
                         default:
                             goto preparse_expr;
                     }
@@ -2916,6 +3004,8 @@ preparse_body__LilyPreparser(LilyPreparser *self,
             }
 
             case LILY_TOKEN_KIND_KEYWORD_MUT:
+                next_token__LilyPreparser(self);
+
                 preparse_variable_block__LilyPreparser(
                   self, body, true, false, false, false);
                 break;
@@ -2926,13 +3016,19 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                 if (peeked) {
                     switch (peeked->kind) {
                         case LILY_TOKEN_KIND_KEYWORD_VAL:
+                            jump__LilyPreparser(self, 2);
+
                             preparse_variable_block__LilyPreparser(
                               self, body, false, true, false, false);
+
                             break;
 
                         case LILY_TOKEN_KIND_KEYWORD_MUT:
+                            jump__LilyPreparser(self, 2);
+
                             preparse_variable_block__LilyPreparser(
                               self, body, true, true, false, false);
+
                             break;
 
                         default:
@@ -2946,8 +3042,11 @@ preparse_body__LilyPreparser(LilyPreparser *self,
             }
 
             case LILY_TOKEN_KIND_KEYWORD_VAL:
+                next_token__LilyPreparser(self);
+
                 preparse_variable_block__LilyPreparser(
                   self, body, false, false, false, false);
+
                 break;
 
             default:
