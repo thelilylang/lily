@@ -3272,6 +3272,27 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
         eat_w_free_and_next_token__LilyPreparser(self);
     }
 
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            break;
+        case LILY_TOKEN_KIND_EOF:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                NULL,
+                NULL,
+                from__String("expected `;` to close the variable declaration")),
+              &self->count_error);
+
+            break;
+        default:
+            UNREACHABLE("this way is impossible");
+    }
+
     LilyPreparserFunBodyItem *item =
       NEW_VARIANT(LilyPreparserFunBodyItem,
                   stmt_var,
