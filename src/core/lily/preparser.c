@@ -2903,11 +2903,29 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
 void
 preparse_basic_block__LilyPreparser(LilyPreparser *self, Vec *body)
 {
+    next_token__LilyPreparser(self);
+
+    Vec *basic_block_body = preparse_body__LilyPreparser(
+      self, &must_close_basic_block__LilyPreparser);
+    LilyPreparserFunBodyItem *item =
+      NEW_VARIANT(LilyPreparserFunBodyItem,
+                  stmt_block,
+                  NEW(LilyPreparserFunBodyItemStmtBlock, basic_block_body));
+
+    push__Vec(body, item);
 }
 
 void
 preparse_basic_brace_block__LilyPreparser(LilyPreparser *self, Vec *body)
 {
+    Vec *brace_block_body = preparse_body__LilyPreparser(
+      self, &must_close_basic_brace_block__LilyPreparser);
+    LilyPreparserFunBodyItem *item =
+      NEW_VARIANT(LilyPreparserFunBodyItem,
+                  stmt_block,
+                  NEW(LilyPreparserFunBodyItemStmtBlock, brace_block_body));
+
+    push__Vec(body, item);
 }
 
 void
