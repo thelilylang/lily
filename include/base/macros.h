@@ -50,8 +50,8 @@
 #define PTR_SIZE sizeof(void *)
 
 #define FREE_BUFFER_ITEMS(buffer, len, type) \
-    for (Usize i = 0; i < len; i++) {        \
-        __free__##type(buffer[i]);           \
+    for (Usize x = 0; x < len; x++) {        \
+        __free__##type(buffer[x]);           \
     }
 
 #define CAST(type, expr) ((type)(expr))
