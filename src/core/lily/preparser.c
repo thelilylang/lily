@@ -634,6 +634,10 @@ must_close_basic_block__LilyPreparser(LilyPreparser *self);
 static inline bool
 must_close_basic_brace_block__LilyPreparser(LilyPreparser *self);
 
+/// @brief Check if the `fun` block could be closed.
+static inline bool
+must_close_fun_block__LilyPreparser(LilyPreparser *self);
+
 static void
 preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body);
 
@@ -2821,6 +2825,38 @@ must_close_basic_brace_block__LilyPreparser(LilyPreparser *self)
     return self->current->kind == LILY_TOKEN_KIND_R_HOOK;
 }
 
+bool
+must_close_fun_block__LilyPreparser(LilyPreparser *self)
+{
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_ALIAS:
+        case LILY_TOKEN_KIND_KEYWORD_CLASS:
+        case LILY_TOKEN_KIND_KEYWORD_ENUM:
+        case LILY_TOKEN_KIND_KEYWORD_END:
+        case LILY_TOKEN_KIND_KEYWORD_ERROR:
+        case LILY_TOKEN_KIND_KEYWORD_IMPL:
+        case LILY_TOKEN_KIND_KEYWORD_IMPORT:
+        case LILY_TOKEN_KIND_KEYWORD_INCLUDE:
+        case LILY_TOKEN_KIND_KEYWORD_INHERIT:
+        case LILY_TOKEN_KIND_KEYWORD_MACRO:
+        case LILY_TOKEN_KIND_KEYWORD_MODULE:
+        case LILY_TOKEN_KIND_KEYWORD_object:
+        case LILY_TOKEN_KIND_KEYWORD_OBJECT:
+        case LILY_TOKEN_KIND_KEYWORD_PACKAGE:
+        case LILY_TOKEN_KIND_KEYWORD_PUB:
+        case LILY_TOKEN_KIND_KEYWORD_RECORD:
+        case LILY_TOKEN_KIND_KEYWORD_REQ:
+        case LILY_TOKEN_KIND_KEYWORD_TEST:
+        case LILY_TOKEN_KIND_KEYWORD_TRAIT:
+        case LILY_TOKEN_KIND_KEYWORD_TYPE:
+        case LILY_TOKEN_KIND_KEYWORD_WHEN:
+        case LILY_TOKEN_KIND_EOF:
+            return true;
+        default:
+            return false;
+    }
+}
+
 void
 preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
 {
@@ -3314,7 +3350,7 @@ preparse_body__LilyPreparser(LilyPreparser *self,
 {
     Vec *body = NEW(Vec);
 
-    while (must_close(self)) {
+    while (!must_close(self)) {
         switch (self->current->kind) {
             /*
                 @{
@@ -3503,6 +3539,46 @@ preparse_body__LilyPreparser(LilyPreparser *self,
 exit_preparse_body_loop : {
 };
 
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_END:
+            break;
+
+        case LILY_TOKEN_KIND_EOF:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                init__Vec(
+                  1, from__String("you may have forgotten the keyword `end`")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            break;
+
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError,
+                    LILY_ERROR_KIND_UNEXPECTED_TOKEN_IN_FUNCTION_BODY),
+                init__Vec(
+                  1,
+                  from__String("you probably misclosed function body - use "
+                               "`end` keyword to close the function body")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            break;
+    }
+
     return body;
 }
 
@@ -3517,7 +3593,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
     Vec *params = NEW(Vec);           // Vec<Vec<LilyToken*>*>*
     Vec *when = NEW(Vec);             // Vec<Vec<LilyToken*>*>*
     Vec *req = NEW(Vec);              // Vec<Vec<LilyToken*>*>*
-    Vec *body = NEW(Vec);             // Vec<LilyToken*>*
+    Vec *body = NULL;                 // Vec<LilyToken*>*
     Vec *return_data_type = NEW(Vec); // Vec<LilyToken*>*
     bool req_is_comptime = false;
     bool when_is_comptime = false;
@@ -3826,7 +3902,12 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_EQ:
             next_token__LilyPreparser(self);
+
+            body = preparse_body__LilyPreparser(
+              self, &must_close_fun_block__LilyPreparser);
+
             break;
+
         default:
             UNREACHABLE("this way is not possible");
     }
@@ -3834,6 +3915,8 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
     end__Location(&location,
                   self->current->location.end_line,
                   self->current->location.end_column);
+
+    next_token__LilyPreparser(self); // skip `end` keyword
 
     return NEW_VARIANT(LilyPreparserDecl,
                        fun,
