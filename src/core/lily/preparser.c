@@ -663,8 +663,9 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
                                        bool is_ref,
                                        bool is_drop);
 
-// Preparse body for function and method.
-/// @param must_close Param to add different to stop the preparser of the body.
+/// @brief Preparse body for function and method.
+/// @param must_close Param to add different way to stop the preparser of the
+/// body.
 /// @return Vec<LilyPreparserFunBodyItem*>*
 static Vec *
 preparse_body__LilyPreparser(LilyPreparser *self,
@@ -2772,6 +2773,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
 
     next_token__LilyPreparser(self);
 
+    // 1. Preparse `if` expression
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
         push__Vec(if_expr, self->current);
@@ -2798,15 +2800,202 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
         return;
     }
 
+    // 2. Preparse `if` block
     if_block =
       preparse_body__LilyPreparser(self, &must_close_if_block__LilyPreparser);
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_ELIF: {
+            // 3(A). Preparse `elif` statement. Similar process than `if`
+            // statement preparsing.
+
+            Vec *elif_exprs = NEW(Vec);
+            Vec *elif_blocks = NEW(Vec);
+
+            while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
+                   self->current->kind != LILY_TOKEN_KIND_KEYWORD_ELSE &&
+                   self->current->kind != LILY_TOKEN_KIND_EOF) {
+                Vec *elif_expr = NEW(Vec);
+                Vec *elif_block = NULL;
+
+                next_token__LilyPreparser(self); // skip `elif` keyword
+
+                // 3(1A). Preparse `elif` expression.
+                while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
+                       self->current->kind != LILY_TOKEN_KIND_EOF) {
+                    push__Vec(elif_expr, self->current);
+                    eat_w_free_and_next_token__LilyPreparser(self);
+                }
+
+                if (self->current->kind == LILY_TOKEN_KIND_EOF) {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->scanner->source.file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                        NULL,
+                        NULL,
+                        from__String("expected `do` keyword after `elif` "
+                                     "statement expression")),
+                      &self->count_error);
+
+                    for (Usize i = 0; i < elif_exprs->len; i++) {
+                        Vec *item = get__Vec(elif_exprs, i);
+
+                        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+                        FREE(Vec, item);
+                    }
+
+                    FREE(Vec, elif_exprs);
+
+                    for (Usize i = 0; i < elif_blocks->len; i++) {
+                        Vec *item = get__Vec(elif_blocks, i);
+
+                        FREE_BUFFER_ITEMS(
+                          item->buffer, item->len, LilyPreparserFunBodyItem);
+                        FREE(Vec, item);
+                    }
+
+                    FREE(Vec, elif_blocks);
+
+                    FREE_BUFFER_ITEMS(
+                      elif_expr->buffer, elif_expr->len, LilyToken);
+                    FREE(Vec, elif_expr);
+
+                    return;
+                }
+
+                next_token__LilyPreparser(self);
+
+                // 3(2A). Preparse `elif` block.
+                elif_block = preparse_body__LilyPreparser(
+                  self, &must_close_if_block__LilyPreparser);
+
+                push__Vec(elif_exprs, elif_expr);
+                push__Vec(elif_blocks, elif_block);
+            }
+
+            // 3(3A). Preparse `else` statement if it's possible.
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_KEYWORD_ELSE: {
+                    Vec *else_block = NULL;
+
+                    next_token__LilyPreparser(self);
+
+                    else_block = preparse_body__LilyPreparser(
+                      self, &must_close_else_block__LilyPreparser);
+
+                    switch (self->current->kind) {
+                        case LILY_TOKEN_KIND_KEYWORD_END: {
+                            LilyPreparserFunBodyItem *item =
+                              NEW_VARIANT(LilyPreparserFunBodyItem,
+                                          stmt_if,
+                                          NEW(LilyPreparserFunBodyItemStmtIf,
+                                              if_expr,
+                                              if_block,
+                                              elif_exprs,
+                                              elif_blocks,
+                                              else_block));
+
+                            push__Vec(body, item);
+                        }
+
+                        case LILY_TOKEN_KIND_EOF: {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->scanner->source.file,
+                                &self->current->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                                NULL,
+                                NULL,
+                                from__String(
+                                  "expected `end` to close `elif` block")),
+                              &self->count_error);
+
+                            for (Usize i = 0; i < elif_exprs->len; i++) {
+                                Vec *item = get__Vec(elif_exprs, i);
+
+                                FREE_BUFFER_ITEMS(
+                                  item->buffer, item->len, LilyToken);
+                                FREE(Vec, item);
+                            }
+
+                            FREE(Vec, elif_exprs);
+
+                            for (Usize i = 0; i < elif_blocks->len; i++) {
+                                Vec *item = get__Vec(elif_blocks, i);
+
+                                FREE_BUFFER_ITEMS(item->buffer,
+                                                  item->len,
+                                                  LilyPreparserFunBodyItem);
+                                FREE(Vec, item);
+                            }
+
+                            FREE(Vec, elif_blocks);
+
+                            FREE_BUFFER_ITEMS(else_block->buffer,
+                                              else_block->len,
+                                              LilyPreparserFunBodyItem);
+                            FREE(Vec, else_block);
+
+                            return;
+                        }
+
+                        default:
+                            UNREACHABLE("this way is impossible");
+                    }
+
+                    break;
+                }
+
+                case LILY_TOKEN_KIND_KEYWORD_END: {
+                    LilyPreparserFunBodyItem *item =
+                      NEW_VARIANT(LilyPreparserFunBodyItem,
+                                  stmt_if,
+                                  NEW(LilyPreparserFunBodyItemStmtIf,
+                                      if_expr,
+                                      if_block,
+                                      elif_exprs,
+                                      elif_blocks,
+                                      NULL));
+
+                    push__Vec(body, item);
+
+                    break;
+                }
+
+                case LILY_TOKEN_KIND_EOF:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->scanner->source.file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                        NULL,
+                        NULL,
+                        from__String(
+                          "expected `end` keyword to close `elif` block")),
+                      &self->count_error);
+
+                    return;
+
+                default:
+                    UNREACHABLE("this way is impossible");
+            }
+
             break;
         }
+
         case LILY_TOKEN_KIND_KEYWORD_ELSE: {
-            next_token__LilyPreparser(self);
+            // 3(B). Preparse `else` statement.
+
+            next_token__LilyPreparser(self); // skip `else` keyword
 
             Vec *else_block = preparse_body__LilyPreparser(
               self, &must_close_else_block__LilyPreparser);
@@ -2903,7 +3092,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
 void
 preparse_basic_block__LilyPreparser(LilyPreparser *self, Vec *body)
 {
-    next_token__LilyPreparser(self);
+    next_token__LilyPreparser(self); // skip `begin` keyword
 
     Vec *basic_block_body = preparse_body__LilyPreparser(
       self, &must_close_basic_block__LilyPreparser);
@@ -2946,6 +3135,11 @@ preparse_body__LilyPreparser(LilyPreparser *self,
 
     while (must_close(self)) {
         switch (self->current->kind) {
+            /*
+                @{
+                    <block>
+                }
+            */
             case LILY_TOKEN_KIND_AT: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
@@ -2966,30 +3160,63 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                 break;
             }
 
+            /*
+                begin
+                    <block>
+                end
+            */
             case LILY_TOKEN_KIND_KEYWORD_BEGIN:
                 preparse_basic_block__LilyPreparser(self, body);
                 break;
 
+            /*
+                for <expr> in <expr> do
+                    <block>
+                end
+            */
             case LILY_TOKEN_KIND_KEYWORD_FOR:
                 preparse_for_block__LilyPreparser(self, body);
                 break;
 
+            /*
+                if <expr> do
+                    <block>
+                end
+            */
             case LILY_TOKEN_KIND_KEYWORD_IF:
                 preparse_if_block__LilyPreparser(self, body);
                 break;
 
+            /*
+                match <expr> do
+                    <pattern> [? cond] => <stmt | expr,>
+                end
+            */
             case LILY_TOKEN_KIND_KEYWORD_MATCH:
                 preparse_match_block__LilyPreparser(self, body);
                 break;
 
+            /*
+                try <expr> do
+                [catch <expr> do <block>]
+                end 
+            */
             case LILY_TOKEN_KIND_KEYWORD_TRY:
                 preparse_try_block__LilyPreparser(self, body);
                 break;
 
+            /*
+                while <expr> do
+                end
+            */
             case LILY_TOKEN_KIND_KEYWORD_WHILE:
                 preparse_while_block__LilyPreparser(self, body);
                 break;
 
+            /*
+                ref val <name> [data_type] := <expr>;
+                ref mut <name> [data_type] := <expr>;
+            */
             case LILY_TOKEN_KIND_KEYWORD_REF: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
@@ -3021,6 +3248,9 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                 break;
             }
 
+            /*
+                mut <name> [data_type] := <expr>;
+            */
             case LILY_TOKEN_KIND_KEYWORD_MUT:
                 next_token__LilyPreparser(self);
 
@@ -3028,6 +3258,10 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                   self, body, true, false, false, false);
                 break;
 
+            /*
+                trace val <name> [data_type] := <expr>;
+                trace mut <name> [data_type] := <expr>;
+            */
             case LILY_TOKEN_KIND_KEYWORD_TRACE: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
@@ -3059,6 +3293,9 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                 break;
             }
 
+            /*
+                val <name> [data_type] := <expr>;
+            */
             case LILY_TOKEN_KIND_KEYWORD_VAL:
                 next_token__LilyPreparser(self);
 
