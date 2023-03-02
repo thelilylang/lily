@@ -195,6 +195,7 @@ set(CORE_SRC
 	src/core/lily/preparser.c
 	src/core/lily/scanner.c
 	src/core/lily/token.c
+	src/core/lily/visibility.c
 	src/core/lily/warning.c
 	src/core/shared/cursor.c
 	src/core/shared/diagnostic.c

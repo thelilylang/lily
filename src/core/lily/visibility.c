@@ -22,26 +22,24 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_VISIBILITY_H
-#define LILY_CORE_LILY_VISIBILITY_H
-
-#include <base/macros.h>
-
-enum LilyVisibility
-{
-    LILY_VISIBILITY_PUBLIC,
-    LILY_VISIBILITY_PRIVATE,
-    LILY_VISIBILITY_STATIC
-};
-
-/**
- *
- * @brief Convert LilyVisibility in string.
- * @note This function is only used to debug.
- */
 #ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string, LilyVisibility, enum LilyVisibility self);
-#endif
+#include <core/lily/visibility.h>
 
-#endif // LILY_CORE_LILY_VISIBILITY_H
+#include <stdio.h>
+#include <stdlib.h>
+
+char *
+IMPL_FOR_DEBUG(to_string, LilyVisibility, enum LilyVisibility self)
+{
+    switch (self) {
+        case LILY_VISIBILITY_PUBLIC:
+            return "LILY_VISIBILITY_PUBLIC";
+        case LILY_VISIBILITY_PRIVATE:
+            return "LILY_VISIBILITY_PRIVATE";
+        case LILY_VISIBILITY_STATIC:
+            return "LILY_VISIBILITY_STATIC";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
