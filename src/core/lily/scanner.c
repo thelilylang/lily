@@ -1934,15 +1934,18 @@ get_token__LilyScanner(LilyScanner *self)
 
         // /= <COMMENT_DEBUG> <COMMENT_BLOCK> <COMMENT_DOC> <COMMENT_LINE> /
         case '/':
-            #ifdef ENV_DEBUG
-            if (c1 == (char*)'-' && c2 == (char*)'-') {
+#ifdef ENV_DEBUG
+            if (c1 == (char *)'-' && c2 == (char *)'-') {
                 jump__LilyScanner(self, 3);
 
                 String *debug = scan_comment_doc__LilyScanner(self);
 
-                return NEW_VARIANT(LilyToken, comment_debug, clone__Location(&self->location), debug);
+                return NEW_VARIANT(LilyToken,
+                                   comment_debug,
+                                   clone__Location(&self->location),
+                                   debug);
             }
-            #endif
+#endif
 
             if (c1 == (char *)'/' && c2 == (char *)'/') {
                 jump__LilyScanner(self, 3);
