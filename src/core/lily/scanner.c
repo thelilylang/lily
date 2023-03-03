@@ -768,6 +768,9 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
 {
     switch (token->kind) {
         case LILY_TOKEN_KIND_COMMENT_BLOCK:
+#ifdef ENV_DEBUG
+        case LILY_TOKEN_KIND_COMMENT_DEBUG:
+#endif
         case LILY_TOKEN_KIND_COMMENT_DOC:
         case LILY_TOKEN_KIND_COMMENT_LINE:
             return;
@@ -1929,9 +1932,28 @@ get_token__LilyScanner(LilyScanner *self)
                        LILY_TOKEN_KIND_SEMICOLON,
                        clone__Location(&self->location));
 
-        // /= <COMMENT_BLOCK> <COMMENT_DOC> <COMMENT_LINE> /
+        // /= <COMMENT_DEBUG> <COMMENT_BLOCK> <COMMENT_DOC> <COMMENT_LINE> /
         case '/':
-            if (c1 == (char *)'=') {
+            #ifdef ENV_DEBUG
+            if (c1 == (char*)'-' && c2 == (char*)'-') {
+                jump__LilyScanner(self, 3);
+
+                String *debug = scan_comment_doc__LilyScanner(self);
+
+                return NEW_VARIANT(LilyToken, comment_debug, clone__Location(&self->location), debug);
+            }
+            #endif
+
+            if (c1 == (char *)'/' && c2 == (char *)'/') {
+                jump__LilyScanner(self, 3);
+
+                String *doc = scan_comment_doc__LilyScanner(self);
+
+                return NEW_VARIANT(LilyToken,
+                                   comment_doc,
+                                   clone__Location(&self->location),
+                                   doc);
+            } else if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_SLASH_EQ,
                            clone__Location(&self->location));
@@ -1942,15 +1964,6 @@ get_token__LilyScanner(LilyScanner *self)
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_COMMENT_BLOCK,
                            clone__Location(&self->location));
-            } else if (c1 == (char *)'/' && c2 == (char *)'/') {
-                jump__LilyScanner(self, 3);
-
-                String *doc = scan_comment_doc__LilyScanner(self);
-
-                return NEW_VARIANT(LilyToken,
-                                   comment_doc,
-                                   clone__Location(&self->location),
-                                   doc);
             } else if (c1 == (char *)'/') {
                 skip_comment_line__LilyScanner(self);
 
