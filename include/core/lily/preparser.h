@@ -233,9 +233,10 @@ typedef struct LilyPreparserFunBodyItemStmtIf
 
 typedef struct LilyPreparserFunBodyItemStmtMatch
 {
-    Vec *expr;     // Vec<LilyToken*>*
-    Vec *patterns; // Vec<Vec<LilyToken*>*
-    Vec *blocks;   // Vec<Vec<LilyPreparserFunBodyItem*>*>*
+    Vec *expr;          // Vec<LilyToken*>*
+    Vec *patterns;      // Vec<Vec<LilyToken*>*>*
+    Vec *pattern_conds; // Vec<Vec<LilyToken*>*?>*
+    Vec *blocks;        // Vec<LilyPreparserFunBodyItem*>*
 } LilyPreparserFunBodyItemStmtMatch;
 
 typedef struct LilyPreparserFunBodyItemStmtTry
