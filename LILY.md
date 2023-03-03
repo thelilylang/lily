@@ -162,10 +162,10 @@ end
 
 pub fun@Letter to_string(self) =
     match self do
-        A => "A",
-        B => "B",
-        C => "C",
-        D => "D",
+        A => "A";
+        B => "B";
+        C => "C";
+        D => "D";
     end
 end
 ```
@@ -498,8 +498,8 @@ fun main =
     val y := 10;
 
     match x do 
-        true ? y > 10 => true,
-        false ? y < 10 => true,
+        true ? y > 10 => true;
+        false ? y < 10 => true;
         _ => false
     end
 end
