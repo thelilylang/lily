@@ -48,6 +48,9 @@ enum LilyTokenKind
     LILY_TOKEN_KIND_COLON,
     LILY_TOKEN_KIND_COMMA,
     LILY_TOKEN_KIND_COMMENT_BLOCK,
+#ifdef ENV_DEBUG
+    LILY_TOKEN_KIND_COMMENT_DEBUG,
+#endif
     LILY_TOKEN_KIND_COMMENT_DOC,
     LILY_TOKEN_KIND_COMMENT_LINE,
     LILY_TOKEN_KIND_DOLLAR,
@@ -197,6 +200,9 @@ typedef struct LilyToken
     Location location;
     union
     {
+#ifdef ENV_DEBUG
+        String *comment_debug;
+#endif
         String *comment_doc;
         String *identifier_dollar;
         String *identifier_macro;
@@ -232,6 +238,18 @@ typedef struct LilyToken
  * @brief Construct LilyToken type.
  */
 CONSTRUCTOR(LilyToken *, LilyToken, enum LilyTokenKind kind, Location location);
+
+/**
+ *
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_COMMENT_DEBUG).
+ */
+#ifdef ENV_DEBUG
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    comment_debug,
+                    Location location,
+                    String *comment_debug);
+#endif
 
 /**
  *

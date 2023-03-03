@@ -83,6 +83,23 @@ CONSTRUCTOR(LilyToken *, LilyToken, enum LilyTokenKind kind, Location location)
     return self;
 }
 
+#ifdef ENV_DEBUG
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    comment_debug,
+                    Location location,
+                    String *comment_debug)
+{
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
+
+    self->kind = LILY_TOKEN_KIND_COMMENT_DEBUG;
+    self->location = location;
+    self->comment_debug = comment_debug;
+
+    return self;
+}
+#endif
+
 VARIANT_CONSTRUCTOR(LilyToken *,
                     LilyToken,
                     comment_doc,
@@ -520,6 +537,10 @@ to_string__LilyToken(LilyToken *self)
             return from__String(",");
         case LILY_TOKEN_KIND_COMMENT_BLOCK:
             return from__String("COMMENT(BLOCK)");
+#ifdef ENV_DEBUG
+        case LILY_TOKEN_KIND_COMMENT_DEBUG:
+            return format__String("COMMENT(DEBUG({S}))", self->comment_debug);
+#endif
         case LILY_TOKEN_KIND_COMMENT_DOC:
             return format__String("COMMENT(DOC({S}))", self->comment_doc);
         case LILY_TOKEN_KIND_COMMENT_LINE:
@@ -856,6 +877,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_COMMA";
         case LILY_TOKEN_KIND_COMMENT_BLOCK:
             return "LILY_TOKEN_KIND_COMMENT_BLOCK";
+        case LILY_TOKEN_KIND_COMMENT_DEBUG:
+            return "LILY_TOKEN_KIND_COMMENT_DEBUG";
         case LILY_TOKEN_KIND_COMMENT_DOC:
             return "LILY_TOKEN_KIND_COMMENT_DOC";
         case LILY_TOKEN_KIND_COMMENT_LINE:
@@ -1147,162 +1170,195 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
 {
     switch (self->kind) {
+        case LILY_TOKEN_KIND_COMMENT_DEBUG:
+            return format(
+              "LilyToken{{ kind = {s}, location = {sa}, comment_debug = {S} }",
+              CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+              CALL_DEBUG_IMPL(to_string, Location, &self->location),
+              self->comment_debug);
+
         case LILY_TOKEN_KIND_COMMENT_DOC:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, comment_doc = {S} }",
               CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->comment_doc);
+
         case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "identifier_dollar = {S} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->identifier_dollar);
+
         case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "identifier_macro = {S} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->identifier_macro);
+
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "identifier_normal = {S} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->identifier_normal);
+
         case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "identifier_operator = {S} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->identifier_operator);
+
         case LILY_TOKEN_KIND_LITERAL_BIT_CHAR:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_bit_char = b'{s}' }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_bit_char);
+
         case LILY_TOKEN_KIND_LITERAL_BIT_STRING:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_bit_string = b'{s}' }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_bit_string);
+
         case LILY_TOKEN_KIND_LITERAL_CHAR:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_float = '{c}' }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_char);
+
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, literal_float = {S} }",
               CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->literal_float);
+
         case LILY_TOKEN_KIND_LITERAL_INT_2:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, literal_int_2 = {S} }",
               CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->literal_int_2);
+
         case LILY_TOKEN_KIND_LITERAL_INT_8:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, literal_int_8 = {S} }",
               CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->literal_int_8);
+
         case LILY_TOKEN_KIND_LITERAL_INT_10:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, literal_int_10 = {S} }",
               CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->literal_int_10);
+
         case LILY_TOKEN_KIND_LITERAL_INT_16:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, literal_int_16 = {S} }",
               CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->literal_int_16);
+
         case LILY_TOKEN_KIND_LITERAL_STRING:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, literal_string = {S} }",
               CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->literal_string);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_float32 = {f} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_float32);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_float64 = {f} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_float64);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_int16 = {d} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_int16);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_int32 = {d} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_int32);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_int64 = {d} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_int64);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_int8 = {d} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_int8);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_isize = {d} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_isize);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_uint16 = {d} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_uint16);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_uint32 = {d} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_uint32);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_uint64 = {d} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_uint64);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_uint8 = {d} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_uint8);
+
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_suffix_usize = {d} }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_usize);
+
         case LILY_TOKEN_KIND_MACRO_EXPAND: {
             String *s = from__String("{ ");
 
@@ -1324,6 +1380,7 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               s);
         }
+
         default:
             return format(
               "LilyToken{{ kind = {s}, location = {sa} }",
