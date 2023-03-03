@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <base/macros.h>
+
 #ifdef ENV_DEBUG
 #include <core/lily/visibility.h>
 
