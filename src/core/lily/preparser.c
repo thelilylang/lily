@@ -4403,7 +4403,7 @@ run__LilyPreparser(LilyPreparser *self)
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
                 if (peeked) {
-                    if (peeked->kind != LILY_TOKEN_KIND_BANG) {
+                    if (peeked->kind == LILY_TOKEN_KIND_BANG) {
                     } else {
                         goto unexpected_token;
                     }
@@ -4501,9 +4501,10 @@ run__LilyPreparser(LilyPreparser *self)
                 FREE(String, current_s);
 
                 eat_and_next_token__LilyPreparser(self);
-            }
+                // next_token__LilyPreparser(self);
 
-            break;
+                break;
+            }
             }
         }
     }
