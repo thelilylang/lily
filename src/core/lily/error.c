@@ -107,6 +107,8 @@ to_msg__LilyError(const LilyError *self)
             return "expected token";
         case LILY_ERROR_KIND_UNEXPECTED_TOKEN_IN_FUNCTION_BODY:
             return "unexpected token in function body";
+        case LILY_ERROR_KIND_BAD_KIND_OF_TYPE:
+            return "bad kind of type";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -188,6 +190,8 @@ to_code__LilyError(const LilyError *self)
             return "0035";
         case LILY_ERROR_KIND_UNEXPECTED_TOKEN_IN_FUNCTION_BODY:
             return "0036";
+        case LILY_ERROR_KIND_BAD_KIND_OF_TYPE:
+            return "0037";
         default:
             UNREACHABLE("unknown variant");
     }
