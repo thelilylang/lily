@@ -4853,7 +4853,53 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
             default:
                 UNREACHABLE("this way is impossible");
         }
+
+        push__Vec(
+          fields,
+          NEW(LilyPreparserRecordField, name, data_type, optional_expr));
     }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_END:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+
+            next_token__LilyPreparser(self);
+
+            break;
+        case LILY_TOKEN_KIND_EOF:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                init__Vec(
+                  1, from__String("expected `end` keyword to close record")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            FREE(String, name);
+
+            FREE_BUFFER_ITEMS(
+              fields->buffer, fields->len, LilyPreparserRecordField);
+            FREE(Vec, fields);
+
+            return NULL;
+        default:
+            UNREACHABLE("this way is impossible");
+    }
+
+    return NEW_VARIANT(
+      LilyPreparserDecl,
+      type,
+      location,
+      NEW_VARIANT(LilyPreparserType,
+                  record,
+                  NEW(LilyPreparserRecord, name, fields, visibility_decl)));
 }
 
 LilyPreparserDecl *
