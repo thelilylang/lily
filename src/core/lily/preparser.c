@@ -4780,6 +4780,79 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
             push__Vec(data_type, self->current);
             eat_w_free_and_next_token__LilyPreparser(self);
         }
+
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_SEMICOLON:
+                next_token__LilyPreparser(self);
+
+                break;
+            case LILY_TOKEN_KIND_COLON_EQ: {
+                next_token__LilyPreparser(self);
+
+                optional_expr = NEW(Vec);
+
+                while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+                       self->current->kind != LILY_TOKEN_KIND_EOF) {
+                    push__Vec(optional_expr, self->current);
+                    eat_w_free_and_next_token__LilyPreparser(self);
+                }
+
+                switch (self->current->kind) {
+                    case LILY_TOKEN_KIND_SEMICOLON:
+                        next_token__LilyPreparser(self);
+
+                        break;
+                    case LILY_TOKEN_KIND_EOF:
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->scanner->source.file,
+                            &self->current->location,
+                            NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                            init__Vec(1, from__String("expected `;`")),
+                            NULL,
+                            NULL),
+                          &self->count_error);
+
+                        FREE_BUFFER_ITEMS(
+                          optional_expr->buffer, optional_expr->len, LilyToken);
+                        FREE(Vec, optional_expr);
+
+                        FREE_BUFFER_ITEMS(
+                          data_type->buffer, data_type->len, LilyToken);
+                        FREE(Vec, data_type);
+
+                        FREE(String, name);
+
+                        return NULL;
+                    default:
+                        UNREACHABLE("this way is impossible");
+                }
+
+                break;
+            }
+            case LILY_TOKEN_KIND_EOF:
+                emit__Diagnostic(
+                  NEW_VARIANT(Diagnostic,
+                              simple_lily_error,
+                              self->scanner->source.file,
+                              &self->current->location,
+                              NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                              init__Vec(1, from__String("expected `;`")),
+                              NULL,
+                              NULL),
+                  &self->count_error);
+
+                FREE_BUFFER_ITEMS(data_type->buffer, data_type->len, LilyToken);
+                FREE(Vec, data_type);
+
+                FREE(String, name);
+
+                return NULL;
+            default:
+                UNREACHABLE("this way is impossible");
+        }
     }
 }
 
