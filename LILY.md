@@ -49,8 +49,8 @@ end
 
 ```lily
 type Person record =
-    name Str,
-    age Uint8
+    name Str;
+    age Uint8;
 end
 ```
 
@@ -93,7 +93,7 @@ end
 
 You can add an instruction to generate a `Get` or `Set` or both for this property.
 ```lily
-@name Str = "Hello" :: get, set;
+@name Str := "Hello" :: get, set;
 ```
 
 Create static property with `@@`.
@@ -128,7 +128,7 @@ object Human trait =
 end
 
 object impl Human in Work record =
-    name Str
+    name Str;
 end
 
 // Implements some function
@@ -634,8 +634,8 @@ end
 
 ```lily
 type Person record =
-    name Str,
-    age Uint8
+    name Str;
+    age Uint8;
 end
 
 fun get_name(p ref Person) ref Str =
