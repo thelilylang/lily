@@ -328,11 +328,19 @@ typedef struct LilyPreparserTrait
     enum LilyVisibility visibility;
 } LilyPreparserTrait;
 
+typedef struct LilyPreparserRecordField
+{
+    String *name;
+    Vec *data_type;     // Vec<LilyToken*>*
+    Vec *optional_expr; // Vec<LilyToken*>*?
+} LilyPreparserRecordField;
+
 typedef struct LilyPreparserRecordObject
 {
     String *name;
     Vec *generic_params; // Vec<Vec<LilyToken*>*>*
     Vec *implements;     // Vec<Vec<LilyToken*>*>*
+    Vec *fields;         // Vec<LilyPreparserRecordField*>*
     Vec *body;           // Vec<Vec<LilyToken*>*>*
     enum LilyVisibility visibility;
 } LilyPreparserRecordObject;
@@ -383,7 +391,7 @@ typedef struct LilyPreparserEnum
 typedef struct LilyPreparserRecord
 {
     String *name;
-    Vec *fields; // Vec<Vec<LilyToken*>*
+    Vec *fields; // Vec<LilyPreparserRecordField*>*
     enum LilyVisibility visibility;
 } LilyPreparserRecord;
 
