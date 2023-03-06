@@ -324,7 +324,8 @@ static CONSTRUCTOR(LilyPreparserRecordField *,
                    LilyPreparserRecordField,
                    String *name,
                    Vec *data_type,
-                   Vec *optional_expr);
+                   Vec *optional_expr,
+                   Location location);
 
 // Free LilyPreparserRecordField type.
 static DESTRUCTOR(LilyPreparserRecordField, LilyPreparserRecordField *self);
@@ -707,6 +708,9 @@ preparse_object__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserDecl *
 preparse_type__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserRecordField *
+preparse_record_field__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserDecl *
 preparse_record__LilyPreparser(LilyPreparser *self, String *name);
@@ -1610,7 +1614,8 @@ CONSTRUCTOR(LilyPreparserRecordField *,
             LilyPreparserRecordField,
             String *name,
             Vec *data_type,
-            Vec *optional_expr)
+            Vec *optional_expr,
+            Location location)
 {
     LilyPreparserRecordField *self =
       lily_malloc(sizeof(LilyPreparserRecordField));
@@ -1618,6 +1623,7 @@ CONSTRUCTOR(LilyPreparserRecordField *,
     self->name = name;
     self->data_type = data_type;
     self->optional_expr = optional_expr;
+    self->location = location;
 
     return self;
 }
@@ -4740,6 +4746,119 @@ preparse_type__LilyPreparser(LilyPreparser *self)
     }
 }
 
+LilyPreparserRecordField *
+preparse_record_field__LilyPreparser(LilyPreparser *self)
+{
+    String *name = NULL;
+    Vec *data_type = NEW(Vec);
+    Vec *optional_expr = NULL;
+    Location location_field = clone__Location(&self->current->location);
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+
+            eat_and_next_token__LilyPreparser(self);
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->scanner->source.file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                          init__Vec(1, from__String("expected field name")),
+                          NULL,
+                          NULL),
+              &self->count_error);
+
+            name = from__String("__error__");
+    }
+
+    while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+           self->current->kind != LILY_TOKEN_KIND_COLON_EQ &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        push__Vec(data_type, self->current);
+        eat_w_free_and_next_token__LilyPreparser(self);
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            next_token__LilyPreparser(self);
+
+            break;
+        case LILY_TOKEN_KIND_COLON_EQ: {
+            next_token__LilyPreparser(self);
+
+            optional_expr = NEW(Vec);
+
+            while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+                   self->current->kind != LILY_TOKEN_KIND_EOF) {
+                push__Vec(optional_expr, self->current);
+                eat_w_free_and_next_token__LilyPreparser(self);
+            }
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_SEMICOLON:
+                    next_token__LilyPreparser(self);
+
+                    break;
+                case LILY_TOKEN_KIND_EOF:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->scanner->source.file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                        init__Vec(1, from__String("expected `;`")),
+                        NULL,
+                        NULL),
+                      &self->count_error);
+
+                    FREE_BUFFER_ITEMS(
+                      optional_expr->buffer, optional_expr->len, LilyToken);
+                    FREE(Vec, optional_expr);
+
+                    FREE_BUFFER_ITEMS(
+                      data_type->buffer, data_type->len, LilyToken);
+                    FREE(Vec, data_type);
+
+                    FREE(String, name);
+
+                    return NULL;
+                default:
+                    UNREACHABLE("this way is impossible");
+            }
+
+            break;
+        }
+        case LILY_TOKEN_KIND_EOF:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->scanner->source.file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                          init__Vec(1, from__String("expected `;`")),
+                          NULL,
+                          NULL),
+              &self->count_error);
+
+            FREE_BUFFER_ITEMS(data_type->buffer, data_type->len, LilyToken);
+            FREE(Vec, data_type);
+
+            FREE(String, name);
+
+            return NULL;
+        default:
+            UNREACHABLE("this way is impossible");
+    }
+
+    return NEW(LilyPreparserRecordField, name, data_type, optional_expr, location);
+}
+
 LilyPreparserDecl *
 preparse_record__LilyPreparser(LilyPreparser *self, String *name)
 {
@@ -4747,116 +4866,7 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
-        String *name = NULL;
-        Vec *data_type = NEW(Vec);
-        Vec *optional_expr = NULL;
-
-        switch (self->current->kind) {
-            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-                name = clone__String(self->current->identifier_normal);
-
-                eat_and_next_token__LilyPreparser(self);
-
-                break;
-            default:
-                emit__Diagnostic(
-                  NEW_VARIANT(
-                    Diagnostic,
-                    simple_lily_error,
-                    self->scanner->source.file,
-                    &self->current->location,
-                    NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
-                    init__Vec(1, from__String("expected field name")),
-                    NULL,
-                    NULL),
-                  &self->count_error);
-
-                name = from__String("__error__");
-        }
-
-        while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
-               self->current->kind != LILY_TOKEN_KIND_COLON_EQ &&
-               self->current->kind != LILY_TOKEN_KIND_EOF) {
-            push__Vec(data_type, self->current);
-            eat_w_free_and_next_token__LilyPreparser(self);
-        }
-
-        switch (self->current->kind) {
-            case LILY_TOKEN_KIND_SEMICOLON:
-                next_token__LilyPreparser(self);
-
-                break;
-            case LILY_TOKEN_KIND_COLON_EQ: {
-                next_token__LilyPreparser(self);
-
-                optional_expr = NEW(Vec);
-
-                while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
-                       self->current->kind != LILY_TOKEN_KIND_EOF) {
-                    push__Vec(optional_expr, self->current);
-                    eat_w_free_and_next_token__LilyPreparser(self);
-                }
-
-                switch (self->current->kind) {
-                    case LILY_TOKEN_KIND_SEMICOLON:
-                        next_token__LilyPreparser(self);
-
-                        break;
-                    case LILY_TOKEN_KIND_EOF:
-                        emit__Diagnostic(
-                          NEW_VARIANT(
-                            Diagnostic,
-                            simple_lily_error,
-                            self->scanner->source.file,
-                            &self->current->location,
-                            NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
-                            init__Vec(1, from__String("expected `;`")),
-                            NULL,
-                            NULL),
-                          &self->count_error);
-
-                        FREE_BUFFER_ITEMS(
-                          optional_expr->buffer, optional_expr->len, LilyToken);
-                        FREE(Vec, optional_expr);
-
-                        FREE_BUFFER_ITEMS(
-                          data_type->buffer, data_type->len, LilyToken);
-                        FREE(Vec, data_type);
-
-                        FREE(String, name);
-
-                        return NULL;
-                    default:
-                        UNREACHABLE("this way is impossible");
-                }
-
-                break;
-            }
-            case LILY_TOKEN_KIND_EOF:
-                emit__Diagnostic(
-                  NEW_VARIANT(Diagnostic,
-                              simple_lily_error,
-                              self->scanner->source.file,
-                              &self->current->location,
-                              NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
-                              init__Vec(1, from__String("expected `;`")),
-                              NULL,
-                              NULL),
-                  &self->count_error);
-
-                FREE_BUFFER_ITEMS(data_type->buffer, data_type->len, LilyToken);
-                FREE(Vec, data_type);
-
-                FREE(String, name);
-
-                return NULL;
-            default:
-                UNREACHABLE("this way is impossible");
-        }
-
-        push__Vec(
-          fields,
-          NEW(LilyPreparserRecordField, name, data_type, optional_expr));
+        push__Vec(fields, preparse_record_field__LilyPreparser(self));
     }
 
     switch (self->current->kind) {

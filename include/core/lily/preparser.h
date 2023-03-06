@@ -333,6 +333,7 @@ typedef struct LilyPreparserRecordField
     String *name;
     Vec *data_type;     // Vec<LilyToken*>*
     Vec *optional_expr; // Vec<LilyToken*>*?
+    Location location;
 } LilyPreparserRecordField;
 
 typedef struct LilyPreparserRecordObject
