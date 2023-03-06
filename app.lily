@@ -1,2 +1,11 @@
-fun main =
-;
+import "@std.app" as std;
+import "@file(./app).{a, b.*, c}" as core;
+
+macro my_fun = {
+	fun add(x, y) = x+y;
+};
+
+package app =
+	.a.b,
+	.b,
+end
