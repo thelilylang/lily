@@ -325,7 +325,8 @@ static CONSTRUCTOR(LilyPreparserRecordField *,
                    String *name,
                    Vec *data_type,
                    Vec *optional_expr,
-                   Location location);
+                   Location location,
+                   enum LilyVisibility visibility);
 
 // Free LilyPreparserRecordField type.
 static DESTRUCTOR(LilyPreparserRecordField, LilyPreparserRecordField *self);
@@ -343,6 +344,16 @@ static inline CONSTRUCTOR(LilyPreparserRecordObject,
 // Free LilyPreparserRecordObject type.
 static DESTRUCTOR(LilyPreparserRecordObject,
                   const LilyPreparserRecordObject *self);
+
+// Construct LilyPreparserEnumVariant type.
+static inline CONSTRUCTOR(LilyPreparserEnumVariant *,
+                          LilyPreparserEnumVariant,
+                          String *name,
+                          Vec *data_type,
+                          Location location);
+
+// Free LilyPreparserEnumVariant type.
+static DESTRUCTOR(LilyPreparserEnumVariant, LilyPreparserEnumVariant *self);
 
 // Construct LilyPreparserEnumObject type.
 static inline CONSTRUCTOR(LilyPreparserEnumObject,
@@ -1615,7 +1626,8 @@ CONSTRUCTOR(LilyPreparserRecordField *,
             String *name,
             Vec *data_type,
             Vec *optional_expr,
-            Location location)
+            Location location,
+            enum LilyVisibility visibility)
 {
     LilyPreparserRecordField *self =
       lily_malloc(sizeof(LilyPreparserRecordField));
@@ -1624,6 +1636,7 @@ CONSTRUCTOR(LilyPreparserRecordField *,
     self->data_type = data_type;
     self->optional_expr = optional_expr;
     self->location = location;
+    self->visibility = visibility;
 
     return self;
 }
@@ -1688,6 +1701,29 @@ DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self)
         FREE(Vec, item);
     }
     FREE(Vec, self->body);
+}
+
+CONSTRUCTOR(LilyPreparserEnumVariant *,
+            LilyPreparserEnumVariant,
+            String *name,
+            Vec *data_type,
+            Location location)
+{
+    LilyPreparserEnumVariant *self =
+      lily_malloc(sizeof(LilyPreparserEnumVariant));
+
+    self->name = name;
+    self->data_type = data_type;
+    self->location = location;
+
+    return self;
+}
+
+DESTRUCTOR(LilyPreparserEnumVariant, LilyPreparserEnumVariant *self)
+{
+    FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
+    FREE(Vec, self->data_type);
+    lily_free(self);
 }
 
 CONSTRUCTOR(LilyPreparserEnumObject,
@@ -1838,13 +1874,8 @@ CONSTRUCTOR(LilyPreparserEnum,
 
 DESTRUCTOR(LilyPreparserEnum, const LilyPreparserEnum *self)
 {
-    for (Usize i = 0; i < self->variants->len; i++) {
-        Vec *item = get__Vec(self->variants, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
-    }
-
+    FREE_BUFFER_ITEMS(
+      self->variants->buffer, self->variants->len, LilyPreparserEnumVariant);
     FREE(Vec, self->variants);
 }
 
@@ -4753,6 +4784,16 @@ preparse_record_field__LilyPreparser(LilyPreparser *self)
     Vec *data_type = NEW(Vec);
     Vec *optional_expr = NULL;
     Location location_field = clone__Location(&self->current->location);
+    enum LilyVisibility visibility_field = LILY_VISIBILITY_PRIVATE;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_PUB:
+            visibility_field = LILY_VISIBILITY_PUBLIC;
+            next_token__LilyPreparser(self);
+            break;
+        default:
+            break;
+    }
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
@@ -4856,7 +4897,12 @@ preparse_record_field__LilyPreparser(LilyPreparser *self)
             UNREACHABLE("this way is impossible");
     }
 
-    return NEW(LilyPreparserRecordField, name, data_type, optional_expr, location);
+    return NEW(LilyPreparserRecordField,
+               name,
+               data_type,
+               optional_expr,
+               location,
+               visibility_field);
 }
 
 LilyPreparserDecl *
@@ -4915,6 +4961,7 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
 LilyPreparserDecl *
 preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
 {
+    Vec *variants = NEW(Vec);
 }
 
 LilyPreparserDecl *
