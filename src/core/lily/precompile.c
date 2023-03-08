@@ -658,7 +658,6 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
     return res;
 }
 
-#include <stdio.h>
 void
 run__LilyPrecompile(LilyPrecompile *self,
                     const LilyDumpConfig *dump_config,
