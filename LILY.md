@@ -416,6 +416,14 @@ end
 - Check if data type is a (class/record)/exists.
 - Check if in constructor the inherit class or inherit record is well constructed.
 
+### Case with inherit and impl on one class
+
+```lily
+object inherit [Human, Abc] + impl [Debug, Def] in Worker class =
+    // ...
+end
+``` 
+
 ### Check property conflict
 
 ```lily
