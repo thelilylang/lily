@@ -304,7 +304,7 @@ A Int32 := 30;
 #### On function
 
 ```lily
-fun add(x, y) when x < 0 = x + y;
+fun add(x, y) when [x < 0] = x + y;
 // or
 // fun add(x, y) when [x < 0] = x + y;
 fun add(x, y) = raise InvalidArgument("error")
@@ -332,12 +332,8 @@ NOTE: The dollar sign tells the compiler that the symbol it is looking for is a 
 ### Req contract
 
 ```lily
-fun div(x, y) req y not= 0 = x / y;
-// or
-// fun div(x, y) req [y not= 0] = x / y;
-fun add(x, y) req x < 0 = x + y;
-// or
-// fun add(x, y) req [x < 0] = x + y;
+fun div(x, y) req [y not= 0] = x / y;
+fun add(x, y) req [x < 0] = x + y;
 ```
 ### What is the difference between the keyword `when` and `req`?
 
