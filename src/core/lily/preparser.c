@@ -2034,13 +2034,6 @@ DESTRUCTOR(LilyPreparserRecord, const LilyPreparserRecord *self)
     FREE(String, self->name);
 #endif
 
-    for (Usize i = 0; i < self->fields->len; i++) {
-        Vec *item = get__Vec(self->fields, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
-    }
-
     FREE_BUFFER_ITEMS(
       self->fields->buffer, self->fields->len, LilyPreparserRecordField);
     FREE(Vec, self->fields);
@@ -2726,9 +2719,9 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 
                         if (self->current->kind !=
                               LILY_TOKEN_KIND_KEYWORD_END &&
-                            self->current->kind == LILY_TOKEN_KIND_COMMA) {
+                            self->current->kind == LILY_TOKEN_KIND_SEMICOLON) {
                             switch (self->current->kind) {
-                                case LILY_TOKEN_KIND_COMMA:
+                                case LILY_TOKEN_KIND_SEMICOLON:
                                     next_token__LilyPreparser(self);
                                     break;
                                 default: {
@@ -2746,7 +2739,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                                                     current_s->buffer),
                                         NULL,
                                         NULL,
-                                        from__String("expected `,`")),
+                                        from__String("expected `;`")),
                                       &self->count_error);
 
                                     FREE(String, current_s);
@@ -4931,7 +4924,7 @@ LilyPreparserRecordField *
 preparse_record_field__LilyPreparser(LilyPreparser *self)
 {
     String *name = NULL;
-    Vec *data_type = NEW(Vec);
+    Vec *data_type = NEW(Vec); // Vec<LilyToken*>*
     Vec *optional_expr = NULL;
     Location location_field = clone__Location(&self->current->location);
     enum LilyVisibility visibility_field = LILY_VISIBILITY_PRIVATE;
