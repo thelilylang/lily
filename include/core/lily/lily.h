@@ -63,4 +63,10 @@
 #undef DEBUG_IR
 #endif
 
+#define RUN_UNTIL_PREPARSER
+#undef RUN_UNTIL_PREPARSER
+
+#define RUN_UNTIL_PRECOMPILE
+#undef RUN_UNTIL_PRECOMPILE
+
 #endif // LILY_CORE_LILY_H
