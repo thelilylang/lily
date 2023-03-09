@@ -113,6 +113,12 @@ to_msg__LilyError(const LilyError *self)
             return "impl is already defined";
         case LILY_ERROR_KIND_INHERIT_IS_ALREADY_DEFINED:
             return "inherit is already defined";
+        case LILY_ERROR_KIND_BAD_KIND_OF_OBJECT:
+            return "bad kind of object";
+        case LILY_ERROR_KIND_IMPL_IS_NOT_EXPECTED:
+            return "impl is not expected";
+        case LILY_ERROR_KIND_INHERIT_IS_NOT_EXPECTED:
+            return "inherit is not expected";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -200,6 +206,12 @@ to_code__LilyError(const LilyError *self)
             return "0038";
         case LILY_ERROR_KIND_INHERIT_IS_ALREADY_DEFINED:
             return "0039";
+        case LILY_ERROR_KIND_BAD_KIND_OF_OBJECT:
+            return "0040";
+        case LILY_ERROR_KIND_IMPL_IS_NOT_EXPECTED:
+            return "impl is not expected";
+        case LILY_ERROR_KIND_INHERIT_IS_NOT_EXPECTED:
+            return "inherit is not expected";
         default:
             UNREACHABLE("unknown variant");
     }
