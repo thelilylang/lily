@@ -4815,7 +4815,6 @@ preparse_object__LilyPreparser(LilyPreparser *self)
                     default:                                                   \
                         UNREACHABLE("this way is impossible");                 \
                 }                                                              \
-                /* ERROR: impl or inherit is already defined */                \
             }                                                                  \
                                                                                \
             v = preparse_hook_with_comma_sep__LilyPreparser(self);             \
@@ -4844,9 +4843,29 @@ preparse_object__LilyPreparser(LilyPreparser *self)
                             push__Vec(v, item);                                \
                                                                                \
                             goto label;                                        \
-                        default:                                               \
-                            /* ERROR: unexpected token */                      \
-                            break;                                             \
+                        default: {                                             \
+                            String *current_s =                                \
+                              to_string__LilyToken(self->current);             \
+                                                                               \
+                            emit__Diagnostic(                                  \
+                              NEW_VARIANT(                                     \
+                                Diagnostic,                                    \
+                                simple_lily_error,                             \
+                                self->file,                                    \
+                                &self->current->location,                      \
+                                NEW_VARIANT(LilyError,                         \
+                                            unexpected_token,                  \
+                                            current_s->buffer),                \
+                                NULL,                                          \
+                                NULL,                                          \
+                                from__String(                                  \
+                                  "expected `impl` or `inherit` keyword")),    \
+                              &self->count_error);                             \
+                                                                               \
+                            FREE(String, current_s);                           \
+                            \ 
+                            goto label;                                        \
+                        }                                                      \
                     }                                                          \
                                                                                \
                     break;                                                     \
@@ -4876,11 +4895,28 @@ preparse_object__LilyPreparser(LilyPreparser *self)
                                                                                \
             break;                                                             \
         }                                                                      \
-        default:                                                               \
-            /* ERROR: unexpected token */                                      \
-            return NULL;                                                       \
-    }                                                                          \
+        default: {                                                             \
+            String *current_s = to_string__LilyToken(self->current);           \
                                                                                \
+            emit__Diagnostic(                                                  \
+              NEW_VARIANT(                                                     \
+                Diagnostic,                                                    \
+                simple_lily_error,                                             \
+                self->file,                                                    \
+                &self->current->location,                                      \
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),   \
+                NULL,                                                          \
+                NULL,                                                          \
+                from__String("expected identifier or `[`")),                   \
+              &self->count_error);                                             \
+                                                                               \
+            FREE(String, current_s);                                           \
+            \ 
+            /* Clean up allocations */                                         \
+                                                                               \
+              return NULL;                                                     \
+        }                                                                      \
+    }                                                                          \
     break;
 
     next_token__LilyPreparser(self); // skip `object` keyword
@@ -4953,10 +4989,25 @@ preparse_object__LilyPreparser(LilyPreparser *self)
             next_token__LilyPreparser(self);
 
             break;
-        default:
-            // ERROR: expected `=`
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `=`")),
+              &self->count_error);
+
+            FREE(String, current_s);
 
             break;
+        }
     }
 
     switch (object_kind) {
