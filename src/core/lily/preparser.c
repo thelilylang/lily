@@ -5250,13 +5250,6 @@ CONSTRUCTOR(LilyPreparser, LilyPreparser, const File *file, const Vec *tokens)
     return (
       LilyPreparser){ .file = file,
                       .tokens = tokens,
-                      // .scanner = scanner,
-                      // .public_imports = NEW(Vec),
-                      // .private_imports = NEW(Vec),
-                      // .public_macros = NEW(Vec),
-                      // .private_macros = NEW(Vec),
-                      // .decls = NEW(Vec),
-                      // .package = NEW(LilyPreparserPackage, package_name),
                       .current = NULL,
                       .position = 0,
                       .count_error = 0 };
