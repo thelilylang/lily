@@ -285,10 +285,11 @@ end
 ## Package
 
 ```lily
-// By default the compiler search in `.` path
-package lily
-
-package .abc // create a sub-package
+package =
+    pub .a;
+    .b;
+    .c;
+end
 ```
 
 ## Constant
