@@ -726,6 +726,9 @@ preparse_record_field__LilyPreparser(LilyPreparser *self);
 static LilyPreparserDecl *
 preparse_record__LilyPreparser(LilyPreparser *self, String *name);
 
+static LilyPreparserEnumVariant *
+preparse_enum_variant__LilyPreparser(LilyPreparser *self);
+
 static LilyPreparserDecl *
 preparse_enum__LilyPreparser(LilyPreparser *self, String *name);
 
@@ -4908,11 +4911,16 @@ preparse_record_field__LilyPreparser(LilyPreparser *self)
 LilyPreparserDecl *
 preparse_record__LilyPreparser(LilyPreparser *self, String *name)
 {
-    Vec *fields = NEW(Vec);
+    Vec *fields = NEW(Vec); // Vec<LilyPreparserRecordField*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
-        push__Vec(fields, preparse_record_field__LilyPreparser(self));
+        LilyPreparserRecordField *field =
+          preparse_record_field__LilyPreparser(self);
+
+        if (field) {
+            push__Vec(fields, field);
+        }
     }
 
     switch (self->current->kind) {
@@ -4958,15 +4966,188 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
                   NEW(LilyPreparserRecord, name, fields, visibility_decl)));
 }
 
+static LilyPreparserEnumVariant *
+preparse_enum_variant__LilyPreparser(LilyPreparser *self)
+{
+    Location location_variant = clone__Location(&self->current->location);
+
+    // 1. Get variant's name
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+            eat_and_next_token__LilyPreparser(self);
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                init__Vec(1, from__String("expected variant identifier")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            name = from__String("__error__");
+    }
+
+    // 2. Preparse data type.
+    Vec *data_type = NEW(Vec); // Vec<LilyToken*>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        push__Vec(data_type, self->current);
+        eat_w_free_and_next_token__LilyPreparser(self);
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            next_token__LilyPreparser(self);
+
+            break;
+        case LILY_TOKEN_KIND_EOF:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                init__Vec(
+                  1, from__String("expected `;` to close variant declaration")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            FREE(String, name);
+            FREE_BUFFER_ITEMS(data_type->buffer, data_type->len, LilyToken);
+            FREE(Vec, data_type);
+
+            return NULL;
+        default:
+            UNREACHABLE("this way is impossible");
+    }
+
+    end__Location(&location_variant,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
+
+    return NEW(LilyPreparserEnumVariant, name, data_type, location_variant);
+}
+
 LilyPreparserDecl *
 preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
 {
-    Vec *variants = NEW(Vec);
+    Vec *variants = NEW(Vec); // Vec<LilyPreparserEnumVariant*>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        LilyPreparserEnumVariant *variant =
+          preparse_enum_variant__LilyPreparser(self);
+
+        if (variant) {
+            push__Vec(variants, variant);
+        }
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_END:
+            end__Location(&location,
+                          self->current->location.end_column,
+                          self->current->location.end_column);
+
+            next_token__LilyPreparser(self);
+
+            break;
+        case LILY_TOKEN_KIND_EOF:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                init__Vec(1,
+                          from__String("expected `end` keyword to close enum")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            FREE(String, name);
+
+            FREE_BUFFER_ITEMS(
+              variants->buffer, variants->len, LilyPreparserEnumVariant);
+            FREE(Vec, variants);
+
+            return NULL;
+        default:
+            UNREACHABLE("this way is impossible");
+    }
+
+    return NEW_VARIANT(
+      LilyPreparserDecl,
+      type,
+      location,
+      NEW_VARIANT(LilyPreparserType,
+                  enum_,
+                  NEW(LilyPreparserEnum, name, variants, visibility_decl)));
 }
 
 LilyPreparserDecl *
 preparse_alias__LilyPreparser(LilyPreparser *self, String *name)
 {
+    Vec *data_type = NEW(Vec); // Vec<LilyToken*>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        push__Vec(data_type, self->current);
+        eat_w_free_and_next_token__LilyPreparser(self);
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyPreparser(self);
+
+            break;
+        case LILY_TOKEN_KIND_EOF:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->scanner->source.file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                init__Vec(
+                  1, from__String("expected `;` to close alias")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            FREE(String, name);
+
+            FREE_BUFFER_ITEMS(data_type->buffer, data_type->len, LilyToken);
+            FREE(Vec, data_type);
+
+            return NULL;
+        default:
+            UNREACHABLE("this way is impossible");
+    }
+
+    return NEW_VARIANT(
+      LilyPreparserDecl,
+      type,
+      location,
+      NEW_VARIANT(LilyPreparserType,
+                  alias,
+                  NEW(LilyPreparserAlias, name, data_type, visibility_decl)));
 }
 
 void
