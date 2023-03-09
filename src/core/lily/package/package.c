@@ -29,6 +29,7 @@
 #include <cli/config/compile.h>
 #include <cli/emit.h>
 
+#include <core/lily/lily.h>
 #include <core/lily/package/package.h>
 #include <core/lily/parser.h>
 
@@ -55,19 +56,30 @@ CONSTRUCTOR(LilyPackage *,
     LilyPackage *self = lily_malloc(sizeof(LilyPackage));
 
     self->name = name;
-
-    if (status == LILY_PACKAGE_STATUS_MAIN) {
-        self->public_macros = NEW(Vec);
-    } else {
-        self->public_macros = NULL;
-    }
+ 
 
     self->private_macros = NULL;
-    self->public_imports = NEW(Vec);
-    self->private_imports = NEW(Vec);
-    self->sub_packages = NEW(Vec);
-    self->package_dependencies = NEW(Vec);
-    self->lib_dependencies = NEW(Vec);
+
+    #ifndef RUN_UNTIL_PREPARSER
+        if (status == LILY_PACKAGE_STATUS_MAIN) {
+            self->public_macros = NEW(Vec);
+        } else {
+            self->public_macros = NULL;
+        }
+
+        self->public_imports = NEW(Vec);
+        self->private_imports = NEW(Vec);
+        self->sub_packages = NEW(Vec);
+        self->package_dependencies = NEW(Vec);
+        self->lib_dependencies = NEW(Vec);
+    #else
+        self->public_imports = NULL;
+        self->private_imports = NULL;
+        self->sub_packages = NULL;
+        self->package_dependencies = NULL;
+        self->lib_dependencies = NULL;
+    #endif
+
     self->file = NEW(File, filename, content);
     self->scanner =
       NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &self->file));
@@ -75,8 +87,11 @@ CONSTRUCTOR(LilyPackage *,
     self->preparser_info = NEW(LilyPreparserInfo, self->name);
     self->visibility = visibility;
     self->status = status;
+
+#ifndef RUN_UNTIL_PREPARSER
     self->precompile = NEW(
       LilyPrecompile, &self->preparser_info, &self->file, self, default_path);
+#endif
 
     lily_free(file_ext);
 
@@ -107,6 +122,15 @@ build__LilyPackage(const CompileConfig *config,
     run__LilyScanner(&self->scanner, config->dump_scanner);
     run__LilyPreparser(&self->preparser, &self->preparser_info);
 
+#ifdef RUN_UNTIL_PREPARSER
+    FREE(LilyScanner, &self->scanner);
+    FREE(LilyPreparserInfo, &self->preparser_info);
+    FREE(File, &self->file);
+    lily_free(self);
+
+    exit(0);
+#endif
+
     if (self->preparser_info.package->name) {
         self->name = self->preparser_info.package->name;
     } else {
@@ -120,6 +144,11 @@ build__LilyPackage(const CompileConfig *config,
                                      config->dump_ir);
 
     run__LilyPrecompile(&self->precompile, &dump_config, self);
+
+#ifdef RUN_UNTIL_PRECOMPILE
+    FREE(LilyPackage, self);
+    exit(0);
+#endif
 
     return self;
 }
