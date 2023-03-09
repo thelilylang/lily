@@ -4766,29 +4766,142 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
 LilyPreparserDecl *
 preparse_object__LilyPreparser(LilyPreparser *self)
 {
+#define PREPARSE_INHERIT_OR_IMPL(v, label, token_kind)                         \
+    next_token__LilyPreparser(self);                                           \
+                                                                               \
+    switch (self->current->kind) {                                             \
+        case LILY_TOKEN_KIND_L_HOOK:                                           \
+            if (v) {                                                           \
+                switch (token_kind) {                                          \
+                    case LILY_TOKEN_KIND_KEYWORD_IMPL:                         \
+                        emit__Diagnostic(                                      \
+                          NEW_VARIANT(                                         \
+                            Diagnostic,                                        \
+                            simple_lily_error,                                 \
+                            self->file,                                        \
+                            &self->current->location,                          \
+                            NEW(LilyError,                                     \
+                                LILY_ERROR_KIND_IMPL_IS_ALREADY_DEFINED),      \
+                            init__Vec(1,                                       \
+                                      from__String(                            \
+                                        "remove this re-definition of impl")), \
+                            NULL,                                              \
+                            NULL),                                             \
+                          &self->count_error);                                 \
+                                                                               \
+                        /* Clean up allocations */                             \
+                                                                               \
+                        return NULL;                                           \
+                    case LILY_TOKEN_KIND_KEYWORD_INHERIT:                      \
+                        emit__Diagnostic(                                      \
+                          NEW_VARIANT(                                         \
+                            Diagnostic,                                        \
+                            simple_lily_error,                                 \
+                            self->file,                                        \
+                            &self->current->location,                          \
+                            NEW(LilyError,                                     \
+                                LILY_ERROR_KIND_INHERIT_IS_ALREADY_DEFINED),   \
+                            init__Vec(                                         \
+                              1,                                               \
+                              from__String(                                    \
+                                "remove this re-definition of inherit")),      \
+                            NULL,                                              \
+                            NULL),                                             \
+                          &self->count_error);                                 \
+                                                                               \
+                        /* Clean up allocations */                             \
+                                                                               \
+                        return NULL;                                           \
+                    default:                                                   \
+                        UNREACHABLE("this way is impossible");                 \
+                }                                                              \
+                /* ERROR: impl or inherit is already defined */                \
+            }                                                                  \
+                                                                               \
+            v = preparse_hook_with_comma_sep__LilyPreparser(self);             \
+                                                                               \
+            break;                                                             \
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {                              \
+            v = NEW(Vec);                                                      \
+                                                                               \
+            Vec *item = NEW(Vec); /* Vec<LilyToken*>* */                       \
+                                                                               \
+            while (self->current->kind !=                                      \
+                     LILY_TOKEN_KIND_PLUS && \ 
+                           self->current->kind !=                              \
+                                               LILY_TOKEN_KIND_KEYWORD_IN &&   \
+                   self->current->kind != LILY_TOKEN_KIND_EOF) {               \
+                push__Vec(item, clone__LilyToken(self->current));              \
+                next_token__LilyPreparser(self);                               \
+            }                                                                  \
+                                                                               \
+            switch (self->current->kind) {                                     \
+                next_token__LilyPreparser(self);                               \
+                                                                               \
+                case LILY_TOKEN_KIND_PLUS:                                     \
+                    switch (self->current->kind) {                             \
+                        case token_kind:                                       \
+                            push__Vec(v, item);                                \
+                                                                               \
+                            goto label;                                        \
+                        default:                                               \
+                            /* ERROR: unexpected token */                      \
+                            break;                                             \
+                    }                                                          \
+                                                                               \
+                    break;                                                     \
+                case LILY_TOKEN_KIND_KEYWORD_IN:                               \
+                    next_token__LilyPreparser(self);                           \
+                                                                               \
+                    break;                                                     \
+                case LILY_TOKEN_KIND_EOF:                                      \
+                    emit__Diagnostic(                                          \
+                      NEW_VARIANT(                                             \
+                        Diagnostic,                                            \
+                        simple_lily_error,                                     \
+                        self->file,                                            \
+                        &self->current->location,                              \
+                        NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),      \
+                        NULL,                                                  \
+                        NULL,                                                  \
+                        from__String("expected `in` keyword or `+`")),         \
+                      &self->count_error);                                     \
+                                                                               \
+                    break;                                                     \
+                default:                                                       \
+                    UNREACHABLE("this way is impossible");                     \
+            }                                                                  \
+                                                                               \
+            push__Vec(v, item);                                                \
+                                                                               \
+            break;                                                             \
+        }                                                                      \
+        default:                                                               \
+            /* ERROR: unexpected token */                                      \
+            return NULL;                                                       \
+    }                                                                          \
+                                                                               \
+    break;
+
     next_token__LilyPreparser(self); // skip `object` keyword
 
     // 1. Preparse impl and inherit
-    Vec *impls = NEW(Vec);    // Vec<Vec<LilyToken*>*>*
-    Vec *inherits = NEW(Vec); // Vec<Vec<LilyToken*>*>*
+    Vec *impls = NULL;    // Vec<Vec<LilyToken*>*>*
+    Vec *inherits = NULL; // Vec<Vec<LilyToken*>*>*
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_IMPL: {
-            next_token__LilyPreparser(self);
-
-            switch (self->current->kind) {
-                case LILY_TOKEN_KIND_L_HOOK:
-                    break;
-                case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-                    break;
-                default:
-                    return NULL;
-            }
-
-            break;
+        preparse_impl : {
+            PREPARSE_INHERIT_OR_IMPL(
+              impls, preparse_inherit, LILY_TOKEN_KIND_KEYWORD_INHERIT);
         }
-        case LILY_TOKEN_KIND_KEYWORD_INHERIT:
-            break;
+        }
+        case LILY_TOKEN_KIND_KEYWORD_INHERIT: {
+        preparse_inherit : {
+            PREPARSE_INHERIT_OR_IMPL(
+              inherits, preparse_impl, LILY_TOKEN_KIND_KEYWORD_IMPL);
+        }
+        }
         default:
             break;
     }
@@ -4819,22 +4932,147 @@ preparse_object__LilyPreparser(LilyPreparser *self)
     }
 
     // 3. Preparse generic params
-    Vec *generic_params = NEW(Vec);
+    Vec *generic_params = NULL;
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_L_HOOK:
-            next_token__LilyPreparser(self); // skip `[`
-
-            while (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
-                push__Vec(generic_params, clone__LilyToken(self->current));
-                next_token__LilyPreparser(self);
-            }
-
-            next_token__LilyPreparser(self); // skip `]`
+            generic_params = preparse_hook_with_comma_sep__LilyPreparser(self);
 
             break;
         default:
             break;
+    }
+
+    // 4. Check object kind (class, enum, record or trait)
+    enum LilyTokenKind object_kind = self->current->kind;
+
+    next_token__LilyPreparser(self);
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_EQ:
+            next_token__LilyPreparser(self);
+
+            break;
+        default:
+            // ERROR: expected `=`
+
+            break;
+    }
+
+    switch (object_kind) {
+        case LILY_TOKEN_KIND_KEYWORD_CLASS:
+            return preparse_class__LilyPreparser(self,
+                                                 name,
+                                                 impls ? impls : NEW(Vec),
+                                                 inherits ? inherits
+                                                          : NEW(Vec));
+
+        case LILY_TOKEN_KIND_KEYWORD_ENUM:
+            if (inherits) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &self->current->location,
+                    NEW(LilyError, LILY_ERROR_KIND_INHERIT_IS_NOT_EXPECTED),
+                    NULL,
+                    NULL,
+                    from__String("inherit is not expected on enum object")),
+                  &self->count_error);
+
+                // Clean up allocations
+            }
+
+            return preparse_enum_object__LilyPreparser(
+              self, name, impls ? impls : NEW(Vec));
+
+        case LILY_TOKEN_KIND_KEYWORD_RECORD:
+            if (inherits) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &self->current->location,
+                    NEW(LilyError, LILY_ERROR_KIND_INHERIT_IS_NOT_EXPECTED),
+                    NULL,
+                    NULL,
+                    from__String("inherit is not expected on record object")),
+                  &self->count_error);
+
+                // Clean up allocations
+
+                return NULL;
+            }
+
+            return preparse_record_object__LilyPreparser(
+              self, name, impls ? impls : NEW(Vec));
+
+        case LILY_TOKEN_KIND_KEYWORD_TRAIT:
+            if (impls) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &self->current->location,
+                    NEW(LilyError, LILY_ERROR_KIND_IMPL_IS_NOT_EXPECTED),
+                    NULL,
+                    NULL,
+                    from__String("impl is not expected on trait")),
+                  &self->count_error);
+
+                // Clean up allocations
+
+                return NULL;
+            }
+
+            return preparse_trait__LilyPreparser(
+              self, name, inherits ? inherits : NEW(Vec));
+
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_BAD_KIND_OF_OBJECT),
+                init__Vec(1,
+                          from__String(
+                            "expected `class`, `enum`, `record` or `trait`")),
+                NULL,
+                NULL),
+              &self->count_error);
+
+            // Clean up allocations
+
+            if (impls) {
+                for (Usize i = 0; i < impls->len; i++) {
+                    Vec *item = get__Vec(impls, i);
+
+                    FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+                    FREE(Vec, item);
+                }
+
+                FREE(Vec, impls);
+            }
+
+            if (inherits) {
+                for (Usize i = 0; i < inherits->len; i++) {
+                    Vec *item = get__Vec(inherits, i);
+
+                    FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+                    FREE(Vec, item);
+                }
+
+                FREE(Vec, inherits);
+            }
+
+            FREE(String, name);
+
+            return NULL;
     }
 }
 
