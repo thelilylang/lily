@@ -469,15 +469,39 @@ typedef struct LilyPreparserDecl
     };
 } LilyPreparserDecl;
 
-typedef struct LilyPreparser
+typedef struct LilyPreparserInfo
 {
-    LilyScanner *scanner;
     Vec *public_imports;  // Vec<LilyPreparserImport*>*
     Vec *private_imports; // Vec<LilyPreparserImport*>*
     Vec *public_macros;   // Vec<LilyPreparserMacro*>*
     Vec *private_macros;  // Vec<LilyPreparserMacro*>*
     Vec *decls;           // Vec<LilyPreparserDecl*>*
     LilyPreparserPackage *package;
+} LilyPreparserInfo;
+
+/**
+ *
+ * @brief Construct LilyPreparserInfo type.
+ */
+inline CONSTRUCTOR(LilyPreparserInfo, LilyPreparserInfo, String *package_name);
+
+/**
+ *
+ * @brief Free LilyPreparserInfo type.
+ */
+DESTRUCTOR(LilyPreparserInfo, const LilyPreparserInfo *self);
+
+typedef struct LilyPreparser
+{
+    // LilyScanner *scanner;
+    const File *file;
+    const Vec *tokens; // Vec<LilyToken*>*(&)
+    // Vec *public_imports;  // Vec<LilyPreparserImport*>*
+    // Vec *private_imports; // Vec<LilyPreparserImport*>*
+    // Vec *public_macros;   // Vec<LilyPreparserMacro*>*
+    // Vec *private_macros;  // Vec<LilyPreparserMacro*>*
+    // Vec *decls;           // Vec<LilyPreparserDecl*>*
+    // LilyPreparserPackage *package;
     LilyToken *current;
     Usize position;
     Usize count_error;
@@ -489,20 +513,14 @@ typedef struct LilyPreparser
  */
 inline CONSTRUCTOR(LilyPreparser,
                    LilyPreparser,
-                   LilyScanner *scanner,
-                   String *package_name);
+                   const File *file,
+                   const Vec *tokens);
 
 /**
  *
  * @brief Run the preparser.
  */
 void
-run__LilyPreparser(LilyPreparser *self);
-
-/**
- *
- * @brief Free LilyPreparser type.
- */
-DESTRUCTOR(LilyPreparser, const LilyPreparser *self);
+run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info);
 
 #endif // LILY_CORE_LILY_PREPARSER_H

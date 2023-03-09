@@ -71,11 +71,12 @@ CONSTRUCTOR(LilyPackage *,
     self->file = NEW(File, filename, content);
     self->scanner =
       NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &self->file));
-    self->preparser = NEW(LilyPreparser, &self->scanner, self->name);
+    self->preparser = NEW(LilyPreparser, &self->file, self->scanner.tokens);
+    self->preparser_info = NEW(LilyPreparserInfo, self->name);
     self->visibility = visibility;
     self->status = status;
     self->precompile =
-      NEW(LilyPrecompile, &self->preparser, self, default_path);
+      NEW(LilyPrecompile, &self->preparser_info, &self->file, self, default_path);
 
     lily_free(file_ext);
 
@@ -104,10 +105,10 @@ build__LilyPackage(const CompileConfig *config,
                                 default_path);
 
     run__LilyScanner(&self->scanner, config->dump_scanner);
-    run__LilyPreparser(&self->preparser);
+    run__LilyPreparser(&self->preparser, &self->preparser_info);
 
-    if (self->preparser.package->name) {
-        self->name = self->preparser.package->name;
+    if (self->preparser_info.package->name) {
+        self->name = self->preparser_info.package->name;
     } else {
         self->name = from__String("main");
     }
@@ -190,7 +191,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(File, &self->file);
 
     FREE(LilyScanner, &self->scanner);
-    FREE(LilyPreparser, &self->preparser);
+    FREE(LilyPreparserInfo, &self->preparser_info);
 
     lily_free(self);
 }

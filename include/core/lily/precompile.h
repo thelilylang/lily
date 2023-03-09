@@ -177,7 +177,8 @@ DESTRUCTOR(LilyImport, LilyImport *self);
 
 typedef struct LilyPrecompile
 {
-    const LilyPreparser *preparser;
+    LilyPreparserInfo *info;
+    const File *file;
     LilyPackage *package;
     Usize count_error;
     const char *default_path;
@@ -189,11 +190,13 @@ typedef struct LilyPrecompile
  */
 inline CONSTRUCTOR(LilyPrecompile,
                    LilyPrecompile,
-                   const LilyPreparser *preparser,
+                  LilyPreparserInfo *info,
+                   const File *file,
                    LilyPackage *package,
                    const char *default_path)
 {
-    return (LilyPrecompile){ .preparser = preparser,
+    return (LilyPrecompile){ .info = info,
+                             .file = file,
                              .package = package,
                              .count_error = 0,
                              .default_path = default_path };

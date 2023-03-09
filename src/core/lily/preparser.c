@@ -611,7 +611,7 @@ preparse_macro__LilyPreparser(LilyPreparser *self);
 
 // NOTE: return 1 for success, 0 for failed.
 static int
-preparse_package__LilyPreparser(LilyPreparser *self);
+preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info);
 
 static LilyPreparserDecl *
 preparse_module_body__LilyPreparser(LilyPreparser *self);
@@ -703,16 +703,23 @@ static LilyPreparserDecl *
 preparse_fun__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserDecl *
-preparse_class__LilyPreparser(LilyPreparser *self);
+preparse_class__LilyPreparser(LilyPreparser *self,
+                              String *name,
+                              Vec *impls,
+                              Vec *inherits);
 
 static LilyPreparserDecl *
-preparse_trait__LilyPreparser(LilyPreparser *self);
+preparse_trait__LilyPreparser(LilyPreparser *self, String *name, Vec *inherits);
 
 static LilyPreparserDecl *
-preparse_record_object__LilyPreparser(LilyPreparser *self);
+preparse_record_object__LilyPreparser(LilyPreparser *self,
+                                      String *name,
+                                      Vec *impls);
 
 static LilyPreparserDecl *
-preparse_enum_object__LilyPreparser(LilyPreparser *self);
+preparse_enum_object__LilyPreparser(LilyPreparser *self,
+                                    String *name,
+                                    Vec *impls);
 
 static LilyPreparserDecl *
 preparse_object__LilyPreparser(LilyPreparser *self);
@@ -979,14 +986,14 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserModule, const LilyPreparserModule *self)
                                  self->name);
 
     for (Usize i = 0; i < self->body->len; i++) {
-        String *s =
-          to_string__Debug__LilyPreparserDecl(get__Vec(self->body, i));
+        // String *s =
+        //   to_string__Debug__LilyPreparserDecl(get__Vec(self->body, i));
 
-        APPEND_AND_FREE(res, s);
+        // APPEND_AND_FREE(res, s);
 
-        if (i != self->body->len - 1) {
-            push_str__String(res, ", ");
-        }
+        // if (i != self->body->len - 1) {
+        //     push_str__String(res, ", ");
+        // }
     }
 
     push_str__String(res, " }, visibility = ");
@@ -2176,9 +2183,9 @@ DESTRUCTOR(LilyPreparserDecl, LilyPreparserDecl *self)
 void
 next_token__LilyPreparser(LilyPreparser *self)
 {
-    if (self->position + 1 < self->scanner->tokens->len) {
+    if (self->position + 1 < self->tokens->len) {
         ++self->position;
-        self->current = get__Vec(self->scanner->tokens, self->position);
+        self->current = get__Vec(self->tokens, self->position);
     }
 }
 
@@ -2194,7 +2201,7 @@ void
 eat_token__LilyPreparser(LilyPreparser *self)
 {
     if (self->current->kind != LILY_TOKEN_KIND_EOF) {
-        FREE(LilyToken, remove__Vec(self->scanner->tokens, self->position));
+        FREE(LilyToken, remove__Vec(self->tokens, self->position));
     }
 }
 
@@ -2202,15 +2209,15 @@ void
 eat_token_w_free__LilyPreparser(LilyPreparser *self)
 {
     if (self->current->kind != LILY_TOKEN_KIND_EOF) {
-        remove__Vec(self->scanner->tokens, self->position);
+        remove__Vec(self->tokens, self->position);
     }
 }
 
 LilyToken *
 peek_token__LilyPreparser(const LilyPreparser *self, Usize n)
 {
-    if (self->position + n < self->scanner->tokens->len) {
-        return get__Vec(self->scanner->tokens, self->position + n);
+    if (self->position + n < self->tokens->len) {
+        return get__Vec(self->tokens, self->position + n);
     }
 
     return NULL;
@@ -2221,8 +2228,8 @@ eat_and_next_token__LilyPreparser(LilyPreparser *self)
 {
     eat_token__LilyPreparser(self);
 
-    if (self->position < self->scanner->tokens->len) {
-        self->current = get__Vec(self->scanner->tokens, self->position);
+    if (self->position < self->tokens->len) {
+        self->current = get__Vec(self->tokens, self->position);
     }
 }
 
@@ -2231,8 +2238,8 @@ eat_w_free_and_next_token__LilyPreparser(LilyPreparser *self)
 {
     eat_token_w_free__LilyPreparser(self);
 
-    if (self->position < self->scanner->tokens->len) {
-        self->current = get__Vec(self->scanner->tokens, self->position);
+    if (self->position < self->tokens->len) {
+        self->current = get__Vec(self->tokens, self->position);
     }
 }
 
@@ -2295,7 +2302,7 @@ preparse_import__LilyPreparser(LilyPreparser *self)
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
-                          self->scanner->source.file,
+                          self->file,
                           &self->current->location,
                           NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IMPORT_VALUE),
                           NULL,
@@ -2319,7 +2326,7 @@ preparse_import__LilyPreparser(LilyPreparser *self)
                   NEW_VARIANT(
                     Diagnostic,
                     simple_lily_error,
-                    self->scanner->source.file,
+                    self->file,
                     &self->current->location,
                     NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                     NULL,
@@ -2352,7 +2359,7 @@ preparse_import__LilyPreparser(LilyPreparser *self)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                 NULL,
@@ -2384,7 +2391,7 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
-                          self->scanner->source.file,
+                          self->file,
                           &self->current->location,
                           NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
                           NULL,
@@ -2408,7 +2415,7 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                 NULL,
@@ -2433,7 +2440,7 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                 NULL,
@@ -2467,7 +2474,7 @@ get_tokens : {
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                 NULL,
@@ -2492,17 +2499,17 @@ get_tokens : {
 }
 
 int
-preparse_package__LilyPreparser(LilyPreparser *self)
+preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 {
     eat_and_next_token__LilyPreparser(self);
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            if (self->package->name) {
+            if (info->package->name) {
                 emit__Diagnostic(
                   NEW_VARIANT(Diagnostic,
                               simple_lily_error,
-                              self->scanner->source.file,
+                              self->file,
                               &self->current->location,
                               NEW(LilyError,
                                   LILY_ERROR_KIND_PACKAGE_NAME_ALREADY_DEFINED),
@@ -2514,7 +2521,7 @@ preparse_package__LilyPreparser(LilyPreparser *self)
                 return 0;
             }
 
-            self->package->name =
+            info->package->name =
               clone__String(self->current->identifier_normal);
             eat_and_next_token__LilyPreparser(self);
 
@@ -2534,7 +2541,7 @@ preparse_package__LilyPreparser(LilyPreparser *self)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                 NULL,
@@ -2610,7 +2617,7 @@ preparse_package__LilyPreparser(LilyPreparser *self)
                                       NEW_VARIANT(
                                         Diagnostic,
                                         simple_lily_error,
-                                        self->scanner->source.file,
+                                        self->file,
                                         &self->current->location,
                                         NEW_VARIANT(LilyError,
                                                     unexpected_token,
@@ -2632,7 +2639,7 @@ preparse_package__LilyPreparser(LilyPreparser *self)
                           NEW_VARIANT(
                             Diagnostic,
                             simple_lily_error,
-                            self->scanner->source.file,
+                            self->file,
                             &self->current->location,
                             NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
                             NULL,
@@ -2655,7 +2662,7 @@ preparse_package__LilyPreparser(LilyPreparser *self)
                   NEW_VARIANT(
                     Diagnostic,
                     simple_lily_error,
-                    self->scanner->source.file,
+                    self->file,
                     &self->current->location,
                     NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                     NULL,
@@ -2670,7 +2677,7 @@ preparse_package__LilyPreparser(LilyPreparser *self)
             }
         }
 
-        push__Vec(self->package->sub_packages,
+        push__Vec(info->package->sub_packages,
                   NEW(LilyPreparserSubPackage, visibility, sub_pkg_name));
     }
 
@@ -2704,7 +2711,7 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
 
                     emit__Diagnostic(NEW_VARIANT(Diagnostic,
                                                  simple_lily_error,
-                                                 self->scanner->source.file,
+                                                 self->file,
                                                  &self->current->location,
                                                  NEW_VARIANT(LilyError,
                                                              unexpected_token,
@@ -2744,7 +2751,7 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                 NULL,
@@ -2797,7 +2804,7 @@ parse_module_name : {
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EXPECTED_MODULE_IDENTIFIER),
                 NULL,
@@ -2839,7 +2846,7 @@ parse_module_name : {
           NEW_VARIANT(
             Diagnostic,
             simple_lily_error,
-            self->scanner->source.file,
+            self->file,
             &module_location,
             NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
             NULL,
@@ -2980,7 +2987,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
           NEW_VARIANT(
             Diagnostic,
             simple_lily_error,
-            self->scanner->source.file,
+            self->file,
             &self->current->location,
             NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
             NULL,
@@ -3036,7 +3043,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
                       NEW_VARIANT(
                         Diagnostic,
                         simple_lily_error,
-                        self->scanner->source.file,
+                        self->file,
                         &self->current->location,
                         NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                         NULL,
@@ -3194,7 +3201,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
                       NEW_VARIANT(
                         Diagnostic,
                         simple_lily_error,
-                        self->scanner->source.file,
+                        self->file,
                         &self->current->location,
                         NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                         NULL,
@@ -3254,7 +3261,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
                   NEW_VARIANT(
                     Diagnostic,
                     simple_lily_error,
-                    self->scanner->source.file,
+                    self->file,
                     &self->current->location,
                     NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                     NULL,
@@ -3311,7 +3318,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 NULL,
@@ -3352,7 +3359,7 @@ preparse_for_block__LilyPreparser(LilyPreparser *self, Vec *body)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 NULL,
@@ -3415,7 +3422,7 @@ preparse_while_block__LilyPreparser(LilyPreparser *self, Vec *body)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 NULL,
@@ -3498,7 +3505,7 @@ preparse_try_block__LilyPreparser(LilyPreparser *self, Vec *body)
                       NEW_VARIANT(
                         Diagnostic,
                         simple_lily_error,
-                        self->scanner->source.file,
+                        self->file,
                         &self->current->location,
                         NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                         NULL,
@@ -3539,7 +3546,7 @@ preparse_try_block__LilyPreparser(LilyPreparser *self, Vec *body)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 NULL,
@@ -3585,7 +3592,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 NULL,
@@ -3641,7 +3648,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
                           NEW_VARIANT(
                             Diagnostic,
                             simple_lily_error,
-                            self->scanner->source.file,
+                            self->file,
                             &self->current->location,
                             NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                             NULL,
@@ -3705,7 +3712,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
                 emit__Diagnostic(
                   NEW_VARIANT(Diagnostic,
                               simple_lily_error,
-                              self->scanner->source.file,
+                              self->file,
                               &self->current->location,
                               NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                               NULL,
@@ -3944,7 +3951,7 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
-                          self->scanner->source.file,
+                          self->file,
                           &self->current->location,
                           NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
                           NULL,
@@ -3971,7 +3978,7 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 NULL,
@@ -3999,7 +4006,7 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_TOKEN),
                 NULL,
@@ -4030,7 +4037,7 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 NULL,
@@ -4277,7 +4284,7 @@ exit_preparse_body_loop : {
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 init__Vec(
@@ -4297,7 +4304,7 @@ exit_preparse_body_loop : {
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError,
                     LILY_ERROR_KIND_UNEXPECTED_TOKEN_IN_FUNCTION_BODY),
@@ -4368,7 +4375,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
                       NEW_VARIANT(
                         Diagnostic,
                         simple_lily_error,
-                        self->scanner->source.file,
+                        self->file,
                         &self->current->location,
                         NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
                         NULL,
@@ -4395,7 +4402,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EXPECTED_FUN_IDENTIFIER),
                 NULL,
@@ -4419,7 +4426,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
                       NEW_VARIANT(
                         Diagnostic,
                         simple_lily_error,
-                        self->scanner->source.file,
+                        self->file,
                         &self->current->location,
                         NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
                         NULL,
@@ -4460,7 +4467,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
                       NEW_VARIANT(
                         Diagnostic,
                         simple_lily_error,
-                        self->scanner->source.file,
+                        self->file,
                         &self->current->location,
                         NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
                         NULL,
@@ -4488,6 +4495,9 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
     }
 
     // 5. Get when and req condition
+
+    // when [<expr>] + ..., req [<expr>] + ...
+
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_WHEN:
         preparse_when_expr : {
@@ -4601,7 +4611,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
                       NEW_VARIANT(
                         Diagnostic,
                         simple_lily_error,
-                        self->scanner->source.file,
+                        self->file,
                         &self->current->location,
                         NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_TOKEN),
                         NULL,
@@ -4676,28 +4686,61 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
 }
 
 LilyPreparserDecl *
-preparse_class__LilyPreparser(LilyPreparser *self)
+preparse_class__LilyPreparser(LilyPreparser *self,
+                              String *name,
+                              Vec *impls,
+                              Vec *inherits)
 {
 }
 
 LilyPreparserDecl *
-preparse_trait__LilyPreparser(LilyPreparser *self)
+preparse_trait__LilyPreparser(LilyPreparser *self, String *name, Vec *inherits)
 {
 }
 
 LilyPreparserDecl *
-preparse_record_object__LilyPreparser(LilyPreparser *self)
+preparse_record_object__LilyPreparser(LilyPreparser *self,
+                                      String *name,
+                                      Vec *impls)
 {
 }
 
 LilyPreparserDecl *
-preparse_enum_object__LilyPreparser(LilyPreparser *self)
+preparse_enum_object__LilyPreparser(LilyPreparser *self,
+                                    String *name,
+                                    Vec *impls)
 {
 }
 
 LilyPreparserDecl *
 preparse_object__LilyPreparser(LilyPreparser *self)
 {
+    next_token__LilyPreparser(self); // skip `object` keyword
+
+    // 1. Get object's name
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+
+            eat_and_next_token__LilyPreparser(self);
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                          NULL,
+                          NULL,
+                          from__String("expected name of object")),
+              &self->count_error);
+
+            name = from__String("__error__");
+    }
 }
 
 LilyPreparserDecl *
@@ -4718,7 +4761,7 @@ preparse_type__LilyPreparser(LilyPreparser *self)
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
-                          self->scanner->source.file,
+                          self->file,
                           &self->current->location,
                           NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
                           NULL,
@@ -4742,7 +4785,7 @@ preparse_type__LilyPreparser(LilyPreparser *self)
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
-                          self->scanner->source.file,
+                          self->file,
                           &self->current->location,
                           NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_TOKEN),
                           NULL,
@@ -4767,7 +4810,7 @@ preparse_type__LilyPreparser(LilyPreparser *self)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_BAD_KIND_OF_TYPE),
                 init__Vec(1,
@@ -4809,7 +4852,7 @@ preparse_record_field__LilyPreparser(LilyPreparser *self)
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
-                          self->scanner->source.file,
+                          self->file,
                           &self->current->location,
                           NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
                           init__Vec(1, from__String("expected field name")),
@@ -4853,7 +4896,7 @@ preparse_record_field__LilyPreparser(LilyPreparser *self)
                       NEW_VARIANT(
                         Diagnostic,
                         simple_lily_error,
-                        self->scanner->source.file,
+                        self->file,
                         &self->current->location,
                         NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                         init__Vec(1, from__String("expected `;`")),
@@ -4882,7 +4925,7 @@ preparse_record_field__LilyPreparser(LilyPreparser *self)
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
-                          self->scanner->source.file,
+                          self->file,
                           &self->current->location,
                           NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                           init__Vec(1, from__String("expected `;`")),
@@ -4937,7 +4980,7 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 init__Vec(
@@ -4985,7 +5028,7 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
                 init__Vec(1, from__String("expected variant identifier")),
@@ -5015,7 +5058,7 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 init__Vec(
@@ -5069,7 +5112,7 @@ preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 init__Vec(1,
@@ -5122,11 +5165,10 @@ preparse_alias__LilyPreparser(LilyPreparser *self, String *name)
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->scanner->source.file,
+                self->file,
                 &self->current->location,
                 NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
-                init__Vec(
-                  1, from__String("expected `;` to close alias")),
+                init__Vec(1, from__String("expected `;` to close alias")),
                 NULL,
                 NULL),
               &self->count_error);
@@ -5171,27 +5213,59 @@ preparse_when_condition__LilyPreparser(LilyPreparser *self)
     next_token__LilyPreparser(self);
 }
 
-CONSTRUCTOR(LilyPreparser,
-            LilyPreparser,
-            LilyScanner *scanner,
-            String *package_name)
+CONSTRUCTOR(LilyPreparserInfo, LilyPreparserInfo, String *package_name)
 {
-    return (LilyPreparser){ .scanner = scanner,
-                            .public_imports = NEW(Vec),
-                            .private_imports = NEW(Vec),
-                            .public_macros = NEW(Vec),
-                            .private_macros = NEW(Vec),
-                            .decls = NEW(Vec),
-                            .package = NEW(LilyPreparserPackage, package_name),
-                            .current = NULL,
-                            .position = 0,
-                            .count_error = 0 };
+    return (LilyPreparserInfo){
+        .public_imports = NEW(Vec),
+        .private_imports = NEW(Vec),
+        .public_macros = NEW(Vec),
+        .private_macros = NEW(Vec),
+        .decls = NEW(Vec),
+        .package = NEW(LilyPreparserPackage, package_name),
+    };
+}
+
+DESTRUCTOR(LilyPreparserInfo, const LilyPreparserInfo *self)
+{
+    FREE_BUFFER_ITEMS(self->public_imports->buffer,
+                      self->public_imports->len,
+                      LilyPreparserImport);
+    FREE(Vec, self->public_imports);
+
+    FREE_BUFFER_ITEMS(self->private_imports->buffer,
+                      self->private_imports->len,
+                      LilyPreparserImport);
+    FREE(Vec, self->private_imports);
+
+    FREE(Vec, self->public_macros);
+
+    FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, LilyPreparserDecl);
+    FREE(Vec, self->decls);
+
+    FREE(LilyPreparserPackage, self->package);
+}
+
+CONSTRUCTOR(LilyPreparser, LilyPreparser, const File *file, const Vec *tokens)
+{
+    return (
+      LilyPreparser){ .file = file,
+                      .tokens = tokens,
+                      // .scanner = scanner,
+                      // .public_imports = NEW(Vec),
+                      // .private_imports = NEW(Vec),
+                      // .public_macros = NEW(Vec),
+                      // .private_macros = NEW(Vec),
+                      // .decls = NEW(Vec),
+                      // .package = NEW(LilyPreparserPackage, package_name),
+                      .current = NULL,
+                      .position = 0,
+                      .count_error = 0 };
 }
 
 void
-run__LilyPreparser(LilyPreparser *self)
+run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 {
-    self->current = get__Vec(self->scanner->tokens, 0);
+    self->current = get__Vec(self->tokens, 0);
 
     bool package_is_preparse = false;
 
@@ -5199,34 +5273,48 @@ run__LilyPreparser(LilyPreparser *self)
         location = clone__Location(&self->current->location);
 
         switch (self->current->kind) {
+            /*
+                import <import_value> [as <as_value>]
+            */
             case LILY_TOKEN_KIND_KEYWORD_IMPORT: {
                 LilyPreparserImport *import =
                   preparse_import__LilyPreparser(self);
 
                 if (import) {
-                    push__Vec(self->private_imports, import);
+                    push__Vec(info->private_imports, import);
                 }
 
                 break;
             }
 
+            /*
+                [pub] macro <name>(<params>) = {
+                    <tokens>
+                };
+            */
             case LILY_TOKEN_KIND_KEYWORD_MACRO: {
                 LilyPreparserMacro *macro = preparse_macro__LilyPreparser(self);
 
                 if (macro) {
-                    push__Vec(self->private_macros, macro);
+                    push__Vec(info->private_macros, macro);
                 }
 
                 break;
             }
 
+            /*
+                package [name] =
+                    [pub] .<name>,
+                    ...
+                end
+            */
             case LILY_TOKEN_KIND_KEYWORD_PACKAGE: {
                 if (package_is_preparse) {
                     emit__Diagnostic(
                       NEW_VARIANT(
                         Diagnostic,
                         simple_lily_error,
-                        self->scanner->source.file,
+                        self->file,
                         &self->current->location,
                         NEW(LilyError,
                             LILY_ERROR_KIND_DUPLICATE_PACKAGE_DECLARATION),
@@ -5238,7 +5326,7 @@ run__LilyPreparser(LilyPreparser *self)
                     goto exit_preparser;
                 }
 
-                if (!preparse_package__LilyPreparser(self)) {
+                if (!preparse_package__LilyPreparser(self, info)) {
                     goto exit_preparser;
                 } else {
                     package_is_preparse = true;
@@ -5258,7 +5346,7 @@ run__LilyPreparser(LilyPreparser *self)
                           preparse_import__LilyPreparser(self);
 
                         if (import) {
-                            push__Vec(self->public_imports, import);
+                            push__Vec(info->public_imports, import);
                         }
 
                         break;
@@ -5269,7 +5357,7 @@ run__LilyPreparser(LilyPreparser *self)
                           preparse_fun__LilyPreparser(self);
 
                         if (fun) {
-                            push__Vec(self->decls, fun);
+                            push__Vec(info->decls, fun);
                         }
 
                         break;
@@ -5280,7 +5368,7 @@ run__LilyPreparser(LilyPreparser *self)
                           preparse_module__LilyPreparser(self);
 
                         if (module) {
-                            push__Vec(self->decls, module);
+                            push__Vec(info->decls, module);
                         }
 
                         break;
@@ -5291,7 +5379,7 @@ run__LilyPreparser(LilyPreparser *self)
                           preparse_type__LilyPreparser(self);
 
                         if (type) {
-                            push__Vec(self->decls, type);
+                            push__Vec(info->decls, type);
                         }
 
                         break;
@@ -5302,7 +5390,7 @@ run__LilyPreparser(LilyPreparser *self)
                           preparse_macro__LilyPreparser(self);
 
                         if (macro) {
-                            push__Vec(self->public_macros, macro);
+                            push__Vec(info->public_macros, macro);
                         }
 
                         break;
@@ -5313,7 +5401,7 @@ run__LilyPreparser(LilyPreparser *self)
                           preparse_object__LilyPreparser(self);
 
                         if (object) {
-                            push__Vec(self->decls, object);
+                            push__Vec(info->decls, object);
                         }
 
                         break;
@@ -5328,53 +5416,94 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
 
+            /*
+                [pub] module <path> =
+                    <body>
+                end
+            */
             case LILY_TOKEN_KIND_KEYWORD_MODULE: {
                 LilyPreparserDecl *module =
                   preparse_module__LilyPreparser(self);
 
                 if (module) {
-                    push__Vec(self->decls, module);
+                    push__Vec(info->decls, module);
                 }
 
                 break;
             }
 
+            /*
+                test <test_name> =
+                    <body>
+                end
+            */
             case LILY_TOKEN_KIND_KEYWORD_TEST:
                 preparse_test__LilyPreparser(self);
 
                 break;
 
+            /*
+                fun[@<object_name>] <name>(<params>) [when [<cond>] + ..., req
+               [<cond>] + ...] <return_type> = <body> end
+            */
             case LILY_TOKEN_KIND_KEYWORD_FUN: {
                 LilyPreparserDecl *fun = preparse_fun__LilyPreparser(self);
 
                 if (fun) {
-                    push__Vec(self->decls, fun);
+                    push__Vec(info->decls, fun);
                 }
 
                 break;
             }
 
+            /*
+                object <name>[[<generic_params>]] class =
+                    <body>
+                end
+
+                object <name>[[<generic_params>]] record =
+                    <body>
+                end
+
+                object <name>[[<generic_params>]] enum =
+                    <body>
+                end
+            */
             case LILY_TOKEN_KIND_KEYWORD_object: {
                 LilyPreparserDecl *object =
                   preparse_object__LilyPreparser(self);
 
                 if (object) {
-                    push__Vec(self->decls, object);
+                    push__Vec(info->decls, object);
                 }
 
                 break;
             }
 
+            /*
+                type <name>[[<generic_params>]] alias = <dt>;
+
+                type <name>[[<generic_params>]] enum =
+                    <body>
+                end
+
+                type <name>[[<generic_params>]] record =
+                    <body>
+                end
+            */
             case LILY_TOKEN_KIND_KEYWORD_TYPE: {
                 LilyPreparserDecl *type = preparse_type__LilyPreparser(self);
 
                 if (type) {
-                    push__Vec(self->decls, type);
+                    push__Vec(info->decls, type);
                 }
 
                 break;
             }
 
+            /*
+                <name>!(<args>)
+            */
             case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
@@ -5395,11 +5524,18 @@ run__LilyPreparser(LilyPreparser *self)
 
                 break;
 
+            /*
+                #[<proc>]
+            */
             case LILY_TOKEN_KIND_HASHTAG:
                 preparse_preprocess__LilyPreparser(self);
 
                 break;
 
+            /*
+                when <cond>:
+                <fun>
+            */
             case LILY_TOKEN_KIND_KEYWORD_WHEN:
                 preparse_when_condition__LilyPreparser(self);
 
@@ -5409,7 +5545,7 @@ run__LilyPreparser(LilyPreparser *self)
                           preparse_fun__LilyPreparser(self);
 
                         if (fun) {
-                            push__Vec(self->decls, fun);
+                            push__Vec(info->decls, fun);
                         }
 
                         break;
@@ -5426,7 +5562,7 @@ run__LilyPreparser(LilyPreparser *self)
                                   preparse_fun__LilyPreparser(self);
 
                                 if (fun) {
-                                    push__Vec(self->decls, fun);
+                                    push__Vec(info->decls, fun);
                                 }
 
                                 break;
@@ -5442,7 +5578,7 @@ run__LilyPreparser(LilyPreparser *self)
                           NEW_VARIANT(
                             Diagnostic,
                             simple_lily_error,
-                            self->scanner->source.file,
+                            self->file,
                             &self->current->location,
                             NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                             NULL,
@@ -5466,7 +5602,7 @@ run__LilyPreparser(LilyPreparser *self)
                   NEW_VARIANT(
                     Diagnostic,
                     simple_lily_error,
-                    self->scanner->source.file,
+                    self->file,
                     &self->current->location,
                     NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                     NULL,
@@ -5488,66 +5624,42 @@ exit_preparser : {
 }
 
 #ifdef DEBUG_PREPARSER
-    printf("\n====Preparser(%s)====\n", self->scanner->source.file->name);
+    printf("\n====Preparser(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < self->scanner->tokens->len; i++) {
-        CALL_DEBUG(LilyToken, get__Vec(self->scanner->tokens, i));
+    for (Usize i = 0; i < self->tokens->len; i++) {
+        CALL_DEBUG(LilyToken, get__Vec(self->tokens, i));
     }
 
-    printf("\n====Preparser public imports(%s)====\n",
-           self->scanner->source.file->name);
+    printf("\n====Preparser public imports(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < self->public_imports->len; i++) {
-        CALL_DEBUG(LilyPreparserImport, get__Vec(self->public_imports, i));
+    for (Usize i = 0; i < info->public_imports->len; i++) {
+        CALL_DEBUG(LilyPreparserImport, get__Vec(info->public_imports, i));
     }
 
-    printf("\n====Preparser private imports(%s)====\n",
-           self->scanner->source.file->name);
+    printf("\n====Preparser private imports(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < self->private_imports->len; i++) {
-        CALL_DEBUG(LilyPreparserImport, get__Vec(self->private_imports, i));
+    for (Usize i = 0; i < info->private_imports->len; i++) {
+        CALL_DEBUG(LilyPreparserImport, get__Vec(info->private_imports, i));
     }
 
-    printf("\n====Preparser public macros(%s)====\n",
-           self->scanner->source.file->name);
+    printf("\n====Preparser public macros(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < self->public_macros->len; i++) {
-        CALL_DEBUG(LilyPreparserMacro, get__Vec(self->public_macros, i));
+    for (Usize i = 0; i < info->public_macros->len; i++) {
+        CALL_DEBUG(LilyPreparserMacro, get__Vec(info->public_macros, i));
     }
 
-    printf("\n====Preparser private macros(%s)====\n",
-           self->scanner->source.file->name);
+    printf("\n====Preparser private macros(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < self->private_macros->len; i++) {
-        CALL_DEBUG(LilyPreparserMacro, get__Vec(self->private_macros, i));
+    for (Usize i = 0; i < info->private_macros->len; i++) {
+        CALL_DEBUG(LilyPreparserMacro, get__Vec(info->private_macros, i));
     }
 
-    printf("\n====Package(%s)====\n", self->scanner->source.file->name);
+    printf("\n====Package(%s)====\n", self->file->name);
 
-    CALL_DEBUG(LilyPreparserPackage, self->package);
+    CALL_DEBUG(LilyPreparserPackage, info->package);
 #endif
 
     if (self->count_error > 0) {
         exit(1);
     }
-}
-
-DESTRUCTOR(LilyPreparser, const LilyPreparser *self)
-{
-    FREE_BUFFER_ITEMS(self->public_imports->buffer,
-                      self->public_imports->len,
-                      LilyPreparserImport);
-    FREE(Vec, self->public_imports);
-
-    FREE_BUFFER_ITEMS(self->private_imports->buffer,
-                      self->private_imports->len,
-                      LilyPreparserImport);
-    FREE(Vec, self->private_imports);
-
-    FREE(Vec, self->public_macros);
-
-    FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, LilyPreparserDecl);
-    FREE(Vec, self->decls);
-
-    FREE(LilyPreparserPackage, self->package);
 }

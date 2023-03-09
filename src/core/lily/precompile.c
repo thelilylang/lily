@@ -416,7 +416,7 @@ precompile_import_access__LilyPrecompile(LilyPrecompile *self,
                   NEW_VARIANT(
                     Diagnostic,
                     simple_lily_error,
-                    self->preparser->scanner->source.file,
+                    self->file,
                     location,
                     NEW(LilyError,
                         LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE),
@@ -452,7 +452,7 @@ precompile_import_access__LilyPrecompile(LilyPrecompile *self,
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->preparser->scanner->source.file,
+                self->file,
                 location,
                 NEW(LilyError,
                     LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE),
@@ -485,7 +485,7 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
-                          self->preparser->scanner->source.file,
+                          self->file,
                           &import->location,
                           NEW(LilyError, LILY_ERROR_KIND_BAD_IMPORT_VALUE),
                           NULL,
@@ -521,7 +521,7 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->preparser->scanner->source.file,
+                self->file,
                 &import->location,
                 NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_IMPORT_AT_FLAG),
                 init__Vec(1,
@@ -541,7 +541,7 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
                   NEW_VARIANT(
                     Diagnostic,
                     simple_lily_error,
-                    self->preparser->scanner->source.file,
+                    self->file,
                     &import->location,
                     NEW(LilyError,
                         LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE),
@@ -569,7 +569,7 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
                   NEW_VARIANT(
                     Diagnostic,
                     simple_lily_error,
-                    self->preparser->scanner->source.file,
+                    self->file,
                     &import->location,
                     NEW(LilyError,
                         LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE),
@@ -648,7 +648,7 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                            self->default_path);
 
     run__LilyScanner(&res->scanner, dump_config->dump_scanner);
-    run__LilyPreparser(&res->preparser);
+    run__LilyPreparser(&res->preparser, &res->preparser_info);
     run__LilyPrecompile(&res->precompile, dump_config, root_package);
 
     FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
@@ -664,18 +664,18 @@ run__LilyPrecompile(LilyPrecompile *self,
                     LilyPackage *root_package)
 {
     // 1. Precompile all imports
-    for (Usize i = 0; i < self->preparser->public_imports->len; i++) {
+    for (Usize i = 0; i < self->info->public_imports->len; i++) {
         LilyImport *import = precompile_import__LilyPrecompile(
-          self, get__Vec(self->preparser->public_imports, i));
+          self, get__Vec(self->info->public_imports, i));
 
         if (import) {
             push__Vec(self->package->public_imports, import);
         }
     }
 
-    for (Usize i = 0; i < self->preparser->private_imports->len; i++) {
+    for (Usize i = 0; i < self->info->private_imports->len; i++) {
         LilyImport *import = precompile_import__LilyPrecompile(
-          self, get__Vec(self->preparser->private_imports, i));
+          self, get__Vec(self->info->private_imports, i));
 
         if (import) {
             push__Vec(self->package->private_imports, import);
@@ -684,12 +684,12 @@ run__LilyPrecompile(LilyPrecompile *self,
 
     // 2. Add the public macros obtained by the preparer to the public macros of
     // root_package.
-    while (self->preparser->public_macros->len > 0) {
+    while (self->info->public_macros->len > 0) {
         push__Vec(root_package->public_macros,
-                  remove__Vec(self->preparser->public_macros, 0));
+                  remove__Vec(self->info->public_macros, 0));
     }
 
-    self->package->private_macros = self->preparser->private_macros;
+    self->package->private_macros = self->info->private_macros;
 
     // 3. Check name conflict for macros.
     for (Usize i = 0; i < root_package->public_macros->len; i++) {
@@ -775,7 +775,7 @@ run__LilyPrecompile(LilyPrecompile *self,
     for (Usize i = 0; i < self->package->private_macros->len; i++) {
         for (Usize j = 0; j < root_package->public_macros->len; j++) {
             if (!strcmp(CAST(LilyPreparserMacro *,
-                             get__Vec(self->preparser->private_macros, i))
+                             get__Vec(self->info->private_macros, i))
                           ->name->buffer,
                         CAST(LilyPreparserMacro *,
                              get__Vec(root_package->public_macros, j))
@@ -783,7 +783,7 @@ run__LilyPrecompile(LilyPrecompile *self,
                 i <= j) {
                 const Location *location_i =
                   &CAST(LilyPreparserMacro *,
-                        get__Vec(self->preparser->private_macros, i))
+                        get__Vec(self->info->private_macros, i))
                      ->location;
                 const Location *location_j =
                   &CAST(LilyPreparserMacro *,
@@ -815,28 +815,28 @@ run__LilyPrecompile(LilyPrecompile *self,
     }
 
     // 4. Precompile all packages
-    for (Usize i = 0; i < self->preparser->package->sub_packages->len; i++) {
+    for (Usize i = 0; i < self->info->package->sub_packages->len; i++) {
         push__Vec(self->package->sub_packages,
                   precompile_sub_package__LilyPrecompile(
                     self,
-                    get__Vec(self->preparser->package->sub_packages, i),
+                    get__Vec(self->info->package->sub_packages, i),
                     dump_config,
                     root_package));
     }
 
 #ifdef DEBUG_PRECOMPILE
     printf("\n====Precompile(%s)====\n",
-           self->preparser->scanner->source.file->name);
+           self->file->name);
 
     printf("\n====Precompile public imports(%s)====\n",
-           self->preparser->scanner->source.file->name);
+           self->file->name);
 
     for (Usize i = 0; i < self->package->public_imports->len; i++) {
         CALL_DEBUG(LilyImport, get__Vec(self->package->public_imports, i));
     }
 
     printf("\n====Precompile private imports(%s)====\n",
-           self->preparser->scanner->source.file->name);
+           self->file->name);
 
     for (Usize i = 0; i < self->package->private_imports->len; i++) {
         CALL_DEBUG(LilyImport, get__Vec(self->package->private_imports, i));
@@ -844,7 +844,7 @@ run__LilyPrecompile(LilyPrecompile *self,
 
     if (self->package->public_macros) {
         printf("\n====Precompile public macros(%s)====\n",
-               self->preparser->scanner->source.file->name);
+               self->file->name);
 
         for (Usize i = 0; i < self->package->public_macros->len; i++) {
             CALL_DEBUG(LilyPreparserMacro,
@@ -853,7 +853,7 @@ run__LilyPrecompile(LilyPrecompile *self,
     }
 
     printf("\n====Precompile private macros(%s)====\n",
-           self->preparser->scanner->source.file->name);
+           self->file->name);
 
     for (Usize i = 0; i < self->package->private_macros->len; i++) {
         CALL_DEBUG(LilyPreparserMacro,
