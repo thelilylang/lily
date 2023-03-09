@@ -92,7 +92,7 @@ from__String(char *buffer);
  * @brief Get item from String.
  */
 char
-get__String(String *self, Usize index);
+get__String(const String *self, Usize index);
 
 /**
  *

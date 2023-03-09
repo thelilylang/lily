@@ -100,7 +100,7 @@ from__String(char *buffer)
 }
 
 char
-get__String(String *self, Usize index)
+get__String(const String *self, Usize index)
 {
     ASSERT(index < self->len);
 
