@@ -163,7 +163,6 @@ enum LilyTokenKind
     LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64,
     LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8,
     LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE,
-    LILY_TOKEN_KIND_MACRO_EXPAND,
     LILY_TOKEN_KIND_MINUS_EQ,
     LILY_TOKEN_KIND_MINUS_MINUS_EQ,
     LILY_TOKEN_KIND_MINUS_MINUS,
@@ -229,7 +228,6 @@ typedef struct LilyToken
         Uint64 literal_suffix_uint64;
         Uint8 literal_suffix_uint8;
         Usize literal_suffix_usize;
-        Vec *macro_expand; // Vec<LilyToken*(&)>*
     };
 } LilyToken;
 
@@ -513,16 +511,6 @@ VARIANT_CONSTRUCTOR(LilyToken *,
 
 /**
  *
- * @brief Construct LilyToken type (LILY_TOKEN_KIND_MACRO_EXPAND).
- */
-VARIANT_CONSTRUCTOR(LilyToken *,
-                    LilyToken,
-                    macro_expand,
-                    Location location,
-                    Vec *macro_expand);
-
-/**
- *
  * @brief Convert LilyToken in String (without Location).
  * @note This function is only used to show the token in the parser.
  */
@@ -558,6 +546,13 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self);
 void
 IMPL_FOR_DEBUG(debug, LilyToken, const LilyToken *self);
 #endif
+
+/**
+ *
+ * @brief Clone LilyToken.
+ */
+LilyToken *
+clone__LilyToken(const LilyToken *self);
 
 /**
  *

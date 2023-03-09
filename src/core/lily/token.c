@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef ENV_DEBUG
 #include <base/format.h>
@@ -69,9 +70,6 @@ static inline VARIANT_DESTRUCTOR(LilyToken, literal_int_16, LilyToken *self);
 
 // Free LilyToken type (LILY_TOKEN_KIND_LITERAL_STRING).
 static inline VARIANT_DESTRUCTOR(LilyToken, literal_string, LilyToken *self);
-
-// Free LilyToken type (LILY_TOKEN_KIND_MACRO_EXPAND).
-static inline VARIANT_DESTRUCTOR(LilyToken, macro_expand, LilyToken *self);
 
 CONSTRUCTOR(LilyToken *, LilyToken, enum LilyTokenKind kind, Location location)
 {
@@ -490,21 +488,6 @@ VARIANT_CONSTRUCTOR(LilyToken *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(LilyToken *,
-                    LilyToken,
-                    macro_expand,
-                    Location location,
-                    Vec *macro_expand)
-{
-    LilyToken *self = lily_malloc(sizeof(LilyToken));
-
-    self->kind = LILY_TOKEN_KIND_MACRO_EXPAND;
-    self->location = location;
-    self->macro_expand = macro_expand;
-
-    return self;
-}
-
 String *
 to_string__LilyToken(LilyToken *self)
 {
@@ -765,24 +748,6 @@ to_string__LilyToken(LilyToken *self)
             return format__String("{d}U8", self->literal_suffix_uint8);
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
             return format__String("{d}Uz", self->literal_suffix_usize);
-        case LILY_TOKEN_KIND_MACRO_EXPAND: {
-            String *res = from__String("{ ");
-
-            for (Usize i = 0; i < self->macro_expand->len; i++) {
-                String *s =
-                  to_string__LilyToken(get__Vec(self->macro_expand, i));
-
-                APPEND_AND_FREE(res, s);
-
-                if (i != self->macro_expand->len - 1) {
-                    push_str__String(res, ", ");
-                }
-            }
-
-            push_str__String(res, " }");
-
-            return res;
-        }
         case LILY_TOKEN_KIND_MINUS_EQ:
             return from__String("-=");
         case LILY_TOKEN_KIND_MINUS_MINUS_EQ:
@@ -1103,8 +1068,6 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8";
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
             return "LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE";
-        case LILY_TOKEN_KIND_MACRO_EXPAND:
-            return "LILY_TOKEN_KIND_MACRO_EXPAND";
         case LILY_TOKEN_KIND_MINUS_EQ:
             return "LILY_TOKEN_KIND_MINUS_EQ";
         case LILY_TOKEN_KIND_MINUS_MINUS_EQ:
@@ -1359,28 +1322,6 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_suffix_usize);
 
-        case LILY_TOKEN_KIND_MACRO_EXPAND: {
-            String *s = from__String("{ ");
-
-            for (Usize i = 0; i < self->macro_expand->len; i++) {
-                char *token_s = CALL_DEBUG_IMPL(
-                  to_string, LilyToken, get__Vec(self->macro_expand, i));
-
-                push_str__String(s, token_s);
-                lily_free(token_s);
-
-                if (i != self->macro_expand->len - 1) {
-                    push_str__String(s, ", ");
-                }
-            }
-
-            return format(
-              "LilyToken{{ kind = {s}, location = {sa}, macro_expand = {Sr} }",
-              CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
-              CALL_DEBUG_IMPL(to_string, Location, &self->location),
-              s);
-        }
-
         default:
             return format(
               "LilyToken{{ kind = {s}, location = {sa} }",
@@ -1395,6 +1336,153 @@ IMPL_FOR_DEBUG(debug, LilyToken, const LilyToken *self)
     PRINTLN("{sa}", CALL_DEBUG_IMPL(to_string, LilyToken, self));
 }
 #endif
+
+LilyToken *
+clone__LilyToken(const LilyToken *self)
+{
+    switch (self->kind) {
+#ifdef ENV_DEBUG
+        case LILY_TOKEN_KIND_COMMENT_DEBUG:
+            return NEW_VARIANT(LilyToken,
+                               comment_debug,
+                               self->location,
+                               clone__String(self->comment_debug));
+#endif
+        case LILY_TOKEN_KIND_COMMENT_DOC:
+            return NEW_VARIANT(LilyToken,
+                               comment_doc,
+                               self->location,
+                               clone__String(self->comment_doc));
+        case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
+            return NEW_VARIANT(LilyToken,
+                               identifier_dollar,
+                               self->location,
+                               clone__String(self->identifier_dollar));
+        case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
+            return NEW_VARIANT(LilyToken,
+                               identifier_macro,
+                               self->location,
+                               clone__String(self->identifier_macro));
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            return NEW_VARIANT(LilyToken,
+                               identifier_normal,
+                               self->location,
+                               clone__String(self->identifier_normal));
+        case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
+            return NEW_VARIANT(LilyToken,
+                               identifier_operator,
+                               self->location,
+                               clone__String(self->identifier_operator));
+        case LILY_TOKEN_KIND_LITERAL_BIT_CHAR:
+            return NEW_VARIANT(LilyToken,
+                               literal_bit_char,
+                               self->location,
+                               self->literal_bit_char);
+        case LILY_TOKEN_KIND_LITERAL_BIT_STRING: {
+            Usize n = strlen((char*)self->literal_bit_string) + 1;
+            Uint8 *clone = lily_malloc(n);
+
+            memcpy(clone, self->literal_bit_string, n);
+
+            return NEW_VARIANT(LilyToken,
+                               literal_bit_string,
+                               self->location,
+                               self->literal_bit_string);
+        }
+        case LILY_TOKEN_KIND_LITERAL_CHAR:
+            return NEW_VARIANT(
+              LilyToken, literal_char, self->location, self->literal_char);
+        case LILY_TOKEN_KIND_LITERAL_FLOAT:
+            return NEW_VARIANT(LilyToken,
+                               literal_float,
+                               self->location,
+                               clone__String(self->literal_float));
+        case LILY_TOKEN_KIND_LITERAL_INT_2:
+            return NEW_VARIANT(LilyToken,
+                               literal_int_2,
+                               self->location,
+                               clone__String(self->literal_int_2));
+        case LILY_TOKEN_KIND_LITERAL_INT_8:
+            return NEW_VARIANT(LilyToken,
+                               literal_int_8,
+                               self->location,
+                               clone__String(self->literal_int_8));
+        case LILY_TOKEN_KIND_LITERAL_INT_16:
+            return NEW_VARIANT(LilyToken,
+                               literal_int_16,
+                               self->location,
+                               clone__String(self->literal_int_16));
+        case LILY_TOKEN_KIND_LITERAL_STRING:
+            return NEW_VARIANT(LilyToken,
+                               literal_string,
+                               self->location,
+                               clone__String(self->literal_string));
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_float32,
+                               self->location,
+                               self->literal_suffix_float32);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_float32,
+                               self->location,
+                               self->literal_suffix_float32);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_int16,
+                               self->location,
+                               self->literal_suffix_int16);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_int32,
+                               self->location,
+                               self->literal_suffix_int32);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_int64,
+                               self->location,
+                               self->literal_suffix_int64);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_int8,
+                               self->location,
+                               self->literal_suffix_int8);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_isize,
+                               self->location,
+                               self->literal_suffix_isize);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_uint16,
+                               self->location,
+                               self->literal_suffix_uint16);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_uint32,
+                               self->location,
+                               self->literal_suffix_uint32);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_uint64,
+                               self->location,
+                               self->literal_suffix_uint64);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_uint8,
+                               self->location,
+                               self->literal_suffix_uint8);
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
+            return NEW_VARIANT(LilyToken,
+                               literal_suffix_usize,
+                               self->location,
+                               self->literal_suffix_usize);
+        default:
+            return NEW(LilyToken, self->kind, self->location);
+    }
+
+
+}
 
 VARIANT_DESTRUCTOR(LilyToken, comment_doc, LilyToken *self)
 {
@@ -1502,9 +1590,6 @@ DESTRUCTOR(LilyToken, LilyToken *self)
             break;
         case LILY_TOKEN_KIND_LITERAL_STRING:
             FREE_VARIANT(LilyToken, literal_string, self);
-            break;
-        case LILY_TOKEN_KIND_MACRO_EXPAND:
-            FREE_VARIANT(LilyToken, macro_expand, self);
             break;
         default:
             lily_free(self);
