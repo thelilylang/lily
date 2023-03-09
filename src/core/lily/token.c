@@ -1379,7 +1379,7 @@ clone__LilyToken(const LilyToken *self)
                                self->location,
                                self->literal_bit_char);
         case LILY_TOKEN_KIND_LITERAL_BIT_STRING: {
-            Usize n = strlen((char*)self->literal_bit_string) + 1;
+            Usize n = strlen((char *)self->literal_bit_string) + 1;
             Uint8 *clone = lily_malloc(n);
 
             memcpy(clone, self->literal_bit_string, n);
@@ -1480,8 +1480,6 @@ clone__LilyToken(const LilyToken *self)
         default:
             return NEW(LilyToken, self->kind, self->location);
     }
-
-
 }
 
 VARIANT_DESTRUCTOR(LilyToken, comment_doc, LilyToken *self)
