@@ -493,15 +493,8 @@ DESTRUCTOR(LilyPreparserInfo, const LilyPreparserInfo *self);
 
 typedef struct LilyPreparser
 {
-    // LilyScanner *scanner;
     const File *file;
     const Vec *tokens; // Vec<LilyToken*>*(&)
-    // Vec *public_imports;  // Vec<LilyPreparserImport*>*
-    // Vec *private_imports; // Vec<LilyPreparserImport*>*
-    // Vec *public_macros;   // Vec<LilyPreparserMacro*>*
-    // Vec *private_macros;  // Vec<LilyPreparserMacro*>*
-    // Vec *decls;           // Vec<LilyPreparserDecl*>*
-    // LilyPreparserPackage *package;
     LilyToken *current;
     Usize position;
     Usize count_error;
