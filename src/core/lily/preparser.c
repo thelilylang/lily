@@ -5247,12 +5247,11 @@ DESTRUCTOR(LilyPreparserInfo, const LilyPreparserInfo *self)
 
 CONSTRUCTOR(LilyPreparser, LilyPreparser, const File *file, const Vec *tokens)
 {
-    return (
-      LilyPreparser){ .file = file,
-                      .tokens = tokens,
-                      .current = NULL,
-                      .position = 0,
-                      .count_error = 0 };
+    return (LilyPreparser){ .file = file,
+                            .tokens = tokens,
+                            .current = NULL,
+                            .position = 0,
+                            .count_error = 0 };
 }
 
 void

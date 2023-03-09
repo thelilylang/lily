@@ -190,7 +190,7 @@ typedef struct LilyPrecompile
  */
 inline CONSTRUCTOR(LilyPrecompile,
                    LilyPrecompile,
-                  LilyPreparserInfo *info,
+                   LilyPreparserInfo *info,
                    const File *file,
                    LilyPackage *package,
                    const char *default_path)

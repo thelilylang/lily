@@ -75,8 +75,8 @@ CONSTRUCTOR(LilyPackage *,
     self->preparser_info = NEW(LilyPreparserInfo, self->name);
     self->visibility = visibility;
     self->status = status;
-    self->precompile =
-      NEW(LilyPrecompile, &self->preparser_info, &self->file, self, default_path);
+    self->precompile = NEW(
+      LilyPrecompile, &self->preparser_info, &self->file, self, default_path);
 
     lily_free(file_ext);
 

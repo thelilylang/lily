@@ -825,26 +825,22 @@ run__LilyPrecompile(LilyPrecompile *self,
     }
 
 #ifdef DEBUG_PRECOMPILE
-    printf("\n====Precompile(%s)====\n",
-           self->file->name);
+    printf("\n====Precompile(%s)====\n", self->file->name);
 
-    printf("\n====Precompile public imports(%s)====\n",
-           self->file->name);
+    printf("\n====Precompile public imports(%s)====\n", self->file->name);
 
     for (Usize i = 0; i < self->package->public_imports->len; i++) {
         CALL_DEBUG(LilyImport, get__Vec(self->package->public_imports, i));
     }
 
-    printf("\n====Precompile private imports(%s)====\n",
-           self->file->name);
+    printf("\n====Precompile private imports(%s)====\n", self->file->name);
 
     for (Usize i = 0; i < self->package->private_imports->len; i++) {
         CALL_DEBUG(LilyImport, get__Vec(self->package->private_imports, i));
     }
 
     if (self->package->public_macros) {
-        printf("\n====Precompile public macros(%s)====\n",
-               self->file->name);
+        printf("\n====Precompile public macros(%s)====\n", self->file->name);
 
         for (Usize i = 0; i < self->package->public_macros->len; i++) {
             CALL_DEBUG(LilyPreparserMacro,
@@ -852,8 +848,7 @@ run__LilyPrecompile(LilyPrecompile *self,
         }
     }
 
-    printf("\n====Precompile private macros(%s)====\n",
-           self->file->name);
+    printf("\n====Precompile private macros(%s)====\n", self->file->name);
 
     for (Usize i = 0; i < self->package->private_macros->len; i++) {
         CALL_DEBUG(LilyPreparserMacro,
