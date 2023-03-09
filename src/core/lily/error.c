@@ -109,6 +109,10 @@ to_msg__LilyError(const LilyError *self)
             return "unexpected token in function body";
         case LILY_ERROR_KIND_BAD_KIND_OF_TYPE:
             return "bad kind of type";
+        case LILY_ERROR_KIND_IMPL_IS_ALREADY_DEFINED:
+            return "impl is already defined";
+        case LILY_ERROR_KIND_INHERIT_IS_ALREADY_DEFINED:
+            return "inherit is already defined";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -192,6 +196,10 @@ to_code__LilyError(const LilyError *self)
             return "0036";
         case LILY_ERROR_KIND_BAD_KIND_OF_TYPE:
             return "0037";
+        case LILY_ERROR_KIND_IMPL_IS_ALREADY_DEFINED:
+            return "0038";
+        case LILY_ERROR_KIND_INHERIT_IS_ALREADY_DEFINED:
+            return "0039";
         default:
             UNREACHABLE("unknown variant");
     }
