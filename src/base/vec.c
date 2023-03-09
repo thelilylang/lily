@@ -71,7 +71,7 @@ from__Vec(void **buffer, Usize len)
 }
 
 void *
-get__Vec(Vec *self, Usize index)
+get__Vec(const Vec *self, Usize index)
 {
     ASSERT(index < self->len);
 

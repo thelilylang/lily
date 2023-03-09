@@ -65,7 +65,7 @@ from__Vec(void **buffer, Usize len);
  * @brief Get item from Vec.
  */
 void *
-get__Vec(Vec *self, Usize index);
+get__Vec(const Vec *self, Usize index);
 
 /**
  *
