@@ -4790,6 +4790,27 @@ preparse_object__LilyPreparser(LilyPreparser *self)
                           &self->count_error);                                 \
                                                                                \
                         /* Clean up allocations */                             \
+                        for (Usize i = 0; i < impls->len; i++) {               \
+                            Vec *item = get__Vec(impls, i);                    \
+                                                                               \
+                            FREE_BUFFER_ITEMS(                                 \
+                              item->buffer, item->len, LilyToken);             \
+                            FREE(Vec, item);                                   \
+                        }                                                      \
+                                                                               \
+                        FREE(Vec, impls);                                      \
+                                                                               \
+                        if (inherits) {                                        \
+                            for (Usize i = 0; i < inherits->len; i++) {        \
+                                Vec *item = get__Vec(inherits, i);             \
+                                                                               \
+                                FREE_BUFFER_ITEMS(                             \
+                                  item->buffer, item->len, LilyToken);         \
+                                FREE(Vec, item);                               \
+                            }                                                  \
+                                                                               \
+                            FREE(Vec, inherits);                               \
+                        }                                                      \
                                                                                \
                         return NULL;                                           \
                     case LILY_TOKEN_KIND_KEYWORD_INHERIT:                      \
@@ -4810,6 +4831,28 @@ preparse_object__LilyPreparser(LilyPreparser *self)
                           &self->count_error);                                 \
                                                                                \
                         /* Clean up allocations */                             \
+                                                                               \
+                        for (Usize i = 0; i < inherits->len; i++) {            \
+                            Vec *item = get__Vec(inherits, i);                 \
+                                                                               \
+                            FREE_BUFFER_ITEMS(                                 \
+                              item->buffer, item->len, LilyToken);             \
+                            FREE(Vec, item);                                   \
+                        }                                                      \
+                                                                               \
+                        FREE(Vec, inherits);                                   \
+                                                                               \
+                        if (impls) {                                           \
+                            for (Usize i = 0; i < impls->len; i++) {           \
+                                Vec *item = get__Vec(impls, i);                \
+                                                                               \
+                                FREE_BUFFER_ITEMS(                             \
+                                  item->buffer, item->len, LilyToken);         \
+                                FREE(Vec, item);                               \
+                            }                                                  \
+                                                                               \
+                            FREE(Vec, impls);                                  \
+                        }                                                      \
                                                                                \
                         return NULL;                                           \
                     default:                                                   \
@@ -4911,10 +4954,8 @@ preparse_object__LilyPreparser(LilyPreparser *self)
               &self->count_error);                                             \
                                                                                \
             FREE(String, current_s);                                           \
-            \ 
-            /* Clean up allocations */                                         \
                                                                                \
-              return NULL;                                                     \
+            return NULL;                                                       \
         }                                                                      \
     }                                                                          \
     break;
