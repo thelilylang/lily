@@ -26,6 +26,7 @@
 
 #include <cli/config/compile.h>
 
+#include <core/lily/lily.h>
 #include <core/lily/package.h>
 
 #include <stdlib.h>
@@ -60,5 +61,8 @@ run__Compile(const CompileConfig *config)
                                             default_path);
 
     lily_free(default_path);
+
+#if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILE)
     FREE(LilyPackage, pkg);
+#endif
 }

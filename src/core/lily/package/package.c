@@ -56,29 +56,28 @@ CONSTRUCTOR(LilyPackage *,
     LilyPackage *self = lily_malloc(sizeof(LilyPackage));
 
     self->name = name;
- 
 
     self->private_macros = NULL;
 
-    #ifndef RUN_UNTIL_PREPARSER
-        if (status == LILY_PACKAGE_STATUS_MAIN) {
-            self->public_macros = NEW(Vec);
-        } else {
-            self->public_macros = NULL;
-        }
+#ifndef RUN_UNTIL_PREPARSER
+    if (status == LILY_PACKAGE_STATUS_MAIN) {
+        self->public_macros = NEW(Vec);
+    } else {
+        self->public_macros = NULL;
+    }
 
-        self->public_imports = NEW(Vec);
-        self->private_imports = NEW(Vec);
-        self->sub_packages = NEW(Vec);
-        self->package_dependencies = NEW(Vec);
-        self->lib_dependencies = NEW(Vec);
-    #else
-        self->public_imports = NULL;
-        self->private_imports = NULL;
-        self->sub_packages = NULL;
-        self->package_dependencies = NULL;
-        self->lib_dependencies = NULL;
-    #endif
+    self->public_imports = NEW(Vec);
+    self->private_imports = NEW(Vec);
+    self->sub_packages = NEW(Vec);
+    self->package_dependencies = NEW(Vec);
+    self->lib_dependencies = NEW(Vec);
+#else
+    self->public_imports = NULL;
+    self->private_imports = NULL;
+    self->sub_packages = NULL;
+    self->package_dependencies = NULL;
+    self->lib_dependencies = NULL;
+#endif
 
     self->file = NEW(File, filename, content);
     self->scanner =
@@ -128,7 +127,7 @@ build__LilyPackage(const CompileConfig *config,
     FREE(File, &self->file);
     lily_free(self);
 
-    exit(0);
+    return NULL;
 #endif
 
     if (self->preparser_info.package->name) {
