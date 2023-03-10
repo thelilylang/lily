@@ -294,6 +294,49 @@ static inline CONSTRUCTOR(LilyPreparserFun,
 // Free LilyPreparserFun type.
 static DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self);
 
+// Construct LilyPreparserAttribut type.
+static inline CONSTRUCTOR(LilyPreparserAttribut,
+                          LilyPreparserAttribut,
+                          String *name,
+                          Vec *data_type,
+                          Vec *default_expr,
+                          bool is_get,
+                          bool is_set,
+                          bool is_pub,
+                          bool is_static);
+
+// Free LilyPreparserAttribut type.
+static DESTRUCTOR(LilyPreparserAttribut, const LilyPreparserAttribut *self);
+
+// Construct LilyPreparserClassBodyItem type
+// (LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUT).
+static VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
+                           LilyPreparserClassBodyItem,
+                           attribut,
+                           LilyPreparserAttribut attribut);
+
+// Construct LilyPreparserClassBodyItem type
+// (LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD)
+static VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
+                           LilyPreparserClassBodyItem,
+                           method,
+                           LilyPreparserMethod method);
+
+// Free LilyPreparserClassBodyItem type
+// (LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUT).
+static VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
+                          attribut,
+                          LilyPreparserClassBodyItem *self);
+
+// Free LilyPreparserClassBodyItem type
+// (LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD).
+static VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
+                          method,
+                          LilyPreparserClassBodyItem *self);
+
+// Free LilyPreparserClassBodyItem type.
+static DESTRUCTOR(LilyPreparserClassBodyItem, LilyPreparserClassBodyItem *self);
+
 // Construct LilyPreparserClass type.
 static inline CONSTRUCTOR(LilyPreparserClass,
                           LilyPreparserClass,
@@ -1630,6 +1673,97 @@ DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
     FREE(Vec, self->when);
 }
 
+CONSTRUCTOR(LilyPreparserAttribut,
+            LilyPreparserAttribut,
+            String *name,
+            Vec *data_type,
+            Vec *default_expr,
+            bool is_get,
+            bool is_set,
+            bool is_pub,
+            bool is_static)
+{
+    return (LilyPreparserAttribut){ .name = name,
+                                    .data_type = data_type,
+                                    .default_expr = default_expr,
+                                    .is_get = is_get,
+                                    .is_set = is_set,
+                                    .is_pub = is_pub,
+                                    .is_static = is_static };
+}
+
+DESTRUCTOR(LilyPreparserAttribut, const LilyPreparserAttribut *self)
+{
+#ifdef RUN_UNTIL_PREPARSER
+    FREE(String, self->name);
+#endif
+
+    FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
+    FREE(Vec, self->data_type);
+
+    FREE_BUFFER_ITEMS(
+      self->default_expr->buffer, self->default_expr->len, LilyToken);
+    FREE(Vec, self->default_expr);
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
+                    LilyPreparserClassBodyItem,
+                    attribut,
+                    LilyPreparserAttribut attribut)
+{
+    LilyPreparserClassBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserClassBodyItem));
+
+    self->kind = LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUT;
+    self->attribut = attribut;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
+                    LilyPreparserClassBodyItem,
+                    method,
+                    LilyPreparserMethod method)
+{
+    LilyPreparserClassBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserClassBodyItem));
+
+    self->kind = LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD;
+    self->method = method;
+
+    return self;
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
+                   attribut,
+                   LilyPreparserClassBodyItem *self)
+{
+    FREE(LilyPreparserAttribut, &self->attribut);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
+                   method,
+                   LilyPreparserClassBodyItem *self)
+{
+    FREE(LilyPreparserFun, &self->method);
+    lily_free(self);
+}
+
+DESTRUCTOR(LilyPreparserClassBodyItem, LilyPreparserClassBodyItem *self)
+{
+    switch (self->kind) {
+        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUT:
+            FREE_VARIANT(LilyPreparserClassBodyItem, attribut, self);
+            break;
+        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD:
+            FREE_VARIANT(LilyPreparserClassBodyItem, method, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 CONSTRUCTOR(LilyPreparserClass,
             LilyPreparserClass,
             String *name,
@@ -1679,12 +1813,8 @@ DESTRUCTOR(LilyPreparserClass, const LilyPreparserClass *self)
 
     FREE(Vec, self->implements);
 
-    for (Usize i = 0; i < self->body->len; i++) {
-        Vec *item = get__Vec(self->body, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
-    }
+    FREE_BUFFER_ITEMS(
+      self->body->buffer, self->body->len, LilyPreparserClassBodyItem);
     FREE(Vec, self->body);
 }
 

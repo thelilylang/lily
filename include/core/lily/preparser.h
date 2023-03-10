@@ -309,13 +309,42 @@ typedef struct LilyPreparserFun
     bool when_is_comptime;
 } LilyPreparserFun;
 
+enum LilyPreparserClassBodyItemKind
+{
+    LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUT,
+    LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD,
+};
+
+typedef LilyPreparserFun LilyPreparserMethod;
+
+typedef struct LilyPreparserAttribut
+{
+    String *name;
+    Vec *data_type;    // Vec<LilyToken*>*
+    Vec *default_expr; // Vec<LilyToken*>*
+    bool is_get;
+    bool is_set;
+    bool is_pub;
+    bool is_static;
+} LilyPreparserAttribut;
+
+typedef struct LilyPreparserClassBodyItem
+{
+    enum LilyPreparserClassBodyItemKind kind;
+    union
+    {
+        LilyPreparserAttribut attribut;
+        LilyPreparserMethod method;
+    };
+} LilyPreparserClassBodyItem;
+
 typedef struct LilyPreparserClass
 {
     String *name;
     Vec *generic_params; // Vec<Vec<LilyToken*>*>*
     Vec *inherits;       // Vec<Vec<LilyToken*>*>*
     Vec *implements;     // Vec<Vec<LilyToken*>*>*
-    Vec *body;           // Vec<Vec<LilyToken*>*>*
+    Vec *body;           // Vec<LilyPreparserClassBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserClass;
 
