@@ -279,9 +279,10 @@ enum LilyPreparserFunBodyItemKind
 typedef struct LilyPreparserFunBodyItem
 {
     enum LilyPreparserFunBodyItemKind kind;
+    Location location;
     union
     {
-        LilyPreparserFunBodyItemExprs expr;
+        LilyPreparserFunBodyItemExprs exprs;
         LilyPreparserFunBodyItemStmtBlock stmt_block;
         LilyPreparserFunBodyItemStmtFor stmt_for;
         LilyPreparserFunBodyItemStmtIf stmt_if;
