@@ -297,7 +297,7 @@ typedef struct LilyPreparserFun
 {
     String *name;
     String *object_impl;   // String*?
-    Vec *generic_params;   // Vec<Vec<LilyToken*>*>*
+    Vec *generic_params;   // Vec<Vec<LilyToken*>*>*?
     Vec *params;           // Vec<Vec<LilyToken*>*>*
     Vec *return_data_type; // Vec<LilyToken*>*
     Vec *body;             // Vec<LilyToken*>*
@@ -318,23 +318,24 @@ enum LilyPreparserClassBodyItemKind
 
 typedef LilyPreparserFun LilyPreparserMethod;
 
-typedef struct LilyPreparserAttribut
+typedef struct LilyPreparserAttribute
 {
     String *name;
     Vec *data_type;    // Vec<LilyToken*>*
-    Vec *default_expr; // Vec<LilyToken*>*
+    Vec *default_expr; // Vec<LilyToken*>*?
     bool is_get;
     bool is_set;
     bool is_pub;
     bool is_static;
-} LilyPreparserAttribut;
+} LilyPreparserAttribute;
 
 typedef struct LilyPreparserClassBodyItem
 {
     enum LilyPreparserClassBodyItemKind kind;
+    Location location;
     union
     {
-        LilyPreparserAttribut attribut;
+        LilyPreparserAttribute attribute;
         LilyPreparserMethod method;
     };
 } LilyPreparserClassBodyItem;
@@ -342,7 +343,7 @@ typedef struct LilyPreparserClassBodyItem
 typedef struct LilyPreparserClass
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*
+    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
     Vec *inherits;       // Vec<Vec<LilyToken*>*>*
     Vec *implements;     // Vec<Vec<LilyToken*>*>*
     Vec *body;           // Vec<LilyPreparserClassBodyItem*>*
@@ -352,7 +353,7 @@ typedef struct LilyPreparserClass
 typedef struct LilyPreparserTrait
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*
+    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
     Vec *inherits;       // Vec<Vec<LilyToken*>*>*
     Vec *body;           // Vec<LilyToken*>*
     enum LilyVisibility visibility;
@@ -370,7 +371,7 @@ typedef struct LilyPreparserRecordField
 typedef struct LilyPreparserRecordObject
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*
+    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
     Vec *implements;     // Vec<Vec<LilyToken*>*>*
     Vec *fields;         // Vec<LilyPreparserRecordField*>*
     Vec *body;           // Vec<Vec<LilyToken*>*>*
@@ -387,7 +388,7 @@ typedef struct LilyPreparserEnumVariant
 typedef struct LilyPreparserEnumObject
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*
+    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
     Vec *implements;     // Vec<Vec<LilyToken*>*>*
     Vec *body;           // Vec<Vec<LilyToken*>*>*
     enum LilyVisibility visibility;
