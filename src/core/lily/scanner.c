@@ -2049,11 +2049,11 @@ get_token__LilyScanner(LilyScanner *self)
         // number
         case IS_ZERO:
             if (c1 == (char *)'x' || c1 == (char *)'o' || c1 == (char *)'b' ||
-                c1 == (char *)'.') {
+                c1 == (char *)'.' || !(c1 >= (char*)'0' && c1 <= (char*)'9')) {
                 return get_num__LilyScanner(self);
             }
 
-            while (self->source.cursor.current != '0') {
+            while (self->source.cursor.current == '0') {
                 next_char__Source(&self->source);
             }
 
