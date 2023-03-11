@@ -1702,14 +1702,16 @@ DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
 		FREE(Vec, self->generic_params);
 	}
 
-    for (Usize i = 0; i < self->params->len; i++) {
-        Vec *item = get__Vec(self->params, i);
+	if (self->params) {
+		for (Usize i = 0; i < self->params->len; i++) {
+			Vec *item = get__Vec(self->params, i);
 
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
-    }
+			FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+			FREE(Vec, item);
+		}
 
-    FREE(Vec, self->params);
+		FREE(Vec, self->params);
+	}
 
     FREE_BUFFER_ITEMS(
       self->return_data_type->buffer, self->return_data_type->len, LilyToken);
