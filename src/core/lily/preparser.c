@@ -5110,6 +5110,8 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
                            req_is_comptime));
 }
 
+#include <base/print.h>
+
 LilyPreparserClassBodyItem *
 preparse_attribute__LilyPreparser(LilyPreparser *self,
                                   bool is_pub,
@@ -5186,6 +5188,8 @@ preparse_attribute__LilyPreparser(LilyPreparser *self,
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_COLON_EQ:
+			next_token__LilyPreparser(self);
+
             default_expr = NEW(Vec);
 
             while (self->current->kind != LILY_TOKEN_KIND_COLON_COLON &&
@@ -5194,6 +5198,14 @@ preparse_attribute__LilyPreparser(LilyPreparser *self,
                 push__Vec(default_expr, clone__LilyToken(self->current));
                 next_token__LilyPreparser(self);
             }
+
+			switch (self->current->kind) {
+				case LILY_TOKEN_KIND_EOF:
+					// ERROR: eof is not expected.
+					break;
+				default:
+					break;
+			}
 
             break;
         default:
