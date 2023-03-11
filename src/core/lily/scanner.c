@@ -635,6 +635,8 @@ get_keyword(char *id)
         return LILY_TOKEN_KIND_KEYWORD_FOR;
     else if (!strcmp(id, "fun"))
         return LILY_TOKEN_KIND_KEYWORD_FUN;
+    else if (!strcmp(id, "get"))
+        return LILY_TOKEN_KIND_KEYWORD_GET;
     else if (!strcmp(id, "global"))
         return LILY_TOKEN_KIND_KEYWORD_GLOBAL;
     else if (!strcmp(id, "if"))
@@ -691,6 +693,8 @@ get_keyword(char *id)
         return LILY_TOKEN_KIND_KEYWORD_self;
     else if (!strcmp(id, "Self"))
         return LILY_TOKEN_KIND_KEYWORD_SELF;
+    else if (!strcmp(id, "set"))
+        return LILY_TOKEN_KIND_KEYWORD_SET;
     else if (!strcmp(id, "test"))
         return LILY_TOKEN_KIND_KEYWORD_TEST;
     else if (!strcmp(id, "trace"))
@@ -808,6 +812,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_KEYWORD_FALSE:
         case LILY_TOKEN_KIND_KEYWORD_FOR:
         case LILY_TOKEN_KIND_KEYWORD_FUN:
+        case LILY_TOKEN_KIND_KEYWORD_GET:
         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
         case LILY_TOKEN_KIND_KEYWORD_IF:
         case LILY_TOKEN_KIND_KEYWORD_IMPL:
@@ -836,6 +841,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_KEYWORD_RETURN:
         case LILY_TOKEN_KIND_KEYWORD_self:
         case LILY_TOKEN_KIND_KEYWORD_SELF:
+        case LILY_TOKEN_KIND_KEYWORD_SET:
         case LILY_TOKEN_KIND_KEYWORD_TEST:
         case LILY_TOKEN_KIND_KEYWORD_TRACE:
         case LILY_TOKEN_KIND_KEYWORD_TRAIT:

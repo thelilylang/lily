@@ -610,6 +610,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String("for");
         case LILY_TOKEN_KIND_KEYWORD_FUN:
             return from__String("fun");
+		case LILY_TOKEN_KIND_KEYWORD_GET:
+			return from__String("get");
         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
             return from__String("global");
         case LILY_TOKEN_KIND_KEYWORD_IF:
@@ -666,6 +668,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String("self");
         case LILY_TOKEN_KIND_KEYWORD_SELF:
             return from__String("Self");
+		case LILY_TOKEN_KIND_KEYWORD_SET:
+			return from__String("set");
         case LILY_TOKEN_KIND_KEYWORD_TEST:
             return from__String("test");
         case LILY_TOKEN_KIND_KEYWORD_TRACE:
@@ -930,6 +934,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_KEYWORD_FOR";
         case LILY_TOKEN_KIND_KEYWORD_FUN:
             return "LILY_TOKEN_KIND_KEYWORD_FUN";
+		case LILY_TOKEN_KIND_KEYWORD_GET:
+			return "LILY_TOKEN_KIND_KEYWORD_GET";
         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
             return "LILY_TOKEN_KIND_KEYWORD_GLOBAL";
         case LILY_TOKEN_KIND_KEYWORD_IF:
@@ -986,6 +992,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_KEYWORD_self";
         case LILY_TOKEN_KIND_KEYWORD_SELF:
             return "LILY_TOKEN_KIND_KEYWORD_SELF";
+		case LILY_TOKEN_KIND_KEYWORD_SET:
+			return "LILY_TOKEN_KIND_KEYWORD_SET";
         case LILY_TOKEN_KIND_KEYWORD_TEST:
             return "LILY_TOKEN_KIND_KEYWORD_TEST";
         case LILY_TOKEN_KIND_KEYWORD_TRACE:
