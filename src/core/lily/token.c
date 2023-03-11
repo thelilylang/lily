@@ -1415,6 +1415,11 @@ clone__LilyToken(const LilyToken *self)
                                literal_int_8,
                                self->location,
                                clone__String(self->literal_int_8));
+		case LILY_TOKEN_KIND_LITERAL_INT_10:
+            return NEW_VARIANT(LilyToken,
+                               literal_int_10,
+                               self->location,
+                               clone__String(self->literal_int_10));
         case LILY_TOKEN_KIND_LITERAL_INT_16:
             return NEW_VARIANT(LilyToken,
                                literal_int_16,
