@@ -119,6 +119,8 @@ to_msg__LilyError(const LilyError *self)
             return "impl is not expected";
         case LILY_ERROR_KIND_INHERIT_IS_NOT_EXPECTED:
             return "inherit is not expected";
+        case LILY_ERROR_KIND_EXPECTED_DATA_TYPE:
+            return "expected data type";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -209,9 +211,11 @@ to_code__LilyError(const LilyError *self)
         case LILY_ERROR_KIND_BAD_KIND_OF_OBJECT:
             return "0040";
         case LILY_ERROR_KIND_IMPL_IS_NOT_EXPECTED:
-            return "impl is not expected";
+            return "0041";
         case LILY_ERROR_KIND_INHERIT_IS_NOT_EXPECTED:
-            return "inherit is not expected";
+            return "0042";
+        case LILY_ERROR_KIND_EXPECTED_DATA_TYPE:
+            return "0043";
         default:
             UNREACHABLE("unknown variant");
     }
