@@ -91,7 +91,8 @@ object Person class =
 end
 ```
 
-You can add an instruction to generate a `Get` or `Set` or both for this property.
+You can add an instruction to generate a `get` or `set` or both for this property.
+
 ```lily
 @name Str := "Hello" :: get, set;
 ```
