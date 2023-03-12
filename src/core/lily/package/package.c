@@ -104,19 +104,12 @@ build__LilyPackage(const CompileConfig *config,
                    enum LilyPackageStatus status,
                    const char *default_path)
 {
-    LilyPackage *self = status == LILY_PACKAGE_STATUS_MAIN
-                          ? NEW(LilyPackage,
-                                NULL,
-                                visibility,
-                                (char *)config->filename,
-                                status,
-                                default_path)
-                          : NEW(LilyPackage,
-                                NULL,
-                                visibility,
-                                (char *)config->filename,
-                                status,
-                                default_path);
+    LilyPackage *self = NEW(LilyPackage,
+                            NULL,
+                            visibility,
+                            (char *)config->filename,
+                            status,
+                            default_path);
 
     run__LilyScanner(&self->scanner, config->dump_scanner);
     run__LilyPreparser(&self->preparser, &self->preparser_info);

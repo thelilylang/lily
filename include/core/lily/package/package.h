@@ -98,6 +98,7 @@ CONSTRUCTOR(LilyPackage *,
 /**
  *
  * @brief Build all packages.
+ * @return LilyPackage*?
  */
 LilyPackage *
 build__LilyPackage(const CompileConfig *config,
@@ -110,6 +111,7 @@ build__LilyPackage(const CompileConfig *config,
  *
  * @brief Compile package.
  * @note Begin by the main package.
+ * @return LilyPackage*?
  */
 LilyPackage *
 compile__LilyPackage(const CompileConfig *config,
