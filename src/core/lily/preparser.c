@@ -384,13 +384,55 @@ static CONSTRUCTOR(LilyPreparserRecordField *,
 // Free LilyPreparserRecordField type.
 static DESTRUCTOR(LilyPreparserRecordField, LilyPreparserRecordField *self);
 
+// Construct LilyPreparserRecordObjectItem type
+// (LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_CONSTANT).
+static VARIANT_CONSTRUCTOR(LilyPreparserRecordObjectItem *,
+                           LilyPreparserRecordObjectItem,
+                           constant,
+                           LilyPreparserConstant constant);
+
+// Construct LilyPreparserRecordObjectItem type
+// (LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_FIELD).
+static VARIANT_CONSTRUCTOR(LilyPreparserRecordObjectItem *,
+                           LilyPreparserRecordObjectItem,
+                           field,
+                           LilyPreparserRecordField field);
+
+// Construct LilyPreparserRecordObjectItem type
+// (LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_METHOD).
+static VARIANT_CONSTRUCTOR(LilyPreparserRecordObjectItem *,
+                           LilyPreparserRecordObjectItem,
+                           method,
+                           LilyPreparserMethod method);
+
+// Free LilyPreparserRecordObjectItem type
+// (LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_CONSTANT).
+static VARIANT_DESTRUCTOR(LilyPreparserRecordObjectItem,
+                          constant,
+                          LilyPreparserRecordObjectItem *self);
+
+// Free LilyPreparserRecordObjectItem type
+// (LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_FIELD).
+static VARIANT_DESTRUCTOR(LilyPreparserRecordObjectItem,
+                          field,
+                          LilyPreparserRecordObjectItem *self);
+
+// Free LilyPreparserRecordObjectItem type
+// (LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_METHOD).
+static VARIANT_DESTRUCTOR(LilyPreparserRecordObjectItem,
+                          method,
+                          LilyPreparserRecordObjectItem *self);
+
+// Free LilyPreparserRecordObjectItem type.
+static DESTRUCTOR(LilyPreparserRecordObjectItem,
+                  LilyPreparserRecordObjectItem *self);
+
 // Construct LilyPreparserRecordObject type.
 static inline CONSTRUCTOR(LilyPreparserRecordObject,
                           LilyPreparserRecordObject,
                           String *name,
                           Vec *generic_params,
                           Vec *implements,
-                          Vec *fields,
                           Vec *body,
                           enum LilyVisibility visibility);
 
@@ -1691,27 +1733,27 @@ DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
     }
 #endif
 
-	if (self->generic_params) {
-		for (Usize i = 0; i < self->generic_params->len; i++) {
-			Vec *item = get__Vec(self->generic_params, i);
+    if (self->generic_params) {
+        for (Usize i = 0; i < self->generic_params->len; i++) {
+            Vec *item = get__Vec(self->generic_params, i);
 
-			FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-			FREE(Vec, item);
-		}
+            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+            FREE(Vec, item);
+        }
 
-		FREE(Vec, self->generic_params);
-	}
+        FREE(Vec, self->generic_params);
+    }
 
-	if (self->params) {
-		for (Usize i = 0; i < self->params->len; i++) {
-			Vec *item = get__Vec(self->params, i);
+    if (self->params) {
+        for (Usize i = 0; i < self->params->len; i++) {
+            Vec *item = get__Vec(self->params, i);
 
-			FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-			FREE(Vec, item);
-		}
+            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+            FREE(Vec, item);
+        }
 
-		FREE(Vec, self->params);
-	}
+        FREE(Vec, self->params);
+    }
 
     FREE_BUFFER_ITEMS(
       self->return_data_type->buffer, self->return_data_type->len, LilyToken);
@@ -1752,11 +1794,11 @@ DESTRUCTOR(LilyPreparserAttribute, const LilyPreparserAttribute *self)
     FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
     FREE(Vec, self->data_type);
 
-	if (self->default_expr) {
-		FREE_BUFFER_ITEMS(
-		  self->default_expr->buffer, self->default_expr->len, LilyToken);
-		FREE(Vec, self->default_expr);
-	}
+    if (self->default_expr) {
+        FREE_BUFFER_ITEMS(
+          self->default_expr->buffer, self->default_expr->len, LilyToken);
+        FREE(Vec, self->default_expr);
+    }
 }
 
 VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
@@ -1843,16 +1885,16 @@ DESTRUCTOR(LilyPreparserClass, const LilyPreparserClass *self)
     FREE(String, self->name);
 #endif
 
-	if (self->generic_params) {
-		for (Usize i = 0; i < self->generic_params->len; i++) {
-			Vec *item = get__Vec(self->generic_params, i);
+    if (self->generic_params) {
+        for (Usize i = 0; i < self->generic_params->len; i++) {
+            Vec *item = get__Vec(self->generic_params, i);
 
-			FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-			FREE(Vec, item);
-		}
+            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+            FREE(Vec, item);
+        }
 
-		FREE(Vec, self->generic_params);
-	}
+        FREE(Vec, self->generic_params);
+    }
 
     for (Usize i = 0; i < self->inherits->len; i++) {
         Vec *item = get__Vec(self->inherits, i);
@@ -1898,16 +1940,16 @@ DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self)
     FREE(String, self->name);
 #endif
 
-	if (self->generic_params) {
-		for (Usize i = 0; i < self->generic_params->len; i++) {
-			Vec *item = get__Vec(self->generic_params, i);
+    if (self->generic_params) {
+        for (Usize i = 0; i < self->generic_params->len; i++) {
+            Vec *item = get__Vec(self->generic_params, i);
 
-			FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-			FREE(Vec, item);
-		}
+            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+            FREE(Vec, item);
+        }
 
-		FREE(Vec, self->generic_params);
-	}
+        FREE(Vec, self->generic_params);
+    }
 
     for (Usize i = 0; i < self->inherits->len; i++) {
         Vec *item = get__Vec(self->inherits, i);
@@ -1936,7 +1978,6 @@ CONSTRUCTOR(LilyPreparserRecordField *,
     self->name = name;
     self->data_type = data_type;
     self->optional_expr = optional_expr;
-    self->location = location;
     self->visibility = visibility;
 
     return self;
@@ -1960,19 +2001,129 @@ DESTRUCTOR(LilyPreparserRecordField, LilyPreparserRecordField *self)
     lily_free(self);
 }
 
+VARIANT_CONSTRUCTOR(LilyPreparserRecordObjectItem *,
+                    LilyPreparserRecordObjectItem,
+                    constant,
+                    LilyPreparserConstant constant)
+{
+    LilyPreparserRecordObjectItem *self =
+      lily_malloc(sizeof(LilyPreparserRecordObjectItem));
+
+    self->kind = LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_CONSTANT;
+    self->constant = constant;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserRecordObjectItem *,
+                    LilyPreparserRecordObjectItem,
+                    field,
+                    LilyPreparserRecordField field)
+{
+    LilyPreparserRecordObjectItem *self =
+      lily_malloc(sizeof(LilyPreparserRecordObjectItem));
+
+    self->kind = LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_FIELD;
+    self->field = field;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserRecordObjectItem *,
+                    LilyPreparserRecordObjectItem,
+                    method,
+                    LilyPreparserMethod method)
+{
+    LilyPreparserRecordObjectItem *self =
+      lily_malloc(sizeof(LilyPreparserRecordObjectItem));
+
+    self->kind = LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_METHOD;
+    self->method = method;
+
+    return self;
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserRecordObjectItem,
+                   constant,
+                   LilyPreparserRecordObjectItem *self)
+{
+    switch (self->constant.kind) {
+        case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE:
+            FREE_BUFFER_ITEMS(self->constant.multiple->buffer,
+                              self->constant.multiple->len,
+                              LilyPreparserConstantInfo);
+            FREE(Vec, self->constant.multiple);
+
+            break;
+        case LILY_PREPARSER_CONSTANT_KIND_SIMPLE:
+            FREE(LilyPreparserConstantInfo, self->constant.simple);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserRecordObjectItem,
+                   field,
+                   LilyPreparserRecordObjectItem *self)
+{
+#ifdef RUN_UNTIL_PREPARSER
+    FREE(String, self->field.name);
+#endif
+
+    FREE_BUFFER_ITEMS(
+      self->field.data_type->buffer, self->field.data_type->len, LilyToken);
+    FREE(Vec, self->field.data_type);
+
+    if (self->field.optional_expr) {
+        FREE_BUFFER_ITEMS(self->field.optional_expr->buffer,
+                          self->field.optional_expr->len,
+                          LilyToken);
+        FREE(Vec, self->field.optional_expr);
+    }
+
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserRecordObjectItem,
+                   method,
+                   LilyPreparserRecordObjectItem *self)
+{
+    FREE(LilyPreparserFun, &self->method);
+    lily_free(self);
+}
+
+DESTRUCTOR(LilyPreparserRecordObjectItem, LilyPreparserRecordObjectItem *self)
+{
+    switch (self->kind) {
+        case LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_CONSTANT:
+            FREE_VARIANT(LilyPreparserRecordObjectItem, constant, self);
+            break;
+        case LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_FIELD:
+            FREE_VARIANT(LilyPreparserRecordObjectItem, field, self);
+            break;
+        case LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_METHOD:
+            FREE_VARIANT(LilyPreparserRecordObjectItem, method, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 CONSTRUCTOR(LilyPreparserRecordObject,
             LilyPreparserRecordObject,
             String *name,
             Vec *generic_params,
             Vec *implements,
-            Vec *fields,
             Vec *body,
             enum LilyVisibility visibility)
 {
     return (LilyPreparserRecordObject){ .name = name,
                                         .generic_params = generic_params,
                                         .implements = implements,
-                                        .fields = fields,
                                         .body = body,
                                         .visibility = visibility };
 }
@@ -1983,16 +2134,16 @@ DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self)
     FREE(String, self->name);
 #endif
 
-	if (self->generic_params) {
-		for (Usize i = 0; i < self->generic_params->len; i++) {
-			Vec *item = get__Vec(self->generic_params, i);
+    if (self->generic_params) {
+        for (Usize i = 0; i < self->generic_params->len; i++) {
+            Vec *item = get__Vec(self->generic_params, i);
 
-			FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-			FREE(Vec, item);
-		}
+            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+            FREE(Vec, item);
+        }
 
-		FREE(Vec, self->generic_params);
-	}
+        FREE(Vec, self->generic_params);
+    }
 
     for (Usize i = 0; i < self->implements->len; i++) {
         Vec *item = get__Vec(self->implements, i);
@@ -2004,15 +2155,7 @@ DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self)
     FREE(Vec, self->implements);
 
     FREE_BUFFER_ITEMS(
-      self->fields->buffer, self->fields->len, LilyPreparserRecordField);
-    FREE(Vec, self->fields);
-
-    for (Usize i = 0; i < self->body->len; i++) {
-        Vec *item = get__Vec(self->body, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
-    }
+      self->body->buffer, self->body->len, LilyPreparserRecordObjectItem);
     FREE(Vec, self->body);
 }
 
@@ -2064,16 +2207,16 @@ DESTRUCTOR(LilyPreparserEnumObject, const LilyPreparserEnumObject *self)
     FREE(String, self->name);
 #endif
 
-	if (self->generic_params) {
-		for (Usize i = 0; i < self->generic_params->len; i++) {
-			Vec *item = get__Vec(self->generic_params, i);
+    if (self->generic_params) {
+        for (Usize i = 0; i < self->generic_params->len; i++) {
+            Vec *item = get__Vec(self->generic_params, i);
 
-			FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-			FREE(Vec, item);
-		}
+            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
+            FREE(Vec, item);
+        }
 
-		FREE(Vec, self->generic_params);
-	}
+        FREE(Vec, self->generic_params);
+    }
 
     for (Usize i = 0; i < self->implements->len; i++) {
         Vec *item = get__Vec(self->implements, i);
@@ -5190,7 +5333,7 @@ preparse_attribute__LilyPreparser(LilyPreparser *self,
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_COLON_EQ:
-			next_token__LilyPreparser(self);
+            next_token__LilyPreparser(self);
 
             default_expr = NEW(Vec);
 
@@ -5201,13 +5344,13 @@ preparse_attribute__LilyPreparser(LilyPreparser *self,
                 next_token__LilyPreparser(self);
             }
 
-			switch (self->current->kind) {
-				case LILY_TOKEN_KIND_EOF:
-					// ERROR: eof is not expected.
-					break;
-				default:
-					break;
-			}
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_EOF:
+                    // ERROR: eof is not expected.
+                    break;
+                default:
+                    break;
+            }
 
             break;
         default:
@@ -5279,7 +5422,7 @@ return_attribute : {
             end__Location(&location,
                           self->current->location.end_line,
                           self->current->location.end_column);
-			next_token__LilyPreparser(self);
+            next_token__LilyPreparser(self);
 
             break;
         default:
@@ -5305,15 +5448,18 @@ LilyPreparserClassBodyItem *
 preparse_method__LilyPreparser(LilyPreparser *self)
 {
     LilyPreparserDecl *decl = preparse_fun__LilyPreparser(self);
-    LilyPreparserClassBodyItem *method = NEW_VARIANT(
-      LilyPreparserClassBodyItem, method, decl->fun, decl->location);
 
-    lily_free(decl);
+    if (decl) {
+        LilyPreparserClassBodyItem *method = NEW_VARIANT(
+          LilyPreparserClassBodyItem, method, decl->fun, decl->location);
 
-    return method;
+        lily_free(decl);
+
+        return method;
+    }
+
+    return NULL;
 }
-
-#include <base/print.h>
 
 LilyPreparserDecl *
 preparse_class__LilyPreparser(LilyPreparser *self,
@@ -5364,20 +5510,22 @@ preparse_class__LilyPreparser(LilyPreparser *self,
         }
     }
 
-	switch (self->current->kind) {
-		case LILY_TOKEN_KIND_KEYWORD_END:
-			next_token__LilyPreparser(self);
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_END:
+            next_token__LilyPreparser(self);
 
-			break;
-		
-		case LILY_TOKEN_KIND_EOF:
-			break;
-		
-		default:
-			UNREACHABLE("this way is possible");
-	}
+            break;
 
-	end__Location(&location_decl, self->current->location.end_line, self->current->location.end_column);
+        case LILY_TOKEN_KIND_EOF:
+            break;
+
+        default:
+            UNREACHABLE("this way is possible");
+    }
+
+    end__Location(&location_decl,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
 
     return NEW_VARIANT(LilyPreparserDecl,
                        object,
@@ -5407,6 +5555,79 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                                       Vec *impls,
                                       Vec *generic_params)
 {
+    Location location = location_decl;
+    Vec *body = NEW(Vec); // Vec<LilyPreparserRecordObjectItem*>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_KEYWORD_VAL: {
+                // TODO: push constant to body.
+                break;
+            }
+
+            case LILY_TOKEN_KIND_KEYWORD_FUN: {
+                LilyPreparserMethod *method =
+                  preparse_method__LilyPreparser(self);
+
+                if (method) {
+                    push__Vec(body,
+                              NEW_VARIANT(LilyPreparserRecordObjectItem,
+                                          method,
+                                          *method));
+                    lily_free(method);
+                } else {
+                    goto clean_up;
+                }
+
+                break;
+            }
+
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+                LilyPreparserRecordField *field =
+                  preparse_record_field__LilyPreparser(self);
+
+                if (field) {
+                    push__Vec(body,
+                              NEW_VARIANT(
+                                LilyPreparserRecordObjectItem, field, *field));
+                    lily_free(field);
+                } else {
+                clean_up : {
+                    // Clean up allocations
+
+                    FREE_BUFFER_ITEMS(
+                      body->buffer, body->len, LilyPreparserRecordObjectItem);
+                    FREE(Vec, body);
+
+                    return NULL;
+                }
+                }
+
+                break;
+            }
+
+            default:
+                // ERROR: unexpected token.
+                break;
+        }
+    }
+
+    end__Location(&location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
+
+    return NEW_VARIANT(LilyPreparserDecl,
+                       object,
+                       location,
+                       NEW_VARIANT(LilyPreparserObject,
+                                   record,
+                                   NEW(LilyPreparserRecordObject,
+                                       name,
+                                       generic_params,
+                                       impls,
+                                       body,
+                                       visibility_decl)));
 }
 
 LilyPreparserDecl *

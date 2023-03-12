@@ -310,6 +310,30 @@ typedef struct LilyPreparserFun
     bool when_is_comptime;
 } LilyPreparserFun;
 
+typedef struct LilyPreparserConstantInfo
+{
+    String *name;
+    Vec *expr;      // Vec<LilyToken*>*
+    Vec *data_type; // Vec<LilyToken*>*
+    enum LilyVisibility visibility;
+} LilyPreparserConstantInfo;
+
+enum LilyPreparserConstantKind
+{
+    LILY_PREPARSER_CONSTANT_KIND_SIMPLE,
+    LILY_PREPARSER_CONSTANT_KIND_MULTIPLE
+};
+
+typedef struct LilyPreparserConstant
+{
+    enum LilyPreparserConstantKind kind;
+    union
+    {
+        LilyPreparserConstantInfo *simple;
+        Vec *multiple; // Vec<LilyPreparserConstantInfo*>*
+    };
+} LilyPreparserConstant;
+
 enum LilyPreparserClassBodyItemKind
 {
     LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUT,
@@ -364,17 +388,33 @@ typedef struct LilyPreparserRecordField
     String *name;
     Vec *data_type;     // Vec<LilyToken*>*
     Vec *optional_expr; // Vec<LilyToken*>*?
-    Location location;
     enum LilyVisibility visibility;
 } LilyPreparserRecordField;
+
+enum LilyPreparserRecordObjectItemKind
+{
+    LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_CONSTANT,
+    LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_FIELD,
+    LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_METHOD,
+};
+
+typedef struct LilyPreparserRecordObjectItem
+{
+    enum LilyPreparserRecordObjectItemKind kind;
+    union
+    {
+        LilyPreparserConstant constant;
+        LilyPreparserRecordField field;
+        LilyPreparserMethod method;
+    };
+} LilyPreparserRecordObjectItem;
 
 typedef struct LilyPreparserRecordObject
 {
     String *name;
     Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
     Vec *implements;     // Vec<Vec<LilyToken*>*>*
-    Vec *fields;         // Vec<LilyPreparserRecordField*>*
-    Vec *body;           // Vec<Vec<LilyToken*>*>*
+    Vec *body;           // Vec<LilyPreparserRecordObjectItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserRecordObject;
 
@@ -452,30 +492,6 @@ typedef struct LilyPreparserType
         LilyPreparserRecord record;
     };
 } LilyPreparserType;
-
-typedef struct LilyPreparserConstantInfo
-{
-    String *name;
-    Vec *expr;      // Vec<LilyToken*>*
-    Vec *data_type; // Vec<LilyToken*>*
-    enum LilyVisibility visibility;
-} LilyPreparserConstantInfo;
-
-enum LilyPreparserConstantKind
-{
-    LILY_PREPARSER_CONSTANT_KIND_SIMPLE,
-    LILY_PREPARSER_CONSTANT_KIND_MULTIPLE
-};
-
-typedef struct LilyPreparserConstant
-{
-    enum LilyPreparserConstantKind kind;
-    union
-    {
-        LilyPreparserConstantInfo *simple;
-        Vec *multiple; // Vec<LilyPreparserConstantInfo*>*
-    };
-} LilyPreparserConstant;
 
 enum LilyPreparserDeclKind
 {
