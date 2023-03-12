@@ -794,6 +794,9 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
                                        bool is_ref,
                                        bool is_drop);
 
+static bool
+must_preparse_exprs(LilyPreparser *self);
+
 /// @brief Preparse body for function and method.
 /// @param must_close Param to add different way to stop the preparser of the
 /// body.
@@ -876,35 +879,42 @@ preparse_when_condition__LilyPreparser(LilyPreparser *self);
         while (self->current->kind != sep && self->current->kind != closing) { \
             switch (self->current->kind) {                                     \
                 case LILY_TOKEN_KIND_L_BRACE:                                  \
-                    while (self->current->kind != LILY_TOKEN_KIND_R_BRACE) {   \
+                    do {                                                       \
                         push__Vec(item, clone__LilyToken(self->current));      \
                         next_token__LilyPreparser(self);                       \
-                    }                                                          \
+                    } while (self->current->kind != LILY_TOKEN_KIND_R_BRACE);  \
                                                                                \
                     break;                                                     \
                 case LILY_TOKEN_KIND_L_HOOK:                                   \
-                    while (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {    \
+                    do {                                                       \
                         push__Vec(item, clone__LilyToken(self->current));      \
                         next_token__LilyPreparser(self);                       \
-                    }                                                          \
+                    } while (self->current->kind != LILY_TOKEN_KIND_R_HOOK);   \
                                                                                \
                     break;                                                     \
                 case LILY_TOKEN_KIND_L_PAREN:                                  \
-                    while (self->current->kind != LILY_TOKEN_KIND_R_PAREN) {   \
+                    do {                                                       \
                         push__Vec(item, clone__LilyToken(self->current));      \
                         next_token__LilyPreparser(self);                       \
-                    }                                                          \
+                    } while (self->current->kind != LILY_TOKEN_KIND_R_PAREN);  \
+                                                                               \
                     break;                                                     \
                 default:                                                       \
                     break;                                                     \
             }                                                                  \
                                                                                \
-            push__Vec(item, clone__LilyToken(self->current));                  \
-            next_token__LilyPreparser(self);                                   \
+            if (self->current->kind != sep &&                                  \
+                self->current->kind != closing) {                              \
+                push__Vec(item, clone__LilyToken(self->current));              \
+                next_token__LilyPreparser(self);                               \
+            }                                                                  \
         }                                                                      \
                                                                                \
         push__Vec(res, item);                                                  \
-        next_token__LilyPreparser(self);                                       \
+                                                                               \
+        if (self->current->kind != closing) {                                  \
+            next_token__LilyPreparser(self);                                   \
+        }                                                                      \
     }                                                                          \
                                                                                \
     next_token__LilyPreparser(self);                                           \
@@ -1302,10 +1312,11 @@ CONSTRUCTOR(LilyPreparserFunBodyItemStmtIf,
 DESTRUCTOR(LilyPreparserFunBodyItemStmtIf,
            const LilyPreparserFunBodyItemStmtIf *self)
 {
-    FREE_BUFFER_ITEMS(self->if_expr->buffer,
-                      self->if_expr->len,
-                      LilyPreparserFunBodyItemStmtIf);
+    FREE_BUFFER_ITEMS(self->if_expr->buffer, self->if_expr->len, LilyToken);
     FREE(Vec, self->if_expr);
+
+    FREE_BUFFER_ITEMS(
+      self->if_block->buffer, self->if_block->len, LilyPreparserFunBodyItem);
     FREE(Vec, self->if_block);
 
     if (self->elif_exprs) {
@@ -1732,14 +1743,15 @@ DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
       self->return_data_type->buffer, self->return_data_type->len, LilyToken);
     FREE(Vec, self->return_data_type);
 
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyToken);
-    FREE(Vec, self->body);
-
     FREE_BUFFER_ITEMS(self->req->buffer, self->req->len, LilyToken);
     FREE(Vec, self->req);
 
     FREE_BUFFER_ITEMS(self->when->buffer, self->when->len, LilyToken);
     FREE(Vec, self->when);
+
+    FREE_BUFFER_ITEMS(
+      self->body->buffer, self->body->len, LilyPreparserFunBodyItem);
+    FREE(Vec, self->body);
 }
 
 CONSTRUCTOR(LilyPreparserAttribute,
@@ -3454,6 +3466,8 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
         return;
     }
 
+    next_token__LilyPreparser(self);
+
     // 2. Preparse `if` block
     if_block =
       preparse_body__LilyPreparser(self, &must_close_if_block__LilyPreparser);
@@ -3464,8 +3478,6 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
 
         return;
     }
-
-    next_token__LilyPreparser(self);
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_ELIF: {
@@ -4535,6 +4547,52 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
     push__Vec(body, item);
 }
 
+bool
+must_preparse_exprs(LilyPreparser *self)
+{
+    LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+    if (peeked) {
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_AT:
+                return peeked->kind != LILY_TOKEN_KIND_L_BRACE;
+            case LILY_TOKEN_KIND_KEYWORD_BEGIN:
+            case LILY_TOKEN_KIND_KEYWORD_FOR:
+            case LILY_TOKEN_KIND_KEYWORD_IF:
+            case LILY_TOKEN_KIND_KEYWORD_MATCH:
+            case LILY_TOKEN_KIND_KEYWORD_TRY:
+            case LILY_TOKEN_KIND_KEYWORD_WHILE:
+            case LILY_TOKEN_KIND_KEYWORD_MUT:
+            case LILY_TOKEN_KIND_KEYWORD_VAL:
+            case LILY_TOKEN_KIND_EOF:
+            case LILY_TOKEN_KIND_KEYWORD_END:
+                return false;
+            case LILY_TOKEN_KIND_KEYWORD_REF:
+            case LILY_TOKEN_KIND_KEYWORD_TRACE:
+                return peeked->kind != LILY_TOKEN_KIND_KEYWORD_VAL &&
+                       peeked->kind != LILY_TOKEN_KIND_KEYWORD_MUT;
+            default:
+                return true;
+        }
+    } else {
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_KEYWORD_BEGIN:
+            case LILY_TOKEN_KIND_KEYWORD_FOR:
+            case LILY_TOKEN_KIND_KEYWORD_IF:
+            case LILY_TOKEN_KIND_KEYWORD_MATCH:
+            case LILY_TOKEN_KIND_KEYWORD_TRY:
+            case LILY_TOKEN_KIND_KEYWORD_WHILE:
+            case LILY_TOKEN_KIND_KEYWORD_MUT:
+            case LILY_TOKEN_KIND_KEYWORD_VAL:
+            case LILY_TOKEN_KIND_EOF:
+            case LILY_TOKEN_KIND_KEYWORD_END:
+                return false;
+            default:
+                return true;
+        }
+    }
+}
+
 Vec *
 preparse_body__LilyPreparser(LilyPreparser *self,
                              bool (*must_close)(LilyPreparser *))
@@ -4563,10 +4621,10 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                                                                       body);
 
                         default:
-                            goto preparse_expr;
+                            goto preparse_exprs;
                     }
                 } else {
-                    goto preparse_expr;
+                    goto preparse_exprs;
                 }
 
                 break;
@@ -4623,10 +4681,10 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                             preparse_try_block__LilyPreparser(self, body);
                             break;
                         default:
-                            goto preparse_expr;
+                            goto preparse_exprs;
                     }
                 } else {
-                    goto preparse_expr;
+                    goto preparse_exprs;
                 }
 
                 break;
@@ -4666,10 +4724,10 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                             break;
 
                         default:
-                            goto preparse_expr;
+                            goto preparse_exprs;
                     }
                 } else {
-                    goto preparse_expr;
+                    goto preparse_exprs;
                 }
 
                 break;
@@ -4711,10 +4769,10 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                             break;
 
                         default:
-                            goto preparse_expr;
+                            goto preparse_exprs;
                     }
                 } else {
-                    goto preparse_expr;
+                    goto preparse_exprs;
                 }
 
                 break;
@@ -4732,22 +4790,30 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                 break;
 
             default:
-            preparse_expr : {
+            preparse_exprs : {
+                Location location = clone__Location(&self->current->location);
+                Vec *exprs = NEW(Vec);
+
+                while (must_preparse_exprs(self)) {
+                    push__Vec(exprs, clone__LilyToken(self->current));
+                    next_token__LilyPreparser(self);
+                }
+
+                LilyToken *previous = self->tokens->buffer[self->position - 1];
+
+                end__Location(&location,
+                              previous->location.end_line,
+                              previous->location.end_column);
+                push__Vec(body,
+                          NEW_VARIANT(LilyPreparserFunBodyItem,
+                                      exprs,
+                                      NEW(LilyPreparserFunBodyItemExprs, exprs),
+                                      location));
+
                 break;
             }
         }
-
-        switch (self->current->kind) {
-            case LILY_TOKEN_KIND_EOF:
-                goto exit_preparse_body_loop;
-            default:
-                next_token__LilyPreparser(self);
-                break;
-        }
     }
-
-exit_preparse_body_loop : {
-};
 
     if (is_brace_block || self->current->kind == LILY_TOKEN_KIND_KEYWORD_END) {
         return body;
@@ -4808,7 +4874,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
     String *object_impl = NULL;
     String *name = NULL;
     Vec *generic_params = NULL;       // Vec<Vec<LilyToken*>*>*?
-    Vec *params = NULL;               // Vec<Vec<LilyToken*>*>*
+    Vec *params = NULL;               // Vec<Vec<LilyToken*>*>*?
     Vec *when = NEW(Vec);             // Vec<Vec<LilyToken*>*>*
     Vec *req = NEW(Vec);              // Vec<Vec<LilyToken*>*>*
     Vec *body = NULL;                 // Vec<LilyToken*>*
@@ -5346,7 +5412,8 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                     }
 
                     if (inherits) {
-                        FREE_BUFFER_ITEMS_2(inherits->buffer, inherits->len, LilyToken);
+                        FREE_BUFFER_ITEMS_2(
+                          inherits->buffer, inherits->len, LilyToken);
                         FREE(Vec, inherits);
                     }
 
@@ -5514,7 +5581,8 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
             }
 
             if (generic_params) {
-                FREE_BUFFER_ITEMS_2(generic_params->buffer, generic_params->len, LilyToken);
+                FREE_BUFFER_ITEMS_2(
+                  generic_params->buffer, generic_params->len, LilyToken);
                 FREE(Vec, generic_params);
             }
 
@@ -5581,7 +5649,8 @@ preparse_object__LilyPreparser(LilyPreparser *self)
                           &self->count_error);                                 \
                                                                                \
                         /* Clean up allocations */                             \
-                        FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken); \
+                        FREE_BUFFER_ITEMS_2(                                   \
+                          impls->buffer, impls->len, LilyToken);               \
                         FREE(Vec, impls);                                      \
                                                                                \
                         if (inherits) {                                        \
@@ -5822,11 +5891,8 @@ preparse_object__LilyPreparser(LilyPreparser *self)
 
     switch (object_kind) {
         case LILY_TOKEN_KIND_KEYWORD_CLASS:
-            return preparse_class__LilyPreparser(self,
-                                                 name,
-                                                 impls,
-                                                 inherits,
-                                                 generic_params);
+            return preparse_class__LilyPreparser(
+              self, name, impls, inherits, generic_params);
 
         case LILY_TOKEN_KIND_KEYWORD_ENUM:
             if (inherits) {
@@ -5865,7 +5931,7 @@ preparse_object__LilyPreparser(LilyPreparser *self)
 
                 // Clean up allocations
 
-            clean_up_for_record_or_enum: {
+            clean_up_for_record_or_enum : {
                 if (impls) {
                     FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken);
                     FREE(Vec, impls);
@@ -5901,7 +5967,8 @@ preparse_object__LilyPreparser(LilyPreparser *self)
                 FREE(Vec, impls);
 
                 if (inherits) {
-                    FREE_BUFFER_ITEMS_2(inherits->buffer, inherits->len, LilyToken);
+                    FREE_BUFFER_ITEMS_2(
+                      inherits->buffer, inherits->len, LilyToken);
                     FREE(Vec, inherits);
                 }
 
