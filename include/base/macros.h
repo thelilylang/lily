@@ -49,9 +49,20 @@
 
 #define PTR_SIZE sizeof(void *)
 
-#define FREE_BUFFER_ITEMS(buffer, len, type) \
-    for (Usize x = 0; x < len; x++) {        \
-        __free__##type(buffer[x]);           \
+// Vec<T>
+// FREE_BUFFER_ITEMS(buffer, len, type)
+#define FREE_BUFFER_ITEMS(b, l, t)     \
+    for (Usize x1 = 0; x1 < l; x1++) { \
+        __free__##t(b[x1]);            \
+    }
+
+// Vec<Vec<T>>
+// FREE_BUFFER_ITEMS_2(buffer, len, type)
+#define FREE_BUFFER_ITEMS_2(b, l, t)                   \
+    for (Usize x2 = 0; x2 < l; x2++) {                 \
+        Vec *item = b[x2];                             \
+        FREE_BUFFER_ITEMS(item->buffer, item->len, t); \
+        FREE(Vec, item);                               \
     }
 
 #define CAST(type, expr) ((type)(expr))
