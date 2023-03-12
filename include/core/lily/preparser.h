@@ -300,7 +300,7 @@ typedef struct LilyPreparserFun
     Vec *generic_params;   // Vec<Vec<LilyToken*>*>*?
     Vec *params;           // Vec<Vec<LilyToken*>*>*?
     Vec *return_data_type; // Vec<LilyToken*>*
-    Vec *body;             // Vec<LilyToken*>*
+    Vec *body;             // Vec<LilyPreparserFunBodyItem*>*
     Vec *req;              // Vec<Vec<LilyToken*>*>*
     Vec *when;             // Vec<Vec<LilyToken*>*>*
     enum LilyVisibility visibility;
