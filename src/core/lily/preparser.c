@@ -1309,25 +1309,15 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtIf,
     FREE(Vec, self->if_block);
 
     if (self->elif_exprs) {
-        for (Usize i = 0; i < self->elif_exprs->len; i++) {
-            Vec *item = get__Vec(self->elif_exprs, i);
-
-            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-            FREE(Vec, item);
-        }
-
+        FREE_BUFFER_ITEMS_2(
+          self->elif_exprs->buffer, self->elif_exprs->len, LilyToken);
         FREE(Vec, self->elif_exprs);
     }
 
     if (self->elif_blocks) {
-        for (Usize i = 0; i < self->elif_blocks->len; i++) {
-            Vec *item = get__Vec(self->elif_blocks, i);
-
-            FREE_BUFFER_ITEMS(
-              item->buffer, item->len, LilyPreparserFunBodyItem);
-            FREE(Vec, item);
-        }
-
+        FREE_BUFFER_ITEMS_2(self->elif_blocks->buffer,
+                            self->elif_blocks->len,
+                            LilyPreparserFunBodyItem);
         FREE(Vec, self->elif_blocks);
     }
 
@@ -1358,13 +1348,7 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtMatch,
     FREE_BUFFER_ITEMS(self->expr->buffer, self->expr->len, LilyToken);
     FREE(Vec, self->expr);
 
-    for (Usize i = 0; i < self->patterns->len; i++) {
-        Vec *item = get__Vec(self->patterns, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
-    }
-
+    FREE_BUFFER_ITEMS_2(self->patterns->buffer, self->patterns->len, LilyToken);
     FREE(Vec, self->patterns);
 
     for (Usize i = 0; i < self->pattern_conds->len; i++) {
@@ -1734,34 +1718,26 @@ DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
 #endif
 
     if (self->generic_params) {
-        for (Usize i = 0; i < self->generic_params->len; i++) {
-            Vec *item = get__Vec(self->generic_params, i);
-
-            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-            FREE(Vec, item);
-        }
-
+        FREE_BUFFER_ITEMS_2(
+          self->generic_params->buffer, self->generic_params->len, LilyToken)
         FREE(Vec, self->generic_params);
     }
 
     if (self->params) {
-        for (Usize i = 0; i < self->params->len; i++) {
-            Vec *item = get__Vec(self->params, i);
-
-            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-            FREE(Vec, item);
-        }
-
+        FREE_BUFFER_ITEMS_2(self->params->buffer, self->params->len, LilyToken);
         FREE(Vec, self->params);
     }
 
     FREE_BUFFER_ITEMS(
       self->return_data_type->buffer, self->return_data_type->len, LilyToken);
     FREE(Vec, self->return_data_type);
+
     FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyToken);
     FREE(Vec, self->body);
+
     FREE_BUFFER_ITEMS(self->req->buffer, self->req->len, LilyToken);
     FREE(Vec, self->req);
+
     FREE_BUFFER_ITEMS(self->when->buffer, self->when->len, LilyToken);
     FREE(Vec, self->when);
 }
@@ -1886,33 +1862,22 @@ DESTRUCTOR(LilyPreparserClass, const LilyPreparserClass *self)
 #endif
 
     if (self->generic_params) {
-        for (Usize i = 0; i < self->generic_params->len; i++) {
-            Vec *item = get__Vec(self->generic_params, i);
-
-            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-            FREE(Vec, item);
-        }
-
+        FREE_BUFFER_ITEMS_2(
+          self->generic_params->buffer, self->generic_params->len, LilyToken);
         FREE(Vec, self->generic_params);
     }
 
-    for (Usize i = 0; i < self->inherits->len; i++) {
-        Vec *item = get__Vec(self->inherits, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
+    if (self->inherits) {
+        FREE_BUFFER_ITEMS_2(
+          self->inherits->buffer, self->inherits->len, LilyToken);
+        FREE(Vec, self->inherits);
     }
 
-    FREE(Vec, self->inherits);
-
-    for (Usize i = 0; i < self->implements->len; i++) {
-        Vec *item = get__Vec(self->implements, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
+    if (self->implements) {
+        FREE_BUFFER_ITEMS_2(
+          self->implements->buffer, self->implements->len, LilyToken);
+        FREE(Vec, self->implements);
     }
-
-    FREE(Vec, self->implements);
 
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyPreparserClassBodyItem);
@@ -1941,24 +1906,16 @@ DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self)
 #endif
 
     if (self->generic_params) {
-        for (Usize i = 0; i < self->generic_params->len; i++) {
-            Vec *item = get__Vec(self->generic_params, i);
-
-            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-            FREE(Vec, item);
-        }
-
+        FREE_BUFFER_ITEMS_2(
+          self->generic_params->buffer, self->generic_params->len, LilyToken);
         FREE(Vec, self->generic_params);
     }
 
-    for (Usize i = 0; i < self->inherits->len; i++) {
-        Vec *item = get__Vec(self->inherits, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
+    if (self->inherits) {
+        FREE_BUFFER_ITEMS_2(
+          self->inherits->buffer, self->inherits->len, LilyToken);
+        FREE(Vec, self->inherits);
     }
-
-    FREE(Vec, self->inherits);
 
     FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyToken);
     FREE(Vec, self->body);
@@ -2135,24 +2092,16 @@ DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self)
 #endif
 
     if (self->generic_params) {
-        for (Usize i = 0; i < self->generic_params->len; i++) {
-            Vec *item = get__Vec(self->generic_params, i);
-
-            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-            FREE(Vec, item);
-        }
-
+        FREE_BUFFER_ITEMS_2(
+          self->generic_params->buffer, self->generic_params->len, LilyToken);
         FREE(Vec, self->generic_params);
     }
 
-    for (Usize i = 0; i < self->implements->len; i++) {
-        Vec *item = get__Vec(self->implements, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
+    if (self->implements) {
+        FREE_BUFFER_ITEMS_2(
+          self->implements->buffer, self->implements->len, LilyToken);
+        FREE(Vec, self->implements);
     }
-
-    FREE(Vec, self->implements);
 
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyPreparserRecordObjectItem);
@@ -2208,31 +2157,18 @@ DESTRUCTOR(LilyPreparserEnumObject, const LilyPreparserEnumObject *self)
 #endif
 
     if (self->generic_params) {
-        for (Usize i = 0; i < self->generic_params->len; i++) {
-            Vec *item = get__Vec(self->generic_params, i);
-
-            FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-            FREE(Vec, item);
-        }
-
+        FREE_BUFFER_ITEMS_2(
+          self->generic_params->buffer, self->generic_params->len, LilyToken);
         FREE(Vec, self->generic_params);
     }
 
-    for (Usize i = 0; i < self->implements->len; i++) {
-        Vec *item = get__Vec(self->implements, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
+    if (self->implements) {
+        FREE_BUFFER_ITEMS_2(
+          self->implements->buffer, self->implements->len, LilyToken);
+        FREE(Vec, self->implements);
     }
 
-    FREE(Vec, self->implements);
-
-    for (Usize i = 0; i < self->body->len; i++) {
-        Vec *item = get__Vec(self->body, i);
-
-        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-        FREE(Vec, item);
-    }
+    FREE_BUFFER_ITEMS_2(self->body->buffer, self->body->len, LilyToken);
     FREE(Vec, self->body);
 }
 
@@ -3568,30 +3504,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
                                      "statement expression")),
                       &self->count_error);
 
-                    for (Usize i = 0; i < elif_exprs->len; i++) {
-                        Vec *item = get__Vec(elif_exprs, i);
-
-                        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-                        FREE(Vec, item);
-                    }
-
-                    FREE(Vec, elif_exprs);
-
-                    for (Usize i = 0; i < elif_blocks->len; i++) {
-                        Vec *item = get__Vec(elif_blocks, i);
-
-                        FREE_BUFFER_ITEMS(
-                          item->buffer, item->len, LilyPreparserFunBodyItem);
-                        FREE(Vec, item);
-                    }
-
-                    FREE(Vec, elif_blocks);
-
-                    FREE_BUFFER_ITEMS(
-                      elif_expr->buffer, elif_expr->len, LilyToken);
-                    FREE(Vec, elif_expr);
-
-                    return;
+                    goto clean_up_elif;
                 }
 
                 next_token__LilyPreparser(self);
@@ -3603,6 +3516,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
                 if (!elif_block) {
                     // Clean up allocations
 
+                clean_up_elif : {
                     FREE_BUFFER_ITEMS(if_expr->buffer, if_expr->len, LilyToken);
                     FREE(Vec, if_expr);
 
@@ -3611,26 +3525,17 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
                                       LilyPreparserFunBodyItem);
                     FREE(Vec, if_block);
 
-                    for (Usize i = 0; i < elif_exprs->len; i++) {
-                        Vec *item = get__Vec(elif_exprs, i);
-
-                        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-                        FREE(Vec, item);
-                    }
-
+                    FREE_BUFFER_ITEMS_2(
+                      elif_exprs->buffer, elif_exprs->len, LilyToken);
                     FREE(Vec, elif_exprs);
 
-                    for (Usize i = 0; i < elif_blocks->len; i++) {
-                        Vec *item = get__Vec(elif_blocks, i);
-
-                        FREE_BUFFER_ITEMS(
-                          item->buffer, item->len, LilyPreparserFunBodyItem);
-                        FREE(Vec, item);
-                    }
-
+                    FREE_BUFFER_ITEMS_2(elif_blocks->buffer,
+                                        elif_blocks->len,
+                                        LilyPreparserFunBodyItem);
                     FREE(Vec, elif_blocks);
 
                     return;
+                }
                 }
 
                 push__Vec(elif_exprs, elif_expr);
@@ -3649,29 +3554,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
 
                     if (!else_block) {
                         // Clean up allocations
-
-                        for (Usize i = 0; i < elif_exprs->len; i++) {
-                            Vec *item = get__Vec(elif_exprs, i);
-
-                            FREE_BUFFER_ITEMS(
-                              item->buffer, item->len, LilyToken);
-                            FREE(Vec, item);
-                        }
-
-                        FREE(Vec, elif_exprs);
-
-                        for (Usize i = 0; i < elif_blocks->len; i++) {
-                            Vec *item = get__Vec(elif_blocks, i);
-
-                            FREE_BUFFER_ITEMS(item->buffer,
-                                              item->len,
-                                              LilyPreparserFunBodyItem);
-                            FREE(Vec, item);
-                        }
-
-                        FREE(Vec, elif_blocks);
-
-                        return;
+                        goto clean_up_elif;
                     }
 
                     switch (self->current->kind) {
@@ -3747,23 +3630,13 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
                                       LilyPreparserFunBodyItem);
                     FREE(Vec, if_block);
 
-                    for (Usize i = 0; i < elif_exprs->len; i++) {
-                        Vec *item = get__Vec(elif_exprs, i);
-
-                        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-                        FREE(Vec, item);
-                    }
-
+                    FREE_BUFFER_ITEMS_2(
+                      elif_exprs->buffer, elif_exprs->len, LilyToken);
                     FREE(Vec, elif_exprs);
 
-                    for (Usize i = 0; i < elif_blocks->len; i++) {
-                        Vec *item = get__Vec(elif_blocks, i);
-
-                        FREE_BUFFER_ITEMS(
-                          item->buffer, item->len, LilyPreparserFunBodyItem);
-                        FREE(Vec, item);
-                    }
-
+                    FREE_BUFFER_ITEMS_2(elif_blocks->buffer,
+                                        elif_blocks->len,
+                                        LilyPreparserFunBodyItem);
                     FREE(Vec, elif_blocks);
 
                     return;
@@ -3867,6 +3740,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
 
             FREE_BUFFER_ITEMS(if_expr->buffer, if_expr->len, LilyToken);
             FREE(Vec, if_expr);
+
             FREE_BUFFER_ITEMS(
               if_block->buffer, if_block->len, LilyPreparserFunBodyItem);
             FREE(Vec, if_block);
@@ -4246,17 +4120,12 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
 
                         // Clean up allocations
 
+                    clean_up_pattern : {
                         FREE_BUFFER_ITEMS(expr->buffer, expr->len, LilyToken);
                         FREE(Vec, expr);
 
-                        for (Usize i = 0; i < patterns->len; i++) {
-                            Vec *item = get__Vec(patterns, i);
-
-                            FREE_BUFFER_ITEMS(
-                              item->buffer, item->len, LilyToken);
-                            FREE(Vec, item);
-                        }
-
+                        FREE_BUFFER_ITEMS_2(
+                          patterns->buffer, patterns->len, LilyToken);
                         FREE(Vec, patterns);
 
                         for (Usize i = 0; i < pattern_conds->len; i++) {
@@ -4283,8 +4152,8 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
                         FREE_BUFFER_ITEMS(
                           pattern_cond->buffer, pattern_cond->len, LilyToken);
                         FREE(Vec, pattern_cond);
-
                         return;
+                    }
                     default:
                         UNREACHABLE("this way is impossible");
                 }
@@ -4309,37 +4178,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
 
                 // Clean up allocations
 
-                FREE_BUFFER_ITEMS(expr->buffer, expr->len, LilyToken);
-                FREE(Vec, expr);
-
-                for (Usize i = 0; i < patterns->len; i++) {
-                    Vec *item = get__Vec(patterns, i);
-
-                    FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-                    FREE(Vec, item);
-                }
-
-                FREE(Vec, patterns);
-
-                for (Usize i = 0; i < pattern_conds->len; i++) {
-                    Vec *item = get__Vec(pattern_conds, i);
-
-                    if (item) {
-                        FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-                        FREE(Vec, item);
-                    }
-                }
-
-                FREE(Vec, pattern_conds);
-
-                FREE_BUFFER_ITEMS(
-                  blocks->buffer, blocks->len, LilyPreparserFunBodyItem);
-                FREE(Vec, blocks);
-
-                FREE_BUFFER_ITEMS(pattern->buffer, pattern->len, LilyToken);
-                FREE(Vec, pattern);
-
-                return;
+                goto clean_up_pattern;
 
             default:
                 UNREACHABLE("this way is impossible");
@@ -4615,6 +4454,7 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
               &self->count_error);
 
             FREE(String, name);
+
             FREE_BUFFER_ITEMS(data_type->buffer, data_type->len, LilyToken);
             FREE(Vec, data_type);
 
@@ -4659,6 +4499,7 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
                           self->current->location.end_column);
             next_token__LilyPreparser(self);
             break;
+
         case LILY_TOKEN_KIND_EOF:
             emit__Diagnostic(
               NEW_VARIANT(
@@ -4673,6 +4514,7 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
               &self->count_error);
 
             break;
+
         default:
             UNREACHABLE("this way is impossible");
     }
@@ -4965,7 +4807,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
     Location location = location_decl;
     String *object_impl = NULL;
     String *name = NULL;
-    Vec *generic_params = NULL;       // Vec<Vec<LilyToken*>*>*
+    Vec *generic_params = NULL;       // Vec<Vec<LilyToken*>*>*?
     Vec *params = NULL;               // Vec<Vec<LilyToken*>*>*
     Vec *when = NEW(Vec);             // Vec<Vec<LilyToken*>*>*
     Vec *req = NEW(Vec);              // Vec<Vec<LilyToken*>*>*
@@ -5482,11 +5324,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                 if (attribute) {
                     push__Vec(body, attribute);
                 } else {
-                    FREE_BUFFER_ITEMS(
-                      body->buffer, body->len, LilyPreparserClassBodyItem);
-                    FREE(Vec, body);
-
-                    return NULL;
+                    goto clean_up;
                 }
 
                 break;
@@ -5498,11 +5336,26 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                 if (method) {
                     push__Vec(body, method);
                 } else {
+                clean_up : {
+                    FREE(String, name);
+
+                    if (impls) {
+                        FREE_BUFFER_ITEMS_2(
+                          impls->buffer, impls->len, LilyToken);
+                        FREE(Vec, impls);
+                    }
+
+                    if (inherits) {
+                        FREE_BUFFER_ITEMS_2(inherits->buffer, inherits->len, LilyToken);
+                        FREE(Vec, inherits);
+                    }
+
                     FREE_BUFFER_ITEMS(
                       body->buffer, body->len, LilyPreparserClassBodyItem);
                     FREE(Vec, body);
 
                     return NULL;
+                }
                 }
             }
             default:
@@ -5517,7 +5370,33 @@ preparse_class__LilyPreparser(LilyPreparser *self,
             break;
 
         case LILY_TOKEN_KIND_EOF:
-            break;
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                NULL,
+                NULL,
+                from__String("expected `end` keyword to close class")),
+              &self->count_error);
+
+            // Clean up allocations
+
+            FREE(String, name);
+
+            if (impls) {
+                FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken);
+                FREE(Vec, impls);
+            }
+
+            if (inherits) {
+                FREE_BUFFER_ITEMS_2(inherits->buffer, inherits->len, LilyToken);
+                FREE(Vec, inherits);
+            }
+
+            return NULL;
 
         default:
             UNREACHABLE("this way is possible");
@@ -5613,6 +5492,43 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
         }
     }
 
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_EOF:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                NULL,
+                NULL,
+                from__String("expected `end` keyword to close record object")),
+              &self->count_error);
+
+            FREE(String, name);
+
+            if (impls) {
+                FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken);
+                FREE(Vec, impls);
+            }
+
+            if (generic_params) {
+                FREE_BUFFER_ITEMS_2(generic_params->buffer, generic_params->len, LilyToken);
+                FREE(Vec, generic_params);
+            }
+
+            return NULL;
+
+        case LILY_TOKEN_KIND_KEYWORD_END:
+            next_token__LilyPreparser(self);
+
+            break;
+
+        default:
+            UNREACHABLE("this way is impossible");
+    }
+
     end__Location(&location,
                   self->current->location.end_line,
                   self->current->location.end_column);
@@ -5665,14 +5581,7 @@ preparse_object__LilyPreparser(LilyPreparser *self)
                           &self->count_error);                                 \
                                                                                \
                         /* Clean up allocations */                             \
-                        for (Usize i = 0; i < impls->len; i++) {               \
-                            Vec *item = get__Vec(impls, i);                    \
-                                                                               \
-                            FREE_BUFFER_ITEMS(                                 \
-                              item->buffer, item->len, LilyToken);             \
-                            FREE(Vec, item);                                   \
-                        }                                                      \
-                                                                               \
+                        FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken); \
                         FREE(Vec, impls);                                      \
                                                                                \
                         if (inherits) {                                        \
@@ -5706,26 +5615,13 @@ preparse_object__LilyPreparser(LilyPreparser *self)
                           &self->count_error);                                 \
                                                                                \
                         /* Clean up allocations */                             \
-                                                                               \
-                        for (Usize i = 0; i < inherits->len; i++) {            \
-                            Vec *item = get__Vec(inherits, i);                 \
-                                                                               \
-                            FREE_BUFFER_ITEMS(                                 \
-                              item->buffer, item->len, LilyToken);             \
-                            FREE(Vec, item);                                   \
-                        }                                                      \
-                                                                               \
+                        FREE_BUFFER_ITEMS_2(                                   \
+                          inherits->buffer, inherits->len, LilyToken);         \
                         FREE(Vec, inherits);                                   \
                                                                                \
                         if (impls) {                                           \
-                            for (Usize i = 0; i < impls->len; i++) {           \
-                                Vec *item = get__Vec(impls, i);                \
-                                                                               \
-                                FREE_BUFFER_ITEMS(                             \
-                                  item->buffer, item->len, LilyToken);         \
-                                FREE(Vec, item);                               \
-                            }                                                  \
-                                                                               \
+                            FREE_BUFFER_ITEMS_2(                               \
+                              impls->buffer, impls->len, LilyToken);           \
                             FREE(Vec, impls);                                  \
                         }                                                      \
                                                                                \
@@ -5836,8 +5732,8 @@ preparse_object__LilyPreparser(LilyPreparser *self)
     next_token__LilyPreparser(self); // skip `object` keyword
 
     // 1. Preparse impl and inherit
-    Vec *impls = NULL;    // Vec<Vec<LilyToken*>*>*
-    Vec *inherits = NULL; // Vec<Vec<LilyToken*>*>*
+    Vec *impls = NULL;    // Vec<Vec<LilyToken*>*>*?
+    Vec *inherits = NULL; // Vec<Vec<LilyToken*>*>*?
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_IMPL: {
@@ -5928,8 +5824,8 @@ preparse_object__LilyPreparser(LilyPreparser *self)
         case LILY_TOKEN_KIND_KEYWORD_CLASS:
             return preparse_class__LilyPreparser(self,
                                                  name,
-                                                 impls ? impls : NEW(Vec),
-                                                 inherits ? inherits : NEW(Vec),
+                                                 impls,
+                                                 inherits,
                                                  generic_params);
 
         case LILY_TOKEN_KIND_KEYWORD_ENUM:
@@ -5947,10 +5843,11 @@ preparse_object__LilyPreparser(LilyPreparser *self)
                   &self->count_error);
 
                 // Clean up allocations
+                goto clean_up_for_record_or_enum;
             }
 
             return preparse_enum_object__LilyPreparser(
-              self, name, impls ? impls : NEW(Vec), generic_params);
+              self, name, impls, generic_params);
 
         case LILY_TOKEN_KIND_KEYWORD_RECORD:
             if (inherits) {
@@ -5968,11 +5865,21 @@ preparse_object__LilyPreparser(LilyPreparser *self)
 
                 // Clean up allocations
 
+            clean_up_for_record_or_enum: {
+                if (impls) {
+                    FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken);
+                    FREE(Vec, impls);
+                }
+
+                FREE_BUFFER_ITEMS_2(inherits->buffer, inherits->len, LilyToken);
+                FREE(Vec, inherits);
+
                 return NULL;
+            }
             }
 
             return preparse_record_object__LilyPreparser(
-              self, name, impls ? impls : NEW(Vec), generic_params);
+              self, name, impls, generic_params);
 
         case LILY_TOKEN_KIND_KEYWORD_TRAIT:
             if (impls) {
@@ -5990,11 +5897,19 @@ preparse_object__LilyPreparser(LilyPreparser *self)
 
                 // Clean up allocations
 
+                FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken);
+                FREE(Vec, impls);
+
+                if (inherits) {
+                    FREE_BUFFER_ITEMS_2(inherits->buffer, inherits->len, LilyToken);
+                    FREE(Vec, inherits);
+                }
+
                 return NULL;
             }
 
             return preparse_trait__LilyPreparser(
-              self, name, inherits ? inherits : NEW(Vec), generic_params);
+              self, name, inherits, generic_params);
 
         default:
             emit__Diagnostic(
@@ -6014,24 +5929,12 @@ preparse_object__LilyPreparser(LilyPreparser *self)
             // Clean up allocations
 
             if (impls) {
-                for (Usize i = 0; i < impls->len; i++) {
-                    Vec *item = get__Vec(impls, i);
-
-                    FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-                    FREE(Vec, item);
-                }
-
+                FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken);
                 FREE(Vec, impls);
             }
 
             if (inherits) {
-                for (Usize i = 0; i < inherits->len; i++) {
-                    Vec *item = get__Vec(inherits, i);
-
-                    FREE_BUFFER_ITEMS(item->buffer, item->len, LilyToken);
-                    FREE(Vec, item);
-                }
-
+                FREE_BUFFER_ITEMS_2(inherits->buffer, inherits->len, LilyToken);
                 FREE(Vec, inherits);
             }
 
@@ -6118,6 +6021,8 @@ preparse_type__LilyPreparser(LilyPreparser *self)
                 NULL,
                 NULL),
               &self->count_error);
+
+            FREE(String, name);
 
             return NULL;
     }
@@ -6375,6 +6280,7 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
               &self->count_error);
 
             FREE(String, name);
+
             FREE_BUFFER_ITEMS(data_type->buffer, data_type->len, LilyToken);
             FREE(Vec, data_type);
 
