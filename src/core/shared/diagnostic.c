@@ -455,8 +455,8 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
         }
 
         {
-            char *s = format("\x1b[34m{d} |\x1b[0m",
-                             self->location->start_line);
+            char *s =
+              format("\x1b[34m{d} |\x1b[0m", self->location->start_line);
 
             PUSH_STR_AND_FREE(res, s);
         }
@@ -481,9 +481,9 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
         }
 
         {
-            Usize diff = self->location->end_column - self->location->start_column;
-            String *repeat = repeat__String("^",
-                                            diff == 0 ? 1 : diff);
+            Usize diff =
+              self->location->end_column - self->location->start_column;
+            String *repeat = repeat__String("^", diff == 0 ? 1 : diff);
 
             switch (level->kind) {
                 case DIAGNOSTIC_LEVEL_KIND_CC_ERROR:
