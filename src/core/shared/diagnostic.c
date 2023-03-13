@@ -444,26 +444,25 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
     }
 
     if (self->lines->len == 1) {
-        char *line = format(" {s}", CAST(char *, get__Vec(self->lines, 0)));
+        char *line = format("{s}", CAST(char *, get__Vec(self->lines, 0)));
         Usize count_whitespace = 0;
 
         for (Usize i = 0; line[i++];) {
-            if (isspace(line[i - 1])) {
+            if (isblank(line[i - 1])) {
                 count_whitespace++;
             } else
                 break;
         }
 
         {
-            char *s = format("\x1b[34m{d} |\x1b[0m {Sr}",
-                             self->location->start_line,
-                             repeat__String(" ", line_number_length - 1));
+            char *s = format("\x1b[34m{d} |\x1b[0m",
+                             self->location->start_line);
 
             PUSH_STR_AND_FREE(res, s);
         }
 
         {
-            char *s = format("{s}\n", line);
+            char *s = format(" {s}\n", line);
 
             PUSH_STR_AND_FREE(res, s);
         }
@@ -475,27 +474,16 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
             PUSH_STR_AND_FREE(res, s);
         }
 
-        for (Usize i = 0; i < strlen(line); i++) {
-            if (isspace(line[i])) {
-                push__String(res, line[i]);
-            } else {
-                break;
-            }
+        push__String(res, ' ');
+
+        for (Usize i = 0; i < count_whitespace; i++) {
+            push__String(res, line[i]);
         }
 
         {
-            char *s = format("{Sr}",
-                             repeat__String(" ",
-                                            self->location->start_column -
-                                              count_whitespace + 1));
-
-            PUSH_STR_AND_FREE(res, s);
-        }
-
-        {
+            Usize diff = self->location->end_column - self->location->start_column;
             String *repeat = repeat__String("^",
-                                            self->location->end_column -
-                                              self->location->start_column + 1);
+                                            diff == 0 ? 1 : diff);
 
             switch (level->kind) {
                 case DIAGNOSTIC_LEVEL_KIND_CC_ERROR:
