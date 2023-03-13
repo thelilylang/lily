@@ -5553,9 +5553,27 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                 break;
             }
 
-            default:
-                // ERROR: unexpected token.
+            default: {
+                String *current_s = to_string__LilyToken(self->current);
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &self->current->location,
+                    NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                    NULL,
+                    NULL,
+                    from__String("expected identifier, `val` or `fun`")),
+                  &self->count_error);
+
+                FREE(String, current_s);
+
+                next_token__LilyPreparser(self);
+
                 break;
+            }
         }
     }
 
