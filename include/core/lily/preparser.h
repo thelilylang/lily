@@ -389,32 +389,34 @@ typedef struct LilyPreparserRecordField
     Vec *data_type;     // Vec<LilyToken*>*
     Vec *optional_expr; // Vec<LilyToken*>*?
     enum LilyVisibility visibility;
+    Location location;
 } LilyPreparserRecordField;
 
-enum LilyPreparserRecordObjectItemKind
+enum LilyPreparserRecordObjectBodyItemKind
 {
     LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_CONSTANT,
     LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_FIELD,
     LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_METHOD,
 };
 
-typedef struct LilyPreparserRecordObjectItem
+typedef struct LilyPreparserRecordObjectBodyItem
 {
-    enum LilyPreparserRecordObjectItemKind kind;
+    enum LilyPreparserRecordObjectBodyItemKind kind;
+    Location location;
     union
     {
         LilyPreparserConstant constant;
         LilyPreparserRecordField field;
         LilyPreparserMethod method;
     };
-} LilyPreparserRecordObjectItem;
+} LilyPreparserRecordObjectBodyItem;
 
 typedef struct LilyPreparserRecordObject
 {
     String *name;
     Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
     Vec *implements;     // Vec<Vec<LilyToken*>*>*?
-    Vec *body;           // Vec<LilyPreparserRecordObjectItem*>*
+    Vec *body;           // Vec<LilyPreparserRecordObjectBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserRecordObject;
 
@@ -425,12 +427,31 @@ typedef struct LilyPreparserEnumVariant
     Location location;
 } LilyPreparserEnumVariant;
 
+enum LilyPreparserEnumObjectBodyItemKind
+{
+    LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_CONSTANT,
+    LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_METHOD,
+    LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_VARIANT,
+};
+
+typedef struct LilyPreparserEnumObjectBodyItem
+{
+    enum LilyPreparserEnumObjectBodyItemKind kind;
+    Location location;
+    union
+    {
+        LilyPreparserConstant constant;
+        LilyPreparserMethod method;
+        LilyPreparserEnumVariant variant;
+    };
+} LilyPreparserEnumObjectBodyItem;
+
 typedef struct LilyPreparserEnumObject
 {
     String *name;
     Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
     Vec *implements;     // Vec<Vec<LilyToken*>*>*?
-    Vec *body;           // Vec<Vec<LilyToken*>*>*
+    Vec *body;           // Vec<LilyPreparserEnumObjectBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserEnumObject;
 
