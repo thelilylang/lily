@@ -1,0 +1,216 @@
+package =
+	.a;
+	.b;
+	.c;
+end
+
+type Letter enum =
+	A;
+	B;
+	C;
+	D;
+	E;
+	F;
+	G;
+	H;
+	I;
+	J;
+	K;
+	L;
+	M;
+	N;
+	O;
+	P;
+	Q;
+	R;
+	S;
+	T;
+	U;
+	V;
+	W;
+	X;
+	Y;
+	Z;
+	A2;
+	B2;
+	C2;
+	D2;
+	E2;
+	F2;
+	G2;
+	H2;
+	I2;
+	J2;
+	K2;
+	L2;
+	M2;
+	N2;
+	O2;
+	P2;
+	Q2;
+	R2;
+	S2;
+	T2;
+	U2;
+	V2;
+	W2;
+	X2;
+	Y2;
+	Z2;
+end
+
+type Animal enum =
+	Dog;
+	Cat;
+	Shark;
+end
+
+type Person record =
+	name Str;
+	age Uint8;
+end
+
+type Human record =
+	name Str;
+end
+
+type Name alias = Str;
+
+object Device class =
+	val price Float32 := 01 :: get, set;
+	val total_price Float32 := 01 :: get, set;
+end
+
+fun main =	
+	if a < 30 do
+		val i := 0;
+		val j := 40;
+		val k := 5000;
+		mut total := 0;
+		val l Int32 := 4300;
+		val m Int64 := 400400;
+		mut total_m := i + j + k + total + l + m;
+
+		total = i + j + k
+		total_m += 10_000
+
+		if a < 0 do
+		end
+
+		while j > 0 do
+			j -= 1
+		end
+	end
+end
+
+fun add(x, y) = x+y end
+
+fun mul(x, y) = x*y end
+
+fun div(x, y) = x/y end
+
+fun mod(x, y) = x%y end
+
+object App record =
+	name Str;
+	u Bool;
+	is_java Bool;
+end
+
+object App record =
+	name Str;
+	u Bool;
+	is_java Bool;
+end
+
+object App record =
+	name Str;
+	u Bool;
+	is_java Bool;
+end
+
+object impl [App, I] in App record =
+	name Str;
+	u Bool;
+	is_java Bool;
+end
+
+object App record =
+	name Str;
+	u Bool;
+	is_java Bool;
+end
+
+object App record =
+	name Str;
+	u Bool;
+	is_java Bool;
+end
+
+object App record =
+	name Str;
+	u Bool;
+	is_java Bool;
+end
+
+object App record =
+	name Str;
+	u Bool;
+	is_java Bool;
+end
+
+object App record =
+	name Str;
+	u Bool;
+	is_java Bool;
+end
+
+object App record =
+	name Str;
+	u Bool;
+	is_java Bool;
+end
+
+object AppKind enum =
+	JavaApp;
+	ReactApp;
+	VueApp;
+end
+
+// object Clone[T] trait =
+// 	fun clone(x T) = x end
+// end
+
+fun abs(x) =
+	if x < 0 do
+		-x
+	end
+
+	x
+end
+
+fun exp(x, y) = x ** y end
+
+fun add(x Int8, y Int8) = x + y end
+fun add(x Int16, y Int16) = x + y end
+fun add(x Int32, y Int32) = x + y end
+fun add(x Int64, y Int64) = x + y end
+fun add(x Uint8, y Uint8) = x + y end
+fun add(x Uint16, y Uint16) = x + y end
+fun add(x Uint32, y Uint32) = x + y end
+fun add(x Uint64, y Uint64) = x + y end
+fun add(x Uint64, y Uint64) = x + y end
+
+fun sub(x Int8, y Int8) = x - y end
+fun sub(x Int16, y Int16) = x - y end
+fun sub(x Int32, y Int32) = x - y end
+fun sub(x Int64, y Int64) = x - y end
+fun sub(x Uint8, y Uint8) = x - y end
+fun sub(x Uint16, y Uint16) = x - y end
+fun sub(x Uint32, y Uint32) = x - y end
+fun sub(x Uint64, y Uint64) = x - y end
+
+fun mul(x Int8, y Int8) = x * y end
+fun mul(x Int16, y Int16) = x * y end
+fun mul(x Int32, y Int32) = x * y end
+fun mul(x Int64, y Int64) = x * y end

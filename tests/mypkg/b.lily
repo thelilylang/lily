@@ -1,0 +1,3 @@
+pub macro app = {
+	fun add(x, y) = x+y;
+};
