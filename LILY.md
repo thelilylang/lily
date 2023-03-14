@@ -785,6 +785,7 @@ error
 false
 for
 fun
+get
 global
 if
 impl
@@ -811,6 +812,7 @@ req
 return
 self
 Self
+set
 test
 trace
 trait
