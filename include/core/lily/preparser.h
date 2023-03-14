@@ -403,7 +403,7 @@ typedef struct LilyPreparserTrait
     String *name;
     Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
     Vec *inherits;       // Vec<Vec<LilyToken*>*>*?
-    Vec *body;           // Vec<LilyToken*>*
+    Vec *body;           // Vec<LilyPreparserTraitBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserTrait;
 

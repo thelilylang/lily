@@ -2112,7 +2112,7 @@ DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self)
         FREE(Vec, self->inherits);
     }
 
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyToken);
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyPreparserTraitBodyItem);
     FREE(Vec, self->body);
 }
 
