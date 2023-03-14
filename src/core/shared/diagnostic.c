@@ -481,7 +481,11 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
         }
 
         {
-            char *s = format("{Sr}", repeat__String(" ", self->location->start_column >= 1 ? self->location->start_column - 1 : 0));
+            char *s = format("{Sr}",
+                             repeat__String(" ",
+                                            self->location->start_column >= 1
+                                              ? self->location->start_column - 1
+                                              : 0));
 
             PUSH_STR_AND_FREE(res, s);
         }
