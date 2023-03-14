@@ -5789,6 +5789,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                               Vec *inherits,
                               Vec *generic_params)
 {
+	Location location = location_decl;
     enum LilyVisibility visibility = visibility_decl;
 
     // 1. Preparse class body
@@ -6045,13 +6046,13 @@ preparse_class__LilyPreparser(LilyPreparser *self,
             UNREACHABLE("this way is possible");
     }
 
-    end__Location(&location_decl,
+    end__Location(&location,
                   self->current->location.end_line,
                   self->current->location.end_column);
 
     return NEW_VARIANT(LilyPreparserDecl,
                        object,
-                       location_decl,
+                       location,
                        NEW_VARIANT(LilyPreparserObject,
                                    class,
                                    NEW(LilyPreparserClass,
@@ -6156,6 +6157,7 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
                               Vec *inherits,
                               Vec *generic_params)
 {
+    Location location = location_decl;
     enum LilyVisibility visibility = visibility_decl;
 
     // 1. Preparse body.
@@ -6172,23 +6174,231 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
                 if (attribute) {
                     push__Vec(body, attribute);
                 } else {
-                    // TODO: clean up
-
-                    return NULL;
+                    goto clean_up;
                 }
 
                 break;
             }
+
             case LILY_TOKEN_KIND_KEYWORD_GLOBAL: {
-                // TODO: preparse attribute and prototype with `global` keyword
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+                if (peeked) {
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_KEYWORD_FUN: {
+                            next_token__LilyPreparser(self);
+
+                            visibility_decl = LILY_VISIBILITY_STATIC;
+
+                            LilyPreparserTraitBodyItem *prototype =
+                              preparse_prototype__LilyPreparser(self);
+
+                            if (prototype) {
+                                push__Vec(body, prototype);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+
+                        case LILY_TOKEN_KIND_KEYWORD_VAL: {
+                            next_token__LilyPreparser(self);
+
+                            visibility_decl = LILY_VISIBILITY_STATIC;
+
+                            LilyPreparserTraitBodyItem *attribute =
+                              preparse_attribute_for_trait__LilyPreparser(
+                                self,
+                                clone__Location(&self->current->location));
+
+                            if (attribute) {
+                                push__Vec(body, attribute);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+
+                        default: {
+                            String *current_s = from__String("global");
+
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->file,
+                                &self->current->location,
+                                NEW_VARIANT(LilyError,
+                                            unexpected_token,
+                                            current_s->buffer),
+                                NULL,
+                                init__Vec(1,
+                                          from__String(
+                                            "expected `fun` or `val` keyword")),
+                                NULL),
+                              &self->count_error);
+
+                            FREE(String, current_s);
+
+                            goto clean_up;
+                        }
+                    }
+                } else {
+                    String *current_s = from__String("global");
+
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW_VARIANT(
+                          LilyError, unexpected_token, current_s->buffer),
+                        NULL,
+                        init__Vec(
+                          1, from__String("expected `fun` or `val` keyword")),
+                        NULL),
+                      &self->count_error);
+
+                    FREE(String, current_s);
+
+                    goto clean_up;
+                }
+
+                visibility_decl = LILY_VISIBILITY_PRIVATE;
+
                 break;
             }
+
             case LILY_TOKEN_KIND_KEYWORD_PUB: {
-                // TODO: preparse attribute and prototype with `pub` keyword
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+                if (peeked) {
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_KEYWORD_FUN: {
+                            next_token__LilyPreparser(self);
+
+                            visibility_decl = LILY_VISIBILITY_PUBLIC;
+
+                            LilyPreparserTraitBodyItem *prototype =
+                              preparse_prototype__LilyPreparser(self);
+
+                            if (prototype) {
+                                push__Vec(body, prototype);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+
+                        case LILY_TOKEN_KIND_KEYWORD_VAL: {
+                            next_token__LilyPreparser(self);
+
+                            visibility_decl = LILY_VISIBILITY_PUBLIC;
+
+                            LilyPreparserTraitBodyItem *attribute =
+                              preparse_attribute_for_trait__LilyPreparser(
+                                self,
+                                clone__Location(&self->current->location));
+
+                            if (attribute) {
+                                push__Vec(body, attribute);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+
+                        default: {
+                            String *current_s = from__String("pub");
+
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->file,
+                                &self->current->location,
+                                NEW_VARIANT(LilyError,
+                                            unexpected_token,
+                                            current_s->buffer),
+                                NULL,
+                                init__Vec(1,
+                                          from__String(
+                                            "expected `fun` or `val` keyword")),
+                                NULL),
+                              &self->count_error);
+
+                            FREE(String, current_s);
+
+                            goto clean_up;
+                        }
+                    }
+                } else {
+                    String *current_s = from__String("pub");
+
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW_VARIANT(
+                          LilyError, unexpected_token, current_s->buffer),
+                        NULL,
+                        init__Vec(
+                          1, from__String("expected `fun` or `val` keyword")),
+                        NULL),
+                      &self->count_error);
+
+                    FREE(String, current_s);
+
+                    goto clean_up;
+                }
+
+                visibility_decl = LILY_VISIBILITY_PRIVATE;
+
                 break;
             }
+
             case LILY_TOKEN_KIND_KEYWORD_FUN: {
-                // TODO: preparse prototype
+                LilyPreparserTraitBodyItem *prototype =
+                  preparse_prototype__LilyPreparser(self);
+
+                if (prototype) {
+                    push__Vec(body, prototype);
+                } else {
+                clean_up : {
+                    // Clean up allocations
+
+                    FREE(String, name);
+
+                    if (inherits) {
+                        FREE_BUFFER_ITEMS_2(
+                          inherits->buffer, inherits->len, LilyToken);
+                        FREE(Vec, inherits);
+                    }
+
+                    if (generic_params) {
+                        FREE_BUFFER_ITEMS_2(generic_params->buffer,
+                                            generic_params->len,
+                                            LilyToken);
+                        FREE(Vec, generic_params);
+                    }
+
+                    FREE_BUFFER_ITEMS(
+                      body->buffer, body->len, LilyPreparserTraitBodyItem);
+                    FREE(Vec, body);
+
+                    visibility_decl = LILY_VISIBILITY_PRIVATE;
+
+                    return NULL;
+                }
+                }
+
                 break;
             }
             default:
@@ -6196,9 +6406,14 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
         }
     }
 
+    end__Location(&location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
+    next_token__LilyPreparser(self);
+
     return NEW_VARIANT(LilyPreparserDecl,
                        object,
-                       location_decl,
+                       location,
                        NEW_VARIANT(LilyPreparserObject,
                                    trait,
                                    NEW(LilyPreparserTrait,
