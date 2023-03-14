@@ -33,7 +33,7 @@
 #ifdef ENV_DEBUG
 // Vec<T>
 #define DEBUG_VEC_STRING(self, res, name)                        \
-    push_str__String(res, " { ");                               \
+    push_str__String(res, " { ");                                \
     for (Usize x = 0; x < self->len; x++) {                      \
         String *s = to_string__Debug__##name(get__Vec(self, x)); \
         APPEND_AND_FREE(res, s);                                 \
@@ -45,7 +45,7 @@
 
 // Vec<T>
 #define DEBUG_VEC_STR(self, res, name)                         \
-    push_str__String(res, " { ");                             \
+    push_str__String(res, " { ");                              \
     for (Usize x = 0; x < self->len; x++) {                    \
         char *s = to_string__Debug__##name(get__Vec(self, x)); \
         PUSH_STR_AND_FREE(res, s);                             \
@@ -57,7 +57,7 @@
 
 // Vec<Vec<T>>
 #define DEBUG_VEC_STRING_2(self, res, name)                           \
-    push_str__String(self, " { ");                                    \
+    push_str__String(res, " { ");                                     \
     for (Usize x = 0; x < self->len; x++) {                           \
         Vec *item = get__Vec(self, x);                                \
         String *res_item = from__String("{ ");                        \
@@ -78,7 +78,7 @@
 
 // Vec<Vec<T>>
 #define DEBUG_VEC_STR_2(self, res, name)                            \
-    push_str__String(self, " { ");                                  \
+    push_str__String(res, " { ");                                   \
     for (Usize x = 0; x < self->len; x++) {                         \
         Vec *item = get__Vec(self, x);                              \
         String *res_item = from__String("{ ");                      \
