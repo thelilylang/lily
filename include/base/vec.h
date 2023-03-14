@@ -30,16 +30,27 @@
 
 #include <stdbool.h>
 
-// Vec<T>
 #ifdef ENV_DEBUG
-#define DEBUG_VEC(self, res, name)                               \
+// Vec<T>
+#define DEBUG_VEC_STRING(self, res, name)                        \
     for (Usize x = 0; x < self->len; x++) {                      \
         String *s = to_string__Debug__##name(get__Vec(self, x)); \
         APPEND_AND_FREE(res, s);                                 \
-        if (i != self->len - 1) {                                \
+        if (x != self->len - 1) {                                \
             push_str__String(res, ", ");                         \
         }                                                        \
     }                                                            \
+    push_str__String(res, " }");
+
+// Vec<T>
+#define DEBUG_VEC_STR(self, res, name)                         \
+    for (Usize x = 0; x < self->len; x++) {                    \
+        char *s = to_string__Debug__##name(get__Vec(self, x)); \
+        PUSH_STR_AND_FREE(res, s);                             \
+        if (x != self->len - 1) {                              \
+            push_str__String(res, ", ");                       \
+        }                                                      \
+    }                                                          \
     push_str__String(res, " }");
 #endif
 
