@@ -915,6 +915,9 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                               Vec *inherits,
                               Vec *generic_params);
 
+static LilyPreparserTraitBodyItem *
+preparse_prototype__LilyPreparser(LilyPreparser *self);
+
 static LilyPreparserDecl *
 preparse_trait__LilyPreparser(LilyPreparser *self,
                               String *name,
@@ -6010,7 +6013,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                 simple_lily_error,
                 self->file,
                 &self->current->location,
-                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
                 NULL,
                 NULL,
                 from__String("expected `end` keyword to close class")),
@@ -6060,27 +6063,150 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                                        visibility)));
 }
 
+LilyPreparserTraitBodyItem *
+preparse_prototype__LilyPreparser(LilyPreparser *self)
+{
+    Location location = clone__Location(&self->current->location);
+
+    next_token__LilyPreparser(self); // skip `fun` keyword
+
+    // 1. Get name of prototype
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+            next_token__LilyPreparser(self);
+
+            break;
+
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                          NULL,
+                          NULL,
+                          from__String("expected name of protoype here")),
+              &self->count_error);
+
+            name = from__String("__error__");
+
+            break;
+    }
+
+    // 2. Preparse generic params.
+    Vec *generic_params = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_HOOK:
+            generic_params = preparse_hook_with_comma_sep__LilyPreparser(self);
+            break;
+
+        default:
+            break;
+    }
+
+    // 3. Preparse params.
+    Vec *params = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_PAREN:
+            params = preparse_paren_with_comma_sep__LilyPreparser(self);
+            break;
+
+        default:
+            break;
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            next_token__LilyPreparser(self);
+            break;
+
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                          NULL,
+                          NULL,
+                          from__String("expected `;`")),
+              &self->count_error);
+    }
+
+    end__Location(&location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
+
+    return NEW_VARIANT(
+      LilyPreparserTraitBodyItem,
+      prototype,
+      location,
+      NEW(LilyPreparserPrototype, name, generic_params, params));
+}
+
 LilyPreparserDecl *
 preparse_trait__LilyPreparser(LilyPreparser *self,
                               String *name,
                               Vec *inherits,
                               Vec *generic_params)
 {
+    enum LilyVisibility visibility = visibility_decl;
+
+    // 1. Preparse body.
     Vec *body = NEW(Vec); // Vec<LilyPreparserTraitBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
         switch (self->current->kind) {
             case LILY_TOKEN_KIND_KEYWORD_VAL: {
+                LilyPreparserTraitBodyItem *attribute =
+                  preparse_attribute_for_trait__LilyPreparser(
+                    self, clone__Location(&self->current->location));
+
+                if (attribute) {
+                    push__Vec(body, attribute);
+                } else {
+                    // TODO: clean up
+
+                    return NULL;
+                }
 
                 break;
             }
-            case LILY_TOKEN_KIND_KEYWORD_FUN:
+            case LILY_TOKEN_KIND_KEYWORD_GLOBAL: {
+                // TODO: preparse attribute and prototype with `global` keyword
                 break;
+            }
+            case LILY_TOKEN_KIND_KEYWORD_PUB: {
+                // TODO: preparse attribute and prototype with `pub` keyword
+                break;
+            }
+            case LILY_TOKEN_KIND_KEYWORD_FUN: {
+                // TODO: preparse prototype
+                break;
+            }
             default:
                 break;
         }
     }
+
+    return NEW_VARIANT(LilyPreparserDecl,
+                       object,
+                       location_decl,
+                       NEW_VARIANT(LilyPreparserObject,
+                                   trait,
+                                   NEW(LilyPreparserTrait,
+                                       name,
+                                       generic_params,
+                                       inherits,
+                                       body,
+                                       visibility)));
 }
 
 LilyPreparserRecordObjectBodyItem *
