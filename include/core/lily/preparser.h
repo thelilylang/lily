@@ -374,6 +374,30 @@ typedef struct LilyPreparserClass
     enum LilyVisibility visibility;
 } LilyPreparserClass;
 
+enum LilyPreparserTraitBodyItemKind
+{
+    LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_PROTOTYPE,
+    LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_ATTRIBUTE,
+};
+
+typedef struct LilyPreparserPrototype
+{
+    String *name;
+    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
+    Vec *params;         // Vec<Vec<LilyToken*>*>*?
+} LilyPreparserPrototype;
+
+typedef struct LilyPreparserTraitBodyItem
+{
+    enum LilyPreparserTraitBodyItemKind kind;
+    Location location;
+    union
+    {
+        LilyPreparserPrototype prototype;
+        LilyPreparserAttribute attribute;
+    };
+} LilyPreparserTraitBodyItem;
+
 typedef struct LilyPreparserTrait
 {
     String *name;
@@ -394,9 +418,9 @@ typedef struct LilyPreparserRecordField
 
 enum LilyPreparserRecordObjectBodyItemKind
 {
-    LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_CONSTANT,
-    LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_FIELD,
-    LILY_PREPARSER_RECORD_OBJECT_ITEM_KIND_METHOD,
+    LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT,
+    LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_FIELD,
+    LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD,
 };
 
 typedef struct LilyPreparserRecordObjectBodyItem
@@ -429,9 +453,9 @@ typedef struct LilyPreparserEnumVariant
 
 enum LilyPreparserEnumObjectBodyItemKind
 {
-    LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_CONSTANT,
-    LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_METHOD,
-    LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_VARIANT,
+    LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT,
+    LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD,
+    LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_VARIANT,
 };
 
 typedef struct LilyPreparserEnumObjectBodyItem
