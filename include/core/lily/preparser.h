@@ -216,11 +216,35 @@ typedef struct LilyPreparserFunBodyItemStmtBlock
     Vec *block; // Vec<LilyPreparserFunBodyItem*>*
 } LilyPreparserFunBodyItemStmtBlock;
 
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemStmtBlock in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtBlock,
+               const LilyPreparserFunBodyItemStmtBlock *self);
+#endif
+
 typedef struct LilyPreparserFunBodyItemStmtFor
 {
     Vec *expr;  // Vec<LilyToken*>*
     Vec *block; // Vec<LilyPreparserFunBodyItem*>*
 } LilyPreparserFunBodyItemStmtFor;
+
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemStmtFor in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtFor,
+               const LilyPreparserFunBodyItemStmtFor *self);
+#endif
 
 typedef struct LilyPreparserFunBodyItemStmtIf
 {
@@ -230,6 +254,18 @@ typedef struct LilyPreparserFunBodyItemStmtIf
     Vec *elif_blocks; // Vec<Vec<LilyPreparserFunBodyItem*>*>*?
     Vec *else_block;  // Vec<LilyPreparserFunBodyItem>*?
 } LilyPreparserFunBodyItemStmtIf;
+
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemStmtIf in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtIf,
+               const LilyPreparserFunBodyItemStmtIf *self);
+#endif
 
 typedef struct LilyPreparserFunBodyItemStmtMatch
 {
@@ -292,6 +328,18 @@ typedef struct LilyPreparserFunBodyItem
         LilyPreparserFunBodyItemStmtWhile stmt_while;
     };
 } LilyPreparserFunBodyItem;
+
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItem in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItem,
+               const LilyPreparserFunBodyItem *self);
+#endif
 
 typedef struct LilyPreparserFun
 {

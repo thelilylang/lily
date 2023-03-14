@@ -1101,19 +1101,9 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserMacro, const LilyPreparserMacro *self)
     String *res = format__String(
       "LilyPreparserMacro{{ name = {S}, tokens = {{ ", self->name);
 
-    for (Usize i = 0; i < self->tokens->len; i++) {
-        char *s = to_string__Debug__LilyToken(get__Vec(self->tokens, i));
+    DEBUG_VEC_STR(self->tokens, res, LilyToken);
 
-        push_str__String(res, s);
-
-        lily_free(s);
-
-        if (i != self->tokens->len - 1) {
-            push_str__String(res, ", ");
-        }
-    }
-
-    push_str__String(res, " }, location = ");
+    push_str__String(res, ", location = ");
 
     char *location_s = to_string__Debug__Location(&self->location);
 
@@ -1213,24 +1203,13 @@ IMPL_FOR_DEBUG(to_string,
     if (self->name) {
         push_str__String(res, "LilyPreparserPackage{ name = ");
         push_str__String(res, self->name->buffer);
-        push_str__String(res, ", sub_packages = { ");
+        push_str__String(res, ", sub_packages =");
     } else {
-        push_str__String(
-          res, "LilyPreparserPackage{ name = NULL, sub_packages = { ");
+        push_str__String(res,
+                         "LilyPreparserPackage{ name = NULL, sub_packages =");
     }
 
-    for (Usize i = 0; i < self->sub_packages->len; i++) {
-        char *s = to_string__Debug__LilyPreparserSubPackage(
-          get__Vec(self->sub_packages, i));
-
-        push_str__String(res, s);
-
-        lily_free(s);
-
-        if (i != self->sub_packages->len - 1) {
-            push_str__String(res, ", ");
-        }
-    }
+    DEBUG_VEC_STR(self->sub_packages, res, LilyPreparserSubPackage);
 
     push_str__String(res, " }");
 
@@ -1337,19 +1316,11 @@ IMPL_FOR_DEBUG(to_string,
                LilyPreparserFunBodyItemExprs,
                const LilyPreparserFunBodyItemExprs *self)
 {
-    String *res = from__String("LilyPreparserFunBodyItemExprs{ tokens = { ");
+    String *res = from__String("LilyPreparserFunBodyItemExprs{ tokens =");
 
-    for (Usize i = 0; i < self->tokens->len; i++) {
-        String *s = to_string__Debug__LilyToken(get__Vec(self->tokens, i));
+    DEBUG_VEC_STRING(self->tokens, res, LilyToken);
 
-        APPEND_AND_FREE(res, s);
-
-        if (i != self->tokens->len - 1) {
-            push_str__String(res, ", ");
-        }
-    }
-
-    push_str__String(res, " } }");
+    push_str__String(res, "}");
 
     return res;
 }
@@ -1369,6 +1340,22 @@ CONSTRUCTOR(LilyPreparserFunBodyItemStmtBlock,
     return (LilyPreparserFunBodyItemStmtBlock){ .block = block };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtBlock,
+               const LilyPreparserFunBodyItemStmtBlock *self)
+{
+    String *res = from__String("LilyPreparserFunBodyItemStmtBlock{ block =");
+
+    DEBUG_VEC_STRING(self->block, res, LilyToken);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserFunBodyItemStmtBlock,
            const LilyPreparserFunBodyItemStmtBlock *self)
 {
@@ -1384,6 +1371,24 @@ CONSTRUCTOR(LilyPreparserFunBodyItemStmtFor,
 {
     return (LilyPreparserFunBodyItemStmtFor){ .expr = expr, .block = block };
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtFor,
+               const LilyPreparserFunBodyItemStmtFor *self)
+{
+    String *res = from__String("LilyPreparserFunBodyItemStmtFor{ expr =");
+
+    DEBUG_VEC_STRING(self->expr, res, LilyToken);
+    push_str__String(res, ", block =");
+
+    DEBUG_VEC_STRING(self->block, res, LilyToken);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyPreparserFunBodyItemStmtFor,
            const LilyPreparserFunBodyItemStmtFor *self)
@@ -1409,6 +1414,43 @@ CONSTRUCTOR(LilyPreparserFunBodyItemStmtIf,
                                              .elif_blocks = elif_blocks,
                                              .else_block = else_block };
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtIf,
+               const LilyPreparserFunBodyItemStmtIf *self)
+{
+    String *res = from__String("LilyPreparserFunBodyItemStmtIf{ if_expr =");
+
+    DEBUG_VEC_STRING(self->if_expr, res, LilyToken);
+    push_str__String(res, ", if_block =");
+
+    DEBUG_VEC_STRING(self->if_block, res, LilyToken);
+
+    if (self->elif_exprs) {
+        push_str__String(res, ", elif_exprs =");
+        DEBUG_VEC_STRING_2(self->elif_exprs, res, LilyToken);
+
+        if (!self->elif_blocks) {
+            UNREACHABLE("self->elif_blocks cannot be NULL when "
+                        "self->elif_exprs is not NULL.");
+        }
+
+        push_str__String(res, ", elif_blocks =");
+        DEBUG_VEC_STRING_2(self->elif_blocks, res, LilyPreparserFunBodyItem);
+    }
+
+    if (self->else_block) {
+        push_str__String(res, ", else_block =");
+        DEBUG_VEC_STRING(self->else_block, res, LilyPreparserFunBodyItem);
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyPreparserFunBodyItemStmtIf,
            const LilyPreparserFunBodyItemStmtIf *self)
@@ -1691,6 +1733,16 @@ VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItem,
+               const LilyPreparserFunBodyItem *self)
+{
+    return from__String("todo");
+}
+#endif
 
 VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                    expr,
@@ -5789,7 +5841,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                               Vec *inherits,
                               Vec *generic_params)
 {
-	Location location = location_decl;
+    Location location = location_decl;
     enum LilyVisibility visibility = visibility_decl;
 
     // 1. Preparse class body
