@@ -481,6 +481,12 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
         }
 
         {
+            char *s = format("{Sr}", repeat__String(" ", self->location->start_column >= 1 ? self->location->start_column - 1 : 0));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+
+        {
             Usize diff =
               self->location->end_column - self->location->start_column;
             String *repeat = repeat__String("^", diff == 0 ? 1 : diff);
