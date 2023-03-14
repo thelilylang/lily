@@ -1897,7 +1897,7 @@ VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
     LilyPreparserClassBodyItem *self =
       lily_malloc(sizeof(LilyPreparserClassBodyItem));
 
-    self->kind = LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUT;
+    self->kind = LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE;
     self->location = location;
     self->attribute = attribute;
 
@@ -1939,7 +1939,7 @@ VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
 DESTRUCTOR(LilyPreparserClassBodyItem, LilyPreparserClassBodyItem *self)
 {
     switch (self->kind) {
-        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUT:
+        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE:
             FREE_VARIANT(LilyPreparserClassBodyItem, attribute, self);
             break;
         case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD:
