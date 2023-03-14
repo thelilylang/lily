@@ -121,6 +121,10 @@ to_msg__LilyError(const LilyError *self)
             return "inherit is not expected";
         case LILY_ERROR_KIND_EXPECTED_DATA_TYPE:
             return "expected data type";
+        case LILY_ERROR_KIND_SET_IS_DUPLICATE:
+            return "set is duplicate";
+        case LILY_ERROR_KIND_GET_IS_DUPLICATE:
+            return "get is duplicate";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -216,6 +220,10 @@ to_code__LilyError(const LilyError *self)
             return "0042";
         case LILY_ERROR_KIND_EXPECTED_DATA_TYPE:
             return "0043";
+        case LILY_ERROR_KIND_SET_IS_DUPLICATE:
+            return "0044";
+        case LILY_ERROR_KIND_GET_IS_DUPLICATE:
+            return "0045";
         default:
             UNREACHABLE("unknown variant");
     }
