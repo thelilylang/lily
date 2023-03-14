@@ -5921,9 +5921,27 @@ preparse_class__LilyPreparser(LilyPreparser *self,
 
                             break;
                         }
-                        default:
-                            // ERROR: unexpected token
-                            break;
+                        default: {
+                            String *current_s = from__String("pub");
+
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->file,
+                                &self->current->location,
+                                NEW_VARIANT(
+                                  LilyError, unexpected_token, current_s->buffer),
+                                NULL,
+                                init__Vec(
+                                  1, from__String("expected `fun` or `val` keyword")),
+                                NULL),
+                              &self->count_error);
+
+                            FREE(String, current_s);
+
+                            goto clean_up;
+                        }
                     }
                 }
             }
