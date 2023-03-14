@@ -177,9 +177,9 @@ object AppKind enum =
 	VueApp;
 end
 
-// object Clone[T] trait =
-// 	fun clone(x T) = x end
-// end
+object Clone[T] trait =
+	fun clone(T);
+end
 
 fun abs(x) =
 	if x < 0 do
