@@ -30,6 +30,13 @@
 
 #include <stdbool.h>
 
+#ifdef ENV_DEBUG
+#define DEBUG_STRING(self, res)          \
+    push__String(res, "\"");             \
+    push_str__String(res, self->buffer); \
+    push__String(res, "\"");
+#endif
+
 #define STRING_DEFAULT_CAPACITY 4
 
 #define PUSH_STR_AND_FREE(self, s) \
