@@ -275,6 +275,18 @@ typedef struct LilyPreparserFunBodyItemStmtMatch
     Vec *blocks;        // Vec<LilyPreparserFunBodyItem*>*
 } LilyPreparserFunBodyItemStmtMatch;
 
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemStmtMatch in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtMatch,
+               const LilyPreparserFunBodyItemStmtMatch *self);
+#endif
+
 typedef struct LilyPreparserFunBodyItemStmtTry
 {
     Vec *block;       // Vec<LilyPreparserFunBodyItem*>*

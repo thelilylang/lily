@@ -1496,6 +1496,47 @@ CONSTRUCTOR(LilyPreparserFunBodyItemStmtMatch,
                                                 .blocks = blocks };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtMatch,
+               const LilyPreparserFunBodyItemStmtMatch *self)
+{
+    String *res = from__String("LilyPreparserFunBodyItemStmtMatch{ expr =");
+
+    DEBUG_VEC_STR(self->expr, res, LilyToken);
+
+    push_str__String(res, ", patterns =");
+    DEBUG_VEC_STR_2(self->patterns, res, LilyToken);
+
+    push_str__String(res, ", pattern_conds=");
+
+    for (Usize i = 0; i < self->pattern_conds->len; i++) {
+        String *item = NEW(String);
+        Vec *pattern_cond = get__Vec(self->pattern_conds, i);
+
+        if (pattern_cond) {
+            DEBUG_VEC_STR(pattern_cond, item, LilyToken);
+        } else {
+            push_str__String(item, "NULL");
+        }
+
+        APPEND_AND_FREE(res, item);
+
+        if (i != self->pattern_conds->len - 1) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, ", blocks=");
+    DEBUG_VEC_STRING(self->blocks, res, LilyPreparserFunBodyItem);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserFunBodyItemStmtMatch,
            const LilyPreparserFunBodyItemStmtMatch *self)
 {
