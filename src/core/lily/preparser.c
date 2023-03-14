@@ -310,8 +310,7 @@ static inline CONSTRUCTOR(LilyPreparserAttribute,
                           Vec *default_expr,
                           bool is_get,
                           bool is_set,
-                          bool is_pub,
-                          bool is_static);
+                          enum LilyVisibility visibility);
 
 // Free LilyPreparserAttribute type.
 static DESTRUCTOR(LilyPreparserAttribute, const LilyPreparserAttribute *self);
@@ -375,6 +374,7 @@ static DESTRUCTOR(LilyPreparserPrototype, const LilyPreparserPrototype *self);
 static VARIANT_CONSTRUCTOR(LilyPreparserTraitBodyItem *,
                            LilyPreparserTraitBodyItem,
                            attribute,
+                           Location location,
                            LilyPreparserAttribute attribute);
 
 // Construct LilyPreparserTraitBodyItem type
@@ -382,6 +382,7 @@ static VARIANT_CONSTRUCTOR(LilyPreparserTraitBodyItem *,
 static VARIANT_CONSTRUCTOR(LilyPreparserTraitBodyItem *,
                            LilyPreparserTraitBodyItem,
                            prototype,
+                           Location location,
                            LilyPreparserPrototype prototype);
 
 // Free LilyPreparserTraitBodyItem type
@@ -897,9 +898,12 @@ static LilyPreparserDecl *
 preparse_fun__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserClassBodyItem *
-preparse_attribute__LilyPreparser(LilyPreparser *self,
-                                  bool is_pub,
-                                  Location location);
+preparse_attribute_for_class__LilyPreparser(LilyPreparser *self,
+                                            Location location);
+
+static LilyPreparserTraitBodyItem *
+preparse_attribute_for_trait__LilyPreparser(LilyPreparser *self,
+                                            Location location);
 
 static LilyPreparserClassBodyItem *
 preparse_method_for_class__LilyPreparser(LilyPreparser *self);
@@ -1855,16 +1859,14 @@ CONSTRUCTOR(LilyPreparserAttribute,
             Vec *default_expr,
             bool is_get,
             bool is_set,
-            bool is_pub,
-            bool is_static)
+            enum LilyVisibility visibility)
 {
     return (LilyPreparserAttribute){ .name = name,
                                      .data_type = data_type,
                                      .default_expr = default_expr,
                                      .is_get = is_get,
                                      .is_set = is_set,
-                                     .is_pub = is_pub,
-                                     .is_static = is_static };
+                                     .visibility = visibility };
 }
 
 DESTRUCTOR(LilyPreparserAttribute, const LilyPreparserAttribute *self)
@@ -2022,12 +2024,14 @@ DESTRUCTOR(LilyPreparserPrototype, const LilyPreparserPrototype *self)
 VARIANT_CONSTRUCTOR(LilyPreparserTraitBodyItem *,
                     LilyPreparserTraitBodyItem,
                     attribute,
+                    Location location,
                     LilyPreparserAttribute attribute)
 {
     LilyPreparserTraitBodyItem *self =
       lily_malloc(sizeof(LilyPreparserTraitBodyItem));
 
     self->kind = LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_ATTRIBUTE;
+    self->location = location;
     self->attribute = attribute;
 
     return self;
@@ -2036,12 +2040,14 @@ VARIANT_CONSTRUCTOR(LilyPreparserTraitBodyItem *,
 VARIANT_CONSTRUCTOR(LilyPreparserTraitBodyItem *,
                     LilyPreparserTraitBodyItem,
                     prototype,
+                    Location location,
                     LilyPreparserPrototype prototype)
 {
     LilyPreparserTraitBodyItem *self =
       lily_malloc(sizeof(LilyPreparserTraitBodyItem));
 
     self->kind = LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_PROTOTYPE;
+    self->location = location;
     self->prototype = prototype;
 
     return self;
@@ -2112,7 +2118,8 @@ DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self)
         FREE(Vec, self->inherits);
     }
 
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyPreparserTraitBodyItem);
+    FREE_BUFFER_ITEMS(
+      self->body->buffer, self->body->len, LilyPreparserTraitBodyItem);
     FREE(Vec, self->body);
 }
 
@@ -5470,30 +5477,13 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
                            req_is_comptime));
 }
 
-#include <base/print.h>
-
 LilyPreparserClassBodyItem *
-preparse_attribute__LilyPreparser(LilyPreparser *self,
-                                  bool is_pub,
-                                  Location location)
+preparse_attribute_for_class__LilyPreparser(LilyPreparser *self,
+                                            Location location)
 {
-    // 1. Check if the attribute is static
-    bool is_static = false;
+    next_token__LilyPreparser(self); // skip `val` keyword
 
-    next_token__LilyPreparser(self); // skip `@`
-
-    switch (self->current->kind) {
-        case LILY_TOKEN_KIND_AT:
-            is_static = true;
-            next_token__LilyPreparser(self); // skip `@`
-
-            break;
-
-        default:
-            break;
-    }
-
-    // 2. Get attribute's name
+    // 1. Get attribute's name
     String *name = NULL;
 
     switch (self->current->kind) {
@@ -5517,7 +5507,7 @@ preparse_attribute__LilyPreparser(LilyPreparser *self,
             name = from__String("__error__");
     }
 
-    // 3. Get attribute's data type
+    // 2. Get attribute's data type
     Vec *data_type = NEW(Vec); // Vec<LilyToken*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
@@ -5543,7 +5533,7 @@ preparse_attribute__LilyPreparser(LilyPreparser *self,
           &self->count_error);
     }
 
-    // 4. Preparse default expression
+    // 3. Preparse default expression
     Vec *default_expr = NULL; // Vec<LilyToken*>*?
 
     switch (self->current->kind) {
@@ -5561,8 +5551,31 @@ preparse_attribute__LilyPreparser(LilyPreparser *self,
 
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_EOF:
-                    // ERROR: eof is not expected.
-                    break;
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                        NULL,
+                        NULL,
+                        from__String("expected `::` or `;`")),
+                      &self->count_error);
+
+                    FREE(String, name);
+
+                    FREE_BUFFER_ITEMS(
+                      data_type->buffer, data_type->len, LilyToken);
+                    FREE(Vec, data_type);
+
+                    if (default_expr) {
+                        FREE_BUFFER_ITEMS(
+                          default_expr->buffer, default_expr->len, LilyToken);
+                        FREE(Vec, default_expr);
+                    }
+
+                    return NULL;
                 default:
                     break;
             }
@@ -5572,7 +5585,7 @@ preparse_attribute__LilyPreparser(LilyPreparser *self,
             break;
     }
 
-    // 5. Check if encapsulation is defined
+    // 4. Check if encapsulation is defined
     bool is_get = false;
     bool is_set = false;
 
@@ -5589,9 +5602,37 @@ preparse_attribute__LilyPreparser(LilyPreparser *self,
                     is_set = true;
                     break;
 
-                default:
-                    // ERROR: unexpected token
+                default: {
+                    String *current_s = to_string__LilyToken(self->current);
+
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW_VARIANT(
+                          LilyError, unexpected_token, current_s->buffer),
+                        NULL,
+                        NULL,
+                        from__String("expected `get` or `set` keyword")),
+                      &self->count_error);
+
+                    FREE(String, current_s);
+                    FREE(String, name);
+
+                    FREE_BUFFER_ITEMS(
+                      data_type->buffer, data_type->len, LilyToken);
+                    FREE(Vec, data_type);
+
+                    if (default_expr) {
+                        FREE_BUFFER_ITEMS(
+                          default_expr->buffer, default_expr->len, LilyToken);
+                        FREE(Vec, default_expr);
+                    }
+
                     return NULL;
+                }
             }
 
             next_token__LilyPreparser(self); // skip `get` or `set` keyword
@@ -5608,14 +5649,40 @@ preparse_attribute__LilyPreparser(LilyPreparser *self,
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_KEYWORD_GET:
                     if (is_get) {
-                        // ERROR: get is duplicate
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->file,
+                            &self->current->location,
+                            NEW(LilyError, LILY_ERROR_KIND_GET_IS_DUPLICATE),
+                            NULL,
+                            init__Vec(
+                              1, from__String("remove one of the two `get`")),
+                            NULL),
+                          &self->count_error);
+                    } else {
+                        is_get = true;
                     }
 
                     break;
 
                 case LILY_TOKEN_KIND_KEYWORD_SET:
                     if (is_set) {
-                        // ERROR: set is duplicate
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->file,
+                            &self->current->location,
+                            NEW(LilyError, LILY_ERROR_KIND_SET_IS_DUPLICATE),
+                            NULL,
+                            init__Vec(
+                              1, from__String("remove one of the two `set`")),
+                            NULL),
+                          &self->count_error);
+                    } else {
+                        is_set = true;
                     }
 
                     break;
@@ -5640,10 +5707,28 @@ return_attribute : {
             next_token__LilyPreparser(self);
 
             break;
-        default:
-            // ERROR: unexpected token
-            return NULL;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `;`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+        }
     }
+
+    end__Location(&location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
 
     return NEW_VARIANT(LilyPreparserClassBodyItem,
                        attribute,
@@ -5653,10 +5738,28 @@ return_attribute : {
                            default_expr,
                            is_get,
                            is_set,
-                           is_pub,
-                           is_static),
+                           visibility_decl),
                        location);
 }
+}
+
+LilyPreparserTraitBodyItem *
+preparse_attribute_for_trait__LilyPreparser(LilyPreparser *self,
+                                            Location location)
+{
+    LilyPreparserClassBodyItem *item =
+      preparse_attribute_for_class__LilyPreparser(self, location);
+
+    if (item) {
+        LilyPreparserTraitBodyItem *res = NEW_VARIANT(
+          LilyPreparserTraitBodyItem, attribute, location, item->attribute);
+
+        lily_free(item);
+
+        return res;
+    }
+
+    return NULL;
 }
 
 LilyPreparserClassBodyItem *
@@ -5683,16 +5786,151 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                               Vec *inherits,
                               Vec *generic_params)
 {
+    enum LilyVisibility visibility = visibility_decl;
+
     // 1. Preparse class body
     Vec *body = NEW(Vec); // Vec<LilyPreparserClassBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
         switch (self->current->kind) {
-            case LILY_TOKEN_KIND_AT: {
+            case LILY_TOKEN_KIND_KEYWORD_PUB: {
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+                if (peeked) {
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_KEYWORD_VAL: {
+                            next_token__LilyPreparser(self);
+
+                            visibility_decl = LILY_VISIBILITY_PUBLIC;
+
+                            LilyPreparserClassBodyItem *attribute =
+                              preparse_attribute_for_class__LilyPreparser(
+                                self,
+                                clone__Location(&self->current->location));
+
+                            if (attribute) {
+                                push__Vec(body, attribute);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+
+                        case LILY_TOKEN_KIND_KEYWORD_FUN: {
+                            next_token__LilyPreparser(self);
+
+                            visibility_decl = LILY_VISIBILITY_PUBLIC;
+
+                            LilyPreparserClassBodyItem *method =
+                              preparse_method_for_class__LilyPreparser(self);
+
+                            if (method) {
+                                push__Vec(body, method);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+
+                        default: {
+                            String *current_s =
+                              to_string__LilyToken(self->current);
+
+                            emit__Diagnostic(
+                              NEW_VARIANT(Diagnostic,
+                                          simple_lily_error,
+                                          self->file,
+                                          &self->current->location,
+                                          NEW_VARIANT(LilyError,
+                                                      unexpected_token,
+                                                      current_s->buffer),
+                                          NULL,
+                                          NULL,
+                                          from__String(
+                                            "expected `fun` or `val` keyword")),
+                              &self->count_error);
+
+                            FREE(String, current_s);
+
+                            goto clean_up;
+                        }
+                    }
+                } else {
+                    String *current_s = from__String("pub");
+
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW_VARIANT(
+                          LilyError, unexpected_token, current_s->buffer),
+                        NULL,
+                        init__Vec(
+                          1, from__String("expected `fun` or `val` keyword")),
+                        NULL),
+                      &self->count_error);
+
+                    FREE(String, current_s);
+
+                    goto clean_up;
+                }
+
+                break;
+            }
+            case LILY_TOKEN_KIND_KEYWORD_GLOBAL: {
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+                if (peeked) {
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_KEYWORD_VAL: {
+                            next_token__LilyPreparser(self);
+
+                            visibility_decl = LILY_VISIBILITY_STATIC;
+
+                            LilyPreparserClassBodyItem *attribute =
+                              preparse_attribute_for_class__LilyPreparser(
+                                self,
+                                clone__Location(&self->current->location));
+
+                            if (attribute) {
+                                push__Vec(body, attribute);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+                        case LILY_TOKEN_KIND_KEYWORD_FUN: {
+                            next_token__LilyPreparser(self);
+
+                            visibility_decl = LILY_VISIBILITY_STATIC;
+
+                            LilyPreparserClassBodyItem *method =
+                              preparse_method_for_class__LilyPreparser(self);
+
+                            if (method) {
+                                push__Vec(body, method);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+                        default:
+                            // ERROR: unexpected token
+                            break;
+                    }
+                }
+            }
+            case LILY_TOKEN_KIND_KEYWORD_VAL: {
                 LilyPreparserClassBodyItem *attribute =
-                  preparse_attribute__LilyPreparser(
-                    self, false, clone__Location(&self->current->location));
+                  preparse_attribute_for_class__LilyPreparser(
+                    self, clone__Location(&self->current->location));
 
                 if (attribute) {
                     push__Vec(body, attribute);
@@ -5735,6 +5973,8 @@ preparse_class__LilyPreparser(LilyPreparser *self,
             default:
                 break;
         }
+
+        visibility_decl = LILY_VISIBILITY_PRIVATE;
     }
 
     switch (self->current->kind) {
@@ -5774,6 +6014,8 @@ preparse_class__LilyPreparser(LilyPreparser *self,
               body->buffer, body->len, LilyPreparserClassBodyItem);
             FREE(Vec, body);
 
+            visibility_decl = LILY_VISIBILITY_PRIVATE;
+
             return NULL;
 
         default:
@@ -5795,7 +6037,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                                        inherits,
                                        impls,
                                        body,
-                                       visibility_decl)));
+                                       visibility)));
 }
 
 LilyPreparserDecl *
@@ -5804,6 +6046,21 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
                               Vec *inherits,
                               Vec *generic_params)
 {
+    Vec *body = NEW(Vec); // Vec<LilyPreparserTraitBodyItem*>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_KEYWORD_VAL: {
+
+                break;
+            }
+            case LILY_TOKEN_KIND_KEYWORD_FUN:
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 LilyPreparserRecordObjectBodyItem *
@@ -5829,6 +6086,7 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                                       Vec *impls,
                                       Vec *generic_params)
 {
+    enum LilyVisibility visibility = visibility_decl;
     Location location = location_decl;
     Vec *body = NEW(Vec); // Vec<LilyPreparserRecordObjectBodyItem*>*
 
@@ -5975,7 +6233,7 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                                        generic_params,
                                        impls,
                                        body,
-                                       visibility_decl)));
+                                       visibility)));
 }
 
 LilyPreparserEnumObjectBodyItem *
@@ -6001,6 +6259,7 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
                                     Vec *impls,
                                     Vec *generic_params)
 {
+    enum LilyVisibility visibility = visibility_decl;
     Location location = location_decl;
     Vec *body = NEW(Vec); // Vec<LilyPreparserEnumObjectBodyItem*>*
 
@@ -6146,7 +6405,7 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
                                        generic_params,
                                        impls,
                                        body,
-                                       visibility_decl)));
+                                       visibility)));
 }
 
 LilyPreparserDecl *

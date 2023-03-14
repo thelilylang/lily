@@ -347,10 +347,9 @@ typedef struct LilyPreparserAttribute
     String *name;
     Vec *data_type;    // Vec<LilyToken*>*
     Vec *default_expr; // Vec<LilyToken*>*?
+    enum LilyVisibility visibility;
     bool is_get;
     bool is_set;
-    bool is_pub;
-    bool is_static;
 } LilyPreparserAttribute;
 
 typedef struct LilyPreparserClassBodyItem
