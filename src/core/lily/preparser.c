@@ -5930,11 +5930,13 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                                 simple_lily_error,
                                 self->file,
                                 &self->current->location,
-                                NEW_VARIANT(
-                                  LilyError, unexpected_token, current_s->buffer),
+                                NEW_VARIANT(LilyError,
+                                            unexpected_token,
+                                            current_s->buffer),
                                 NULL,
-                                init__Vec(
-                                  1, from__String("expected `fun` or `val` keyword")),
+                                init__Vec(1,
+                                          from__String(
+                                            "expected `fun` or `val` keyword")),
                                 NULL),
                               &self->count_error);
 
