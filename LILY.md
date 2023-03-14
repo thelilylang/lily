@@ -76,13 +76,8 @@ type PersonName alias = Str;
 
 ```lily
 object Person class =
-    @name Str;
-    @age Uint8;
-
-    pub fun get_name(self) = self.name;
-    pub fun get_age(self) = self.age;
-    pub fun set_name(mut self, name Str) = self.name = name;
-    pub fun set_age(mut self, age Uint8) = self.age = age;
+    val name Str :: get, set;
+    val age Uint8 :: get, set;
 
     pub fun new(name Str, age Uint8) =
         @.name = name
@@ -94,13 +89,13 @@ end
 You can add an instruction to generate a `get` or `set` or both for this property.
 
 ```lily
-@name Str := "Hello" :: get, set;
+val name Str := "Hello" :: get, set;
 ```
 
-Create static property with `@@`.
+Create static property with `global val`.
 
 ```lily
-@@name Str
+global val name Str
 ```
 
 ### Object type
@@ -123,7 +118,7 @@ end
 
 ```lily
 object Human trait =
-    @name Str;
+    val name Str;
 
     fun get_name() Str;
 end
@@ -296,7 +291,7 @@ end
 ## Constant
 
 ```lily
-A Int32 := 30;
+val A Int32 := 30;
 ```
 
 ## Contract
@@ -430,10 +425,10 @@ end
 
 ```lily
 object Foo class =
-    @name Str;
-//   ^^^^ -> check name
-    @name Int32;
-//   ^^^^ -> check name
+    val name Str;
+//      ^^^^ -> check name
+    val name Int32;
+//      ^^^^ -> check name
 end
 ```
 
@@ -441,8 +436,8 @@ end
 
 ```lily
 object Foo class =
-    @name AA;
-//        ^^ -> check data type
+    val name AA;
+//           ^^ -> check data type
 end
 ```
 
