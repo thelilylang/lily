@@ -1573,6 +1573,34 @@ CONSTRUCTOR(LilyPreparserFunBodyItemStmtTry,
                                               .catch_block = catch_block };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtTry,
+               const LilyPreparserFunBodyItemStmtTry *self)
+{
+    String *res = from__String("LilyPreparserFunBodyItemStmtTry{ block =");
+
+    DEBUG_VEC_STRING(self->block, res, LilyPreparserFunBodyItem);
+
+    if (self->catch_expr) {
+        push_str__String(res, ", catch_expr =");
+        DEBUG_VEC_STR(self->catch_expr, res, LilyToken);
+
+        if (!self->catch_block) {
+            UNREACHABLE("self->catch_block cannot be NULL when self->catch_expr is not NULL");
+        }
+
+        push_str__String(res, ", catch_block =");
+        DEBUG_VEC_STRING(self->catch_block, res, LilyPreparserFunBodyItem);
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserFunBodyItemStmtTry,
            const LilyPreparserFunBodyItemStmtTry *self)
 {
