@@ -30,6 +30,19 @@
 
 #include <stdbool.h>
 
+// Vec<T>
+#ifdef ENV_DEBUG
+#define DEBUG_VEC(self, res, name)                               \
+    for (Usize x = 0; x < self->len; x++) {                      \
+        String *s = to_string__Debug__##name(get__Vec(self, x)); \
+        APPEND_AND_FREE(res, s);                                 \
+        if (i != self->len - 1) {                                \
+            push_str__String(res, ", ");                         \
+        }                                                        \
+    }                                                            \
+    push_str__String(res, " }");
+#endif
+
 typedef struct String String;
 
 typedef struct Vec
