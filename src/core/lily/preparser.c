@@ -1101,19 +1101,20 @@ CONSTRUCTOR(LilyPreparserMacro *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserMacro, const LilyPreparserMacro *self)
 {
-    String *res = format__String(
-      "LilyPreparserMacro{{ name = {S}, tokens = {{ ", self->name);
+    String *res =
+      format__String("LilyPreparserMacro{{ name = {S}, params =", self->name);
 
+    DEBUG_VEC_STR_2(self->params, res, LilyToken);
+
+    push_str__String(res, ", tokens =");
     DEBUG_VEC_STR(self->tokens, res, LilyToken);
 
-    push_str__String(res, ", location = ");
+    {
+        char *s = format(", location = {sa} }",
+                         to_string__Debug__Location(&self->location));
 
-    char *location_s = to_string__Debug__Location(&self->location);
-
-    push_str__String(res, location_s);
-    push_str__String(res, " }");
-
-    lily_free(location_s);
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
@@ -3158,7 +3159,8 @@ IMPL_FOR_DEBUG(to_string,
     DEBUG_VEC_STRING(self->body, res, LilyPreparserRecordObjectBodyItem);
 
     {
-        char *s = format(", visibility = {s} }", to_string__Debug__LilyVisibility(self->visibility));
+        char *s = format(", visibility = {s} }",
+                         to_string__Debug__LilyVisibility(self->visibility));
 
         PUSH_STR_AND_FREE(res, s);
     }
@@ -3462,7 +3464,8 @@ IMPL_FOR_DEBUG(to_string,
     DEBUG_VEC_STRING(self->body, res, LilyPreparserEnumObjectBodyItem);
 
     {
-        char *s = format(", visibility = {s} }", to_string__Debug__LilyVisibility(self->visibility));
+        char *s = format(", visibility = {s} }",
+                         to_string__Debug__LilyVisibility(self->visibility));
 
         PUSH_STR_AND_FREE(res, s);
     }
