@@ -2803,6 +2803,36 @@ CONSTRUCTOR(LilyPreparserTrait,
                                  .visibility = visibility };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserTrait, const LilyPreparserTrait *self)
+{
+    String *res = format__String(
+      "LilyPreparserTrait{{ name = {S}, generic_params =", self->name);
+
+    if (self->generic_params) {
+        DEBUG_VEC_STR_2(self->generic_params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", inherits =");
+
+    if (self->inherits) {
+        DEBUG_VEC_STR_2(self->inherits, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", body =");
+    DEBUG_VEC_STRING(self->body, res, LilyPreparserTraitBodyItem);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self)
 {
 #ifdef RUN_UNTIL_PREPARSER
