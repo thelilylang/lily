@@ -3202,6 +3202,28 @@ CONSTRUCTOR(LilyPreparserEnumVariant *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumVariant,
+               const LilyPreparserEnumVariant *self)
+{
+    String *res = format__String(
+      "LilyPreparserEnumVariant{{ name = {S}, data_type =", self->name);
+
+    DEBUG_VEC_STR(self->data_type, res, LilyToken);
+
+    {
+        char *s = format(", location = {sa} }",
+                         to_string__Debug__Location(&self->location));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserEnumVariant, LilyPreparserEnumVariant *self)
 {
 #ifdef RUN_UNTIL_PREPARSER

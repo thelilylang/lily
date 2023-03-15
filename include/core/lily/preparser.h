@@ -757,6 +757,18 @@ typedef struct LilyPreparserEnumVariant
     Location location;
 } LilyPreparserEnumVariant;
 
+/**
+ *
+ * @brief Convert LilyPreparserEnumVariant in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumVariant,
+               const LilyPreparserEnumVariant *self);
+#endif
+
 enum LilyPreparserEnumObjectBodyItemKind
 {
     LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT,
