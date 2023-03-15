@@ -2459,6 +2459,41 @@ VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserClassBodyItem,
+               const LilyPreparserClassBodyItem *self)
+{
+    String *res = format__String("LilyPreparserClassBodyItem{{ kind = {s}, location = {sa}", to_string__Debug__LilyPreparserClassBodyItemKind(self->kind), to_string__Debug__Location(&self->location));
+
+    switch (self->kind) {
+        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE: {
+            String *s = to_string__Debug__LilyPreparserAttribute(&self->attribute);
+            
+            push_str__String(res, ", attribute = ");
+            APPEND_AND_FREE(res, s);
+            
+            break;
+        }
+        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD: {
+            String *s = to_string__Debug__LilyPreparserMethod(&self->method);
+            
+            push_str__String(res, ", method = ");
+            APPEND_AND_FREE(res, s);
+            
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
                    attribute,
                    LilyPreparserClassBodyItem *self)
