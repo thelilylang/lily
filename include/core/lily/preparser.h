@@ -424,6 +424,16 @@ typedef struct LilyPreparserConstantInfo
     enum LilyVisibility visibility;
 } LilyPreparserConstantInfo;
 
+/**
+ *
+ * @brief Convert LilyPreparserConstantInfo in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserConstantInfo, const LilyPreparserConstantInfo *self);
+#endif
+
 enum LilyPreparserConstantKind
 {
     LILY_PREPARSER_CONSTANT_KIND_SIMPLE,

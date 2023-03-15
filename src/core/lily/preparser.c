@@ -2129,6 +2129,25 @@ CONSTRUCTOR(LilyPreparserConstantInfo *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserConstantInfo, const LilyPreparserConstantInfo *self)
+{
+    String *res = format__String("LilyPreparserConstantInfo{{ name = {S}, expr =", self->name);
+
+    DEBUG_VEC_STR(self->expr, res, LilyToken);
+
+    push_str__String(res, ", data_type =");
+    DEBUG_VEC_STR(self->data_type, res, LilyToken);
+
+    push_str__String(res, ", visibility = ");
+    push_str__String(res, to_string__Debug__LilyVisibility(self->visibility));
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserConstantInfo, LilyPreparserConstantInfo *self)
 {
 #ifdef RUN_UNTIL_PREPARSER
