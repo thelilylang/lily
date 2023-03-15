@@ -9308,7 +9308,6 @@ exit_preparser : {
     printf("\n====Preparser decls(%s)====\n", self->file->name);
 
     for (Usize i = 0; i < info->decls->len; i++) {
-        // printf("%s\n", to_string__Debug__LilyPreparserDeclKind(CAST(LilyPreparserDecl*, get__Vec(info->decls, i))->kind));
         CALL_DEBUG(LilyPreparserDecl, get__Vec(info->decls, i));
     }
 
