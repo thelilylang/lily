@@ -1863,21 +1863,29 @@ IMPL_FOR_DEBUG(to_string,
 {
     switch (self->kind) {
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS:
-            return to_string__Debug__LilyPreparserFunBodyItemExprs(&self->exprs);
+            return to_string__Debug__LilyPreparserFunBodyItemExprs(
+              &self->exprs);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtBlock(&self->stmt_block);
+            return to_string__Debug__LilyPreparserFunBodyItemStmtBlock(
+              &self->stmt_block);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtFor(&self->stmt_for);
+            return to_string__Debug__LilyPreparserFunBodyItemStmtFor(
+              &self->stmt_for);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtIf(&self->stmt_if);
+            return to_string__Debug__LilyPreparserFunBodyItemStmtIf(
+              &self->stmt_if);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtMatch(&self->stmt_match);
+            return to_string__Debug__LilyPreparserFunBodyItemStmtMatch(
+              &self->stmt_match);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtTry(&self->stmt_try);
+            return to_string__Debug__LilyPreparserFunBodyItemStmtTry(
+              &self->stmt_try);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtVariable(&self->stmt_var);
+            return to_string__Debug__LilyPreparserFunBodyItemStmtVariable(
+              &self->stmt_var);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtWhile(&self->stmt_while);
+            return to_string__Debug__LilyPreparserFunBodyItemStmtWhile(
+              &self->stmt_while);
         default:
             UNREACHABLE("unknown variant");
     }
