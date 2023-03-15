@@ -2019,6 +2019,62 @@ CONSTRUCTOR(LilyPreparserFun,
                                .when_is_comptime = when_is_comptime };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserFun, const LilyPreparserFun *self)
+{
+    String *res = format__String("LilyPreparserFun{{ name = {S}", self->name);
+
+    if (self->object_impl) {
+        char *s = format(", object_impl = {S}", self->object_impl);
+
+        PUSH_STR_AND_FREE(res, s);
+    } else {
+        push_str__String(res, ", object_impl = NULL");
+    }
+
+    if (self->generic_params) {
+        push_str__String(res, ", generic_params=");
+        DEBUG_VEC_STR_2(self->generic_params, res, LilyToken);
+    } else {
+        push_str__String(res, ", generic_params = NULL");
+    }
+
+    if (self->params) {
+        push_str__String(res, ", params=");
+        DEBUG_VEC_STR_2(self->params, res, LilyToken);
+    } else {
+        push_str__String(res, ", params = NULL");
+    }
+
+    push_str__String(res, ", return_data_type =");
+    DEBUG_VEC_STR(self->return_data_type, res, LilyToken);
+
+    push_str__String(res, ", body =");
+    DEBUG_VEC_STRING(self->body, res, LilyPreparserFunBodyItem);
+
+    push_str__String(res, ", req =");
+    DEBUG_VEC_STR_2(self->req, res, LilyToken);
+
+    push_str__String(res, ", when =");
+    DEBUG_VEC_STR_2(self->when, res, LilyToken);
+
+    {
+        char *s = format(", visibility = {s}, is_async = {b}, is_operator = "
+                         "{b}, req_is_comptime = {b}, when_is_comptime = {b} }",
+                         to_string__Debug__LilyVisibility(self->visibility),
+                         self->is_async,
+                         self->is_operator,
+                         self->req_is_comptime,
+                         self->when_is_comptime);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
 {
 #ifdef RUN_UNTIL_PREPARSER

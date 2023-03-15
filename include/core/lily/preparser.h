@@ -406,6 +406,16 @@ typedef struct LilyPreparserFun
     bool when_is_comptime;
 } LilyPreparserFun;
 
+/**
+ *
+ * @brief Convert LilyPreparserFun in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserFun, const LilyPreparserFun *self);
+#endif
+
 typedef struct LilyPreparserConstantInfo
 {
     String *name;
