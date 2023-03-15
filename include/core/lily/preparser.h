@@ -583,9 +583,7 @@ typedef struct LilyPreparserClass
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string,
-               LilyPreparserClass,
-               const LilyPreparserClass *self);
+IMPL_FOR_DEBUG(to_string, LilyPreparserClass, const LilyPreparserClass *self);
 #endif
 
 enum LilyPreparserTraitBodyItemKind
@@ -635,6 +633,18 @@ typedef struct LilyPreparserTraitBodyItem
         LilyPreparserAttribute attribute;
     };
 } LilyPreparserTraitBodyItem;
+
+/**
+ *
+ * @brief Convert LilyPreparserTraitBodyItem in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserTraitBodyItem,
+               const LilyPreparserTraitBodyItem *self);
+#endif
 
 typedef struct LilyPreparserTrait
 {

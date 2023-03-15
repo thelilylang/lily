@@ -2546,11 +2546,10 @@ CONSTRUCTOR(LilyPreparserClass,
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string,
-               LilyPreparserClass,
-               const LilyPreparserClass *self)
+IMPL_FOR_DEBUG(to_string, LilyPreparserClass, const LilyPreparserClass *self)
 {
-    String *res = format__String("LilyPreparserClass{{ name = {S}, generic_params =", self->name);
+    String *res = format__String(
+      "LilyPreparserClass{{ name = {S}, generic_params =", self->name);
 
     if (self->generic_params) {
         DEBUG_VEC_STR_2(self->generic_params, res, LilyToken);
@@ -2646,7 +2645,8 @@ IMPL_FOR_DEBUG(to_string,
                LilyPreparserPrototype,
                const LilyPreparserPrototype *self)
 {
-    String *res = format__String("LilyPreparserPrototype{{ name = {S}, generic_params =", self->name);
+    String *res = format__String(
+      "LilyPreparserPrototype{{ name = {S}, generic_params =", self->name);
 
     if (self->generic_params) {
         DEBUG_VEC_STR_2(self->generic_params, res, LilyToken);
@@ -2717,6 +2717,44 @@ VARIANT_CONSTRUCTOR(LilyPreparserTraitBodyItem *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserTraitBodyItem,
+               const LilyPreparserTraitBodyItem *self)
+{
+    String *res = format__String(
+      "LilyPreparserTraitBodyItem{ kind = {s}, location = {sa}",
+      to_string__Debug__LilyPreparserTraitBodyItemKind(self->kind),
+      to_string__Debug__Location(&self->location));
+
+    switch (self->kind) {
+        case LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_ATTRIBUTE: {
+            char *s = format(
+              ", attribute = {Sr} }",
+              to_string__Debug__LilyPreparserAttribute(&self->attribute));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_PROTOTYPE: {
+            char *s = format(
+              ", prototype = {Sr} }",
+              to_string__Debug__LilyPreparserPrototype(&self->prototype));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
+}
+#endif
 
 VARIANT_DESTRUCTOR(LilyPreparserTraitBodyItem,
                    attribute,
