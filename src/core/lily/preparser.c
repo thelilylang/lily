@@ -1253,13 +1253,14 @@ CONSTRUCTOR(LilyPreparserModule,
 String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserModule, const LilyPreparserModule *self)
 {
-    String *res = format__String("LilyPreparserModule{{ name = {S}, body =",
-                                 self->name);
+    String *res =
+      format__String("LilyPreparserModule{{ name = {S}, body =", self->name);
 
     DEBUG_VEC_STRING(self->body, res, LilyPreparserDecl);
 
     {
-        char *s = format(", visibility = {s} }", to_string__Debug__LilyVisibility(self->visibility));
+        char *s = format(", visibility = {s} }",
+                         to_string__Debug__LilyVisibility(self->visibility));
 
         PUSH_STR_AND_FREE(res, s);
     }
@@ -3989,39 +3990,50 @@ VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserDecl, const LilyPreparserDecl *self)
 {
-    String *res = format__String("LilyPreparserDecl{{ kind = {s}, location = {sa}", to_string__Debug__LilyPreparserDeclKind(self->kind), to_string__Debug__Location(&self->location));
+    String *res =
+      format__String("LilyPreparserDecl{{ kind = {s}, location = {sa}",
+                     to_string__Debug__LilyPreparserDeclKind(self->kind),
+                     to_string__Debug__Location(&self->location));
 
     switch (self->kind) {
         case LILY_PREPARSER_DECL_KIND_CONSTANT: {
-            char *s = format(", constant = {Sr} }", to_string__Debug__LilyPreparserConstant(&self->constant));
+            char *s =
+              format(", constant = {Sr} }",
+                     to_string__Debug__LilyPreparserConstant(&self->constant));
 
             PUSH_STR_AND_FREE(res, s);
 
             break;
         }
         case LILY_PREPARSER_DECL_KIND_FUN: {
-            char *s = format(", fun = {Sr} }", to_string__Debug__LilyPreparserFun(&self->fun));
+            char *s = format(", fun = {Sr} }",
+                             to_string__Debug__LilyPreparserFun(&self->fun));
 
             PUSH_STR_AND_FREE(res, s);
 
             break;
         }
         case LILY_PREPARSER_DECL_KIND_MODULE: {
-            char *s = format(", module = {Sr} }", to_string__Debug__LilyPreparserModule(&self->module));
+            char *s =
+              format(", module = {Sr} }",
+                     to_string__Debug__LilyPreparserModule(&self->module));
 
             PUSH_STR_AND_FREE(res, s);
 
             break;
         }
         case LILY_PREPARSER_DECL_KIND_OBJECT: {
-            char *s = format(", object = {Sr} }", to_string__Debug__LilyPreparserObject(&self->object));
+            char *s =
+              format(", object = {Sr} }",
+                     to_string__Debug__LilyPreparserObject(&self->object));
 
             PUSH_STR_AND_FREE(res, s);
 
             break;
         }
         case LILY_PREPARSER_DECL_KIND_TYPE: {
-            char *s = format(", type = {Sr} }", to_string__Debug__LilyPreparserType(&self->type));
+            char *s = format(", type = {Sr} }",
+                             to_string__Debug__LilyPreparserType(&self->type));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -9266,6 +9278,12 @@ exit_preparser : {
 
     for (Usize i = 0; i < info->private_macros->len; i++) {
         CALL_DEBUG(LilyPreparserMacro, get__Vec(info->private_macros, i));
+    }
+
+    printf("\n====Preparser decls(%s)====\n", self->file->name);
+
+    for (Usize i = 0; i < info->decls; i++) {
+        CALL_DEBUG(LilyPreparserDecl, get__Vec(info->decls, i));
     }
 
     printf("\n====Package(%s)====\n", self->file->name);
