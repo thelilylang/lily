@@ -865,6 +865,16 @@ typedef struct LilyPreparserObject
     };
 } LilyPreparserObject;
 
+/**
+ *
+ * @brief Convert LilyPreparserObject in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserObject, const LilyPreparserObject *self);
+#endif
+
 typedef struct LilyPreparserAlias
 {
     String *name;

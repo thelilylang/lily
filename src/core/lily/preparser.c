@@ -3547,6 +3547,59 @@ VARIANT_CONSTRUCTOR(LilyPreparserObject,
                                   .enum_ = enum_ };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserObject, const LilyPreparserObject *self)
+{
+    String *res =
+      format__String("LilyPreparserObject{{ kind = {s}",
+                     to_string__Debug__LilyPreparserObjectKind(self->kind));
+
+    switch (self->kind) {
+        case LILY_PREPARSER_OBJECT_KIND_CLASS: {
+            char *s =
+              format(", class = {Sr} }",
+                     to_string__Debug__LilyPreparserClass(&self->class));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_OBJECT_KIND_TRAIT: {
+            char *s =
+              format(", trait = {Sr} }",
+                     to_string__Debug__LilyPreparserTrait(&self->trait));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_OBJECT_KIND_RECORD: {
+            char *s = format(
+              ", record = {Sr} }",
+              to_string__Debug__LilyPreparserRecordObject(&self->record));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_OBJECT_KIND_ENUM: {
+            char *s =
+              format(", enum = {Sr} }",
+                     to_string__Debug__LilyPreparserEnumObject(&self->enum_));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant")
+    }
+
+    return res;
+}
+#endif
+
 VARIANT_DESTRUCTOR(LilyPreparserObject, class, const LilyPreparserObject *self)
 {
     FREE(LilyPreparserClass, &self->class);
