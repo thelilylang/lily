@@ -224,3 +224,7 @@ module X.Y.Z =
 		Cat;
 	end
 end
+
+macro get_name($name id) = {
+	name
+};
