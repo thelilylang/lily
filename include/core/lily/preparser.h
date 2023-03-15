@@ -975,6 +975,18 @@ enum LilyPreparserDeclKind
     LILY_PREPARSER_DECL_KIND_TYPE,
 };
 
+/**
+ *
+ * @brief Convert LilyPreparserDeclKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserDeclKind,
+               enum LilyPreparserDeclKind self);
+#endif
+
 typedef struct LilyPreparserDecl
 {
     enum LilyPreparserDeclKind kind;
