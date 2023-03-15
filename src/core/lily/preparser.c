@@ -4359,8 +4359,8 @@ preparse_import__LilyPreparser(LilyPreparser *self)
 LilyPreparserMacro *
 preparse_macro__LilyPreparser(LilyPreparser *self)
 {
+    // 1. Get name of macro.
     String *name = NULL;
-    Vec *tokens = NEW(Vec);
 
     next_token__LilyPreparser(self);
 
@@ -4381,9 +4381,19 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
                           NULL),
               &self->count_error);
 
-            FREE(Vec, tokens);
+            name = from__String("__error__");
+    }
 
-            return NULL;
+    // 2. Get params of macro
+    Vec *params = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_PAREN:
+            params = preparse_paren_with_comma_sep__LilyPreparser(self);
+            break;
+
+        default:
+            break;
     }
 
     switch (self->current->kind) {
@@ -4436,6 +4446,9 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
         }
     }
 
+    // 3. Get tokens of macro.
+    Vec *tokens = NEW(Vec);
+
 get_tokens : {
     while (self->current->kind != LILY_TOKEN_KIND_R_BRACE &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
@@ -4477,7 +4490,7 @@ get_tokens : {
                   self->current->location.end_line,
                   self->current->location.end_column);
 
-    return NEW(LilyPreparserMacro, name, tokens, location_decl);
+    return NEW(LilyPreparserMacro, name, params, tokens, location_decl);
 }
 
 int
