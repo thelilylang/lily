@@ -317,6 +317,18 @@ typedef struct LilyPreparserFunBodyItemStmtVariable
     bool is_drop;
 } LilyPreparserFunBodyItemStmtVariable;
 
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemStmtVariable in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtVariable,
+               const LilyPreparserFunBodyItemStmtVariable *self);
+#endif
+
 typedef struct LilyPreparserFunBodyItemStmtWhile
 {
     Vec *expr;  // Vec<LilyToken*>*

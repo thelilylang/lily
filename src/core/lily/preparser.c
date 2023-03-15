@@ -1588,7 +1588,8 @@ IMPL_FOR_DEBUG(to_string,
         DEBUG_VEC_STR(self->catch_expr, res, LilyToken);
 
         if (!self->catch_block) {
-            UNREACHABLE("self->catch_block cannot be NULL when self->catch_expr is not NULL");
+            UNREACHABLE("self->catch_block cannot be NULL when "
+                        "self->catch_expr is not NULL");
         }
 
         push_str__String(res, ", catch_block =");
@@ -1639,6 +1640,38 @@ CONSTRUCTOR(LilyPreparserFunBodyItemStmtVariable,
                                                    .is_trace = is_trace,
                                                    .is_drop = is_drop };
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtVariable,
+               const LilyPreparserFunBodyItemStmtVariable *self)
+{
+    String *res = format__String(
+      "LilyPreparserFunBodyItemStmtVariable{{ name = {S}", self->name);
+
+    if (self->data_type) {
+        push_str__String(res, ", data_type =");
+        DEBUG_VEC_STR(self->data_type, res, LilyToken);
+    }
+
+    push_str__String(res, ", expr =");
+    DEBUG_VEC_STR(self->expr, res, LilyToken);
+
+    {
+        char *s = format(
+          ", is_mut = {b}, is_trace = {b}, is_ref = {b}, is_drop = {b} }",
+          self->is_mut,
+          self->is_trace,
+          self->is_ref,
+          self->is_drop);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyPreparserFunBodyItemStmtVariable,
            const LilyPreparserFunBodyItemStmtVariable *self)
