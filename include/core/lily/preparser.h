@@ -717,6 +717,18 @@ typedef struct LilyPreparserRecordObjectBodyItem
     };
 } LilyPreparserRecordObjectBodyItem;
 
+/**
+ *
+ * @brief Convert LilyPreparserRecordObjectBodyItem in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserRecordObjectBodyItem,
+               const LilyPreparserRecordObjectBodyItem *self);
+#endif
+
 typedef struct LilyPreparserRecordObject
 {
     String *name;

@@ -2927,6 +2927,25 @@ DESTRUCTOR(LilyPreparserRecordField, LilyPreparserRecordField *self)
     lily_free(self);
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserRecordObjectBodyItemKind,
+               enum LilyPreparserRecordObjectBodyItemKind self)
+{
+    switch (self) {
+        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT:
+            return "LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT";
+        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_FIELD:
+            return "LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_FIELD";
+        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD:
+            return "LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
 VARIANT_CONSTRUCTOR(LilyPreparserRecordObjectBodyItem *,
                     LilyPreparserRecordObjectBodyItem,
                     constant,
@@ -2978,19 +2997,47 @@ VARIANT_CONSTRUCTOR(LilyPreparserRecordObjectBodyItem *,
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
-               LilyPreparserRecordObjectBodyItemKind,
-               enum LilyPreparserRecordObjectBodyItemKind self)
+               LilyPreparserRecordObjectBodyItem,
+               const LilyPreparserRecordObjectBodyItem *self)
 {
-    switch (self) {
-        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT:
-            return "LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT";
-        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_FIELD:
-            return "LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_FIELD";
-        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD:
-            return "LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD";
+    String *res = format__String(
+      "LilyPreparserRecordObjectBodyItem{{ kind = {s}, location = {sa}",
+      to_string__Debug__LilyPreparserRecordObjectBodyItemKind(self->kind),
+      to_string__Debug__Location(&self->location));
+
+    switch (self->kind) {
+        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT: {
+            char *s =
+              format(", constant = {Sr} }",
+                     to_string__Debug__LilyPreparserConstant(&self->constant));
+
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_FIELD: {
+            char *s =
+              format(", field = {Sr} }",
+                     to_string__Debug__LilyPreparserRecordField(&self->field));
+
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD: {
+            char *s =
+              format(", method = {Sr} }",
+                     to_string__Debug__LilyPreparserMethod(&self->method));
+
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
         default:
             UNREACHABLE("unknown variant");
     }
+
+    return res;
 }
 #endif
 
