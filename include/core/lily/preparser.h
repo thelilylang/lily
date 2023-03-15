@@ -576,6 +576,18 @@ typedef struct LilyPreparserClass
     enum LilyVisibility visibility;
 } LilyPreparserClass;
 
+/**
+ *
+ * @brief Convert LilyPreparserClass in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserClass,
+               const LilyPreparserClass *self);
+#endif
+
 enum LilyPreparserTraitBodyItemKind
 {
     LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_PROTOTYPE,
