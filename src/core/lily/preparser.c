@@ -2262,6 +2262,23 @@ DESTRUCTOR(LilyPreparserConstant, const LilyPreparserConstant *self)
     }
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserClassBodyItemKind,
+               enum LilyPreparserClassBodyItemKind kind)
+{
+    switch (kind) {
+        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE:
+            return "LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE";
+        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD:
+            return "LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
 CONSTRUCTOR(LilyPreparserAttribute,
             LilyPreparserAttribute,
             String *name,

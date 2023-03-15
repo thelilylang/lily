@@ -482,6 +482,18 @@ enum LilyPreparserClassBodyItemKind
     LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD,
 };
 
+/**
+ *
+ * @brief Convert LilyPreparserClassBodyItemKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserClassBodyItemKind,
+               enum LilyPreparserClassBodyItemKind kind);
+#endif
+
 typedef LilyPreparserFun LilyPreparserMethod;
 
 /**
