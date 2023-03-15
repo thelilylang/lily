@@ -1104,7 +1104,11 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserMacro, const LilyPreparserMacro *self)
     String *res =
       format__String("LilyPreparserMacro{{ name = {S}, params =", self->name);
 
-    DEBUG_VEC_STR_2(self->params, res, LilyToken);
+    if (self->params) {
+        DEBUG_VEC_STR_2(self->params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, ", tokens =");
     DEBUG_VEC_STR(self->tokens, res, LilyToken);
