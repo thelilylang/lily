@@ -4375,7 +4375,7 @@ preparse_import__LilyPreparser(LilyPreparser *self)
 LilyPreparserMacro *
 preparse_macro__LilyPreparser(LilyPreparser *self)
 {
-    // 1. Get name of macro.
+    // 1. Get name of the macro.
     String *name = NULL;
 
     next_token__LilyPreparser(self);
@@ -4400,7 +4400,7 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
             name = from__String("__error__");
     }
 
-    // 2. Get params of macro
+    // 2. Get params of the macro
     Vec *params = NULL;
 
     switch (self->current->kind) {
@@ -4462,7 +4462,7 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
         }
     }
 
-    // 3. Get tokens of macro.
+    // 3. Get tokens of the macro.
     Vec *tokens = NEW(Vec);
 
 get_tokens : {
