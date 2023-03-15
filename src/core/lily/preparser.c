@@ -1253,23 +1253,16 @@ CONSTRUCTOR(LilyPreparserModule,
 String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserModule, const LilyPreparserModule *self)
 {
-    String *res = format__String("LilyPreparserModule{{ name = {S}, body = {{ ",
+    String *res = format__String("LilyPreparserModule{{ name = {S}, body =",
                                  self->name);
 
-    for (Usize i = 0; i < self->body->len; i++) {
-        // String *s =
-        //   to_string__Debug__LilyPreparserDecl(get__Vec(self->body, i));
+    DEBUG_VEC_STRING(self->body, res, LilyPreparserDecl);
 
-        // APPEND_AND_FREE(res, s);
+    {
+        char *s = format(", visibility = {s} }", to_string__Debug__LilyVisibility(self->visibility));
 
-        // if (i != self->body->len - 1) {
-        //     push_str__String(res, ", ");
-        // }
+        PUSH_STR_AND_FREE(res, s);
     }
-
-    push_str__String(res, " }, visibility = ");
-    push_str__String(res, to_string__Debug__LilyVisibility(self->visibility));
-    push_str__String(res, " }");
 
     return res;
 }
