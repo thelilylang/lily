@@ -3431,6 +3431,42 @@ CONSTRUCTOR(LilyPreparserEnumObject,
                                       .visibility = visibility };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumObject,
+               const LilyPreparserEnumObject *self)
+{
+    String *res = format__String(
+      "LilyPreparserEnumObject{{ name = {S}, generic_params =", self->name);
+
+    if (self->generic_params) {
+        DEBUG_VEC_STR_2(self->generic_params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", implements =");
+
+    if (self->implements) {
+        DEBUG_VEC_STR_2(self->implements, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", body =");
+    DEBUG_VEC_STRING(self->body, res, LilyPreparserEnumObjectBodyItem);
+
+    {
+        char *s = format(", visibility = {s} }", self->visibility);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserEnumObject, const LilyPreparserEnumObject *self)
 {
 #ifdef RUN_UNTIL_PREPARSER
