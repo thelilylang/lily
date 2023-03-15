@@ -2975,6 +2975,25 @@ VARIANT_CONSTRUCTOR(LilyPreparserRecordObjectBodyItem *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserRecordObjectBodyItemKind,
+               enum LilyPreparserRecordObjectBodyItemKind self)
+{
+    switch (self) {
+        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT:
+            return "LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT";
+        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_FIELD:
+            return "LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_FIELD";
+        case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD:
+            return "LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
 VARIANT_DESTRUCTOR(LilyPreparserRecordObjectBodyItem,
                    constant,
                    LilyPreparserRecordObjectBodyItem *self)

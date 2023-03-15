@@ -693,6 +693,18 @@ enum LilyPreparserRecordObjectBodyItemKind
     LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD,
 };
 
+/**
+ *
+ * @brief Convert LilyPreparserRecordObjectItemKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserRecordObjectBodyItemKind,
+               enum LilyPreparserRecordObjectBodyItemKind self);
+#endif
+
 typedef struct LilyPreparserRecordObjectBodyItem
 {
     enum LilyPreparserRecordObjectBodyItemKind kind;
