@@ -359,6 +359,18 @@ enum LilyPreparserFunBodyItemKind
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE
 };
 
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemKind,
+               enum LilyPreparserFunBodyItemKind self);
+#endif
+
 // LilyPreparserFunBodyItem is used for body of functions and methods.
 typedef struct LilyPreparserFunBodyItem
 {

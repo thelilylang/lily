@@ -1727,6 +1727,35 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtWhile,
     FREE(Vec, self->block);
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemKind,
+               enum LilyPreparserFunBodyItemKind self)
+{
+    switch (self) {
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
 VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                     LilyPreparserFunBodyItem,
                     exprs,
