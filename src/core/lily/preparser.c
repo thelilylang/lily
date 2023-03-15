@@ -2111,6 +2111,87 @@ DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
     FREE(Vec, self->body);
 }
 
+CONSTRUCTOR(LilyPreparserConstantInfo *,
+            LilyPreparserConstantInfo,
+            String *name,
+            Vec *expr,
+            Vec *data_type,
+            enum LilyVisibility visibility)
+{
+    LilyPreparserConstantInfo *self =
+      lily_malloc(sizeof(LilyPreparserConstantInfo));
+
+    self->name = name;
+    self->expr = expr;
+    self->data_type = data_type;
+    self->visibility = visibility;
+
+    return self;
+}
+
+DESTRUCTOR(LilyPreparserConstantInfo, LilyPreparserConstantInfo *self)
+{
+#ifdef RUN_UNTIL_PREPARSER
+    FREE(String, self->name);
+#endif
+
+    FREE_BUFFER_ITEMS(self->expr->buffer, self->expr->len, LilyToken);
+    FREE(Vec, self->expr);
+    FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
+    FREE(Vec, self->data_type);
+    lily_free(self);
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserConstant,
+                    LilyPreparserConstant,
+                    simple,
+                    LilyPreparserConstantInfo *simple)
+{
+    return (LilyPreparserConstant){ .kind = LILY_PREPARSER_CONSTANT_KIND_SIMPLE,
+                                    .simple = simple };
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserConstant,
+                    LilyPreparserConstant,
+                    multiple,
+                    Vec *multiple)
+{
+    return (LilyPreparserConstant){ .kind =
+                                      LILY_PREPARSER_CONSTANT_KIND_MULTIPLE,
+                                    .multiple = multiple };
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserConstant,
+                   simple,
+                   const LilyPreparserConstant *self)
+{
+    FREE(LilyPreparserConstantInfo, self->simple);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserConstant,
+                   multiple,
+                   const LilyPreparserConstant *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->multiple->buffer, self->multiple->len, LilyPreparserConstantInfo);
+    FREE(Vec, self->multiple);
+}
+
+DESTRUCTOR(LilyPreparserConstant, const LilyPreparserConstant *self)
+{
+    switch (self->kind) {
+        case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE:
+            FREE_VARIANT(LilyPreparserConstant, multiple, self);
+            break;
+        case LILY_PREPARSER_CONSTANT_KIND_SIMPLE:
+            FREE_VARIANT(LilyPreparserConstant, simple, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+
 CONSTRUCTOR(LilyPreparserAttribute,
             LilyPreparserAttribute,
             String *name,
@@ -2953,86 +3034,6 @@ DESTRUCTOR(LilyPreparserType, const LilyPreparserType *self)
             break;
         case LILY_PREPARSER_TYPE_KIND_RECORD:
             FREE(LilyPreparserRecord, &self->record);
-            break;
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-
-CONSTRUCTOR(LilyPreparserConstantInfo *,
-            LilyPreparserConstantInfo,
-            String *name,
-            Vec *expr,
-            Vec *data_type,
-            enum LilyVisibility visibility)
-{
-    LilyPreparserConstantInfo *self =
-      lily_malloc(sizeof(LilyPreparserConstantInfo));
-
-    self->name = name;
-    self->expr = expr;
-    self->data_type = data_type;
-    self->visibility = visibility;
-
-    return self;
-}
-
-DESTRUCTOR(LilyPreparserConstantInfo, LilyPreparserConstantInfo *self)
-{
-#ifdef RUN_UNTIL_PREPARSER
-    FREE(String, self->name);
-#endif
-
-    FREE_BUFFER_ITEMS(self->expr->buffer, self->expr->len, LilyToken);
-    FREE(Vec, self->expr);
-    FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
-    FREE(Vec, self->data_type);
-    lily_free(self);
-}
-
-VARIANT_CONSTRUCTOR(LilyPreparserConstant,
-                    LilyPreparserConstant,
-                    simple,
-                    LilyPreparserConstantInfo *simple)
-{
-    return (LilyPreparserConstant){ .kind = LILY_PREPARSER_CONSTANT_KIND_SIMPLE,
-                                    .simple = simple };
-}
-
-VARIANT_CONSTRUCTOR(LilyPreparserConstant,
-                    LilyPreparserConstant,
-                    multiple,
-                    Vec *multiple)
-{
-    return (LilyPreparserConstant){ .kind =
-                                      LILY_PREPARSER_CONSTANT_KIND_MULTIPLE,
-                                    .multiple = multiple };
-}
-
-VARIANT_DESTRUCTOR(LilyPreparserConstant,
-                   simple,
-                   const LilyPreparserConstant *self)
-{
-    FREE(LilyPreparserConstantInfo, self->simple);
-}
-
-VARIANT_DESTRUCTOR(LilyPreparserConstant,
-                   multiple,
-                   const LilyPreparserConstant *self)
-{
-    FREE_BUFFER_ITEMS(
-      self->multiple->buffer, self->multiple->len, LilyPreparserConstantInfo);
-    FREE(Vec, self->multiple);
-}
-
-DESTRUCTOR(LilyPreparserConstant, const LilyPreparserConstant *self)
-{
-    switch (self->kind) {
-        case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE:
-            FREE_VARIANT(LilyPreparserConstant, multiple, self);
-            break;
-        case LILY_PREPARSER_CONSTANT_KIND_SIMPLE:
-            FREE_VARIANT(LilyPreparserConstant, simple, self);
             break;
         default:
             UNREACHABLE("unknown variant");
