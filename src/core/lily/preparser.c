@@ -3765,6 +3765,25 @@ DESTRUCTOR(LilyPreparserRecord, const LilyPreparserRecord *self)
     FREE(Vec, self->fields);
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserTypeKind,
+               enum LilyPreparserTypeKind self)
+{
+    switch (self) {
+        case LILY_PREPARSER_TYPE_KIND_ALIAS:
+            return "LILY_PREPARSER_TYPE_KIND_ALIAS";
+        case LILY_PREPARSER_TYPE_KIND_ENUM:
+            return "LILY_PREPARSER_TYPE_KIND_ENUM";
+        case LILY_PREPARSER_TYPE_KIND_RECORD:
+            return "LILY_PREPARSER_TYPE_KIND_RECORD";
+        default:
+            UNREACHABLE("unknown variant")
+    }
+}
+#endif
+
 VARIANT_CONSTRUCTOR(LilyPreparserType,
                     LilyPreparserType,
                     alias,
