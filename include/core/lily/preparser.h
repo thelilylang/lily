@@ -613,6 +613,18 @@ typedef struct LilyPreparserPrototype
     Vec *params;         // Vec<Vec<LilyToken*>*>*?
 } LilyPreparserPrototype;
 
+/**
+ *
+ * @brief Convert LilyPreparserPrototype in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserPrototype,
+               const LilyPreparserPrototype *self);
+#endif
+
 typedef struct LilyPreparserTraitBodyItem
 {
     enum LilyPreparserTraitBodyItemKind kind;

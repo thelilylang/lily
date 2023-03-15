@@ -2640,6 +2640,34 @@ CONSTRUCTOR(LilyPreparserPrototype,
                                      .params = params };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserPrototype,
+               const LilyPreparserPrototype *self)
+{
+    String *res = format__String("LilyPreparserPrototype{{ name = {S}, generic_params =", self->name);
+
+    if (self->generic_params) {
+        DEBUG_VEC_STR_2(self->generic_params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", params =");
+
+    if (self->params) {
+        DEBUG_VEC_STR_2(self->params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserPrototype, const LilyPreparserPrototype *self)
 {
 #ifdef RUN_UNTIL_PREPARSER
