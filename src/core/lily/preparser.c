@@ -3986,6 +3986,56 @@ VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserDecl, const LilyPreparserDecl *self)
+{
+    String *res = format__String("LilyPreparserDecl{{ kind = {s}, location = {sa}", to_string__Debug__LilyPreparserDeclKind(self->kind), to_string__Debug__Location(&self->location));
+
+    switch (self->kind) {
+        case LILY_PREPARSER_DECL_KIND_CONSTANT: {
+            char *s = format(", constant = {Sr} }", to_string__Debug__LilyPreparserConstant(&self->constant));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_DECL_KIND_FUN: {
+            char *s = format(", fun = {Sr} }", to_string__Debug__LilyPreparserFun(&self->fun));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_DECL_KIND_MODULE: {
+            char *s = format(", module = {Sr} }", to_string__Debug__LilyPreparserModule(&self->module));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_DECL_KIND_OBJECT: {
+            char *s = format(", object = {Sr} }", to_string__Debug__LilyPreparserObject(&self->object));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_DECL_KIND_TYPE: {
+            char *s = format(", type = {Sr} }", to_string__Debug__LilyPreparserType(&self->type));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
+}
+#endif
+
 VARIANT_DESTRUCTOR(LilyPreparserDecl, constant, LilyPreparserDecl *self)
 {
     FREE(LilyPreparserConstant, &self->constant);

@@ -1001,6 +1001,16 @@ typedef struct LilyPreparserDecl
     };
 } LilyPreparserDecl;
 
+/**
+ *
+ * @brief Convert LilyPreparserDecl in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserDecl, const LilyPreparserDecl *self);
+#endif
+
 typedef struct LilyPreparserInfo
 {
     Vec *public_imports;  // Vec<LilyPreparserImport*>*
