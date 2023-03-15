@@ -594,6 +594,18 @@ enum LilyPreparserTraitBodyItemKind
     LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_ATTRIBUTE,
 };
 
+/**
+ *
+ * @brief Convert LilyPreparserTraitBodyItemKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserTraitBodyItemKind,
+               enum LilyPreparserTraitBodyItemKind self);
+#endif
+
 typedef struct LilyPreparserPrototype
 {
     String *name;
