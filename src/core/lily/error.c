@@ -125,6 +125,12 @@ to_msg__LilyError(const LilyError *self)
             return "set is duplicate";
         case LILY_ERROR_KIND_GET_IS_DUPLICATE:
             return "get is duplicate";
+        case LILY_ERROR_KIND_EXPECTED_EXPRESSION:
+            return "expected expression";
+        case LILY_ERROR_KIND_MISS_ONE_OR_MANY_EXPRESSIONS:
+            return "miss one or many expressions";
+        case LILY_ERROR_KIND_MISS_ONE_OR_MANY_IDENTIFIERS:
+            return "miss one or many identifiers";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -224,6 +230,12 @@ to_code__LilyError(const LilyError *self)
             return "0044";
         case LILY_ERROR_KIND_GET_IS_DUPLICATE:
             return "0045";
+        case LILY_ERROR_KIND_EXPECTED_EXPRESSION:
+            return "0046";
+        case LILY_ERROR_KIND_MISS_ONE_OR_MANY_EXPRESSIONS:
+            return "0047";
+        case LILY_ERROR_KIND_MISS_ONE_OR_MANY_IDENTIFIERS:
+            return "0048";
         default:
             UNREACHABLE("unknown variant");
     }
