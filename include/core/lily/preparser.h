@@ -335,6 +335,18 @@ typedef struct LilyPreparserFunBodyItemStmtWhile
     Vec *block; // Vec<LilyPreparserFunBodyItem*>*
 } LilyPreparserFunBodyItemStmtWhile;
 
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemStmtWhile in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtWhile,
+               const LilyPreparserFunBodyItemStmtWhile *self);
+#endif
+
 enum LilyPreparserFunBodyItemKind
 {
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS,

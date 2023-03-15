@@ -1698,6 +1698,25 @@ CONSTRUCTOR(LilyPreparserFunBodyItemStmtWhile,
     return (LilyPreparserFunBodyItemStmtWhile){ .expr = expr, .block = block };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtWhile,
+               const LilyPreparserFunBodyItemStmtWhile *self)
+{
+    String *res = from__String("LilyPreparserFunBodyItemStmtWhile{ expr =");
+
+    DEBUG_VEC_STR(self->expr, res, LilyToken);
+
+    push_str__String(res, ", block =");
+    DEBUG_VEC_STRING(self->block, res, LilyPreparserFunBodyItem);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserFunBodyItemStmtWhile,
            const LilyPreparserFunBodyItemStmtWhile *self)
 {
