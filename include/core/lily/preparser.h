@@ -431,7 +431,9 @@ typedef struct LilyPreparserConstantInfo
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyPreparserConstantInfo, const LilyPreparserConstantInfo *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserConstantInfo,
+               const LilyPreparserConstantInfo *self);
 #endif
 
 enum LilyPreparserConstantKind
@@ -447,7 +449,9 @@ enum LilyPreparserConstantKind
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyPreparserConstantKind, enum LilyPreparserConstantKind kind);
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserConstantKind,
+               enum LilyPreparserConstantKind kind);
 #endif
 
 typedef struct LilyPreparserConstant
@@ -467,7 +471,9 @@ typedef struct LilyPreparserConstant
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyPreparserConstant, const LilyPreparserConstant *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserConstant,
+               const LilyPreparserConstant *self);
 #endif
 
 enum LilyPreparserClassBodyItemKind
@@ -500,6 +506,18 @@ typedef struct LilyPreparserAttribute
     bool is_get;
     bool is_set;
 } LilyPreparserAttribute;
+
+/**
+ *
+ * @brief Convert LilyPreparserAttribute in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserAttribute,
+               const LilyPreparserAttribute *self);
+#endif
 
 typedef struct LilyPreparserClassBodyItem
 {

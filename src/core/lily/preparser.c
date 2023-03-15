@@ -2269,6 +2269,35 @@ CONSTRUCTOR(LilyPreparserAttribute,
                                      .visibility = visibility };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserAttribute,
+               const LilyPreparserAttribute *self)
+{
+    String *res = format__String(
+      "LilyPreparserAttribute{ name = {S}, data_type =", self->name);
+
+    DEBUG_VEC_STR(self->data_type, res, LilyToken);
+
+    if (self->default_expr) {
+        push_str__String(res, ", default_expr =");
+        DEBUG_VEC_STR(self->default_expr, res, LilyToken);
+    }
+
+    {
+        char *s = format(", visibility = {s}, is_get = {b}, is_set = {b} }",
+                         to_string__Debug__LilyVisibility(self->visibility),
+                         self->is_get,
+                         self->is_set);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserAttribute, const LilyPreparserAttribute *self)
 {
 #ifdef RUN_UNTIL_PREPARSER
