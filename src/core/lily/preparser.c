@@ -6881,8 +6881,31 @@ preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
     Vec *data_types = NEW(Vec); // Vec<Vec<LilyToken*>*?>*
 
     while (self->current->kind != LILY_TOKEN_KIND_R_PAREN) {
-        push__Vec(names, clone__String(self->current->identifier_normal));
-        next_token__LilyPreparser(self);
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                push__Vec(names,
+                          clone__String(self->current->identifier_normal));
+                next_token__LilyPreparser(self);
+
+                break;
+
+            default:
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &self->current->location,
+                    NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                    NULL,
+                    NULL,
+                    from__String("expected name of the constant")),
+                  &self->count_error);
+
+                push__Vec(names, from__String("__error__"));
+
+                break;
+        }
 
         if (self->current->kind != LILY_TOKEN_KIND_COMMA &&
             self->current->kind != LILY_TOKEN_KIND_R_PAREN) {
