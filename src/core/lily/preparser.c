@@ -3302,6 +3302,53 @@ VARIANT_CONSTRUCTOR(LilyPreparserEnumObjectBodyItem *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumObjectBodyItem,
+               const LilyPreparserEnumObjectBodyItem *self)
+{
+    String *res = format__String(
+      "LilyPreparserEnumObjectBodyItem{{ kind = {s}, location = {sa}",
+      to_string__Debug__LilyPreparserEnumObjectBodyItemKind(self->kind),
+      to_string__Debug__Location(&self->location));
+
+    switch (self->kind) {
+        case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT: {
+            char *s =
+              format(", constant = {Sr} }",
+                     to_string__Debug__LilyPreparserConstant(&self->constant));
+
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD: {
+            char *s =
+              format(", method = {Sr} }",
+                     to_string__Debug__LilyPreparserMethod(&self->method));
+
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_VARIANT: {
+            char *s = format(
+              ", variant = {Sr} }",
+              to_string__Debug__LilyPreparserEnumVariant(&self->variant));
+
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
+}
+#endif
+
 VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
                    constant,
                    LilyPreparserEnumObjectBodyItem *self)
@@ -4926,16 +4973,15 @@ preparse_for_block__LilyPreparser(LilyPreparser *self, Vec *body)
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_EOF:
             emit__Diagnostic(
-              NEW_VARIANT(
-                Diagnostic,
-                simple_lily_error,
-                self->file,
-                &self->current->location,
-                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
-                NULL,
-                NULL,
-                from__String(
-                  "expected `do` keyword after `for` statement expression")),
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                          NULL,
+                          NULL,
+                          from__String("expected `do` keyword after `for` "
+                                       "statement expression")),
               &self->count_error);
 
             // Clean up allocations
@@ -4995,16 +5041,15 @@ preparse_while_block__LilyPreparser(LilyPreparser *self, Vec *body)
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_EOF:
             emit__Diagnostic(
-              NEW_VARIANT(
-                Diagnostic,
-                simple_lily_error,
-                self->file,
-                &self->current->location,
-                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
-                NULL,
-                NULL,
-                from__String(
-                  "expected `do` keyword after `while` statement expression")),
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                          NULL,
+                          NULL,
+                          from__String("expected `do` keyword after "
+                                       "`while` statement expression")),
               &self->count_error);
 
             // Clean up allocations
@@ -5157,16 +5202,15 @@ preparse_try_block__LilyPreparser(LilyPreparser *self, Vec *body)
 
         case LILY_TOKEN_KIND_EOF:
             emit__Diagnostic(
-              NEW_VARIANT(
-                Diagnostic,
-                simple_lily_error,
-                self->file,
-                &self->current->location,
-                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
-                NULL,
-                NULL,
-                from__String(
-                  "expected `do` keyword after `while` statement expression")),
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                          NULL,
+                          NULL,
+                          from__String("expected `do` keyword after "
+                                       "`while` statement expression")),
               &self->count_error);
 
             // Clean up allocations
@@ -5205,16 +5249,15 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
 
         case LILY_TOKEN_KIND_EOF:
             emit__Diagnostic(
-              NEW_VARIANT(
-                Diagnostic,
-                simple_lily_error,
-                self->file,
-                &self->current->location,
-                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
-                NULL,
-                NULL,
-                from__String(
-                  "expected `do` keyword after `match` statement expression")),
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                          NULL,
+                          NULL,
+                          from__String("expected `do` keyword after "
+                                       "`match` statement expression")),
               &self->count_error);
 
             FREE_BUFFER_ITEMS(expr->buffer, expr->len, LilyToken);
@@ -8709,7 +8752,8 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                 break;
 
             /*
-                fun[@<object_name>] <name>(<params>) [when [<cond>] + ..., req
+                fun[@<object_name>] <name>(<params>) [when [<cond>] + ...,
+               req
                [<cond>] + ...] <return_type> = <body> end
             */
             case LILY_TOKEN_KIND_KEYWORD_FUN: {

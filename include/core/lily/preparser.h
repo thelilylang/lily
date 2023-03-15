@@ -800,6 +800,18 @@ typedef struct LilyPreparserEnumObjectBodyItem
     };
 } LilyPreparserEnumObjectBodyItem;
 
+/**
+ *
+ * @brief Convert LilyPreparserEnumObjectBodyItem in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumObjectBodyItem,
+               const LilyPreparserEnumObjectBodyItem *self);
+#endif
+
 typedef struct LilyPreparserEnumObject
 {
     String *name;
