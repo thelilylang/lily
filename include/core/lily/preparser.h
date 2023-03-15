@@ -882,6 +882,16 @@ typedef struct LilyPreparserAlias
     enum LilyVisibility visibility;
 } LilyPreparserAlias;
 
+/**
+ *
+ * @brief Convert LilyPreparserAlias in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserAlias, const LilyPreparserAlias *self);
+#endif
+
 typedef struct LilyPreparserEnum
 {
     String *name;

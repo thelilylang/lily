@@ -3651,6 +3651,26 @@ CONSTRUCTOR(LilyPreparserAlias,
                                  .visibility = visibility };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserAlias, const LilyPreparserAlias *self)
+{
+    String *res = format__String("LilyPreparserAlias{{ name = {S}, data_type =",
+                                 self->name);
+
+    DEBUG_VEC_STR(self->data_type, res, LilyToken);
+
+    {
+        char *s = format(", visibility = {s} }",
+                         to_string__Debug__LilyVisibility(self->visibility));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserAlias, const LilyPreparserAlias *self)
 {
 #ifdef RUN_UNTIL_PREPARSER
