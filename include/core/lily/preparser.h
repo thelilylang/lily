@@ -598,7 +598,7 @@ enum LilyPreparserTraitBodyItemKind
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
-String *
+char *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserTraitBodyItemKind,
                enum LilyPreparserTraitBodyItemKind self);
@@ -699,7 +699,7 @@ enum LilyPreparserRecordObjectBodyItemKind
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
-String *
+char *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserRecordObjectBodyItemKind,
                enum LilyPreparserRecordObjectBodyItemKind self);

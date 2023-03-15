@@ -1318,7 +1318,7 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res = from__String("LilyPreparserFunBodyItemExprs{ tokens =");
 
-    DEBUG_VEC_STRING(self->tokens, res, LilyToken);
+    DEBUG_VEC_STR(self->tokens, res, LilyToken);
 
     push_str__String(res, "}");
 
@@ -1348,7 +1348,7 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res = from__String("LilyPreparserFunBodyItemStmtBlock{ block =");
 
-    DEBUG_VEC_STRING(self->block, res, LilyToken);
+    DEBUG_VEC_STR(self->block, res, LilyToken);
 
     push_str__String(res, " }");
 
@@ -1380,10 +1380,10 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res = from__String("LilyPreparserFunBodyItemStmtFor{ expr =");
 
-    DEBUG_VEC_STRING(self->expr, res, LilyToken);
+    DEBUG_VEC_STR(self->expr, res, LilyToken);
     push_str__String(res, ", block =");
 
-    DEBUG_VEC_STRING(self->block, res, LilyToken);
+    DEBUG_VEC_STR(self->block, res, LilyToken);
     push_str__String(res, " }");
 
     return res;
@@ -1423,14 +1423,14 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res = from__String("LilyPreparserFunBodyItemStmtIf{ if_expr =");
 
-    DEBUG_VEC_STRING(self->if_expr, res, LilyToken);
+    DEBUG_VEC_STR(self->if_expr, res, LilyToken);
     push_str__String(res, ", if_block =");
 
-    DEBUG_VEC_STRING(self->if_block, res, LilyToken);
+    DEBUG_VEC_STR(self->if_block, res, LilyToken);
 
     if (self->elif_exprs) {
         push_str__String(res, ", elif_exprs =");
-        DEBUG_VEC_STRING_2(self->elif_exprs, res, LilyToken);
+        DEBUG_VEC_STR_2(self->elif_exprs, res, LilyToken);
 
         if (!self->elif_blocks) {
             UNREACHABLE("self->elif_blocks cannot be NULL when "
@@ -2612,7 +2612,7 @@ DESTRUCTOR(LilyPreparserClass, const LilyPreparserClass *self)
 }
 
 #ifdef ENV_DEBUG
-String *
+char *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserTraitBodyItemKind,
                enum LilyPreparserTraitBodyItemKind self)
@@ -2928,7 +2928,7 @@ DESTRUCTOR(LilyPreparserRecordField, LilyPreparserRecordField *self)
 }
 
 #ifdef ENV_DEBUG
-String *
+char *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserRecordObjectBodyItemKind,
                enum LilyPreparserRecordObjectBodyItemKind self)
@@ -3011,7 +3011,7 @@ IMPL_FOR_DEBUG(to_string,
               format(", constant = {Sr} }",
                      to_string__Debug__LilyPreparserConstant(&self->constant));
 
-            APPEND_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
             break;
         }
@@ -3020,7 +3020,7 @@ IMPL_FOR_DEBUG(to_string,
               format(", field = {Sr} }",
                      to_string__Debug__LilyPreparserRecordField(&self->field));
 
-            APPEND_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
             break;
         }
@@ -3029,7 +3029,7 @@ IMPL_FOR_DEBUG(to_string,
               format(", method = {Sr} }",
                      to_string__Debug__LilyPreparserMethod(&self->method));
 
-            APPEND_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
             break;
         }
@@ -3319,7 +3319,7 @@ IMPL_FOR_DEBUG(to_string,
               format(", constant = {Sr} }",
                      to_string__Debug__LilyPreparserConstant(&self->constant));
 
-            APPEND_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
             break;
         }
@@ -3328,7 +3328,7 @@ IMPL_FOR_DEBUG(to_string,
               format(", method = {Sr} }",
                      to_string__Debug__LilyPreparserMethod(&self->method));
 
-            APPEND_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
             break;
         }
@@ -3337,7 +3337,7 @@ IMPL_FOR_DEBUG(to_string,
               ", variant = {Sr} }",
               to_string__Debug__LilyPreparserEnumVariant(&self->variant));
 
-            APPEND_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
             break;
         }
