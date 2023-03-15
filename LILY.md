@@ -292,6 +292,7 @@ end
 
 ```lily
 val A Int32 := 30;
+pub val (A Int32, B Int32) := (340, 400);
 ```
 
 ## Contract
