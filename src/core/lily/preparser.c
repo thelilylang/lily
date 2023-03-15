@@ -898,6 +898,12 @@ preparse_body__LilyPreparser(LilyPreparser *self,
 static LilyPreparserDecl *
 preparse_fun__LilyPreparser(LilyPreparser *self);
 
+static LilyPreparserDecl *
+preparse_constant__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserDecl *
+preparse_constant_multiple__LilyPreparser(LilyPreparser *self);
+
 static LilyPreparserClassBodyItem *
 preparse_attribute_for_class__LilyPreparser(LilyPreparser *self,
                                             Location location);
@@ -926,6 +932,9 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
                               Vec *generic_params);
 
 static LilyPreparserRecordObjectBodyItem *
+preparse_constant_for_record__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserRecordObjectBodyItem *
 preparse_method_for_record__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserDecl *
@@ -933,6 +942,9 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                                       String *name,
                                       Vec *impls,
                                       Vec *generic_params);
+
+static LilyPreparserEnumObjectBodyItem *
+preparse_constant_for_enum__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserEnumObjectBodyItem *
 preparse_method_for_enum__LilyPreparser(LilyPreparser *self);
@@ -4697,6 +4709,8 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
             next_token__LilyPreparser(self);
 
             switch (self->current->kind) {
+                case LILY_TOKEN_KIND_KEYWORD_VAL:
+                    return preparse_constant__LilyPreparser(self);
                 case LILY_TOKEN_KIND_KEYWORD_TYPE:
                     return preparse_type__LilyPreparser(self);
                 case LILY_TOKEN_KIND_KEYWORD_MODULE:
@@ -6720,6 +6734,345 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
                            req_is_comptime));
 }
 
+LilyPreparserDecl *
+preparse_constant__LilyPreparser(LilyPreparser *self)
+{
+    next_token__LilyPreparser(self); // skip `val` keyword
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_PAREN:
+            return preparse_constant_multiple__LilyPreparser(self);
+        default:
+            break;
+    }
+
+    enum LilyVisibility visibility = visibility_decl;
+    Location location = location_decl;
+
+    // 1. Get name of the constant.
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+            next_token__LilyPreparser(self);
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                          NULL,
+                          NULL,
+                          from__String("expected name of the constant")),
+              &self->count_error);
+
+            name = from__String("__error__");
+
+            break;
+    }
+
+    // 2. Get data type of the constant.
+    Vec *data_type = NEW(Vec);
+
+    if (self->current->kind != LILY_TOKEN_KIND_COLON_EQ) {
+        while (self->current->kind != LILY_TOKEN_KIND_COLON_EQ &&
+               self->current->kind != LILY_TOKEN_KIND_SEMICOLON) {
+            push__Vec(data_type, clone__LilyToken(self->current));
+            next_token__LilyPreparser(self);
+        }
+    } else {
+        emit__Diagnostic(
+          NEW_VARIANT(Diagnostic,
+                      simple_lily_error,
+                      self->file,
+                      &self->current->location,
+                      NEW(LilyError, LILY_ERROR_KIND_EXPECTED_DATA_TYPE),
+                      NULL,
+                      NULL,
+                      from__String("expected data type of the constant")),
+          &self->count_error);
+    }
+
+    // 3. Get expression of the constant.
+    Vec *expr = NEW(Vec);
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_COLON_EQ:
+            next_token__LilyPreparser(self);
+            break;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `:=`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+
+            break;
+        }
+    }
+
+    while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        push__Vec(expr, clone__LilyToken(self->current));
+        next_token__LilyPreparser(self);
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyPreparser(self);
+
+            break;
+
+        case LILY_TOKEN_KIND_EOF: {
+            // Clean up allocations
+
+            FREE(String, name);
+
+            FREE_BUFFER_ITEMS(expr->buffer, expr->len, LilyToken);
+            FREE(Vec, expr);
+
+            FREE_BUFFER_ITEMS(data_type->buffer, data_type->len, LilyToken);
+            FREE(Vec, data_type);
+
+            return NULL;
+        }
+
+        default:
+            UNREACHABLE("this way is impossible");
+    }
+
+    return NEW_VARIANT(
+      LilyPreparserDecl,
+      constant,
+      location,
+      NEW_VARIANT(
+        LilyPreparserConstant,
+        simple,
+        NEW(LilyPreparserConstantInfo, name, expr, data_type, visibility)));
+}
+
+LilyPreparserDecl *
+preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
+{
+    enum LilyVisibility visibility = visibility_decl;
+    Location location = location_decl;
+
+    next_token__LilyPreparser(self); // skip `(`
+
+    // 1. Get name of the constants.
+    Vec *names = NEW(Vec);      // Vec<String*>*
+    Vec *data_types = NEW(Vec); // Vec<Vec<LilyToken*>*?>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_R_PAREN) {
+        push__Vec(names, clone__String(self->current->identifier_normal));
+        next_token__LilyPreparser(self);
+
+        if (self->current->kind != LILY_TOKEN_KIND_COMMA &&
+            self->current->kind != LILY_TOKEN_KIND_R_PAREN) {
+            Vec *data_type = NEW(Vec); // Vec<LilyToken*>*
+
+            do {
+                push__Vec(data_type, clone__LilyToken(self->current));
+                next_token__LilyPreparser(self);
+            } while (self->current->kind != LILY_TOKEN_KIND_COMMA &&
+                     self->current->kind != LILY_TOKEN_KIND_R_PAREN);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_COMMA:
+                    next_token__LilyPreparser(self);
+                    break;
+
+                case LILY_TOKEN_KIND_R_PAREN:
+                    break;
+
+                default:
+                    UNREACHABLE("this way is impossible");
+            }
+
+            push__Vec(data_types, data_type);
+        } else if (self->current->kind == LILY_TOKEN_KIND_COMMA) {
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_DATA_TYPE),
+                          NULL,
+                          NULL,
+                          from__String("expected data type of the constant")),
+              &self->count_error);
+
+            push__Vec(data_types, NEW(Vec));
+            next_token__LilyPreparser(self); // skip `,`
+        }
+    }
+
+    next_token__LilyPreparser(self); // skip `)`
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_COLON_EQ:
+            next_token__LilyPreparser(self);
+            break;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `:=`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+
+            break;
+        }
+    }
+
+    // 2. Get expression of constants.
+    Vec *exprs = NEW(Vec); // Vec<Vec<LilyToken*>*>*
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_PAREN:
+            next_token__LilyPreparser(self);
+
+            while (self->current->kind != LILY_TOKEN_KIND_R_PAREN) {
+                Vec *expr = NEW(Vec);
+
+                while (self->current->kind != LILY_TOKEN_KIND_COMMA &&
+                       self->current->kind != LILY_TOKEN_KIND_R_PAREN) {
+                    push__Vec(expr, clone__LilyToken(self->current));
+                    next_token__LilyPreparser(self);
+                }
+
+                switch (self->current->kind) {
+                    case LILY_TOKEN_KIND_COMMA:
+                        next_token__LilyPreparser(self);
+                        break;
+
+                    case LILY_TOKEN_KIND_R_PAREN:
+                        break;
+
+                    default:
+                        UNREACHABLE("this way is impossible")
+                }
+
+                push__Vec(exprs, expr);
+            }
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_EXPRESSION),
+                          NULL,
+                          NULL,
+                          from__String("expected `(`")),
+              &self->count_error);
+
+            break;
+    }
+
+    next_token__LilyPreparser(self); // skip `)`
+
+    if (exprs->len < names->len) {
+        emit__Diagnostic(
+          NEW_VARIANT(
+            Diagnostic,
+            simple_lily_error,
+            self->file,
+            &self->current->location,
+            NEW(LilyError, LILY_ERROR_KIND_MISS_ONE_OR_MANY_EXPRESSIONS),
+            NULL,
+            NULL,
+            NULL),
+          &self->count_error);
+    } else if (exprs->len > names->len) {
+        emit__Diagnostic(
+          NEW_VARIANT(
+            Diagnostic,
+            simple_lily_error,
+            self->file,
+            &self->current->location,
+            NEW(LilyError, LILY_ERROR_KIND_MISS_ONE_OR_MANY_IDENTIFIERS),
+            NULL,
+            NULL,
+            NULL),
+          &self->count_error);
+    }
+
+    Vec *multiple = NEW(Vec); // Vec<LilyPreparserConstantInfo*>*
+
+    for (Usize i = 0; i < names->len; i++) {
+        push__Vec(multiple,
+                  NEW(LilyPreparserConstantInfo,
+                      get__Vec(names, i),
+                      get__Vec(data_types, i),
+                      get__Vec(exprs, i),
+                      visibility));
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyPreparser(self);
+
+            break;
+
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                          NULL,
+                          NULL,
+                          from__String("expected `;`")),
+              &self->count_error);
+
+            break;
+    }
+
+    // Clean up allocations
+
+    FREE(Vec, names);
+    FREE(Vec, data_types);
+    FREE(Vec, exprs);
+
+    return NEW_VARIANT(LilyPreparserDecl,
+                       constant,
+                       location,
+                       NEW_VARIANT(LilyPreparserConstant, multiple, multiple));
+}
+
 LilyPreparserClassBodyItem *
 preparse_attribute_for_class__LilyPreparser(LilyPreparser *self,
                                             Location location)
@@ -7681,6 +8034,26 @@ preparse_method_for_record__LilyPreparser(LilyPreparser *self)
     return NULL;
 }
 
+LilyPreparserRecordObjectBodyItem *
+preparse_constant_for_record__LilyPreparser(LilyPreparser *self)
+{
+    LilyPreparserDecl *decl = preparse_constant__LilyPreparser(self);
+
+    if (decl) {
+        LilyPreparserRecordObjectBodyItem *constant =
+          NEW_VARIANT(LilyPreparserRecordObjectBodyItem,
+                      constant,
+                      decl->location,
+                      decl->constant);
+
+        lily_free(decl);
+
+        return constant;
+    }
+
+    return NULL;
+}
+
 LilyPreparserDecl *
 preparse_record_object__LilyPreparser(LilyPreparser *self,
                                       String *name,
@@ -7695,7 +8068,15 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
            self->current->kind != LILY_TOKEN_KIND_EOF) {
         switch (self->current->kind) {
             case LILY_TOKEN_KIND_KEYWORD_VAL: {
-                // TODO: push constant to body.
+                LilyPreparserRecordObjectBodyItem *constant =
+                  preparse_constant_for_record__LilyPreparser(self);
+
+                if (constant) {
+                    push__Vec(body, constant);
+                } else {
+                    goto clean_up;
+                }
+
                 break;
             }
 
@@ -7835,6 +8216,26 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                                        impls,
                                        body,
                                        visibility)));
+}
+
+LilyPreparserEnumObjectBodyItem *
+preparse_constant_for_enum__LilyPreparser(LilyPreparser *self)
+{
+    LilyPreparserDecl *decl = preparse_constant__LilyPreparser(self);
+
+    if (decl) {
+        LilyPreparserEnumObjectBodyItem *constant =
+          NEW_VARIANT(LilyPreparserEnumObjectBodyItem,
+                      constant,
+                      decl->location,
+                      decl->constant);
+
+        lily_free(decl);
+
+        return constant;
+    }
+
+    return NULL;
 }
 
 LilyPreparserEnumObjectBodyItem *
@@ -9046,6 +9447,17 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                         break;
                     }
 
+                    case LILY_TOKEN_KIND_KEYWORD_VAL: {
+                        LilyPreparserDecl *constant =
+                          preparse_constant__LilyPreparser(self);
+
+                        if (constant) {
+                            push__Vec(info->decls, constant);
+                        }
+
+                        break;
+                    }
+
                     case LILY_TOKEN_KIND_KEYWORD_MODULE: {
                         LilyPreparserDecl *module =
                           preparse_module__LilyPreparser(self);
@@ -9135,6 +9547,21 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 
                 if (fun) {
                     push__Vec(info->decls, fun);
+                }
+
+                break;
+            }
+
+            /*
+                val <name> [data_type] := <expr>;
+                val (<name> [data_type], ...) := (<expr>, ...);
+            */
+            case LILY_TOKEN_KIND_KEYWORD_VAL: {
+                LilyPreparserDecl *constant =
+                  preparse_constant__LilyPreparser(self);
+
+                if (constant) {
+                    push__Vec(info->decls, constant);
                 }
 
                 break;
