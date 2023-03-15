@@ -7038,6 +7038,11 @@ preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
             NULL,
             NULL),
           &self->count_error);
+
+        // Fill exprs while exprs and names aren't the same length.
+        for (int i = 0; i < names->len - exprs->len; i++) {
+            push__Vec(exprs, NEW(Vec));
+        }
     } else if (exprs->len > names->len) {
         emit__Diagnostic(
           NEW_VARIANT(
@@ -7050,6 +7055,11 @@ preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
             NULL,
             NULL),
           &self->count_error);
+
+        // Fill names while exprs and names aren't the same length.
+        for (int i = 0; i < exprs->len - names->len; i++) {
+            push__Vec(exprs, NEW(Vec));
+        }
     }
 
     Vec *multiple = NEW(Vec); // Vec<LilyPreparserConstantInfo*>*
