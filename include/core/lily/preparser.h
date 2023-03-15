@@ -440,6 +440,16 @@ enum LilyPreparserConstantKind
     LILY_PREPARSER_CONSTANT_KIND_MULTIPLE
 };
 
+/**
+ *
+ * @brief Convert LilyPreparserConstantKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyPreparserConstantKind, enum LilyPreparserConstantKind kind);
+#endif
+
 typedef struct LilyPreparserConstant
 {
     enum LilyPreparserConstantKind kind;

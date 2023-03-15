@@ -2161,6 +2161,21 @@ DESTRUCTOR(LilyPreparserConstantInfo, LilyPreparserConstantInfo *self)
     lily_free(self);
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyPreparserConstantKind, enum LilyPreparserConstantKind kind)
+{
+    switch (kind) {
+        case LILY_PREPARSER_CONSTANT_KIND_SIMPLE:
+            return "LILY_PREPARSER_CONSTANT_KIND_SIMPLE";
+        case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE:
+            return "LILY_PREPARSER_CONSTANT_KIND_MULTIPLE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
 VARIANT_CONSTRUCTOR(LilyPreparserConstant,
                     LilyPreparserConstant,
                     simple,
