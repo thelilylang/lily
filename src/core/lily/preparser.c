@@ -6930,7 +6930,7 @@ preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
             }
 
             push__Vec(data_types, data_type);
-        } else if (self->current->kind == LILY_TOKEN_KIND_COMMA) {
+        } else {
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
@@ -6943,7 +6943,10 @@ preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
               &self->count_error);
 
             push__Vec(data_types, NEW(Vec));
-            next_token__LilyPreparser(self); // skip `,`
+
+            if (self->current->kind == LILY_TOKEN_KIND_COMMA) {
+                next_token__LilyPreparser(self); // skip `,`
+            }
         }
     }
 
