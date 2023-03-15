@@ -8894,6 +8894,9 @@ DESTRUCTOR(LilyPreparserInfo, const LilyPreparserInfo *self)
     FREE(Vec, self->public_macros);
 
 #ifdef RUN_UNTIL_PREPARSER
+    FREE_BUFFER_ITEMS(self->private_macros->buffer,
+                      self->private_macros->len,
+                      LilyPreparserMacro);
     FREE(Vec, self->private_macros);
 #endif
 
