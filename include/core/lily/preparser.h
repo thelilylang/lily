@@ -916,6 +916,16 @@ typedef struct LilyPreparserRecord
     enum LilyVisibility visibility;
 } LilyPreparserRecord;
 
+/**
+ *
+ * @brief Convert LilyPreparserRecord in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserRecord, const LilyPreparserRecord *self);
+#endif
+
 enum LilyPreparserTypeKind
 {
     LILY_PREPARSER_TYPE_KIND_ALIAS,

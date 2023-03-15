@@ -3734,6 +3734,26 @@ CONSTRUCTOR(LilyPreparserRecord,
                                   .visibility = visibility };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserRecord, const LilyPreparserRecord *self)
+{
+    String *res =
+      format__String("LilyPreparserRecord{{ name = {S}, fields =", self->name);
+
+    DEBUG_VEC_STRING(self->fields, res, LilyPreparserRecordField);
+
+    {
+        char *s = format(", visibility = {s} }",
+                         to_string__Debug__LilyVisibility(self->visibility));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserRecord, const LilyPreparserRecord *self)
 {
 #ifdef RUN_UNTIL_PREPARSER
