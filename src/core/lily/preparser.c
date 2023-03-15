@@ -2254,9 +2254,9 @@ DESTRUCTOR(LilyPreparserConstantInfo, LilyPreparserConstantInfo *self)
 char *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserConstantKind,
-               enum LilyPreparserConstantKind kind)
+               enum LilyPreparserConstantKind self)
 {
-    switch (kind) {
+    switch (self) {
         case LILY_PREPARSER_CONSTANT_KIND_SIMPLE:
             return "LILY_PREPARSER_CONSTANT_KIND_SIMPLE";
         case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE:
@@ -2352,9 +2352,9 @@ DESTRUCTOR(LilyPreparserConstant, const LilyPreparserConstant *self)
 char *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserClassBodyItemKind,
-               enum LilyPreparserClassBodyItemKind kind)
+               enum LilyPreparserClassBodyItemKind self)
 {
-    switch (kind) {
+    switch (self) {
         case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE:
             return "LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE";
         case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD:

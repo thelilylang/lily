@@ -463,7 +463,7 @@ enum LilyPreparserConstantKind
 char *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserConstantKind,
-               enum LilyPreparserConstantKind kind);
+               enum LilyPreparserConstantKind self);
 #endif
 
 typedef struct LilyPreparserConstant
@@ -503,7 +503,7 @@ enum LilyPreparserClassBodyItemKind
 char *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserClassBodyItemKind,
-               enum LilyPreparserClassBodyItemKind kind);
+               enum LilyPreparserClassBodyItemKind self);
 #endif
 
 typedef LilyPreparserFun LilyPreparserMethod;
