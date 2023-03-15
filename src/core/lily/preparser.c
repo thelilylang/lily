@@ -1890,34 +1890,91 @@ IMPL_FOR_DEBUG(to_string,
                LilyPreparserFunBodyItem,
                const LilyPreparserFunBodyItem *self)
 {
+    String *res =
+      format__String("LilyPreparserFunBodyItem{ kind = {s}, location = {sa}",
+                     to_string__Debug__LilyPreparserFunBodyItemKind(self->kind),
+                     to_string__Debug__Location(&self->location));
+
     switch (self->kind) {
-        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS:
-            return to_string__Debug__LilyPreparserFunBodyItemExprs(
-              &self->exprs);
-        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtBlock(
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS: {
+            String *s =
+              to_string__Debug__LilyPreparserFunBodyItemExprs(&self->exprs);
+
+            push_str__String(res, ", exprs = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK: {
+            String *s = to_string__Debug__LilyPreparserFunBodyItemStmtBlock(
               &self->stmt_block);
-        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtFor(
+
+            push_str__String(res, ", stmt_block = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR: {
+            String *s = to_string__Debug__LilyPreparserFunBodyItemStmtFor(
               &self->stmt_for);
-        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtIf(
-              &self->stmt_if);
-        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtMatch(
+
+            push_str__String(res, ", stmt_for = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF: {
+            String *s =
+              to_string__Debug__LilyPreparserFunBodyItemStmtIf(&self->stmt_if);
+
+            push_str__String(res, ", stmt_if = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH: {
+            String *s = to_string__Debug__LilyPreparserFunBodyItemStmtMatch(
               &self->stmt_match);
-        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtTry(
+
+            push_str__String(res, ", stmt_match = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY: {
+            String *s = to_string__Debug__LilyPreparserFunBodyItemStmtTry(
               &self->stmt_try);
-        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtVariable(
+
+            push_str__String(res, ", stmt_try = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE: {
+            String *s = to_string__Debug__LilyPreparserFunBodyItemStmtVariable(
               &self->stmt_var);
-        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE:
-            return to_string__Debug__LilyPreparserFunBodyItemStmtWhile(
+
+            push_str__String(res, ", stmt_var = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE: {
+            String *s = to_string__Debug__LilyPreparserFunBodyItemStmtWhile(
               &self->stmt_while);
+
+            push_str__String(res, ", stmt_while = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
         default:
             UNREACHABLE("unknown variant");
     }
+
+    push_str__String(res, " }");
+
+    return res;
 }
 #endif
 
