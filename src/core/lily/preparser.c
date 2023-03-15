@@ -3813,6 +3813,49 @@ VARIANT_CONSTRUCTOR(LilyPreparserType,
                                 .record = record };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserType, const LilyPreparserType *self)
+{
+    String *res =
+      format__String("LilyPreparserType{{ kind = {s}",
+                     to_string__Debug__LilyPreparserTypeKind(self->kind));
+
+    switch (self->kind) {
+        case LILY_PREPARSER_TYPE_KIND_ALIAS: {
+            char *s =
+              format(", alias = {Sr} }",
+                     to_string__Debug__LilyPreparserAlias(&self->alias));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_TYPE_KIND_ENUM: {
+            char *s = format(", enum = {Sr} }",
+                             to_string__Debug__LilyPreparserEnum(&self->enum_));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_TYPE_KIND_RECORD: {
+            char *s =
+              format(", record = {Sr} }",
+                     to_string__Debug__LilyPreparserRecord(&self->record));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant")
+    }
+
+    return res;
+}
+#endif
+
 VARIANT_DESTRUCTOR(LilyPreparserType, alias, const LilyPreparserType *self)
 {
     FREE(LilyPreparserAlias, &self->alias);

@@ -956,6 +956,16 @@ typedef struct LilyPreparserType
     };
 } LilyPreparserType;
 
+/**
+ *
+ * @brief Convert LilyPreparserType in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserType, const LilyPreparserType *self);
+#endif
+
 enum LilyPreparserDeclKind
 {
     LILY_PREPARSER_DECL_KIND_CONSTANT,
