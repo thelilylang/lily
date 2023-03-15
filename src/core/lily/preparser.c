@@ -48,6 +48,7 @@ static CONSTRUCTOR(LilyPreparserImport *,
 static CONSTRUCTOR(LilyPreparserMacro *,
                    LilyPreparserMacro,
                    String *name,
+                   Vec *params,
                    Vec *tokens,
                    Location location);
 
@@ -1082,12 +1083,14 @@ DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self)
 CONSTRUCTOR(LilyPreparserMacro *,
             LilyPreparserMacro,
             String *name,
+            Vec *params,
             Vec *tokens,
             Location location)
 {
     LilyPreparserMacro *self = lily_malloc(sizeof(LilyPreparserMacro));
 
     self->name = name;
+    self->params = params;
     self->tokens = tokens;
     self->location = location;
 

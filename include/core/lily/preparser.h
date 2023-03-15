@@ -68,6 +68,7 @@ DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self);
 typedef struct LilyPreparserMacro
 {
     String *name;
+    Vec *params; // Vec<Vec<LilyToken*>*>*?
     Vec *tokens; // Vec<LilyToken*>*
     Location location;
 } LilyPreparserMacro;
