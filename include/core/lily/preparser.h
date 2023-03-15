@@ -478,6 +478,19 @@ enum LilyPreparserClassBodyItemKind
 
 typedef LilyPreparserFun LilyPreparserMethod;
 
+/**
+ *
+ * @brief Convert LilyPreparserMethod in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+inline String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserMethod, const LilyPreparserMethod *self)
+{
+    return to_string__Debug__LilyPreparserFun(self);
+}
+#endif
+
 typedef struct LilyPreparserAttribute
 {
     String *name;
