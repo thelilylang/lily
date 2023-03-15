@@ -1128,8 +1128,15 @@ IMPL_FOR_DEBUG(debug, LilyPreparserMacro, const LilyPreparserMacro *self)
 DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self)
 {
     FREE(String, self->name);
+
+    if (self->params) {
+        FREE_BUFFER_ITEMS_2(self->params->buffer, self->params->len, LilyToken);
+        FREE(Vec, self->params);
+    }
+
     FREE_BUFFER_ITEMS(self->tokens->buffer, self->tokens->len, LilyToken);
     FREE(Vec, self->tokens);
+
     lily_free(self);
 }
 
