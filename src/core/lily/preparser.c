@@ -3235,6 +3235,25 @@ DESTRUCTOR(LilyPreparserEnumVariant, LilyPreparserEnumVariant *self)
     lily_free(self);
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumObjectBodyItemKind,
+               enum LilyPreparserEnumObjectBodyItemKind self)
+{
+    switch (self) {
+        case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT:
+            return "LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT";
+        case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD:
+            return "LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD";
+        case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_VARIANT:
+            return "LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_VARIANT";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
 VARIANT_CONSTRUCTOR(LilyPreparserEnumObjectBodyItem *,
                     LilyPreparserEnumObjectBodyItem,
                     constant,

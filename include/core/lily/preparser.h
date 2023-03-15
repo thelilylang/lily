@@ -776,6 +776,18 @@ enum LilyPreparserEnumObjectBodyItemKind
     LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_VARIANT,
 };
 
+/**
+ *
+ * @brief Convert LilyPreparserEnumObjectBodyItemKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumObjectBodyItemKind,
+               enum LilyPreparserEnumObjectBodyItemKind self);
+#endif
+
 typedef struct LilyPreparserEnumObjectBodyItem
 {
     enum LilyPreparserEnumObjectBodyItemKind kind;
