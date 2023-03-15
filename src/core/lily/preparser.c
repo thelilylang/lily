@@ -1267,12 +1267,6 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserModule, const LilyPreparserModule *self)
 
     return res;
 }
-
-void
-IMPL_FOR_DEBUG(debug, LilyPreparserDecl, const LilyPreparserDecl *self)
-{
-    PRINTLN("{Sr}", to_string__Debug__LilyPreparserModule(self));
-}
 #endif
 
 DESTRUCTOR(LilyPreparserModule, const LilyPreparserModule *self)
@@ -1891,7 +1885,7 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserFunBodyItem *self)
 {
     String *res =
-      format__String("LilyPreparserFunBodyItem{ kind = {s}, location = {sa}",
+      format__String("LilyPreparserFunBodyItem{{ kind = {s}, location = {sa}",
                      to_string__Debug__LilyPreparserFunBodyItemKind(self->kind),
                      to_string__Debug__Location(&self->location));
 
@@ -2389,7 +2383,7 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserAttribute *self)
 {
     String *res = format__String(
-      "LilyPreparserAttribute{ name = {S}, data_type =", self->name);
+      "LilyPreparserAttribute{{ name = {S}, data_type =", self->name);
 
     DEBUG_VEC_STR(self->data_type, res, LilyToken);
 
@@ -2725,7 +2719,7 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserTraitBodyItem *self)
 {
     String *res = format__String(
-      "LilyPreparserTraitBodyItem{ kind = {s}, location = {sa}",
+      "LilyPreparserTraitBodyItem{{ kind = {s}, location = {sa}",
       to_string__Debug__LilyPreparserTraitBodyItemKind(self->kind),
       to_string__Debug__Location(&self->location));
 
@@ -3154,7 +3148,7 @@ IMPL_FOR_DEBUG(to_string,
     DEBUG_VEC_STRING(self->body, res, LilyPreparserRecordObjectBodyItem);
 
     {
-        char *s = format(", visibility = {s} }", self->visibility);
+        char *s = format(", visibility = {s} }", to_string__Debug__LilyVisibility(self->visibility));
 
         PUSH_STR_AND_FREE(res, s);
     }
@@ -3458,7 +3452,7 @@ IMPL_FOR_DEBUG(to_string,
     DEBUG_VEC_STRING(self->body, res, LilyPreparserEnumObjectBodyItem);
 
     {
-        char *s = format(", visibility = {s} }", self->visibility);
+        char *s = format(", visibility = {s} }", to_string__Debug__LilyVisibility(self->visibility));
 
         PUSH_STR_AND_FREE(res, s);
     }
@@ -4044,6 +4038,12 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserDecl, const LilyPreparserDecl *self)
     }
 
     return res;
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyPreparserDecl, const LilyPreparserDecl *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyPreparserDecl(self));
 }
 #endif
 
@@ -9282,7 +9282,8 @@ exit_preparser : {
 
     printf("\n====Preparser decls(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < info->decls; i++) {
+    for (Usize i = 0; i < info->decls->len; i++) {
+        // printf("%s\n", to_string__Debug__LilyPreparserDeclKind(CAST(LilyPreparserDecl*, get__Vec(info->decls, i))->kind));
         CALL_DEBUG(LilyPreparserDecl, get__Vec(info->decls, i));
     }
 
