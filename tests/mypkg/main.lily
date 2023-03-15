@@ -228,3 +228,9 @@ end
 macro get_name($name id) = {
 	name
 };
+
+val X Int32 := 30;
+val Y Int32 := 300;
+val Z Int64 := 1_000;
+
+pub val (A Int32, B Int32, C Int32) := (1, 2, 3);
