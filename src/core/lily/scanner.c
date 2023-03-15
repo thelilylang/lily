@@ -2205,8 +2205,6 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
                     end_token__LilyScanner(self,
                                            self->source.cursor.line,
                                            self->source.cursor.column);
-                    previous_char__Source(&self->source);
-                    next_char__Source(&self->source);
                     set_all__Location(&token->location, &self->location);
                 }
 
