@@ -4787,6 +4787,31 @@ parse_module_name : {
     }
 }
 
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_EQ:
+            next_token__LilyPreparser(self);
+            break;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `=`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+
+            break;
+        }
+    }
+
     Location module_location = location_decl;
     enum LilyVisibility module_visibility = visibility_decl;
 
