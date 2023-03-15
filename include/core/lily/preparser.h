@@ -1011,6 +1011,16 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserDecl, const LilyPreparserDecl *self);
 #endif
 
+/**
+ *
+ * @brief Print debug LilyPreparserDecl struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyPreparserDecl, const LilyPreparserDecl *self);
+#endif
+
 typedef struct LilyPreparserInfo
 {
     Vec *public_imports;  // Vec<LilyPreparserImport*>*

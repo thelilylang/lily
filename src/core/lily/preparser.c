@@ -1266,6 +1266,12 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserModule, const LilyPreparserModule *self)
 
     return res;
 }
+
+void
+IMPL_FOR_DEBUG(debug, LilyPreparserDecl, const LilyPreparserDecl *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyPreparserModule(self));
+}
 #endif
 
 DESTRUCTOR(LilyPreparserModule, const LilyPreparserModule *self)
