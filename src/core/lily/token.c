@@ -715,7 +715,7 @@ to_string__LilyToken(LilyToken *self)
         case LILY_TOKEN_KIND_LITERAL_BIT_STRING:
             return format__String("b\"{s}\"", (char *)self->literal_bit_string);
         case LILY_TOKEN_KIND_LITERAL_CHAR:
-            return format__String("b'{c}'", self->literal_bit_char);
+            return format__String("'{c}'", self->literal_bit_char);
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
             return format__String("{S}", self->literal_float);
         case LILY_TOKEN_KIND_LITERAL_INT_2:
