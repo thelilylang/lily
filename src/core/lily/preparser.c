@@ -2195,6 +2195,32 @@ VARIANT_CONSTRUCTOR(LilyPreparserConstant,
                                     .multiple = multiple };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserConstant, const LilyPreparserConstant *self)
+{
+    String *res = format__String("LilyPreparserConstant{{ kind = {s}", to_string__Debug__LilyPreparserConstantKind(self->kind));
+
+    switch (self->kind) {
+        case LILY_PREPARSER_CONSTANT_KIND_SIMPLE: {
+            char *s = format(", simple = {Sr} }", to_string__Debug__LilyPreparserConstantInfo(self->simple));
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE:
+            DEBUG_VEC_STRING(self->multiple, res, LilyPreparserConstantInfo);
+            push_str__String(res, " }");
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
+}
+#endif
+
 VARIANT_DESTRUCTOR(LilyPreparserConstant,
                    simple,
                    const LilyPreparserConstant *self)

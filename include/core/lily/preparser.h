@@ -460,6 +460,16 @@ typedef struct LilyPreparserConstant
     };
 } LilyPreparserConstant;
 
+/**
+ *
+ * @brief Convert LilyPreparserConstant in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserConstant, const LilyPreparserConstant *self);
+#endif
+
 enum LilyPreparserClassBodyItemKind
 {
     LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE,
