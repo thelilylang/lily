@@ -6,6 +6,6 @@ macro my_fun = {
 };
 
 package app =
-	.a.b,
-	.b,
+	.a.b;
+	.b;
 end
