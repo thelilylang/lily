@@ -3692,6 +3692,26 @@ CONSTRUCTOR(LilyPreparserEnum,
                                 .visibility = visibility };
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserEnum, const LilyPreparserEnum *self)
+{
+    String *res =
+      format__String("LilyPreparserEnum{{ name = {S}, variants =", self->name);
+
+    DEBUG_VEC_STRING(self->variants, res, LilyPreparserEnumVariant);
+
+    {
+        char *s = format(", visibility = {s} }",
+                         to_string__Debug__LilyVisibility(self->visibility));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserEnum, const LilyPreparserEnum *self)
 {
 #ifdef RUN_UNTIL_PREPARSER

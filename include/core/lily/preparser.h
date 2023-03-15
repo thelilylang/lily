@@ -895,9 +895,19 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserAlias, const LilyPreparserAlias *self);
 typedef struct LilyPreparserEnum
 {
     String *name;
-    Vec *variants; // Vec<Vec<LilyPreparserEnumVariant>*>*
+    Vec *variants; // Vec<LilyPreparserEnumVariant*>*
     enum LilyVisibility visibility;
 } LilyPreparserEnum;
+
+/**
+ *
+ * @brief Convert LilyPreparserEnum in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserEnum, const LilyPreparserEnum *self);
+#endif
 
 typedef struct LilyPreparserRecord
 {
