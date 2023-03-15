@@ -2876,6 +2876,39 @@ CONSTRUCTOR(LilyPreparserRecordField *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserRecordField,
+               const LilyPreparserRecordField *self)
+{
+    String *res = format__String(
+      "LilyPreparserRecordField{{ name = {S}, data_type =", self->name);
+
+    DEBUG_VEC_STR(self->data_type, res, LilyToken);
+
+    push_str__String(res, ", optional_expr =");
+
+    if (self->optional_expr) {
+        DEBUG_VEC_STR(self->optional_expr, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", visibility = ");
+    push_str__String(res, to_string__Debug__LilyVisibility(self->visibility));
+
+    {
+        char *s = format(", location = {sa} }",
+                         to_string__Debug__Location(&self->location));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyPreparserRecordField, LilyPreparserRecordField *self)
 {
 #ifdef RUN_UNTIL_PREPARSER

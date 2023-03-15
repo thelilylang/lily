@@ -662,9 +662,7 @@ typedef struct LilyPreparserTrait
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string,
-               LilyPreparserTrait,
-               const LilyPreparserTrait *self);
+IMPL_FOR_DEBUG(to_string, LilyPreparserTrait, const LilyPreparserTrait *self);
 #endif
 
 typedef struct LilyPreparserRecordField
@@ -675,6 +673,18 @@ typedef struct LilyPreparserRecordField
     enum LilyVisibility visibility;
     Location location;
 } LilyPreparserRecordField;
+
+/**
+ *
+ * @brief Convert LilyPreparserRecordField in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserRecordField,
+               const LilyPreparserRecordField *self);
+#endif
 
 enum LilyPreparserRecordObjectBodyItemKind
 {
