@@ -214,3 +214,13 @@ fun mul(x Int8, y Int8) = x * y end
 fun mul(x Int16, y Int16) = x * y end
 fun mul(x Int32, y Int32) = x * y end
 fun mul(x Int64, y Int64) = x * y end
+
+module X.Y.Z =
+	fun add(x, y) = x+y end
+
+	type AnimalKind enum =
+		Wolf;
+		Dog;
+		Cat;
+	end
+end
