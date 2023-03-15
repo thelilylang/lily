@@ -738,6 +738,18 @@ typedef struct LilyPreparserRecordObject
     enum LilyVisibility visibility;
 } LilyPreparserRecordObject;
 
+/**
+ *
+ * @brief Convert LilyPreparserRecordObject in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserRecordObject,
+               const LilyPreparserRecordObject *self);
+#endif
+
 typedef struct LilyPreparserEnumVariant
 {
     String *name;
