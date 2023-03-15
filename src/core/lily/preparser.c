@@ -2131,9 +2131,12 @@ CONSTRUCTOR(LilyPreparserConstantInfo *,
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyPreparserConstantInfo, const LilyPreparserConstantInfo *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserConstantInfo,
+               const LilyPreparserConstantInfo *self)
 {
-    String *res = format__String("LilyPreparserConstantInfo{{ name = {S}, expr =", self->name);
+    String *res = format__String(
+      "LilyPreparserConstantInfo{{ name = {S}, expr =", self->name);
 
     DEBUG_VEC_STR(self->expr, res, LilyToken);
 
@@ -2163,7 +2166,9 @@ DESTRUCTOR(LilyPreparserConstantInfo, LilyPreparserConstantInfo *self)
 
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyPreparserConstantKind, enum LilyPreparserConstantKind kind)
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserConstantKind,
+               enum LilyPreparserConstantKind kind)
 {
     switch (kind) {
         case LILY_PREPARSER_CONSTANT_KIND_SIMPLE:
@@ -2197,13 +2202,19 @@ VARIANT_CONSTRUCTOR(LilyPreparserConstant,
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyPreparserConstant, const LilyPreparserConstant *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserConstant,
+               const LilyPreparserConstant *self)
 {
-    String *res = format__String("LilyPreparserConstant{{ kind = {s}", to_string__Debug__LilyPreparserConstantKind(self->kind));
+    String *res =
+      format__String("LilyPreparserConstant{{ kind = {s}",
+                     to_string__Debug__LilyPreparserConstantKind(self->kind));
 
     switch (self->kind) {
         case LILY_PREPARSER_CONSTANT_KIND_SIMPLE: {
-            char *s = format(", simple = {Sr} }", to_string__Debug__LilyPreparserConstantInfo(self->simple));
+            char *s =
+              format(", simple = {Sr} }",
+                     to_string__Debug__LilyPreparserConstantInfo(self->simple));
             PUSH_STR_AND_FREE(res, s);
 
             break;
@@ -2250,7 +2261,6 @@ DESTRUCTOR(LilyPreparserConstant, const LilyPreparserConstant *self)
             UNREACHABLE("unknown variant");
     }
 }
-
 
 CONSTRUCTOR(LilyPreparserAttribute,
             LilyPreparserAttribute,
