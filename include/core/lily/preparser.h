@@ -609,8 +609,9 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserClass, const LilyPreparserClass *self);
 
 enum LilyPreparserTraitBodyItemKind
 {
-    LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_PROTOTYPE,
     LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_ATTRIBUTE,
+    LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_MACRO_EXPAND,
+    LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_PROTOTYPE,
 };
 
 /**
@@ -650,8 +651,9 @@ typedef struct LilyPreparserTraitBodyItem
     Location location;
     union
     {
-        LilyPreparserPrototype prototype;
         LilyPreparserAttribute attribute;
+        LilyPreparserMacroExpand macro_expand;
+        LilyPreparserPrototype prototype;
     };
 } LilyPreparserTraitBodyItem;
 
