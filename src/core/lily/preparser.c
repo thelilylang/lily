@@ -10195,6 +10195,9 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
 LilyPreparserDecl *
 preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
 {
+	enum LilyVisibility visibility = visibility_decl;
+	Location location = location_decl;
+
     Vec *variants = NEW(Vec); // Vec<LilyPreparserEnumVariant*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
@@ -10209,7 +10212,7 @@ preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_END:
-            end__Location(&location_decl,
+            end__Location(&location,
                           self->current->location.end_column,
                           self->current->location.end_column);
 
@@ -10244,10 +10247,10 @@ preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
     return NEW_VARIANT(
       LilyPreparserDecl,
       type,
-      location_decl,
+      location,
       NEW_VARIANT(LilyPreparserType,
                   enum_,
-                  NEW(LilyPreparserEnum, name, variants, visibility_decl)));
+                  NEW(LilyPreparserEnum, name, variants, visibility)));
 }
 
 LilyPreparserDecl *
