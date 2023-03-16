@@ -532,6 +532,14 @@ static VARIANT_CONSTRUCTOR(LilyPreparserEnumObjectBodyItem *,
                            LilyPreparserConstant constant);
 
 // Construct LilyPreparserEnumObjectBodyItem type
+// (LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_MACRO_EXPAND).
+static VARIANT_CONSTRUCTOR(LilyPreparserEnumObjectBodyItem *,
+                           LilyPreparserEnumObjectBodyItem,
+                           macro_expand,
+                           Location location,
+                           LilyPreparserMacroExpand macro_expand);
+
+// Construct LilyPreparserEnumObjectBodyItem type
 // (LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_METHOD).
 static VARIANT_CONSTRUCTOR(LilyPreparserEnumObjectBodyItem *,
                            LilyPreparserEnumObjectBodyItem,
@@ -551,6 +559,12 @@ static VARIANT_CONSTRUCTOR(LilyPreparserEnumObjectBodyItem *,
 // (LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_CONSTANT).
 static VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
                           constant,
+                          LilyPreparserEnumObjectBodyItem *self);
+
+// Free LilyPreparserEnumObjectBodyItem type
+// (LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_MACRO_EXPAND).
+static VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
+                          macro_expand,
                           LilyPreparserEnumObjectBodyItem *self);
 
 // Free LilyPreparserEnumObjectBodyItem type
@@ -1002,6 +1016,9 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
 
 static LilyPreparserEnumObjectBodyItem *
 preparse_constant_for_enum__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserEnumObjectBodyItem *
+preparse_macro_expand_for_enum__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserEnumObjectBodyItem *
 preparse_method_for_enum__LilyPreparser(LilyPreparser *self);
@@ -3402,6 +3419,8 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT:
             return "LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT";
+		case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND:
+			return "LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND";
         case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD:
             return "LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD";
         case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_VARIANT:
@@ -3424,6 +3443,22 @@ VARIANT_CONSTRUCTOR(LilyPreparserEnumObjectBodyItem *,
     self->kind = LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT;
     self->location = location;
     self->constant = constant;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserEnumObjectBodyItem *,
+                    LilyPreparserEnumObjectBodyItem,
+                    macro_expand,
+                    Location location,
+                    LilyPreparserMacroExpand macro_expand)
+{
+    LilyPreparserEnumObjectBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserEnumObjectBodyItem));
+
+    self->kind = LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND;
+    self->location = location;
+    self->macro_expand = macro_expand;
 
     return self;
 }
@@ -3481,6 +3516,15 @@ IMPL_FOR_DEBUG(to_string,
 
             break;
         }
+        case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND: {
+            char *s = format(
+              ", macro_expand = {Sr} }",
+              to_string__Debug__LilyPreparserMacroExpand(&self->macro_expand));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD: {
             char *s =
               format(", method = {Sr} }",
@@ -3531,6 +3575,14 @@ VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
 }
 
 VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
+                   macro_expand,
+                   LilyPreparserEnumObjectBodyItem *self)
+{
+    FREE(LilyPreparserMacroExpand, &self->macro_expand);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
                    method,
                    LilyPreparserEnumObjectBodyItem *self)
 {
@@ -3559,6 +3611,10 @@ DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
     switch (self->kind) {
         case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT:
             FREE_VARIANT(LilyPreparserEnumObjectBodyItem, constant, self);
+            break;
+
+        case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND:
+            FREE_VARIANT(LilyPreparserEnumObjectBodyItem, macro_expand, self);
             break;
 
         case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD:
@@ -8646,6 +8702,26 @@ preparse_constant_for_enum__LilyPreparser(LilyPreparser *self)
 }
 
 LilyPreparserEnumObjectBodyItem *
+preparse_macro_expand_for_enum__LilyPreparser(LilyPreparser *self)
+{
+    LilyPreparserDecl *decl = preparse_macro_expand__LilyPreparser(self);
+
+    if (decl) {
+        LilyPreparserEnumObjectBodyItem *macro_expand =
+          NEW_VARIANT(LilyPreparserEnumObjectBodyItem,
+                      macro_expand,
+                      decl->location,
+                      decl->macro_expand);
+
+        lily_free(decl);
+
+        return macro_expand;
+    }
+
+    return NULL;
+}
+
+LilyPreparserEnumObjectBodyItem *
 preparse_method_for_enum__LilyPreparser(LilyPreparser *self)
 {
     LilyPreparserDecl *decl = preparse_fun__LilyPreparser(self);
@@ -8702,41 +8778,68 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
             }
 
             case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
-                LilyPreparserEnumVariant *variant =
-                  preparse_enum_variant__LilyPreparser(self);
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
-                if (variant) {
-                    push__Vec(body,
-                              NEW_VARIANT(LilyPreparserEnumObjectBodyItem,
-                                          variant,
-                                          variant->location,
-                                          *variant));
-                    lily_free(variant);
+                if (peeked) {
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_BANG: {
+                            LilyPreparserEnumObjectBodyItem *macro_expand =
+                              preparse_macro_expand_for_enum__LilyPreparser(
+                                self);
+
+                            if (macro_expand) {
+                                push__Vec(body, macro_expand);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+                        default: {
+
+                            LilyPreparserEnumVariant *variant =
+                              preparse_enum_variant__LilyPreparser(self);
+
+                            if (variant) {
+                                push__Vec(
+                                  body,
+                                  NEW_VARIANT(LilyPreparserEnumObjectBodyItem,
+                                              variant,
+                                              variant->location,
+                                              *variant));
+                                lily_free(variant);
+                            } else {
+                            clean_up : {
+                                // Clean up allocations
+
+                                FREE(String, name);
+
+                                if (impls) {
+                                    FREE_BUFFER_ITEMS_2(
+                                      impls->buffer, impls->len, LilyToken);
+                                    FREE(Vec, impls);
+                                }
+
+                                if (generic_params) {
+                                    FREE_BUFFER_ITEMS_2(generic_params->buffer,
+                                                        generic_params->len,
+                                                        LilyToken);
+                                    FREE(Vec, generic_params);
+                                }
+
+                                FREE_BUFFER_ITEMS(
+                                  body->buffer,
+                                  body->len,
+                                  LilyPreparserEnumObjectBodyItem);
+                                FREE(Vec, body);
+
+                                return NULL;
+                            }
+                            }
+                            break;
+                        }
+                    }
                 } else {
-                clean_up : {
-                    // Clean up allocations
-
-                    FREE(String, name);
-
-                    if (impls) {
-                        FREE_BUFFER_ITEMS_2(
-                          impls->buffer, impls->len, LilyToken);
-                        FREE(Vec, impls);
-                    }
-
-                    if (generic_params) {
-                        FREE_BUFFER_ITEMS_2(generic_params->buffer,
-                                            generic_params->len,
-                                            LilyToken);
-                        FREE(Vec, generic_params);
-                    }
-
-                    FREE_BUFFER_ITEMS(
-                      body->buffer, body->len, LilyPreparserEnumObjectBodyItem);
-                    FREE(Vec, body);
-
-                    return NULL;
-                }
                 }
 
                 break;

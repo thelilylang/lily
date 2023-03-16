@@ -795,6 +795,7 @@ IMPL_FOR_DEBUG(to_string,
 enum LilyPreparserEnumObjectBodyItemKind
 {
     LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT,
+    LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND,
     LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD,
     LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_VARIANT,
 };
@@ -818,6 +819,7 @@ typedef struct LilyPreparserEnumObjectBodyItem
     union
     {
         LilyPreparserConstant constant;
+        LilyPreparserMacroExpand macro_expand;
         LilyPreparserMethod method;
         LilyPreparserEnumVariant variant;
     };
