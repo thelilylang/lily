@@ -3972,10 +3972,10 @@ DESTRUCTOR(LilyPreparserMacroExpand, const LilyPreparserMacroExpand *self)
     FREE(String, self->name);
 #endif
 
-	if (self->params) {
-		FREE_BUFFER_ITEMS_2(self->params->buffer, self->params->len, LilyToken);
-		FREE(Vec, self->params);
-	}
+    if (self->params) {
+        FREE_BUFFER_ITEMS_2(self->params->buffer, self->params->len, LilyToken);
+        FREE(Vec, self->params);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -4852,16 +4852,22 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
             return preparse_fun__LilyPreparser(self);
         case LILY_TOKEN_KIND_KEYWORD_object:
             return preparse_object__LilyPreparser(self);
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            next_token__LilyPreparser(self);
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+            LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
-            switch (self->current->kind) {
-                case LILY_TOKEN_KIND_BANG:
-                    break;
-                default:
-                    return NULL;
-            }
+            if (peeked) {
+                switch (peeked->kind) {
+                    case LILY_TOKEN_KIND_BANG:
+                        return preparse_macro_expand__LilyPreparser(self);
+                    default:
+                        goto unexpected_token;
+                }
+            } else {
+				goto unexpected_token;
+			}
+        }
         default: {
+        unexpected_token : {
             String *current_s = to_string__LilyToken(self->current);
 
             emit__Diagnostic(
@@ -4881,6 +4887,7 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
             next_token__LilyPreparser(self);
 
             return NULL;
+        }
         }
     }
 }
@@ -9443,7 +9450,9 @@ preparse_macro_expand__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-			end__Location(&location, self->current->location.end_line, self->current->location.end_column);
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
             next_token__LilyPreparser(self);
 
             break;
@@ -9809,13 +9818,14 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 
                 if (peeked) {
                     if (peeked->kind == LILY_TOKEN_KIND_BANG) {
-						LilyPreparserDecl *macro_expand = preparse_macro_expand__LilyPreparser(self);
+                        LilyPreparserDecl *macro_expand =
+                          preparse_macro_expand__LilyPreparser(self);
 
-						if (macro_expand) {
-							push__Vec(info->decls, macro_expand);
-						}
+                        if (macro_expand) {
+                            push__Vec(info->decls, macro_expand);
+                        }
 
-						break;
+                        break;
                     } else {
                         goto unexpected_token;
                     }
