@@ -68,7 +68,7 @@ end
 type Person record =
 	app!();
 	mut name Str;
-	age Uint8;
+	age Uint8; 
 end
 
 type Human record =
