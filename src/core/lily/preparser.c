@@ -326,6 +326,14 @@ static VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
                            Location location);
 
 // Construct LilyPreparserClassBodyItem type
+// (LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND).
+static VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
+                           LilyPreparserClassBodyItem,
+                           macro_expand,
+                           LilyPreparserMacroExpand macro_expand,
+                           Location location);
+
+// Construct LilyPreparserClassBodyItem type
 // (LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD)
 static VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
                            LilyPreparserClassBodyItem,
@@ -337,6 +345,12 @@ static VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
 // (LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUT).
 static VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
                           attribute,
+                          LilyPreparserClassBodyItem *self);
+
+// Free LilyPreparserClassBodyItem type
+// (LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND).
+static VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
+                          macro_expand,
                           LilyPreparserClassBodyItem *self);
 
 // Free LilyPreparserClassBodyItem type
@@ -934,6 +948,9 @@ preparse_attribute_for_class__LilyPreparser(LilyPreparser *self,
 static LilyPreparserTraitBodyItem *
 preparse_attribute_for_trait__LilyPreparser(LilyPreparser *self,
                                             Location location);
+
+static LilyPreparserClassBodyItem *
+preparse_macro_expand_for_class__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserClassBodyItem *
 preparse_method_for_class__LilyPreparser(LilyPreparser *self);
@@ -2404,6 +2421,8 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE:
             return "LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE";
+        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND:
+            return "LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND";
         case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD:
             return "LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD";
         default:
@@ -2490,6 +2509,22 @@ VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
     return self;
 }
 
+static VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
+                           LilyPreparserClassBodyItem,
+                           macro_expand,
+                           LilyPreparserMacroExpand macro_expand,
+                           Location location)
+{
+    LilyPreparserClassBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserClassBodyItem));
+
+    self->kind = LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND;
+    self->location = location;
+    self->macro_expand = macro_expand;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(LilyPreparserClassBodyItem *,
                     LilyPreparserClassBodyItem,
                     method,
@@ -2527,6 +2562,15 @@ IMPL_FOR_DEBUG(to_string,
 
             break;
         }
+        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND: {
+            String *s =
+              to_string__Debug__LilyPreparserMacroExpand(&self->macro_expand);
+
+            push_str__String(res, ", macro_expand = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD: {
             String *s = to_string__Debug__LilyPreparserMethod(&self->method);
 
@@ -2554,6 +2598,14 @@ VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
 }
 
 VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
+                   macro_expand,
+                   LilyPreparserClassBodyItem *self)
+{
+    FREE(LilyPreparserMacroExpand, &self->macro_expand);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
                    method,
                    LilyPreparserClassBodyItem *self)
 {
@@ -2566,6 +2618,9 @@ DESTRUCTOR(LilyPreparserClassBodyItem, LilyPreparserClassBodyItem *self)
     switch (self->kind) {
         case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE:
             FREE_VARIANT(LilyPreparserClassBodyItem, attribute, self);
+            break;
+        case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND:
+            FREE_VARIANT(LilyPreparserClassBodyItem, macro_expand, self);
             break;
         case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD:
             FREE_VARIANT(LilyPreparserClassBodyItem, method, self);
@@ -4863,8 +4918,8 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
                         goto unexpected_token;
                 }
             } else {
-				goto unexpected_token;
-			}
+                goto unexpected_token;
+            }
         }
         default: {
         unexpected_token : {
@@ -6550,7 +6605,7 @@ preparse_body__LilyPreparser(LilyPreparser *self,
 LilyPreparserDecl *
 preparse_fun__LilyPreparser(LilyPreparser *self)
 {
-    next_token__LilyPreparser(self);
+    next_token__LilyPreparser(self); // skip `fun` keyword
 
     Location location = location_decl;
     String *object_impl = NULL;
@@ -7506,6 +7561,26 @@ preparse_attribute_for_trait__LilyPreparser(LilyPreparser *self,
 }
 
 LilyPreparserClassBodyItem *
+preparse_macro_expand_for_class__LilyPreparser(LilyPreparser *self)
+{
+    LilyPreparserDecl *decl = preparse_macro_expand__LilyPreparser(self);
+
+    if (decl) {
+        LilyPreparserClassBodyItem *macro_expand =
+          NEW_VARIANT(LilyPreparserClassBodyItem,
+                      macro_expand,
+                      decl->macro_expand,
+                      decl->location);
+
+        lily_free(decl);
+
+        return macro_expand;
+    }
+
+    return NULL;
+}
+
+LilyPreparserClassBodyItem *
 preparse_method_for_class__LilyPreparser(LilyPreparser *self)
 {
     LilyPreparserDecl *decl = preparse_fun__LilyPreparser(self);
@@ -7704,6 +7779,51 @@ preparse_class__LilyPreparser(LilyPreparser *self,
 
                 break;
             }
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+                if (peeked) {
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_BANG: {
+                            LilyPreparserClassBodyItem *macro_expand =
+                              preparse_macro_expand_for_class__LilyPreparser(
+                                self);
+
+                            if (macro_expand) {
+                                push__Vec(body, macro_expand);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+                        default:
+                            goto unexpected_token_macro_expand;
+                    }
+                } else {
+                unexpected_token_macro_expand : {
+                    String *current_s = to_string__LilyToken(self->current);
+
+                    emit__Diagnostic(NEW_VARIANT(Diagnostic,
+                                                 simple_lily_error,
+                                                 self->file,
+                                                 &self->current->location,
+                                                 NEW_VARIANT(LilyError,
+                                                             unexpected_token,
+                                                             current_s->buffer),
+                                                 NULL,
+                                                 NULL,
+                                                 from__String("expected `!`")),
+                                     &self->count_error);
+
+                    FREE(String, current_s);
+
+                    goto clean_up;
+                }
+                }
+
+                break;
+            }
             case LILY_TOKEN_KIND_KEYWORD_FUN: {
                 LilyPreparserClassBodyItem *method =
                   preparse_method_for_class__LilyPreparser(self);
@@ -7734,8 +7854,27 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                 }
                 }
             }
-            default:
+            default: {
+                String *current_s = to_string__LilyToken(self->current);
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &self->current->location,
+                    NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                    NULL,
+                    NULL,
+                    from__String("expected `fun`, `val` or identifier")),
+                  &self->count_error);
+
+                FREE(String, current_s);
+
+                next_token__LilyPreparser(self);
+
                 break;
+            }
         }
 
         visibility_decl = LILY_VISIBILITY_PRIVATE;

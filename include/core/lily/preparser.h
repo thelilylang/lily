@@ -489,9 +489,28 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserConstant *self);
 #endif
 
+typedef struct LilyPreparserMacroExpand
+{
+    String *name;
+    Vec *params; // Vec<Vec<LilyToken*>*>*?
+} LilyPreparserMacroExpand;
+
+/**
+ *
+ * @brief Convert LilyPreparserMacroExpand in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserMacroExpand,
+               const LilyPreparserMacroExpand *self);
+#endif
+
 enum LilyPreparserClassBodyItemKind
 {
     LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE,
+    LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND,
     LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD,
 };
 
@@ -551,6 +570,7 @@ typedef struct LilyPreparserClassBodyItem
     union
     {
         LilyPreparserAttribute attribute;
+        LilyPreparserMacroExpand macro_expand;
         LilyPreparserMethod method;
     };
 } LilyPreparserClassBodyItem;
@@ -965,24 +985,6 @@ typedef struct LilyPreparserType
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserType, const LilyPreparserType *self);
-#endif
-
-typedef struct LilyPreparserMacroExpand
-{
-    String *name;
-    Vec *params; // Vec<Vec<LilyToken*>*>*?
-} LilyPreparserMacroExpand;
-
-/**
- *
- * @brief Convert LilyPreparserMacroExpand in String.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string,
-               LilyPreparserMacroExpand,
-               const LilyPreparserMacroExpand *self);
 #endif
 
 enum LilyPreparserDeclKind
