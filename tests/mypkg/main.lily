@@ -181,6 +181,7 @@ object AppKind enum =
 end
 
 object Clone[T] trait =
+	app!();
 	fun clone(T);
 end
 
