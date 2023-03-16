@@ -665,6 +665,16 @@ static inline VARIANT_DESTRUCTOR(LilyPreparserType,
 // Free LilyPreparserType type.
 static DESTRUCTOR(LilyPreparserType, const LilyPreparserType *self);
 
+// Construct LilyPreparserMacroExpand type.
+static inline CONSTRUCTOR(LilyPreparserMacroExpand,
+                          LilyPreparserMacroExpand,
+                          String *name,
+                          Vec *params);
+
+// Free LilyPreparserMacroExpand type.
+static DESTRUCTOR(LilyPreparserMacroExpand,
+                  const LilyPreparserMacroExpand *self);
+
 // Construct LilyPreparserConstantInfo type.
 static CONSTRUCTOR(LilyPreparserConstantInfo *,
                    LilyPreparserConstantInfo,
@@ -3909,6 +3919,32 @@ DESTRUCTOR(LilyPreparserType, const LilyPreparserType *self)
         default:
             UNREACHABLE("unknown variant");
     }
+}
+
+CONSTRUCTOR(LilyPreparserMacroExpand, LilyPreparserMacroExpand, String *name, Vec *params)
+{
+    return (LilyPreparserMacroExpand){
+        .name = name,
+        .params = params
+    };
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserType, const LilyPreparserMacroExpand *self)
+{
+    String *res = format__String("LilyPreparserMacroExpand{{ name = {S}", self->name);
+}
+#endif
+
+DESTRUCTOR(LilyPreparserMacroExpand, const LilyPreparserMacroExpand *self)
+{
+#ifdef RUN_UNTIL_PREPARSER
+    FREE(String, self->name);
+#endif
+
+    FREE_BUFFER_ITEMS_2(self->params->buffer, self->params->len, LilyToken);
+    FREE(Vec, self->params);
 }
 
 #ifdef ENV_DEBUG
