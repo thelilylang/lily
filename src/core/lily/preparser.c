@@ -8891,7 +8891,84 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                 break;
             }
 
+            case LILY_TOKEN_KIND_KEYWORD_PUB: {
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+                if (peeked) {
+                    visibility_decl = LILY_VISIBILITY_PUBLIC;
+
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_KEYWORD_FUN: {
+                            next_token__LilyPreparser(self); // skip `pub`
+
+                            LilyPreparserRecordObjectBodyItem *method =
+                              preparse_method_for_record__LilyPreparser(self);
+
+                            visibility_decl = LILY_VISIBILITY_PRIVATE;
+
+                            if (method) {
+                                push__Vec(body, method);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+                        case LILY_TOKEN_KIND_KEYWORD_VAL: {
+                            next_token__LilyPreparser(self); // skip `pub`
+
+                            LilyPreparserRecordObjectBodyItem *constant =
+                              preparse_constant_for_record__LilyPreparser(self);
+
+                            visibility_decl = LILY_VISIBILITY_PRIVATE;
+
+                            if (constant) {
+                                push__Vec(body, constant);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+                        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+                            Location location_field =
+                              clone__Location(&self->current->location);
+
+                            next_token__LilyPreparser(self); // skip `pub`
+
+                            LilyPreparserRecordField *field =
+                              preparse_record_field__LilyPreparser(self, false);
+
+                            end__Location(&location_field,
+                                          self->current->location.end_line,
+                                          self->current->location.end_column);
+
+                            visibility_decl = LILY_VISIBILITY_PRIVATE;
+
+                            if (field) {
+                                push__Vec(
+                                  body,
+                                  NEW_VARIANT(LilyPreparserRecordObjectBodyItem,
+                                              field,
+                                              location_field,
+                                              *field));
+                                lily_free(field);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+                        default:
+                            goto unexpected_token;
+                    }
+                }
+
+				break;
+            }
+
             default: {
+            unexpected_token : {
                 String *current_s = to_string__LilyToken(self->current);
 
                 emit__Diagnostic(
@@ -8903,7 +8980,7 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                     NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                     NULL,
                     NULL,
-                    from__String("expected identifier, `val` or `fun`")),
+                    from__String("expected identifier, `val`, `pub` or `fun`")),
                   &self->count_error);
 
                 FREE(String, current_s);
@@ -8911,6 +8988,7 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                 next_token__LilyPreparser(self);
 
                 break;
+            }
             }
         }
     }
@@ -9894,12 +9972,12 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
                             Location location_field =
                               clone__Location(&self->current->location);
 
-							visibility_decl = LILY_VISIBILITY_PUBLIC;
+                            visibility_decl = LILY_VISIBILITY_PUBLIC;
 
                             LilyPreparserRecordField *field =
                               preparse_record_field__LilyPreparser(self, false);
 
-							visibility_decl = LILY_VISIBILITY_PRIVATE;
+                            visibility_decl = LILY_VISIBILITY_PRIVATE;
 
                             if (field) {
                                 end__Location(
@@ -9935,12 +10013,12 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
 
                             next_token__LilyPreparser(self);
 
-							visibility_decl = LILY_VISIBILITY_PUBLIC;
+                            visibility_decl = LILY_VISIBILITY_PUBLIC;
 
                             LilyPreparserRecordField *field =
                               preparse_record_field__LilyPreparser(self, true);
 
-							visibility_decl = LILY_VISIBILITY_PRIVATE;
+                            visibility_decl = LILY_VISIBILITY_PRIVATE;
 
                             if (field) {
                                 end__Location(
@@ -9963,10 +10041,10 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
                             goto unexpected_token;
                     }
                 } else {
-					goto unexpected_token;
-				}
+                    goto unexpected_token;
+                }
 
-				break;
+                break;
             }
             default: {
             unexpected_token : {
