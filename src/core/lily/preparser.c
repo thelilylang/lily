@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
 #include <base/new.h>
 
 #include <core/lily/error.h>
@@ -760,7 +761,9 @@ static VARIANT_DESTRUCTOR(LilyPreparserDecl, constant, LilyPreparserDecl *self);
 static VARIANT_DESTRUCTOR(LilyPreparserDecl, fun, LilyPreparserDecl *self);
 
 // Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_MACRO_EXPAND).
-static VARIANT_DESTRUCTOR(LilyPreparserDecl, macro_expand, LilyPreparserDecl *self);
+static VARIANT_DESTRUCTOR(LilyPreparserDecl,
+                          macro_expand,
+                          LilyPreparserDecl *self);
 
 // Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_MODULE).
 static VARIANT_DESTRUCTOR(LilyPreparserDecl, module, LilyPreparserDecl *self);
@@ -995,6 +998,9 @@ preparse_enum__LilyPreparser(LilyPreparser *self, String *name);
 
 static LilyPreparserDecl *
 preparse_alias__LilyPreparser(LilyPreparser *self, String *name);
+
+static LilyPreparserDecl *
+preparse_macro_expand__LilyPreparser(LilyPreparser *self);
 
 static void
 preparse_preprocess__LilyPreparser(LilyPreparser *self);
@@ -4114,13 +4120,15 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserDecl, const LilyPreparserDecl *self)
 
             break;
         }
-		case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND: {
-			char *s = format(", macro_expand = {Sr} }", to_string__Debug__LilyPreparserMacroExpand(&self->macro_expand));
+        case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND: {
+            char *s = format(
+              ", macro_expand = {Sr} }",
+              to_string__Debug__LilyPreparserMacroExpand(&self->macro_expand));
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_PREPARSER_DECL_KIND_MODULE: {
             char *s =
               format(", module = {Sr} }",
@@ -4483,6 +4491,7 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
         default:
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
+
                           simple_lily_error,
                           self->file,
                           &self->current->location,
@@ -9408,6 +9417,55 @@ preparse_alias__LilyPreparser(LilyPreparser *self, String *name)
                   NEW(LilyPreparserAlias, name, data_type, visibility_decl)));
 }
 
+LilyPreparserDecl *
+preparse_macro_expand__LilyPreparser(LilyPreparser *self)
+{
+    ASSERT(self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL);
+
+    Location location = location_decl;
+
+    // 1. Get name of the macro expand.
+    String *name = clone__String(self->current->identifier_normal);
+
+    next_token__LilyPreparser(self);
+    next_token__LilyPreparser(self); // skip `!`
+
+    // 2. Get params of the macro expand.
+    Vec *params = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_PAREN:
+            params = preparse_paren_with_comma_sep__LilyPreparser(self);
+            break;
+        default:
+            break;
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+			end__Location(&location, self->current->location.end_line, self->current->location.end_column);
+            next_token__LilyPreparser(self);
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                          NULL,
+                          NULL,
+                          from__String("expected `;`")),
+              &self->count_error);
+    }
+
+    return NEW_VARIANT(LilyPreparserDecl,
+                       macro_expand,
+                       location,
+                       NEW(LilyPreparserMacroExpand, name, params));
+}
+
 void
 preparse_preprocess__LilyPreparser(LilyPreparser *self)
 {
@@ -9744,13 +9802,20 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
             }
 
             /*
-                <name>!(<args>)
+                <name>!(<args>);
             */
             case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
                 if (peeked) {
                     if (peeked->kind == LILY_TOKEN_KIND_BANG) {
+						LilyPreparserDecl *macro_expand = preparse_macro_expand__LilyPreparser(self);
+
+						if (macro_expand) {
+							push__Vec(info->decls, macro_expand);
+						}
+
+						break;
                     } else {
                         goto unexpected_token;
                     }
