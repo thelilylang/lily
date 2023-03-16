@@ -970,7 +970,7 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserType, const LilyPreparserType *self);
 typedef struct LilyPreparserMacroExpand
 {
     String *name;
-    Vec *params; // Vec<Vec<LilyToken*>*>*
+    Vec *params; // Vec<Vec<LilyToken*>*>*?
 } LilyPreparserMacroExpand;
 
 /**

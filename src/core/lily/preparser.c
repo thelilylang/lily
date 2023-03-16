@@ -3966,8 +3966,10 @@ DESTRUCTOR(LilyPreparserMacroExpand, const LilyPreparserMacroExpand *self)
     FREE(String, self->name);
 #endif
 
-    FREE_BUFFER_ITEMS_2(self->params->buffer, self->params->len, LilyToken);
-    FREE(Vec, self->params);
+	if (self->params) {
+		FREE_BUFFER_ITEMS_2(self->params->buffer, self->params->len, LilyToken);
+		FREE(Vec, self->params);
+	}
 }
 
 #ifdef ENV_DEBUG
@@ -4173,8 +4175,8 @@ VARIANT_DESTRUCTOR(LilyPreparserDecl, fun, LilyPreparserDecl *self)
 
 VARIANT_DESTRUCTOR(LilyPreparserDecl, macro_expand, LilyPreparserDecl *self)
 {
-	FREE(LilyPreparserMacroExpand, &self->macro_expand);
-	lily_free(self);
+    FREE(LilyPreparserMacroExpand, &self->macro_expand);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyPreparserDecl, module, LilyPreparserDecl *self)
@@ -4206,9 +4208,9 @@ DESTRUCTOR(LilyPreparserDecl, LilyPreparserDecl *self)
             FREE_VARIANT(LilyPreparserDecl, fun, self);
             break;
 
-		case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
-			FREE_VARIANT(LilyPreparserDecl, macro_expand, self);
-			break;
+        case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
+            FREE_VARIANT(LilyPreparserDecl, macro_expand, self);
+            break;
 
         case LILY_PREPARSER_DECL_KIND_MODULE:
             FREE_VARIANT(LilyPreparserDecl, module, self);
