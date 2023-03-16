@@ -8676,7 +8676,15 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
            self->current->kind != LILY_TOKEN_KIND_EOF) {
         switch (self->current->kind) {
             case LILY_TOKEN_KIND_KEYWORD_VAL: {
-                // TODO: push constant to body.
+                LilyPreparserEnumObjectBodyItem *constant =
+                  preparse_constant_for_enum__LilyPreparser(self);
+
+                if (constant) {
+                    push__Vec(body, constant);
+                } else {
+                    goto clean_up;
+                }
+
                 break;
             }
 
