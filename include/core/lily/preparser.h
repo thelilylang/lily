@@ -694,7 +694,7 @@ typedef struct LilyPreparserRecordField
     Vec *data_type;     // Vec<LilyToken*>*
     Vec *optional_expr; // Vec<LilyToken*>*?
     enum LilyVisibility visibility;
-    Location location;
+    bool is_mut; // only used in record type
 } LilyPreparserRecordField;
 
 /**
@@ -936,10 +936,51 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserEnum, const LilyPreparserEnum *self);
 #endif
 
+enum LilyPreparserRecordBodyItemKind
+{
+    LILY_PREPARSER_RECORD_BODY_ITEM_KIND_FIELD,
+    LILY_PREPARSER_RECORD_BODY_ITEM_KIND_MACRO_EXPAND,
+};
+
+/**
+ *
+ * @brief Convert LilyPreparserRecordBodyItemKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserRecordBodyItemKind,
+               enum LilyPreparserRecordBodyItemKind self);
+#endif
+
+typedef struct LilyPreparserRecordBodyItem
+{
+    enum LilyPreparserRecordBodyItemKind kind;
+    Location location;
+    union
+    {
+        LilyPreparserRecordField field;
+        LilyPreparserMacroExpand macro_expand;
+    };
+} LilyPreparserRecordBodyItem;
+
+/**
+ *
+ * @brief Convert LilyPreparserRecordBodyItem in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserRecordBodyItem,
+               const LilyPreparserRecordBodyItem *self);
+#endif
+
 typedef struct LilyPreparserRecord
 {
     String *name;
-    Vec *fields; // Vec<LilyPreparserRecordField*>*
+    Vec *body; // Vec<LilyPreparserRecordBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserRecord;
 
