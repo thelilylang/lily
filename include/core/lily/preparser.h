@@ -711,6 +711,7 @@ enum LilyPreparserRecordObjectBodyItemKind
 {
     LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT,
     LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_FIELD,
+    LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND,
     LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD,
 };
 
@@ -734,6 +735,7 @@ typedef struct LilyPreparserRecordObjectBodyItem
     {
         LilyPreparserConstant constant;
         LilyPreparserRecordField field;
+        LilyPreparserMacroExpand macro_expand;
         LilyPreparserMethod method;
     };
 } LilyPreparserRecordObjectBodyItem;
@@ -956,11 +958,11 @@ enum LilyPreparserTypeKind
 
 /**
  *
- * @brief Convert LilyPreparserTypeKind in String.
+ * @brief Convert LilyPreparserTypeKind in string.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
-String *
+char *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserTypeKind,
                enum LilyPreparserTypeKind self);
