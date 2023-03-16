@@ -725,6 +725,13 @@ static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
                            Location location,
                            LilyPreparserFun fun);
 
+// Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_MACRO_EXPAND).
+static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                           LilyPreparserDecl,
+                           macro_expand,
+                           Location location,
+                           LilyPreparserMacroExpand macro_expand);
+
 // Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_MODULE).
 static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
                            LilyPreparserDecl,
@@ -751,6 +758,9 @@ static VARIANT_DESTRUCTOR(LilyPreparserDecl, constant, LilyPreparserDecl *self);
 
 // Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_FUN).
 static VARIANT_DESTRUCTOR(LilyPreparserDecl, fun, LilyPreparserDecl *self);
+
+// Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_MACRO_EXPAND).
+static VARIANT_DESTRUCTOR(LilyPreparserDecl, macro_expand, LilyPreparserDecl *self);
 
 // Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_MODULE).
 static VARIANT_DESTRUCTOR(LilyPreparserDecl, module, LilyPreparserDecl *self);
@@ -3921,19 +3931,32 @@ DESTRUCTOR(LilyPreparserType, const LilyPreparserType *self)
     }
 }
 
-CONSTRUCTOR(LilyPreparserMacroExpand, LilyPreparserMacroExpand, String *name, Vec *params)
+CONSTRUCTOR(LilyPreparserMacroExpand,
+            LilyPreparserMacroExpand,
+            String *name,
+            Vec *params)
 {
-    return (LilyPreparserMacroExpand){
-        .name = name,
-        .params = params
-    };
+    return (LilyPreparserMacroExpand){ .name = name, .params = params };
 }
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyPreparserType, const LilyPreparserMacroExpand *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserMacroExpand,
+               const LilyPreparserMacroExpand *self)
 {
-    String *res = format__String("LilyPreparserMacroExpand{{ name = {S}", self->name);
+    String *res = format__String(
+      "LilyPreparserMacroExpand{{ name = {S}, params =", self->name);
+
+    if (self->params) {
+        DEBUG_VEC_STR_2(self->params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
 }
 #endif
 
@@ -3958,6 +3981,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_PREPARSER_DECL_KIND_CONSTANT";
         case LILY_PREPARSER_DECL_KIND_FUN:
             return "LILY_PREPARSER_DECL_KIND_FUN";
+        case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
+            return "LILY_PREPARSER_DECL_KIND_MACRO_EXPAND";
         case LILY_PREPARSER_DECL_KIND_MODULE:
             return "LILY_PREPARSER_DECL_KIND_MODULE";
         case LILY_PREPARSER_DECL_KIND_OBJECT:
@@ -3996,6 +4021,21 @@ VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
     self->kind = LILY_PREPARSER_DECL_KIND_FUN;
     self->location = location;
     self->fun = fun;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                    LilyPreparserDecl,
+                    macro_expand,
+                    Location location,
+                    LilyPreparserMacroExpand macro_expand)
+{
+    LilyPreparserDecl *self = lily_malloc(sizeof(LilyPreparserDecl));
+
+    self->kind = LILY_PREPARSER_DECL_KIND_MACRO_EXPAND;
+    self->location = location;
+    self->macro_expand = macro_expand;
 
     return self;
 }
@@ -4072,6 +4112,13 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserDecl, const LilyPreparserDecl *self)
 
             break;
         }
+		case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND: {
+			char *s = format(", macro_expand = {Sr} }", to_string__Debug__LilyPreparserMacroExpand(&self->macro_expand));
+
+			PUSH_STR_AND_FREE(res, s);
+
+			break;
+		}
         case LILY_PREPARSER_DECL_KIND_MODULE: {
             char *s =
               format(", module = {Sr} }",
@@ -4124,6 +4171,12 @@ VARIANT_DESTRUCTOR(LilyPreparserDecl, fun, LilyPreparserDecl *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyPreparserDecl, macro_expand, LilyPreparserDecl *self)
+{
+	FREE(LilyPreparserMacroExpand, &self->macro_expand);
+	lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyPreparserDecl, module, LilyPreparserDecl *self)
 {
     FREE(LilyPreparserModule, &self->module);
@@ -4152,6 +4205,10 @@ DESTRUCTOR(LilyPreparserDecl, LilyPreparserDecl *self)
         case LILY_PREPARSER_DECL_KIND_FUN:
             FREE_VARIANT(LilyPreparserDecl, fun, self);
             break;
+
+		case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
+			FREE_VARIANT(LilyPreparserDecl, macro_expand, self);
+			break;
 
         case LILY_PREPARSER_DECL_KIND_MODULE:
             FREE_VARIANT(LilyPreparserDecl, module, self);
