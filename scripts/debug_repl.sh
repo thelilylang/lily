@@ -24,7 +24,7 @@ function do_nothing {
 	echo "do nothing for the moment."
 }
 
-CURRENT_FILE="./tests/mypkg/main.lily"
+FILE="./tests/mypkg/main.lily"
 
 echo "Welcome to the debug REPL."
 
@@ -72,7 +72,7 @@ do
 		"file")
 			echo -n "file> "
 			read file
-			CURRENT_FILE=$file
+			FILE=$file
 			echo "A new file has been successfully configured."
 			;;
 		"help")
