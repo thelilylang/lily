@@ -1,0 +1,11 @@
+--- ../include/base/macros.h	2023-03-16 20:13:55.381852204 -0400
++++ macros.h	2023-03-16 20:19:20.464084773 -0400
+@@ -26,7 +26,7 @@
+ #define LILY_BASE_MACROS_H
+ 
+ #define ENV_DEBUG
+-// #undef ENV_DEBUG
++#undef ENV_DEBUG
+ 
+ #define ENV_INSTALL
+ #undef ENV_INSTALL
