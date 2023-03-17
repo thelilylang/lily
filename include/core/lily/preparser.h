@@ -779,7 +779,6 @@ typedef struct LilyPreparserEnumVariant
 {
     String *name;
     Vec *data_type; // Vec<LilyToken*>*
-    Location location;
 } LilyPreparserEnumVariant;
 
 /**
@@ -919,10 +918,51 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserAlias, const LilyPreparserAlias *self);
 #endif
 
+enum LilyPreparserEnumBodyItemKind
+{
+    LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND,
+    LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT
+};
+
+/**
+ *
+ * @brief Convert LilyPreparserAlias in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumBodyItemKind,
+               enum LilyPreparserEnumBodyItemKind self);
+#endif
+
+typedef struct LilyPreparserEnumBodyItem
+{
+    enum LilyPreparserEnumBodyItemKind kind;
+    Location location;
+    union
+    {
+        LilyPreparserMacroExpand macro_expand;
+        LilyPreparserEnumVariant variant;
+    };
+} LilyPreparserEnumBodyItem;
+
+/**
+ *
+ * @brief Convert LilyPreparserEnumBodyItem in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumBodyItem,
+               const LilyPreparserEnumBodyItem *self);
+#endif
+
 typedef struct LilyPreparserEnum
 {
     String *name;
-    Vec *variants; // Vec<LilyPreparserEnumVariant*>*
+    Vec *variants; // Vec<LilyPreparserEnumBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserEnum;
 

@@ -532,11 +532,11 @@ static DESTRUCTOR(LilyPreparserRecordObject,
 static inline CONSTRUCTOR(LilyPreparserEnumVariant *,
                           LilyPreparserEnumVariant,
                           String *name,
-                          Vec *data_type,
-                          Location location);
+                          Vec *data_type);
 
 // Free LilyPreparserEnumVariant type.
-static DESTRUCTOR(LilyPreparserEnumVariant, LilyPreparserEnumVariant *self);
+static DESTRUCTOR(LilyPreparserEnumVariant,
+                  const LilyPreparserEnumVariant *self);
 
 // Construct LilyPreparserEnumObjectBodyItem type
 // (LILY_PREPARSER_ENUM_OBJECT_ITEM_KIND_CONSTANT).
@@ -666,6 +666,37 @@ static inline CONSTRUCTOR(LilyPreparserAlias,
 
 // Free LilyPreparserAlias type.
 static DESTRUCTOR(LilyPreparserAlias, const LilyPreparserAlias *self);
+
+// Construct LilyPreparserEnumBodyItem type
+// (LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND).
+static VARIANT_CONSTRUCTOR(LilyPreparserEnumBodyItem *,
+                           LilyPreparserEnumBodyItem,
+                           macro_expand,
+                           Location location,
+                           LilyPreparserMacroExpand macro_expand);
+
+// Construct LilyPreparserEnumBodyItem type
+// (LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT).
+static VARIANT_CONSTRUCTOR(LilyPreparserEnumBodyItem *,
+                           LilyPreparserEnumBodyItem,
+                           variant,
+                           Location location,
+                           LilyPreparserEnumVariant variant);
+
+// Free LilyPreparserEnumBodyItem type
+// (LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND).
+static VARIANT_DESTRUCTOR(LilyPreparserEnumBodyItem,
+                          macro_expand,
+                          LilyPreparserEnumBodyItem *self);
+
+// Free LilyPreparserEnumBodyItem type
+// (LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT).
+static VARIANT_DESTRUCTOR(LilyPreparserEnumBodyItem,
+                          variant,
+                          LilyPreparserEnumBodyItem *self);
+
+// Free LilyPreparserEnumBodyItem type.
+static DESTRUCTOR(LilyPreparserEnumBodyItem, LilyPreparserEnumBodyItem *self);
 
 // Construct LilyPreparserEnum type.
 static inline CONSTRUCTOR(LilyPreparserEnum,
@@ -1068,7 +1099,7 @@ static LilyPreparserEnumObjectBodyItem *
 preparse_constant_for_enum__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserEnumObjectBodyItem *
-preparse_macro_expand_for_enum__LilyPreparser(LilyPreparser *self);
+preparse_macro_expand_for_enum_object__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserEnumObjectBodyItem *
 preparse_method_for_enum__LilyPreparser(LilyPreparser *self);
@@ -1096,6 +1127,9 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name);
 
 static LilyPreparserEnumVariant *
 preparse_enum_variant__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserEnumBodyItem *
+preparse_macro_expand_for_enum__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserDecl *
 preparse_enum__LilyPreparser(LilyPreparser *self, String *name);
@@ -3319,21 +3353,7 @@ VARIANT_DESTRUCTOR(LilyPreparserRecordObjectBodyItem,
                    field,
                    LilyPreparserRecordObjectBodyItem *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
-    FREE(String, self->field.name);
-#endif
-
-    FREE_BUFFER_ITEMS(
-      self->field.data_type->buffer, self->field.data_type->len, LilyToken);
-    FREE(Vec, self->field.data_type);
-
-    if (self->field.optional_expr) {
-        FREE_BUFFER_ITEMS(self->field.optional_expr->buffer,
-                          self->field.optional_expr->len,
-                          LilyToken);
-        FREE(Vec, self->field.optional_expr);
-    }
-
+    FREE(LilyPreparserRecordField, &self->field);
     lily_free(self);
 }
 
@@ -3452,15 +3472,13 @@ DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self)
 CONSTRUCTOR(LilyPreparserEnumVariant *,
             LilyPreparserEnumVariant,
             String *name,
-            Vec *data_type,
-            Location location)
+            Vec *data_type)
 {
     LilyPreparserEnumVariant *self =
       lily_malloc(sizeof(LilyPreparserEnumVariant));
 
     self->name = name;
     self->data_type = data_type;
-    self->location = location;
 
     return self;
 }
@@ -3475,19 +3493,13 @@ IMPL_FOR_DEBUG(to_string,
       "LilyPreparserEnumVariant{{ name = {S}, data_type =", self->name);
 
     DEBUG_VEC_STR(self->data_type, res, LilyToken);
-
-    {
-        char *s = format(", location = {sa} }",
-                         to_string__Debug__Location(&self->location));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
+    push_str__String(res, " }");
 
     return res;
 }
 #endif
 
-DESTRUCTOR(LilyPreparserEnumVariant, LilyPreparserEnumVariant *self)
+DESTRUCTOR(LilyPreparserEnumVariant, const LilyPreparserEnumVariant *self)
 {
 #ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
@@ -3495,7 +3507,6 @@ DESTRUCTOR(LilyPreparserEnumVariant, LilyPreparserEnumVariant *self)
 
     FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
     FREE(Vec, self->data_type);
-    lily_free(self);
 }
 
 #ifdef ENV_DEBUG
@@ -4101,6 +4112,134 @@ DESTRUCTOR(LilyPreparserAlias, const LilyPreparserAlias *self)
     FREE(Vec, self->data_type);
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumBodyItemKind,
+               enum LilyPreparserEnumBodyItemKind self)
+{
+    switch (self) {
+        case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND:
+            return "LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND";
+        case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT:
+            return "LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+// Construct LilyPreparserEnumBodyItem type
+// (LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND).
+VARIANT_CONSTRUCTOR(LilyPreparserEnumBodyItem *,
+                    LilyPreparserEnumBodyItem,
+                    macro_expand,
+                    Location location,
+                    LilyPreparserMacroExpand macro_expand)
+{
+    LilyPreparserEnumBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserEnumBodyItem));
+
+    self->kind = LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND;
+    self->location = location;
+    self->macro_expand = macro_expand;
+
+    return self;
+}
+
+// Construct LilyPreparserEnumBodyItem type
+// (LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT).
+VARIANT_CONSTRUCTOR(LilyPreparserEnumBodyItem *,
+                    LilyPreparserEnumBodyItem,
+                    variant,
+                    Location location,
+                    LilyPreparserEnumVariant variant)
+{
+    LilyPreparserEnumBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserEnumBodyItem));
+
+    self->kind = LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT;
+    self->location = location;
+    self->variant = variant;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserEnumBodyItem,
+               const LilyPreparserEnumBodyItem *self)
+{
+    String *res = format__String(
+      "LilyPreparserEnumBodyItem{{ kind = {s}, location = {sa}, ",
+      to_string__Debug__LilyPreparserEnumBodyItemKind(self->kind),
+      to_string__Debug__Location(&self->location));
+
+    switch (self->kind) {
+        case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND: {
+            char *s = format(
+              "macro_expand = {Sr} }",
+              to_string__Debug__LilyPreparserMacroExpand(&self->macro_expand));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT: {
+            char *s = format(
+              "variant = {Sr} }",
+              to_string__Debug__LilyPreparserEnumVariant(&self->variant));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
+
+    return res;
+}
+#endif
+
+// Free LilyPreparserEnumBodyItem type
+// (LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND).
+VARIANT_DESTRUCTOR(LilyPreparserEnumBodyItem,
+                   macro_expand,
+                   LilyPreparserEnumBodyItem *self)
+{
+    FREE(LilyPreparserMacroExpand, &self->macro_expand);
+    lily_free(self);
+}
+
+// Free LilyPreparserEnumBodyItem type
+// (LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT).
+VARIANT_DESTRUCTOR(LilyPreparserEnumBodyItem,
+                   variant,
+                   LilyPreparserEnumBodyItem *self)
+{
+    FREE(LilyPreparserEnumVariant, &self->variant);
+    lily_free(self);
+}
+
+// Free LilyPreparserEnumBodyItem type.
+DESTRUCTOR(LilyPreparserEnumBodyItem, LilyPreparserEnumBodyItem *self)
+{
+    switch (self->kind) {
+        case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND:
+            FREE_VARIANT(LilyPreparserEnumBodyItem, macro_expand, self);
+            break;
+        case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT:
+            FREE_VARIANT(LilyPreparserEnumBodyItem, variant, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 CONSTRUCTOR(LilyPreparserEnum,
             LilyPreparserEnum,
             String *name,
@@ -4119,7 +4258,7 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserEnum, const LilyPreparserEnum *self)
     String *res =
       format__String("LilyPreparserEnum{{ name = {S}, variants =", self->name);
 
-    DEBUG_VEC_STRING(self->variants, res, LilyPreparserEnumVariant);
+    DEBUG_VEC_STRING(self->variants, res, LilyPreparserEnumBodyItem);
 
     {
         char *s = format(", visibility = {s} }",
@@ -4139,7 +4278,7 @@ DESTRUCTOR(LilyPreparserEnum, const LilyPreparserEnum *self)
 #endif
 
     FREE_BUFFER_ITEMS(
-      self->variants->buffer, self->variants->len, LilyPreparserEnumVariant);
+      self->variants->buffer, self->variants->len, LilyPreparserEnumBodyItem);
     FREE(Vec, self->variants);
 }
 
@@ -8822,11 +8961,16 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                             LilyPreparserRecordField *field =
                               preparse_record_field__LilyPreparser(self, false);
 
+                            {
+                                LilyToken *previous =
+                                  self->tokens->buffer[self->position - 1];
+
+                                end__Location(&location_field,
+                                              previous->location.end_line,
+                                              previous->location.end_column);
+                            }
+
                             if (field) {
-                                end__Location(
-                                  &location_field,
-                                  self->current->location.end_line,
-                                  self->current->location.end_column);
                                 push__Vec(
                                   body,
                                   NEW_VARIANT(LilyPreparserRecordObjectBodyItem,
@@ -8939,9 +9083,14 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                             LilyPreparserRecordField *field =
                               preparse_record_field__LilyPreparser(self, false);
 
-                            end__Location(&location_field,
-                                          self->current->location.end_line,
-                                          self->current->location.end_column);
+                            {
+                                LilyToken *previous =
+                                  self->tokens->buffer[self->position - 1];
+
+                                end__Location(&location_field,
+                                              previous->location.end_line,
+                                              previous->location.end_column);
+                            }
 
                             visibility_decl = LILY_VISIBILITY_PRIVATE;
 
@@ -8964,7 +9113,7 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                     }
                 }
 
-				break;
+                break;
             }
 
             default: {
@@ -9073,7 +9222,7 @@ preparse_constant_for_enum__LilyPreparser(LilyPreparser *self)
 }
 
 LilyPreparserEnumObjectBodyItem *
-preparse_macro_expand_for_enum__LilyPreparser(LilyPreparser *self)
+preparse_macro_expand_for_enum_object__LilyPreparser(LilyPreparser *self)
 {
     LilyPreparserDecl *decl = preparse_macro_expand__LilyPreparser(self);
 
@@ -9155,7 +9304,7 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
                     switch (peeked->kind) {
                         case LILY_TOKEN_KIND_BANG: {
                             LilyPreparserEnumObjectBodyItem *macro_expand =
-                              preparse_macro_expand_for_enum__LilyPreparser(
+                              preparse_macro_expand_for_enum_object__LilyPreparser(
                                 self);
 
                             if (macro_expand) {
@@ -9168,15 +9317,25 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
                         }
                         default: {
 
+                            Location location_variant =
+                              clone__Location(&self->current->location);
                             LilyPreparserEnumVariant *variant =
                               preparse_enum_variant__LilyPreparser(self);
+
+                            {
+                                LilyToken *previous =
+                                  self->tokens->buffer[self->position - 1];
+                                end__Location(&location_variant,
+                                              previous->location.end_line,
+                                              previous->location.end_column);
+                            }
 
                             if (variant) {
                                 push__Vec(
                                   body,
                                   NEW_VARIANT(LilyPreparserEnumObjectBodyItem,
                                               variant,
-                                              variant->location,
+                                              location_variant,
                                               *variant));
                                 lily_free(variant);
                             } else {
@@ -9977,13 +10136,18 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
                             LilyPreparserRecordField *field =
                               preparse_record_field__LilyPreparser(self, false);
 
+                            {
+                                LilyToken *previous =
+                                  self->tokens->buffer[self->position - 1];
+
+                                end__Location(&location_field,
+                                              previous->location.end_line,
+                                              previous->location.end_column);
+                            }
+
                             visibility_decl = LILY_VISIBILITY_PRIVATE;
 
                             if (field) {
-                                end__Location(
-                                  &location_field,
-                                  self->current->location.end_line,
-                                  self->current->location.end_column);
                                 push__Vec(
                                   body,
                                   NEW_VARIANT(LilyPreparserRecordBodyItem,
@@ -10018,13 +10182,18 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
                             LilyPreparserRecordField *field =
                               preparse_record_field__LilyPreparser(self, true);
 
+                            {
+                                LilyToken *previous =
+                                  self->tokens->buffer[self->position - 1];
+
+                                end__Location(&location_field,
+                                              previous->location.end_line,
+                                              previous->location.end_column);
+                            }
+
                             visibility_decl = LILY_VISIBILITY_PRIVATE;
 
                             if (field) {
-                                end__Location(
-                                  &location_field,
-                                  self->current->location.end_line,
-                                  self->current->location.end_column);
                                 push__Vec(
                                   body,
                                   NEW_VARIANT(LilyPreparserRecordBodyItem,
@@ -10120,8 +10289,6 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
 static LilyPreparserEnumVariant *
 preparse_enum_variant__LilyPreparser(LilyPreparser *self)
 {
-    Location location_variant = clone__Location(&self->current->location);
-
     // 1. Get variant's name
     String *name = NULL;
 
@@ -10158,10 +10325,6 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location_variant,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
-
             next_token__LilyPreparser(self);
 
             break;
@@ -10189,24 +10352,111 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
             UNREACHABLE("this way is impossible");
     }
 
-    return NEW(LilyPreparserEnumVariant, name, data_type, location_variant);
+    return NEW(LilyPreparserEnumVariant, name, data_type);
+}
+
+LilyPreparserEnumBodyItem *
+preparse_macro_expand_for_enum__LilyPreparser(LilyPreparser *self)
+{
+    LilyPreparserDecl *decl = preparse_macro_expand__LilyPreparser(self);
+
+    if (decl) {
+        LilyPreparserEnumBodyItem *macro_expand =
+          NEW_VARIANT(LilyPreparserEnumBodyItem,
+                      macro_expand,
+                      decl->location,
+                      decl->macro_expand);
+
+        lily_free(decl);
+
+        return macro_expand;
+    }
+
+    return NULL;
 }
 
 LilyPreparserDecl *
 preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
 {
-	enum LilyVisibility visibility = visibility_decl;
-	Location location = location_decl;
+    enum LilyVisibility visibility = visibility_decl;
+    Location location = location_decl;
 
-    Vec *variants = NEW(Vec); // Vec<LilyPreparserEnumVariant*>*
+    Vec *body = NEW(Vec); // Vec<LilyPreparserEnumBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
-        LilyPreparserEnumVariant *variant =
-          preparse_enum_variant__LilyPreparser(self);
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
-        if (variant) {
-            push__Vec(variants, variant);
+                if (peeked) {
+                    switch (peeked->kind) {
+                        case LILY_TOKEN_KIND_BANG: {
+                            LilyPreparserEnumBodyItem *macro_expand =
+                              preparse_macro_expand_for_enum__LilyPreparser(
+                                self);
+
+                            if (macro_expand) {
+                                push__Vec(body, macro_expand);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+                        default: {
+                            Location location_variant =
+                              clone__Location(&self->current->location);
+                            LilyPreparserEnumVariant *variant =
+                              preparse_enum_variant__LilyPreparser(self);
+
+                            {
+                                LilyToken *previous =
+                                  self->tokens->buffer[self->position - 1];
+                                end__Location(&location_variant,
+                                              previous->location.end_line,
+                                              previous->location.end_column);
+                            }
+
+                            if (variant) {
+                                push__Vec(body,
+                                          NEW_VARIANT(LilyPreparserEnumBodyItem,
+                                                      variant,
+                                                      location_variant,
+                                                      *variant));
+                                lily_free(variant);
+                            } else {
+                                goto clean_up;
+                            }
+
+                            break;
+                        }
+                    }
+                }
+
+                break;
+            }
+            default: {
+                String *current_s = to_string__LilyToken(self->current);
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &self->current->location,
+                    NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                    NULL,
+                    NULL,
+                    from__String("expected `mut` keyword or identifier")),
+                  &self->count_error);
+
+                FREE(String, current_s);
+
+                next_token__LilyPreparser(self);
+
+                break;
+            }
         }
     }
 
@@ -10233,13 +10483,15 @@ preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
                 NULL),
               &self->count_error);
 
+        clean_up : {
             FREE(String, name);
 
             FREE_BUFFER_ITEMS(
-              variants->buffer, variants->len, LilyPreparserEnumVariant);
-            FREE(Vec, variants);
+              body->buffer, body->len, LilyPreparserEnumBodyItem);
+            FREE(Vec, body);
 
             return NULL;
+        }
         default:
             UNREACHABLE("this way is impossible");
     }
@@ -10250,7 +10502,7 @@ preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
       location,
       NEW_VARIANT(LilyPreparserType,
                   enum_,
-                  NEW(LilyPreparserEnum, name, variants, visibility)));
+                  NEW(LilyPreparserEnum, name, body, visibility)));
 }
 
 LilyPreparserDecl *
