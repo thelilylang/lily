@@ -130,6 +130,8 @@ do
 		"rupp")
 			do_nothing
 			;;
+		"")
+			;;
 		*)
 			echo "error: bad command"
 			echo "please consult the command help"
