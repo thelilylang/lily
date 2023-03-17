@@ -1,5 +1,7 @@
 #!/bin/sh
 
+FILE="./tests/mypkg/main.lily"
+
 function print_commands {
 	echo "Commands:"
 
@@ -23,8 +25,6 @@ function print_commands {
 function do_nothing {
 	echo "do nothing for the moment."
 }
-
-FILE="./tests/mypkg/main.lily"
 
 echo "Welcome to the debug REPL."
 
