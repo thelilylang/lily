@@ -5,6 +5,7 @@ FILE="./tests/mypkg/main.lily"
 function print_commands {
 	echo "Commands:"
 
+	echo "  build: Build the project"
 	echo "  compile: Compile a file"
 	echo "  file"
 	echo "  da: Debug analyzer"
@@ -39,6 +40,9 @@ do
 	read input
 	
 	case $input in
+		"build")
+			ninja -C build/Debug
+			;;
 		"compile")
 			./build/Debug/lily compile $CURRENT_FILE
 			;;
