@@ -5,9 +5,8 @@ FILE="./tests/mypkg/main.lily"
 function print_commands {
 	echo "Commands:"
 
-	echo "  build: Build the project"
+	echo "  b: Build the project"
 	echo "  compile: Compile a file"
-	echo "  file"
 	echo "  da: Debug analyzer"
 	echo "  dd: Disable debug"
 	echo "  dir: Debug IR"
@@ -18,6 +17,8 @@ function print_commands {
 	echo "  ed: Enable debug"
 	echo "  exit: Exit to the REPL"
 	echo "  file: Set a new value to the file"
+	echo "  git: Git command"
+	echo "  git>: Run a git repl"
 	echo "  help: Print the help"
 	echo "  rupc: Run until precompiler"
 	echo "  rupp: Run until preparser"
@@ -40,7 +41,7 @@ do
 	read input
 	
 	case $input in
-		"build")
+		"b")
 			ninja -C build/Debug
 			;;
 		"compile")
@@ -78,6 +79,25 @@ do
 			read file
 			FILE=$file
 			echo "A new file has been successfully configured."
+			;;
+		"git")
+			echo -n "git> "
+			read args
+			git $args
+			;;
+		"git>")
+			while [ 1 ]
+			do
+				echo -n "git> "
+				read args
+
+				if [ $args == "#e" ]
+				then
+					break
+				fi
+
+				git $args
+			done
 			;;
 		"help")
 			print_commands
