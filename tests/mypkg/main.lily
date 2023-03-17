@@ -57,6 +57,8 @@ type Letter enum =
 	X2;
 	Y2;
 	Z2;
+	app!();
+	app2!();
 end
 
 type Animal enum =
