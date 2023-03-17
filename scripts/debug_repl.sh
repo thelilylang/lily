@@ -37,11 +37,11 @@ function print_commands {
 	echo "  dpp: Debug preparser"
 	echo "  ds: Debug scanner"
 	echo "  ed: Enable debug"
-	echo "  exit: Exit to the REPL"
+	echo "  #e: Exit to the REPL"
 	echo "  file: Set a new value to the file"
 	echo "  git: Git command"
 	echo "  git>: Run a git repl"
-	echo "  help: Print the help"
+	echo "  #h: Print the help"
 	echo "  rupc: Run until precompiler"
 	echo "  rupp: Run until preparser"
 }
@@ -93,7 +93,7 @@ do
 		"ed")
 			cd patches && patch ../include/base/macros.h enable_debug.patch && cd ..
 			;;
-		"exit")
+		"#e")
 			break
 			;;
 		"file")
@@ -121,7 +121,7 @@ do
 				git $args
 			done
 			;;
-		"help")
+		"#h")
 			print_commands
 			;;		
 		"rupc")
@@ -133,6 +133,7 @@ do
 		*)
 			echo "error: bad command"
 			echo "please consult the command help"
+			echo "to see the help, enter '#h'"
 			;;
 	esac
 done
