@@ -29,6 +29,7 @@ function print_commands {
 
 	echo "  b: Build the project"
 	echo "  compile: Compile a file"
+	echo "  clear: Run the clear command"
 	echo "  da: Debug analyzer"
 	echo "  dd: Disable debug"
 	echo "  dir: Debug IR"
@@ -65,6 +66,9 @@ do
 	case $input in
 		"b")
 			ninja -C build/Debug
+			;;
+		"clear")
+			clear
 			;;
 		"compile")
 			./build/Debug/lily compile $FILE
@@ -111,14 +115,14 @@ do
 			while [ 1 ]
 			do
 				echo -n "git> "
-				read args
+				read
 
-				if [ $args == "#e" ]
+				if [ $REPLY == "#e" ]
 				then
 					break
 				fi
 
-				git $args
+				git $REPLY
 			done
 			;;
 		"#h")
