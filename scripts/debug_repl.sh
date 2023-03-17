@@ -117,7 +117,7 @@ do
 				echo -n "git> "
 				read
 
-				if [ $REPLY == "#e" ]
+				if [ "$REPLY" == "#e" ]
 				then
 					break
 				fi
