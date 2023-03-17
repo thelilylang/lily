@@ -67,7 +67,7 @@ do
 			ninja -C build/Debug
 			;;
 		"compile")
-			./build/Debug/lily compile $CURRENT_FILE
+			./build/Debug/lily compile $FILE
 			;;
 		"da")
 			do_nothing
