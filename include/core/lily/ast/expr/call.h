@@ -206,6 +206,18 @@ inline CONSTRUCTOR(LilyAstExprCallRecord,
 
 /**
  *
+ * @brief Convert LilyAstExprCallRecord in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprCallRecord,
+               const LilyAstExprCallRecord *self);
+#endif
+
+/**
+ *
  * @brief Free LilyAstExprCallRecord type.
  */
 DESTRUCTOR(LilyAstExprCallRecord, const LilyAstExprCallRecord *self);

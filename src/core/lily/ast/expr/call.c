@@ -230,6 +230,23 @@ DESTRUCTOR(LilyAstExprRecordParamCall, LilyAstExprRecordParamCall *self)
     lily_free(self);
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprCallRecord,
+               const LilyAstExprCallRecord *self)
+{
+    String *res = format__String("LilyAstExprCallRecord{{ id = {S}, params =",
+                                 to_string__Debug__LilyAstExpr(self->id));
+
+    DEBUG_VEC_STRING(self->params, res, LilyAstExprRecordParamCall);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyAstExprCallRecord, const LilyAstExprCallRecord *self)
 {
     FREE(LilyAstExpr, self->id);
