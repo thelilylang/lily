@@ -71,7 +71,7 @@ do
 			clear
 			;;
 		"compile")
-			./build/Debug/lily compile $FILE
+			./build/Debug/lily compile "$FILE"
 			;;
 		"da")
 			do_nothing
