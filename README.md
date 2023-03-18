@@ -5,6 +5,8 @@
 ![Build state](https://img.shields.io/github/actions/workflow/status/ArthurPV/lily/cmake.yml?branch=main&style=flat)
 ![License](https://img.shields.io/github/license/ArthurPV/lily)
 
+Work in progress...
+
 ## Summary
 
 * [Contribute](#contribute)
