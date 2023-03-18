@@ -32,6 +32,19 @@
 #include <stdlib.h>
 #endif
 
+
+// @brief Free LilyAstExprFunParamCall type
+// (LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT).
+static VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
+                   default_,
+                   LilyAstExprFunParamCall *self);
+
+// @brief Free LilyAstExprFunParamCall type
+// (LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL).
+static VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
+                   normal,
+                   LilyAstExprFunParamCall *self);
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, LilyAstExprCallKind, enum LilyAstExprCallKind self)
@@ -39,8 +52,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprCallKind, enum LilyAstExprCallKind self)
     switch (self) {
         case LILY_AST_EXPR_CALL_KIND_FUN:
             return "LILY_AST_EXPR_CALL_KIND_FUN";
-        case LILY_AST_EXPR_CALL_KIND_MACRO:
-            return "LILY_AST_EXPR_CALL_KIND_MACRO";
         case LILY_AST_EXPR_CALL_KIND_RECORD:
             return "LILY_AST_EXPR_CALL_KIND_RECORD";
         case LILY_AST_EXPR_CALL_KIND_VARIANT:
@@ -145,4 +156,27 @@ VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
 {
     FREE(LilyAstExpr, self->value);
     lily_free(self);
+}
+
+
+DESTRUCTOR(LilyAstExprFunParamCall, LilyAstExprFunParamCall *self)
+{
+	switch (self->kind) {
+		case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
+			FREE_VARIANT(LilyAstExprFunParamCall, default_, self);
+			break;
+		case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
+			FREE_VARIANT(LilyAstExprFunParamCall, normal, self);
+			break;
+		default:
+			UNREACHABLE("unknown variant");
+	}
+}
+
+DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self)
+{
+	FREE(LilyAstExpr, self->id);
+
+	FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, LilyAstExprFunParamCall);
+	FREE(Vec, self->params);
 }
