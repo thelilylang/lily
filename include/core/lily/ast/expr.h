@@ -33,7 +33,6 @@
 #include <core/lily/ast/expr/binary.h>
 #include <core/lily/ast/expr/call.h>
 #include <core/lily/ast/expr/identifier.h>
-#include <core/lily/ast/expr/identifier_macro.h>
 #include <core/lily/ast/expr/lambda.h>
 #include <core/lily/ast/expr/literal.h>
 #include <core/lily/ast/expr/tuple.h>
