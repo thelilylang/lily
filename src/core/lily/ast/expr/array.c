@@ -31,15 +31,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprArray, const LilyAstExprArray *self)
 {
     String *res = from__String("LilyAstExprArray{ items = { ");
 
-    for (Usize i = 0; i < self->items->len; i++) {
-        String *s = to_string__Debug__LilyAstExpr(get__Vec(self->items, i));
-
-        APPEND_AND_FREE(res, s);
-
-        if (i != self->items->len - 1) {
-            push_str__String(res, ", ");
-        }
-    }
+    DEBUG_VEC_STRING(self->items, res, LilyAstExpr);
 
     push_str__String(res, "} }");
 
