@@ -217,6 +217,8 @@ add_executable(lily src/bin/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)
 
 if (DEBUG)
+	enable_testing()
+
 	add_executable(test_base tests/base/base.c)
 	target_link_libraries(test_base lily_base)
 
