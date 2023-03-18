@@ -8,11 +8,32 @@
 ## Summary
 
 * [Contribute](#contribute)
+* [Examples](#examples)
 * [Build](#build)
 * [License](#license)
 
+## Examples
+
+> Create a simple function called `add` that adds the parameter x to the parameter y.
+
 ```lily
+fun add(x, y) = x + y end
+
 fun main =
+    val res := add(10, 20);
+end
+```
+
+> Create a simple record (similar to OCaml) named `Person`. 
+
+```lily
+type Person record =
+    name Str;
+    age Uint8;
+end
+
+fun main =
+    val person := Person { name = "John", age = 25 };
 end
 ```
 
