@@ -207,7 +207,7 @@ DESTRUCTOR(LilyAstDataTypeCustom, const LilyAstDataTypeCustom *self)
         FREE(Vec, self->generics);
     }
 
-    FREE(String, self->name);
+    FREE_MOVE(self->name, FREE(String, self->name));
 }
 
 CONSTRUCTOR(LilyAstDataType *,
