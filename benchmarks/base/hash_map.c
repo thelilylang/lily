@@ -14,7 +14,7 @@ main()
         clock_t start = clock();
         HashMap *hm = NEW(HashMap);
 
-        for (Usize i = 0; i < 1'000'000'000; i++) {
+        for (Usize i = 0; i < 1000000000; i++) {
             insert__HashMap(hm, (Usize *)i, "a");
         }
 

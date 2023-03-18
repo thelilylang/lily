@@ -54,7 +54,7 @@ test_check_int8_overflow__Atoi()
         time_t tt;
         srand((unsigned)time(&tt));
 
-        for (int i = 0; i < 1'000; i++) {
+        for (int i = 0; i < 1000; i++) {
             Int8 np = rand() % 127;
             Int8 nn = -rand() % 128;
 
@@ -137,7 +137,7 @@ test_check_int16_overflow__Atoi()
         time_t tt;
         srand((unsigned)time(&tt));
 
-        for (int i = 0; i < 1'000; i++) {
+        for (int i = 0; i < 1000; i++) {
             Int16 np = rand() % 32767;
             Int16 nn = -rand() % 32768;
 
@@ -221,7 +221,7 @@ test_check_int32_overflow__Atoi()
         time_t tt;
         srand((unsigned)time(&tt));
 
-        for (int i = 0; i < 1'000; i++) {
+        for (int i = 0; i < 1000; i++) {
             Int32 np = rand() % INT32_MAX;
             Int32 nn = -rand() % INT32_MIN + 1;
 
@@ -303,7 +303,7 @@ test_check_int64_overflow__Atoi()
         time_t tt;
         srand((unsigned)time(&tt));
 
-        for (int i = 0; i < 1'000; i++) {
+        for (int i = 0; i < 1000; i++) {
             Int64 np = rand() % INT64_MAX;
             Int64 nn = -rand() % INT64_MAX;
 
@@ -381,7 +381,7 @@ test_check_uint8_overflow__Atoi()
         time_t tt;
         srand((unsigned)time(&tt));
 
-        for (int i = 0; i < 1'000; i++) {
+        for (int i = 0; i < 1000; i++) {
             Uint8 np = rand() % 255;
 
             char *np_s_2 = itoa__Uint8(np, 2);
@@ -437,7 +437,7 @@ test_check_uint16_overflow__Atoi()
         time_t tt;
         srand((unsigned)time(&tt));
 
-        for (int i = 0; i < 1'000; i++) {
+        for (int i = 0; i < 1000; i++) {
             Uint16 np = rand() % 65535;
 
             char *np_s_2 = itoa__Uint16(np, 2);
@@ -497,7 +497,7 @@ test_check_uint32_overflow__Atoi()
         time_t tt;
         srand((unsigned)time(&tt));
 
-        for (int i = 0; i < 1'000; i++) {
+        for (int i = 0; i < 1000; i++) {
             Uint32 np = rand() % UINT32_MAX;
 
             char *np_s_2 = itoa__Uint32(np, 2);
@@ -565,7 +565,7 @@ test_check_uint64_overflow__Atoi()
         time_t tt;
         srand((unsigned)time(&tt));
 
-        for (int i = 0; i < 1'000; i++) {
+        for (int i = 0; i < 1000; i++) {
             Uint64 np = rand() % UINT64_MAX;
 
             char *np_s_2 = itoa__Uint64(np, 2);

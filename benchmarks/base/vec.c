@@ -14,7 +14,7 @@ main()
         clock_t start = clock();
         Vec *v = NEW(Vec);
 
-        for (Usize i = 0; i < 1'000'000'000; i++) {
+        for (Usize i = 0; i < 1000000000; i++) {
             push__Vec(v, (Usize *)i);
         }
 
@@ -29,11 +29,11 @@ main()
         clock_t start = clock();
         Vec *v = NEW(Vec);
 
-        for (Usize i = 0; i < 1'000'000'000; i++) {
+        for (Usize i = 0; i < 1000000000; i++) {
             push__Vec(v, (Usize *)i);
         }
 
-        for (Usize i = 0; i < 1'000'000'000; i++) {
+        for (Usize i = 0; i < 1000000000; i++) {
             pop__Vec(v);
         }
 
