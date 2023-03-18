@@ -232,13 +232,25 @@ typedef struct LilyAstExprCallVariant
  *
  * @brief Construct LilyAstExprCallVariant type.
  */
-inline CONSTRUCTOR(LilyAstExprCallVariant, LilyAstExprCallVariant, LilyAstExpr *id, Vec *params)
+inline CONSTRUCTOR(LilyAstExprCallVariant,
+                   LilyAstExprCallVariant,
+                   LilyAstExpr *id,
+                   Vec *params)
 {
-	return (LilyAstExprCallVariant){
-		.id = id,
-		.params = params
-	};
+    return (LilyAstExprCallVariant){ .id = id, .params = params };
 }
+
+/**
+ *
+ * @brief Convert LilyAstExprCallVariant in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprCallVariant,
+               const LilyAstExprCallVariant *self);
+#endif
 
 /**
  *
