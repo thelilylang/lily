@@ -122,7 +122,7 @@ do
 					break
 				fi
 
-				git $REPLY
+				git "$REPLY"
 			done
 			;;
 		"#h")
