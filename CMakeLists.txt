@@ -21,7 +21,6 @@ set(BASE_SRC
 	src/base/itoa.c
 	src/base/optional.c
 	src/base/str.c
-	src/base/test.c
 	src/base/string.c
   	src/base/vec.c)
 
