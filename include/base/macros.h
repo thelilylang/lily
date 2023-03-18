@@ -78,6 +78,10 @@
 
 #define LEN(arr, item) (((int)sizeof(arr) / sizeof(item)))
 
+#define MOVE(p1, p2) \
+	p2 = p1; \
+	p1 = NULL
+
 #ifdef ENV_DEBUG
 #define IMPL_FOR_DEBUG(name, struct_name, ...) \
     name##__Debug__##struct_name(__VA_ARGS__)
