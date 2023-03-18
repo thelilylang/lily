@@ -11,6 +11,7 @@ Work in progress...
 
 * [Contribute](#contribute)
 * [Examples](#examples)
+* [Dependencies](#dependencies)
 * [Build](#build)
 * [License](#license)
 
@@ -38,6 +39,11 @@ fun main =
     val person := Person { name = "John", age = 25 };
 end
 ```
+
+## Dependencies
+
+- CMake >= 3.10
+- GCC >= 11.3.0 or Clang >= 15.0.0
 
 ## Contribute
 
