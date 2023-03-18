@@ -40,21 +40,97 @@ enum LilyAstExprCallKind
     LILY_AST_EXPR_CALL_KIND_VARIANT,
 };
 
+/**
+ *
+ * @brief Convert LilyAstExprCallKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstExprCallKind, enum LilyAstExprCallKind self);
+#endif
+
 enum LilyAstExprFunParamCallKind
 {
     LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT,
     LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL,
 };
 
+/**
+ *
+ * @brief Convert LilyAstExprFunParamCallKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprFunParamCallKind,
+               enum LilyAstExprFunParamCallKind self);
+#endif
+
 typedef struct LilyAstExprFunParamCall
 {
     enum LilyAstExprFunParamCallKind kind;
     LilyAstExpr *value;
+    Location location;
     union
     {
         String *default_;
     };
 } LilyAstExprFunParamCall;
+
+/**
+ *
+ * @brief Construct LilyAstExprFunParamCall type
+ * (LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExprFunParamCall *,
+                    LilyAstExprFunParamCall,
+                    default_,
+                    LilyAstExpr *value,
+                    Location location,
+                    String *default_);
+
+/**
+ *
+ * @brief Construct LilyAstExprFunParamCall type
+ * (LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExprFunParamCall *,
+                    LilyAstExprFunParamCall,
+                    normal,
+                    LilyAstExpr *value,
+                    Location location);
+
+/**
+ *
+ * @brief Convert LilyAstExprFunParamCall in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprFunParamCall,
+               const LilyAstExprFunParamCall *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstExprFunParamCall type
+ * (LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT).
+ */
+VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
+                   default_,
+                   LilyAstExprFunParamCall *self);
+
+/**
+ *
+ * @brief Free LilyAstExprFunParamCall type
+ * (LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL).
+ */
+VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
+                   normal,
+                   LilyAstExprFunParamCall *self);
 
 typedef struct LilyAstExprCallFun
 {

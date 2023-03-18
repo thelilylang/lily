@@ -22,4 +22,127 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
+
+#include <core/lily/ast/expr.h>
 #include <core/lily/ast/expr/call.h>
+
+#ifdef ENV_DEBUG
+#include <stdio.h>
+#include <stdlib.h>
+#endif
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstExprCallKind, enum LilyAstExprCallKind self)
+{
+    switch (self) {
+        case LILY_AST_EXPR_CALL_KIND_FUN:
+            return "LILY_AST_EXPR_CALL_KIND_FUN";
+        case LILY_AST_EXPR_CALL_KIND_MACRO:
+            return "LILY_AST_EXPR_CALL_KIND_MACRO";
+        case LILY_AST_EXPR_CALL_KIND_RECORD:
+            return "LILY_AST_EXPR_CALL_KIND_RECORD";
+        case LILY_AST_EXPR_CALL_KIND_VARIANT:
+            return "LILY_AST_EXPR_CALL_KIND_VARIANT";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprFunParamCallKind,
+               enum LilyAstExprFunParamCallKind self)
+{
+    switch (self) {
+        case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
+            return "LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT";
+        case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
+            return "LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_CONSTRUCTOR(LilyAstExprFunParamCall *,
+                    LilyAstExprFunParamCall,
+                    default_,
+                    LilyAstExpr *value,
+                    Location location,
+                    String *default_)
+{
+    LilyAstExprFunParamCall *self =
+      lily_malloc(sizeof(LilyAstExprFunParamCall));
+
+    self->kind = LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT;
+    self->value = value;
+    self->location = location;
+    self->default_ = default_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExprFunParamCall *,
+                    LilyAstExprFunParamCall,
+                    normal,
+                    LilyAstExpr *value,
+                    Location location)
+{
+    LilyAstExprFunParamCall *self =
+      lily_malloc(sizeof(LilyAstExprFunParamCall));
+
+    self->kind = LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL;
+    self->value = value;
+    self->location = location;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprFunParamCall,
+               const LilyAstExprFunParamCall *self)
+{
+    switch (self->kind) {
+        case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
+            return format__String(
+              "LilyAstExprFunParamCall{{ kind = {s}, value = {Sr}, location = "
+              "{sa}, default = {S} }",
+              to_string__Debug__LilyAstExprFunParamCallKind(self->kind),
+              to_string__Debug__LilyAstExpr(self->value),
+              to_string__Debug__Location(&self->location),
+              self->default_);
+        case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
+            return format__String(
+              "LilyAstExprFunParamCall{{ kind = {s}, value = {Sr}, location = "
+              "{sa} }",
+              to_string__Debug__LilyAstExprFunParamCallKind(self->kind),
+              to_string__Debug__LilyAstExpr(self->value),
+              to_string__Debug__Location(&self->location));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
+                   default_,
+                   LilyAstExprFunParamCall *self)
+{
+    FREE(LilyAstExpr, self->value);
+    FREE(String, self->default_);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
+                   normal,
+                   LilyAstExprFunParamCall *self)
+{
+    FREE(LilyAstExpr, self->value);
+    lily_free(self);
+}
