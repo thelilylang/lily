@@ -172,6 +172,21 @@ DESTRUCTOR(LilyAstExprFunParamCall, LilyAstExprFunParamCall *self)
     }
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstExprCallFun, const LilyAstExprCallFun *self)
+{
+    String *res = format__String("LilyAstExprCallFun{{ id = {Sr}, params =",
+                                 to_string__Debug__LilyAstExpr(self->id));
+
+    DEBUG_VEC_STRING(self->params, res, LilyAstExprFunParamCall);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self)
 {
     FREE(LilyAstExpr, self->id);
@@ -195,9 +210,30 @@ CONSTRUCTOR(LilyAstExprRecordParamCall *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprRecordParamCall,
+               const LilyAstExprRecordParamCall *self)
+{
+    return format__String(
+      "LilyAstExprRecordParamCall{{ name = {S}, value = {Sr} }",
+      self->name,
+      to_string__Debug__LilyAstExpr(self->value));
+}
+#endif
+
 DESTRUCTOR(LilyAstExprRecordParamCall, LilyAstExprRecordParamCall *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
     FREE(LilyAstExpr, self->value);
     lily_free(self);
+}
+
+DESTRUCTOR(LilyAstExprCallRecord, const LilyAstExprCallRecord *self)
+{
+    FREE(LilyAstExpr, self->id);
+    FREE_BUFFER_ITEMS(
+      self->params->buffer, self->params->len, LilyAstExprRecordParamCall);
+    FREE(Vec, self->params);
 }

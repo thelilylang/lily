@@ -139,6 +139,16 @@ inline CONSTRUCTOR(LilyAstExprCallFun,
 
 /**
  *
+ * @brief Convert LilyAstExprCallFun in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstExprCallFun, const LilyAstExprCallFun *self);
+#endif
+
+/**
+ *
  * @brief Free LilyAstExprCallFun type.
  */
 DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self);
@@ -160,6 +170,18 @@ CONSTRUCTOR(LilyAstExprRecordParamCall *,
 
 /**
  *
+ * @brief Convert LilyAstExprRecordParamCall in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprRecordParamCall,
+               const LilyAstExprRecordParamCall *self);
+#endif
+
+/**
+ *
  * @brief Free LilyAstExprRecordParamCall type.
  */
 DESTRUCTOR(LilyAstExprRecordParamCall, LilyAstExprRecordParamCall *self);
@@ -169,6 +191,24 @@ typedef struct LilyAstExprCallRecord
     LilyAstExpr *id;
     Vec *params; // Vec<LilyAstExprRecordParamCall*>*
 } LilyAstExprCallRecord;
+
+/**
+ *
+ * @brief Construct LilyAstExprCallRecord type.
+ */
+inline CONSTRUCTOR(LilyAstExprCallRecord,
+                   LilyAstExprCallRecord,
+                   LilyAstExpr *id,
+                   Vec *params)
+{
+    return (LilyAstExprCallRecord){ .id = id, .params = params };
+}
+
+/**
+ *
+ * @brief Free LilyAstExprCallRecord type.
+ */
+DESTRUCTOR(LilyAstExprCallRecord, const LilyAstExprCallRecord *self);
 
 typedef struct LilyAstExprCallVariant
 {
