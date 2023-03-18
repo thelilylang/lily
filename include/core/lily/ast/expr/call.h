@@ -35,7 +35,6 @@ typedef struct LilyAstExpr LilyAstExpr;
 enum LilyAstExprCallKind
 {
     LILY_AST_EXPR_CALL_KIND_FUN,
-    LILY_AST_EXPR_CALL_KIND_MACRO,
     LILY_AST_EXPR_CALL_KIND_RECORD,
     LILY_AST_EXPR_CALL_KIND_VARIANT,
 };
@@ -116,21 +115,9 @@ IMPL_FOR_DEBUG(to_string,
 
 /**
  *
- * @brief Free LilyAstExprFunParamCall type
- * (LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT).
+ * @brief Free LilyAstExprFunParamCall type.
  */
-VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
-                   default_,
-                   LilyAstExprFunParamCall *self);
-
-/**
- *
- * @brief Free LilyAstExprFunParamCall type
- * (LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL).
- */
-VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
-                   normal,
-                   LilyAstExprFunParamCall *self);
+DESTRUCTOR(LilyAstExprFunParamCall, LilyAstExprFunParamCall *self);
 
 typedef struct LilyAstExprCallFun
 {
@@ -138,31 +125,23 @@ typedef struct LilyAstExprCallFun
     Vec *params; // Vec<LilyAstExprFunParamCall*>*
 } LilyAstExprCallFun;
 
-enum LilyAstExprMacroComponentKind
+/**
+ *
+ * @brief Construct LilyAstExprCallFun type.
+ */
+inline CONSTRUCTOR(LilyAstExprCallFun, LilyAstExprCallFun, LilyAstExpr *id, Vec *params)
 {
-    LILY_AST_EXPR_MACRO_COMPONENT_KIND_BLOCK,
-    LILY_AST_EXPR_MACRO_COMPONENT_KIND_DT,
-    LILY_AST_EXPR_MACRO_COMPONENT_KIND_EXPR,
-    LILY_AST_EXPR_MACRO_COMPONENT_KIND_ID,
-    LILY_AST_EXPR_MACRO_COMPONENT_KIND_PATH,
-    LILY_AST_EXPR_MACRO_COMPONENT_KIND_STMT,
-};
+	return (LilyAstExprCallFun){
+		.id = id,
+		.params = params
+	};
+}
 
-typedef struct LilyAstExprMacroComponent
-{
-    enum LilyAstExprMacroComponentKind kind;
-    union
-    {
-        LilyAstDataType *dt;
-        LilyAstExpr *expr;
-    };
-} LilyAstExprMacroComponent;
-
-typedef struct LilyAstExprCallMacro
-{
-    String *id;
-    Vec *params; // Vec<*>*
-} LilyAstExprCallMacro;
+/**
+ *
+ * @brief Free LilyAstExprCallFun type.
+ */
+DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self);
 
 typedef struct LilyAstExprRecordParamCall
 {
@@ -188,7 +167,6 @@ typedef struct LilyAstExprCall
     union
     {
         LilyAstExprCallFun fun;
-        LilyAstExprCallMacro macro;
     };
 } LilyAstExprCall;
 
