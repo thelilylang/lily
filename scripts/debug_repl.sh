@@ -109,7 +109,7 @@ do
 		"git")
 			echo -n "git> "
 			read args
-			git $args
+			git "$args"
 			;;
 		"git>")
 			while [ 1 ]
