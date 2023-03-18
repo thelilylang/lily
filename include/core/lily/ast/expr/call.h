@@ -228,6 +228,24 @@ typedef struct LilyAstExprCallVariant
     Vec *params; // Vec<LilyAstExpr*>*
 } LilyAstExprCallVariant;
 
+/**
+ *
+ * @brief Construct LilyAstExprCallVariant type.
+ */
+inline CONSTRUCTOR(LilyAstExprCallVariant, LilyAstExprCallVariant, LilyAstExpr *id, Vec *params)
+{
+	return (LilyAstExprCallVariant){
+		.id = id,
+		.params = params
+	};
+}
+
+/**
+ *
+ * @brief Free LilyAstExprCallVariant type.
+ */
+DESTRUCTOR(LilyAstExprCallVariant, const LilyAstExprCallVariant *self);
+
 typedef struct LilyAstExprCall
 {
     enum LilyAstExprCallKind kind;

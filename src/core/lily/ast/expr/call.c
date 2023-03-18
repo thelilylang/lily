@@ -254,3 +254,11 @@ DESTRUCTOR(LilyAstExprCallRecord, const LilyAstExprCallRecord *self)
       self->params->buffer, self->params->len, LilyAstExprRecordParamCall);
     FREE(Vec, self->params);
 }
+
+DESTRUCTOR(LilyAstExprCallVariant, const LilyAstExprCallVariant *self)
+{
+	FREE(LilyAstExpr, self->id);
+
+	FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, LilyAstExpr);
+	FREE(Vec, self->params);
+}
