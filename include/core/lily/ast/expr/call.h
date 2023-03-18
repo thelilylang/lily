@@ -264,7 +264,66 @@ typedef struct LilyAstExprCall
     union
     {
         LilyAstExprCallFun fun;
+        LilyAstExprCallRecord record;
+        LilyAstExprCallVariant variant;
     };
 } LilyAstExprCall;
+
+/**
+ *
+ * @brief Construct LilyAstExprCall type
+ * (LILY_AST_EXPR_CALL_KIND_FUN).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprCall,
+                           LilyAstExprCall,
+                           fun,
+                           LilyAstExprCallFun fun)
+{
+    return (LilyAstExprCall){ .kind = LILY_AST_EXPR_CALL_KIND_FUN, .fun = fun };
+}
+
+/**
+ *
+ * @brief Construct LilyAstExprCall type
+ * (LILY_AST_EXPR_CALL_KIND_RECORD).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprCall,
+                           LilyAstExprCall,
+                           record,
+                           LilyAstExprCallRecord record)
+{
+    return (LilyAstExprCall){ .kind = LILY_AST_EXPR_CALL_KIND_RECORD,
+                              .record = record };
+}
+
+/**
+ *
+ * @brief Construct LilyAstExprCall type
+ * (LILY_AST_EXPR_CALL_KIND_VARIANT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprCall,
+                           LilyAstExprCall,
+                           variant,
+                           LilyAstExprCallVariant variant)
+{
+    return (LilyAstExprCall){ .kind = LILY_AST_EXPR_CALL_KIND_VARIANT,
+                              .variant = variant };
+}
+
+/**
+ *
+ * @brief Convert LilyAstExprCall in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstExprCall, const LilyAstExprCall *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstExprCall type.
+ */
+DESTRUCTOR(LilyAstExprCall, const LilyAstExprCall *self);
 
 #endif // LILY_CORE_LILY_AST_EXPR_CALL_H
