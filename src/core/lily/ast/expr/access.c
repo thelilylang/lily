@@ -186,39 +186,21 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self)
               to_string__Debug__LilyAstExprAccessHook(&self->hook));
         case LILY_AST_EXPR_ACCESS_KIND_OBJECT: {
             String *res =
-              format__String("LilyAstExprAccess{{ kind = {s}, object = {{ ");
+              format__String("LilyAstExprAccess{{ kind = {s}, object =");
 
-            for (Usize i = 0; i < self->object->len; i++) {
-                String *s =
-                  to_string__Debug__LilyAstDataType(get__Vec(self->object, i));
+            DEBUG_VEC_STRING(self->object, res, LilyAstDataType);
 
-                APPEND_AND_FREE(res, s);
-
-                if (i != self->object->len - 1) {
-                    push_str__String(res, ", ");
-                }
-            }
-
-            push__String(res, '}');
+            push_str__String(res, " }");
 
             return res;
         }
         case LILY_AST_EXPR_ACCESS_KIND_PATH: {
             String *res =
-              format__String("LilyAstExprAccess{{ kind = {s}, path = {{ ");
+              format__String("LilyAstExprAccess{{ kind = {s}, path =");
 
-            for (Usize i = 0; i < self->path->len; i++) {
-                String *s =
-                  to_string__Debug__LilyAstExpr(get__Vec(self->path, i));
+            DEBUG_VEC_STRING(self->path, res, LilyAstExpr);
 
-                APPEND_AND_FREE(res, s);
-
-                if (i != self->path->len - 1) {
-                    push_str__String(res, ", ");
-                }
-            }
-
-            push__String(res, '}');
+            push_str__String(res, " }");
 
             return res;
         }
