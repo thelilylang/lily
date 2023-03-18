@@ -204,13 +204,13 @@ end
 ## Macro
 
 ```lily
-pub macro create_a_function($name id, $d dt) =
+pub macro create_a_function($name id, $d dt) = {
     pub fun {{name}}(x {{d}}) = x;
-end
+};
 
-#create_a_function(add1, Int32)
-#create_a_function(add2, Int32)
-#create_a_function(add3, Int32)
+create_a_function!(add1, Int32)
+create_a_function!(add2, Int32)
+create_a_function!(add3, Int32)
 ```
 
 ### Macro param types
