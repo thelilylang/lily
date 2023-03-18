@@ -78,9 +78,16 @@
 
 #define LEN(arr, item) (((int)sizeof(arr) / sizeof(item)))
 
+// MOVE(pointer1, pointer2)
 #define MOVE(p1, p2) \
-	p2 = p1; \
-	p1 = NULL
+    p2 = p1;         \
+    p1 = NULL
+
+// FREE_MOVE(pointer, free)
+#define FREE_MOVE(p, f) \
+    if (p) {            \
+        f;              \
+    }
 
 #ifdef ENV_DEBUG
 #define IMPL_FOR_DEBUG(name, struct_name, ...) \
