@@ -71,8 +71,6 @@ set(CORE_SRC
 	src/core/lily/ast/expr/array.c
 	src/core/lily/ast/expr/binary.c
 	src/core/lily/ast/expr/call.c
-	src/core/lily/ast/expr/identifier.c
-	src/core/lily/ast/expr/identifier_macro.c
 	src/core/lily/ast/expr/lambda.c
 	src/core/lily/ast/expr/literal.c
 	src/core/lily/ast/expr/tuple.c
