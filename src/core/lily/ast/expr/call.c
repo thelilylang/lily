@@ -27,23 +27,23 @@
 #include <core/lily/ast/expr.h>
 #include <core/lily/ast/expr/call.h>
 
-#ifdef ENV_DEBUG
 #include <stdio.h>
+
+#ifdef ENV_DEBUG
 #include <stdlib.h>
 #endif
-
 
 // @brief Free LilyAstExprFunParamCall type
 // (LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT).
 static VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
-                   default_,
-                   LilyAstExprFunParamCall *self);
+                          default_,
+                          LilyAstExprFunParamCall *self);
 
 // @brief Free LilyAstExprFunParamCall type
 // (LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL).
 static VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
-                   normal,
-                   LilyAstExprFunParamCall *self);
+                          normal,
+                          LilyAstExprFunParamCall *self);
 
 #ifdef ENV_DEBUG
 char *
@@ -146,7 +146,7 @@ VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
                    LilyAstExprFunParamCall *self)
 {
     FREE(LilyAstExpr, self->value);
-    FREE(String, self->default_);
+    FREE_MOVE(self->default_, FREE(String, self->default_));
     lily_free(self);
 }
 
@@ -158,25 +158,46 @@ VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
     lily_free(self);
 }
 
-
 DESTRUCTOR(LilyAstExprFunParamCall, LilyAstExprFunParamCall *self)
 {
-	switch (self->kind) {
-		case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
-			FREE_VARIANT(LilyAstExprFunParamCall, default_, self);
-			break;
-		case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
-			FREE_VARIANT(LilyAstExprFunParamCall, normal, self);
-			break;
-		default:
-			UNREACHABLE("unknown variant");
-	}
+    switch (self->kind) {
+        case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
+            FREE_VARIANT(LilyAstExprFunParamCall, default_, self);
+            break;
+        case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
+            FREE_VARIANT(LilyAstExprFunParamCall, normal, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self)
 {
-	FREE(LilyAstExpr, self->id);
+    FREE(LilyAstExpr, self->id);
 
-	FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, LilyAstExprFunParamCall);
-	FREE(Vec, self->params);
+    FREE_BUFFER_ITEMS(
+      self->params->buffer, self->params->len, LilyAstExprFunParamCall);
+    FREE(Vec, self->params);
+}
+
+CONSTRUCTOR(LilyAstExprRecordParamCall *,
+            LilyAstExprRecordParamCall,
+            String *name,
+            LilyAstExpr *value)
+{
+    LilyAstExprRecordParamCall *self =
+      lily_malloc(sizeof(LilyAstExprRecordParamCall));
+
+    self->name = name;
+    self->value = value;
+
+    return self;
+}
+
+DESTRUCTOR(LilyAstExprRecordParamCall, LilyAstExprRecordParamCall *self)
+{
+    FREE_MOVE(self->name, FREE(String, self->name));
+    FREE(LilyAstExpr, self->value);
+    lily_free(self);
 }

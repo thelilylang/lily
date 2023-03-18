@@ -129,12 +129,12 @@ typedef struct LilyAstExprCallFun
  *
  * @brief Construct LilyAstExprCallFun type.
  */
-inline CONSTRUCTOR(LilyAstExprCallFun, LilyAstExprCallFun, LilyAstExpr *id, Vec *params)
+inline CONSTRUCTOR(LilyAstExprCallFun,
+                   LilyAstExprCallFun,
+                   LilyAstExpr *id,
+                   Vec *params)
 {
-	return (LilyAstExprCallFun){
-		.id = id,
-		.params = params
-	};
+    return (LilyAstExprCallFun){ .id = id, .params = params };
 }
 
 /**
@@ -148,6 +148,21 @@ typedef struct LilyAstExprRecordParamCall
     String *name;
     LilyAstExpr *value;
 } LilyAstExprRecordParamCall;
+
+/**
+ *
+ * @brief Construct LilyAstExprRecordParamCall type.
+ */
+CONSTRUCTOR(LilyAstExprRecordParamCall *,
+            LilyAstExprRecordParamCall,
+            String *name,
+            LilyAstExpr *value);
+
+/**
+ *
+ * @brief Free LilyAstExprRecordParamCall type.
+ */
+DESTRUCTOR(LilyAstExprRecordParamCall, LilyAstExprRecordParamCall *self);
 
 typedef struct LilyAstExprCallRecord
 {
