@@ -233,7 +233,7 @@ module X.Y.Z =
 end
 
 macro get_name($name id) = {
-	name
+	{{name}}
 };
 
 val X Int32 := 30;
