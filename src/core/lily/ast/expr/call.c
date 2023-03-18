@@ -30,6 +30,7 @@
 #include <stdio.h>
 
 #ifdef ENV_DEBUG
+#include <base/format.h>
 #include <stdlib.h>
 #endif
 
@@ -44,6 +45,21 @@ static VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
 static VARIANT_DESTRUCTOR(LilyAstExprFunParamCall,
                           normal,
                           LilyAstExprFunParamCall *self);
+
+// @brief Free LilyAstExprCall type (LILY_AST_EXPR_CALL_KIND_FUN).
+static inline VARIANT_DESTRUCTOR(LilyAstExprCall,
+                                 fun,
+                                 const LilyAstExprCall *self);
+
+// @brief Free LilyAstExprCall type (LILY_AST_EXPR_CALL_KIND_RECORD).
+static inline VARIANT_DESTRUCTOR(LilyAstExprCall,
+                                 record,
+                                 const LilyAstExprCall *self);
+
+// @brief Free LilyAstExprCall type (LILY_AST_EXPR_CALL_KIND_VARIANT).
+static inline VARIANT_DESTRUCTOR(LilyAstExprCall,
+                                 variant,
+                                 const LilyAstExprCall *self);
 
 #ifdef ENV_DEBUG
 char *
@@ -255,10 +271,102 @@ DESTRUCTOR(LilyAstExprCallRecord, const LilyAstExprCallRecord *self)
     FREE(Vec, self->params);
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprCallVariant,
+               const LilyAstExprCallVariant *self)
+{
+    String *res = format__String("LilyAstExprCallVariant{{ id = {Sr}, params =",
+                                 to_string__Debug__LilyAstExpr(self->id));
+
+    DEBUG_VEC_STRING(self->params, res, LilyAstExpr);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyAstExprCallVariant, const LilyAstExprCallVariant *self)
 {
-	FREE(LilyAstExpr, self->id);
+    FREE(LilyAstExpr, self->id);
 
-	FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, LilyAstExpr);
-	FREE(Vec, self->params);
+    FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, LilyAstExpr);
+    FREE(Vec, self->params);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstExprCall, const LilyAstExprCall *self)
+{
+    String *res =
+      format__String("LilyAstExprCall{{ kind = {s}",
+                     to_string__Debug__LilyAstExprCallKind(self->kind));
+
+    switch (self->kind) {
+        case LILY_AST_EXPR_CALL_KIND_FUN: {
+            char *s = format(", fun = {Sr} }",
+                             to_string__Debug__LilyAstExprCallFun(&self->fun));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_CALL_KIND_RECORD: {
+            char *s =
+              format(", record = {Sr} }",
+                     to_string__Debug__LilyAstExprCallRecord(&self->record));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_CALL_KIND_VARIANT: {
+            char *s =
+              format(", variant = {Sr} }",
+                     to_string__Debug__LilyAstExprCallVariant(&self->variant));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
+}
+#endif
+
+VARIANT_DESTRUCTOR(LilyAstExprCall, fun, const LilyAstExprCall *self)
+{
+    FREE(LilyAstExprCallFun, &self->fun);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExprCall, record, const LilyAstExprCall *self)
+{
+    FREE(LilyAstExprCallRecord, &self->record);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExprCall, variant, const LilyAstExprCall *self)
+{
+    FREE(LilyAstExprCallVariant, &self->variant);
+}
+
+DESTRUCTOR(LilyAstExprCall, const LilyAstExprCall *self)
+{
+    switch (self->kind) {
+        case LILY_AST_EXPR_CALL_KIND_FUN:
+            FREE_VARIANT(LilyAstExprCall, fun, self);
+            break;
+        case LILY_AST_EXPR_CALL_KIND_RECORD:
+            FREE_VARIANT(LilyAstExprCall, record, self);
+            break;
+        case LILY_AST_EXPR_CALL_KIND_VARIANT:
+            FREE_VARIANT(LilyAstExprCall, variant, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
