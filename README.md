@@ -18,3 +18,6 @@ ninja -C build/Debug
 make configure
 ninja -C build
 ```
+
+## Licence
+Lily is licenced under a MIT licence.
