@@ -25,8 +25,8 @@
 #ifndef LILY_CORE_LILY_AST_EXPR_IDENTIFIER_H
 #define LILY_CORE_LILY_AST_EXPR_IDENTIFIER_H
 
-#include <base/string.h>
 #include <base/new.h>
+#include <base/string.h>
 
 typedef struct LilyAstExprIdentifier
 {
@@ -53,7 +53,7 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstExprIdentifier,
                const LilyAstExprIdentifier *self)
 {
-	return format__String("LilyAstExpridentifier{{ name = {S} }", self->name);
+    return format__String("LilyAstExpridentifier{{ name = {S} }", self->name);
 }
 #endif
 
@@ -61,8 +61,9 @@ IMPL_FOR_DEBUG(to_string,
  *
  * @brief Free LilyAstExprIdentifier type.
  */
-inline DESTRUCTOR(LilyAstExprIdentifier, const LilyAstExprIdentifier *self) {
-	FREE_MOVE(self->name, FREE(String, self->name));
+inline DESTRUCTOR(LilyAstExprIdentifier, const LilyAstExprIdentifier *self)
+{
+    FREE_MOVE(self->name, FREE(String, self->name));
 }
 
 typedef struct LilyAstExprIdentifierDollar
@@ -92,7 +93,8 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstExprIdentifierDollar,
                const LilyAstExprIdentifierDollar *self)
 {
-	return format__String("LilyAstExpridentifierDollar{{ name = {S} }", self->name);
+    return format__String("LilyAstExpridentifierDollar{{ name = {S} }",
+                          self->name);
 }
 #endif
 
@@ -100,8 +102,10 @@ IMPL_FOR_DEBUG(to_string,
  *
  * @brief Free LilyAstExprIdentifierDollar type.
  */
-inline DESTRUCTOR(LilyAstExprIdentifierDollar, const LilyAstExprIdentifierDollar *self) {
-	FREE_MOVE(self->name, FREE(String, self->name));
+inline DESTRUCTOR(LilyAstExprIdentifierDollar,
+                  const LilyAstExprIdentifierDollar *self)
+{
+    FREE_MOVE(self->name, FREE(String, self->name));
 }
 
 #endif // LILY_CORE_LILY_AST_EXPR_IDENTIFIER_H
