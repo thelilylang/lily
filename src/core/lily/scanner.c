@@ -855,8 +855,8 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_KEYWORD_WHEN:
         case LILY_TOKEN_KIND_KEYWORD_WHILE:
         case LILY_TOKEN_KIND_KEYWORD_XOR:
-        case LILY_TOKEN_KIND_LITERAL_BIT_CHAR:
-        case LILY_TOKEN_KIND_LITERAL_BIT_STRING:
+        case LILY_TOKEN_KIND_LITERAL_BYTE:
+        case LILY_TOKEN_KIND_LITERAL_BYTES:
         case LILY_TOKEN_KIND_LITERAL_CHAR:
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
         case LILY_TOKEN_KIND_LITERAL_INT_2:
@@ -2083,7 +2083,7 @@ get_token__LilyScanner(LilyScanner *self)
 
                 if (res) {
                     return NEW_VARIANT(LilyToken,
-                                       literal_bit_char,
+                                       literal_byte,
                                        clone__Location(&self->location),
                                        (char)(Uptr)res);
                 }
@@ -2097,7 +2097,7 @@ get_token__LilyScanner(LilyScanner *self)
 
                 if (res) {
                     return NEW_VARIANT(LilyToken,
-                                       literal_bit_string,
+                                       literal_bytes,
                                        clone__Location(&self->location),
                                        (Uint8 *)res);
                 }

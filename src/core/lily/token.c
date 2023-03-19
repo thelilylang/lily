@@ -175,30 +175,30 @@ VARIANT_CONSTRUCTOR(LilyToken *,
 
 VARIANT_CONSTRUCTOR(LilyToken *,
                     LilyToken,
-                    literal_bit_char,
+                    literal_byte,
                     Location location,
-                    Uint8 literal_bit_char)
+                    Uint8 literal_byte)
 {
     LilyToken *self = lily_malloc(sizeof(LilyToken));
 
-    self->kind = LILY_TOKEN_KIND_LITERAL_BIT_CHAR;
+    self->kind = LILY_TOKEN_KIND_LITERAL_BYTE;
     self->location = location;
-    self->literal_bit_char = literal_bit_char;
+    self->literal_byte = literal_byte;
 
     return self;
 }
 
 VARIANT_CONSTRUCTOR(LilyToken *,
                     LilyToken,
-                    literal_bit_string,
+                    literal_bytes,
                     Location location,
-                    Uint8 *literal_bit_string)
+                    Uint8 *literal_bytes)
 {
     LilyToken *self = lily_malloc(sizeof(LilyToken));
 
-    self->kind = LILY_TOKEN_KIND_LITERAL_BIT_STRING;
+    self->kind = LILY_TOKEN_KIND_LITERAL_BYTES;
     self->location = location;
-    self->literal_bit_string = literal_bit_string;
+    self->literal_bytes = literal_bytes;
 
     return self;
 }
@@ -710,12 +710,12 @@ to_string__LilyToken(LilyToken *self)
             return from__String("<<");
         case LILY_TOKEN_KIND_L_SHIFT:
             return from__String("<");
-        case LILY_TOKEN_KIND_LITERAL_BIT_CHAR:
-            return format__String("b\'{c}\'", self->literal_bit_char);
-        case LILY_TOKEN_KIND_LITERAL_BIT_STRING:
-            return format__String("b\"{s}\"", (char *)self->literal_bit_string);
+        case LILY_TOKEN_KIND_LITERAL_BYTE:
+            return format__String("b\'{c}\'", self->literal_byte);
+        case LILY_TOKEN_KIND_LITERAL_BYTES:
+            return format__String("b\"{s}\"", (char *)self->literal_bytes);
         case LILY_TOKEN_KIND_LITERAL_CHAR:
-            return format__String("'{c}'", self->literal_bit_char);
+            return format__String("'{c}'", self->literal_char);
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
             return format__String("{S}", self->literal_float);
         case LILY_TOKEN_KIND_LITERAL_INT_2:
@@ -1034,10 +1034,10 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_L_SHIFT_L_SHIFT";
         case LILY_TOKEN_KIND_L_SHIFT:
             return "LILY_TOKEN_KIND_L_SHIFT";
-        case LILY_TOKEN_KIND_LITERAL_BIT_CHAR:
-            return "LILY_TOKEN_KIND_LITERAL_BIT_CHAR";
-        case LILY_TOKEN_KIND_LITERAL_BIT_STRING:
-            return "LILY_TOKEN_KIND_LITERAL_BIT_STRING";
+        case LILY_TOKEN_KIND_LITERAL_BYTE:
+            return "LILY_TOKEN_KIND_LITERAL_BYTE";
+        case LILY_TOKEN_KIND_LITERAL_BYTES:
+            return "LILY_TOKEN_KIND_LITERAL_BYTES";
         case LILY_TOKEN_KIND_LITERAL_CHAR:
             return "LILY_TOKEN_KIND_LITERAL_CHAR";
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
@@ -1183,19 +1183,19 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->identifier_operator);
 
-        case LILY_TOKEN_KIND_LITERAL_BIT_CHAR:
+        case LILY_TOKEN_KIND_LITERAL_BYTE:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
-                          "literal_bit_char = b'{s}' }",
+                          "literal_byte = b'{s}' }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                          self->literal_bit_char);
+                          self->literal_byte);
 
-        case LILY_TOKEN_KIND_LITERAL_BIT_STRING:
+        case LILY_TOKEN_KIND_LITERAL_BYTES:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
-                          "literal_bit_string = b'{s}' }",
+                          "literal_bytes = b\"{s}\" }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                          self->literal_bit_string);
+                          self->literal_bytes);
 
         case LILY_TOKEN_KIND_LITERAL_CHAR:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
@@ -1381,21 +1381,21 @@ clone__LilyToken(const LilyToken *self)
                                identifier_operator,
                                self->location,
                                clone__String(self->identifier_operator));
-        case LILY_TOKEN_KIND_LITERAL_BIT_CHAR:
+        case LILY_TOKEN_KIND_LITERAL_BYTE:
             return NEW_VARIANT(LilyToken,
-                               literal_bit_char,
+                               literal_byte,
                                self->location,
-                               self->literal_bit_char);
-        case LILY_TOKEN_KIND_LITERAL_BIT_STRING: {
-            Usize n = strlen((char *)self->literal_bit_string) + 1;
+                               self->literal_byte);
+        case LILY_TOKEN_KIND_LITERAL_BYTES: {
+            Usize n = strlen((char *)self->literal_bytes) + 1;
             Uint8 *clone = lily_malloc(n);
 
-            memcpy(clone, self->literal_bit_string, n);
+            memcpy(clone, self->literal_bytes, n);
 
             return NEW_VARIANT(LilyToken,
-                               literal_bit_string,
+                               literal_bytes,
                                self->location,
-                               self->literal_bit_string);
+                               self->literal_bytes);
         }
         case LILY_TOKEN_KIND_LITERAL_CHAR:
             return NEW_VARIANT(

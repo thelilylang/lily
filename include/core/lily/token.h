@@ -144,8 +144,8 @@ enum LilyTokenKind
     LILY_TOKEN_KIND_L_SHIFT_L_SHIFT_EQ,
     LILY_TOKEN_KIND_L_SHIFT_L_SHIFT,
     LILY_TOKEN_KIND_L_SHIFT,
-    LILY_TOKEN_KIND_LITERAL_BIT_CHAR,
-    LILY_TOKEN_KIND_LITERAL_BIT_STRING,
+    LILY_TOKEN_KIND_LITERAL_BYTE,
+    LILY_TOKEN_KIND_LITERAL_BYTES,
     LILY_TOKEN_KIND_LITERAL_CHAR,
     LILY_TOKEN_KIND_LITERAL_FLOAT,
     LILY_TOKEN_KIND_LITERAL_INT_2,
@@ -209,8 +209,8 @@ typedef struct LilyToken
         String *identifier_macro;
         String *identifier_normal;
         String *identifier_operator;
-        Uint8 literal_bit_char;
-        Uint8 *literal_bit_string;
+        Uint8 literal_byte;
+        Uint8 *literal_bytes;
         char literal_char;
         String *literal_float;
         String *literal_int_2;
@@ -303,23 +303,23 @@ VARIANT_CONSTRUCTOR(LilyToken *,
 
 /**
  *
- * @brief Construct LilyToken type (LILY_TOKEN_KIND_LITERAL_BIT_CHAR).
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_LITERAL_BYTE).
  */
 VARIANT_CONSTRUCTOR(LilyToken *,
                     LilyToken,
-                    literal_bit_char,
+                    literal_byte,
                     Location location,
-                    Uint8 literal_bit_char);
+                    Uint8 literal_byte);
 
 /**
  *
- * @brief Construct LilyToken type (LILY_TOKEN_KIND_LITERAL_BIT_STRING).
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_LITERAL_BYTES).
  */
 VARIANT_CONSTRUCTOR(LilyToken *,
                     LilyToken,
-                    literal_bit_string,
+                    literal_bytes,
                     Location location,
-                    Uint8 *literal_bit_string);
+                    Uint8 *literal_bytes);
 
 /**
  *
