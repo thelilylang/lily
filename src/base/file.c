@@ -22,29 +22,30 @@
  * SOFTWARE.
  */
 
+#include <base/platform.h>
+
+#ifdef LILY_WINDOWS_OS
+#include <windows.h>
+#else
 #define _GNU_SOURCE
+#include <dirent.h>
+#endif
 
 #include <base/alloc.h>
 #include <base/assert.h>
 #include <base/file.h>
 #include <base/macros.h>
-#include <base/platform.h>
 #include <base/types.h>
 
-#include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(LILY_WINDOWS_OS)
-#include <windows.h>
-#endif
-
 bool
 is_directory__Path(const char *path)
 {
-#if defined(LILY_WINDOWS_OS)
+#ifdef LILY_WINDOWS_OS
     DWORD dwAttrib = GetFileAttributes(path);
 
     return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
@@ -87,6 +88,7 @@ get_extension__Path(const char *path)
     return extension;
 }
 
+#ifdef LILY_WINDOWS_OS
 char *
 read_file__Path(const char *path)
 {
@@ -96,13 +98,46 @@ read_file__Path(const char *path)
     }
 
     FILE *file = fopen(path, "r");
-    char *content = lily_malloc(1);
-    content[0] = '\0';
 
     if (!file) {
         printf("\x1b[31merror\x1b[0m: could not open file: `%s`\n", path);
         exit(1);
     }
+
+    char *content = lily_malloc(1);
+    content[0] = '\0';
+    char ch;
+    
+    size_t len = 0;
+
+    while ((ch = fgetc(file)) != EOF) {
+        content = lily_realloc(content, strlen(content) + 2);
+        content[len++] = ch;
+        content[len] = '\0';
+    }
+
+    fclose(file);
+    
+    return content;
+}
+#else
+char *
+read_file__Path(const char *path)
+{
+    if (is_directory__Path(path)) {
+        printf("\x1b[31merror\x1b[0m: the file is a directory: `%s`\n", path);
+        exit(1);
+    }
+
+    FILE *file = fopen(path, "r");
+
+    if (!file) {
+        printf("\x1b[31merror\x1b[0m: could not open file: `%s`\n", path);
+        exit(1);
+    }
+
+    char *content = lily_malloc(1);
+    content[0] = '\0';
 
     char *line = NULL;
     size_t len = 0;
@@ -119,3 +154,5 @@ read_file__Path(const char *path)
 
     return content;
 }
+#endif
+
