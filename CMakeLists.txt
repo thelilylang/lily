@@ -3,7 +3,7 @@ project(lily C)
 
 set(DEBUG 1) # 0 for release, 1 for debug
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
