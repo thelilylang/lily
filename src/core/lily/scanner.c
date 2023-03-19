@@ -2077,7 +2077,7 @@ get_token__LilyScanner(LilyScanner *self)
         case IS_DIGIT_WITHOUT_ZERO:
             return get_num__LilyScanner(self);
 
-        // bit char literal, bit string literal <id> xor= not= <keyword>
+        // byte literal, bytes literal <id> xor= not= <keyword>
         case IS_ID:
             if (self->source.cursor.current == 'b' && c1 == (char *)'\'') {
                 next_char__Source(&self->source);
