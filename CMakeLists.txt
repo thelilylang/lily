@@ -7,7 +7,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-add_compile_options(-Wall -O3)
+add_compile_options(-Wall -O3 -fdiagnostics-color=always)
 
 set(BASE_SRC
 	src/base/alloc.c
