@@ -35,10 +35,6 @@
 
 #include <stdio.h>
 
-#ifdef LILY_WINDOWS_OS
-#error "Windows is not yet supported."
-#endif
-
 #if defined(GCC_VERSION) || defined(CLANG_VERSION)
 
 #if defined(GCC_VERSION)
