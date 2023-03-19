@@ -111,7 +111,7 @@ read_file__Path(const char *path)
     size_t len = 0;
 
     while ((ch = fgetc(file)) != EOF) {
-        content = lily_realloc(content, strlen(content) + 2);
+        content = lily_realloc(content, len + 2);
         content[len++] = ch;
         content[len] = '\0';
     }
