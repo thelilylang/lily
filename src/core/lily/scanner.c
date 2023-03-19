@@ -615,8 +615,8 @@ get_keyword(char *id)
         return LILY_TOKEN_KIND_KEYWORD_CLASS;
     else if (!strcmp(id, "comptime"))
         return LILY_TOKEN_KIND_KEYWORD_COMPTIME;
-	else if (!strcmp(id, "defer"))
-		return LILY_TOKEN_KIND_KEYWORD_DEFER;
+    else if (!strcmp(id, "defer"))
+        return LILY_TOKEN_KIND_KEYWORD_DEFER;
     else if (!strcmp(id, "do"))
         return LILY_TOKEN_KIND_KEYWORD_DO;
     else if (!strcmp(id, "drop"))
@@ -804,7 +804,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_KEYWORD_CATCH:
         case LILY_TOKEN_KIND_KEYWORD_CLASS:
         case LILY_TOKEN_KIND_KEYWORD_COMPTIME:
-		case LILY_TOKEN_KIND_KEYWORD_DEFER:
+        case LILY_TOKEN_KIND_KEYWORD_DEFER:
         case LILY_TOKEN_KIND_KEYWORD_DO:
         case LILY_TOKEN_KIND_KEYWORD_DROP:
         case LILY_TOKEN_KIND_KEYWORD_ELIF:

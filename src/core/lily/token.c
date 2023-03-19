@@ -590,8 +590,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String("class");
         case LILY_TOKEN_KIND_KEYWORD_COMPTIME:
             return from__String("comptime");
-		case LILY_TOKEN_KIND_KEYWORD_DEFER:
-			return from__String("defer");
+        case LILY_TOKEN_KIND_KEYWORD_DEFER:
+            return from__String("defer");
         case LILY_TOKEN_KIND_KEYWORD_DO:
             return from__String("do");
         case LILY_TOKEN_KIND_KEYWORD_DROP:
@@ -916,8 +916,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_KEYWORD_CLASS";
         case LILY_TOKEN_KIND_KEYWORD_COMPTIME:
             return "LILY_TOKEN_KIND_KEYWORD_COMPTIME";
-		case LILY_TOKEN_KIND_KEYWORD_DEFER:
-			return "LILY_TOKEN_KIND_KEYWORD_DEFER";
+        case LILY_TOKEN_KIND_KEYWORD_DEFER:
+            return "LILY_TOKEN_KIND_KEYWORD_DEFER";
         case LILY_TOKEN_KIND_KEYWORD_DO:
             return "LILY_TOKEN_KIND_KEYWORD_DO";
         case LILY_TOKEN_KIND_KEYWORD_DROP:
