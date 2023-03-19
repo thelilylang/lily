@@ -42,7 +42,7 @@
 #if defined(GCC_VERSION) || defined(CLANG_VERSION)
 
 #if defined(GCC_VERSION)
-#if GCC_VERSION < 4500
+#if GCC_VERSION < 4600
 #error "this version of GCC is not yet supported."
 #endif
 
