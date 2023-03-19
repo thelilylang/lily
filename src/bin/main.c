@@ -22,7 +22,9 @@
  * SOFTWARE.
  */
 
+#include <base/macros.h>
 #include <base/new.h>
+#include <base/platform.h>
 
 #include <cli/emit.h>
 #include <cli/help.h>
@@ -32,6 +34,29 @@
 #include <command/compile.h>
 
 #include <stdio.h>
+
+#ifdef LILY_WINDOWS_OS
+#error "Windows is not yet supported."
+#endif
+
+#if defined(GCC_VERSION) || defined(CLANG_VERSION)
+
+#if defined(GCC_VERSION)
+#if GCC_VERSION < 100201
+#error "this version of GCC is not yet supported."
+#endif
+
+#elif defined(CLANG_VERSION)
+#if CLANG_VERSION < 110001
+#error "this version of clang is not yet supported."
+#endif
+
+#else
+#error \
+  "unknown compiler, please add a support for this compiler or open issue at 'https://github.com/ArthurPV/lily/tree/main'."
+#endif
+
+#endif
 
 int
 main(int argc, char **argv)
