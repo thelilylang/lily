@@ -42,12 +42,12 @@
 #if defined(GCC_VERSION) || defined(CLANG_VERSION)
 
 #if defined(GCC_VERSION)
-#if GCC_VERSION < 100201
+#if GCC_VERSION < 4500
 #error "this version of GCC is not yet supported."
 #endif
 
 #elif defined(CLANG_VERSION)
-#if CLANG_VERSION < 110001
+#if CLANG_VERSION < 3000
 #error "this version of clang is not yet supported."
 #endif
 
