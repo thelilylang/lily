@@ -27,10 +27,8 @@
 #include <core/lily/ast/expr.h>
 #include <core/lily/ast/expr/lambda.h>
 
-#ifdef ENV_DEBUG
 #include <stdio.h>
 #include <stdlib.h>
-#endif
 
 // Free LilyAstExprLambdaParam type (LILY_AST_EXPR_LAMBDA_PARAM_KIND_DEFAULT).
 static VARIANT_DESTRUCTOR(LilyAstExprLambdaParam,
