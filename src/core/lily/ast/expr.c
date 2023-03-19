@@ -30,6 +30,40 @@
 #include <stdlib.h>
 
 #ifdef ENV_DEBUG
+#include <base/format.h>
+#endif
+
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_ACCESS).
+static VARIANT_DESTRUCTOR(LilyAstExpr, access, LilyAstExpr *self);
+
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_ARRAY).
+static VARIANT_DESTRUCTOR(LilyAstExpr, array, LilyAstExpr *self);
+
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_BINARY).
+static VARIANT_DESTRUCTOR(LilyAstExpr, binary, LilyAstExpr *self);
+
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_CALL).
+static VARIANT_DESTRUCTOR(LilyAstExpr, call, LilyAstExpr *self);
+
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_GROUPING).
+static VARIANT_DESTRUCTOR(LilyAstExpr, grouping, LilyAstExpr *self);
+
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_IDENTIFIER).
+static VARIANT_DESTRUCTOR(LilyAstExpr, identifier, LilyAstExpr *self);
+
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_LAMBDA).
+static VARIANT_DESTRUCTOR(LilyAstExpr, lambda, LilyAstExpr *self);
+
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_LITERAL).
+static VARIANT_DESTRUCTOR(LilyAstExpr, literal, LilyAstExpr *self);
+
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_TUPLE).
+static VARIANT_DESTRUCTOR(LilyAstExpr, tuple, LilyAstExpr *self);
+
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_UNARY).
+static VARIANT_DESTRUCTOR(LilyAstExpr, unary, LilyAstExpr *self);
+
+#ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, LilyAstExprKind, enum LilyAstExprKind self)
 {
@@ -44,8 +78,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprKind, enum LilyAstExprKind self)
             return "LILY_AST_EXPR_KIND_CALL";
         case LILY_AST_EXPR_KIND_IDENTIFIER:
             return "LILY_AST_EXPR_KIND_IDENTIFIER";
-        case LILY_AST_EXPR_KIND_IDENTIFIER_MACRO:
-            return "LILY_AST_EXPR_KIND_IDENTIFIER_MACRO";
         case LILY_AST_EXPR_KIND_LAMBDA:
             return "LILY_AST_EXPR_KIND_LAMBDA";
         case LILY_AST_EXPR_KIND_LITERAL:
@@ -64,11 +96,274 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprKind, enum LilyAstExprKind self)
             UNREACHABLE("unknown variant");
     }
 }
+#endif
 
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    access,
+                    Location location,
+                    LilyAstExprAccess access)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_ACCESS;
+    self->location = location;
+    self->access = access;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    array,
+                    Location location,
+                    LilyAstExprArray array)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_ARRAY;
+    self->location = location;
+    self->array = array;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    binary,
+                    Location location,
+                    LilyAstExprBinary binary)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_BINARY;
+    self->location = location;
+    self->binary = binary;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    call,
+                    Location location,
+                    LilyAstExprCall call)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_CALL;
+    self->location = location;
+    self->call = call;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    grouping,
+                    Location location,
+                    LilyAstExpr *grouping)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_GROUPING;
+    self->location = location;
+    self->grouping = grouping;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    identifier,
+                    Location location,
+                    LilyAstExprIdentifier identifier)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_IDENTIFIER;
+    self->location = location;
+    self->identifier = identifier;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    lambda,
+                    Location location,
+                    LilyAstExprLambda lambda)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_LAMBDA;
+    self->location = location;
+    self->lambda = lambda;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    literal,
+                    Location location,
+                    LilyAstExprLiteral literal)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_LITERAL;
+    self->location = location;
+    self->literal = literal;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    tuple,
+                    Location location,
+                    LilyAstExprTuple tuple)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_TUPLE;
+    self->location = location;
+    self->tuple = tuple;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    unary,
+                    Location location,
+                    LilyAstExprUnary unary)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_UNARY;
+    self->location = location;
+    self->unary = unary;
+
+    return self;
+}
+
+CONSTRUCTOR(LilyAstExpr *,
+            LilyAstExpr,
+            Location location,
+            enum LilyAstExprKind kind)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = kind;
+    self->location = location;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstExpr, const LilyAstExpr *self)
 {
-    TODO("implements");
+    String *res = format__String("LilyAstExpr{{ kind = {s}, location = {sa}",
+                                 to_string__Debug__LilyAstExprKind(self->kind),
+                                 to_string__Debug__Location(&self->location));
+
+    switch (self->kind) {
+        case LILY_AST_EXPR_KIND_ACCESS: {
+            char *s =
+              format(", access = {Sr} }",
+                     to_string__Debug__LilyAstExprAccess(&self->access));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_KIND_ARRAY: {
+            char *s = format(", array = {Sr} }",
+                             to_string__Debug__LilyAstExprArray(&self->array));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_KIND_BINARY: {
+            char *s =
+              format(", binary = {Sr} }",
+                     to_string__Debug__LilyAstExprBinary(&self->binary));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_KIND_CALL: {
+            char *s = format(", call = {Sr} }",
+                             to_string__Debug__LilyAstExprCall(&self->call));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_KIND_GROUPING: {
+            char *s = format(", grouping = {Sr} }",
+                             to_string__Debug__LilyAstExpr(self->grouping));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_KIND_IDENTIFIER: {
+            char *s = format(
+              ", identifier = {Sr} }",
+              to_string__Debug__LilyAstExprIdentifier(&self->identifier));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_KIND_LAMBDA: {
+            char *s =
+              format(", lambda = {Sr} }",
+                     to_string__Debug__LilyAstExprLambda(&self->lambda));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_KIND_LITERAL: {
+            char *s =
+              format(", literal = {Sr} }",
+                     to_string__Debug__LilyAstExprLiteral(&self->literal));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_KIND_TUPLE: {
+            char *s = format(", tuple = {Sr} }",
+                             to_string__Debug__LilyAstExprTuple(&self->tuple));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_KIND_UNARY: {
+            char *s = format(", unary = {Sr} }",
+                             to_string__Debug__LilyAstExprUnary(&self->unary));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_KIND_SELF:
+        case LILY_AST_EXPR_KIND_WILDCARD:
+            push_str__String(res, " }");
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
 }
 #endif
 
@@ -78,7 +373,104 @@ to_string__LilyAstExpr(const LilyAstExpr *self)
     TODO("implements");
 }
 
+VARIANT_DESTRUCTOR(LilyAstExpr, access, LilyAstExpr *self)
+{
+    FREE(LilyAstExprAccess, &self->access);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExpr, array, LilyAstExpr *self)
+{
+    FREE(LilyAstExprArray, &self->array);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExpr, binary, LilyAstExpr *self)
+{
+    FREE(LilyAstExprBinary, &self->binary);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExpr, call, LilyAstExpr *self)
+{
+    FREE(LilyAstExprCall, &self->call);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExpr, grouping, LilyAstExpr *self)
+{
+    FREE(LilyAstExpr, self->grouping);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExpr, identifier, LilyAstExpr *self)
+{
+    FREE(LilyAstExprIdentifier, &self->identifier);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExpr, lambda, LilyAstExpr *self)
+{
+    FREE(LilyAstExprLambda, &self->lambda);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExpr, literal, LilyAstExpr *self)
+{
+    FREE(LilyAstExprLiteral, &self->literal);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExpr, tuple, LilyAstExpr *self)
+{
+    FREE(LilyAstExprTuple, &self->tuple);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExpr, unary, LilyAstExpr *self)
+{
+    FREE(LilyAstExprUnary, &self->unary);
+    lily_free(self);
+}
+
 DESTRUCTOR(LilyAstExpr, LilyAstExpr *self)
 {
-    lily_free(self);
+    switch (self->kind) {
+        case LILY_AST_EXPR_KIND_ACCESS:
+            FREE_VARIANT(LilyAstExpr, access, self);
+            break;
+        case LILY_AST_EXPR_KIND_ARRAY:
+            FREE_VARIANT(LilyAstExpr, array, self);
+            break;
+        case LILY_AST_EXPR_KIND_BINARY:
+            FREE_VARIANT(LilyAstExpr, binary, self);
+            break;
+        case LILY_AST_EXPR_KIND_CALL:
+            FREE_VARIANT(LilyAstExpr, call, self);
+            break;
+        case LILY_AST_EXPR_KIND_GROUPING:
+            FREE_VARIANT(LilyAstExpr, grouping, self);
+            break;
+        case LILY_AST_EXPR_KIND_IDENTIFIER:
+            FREE_VARIANT(LilyAstExpr, identifier, self);
+            break;
+        case LILY_AST_EXPR_KIND_LAMBDA:
+            FREE_VARIANT(LilyAstExpr, lambda, self);
+            break;
+        case LILY_AST_EXPR_KIND_LITERAL:
+            FREE_VARIANT(LilyAstExpr, literal, self);
+            break;
+        case LILY_AST_EXPR_KIND_TUPLE:
+            FREE_VARIANT(LilyAstExpr, tuple, self);
+            break;
+        case LILY_AST_EXPR_KIND_UNARY:
+            FREE_VARIANT(LilyAstExpr, unary, self);
+            break;
+        case LILY_AST_EXPR_KIND_SELF:
+        case LILY_AST_EXPR_KIND_WILDCARD:
+            lily_free(self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }

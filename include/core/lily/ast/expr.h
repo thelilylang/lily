@@ -46,14 +46,13 @@ enum LilyAstExprKind
     LILY_AST_EXPR_KIND_ARRAY,
     LILY_AST_EXPR_KIND_BINARY,
     LILY_AST_EXPR_KIND_CALL,
+    LILY_AST_EXPR_KIND_GROUPING,
     LILY_AST_EXPR_KIND_IDENTIFIER,
-    LILY_AST_EXPR_KIND_IDENTIFIER_MACRO,
     LILY_AST_EXPR_KIND_LAMBDA,
     LILY_AST_EXPR_KIND_LITERAL,
     LILY_AST_EXPR_KIND_SELF,
     LILY_AST_EXPR_KIND_TUPLE,
     LILY_AST_EXPR_KIND_UNARY,
-    LILY_AST_EXPR_KIND_GROUPING,
     LILY_AST_EXPR_KIND_WILDCARD
 };
 
@@ -66,8 +65,124 @@ typedef struct LilyAstExpr
         LilyAstExprAccess access;
         LilyAstExprArray array;
         LilyAstExprBinary binary;
+        LilyAstExprCall call;
+        LilyAstExpr *grouping;
+        LilyAstExprIdentifier identifier;
+        LilyAstExprLambda lambda;
+        LilyAstExprLiteral literal;
+        LilyAstExprTuple tuple;
+        LilyAstExprUnary unary;
     };
 } LilyAstExpr;
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_ACCESS).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    access,
+                    Location location,
+                    LilyAstExprAccess access);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_ARRAY).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    array,
+                    Location location,
+                    LilyAstExprArray array);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_BINARY).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    binary,
+                    Location location,
+                    LilyAstExprBinary binary);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_CALL).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    call,
+                    Location location,
+                    LilyAstExprCall call);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_GROUPING).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    grouping,
+                    Location location,
+                    LilyAstExpr *grouping);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_IDENTIFIER).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    identifier,
+                    Location location,
+                    LilyAstExprIdentifier identifier);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_LAMBDA).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    lambda,
+                    Location location,
+                    LilyAstExprLambda lambda);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_LITERAL).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    literal,
+                    Location location,
+                    LilyAstExprLiteral literal);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_TUPLE).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    tuple,
+                    Location location,
+                    LilyAstExprTuple tuple);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_UNARY).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    unary,
+                    Location location,
+                    LilyAstExprUnary unary);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type.
+ */
+CONSTRUCTOR(LilyAstExpr *,
+            LilyAstExpr,
+            Location location,
+            enum LilyAstExprKind kind);
 
 /**
  *
