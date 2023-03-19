@@ -631,11 +631,23 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                        LilyPackage *root_package)
 {
     Vec *split_pkg_name = split__String(sub_pkg->name, '.');
+
+#ifdef LILY_WINDOWS_OS
+    String *pkg_filename_join = join__Vec(split_pkg_name, '\\');
+#else
     String *pkg_filename_join = join__Vec(split_pkg_name, '/');
+#endif
+
     String *pkg_filename = NEW(String);
 
     push_str__String(pkg_filename, (char *)self->default_path);
+
+#ifdef LILY_WINDOWS_OS
+    push_str__String(pkg_filename, "\\");
+#else
     push_str__String(pkg_filename, "/");
+#endif
+
     APPEND_AND_FREE(pkg_filename, pkg_filename_join);
 
     push_str__String(pkg_filename, ".lily");
