@@ -107,7 +107,7 @@ read_file__Path(const char *path)
     char *content = lily_malloc(1);
     content[0] = '\0';
     char ch;
-    
+
     size_t len = 0;
 
     while ((ch = fgetc(file)) != EOF) {
@@ -117,7 +117,7 @@ read_file__Path(const char *path)
     }
 
     fclose(file);
-    
+
     return content;
 }
 #else
@@ -155,4 +155,3 @@ read_file__Path(const char *path)
     return content;
 }
 #endif
-
