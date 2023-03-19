@@ -771,6 +771,7 @@ cast
 catch
 class
 comptime
+defer
 do
 drop
 elif
