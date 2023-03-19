@@ -96,181 +96,181 @@ IMPL_FOR_DEBUG(to_string,
 }
 
 String *
-IMPL_FOR_DEBUG(to_string,
-               LilyAstExprLiteral,
-               const LilyAstExprLiteral *self)
+IMPL_FOR_DEBUG(to_string, LilyAstExprLiteral, const LilyAstExprLiteral *self)
 {
-	String *res = format__String("LilyAstExprLiteral{{ kind = {s}, ", to_string__Debug__LilyAstExprLiteralKind(self->kind));
+    String *res =
+      format__String("LilyAstExprLiteral{{ kind = {s}, ",
+                     to_string__Debug__LilyAstExprLiteralKind(self->kind));
 
-	switch (self->kind) {
+    switch (self->kind) {
         case LILY_AST_EXPR_LITERAL_KIND_BOOL: {
-			char *s = format("bool = {b} }", self->bool_);
+            char *s = format("bool = {b} }", self->bool_);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_BYTE: {
-			char *s = format("byte = {d} }", self->byte);
+            char *s = format("byte = {d} }", self->byte);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
-		case LILY_AST_EXPR_LITERAL_KIND_BYTES: {
-			char *s = format("bytes = b\"{s}\" }", (char*)self->bytes);
+            break;
+        }
+        case LILY_AST_EXPR_LITERAL_KIND_BYTES: {
+            char *s = format("bytes = b\"{s}\" }", (char *)self->bytes);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_CHAR: {
-			char *s = format("char = '{c}' }", self->char_);
+            char *s = format("char = '{c}' }", self->char_);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_FLOAT32: {
-			char *s = format("float32 = {f} }", self->float32);
+            char *s = format("float32 = {f} }", self->float32);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_FLOAT64: {
-			char *s = format("float64 = {f} }", self->float64);
+            char *s = format("float64 = {f} }", self->float64);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_INT32: {
-			char *s = format("int32 = {d} }", self->int32);
+            char *s = format("int32 = {d} }", self->int32);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_INT64: {
-			char *s = format("int64 = {d} }", self->int64);
+            char *s = format("int64 = {d} }", self->int64);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
-		case LILY_AST_EXPR_LITERAL_KIND_UNDEF:
+            break;
+        }
+        case LILY_AST_EXPR_LITERAL_KIND_UNDEF:
         case LILY_AST_EXPR_LITERAL_KIND_NIL:
-			break;
+            break;
         case LILY_AST_EXPR_LITERAL_KIND_STR: {
-			char *s = format("str = {S} }", self->str);
+            char *s = format("str = {S} }", self->str);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_FLOAT32: {
-			char *s = format("suffix_float32 = {f} }", self->suffix_float32);
+            char *s = format("suffix_float32 = {f} }", self->suffix_float32);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_FLOAT64: {
-			char *s = format("suffix_float64 = {f} }", self->suffix_float64);
+            char *s = format("suffix_float64 = {f} }", self->suffix_float64);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_INT8: {
-			char *s = format("suffix_int8 = {d} }", self->suffix_int8);
+            char *s = format("suffix_int8 = {d} }", self->suffix_int8);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_INT16: {
-			char *s = format("suffix_int16 = {d} }", self->suffix_int16);
+            char *s = format("suffix_int16 = {d} }", self->suffix_int16);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_INT32: {
-			char *s = format("suffix_int32 = {d} }", self->suffix_int32);
+            char *s = format("suffix_int32 = {d} }", self->suffix_int32);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_INT64: {
-			char *s = format("suffix_int64 = {d} }", self->suffix_int64);
+            char *s = format("suffix_int64 = {d} }", self->suffix_int64);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_ISIZE: {
-			char *s = format("suffix_isize = {d} }", self->suffix_isize);
+            char *s = format("suffix_isize = {d} }", self->suffix_isize);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_UINT8: {
-			char *s = format("suffix_uint8 = {d} }", self->suffix_uint8);
+            char *s = format("suffix_uint8 = {d} }", self->suffix_uint8);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_UINT16: {
-			char *s = format("suffix_uint16 = {d} }", self->suffix_uint16);
+            char *s = format("suffix_uint16 = {d} }", self->suffix_uint16);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_UINT32: {
-			char *s = format("suffix_uint32 = {d} }", self->suffix_uint32);
+            char *s = format("suffix_uint32 = {d} }", self->suffix_uint32);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_UINT64: {
-			char *s = format("suffix_uint64 = {d} }", self->suffix_uint64);
+            char *s = format("suffix_uint64 = {d} }", self->suffix_uint64);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_USIZE: {
-			char *s = format("suffix_usize = {d} }", self->suffix_usize);
+            char *s = format("suffix_usize = {d} }", self->suffix_usize);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_UINT32: {
-			char *s = format("uint32 = {d} }", self->uint32);
+            char *s = format("uint32 = {d} }", self->uint32);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         case LILY_AST_EXPR_LITERAL_KIND_UINT64: {
-			char *s = format("uint64 = {d} }", self->uint64);
+            char *s = format("uint64 = {d} }", self->uint64);
 
-			PUSH_STR_AND_FREE(res, s);
+            PUSH_STR_AND_FREE(res, s);
 
-			break;
-		}
+            break;
+        }
         default:
             UNREACHABLE("unknown variant");
     }
 
-	return res;
+    return res;
 }
 #endif

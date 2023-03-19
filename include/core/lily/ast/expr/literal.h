@@ -431,11 +431,11 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprLiteral,
  *
  * @brief Construct LilyAstExprLiteral type.
  */
-inline CONSTRUCTOR(LilyAstExprLiteral, LilyAstExprLiteral, enum LilyAstExprLiteralKind kind)
+inline CONSTRUCTOR(LilyAstExprLiteral,
+                   LilyAstExprLiteral,
+                   enum LilyAstExprLiteralKind kind)
 {
-	return (LilyAstExprLiteral){
-		.kind = kind
-	};
+    return (LilyAstExprLiteral){ .kind = kind };
 }
 
 /**
@@ -445,9 +445,7 @@ inline CONSTRUCTOR(LilyAstExprLiteral, LilyAstExprLiteral, enum LilyAstExprLiter
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string,
-               LilyAstExprLiteral,
-               const LilyAstExprLiteral *self);
+IMPL_FOR_DEBUG(to_string, LilyAstExprLiteral, const LilyAstExprLiteral *self);
 #endif
 
 /**
@@ -465,14 +463,15 @@ inline VARIANT_DESTRUCTOR(LilyAstExprLiteral,
  *
  * @brief Free LilyAstExprLiteral type.
  */
-inline DESTRUCTOR(LilyAstExprLiteral, const LilyAstExprLiteral *self) {
-	switch (self->kind) {
-		case LILY_AST_EXPR_LITERAL_KIND_STR:
-			FREE_VARIANT(LilyAstExprLiteral, str, self);
-			break;
-		default:
-			break;
-	}
+inline DESTRUCTOR(LilyAstExprLiteral, const LilyAstExprLiteral *self)
+{
+    switch (self->kind) {
+        case LILY_AST_EXPR_LITERAL_KIND_STR:
+            FREE_VARIANT(LilyAstExprLiteral, str, self);
+            break;
+        default:
+            break;
+    }
 }
 
 #endif // LILY_CORE_LILY_AST_EXPR_LITERAL_H
