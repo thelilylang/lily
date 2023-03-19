@@ -1382,20 +1382,16 @@ clone__LilyToken(const LilyToken *self)
                                self->location,
                                clone__String(self->identifier_operator));
         case LILY_TOKEN_KIND_LITERAL_BYTE:
-            return NEW_VARIANT(LilyToken,
-                               literal_byte,
-                               self->location,
-                               self->literal_byte);
+            return NEW_VARIANT(
+              LilyToken, literal_byte, self->location, self->literal_byte);
         case LILY_TOKEN_KIND_LITERAL_BYTES: {
             Usize n = strlen((char *)self->literal_bytes) + 1;
             Uint8 *clone = lily_malloc(n);
 
             memcpy(clone, self->literal_bytes, n);
 
-            return NEW_VARIANT(LilyToken,
-                               literal_bytes,
-                               self->location,
-                               self->literal_bytes);
+            return NEW_VARIANT(
+              LilyToken, literal_bytes, self->location, self->literal_bytes);
         }
         case LILY_TOKEN_KIND_LITERAL_CHAR:
             return NEW_VARIANT(
