@@ -78,7 +78,7 @@ get_extension__Path(const char *path)
         }
 
         if (extension_started) {
-            extension = realloc(extension, size + 1);
+            extension = lily_realloc(extension, size + 1);
             extension[size - 1] = path[i];
             extension[size++] = '\0';
         }
@@ -108,7 +108,7 @@ read_file__Path(const char *path)
     size_t len = 0;
 
     while (getline(&line, &len, file) != -1) {
-        content = realloc(content, strlen(content) + len + 1);
+        content = lily_realloc(content, strlen(content) + len + 1);
         strcat(content, line);
     }
 
