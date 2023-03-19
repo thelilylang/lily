@@ -36,18 +36,18 @@
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstExprTuple, const LilyAstExprTuple *self)
 {
-	String *res = from__String("LilyAstExprTuple{ items =");
+    String *res = from__String("LilyAstExprTuple{ items =");
 
-	DEBUG_VEC_STRING(self->items, res, LilyAstExprTuple);
+    DEBUG_VEC_STRING(self->items, res, LilyAstExprTuple);
 
-	push_str__String(res, " }");
+    push_str__String(res, " }");
 
-	return res;
+    return res;
 }
 #endif
 
 DESTRUCTOR(LilyAstExprTuple, const LilyAstExprTuple *self)
 {
-	FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, LilyAstExprTuple);
-	FREE(Vec, self->items);
+    FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, LilyAstExprTuple);
+    FREE(Vec, self->items);
 }
