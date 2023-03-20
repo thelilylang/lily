@@ -64,8 +64,8 @@ collect_all_packages_to_build_dependency_tree__LilyPrecompile(
   LilyPackage *package,
   Vec *dependencies_order);
 
-// Check recursive import
-// ex:
+// Check recursive import.
+// e.g.:
 // <Package name>: <Dependencies>
 // A: [B, C]
 // B: [A, C]
