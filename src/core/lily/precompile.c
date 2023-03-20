@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <cli/emit.h>
+
 #include <core/lily/lily.h>
 #include <core/lily/package/package.h>
 #include <core/lily/precompile.h>
@@ -60,6 +62,17 @@ check_import_to_build_dependency_tree__LilyPrecompile(
 static Vec *
 collect_all_packages_to_build_dependency_tree__LilyPrecompile(
   LilyPackage *package,
+  Vec *dependencies_order);
+
+// Check recursive import
+// ex:
+// <Package name>: <Dependencies>
+// A: [B, C]
+// B: [A, C]
+// C: []
+// This case is a recursive import.
+static void
+check_for_recursive_import_to_build_dependency_tree__LilyPrecompile(
   Vec *dependencies_order);
 
 // Sort dependencies_order by package->dependencies len.
@@ -384,6 +397,13 @@ check_import_to_build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
 
         switch (value->kind) {
             case LILY_IMPORT_VALUE_KIND_PACKAGE: {
+                // Check for self import.
+                if (!strcmp(value->package->buffer, package->name->buffer)) {
+                    // TODO: add error with diagnostic
+                    EMIT_ERROR("self import");
+                    exit(1);
+                }
+
                 LilyPackage *pkg = search_package_from_name__LilyPackage(
                   root_package, value->package);
 
@@ -424,6 +444,41 @@ collect_all_packages_to_build_dependency_tree__LilyPrecompile(
 }
 
 void
+check_for_recursive_import_to_build_dependency_tree__LilyPrecompile(
+  Vec *dependencies_order)
+{
+    for (Usize i = 0; i < dependencies_order->len; i++) {
+        for (Usize j = i + 1; j < dependencies_order->len; j++) {
+            LilyPackage *p1 = get__Vec(dependencies_order, i);
+            LilyPackage *p2 = get__Vec(dependencies_order, j);
+
+            bool found_in_p1 = false;
+
+            for (Usize k = 0; k < p1->package_dependencies->len; k++) {
+                if (!strcmp(
+                      p2->name->buffer,
+                      CAST(LilyPackage *, get__Vec(p1->package_dependencies, k))
+                        ->name->buffer)) {
+                    found_in_p1 = true;
+                }
+            }
+
+            for (Usize k = 0; k < p2->package_dependencies->len; k++) {
+                if (!strcmp(
+                      p1->name->buffer,
+                      CAST(LilyPackage *, get__Vec(p2->package_dependencies, k))
+                        ->name->buffer) &&
+                    found_in_p1) {
+                    // TODO: add error with diagnostic
+                    EMIT_ERROR("recursive import is occured");
+                    exit(1);
+                }
+            }
+        }
+    }
+}
+
+void
 calculate_dependencies_order_to_build_dependency_tree__LilyPrecompile(
   Vec *dependencies_order)
 {
@@ -441,9 +496,10 @@ calculate_dependencies_order_to_build_dependency_tree__LilyPrecompile(
 }
 
 // 1. Check import (only with `@package`).
-// 2. Calculate dependencies.
+// 2. Collect all packages dependencies.
 // 3. Check for recursive import.
-// 4. Add package with less dependencies.
+// 4. Calculate dependencies.
+// 5. Add package with less dependencies.
 void
 build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
                                       LilyPackage *package,
@@ -453,11 +509,15 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
     check_import_to_build_dependency_tree__LilyPrecompile(
       self, package, root_package);
 
-    // 2. Calculate dependencies.
+    // 2. Collect all packages dependencies.
     Vec *dependencies_order =
       collect_all_packages_to_build_dependency_tree__LilyPrecompile(
         package,
         NEW(Vec)); // Vec<LilyPackage* (&)>*
+
+    // 3. Check for recursive import.
+    check_for_recursive_import_to_build_dependency_tree__LilyPrecompile(
+      dependencies_order);
 
 #ifdef ENV_DEBUG
     PRINTLN("\n====Precompile dependencies order before sort({S})====\n",
@@ -472,6 +532,7 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
     }
 #endif
 
+    // 4. Calculate dependencies.
     calculate_dependencies_order_to_build_dependency_tree__LilyPrecompile(
       dependencies_order);
 
@@ -487,8 +548,6 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
                 pkg->package_dependencies->len);
     }
 #endif
-
-    // 3. Check for recursive import.
 
     // 4. Add package with less dependencies.
 
@@ -994,7 +1053,7 @@ run__LilyPrecompile(LilyPrecompile *self,
 
     // 5. Init dependency tree.
     if (!strcmp(self->package->name->buffer, root_package->name->buffer)) {
-        self->dependency_tree = NEW(LilyPackageDependencyTree, NULL, NULL);
+        self->dependency_trees = NEW(Vec);
 
         build_dependency_tree__LilyPrecompile(
           self, self->package, root_package);
