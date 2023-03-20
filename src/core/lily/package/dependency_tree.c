@@ -25,6 +25,7 @@
 #include <base/macros.h>
 
 #include <core/lily/package/dependency_tree.h>
+#include <core/lily/package/package.h>
 
 #include <string.h>
 
@@ -87,13 +88,37 @@ collect_dependencies__LilyPackageDependencyTree(
     return NULL;
 }
 
+bool
+is_added__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
+                                    LilyPackage *package)
+{
+    // 1. Check if package is found.
+    if (!strcmp(self->package->name->buffer, package->name->buffer)) {
+        return true;
+    }
+
+    // 2. Search package name.
+    for (Usize i = 0; i < self->children->len; i++) {
+        bool res = is_added__LilyPackageDependencyTree(
+          get__Vec(self->children, i), package);
+
+        if (res) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 DESTRUCTOR(LilyPackageDependencyTree, LilyPackageDependencyTree *self)
 {
     FREE_BUFFER_ITEMS(
       self->children->buffer, self->children->len, LilyPackageDependencyTree);
     FREE(Vec, self->children);
 
-    FREE(Vec, self->dependencies);
+    if (self->dependencies) {
+        FREE(Vec, self->dependencies);
+    }
 
     lily_free(self);
 }

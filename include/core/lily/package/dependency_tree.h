@@ -25,7 +25,9 @@
 #ifndef LILY_CORE_LILY_PACKAGE_DEPENDENCY_TREE_H
 #define LILY_CORE_LILY_PACKAGE_DEPENDENCY_TREE_H
 
-#include <core/lily/package/package.h>
+#include <base/vec.h>
+
+typedef struct LilyPackage LilyPackage;
 
 /*
                                 Package1
@@ -43,11 +45,14 @@
                      /       \             /       \
                 Package3  Package4     Package5  Package6
 */
+
+// NOTE: The dependency tree does not deal with the dependency of packages on
+// libraries.
 typedef struct LilyPackageDependencyTree
 {
     LilyPackage *package; // LilyPackage* (&)
     Vec *children;        // Vec<LilyPackageDependencyTree*>*
-    Vec *dependencies;    // Vec<LilyPackageDependencyTree* (&)>*
+    Vec *dependencies;    // Vec<LilyPackageDependencyTree* (&)>*?
 } LilyPackageDependencyTree;
 
 /**
@@ -68,6 +73,14 @@ void
 add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
                                        LilyPackage *package,
                                        Vec *file_dependencies);
+
+/**
+ *
+ * @brief Verify if the package is added in the tree.
+ */
+bool
+is_added__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
+                                    LilyPackage *package);
 
 /**
  *
