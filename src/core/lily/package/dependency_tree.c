@@ -29,23 +29,31 @@
 CONSTRUCTOR(LilyPackageDependencyTree *,
             LilyPackageDependencyTree,
             LilyPackage *current,
+            Vec *children,
             Vec *dependencies)
 {
     LilyPackageDependencyTree *self =
       lily_malloc(sizeof(LilyPackageDependencyTree));
 
     self->current = current;
+    self->children = children;
     self->dependencies = dependencies;
 
     return self;
 }
 
+void
+add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
+                                       LilyPackage *package,
+                                       Vec *dependencies)
+{
+}
+
 DESTRUCTOR(LilyPackageDependencyTree, LilyPackageDependencyTree *self)
 {
-    FREE_BUFFER_ITEMS(self->dependencies->buffer,
-                      self->dependencies->len,
-                      LilyPackageDependencyTree);
-    FREE(Vec, self->dependencies);
+    FREE_BUFFER_ITEMS(
+      self->children->buffer, self->children->len, LilyPackageDependencyTree);
+    FREE(Vec, self->children);
 
     lily_free(self);
 }

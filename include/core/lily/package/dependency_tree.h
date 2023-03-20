@@ -43,11 +43,14 @@
                      /       \             /       \
                 Package3  Package4     Package5  Package6
 */
-typedef struct LilyPackageDependencyTree
+typedef struct LilyPackageDependencyTree LilyPackageDependencyTree;
+
+struct LilyPackageDependencyTree
 {
     LilyPackage *current; // LilyPackage* (&)
-    Vec *dependencies;    // Vec<LilyPackageDependencyTree*>*
-} LilyPackageDependencyTree;
+    Vec *children;        // Vec<LilyPackageDependencyTree*>*
+    Vec *dependencies;    // Vec<LilyPackageDependencyTree*>* (&)
+};
 
 /**
  *
@@ -56,7 +59,17 @@ typedef struct LilyPackageDependencyTree
 CONSTRUCTOR(LilyPackageDependencyTree *,
             LilyPackageDependencyTree,
             LilyPackage *current,
+            Vec *children,
             Vec *dependencies);
+
+/**
+ *
+ * @brief Add package to dpeendency tree.
+ */
+void
+add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
+                                       LilyPackage *package,
+                                       Vec *dependencies);
 
 /**
  *
