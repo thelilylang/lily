@@ -463,13 +463,16 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
       dependencies_order);
 
 #ifdef ENV_DEBUG
-	PRINTLN("\n====Precompile dependencies order({S})====\n", root_package->name);
+    PRINTLN("\n====Precompile dependencies order({S})====\n",
+            root_package->name);
 
-	for (Usize i = 0; i < dependencies_order->len; i++) {
-		LilyPackage *pkg = get__Vec(dependencies_order, i);
+    for (Usize i = 0; i < dependencies_order->len; i++) {
+        LilyPackage *pkg = get__Vec(dependencies_order, i);
 
-		PRINTLN("package name: {S}, dependencies len: {d}", pkg->name, pkg->package_dependencies->len);
-	}
+        PRINTLN("package name: {S}, dependencies len: {d}",
+                pkg->name,
+                pkg->package_dependencies->len);
+    }
 #endif
 
     // 3. Check for recursive import.
