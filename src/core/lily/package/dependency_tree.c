@@ -36,7 +36,8 @@ get_package_level__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
 
 /// @return Vec<LilyPackageDependencyTree* (&)>*
 static Vec *
-collect_dependencies__LilyPackageDependencyTree(LilyPackageDependencyTree *self);
+collect_dependencies__LilyPackageDependencyTree(
+  LilyPackageDependencyTree *self);
 
 CONSTRUCTOR(LilyPackageDependencyTree *,
             LilyPackageDependencyTree,
@@ -58,7 +59,7 @@ add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
                                        LilyPackage *package,
                                        Vec *file_dependencies)
 {
-	// TODO: add package
+    // TODO: add package
 }
 
 Usize
@@ -87,11 +88,11 @@ get_package_level__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
 Vec *
 collect_dependencies__LilyPackageDependencyTree(LilyPackageDependencyTree *self)
 {
-	Vec *dependencies = NEW(Vec);
+    Vec *dependencies = NEW(Vec);
 
-	// TODO: collect dependencies
+    // TODO: collect dependencies
 
-	return dependencies;
+    return dependencies;
 }
 
 DESTRUCTOR(LilyPackageDependencyTree, LilyPackageDependencyTree *self)
@@ -100,7 +101,7 @@ DESTRUCTOR(LilyPackageDependencyTree, LilyPackageDependencyTree *self)
       self->children->buffer, self->children->len, LilyPackageDependencyTree);
     FREE(Vec, self->children);
 
-	FREE(Vec, self->dependencies);
+    FREE(Vec, self->dependencies);
 
     lily_free(self);
 }
