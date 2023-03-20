@@ -27,6 +27,8 @@
 #include <core/lily/precompile.h>
 
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #ifdef ENV_DEBUG
@@ -47,6 +49,12 @@ static VARIANT_DESTRUCTOR(LilyImportValue, package, LilyImportValue *self);
 
 // Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_SELECT).
 static VARIANT_DESTRUCTOR(LilyImportValue, select, LilyImportValue *self);
+
+static void
+check_import_to_build_dependency_tree__LilyPrecompile(
+  LilyPrecompile *self,
+  LilyPackage *package,
+  LilyPackage *root_package);
 
 /// @param self Is the root LilyPrecompile.
 static void
@@ -354,6 +362,40 @@ DESTRUCTOR(LilyImport, LilyImport *self)
     lily_free(self);
 }
 
+void
+check_import_to_build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
+                                                      LilyPackage *package,
+                                                      LilyPackage *root_package)
+{
+    for (Usize i = 0; i < package->private_imports->len; i++) {
+        LilyImport *import = get__Vec(package->private_imports, i);
+        LilyImportValue *value = get__Vec(import->values, 0);
+
+        switch (value->kind) {
+            case LILY_IMPORT_VALUE_KIND_PACKAGE: {
+                LilyPackage *pkg = search_package_from_name__LilyPackage(
+                  root_package, value->package);
+
+                if (pkg) {
+                    push__Vec(package->package_dependencies, pkg);
+                } else {
+                    UNREACHABLE(
+                      "it is impossible that the package is not found");
+                }
+
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    for (Usize i = 0; i < package->sub_packages->len; i++) {
+        check_import_to_build_dependency_tree__LilyPrecompile(
+          self, get__Vec(package->sub_packages, i), root_package);
+    }
+}
+
 // 1. Check import (only with `@package`)
 // 2. Search package from import information.
 // 3. Push package in `file_dependencies` to `Vec*`.
@@ -366,37 +408,8 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
                                       LilyPackage *root_package)
 {
     // 1. Check import
-    for (Usize i = 0; i < package->private_imports->len; i++) {
-		LilyImport *import = get__Vec(package->private_imports, i);
-		LilyImportValue *value = get__Vec(import->values, 0);
-
-		switch (value->kind) {
-			case LILY_IMPORT_VALUE_KIND_PACKAGE: {
-				LilyPackage *pkg = search_package_from_name__LilyPackage(root_package, value->package);
-
-				if (pkg) {
-				} else {
-				// emit__Diagnostic(
-                //   NEW_VARIANT(
-                //     Diagnostic,
-                //     simple_lily_error,
-                //     self->file,
-                //     location,
-                //     NEW(LilyError,
-                //         LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE),
-                //     NULL,
-                //     NULL,
-                //     from__String("expected `}` to close the selector")),
-                //   &self->count_error);
-					// ERROR: package not found.
-				}
-
-				break;
-			}
-			default:
-				break;
-		}
-    }
+    check_import_to_build_dependency_tree__LilyPrecompile(
+      self, package, root_package);
 
     // 2. Search package from import information
 
@@ -909,7 +922,9 @@ run__LilyPrecompile(LilyPrecompile *self,
     // 5. Init dependency tree.
     if (!strcmp(self->package->name->buffer, root_package->name->buffer)) {
         self->dependency_tree = NEW(LilyPackageDependencyTree, NULL, NULL);
-        build_dependency_tree__LilyPrecompile(self, self->package, root_package);
+
+        build_dependency_tree__LilyPrecompile(
+          self, self->package, root_package);
     }
 
 #ifdef DEBUG_PRECOMPILE
