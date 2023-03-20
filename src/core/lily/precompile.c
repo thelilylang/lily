@@ -56,6 +56,17 @@ check_import_to_build_dependency_tree__LilyPrecompile(
   LilyPackage *package,
   LilyPackage *root_package);
 
+/// @return Vec<LilyPackage* (&)>*
+static Vec *
+collect_all_packages_to_build_dependency_tree__LilyPrecompile(
+  LilyPackage *package,
+  Vec *dependencies_order);
+
+// Sort dependencies_order by package->dependencies len.
+static void
+calculate_dependencies_order_to_build_dependency_tree__LilyPrecompile(
+  Vec *dependencies_order);
+
 /// @param self Is the root LilyPrecompile.
 static void
 build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
@@ -338,7 +349,7 @@ IMPL_FOR_DEBUG(to_string, LilyImport, const LilyImport *self)
 
     {
         char *s = format("}, location = {sa}, as = {S} }",
-                         to_string__Debug__Location(self->location),
+                         to_string__Debug__Location(&self->location),
                          self->as);
 
         PUSH_STR_AND_FREE(res, s);
@@ -396,30 +407,76 @@ check_import_to_build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
     }
 }
 
-// 1. Check import (only with `@package`)
-// 2. Search package from import information.
-// 3. Push package in `file_dependencies` to `Vec*`.
-// 4. Calculate dependencies.
-// 5. Check for recursive import.
-// 6. Add package with less dependencies.
+Vec *
+collect_all_packages_to_build_dependency_tree__LilyPrecompile(
+  LilyPackage *package,
+  Vec *dependencies_order)
+{
+    push__Vec(dependencies_order, package);
+
+    for (Usize i = 0; i < package->sub_packages->len; i++) {
+        dependencies_order =
+          collect_all_packages_to_build_dependency_tree__LilyPrecompile(
+            get__Vec(package->sub_packages, i), dependencies_order);
+    }
+
+    return dependencies_order;
+}
+
+void
+calculate_dependencies_order_to_build_dependency_tree__LilyPrecompile(
+  Vec *dependencies_order)
+{
+    for (Usize i = 0; i < dependencies_order->len; i++) {
+        for (Usize j = i + 1; j < dependencies_order->len; j++) {
+            if (CAST(LilyPackage *, get__Vec(dependencies_order, i))
+                  ->package_dependencies->len >
+                CAST(LilyPackage *, get__Vec(dependencies_order, j))
+                  ->package_dependencies->len) {
+                SWAP(dependencies_order->buffer[i],
+                     dependencies_order->buffer[j]);
+            }
+        }
+    }
+}
+
+// 1. Check import (only with `@package`).
+// 2. Calculate dependencies.
+// 3. Check for recursive import.
+// 4. Add package with less dependencies.
 void
 build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
                                       LilyPackage *package,
                                       LilyPackage *root_package)
 {
-    // 1. Check import
+    // 1. Check import.
     check_import_to_build_dependency_tree__LilyPrecompile(
       self, package, root_package);
 
-    // 2. Search package from import information
+    // 2. Calculate dependencies.
+    Vec *dependencies_order =
+      collect_all_packages_to_build_dependency_tree__LilyPrecompile(
+        package,
+        NEW(Vec)); // Vec<LilyPackage* (&)>*
 
-    // 3. Push package in `file_dependencies` to `Vec*`.
+    calculate_dependencies_order_to_build_dependency_tree__LilyPrecompile(
+      dependencies_order);
 
-    // 4. Calculate dependencies.
+#ifdef ENV_DEBUG
+	PRINTLN("\n====Precompile dependencies order({S})====\n", root_package->name);
 
-    // 5. Check for recursive import.
+	for (Usize i = 0; i < dependencies_order->len; i++) {
+		LilyPackage *pkg = get__Vec(dependencies_order, i);
 
-    // 6. Add package with less dependencies.
+		PRINTLN("package name: {S}, dependencies len: {d}", pkg->name, pkg->package_dependencies->len);
+	}
+#endif
+
+    // 3. Check for recursive import.
+
+    // 4. Add package with less dependencies.
+
+    FREE(Vec, dependencies_order);
 }
 
 Vec *
