@@ -459,6 +459,19 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
         package,
         NEW(Vec)); // Vec<LilyPackage* (&)>*
 
+#ifdef ENV_DEBUG
+    PRINTLN("\n====Precompile dependencies order before sort({S})====\n",
+            root_package->name);
+
+    for (Usize i = 0; i < dependencies_order->len; i++) {
+        LilyPackage *pkg = get__Vec(dependencies_order, i);
+
+        PRINTLN("package name: {S}, dependencies len: {d}",
+                pkg->name,
+                pkg->package_dependencies->len);
+    }
+#endif
+
     calculate_dependencies_order_to_build_dependency_tree__LilyPrecompile(
       dependencies_order);
 
