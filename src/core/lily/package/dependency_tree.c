@@ -47,6 +47,7 @@ CONSTRUCTOR(LilyPackageDependencyTree *,
     self->package = package;
     self->children = NEW(Vec);
     self->dependencies = dependencies;
+	self->is_done = false;
 
     return self;
 }
