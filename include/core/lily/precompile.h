@@ -141,6 +141,7 @@ DESTRUCTOR(LilyImportValue, LilyImportValue *self);
 typedef struct LilyImport
 {
     Vec *values; // Vec<LilyImportValue*>*
+    Location location;
     String *as;
 } LilyImport;
 
@@ -148,7 +149,11 @@ typedef struct LilyImport
  *
  * @brief Construct LilyImport type.
  */
-CONSTRUCTOR(LilyImport *, LilyImport, Vec *values, String *as);
+CONSTRUCTOR(LilyImport *,
+            LilyImport,
+            Vec *values,
+            Location location,
+            String *as);
 
 /**
  *
