@@ -184,7 +184,9 @@ DESTRUCTOR(LilyImport, LilyImport *self);
 typedef struct LilyPrecompile
 {
     LilyPreparserInfo *info;
-    LilyPackageDependencyTree *dependency_tree; // LilyPackageDependencyTree*?
+    Vec *dependency_trees; // Vec<LilyPackageDependencyTree*>*?
+    // LilyPackageDependencyTree *dependency_tree; //
+    // LilyPackageDependencyTree*?
     const File *file;
     LilyPackage *package;
     Usize count_error;
@@ -203,7 +205,7 @@ inline CONSTRUCTOR(LilyPrecompile,
                    const char *default_path)
 {
     return (LilyPrecompile){ .info = info,
-                             .dependency_tree = NULL,
+                             .dependency_trees = NULL,
                              .file = file,
                              .package = package,
                              .count_error = 0,
