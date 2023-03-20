@@ -70,7 +70,7 @@ collect_all_packages_to_build_dependency_tree__LilyPrecompile(
 // A: [B, C]
 // B: [A, C]
 // C: []
-// This case is a recursive import.
+// This case would find a recursive import.
 static void
 check_for_recursive_import_to_build_dependency_tree__LilyPrecompile(
   Vec *dependencies_order);
