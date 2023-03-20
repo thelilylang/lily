@@ -64,6 +64,9 @@ collect_all_packages_to_build_dependency_tree__LilyPrecompile(
   LilyPackage *package,
   Vec *dependencies_order);
 
+static void
+check_deps__LilyPrecompile(LilyPackage *package, String *rejected_package_name);
+
 // Check recursive import.
 // e.g.:
 // <Package name>: <Dependencies>
@@ -444,36 +447,30 @@ collect_all_packages_to_build_dependency_tree__LilyPrecompile(
 }
 
 void
+check_deps__LilyPrecompile(LilyPackage *package, String *rejected_package_name)
+{
+    if (!strcmp(package->name->buffer, rejected_package_name->buffer)) {
+        // TODO: add error with diagnostic
+        EMIT_ERROR("resursive import is occured");
+        exit(1);
+    }
+
+    for (Usize i = 0; i < package->package_dependencies->len; i++) {
+        check_deps__LilyPrecompile(get__Vec(package->package_dependencies, i),
+                                   rejected_package_name);
+    }
+}
+
+void
 check_for_recursive_import_to_build_dependency_tree__LilyPrecompile(
   Vec *dependencies_order)
 {
     for (Usize i = 0; i < dependencies_order->len; i++) {
-        for (Usize j = i + 1; j < dependencies_order->len; j++) {
-            LilyPackage *p1 = get__Vec(dependencies_order, i);
-            LilyPackage *p2 = get__Vec(dependencies_order, j);
+        LilyPackage *pkg = get__Vec(dependencies_order, i);
 
-            bool found_in_p1 = false;
-
-            for (Usize k = 0; k < p1->package_dependencies->len; k++) {
-                if (!strcmp(
-                      p2->name->buffer,
-                      CAST(LilyPackage *, get__Vec(p1->package_dependencies, k))
-                        ->name->buffer)) {
-                    found_in_p1 = true;
-                }
-            }
-
-            for (Usize k = 0; k < p2->package_dependencies->len; k++) {
-                if (!strcmp(
-                      p1->name->buffer,
-                      CAST(LilyPackage *, get__Vec(p2->package_dependencies, k))
-                        ->name->buffer) &&
-                    found_in_p1) {
-                    // TODO: add error with diagnostic
-                    EMIT_ERROR("recursive import is occured");
-                    exit(1);
-                }
-            }
+        for (Usize j = 0; j < pkg->package_dependencies->len; j++) {
+            check_deps__LilyPrecompile(get__Vec(pkg->package_dependencies, j),
+                                       pkg->name);
         }
     }
 }
@@ -550,6 +547,10 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
 #endif
 
     // 4. Add package with less dependencies.
+
+    // 4.1 Push all packages with no package dependencies.
+    for (Usize i = 0; i < dependencies_order->len; i++) {
+    }
 
     FREE(Vec, dependencies_order);
 }
