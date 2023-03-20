@@ -296,11 +296,16 @@ DESTRUCTOR(LilyImportValue, LilyImportValue *self)
     }
 }
 
-CONSTRUCTOR(LilyImport *, LilyImport, Vec *values, String *as)
+CONSTRUCTOR(LilyImport *,
+            LilyImport,
+            Vec *values,
+            Location location,
+            String *as)
 {
     LilyImport *self = lily_malloc(sizeof(LilyImport));
 
     self->values = values;
+    self->location = location;
     self->as = as;
 
     return self;
@@ -323,9 +328,13 @@ IMPL_FOR_DEBUG(to_string, LilyImport, const LilyImport *self)
         }
     }
 
-    push_str__String(res, " }, as = { ");
-    push_str__String(res, self->as->buffer);
-    push_str__String(res, " }");
+    {
+        char *s = format("}, location = {sa}, as = {S} }",
+                         to_string__Debug__Location(self->location),
+                         self->as);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
@@ -682,7 +691,7 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
         FREE(String, rest_import_value);
     }
 
-    return NEW(LilyImport, values, import->as);
+    return NEW(LilyImport, values, import->location, import->as);
 }
 
 LilyPackage *
