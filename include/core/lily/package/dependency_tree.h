@@ -47,9 +47,9 @@ typedef struct LilyPackageDependencyTree LilyPackageDependencyTree;
 
 struct LilyPackageDependencyTree
 {
-    LilyPackage *current; // LilyPackage* (&)
+    LilyPackage *package; // LilyPackage* (&)
     Vec *children;        // Vec<LilyPackageDependencyTree*>*
-    Vec *dependencies;    // Vec<LilyPackageDependencyTree*>* (&)
+    Vec *dependencies;    // Vec<LilyPackageDependencyTree* (&)>*
 };
 
 /**
@@ -58,18 +58,18 @@ struct LilyPackageDependencyTree
  */
 CONSTRUCTOR(LilyPackageDependencyTree *,
             LilyPackageDependencyTree,
-            LilyPackage *current,
-            Vec *children,
+            LilyPackage *package,
             Vec *dependencies);
 
 /**
  *
- * @brief Add package to dpeendency tree.
+ * @brief Add package to dependency tree.
+ * @param file_dependencies Vec<LilyPackage* (&)>*
  */
 void
 add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
                                        LilyPackage *package,
-                                       Vec *dependencies);
+                                       Vec *file_dependencies);
 
 /**
  *
