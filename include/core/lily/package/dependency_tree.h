@@ -53,7 +53,7 @@ typedef struct LilyPackageDependencyTree
     LilyPackage *package; // LilyPackage* (&)
     Vec *children;        // Vec<LilyPackageDependencyTree*>*
     Vec *dependencies;    // Vec<LilyPackageDependencyTree* (&)>*?
-	bool is_done;
+    bool is_done;
 } LilyPackageDependencyTree;
 
 /**
