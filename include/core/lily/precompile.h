@@ -27,6 +27,7 @@
 
 #include <base/macros.h>
 
+#include <core/lily/package/dependency_tree.h>
 #include <core/lily/preparser.h>
 
 typedef struct LilyDumpConfig LilyDumpConfig;
@@ -178,6 +179,7 @@ DESTRUCTOR(LilyImport, LilyImport *self);
 typedef struct LilyPrecompile
 {
     LilyPreparserInfo *info;
+    LilyPackageDependencyTree *dependency_tree; // LilyPackageDependencyTree*?
     const File *file;
     LilyPackage *package;
     Usize count_error;
@@ -196,6 +198,7 @@ inline CONSTRUCTOR(LilyPrecompile,
                    const char *default_path)
 {
     return (LilyPrecompile){ .info = info,
+                             .dependency_tree = NULL,
                              .file = file,
                              .package = package,
                              .count_error = 0,

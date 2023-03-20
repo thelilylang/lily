@@ -48,6 +48,12 @@ static VARIANT_DESTRUCTOR(LilyImportValue, package, LilyImportValue *self);
 // Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_SELECT).
 static VARIANT_DESTRUCTOR(LilyImportValue, select, LilyImportValue *self);
 
+/// @param self Is the root LilyPrecompile.
+static void
+build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
+                                      LilyPackage *package,
+                                      LilyPackage *root_package);
+
 /// @return Vec<LilyImportValue>
 static Vec *
 precompile_import_access__LilyPrecompile(LilyPrecompile *self,
@@ -337,6 +343,61 @@ DESTRUCTOR(LilyImport, LilyImport *self)
     FREE(Vec, self->values);
     FREE(String, self->as);
     lily_free(self);
+}
+
+// 1. Check import (only with `@package`)
+// 2. Search package from import information.
+// 3. Push package in `file_dependencies` to `Vec*`.
+// 4. Calculate dependencies.
+// 5. Check for recursive import.
+// 6. Add package with less dependencies.
+void
+build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
+                                      LilyPackage *package,
+                                      LilyPackage *root_package)
+{
+    // 1. Check import
+    for (Usize i = 0; i < package->private_imports->len; i++) {
+		LilyImport *import = get__Vec(package->private_imports, i);
+		LilyImportValue *value = get__Vec(import->values, 0);
+
+		switch (value->kind) {
+			case LILY_IMPORT_VALUE_KIND_PACKAGE: {
+				LilyPackage *pkg = search_package_from_name__LilyPackage(root_package, value->package);
+
+				if (pkg) {
+				} else {
+				// emit__Diagnostic(
+                //   NEW_VARIANT(
+                //     Diagnostic,
+                //     simple_lily_error,
+                //     self->file,
+                //     location,
+                //     NEW(LilyError,
+                //         LILY_ERROR_KIND_UNEXPECTED_CHARACTER_IN_IMPORT_VALUE),
+                //     NULL,
+                //     NULL,
+                //     from__String("expected `}` to close the selector")),
+                //   &self->count_error);
+					// ERROR: package not found.
+				}
+
+				break;
+			}
+			default:
+				break;
+		}
+    }
+
+    // 2. Search package from import information
+
+    // 3. Push package in `file_dependencies` to `Vec*`.
+
+    // 4. Calculate dependencies.
+
+    // 5. Check for recursive import.
+
+    // 6. Add package with less dependencies.
 }
 
 Vec *
@@ -834,6 +895,12 @@ run__LilyPrecompile(LilyPrecompile *self,
                     get__Vec(self->info->package->sub_packages, i),
                     dump_config,
                     root_package));
+    }
+
+    // 5. Init dependency tree.
+    if (!strcmp(self->package->name->buffer, root_package->name->buffer)) {
+        self->dependency_tree = NEW(LilyPackageDependencyTree, NULL, NULL);
+        build_dependency_tree__LilyPrecompile(self, self->package, root_package);
     }
 
 #ifdef DEBUG_PRECOMPILE
