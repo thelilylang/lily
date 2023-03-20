@@ -156,19 +156,38 @@ compile__LilyPackage(const CompileConfig *config,
 }
 
 const File *
-get_file_from_filename__LilyPackage(const LilyPackage *package,
+get_file_from_filename__LilyPackage(const LilyPackage *self,
                                     const char *filename)
 {
-    if (filename == package->file.name) {
-        return &package->file;
+    if (!strcmp(filename, self->file.name)) {
+        return &self->file;
     }
 
-    for (Usize i = 0; i < package->sub_packages->len; i++) {
+    for (Usize i = 0; i < self->sub_packages->len; i++) {
         const File *f = get_file_from_filename__LilyPackage(
-          get__Vec(package->sub_packages, i), filename);
+          get__Vec(self->sub_packages, i), filename);
 
         if (f) {
             return f;
+        }
+    }
+
+    return NULL;
+}
+
+LilyPackage *
+search_package_from_name__LilyPackage(LilyPackage *self, String *name)
+{
+    if (!strcmp(name->buffer, self->name->buffer)) {
+        return self;
+    }
+
+    for (Usize i = 0; i < self->sub_packages->len; i++) {
+        LilyPackage *pkg = search_package_from_name__LilyPackage(
+          get__Vec(self->sub_packages, i), name);
+
+        if (pkg) {
+            return pkg;
         }
     }
 

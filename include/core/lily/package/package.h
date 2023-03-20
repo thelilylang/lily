@@ -120,9 +120,23 @@ compile__LilyPackage(const CompileConfig *config,
                      enum LilyPackageStatus status,
                      const char *default_path);
 
+/**
+ *
+ * @brief Look for the name of the file among all the packages and return the
+ * File.
+ */
 const File *
-get_file_from_filename__LilyPackage(const LilyPackage *package,
+get_file_from_filename__LilyPackage(const LilyPackage *self,
                                     const char *filename);
+
+/**
+ *
+ * @brief Search for the package from the name and return LilyPackage if found
+ * otherwise return NULL.
+ * @return LilyPackage*?
+ */
+LilyPackage *
+search_package_from_name__LilyPackage(LilyPackage *self, String *name);
 
 /**
  *
