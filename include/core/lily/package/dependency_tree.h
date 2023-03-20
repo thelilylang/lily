@@ -43,14 +43,12 @@
                      /       \             /       \
                 Package3  Package4     Package5  Package6
 */
-typedef struct LilyPackageDependencyTree LilyPackageDependencyTree;
-
-struct LilyPackageDependencyTree
+typedef struct LilyPackageDependencyTree
 {
     LilyPackage *package; // LilyPackage* (&)
     Vec *children;        // Vec<LilyPackageDependencyTree*>*
     Vec *dependencies;    // Vec<LilyPackageDependencyTree* (&)>*
-};
+} LilyPackageDependencyTree;
 
 /**
  *

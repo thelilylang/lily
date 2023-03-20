@@ -28,16 +28,12 @@
 
 #include <string.h>
 
-// Return 0 if is not found otherwise greater or equal than 1.
-static Usize
-get_package_level__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
-                                             LilyPackage *package,
-                                             Usize level);
-
-/// @return Vec<LilyPackageDependencyTree* (&)>*
+/// @return Vec<LilyPackageDependencyTree* (&)>*?
 static Vec *
 collect_dependencies__LilyPackageDependencyTree(
-  LilyPackageDependencyTree *self);
+  LilyPackageDependencyTree *self,
+  LilyPackage *package,
+  LilyPackageDependencyTree *previous);
 
 CONSTRUCTOR(LilyPackageDependencyTree *,
             LilyPackageDependencyTree,
@@ -62,37 +58,33 @@ add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
     // TODO: add package
 }
 
-Usize
-get_package_level__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
-                                             LilyPackage *package,
-                                             Usize level)
+Vec *
+collect_dependencies__LilyPackageDependencyTree(
+  LilyPackageDependencyTree *self,
+  LilyPackage *package,
+  LilyPackageDependencyTree *previous)
 {
     // 1. Check if package is found.
     if (!strcmp(self->package->name->buffer, package->name->buffer)) {
-        return 1;
+        Vec *dependencies = NEW(Vec);
+
+        append__Vec(dependencies, previous->dependencies);
+        push__Vec(dependencies, previous);
+
+        return dependencies;
     }
 
     // 2. Search package name.
     for (Usize i = 0; i < self->children->len; i++) {
-        level += get_package_level__LilyPackageDependencyTree(
-          get__Vec(self->children, i), package, 0);
+        Vec *dependencies = collect_dependencies__LilyPackageDependencyTree(
+          get__Vec(self->children, i), package, self);
 
-        if (level != 0) {
-            return 1;
+        if (dependencies) {
+            return dependencies;
         }
     }
 
-    return level;
-}
-
-Vec *
-collect_dependencies__LilyPackageDependencyTree(LilyPackageDependencyTree *self)
-{
-    Vec *dependencies = NEW(Vec);
-
-    // TODO: collect dependencies
-
-    return dependencies;
+    return NULL;
 }
 
 DESTRUCTOR(LilyPackageDependencyTree, LilyPackageDependencyTree *self)
