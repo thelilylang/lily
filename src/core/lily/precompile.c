@@ -22,9 +22,12 @@
  * SOFTWARE.
  */
 
+#include <base/file.h>
+
 #include <cli/emit.h>
 
 #include <core/lily/lily.h>
+#include <core/lily/package/default_path.h>
 #include <core/lily/package/package.h>
 #include <core/lily/precompile.h>
 
@@ -866,24 +869,53 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
 
     APPEND_AND_FREE(pkg_filename, pkg_filename_join);
 
-    push_str__String(pkg_filename, ".lily");
+	// If it's a directory. Check if there is `pkg.lily` in the directory.
+    if (is_directory__Path(pkg_filename->buffer)) {
+#ifdef LILY_WINDOWS_OS
+        push_str__String(pkg_filename, "\\pkg.lily");
+#else
+        push_str__String(pkg_filename, "/pkg.lily");
+#endif
 
-    LilyPackage *res = NEW(LilyPackage,
-                           sub_pkg->name,
-                           sub_pkg->visibility,
-                           pkg_filename->buffer,
-                           LILY_PACKAGE_STATUS_NORMAL,
-                           self->default_path);
+        char *default_path = generate_default_path(pkg_filename->buffer);
 
-    run__LilyScanner(&res->scanner, dump_config->dump_scanner);
-    run__LilyPreparser(&res->preparser, &res->preparser_info);
-    run__LilyPrecompile(&res->precompile, dump_config, root_package);
+        LilyPackage *res = NEW(LilyPackage,
+                               sub_pkg->name,
+                               sub_pkg->visibility,
+                               pkg_filename->buffer,
+                               LILY_PACKAGE_STATUS_SUB_MAIN,
+                               default_path);
 
-    FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
-    FREE(Vec, split_pkg_name);
-    lily_free(pkg_filename);
+        run__LilyScanner(&res->scanner, dump_config->dump_scanner);
+        run__LilyPreparser(&res->preparser, &res->preparser_info);
+        run__LilyPrecompile(&res->precompile, dump_config, root_package);
 
-    return res;
+        FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
+        FREE(Vec, split_pkg_name);
+        lily_free(pkg_filename);
+        lily_free(default_path);
+
+        return res;
+    } else {
+        push_str__String(pkg_filename, ".lily");
+
+        LilyPackage *res = NEW(LilyPackage,
+                               sub_pkg->name,
+                               sub_pkg->visibility,
+                               pkg_filename->buffer,
+                               LILY_PACKAGE_STATUS_NORMAL,
+                               self->default_path);
+
+        run__LilyScanner(&res->scanner, dump_config->dump_scanner);
+        run__LilyPreparser(&res->preparser, &res->preparser_info);
+        run__LilyPrecompile(&res->precompile, dump_config, root_package);
+
+        FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
+        FREE(Vec, split_pkg_name);
+        lily_free(pkg_filename);
+
+        return res;
+    }
 }
 
 void
