@@ -869,7 +869,7 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
 
     APPEND_AND_FREE(pkg_filename, pkg_filename_join);
 
-	// If it's a directory. Check if there is `pkg.lily` in the directory.
+    // If it's a directory. Check if there is `pkg.lily` in the directory.
     if (is_directory__Path(pkg_filename->buffer)) {
 #ifdef LILY_WINDOWS_OS
         push_str__String(pkg_filename, "\\pkg.lily");
