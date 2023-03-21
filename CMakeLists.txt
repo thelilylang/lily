@@ -24,6 +24,7 @@ set(BASE_SRC
 	src/base/hash_set.c
 	src/base/itoa.c
 	src/base/optional.c
+	src/base/stack.c
 	src/base/str.c
 	src/base/string.c
   	src/base/vec.c)
