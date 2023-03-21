@@ -102,6 +102,7 @@ DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self);
 typedef struct LilyPreparserSubPackage
 {
     String *name;
+    String *global_name;
     enum LilyVisibility visibility;
 } LilyPreparserSubPackage;
 
@@ -1145,7 +1146,7 @@ typedef struct LilyPreparserInfo
  *
  * @brief Construct LilyPreparserInfo type.
  */
-inline CONSTRUCTOR(LilyPreparserInfo, LilyPreparserInfo, String *package_name);
+CONSTRUCTOR(LilyPreparserInfo, LilyPreparserInfo, String *package_name);
 
 /**
  *
@@ -1160,16 +1161,18 @@ typedef struct LilyPreparser
     LilyToken *current;
     Usize position;
     Usize count_error;
+    const char *default_package_access; // const char*?
 } LilyPreparser;
 
 /**
  *
  * @brief Construct LilyPreparser type.
  */
-inline CONSTRUCTOR(LilyPreparser,
-                   LilyPreparser,
-                   const File *file,
-                   const Vec *tokens);
+CONSTRUCTOR(LilyPreparser,
+            LilyPreparser,
+            const File *file,
+            const Vec *tokens,
+            const char *default_package_access);
 
 /**
  *

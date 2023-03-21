@@ -57,7 +57,8 @@ static CONSTRUCTOR(LilyPreparserMacro *,
 static CONSTRUCTOR(LilyPreparserSubPackage *,
                    LilyPreparserSubPackage,
                    enum LilyVisibility visibility,
-                   String *name);
+                   String *name,
+                   String *global_name);
 
 // Construct LilyPreparserPackage type.
 static CONSTRUCTOR(LilyPreparserPackage *, LilyPreparserPackage, String *name);
@@ -1324,12 +1325,14 @@ DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self)
 CONSTRUCTOR(LilyPreparserSubPackage *,
             LilyPreparserSubPackage,
             enum LilyVisibility visibility,
-            String *name)
+            String *name,
+            String *global_name)
 {
     LilyPreparserSubPackage *self =
       lily_malloc(sizeof(LilyPreparserSubPackage));
 
     self->name = name;
+    self->global_name = global_name;
     self->visibility = visibility;
 
     return self;
@@ -1343,13 +1346,17 @@ IMPL_FOR_DEBUG(to_string,
 {
     switch (self->visibility) {
         case LILY_VISIBILITY_PRIVATE:
-            return format("LilyPreparserSubPackage{{ name = {S}, visibility = "
+            return format("LilyPreparserSubPackage{{ name = {S}, global_name = "
+                          "{S}, visibility = "
                           "LILY_VISIBILITY_PRIVATE }",
-                          self->name);
+                          self->name,
+                          self->global_name);
         case LILY_VISIBILITY_PUBLIC:
-            return format("LilyPreparserSubPackage{{ name = {S}, visibility = "
+            return format("LilyPreparserSubPackage{{ name = {S}, global_name = "
+                          "{S}, visibility = "
                           "LILY_VISIBILITY_PUBLIC }",
-                          self->name);
+                          self->name,
+                          self->global_name);
         default:
             UNREACHABLE("static visibility is not expected in this case");
     }
@@ -1368,6 +1375,7 @@ DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self)
 {
 #ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
+    FREE(String, self->global_name);
 #endif
 
     lily_free(self);
@@ -5184,6 +5192,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
            self->current->kind != LILY_TOKEN_KIND_EOF) {
 
         String *sub_pkg_name = NULL;
+        String *sub_pkg_global_name = NULL;
         enum LilyVisibility visibility = LILY_VISIBILITY_PRIVATE;
 
         switch (self->current->kind) {
@@ -5205,12 +5214,27 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 
                 switch (self->current->kind) {
                     case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-                        sub_pkg_name =
-                          clone__String(self->current->identifier_normal);
+                        if (self->default_package_access) {
+                            sub_pkg_name =
+                              clone__String(self->current->identifier_normal);
+
+                            sub_pkg_global_name = from__String(
+                              (char *)self->default_package_access);
+                            push__String(sub_pkg_global_name, '.');
+                            append__String(sub_pkg_global_name,
+                                           self->current->identifier_normal);
+                        } else {
+                            sub_pkg_name =
+                              clone__String(self->current->identifier_normal);
+                            sub_pkg_global_name =
+                              clone__String(self->current->identifier_normal);
+                        }
+
                         next_token__LilyPreparser(self);
 
                         while (self->current->kind == LILY_TOKEN_KIND_DOT) {
                             push_str__String(sub_pkg_name, ".");
+                            push_str__String(sub_pkg_global_name, ".");
 
                             next_token__LilyPreparser(self);
 
@@ -5218,6 +5242,9 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                                 case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
                                     push_str__String(
                                       sub_pkg_name,
+                                      self->current->identifier_normal->buffer);
+                                    push_str__String(
+                                      sub_pkg_global_name,
                                       self->current->identifier_normal->buffer);
                                     next_token__LilyPreparser(self);
 
@@ -5303,7 +5330,10 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
         }
 
         push__Vec(info->package->sub_packages,
-                  NEW(LilyPreparserSubPackage, visibility, sub_pkg_name));
+                  NEW(LilyPreparserSubPackage,
+                      visibility,
+                      sub_pkg_name,
+                      sub_pkg_global_name));
     }
 
     next_token__LilyPreparser(self);
@@ -10668,13 +10698,18 @@ DESTRUCTOR(LilyPreparserInfo, const LilyPreparserInfo *self)
     FREE(LilyPreparserPackage, self->package);
 }
 
-CONSTRUCTOR(LilyPreparser, LilyPreparser, const File *file, const Vec *tokens)
+CONSTRUCTOR(LilyPreparser,
+            LilyPreparser,
+            const File *file,
+            const Vec *tokens,
+            const char *default_package_access)
 {
     return (LilyPreparser){ .file = file,
                             .tokens = tokens,
                             .current = NULL,
                             .position = 0,
-                            .count_error = 0 };
+                            .count_error = 0,
+                            .default_package_access = default_package_access };
 }
 
 void
