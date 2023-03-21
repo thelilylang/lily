@@ -25,11 +25,30 @@
 #ifndef LILY_CORE_LILY_PACKAGE_LIBRARY_H
 #define LILY_CORE_LILY_PACKAGE_LIBRARY_H
 
+#include <base/macros.h>
 #include <base/string.h>
+
+typedef struct LilyPackage LilyPackage;
 
 typedef struct LilyLibrary
 {
     String *name;
+	String *version;
+	String *url; // String*?; URL to download the library
+	String *path; // path (in the PC) to find the library
+	LilyPackage *package;
 } LilyLibrary;
+
+/**
+ *
+ * @brief Construct LilyLibrary type.
+ */
+CONSTRUCTOR(LilyLibrary *, LilyLibrary, String *name, String *version, String *url, String *path, LilyPackage *package);
+
+/**
+ *
+ * @brief Free LilyLibrary type.
+ */
+DESTRUCTOR(LilyLibrary, LilyLibrary *self);
 
 #endif // LILY_CORE_LILY_PACKAGE_LIBRARY_H

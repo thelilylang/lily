@@ -22,4 +22,35 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
+
 #include <core/lily/package/library.h>
+#include <core/lily/package/package.h>
+
+CONSTRUCTOR(LilyLibrary *, LilyLibrary, String *name, String *version, String *url, String *path, LilyPackage *package)
+{
+	LilyLibrary *self = lily_malloc(sizeof(LilyLibrary));
+
+	self->name = name;
+	self->version = version;
+	self->url = url;
+	self->path = path;
+	self->package = package;
+	
+	return self;
+}
+
+DESTRUCTOR(LilyLibrary, LilyLibrary *self)
+{
+	FREE(String, self->name);
+	FREE(String, self->version);
+
+	if (self->url) {
+		FREE(String, self->url);
+	}
+
+	FREE(String, self->path);
+	FREE(LilyPackage, self->package);
+
+	lily_free(self);
+}
