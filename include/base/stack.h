@@ -48,9 +48,9 @@ typedef struct Stack
 CONSTRUCTOR(Stack *, Stack, Usize max_size);
 
 /**
- * 
+ *
  * @brief Check if the stack is empty.
-*/
+ */
 bool
 empty__Stack(const Stack *self);
 

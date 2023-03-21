@@ -18,9 +18,9 @@ test_push__Stack()
 {
     Stack *s = NEW(Stack, 1024);
 
-    push__Stack(s, (int*)10);
-    push__Stack(s, (int*)20);
-    push__Stack(s, (int*)30);
+    push__Stack(s, (int *)10);
+    push__Stack(s, (int *)20);
+    push__Stack(s, (int *)30);
 
     FREE(Stack, s);
 }
@@ -30,13 +30,13 @@ test_pop__Stack()
 {
     Stack *s = NEW(Stack, 1024);
 
-    push__Stack(s, (int*)10);
-    push__Stack(s, (int*)20);
-    push__Stack(s, (int*)30);
+    push__Stack(s, (int *)10);
+    push__Stack(s, (int *)20);
+    push__Stack(s, (int *)30);
 
-    ASSERT_EQ(pop__Stack(s), (int*)30);
-    ASSERT_EQ(pop__Stack(s), (int*)20);
-    ASSERT_EQ(pop__Stack(s), (int*)10);
+    ASSERT_EQ(pop__Stack(s), (int *)30);
+    ASSERT_EQ(pop__Stack(s), (int *)20);
+    ASSERT_EQ(pop__Stack(s), (int *)10);
 
     FREE(Stack, s);
 }
@@ -46,9 +46,9 @@ test_empty__Stack()
 {
     Stack *s = NEW(Stack, 1024);
 
-    push__Stack(s, (int*)10);
-    push__Stack(s, (int*)20);
-    push__Stack(s, (int*)30);
+    push__Stack(s, (int *)10);
+    push__Stack(s, (int *)20);
+    push__Stack(s, (int *)30);
 
     pop__Stack(s);
     pop__Stack(s);
