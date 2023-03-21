@@ -215,6 +215,9 @@ ungrow__Vec(Vec *self)
 
 DESTRUCTOR(Vec, Vec *self)
 {
-    lily_free(self->buffer);
+    if (self->buffer) {
+        lily_free(self->buffer);
+    }
+
     lily_free(self);
 }
