@@ -37,7 +37,4 @@ typedef struct LilyAstBodyFunItem {
 	enum LilyAstBodyFunItemKind kind;
 } LilyAstBodyFunItem;
 
-typedef struct LilyAstBodyFun {
-} LilyAstBodyFun;
-
 #endif // LILY_CORE_LILY_AST_BODY_FUN_H
