@@ -38,8 +38,9 @@
 
 enum LilyPackageStatus
 {
-    LILY_PACKAGE_STATUS_MAIN, // Contains the main function
-    LILY_PACKAGE_STATUS_NORMAL
+    LILY_PACKAGE_STATUS_MAIN, // Can contain the main function
+    LILY_PACKAGE_STATUS_NORMAL,
+    LILY_PACKAGE_STATUS_SUB_MAIN,
 };
 
 typedef struct LilyDumpConfig
