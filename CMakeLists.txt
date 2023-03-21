@@ -60,6 +60,13 @@ set(CORE_SRC
 	src/core/cc/warning.c
 	src/core/cpp/error.c
 	src/core/cpp/warning.c
+	src/core/lily/ast/body/class.c
+	src/core/lily/ast/body/enum.c
+	src/core/lily/ast/body/enum_object.c
+	src/core/lily/ast/body/fun.c
+	src/core/lily/ast/body/record.c
+	src/core/lily/ast/body/record_object.c
+	src/core/lily/ast/body/trait.c
 	src/core/lily/ast/decl/alias.c
 	src/core/lily/ast/decl/class.c
 	src/core/lily/ast/decl/enum.c
@@ -93,10 +100,13 @@ set(CORE_SRC
 	src/core/lily/ast/stmt/return.c
 	src/core/lily/ast/stmt/variable.c
 	src/core/lily/ast/stmt/while.c
+	src/core/lily/ast/attribute.c
 	src/core/lily/ast/data_type.c
 	src/core/lily/ast/decl.c
 	src/core/lily/ast/expr.c
+	src/core/lily/ast/field.c
 	src/core/lily/ast/stmt.c
+	src/core/lily/ast/variant.c
 	src/core/lily/checked/decl/alias.c
 	src/core/lily/checked/decl/class.c
 	src/core/lily/checked/decl/enum.c
