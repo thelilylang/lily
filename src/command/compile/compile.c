@@ -37,11 +37,8 @@ run__Compile(const CompileConfig *config)
     // Get the default path
     char *default_path = generate_default_path((char *)config->filename);
 
-    LilyPackage *pkg = compile__LilyPackage(config,
-                                            NULL,
-                                            LILY_VISIBILITY_PUBLIC,
-                                            LILY_PACKAGE_STATUS_MAIN,
-                                            default_path);
+    LilyPackage *pkg = compile__LilyPackage(
+      config, LILY_VISIBILITY_PUBLIC, LILY_PACKAGE_STATUS_MAIN, default_path);
 
     lily_free(default_path);
 
