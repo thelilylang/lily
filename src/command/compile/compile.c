@@ -34,34 +34,8 @@
 void
 run__Compile(const CompileConfig *config)
 {
-    char *default_path = NULL;
-
     // Get the default path
-    {
-        String *filename_string = from__String((char *)config->filename);
-
-#ifdef LILY_WINDOWS_OS
-        Vec *filename_string_split = split__String(filename_string, '\\');
-#else
-        Vec *filename_string_split = split__String(filename_string, '/');
-#endif
-
-        FREE(String, pop__Vec(filename_string_split));
-
-#ifdef LILY_WINDOWS_OS
-        String *filename_string_joined = join__Vec(filename_string_split, '\\');
-#else
-        String *filename_string_joined = join__Vec(filename_string_split, '/');
-#endif
-
-        default_path = filename_string_joined->buffer;
-
-        FREE(String, filename_string);
-        FREE_BUFFER_ITEMS(
-          filename_string_split->buffer, filename_string_split->len, String);
-        FREE(Vec, filename_string_split);
-        lily_free(filename_string_joined);
-    }
+    char *default_path = generate_default_path((char *)config->filename);
 
     LilyPackage *pkg = compile__LilyPackage(config,
                                             NULL,
