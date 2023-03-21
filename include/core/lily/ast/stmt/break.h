@@ -29,15 +29,14 @@
 #include <base/platform.h>
 #include <base/string.h>
 
-typedef struct LilyAstStmtBreak {
-	String *name;
+typedef struct LilyAstStmtBreak
+{
+    String *name;
 } LilyAstStmtBreak;
 
 inline CONSTRUCTOR(LilyAstStmtBreak, LilyAstStmtBreak, String *name)
 {
-	return (LilyAstStmtBreak){
-		.name = name
-	};
+    return (LilyAstStmtBreak){ .name = name };
 }
 
 /**
@@ -50,8 +49,9 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtBreak, const LilyAstStmtBreak *self);
 #endif
 
-inline DESTRUCTOR(LilyAstStmtBreak, const LilyAstStmtBreak *self) {
-	FREE_MOVE(self->name, FREE(String, self->name));
+inline DESTRUCTOR(LilyAstStmtBreak, const LilyAstStmtBreak *self)
+{
+    FREE_MOVE(self->name, FREE(String, self->name));
 }
 
 #endif // LILY_CORE_LILY_AST_STMT_BREAK_H
