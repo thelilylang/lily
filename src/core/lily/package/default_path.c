@@ -24,14 +24,14 @@
 
 #include <base/alloc.h>
 #include <base/new.h>
-#include <base/string.h>
 #include <base/platform.h>
+#include <base/string.h>
 #include <base/vec.h>
 
 #include <core/lily/package/default_path.h>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 char *
 generate_default_path(char *filename_base)
