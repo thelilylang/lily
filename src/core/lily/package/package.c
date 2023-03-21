@@ -224,8 +224,13 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(Vec, self->package_dependencies);
     FREE(Vec, self->lib_dependencies);
 
-    if (self->status == LILY_PACKAGE_STATUS_NORMAL) {
-        lily_free(self->file.name);
+    switch (self->status) {
+        case LILY_PACKAGE_STATUS_NORMAL:
+        case LILY_PACKAGE_STATUS_SUB_MAIN:
+            lily_free(self->file.name);
+            break;
+        default:
+            break;
     }
 
     FREE(File, &self->file);
