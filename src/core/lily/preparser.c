@@ -9613,8 +9613,6 @@ preparse_object__LilyPreparser(LilyPreparser *self)
             }                                                                  \
                                                                                \
             switch (self->current->kind) {                                     \
-                next_token__LilyPreparser(self);                               \
-                                                                               \
                 case LILY_TOKEN_KIND_PLUS:                                     \
                     switch (self->current->kind) {                             \
                         case token_kind:                                       \
