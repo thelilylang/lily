@@ -33,17 +33,23 @@ typedef struct LilyPackage LilyPackage;
 typedef struct LilyLibrary
 {
     String *name;
-	String *version;
-	String *url; // String*?; URL to download the library
-	String *path; // path (in the PC) to find the library
-	LilyPackage *package;
+    String *version;
+    String *url;  // String*?; URL to download the library
+    String *path; // path (in the PC) to find the library
+    LilyPackage *package;
 } LilyLibrary;
 
 /**
  *
  * @brief Construct LilyLibrary type.
  */
-CONSTRUCTOR(LilyLibrary *, LilyLibrary, String *name, String *version, String *url, String *path, LilyPackage *package);
+CONSTRUCTOR(LilyLibrary *,
+            LilyLibrary,
+            String *name,
+            String *version,
+            String *url,
+            String *path,
+            LilyPackage *package);
 
 /**
  *
