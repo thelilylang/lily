@@ -184,6 +184,7 @@ set(CORE_SRC
 	src/core/lily/ir/cpp/generator.c
 	src/core/lily/ir/llvm/generator.c
 	src/core/lily/ir/llvm/linker.c
+	src/core/lily/package/default_path.c
 	src/core/lily/package/dependency_tree.c
 	src/core/lily/package/library.c
 	src/core/lily/package/package.c
