@@ -26,7 +26,7 @@
 #define LILY_CORE_LILY_AST_STMT_BREAK_H
 
 #include <base/new.h>
-#include <base/platform.h>
+#include <base/macros.h>
 #include <base/string.h>
 
 typedef struct LilyAstStmtBreak
