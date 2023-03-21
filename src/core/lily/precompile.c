@@ -526,8 +526,9 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
     for (Usize i = 0; i < dependencies_order->len; i++) {
         LilyPackage *pkg = get__Vec(dependencies_order, i);
 
-        PRINTLN("package name: {S}, dependencies len: {d}",
+        PRINTLN("package name: {S}, global_name: {S}, dependencies len: {d}",
                 pkg->name,
+                pkg->global_name,
                 pkg->package_dependencies->len);
     }
 #endif
@@ -543,8 +544,9 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
     for (Usize i = 0; i < dependencies_order->len; i++) {
         LilyPackage *pkg = get__Vec(dependencies_order, i);
 
-        PRINTLN("package name: {S}, dependencies len: {d}",
+        PRINTLN("package name: {S}, global_name: {S}, dependencies len: {d}",
                 pkg->name,
+                pkg->global_name,
                 pkg->package_dependencies->len);
     }
 #endif
@@ -881,10 +883,12 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
 
         LilyPackage *res = NEW(LilyPackage,
                                sub_pkg->name,
+                               sub_pkg->global_name,
                                sub_pkg->visibility,
                                pkg_filename->buffer,
                                LILY_PACKAGE_STATUS_SUB_MAIN,
-                               default_path);
+                               default_path,
+                               sub_pkg->global_name->buffer);
 
         run__LilyScanner(&res->scanner, dump_config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
@@ -901,10 +905,12 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
 
         LilyPackage *res = NEW(LilyPackage,
                                sub_pkg->name,
+                               sub_pkg->global_name,
                                sub_pkg->visibility,
                                pkg_filename->buffer,
                                LILY_PACKAGE_STATUS_NORMAL,
-                               self->default_path);
+                               self->default_path,
+                               self->package->global_name->buffer);
 
         run__LilyScanner(&res->scanner, dump_config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
