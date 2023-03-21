@@ -2,6 +2,7 @@ package =
 	.a;
 	.b;
 	.c;
+	.app;
 end
 
 type Letter enum =
