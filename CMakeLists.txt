@@ -83,6 +83,7 @@ set(CORE_SRC
 	src/core/lily/ast/stmt/asm.c
 	src/core/lily/ast/stmt/await.c
 	src/core/lily/ast/stmt/block.c
+	src/core/lily/ast/stmt/break.c
 	src/core/lily/ast/stmt/defer.c
 	src/core/lily/ast/stmt/drop.c
 	src/core/lily/ast/stmt/for.c
