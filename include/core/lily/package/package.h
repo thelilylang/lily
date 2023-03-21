@@ -67,6 +67,7 @@ inline CONSTRUCTOR(LilyDumpConfig,
 typedef struct LilyPackage
 {
     String *name;
+    String *global_name;
     Vec *public_macros;        // Vec<LilyPreparserMacro*>*?
     Vec *private_macros;       // Vec<LilyPreparserMacro*>*
     Vec *public_imports;       // Vec<LilyImport*>*
@@ -91,10 +92,12 @@ typedef struct LilyPackage
 CONSTRUCTOR(LilyPackage *,
             LilyPackage,
             String *name,
+            String *global_name,
             enum LilyVisibility visibility,
             char *filename,
             enum LilyPackageStatus status,
-            const char *default_path);
+            const char *default_path,
+            const char *default_package_acccess);
 
 /**
  *
@@ -103,7 +106,6 @@ CONSTRUCTOR(LilyPackage *,
  */
 LilyPackage *
 build__LilyPackage(const CompileConfig *config,
-                   String *name,
                    enum LilyVisibility visibility,
                    enum LilyPackageStatus status,
                    const char *default_path);
@@ -116,7 +118,6 @@ build__LilyPackage(const CompileConfig *config,
  */
 LilyPackage *
 compile__LilyPackage(const CompileConfig *config,
-                     String *name,
                      enum LilyVisibility visibility,
                      enum LilyPackageStatus status,
                      const char *default_path);

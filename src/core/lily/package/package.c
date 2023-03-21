@@ -32,6 +32,7 @@
 #include <core/lily/lily.h>
 #include <core/lily/package/package.h>
 #include <core/lily/parser.h>
+#include <core/lily/preparser.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,10 +41,12 @@
 CONSTRUCTOR(LilyPackage *,
             LilyPackage,
             String *name,
+            String *global_name,
             enum LilyVisibility visibility,
             char *filename,
             enum LilyPackageStatus status,
-            const char *default_path)
+            const char *default_path,
+            const char *default_package_access)
 {
     char *content = read_file__Path(filename);
     char *file_ext = get_extension__Path(filename);
@@ -56,6 +59,7 @@ CONSTRUCTOR(LilyPackage *,
     LilyPackage *self = lily_malloc(sizeof(LilyPackage));
 
     self->name = name;
+    self->global_name = global_name;
 
     self->private_macros = NULL;
 
@@ -82,7 +86,8 @@ CONSTRUCTOR(LilyPackage *,
     self->file = NEW(File, filename, content);
     self->scanner =
       NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &self->file));
-    self->preparser = NEW(LilyPreparser, &self->file, self->scanner.tokens);
+    self->preparser = NEW(
+      LilyPreparser, &self->file, self->scanner.tokens, default_package_access);
     self->preparser_info = NEW(LilyPreparserInfo, self->name);
     self->visibility = visibility;
     self->status = status;
@@ -99,17 +104,18 @@ CONSTRUCTOR(LilyPackage *,
 
 LilyPackage *
 build__LilyPackage(const CompileConfig *config,
-                   String *name,
                    enum LilyVisibility visibility,
                    enum LilyPackageStatus status,
                    const char *default_path)
 {
     LilyPackage *self = NEW(LilyPackage,
                             NULL,
+                            NULL,
                             visibility,
                             (char *)config->filename,
                             status,
-                            default_path);
+                            default_path,
+                            NULL);
 
     run__LilyScanner(&self->scanner, config->dump_scanner);
     run__LilyPreparser(&self->preparser, &self->preparser_info);
@@ -125,8 +131,10 @@ build__LilyPackage(const CompileConfig *config,
 
     if (self->preparser_info.package->name) {
         self->name = self->preparser_info.package->name;
+        self->global_name = clone__String(self->name);
     } else {
         self->name = from__String("main");
+        self->global_name = from__String("main");
     }
 
     LilyDumpConfig dump_config = NEW(LilyDumpConfig,
@@ -147,12 +155,11 @@ build__LilyPackage(const CompileConfig *config,
 
 LilyPackage *
 compile__LilyPackage(const CompileConfig *config,
-                     String *name,
                      enum LilyVisibility visibility,
                      enum LilyPackageStatus status,
                      const char *default_path)
 {
-    return build__LilyPackage(config, name, visibility, status, default_path);
+    return build__LilyPackage(config, visibility, status, default_path);
 }
 
 const File *
@@ -197,6 +204,7 @@ search_package_from_name__LilyPackage(LilyPackage *self, String *name)
 DESTRUCTOR(LilyPackage, LilyPackage *self)
 {
     FREE(String, self->name);
+    FREE(String, self->global_name);
 
     if (self->public_macros) {
         FREE_BUFFER_ITEMS(self->public_macros->buffer,
