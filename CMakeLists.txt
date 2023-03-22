@@ -87,6 +87,14 @@ set(CORE_SRC
 	src/core/lily/ast/expr/literal.c
 	src/core/lily/ast/expr/tuple.c
 	src/core/lily/ast/expr/unary.c
+	src/core/lily/ast/pattern/array.c
+	src/core/lily/ast/pattern/as.c
+	src/core/lily/ast/pattern/exception.c
+	src/core/lily/ast/pattern/literal.c
+	src/core/lily/ast/pattern/range.c
+	src/core/lily/ast/pattern/record_call.c
+	src/core/lily/ast/pattern/tuple.c
+	src/core/lily/ast/pattern/variant_call.c
 	src/core/lily/ast/stmt/asm.c
 	src/core/lily/ast/stmt/await.c
 	src/core/lily/ast/stmt/block.c
