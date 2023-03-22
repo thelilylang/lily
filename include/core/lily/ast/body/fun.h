@@ -33,8 +33,50 @@ enum LilyAstBodyFunItemKind {
 	LILY_AST_BODY_FUN_ITEM_KIND_STMT
 };
 
+/**
+ *
+ * @brief Convert LilyAstBodyFunItemKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstBodyFunItemKind, enum LilyAstBodyFunItemKind self);
+#endif
+
 typedef struct LilyAstBodyFunItem {
 	enum LilyAstBodyFunItemKind kind;
+	union {
+		LilyAstStmt stmt;
+		LilyAstExpr *expr;
+	};
 } LilyAstBodyFunItem;
+
+/**
+ * 
+ * @brief Construct LilyAstBodyFunItem type (LILY_AST_BODY_FUN_ITEM_KIND_EXPR).
+*/
+VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *, LilyAstBodyFunItem, expr, LilyAstExpr *expr);
+
+/**
+ * 
+ * @brief Construct LilyAstBodyFunItem type (LILY_AST_BODY_FUN_ITEM_KIND_STMT).
+*/
+VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *, LilyAstBodyFunItem, stmt, LilyAstStmt stmt);
+
+/**
+ *
+ * @brief Convert LilyAstBodyFunItem in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstBodyFunItem, const LilyAstBodyFunItem *self);
+#endif
+
+/**
+ * 
+ * @brief Free LilyAstBodyFunItem type.
+*/
+DESTRUCTOR(LilyAstBodyFunItem, LilyAstBodyFunItem *self);
 
 #endif // LILY_CORE_LILY_AST_BODY_FUN_H
