@@ -112,8 +112,10 @@ profile:
 		src/command/to/*.c \
 		src/core/cc/*.c \
 		src/core/cpp/*.c \
+		src/core/lily/ast/body/*.c \
 		src/core/lily/ast/decl/*.c \
 		src/core/lily/ast/expr/*.c \
+		src/core/lily/ast/pattern/*.c \
 		src/core/lily/ast/stmt/*.c \
 		src/core/lily/ast/*.c \
 		src/core/lily/checked/decl/*.c \
