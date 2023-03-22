@@ -64,4 +64,3 @@ DESTRUCTOR(LilyAstPatternTuple, LilyAstPatternTuple *self)
     FREE_BUFFER_ITEMS(self->patterns->buffer, self->patterns->len, LilyAstExpr);
     FREE(Vec, self->patterns);
 }
-
