@@ -28,7 +28,7 @@
 #include <base/macros.h>
 #include <base/string.h>
 
-typedef struct LilyAstPattern;
+typedef struct LilyAstPattern LilyAstPattern;
 
 typedef struct LilyAstPatternAs
 {
