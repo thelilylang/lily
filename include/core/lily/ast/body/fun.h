@@ -28,9 +28,10 @@
 #include <core/lily/ast/expr.h>
 #include <core/lily/ast/stmt.h>
 
-enum LilyAstBodyFunItemKind {
-	LILY_AST_BODY_FUN_ITEM_KIND_EXPR,
-	LILY_AST_BODY_FUN_ITEM_KIND_STMT
+enum LilyAstBodyFunItemKind
+{
+    LILY_AST_BODY_FUN_ITEM_KIND_EXPR,
+    LILY_AST_BODY_FUN_ITEM_KIND_STMT
 };
 
 /**
@@ -40,28 +41,38 @@ enum LilyAstBodyFunItemKind {
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyAstBodyFunItemKind, enum LilyAstBodyFunItemKind self);
+IMPL_FOR_DEBUG(to_string,
+               LilyAstBodyFunItemKind,
+               enum LilyAstBodyFunItemKind self);
 #endif
 
-typedef struct LilyAstBodyFunItem {
-	enum LilyAstBodyFunItemKind kind;
-	union {
-		LilyAstStmt stmt;
-		LilyAstExpr *expr;
-	};
+typedef struct LilyAstBodyFunItem
+{
+    enum LilyAstBodyFunItemKind kind;
+    union
+    {
+        LilyAstStmt stmt;
+        LilyAstExpr *expr;
+    };
 } LilyAstBodyFunItem;
 
 /**
- * 
+ *
  * @brief Construct LilyAstBodyFunItem type (LILY_AST_BODY_FUN_ITEM_KIND_EXPR).
-*/
-VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *, LilyAstBodyFunItem, expr, LilyAstExpr *expr);
+ */
+VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *,
+                    LilyAstBodyFunItem,
+                    expr,
+                    LilyAstExpr *expr);
 
 /**
- * 
+ *
  * @brief Construct LilyAstBodyFunItem type (LILY_AST_BODY_FUN_ITEM_KIND_STMT).
-*/
-VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *, LilyAstBodyFunItem, stmt, LilyAstStmt stmt);
+ */
+VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *,
+                    LilyAstBodyFunItem,
+                    stmt,
+                    LilyAstStmt stmt);
 
 /**
  *
@@ -74,9 +85,9 @@ IMPL_FOR_DEBUG(to_string, LilyAstBodyFunItem, const LilyAstBodyFunItem *self);
 #endif
 
 /**
- * 
+ *
  * @brief Free LilyAstBodyFunItem type.
-*/
+ */
 DESTRUCTOR(LilyAstBodyFunItem, LilyAstBodyFunItem *self);
 
 #endif // LILY_CORE_LILY_AST_BODY_FUN_H

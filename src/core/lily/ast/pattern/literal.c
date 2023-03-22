@@ -96,7 +96,9 @@ IMPL_FOR_DEBUG(to_string,
 }
 
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstPatternLiteral, const LilyAstPatternLiteral *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyAstPatternLiteral,
+               const LilyAstPatternLiteral *self)
 {
     String *res =
       format__String("LilyAstPatternLiteral{{ kind = {s}, ",

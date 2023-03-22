@@ -26,8 +26,8 @@
 
 #include <core/lily/ast/body/fun.h>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // Free LilyAstBodyFunItem type (LILY_AST_BODY_FUN_ITEM_KIND_EXPR).
 static VARIANT_DESTRUCTOR(LilyAstBodyFunItem, expr, LilyAstBodyFunItem *self);
@@ -37,7 +37,9 @@ static VARIANT_DESTRUCTOR(LilyAstBodyFunItem, stmt, LilyAstBodyFunItem *self);
 
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyAstBodyFunItemKind, enum LilyAstBodyFunItemKind self)
+IMPL_FOR_DEBUG(to_string,
+               LilyAstBodyFunItemKind,
+               enum LilyAstBodyFunItemKind self)
 {
     switch (self) {
         case LILY_AST_BODY_FUN_ITEM_KIND_EXPR:
@@ -50,7 +52,10 @@ IMPL_FOR_DEBUG(to_string, LilyAstBodyFunItemKind, enum LilyAstBodyFunItemKind se
 }
 #endif
 
-VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *, LilyAstBodyFunItem, expr, LilyAstExpr *expr)
+VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *,
+                    LilyAstBodyFunItem,
+                    expr,
+                    LilyAstExpr *expr)
 {
     LilyAstBodyFunItem *self = lily_malloc(sizeof(LilyAstBodyFunItem));
 
@@ -60,7 +65,10 @@ VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *, LilyAstBodyFunItem, expr, LilyAstExpr 
     return self;
 }
 
-VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *, LilyAstBodyFunItem, stmt, LilyAstStmt stmt)
+VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *,
+                    LilyAstBodyFunItem,
+                    stmt,
+                    LilyAstStmt stmt)
 {
     LilyAstBodyFunItem *self = lily_malloc(sizeof(LilyAstBodyFunItem));
 

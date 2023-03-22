@@ -26,9 +26,9 @@
 #define LILY_CORE_LILY_AST_PATTERN_LITERAL_H
 
 #include <base/macros.h>
+#include <base/new.h>
 #include <base/string.h>
 #include <base/types.h>
-#include <base/new.h>
 
 enum LilyAstPatternLiteralKind
 {
@@ -104,7 +104,8 @@ typedef struct LilyAstPatternLiteral
 
 /**
  *
- * @brief Construct LilyAstPatternLiteral type (LILY_AST_PATTERN_LITERAL_KIND_BOOL).
+ * @brief Construct LilyAstPatternLiteral type
+ * (LILY_AST_PATTERN_LITERAL_KIND_BOOL).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            LilyAstPatternLiteral,
@@ -112,12 +113,13 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            bool bool_)
 {
     return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_BOOL,
-                                 .bool_ = bool_ };
+                                    .bool_ = bool_ };
 }
 
 /**
  *
- * @brief Construct LilyAstPatternLiteral type (LILY_AST_PATTERN_LITERAL_KIND_BYTE).
+ * @brief Construct LilyAstPatternLiteral type
+ * (LILY_AST_PATTERN_LITERAL_KIND_BYTE).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            LilyAstPatternLiteral,
@@ -125,12 +127,13 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            Uint8 byte)
 {
     return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_BYTE,
-                                 .byte = byte };
+                                    .byte = byte };
 }
 
 /**
  *
- * @brief Construct LilyAstPatternLiteral type (LILY_AST_PATTERN_LITERAL_KIND_BYTES).
+ * @brief Construct LilyAstPatternLiteral type
+ * (LILY_AST_PATTERN_LITERAL_KIND_BYTES).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            LilyAstPatternLiteral,
@@ -138,12 +141,13 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            Uint8 *bytes)
 {
     return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_BYTES,
-                                 .bytes = bytes };
+                                    .bytes = bytes };
 }
 
 /**
  *
- * @brief Construct LilyAstPatternLiteral type (LILY_AST_PATTERN_LITERAL_KIND_CHAR).
+ * @brief Construct LilyAstPatternLiteral type
+ * (LILY_AST_PATTERN_LITERAL_KIND_CHAR).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            LilyAstPatternLiteral,
@@ -151,7 +155,7 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            char char_)
 {
     return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_CHAR,
-                                 .char_ = char_ };
+                                    .char_ = char_ };
 }
 
 /**
@@ -164,8 +168,9 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            float32,
                            Float32 float32)
 {
-    return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_FLOAT32,
-                                 .float32 = float32 };
+    return (LilyAstPatternLiteral){ .kind =
+                                      LILY_AST_PATTERN_LITERAL_KIND_FLOAT32,
+                                    .float32 = float32 };
 }
 
 /**
@@ -178,13 +183,15 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            float64,
                            Float64 float64)
 {
-    return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_FLOAT64,
-                                 .float64 = float64 };
+    return (LilyAstPatternLiteral){ .kind =
+                                      LILY_AST_PATTERN_LITERAL_KIND_FLOAT64,
+                                    .float64 = float64 };
 }
 
 /**
  *
- * @brief Construct LilyAstPatternLiteral type (LILY_AST_PATTERN_LITERAL_KIND_INT32).
+ * @brief Construct LilyAstPatternLiteral type
+ * (LILY_AST_PATTERN_LITERAL_KIND_INT32).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            LilyAstPatternLiteral,
@@ -192,12 +199,13 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            Int32 int32)
 {
     return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_INT32,
-                                 .int32 = int32 };
+                                    .int32 = int32 };
 }
 
 /**
  *
- * @brief Construct LilyAstPatternLiteral type (LILY_AST_PATTERN_LITERAL_KIND_INT64).
+ * @brief Construct LilyAstPatternLiteral type
+ * (LILY_AST_PATTERN_LITERAL_KIND_INT64).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            LilyAstPatternLiteral,
@@ -205,12 +213,13 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            Int64 int64)
 {
     return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_INT64,
-                                 .int64 = int64 };
+                                    .int64 = int64 };
 }
 
 /**
  *
- * @brief Construct LilyAstPatternLiteral type (LILY_AST_PATTERN_LITERAL_KIND_STR).
+ * @brief Construct LilyAstPatternLiteral type
+ * (LILY_AST_PATTERN_LITERAL_KIND_STR).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            LilyAstPatternLiteral,
@@ -218,7 +227,7 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            String *str)
 {
     return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_STR,
-                                 .str = str };
+                                    .str = str };
 }
 
 /**
@@ -231,9 +240,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_float32,
                            Float32 suffix_float32)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_FLOAT32,
-                                 .suffix_float32 = suffix_float32 };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_FLOAT32,
+        .suffix_float32 = suffix_float32
+    };
 }
 
 /**
@@ -246,9 +256,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_float64,
                            Float64 suffix_float64)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_FLOAT64,
-                                 .suffix_float64 = suffix_float64 };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_FLOAT64,
+        .suffix_float64 = suffix_float64
+    };
 }
 
 /**
@@ -261,8 +272,9 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_int8,
                            Int8 suffix_int8)
 {
-    return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_INT8,
-                                 .suffix_int8 = suffix_int8 };
+    return (LilyAstPatternLiteral){ .kind =
+                                      LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_INT8,
+                                    .suffix_int8 = suffix_int8 };
 }
 
 /**
@@ -275,9 +287,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_int16,
                            Int16 suffix_int16)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_INT16,
-                                 .suffix_int16 = suffix_int16 };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_INT16,
+        .suffix_int16 = suffix_int16
+    };
 }
 
 /**
@@ -290,9 +303,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_int32,
                            Int32 suffix_int32)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_INT16,
-                                 .suffix_int32 = suffix_int32 };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_INT16,
+        .suffix_int32 = suffix_int32
+    };
 }
 
 /**
@@ -305,9 +319,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_int64,
                            Int64 suffix_int64)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_INT64,
-                                 .suffix_int64 = suffix_int64 };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_INT64,
+        .suffix_int64 = suffix_int64
+    };
 }
 
 /**
@@ -320,9 +335,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_isize,
                            Isize suffix_isize)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_ISIZE,
-                                 .suffix_isize = suffix_isize };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_ISIZE,
+        .suffix_isize = suffix_isize
+    };
 }
 
 /**
@@ -335,9 +351,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_uint8,
                            Uint8 suffix_uint8)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_UINT8,
-                                 .suffix_uint8 = suffix_uint8 };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_UINT8,
+        .suffix_uint8 = suffix_uint8
+    };
 }
 
 /**
@@ -350,9 +367,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_uint16,
                            Uint16 suffix_uint16)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_UINT16,
-                                 .suffix_uint16 = suffix_uint16 };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_UINT16,
+        .suffix_uint16 = suffix_uint16
+    };
 }
 
 /**
@@ -365,9 +383,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_uint32,
                            Uint32 suffix_uint32)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_UINT32,
-                                 .suffix_uint32 = suffix_uint32 };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_UINT32,
+        .suffix_uint32 = suffix_uint32
+    };
 }
 
 /**
@@ -380,9 +399,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_uint64,
                            Uint64 suffix_uint64)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_UINT64,
-                                 .suffix_uint64 = suffix_uint64 };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_UINT64,
+        .suffix_uint64 = suffix_uint64
+    };
 }
 
 /**
@@ -395,9 +415,10 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            suffix_usize,
                            Usize suffix_usize)
 {
-    return (LilyAstPatternLiteral){ .kind =
-                                   LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_USIZE,
-                                 .suffix_usize = suffix_usize };
+    return (LilyAstPatternLiteral){
+        .kind = LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_USIZE,
+        .suffix_usize = suffix_usize
+    };
 }
 
 /**
@@ -410,8 +431,9 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            uint32,
                            Uint32 uint32)
 {
-    return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_UINT32,
-                                 .uint32 = uint32 };
+    return (LilyAstPatternLiteral){ .kind =
+                                      LILY_AST_PATTERN_LITERAL_KIND_UINT32,
+                                    .uint32 = uint32 };
 }
 
 /**
@@ -424,8 +446,9 @@ inline VARIANT_CONSTRUCTOR(LilyAstPatternLiteral,
                            uint64,
                            Uint64 uint64)
 {
-    return (LilyAstPatternLiteral){ .kind = LILY_AST_PATTERN_LITERAL_KIND_UINT64,
-                                 .uint64 = uint64 };
+    return (LilyAstPatternLiteral){ .kind =
+                                      LILY_AST_PATTERN_LITERAL_KIND_UINT64,
+                                    .uint64 = uint64 };
 }
 
 /**
@@ -446,7 +469,9 @@ inline CONSTRUCTOR(LilyAstPatternLiteral,
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstPatternLiteral, const LilyAstPatternLiteral *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyAstPatternLiteral,
+               const LilyAstPatternLiteral *self);
 #endif
 
 /**
