@@ -105,6 +105,7 @@ set(CORE_SRC
 	src/core/lily/ast/decl.c
 	src/core/lily/ast/expr.c
 	src/core/lily/ast/field.c
+	src/core/lily/ast/pattern.c
 	src/core/lily/ast/stmt.c
 	src/core/lily/ast/variant.c
 	src/core/lily/checked/decl/alias.c
