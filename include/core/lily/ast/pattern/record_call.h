@@ -28,12 +28,14 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+#include <core/lily/ast/expr.h>
+
 typedef struct LilyAstPattern LilyAstPattern;
 
 typedef struct LilyAstPatternRecordCall
 {
-    String *name;  // String*?
-    Vec *patterns; // Vec<LilyAstPattern*>*
+    LilyAstExpr *id; // LilyAstExpr*?
+    Vec *patterns;   // Vec<LilyAstPattern*>*
 } LilyAstPatternRecordCall;
 
 /**
@@ -42,10 +44,10 @@ typedef struct LilyAstPatternRecordCall
  */
 inline CONSTRUCTOR(LilyAstPatternRecordCall,
                    LilyAstPatternRecordCall,
-                   String *name,
+                   LilyAstExpr *id,
                    Vec *patterns)
 {
-    return (LilyAstPatternRecordCall){ .name = name, .patterns = patterns };
+    return (LilyAstPatternRecordCall){ .id = id, .patterns = patterns };
 }
 
 /**

@@ -34,8 +34,14 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstPatternRecordCall,
                const LilyAstPatternRecordCall *self)
 {
-    String *res = format__String(
-      "LilyAstPatternRecordCall{{ name = {S}, patterns =", self->name);
+    String *res = NULL;
+
+    if (self->id) {
+        res = format__String("LilyAstPatternRecordCall{{ id = {Sr}, patterns =",
+                             to_string__Debug__LilyAstExpr(self->id));
+    } else {
+        res = from__String("LilyAstPatternRecordCall{ id = NULL, patterns =");
+    }
 
     DEBUG_VEC_STRING(self->patterns, res, LilyAstPattern);
 
@@ -47,7 +53,9 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyAstPatternRecordCall, const LilyAstPatternRecordCall *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
+    if (self->id) {
+        FREE(LilyAstExpr, self->id);
+    }
 
     FREE_BUFFER_ITEMS(
       self->patterns->buffer, self->patterns->len, LilyAstPattern);
