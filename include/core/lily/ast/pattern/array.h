@@ -32,16 +32,16 @@
 
 typedef struct LilyAstPatternArray
 {
-    Vec *items; // Vec<LilyAstPattern*>*
+    Vec *patterns; // Vec<LilyAstPattern*>*
 } LilyAstPatternArray;
 
 /**
  *
  * @brief Construct LilyAstPatternArray type.
  */
-inline CONSTRUCTOR(LilyAstPatternArray, LilyAstPatternArray, Vec *items)
+inline CONSTRUCTOR(LilyAstPatternArray, LilyAstPatternArray, Vec *patterns)
 {
-    return (LilyAstPatternArray){ .items = items };
+    return (LilyAstPatternArray){ .patterns = patterns };
 }
 
 /**

@@ -29,9 +29,9 @@
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstPatternArray, const LilyAstPatternArray *self)
 {
-    String *res = from__String("LilyAstPatternArray{ items = { ");
+    String *res = from__String("LilyAstPatternArray{ patterns = { ");
 
-    DEBUG_VEC_STRING(self->items, res, LilyAstPattern);
+    DEBUG_VEC_STRING(self->patterns, res, LilyAstPattern);
 
     push_str__String(res, "} }");
 
@@ -44,12 +44,12 @@ to_string__LilyAstPatternArray(const LilyAstPatternArray *self)
 {
     String *res = from__String("[");
 
-    for (Usize i = 0; i < self->items->len; i++) {
-        String *s = to_string__LilyAstPattern(get__Vec(self->items, i));
+    for (Usize i = 0; i < self->patterns->len; i++) {
+        String *s = to_string__LilyAstPattern(get__Vec(self->patterns, i));
 
         APPEND_AND_FREE(res, s);
 
-        if (i != self->items->len - 1) {
+        if (i != self->patterns->len - 1) {
             push_str__String(res, ", ");
         }
     }
@@ -61,6 +61,6 @@ to_string__LilyAstPatternArray(const LilyAstPatternArray *self)
 
 DESTRUCTOR(LilyAstPatternArray, LilyAstPatternArray *self)
 {
-    FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, LilyAstExpr);
-    FREE(Vec, self->items);
+    FREE_BUFFER_ITEMS(self->patterns->buffer, self->patterns->len, LilyAstExpr);
+    FREE(Vec, self->patterns);
 }
