@@ -30,4 +30,8 @@
 #include <core/lily/ast/expr.h>
 #include <core/lily/ast/stmt.h>
 
+// Document all defined types in `ast/` directory.
+#if 0
+#endif
+
 #endif // LILY_CORE_LILY_AST_H
