@@ -26,10 +26,8 @@
 
 #include <core/lily/ast/body/fun.h>
 
-#ifdef ENV_DEBUG
-#include <stdio.h>
 #include <stdlib.h>
-#endif
+#include <stdio.h>
 
 // Free LilyAstBodyFunItem type (LILY_AST_BODY_FUN_ITEM_KIND_EXPR).
 static VARIANT_DESTRUCTOR(LilyAstBodyFunItem, expr, LilyAstBodyFunItem *self);
