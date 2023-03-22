@@ -22,4 +22,87 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
+
 #include <core/lily/ast/stmt/match.h>
+
+#ifdef ENV_DEBUG
+#include <base/format.h>
+#endif
+
+CONSTRUCTOR(LilyAstStmtMatchCase *,
+            LilyAstStmtMatchCase,
+            LilyAstPattern *pattern,
+            LilyAstExpr *cond,
+            LilyAstBodyFunItem *body_item)
+{
+    LilyAstStmtMatchCase *self = lily_malloc(sizeof(LilyAstStmtMatchCase));
+
+    self->pattern = pattern;
+    self->cond = cond;
+    self->body_item = body_item;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstStmtMatchCase,
+               const LilyAstStmtMatchCase *self)
+{
+    String *res =
+      format__String("LilyAstStmtMatchCase{{ pattern = {Sr}",
+                     to_string__Debug__LilyAstPattern(self->pattern));
+
+    if (self->cond) {
+        char *s = format(", cond = {Sr}, body_item = {Sr} }",
+                         to_string__Debug__LilyAstExpr(self->cond),
+                         to_string__Debug__LilyAstBodyFunItem(self->body_item));
+
+        PUSH_STR_AND_FREE(res, s);
+    } else {
+        char *s = format(", cond = NULL, body_item = {Sr} }",
+                         to_string__Debug__LilyAstBodyFunItem(self->body_item));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyAstStmtMatchCase, LilyAstStmtMatchCase *self)
+{
+    FREE(LilyAstPattern, self->pattern);
+
+    if (self->cond) {
+        FREE(LilyAstExpr, self->cond);
+    }
+
+    FREE(LilyAstBodyFunItem, self->body_item);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstStmtMatch, const LilyAstStmtMatch *self)
+{
+    String *res = format__String("LilyAstStmtMatch{{ expr = {Sr}, cases =",
+                                 to_string__Debug__LilyAstExpr(self->expr));
+
+    DEBUG_VEC_STRING(self->cases, res, LilyAstStmtMatchCase);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyAstStmtMatch, const LilyAstStmtMatch *self)
+{
+    FREE(LilyAstExpr, self->expr);
+
+    FREE_BUFFER_ITEMS(
+      self->cases->buffer, self->cases->len, LilyAstStmtMatchCase);
+    FREE(Vec, self->cases);
+}

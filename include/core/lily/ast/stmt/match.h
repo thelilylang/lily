@@ -25,10 +25,77 @@
 #ifndef LILY_CORE_LILY_AST_STMT_MATCH_H
 #define LILY_CORE_LILY_AST_STMT_MATCH_H
 
+#include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/expr.h>
+#include <core/lily/ast/pattern.h>
 
-typedef struct LilyAstStmtMatch {
+typedef struct LilyAstStmtMatchCase
+{
+    LilyAstPattern *pattern;
+    LilyAstExpr *cond; // LilyAstExpr*?
+    LilyAstBodyFunItem *body_item;
+} LilyAstStmtMatchCase;
+
+/**
+ *
+ * @brief Construct LilyAstStmtMatchCase type.
+ */
+CONSTRUCTOR(LilyAstStmtMatchCase *,
+            LilyAstStmtMatchCase,
+            LilyAstPattern *pattern,
+            LilyAstExpr *cond,
+            LilyAstBodyFunItem *body_item);
+
+/**
+ *
+ * @brief Convert LilyAstStmtMatchCase in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstStmtMatchCase,
+               const LilyAstStmtMatchCase *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstStmtMatchCase type.
+ */
+DESTRUCTOR(LilyAstStmtMatchCase, LilyAstStmtMatchCase *self);
+
+typedef struct LilyAstStmtMatch
+{
     LilyAstExpr *expr;
+    Vec *cases; // Vec<LilyAstStmtMatchCase*>*
 } LilyAstStmtMatch;
+
+/**
+ *
+ * @brief Construct LilyAstStmtMatch type.
+ */
+inline CONSTRUCTOR(LilyAstStmtMatch,
+                   LilyAstStmtMatch,
+                   LilyAstExpr *expr,
+                   Vec *cases)
+{
+    return (LilyAstStmtMatch){ .expr = expr, .cases = cases };
+}
+
+/**
+ *
+ * @brief Convert LilyAstStmtMatch in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstStmtMatch, const LilyAstStmtMatch *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstStmtMatch type.
+ */
+DESTRUCTOR(LilyAstStmtMatch, const LilyAstStmtMatch *self);
 
 #endif // LILY_CORE_LILY_AST_STMT_MATCH_H
