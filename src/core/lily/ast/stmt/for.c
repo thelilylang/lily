@@ -33,7 +33,8 @@ CONSTRUCTOR(LilyAstStmtFor, LilyAstStmtFor, LilyAstExpr *expr, Vec *body)
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtFor, const LilyAstStmtFor *self)
 {
-    String *res = format__String("LilyAstStmtFor{{ expr = {Sr}, body =", to_string__Debug__LilyAstExpr(self->expr));
+    String *res = format__String("LilyAstStmtFor{{ expr = {Sr}, body =",
+                                 to_string__Debug__LilyAstExpr(self->expr));
 
     DEBUG_VEC_STRING(self->body, res, LilyAstBodyFunItem);
 
