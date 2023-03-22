@@ -29,8 +29,10 @@ format:
 	${CLANG_FORMAT} ./include/core/cpp/*.h
 	${CLANG_FORMAT} ./include/core/lily/*.h
 	${CLANG_FORMAT} ./include/core/lily/ast/*.h
+	${CLANG_FORMAT} ./include/core/lily/ast/body/*.h
 	${CLANG_FORMAT} ./include/core/lily/ast/decl/*.h
 	${CLANG_FORMAT} ./include/core/lily/ast/expr/*.h
+	${CLANG_FORMAT} ./include/core/lily/ast/pattern/*.h
 	${CLANG_FORMAT} ./include/core/lily/ast/stmt/*.h
 	${CLANG_FORMAT} ./include/core/lily/checked/*.h
 	${CLANG_FORMAT} ./include/core/lily/checked/decl/*.h
@@ -66,8 +68,10 @@ format:
 	${CLANG_FORMAT} ./src/core/cpp/*.c
 	${CLANG_FORMAT} ./src/core/lily/*.c
 	${CLANG_FORMAT} ./src/core/lily/ast/*.c
+	${CLANG_FORMAT} ./src/core/lily/ast/body/*.c
 	${CLANG_FORMAT} ./src/core/lily/ast/decl/*.c
 	${CLANG_FORMAT} ./src/core/lily/ast/expr/*.c
+	${CLANG_FORMAT} ./src/core/lily/ast/pattern/*.c
 	${CLANG_FORMAT} ./src/core/lily/ast/stmt/*.c
 	${CLANG_FORMAT} ./src/core/lily/checked/*.c
 	${CLANG_FORMAT} ./src/core/lily/checked/decl/*.c
