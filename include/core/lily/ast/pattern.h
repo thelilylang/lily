@@ -25,18 +25,168 @@
 #ifndef LILY_CORE_LILY_AST_PATTERN_H
 #define LILY_CORE_LILY_AST_PATTERN_H
 
-enum LilyAstPatternKind {
+#include <core/lily/ast/pattern/array.h>
+#include <core/lily/ast/pattern/as.h>
+#include <core/lily/ast/pattern/exception.h>
+#include <core/lily/ast/pattern/literal.h>
+#include <core/lily/ast/pattern/range.h>
+#include <core/lily/ast/pattern/record_call.h>
+#include <core/lily/ast/pattern/tuple.h>
+#include <core/lily/ast/pattern/variant_call.h>
+
+#include <core/shared/location.h>
+
+enum LilyAstPatternKind
+{
     LILY_AST_PATTERN_KIND_ARRAY,
     LILY_AST_PATTERN_KIND_AS,
+    LILY_AST_PATTERN_KIND_AUTO_COMPLETE,
     LILY_AST_PATTERN_KIND_EXCEPTION,
     LILY_AST_PATTERN_KIND_LITERAL,
     LILY_AST_PATTERN_KIND_RANGE,
     LILY_AST_PATTERN_KIND_RECORD_CALL,
     LILY_AST_PATTERN_KIND_TUPLE,
     LILY_AST_PATTERN_KIND_VARIANT_CALL,
+    LILY_AST_PATTERN_KIND_WILDCARD
 };
 
-typedef struct LilyAstPattern {
+/**
+ *
+ * @brief Convert LilyAstPatternKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstPatternKind, enum LilyAstPatternKind self);
+#endif
+
+typedef struct LilyAstPattern
+{
+    enum LilyAstPatternKind kind;
+    Location location;
+    union
+    {
+        LilyAstPatternArray array;
+        LilyAstPatternAs as;
+        LilyAstPatternException exception;
+        LilyAstPatternLiteral literal;
+        LilyAstPatternRange range;
+        LilyAstPatternRecordCall record_call;
+        LilyAstPatternTuple tuple;
+        LilyAstPatternVariantCall variant_call;
+    };
 } LilyAstPattern;
+
+/**
+ *
+ * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_ARRAY).
+ */
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    array,
+                    Location location,
+                    LilyAstPatternArray array);
+
+/**
+ *
+ * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_AS).
+ */
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    as,
+                    Location location,
+                    LilyAstPatternAs as);
+
+/**
+ *
+ * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_EXCEPTION).
+ */
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    exception,
+                    Location location,
+                    LilyAstPatternException exception);
+
+/**
+ *
+ * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_LITERAL).
+ */
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    literal,
+                    Location location,
+                    LilyAstPatternLiteral literal);
+
+/**
+ *
+ * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_RANGE).
+ */
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    range,
+                    Location location,
+                    LilyAstPatternRange range);
+
+/**
+ *
+ * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_RECORD_CALL).
+ */
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    record_call,
+                    Location location,
+                    LilyAstPatternRecordCall record_call);
+
+/**
+ *
+ * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_TUPLE).
+ */
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    tuple,
+                    Location location,
+                    LilyAstPatternTuple tuple);
+
+/**
+ *
+ * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_VARIANT_CALL).
+ */
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    variant_call,
+                    Location location,
+                    LilyAstPatternVariantCall variant_call);
+
+/**
+ *
+ * @brief Construct LilyAstPattern type.
+ */
+CONSTRUCTOR(LilyAstPattern *,
+            LilyAstPattern,
+            Location location,
+            enum LilyAstPatternKind kind);
+
+/**
+ *
+ * @brief Convert LilyAstPattern in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstPattern, const LilyAstPattern *self);
+#endif
+
+/**
+ *
+ * @brief Convert LilyAstPattern in String.
+ */
+String *
+to_string__LilyAstPattern(const LilyAstPattern *self);
+
+/**
+ *
+ * @brief Free LilyAstPattern type.
+ */
+DESTRUCTOR(LilyAstPattern, LilyAstPattern *self);
 
 #endif // LILY_CORE_LILY_AST_PATTERN_H
