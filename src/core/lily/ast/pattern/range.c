@@ -39,6 +39,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstPatternRange, const LilyAstPatternRange *self)
 
 DESTRUCTOR(LilyAstPatternRange, const LilyAstPatternRange *self)
 {
-    FREE(LilyAstPatternRange, self->left);
-    FREE(LilyAstPatternRange, self->right);
+    FREE(LilyAstPattern, self->left);
+    FREE(LilyAstPattern, self->right);
 }
