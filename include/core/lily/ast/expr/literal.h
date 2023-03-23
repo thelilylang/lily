@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_AST_EXPR_LITERAL_H
 #define LILY_CORE_LILY_AST_EXPR_LITERAL_H
 
+#include <base/macros.h>
 #include <base/new.h>
 #include <base/string.h>
 #include <base/types.h>
