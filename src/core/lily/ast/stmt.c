@@ -66,6 +66,9 @@ static inline VARIANT_DESTRUCTOR(LilyAstStmt, next, const LilyAstStmt *self);
 // Free LilyAstStmt type (LILY_AST_STMT_KIND_RETURN).
 static inline VARIANT_DESTRUCTOR(LilyAstStmt, return, const LilyAstStmt *self);
 
+// Free LilyAstStmt type (LILY_AST_STMT_KIND_TRY).
+static inline VARIANT_DESTRUCTOR(LilyAstStmt, try, const LilyAstStmt *self);
+
 // Free LilyAstStmt type (LILY_AST_STMT_KIND_VARIABLE).
 static inline VARIANT_DESTRUCTOR(LilyAstStmt,
                                  variable,
@@ -101,6 +104,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtKind, enum LilyAstStmtKind self)
             return "LILY_AST_STMT_KIND_NEXT";
         case LILY_AST_STMT_KIND_RETURN:
             return "LILY_AST_STMT_KIND_RETURN";
+        case LILY_AST_STMT_KIND_TRY:
+            return "LILY_AST_STMT_KIND_TRY";
         case LILY_AST_STMT_KIND_VARIABLE:
             return "LILY_AST_STMT_KIND_VARIABLE";
         case LILY_AST_STMT_KIND_WHILE:
@@ -206,6 +211,14 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmt, const LilyAstStmt *self)
 
             break;
         }
+        case LILY_AST_STMT_KIND_TRY: {
+            char *s = format(", try = {Sr} }",
+                             to_string__Debug__LilyAstStmtTry(&self->try));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_AST_STMT_KIND_VARIABLE: {
             char *s =
               format(", variable = {Sr} }",
@@ -286,6 +299,11 @@ VARIANT_DESTRUCTOR(LilyAstStmt, return, const LilyAstStmt *self)
     FREE(LilyAstStmtReturn, &self->return_);
 }
 
+VARIANT_DESTRUCTOR(LilyAstStmt, try, const LilyAstStmt *self)
+{
+    FREE(LilyAstStmtTry, &self->try);
+}
+
 VARIANT_DESTRUCTOR(LilyAstStmt, variable, const LilyAstStmt *self)
 {
     FREE(LilyAstStmtVariable, &self->variable);
@@ -331,6 +349,9 @@ DESTRUCTOR(LilyAstStmt, const LilyAstStmt *self)
             break;
         case LILY_AST_STMT_KIND_RETURN:
             FREE_VARIANT(LilyAstStmt, return, self);
+            break;
+        case LILY_AST_STMT_KIND_TRY:
+            FREE_VARIANT(LilyAstStmt, try, self);
             break;
         case LILY_AST_STMT_KIND_VARIABLE:
             FREE_VARIANT(LilyAstStmt, variable, self);

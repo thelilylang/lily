@@ -38,6 +38,7 @@
 #include <core/lily/ast/stmt/match.h>
 #include <core/lily/ast/stmt/next.h>
 #include <core/lily/ast/stmt/return.h>
+#include <core/lily/ast/stmt/try.h>
 #include <core/lily/ast/stmt/variable.h>
 #include <core/lily/ast/stmt/while.h>
 
@@ -58,6 +59,7 @@ enum LilyAstStmtKind
     LILY_AST_STMT_KIND_MATCH,
     LILY_AST_STMT_KIND_NEXT,
     LILY_AST_STMT_KIND_RETURN,
+    LILY_AST_STMT_KIND_TRY,
     LILY_AST_STMT_KIND_VARIABLE,
     LILY_AST_STMT_KIND_WHILE
 };
@@ -88,6 +90,7 @@ typedef struct LilyAstStmt
         LilyAstStmtMatch match;
         LilyAstStmtNext next;
         LilyAstStmtReturn return_;
+        LilyAstStmtTry try;
         LilyAstStmtVariable variable;
         LilyAstStmtWhile while_;
     };
@@ -212,6 +215,15 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt,
 {
     return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_RETURN,
                           .return_ = return_ };
+}
+
+/**
+ *
+ * @brief Construct LilyAstStmt type (LILY_AST_STMT_KIND_TRY).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, try, LilyAstStmtTry try)
+{
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_TRY, .try = try };
 }
 
 /**
