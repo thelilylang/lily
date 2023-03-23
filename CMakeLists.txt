@@ -106,6 +106,7 @@ set(CORE_SRC
 	src/core/lily/ast/stmt/match.c
 	src/core/lily/ast/stmt/next.c
 	src/core/lily/ast/stmt/return.c
+	src/core/lily/ast/stmt/try.c
 	src/core/lily/ast/stmt/variable.c
 	src/core/lily/ast/stmt/while.c
 	src/core/lily/ast/attribute.c
