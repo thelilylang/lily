@@ -24,6 +24,7 @@
 
 #include <base/new.h>
 
+#include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/stmt/while.h>
 
 #include <stdlib.h>

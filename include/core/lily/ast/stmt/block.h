@@ -25,7 +25,7 @@
 #ifndef LILY_CORE_LILY_AST_STMT_BLOCK_H
 #define LILY_CORE_LILY_AST_STMT_BLOCK_H
 
-#include <core/lily/ast/body/fun.h>
+#include <base/vec.h>
 
 typedef struct LilyAstStmtBlock
 {

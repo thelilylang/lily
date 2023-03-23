@@ -24,6 +24,7 @@
 
 #include <base/alloc.h>
 
+#include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/stmt/match.h>
 
 #ifdef ENV_DEBUG

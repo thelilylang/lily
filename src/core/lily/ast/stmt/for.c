@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/stmt/for.h>
 
 CONSTRUCTOR(LilyAstStmtFor, LilyAstStmtFor, LilyAstExpr *expr, Vec *body)

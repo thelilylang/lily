@@ -25,7 +25,6 @@
 #ifndef LILY_CORE_LILY_AST_STMT_FOR_H
 #define LILY_CORE_LILY_AST_STMT_FOR_H
 
-#include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/expr.h>
 
 typedef struct LilyAstStmtFor

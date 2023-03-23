@@ -25,9 +25,10 @@
 #ifndef LILY_CORE_LILY_AST_STMT_MATCH_H
 #define LILY_CORE_LILY_AST_STMT_MATCH_H
 
-#include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/expr.h>
 #include <core/lily/ast/pattern.h>
+
+typedef struct LilyAstBodyFunItem LilyAstBodyFunItem;
 
 typedef struct LilyAstStmtMatchCase
 {
