@@ -43,6 +43,8 @@
 #elif defined(__clang_major__)
 #define CLANG_VERSION \
     (__clang_major__ * 1000 + __clang_minor__ * 100 + __clang_patchlevel__)
+#elif defined(_MSC_VER)
+#define MSVC_VERSION _MSC_VER
 #else
 #error \
   "unknown compiler, please add a support for this compiler or open issue at 'https://github.com/ArthurPV/lily/tree/main'."

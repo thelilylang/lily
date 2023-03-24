@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 
-#if defined(GCC_VERSION) || defined(CLANG_VERSION)
+#if defined(GCC_VERSION) || defined(CLANG_VERSION) || defined(MSVC_VERSION)
 
 #if defined(GCC_VERSION)
 #if GCC_VERSION < 4600
@@ -45,6 +45,11 @@
 #elif defined(CLANG_VERSION)
 #if CLANG_VERSION < 3000
 #error "this version of clang is not yet supported."
+#endif
+
+#elif defined(MSCV_VERSION)
+#if MSCV_VERSION < 1928
+#error "this version of MSCV is not yet supported."
 #endif
 
 #else
