@@ -26,6 +26,14 @@
 #include <base/new.h>
 #include <base/test.h>
 
+#include <stdio.h>
+
+// Free TestItem type (TEST_ITEM_KIND_SIMPLE).
+static inline VARIANT_DESTRUCTOR(TestItem, simple, TestItem *self);
+
+// Free TestItem type (TEST_ITEM_KIND_SUITE).
+static VARIANT_DESTRUCTOR(TestItem, suite, TestItem *self);
+
 CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(TestSuite *))
 {
     TestCase *self = lily_malloc(sizeof(TestCase));
@@ -62,8 +70,33 @@ VARIANT_CONSTRUCTOR(TestItem *, TestItem, suite, TestSuite suite)
     return self;
 }
 
+VARIANT_DESTRUCTOR(TestItem, simple, TestItem *self)
+{
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(TestItem, suite, TestItem *self)
+{
+    FREE(TestSuite, &self->suite);
+    lily_free(self);
+}
+
+DESTRUCTOR(TestItem, TestItem *self)
+{
+    switch (self->kind) {
+        case TEST_ITEM_KIND_SIMPLE:
+            FREE_VARIANT(TestItem, simple, self);
+            break;
+        case TEST_ITEM_KIND_SUITE:
+            FREE_VARIANT(TestItem, suite, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 DESTRUCTOR(Test, const Test *self)
 {
-    FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, TestSuite);
+    FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, TestItem);
     FREE(Vec, self->items);
 }

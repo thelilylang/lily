@@ -181,6 +181,12 @@ VARIANT_CONSTRUCTOR(TestItem *, TestItem, simple, TestSimple simple);
  */
 VARIANT_CONSTRUCTOR(TestItem *, TestItem, suite, TestSuite suite);
 
+/**
+ *
+ * @brief Free TestItem type.
+ */
+DESTRUCTOR(TestItem, TestItem *self);
+
 struct Test
 {
     Vec *items; // Vec<TestItem*>*
