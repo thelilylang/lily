@@ -257,10 +257,10 @@ if (DEBUG)
 
 	add_test(NAME test_base COMMAND test_base)
 
-	# add_executable(test_core_scanner tests/core/scanner/scanner.c)
-	# target_link_libraries(test_core_scanner lily_base lily_core)
+	add_executable(test_core_scanner tests/core/scanner/scanner.c)
+	target_link_libraries(test_core_scanner lily_base lily_core)
 
-	# add_test(NAME test_core_scanner COMMAND test_core_scanner)
+	add_test(NAME test_core_scanner COMMAND test_core_scanner)
 
 	add_executable(bench_vec benchmarks/base/vec.c)
 	target_link_libraries(bench_vec lily_base)
