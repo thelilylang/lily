@@ -258,7 +258,7 @@ if (DEBUG)
 
 	add_test(NAME test_base COMMAND test_base)
 
-	add_executable(test_core_scanner tests/core/scanner/scanner.c)
+	add_executable(test_core_scanner tests/core/lily/scanner/scanner.c)
 	target_link_libraries(test_core_scanner lily_base lily_core)
 
 	add_test(NAME test_core_scanner COMMAND test_core_scanner)
