@@ -43,7 +43,7 @@
 #include <string.h>
 
 bool
-is_directory__Path(const char *path)
+is_directory__File(const char *path)
 {
 #ifdef LILY_WINDOWS_OS
     DWORD dwAttrib = GetFileAttributes(path);
@@ -64,7 +64,7 @@ is_directory__Path(const char *path)
 }
 
 char *
-get_extension__Path(const char *path)
+get_extension__File(const char *path)
 {
     bool extension_started = false;
     Usize size = 1;
@@ -90,9 +90,9 @@ get_extension__Path(const char *path)
 
 #ifdef LILY_WINDOWS_OS
 char *
-read_file__Path(const char *path)
+read_file__File(const char *path)
 {
-    if (is_directory__Path(path)) {
+    if (is_directory__File(path)) {
         printf("\x1b[31merror\x1b[0m: the file is a directory: `%s`\n", path);
         exit(1);
     }
@@ -122,9 +122,9 @@ read_file__Path(const char *path)
 }
 #else
 char *
-read_file__Path(const char *path)
+read_file__File(const char *path)
 {
-    if (is_directory__Path(path)) {
+    if (is_directory__File(path)) {
         printf("\x1b[31merror\x1b[0m: the file is a directory: `%s`\n", path);
         exit(1);
     }

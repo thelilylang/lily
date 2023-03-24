@@ -32,20 +32,20 @@
  * @brief Check if the path is a directory.
  */
 bool
-is_directory__Path(const char *path);
+is_directory__File(const char *path);
 
 /**
  *
  * @brief Get extension of the path.
  */
 char *
-get_extension__Path(const char *path);
+get_extension__File(const char *path);
 
 /**
  *
  * @brief Read file content.
  */
 char *
-read_file__Path(const char *path);
+read_file__File(const char *path);
 
 #endif // LILY_BASE_FILE_H

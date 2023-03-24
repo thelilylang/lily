@@ -48,8 +48,8 @@ CONSTRUCTOR(LilyPackage *,
             const char *default_path,
             const char *default_package_access)
 {
-    char *content = read_file__Path(filename);
-    char *file_ext = get_extension__Path(filename);
+    char *content = read_file__File(filename);
+    char *file_ext = get_extension__File(filename);
 
     if (strcmp(file_ext, ".lily")) {
         EMIT_ERROR("bad extension, expected `.lily`");
