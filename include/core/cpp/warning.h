@@ -35,8 +35,8 @@ enum CppWarningKind
 typedef struct CppWarning
 {
     enum CppWarningKind kind;
-    union
-    {};
+    // union
+    // {};
 } CppWarning;
 
 /**

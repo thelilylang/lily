@@ -35,8 +35,8 @@ enum LilyWarningKind
 typedef struct LilyWarning
 {
     enum LilyWarningKind kind;
-    union
-    {};
+    // union
+    // {};
 } LilyWarning;
 
 /**

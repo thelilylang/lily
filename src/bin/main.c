@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 
-#if defined(GCC_VERSION) || defined(CLANG_VERSION)
+#if defined(GCC_VERSION) || defined(CLANG_VERSION) || defined(MSVC_VERSION)
 
 #if defined(GCC_VERSION)
 #if GCC_VERSION < 4600
@@ -45,6 +45,11 @@
 #elif defined(CLANG_VERSION)
 #if CLANG_VERSION < 3000
 #error "this version of clang is not yet supported."
+#endif
+
+#elif defined(MSVC_VERSION)
+#if MSVC_VERSION < 1928
+#error "this version of MSCV is not yet supported."
 #endif
 
 #else
@@ -59,6 +64,18 @@ main(int argc, char **argv)
 {
     if (argc > 1) {
         const char *command = argv[1];
+
+#ifdef MSVC_VERSION
+        Vec *options = NEW(Vec); // Vec<char*>*
+
+        // 1. Get the rest of argv
+        for (int i = 2; i < argc; i++)
+            push__Vec(options, argv[i]);
+
+        // 2. Parse comand
+        const ParseCommand parse_command =
+          NEW(ParseCommand, command, (const char **)options->buffer, argc - 2);
+#else
         char *options[argc - 2];
 
         // 1. Get the rest of argv
@@ -68,6 +85,7 @@ main(int argc, char **argv)
         // 2. Parse comand
         const ParseCommand parse_command =
           NEW(ParseCommand, command, (const char **)options, argc - 2);
+#endif
 
         const Option option = run__ParseCommand(&parse_command);
 
@@ -96,6 +114,10 @@ main(int argc, char **argv)
             case CONFIG_KIND_TO:
                 break;
         }
+
+#ifdef MSVC_VERSION
+        FREE(Vec, options);
+#endif
 
         FREE(Option, option);
     } else {
