@@ -75,10 +75,12 @@ set(CORE_SRC
 	src/core/lily/ast/decl/macro.c
 	src/core/lily/ast/decl/method.c
 	src/core/lily/ast/decl/module.c
+	src/core/lily/ast/decl/object.c
 	src/core/lily/ast/decl/property.c
 	src/core/lily/ast/decl/record.c
 	src/core/lily/ast/decl/record_object.c
 	src/core/lily/ast/decl/trait.c
+	src/core/lily/ast/decl/type.c
 	src/core/lily/ast/expr/access.c
 	src/core/lily/ast/expr/array.c
 	src/core/lily/ast/expr/binary.c
