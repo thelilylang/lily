@@ -118,6 +118,7 @@ set(CORE_SRC
 	src/core/lily/ast/field.c
 	src/core/lily/ast/generic_param.c
 	src/core/lily/ast/impl.c
+	src/core/lily/ast/inherit.c
 	src/core/lily/ast/pattern.c
 	src/core/lily/ast/stmt.c
 	src/core/lily/ast/variant.c
