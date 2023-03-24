@@ -25,7 +25,11 @@
 #ifndef LILY_BASE_TEST_H
 #define LILY_BASE_TEST_H
 
+#include <base/new.h>
+#include <base/types.h>
 #include <base/vec.h>
+
+#include <stdarg.h>
 
 #define TEST_SUCCESS 0
 #define TEST_FAILED 1
@@ -43,6 +47,52 @@
     if (!x)            \
         return TEST_FAILED;
 
+#define CASE(name, block)                   \
+    int test_case__##name(TestSuite *suite) \
+    {                                       \
+        block;                              \
+        return TEST_SUCCESS;                \
+    }
+
+#define SKIP_CASE(name, block)              \
+    int test_case__##name(TestSuite *suite) \
+    {                                       \
+        do {                                \
+            return TEST_SKIPPED;            \
+        } while (0);                        \
+        block;                              \
+    }
+
+#define SIMPLE(name, block)             \
+    int test_simple__##name(Test *test) \
+    {                                   \
+        block;                          \
+        return TEST_SUCCESS;            \
+    }
+
+#define SKIP_SIMPLE(name, block)        \
+    int test_simple__##name(Test *test) \
+    {                                   \
+        do {                            \
+            return TEST_SKIPPED;        \
+        } while (0);                    \
+        block;                          \
+    }
+
+#define SUITE(name, n_case, ...)                      \
+    Suite test_suite__##name(Test *test)              \
+    {                                                 \
+        Vec *cases = NEW(Vec);                        \
+        va_arg vl;                                    \
+        va_start(vl, n_case);                         \
+                                                      \
+        for (Usiz i = 0; i < n_case; i++) {           \
+            push__Vec(cases, va_arg(vl, TestCase *)); \
+        }                                             \
+                                                      \
+        return NEW(TestSuite, name, cases);           \
+    }
+
 typedef struct TestSuite TestSuite;
 typedef struct Test Test;
 
@@ -58,11 +108,29 @@ typedef struct TestCase
  */
 CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(TestSuite *));
 
-typedef struct TestSimpleCase
+/**
+ *
+ * @brief Free TestCase type.
+ */
+inline DESTRUCTOR(TestCase, TestCase *self)
+{
+    lily_free(self);
+}
+
+typedef struct TestSimple
 {
     char *name;
     int (*f)(Test *);
-} TestSimpleCase;
+} TestSimple;
+
+/**
+ *
+ * @brief Construct TestSimple type.
+ */
+inline CONSTRUCTOR(TestSimple, TestSimple, char *name, int (*f)(Test *))
+{
+    return (TestSimple){ .name = name, .f = f };
+}
 
 struct TestSuite
 {
@@ -70,9 +138,67 @@ struct TestSuite
     Vec *cases; // Vec<TestCase*>*
 };
 
+/**
+ *
+ * @brief Construct TestSuite type.
+ */
+inline CONSTRUCTOR(TestSuite, TestSuite, char *name, Vec *cases)
+{
+    return (TestSuite){ .name = name, .cases = cases };
+}
+
+/**
+ *
+ * @brief Free TestSuite type.
+ */
+DESTRUCTOR(TestSuite, const TestSuite *self);
+
+enum TestItemKind
+{
+    TEST_ITEM_KIND_SIMPLE,
+    TEST_ITEM_KIND_SUITE,
+};
+
+typedef struct TestItem
+{
+    enum TestItemKind kind;
+    union
+    {
+        TestSimple simple;
+        TestSuite suite;
+    };
+} TestItem;
+
+/**
+ *
+ * @brief Construct TestItem type (TEST_ITEM_KIND_SIMPLE).
+ */
+VARIANT_CONSTRUCTOR(TestItem *, TestItem, simple, TestSimple simple);
+
+/**
+ *
+ * @brief Construct TestItem type (TEST_ITEM_KIND_SUITE).
+ */
+VARIANT_CONSTRUCTOR(TestItem *, TestItem, suite, TestSuite suite);
+
 struct Test
 {
-    Vec *suites;
+    Vec *items; // Vec<TestItem*>*
 };
+
+/**
+ *
+ * @brief Construct Test type.
+ */
+inline CONSTRUCTOR(Test, Test, Vec *items)
+{
+    return (Test){ .items = items };
+}
+
+/**
+ *
+ * @brief Free Test type.
+ */
+DESTRUCTOR(Test, const Test *self);
 
 #endif // LILY_BASE_TEST_H

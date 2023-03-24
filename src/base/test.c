@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/new.h>
 #include <base/test.h>
 
 CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(TestSuite *))
@@ -33,4 +34,36 @@ CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(TestSuite *))
     self->f = f;
 
     return self;
+}
+
+DESTRUCTOR(TestSuite, const TestSuite *self)
+{
+    FREE_BUFFER_ITEMS(self->cases->buffer, self->cases->len, TestCase);
+    FREE(Vec, self->cases);
+}
+
+VARIANT_CONSTRUCTOR(TestItem *, TestItem, simple, TestSimple simple)
+{
+    TestItem *self = lily_malloc(sizeof(TestItem));
+
+    self->kind = TEST_ITEM_KIND_SIMPLE;
+    self->simple = simple;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(TestItem *, TestItem, suite, TestSuite suite)
+{
+    TestItem *self = lily_malloc(sizeof(TestItem));
+
+    self->kind = TEST_ITEM_KIND_SUITE;
+    self->suite = suite;
+
+    return self;
+}
+
+DESTRUCTOR(Test, const Test *self)
+{
+    FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, TestSuite);
+    FREE(Vec, self->items);
 }
