@@ -13,6 +13,10 @@ else()
 add_compile_options(-Wall -O3 -fdiagnostics-color=always)
 endif()
 
+if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+  set(CMAKE_C_FLAGS "/wd4710") 
+endif()
+
 set(BASE_SRC
 	src/base/alloc.c
 	src/base/atof.c
