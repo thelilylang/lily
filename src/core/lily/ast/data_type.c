@@ -581,7 +581,7 @@ to_string__LilyAstDataType(const LilyAstDataType *self)
             }
 
             return res;
-        } 
+        }
         case LILY_AST_DATA_TYPE_KIND_BOOL:
             return from__String("Bool");
         case LILY_AST_DATA_TYPE_KIND_BYTE:
