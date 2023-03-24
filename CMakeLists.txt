@@ -29,6 +29,7 @@ set(BASE_SRC
 	src/base/stack.c
 	src/base/str.c
 	src/base/string.c
+	src/base/test.c
   	src/base/vec.c)
 
 set(CLI_SRC
