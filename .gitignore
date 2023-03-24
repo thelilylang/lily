@@ -3,3 +3,5 @@
 /.vscode
 /.idea
 /cmake-build-debug
+/.vc
+/out
