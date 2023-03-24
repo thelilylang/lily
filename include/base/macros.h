@@ -37,7 +37,7 @@
 #define ENV_SAFE
 #undef ENV_SAFE
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__clang_major__)
 #define GCC_VERSION \
     (__GNUC__ * 1000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
 #elif defined(__clang_major__)
