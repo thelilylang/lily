@@ -25,13 +25,120 @@
 #ifndef LILY_CORE_LILY_AST_GENERIC_PARAM_H
 #define LILY_CORE_LILY_AST_GENERIC_PARAM_H
 
-enum LilyAstGenericParamKind {
+#include <base/macros.h>
+
+#include <core/lily/ast/expr.h>
+
+#ifdef ENV_DEBUG
+#include <base/string.h>
+#endif
+
+enum LilyAstGenericParamKind
+{
+    LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT,
     LILY_AST_GENERIC_PARAM_KIND_NORMAL,
-    LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT
 };
 
-typedef struct LilyAstGenericParam {
+/**
+ *
+ * @brief Convert LilyAstGenericParamKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstGenericParamKind,
+               enum LilyAstGenericParamKind self);
+#endif
+
+typedef struct LilyAstGenericParamConstraint
+{
+    LilyAstExpr *id;
+    Vec *constraints; // Vec<LilyAstExpr*>*
+} LilyAstGenericParamConstraint;
+
+/**
+ *
+ * @brief Construct LilyAstGenericParamConstraint type.
+ */
+inline CONSTRUCTOR(LilyAstGenericParamConstraint,
+                   LilyAstGenericParamConstraint,
+                   LilyAstExpr *id,
+                   Vec *constraints)
+{
+    return (LilyAstGenericParamConstraint){ .id = id,
+                                            .constraints = constraints };
+}
+
+/**
+ *
+ * @brief Convert LilyAstGenericParamConstraint in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstGenericParamConstraint,
+               const LilyAstGenericParamConstraint *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstGenericParamConstraint type.
+ */
+DESTRUCTOR(LilyAstGenericParamConstraint,
+           const LilyAstGenericParamConstraint *self);
+
+typedef struct LilyAstGenericParam
+{
     enum LilyAstGenericParamKind kind;
+    union
+    {
+        LilyAstGenericParamConstraint constraint;
+        LilyAstExpr *normal; // expected an identifier for normal param
+    };
 } LilyAstGenericParam;
+
+/**
+ *
+ * @brief Construct LilyAstGenericParam type
+ * (LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT).
+ */
+VARIANT_CONSTRUCTOR(LilyAstGenericParam *,
+                    LilyAstGenericParam,
+                    constraint,
+                    LilyAstGenericParamConstraint constraint);
+
+/**
+ *
+ * @brief Construct LilyAstGenericParam type
+ * (LILY_AST_GENERIC_PARAM_KIND_NORMAL).
+ */
+VARIANT_CONSTRUCTOR(LilyAstGenericParam *,
+                    LilyAstGenericParam,
+                    normal,
+                    LilyAstExpr *normal);
+
+/**
+ *
+ * @brief Convert LilyAstGenericParam in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyAstGenericParam, const LilyAstGenericParam *self);
+#endif
+
+/**
+ * 
+ * @brief Free LilyAstGenericParam type (LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT).
+*/
+VARIANT_DESTRUCTOR(LilyAstGenericParam, constraint, LilyAstGenericParam *self);
+
+/**
+ * 
+ * @brief Free LilyAstGenericParam type (LILY_AST_GENERIC_PARAM_KIND_NORMAL).
+*/
+VARIANT_DESTRUCTOR(LilyAstGenericParam, normal, LilyAstGenericParam *self);
 
 #endif // LILY_CORE_LILY_AST_GENERIC_PARAM_H
