@@ -382,12 +382,12 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataTypeKind, enum LilyAstDataTypeKind self)
             return "LILY_AST_DATA_TYPE_KIND_ANY";
         case LILY_AST_DATA_TYPE_KIND_ARRAY:
             return "LILY_AST_DATA_TYPE_KIND_ARRAY";
-        case LILY_AST_DATA_TYPE_KIND_BIT_CHAR:
-            return "LILY_AST_DATA_TYPE_KIND_BIT_CHAR";
-        case LILY_AST_DATA_TYPE_KIND_BIT_STR:
-            return "LILY_AST_DATA_TYPE_KIND_BIT_STR";
         case LILY_AST_DATA_TYPE_KIND_BOOL:
             return "LILY_AST_DATA_TYPE_KIND_BOOL";
+        case LILY_AST_DATA_TYPE_KIND_BYTE:
+            return "LILY_AST_DATA_TYPE_KIND_BIT_CHAR";
+        case LILY_AST_DATA_TYPE_KIND_BYTES:
+            return "LILY_AST_DATA_TYPE_KIND_BIT_STR";
         case LILY_AST_DATA_TYPE_KIND_CHAR:
             return "LILY_AST_DATA_TYPE_KIND_CHAR";
         case LILY_AST_DATA_TYPE_KIND_CUSTOM:
@@ -581,13 +581,13 @@ to_string__LilyAstDataType(const LilyAstDataType *self)
             }
 
             return res;
-        }
-        case LILY_AST_DATA_TYPE_KIND_BIT_CHAR:
-            return from__String("BitChar");
-        case LILY_AST_DATA_TYPE_KIND_BIT_STR:
-            return from__String("BitStr");
+        } 
         case LILY_AST_DATA_TYPE_KIND_BOOL:
             return from__String("Bool");
+        case LILY_AST_DATA_TYPE_KIND_BYTE:
+            return from__String("Byte");
+        case LILY_AST_DATA_TYPE_KIND_BYTES:
+            return from__String("Bytes");
         case LILY_AST_DATA_TYPE_KIND_CHAR:
             return from__String("Char");
         case LILY_AST_DATA_TYPE_KIND_CUSTOM: {
