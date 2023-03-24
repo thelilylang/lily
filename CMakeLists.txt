@@ -14,7 +14,7 @@ add_compile_options(-Wall -O3 -fdiagnostics-color=always)
 endif()
 
 if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-  set(CMAKE_C_FLAGS "/wd4710") 
+  set(CMAKE_C_FLAGS "/wd4710 /wd4711") 
 endif()
 
 set(BASE_SRC
