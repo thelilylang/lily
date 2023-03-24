@@ -35,8 +35,8 @@ enum CcWarningKind
 typedef struct CcWarning
 {
     enum CcWarningKind kind;
-    union
-    {};
+    // union
+    // {};
 } CcWarning;
 
 /**
