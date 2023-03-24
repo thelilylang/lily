@@ -103,18 +103,23 @@ VARIANT_CONSTRUCTOR(LilyAstGenericParam *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstGenericParam, const LilyAstGenericParam *self)
 {
-    String *res = format__String("LilyAstGenericParam{{ kind = {s}", to_string__Debug__LilyAstGenericParamKind(self->kind));
+    String *res =
+      format__String("LilyAstGenericParam{{ kind = {s}",
+                     to_string__Debug__LilyAstGenericParamKind(self->kind));
 
     switch (self->kind) {
         case LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT: {
-            char *s = format(", constraint = {Sr} }", to_string__Debug__LilyAstGenericParamConstraint(&self->constraint));
+            char *s = format(", constraint = {Sr} }",
+                             to_string__Debug__LilyAstGenericParamConstraint(
+                               &self->constraint));
 
             PUSH_STR_AND_FREE(res, s);
 
             break;
         }
         case LILY_AST_GENERIC_PARAM_KIND_NORMAL: {
-            char *s = format(", normal = {Sr} }", to_string__Debug__LilyAstExpr(self->normal));
+            char *s = format(", normal = {Sr} }",
+                             to_string__Debug__LilyAstExpr(self->normal));
 
             PUSH_STR_AND_FREE(res, s);
 
