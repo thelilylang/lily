@@ -8,7 +8,6 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 if (NOT WIN32)
-else()
 add_compile_options(-Wall -O3 -fdiagnostics-color=always)
 endif()
 
@@ -257,6 +256,11 @@ if (DEBUG)
 	target_link_libraries(test_base lily_base)
 
 	add_test(NAME test_base COMMAND test_base)
+
+	# add_executable(test_core_scanner tests/core/scanner/scanner.c)
+	# target_link_libraries(test_core_scanner lily_base lily_core)
+
+	# add_test(NAME test_core_scanner COMMAND test_core_scanner)
 
 	add_executable(bench_vec benchmarks/base/vec.c)
 	target_link_libraries(bench_vec lily_base)
