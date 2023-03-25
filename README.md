@@ -46,7 +46,7 @@ end
 
 ## Dependencies
 
-- CMake >= 3.10
+- CMake >= 3.20
 - GCC >= 4.6 or Clang >= 3.0
 
 ## Contribute
