@@ -1,9 +1,9 @@
 #!/bin/sh
 
-./build/test_core_scanner
+./build/Debug/test_core_scanner
 
 echo
-./build/test_core_preparser
+./build/Debug/test_core_preparser
 
 echo
-./build/test_core_precompile
+./build/Debug/test_core_precompile

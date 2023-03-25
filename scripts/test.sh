@@ -1,3 +1,3 @@
 #!/bin/sh
 
-ctest --test-dir build/
+ctest --test-dir build/Debug
