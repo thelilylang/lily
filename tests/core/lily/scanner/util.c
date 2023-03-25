@@ -2,6 +2,8 @@
 
 #include <core/lily/scanner.h>
 
+#define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
+
 LilyScanner
 run_scanner(File *file)
 {
@@ -27,5 +29,3 @@ run_scanner(File *file)
 #define SCANNER_ITERATOR() Usize it = 0;
 
 #define NEXT() CAST(LilyToken *, get__Vec(scanner.tokens, it++))
-
-#define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
