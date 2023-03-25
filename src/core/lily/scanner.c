@@ -1684,7 +1684,7 @@ get_token__LilyScanner(LilyScanner *self)
                        LILY_TOKEN_KIND_COMMA,
                        clone__Location(&self->location));
 
-        // $<id>
+        // $<id>, $
         case '$':
             if ((c1 >= (char *)'a' && c1 <= (char *)'z') ||
                 (c1 >= (char *)'A' && c1 <= (char *)'Z') || c1 == (char *)'_') {
