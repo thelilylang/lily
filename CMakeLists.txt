@@ -251,6 +251,9 @@ add_executable(lily src/bin/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)
 
 if (DEBUG)
+	message("Move `tests` directory in build directory")
+	file(COPY tests DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
 	enable_testing()
 
 	add_executable(test_base tests/base/base.c)
