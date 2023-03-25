@@ -64,9 +64,6 @@ display_failed_test_output__Test(char *name);
 static inline void
 display_failed_suite_output__Test(char *name, double time);
 
-static inline void
-display_separator__Test();
-
 CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(void))
 {
     TestCase *self = lily_malloc(sizeof(TestCase));
@@ -203,12 +200,6 @@ display_failed_suite_output__Test(char *name, double time)
            time);
 }
 
-static void
-display_separator__Test()
-{
-    puts("\n\x1b[30m==============================\x1b[0m\n");
-}
-
 #define DISPLAY_RESULT(name, kind, f_res, time)               \
     switch (f_res) {                                          \
         case TEST_PASS:                                       \
@@ -235,8 +226,10 @@ run__Test(const Test *self)
     Usize n_simple = 0;
     Usize n_suite = 0;
     Usize n_case = 0;
+    Usize n_simple_skipped = 0;
     Usize n_simple_failed = 0;
     Usize n_suite_failed = 0;
+    Usize n_case_skipped = 0;
     Usize n_case_failed = 0;
 
     // Run all items.
@@ -245,28 +238,38 @@ run__Test(const Test *self)
 
         switch (item->kind) {
             case TEST_ITEM_KIND_SIMPLE: {
-                display_runs_output__Test(item->simple.name);
+                for (; i < self->items->len; i++) {
+                    if (item->kind == TEST_ITEM_KIND_SIMPLE) {
+                        display_runs_output__Test(item->simple.name);
 
-                clock_t time_simple = clock();
-                int f_res = item->simple.f();
+                        clock_t time_simple = clock();
+                        int f_res = item->simple.f();
 
-                if (f_res == TEST_FAIL) {
-                    ++n_simple_failed;
-                    is_failed = true;
+                        if (f_res == TEST_FAIL) {
+                            ++n_simple_failed;
+                            is_failed = true;
+                        } else if (f_res == TEST_SKIP) {
+                            ++n_simple_skipped;
+                        }
+
+                        DISPLAY_RESULT(item->simple.name,
+                                       simple,
+                                       f_res,
+                                       (double)(clock() - time_simple));
+
+                        item = self->items->buffer[i + 1];
+                        ++n_simple;
+                    } else {
+                        break;
+                    }
                 }
 
-                DISPLAY_RESULT(item->simple.name,
-                               simple,
-                               f_res,
-                               (double)(clock() - time_simple));
-
-                ++n_simple;
+                i--;
+                puts("");
 
                 break;
             }
             case TEST_ITEM_KIND_SUITE: {
-                display_separator__Test();
-
                 int is_failed = false;
 
                 clock_t time_suite = clock();
@@ -282,6 +285,8 @@ run__Test(const Test *self)
                     if (f_res == TEST_FAIL) {
                         ++n_case_failed;
                         is_failed = true;
+                    } else if (f_res == TEST_SKIP) {
+                        ++n_case_skipped;
                     }
 
                     DISPLAY_RESULT(test_case->name,
@@ -301,9 +306,7 @@ run__Test(const Test *self)
                       item->suite.name, (double)(clock() - time_suite));
                 }
 
-                if (i + 1 == self->items->len) {
-                    display_separator__Test();
-                }
+                puts("");
 
                 ++n_suite;
 
@@ -326,17 +329,19 @@ run__Test(const Test *self)
            n_suite);
 
     printf("\x1b[30mSimple:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu "
-           "failed,\x1b[0m "
+           "failed,\x1b[0m \x1b[33m%zu skipped,\x1b[0m "
            "\x1b[30m%zu total\n\x1b[0m",
-           n_simple - n_simple_failed,
+           n_simple - n_simple_failed - n_simple_skipped,
            n_simple_failed,
+           n_simple_skipped,
            n_simple);
 
     printf("\x1b[30mCase:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu "
-           "failed,\x1b[0m "
+           "failed,\x1b[0m \x1b[33m%zu skipped,\x1b[0m "
            "\x1b[30m%zu total\n\x1b[0m",
-           n_case - n_case_failed,
+           n_case - n_case_failed - n_case_skipped,
            n_case_failed,
+           n_case_skipped,
            n_case);
 
     printf("\x1b[30mTime: %.2fs\n\x1b[0m",
