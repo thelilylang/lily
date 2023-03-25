@@ -1,8 +1,12 @@
+#ifndef UTIL_C
+#define UTIL_C
+
 #include <base/file.h>
 
 #include <core/lily/scanner.h>
 
 #define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
+#define FILE_OPERATOR "./tests/core/lily/scanner/input/operator.lily"
 
 LilyScanner
 run_scanner(File *file)
@@ -29,3 +33,5 @@ run_scanner(File *file)
 #define SCANNER_ITERATOR() Usize it = 0;
 
 #define NEXT() CAST(LilyToken *, get__Vec(scanner.tokens, it++))
+
+#endif // UTIL_C
