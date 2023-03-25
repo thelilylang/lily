@@ -5,6 +5,7 @@
 
 #include <core/lily/scanner.h>
 
+#define FILE_COMMENT_DOC "./tests/core/lily/scanner/input/comment_doc.lily"
 #define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
 #define FILE_OPERATOR "./tests/core/lily/scanner/input/operator.lily"
 
@@ -32,6 +33,8 @@ run_scanner(File *file)
 
 #define SCANNER_ITERATOR() Usize it = 0;
 
+#define CURRENT() CAST(LilyToken *, get__Vec(scanner.tokens, it))
 #define NEXT() CAST(LilyToken *, get__Vec(scanner.tokens, it++))
+#define PREVIOUS() CAST(LilyToken *, get__Vec(scanner.tokens, it - 1))
 
 #endif // UTIL_C
