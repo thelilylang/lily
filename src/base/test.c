@@ -318,25 +318,29 @@ run__Test(const Test *self)
         display_pass_test_output__Test(self->name);
     }
 
-    printf("\n\x1b[30mSuite:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu failed,\x1b[0m "
+    printf("\n\x1b[30mSuite:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu "
+           "failed,\x1b[0m "
            "\x1b[30m%zu total\n\x1b[0m",
            n_suite - n_suite_failed,
            n_suite_failed,
            n_suite);
 
-    printf("\x1b[30mSimple:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu failed,\x1b[0m "
+    printf("\x1b[30mSimple:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu "
+           "failed,\x1b[0m "
            "\x1b[30m%zu total\n\x1b[0m",
            n_simple - n_simple_failed,
            n_simple_failed,
            n_simple);
 
-    printf("\x1b[30mCase:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu failed,\x1b[0m "
+    printf("\x1b[30mCase:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu "
+           "failed,\x1b[0m "
            "\x1b[30m%zu total\n\x1b[0m",
            n_case - n_case_failed,
            n_case_failed,
            n_case);
 
-    printf("\x1b[30mTime: %.2fs\n\x1b[0m", (double)(clock() - start) / CLOCKS_PER_SEC);
+    printf("\x1b[30mTime: %.2fs\n\x1b[0m",
+           (double)(clock() - start) / CLOCKS_PER_SEC);
 }
 
 DESTRUCTOR(Test, const Test *self)
