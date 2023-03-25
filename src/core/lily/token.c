@@ -535,7 +535,7 @@ to_string__LilyToken(LilyToken *self)
         case LILY_TOKEN_KIND_DOT_DOT:
             return from__String("..");
         case LILY_TOKEN_KIND_DOT_INTERROGATION:
-            return from__String("?");
+            return from__String(".?");
         case LILY_TOKEN_KIND_DOT_STAR:
             return from__String(".*");
         case LILY_TOKEN_KIND_DOT:
