@@ -113,9 +113,10 @@
 
 #define CALL_SIMPLE(name) NEW(TestSimple, #name, &test_simple__##name)
 
-#define RUN_TEST()    \
-    run__Test(&test); \
-    FREE(Test, &test);
+#define RUN_TEST()                   \
+    int test_res = run__Test(&test); \
+    FREE(Test, &test);               \
+    return test_res;
 
 typedef struct TestSuite TestSuite;
 
@@ -229,7 +230,7 @@ inline CONSTRUCTOR(Test, Test, char *name)
  *
  * @brief Run test.
  */
-void
+int
 run__Test(const Test *self);
 
 /**

@@ -218,7 +218,7 @@ display_failed_suite_output__Test(char *name, double time)
             UNREACHABLE("unknown status");                    \
     }
 
-void
+int
 run__Test(const Test *self)
 {
     clock_t start = clock();
@@ -346,6 +346,12 @@ run__Test(const Test *self)
 
     printf("\x1b[30mTime: %.2fs\n\x1b[0m",
            (double)(clock() - start) / CLOCKS_PER_SEC);
+
+    if (is_failed) {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
 
 DESTRUCTOR(Test, const Test *self)
