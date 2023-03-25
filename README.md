@@ -61,6 +61,7 @@ ninja -C build/Debug
 ### Test
 
 > You can run `test.sh` to test with the `ctest` utility.
+NOTE: Using `test.sh` the `make clean` command will be run then the scripts will recompile the whole project and finally run `ctest`. 
 
 ```bash
 ./scripts/test.sh
