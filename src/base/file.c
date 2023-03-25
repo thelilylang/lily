@@ -118,6 +118,9 @@ read_file__File(const char *path)
 
     fclose(file);
 
+    content = lily_realloc(content, len + 2);
+    strcat(content, "\n\0");
+
     return content;
 }
 #else
@@ -141,16 +144,19 @@ read_file__File(const char *path)
 
     char *line = NULL;
     size_t len = 0;
+    size_t line_len = 0;
 
-    while (getline(&line, &len, file) != -1) {
-        content = lily_realloc(content, strlen(content) + len + 1);
+    while (getline(&line, &line_len, file) != -1) {
+        len += line_len;
+        content = lily_realloc(content, len + 1);
         strcat(content, line);
     }
 
     fclose(file);
     lily_free(line);
 
-    content[strlen(content)] = '\0';
+    content = lily_realloc(content, len + 2);
+    strcat(content, "\n\0"); 
 
     return content;
 }
