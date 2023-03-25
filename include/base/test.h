@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_TEST_H
 #define LILY_BASE_TEST_H
 
+#include <base/alloc.h>
 #include <base/new.h>
 #include <base/types.h>
 #include <base/vec.h>
@@ -47,40 +48,40 @@
     if (!x)            \
         return TEST_FAILED;
 
-#define CASE(name, block)                   \
-    int test_case__##name(TestSuite *suite) \
-    {                                       \
-        block;                              \
-        return TEST_SUCCESS;                \
+#define CASE(name, block)    \
+    int test_case__##name()  \
+    {                        \
+        block;               \
+        return TEST_SUCCESS; \
     }
 
-#define SKIP_CASE(name, block)              \
-    int test_case__##name(TestSuite *suite) \
-    {                                       \
-        do {                                \
-            return TEST_SKIPPED;            \
-        } while (0);                        \
-        block;                              \
+#define SKIP_CASE(name, block)   \
+    int test_case__##name()      \
+    {                            \
+        do {                     \
+            return TEST_SKIPPED; \
+        } while (0);             \
+        block;                   \
     }
 
-#define SIMPLE(name, block)             \
-    int test_simple__##name(Test *test) \
-    {                                   \
-        block;                          \
-        return TEST_SUCCESS;            \
+#define SIMPLE(name, block)   \
+    int test_simple__##name() \
+    {                         \
+        block;                \
+        return TEST_SUCCESS;  \
     }
 
-#define SKIP_SIMPLE(name, block)        \
-    int test_simple__##name(Test *test) \
-    {                                   \
-        do {                            \
-            return TEST_SKIPPED;        \
-        } while (0);                    \
-        block;                          \
+#define SKIP_SIMPLE(name, block) \
+    int test_simple__##name()    \
+    {                            \
+        do {                     \
+            return TEST_SKIPPED; \
+        } while (0);             \
+        block;                   \
     }
 
 #define SUITE(name, n_case, ...)                      \
-    Suite test_suite__##name(Test *test)              \
+    Suite test_suite__##name()                        \
     {                                                 \
         Vec *cases = NEW(Vec);                        \
         va_arg vl;                                    \
@@ -93,20 +94,31 @@
         return NEW(TestSuite, name, cases);           \
     }
 
+#define ADD_SUITE(suite) \
+    push__Vec(test.items, NEW_VARIANT(TestItem, suite, suite))
+
+#define ADD_SIMPLE(name) \
+    push__Vec(test.items, NEW_VARIANT(TestItem, simple, NEW(TestSimple, #name, &test_simple__##name)))
+
+#define NEW_TEST(name) Test test = NEW(Test, name);
+
+#define RUN_TEST()    \
+    run__Test(&test); \
+    FREE(Test, &test);
+
 typedef struct TestSuite TestSuite;
-typedef struct Test Test;
 
 typedef struct TestCase
 {
     char *name;
-    int (*f)(TestSuite *);
+    int (*f)(void);
 } TestCase;
 
 /**
  *
  * @brief Construct TestCase type.
  */
-CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(TestSuite *));
+CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(void));
 
 /**
  *
@@ -120,14 +132,14 @@ inline DESTRUCTOR(TestCase, TestCase *self)
 typedef struct TestSimple
 {
     char *name;
-    int (*f)(Test *);
+    int (*f)(void);
 } TestSimple;
 
 /**
  *
  * @brief Construct TestSimple type.
  */
-inline CONSTRUCTOR(TestSimple, TestSimple, char *name, int (*f)(Test *))
+inline CONSTRUCTOR(TestSimple, TestSimple, char *name, int (*f)(void))
 {
     return (TestSimple){ .name = name, .f = f };
 }
@@ -187,19 +199,27 @@ VARIANT_CONSTRUCTOR(TestItem *, TestItem, suite, TestSuite suite);
  */
 DESTRUCTOR(TestItem, TestItem *self);
 
-struct Test
+typedef struct Test
 {
     Vec *items; // Vec<TestItem*>*
-};
+    char *name;
+} Test;
 
 /**
  *
  * @brief Construct Test type.
  */
-inline CONSTRUCTOR(Test, Test, Vec *items)
+inline CONSTRUCTOR(Test, Test, char *name)
 {
-    return (Test){ .items = items };
+    return (Test){ .items = NEW(Vec), .name = name };
 }
+
+/**
+ *
+ * @brief Run test.
+ */
+void
+run__Test(const Test *self);
 
 /**
  *

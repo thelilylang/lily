@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-#include <base/alloc.h>
 #include <base/new.h>
 #include <base/test.h>
 
 #include <stdio.h>
+#include <time.h>
 
 // Free TestItem type (TEST_ITEM_KIND_SIMPLE).
 static inline VARIANT_DESTRUCTOR(TestItem, simple, TestItem *self);
@@ -34,7 +34,19 @@ static inline VARIANT_DESTRUCTOR(TestItem, simple, TestItem *self);
 // Free TestItem type (TEST_ITEM_KIND_SUITE).
 static VARIANT_DESTRUCTOR(TestItem, suite, TestItem *self);
 
-CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(TestSuite *))
+static void
+display_runs_output__Test(char *name);
+
+static void
+display_success_output__Test(char *name);
+
+static void
+display_skipped_output__Test(char *name);
+
+static void
+display_failed_output__Test(char *name);
+
+CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(void))
 {
     TestCase *self = lily_malloc(sizeof(TestCase));
 
@@ -93,6 +105,108 @@ DESTRUCTOR(TestItem, TestItem *self)
         default:
             UNREACHABLE("unknown variant");
     }
+}
+
+void
+display_runs_output__Test(char *name)
+{
+    printf("\r\x1b[37m\x1b[43mRUNS\x1b[0m \x1b[30m%s\x1b[0m", name);
+    fflush(stdout);
+}
+
+void
+display_success_output__Test(char *name)
+{
+    printf("\r\x1b[37m\x1b[42mSUCCESS\x1b[0m \x1b[30m%s\n\x1b[0m", name);
+}
+
+void
+display_skipped_output__Test(char *name)
+{
+    printf("\r\x1b[37m\x1b[43mSKIPPED\x1b[0m \x1b[30m%s\n\x1b[0m", name);
+}
+
+void
+display_failed_output__Test(char *name)
+{
+    printf("\r\x1b[37m\x1b[43mFAILED\x1b[0m \x1b[30m%s\n\x1b[0m", name);
+}
+
+#define DISPLAY_RESULT(f_res)                                \
+    switch (f_res) {                                         \
+        case TEST_SUCCESS:                                   \
+            display_success_output__Test(item->simple.name); \
+                                                             \
+            break;                                           \
+        case TEST_SKIPPED:                                   \
+            display_skipped_output__Test(item->simple.name); \
+                                                             \
+            break;                                           \
+        case TEST_FAILED:                                    \
+            display_failed_output__Test(item->simple.name);  \
+                                                             \
+            break;                                           \
+        default:                                             \
+            UNREACHABLE("unknown status");                   \
+    }
+
+void
+run__Test(const Test *self)
+{
+    clock_t start = clock();
+    int is_failed = false;
+
+    // Run all items.
+    for (Usize i = 0; i < self->items->len; i++) {
+        TestItem *item = get__Vec(self->items, i);
+
+        switch (item->kind) {
+            case TEST_ITEM_KIND_SIMPLE: {
+                display_runs_output__Test(item->simple.name);
+
+                int f_res = item->simple.f();
+
+                if (f_res == TEST_FAILED) {
+                    is_failed = true;
+                }
+
+                DISPLAY_RESULT(f_res);
+
+                break;
+            }
+            case TEST_ITEM_KIND_SUITE: {
+                int is_failed = false;
+
+                for (Usize i = 0; i < item->suite.cases->len; i++) {
+                    TestCase *test_case = get__Vec(item->suite.cases, i);
+
+                    display_runs_output__Test(item->simple.name);
+
+                    int f_res = test_case->f();
+
+                    if (f_res == TEST_FAILED) {
+                        is_failed = true;
+                    }
+
+                    DISPLAY_RESULT(f_res);
+                }
+
+                if (is_failed) {
+                    display_failed_output__Test(item->suite.name);
+                }
+
+                break;
+            }
+        }
+    }
+
+    if (is_failed) {
+        display_success_output__Test(self->name);
+    } else {
+        display_success_output__Test(self->name);
+    }
+
+    printf("\x1b[30mtime\x1b[0m: %.2fs\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
 
 DESTRUCTOR(Test, const Test *self)
