@@ -2,8 +2,6 @@
 
 #include <base/test.h>
 
-#include <stdio.h>
-
 SIMPLE(separator, {
     RUN_SCANNER(FILE_SEPARATOR);
     SCANNER_ITERATOR();

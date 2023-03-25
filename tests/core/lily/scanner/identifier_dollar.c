@@ -2,7 +2,6 @@
 
 #include <base/test.h>
 
-#include <stdio.h>
 #include <string.h>
 
 SIMPLE(identifier_dollar, {

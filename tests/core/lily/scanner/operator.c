@@ -2,8 +2,6 @@
 
 #include <base/test.h>
 
-#include <stdio.h>
-
 SIMPLE(operator, {
     RUN_SCANNER(FILE_OPERATOR);
     SCANNER_ITERATOR();

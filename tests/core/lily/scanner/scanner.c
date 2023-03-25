@@ -36,6 +36,7 @@ main()
     NEW_TEST("scanner");
     ADD_SIMPLE(comment_doc);
     ADD_SIMPLE(identifier_dollar);
+    ADD_SIMPLE(identifier_macro);
     ADD_SIMPLE(separator);
     ADD_SIMPLE(operator);
     RUN_TEST();

@@ -8,6 +8,7 @@
 #define FILE_COMMENT_DOC "./tests/core/lily/scanner/input/comment_doc.lily"
 #define FILE_IDENTIFIER_DOLLAR \
     "./tests/core/lily/scanner/input/identifier_dollar.lily"
+#define FILE_IDENTIFIER_MACRO "./tests/core/lily/scanner/input/identifier_macro.lily"
 #define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
 #define FILE_OPERATOR "./tests/core/lily/scanner/input/operator.lily"
 
