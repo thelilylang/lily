@@ -1776,9 +1776,52 @@ get_token__LilyScanner(LilyScanner *self)
 
             switch (match) {
                 case '{':
-                    token = NEW(LilyToken,
-                                LILY_TOKEN_KIND_L_BRACE,
-                                clone__Location(&self->location));
+                    if (c1 == (char *)'{') {
+                        jump__LilyScanner(self, 2);
+                        skip_space__LilyScanner(self);
+
+                        String *id = scan_identifier__LilyScanner(self);
+
+                        next_char__Source(&self->source);
+                        skip_space__LilyScanner(self);
+
+                        if (self->source.cursor.current == '}' &&
+                            peek_char__LilyScanner(self, 1) == (char *)'}') {
+                            next_char__Source(&self->source);
+
+                            return NEW_VARIANT(LilyToken,
+                                               identifier_macro,
+                                               clone__Location(&self->location),
+                                               id);
+                        } else {
+                            Location location_error =
+                              clone__Location(&self->location);
+
+                            end__Location(&location_error,
+                                          self->source.cursor.line,
+                                          self->source.cursor.column);
+
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->source.file,
+                                &location_error,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_EXPECTED_MANY_CHARACTERS),
+                                NULL,
+                                NULL,
+                                from__String("expected `}}`")),
+                              &self->count_error);
+
+                            return NULL;
+                        }
+                    } else {
+                        token = NEW(LilyToken,
+                                    LILY_TOKEN_KIND_L_BRACE,
+                                    clone__Location(&self->location));
+                    }
+
                     break;
                 case '[':
                     token = NEW(LilyToken,
