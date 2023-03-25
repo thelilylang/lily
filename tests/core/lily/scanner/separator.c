@@ -1,6 +1,7 @@
 #include "util.c"
 
 #include <base/test.h>
+
 #include <stdio.h>
 
 SIMPLE(separator, {
