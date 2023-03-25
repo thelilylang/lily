@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 SIMPLE(separator, {
-    RUN_SCANNER("./tests/core/lily/scanner/input/separator.lily");
+    RUN_SCANNER(FILE_SEPARATOR);
     SCANNER_ITERATOR();
 
     TEST_ASSERT_EQ(NEXT()->kind, LILY_TOKEN_KIND_ARROW);
