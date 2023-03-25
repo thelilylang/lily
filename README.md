@@ -58,6 +58,20 @@ make debug
 ninja -C build/Debug
 ```
 
+### Test
+
+> You can run `test.sh` to test with the `ctest` utility.
+
+```bash
+./scripts/test.sh
+```
+
+> However, using `test.sh` it is not possible to see exactly which test fails for example, so in this case use `full_test.sh`.
+
+```bash
+./scripts/full_test.sh
+```
+
 ## Build
 
 ```bash
