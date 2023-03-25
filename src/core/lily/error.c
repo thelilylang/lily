@@ -131,6 +131,8 @@ to_msg__LilyError(const LilyError *self)
             return "miss one or many expressions";
         case LILY_ERROR_KIND_MISS_ONE_OR_MANY_IDENTIFIERS:
             return "miss one or many identifiers";
+        case LILY_ERROR_KIND_EXPECTED_MANY_CHARACTERS:
+            return "expected many characters";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -236,6 +238,8 @@ to_code__LilyError(const LilyError *self)
             return "0047";
         case LILY_ERROR_KIND_MISS_ONE_OR_MANY_IDENTIFIERS:
             return "0048";
+        case LILY_ERROR_KIND_EXPECTED_MANY_CHARACTERS:
+            return "0049";
         default:
             UNREACHABLE("unknown variant");
     }
