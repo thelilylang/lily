@@ -156,7 +156,7 @@ read_file__File(const char *path)
     lily_free(line);
 
     content = lily_realloc(content, len + 2);
-    strcat(content, "\n\0"); 
+    strcat(content, "\n\0");
 
     return content;
 }

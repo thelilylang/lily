@@ -19,11 +19,11 @@ run_scanner(File *file)
     LilyScanner scanner = run_scanner(&file);
 
 #define FREE_SCANNER() \
-  FREE(File, &file); \
-  FREE(LilyScanner, &scanner);
+    FREE(File, &file); \
+    FREE(LilyScanner, &scanner);
 
-#define GET_TOKEN(idx) CAST(LilyToken*, get__Vec(scanner.tokens, idx))
+#define GET_TOKEN(idx) CAST(LilyToken *, get__Vec(scanner.tokens, idx))
 
 #define SCANNER_ITERATOR() Usize it = 0;
 
-#define NEXT() CAST(LilyToken*, get__Vec(scanner.tokens, it++))
+#define NEXT() CAST(LilyToken *, get__Vec(scanner.tokens, it++))
