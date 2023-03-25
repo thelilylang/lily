@@ -34,17 +34,38 @@ static inline VARIANT_DESTRUCTOR(TestItem, simple, TestItem *self);
 // Free TestItem type (TEST_ITEM_KIND_SUITE).
 static VARIANT_DESTRUCTOR(TestItem, suite, TestItem *self);
 
-static void
+static inline void
 display_runs_output__Test(char *name);
 
-static void
-display_success_output__Test(char *name);
+static inline void
+display_pass_case_output__Test(char *name, double time);
 
-static void
-display_skipped_output__Test(char *name);
+static inline void
+display_pass_suite_output__Test(char *name, double time);
 
-static void
-display_failed_output__Test(char *name);
+static inline void
+display_pass_simple_output__Test(char *name, double time);
+
+static inline void
+display_pass_test_output__Test(char *name);
+
+static inline void
+display_skipped_output__Test(char *name, double time);
+
+static inline void
+display_failed_case_output__Test(char *name, double time);
+
+static inline void
+display_failed_simple_output__Test(char *name, double time);
+
+static inline void
+display_failed_test_output__Test(char *name);
+
+static inline void
+display_failed_suite_output__Test(char *name, double time);
+
+static inline void
+display_separator__Test();
 
 CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(void))
 {
@@ -115,46 +136,108 @@ display_runs_output__Test(char *name)
 }
 
 void
-display_success_output__Test(char *name)
+display_pass_case_output__Test(char *name, double time)
 {
-    printf("\r\x1b[37m\x1b[42mSUCCESS\x1b[0m \x1b[30m%s\n\x1b[0m", name);
+    printf("\r\x1b[37m\x1b[42mCASE\x1b[0m \x1b[30m%s (%.2f ms)\n\x1b[0m",
+           name,
+           time);
 }
 
 void
-display_skipped_output__Test(char *name)
+display_pass_suite_output__Test(char *name, double time)
 {
-    printf("\r\x1b[37m\x1b[43mSKIPPED\x1b[0m \x1b[30m%s\n\x1b[0m", name);
+    printf("\r\x1b[37m\x1b[42mSUITE\x1b[0m \x1b[30m%s (%.2f ms)\n\x1b[0m",
+           name,
+           time);
 }
 
 void
-display_failed_output__Test(char *name)
+display_pass_simple_output__Test(char *name, double time)
 {
-    printf("\r\x1b[37m\x1b[43mFAILED\x1b[0m \x1b[30m%s\n\x1b[0m", name);
+    printf("\r\x1b[37m\x1b[42mSIMPLE\x1b[0m \x1b[30m%s (%.2f ms)\n\x1b[0m",
+           name,
+           time);
 }
 
-#define DISPLAY_RESULT(f_res)                                \
-    switch (f_res) {                                         \
-        case TEST_SUCCESS:                                   \
-            display_success_output__Test(item->simple.name); \
-                                                             \
-            break;                                           \
-        case TEST_SKIPPED:                                   \
-            display_skipped_output__Test(item->simple.name); \
-                                                             \
-            break;                                           \
-        case TEST_FAILED:                                    \
-            display_failed_output__Test(item->simple.name);  \
-                                                             \
-            break;                                           \
-        default:                                             \
-            UNREACHABLE("unknown status");                   \
+void
+display_pass_test_output__Test(char *name)
+{
+    printf("\r\x1b[37m\x1b[42mTEST\x1b[0m \x1b[30m%s\n\x1b[0m", name);
+}
+
+void
+display_skipped_output__Test(char *name, double time)
+{
+    printf("\r\x1b[37m\x1b[43mSKIPPED\x1b[0m \x1b[30m%s (%.2f ms)\n\x1b[0m",
+           name,
+           time);
+}
+
+void
+display_failed_case_output__Test(char *name, double time)
+{
+    printf("\r\x1b[37m\x1b[41mCASE\x1b[0m \x1b[30m%s (%.2f ms)\n\x1b[0m",
+           name,
+           time);
+}
+
+void
+display_failed_simple_output__Test(char *name, double time)
+{
+    printf("\r\x1b[37m\x1b[41mSIMPLE\x1b[0m \x1b[30m%s (%.2f ms)\n\x1b[0m",
+           name,
+           time);
+}
+
+static inline void
+display_failed_test_output__Test(char *name)
+{
+    printf("\r\x1b[37m\x1b[41mTEST\x1b[0m \x1b[30m%s\n\x1b[0m", name);
+}
+
+void
+display_failed_suite_output__Test(char *name, double time)
+{
+    printf("\r\x1b[37m\x1b[41mSUITE\x1b[0m \x1b[30m%s (%.2f ms)\n\x1b[0m",
+           name,
+           time);
+}
+
+static void
+display_separator__Test()
+{
+    puts("\n\x1b[30m==============================\x1b[0m\n");
+}
+
+#define DISPLAY_RESULT(name, kind, f_res, time)               \
+    switch (f_res) {                                          \
+        case TEST_PASS:                                       \
+            display_pass_##kind##_output__Test(name, time);   \
+                                                              \
+            break;                                            \
+        case TEST_SKIP:                                       \
+            display_skipped_output__Test(name, time);         \
+                                                              \
+            break;                                            \
+        case TEST_FAIL:                                       \
+            display_failed_##kind##_output__Test(name, time); \
+                                                              \
+            break;                                            \
+        default:                                              \
+            UNREACHABLE("unknown status");                    \
     }
 
 void
 run__Test(const Test *self)
 {
     clock_t start = clock();
-    int is_failed = false;
+    bool is_failed = false;
+    Usize n_simple = 0;
+    Usize n_suite = 0;
+    Usize n_case = 0;
+    Usize n_simple_failed = 0;
+    Usize n_suite_failed = 0;
+    Usize n_case_failed = 0;
 
     // Run all items.
     for (Usize i = 0; i < self->items->len; i++) {
@@ -164,36 +247,65 @@ run__Test(const Test *self)
             case TEST_ITEM_KIND_SIMPLE: {
                 display_runs_output__Test(item->simple.name);
 
+                clock_t time_simple = clock();
                 int f_res = item->simple.f();
 
-                if (f_res == TEST_FAILED) {
+                if (f_res == TEST_FAIL) {
+                    ++n_simple_failed;
                     is_failed = true;
                 }
 
-                DISPLAY_RESULT(f_res);
+                DISPLAY_RESULT(item->simple.name,
+                               simple,
+                               f_res,
+                               (double)(clock() - time_simple));
+
+                ++n_simple;
 
                 break;
             }
             case TEST_ITEM_KIND_SUITE: {
+                display_separator__Test();
+
                 int is_failed = false;
+
+                clock_t time_suite = clock();
 
                 for (Usize i = 0; i < item->suite.cases->len; i++) {
                     TestCase *test_case = get__Vec(item->suite.cases, i);
 
-                    display_runs_output__Test(item->simple.name);
+                    display_runs_output__Test(test_case->name);
 
+                    clock_t time_case = clock();
                     int f_res = test_case->f();
 
-                    if (f_res == TEST_FAILED) {
+                    if (f_res == TEST_FAIL) {
+                        ++n_case_failed;
                         is_failed = true;
                     }
 
-                    DISPLAY_RESULT(f_res);
+                    DISPLAY_RESULT(test_case->name,
+                                   case,
+                                   f_res,
+                                   (double)(clock() - time_case));
+
+                    ++n_case;
                 }
 
                 if (is_failed) {
-                    display_failed_output__Test(item->suite.name);
+                    ++n_suite_failed;
+                    display_failed_suite_output__Test(
+                      item->suite.name, (double)(clock() - time_suite));
+                } else {
+                    display_pass_suite_output__Test(
+                      item->suite.name, (double)(clock() - time_suite));
                 }
+
+                if (i + 1 == self->items->len) {
+                    display_separator__Test();
+                }
+
+                ++n_suite;
 
                 break;
             }
@@ -201,12 +313,30 @@ run__Test(const Test *self)
     }
 
     if (is_failed) {
-        display_success_output__Test(self->name);
+        display_failed_test_output__Test(self->name);
     } else {
-        display_success_output__Test(self->name);
+        display_pass_test_output__Test(self->name);
     }
 
-    printf("\x1b[30mtime\x1b[0m: %.2fs\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+    printf("\n\x1b[30mSuite:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu failed,\x1b[0m "
+           "\x1b[30m%zu total\n\x1b[0m",
+           n_suite - n_suite_failed,
+           n_suite_failed,
+           n_suite);
+
+    printf("\x1b[30mSimple:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu failed,\x1b[0m "
+           "\x1b[30m%zu total\n\x1b[0m",
+           n_simple - n_simple_failed,
+           n_simple_failed,
+           n_simple);
+
+    printf("\x1b[30mCase:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu failed,\x1b[0m "
+           "\x1b[30m%zu total\n\x1b[0m",
+           n_case - n_case_failed,
+           n_case_failed,
+           n_case);
+
+    printf("\x1b[30mTime: %.2fs\n\x1b[0m", (double)(clock() - start) / CLOCKS_PER_SEC);
 }
 
 DESTRUCTOR(Test, const Test *self)

@@ -32,75 +32,86 @@
 
 #include <stdarg.h>
 
-#define TEST_SUCCESS 0
-#define TEST_FAILED 1
-#define TEST_SKIPPED -1
+#define TEST_PASS 0
+#define TEST_FAIL 1
+#define TEST_SKIP -1
 
 #define TEST_ASSERT_EQ(x, y) \
     if (x != y)              \
-        return TEST_FAILED;
+        return TEST_FAIL;
 
 #define TEST_ASSERT_NE(x, y) \
     if (x == y)              \
-        return TEST_FAILED;
+        return TEST_FAIL;
 
 #define TEST_ASSERT(x) \
     if (!x)            \
-        return TEST_FAILED;
+        return TEST_FAIL;
 
-#define CASE(name, block)    \
-    int test_case__##name()  \
-    {                        \
-        block;               \
-        return TEST_SUCCESS; \
+#define CASE(name, block)   \
+    int test_case__##name() \
+    {                       \
+        block;              \
+        return TEST_PASS;   \
     }
 
-#define SKIP_CASE(name, block)   \
-    int test_case__##name()      \
-    {                            \
-        do {                     \
-            return TEST_SKIPPED; \
-        } while (0);             \
-        block;                   \
+#define SKIP_CASE(name, block) \
+    int test_case__##name()    \
+    {                          \
+        do {                   \
+            return TEST_SKIP;  \
+        } while (0);           \
+        block;                 \
     }
 
 #define SIMPLE(name, block)   \
     int test_simple__##name() \
     {                         \
         block;                \
-        return TEST_SUCCESS;  \
+        return TEST_PASS;     \
     }
 
 #define SKIP_SIMPLE(name, block) \
     int test_simple__##name()    \
     {                            \
         do {                     \
-            return TEST_SKIPPED; \
+            return TEST_SKIP;    \
         } while (0);             \
         block;                   \
     }
 
-#define SUITE(name, n_case, ...)                      \
-    Suite test_suite__##name()                        \
+#define SUITE(name)                                   \
+    TestSuite test_suite__##name(int n_case, ...)     \
     {                                                 \
         Vec *cases = NEW(Vec);                        \
-        va_arg vl;                                    \
+        va_list vl;                                   \
         va_start(vl, n_case);                         \
                                                       \
-        for (Usiz i = 0; i < n_case; i++) {           \
+        for (Usize i = 0; i < n_case; i++) {          \
             push__Vec(cases, va_arg(vl, TestCase *)); \
         }                                             \
                                                       \
-        return NEW(TestSuite, name, cases);           \
+        va_end(vl);                                   \
+                                                      \
+        return NEW(TestSuite, #name, cases);          \
     }
 
-#define ADD_SUITE(suite) \
-    push__Vec(test.items, NEW_VARIANT(TestItem, suite, suite))
+#define ADD_SUITE(n_case, name, ...) \
+    push__Vec(                       \
+      test.items,                    \
+      NEW_VARIANT(TestItem, suite, test_suite__##name(n_case, __VA_ARGS__)))
 
-#define ADD_SIMPLE(name) \
-    push__Vec(test.items, NEW_VARIANT(TestItem, simple, NEW(TestSimple, #name, &test_simple__##name)))
+#define ADD_SIMPLE(name)            \
+    push__Vec(test.items,           \
+              NEW_VARIANT(TestItem, \
+                          simple,   \
+                          NEW(TestSimple, #name, &test_simple__##name)))
 
 #define NEW_TEST(name) Test test = NEW(Test, name);
+
+#define CALL_CASE(name) NEW(TestCase, #name, &test_case__##name)
+
+#define CALL_SIMPLE(name) NEW(TestSimple, #name, &test_simple__##name)
 
 #define RUN_TEST()    \
     run__Test(&test); \
