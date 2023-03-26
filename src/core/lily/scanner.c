@@ -2107,8 +2107,7 @@ get_token__LilyScanner(LilyScanner *self)
                 next_char__Source(&self->source);
             }
 
-            if (self->source.cursor.position >=
-                strlen(self->source.file->content)) {
+            if (isspace(self->source.cursor.current)) {
                 Location location_error = clone__Location(&self->location);
 
                 end__Location(&location_error,
