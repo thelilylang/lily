@@ -74,7 +74,7 @@ set(CORE_SRC
 	src/core/lily/ast/decl/class.c
 	src/core/lily/ast/decl/enum.c
 	src/core/lily/ast/decl/enum_object.c
-	src/core/lily/ast/decl/function.c
+	src/core/lily/ast/decl/fun.c
 	src/core/lily/ast/decl/macro.c
 	src/core/lily/ast/decl/method.c
 	src/core/lily/ast/decl/module.c
