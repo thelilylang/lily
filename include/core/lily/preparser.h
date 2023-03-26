@@ -963,7 +963,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserEnum
 {
     String *name;
-    Vec *variants; // Vec<LilyPreparserEnumBodyItem*>*
+    Vec *body; // Vec<LilyPreparserEnumBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserEnum;
 

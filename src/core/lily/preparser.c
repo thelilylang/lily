@@ -703,7 +703,7 @@ static DESTRUCTOR(LilyPreparserEnumBodyItem, LilyPreparserEnumBodyItem *self);
 static inline CONSTRUCTOR(LilyPreparserEnum,
                           LilyPreparserEnum,
                           String *name,
-                          Vec *variants,
+                          Vec *body,
                           enum LilyVisibility visibility);
 
 // Free LilyPreparserEnum type.
@@ -4251,11 +4251,11 @@ DESTRUCTOR(LilyPreparserEnumBodyItem, LilyPreparserEnumBodyItem *self)
 CONSTRUCTOR(LilyPreparserEnum,
             LilyPreparserEnum,
             String *name,
-            Vec *variants,
+            Vec *body,
             enum LilyVisibility visibility)
 {
     return (LilyPreparserEnum){ .name = name,
-                                .variants = variants,
+                                .body = body,
                                 .visibility = visibility };
 }
 
@@ -4264,9 +4264,9 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserEnum, const LilyPreparserEnum *self)
 {
     String *res =
-      format__String("LilyPreparserEnum{{ name = {S}, variants =", self->name);
+      format__String("LilyPreparserEnum{{ name = {S}, body =", self->name);
 
-    DEBUG_VEC_STRING(self->variants, res, LilyPreparserEnumBodyItem);
+    DEBUG_VEC_STRING(self->body, res, LilyPreparserEnumBodyItem);
 
     {
         char *s = format(", visibility = {s} }",
@@ -4286,8 +4286,8 @@ DESTRUCTOR(LilyPreparserEnum, const LilyPreparserEnum *self)
 #endif
 
     FREE_BUFFER_ITEMS(
-      self->variants->buffer, self->variants->len, LilyPreparserEnumBodyItem);
-    FREE(Vec, self->variants);
+      self->body->buffer, self->body->len, LilyPreparserEnumBodyItem);
+    FREE(Vec, self->body);
 }
 
 CONSTRUCTOR(LilyPreparserRecord,
