@@ -24,7 +24,7 @@
 
 #include <base/alloc.h>
 
-#include <core/lily/ast/attribute.h>
+#include <core/lily/ast/decl/attribute.h>
 
 #ifdef ENV_DEBUG
 #include <base/format.h>
