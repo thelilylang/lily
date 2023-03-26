@@ -731,8 +731,7 @@ void
 skip_space__LilyScanner(LilyScanner *self)
 {
     while (isspace(self->source.cursor.current) &&
-           self->source.cursor.position <
-             self->source.file->len - 1) {
+           self->source.cursor.position < self->source.file->len - 1) {
         next_char__Source(&self->source);
     }
 }
@@ -1054,8 +1053,7 @@ skip_comment_block__LilyScanner(LilyScanner *self)
 
     while (self->source.cursor.current != '*' ||
            peek_char__LilyScanner(self, 1) != (char *)'/') {
-        if (self->source.cursor.position >=
-            self->source.file->len - 2) {
+        if (self->source.cursor.position >= self->source.file->len - 2) {
             end__Location(&location_error,
                           self->source.cursor.line,
                           self->source.cursor.column);
@@ -1090,8 +1088,7 @@ scan_comment_doc__LilyScanner(LilyScanner *self)
     while (self->source.cursor.current != '\n') {
         next_char__Source(&self->source);
 
-        if (self->source.cursor.position >=
-            self->source.file->len - 1) {
+        if (self->source.cursor.position >= self->source.file->len - 1) {
             break;
         }
 
@@ -1201,8 +1198,7 @@ scan_string__LilyScanner(LilyScanner *self)
     next_char__Source(&self->source);
 
     while (self->source.cursor.current != '\"') {
-        if (self->source.cursor.position >
-            self->source.file->len - 2) {
+        if (self->source.cursor.position > self->source.file->len - 2) {
             end__Location(&location_error,
                           self->source.cursor.line,
                           self->source.cursor.column);
@@ -1552,8 +1548,7 @@ get_closing__LilyScanner(LilyScanner *self, char target)
     skip_space__LilyScanner(self);
 
     while (skip_and_verify__LilyScanner(self, target)) {
-        if (self->source.cursor.position >=
-            self->source.file->len - 1) {
+        if (self->source.cursor.position >= self->source.file->len - 1) {
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
@@ -2309,7 +2304,8 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
 
                 FREE(String, token_s);
 
-                if (self->source.cursor.position >= self->source.file->len - 1) {
+                if (self->source.cursor.position >=
+                    self->source.file->len - 1) {
                     break;
                 }
             }
