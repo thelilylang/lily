@@ -119,6 +119,7 @@ set(CORE_SRC
 	src/core/lily/ast/decl.c
 	src/core/lily/ast/expr.c
 	src/core/lily/ast/field.c
+	src/core/lily/ast/field_object.c
 	src/core/lily/ast/generic_param.c
 	src/core/lily/ast/impl_param.c
 	src/core/lily/ast/inherit_param.c
