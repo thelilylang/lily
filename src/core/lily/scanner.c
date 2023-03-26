@@ -1807,12 +1807,15 @@ get_token__LilyScanner(LilyScanner *self)
                                 simple_lily_error,
                                 self->source.file,
                                 &location_error,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_EXPECTED_MANY_CHARACTERS),
+                                NEW(
+                                  LilyError,
+                                  LILY_ERROR_KIND_EXPECTED_ONE_OR_MANY_CHARACTERS),
                                 NULL,
                                 NULL,
                                 from__String("expected `}}`")),
                               &self->count_error);
+
+                            FREE(String, id);
 
                             return NULL;
                         }
@@ -2090,6 +2093,50 @@ get_token__LilyScanner(LilyScanner *self)
             }
 
             return NULL;
+        }
+
+        // identifier operator
+        case '`': {
+            next_char__Source(&self->source);
+
+            String *operator= NEW(String);
+
+            while (self->source.cursor.current != '`') {
+                push__String(operator, self->source.cursor.current);
+                next_char__Source(&self->source);
+            }
+
+            if (self->source.cursor.current != '`') {
+                Location location_error = clone__Location(&self->location);
+
+                end__Location(&location_error,
+                              self->source.cursor.line,
+                              self->source.cursor.column);
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->source.file,
+                    &location_error,
+                    NEW(LilyError,
+                        LILY_ERROR_KIND_EXPECTED_ONE_OR_MANY_CHARACTERS),
+                    NULL,
+                    NULL,
+                    from__String("expected '`'")),
+                  &self->count_error);
+
+                FREE(String, operator);
+
+                next_char__Source(&self->source);
+
+                return NULL;
+            }
+
+            return NEW_VARIANT(LilyToken,
+                               identifier_operator,
+                               clone__Location(&self->location),
+                               operator);
         }
 
         // number
