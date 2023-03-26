@@ -2129,7 +2129,7 @@ get_token__LilyScanner(LilyScanner *self)
                   &self->count_error);
 
                 FREE(String, operator);
-                
+
                 return NULL;
             }
 
@@ -2329,7 +2329,7 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
 
 #ifndef DEBUG_SCANNER
     if (dump_scanner) {
-        n("====Scanner(%s)====\n", self->source.file->name);
+        printf("====Scanner(%s)====\n", self->source.file->name);
 
         for (Usize i = 0; i < self->tokens->len; i++) {
             PRINTLN("{Sr}", to_string__LilyToken(get__Vec(self->tokens, i)));
