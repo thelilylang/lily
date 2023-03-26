@@ -131,15 +131,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstGenericParam, const LilyAstGenericParam *self);
 
 /**
  *
- * @brief Free LilyAstGenericParam type
- * (LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT).
+ * @brief Free LilyAstGenericParam type.
  */
-VARIANT_DESTRUCTOR(LilyAstGenericParam, constraint, LilyAstGenericParam *self);
-
-/**
- *
- * @brief Free LilyAstGenericParam type (LILY_AST_GENERIC_PARAM_KIND_NORMAL).
- */
-VARIANT_DESTRUCTOR(LilyAstGenericParam, normal, LilyAstGenericParam *self);
+DESTRUCTOR(LilyAstGenericParam, LilyAstGenericParam *self);
 
 #endif // LILY_CORE_LILY_AST_GENERIC_PARAM_H

@@ -30,6 +30,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Free LilyAstGenericParam type (LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT).
+static VARIANT_DESTRUCTOR(LilyAstGenericParam,
+                          constraint,
+                          LilyAstGenericParam *self);
+
+// Free LilyAstGenericParam type (LILY_AST_GENERIC_PARAM_KIND_NORMAL).
+static VARIANT_DESTRUCTOR(LilyAstGenericParam,
+                          normal,
+                          LilyAstGenericParam *self);
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -143,4 +153,18 @@ VARIANT_DESTRUCTOR(LilyAstGenericParam, normal, LilyAstGenericParam *self)
 {
     FREE(LilyAstExpr, self->normal);
     lily_free(self);
+}
+
+DESTRUCTOR(LilyAstGenericParam, LilyAstGenericParam *self)
+{
+    switch (self->kind) {
+        case LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT:
+            FREE_VARIANT(LilyAstGenericParam, constraint, self);
+            break;
+        case LILY_AST_GENERIC_PARAM_KIND_NORMAL:
+            FREE_VARIANT(LilyAstGenericParam, normal, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
