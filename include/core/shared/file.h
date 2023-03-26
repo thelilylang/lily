@@ -27,13 +27,16 @@
 
 #include <base/alloc.h>
 #include <base/macros.h>
+#include <base/types.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct File
 {
     char *name;
     char *content;
+    Usize len; // length of the content
 } File;
 
 /**
@@ -42,7 +45,7 @@ typedef struct File
  */
 inline CONSTRUCTOR(File, File, char *name, char *content)
 {
-    return (File){ .name = name, .content = content };
+    return (File){ .name = name, .content = content, .len = strlen(content) };
 }
 
 /**
