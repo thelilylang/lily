@@ -71,6 +71,7 @@ set(CORE_SRC
 	src/core/lily/ast/body/record_object.c
 	src/core/lily/ast/body/trait.c
 	src/core/lily/ast/decl/alias.c
+	src/core/lily/ast/decl/attribute.c
 	src/core/lily/ast/decl/class.c
 	src/core/lily/ast/decl/enum.c
 	src/core/lily/ast/decl/enum_object.c
@@ -79,7 +80,6 @@ set(CORE_SRC
 	src/core/lily/ast/decl/method.c
 	src/core/lily/ast/decl/module.c
 	src/core/lily/ast/decl/object.c
-	src/core/lily/ast/decl/property.c
 	src/core/lily/ast/decl/record.c
 	src/core/lily/ast/decl/record_object.c
 	src/core/lily/ast/decl/trait.c
@@ -114,7 +114,6 @@ set(CORE_SRC
 	src/core/lily/ast/stmt/try.c
 	src/core/lily/ast/stmt/variable.c
 	src/core/lily/ast/stmt/while.c
-	src/core/lily/ast/attribute.c
 	src/core/lily/ast/data_type.c
 	src/core/lily/ast/decl.c
 	src/core/lily/ast/expr.c
