@@ -38,6 +38,7 @@ main()
     ADD_SIMPLE(identifier_dollar);
     ADD_SIMPLE(identifier_macro);
     ADD_SIMPLE(identifier_normal);
+    ADD_SIMPLE(identifier_operator);
     ADD_SIMPLE(separator);
     ADD_SIMPLE(operator);
     RUN_TEST();

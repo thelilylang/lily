@@ -12,7 +12,8 @@
     "./tests/core/lily/scanner/input/identifier_macro.lily"
 #define FILE_IDENTIFIER_NORMAL \
     "./tests/core/lily/scanner/input/identifier_normal.lily"
-#define FILE_IDENTIFIER_OPERATOR "./tests/core/lily/scanner/input/identifier_operator.lily"
+#define FILE_IDENTIFIER_OPERATOR \
+    "./tests/core/lily/scanner/input/identifier_operator.lily"
 #define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
 #define FILE_OPERATOR "./tests/core/lily/scanner/input/operator.lily"
 
