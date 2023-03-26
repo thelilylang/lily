@@ -64,10 +64,8 @@ set(CORE_SRC
 	src/core/cpp/error.c
 	src/core/cpp/warning.c
 	src/core/lily/ast/body/class.c
-	src/core/lily/ast/body/enum.c
 	src/core/lily/ast/body/enum_object.c
 	src/core/lily/ast/body/fun.c
-	src/core/lily/ast/body/record.c
 	src/core/lily/ast/body/record_object.c
 	src/core/lily/ast/body/trait.c
 	src/core/lily/ast/decl/alias.c
