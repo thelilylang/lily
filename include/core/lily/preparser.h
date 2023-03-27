@@ -630,8 +630,9 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserPrototype
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
-    Vec *params;         // Vec<Vec<LilyToken*>*>*?
+    Vec *generic_params;   // Vec<Vec<LilyToken*>*>*?
+    Vec *params;           // Vec<Vec<LilyToken*>*>*?
+    Vec *return_data_type; // Vec<LilyToken*>*?
 } LilyPreparserPrototype;
 
 /**

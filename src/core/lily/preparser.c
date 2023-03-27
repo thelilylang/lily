@@ -381,7 +381,8 @@ static inline CONSTRUCTOR(LilyPreparserPrototype,
                           LilyPreparserPrototype,
                           String *name,
                           Vec *generic_params,
-                          Vec *params);
+                          Vec *params,
+                          Vec *return_data_type);
 
 // Free LilyPreparserPrototype type.
 static DESTRUCTOR(LilyPreparserPrototype, const LilyPreparserPrototype *self);
@@ -2865,11 +2866,13 @@ CONSTRUCTOR(LilyPreparserPrototype,
             LilyPreparserPrototype,
             String *name,
             Vec *generic_params,
-            Vec *params)
+            Vec *params,
+            Vec *return_data_type)
 {
     return (LilyPreparserPrototype){ .name = name,
                                      .generic_params = generic_params,
-                                     .params = params };
+                                     .params = params,
+                                     .return_data_type = return_data_type };
 }
 
 #ifdef ENV_DEBUG
@@ -2895,6 +2898,14 @@ IMPL_FOR_DEBUG(to_string,
         push_str__String(res, " NULL");
     }
 
+    push_str__String(res, ", return_data_type =");
+
+    if (self->return_data_type) {
+        DEBUG_VEC_STR(self->return_data_type, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     push_str__String(res, " }");
 
     return res;
@@ -2916,6 +2927,13 @@ DESTRUCTOR(LilyPreparserPrototype, const LilyPreparserPrototype *self)
     if (self->params) {
         FREE_BUFFER_ITEMS_2(self->params->buffer, self->params->len, LilyToken);
         FREE(Vec, self->params);
+    }
+
+    if (self->return_data_type) {
+        FREE_BUFFER_ITEMS(self->return_data_type->buffer,
+                          self->return_data_type->len,
+                          LilyToken);
+        FREE(Vec, self->return_data_type);
     }
 }
 
@@ -8506,6 +8524,20 @@ preparse_prototype__LilyPreparser(LilyPreparser *self)
             break;
     }
 
+    // 4. Preparse return data type.
+    Vec *return_data_type = NULL;
+
+    if (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+        self->current->kind != LILY_TOKEN_KIND_EOF &&
+        self->current->kind != LILY_TOKEN_KIND_KEYWORD_END) {
+        return_data_type = NEW(Vec);
+
+        do {
+            push__Vec(return_data_type, clone__LilyToken(self->current));
+            next_token__LilyPreparser(self);
+        } while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON);
+    }
+
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
             next_token__LilyPreparser(self);
@@ -8528,11 +8560,14 @@ preparse_prototype__LilyPreparser(LilyPreparser *self)
                   self->current->location.end_line,
                   self->current->location.end_column);
 
-    return NEW_VARIANT(
-      LilyPreparserTraitBodyItem,
-      prototype,
-      location,
-      NEW(LilyPreparserPrototype, name, generic_params, params));
+    return NEW_VARIANT(LilyPreparserTraitBodyItem,
+                       prototype,
+                       location,
+                       NEW(LilyPreparserPrototype,
+                           name,
+                           generic_params,
+                           params,
+                           return_data_type));
 }
 
 LilyPreparserDecl *
