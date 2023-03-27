@@ -257,9 +257,9 @@ run__Test(const Test *self)
                                        f_res,
                                        (double)(clock() - time_simple));
 
-						if (i + 1 < self->items->len) {
-							item = self->items->buffer[i + 1];
-						}
+                        if (i + 1 < self->items->len) {
+                            item = self->items->buffer[i + 1];
+                        }
 
                         ++n_simple;
                     } else {
