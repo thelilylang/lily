@@ -23,7 +23,7 @@
  */
 
 #ifndef LILY_CORE_LILY_AST_DECL_CONSTANT_H
-#define LILY_CORE_LILY_AST_DECL_CLASSANT_H
+#define LILY_CORE_LILY_AST_DECL_CONSTANT_H
 
 #include <base/macros.h>
 #include <base/string.h>
