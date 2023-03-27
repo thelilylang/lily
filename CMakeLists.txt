@@ -71,6 +71,7 @@ set(CORE_SRC
 	src/core/lily/ast/decl/alias.c
 	src/core/lily/ast/decl/attribute.c
 	src/core/lily/ast/decl/class.c
+	src/core/lily/ast/decl/constant.c
 	src/core/lily/ast/decl/enum.c
 	src/core/lily/ast/decl/enum_object.c
 	src/core/lily/ast/decl/fun.c
