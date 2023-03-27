@@ -190,7 +190,7 @@ DESTRUCTOR(LilyAstDeclMethodParam, LilyAstDeclMethodParam *self)
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstDeclMethod, LilyAstDeclMethod *self)
+IMPL_FOR_DEBUG(to_string, LilyAstDeclMethod, const LilyAstDeclMethod *self)
 {
     String *res = format__String(
       "LilyAstDeclMethod{{ name = {S}, object_impl = ", self->name);
