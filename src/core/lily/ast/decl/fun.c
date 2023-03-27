@@ -150,7 +150,7 @@ DESTRUCTOR(LilyAstDeclFunParam, LilyAstDeclFunParam *self)
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstDeclFun, LilyAstDeclFun *self)
+IMPL_FOR_DEBUG(to_string, LilyAstDeclFun, const LilyAstDeclFun *self)
 {
     String *res = format__String(
       "LilyAstDeclFun{{ name = {S}, generic_params =", self->name);

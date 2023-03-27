@@ -157,7 +157,7 @@ inline CONSTRUCTOR(LilyAstDeclFun,
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstDeclFun, LilyAstDeclFun *self);
+IMPL_FOR_DEBUG(to_string, LilyAstDeclFun, const LilyAstDeclFun *self);
 #endif
 
 /**
