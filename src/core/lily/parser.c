@@ -25,6 +25,21 @@
 #include <core/lily/ast/decl.h>
 #include <core/lily/package/package.h>
 #include <core/lily/parser.h>
+#include <core/lily/lily.h>
+
+#include <stdio.h>
+
+void
+run__LilyParser(LilyParser *self)
+{
+#ifdef DEBUG_PARSER
+    printf("====Parser(%s)====\n", self->package->file.name);
+
+	for (Usize i = 0; i < self->decls->len; i++) {
+		CALL_DEBUG(LilyAstDecl, get__Vec(self->decls, i));
+	}
+#endif
+}
 
 DESTRUCTOR(LilyParser, const LilyParser *self)
 {

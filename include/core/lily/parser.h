@@ -53,6 +53,17 @@ inline CONSTRUCTOR(LilyParser, LilyParser, LilyPackage *package)
     };
 }
 
+/**
+ *
+ * @brief Run the parser.
+ */
+void
+run__LilyParser(LilyParser *self);
+
+/**
+ *
+ * @brief Free LilyParser type.
+ */
 DESTRUCTOR(LilyParser, const LilyParser *self);
 
 #endif // LILY_CORE_LILY_PARSER_H
