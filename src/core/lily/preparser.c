@@ -4785,10 +4785,10 @@ next_token__LilyPreparser(LilyPreparser *self)
 void
 jump__LilyPreparser(LilyPreparser *self, Usize n)
 {
-	if (self->position + n < self->tokens->len) {
-		self->position += n;
-		self->current = get__Vec(self->tokens, self->position);
-	}
+    if (self->position + n < self->tokens->len) {
+        self->position += n;
+        self->current = get__Vec(self->tokens, self->position);
+    }
 }
 
 LilyToken *
