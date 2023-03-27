@@ -83,9 +83,9 @@ typedef struct LilyPackage
     LilyPreparserInfo preparser_info;
     LilyPrecompile precompile; // LilyPrecompile
     LilyParser parser;
-	Usize count_error;
-	Usize count_warning;
-	// count all errors and warnings after the precompiler step
+    Usize count_error;
+    Usize count_warning;
+    // count all errors and warnings after the precompiler step
     enum LilyVisibility visibility;
     enum LilyPackageStatus status;
 } LilyPackage;

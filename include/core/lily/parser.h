@@ -39,7 +39,7 @@ typedef struct LilyParser
     Vec *decls; // Vec<LilyAstDecl*>*
     LilyPackage *package;
     LilyPreparserDecl *current;
-    Usize position; 
+    Usize position;
 } LilyParser;
 
 /**
@@ -48,10 +48,9 @@ typedef struct LilyParser
  */
 inline CONSTRUCTOR(LilyParser, LilyParser, LilyPackage *package)
 {
-    return (LilyParser){ .decls = NEW(Vec),
-                         .package = package,
-                         .current = NULL,
-                         .position = 0 };
+    return (LilyParser){
+        .decls = NEW(Vec), .package = package, .current = NULL, .position = 0
+    };
 }
 
 DESTRUCTOR(LilyParser, const LilyParser *self);

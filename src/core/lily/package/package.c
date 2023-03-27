@@ -89,8 +89,8 @@ CONSTRUCTOR(LilyPackage *,
     self->preparser_info = NEW(LilyPreparserInfo, self->name);
     self->visibility = visibility;
     self->status = status;
-	self->count_error = 0;
-	self->count_warning = 0;
+    self->count_error = 0;
+    self->count_warning = 0;
 
 #ifndef RUN_UNTIL_PREPARSER
     self->precompile = NEW(
