@@ -191,7 +191,6 @@ typedef struct LilyPrecompile
     LilyPackage *package;
     Usize count_error;
     const char *default_path;
-    const char *default_package_access;
 } LilyPrecompile;
 
 /**
