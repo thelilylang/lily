@@ -31,8 +31,6 @@
 
 #include <core/lily/lily.h>
 #include <core/lily/package/package.h>
-#include <core/lily/parser.h>
-#include <core/lily/preparser.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -91,10 +89,13 @@ CONSTRUCTOR(LilyPackage *,
     self->preparser_info = NEW(LilyPreparserInfo, self->name);
     self->visibility = visibility;
     self->status = status;
+	self->count_error = 0;
+	self->count_warning = 0;
 
 #ifndef RUN_UNTIL_PREPARSER
     self->precompile = NEW(
       LilyPrecompile, &self->preparser_info, &self->file, self, default_path);
+    self->parser = NEW(LilyParser, self);
 #endif
 
     lily_free(file_ext);
@@ -245,6 +246,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
 
     FREE(LilyScanner, &self->scanner);
     FREE(LilyPreparserInfo, &self->preparser_info);
+    FREE(LilyParser, &self->parser);
 
     lily_free(self);
 }
