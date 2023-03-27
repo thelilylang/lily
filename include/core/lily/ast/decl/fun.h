@@ -38,6 +38,7 @@ enum LilyAstDeclFunParamKind
 {
     LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT,
     LILY_AST_DECL_FUN_PARAM_KIND_NORMAL,
+    LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF,
     LILY_AST_DECL_FUN_PARAM_KIND_SELF,
 };
 
@@ -90,13 +91,12 @@ VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
 
 /**
  *
- * @brief Construct LilyAstDeclFunParam type
- * (LILY_AST_DECL_FUN_PARAM_KIND_SELF).
+ * @brief Construct LilyAstDeclFunParam type.
  */
-VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
-                    LilyAstDeclFunParam,
-                    self,
-                    Location location);
+CONSTRUCTOR(LilyAstDeclFunParam *,
+            LilyAstDeclFunParam,
+            enum LilyAstDeclFunParamKind kind,
+            Location location);
 
 /**
  *

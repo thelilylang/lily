@@ -43,11 +43,6 @@ static VARIANT_DESTRUCTOR(LilyAstDeclFunParam,
                           normal,
                           LilyAstDeclFunParam *self);
 
-// Free LilyAstDeclFunParam type (LILY_AST_DECL_FUN_PARAM_KIND_NORMAL).
-static inline VARIANT_DESTRUCTOR(LilyAstDeclFunParam,
-                                 self,
-                                 LilyAstDeclFunParam *self);
-
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -59,6 +54,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT";
         case LILY_AST_DECL_FUN_PARAM_KIND_NORMAL:
             return "LILY_AST_DECL_FUN_PARAM_KIND_NORMAL";
+        case LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF:
+            return "LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF";
         case LILY_AST_DECL_FUN_PARAM_KIND_SELF:
             return "LILY_AST_DECL_FUN_PARAM_KIND_SELF";
         default:
@@ -99,15 +96,15 @@ VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
-                    LilyAstDeclFunParam,
-                    self,
-                    Location location)
+CONSTRUCTOR(LilyAstDeclFunParam *,
+            LilyAstDeclFunParam,
+            enum LilyAstDeclFunParamKind kind,
+            Location location)
 {
     LilyAstDeclFunParam *self = lily_malloc(sizeof(LilyAstDeclFunParam));
 
     self->name = NULL;
-    self->kind = LILY_AST_DECL_FUN_PARAM_KIND_SELF;
+    self->kind = kind;
     self->location = location;
 
     return self;
@@ -121,6 +118,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclFunParam, const LilyAstDeclFunParam *self)
 
     switch (self->kind) {
         case LILY_AST_DECL_FUN_PARAM_KIND_SELF:
+        case LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF:
             push_str__String(res, "NULL");
             break;
         default:
@@ -168,11 +166,6 @@ VARIANT_DESTRUCTOR(LilyAstDeclFunParam, normal, LilyAstDeclFunParam *self)
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyAstDeclFunParam, self, LilyAstDeclFunParam *self)
-{
-    lily_free(self);
-}
-
 DESTRUCTOR(LilyAstDeclFunParam, LilyAstDeclFunParam *self)
 {
     switch (self->kind) {
@@ -182,8 +175,9 @@ DESTRUCTOR(LilyAstDeclFunParam, LilyAstDeclFunParam *self)
         case LILY_AST_DECL_FUN_PARAM_KIND_NORMAL:
             FREE_VARIANT(LilyAstDeclFunParam, normal, self);
             break;
+        case LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF:
         case LILY_AST_DECL_FUN_PARAM_KIND_SELF:
-            FREE_VARIANT(LilyAstDeclFunParam, self, self);
+            lily_free(self);
             break;
         default:
             UNREACHABLE("unknown variant");
