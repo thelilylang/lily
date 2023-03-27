@@ -52,10 +52,10 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT:
             return "LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT";
-        case LILY_AST_DECL_FUN_PARAM_KIND_NORMAL:
-            return "LILY_AST_DECL_FUN_PARAM_KIND_NORMAL";
         case LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF:
             return "LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF";
+        case LILY_AST_DECL_FUN_PARAM_KIND_NORMAL:
+            return "LILY_AST_DECL_FUN_PARAM_KIND_NORMAL";
         case LILY_AST_DECL_FUN_PARAM_KIND_SELF:
             return "LILY_AST_DECL_FUN_PARAM_KIND_SELF";
         default:
