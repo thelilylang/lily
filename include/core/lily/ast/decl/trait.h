@@ -29,6 +29,9 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+#include <core/lily/ast/body/trait.h>
+#include <core/lily/ast/generic_param.h>
+#include <core/lily/ast/inherit_param.h>
 #include <core/lily/visibility.h>
 
 typedef struct LilyAstDeclTrait

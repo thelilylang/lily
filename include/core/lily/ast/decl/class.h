@@ -29,6 +29,10 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+#include <core/lily/ast/body/class.h>
+#include <core/lily/ast/generic_param.h>
+#include <core/lily/ast/impl_param.h>
+#include <core/lily/ast/inherit_param.h>
 #include <core/lily/visibility.h>
 
 typedef struct LilyAstDeclClass

@@ -24,11 +24,7 @@
 
 #include <base/new.h>
 
-#include <core/lily/ast/body/class.h>
 #include <core/lily/ast/decl/class.h>
-#include <core/lily/ast/generic_param.h>
-#include <core/lily/ast/impl_param.h>
-#include <core/lily/ast/inherit_param.h>
 
 #ifdef ENV_DEBUG
 String *
