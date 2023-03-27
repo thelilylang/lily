@@ -213,7 +213,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstDecl, const LilyAstDecl *self)
 void
 IMPL_FOR_DEBUG(debug, LilyAstDecl, const LilyAstDecl *self)
 {
-	PRINTLN("{Sr}", to_string__Debug__LilyAstDecl(self));
+    PRINTLN("{Sr}", to_string__Debug__LilyAstDecl(self));
 }
 #endif
 
