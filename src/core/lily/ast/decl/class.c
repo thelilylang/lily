@@ -90,6 +90,7 @@ DESTRUCTOR(LilyAstDeclClass, const LilyAstDeclClass *self)
         FREE(Vec, self->impl_params);
     }
 
-	FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyAstBodyClassItem);
-	FREE(Vec, self->body);
+    FREE_BUFFER_ITEMS(
+      self->body->buffer, self->body->len, LilyAstBodyClassItem);
+    FREE(Vec, self->body);
 }
