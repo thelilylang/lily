@@ -25,9 +25,15 @@
 #ifndef LILY_CORE_LILY_AST_BODY_ENUM_OBJECT_H
 #define LILY_CORE_LILY_AST_BODY_ENUM_OBJECT_H
 
+#include <base/macros.h>
+
 #include <core/lily/ast/decl/constant.h>
 #include <core/lily/ast/variant.h>
 #include <core/shared/location.h>
+
+#ifdef ENV_DEBUG
+#include <base/string.h>
+#endif
 
 enum LilyAstBodyEnumObjectItemKind
 {
