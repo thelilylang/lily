@@ -28,7 +28,6 @@
 #include <base/macros.h>
 
 #include <core/lily/ast/decl/alias.h>
-// #include <core/lily/ast/decl/constant.h>
 #include <core/lily/ast/decl/fun.h>
 #include <core/lily/ast/decl/method.h>
 #include <core/lily/ast/decl/object.h>
