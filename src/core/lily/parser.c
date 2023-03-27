@@ -29,6 +29,75 @@
 
 #include <stdio.h>
 
+typedef struct LilyParseBlock
+{
+    Vec *tokens; // Vec<LilyToken*>*
+    LilyToken *current;
+    Usize position;
+} LilyParseBlock;
+
+// Construct LilyParseBlock type.
+inline CONSTRUCTOR(LilyParseBlock, LilyParseBlock, Vec *tokens)
+{
+    return (LilyParseBlock){ .tokens = tokens,
+                             .current = get__Vec(tokens, 0),
+                             .position = 0 };
+}
+
+// Advance to one declaration.
+static void
+next_decl__LilyParser(LilyParser *self);
+
+// Advance to one token.
+static void
+next_token__LilyParseBlock(LilyParseBlock *self);
+
+// Advance to n token.
+static void
+jump__LilyParseBlock(LilyParseBlock *self, Usize n);
+
+// Peek token at position + n.
+static LilyToken *
+peek_token__LilyParseBlock(LilyParseBlock *self, Usize n);
+
+void
+next_decl__LilyParser(LilyParser *self)
+{
+    if (self->position + 1 < self->package->preparser_info.decls->len) {
+        ++self->position;
+        self->current =
+          get__Vec(self->package->preparser_info.decls, self->position);
+    }
+}
+
+void
+next_token__LilyParseBlock(LilyParseBlock *self)
+{
+    if (self->position + 1 < self->tokens->len) {
+        ++self->position;
+        self->current = get__Vec(self->tokens, self->position);
+    }
+}
+
+void
+jump__LilyParseBlock(LilyParseBlock *self, Usize n)
+{
+    if (self->position + n < self->tokens->len) {
+        self->position += n;
+        self->current = get__Vec(self->tokens, self->position);
+    }
+}
+
+LilyToken *
+peek_token__LilyParseBlock(LilyParseBlock *self, Usize n)
+{
+    if (self->position + n < self->tokens->len) {
+        return get__Vec(self->tokens, self->position + n);
+    }
+
+    return NULL;
+}
+
 void
 run__LilyParser(LilyParser *self)
 {
