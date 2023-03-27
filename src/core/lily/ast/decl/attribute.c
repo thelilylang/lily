@@ -32,10 +32,12 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstAttribute, const LilyAstAttribute *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDeclAttribute,
+               const LilyAstDeclAttribute *self)
 {
     String *res = format__String(
-      "LilyAstAttribute{{ name = {S}, data_type = {Sr}, optional_expr =",
+      "LilyAstDeclAttribute{{ name = {S}, data_type = {Sr}, optional_expr =",
       self->name,
       to_string__Debug__LilyAstDataType(self->data_type));
 
@@ -60,7 +62,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstAttribute, const LilyAstAttribute *self)
 }
 #endif
 
-DESTRUCTOR(LilyAstAttribute, const LilyAstAttribute *self)
+DESTRUCTOR(LilyAstAttribute, const LilyAstDeclAttribute *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
     FREE(LilyAstDataType, self->data_type);

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_ATTRIBUTE_H
-#define LILY_CORE_LILY_AST_ATTRIBUTE_H
+#ifndef LILY_CORE_LILY_AST_DECL_ATTRIBUTE_H
+#define LILY_CORE_LILY_AST_DECL_ATTRIBUTE_H
 
 #include <base/string.h>
 
@@ -31,7 +31,7 @@
 #include <core/lily/ast/expr.h>
 #include <core/lily/visibility.h>
 
-typedef struct LilyAstAttribute
+typedef struct LilyAstDeclAttribute
 {
     String *name;
     LilyAstDataType *data_type;
@@ -39,14 +39,14 @@ typedef struct LilyAstAttribute
     bool is_set;
     bool is_get;
     enum LilyVisibility visibility;
-} LilyAstAttribute;
+} LilyAstDeclAttribute;
 
 /**
  *
- * @brief Construct LilyAstAttribute type.
+ * @brief Construct LilyAstDeclAttribute type.
  */
-inline CONSTRUCTOR(LilyAstAttribute,
-                   LilyAstAttribute,
+inline CONSTRUCTOR(LilyAstDeclAttribute,
+                   LilyAstDeclAttribute,
                    String *name,
                    LilyAstDataType *data_type,
                    LilyAstExpr *optional_expr,
@@ -54,28 +54,30 @@ inline CONSTRUCTOR(LilyAstAttribute,
                    bool is_get,
                    enum LilyVisibility visibility)
 {
-    return (LilyAstAttribute){ .name = name,
-                               .data_type = data_type,
-                               .optional_expr = optional_expr,
-                               .is_set = is_set,
-                               .is_get = is_get,
-                               .visibility = visibility };
+    return (LilyAstDeclAttribute){ .name = name,
+                                   .data_type = data_type,
+                                   .optional_expr = optional_expr,
+                                   .is_set = is_set,
+                                   .is_get = is_get,
+                                   .visibility = visibility };
 }
 
 /**
  *
- * @brief Convert LilyAstAttribute in String.
+ * @brief Convert LilyAstDeclAttribute in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstAttribute, const LilyAstAttribute *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDeclAttribute,
+               const LilyAstDeclAttribute *self);
 #endif
 
 /**
  *
- * @brief Free LilyAstAttribute type.
+ * @brief Free LilyAstDeclAttribute type.
  */
-DESTRUCTOR(LilyAstAttribute, const LilyAstAttribute *self);
+DESTRUCTOR(LilyAstDeclAttribute, const LilyAstDeclAttribute *self);
 
-#endif // LILY_CORE_LILY_AST_ATTRIBUTE_H
+#endif // LILY_CORE_LILY_AST_DECL_ATTRIBUTE_H
