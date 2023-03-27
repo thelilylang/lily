@@ -62,7 +62,7 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
-DESTRUCTOR(LilyAstAttribute, const LilyAstDeclAttribute *self)
+DESTRUCTOR(LilyAstDeclAttribute, const LilyAstDeclAttribute *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
     FREE(LilyAstDataType, self->data_type);

@@ -44,12 +44,12 @@ typedef struct LilyAstDeclConstant
  *
  * @brief Construct LilyAstDeclConstant type.
  */
-CONSTRUCTOR(LilyAstDeclConstant,
-            LilyAstDeclConstant,
-            String *name,
-            LilyAstDataType *data_type,
-            LilyAstExpr *expr,
-            enum LilyVisibility visibility)
+inline CONSTRUCTOR(LilyAstDeclConstant,
+                   LilyAstDeclConstant,
+                   String *name,
+                   LilyAstDataType *data_type,
+                   LilyAstExpr *expr,
+                   enum LilyVisibility visibility)
 {
     return (LilyAstDeclConstant){ .name = name,
                                   .data_type = data_type,

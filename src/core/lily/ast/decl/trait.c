@@ -24,6 +24,10 @@
 
 #include <core/lily/ast/decl/trait.h>
 
+#include <core/lily/ast/body/trait.h>
+#include <core/lily/ast/generic_param.h>
+#include <core/lily/ast/inherit_param.h>
+
 #ifdef ENV_DEBUG
 #include <base/alloc.h>
 #include <base/format.h>

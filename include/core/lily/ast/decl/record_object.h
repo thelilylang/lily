@@ -46,13 +46,13 @@ typedef struct LilyAstDeclRecordObject
  *
  * @brief Construct LilyAstDeclRecordObject
  */
-CONSTRUCTOR(LilyAstDeclRecordObject,
-            LilyAstDeclRecordObject,
-            String *name,
-            Vec *generic_params,
-            Vec *impl_params,
-            Vec *body,
-            enum LilyVisibility visibility)
+inline CONSTRUCTOR(LilyAstDeclRecordObject,
+                   LilyAstDeclRecordObject,
+                   String *name,
+                   Vec *generic_params,
+                   Vec *impl_params,
+                   Vec *body,
+                   enum LilyVisibility visibility)
 {
     return (LilyAstDeclRecordObject){ .name = name,
                                       .generic_params = generic_params,
