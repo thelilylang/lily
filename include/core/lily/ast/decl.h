@@ -140,6 +140,16 @@ IMPL_FOR_DEBUG(to_string, LilyAstDecl, const LilyAstDecl *self);
 
 /**
  *
+ * @brief Print debug LilyAstDecl struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyAstDecl, const LilyAstDecl *self);
+#endif
+
+/**
+ *
  * @brief Free LilyAstDecl type.
  */
 DESTRUCTOR(LilyAstDecl, LilyAstDecl *self);

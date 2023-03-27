@@ -29,6 +29,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef ENV_DEBUG
+#include <base/print.h>
+#endif
+
 // Free LilyAstDecl type (LILY_AST_DECL_KIND_ALIAS).
 static VARIANT_DESTRUCTOR(LilyAstDecl, alias, LilyAstDecl *self);
 
@@ -204,6 +208,12 @@ IMPL_FOR_DEBUG(to_string, LilyAstDecl, const LilyAstDecl *self)
         default:
             UNREACHABLE("unknown variant");
     }
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyAstDecl, const LilyAstDecl *self)
+{
+	PRINTLN("{Sr}", to_string__Debug__LilyAstDecl(self));
 }
 #endif
 
