@@ -41,7 +41,7 @@ typedef struct LilyAstDeclClass
     Vec *generic_params; // Vec<LilyAstGenericParam*>*?
     Vec *inherit_params; // Vec<LilyAstInheritParam*>*?
     Vec *impl_params;    // Vec<LilyAstImplParam*>*?
-    Vec *body;
+    Vec *body; // Vec<LilyAstBodyClassItem*>*
     enum LilyVisibility visibility;
 } LilyAstDeclClass;
 
