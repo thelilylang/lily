@@ -52,12 +52,8 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT:
             return "LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT";
-        case LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF:
-            return "LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF";
         case LILY_AST_DECL_FUN_PARAM_KIND_NORMAL:
             return "LILY_AST_DECL_FUN_PARAM_KIND_NORMAL";
-        case LILY_AST_DECL_FUN_PARAM_KIND_SELF:
-            return "LILY_AST_DECL_FUN_PARAM_KIND_SELF";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -96,43 +92,15 @@ VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
     return self;
 }
 
-CONSTRUCTOR(LilyAstDeclFunParam *,
-            LilyAstDeclFunParam,
-            enum LilyAstDeclFunParamKind kind,
-            Location location)
-{
-    LilyAstDeclFunParam *self = lily_malloc(sizeof(LilyAstDeclFunParam));
-
-    self->name = NULL;
-    self->kind = kind;
-    self->location = location;
-
-    return self;
-}
-
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDeclFunParam, const LilyAstDeclFunParam *self)
 {
-    String *res = from__String("LilyAstDeclFunParam{{ name = ");
-
-    switch (self->kind) {
-        case LILY_AST_DECL_FUN_PARAM_KIND_SELF:
-        case LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF:
-            push_str__String(res, "NULL");
-            break;
-        default:
-            append__String(res, self->name);
-            break;
-    }
-
-    {
-        char *s = format(", kind = {s}, location = {sa}",
-                         to_string__Debug__LilyAstDeclFunParamKind(self->kind),
-                         to_string__Debug__Location(&self->location));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
+    String *res = format__String(
+      "LilyAstDeclFunParam{{ name = {S}, kind = {s}, location = {sa}",
+      self->name,
+      to_string__Debug__LilyAstDeclFunParamKind(self->kind),
+      to_string__Debug__Location(&self->location));
 
     switch (self->kind) {
         case LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT: {
@@ -175,59 +143,17 @@ DESTRUCTOR(LilyAstDeclFunParam, LilyAstDeclFunParam *self)
         case LILY_AST_DECL_FUN_PARAM_KIND_NORMAL:
             FREE_VARIANT(LilyAstDeclFunParam, normal, self);
             break;
-        case LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF:
-        case LILY_AST_DECL_FUN_PARAM_KIND_SELF:
-            lily_free(self);
-            break;
         default:
             UNREACHABLE("unknown variant");
     }
-}
-
-CONSTRUCTOR(LilyAstDeclFun,
-            LilyAstDeclFun,
-            String *name,
-            String *object_impl,
-            Vec *generic_params,
-            Vec *params,
-            LilyAstDataType *return_data_type,
-            Vec *body,
-            Vec *req,
-            Vec *when,
-            enum LilyVisibility visibility,
-            bool is_async,
-            bool is_operator,
-            bool req_is_comptime,
-            bool when_is_comptime)
-{
-    return (LilyAstDeclFun){ .name = name,
-                             .object_impl = object_impl,
-                             .params = params,
-                             .return_data_type = return_data_type,
-                             .body = body,
-                             .req = req,
-                             .when = when,
-                             .visibility = visibility,
-                             .is_async = is_async,
-                             .is_operator = is_operator,
-                             .req_is_comptime = req_is_comptime,
-                             .when_is_comptime = when_is_comptime };
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDeclFun, LilyAstDeclFun *self)
 {
-    String *res =
-      format__String("LilyAstDeclFun{{ name = {S}, object_impl = ", self->name);
-
-    if (self->object_impl) {
-        append__String(res, self->object_impl);
-    } else {
-        push_str__String(res, "NULL");
-    }
-
-    push_str__String(res, ", generic_params =");
+    String *res = format__String(
+      "LilyAstDeclFun{{ name = {S}, generic_params =", self->name);
 
     if (self->generic_params) {
         DEBUG_VEC_STRING(self->generic_params, res, LilyAstGenericParam);
@@ -291,7 +217,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclFun, LilyAstDeclFun *self)
 DESTRUCTOR(LilyAstDeclFun, const LilyAstDeclFun *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
-    FREE_MOVE(self->object_impl, FREE(String, self->object_impl));
     FREE_BUFFER_ITEMS(self->generic_params->buffer,
                       self->generic_params->len,
                       LilyAstGenericParam);

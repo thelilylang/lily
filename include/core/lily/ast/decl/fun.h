@@ -37,9 +37,7 @@
 enum LilyAstDeclFunParamKind
 {
     LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT,
-    LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF,
     LILY_AST_DECL_FUN_PARAM_KIND_NORMAL,
-    LILY_AST_DECL_FUN_PARAM_KIND_SELF,
 };
 
 /**
@@ -56,8 +54,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyAstDeclFunParam
 {
-    String *name; // String*? only if kind is equal to
-                  // LILY_AST_DECL_FUN_PARAM_KIND_SELF
+    String *name;
     enum LilyAstDeclFunParamKind kind;
     Location location;
     union
@@ -91,15 +88,6 @@ VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
 
 /**
  *
- * @brief Construct LilyAstDeclFunParam type.
- */
-CONSTRUCTOR(LilyAstDeclFunParam *,
-            LilyAstDeclFunParam,
-            enum LilyAstDeclFunParamKind kind,
-            Location location);
-
-/**
- *
  * @brief Convert LilyAstDeclFunParam in String.
  * @note This function is only used to debug.
  */
@@ -117,7 +105,6 @@ DESTRUCTOR(LilyAstDeclFunParam, LilyAstDeclFunParam *self);
 typedef struct LilyAstDeclFun
 {
     String *name;
-    String *object_impl;               // String*?
     Vec *generic_params;               // Vec<LilyAstGenericParam>*?
     Vec *params;                       // Vec<LilyAstDeclFunParam*>*?
     LilyAstDataType *return_data_type; // LilyAstDataType*?
@@ -135,21 +122,33 @@ typedef struct LilyAstDeclFun
  *
  * @brief Construct LilyAstDeclFun type.
  */
-CONSTRUCTOR(LilyAstDeclFun,
-            LilyAstDeclFun,
-            String *name,
-            String *object_impl,
-            Vec *generic_params,
-            Vec *params,
-            LilyAstDataType *return_data_type,
-            Vec *body,
-            Vec *req,
-            Vec *when,
-            enum LilyVisibility visibility,
-            bool is_async,
-            bool is_operator,
-            bool req_is_comptime,
-            bool when_is_comptime);
+inline CONSTRUCTOR(LilyAstDeclFun,
+                   LilyAstDeclFun,
+                   String *name,
+                   Vec *generic_params,
+                   Vec *params,
+                   LilyAstDataType *return_data_type,
+                   Vec *body,
+                   Vec *req,
+                   Vec *when,
+                   enum LilyVisibility visibility,
+                   bool is_async,
+                   bool is_operator,
+                   bool req_is_comptime,
+                   bool when_is_comptime)
+{
+    return (LilyAstDeclFun){ .name = name,
+                             .params = params,
+                             .return_data_type = return_data_type,
+                             .body = body,
+                             .req = req,
+                             .when = when,
+                             .visibility = visibility,
+                             .is_async = is_async,
+                             .is_operator = is_operator,
+                             .req_is_comptime = req_is_comptime,
+                             .when_is_comptime = when_is_comptime };
+}
 
 /**
  *
