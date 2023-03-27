@@ -26,49 +26,56 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstDeclEnumObject, const LilyAstDeclEnumObject *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDeclEnumObject,
+               const LilyAstDeclEnumObject *self)
 {
-	String *res = format__String("LilyAstDeclEnumObject{{ name = {S}, generic_params =", self->name);
+    String *res = format__String(
+      "LilyAstDeclEnumObject{{ name = {S}, generic_params =", self->name);
 
-	if (self->generic_params) {
-		DEBUG_VEC_STRING(self->generic_params, res, LilyAstGenericParam);
-	} else {
-		push_str__String(res, " NULL");
-	}
+    if (self->generic_params) {
+        DEBUG_VEC_STRING(self->generic_params, res, LilyAstGenericParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
-	push_str__String(res, ", impl_params =");
+    push_str__String(res, ", impl_params =");
 
-	if (self->generic_params) {
-		DEBUG_VEC_STRING(self->impl_params, res, LilyAstImplParam);
-	} else {
-		push_str__String(res, " NULL");
-	}
+    if (self->generic_params) {
+        DEBUG_VEC_STRING(self->impl_params, res, LilyAstImplParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
-	push_str__String(res, ", body =");
-	DEBUG_VEC_STRING(self->body, res, LilyAstBodyEnumObjectItem);
+    push_str__String(res, ", body =");
+    DEBUG_VEC_STRING(self->body, res, LilyAstBodyEnumObjectItem);
 
-	push_str__String(res, ", visibility = ");
-	push_str__String(res, to_string__Debug__LilyVisibility(self->visibility));
-	push_str__String(res, " }");
+    push_str__String(res, ", visibility = ");
+    push_str__String(res, to_string__Debug__LilyVisibility(self->visibility));
+    push_str__String(res, " }");
 
-	return res;
+    return res;
 }
 #endif
 
 DESTRUCTOR(LilyAstDeclEnumObject, const LilyAstDeclEnumObject *self)
 {
-	FREE_MOVE(self->name, FREE(String, self->name));
+    FREE_MOVE(self->name, FREE(String, self->name));
 
-	if (self->generic_params) {
-		FREE_BUFFER_ITEMS(self->generic_params->buffer, self->generic_params->len, LilyAstGenericParam);
-		FREE(Vec, self->generic_params);
-	}
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(self->generic_params->buffer,
+                          self->generic_params->len,
+                          LilyAstGenericParam);
+        FREE(Vec, self->generic_params);
+    }
 
-	if (self->impl_params) {
-		FREE_BUFFER_ITEMS(self->impl_params->buffer, self->impl_params->len, LilyAstImplParam);
-		FREE(Vec, self->impl_params);
-	}
+    if (self->impl_params) {
+        FREE_BUFFER_ITEMS(
+          self->impl_params->buffer, self->impl_params->len, LilyAstImplParam);
+        FREE(Vec, self->impl_params);
+    }
 
-	FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyAstBodyEnumObjectItem);
-	FREE(Vec, self->body);
+    FREE_BUFFER_ITEMS(
+      self->body->buffer, self->body->len, LilyAstBodyEnumObjectItem);
+    FREE(Vec, self->body);
 }
