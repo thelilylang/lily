@@ -26,11 +26,13 @@
 #define LILY_CORE_LILY_PACKAGE_PACKAGE_H
 
 #include <base/string.h>
+#include <base/types.h>
 #include <base/vec.h>
 
 #include <cli/config/compile.h>
 
 #include <core/lily/package/library.h>
+#include <core/lily/parser.h>
 #include <core/lily/precompile.h>
 #include <core/lily/preparser.h>
 #include <core/lily/scanner.h>
@@ -80,7 +82,10 @@ typedef struct LilyPackage
     LilyPreparser preparser; // LilyPreparser
     LilyPreparserInfo preparser_info;
     LilyPrecompile precompile; // LilyPrecompile
-    // LilyLibrary library;
+    LilyParser parser;
+	Usize count_error;
+	Usize count_warning;
+	// count all errors and warnings after the precompiler step
     enum LilyVisibility visibility;
     enum LilyPackageStatus status;
 } LilyPackage;
