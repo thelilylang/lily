@@ -186,7 +186,7 @@ end
 
 object Clone[T] trait =
 	app!();
-	fun clone(T);
+	fun clone(Self, T) Unit;
 end
 
 fun abs(x) =
