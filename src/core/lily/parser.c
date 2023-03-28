@@ -105,7 +105,7 @@ peek_token__LilyParseBlock(LilyParseBlock *self, Usize n)
 LilyAstDataType *
 parse_data_type__LilyParseBlock(LilyParseBlock *)
 {
-    // TODO: Issue #14
+    TODO("Issue #14");
 }
 
 void
