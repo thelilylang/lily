@@ -122,10 +122,10 @@ to_string__LilyAstExprBinary(const LilyAstExprBinary *self);
 
 /**
  *
- * @brief Convert LilyAstExprBinary in precedence (Uint8).
+ * @brief Convert LilyAstExprBinaryKind in precedence (Uint8).
  */
 Uint8
-to_precedence__LilyAstExprBinary(const LilyAstExprBinary *self);
+to_precedence__LilyAstExprBinaryKind(enum LilyAstExprBinaryKind self);
 
 /**
  *

@@ -233,9 +233,9 @@ to_string__LilyAstExprBinary(const LilyAstExprBinary *self)
 }
 
 Uint8
-to_precedence__LilyAstExprBinary(const LilyAstExprBinary *self)
+to_precedence__LilyAstExprBinaryKind(enum LilyAstExprBinaryKind self)
 {
-    switch (self->kind) {
+    switch (self) {
         case LILY_AST_EXPR_BINARY_KIND_EXP:
             return 100;
         case LILY_AST_EXPR_BINARY_KIND_MUL:
