@@ -556,6 +556,14 @@ end
 ```lily
 fun main =
     val tuple (Int32, Int32) := (1, 2);
+    val x := tuple#0;
+end
+```
+
+### Lambda
+```lily
+fun main =
+    val f := fun (x Int32) -> x;
 end
 ```
 
