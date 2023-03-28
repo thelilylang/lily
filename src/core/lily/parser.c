@@ -63,6 +63,22 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self);
 static LilyAstExpr *
 parse_array_expr__LilyParseBlock(LilyParseBlock *self);
 
+// Parse binary expression
+static LilyAstExpr *
+parse_binary_expr__LilyParseBlock(LilyParseBlock *self);
+
+// Parse call expression
+static LilyAstExpr *
+parse_call_expr__LilyParseBlock(LilyParseBlock *self);
+
+// Parse lambda expression
+static LilyAstExpr *
+parse_lambda_expr__LilyParseBlock(LilyParseBlock *self);
+
+// Parse expression
+static LilyAstExpr *
+parse_expr__LilyParseBlock(LilyParseBlock *self);
+
 CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
 {
     Location location_eof =
@@ -832,6 +848,30 @@ LilyAstExpr *
 parse_array_expr__LilyParseBlock(LilyParseBlock *self)
 {
     TODO("Issue #16");
+}
+
+LilyAstExpr *
+parse_binary_expr__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #18");
+}
+
+LilyAstExpr *
+parse_call_expr__LilyParseBlock(LilyParseBlock *)
+{
+    TODO("Issue #19");
+}
+
+LilyAstExpr *
+parse_lambda_expr__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #20");
+}
+
+LilyAstExpr *
+parse_expr__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("parse expr");
 }
 
 TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self)
