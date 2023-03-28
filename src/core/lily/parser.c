@@ -61,8 +61,8 @@ static LilyToken *
 peek_token__LilyParseBlock(LilyParseBlock *self, Usize n);
 
 // Parse data type
-static LilyAstDataType*
-parse_data_type__LilyParseBlock(LilyParseBlock*);
+static LilyAstDataType *
+parse_data_type__LilyParseBlock(LilyParseBlock *);
 
 void
 next_decl__LilyParser(LilyParser *self)
@@ -102,10 +102,10 @@ peek_token__LilyParseBlock(LilyParseBlock *self, Usize n)
     return NULL;
 }
 
-LilyAstDataType*
-parse_data_type__LilyParseBlock(LilyParseBlock*)
+LilyAstDataType *
+parse_data_type__LilyParseBlock(LilyParseBlock *)
 {
-	// TODO: Issue #14
+    // TODO: Issue #14
 }
 
 void
