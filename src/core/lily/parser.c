@@ -68,6 +68,10 @@ parse_data_type__LilyParseBlock(LilyParseBlock *);
 static LilyAstExpr *
 parse_access_expr__LilyParseBlock(LilyParseBlock *);
 
+// Parse array expression
+static LilyAstExpr *
+parse_array_expr__LilyParseBlock(LilyParseBlock *);
+
 void
 next_decl__LilyParser(LilyParser *self)
 {
@@ -116,6 +120,12 @@ LilyAstExpr *
 parse_access_expr__LilyParseBlock(LilyParseBlock *self)
 {
     TODO("Issue #15");
+}
+
+LilyAstExpr *
+parse_array_expr__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #16");
 }
 
 void
