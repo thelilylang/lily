@@ -22,6 +22,8 @@
     "./tests/core/lily/parser/input/data_type/array/undetermined.lily"
 #define FILE_DATA_TYPE_ARRAY_UNDETERMINED_2 \
     "./tests/core/lily/parser/input/data_type/array/undetermined2.lily"
+#define FILE_DATA_TYPE_LAMBDA \
+    "./tests/core/lily/parser/input/data_type/lambda.lily"
 
 LilyAstDataType *
 run_parse_data_type(File *file)

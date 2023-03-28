@@ -89,3 +89,11 @@ CASE(data_type_array_undetermined2, {
 
     FREE_RUN_PARSE_DATA_TYPE();
 });
+
+CASE(data_type_lambda, {
+    RUN_PARSE_DATA_TYPE(FILE_DATA_TYPE_LAMBDA);
+
+    TEST_ASSERT_EQ(dt->kind, LILY_AST_DATA_TYPE_KIND_LAMBDA);
+
+    FREE_RUN_PARSE_DATA_TYPE();
+});
