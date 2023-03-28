@@ -198,9 +198,9 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprLambda, const LilyAstExprLambda *self)
         push_str__String(res, "NULL");
     }
 
-	push_str__String(res, " body =");
+    push_str__String(res, " body =");
 
-	DEBUG_VEC_STRING(self->body, res, LilyAstBodyFunItem);
+    DEBUG_VEC_STRING(self->body, res, LilyAstBodyFunItem);
 
     push_str__String(res, " }");
 
@@ -220,6 +220,6 @@ DESTRUCTOR(LilyAstExprLambda, const LilyAstExprLambda *self)
         FREE(LilyAstDataType, self->return_data_type);
     }
 
-	FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyAstBodyFunItem);
-	FREE(Vec, self->body);
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyAstBodyFunItem);
+    FREE(Vec, self->body);
 }
