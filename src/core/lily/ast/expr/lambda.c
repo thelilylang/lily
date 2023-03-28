@@ -24,6 +24,7 @@
 
 #include <base/alloc.h>
 
+#include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/expr.h>
 #include <core/lily/ast/expr/lambda.h>
 
@@ -197,6 +198,10 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprLambda, const LilyAstExprLambda *self)
         push_str__String(res, "NULL");
     }
 
+	push_str__String(res, " body =");
+
+	DEBUG_VEC_STRING(self->body, res, LilyAstBodyFunItem);
+
     push_str__String(res, " }");
 
     return res;
@@ -214,4 +219,7 @@ DESTRUCTOR(LilyAstExprLambda, const LilyAstExprLambda *self)
     if (self->return_data_type) {
         FREE(LilyAstDataType, self->return_data_type);
     }
+
+	FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyAstBodyFunItem);
+	FREE(Vec, self->body);
 }
