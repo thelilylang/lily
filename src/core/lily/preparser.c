@@ -10675,6 +10675,7 @@ preparse_macro_expand__LilyPreparser(LilyPreparser *self)
 void
 preparse_preprocess__LilyPreparser(LilyPreparser *self)
 {
+    // TODO: Issue #12
 }
 
 void
