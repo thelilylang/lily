@@ -43,3 +43,11 @@ VARIANT_CONSTRUCTOR(Optional *, Optional, none)
 
     return self;
 }
+
+void *
+get__Optional(const Optional *self)
+{
+    ASSERT(self->some);
+
+    return self->some;
+}
