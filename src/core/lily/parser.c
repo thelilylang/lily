@@ -75,6 +75,9 @@ parse_call_expr__LilyParseBlock(LilyParseBlock *self);
 static LilyAstExpr *
 parse_lambda_expr__LilyParseBlock(LilyParseBlock *self);
 
+static LilyAstExpr *
+parse_primary_expr__LilyParseBlock(LilyParseBlock *self);
+
 // Parse expression
 static LilyAstExpr *
 parse_expr__LilyParseBlock(LilyParseBlock *self);
@@ -866,6 +869,12 @@ LilyAstExpr *
 parse_lambda_expr__LilyParseBlock(LilyParseBlock *self)
 {
     TODO("Issue #20");
+}
+
+LilyAstExpr *
+parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("parse primary expr");
 }
 
 LilyAstExpr *
