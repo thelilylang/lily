@@ -65,7 +65,7 @@ parse_array_expr__LilyParseBlock(LilyParseBlock *self);
 
 // Parse binary expression
 static LilyAstExpr *
-parse_binary_expr__LilyParseBlock(LilyParseBlock *self);
+parse_binary_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr);
 
 // Parse call expression
 static LilyAstExpr *
@@ -854,9 +854,120 @@ parse_array_expr__LilyParseBlock(LilyParseBlock *self)
 }
 
 LilyAstExpr *
-parse_binary_expr__LilyParseBlock(LilyParseBlock *self)
+parse_binary_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr)
 {
-    TODO("Issue #18");
+    Vec *stack = NEW(Vec); // Vec<LilyAstExpr* | enum LilyAstExprBinaryKind*>*
+    Usize last_precedence = MAX_LILY_AST_EXPR_BINARY_PRECEDENCE + 1;
+
+    push__Vec(stack, expr);
+
+    while (self->current->kind == LILY_TOKEN_KIND_PLUS ||
+           self->current->kind == LILY_TOKEN_KIND_KEYWORD_AND ||
+           self->current->kind == LILY_TOKEN_KIND_PLUS_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_AMPERSAND_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_L_SHIFT_L_SHIFT_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_BAR_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_R_SHIFT_R_SHIFT_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_SLASH_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_STAR_STAR_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_PERCENTAGE_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_STAR_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_MINUS_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_XOR_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_AMPERSAND ||
+           self->current->kind == LILY_TOKEN_KIND_BAR ||
+           self->current->kind == LILY_TOKEN_KIND_BAR_R_SHIFT ||
+           self->current->kind == LILY_TOKEN_KIND_SLASH ||
+           self->current->kind == LILY_TOKEN_KIND_EQ_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_STAR_STAR ||
+           self->current->kind == LILY_TOKEN_KIND_R_SHIFT_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_R_SHIFT ||
+           self->current->kind == LILY_TOKEN_KIND_L_SHIFT_L_SHIFT ||
+           self->current->kind == LILY_TOKEN_KIND_L_SHIFT_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_L_SHIFT ||
+           self->current->kind == LILY_TOKEN_KIND_PERCENTAGE ||
+           self->current->kind == LILY_TOKEN_KIND_STAR ||
+           self->current->kind == LILY_TOKEN_KIND_NOT_EQ ||
+           self->current->kind == LILY_TOKEN_KIND_KEYWORD_OR ||
+           self->current->kind == LILY_TOKEN_KIND_R_SHIFT_R_SHIFT ||
+           self->current->kind == LILY_TOKEN_KIND_DOT_DOT ||
+           self->current->kind == LILY_TOKEN_KIND_MINUS ||
+           self->current->kind == LILY_TOKEN_KIND_KEYWORD_XOR) {
+        enum LilyAstExprBinaryKind op =
+          from_token__LilyAstExprBinary(self->current);
+        Usize precedence = to_precedence__LilyAstExprBinaryKind(op);
+
+        next_token__LilyParseBlock(self);
+
+        LilyAstExpr *right = parse_primary_expr__LilyParseBlock(self);
+
+        if (!right) {
+            for (Usize i = 0; i < stack->len; i += 2) {
+                FREE(LilyAstExpr, get__Vec(stack, i));
+            }
+
+            FREE(Vec, stack);
+
+            return NULL;
+        }
+
+        while (precedence <= last_precedence && stack->len > 1) {
+            LilyAstExpr *right = pop__Vec(stack);
+            enum LilyAstExprBinaryKind op =
+              (enum LilyAstExprBinaryKind)(Uptr)pop__Vec(stack);
+
+            last_precedence = to_precedence__LilyAstExprBinaryKind(op);
+
+            if (last_precedence < precedence) {
+                push__Vec(stack, (int *)op);
+                push__Vec(stack, right);
+            }
+
+            LilyAstExpr *left = pop__Vec(stack);
+
+            push__Vec(
+              stack,
+              NEW_VARIANT(
+                LilyAstExpr,
+                binary,
+                (Location){ .filename = self->current->location.filename,
+                            .start_line = left->location.start_line,
+                            .end_line = right->location.end_line,
+                            .start_column = left->location.start_column,
+                            .end_column = right->location.end_column },
+                NEW(LilyAstExprBinary, op, left, right)));
+        }
+
+        push__Vec(stack, (int *)op);
+        push__Vec(stack, right);
+
+        last_precedence = precedence;
+    }
+
+    while (stack->len > 1) {
+        LilyAstExpr *rhs = pop__Vec(stack);
+        enum LilyAstExprBinaryKind op =
+          (enum LilyAstExprBinaryKind)(Uptr)pop__Vec(stack);
+        LilyAstExpr *lhs = pop__Vec(stack);
+
+        push__Vec(
+          stack,
+          NEW_VARIANT(LilyAstExpr,
+                      binary,
+                      (Location){ .filename = self->current->location.filename,
+                                  .start_line = lhs->location.start_line,
+                                  .end_line = rhs->location.end_line,
+                                  .start_column = lhs->location.start_column,
+                                  .end_column = rhs->location.end_column },
+                      NEW(LilyAstExprBinary, op, lhs, rhs)));
+    }
+
+    LilyAstExpr *res = pop__Vec(stack);
+
+    FREE(Vec, stack);
+
+    return res;
 }
 
 LilyAstExpr *
