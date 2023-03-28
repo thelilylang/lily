@@ -10681,6 +10681,8 @@ preparse_preprocess__LilyPreparser(LilyPreparser *self)
 void
 preparse_when_condition__LilyPreparser(LilyPreparser *self)
 {
+    // TODO: Issue #13
+
     // when <cond>:
     while (self->current->kind != LILY_TOKEN_KIND_COLON &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
