@@ -74,7 +74,7 @@ typedef struct LilyAstExprFunParamCall
     Location location;
     union
     {
-        String *default_;
+        String *default_; // <default_> := <value>
     };
 } LilyAstExprFunParamCall;
 
