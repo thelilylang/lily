@@ -1,4 +1,6 @@
+#include "array.c"
 #include "data_type.c"
+#include "expr.c"
 
 #include <base/test.h>
 
@@ -19,5 +21,6 @@ main()
               CALL_CASE(data_type_lambda),
               CALL_CASE(data_type_tuple),
               CALL_CASE(data_type_custom));
+    ADD_SUITE(2, expr, CALL_CASE(expr_array), CALL_CASE(expr_array2));
     RUN_TEST();
 }
