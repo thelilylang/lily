@@ -898,19 +898,32 @@ parse_fun_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
     next_token__LilyParseBlock(self);
 
     Vec *params = NEW(Vec); // Vec<LilyAstExpr*>*
+    Location location = clone__Location(&id->location);
 
     while (self->current->kind != LILY_TOKEN_KIND_R_PAREN) {
         LilyAstExpr *param = parse_expr__LilyParseBlock(self);
 
         if (!param) {
+            // Clean up
             FREE_BUFFER_ITEMS(params->buffer, params->len, LilyAstExpr);
             FREE(Vec, params);
 
             return NULL;
         }
+
+        CHECK_COMMA(LILY_TOKEN_KIND_R_PAREN);
     }
 
-    TODO("parse fun call");
+    end__Location(&location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
+    next_token__LilyParseBlock(self);
+
+    return NEW_VARIANT(
+      LilyAstExpr,
+      call,
+      location,
+      NEW_VARIANT(LilyAstExprCall, fun, NEW(LilyAstExprCallFun, id, params)));
 }
 
 LilyAstExpr *
