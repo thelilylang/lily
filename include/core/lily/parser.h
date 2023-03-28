@@ -30,17 +30,35 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/lily/ast/data_type.h>
 #include <core/lily/preparser.h>
 
 typedef struct LilyPackage LilyPackage;
+typedef struct LilyParser LilyParser;
 
-typedef struct LilyParser
+typedef struct LilyParseBlock
+{
+    Vec *tokens; // Vec<LilyToken*>*
+    LilyToken *current;
+    const File *file;
+    Usize *count_error;
+    Usize *count_warning;
+    Usize position;
+} LilyParseBlock;
+
+/**
+ *
+ * @brief Construct LilyParseBlock
+ */
+CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens);
+
+struct LilyParser
 {
     Vec *decls; // Vec<LilyAstDecl*>*
     LilyPackage *package;
     LilyPreparserDecl *current;
     Usize position;
-} LilyParser;
+};
 
 /**
  *
@@ -52,6 +70,13 @@ inline CONSTRUCTOR(LilyParser, LilyParser, LilyPackage *package)
         .decls = NEW(Vec), .package = package, .current = NULL, .position = 0
     };
 }
+
+/**
+ *
+ * @brief Parse data type.
+ * @note This function is only used in test.
+ */
+TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self);
 
 /**
  *
