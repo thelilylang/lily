@@ -4,6 +4,8 @@
 
 #include <core/lily/parser.h>
 
+#include <string.h>
+
 SUITE(data_type);
 
 CASE(data_type_array_dynamic, {
@@ -102,7 +104,16 @@ CASE(data_type_tuple, {
     RUN_PARSE_DATA_TYPE(FILE_DATA_TYPE_TUPLE);
 
     TEST_ASSERT_EQ(dt->kind, LILY_AST_DATA_TYPE_KIND_TUPLE);
-	TEST_ASSERT_EQ(dt->tuple->len, 3);
+    TEST_ASSERT_EQ(dt->tuple->len, 3);
+
+    FREE_RUN_PARSE_DATA_TYPE();
+});
+
+CASE(data_type_custom, {
+    RUN_PARSE_DATA_TYPE(FILE_DATA_TYPE_CUSTOM);
+
+    TEST_ASSERT_EQ(dt->kind, LILY_AST_DATA_TYPE_KIND_CUSTOM);
+    TEST_ASSERT(!strcmp(dt->custom.name->buffer, "A.B.C"));
 
     FREE_RUN_PARSE_DATA_TYPE();
 });
