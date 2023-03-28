@@ -879,6 +879,11 @@ TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self)
     return parse_data_type__LilyParseBlock(self);
 }
 
+TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self)
+{
+    return parse_expr__LilyParseBlock(self);
+}
+
 void
 run__LilyParser(LilyParser *self)
 {

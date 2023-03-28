@@ -31,6 +31,7 @@
 #include <base/vec.h>
 
 #include <core/lily/ast/data_type.h>
+#include <core/lily/ast/expr.h>
 #include <core/lily/preparser.h>
 
 typedef struct LilyPackage LilyPackage;
@@ -77,6 +78,13 @@ inline CONSTRUCTOR(LilyParser, LilyParser, LilyPackage *package)
  * @note This function is only used in test.
  */
 TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self);
+
+/**
+ *
+ * @brief Parse expression.
+ * @note This function is only used in test.
+ */
+TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self);
 
 /**
  *
