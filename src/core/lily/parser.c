@@ -67,9 +67,21 @@ parse_array_expr__LilyParseBlock(LilyParseBlock *self);
 static LilyAstExpr *
 parse_binary_expr__LilyParseBlock(LilyParseBlock *self);
 
+// Parse fun/method call expression
+static LilyAstExpr *
+parse_fun_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id);
+
+// Parse record call expression
+static LilyAstExpr *
+parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id);
+
+// Parse variant call expression
+static LilyAstExpr *
+parse_variant_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id);
+
 // Parse call expression
 static LilyAstExpr *
-parse_call_expr__LilyParseBlock(LilyParseBlock *self);
+parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id);
 
 // Parse lambda expression
 static LilyAstExpr *
@@ -860,9 +872,52 @@ parse_binary_expr__LilyParseBlock(LilyParseBlock *self)
 }
 
 LilyAstExpr *
-parse_call_expr__LilyParseBlock(LilyParseBlock *)
+parse_fun_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
 {
-    TODO("Issue #19");
+    next_token__LilyParseBlock(self);
+
+    Vec *params = NEW(Vec); // Vec<LilyAstExpr*>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_R_PAREN) {
+        LilyAstExpr *param = parse_expr__LilyParseBlock(self);
+
+        if (!param) {
+            FREE_BUFFER_ITEMS(params->buffer, params->len, LilyAstExpr);
+            FREE(Vec, params);
+
+            return NULL;
+        }
+    }
+
+    TODO("parse fun call");
+}
+
+LilyAstExpr *
+parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
+{
+    TODO("parse record call");
+}
+
+LilyAstExpr *
+parse_variant_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
+{
+    TODO("parse variant call");
+}
+
+LilyAstExpr *
+parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
+{
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_BRACE:
+            return parse_fun_call__LilyParseBlock(self, id);
+        case LILY_TOKEN_KIND_L_PAREN:
+            return parse_record_call__LilyParseBlock(self, id);
+        case LILY_TOKEN_KIND_COLON:
+            return parse_variant_call__LilyParseBlock(self, id);
+        default:
+            // ERROR: unexpected token
+            return NULL;
+    }
 }
 
 LilyAstExpr *
