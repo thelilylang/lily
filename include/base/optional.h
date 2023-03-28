@@ -59,13 +59,12 @@ VARIANT_CONSTRUCTOR(Optional *, Optional, some, void *some);
  */
 VARIANT_CONSTRUCTOR(Optional *, Optional, none);
 
-inline void *
-get__Optional(const Optional *self)
-{
-    ASSERT(self->some);
-
-    return self->some;
-}
+/**
+ *
+ * @brief Get some value.
+ */
+void *
+get__Optional(const Optional *self);
 
 /**
  *

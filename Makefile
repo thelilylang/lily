@@ -91,6 +91,7 @@ format:
 	${CLANG_FORMAT} ./src/core/shared/*.c
 	${CLANG_FORMAT} ./benchmarks/base/*.c
 	${CLANG_FORMAT} ./tests/base/*.c
+	${CLANG_FORMAT} ./tests/core/lily/parser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/precompile/*.c
 	${CLANG_FORMAT} ./tests/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/scanner/*.c
