@@ -109,7 +109,7 @@ typedef struct LilyAstExprLambda
 {
     Vec *params;                       // Vec<LilyAstExprLambdaParam*>*?
     LilyAstDataType *return_data_type; // LilyAstDataType*?
-    Vec *body; // Vec<LilyAstBodyFunItem*>*
+    Vec *body;                         // Vec<LilyAstBodyFunItem*>*
 } LilyAstExprLambda;
 
 /**
@@ -120,11 +120,11 @@ inline CONSTRUCTOR(LilyAstExprLambda,
                    LilyAstExprLambda,
                    Vec *params,
                    LilyAstDataType *return_data_type,
-				   Vec *body)
+                   Vec *body)
 {
     return (LilyAstExprLambda){ .params = params,
                                 .return_data_type = return_data_type,
-								.body = body };
+                                .body = body };
 }
 
 /**

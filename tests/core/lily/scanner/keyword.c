@@ -1,0 +1,10 @@
+#include <base/test.h>
+
+SIMPLE(keyword, {
+    RUN_SCANNER(FILE_KEYWORD);
+    SCANNER_ITERATOR();
+
+    TEST_ASSERT_EQ(NEXT()->kind, LILY_TOKEN_KIND_KEYWORD_ALIAS);
+
+    FREE_SCANNER();
+});

@@ -28,6 +28,8 @@
     "./tests/core/lily/parser/input/data_type/tuple.lily"
 #define FILE_DATA_TYPE_CUSTOM \
     "./tests/core/lily/parser/input/data_type/custom.lily"
+#define FILE_EXPR_ARRAY "./tests/core/lily/parser/input/array/array.lily"
+#define FILE_EXPR_ARRAY2 "./tests/core/lily/parser/input/array/array2.lily"
 
 LilyAstDataType *
 run_parse_data_type(File *file)
@@ -63,5 +65,41 @@ run_parse_data_type(File *file)
     FREE(File, &file);             \
     if (dt)                        \
         FREE(LilyAstDataType, dt);
+
+LilyAstExpr *
+run_parse_expr(File *file)
+{
+    LilyScanner scanner =
+      NEW(LilyScanner, NEW(Source, NEW(Cursor, file->content), file));
+
+    run__LilyScanner(&scanner, false);
+
+    Usize count_error = 0;
+    Usize count_warning = 0;
+
+    LilyParseBlock parse_block =
+      (LilyParseBlock){ .tokens = scanner.tokens,
+                        .current = get__Vec(scanner.tokens, 0),
+                        .file = file,
+                        .count_error = &count_error,
+                        .count_warning = &count_warning,
+                        .position = 0 };
+
+    LilyAstExpr *expr = CALL_TEST(parse_expr, &parse_block);
+
+    FREE(LilyScanner, &scanner);
+
+    return expr;
+}
+
+#define RUN_PARSE_EXPR(filename)               \
+    char *content = read_file__File(filename); \
+    File file = NEW(File, filename, content);  \
+    LilyAstExpr *expr = run_parse_expr(&file);
+
+#define FREE_RUN_PARSE_EXPR() \
+    FREE(File, &file);        \
+    if (expr)                 \
+        FREE(LilyAstExpr, expr);
 
 #endif // UTIL_C
