@@ -31,19 +31,6 @@
 
 #include <stdio.h>
 
-typedef struct LilyParseBlock
-{
-    Vec *tokens; // Vec<LilyToken*>*
-    LilyToken *current;
-    const File *file;
-    Usize *count_error;
-    Usize *count_warning;
-    Usize position;
-} LilyParseBlock;
-
-// Construct LilyParseBlock type.
-CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens);
-
 // Advance to one declaration.
 static void
 next_decl__LilyParser(LilyParser *self);
@@ -472,6 +459,25 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
             return NULL;                                                  \
     }
 
+#define PARSE_ARRAY_DATA_TYPE()                                           \
+    LilyAstDataType *dt = NULL;                                           \
+    if (is_data_type__LilyParseBlock(self)) {                             \
+        dt = parse_data_type__LilyParseBlock(self);                       \
+                                                                          \
+        if (!dt) {                                                        \
+            return NULL;                                                  \
+        }                                                                 \
+                                                                          \
+        end__Location(                                                    \
+          &location, dt->location.end_line, dt->location.end_column);     \
+    } else {                                                              \
+        LilyToken *previous = get__Vec(self->tokens, self->position - 1); \
+                                                                          \
+        end__Location(&location,                                          \
+                      previous->location.end_line,                        \
+                      previous->location.end_column);                     \
+    }
+
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
                     if (!strcmp(self->current->identifier_normal->buffer,
@@ -479,17 +485,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                         next_token__LilyParseBlock(self);
 
                         EXPECTED_R_HOOK();
-
-                        LilyAstDataType *dt =
-                          parse_data_type__LilyParseBlock(self);
-
-                        if (!dt) {
-                            return NULL;
-                        }
-
-                        end__Location(&location,
-                                      dt->location.end_line,
-                                      dt->location.end_column);
+                        PARSE_ARRAY_DATA_TYPE();
 
                         return NEW_VARIANT(
                           LilyAstDataType,
@@ -522,16 +518,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                     next_token__LilyParseBlock(self);
 
                     EXPECTED_R_HOOK();
-
-                    LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
-
-                    if (!dt) {
-                        return NULL;
-                    }
-
-                    end__Location(&location,
-                                  dt->location.end_line,
-                                  dt->location.end_column);
+                    PARSE_ARRAY_DATA_TYPE();
 
                     return NEW_VARIANT(
                       LilyAstDataType,
@@ -570,16 +557,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 
                     FREE(Optional, size_op);
                     EXPECTED_R_HOOK();
-
-                    LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
-
-                    if (!dt) {
-                        return NULL;
-                    }
-
-                    end__Location(&location,
-                                  dt->location.end_line,
-                                  dt->location.end_column);
+                    PARSE_ARRAY_DATA_TYPE();
 
                     return NEW_VARIANT(
                       LilyAstDataType,
@@ -592,16 +570,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                     next_token__LilyParseBlock(self);
 
                     EXPECTED_R_HOOK();
-
-                    LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
-
-                    if (!dt) {
-                        return NULL;
-                    }
-
-                    end__Location(&location,
-                                  dt->location.end_line,
-                                  dt->location.end_column);
+                    PARSE_ARRAY_DATA_TYPE();
 
                     return NEW_VARIANT(
                       LilyAstDataType,
@@ -858,6 +827,11 @@ LilyAstExpr *
 parse_array_expr__LilyParseBlock(LilyParseBlock *self)
 {
     TODO("Issue #16");
+}
+
+TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self)
+{
+    return parse_data_type__LilyParseBlock(self);
 }
 
 void
