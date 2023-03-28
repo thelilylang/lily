@@ -611,7 +611,7 @@ to_string__LilyAstDataType(const LilyAstDataType *self)
             return res;
         }
         case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
-            return format__String("{Sr}!",
+            return format__String("!{Sr}",
                                   to_string__LilyAstDataType(self->exception));
         case LILY_AST_DATA_TYPE_KIND_FLOAT32:
             return from__String("Float32");
@@ -664,10 +664,10 @@ to_string__LilyAstDataType(const LilyAstDataType *self)
         case LILY_AST_DATA_TYPE_KIND_OBJECT:
             return from__String("Object");
         case LILY_AST_DATA_TYPE_KIND_OPTIONAL:
-            return format__String("{Sr}?",
+            return format__String("?{Sr}",
                                   to_string__LilyAstDataType(self->optional));
         case LILY_AST_DATA_TYPE_KIND_PTR:
-            return format__String("{Sr}*",
+            return format__String("*{Sr}",
                                   to_string__LilyAstDataType(self->ptr));
         case LILY_AST_DATA_TYPE_KIND_REF:
             return format__String("ref {Sr}",

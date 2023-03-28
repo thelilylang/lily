@@ -463,7 +463,7 @@ end
 
 fun main() =
     val a Foo := Foo.new();
-    drop val b Foo* := Foo.new();
+    drop val b *Foo := Foo.new();
 end
 ```
 
@@ -572,17 +572,17 @@ I think `move` value is better than copy value because it avoid to write program
 
 ```lily
 fun main =
-    drop val x Int32* := Ptr.new(20); // you must specifie drop except when you precise to the compiler that the drops are automaticly manage by the compiler
-    val y Int32* := nil; // error in safe mode
+    drop val x *Int32 := Ptr.new(20); // you must specifie drop except when you precise to the compiler that the drops are automaticly manage by the compiler
+    val y *Int32 := nil; // error in safe mode
 
     unsafe =
-        val y Int32* := nil; // ok in unsafe mode
+        val y *Int32 := nil; // ok in unsafe mode
         // The compiler emit an error if the Pointer is used with nil value
         // In the runtime the compiler verify if the pointer is null 
     end
 
     begin =
-        val y Int32* := Ptr.new(100);
+        val y *Int32 := Ptr.new(100);
         drop y // drop at this point
         // after this point the compiler shadows the reference of y in this scope
         drop y <- Ptr.new(200) // reassign a drop ptr value
@@ -658,11 +658,11 @@ end
 - Can be dereferenced
 
 ```lily
-fun add(x trace Int32*) trace Int32* = x;
+fun add(x trace *Int32) trace *Int32 = x;
 
 fun main =
-    val x Int32* := Ptr.new(100);
-    trace val y Int32* := add(trace x);
+    val x *Int32 := Ptr.new(100);
+    trace val y *Int32 := add(trace x);
 end
 ```
 
