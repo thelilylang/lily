@@ -652,6 +652,8 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 
             // 1. Parse params
             if (self->current->kind == LILY_TOKEN_KIND_L_PAREN) {
+				next_token__LilyParseBlock(self);
+
                 params = NEW(Vec);
 
                 while (self->current->kind != LILY_TOKEN_KIND_R_PAREN) {
