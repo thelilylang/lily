@@ -310,8 +310,11 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                 next_token__LilyParseBlock(self);
 
                 while (self->current->kind == LILY_TOKEN_KIND_DOT) {
+                    next_token__LilyParseBlock(self);
+
                     switch (self->current->kind) {
                         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                            push__String(name, '.');
                             append__String(name,
                                            self->current->identifier_normal);
                             next_token__LilyParseBlock(self);
@@ -652,7 +655,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 
             // 1. Parse params
             if (self->current->kind == LILY_TOKEN_KIND_L_PAREN) {
-				next_token__LilyParseBlock(self);
+                next_token__LilyParseBlock(self);
 
                 params = NEW(Vec);
 
