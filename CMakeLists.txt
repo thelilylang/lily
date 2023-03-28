@@ -274,6 +274,11 @@ if (DEBUG)
 
 	add_test(NAME test_core_precompile COMMAND test_core_precompile)
 
+	add_executable(test_core_parser tests/core/lily/parser/parser.c)
+	target_link_libraries(test_core_parser lily_base lily_core)
+
+	add_test(NAME test_core_parser COMMAND test_core_parser)
+
 	add_executable(bench_vec benchmarks/base/vec.c)
 	target_link_libraries(bench_vec lily_base)
 

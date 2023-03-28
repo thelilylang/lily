@@ -7,3 +7,6 @@ echo
 
 echo
 ./build/Debug/test_core_precompile
+
+echo
+./build/Debug/test_core_parser
