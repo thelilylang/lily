@@ -155,7 +155,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self)
             String *res =
               format__String("LilyAstExprAccess{{ kind = {s}, object =");
 
-            DEBUG_VEC_STRING(self->object, res, LilyAstDataType);
+            DEBUG_VEC_STRING(self->object.object, res, LilyAstDataType);
 
             push_str__String(res, " }");
 
