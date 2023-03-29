@@ -55,6 +55,11 @@ is_data_type__LilyParseBlock(LilyParseBlock *self);
 static LilyAstDataType *
 parse_data_type__LilyParseBlock(LilyParseBlock *self);
 
+// Parse dot access
+// a.b.c
+static LilyAstExpr *
+parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin);
+
 // Parse access expression
 static LilyAstExpr *
 parse_access_expr__LilyParseBlock(LilyParseBlock *self);
@@ -879,6 +884,33 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
     }
 
     return NULL;
+}
+
+LilyAstExpr *
+parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin)
+{
+    Location location = clone__Location(&begin->location);
+    Vec *access = init__Vec(1, begin); // Vec<LilyAstExpr*>*
+
+    while (self->current->kind == LILY_TOKEN_KIND_DOT) {
+        next_token__LilyParseBlock(self);
+
+        LilyAstExpr *expr = parse_primary_expr__LilyParseBlock(self);
+
+        if (!expr) {
+            FREE_BUFFER_ITEMS(access->buffer, access->len, LilyAstExpr);
+            FREE(Vec, access);
+
+            return NULL;
+        }
+
+        push__Vec(access, expr);
+    }
+
+    return NEW_VARIANT(LilyAstExpr,
+                       access,
+                       location,
+                       NEW_VARIANT(LilyAstExprAccess, path, access));
 }
 
 LilyAstExpr *
