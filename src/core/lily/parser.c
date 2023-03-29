@@ -890,7 +890,13 @@ LilyAstExpr *
 parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin)
 {
     Location location = clone__Location(&begin->location);
-    Vec *access = init__Vec(1, begin); // Vec<LilyAstExpr*>*
+    Vec *access = NULL; // Vec<LilyAstExpr*>*
+
+    if (begin) {
+        access = init__Vec(1, begin);
+    } else {
+        access = NEW(Vec);
+    }
 
     while (self->current->kind == LILY_TOKEN_KIND_DOT) {
         next_token__LilyParseBlock(self);
@@ -916,7 +922,42 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin)
 LilyAstExpr *
 parse_access_expr__LilyParseBlock(LilyParseBlock *self)
 {
-    TODO("Issue #15");
+    Location location = clone__Location(&self->current->location);
+    enum LilyTokenKind kind = self->current->kind;
+
+    next_token__LilyParseBlock(self);
+
+    LilyAstExpr *path = parse_path_access__LilyParseBlock(self, NULL);
+
+    if (path) {
+        end__Location(
+          &location, path->location.end_line, path->location.end_column);
+    } else {
+        return NULL;
+    }
+
+    switch (kind) {
+        case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
+            return NEW_VARIANT(LilyAstExpr,
+                               access,
+                               location,
+                               NEW_VARIANT(LilyAstExprAccess, global, path));
+        case LILY_TOKEN_KIND_AT:
+            return NEW_VARIANT(
+              LilyAstExpr,
+              access,
+              location,
+              NEW_VARIANT(LilyAstExprAccess, property_init, path));
+        case LILY_TOKEN_KIND_KEYWORD_SELF:
+            return NEW_VARIANT(LilyAstExpr,
+                               access,
+                               location,
+                               NEW_VARIANT(LilyAstExprAccess, self, path));
+        default:
+            UNREACHABLE("this way is impossible");
+    }
+
+    return NULL;
 }
 
 LilyAstExpr *
