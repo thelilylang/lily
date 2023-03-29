@@ -101,6 +101,27 @@ parse_expr__LilyParseBlock(LilyParseBlock *self);
     }                                                    \
     next_token__LilyParseBlock(self);
 
+#define CHECK_COMMA(closing)                                                  \
+    if (self->current->kind != closing) {                                     \
+        switch (self->current->kind) {                                        \
+            case LILY_TOKEN_KIND_COMMA:                                       \
+                next_token__LilyParseBlock(self);                             \
+                break;                                                        \
+            default:                                                          \
+                emit__Diagnostic(                                             \
+                  NEW_VARIANT(Diagnostic,                                     \
+                              simple_lily_error,                              \
+                              self->file,                                     \
+                              &self->current->location,                       \
+                              NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN), \
+                              NULL,                                           \
+                              NULL,                                           \
+                              from__String("expected `,`")),                  \
+                  self->count_error);                                         \
+                break;                                                        \
+        }                                                                     \
+    }
+
 CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
 {
     Location location_eof =
