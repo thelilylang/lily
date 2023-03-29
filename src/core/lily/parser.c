@@ -257,7 +257,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
     // Unit
     // Usize
     // <name>.<name>...[<dt>]
-	next_token__LilyParseBlock(self);
+    next_token__LilyParseBlock(self);
 
     Location location = clone__Location(&self->previous->location);
 
@@ -982,10 +982,8 @@ parse_object_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
 LilyAstExpr *
 parse_access_expr__LilyParseBlock(LilyParseBlock *self)
 {
-    Location location = clone__Location(&self->current->location);
-    enum LilyTokenKind kind = self->current->kind;
-
-    next_token__LilyParseBlock(self);
+    Location location = clone__Location(&self->previous->location);
+    enum LilyTokenKind kind = self->previous->kind;
 
     LilyAstExpr *path = parse_path_access__LilyParseBlock(self, NULL);
 
@@ -1023,9 +1021,7 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
 LilyAstExpr *
 parse_array_expr__LilyParseBlock(LilyParseBlock *self)
 {
-    Location location = clone__Location(&self->current->location);
-
-    next_token__LilyParseBlock(self); // skip `[`
+    Location location = clone__Location(&self->previous->location);
 
     Vec *exprs = NEW(Vec); // Vec<LilyAstExpr*>*
 
