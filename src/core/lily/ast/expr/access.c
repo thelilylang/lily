@@ -72,16 +72,16 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstExprAccessHook,
                const LilyAstExprAccessHook *self)
 {
-    return format("LilyAstExprAccessHook{{ access = {Sr}, id = {Sr} }",
+    return format("LilyAstExprAccessHook{{ access = {Sr}, expr = {Sr} }",
                   to_string__LilyAstExpr(self->access),
-                  to_string__LilyAstExpr(self->id));
+                  to_string__LilyAstExpr(self->expr));
 }
 #endif
 
 DESTRUCTOR(LilyAstExprAccessHook, const LilyAstExprAccessHook *self)
 {
     FREE(LilyAstExpr, self->access);
-    FREE(LilyAstExpr, self->id);
+    FREE(LilyAstExpr, self->expr);
 }
 
 #ifdef ENV_DEBUG
@@ -168,7 +168,7 @@ to_string__LilyAstExprAccess(const LilyAstExprAccess *self)
         case LILY_AST_EXPR_ACCESS_KIND_HOOK:
             return format__String("{Sr}[{Sr}]",
                                   to_string__LilyAstExpr(self->hook.access),
-                                  to_string__LilyAstExpr(self->hook.id));
+                                  to_string__LilyAstExpr(self->hook.expr));
         case LILY_AST_EXPR_ACCESS_KIND_OBJECT: {
             String *res = NEW(String);
 

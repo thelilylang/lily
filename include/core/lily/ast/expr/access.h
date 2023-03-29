@@ -44,7 +44,7 @@ enum LilyAstExprAccessKind
 typedef struct LilyAstExprAccessHook
 {
     LilyAstExpr *access;
-    LilyAstExpr *id;
+    LilyAstExpr *expr;
 } LilyAstExprAccessHook;
 
 /**
@@ -54,9 +54,9 @@ typedef struct LilyAstExprAccessHook
 inline CONSTRUCTOR(LilyAstExprAccessHook,
                    LilyAstExprAccessHook,
                    LilyAstExpr *access,
-                   LilyAstExpr *id)
+                   LilyAstExpr *expr)
 {
-    return (LilyAstExprAccessHook){ .access = access, .id = id };
+    return (LilyAstExprAccessHook){ .access = access, .expr = expr };
 }
 
 /**
