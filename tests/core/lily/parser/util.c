@@ -30,6 +30,9 @@
     "./tests/core/lily/parser/input/data_type/custom.lily"
 #define FILE_EXPR_ARRAY "./tests/core/lily/parser/input/array/array.lily"
 #define FILE_EXPR_ARRAY2 "./tests/core/lily/parser/input/array/array2.lily"
+#define FILE_EXPR_BINARY "./tests/core/lily/parser/input/binary/binary.lily"
+#define FILE_EXPR_BINARY_2 "./tests/core/lily/parser/input/binary/binary2.lily"
+#define FILE_EXPR_BINARY_3 "./tests/core/lily/parser/input/binary/binary3.lily"
 
 LilyAstDataType *
 run_parse_data_type(File *file)
