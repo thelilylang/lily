@@ -1041,8 +1041,9 @@ parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
 
         if (!value) {
             FREE(String, name);
-			FREE_BUFFER_ITEMS(params->buffer, params->len, LilyAstExprRecordParamCall);
-			FREE(Vec, params);
+            FREE_BUFFER_ITEMS(
+              params->buffer, params->len, LilyAstExprRecordParamCall);
+            FREE(Vec, params);
 
             return NULL;
         }
@@ -1066,7 +1067,27 @@ parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
 LilyAstExpr *
 parse_variant_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
 {
-    TODO("parse variant call");
+    Location location = clone__Location(&id->location);
+
+    next_token__LilyParseBlock(self); // skip `:`
+
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(self);
+
+    if (!expr) {
+        FREE(LilyAstExpr, id);
+
+        return NULL;
+    }
+
+    end__Location(
+      &location, expr->location.end_line, expr->location.end_column);
+
+    return NEW_VARIANT(LilyAstExpr,
+                       call,
+                       location,
+                       NEW_VARIANT(LilyAstExprCall,
+                                   variant,
+                                   NEW(LilyAstExprCallVariant, id, expr)));
 }
 
 LilyAstExpr *
