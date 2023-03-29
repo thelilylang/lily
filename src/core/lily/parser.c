@@ -94,22 +94,6 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self);
 static LilyAstExpr *
 parse_expr__LilyParseBlock(LilyParseBlock *self);
 
-// Parse binary expression
-static LilyAstExpr *
-parse_binary_expr__LilyParseBlock(LilyParseBlock *self);
-
-// Parse call expression
-static LilyAstExpr *
-parse_call_expr__LilyParseBlock(LilyParseBlock *self);
-
-// Parse lambda expression
-static LilyAstExpr *
-parse_lambda_expr__LilyParseBlock(LilyParseBlock *self);
-
-// Parse expression
-static LilyAstExpr *
-parse_expr__LilyParseBlock(LilyParseBlock *self);
-
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
            self->current->kind != LILY_TOKEN_KIND_EOF) { \
