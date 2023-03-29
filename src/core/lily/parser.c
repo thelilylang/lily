@@ -991,7 +991,74 @@ parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
 {
     next_token__LilyParseBlock(self); // skip `{`
 
-    TODO("parse record call");
+    Vec *params = NEW(Vec); // Vec<LilyAstExprRecordParamCall*>*
+    Location location = clone__Location(&id->location);
+
+    while (self->current->kind != LILY_TOKEN_KIND_R_BRACE) {
+        String *name = NULL;
+
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                name = clone__String(self->current->identifier_normal);
+                next_token__LilyParseBlock(self);
+                break;
+            default:
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &self->current->location,
+                    NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                    NULL,
+                    NULL,
+                    NULL),
+                  self->count_error);
+
+                name = from__String("__error__");
+        }
+
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_EQ:
+                next_token__LilyParseBlock(self);
+                break;
+            default:
+                emit__Diagnostic(
+                  NEW_VARIANT(Diagnostic,
+                              simple_lily_error,
+                              self->file,
+                              &self->current->location,
+                              NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                              NULL,
+                              NULL,
+                              from__String("expected `=`")),
+                  self->count_error);
+
+                break;
+        }
+
+        LilyAstExpr *value = parse_expr__LilyParseBlock(self);
+
+        if (!value) {
+            FREE(String, name);
+
+            return NULL;
+        }
+
+        push__Vec(params, NEW(LilyAstExprRecordParamCall, name, value));
+    }
+
+    end__Location(&location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
+    next_token__LilyParseBlock(self); // skip `}`
+
+    return NEW_VARIANT(LilyAstExpr,
+                       call,
+                       location,
+                       NEW_VARIANT(LilyAstExprCall,
+                                   record,
+                                   NEW(LilyAstExprCallRecord, id, params)));
 }
 
 LilyAstExpr *
