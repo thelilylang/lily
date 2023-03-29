@@ -1041,6 +1041,8 @@ parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
 
         if (!value) {
             FREE(String, name);
+			FREE_BUFFER_ITEMS(params->buffer, params->len, LilyAstExprRecordParamCall);
+			FREE(Vec, params);
 
             return NULL;
         }
