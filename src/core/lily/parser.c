@@ -965,8 +965,8 @@ parse_hook_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
                           from__String("expected `]`")),
               self->count_error);
 
-			FREE(LilyAstExpr, access);
-			FREE(LilyAstExpr, expr);
+            FREE(LilyAstExpr, access);
+            FREE(LilyAstExpr, expr);
 
             return NULL;
         }
