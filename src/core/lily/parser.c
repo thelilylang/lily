@@ -257,138 +257,98 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
     // Unit
     // Usize
     // <name>.<name>...[<dt>]
-    Location location = clone__Location(&self->current->location);
+	next_token__LilyParseBlock(self);
 
-    switch (self->current->kind) {
+    Location location = clone__Location(&self->previous->location);
+
+    switch (self->previous->kind) {
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
             end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+                          self->previous->location.end_line,
+                          self->previous->location.end_column);
 
             if (!strcmp(self->current->identifier_normal->buffer, "Any")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_ANY, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Bool")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_BOOL, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Byte")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_BYTE, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Bytes")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_BYTES, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Char")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CHAR, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Float32")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_FLOAT32, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Float64")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_FLOAT64, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Int16")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_INT16, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Int32")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_INT32, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Int64")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_INT64, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Int8")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_INT8, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Isize")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_ISIZE, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Never")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_NEVER, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Str")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_STR, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Uint16")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_UINT16, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Uint32")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_UINT32, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Uint64")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_UINT64, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Uint8")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_UINT8, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Unit")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_UNIT, location);
             } else if (!strcmp(self->current->identifier_normal->buffer,
                                "Usize")) {
-                next_token__LilyParseBlock(self);
-
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_USIZE, location);
             } else {
                 // 1. Parse name
-                String *name = clone__String(self->current->identifier_normal);
-
-                next_token__LilyParseBlock(self);
+                String *name = clone__String(self->previous->identifier_normal);
 
                 while (self->current->kind == LILY_TOKEN_KIND_DOT) {
                     next_token__LilyParseBlock(self);
@@ -499,16 +459,12 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
             }
 
         case LILY_TOKEN_KIND_KEYWORD_OBJECT:
-        case LILY_TOKEN_KIND_KEYWORD_SELF: {
-            enum LilyTokenKind kind = self->current->kind;
-
+        case LILY_TOKEN_KIND_KEYWORD_SELF:
             end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+                          self->previous->location.end_line,
+                          self->previous->location.end_column);
 
-            next_token__LilyParseBlock(self);
-
-            switch (kind) {
+            switch (self->previous->kind) {
                 case LILY_TOKEN_KIND_KEYWORD_OBJECT:
                     return NEW(LilyAstDataType,
                                LILY_AST_DATA_TYPE_KIND_OBJECT,
@@ -519,11 +475,8 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                 default:
                     UNREACHABLE("this way is impossible");
             }
-        }
 
         case LILY_TOKEN_KIND_L_HOOK:
-            next_token__LilyParseBlock(self);
-
 #define EXPECTED_R_HOOK()                                                 \
     switch (self->current->kind) {                                        \
         case LILY_TOKEN_KIND_R_HOOK:                                      \
@@ -696,9 +649,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_KEYWORD_REF:
         case LILY_TOKEN_KIND_KEYWORD_TRACE:
         case LILY_TOKEN_KIND_KEYWORD_MUT: {
-            enum LilyTokenKind kind = self->current->kind;
-
-            next_token__LilyParseBlock(self);
+            enum LilyTokenKind kind = self->previous->kind;
 
             LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
 
@@ -729,8 +680,6 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
         }
 
         case LILY_TOKEN_KIND_KEYWORD_FUN: {
-            next_token__LilyParseBlock(self);
-
             Vec *params = NULL;                       // Vec<LilyAstDataType*>*?
             LilyAstDataType *return_data_type = NULL; // LilyAstDataType*?
 
@@ -828,8 +777,6 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_L_PAREN: {
             Vec *tuple = NEW(Vec); // Vec<LilyAstDataType*>*
 
-            next_token__LilyParseBlock(self);
-
             while (self->current->kind != LILY_TOKEN_KIND_R_PAREN) {
                 LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
 
@@ -875,7 +822,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
         }
 
         default: {
-            String *token_s = to_string__LilyToken(self->current);
+            String *token_s = to_string__LilyToken(self->previous);
 
             emit__Diagnostic(
               NEW_VARIANT(
