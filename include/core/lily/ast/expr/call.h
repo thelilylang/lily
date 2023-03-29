@@ -225,7 +225,7 @@ DESTRUCTOR(LilyAstExprCallRecord, const LilyAstExprCallRecord *self);
 typedef struct LilyAstExprCallVariant
 {
     LilyAstExpr *id;
-    Vec *params; // Vec<LilyAstExpr*>*
+    LilyAstExpr *value;
 } LilyAstExprCallVariant;
 
 /**
@@ -235,9 +235,9 @@ typedef struct LilyAstExprCallVariant
 inline CONSTRUCTOR(LilyAstExprCallVariant,
                    LilyAstExprCallVariant,
                    LilyAstExpr *id,
-                   Vec *params)
+                   LilyAstExpr *value)
 {
-    return (LilyAstExprCallVariant){ .id = id, .params = params };
+    return (LilyAstExprCallVariant){ .id = id, .value = value };
 }
 
 /**

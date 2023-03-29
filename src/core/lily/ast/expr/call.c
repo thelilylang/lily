@@ -277,23 +277,16 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstExprCallVariant,
                const LilyAstExprCallVariant *self)
 {
-    String *res = format__String("LilyAstExprCallVariant{{ id = {Sr}, params =",
-                                 to_string__Debug__LilyAstExpr(self->id));
-
-    DEBUG_VEC_STRING(self->params, res, LilyAstExpr);
-
-    push_str__String(res, " }");
-
-    return res;
+    return format__String("LilyAstExprCallVariant{{ id = {Sr}, value = {Sr} }",
+                          to_string__Debug__LilyAstExpr(self->id),
+                          to_string__Debug__LilyAstExpr(self->value));
 }
 #endif
 
 DESTRUCTOR(LilyAstExprCallVariant, const LilyAstExprCallVariant *self)
 {
     FREE(LilyAstExpr, self->id);
-
-    FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, LilyAstExpr);
-    FREE(Vec, self->params);
+    FREE(LilyAstExpr, self->value);
 }
 
 #ifdef ENV_DEBUG
