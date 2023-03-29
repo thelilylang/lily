@@ -41,6 +41,7 @@ typedef struct LilyParseBlock
 {
     Vec *tokens; // Vec<LilyToken*>*
     LilyToken *current;
+    LilyToken *previous;
     const File *file;
     Usize *count_error;
     Usize *count_warning;

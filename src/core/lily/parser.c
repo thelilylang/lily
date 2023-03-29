@@ -22,7 +22,9 @@
  * SOFTWARE.
  */
 
+#include <base/atof.h>
 #include <base/atoi.h>
+#include <base/optional.h>
 
 #include <core/lily/ast/decl.h>
 #include <core/lily/lily.h>
@@ -102,6 +104,10 @@ parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id);
 static LilyAstExpr *
 parse_lambda_expr__LilyParseBlock(LilyParseBlock *self);
 
+// Parse literal expression
+static LilyAstExpr *
+parse_literal_expr__LilyParseBlock(LilyParseBlock *self);
+
 static LilyAstExpr *
 parse_primary_expr__LilyParseBlock(LilyParseBlock *self);
 
@@ -149,6 +155,7 @@ CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
 
     return (LilyParseBlock){ .tokens = tokens,
                              .current = get__Vec(tokens, 0),
+                             .previous = get__Vec(tokens, 0),
                              .file = &parser->package->file,
                              .count_error = &parser->package->count_error,
                              .count_warning = &parser->package->count_warning,
@@ -169,7 +176,7 @@ void
 next_token__LilyParseBlock(LilyParseBlock *self)
 {
     if (self->position + 1 < self->tokens->len) {
-        ++self->position;
+        self->previous = get__Vec(self->tokens, self->position++);
         self->current = get__Vec(self->tokens, self->position);
     }
 }
@@ -1467,6 +1474,236 @@ LilyAstExpr *
 parse_lambda_expr__LilyParseBlock(LilyParseBlock *self)
 {
     TODO("Issue #20");
+}
+
+LilyAstExpr *
+parse_literal_expr__LilyParseBlock(LilyParseBlock *self)
+{
+    switch (self->previous->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_TRUE:
+            return NEW_VARIANT(LilyAstExpr,
+                               literal,
+                               clone__Location(&self->previous->location),
+                               NEW_VARIANT(LilyAstExprLiteral, bool, true));
+        case LILY_TOKEN_KIND_KEYWORD_FALSE:
+            return NEW_VARIANT(LilyAstExpr,
+                               literal,
+                               clone__Location(&self->previous->location),
+                               NEW_VARIANT(LilyAstExprLiteral, bool, false));
+        case LILY_TOKEN_KIND_LITERAL_BYTE:
+            return NEW_VARIANT(LilyAstExpr,
+                               literal,
+                               clone__Location(&self->previous->location),
+                               NEW_VARIANT(LilyAstExprLiteral, bool, false));
+        case LILY_TOKEN_KIND_LITERAL_BYTES: {
+            Usize size = strlen((const char *)self->previous->literal_bytes);
+            Uint8 *bytes_copy = lily_malloc(size);
+
+            memcpy(bytes_copy, self->previous->literal_bytes, size);
+
+            return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral, bytes, bytes_copy));
+        }
+        case LILY_TOKEN_KIND_LITERAL_CHAR:
+            return NEW_VARIANT(LilyAstExpr,
+                               literal,
+                               clone__Location(&self->previous->location),
+                               NEW_VARIANT(LilyAstExprLiteral,
+                                           char,
+                                           self->previous->literal_char));
+        case LILY_TOKEN_KIND_LITERAL_FLOAT:
+            return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(
+                LilyAstExprLiteral,
+                float64,
+                atof__Float64(self->previous->literal_float->buffer)));
+        case LILY_TOKEN_KIND_LITERAL_INT_2:
+        case LILY_TOKEN_KIND_LITERAL_INT_8:
+        case LILY_TOKEN_KIND_LITERAL_INT_10:
+        case LILY_TOKEN_KIND_LITERAL_INT_16: {
+            int base = 10;
+
+            switch (self->previous->kind) {
+                case LILY_TOKEN_KIND_LITERAL_INT_2:
+                    base = 2;
+                    break;
+                case LILY_TOKEN_KIND_LITERAL_INT_8:
+                    base = 8;
+                    break;
+                case LILY_TOKEN_KIND_LITERAL_INT_16:
+                    base = 16;
+                    break;
+                default:
+                    break;
+            }
+
+            // try to cast to Int32
+            Optional *op =
+              atoi_safe__Int32(self->previous->literal_int_2->buffer, base);
+
+            if (is_some__Optional(op)) {
+                Int32 int32 = (Int32)(Uptr)get__Optional(op);
+
+                FREE(Optional, op);
+
+                return NEW_VARIANT(
+                  LilyAstExpr,
+                  literal,
+                  clone__Location(&self->previous->location),
+                  NEW_VARIANT(LilyAstExprLiteral, int32, int32));
+            } else {
+                FREE(Optional, op);
+
+                // try to cast to Int64
+                op =
+                  atoi_safe__Int64(self->previous->literal_int_2->buffer, base);
+
+                if (is_some__Optional(op)) {
+                    Int64 int64 = (Int64)(Uptr)get__Optional(op);
+
+                    FREE(Optional, op);
+
+                    return NEW_VARIANT(
+                      LilyAstExpr,
+                      literal,
+                      clone__Location(&self->previous->location),
+                      NEW_VARIANT(LilyAstExprLiteral, int64, int64));
+                } else {
+                    FREE(Optional, op);
+
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->previous->location,
+                        NEW(LilyError,
+                            LILY_ERROR_KIND_FEATURE_NOT_YET_SUPPORTED),
+                        NULL,
+                        NULL,
+                        from__String(
+                          "Int128 and Uint128 data type not yet supported")),
+                      self->count_error);
+
+                    return NULL;
+                }
+            }
+        }
+        case LILY_TOKEN_KIND_LITERAL_STRING:
+            return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          str,
+                          clone__String(self->previous->literal_string)));
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
+            return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_float32,
+                          self->previous->literal_suffix_float32));
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
+            return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_float64,
+                          self->previous->literal_suffix_float64));
+		case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
+			return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_int16,
+                          self->previous->literal_suffix_int16));
+		case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
+			return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_int32,
+                          self->previous->literal_suffix_int32));
+		case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
+			return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_int64,
+                          self->previous->literal_suffix_int64));
+		case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
+			return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_int8,
+                          self->previous->literal_suffix_int8));
+		case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
+			return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_isize,
+                          self->previous->literal_suffix_isize));
+		case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
+			return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_uint8,
+                          self->previous->literal_suffix_uint8));
+		case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
+			return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_uint16,
+                          self->previous->literal_suffix_uint16));
+		case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
+			return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_uint32,
+                          self->previous->literal_suffix_uint32));
+		case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
+			return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_uint64,
+                          self->previous->literal_suffix_uint64));
+		case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
+			return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW_VARIANT(LilyAstExprLiteral,
+                          suffix_usize,
+                          self->previous->literal_suffix_usize));	
+        default:
+            UNREACHABLE("this way is impossible");
+    }
+
+    return NULL;
 }
 
 LilyAstExpr *
