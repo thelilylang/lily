@@ -64,6 +64,12 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin);
 static LilyAstExpr *
 parse_hook_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access);
 
+// Parse object access
+// A.@Object@Object2@Object3
+/// @param access LilyAstExpr*?
+static LilyAstExpr *
+parse_object_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access);
+
 // Parse access expression
 static LilyAstExpr *
 parse_access_expr__LilyParseBlock(LilyParseBlock *self);
@@ -971,6 +977,52 @@ parse_hook_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
             return NULL;
         }
     }
+}
+
+LilyAstExpr *
+parse_object_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
+{
+    // <access>@Object@Object2
+    Location location;
+
+    if (access) {
+        location = clone__Location(&access->location);
+    } else {
+        location = clone__Location(&self->current->location);
+    }
+
+    Vec *object = NEW(Vec); // Vec<LilyAstDataType*>*
+
+    while (self->current->kind == LILY_TOKEN_KIND_AT) {
+        next_token__LilyParseBlock(self);
+
+        LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
+
+        if (!dt) {
+            FREE(LilyAstExpr, access);
+            FREE_BUFFER_ITEMS(object->buffer, object->len, LilyAstDataType);
+            FREE(Vec, object);
+
+            return NULL;
+        }
+
+        push__Vec(object, dt);
+    }
+
+    {
+        LilyAstDataType *last = last__Vec(object);
+
+        end__Location(
+          &location, last->location.end_line, last->location.end_column);
+    }
+
+    return NEW_VARIANT(
+      LilyAstExpr,
+      access,
+      location,
+      NEW_VARIANT(LilyAstExprAccess,
+                  object,
+                  NEW(LilyAstExprAccessObject, access, object)));
 }
 
 LilyAstExpr *
