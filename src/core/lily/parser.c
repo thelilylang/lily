@@ -1451,6 +1451,18 @@ parse_literal_expr__LilyParseBlock(LilyParseBlock *self)
                                literal,
                                clone__Location(&self->previous->location),
                                NEW_VARIANT(LilyAstExprLiteral, bool, false));
+        case LILY_TOKEN_KIND_KEYWORD_NIL:
+            return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW(LilyAstExprLiteral, LILY_AST_EXPR_LITERAL_KIND_NIL));
+        case LILY_TOKEN_KIND_KEYWORD_UNDEF:
+            return NEW_VARIANT(
+              LilyAstExpr,
+              literal,
+              clone__Location(&self->previous->location),
+              NEW(LilyAstExprLiteral, LILY_AST_EXPR_LITERAL_KIND_UNDEF));
         case LILY_TOKEN_KIND_LITERAL_BYTE:
             return NEW_VARIANT(LilyAstExpr,
                                literal,
