@@ -1022,7 +1022,7 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
     return NULL;
 }
 
-#define PARSE_CLOSING(closing)                               \
+#define PARSE_CLOSING(closing)                                          \
     while (self->current->kind != closing) {                            \
         LilyAstExpr *expr = parse_expr__LilyParseBlock(self);           \
                                                                         \
