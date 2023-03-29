@@ -108,7 +108,7 @@ typedef struct LilyAstExprLiteral
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprLiteral,
                            LilyAstExprLiteral,
-                           bool_,
+                           bool,
                            bool bool_)
 {
     return (LilyAstExprLiteral){ .kind = LILY_AST_EXPR_LITERAL_KIND_BOOL,
