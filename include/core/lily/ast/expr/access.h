@@ -71,6 +71,45 @@ IMPL_FOR_DEBUG(to_string,
                const LilyAstExprAccessHook *self);
 #endif
 
+// <access><object>
+typedef struct LilyAstExprAccessObject
+{
+    LilyAstExpr *access; // LilyAstExpr*?
+                         // e.g. A.B.C
+    Vec *object;         // Vec<LilyAstDataType*>*
+                         // e.g. @Object@Object2
+} LilyAstExprAccessObject;
+
+/**
+ *
+ * @brief Construct LilyAstExprAccessObject type.
+ */
+inline CONSTRUCTOR(LilyAstExprAccessObject,
+                   LilyAstExprAccessObject,
+                   LilyAstExpr *access,
+                   Vec *object)
+{
+    return (LilyAstExprAccessObject){ .access = access, .object = object };
+}
+
+/**
+ *
+ * @brief Convert LilyAstExprAccessObject in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprAccessObject,
+               const LilyAstExprAccessObject *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstExprAccessObject type.
+ */
+DESTRUCTOR(LilyAstExprAccessObject, const LilyAstExprAccessObject *self);
+
 typedef struct LilyAstExprAccess
 {
     enum LilyAstExprAccessKind kind;
@@ -78,8 +117,8 @@ typedef struct LilyAstExprAccess
     {
         LilyAstExpr *global;
         LilyAstExprAccessHook hook;
-        Vec *object; // Vec<LilyAstDataType*>*
-        Vec *path;   // Vec<LilyAstExpr*>*
+        LilyAstExprAccessObject object;
+        Vec *path; // Vec<LilyAstExpr*>*
         LilyAstExpr *property_init;
         LilyAstExpr *self;
     };
@@ -118,7 +157,7 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
                            object,
-                           Vec *object)
+                           LilyAstExprAccessObject object)
 {
     return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_OBJECT,
                                 .object = object };

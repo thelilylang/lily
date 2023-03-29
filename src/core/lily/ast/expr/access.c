@@ -47,9 +47,9 @@ static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
                                  const LilyAstExprAccess *self);
 
 // Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_OBJECT).
-static VARIANT_DESTRUCTOR(LilyAstExprAccess,
-                          object,
-                          const LilyAstExprAccess *self);
+static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
+                                 object,
+                                 const LilyAstExprAccess *self);
 
 // Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_PATH).
 static VARIANT_DESTRUCTOR(LilyAstExprAccess,
@@ -76,12 +76,41 @@ IMPL_FOR_DEBUG(to_string,
                   to_string__LilyAstExpr(self->access),
                   to_string__LilyAstExpr(self->expr));
 }
+
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprAccessObject,
+               const LilyAstExprAccessObject *self)
+{
+    String *res = from__String("LilyAstExprAccessObject{ access = ");
+
+    if (self->access) {
+        String *s = to_string__Debug__LilyAstExpr(self->access);
+
+        APPEND_AND_FREE(res, s);
+    } else {
+        push_str__String(res, "NULL");
+    }
+
+    push_str__String(res, ", object =");
+    DEBUG_VEC_STRING(self->object, res, LilyAstDataType);
+    push_str__String(res, " }");
+
+    return res;
+}
 #endif
 
 DESTRUCTOR(LilyAstExprAccessHook, const LilyAstExprAccessHook *self)
 {
     FREE(LilyAstExpr, self->access);
     FREE(LilyAstExpr, self->expr);
+}
+
+DESTRUCTOR(LilyAstExprAccessObject, const LilyAstExprAccessObject *self)
+{
+    FREE(LilyAstExpr, self->access);
+    FREE_BUFFER_ITEMS(self->object->buffer, self->object->len, LilyAstDataType);
+    FREE(Vec, self->object);
 }
 
 #ifdef ENV_DEBUG
@@ -170,18 +199,14 @@ to_string__LilyAstExprAccess(const LilyAstExprAccess *self)
                                   to_string__LilyAstExpr(self->hook.access),
                                   to_string__LilyAstExpr(self->hook.expr));
         case LILY_AST_EXPR_ACCESS_KIND_OBJECT: {
-            String *res = NEW(String);
+            String *res = to_string__LilyAstExpr(self->object.access);
 
-            for (Usize i = 0; i < self->object->len; i++) {
+            for (Usize i = 0; i < self->object.object->len; i++) {
                 String *s =
-                  to_string__LilyAstExprAccess(get__Vec(self->object, i));
+                  to_string__LilyAstDataType(get__Vec(self->object.object, i));
 
                 push__String(res, '@');
                 APPEND_AND_FREE(res, s);
-
-                if (i != self->object->len - 1) {
-                    push__String(res, '.');
-                }
             }
 
             return res;
@@ -225,8 +250,7 @@ VARIANT_DESTRUCTOR(LilyAstExprAccess, hook, const LilyAstExprAccess *self)
 
 VARIANT_DESTRUCTOR(LilyAstExprAccess, object, const LilyAstExprAccess *self)
 {
-    FREE_BUFFER_ITEMS(self->object->buffer, self->object->len, LilyAstDataType);
-    FREE(Vec, self->object);
+    FREE(LilyAstExprAccessObject, &self->object);
 }
 
 VARIANT_DESTRUCTOR(LilyAstExprAccess, path, const LilyAstExprAccess *self)
