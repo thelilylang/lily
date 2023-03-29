@@ -60,6 +60,10 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self);
 static LilyAstExpr *
 parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin);
 
+// Parse hook access
+static LilyAstExpr *
+parse_hook_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access);
+
 // Parse access expression
 static LilyAstExpr *
 parse_access_expr__LilyParseBlock(LilyParseBlock *self);
@@ -917,6 +921,56 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin)
                        access,
                        location,
                        NEW_VARIANT(LilyAstExprAccess, path, access));
+}
+
+LilyAstExpr *
+parse_hook_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
+{
+    // <access>[<expr>]
+
+    next_token__LilyParseBlock(self); // skip `[`
+
+    Location location = clone__Location(&access->location);
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(self);
+
+    if (!expr) {
+        FREE(LilyAstExpr, access);
+
+        return NULL;
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_R_HOOK:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyParseBlock(self);
+
+            return NEW_VARIANT(
+              LilyAstExpr,
+              access,
+              location,
+              NEW_VARIANT(LilyAstExprAccess,
+                          hook,
+                          NEW(LilyAstExprAccessHook, access, expr)));
+        default: {
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                          NULL,
+                          NULL,
+                          from__String("expected `]`")),
+              self->count_error);
+
+			FREE(LilyAstExpr, access);
+			FREE(LilyAstExpr, expr);
+
+            return NULL;
+        }
+    }
 }
 
 LilyAstExpr *
