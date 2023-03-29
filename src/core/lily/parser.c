@@ -82,26 +82,28 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self);
 static LilyAstExpr *
 parse_expr__LilyParseBlock(LilyParseBlock *self);
 
-#define CHECK_COMMA(closing)                                                  \
-    if (self->current->kind != closing) {                                     \
-        switch (self->current->kind) {                                        \
-            case LILY_TOKEN_KIND_COMMA:                                       \
-                next_token__LilyParseBlock(self);                             \
-                break;                                                        \
-            default:                                                          \
-                emit__Diagnostic(                                             \
-                  NEW_VARIANT(Diagnostic,                                     \
-                              simple_lily_error,                              \
-                              self->file,                                     \
-                              &self->current->location,                       \
-                              NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN), \
-                              NULL,                                           \
-                              NULL,                                           \
-                              from__String("expected `,`")),                  \
-                  self->count_error);                                         \
-                break;                                                        \
-        }                                                                     \
-    }
+// Parse binary expression
+static LilyAstExpr *
+parse_binary_expr__LilyParseBlock(LilyParseBlock *self);
+
+// Parse call expression
+static LilyAstExpr *
+parse_call_expr__LilyParseBlock(LilyParseBlock *self);
+
+// Parse lambda expression
+static LilyAstExpr *
+parse_lambda_expr__LilyParseBlock(LilyParseBlock *self);
+
+// Parse expression
+static LilyAstExpr *
+parse_expr__LilyParseBlock(LilyParseBlock *self);
+
+#define SKIP_TO_TOKEN(k)                                 \
+    while (self->current->kind != k &&                   \
+           self->current->kind != LILY_TOKEN_KIND_EOF) { \
+        next_token__LilyParseBlock(self);                \
+    }                                                    \
+    next_token__LilyParseBlock(self);
 
 CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
 {
@@ -871,7 +873,51 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
 LilyAstExpr *
 parse_array_expr__LilyParseBlock(LilyParseBlock *self)
 {
-    TODO("Issue #16");
+    Location location = clone__Location(&self->current->location);
+
+    next_token__LilyParseBlock(self); // skip `[`
+
+    Vec *exprs = NEW(Vec); // Vec<LilyAstExpr*>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
+        LilyAstExpr *expr = parse_expr__LilyParseBlock(self);
+
+        if (expr) {
+            push__Vec(exprs, expr);
+        } else {
+            SKIP_TO_TOKEN(LILY_TOKEN_KIND_R_HOOK);
+
+            return NULL;
+        }
+
+        if (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_COMMA:
+                    next_token__LilyParseBlock(self);
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected `,`")),
+                      self->count_error);
+            }
+        }
+    }
+
+    end__Location(&location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
+    next_token__LilyParseBlock(self); // skip `]`
+
+    return NEW_VARIANT(
+      LilyAstExpr, array, location, NEW(LilyAstExprArray, exprs));
 }
 
 LilyAstExpr *
