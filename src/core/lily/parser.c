@@ -1100,9 +1100,25 @@ parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
             return parse_record_call__LilyParseBlock(self, id);
         case LILY_TOKEN_KIND_COLON:
             return parse_variant_call__LilyParseBlock(self, id);
-        default:
-            // ERROR: unexpected token
+        default: {
+            String *token_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, token_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `{`, `(` or `:`")),
+              self->count_error);
+
+            FREE(String, token_s);
+
             return NULL;
+        }
     }
 }
 
