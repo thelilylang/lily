@@ -1619,86 +1619,86 @@ parse_literal_expr__LilyParseBlock(LilyParseBlock *self)
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_float64,
                           self->previous->literal_suffix_float64));
-		case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
-			return NEW_VARIANT(
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
+            return NEW_VARIANT(
               LilyAstExpr,
               literal,
               clone__Location(&self->previous->location),
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_int16,
                           self->previous->literal_suffix_int16));
-		case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
-			return NEW_VARIANT(
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
+            return NEW_VARIANT(
               LilyAstExpr,
               literal,
               clone__Location(&self->previous->location),
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_int32,
                           self->previous->literal_suffix_int32));
-		case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
-			return NEW_VARIANT(
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
+            return NEW_VARIANT(
               LilyAstExpr,
               literal,
               clone__Location(&self->previous->location),
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_int64,
                           self->previous->literal_suffix_int64));
-		case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
-			return NEW_VARIANT(
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
+            return NEW_VARIANT(
               LilyAstExpr,
               literal,
               clone__Location(&self->previous->location),
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_int8,
                           self->previous->literal_suffix_int8));
-		case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
-			return NEW_VARIANT(
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
+            return NEW_VARIANT(
               LilyAstExpr,
               literal,
               clone__Location(&self->previous->location),
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_isize,
                           self->previous->literal_suffix_isize));
-		case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
-			return NEW_VARIANT(
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
+            return NEW_VARIANT(
               LilyAstExpr,
               literal,
               clone__Location(&self->previous->location),
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_uint8,
                           self->previous->literal_suffix_uint8));
-		case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
-			return NEW_VARIANT(
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
+            return NEW_VARIANT(
               LilyAstExpr,
               literal,
               clone__Location(&self->previous->location),
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_uint16,
                           self->previous->literal_suffix_uint16));
-		case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
-			return NEW_VARIANT(
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
+            return NEW_VARIANT(
               LilyAstExpr,
               literal,
               clone__Location(&self->previous->location),
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_uint32,
                           self->previous->literal_suffix_uint32));
-		case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
-			return NEW_VARIANT(
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
+            return NEW_VARIANT(
               LilyAstExpr,
               literal,
               clone__Location(&self->previous->location),
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_uint64,
                           self->previous->literal_suffix_uint64));
-		case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
-			return NEW_VARIANT(
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
+            return NEW_VARIANT(
               LilyAstExpr,
               literal,
               clone__Location(&self->previous->location),
               NEW_VARIANT(LilyAstExprLiteral,
                           suffix_usize,
-                          self->previous->literal_suffix_usize));	
+                          self->previous->literal_suffix_usize));
         default:
             UNREACHABLE("this way is impossible");
     }
