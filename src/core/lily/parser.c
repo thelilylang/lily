@@ -267,82 +267,82 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                           self->previous->location.end_line,
                           self->previous->location.end_column);
 
-            if (!strcmp(self->current->identifier_normal->buffer, "Any")) {
+            if (!strcmp(self->previous->identifier_normal->buffer, "Any")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_ANY, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Bool")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_BOOL, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Byte")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_BYTE, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Bytes")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_BYTES, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Char")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CHAR, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Float32")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_FLOAT32, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Float64")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_FLOAT64, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Int16")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_INT16, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Int32")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_INT32, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Int64")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_INT64, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Int8")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_INT8, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Isize")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_ISIZE, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Never")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_NEVER, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Str")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_STR, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Uint16")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_UINT16, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Uint32")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_UINT32, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Uint64")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_UINT64, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Uint8")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_UINT8, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Unit")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_UNIT, location);
-            } else if (!strcmp(self->current->identifier_normal->buffer,
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Usize")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_USIZE, location);
