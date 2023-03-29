@@ -89,52 +89,79 @@ typedef struct LilyAstExprAccess
  *
  * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_GLOBAL).
  */
-VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
-                    LilyAstExprAccess,
-                    global,
-                    LilyAstExpr *global);
+inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
+                           LilyAstExprAccess,
+                           global,
+                           LilyAstExpr *global)
+{
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_GLOBAL,
+                                .global = global };
+}
 
 /**
  *
  * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_HOOK).
  */
-VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
-                    LilyAstExprAccess,
-                    hook,
-                    LilyAstExprAccessHook hook);
+inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
+                           LilyAstExprAccess,
+                           hook,
+                           LilyAstExprAccessHook hook)
+{
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_HOOK,
+                                .hook = hook };
+}
 
 /**
  *
  * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_OBJECT).
  */
-VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
-                    LilyAstExprAccess,
-                    object,
-                    Vec *object);
+inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
+                           LilyAstExprAccess,
+                           object,
+                           Vec *object)
+{
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_OBJECT,
+                                .object = object };
+}
 
 /**
  *
  * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_PATH).
  */
-VARIANT_CONSTRUCTOR(LilyAstExprAccess *, LilyAstExprAccess, path, Vec *path);
+inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
+                           LilyAstExprAccess,
+                           path,
+                           Vec *path)
+{
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_PATH,
+                                .path = path };
+}
 
 /**
  *
  * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT).
  */
-VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
-                    LilyAstExprAccess,
-                    property_init,
-                    LilyAstExpr *property_init);
+inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
+                           LilyAstExprAccess,
+                           property_init,
+                           LilyAstExpr *property_init)
+{
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT,
+                                .property_init = property_init };
+}
 
 /**
  *
  * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_SELF).
  */
-VARIANT_CONSTRUCTOR(LilyAstExprAccess *,
-                    LilyAstExprAccess,
-                    self,
-                    LilyAstExpr *self_);
+inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
+                           LilyAstExprAccess,
+                           self,
+                           LilyAstExpr *self)
+{
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_SELF,
+                                .self = self };
+}
 
 /**
  *
@@ -169,6 +196,6 @@ to_string__LilyAstExprAccess(const LilyAstExprAccess *self);
  *
  * @brief Free LilyAstExprAccess type.
  */
-DESTRUCTOR(LilyAstExprAccess, LilyAstExprAccess *self);
+DESTRUCTOR(LilyAstExprAccess, const LilyAstExprAccess *self);
 
 #endif // LILY_CORE_LILY_AST_EXPR_ACCESS_H
