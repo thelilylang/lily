@@ -75,11 +75,27 @@ NOTE: Using `test.sh` the `make clean` command will be run then the scripts will
 ./scripts/full_test.sh
 ```
 
+### Debug
+
+> To see the output of the program you can run the command:
+
+```bash
+./scripts/enable_debug.sh
+```
+
+And then re-compile the project and you can now see the output of the program when you compile a file.
+
 ## Build
 
 ```bash
 make configure
 ninja -C build
+```
+
+You can test the compiler with the command:
+
+```bash
+./build/lily compile ./tests/mypkg/main.lily
 ```
 
 ## License
