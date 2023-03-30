@@ -106,6 +106,8 @@ fun main =
 			j -= 1
 		end
 	end
+
+	return 0;
 end
 
 fun add(x, y) = x+y end
