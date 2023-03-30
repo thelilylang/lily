@@ -2163,8 +2163,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK";
-        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER:
-            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER";
+		case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER:
+			return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF:
@@ -6215,8 +6215,7 @@ preparse_defer_block__LilyPreparser(LilyPreparser *self)
 
     return NEW_VARIANT(LilyPreparserFunBodyItem,
                        stmt_defer,
-                       NEW(LilyPreparserFunBodyItemStmtDefer, item),
-                       location);
+                       NEW(LilyPreparserFunBodyItemStmtDefer, item), location);
 }
 
 LilyPreparserFunBodyItem *
@@ -6986,10 +6985,11 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
                           pattern->buffer, pattern->len, LilyToken);
                         FREE(Vec, pattern);
 
-<<<<<<< Updated upstream
-                        FREE_BUFFER_ITEMS(
-                          pattern_cond->buffer, pattern_cond->len, LilyToken);
-                        FREE(Vec, pattern_cond);
+                        if (pattern_cond) {
+                            FREE_BUFFER_ITEMS(
+                            pattern_cond->buffer, pattern_cond->len, LilyToken);
+                            FREE(Vec, pattern_cond);
+                        }
 
                         return NULL;
                     }
@@ -7026,117 +7026,8 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
         // 3. Preparse block
         LilyPreparserFunBodyItem *block = preparse_block__LilyPreparser(self);
 
-                if (peeked) {
-                    switch (peeked->kind) {
-                        case LILY_TOKEN_KIND_L_BRACE:
-                            jump__LilyPreparser(self, 2);
-                            preparse_basic_brace_block__LilyPreparser(self,
-                                                                      blocks);
-
-                        default:
-                            goto preparse_expr;
-                    }
-                } else {
-                    goto preparse_expr;
-                }
-            }
-
-            /*
-                begin
-                    <block>
-                end
-            */
-            case LILY_TOKEN_KIND_KEYWORD_BEGIN:
-                preparse_basic_block__LilyPreparser(self, blocks);
-                break;
-				
-			/*
-                break <name>;
-            */
-            case LILY_TOKEN_KIND_KEYWORD_BREAK:
-                preparse_break_block__LilyPreparser(self, blocks);
-                break;
-
-            /*
-                for <expr> in <expr> do
-                    <block>
-                end
-            */
-            case LILY_TOKEN_KIND_KEYWORD_FOR:
-                preparse_for_block__LilyPreparser(self, blocks);
-                break;
-
-            /*
-                if <expr> do
-                    <block>
-                end
-            */
-            case LILY_TOKEN_KIND_KEYWORD_IF:
-                preparse_if_block__LilyPreparser(self, blocks);
-                break;
-
-            /*
-                match <expr> do
-                    <pattern> [? <expr>] => <stmt | expr;>
-                end
-            */
-            case LILY_TOKEN_KIND_KEYWORD_MATCH:
-                preparse_match_block__LilyPreparser(self, blocks);
-                break;
-
-            /*
-                return <expr>;
-            */
-            case LILY_TOKEN_KIND_KEYWORD_RETURN:
-                preparse_return_block__LilyPreparser(self, blocks);
-                break;
-
-            /*
-                try do
-                    <block>
-                [catch <expr> do <block>]
-                end
-            */
-            case LILY_TOKEN_KIND_KEYWORD_TRY: {
-                LilyToken *peeked = peek_token__LilyPreparser(self, 1);
-
-                if (peeked) {
-                    switch (peeked->kind) {
-                        case LILY_TOKEN_KIND_KEYWORD_DO:
-                            preparse_try_block__LilyPreparser(self, blocks);
-                            break;
-                        default:
-                            goto preparse_expr;
-                    }
-                } else {
-                    goto preparse_expr;
-                }
-
-                break;
-            }
-
-            /*
-                while <expr> do
-                    <block>
-                end
-            */
-            case LILY_TOKEN_KIND_KEYWORD_WHILE:
-                preparse_while_block__LilyPreparser(self, blocks);
-                break;
-
-            // Expression
-            default: {
-            preparse_expr : {
-                Location location_expr =
-                  clone__Location(&self->current->location);
-                Vec *exprs = NEW(Vec);
-
-                while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
-                       self->current->kind != LILY_TOKEN_KIND_EOF) {
-                    push__Vec(exprs, clone__LilyToken(self->current));
-                    next_token__LilyPreparser(self);
-                }
-
+        if (block) {
+            if (block->kind == LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS) {
                 switch (self->current->kind) {
                     case LILY_TOKEN_KIND_SEMICOLON:
                         next_token__LilyPreparser(self);
@@ -7158,20 +7049,18 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
                 switch (self->current->kind) {
                     case LILY_TOKEN_KIND_SEMICOLON:
                         emit__Diagnostic(
-                          NEW_VARIANT(Diagnostic,
-                                      simple_lily_warning,
-                                      self->file,
-                                      &self->current->location,
-                                      NEW(LilyWarning,
-                                          LILY_WARNING_KIND_UNUSED_SEMICOLON),
-                                      NULL,
-                                      NULL,
-                                      NULL),
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_warning,
+                            self->file,
+                            &self->current->location,
+                            NEW(LilyWarning, LILY_WARNING_KIND_UNUSED_SEMICOLON),
+                            NULL,
+                            NULL,
+                            NULL),
                           &self->count_error);
 
-                        next_token__LilyPreparser(self);
-
-                        break;
+                          next_token__LilyPreparser(self);
                     default:
                         break;
                 }
@@ -7491,8 +7380,8 @@ preparse_block__LilyPreparser(LilyPreparser *self)
         case LILY_TOKEN_KIND_KEYWORD_BREAK:
             return preparse_break_block__LilyPreparser(self);
 
-        case LILY_TOKEN_KIND_KEYWORD_DEFER:
-            return preparse_defer_block__LilyPreparser(self);
+		case LILY_TOKEN_KIND_KEYWORD_DEFER:
+			return preparse_defer_block__LilyPreparser(self);
 
         /*
             for <expr> in <expr> do
