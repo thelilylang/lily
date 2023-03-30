@@ -45,6 +45,26 @@
 #define FILE_EXPR_CALL_3 "./tests/core/lily/parser/input/access/call3.lily"
 #define FILE_EXPR_CALL_4 "./tests/core/lily/parser/input/access/call4.lily"
 #define FILE_EXPR_CALL_5 "./tests/core/lily/parser/input/access/call5.lily"
+#define FILE_EXPR_CAST "./tests/core/lily/parser/input/cast.lily"
+#define FILE_EXPR_IDENTIFIER "./tests/core/lily/parser/input/identifier.lily"
+#define FILE_EXPR_LAMBDA "./tests/core/lily/parser/input/lambda/lambda.lily"
+#define FILE_EXPR_LAMBDA_2 "./tests/core/lily/parser/input/lambda/lambda2.lily"
+#define FILE_EXPR_LITERAL "./tests/core/lily/parser/input/literal/literal.lily"
+#define FILE_EXPR_LITERAL_2 \
+    "./tests/core/lily/parser/input/literal/literal2.lily"
+#define FILE_EXPR_LITERAL_3 \
+    "./tests/core/lily/parser/input/literal/literal3.lily"
+#define FILE_EXPR_LITERAL_4 \
+    "./tests/core/lily/parser/input/literal/literal4.lily"
+#define FILE_EXPR_LITERAL_5 \
+    "./tests/core/lily/parser/input/literal/literal5.lily"
+#define FILE_EXPR_LITERAL_6 \
+    "./tests/core/lily/parser/input/literal/literal6.lily"
+#define FILE_EXPR_TUPLE "./tests/core/lily/parser/input/tuple.lily"
+#define FILE_EXPR_UNARY "./tests/core/lily/parser/input/unary/unary.lily"
+#define FILE_EXPR_UNARY_2 "./tests/core/lily/parser/input/unary/unary2.lily"
+#define FILE_EXPR_UNARY_3 "./tests/core/lily/parser/input/unary/unary3.lily"
+#define FILE_EXPR_UNARY_4 "./tests/core/lily/parser/input/unary/unary4.lily"
 
 LilyAstDataType *
 run_parse_data_type(File *file)

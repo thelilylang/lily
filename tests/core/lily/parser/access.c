@@ -29,7 +29,7 @@ SKIP_CASE(expr_access3, {
 });
 
 SKIP_CASE(expr_access4, {
-    RUN_PARSE_EXPR(FILE_EXPR_ACCESS_3);
+    RUN_PARSE_EXPR(FILE_EXPR_ACCESS_4);
 
     TEST_ASSERT(expr);
 
@@ -37,7 +37,7 @@ SKIP_CASE(expr_access4, {
 });
 
 SKIP_CASE(expr_access5, {
-    RUN_PARSE_EXPR(FILE_EXPR_ACCESS_3);
+    RUN_PARSE_EXPR(FILE_EXPR_ACCESS_5);
 
     TEST_ASSERT(expr);
 

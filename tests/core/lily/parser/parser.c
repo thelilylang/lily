@@ -30,7 +30,7 @@ main()
               CALL_CASE(data_type_lambda),
               CALL_CASE(data_type_tuple),
               CALL_CASE(data_type_custom));
-    ADD_SUITE(17,
+    ADD_SUITE(32,
               expr,
               CALL_CASE(expr_array),
               CALL_CASE(expr_array2),
@@ -48,6 +48,21 @@ main()
               CALL_CASE(expr_call2),
               CALL_CASE(expr_call3),
               CALL_CASE(expr_call4),
-              CALL_CASE(expr_call5));
+              CALL_CASE(expr_call5),
+              CALL_CASE(expr_cast),
+              CALL_CASE(expr_identifier),
+              CALL_CASE(expr_lambda),
+              CALL_CASE(expr_lambda2),
+              CALL_CASE(expr_literal),
+              CALL_CASE(expr_literal2),
+              CALL_CASE(expr_literal3),
+              CALL_CASE(expr_literal4),
+              CALL_CASE(expr_literal5),
+              CALL_CASE(expr_literal6),
+              CALL_CASE(expr_tuple),
+              CALL_CASE(expr_unary),
+              CALL_CASE(expr_unary2),
+              CALL_CASE(expr_unary3),
+              CALL_CASE(expr_unary4));
     RUN_TEST();
 }
