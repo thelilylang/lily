@@ -1,13 +1,15 @@
 #include "util.c"
 
+#include <base/print.h>
 #include <base/test.h>
 
 #include <core/lily/parser.h>
 
-SKIP_CASE(expr_access, {
+CASE(expr_access, {
     RUN_PARSE_EXPR(FILE_EXPR_ACCESS);
 
     TEST_ASSERT(expr);
+    PRINTLN("{Sr}", to_string__Debug__LilyAstExpr(expr));
 
     FREE_RUN_PARSE_EXPR();
 });
