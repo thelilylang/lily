@@ -162,8 +162,9 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self)
             return res;
         }
         case LILY_AST_EXPR_ACCESS_KIND_PATH: {
-            String *res =
-              format__String("LilyAstExprAccess{{ kind = {s}, path =");
+            String *res = format__String(
+              "LilyAstExprAccess{{ kind = {s}, path =",
+              to_string__Debug__LilyAstExprAccessKind(self->kind));
 
             DEBUG_VEC_STRING(self->path, res, LilyAstExpr);
 
