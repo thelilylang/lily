@@ -196,6 +196,8 @@ typedef struct LilyPreparserTest
     Vec *body; // Vec<LilyToken*>*
 } LilyPreparserTest;
 
+typedef struct LilyPreparserFunBodyItem LilyPreparserFunBodyItem;
+
 typedef struct LilyPreparserFunBodyItemExprs
 {
     Vec *tokens; // Vec<LilyToken*>*
@@ -262,6 +264,23 @@ String *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserFunBodyItemStmtBreak,
                const LilyPreparserFunBodyItemStmtBreak *self);
+#endif
+
+typedef struct LilyPreparserFunBodyItemStmtDefer
+{
+    LilyPreparserFunBodyItem *item;
+} LilyPreparserFunBodyItemStmtDefer;
+
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItem in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtDefer,
+               const LilyPreparserFunBodyItemStmtDefer *self);
 #endif
 
 typedef struct LilyPreparserFunBodyItemStmtFor
@@ -406,6 +425,7 @@ enum LilyPreparserFunBodyItemKind
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_AWAIT,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH,
@@ -428,7 +448,7 @@ IMPL_FOR_DEBUG(to_string,
 #endif
 
 // LilyPreparserFunBodyItem is used for body of functions and methods.
-typedef struct LilyPreparserFunBodyItem
+struct LilyPreparserFunBodyItem
 {
     enum LilyPreparserFunBodyItemKind kind;
     Location location;
@@ -438,6 +458,7 @@ typedef struct LilyPreparserFunBodyItem
         LilyPreparserFunBodyItemStmtAwait stmt_await;
         LilyPreparserFunBodyItemStmtBlock stmt_block;
         LilyPreparserFunBodyItemStmtBreak stmt_break;
+        LilyPreparserFunBodyItemStmtDefer stmt_defer;
         LilyPreparserFunBodyItemStmtFor stmt_for;
         LilyPreparserFunBodyItemStmtIf stmt_if;
         LilyPreparserFunBodyItemStmtMatch stmt_match;
@@ -446,7 +467,7 @@ typedef struct LilyPreparserFunBodyItem
         LilyPreparserFunBodyItemStmtVariable stmt_var;
         LilyPreparserFunBodyItemStmtWhile stmt_while;
     };
-} LilyPreparserFunBodyItem;
+};
 
 /**
  *
