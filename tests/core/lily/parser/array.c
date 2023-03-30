@@ -4,12 +4,10 @@
 
 #include <core/lily/parser.h>
 
-#include <string.h>
-
 CASE(expr_array, {
     RUN_PARSE_EXPR(FILE_EXPR_ARRAY);
 
-	TEST_ASSERT(expr);
+    TEST_ASSERT(expr);
 
     FREE_RUN_PARSE_EXPR();
 });
@@ -17,7 +15,7 @@ CASE(expr_array, {
 SKIP_CASE(expr_array2, {
     RUN_PARSE_EXPR(FILE_EXPR_ARRAY_2);
 
-	TEST_ASSERT(expr);
+    TEST_ASSERT(expr);
 
     FREE_RUN_PARSE_EXPR();
 });
@@ -25,7 +23,7 @@ SKIP_CASE(expr_array2, {
 SKIP_CASE(expr_array3, {
     RUN_PARSE_EXPR(FILE_EXPR_ARRAY_3);
 
-	TEST_ASSERT(expr);
+    TEST_ASSERT(expr);
 
     FREE_RUN_PARSE_EXPR();
 });
@@ -33,7 +31,7 @@ SKIP_CASE(expr_array3, {
 SKIP_CASE(expr_array4, {
     RUN_PARSE_EXPR(FILE_EXPR_ARRAY_4);
 
-	TEST_ASSERT(expr);
+    TEST_ASSERT(expr);
 
     FREE_RUN_PARSE_EXPR();
 });

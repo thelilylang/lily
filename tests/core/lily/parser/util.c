@@ -35,6 +35,16 @@
 #define FILE_EXPR_BINARY "./tests/core/lily/parser/input/binary/binary.lily"
 #define FILE_EXPR_BINARY_2 "./tests/core/lily/parser/input/binary/binary2.lily"
 #define FILE_EXPR_BINARY_3 "./tests/core/lily/parser/input/binary/binary3.lily"
+#define FILE_EXPR_ACCESS "./tests/core/lily/parser/input/access/access.lily"
+#define FILE_EXPR_ACCESS_2 "./tests/core/lily/parser/input/access/access2.lily"
+#define FILE_EXPR_ACCESS_3 "./tests/core/lily/parser/input/access/access3.lily"
+#define FILE_EXPR_ACCESS_4 "./tests/core/lily/parser/input/access/access4.lily"
+#define FILE_EXPR_ACCESS_5 "./tests/core/lily/parser/input/access/access5.lily"
+#define FILE_EXPR_CALL "./tests/core/lily/parser/input/access/call.lily"
+#define FILE_EXPR_CALL_2 "./tests/core/lily/parser/input/access/call2.lily"
+#define FILE_EXPR_CALL_3 "./tests/core/lily/parser/input/access/call3.lily"
+#define FILE_EXPR_CALL_4 "./tests/core/lily/parser/input/access/call4.lily"
+#define FILE_EXPR_CALL_5 "./tests/core/lily/parser/input/access/call5.lily"
 
 LilyAstDataType *
 run_parse_data_type(File *file)
