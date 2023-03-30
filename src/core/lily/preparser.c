@@ -127,6 +127,15 @@ static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtDefer,
 static inline DESTRUCTOR(LilyPreparserFunBodyItemStmtDefer,
                          const LilyPreparserFunBodyItemStmtDefer *self);
 
+// Construct LilyPreparserFunBodyItemStmtDrop type.
+static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtDrop,
+                          LilyPreparserFunBodyItemStmtDrop,
+                          Vec *expr);
+
+// Free LilyPreparserFunBodyItemStmtDrop type.
+static inline DESTRUCTOR(LilyPreparserFunBodyItemStmtDrop,
+                         const LilyPreparserFunBodyItemStmtDrop *self);
+
 // Construct LilyPreparserFunBodyItemStmtFor type.
 static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtFor,
                           LilyPreparserFunBodyItemStmtFor,
@@ -248,6 +257,14 @@ static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            Location location);
 
 // Construct LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DROP).
+static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                           LilyPreparserFunBodyItem,
+                           stmt_drop,
+                           LilyPreparserFunBodyItemStmtDrop stmt_drop,
+                           Location location);
+
+// Construct LilyPreparserFunBodyItem type
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR).
 static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            LilyPreparserFunBodyItem,
@@ -330,6 +347,12 @@ static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER).
 static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                           stmt_defer,
+                          LilyPreparserFunBodyItem *self);
+
+// Free LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DROP).
+static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                          stmt_drop,
                           LilyPreparserFunBodyItem *self);
 
 // Free LilyPreparserFunBodyItem type
@@ -1102,6 +1125,9 @@ static LilyPreparserFunBodyItem *
 preparse_defer_block__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserFunBodyItem *
+preparse_drop_block__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserFunBodyItem *
 preparse_if_block__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserFunBodyItem *
@@ -1749,6 +1775,35 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtDefer,
     FREE(LilyPreparserFunBodyItem, self->item);
 }
 
+CONSTRUCTOR(LilyPreparserFunBodyItemStmtDrop,
+            LilyPreparserFunBodyItemStmtDrop,
+            Vec *expr)
+{
+    return (LilyPreparserFunBodyItemStmtDrop){ .expr = expr };
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtDrop,
+               const LilyPreparserFunBodyItemStmtDrop *self)
+{
+    String *res = from__String("LilyPreparserFunBodyItemStmtDrop{{ expr =");
+
+    DEBUG_VEC_STR(self->expr, res, LilyToken);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyPreparserFunBodyItemStmtDrop,
+           const LilyPreparserFunBodyItemStmtDrop *self)
+{
+    FREE_BUFFER_ITEMS(self->expr->buffer, self->expr->len, LilyToken);
+    FREE(Vec, self->expr);
+}
+
 CONSTRUCTOR(LilyPreparserFunBodyItemStmtFor,
             LilyPreparserFunBodyItemStmtFor,
             Vec *expr,
@@ -2165,6 +2220,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DROP:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DROP";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF:
@@ -2260,6 +2317,22 @@ VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
 
     self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER;
     self->stmt_defer = stmt_defer;
+    self->location = location;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                    LilyPreparserFunBodyItem,
+                    stmt_drop,
+                    LilyPreparserFunBodyItemStmtDrop stmt_drop,
+                    Location location)
+{
+    LilyPreparserFunBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserFunBodyItem));
+
+    self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DROP;
+    self->stmt_drop = stmt_drop;
     self->location = location;
 
     return self;
@@ -2434,6 +2507,15 @@ IMPL_FOR_DEBUG(to_string,
 
             break;
         }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DROP: {
+            String *s = to_string__Debug__LilyPreparserFunBodyItemStmtDrop(
+              &self->stmt_drop);
+
+            push_str__String(res, ", stmt_drop = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR: {
             String *s = to_string__Debug__LilyPreparserFunBodyItemStmtFor(
               &self->stmt_for);
@@ -2548,6 +2630,14 @@ VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 }
 
 VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                   stmt_drop,
+                   LilyPreparserFunBodyItem *self)
+{
+    FREE(LilyPreparserFunBodyItemStmtDrop, &self->stmt_drop);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                    stmt_for,
                    LilyPreparserFunBodyItem *self)
 {
@@ -2620,6 +2710,9 @@ DESTRUCTOR(LilyPreparserFunBodyItem, LilyPreparserFunBodyItem *self)
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER:
             FREE_VARIANT(LilyPreparserFunBodyItem, stmt_defer, self);
+            break;
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DROP:
+            FREE_VARIANT(LilyPreparserFunBodyItem, stmt_drop, self);
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
             FREE_VARIANT(LilyPreparserFunBodyItem, stmt_for, self);
@@ -6220,6 +6313,58 @@ preparse_defer_block__LilyPreparser(LilyPreparser *self)
 }
 
 LilyPreparserFunBodyItem *
+preparse_drop_block__LilyPreparser(LilyPreparser *self)
+{
+    Location location = location_fun_body_item;
+
+    next_token__LilyPreparser(self); // skip `drop` keyword
+
+    Vec *expr = NEW(Vec); // Vec<LilyToken*>*
+
+    while (must_preparse_exprs(self)) {
+        push__Vec(expr, clone__LilyToken(self->current));
+        next_token__LilyPreparser(self);
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyPreparser(self);
+
+            break;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `;`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+
+            FREE_BUFFER_ITEMS(expr->buffer, expr->len, LilyToken);
+            FREE(Vec, expr);
+
+            return NULL;
+        }
+    }
+
+    return NEW_VARIANT(LilyPreparserFunBodyItem,
+                       stmt_drop,
+                       NEW(LilyPreparserFunBodyItemStmtDrop, expr),
+                       location);
+}
+
+LilyPreparserFunBodyItem *
 preparse_if_block__LilyPreparser(LilyPreparser *self)
 {
     Location location = location_fun_body_item;
@@ -7382,8 +7527,17 @@ preparse_block__LilyPreparser(LilyPreparser *self)
         case LILY_TOKEN_KIND_KEYWORD_BREAK:
             return preparse_break_block__LilyPreparser(self);
 
+        /*
+           defer <expr|stmt>;
+        */
         case LILY_TOKEN_KIND_KEYWORD_DEFER:
             return preparse_defer_block__LilyPreparser(self);
+
+        /*
+           drop <expr|stmt>;
+        */
+        case LILY_TOKEN_KIND_KEYWORD_DROP:
+            return preparse_drop_block__LilyPreparser(self);
 
         /*
             for <expr> in <expr> do

@@ -273,7 +273,7 @@ typedef struct LilyPreparserFunBodyItemStmtDefer
 
 /**
  *
- * @brief Convert LilyPreparserFunBodyItem in String.
+ * @brief Convert LilyPreparserFunBodyItemStmtDefer in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
@@ -281,6 +281,23 @@ String *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserFunBodyItemStmtDefer,
                const LilyPreparserFunBodyItemStmtDefer *self);
+#endif
+
+typedef struct LilyPreparserFunBodyItemStmtDrop
+{
+    Vec *expr; // Vec<LilyToken*>*
+} LilyPreparserFunBodyItemStmtDrop;
+
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemStmtDrop in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtDrop,
+               const LilyPreparserFunBodyItemStmtDrop *self);
 #endif
 
 typedef struct LilyPreparserFunBodyItemStmtFor
@@ -426,6 +443,7 @@ enum LilyPreparserFunBodyItemKind
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DROP,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH,
@@ -459,6 +477,7 @@ struct LilyPreparserFunBodyItem
         LilyPreparserFunBodyItemStmtBlock stmt_block;
         LilyPreparserFunBodyItemStmtBreak stmt_break;
         LilyPreparserFunBodyItemStmtDefer stmt_defer;
+        LilyPreparserFunBodyItemStmtDrop stmt_drop;
         LilyPreparserFunBodyItemStmtFor stmt_for;
         LilyPreparserFunBodyItemStmtIf stmt_if;
         LilyPreparserFunBodyItemStmtMatch stmt_match;
