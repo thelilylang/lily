@@ -109,6 +109,15 @@ static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtBlock,
 static DESTRUCTOR(LilyPreparserFunBodyItemStmtBlock,
                   const LilyPreparserFunBodyItemStmtBlock *self);
 
+// Construct LilyPreparserFunBodyItemStmtBreak type.
+static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtBreak,
+                          LilyPreparserFunBodyItemStmtBreak,
+                          String *name);
+
+// Free LilyPreparserFunBodyItemStmtBreak type.
+static DESTRUCTOR(LilyPreparserFunBodyItemStmtBreak,
+                  const LilyPreparserFunBodyItemStmtBreak *self);
+
 // Construct LilyPreparserFunBodyItemStmtFor type.
 static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtFor,
                           LilyPreparserFunBodyItemStmtFor,
@@ -214,6 +223,14 @@ static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            Location location);
 
 // Construct LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK).
+static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                           LilyPreparserFunBodyItem,
+                           stmt_break,
+                           LilyPreparserFunBodyItemStmtBreak stmt_break,
+                           Location location);
+
+// Construct LilyPreparserFunBodyItem type
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR).
 static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            LilyPreparserFunBodyItem,
@@ -284,6 +301,12 @@ static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK).
 static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                           stmt_block,
+                          LilyPreparserFunBodyItem *self);
+
+// Free LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK).
+static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                          stmt_break,
                           LilyPreparserFunBodyItem *self);
 
 // Free LilyPreparserFunBodyItem type
@@ -1050,6 +1073,9 @@ static void
 preparse_await_block__LilyPreparser(LilyPreparser *self, Vec *body);
 
 static void
+preparse_break_block__LilyPreparser(LilyPreparser *self, Vec *body);
+
+static void
 preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body);
 
 static void
@@ -1639,6 +1665,37 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtBlock,
     FREE(Vec, self->block);
 }
 
+CONSTRUCTOR(LilyPreparserFunBodyItemStmtBreak,
+            LilyPreparserFunBodyItemStmtBreak,
+            String *name)
+{
+    return (LilyPreparserFunBodyItemStmtBreak){ .name = name };
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtBreak,
+               const LilyPreparserFunBodyItemStmtBreak *self)
+{
+    if (self->name) {
+        return format__String(
+          "LilyPreparserFunBodyItemStmtBreak{{ name = {S} }", self->name);
+    } else {
+        return from__String(
+          "LilyPreparserFunBodyItemStmtBreak{{ name = NULL }");
+    }
+}
+#endif
+
+DESTRUCTOR(LilyPreparserFunBodyItemStmtBreak,
+           const LilyPreparserFunBodyItemStmtBreak *self)
+{
+    if (self->name) {
+        FREE(String, self->name);
+    }
+}
+
 CONSTRUCTOR(LilyPreparserFunBodyItemStmtFor,
             LilyPreparserFunBodyItemStmtFor,
             Vec *expr,
@@ -2051,6 +2108,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_AWAIT";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK";
+		case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK:
+			return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF:
@@ -2114,6 +2173,22 @@ VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
 
     self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK;
     self->stmt_block = stmt_block;
+    self->location = location;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                    LilyPreparserFunBodyItem,
+                    stmt_break,
+                    LilyPreparserFunBodyItemStmtBreak stmt_break,
+                    Location location)
+{
+    LilyPreparserFunBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserFunBodyItem));
+
+    self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK;
+    self->stmt_break = stmt_break;
     self->location = location;
 
     return self;
@@ -2270,6 +2345,15 @@ IMPL_FOR_DEBUG(to_string,
 
             break;
         }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK: {
+            String *s = to_string__Debug__LilyPreparserFunBodyItemStmtBreak(
+              &self->stmt_break);
+
+            push_str__String(res, ", stmt_break = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR: {
             String *s = to_string__Debug__LilyPreparserFunBodyItemStmtFor(
               &self->stmt_for);
@@ -2368,6 +2452,14 @@ VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 }
 
 VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                   stmt_break,
+                   LilyPreparserFunBodyItem *self)
+{
+    FREE(LilyPreparserFunBodyItemStmtBreak, &self->stmt_break);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                    stmt_for,
                    LilyPreparserFunBodyItem *self)
 {
@@ -2434,6 +2526,9 @@ DESTRUCTOR(LilyPreparserFunBodyItem, LilyPreparserFunBodyItem *self)
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:
             FREE_VARIANT(LilyPreparserFunBodyItem, stmt_block, self);
+            break;
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK:
+            FREE_VARIANT(LilyPreparserFunBodyItem, stmt_break, self);
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
             FREE_VARIANT(LilyPreparserFunBodyItem, stmt_for, self);
@@ -5935,6 +6030,67 @@ preparse_await_block__LilyPreparser(LilyPreparser *self, Vec *body)
 }
 
 void
+preparse_break_block__LilyPreparser(LilyPreparser *self, Vec *body)
+{
+    Location location = location_fun_body_item;
+
+    next_token__LilyPreparser(self); // skip `break` keyword
+
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON: {
+        finish_to_preparse_break_stmt : {
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyPreparser(self);
+
+            LilyPreparserFunBodyItem *item =
+              NEW_VARIANT(LilyPreparserFunBodyItem,
+                          stmt_break,
+                          NEW(LilyPreparserFunBodyItemStmtBreak, name),
+                          location);
+
+            push__Vec(body, item);
+
+            break;
+        }
+        }
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+            name = clone__String(self->current->identifier_normal);
+
+            next_token__LilyPreparser(self);
+
+            goto finish_to_preparse_break_stmt;
+        }
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `;`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+
+            if (name) {
+                FREE(String, name);
+            }
+
+            break;
+        }
+    }
+}
+
+void
 preparse_if_block__LilyPreparser(LilyPreparser *self, Vec *body)
 {
     Location location = location_fun_body_item;
@@ -6812,6 +6968,13 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
             case LILY_TOKEN_KIND_KEYWORD_BEGIN:
                 preparse_basic_block__LilyPreparser(self, blocks);
                 break;
+				
+			/*
+                break <name>;
+            */
+            case LILY_TOKEN_KIND_KEYWORD_BREAK:
+                preparse_break_block__LilyPreparser(self, blocks);
+                break;
 
             /*
                 for <expr> in <expr> do
@@ -7233,6 +7396,13 @@ preparse_body__LilyPreparser(LilyPreparser *self,
             */
             case LILY_TOKEN_KIND_KEYWORD_BEGIN:
                 preparse_basic_block__LilyPreparser(self, body);
+                break;
+
+			/*
+                break <name>;
+            */
+            case LILY_TOKEN_KIND_KEYWORD_BREAK:
+                preparse_break_block__LilyPreparser(self, body);
                 break;
 
             /*
