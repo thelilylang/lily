@@ -29,7 +29,8 @@
 
 enum LilyWarningKind
 {
-    LILY_WARNING_KIND_UNUSED_PAREN
+    LILY_WARNING_KIND_UNUSED_PAREN,
+    LILY_WARNING_KIND_UNUSED_SEMICOLON
 };
 
 typedef struct LilyWarning
