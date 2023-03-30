@@ -14,11 +14,21 @@ Work in progress...
 
 ## Summary
 
-* [Contribute](#contribute)
+* [Progression](#progression)
 * [Examples](#examples)
 * [Dependencies](#dependencies)
+* [Contribute](#contribute)
 * [Build](#build)
 * [License](#license)
+
+## Progression
+
+- Scanner: 90% finished
+- Preparser: 75% finished
+- Precompiler: 60% finished
+- Parser: 45% finished
+- Analysis: 0% finished
+- Code generator: 0% finished
 
 ## Examples
 
