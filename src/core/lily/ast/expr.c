@@ -341,7 +341,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstExpr, const LilyAstExpr *self)
         }
         case LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR: {
             char *s = format(", identifier_dollar = {Sr} }",
-                             to_string__Debug__LilyAstExprIdentifier(
+                             to_string__Debug__LilyAstExprIdentifierDollar(
                                &self->identifier_dollar));
 
             PUSH_STR_AND_FREE(res, s);
