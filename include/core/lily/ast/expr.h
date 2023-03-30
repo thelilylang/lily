@@ -48,6 +48,7 @@ enum LilyAstExprKind
     LILY_AST_EXPR_KIND_CALL,
     LILY_AST_EXPR_KIND_GROUPING,
     LILY_AST_EXPR_KIND_IDENTIFIER,
+    LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR,
     LILY_AST_EXPR_KIND_LAMBDA,
     LILY_AST_EXPR_KIND_LITERAL,
     LILY_AST_EXPR_KIND_SELF,
@@ -68,6 +69,7 @@ typedef struct LilyAstExpr
         LilyAstExprCall call;
         LilyAstExpr *grouping;
         LilyAstExprIdentifier identifier;
+        LilyAstExprIdentifierDollar identifier_dollar;
         LilyAstExprLambda lambda;
         LilyAstExprLiteral literal;
         LilyAstExprTuple tuple;
@@ -134,6 +136,16 @@ VARIANT_CONSTRUCTOR(LilyAstExpr *,
                     identifier,
                     Location location,
                     LilyAstExprIdentifier identifier);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    identifier_dollar,
+                    Location location,
+                    LilyAstExprIdentifierDollar identifier_dollar);
 
 /**
  *
