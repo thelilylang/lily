@@ -2108,8 +2108,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_AWAIT";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK";
-		case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK:
-			return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF:
@@ -6894,10 +6894,21 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
                           pattern->buffer, pattern->len, LilyToken);
                         FREE(Vec, pattern);
 
+<<<<<<< Updated upstream
                         FREE_BUFFER_ITEMS(
                           pattern_cond->buffer, pattern_cond->len, LilyToken);
                         FREE(Vec, pattern_cond);
                         return;
+=======
+                        if (pattern_cond) {
+                            FREE_BUFFER_ITEMS(pattern_cond->buffer,
+                                              pattern_cond->len,
+                                              LilyToken);
+                            FREE(Vec, pattern_cond);
+                        }
+
+                        return NULL;
+>>>>>>> Stashed changes
                     }
                     default:
                         UNREACHABLE("this way is impossible");
@@ -6945,6 +6956,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
             case LILY_TOKEN_KIND_AT: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
+<<<<<<< Updated upstream
                 if (peeked) {
                     switch (peeked->kind) {
                         case LILY_TOKEN_KIND_L_BRACE:
@@ -6957,8 +6969,53 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
                     }
                 } else {
                     goto preparse_expr;
+=======
+                if (block) {
+                    if (block->kind ==
+                        LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS) {
+                        switch (self->current->kind) {
+                            case LILY_TOKEN_KIND_SEMICOLON:
+                                next_token__LilyPreparser(self);
+
+                                break;
+                            default:
+                                emit__Diagnostic(
+                                  NEW_VARIANT(
+                                    Diagnostic,
+                                    simple_lily_error,
+                                    self->file,
+                                    &self->current->location,
+                                    NEW(LilyError,
+                                        LILY_ERROR_KIND_EXPECTED_TOKEN),
+                                    NULL,
+                                    NULL,
+                                    from__String("expected `;`")),
+                                  &self->count_error);
+>>>>>>> Stashed changes
                 }
             }
+                else
+                {
+                    switch (self->current->kind) {
+                        case LILY_TOKEN_KIND_SEMICOLON:
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_warning,
+                                self->file,
+                                &self->current->location,
+                                NEW(LilyWarning,
+                                    LILY_WARNING_KIND_UNUSED_SEMICOLON),
+                                NULL,
+                                NULL,
+                                NULL),
+                              &self->count_error);
+
+                            next_token__LilyPreparser(self);
+                        default:
+                            break;
+                    }
+                }
 
             /*
                 begin
@@ -6968,8 +7025,8 @@ preparse_match_block__LilyPreparser(LilyPreparser *self, Vec *body)
             case LILY_TOKEN_KIND_KEYWORD_BEGIN:
                 preparse_basic_block__LilyPreparser(self, blocks);
                 break;
-				
-			/*
+
+            /*
                 break <name>;
             */
             case LILY_TOKEN_KIND_KEYWORD_BREAK:
@@ -7398,7 +7455,7 @@ preparse_body__LilyPreparser(LilyPreparser *self,
                 preparse_basic_block__LilyPreparser(self, body);
                 break;
 
-			/*
+            /*
                 break <name>;
             */
             case LILY_TOKEN_KIND_KEYWORD_BREAK:
