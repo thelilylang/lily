@@ -3,5 +3,5 @@ fun hello =
 end
 
 fun main =
-	hello();
+	hello()
 end
