@@ -1783,16 +1783,86 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
                   clone__String(self->previous->identifier_dollar)));
         case LILY_TOKEN_KIND_KEYWORD_FUN:
             return parse_lambda_expr__LilyParseBlock(self);
+        case LILY_TOKEN_KIND_KEYWORD_REF:
+        case LILY_TOKEN_KIND_KEYWORD_TRACE:
+        case LILY_TOKEN_KIND_MINUS:
+        case LILY_TOKEN_KIND_KEYWORD_NOT: {
+            enum LilyAstExprUnaryKind op = 0;
+
+            switch (self->previous->kind) {
+                case LILY_TOKEN_KIND_MINUS:
+                    op = LILY_AST_EXPR_UNARY_KIND_NEG;
+                    break;
+                case LILY_TOKEN_KIND_KEYWORD_NOT:
+                    op = LILY_AST_EXPR_UNARY_KIND_NOT;
+                    break;
+                case LILY_TOKEN_KIND_KEYWORD_REF: {
+                    if (self->current->kind == LILY_TOKEN_KIND_KEYWORD_MUT) {
+                        next_token__LilyParseBlock(self);
+
+                        op = LILY_AST_EXPR_UNARY_KIND_REF_MUT;
+                    } else {
+                        op = LILY_AST_EXPR_UNARY_KIND_REF;
+                    }
+                }
+                case LILY_TOKEN_KIND_KEYWORD_TRACE: {
+                    if (self->current->kind == LILY_TOKEN_KIND_KEYWORD_MUT) {
+                        next_token__LilyParseBlock(self);
+
+                        op = LILY_AST_EXPR_UNARY_KIND_TRACE_MUT;
+                    } else {
+                        op = LILY_AST_EXPR_UNARY_KIND_TRACE;
+                    }
+                }
+                default:
+                    break;
+            }
+
+            Location location = clone__Location(&self->previous->location);
+            LilyAstExpr *right = parse_expr__LilyParseBlock(self);
+
+            if (!right) {
+                return NULL;
+            }
+
+            end__Location(
+              &location, right->location.end_line, right->location.end_column);
+
+            return NEW_VARIANT(
+              LilyAstExpr, unary, location, NEW(LilyAstExprUnary, op, right));
+        }
         default:
             return NULL;
     }
-    TODO("parse primary expr");
 }
 
 LilyAstExpr *
 parse_expr__LilyParseBlock(LilyParseBlock *self)
 {
     LilyAstExpr *expr = parse_primary_expr__LilyParseBlock(self);
+
+    // Parse dereference
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_DOT_STAR: {
+            Location location = clone__Location(&expr->location);
+
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyParseBlock(self);
+
+            expr = NEW_VARIANT(LilyAstExpr,
+                               unary,
+                               location,
+                               NEW(LilyAstExprUnary,
+                                   LILY_AST_EXPR_UNARY_KIND_DEREFERENCE,
+                                   expr));
+
+            break;
+        }
+        default:
+            break;
+    }
 
     // parse call and object access
     switch (self->current->kind) {
@@ -1846,7 +1916,7 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
             break;
     }
 
-    // parse binary	expression
+    // parse binary expression
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_PLUS:
         case LILY_TOKEN_KIND_KEYWORD_AND:
