@@ -1770,6 +1770,17 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
                            LILY_AST_EXPR_KIND_WILDCARD);
             }
 
+            if (self->current->kind == LILY_TOKEN_KIND_DOT) {
+                return parse_path_access__LilyParseBlock(
+                  self,
+                  NEW_VARIANT(
+                    LilyAstExpr,
+                    identifier,
+                    clone__Location(&self->previous->location),
+                    NEW(LilyAstExprIdentifier,
+                        clone__String(self->previous->identifier_normal))));
+            }
+
             return NEW_VARIANT(
               LilyAstExpr,
               identifier,
