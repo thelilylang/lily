@@ -1023,6 +1023,7 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
 }
 
 #define PARSE_CLOSING(closing)                                          \
+    Vec *exprs = NEW(Vec); /* Vec<LilyAstExpr*>* */                     \
     while (self->current->kind != closing) {                            \
         LilyAstExpr *expr = parse_expr__LilyParseBlock(self);           \
                                                                         \
@@ -1030,6 +1031,9 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
             push__Vec(exprs, expr);                                     \
         } else {                                                        \
             SKIP_TO_TOKEN(closing);                                     \
+                                                                        \
+            FREE_BUFFER_ITEMS(exprs->buffer, exprs->len, LilyAstExpr);  \
+            FREE(Vec, exprs);                                           \
                                                                         \
             return NULL;                                                \
         }                                                               \
@@ -1064,7 +1068,6 @@ LilyAstExpr *
 parse_array_expr__LilyParseBlock(LilyParseBlock *self)
 {
     Location location = clone__Location(&self->previous->location);
-    Vec *exprs = NEW(Vec); // Vec<LilyAstExpr*>*
 
     PARSE_CLOSING(LILY_TOKEN_KIND_R_HOOK);
 
@@ -1076,7 +1079,6 @@ LilyAstExpr *
 parse_tuple_expr__LilyParseBlock(LilyParseBlock *self)
 {
     Location location = clone__Location(&self->previous->location);
-    Vec *exprs = NEW(Vec); // Vec<LilyAstExpr*>*
 
     PARSE_CLOSING(LILY_TOKEN_KIND_R_PAREN);
 
