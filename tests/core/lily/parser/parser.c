@@ -22,10 +22,12 @@ main()
               CALL_CASE(data_type_lambda),
               CALL_CASE(data_type_tuple),
               CALL_CASE(data_type_custom));
-    ADD_SUITE(5,
+    ADD_SUITE(7,
               expr,
               CALL_CASE(expr_array),
               CALL_CASE(expr_array2),
+			  CALL_CASE(expr_array3),
+			  CALL_CASE(expr_array4),
               CALL_CASE(expr_binary),
               CALL_CASE(expr_binary2),
               CALL_CASE(expr_binary3));
