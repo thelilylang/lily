@@ -36,6 +36,8 @@ to_msg__LilyWarning(const LilyWarning *self)
     switch (self->kind) {
         case LILY_WARNING_KIND_UNUSED_PAREN:
             return "unused paren";
+        case LILY_WARNING_KIND_UNUSED_SEMICOLON:
+            return "unused semicolon";
         default:
             UNREACHABLE("unknown variant");
     }
