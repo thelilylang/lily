@@ -1153,6 +1153,8 @@ parse_binary_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr)
             if (last_precedence < precedence) {
                 push__Vec(stack, (int *)op);
                 push__Vec(stack, right);
+
+                break;
             }
 
             LilyAstExpr *left = pop__Vec(stack);
