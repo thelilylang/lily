@@ -124,6 +124,11 @@ static LilyAstBodyFunItem *
 parse_asm_stmt__LilyParser(LilyParser *self,
                            const LilyPreparserFunBodyItem *item);
 
+// Parse await statement.
+static LilyAstBodyFunItem *
+parse_await_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item);
+
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
            self->current->kind != LILY_TOKEN_KIND_EOF) { \
@@ -2031,10 +2036,12 @@ parse_asm_stmt__LilyParser(LilyParser *self,
             push__Vec(params, param);
         }
 
-        return NEW_VARIANT(
-          LilyAstBodyFunItem,
-          stmt,
-          NEW_VARIANT(LilyAstStmt, asm, NEW(LilyAstStmtAsm, value, params)));
+        return NEW_VARIANT(LilyAstBodyFunItem,
+                           stmt,
+                           NEW_VARIANT(LilyAstStmt,
+                                       asm,
+                                       item->location,
+                                       NEW(LilyAstStmtAsm, value, params)));
     } else {
         emit__Diagnostic(
           NEW_VARIANT(Diagnostic,
@@ -2049,6 +2056,25 @@ parse_asm_stmt__LilyParser(LilyParser *self,
 
         return NULL;
     }
+}
+
+LilyAstBodyFunItem *
+parse_await_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item)
+{
+    LilyParseBlock expr_block =
+      NEW(LilyParseBlock, self, item->stmt_await.expr);
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+    if (!expr) {
+        return NULL;
+    }
+
+    return NEW_VARIANT(
+      LilyAstBodyFunItem,
+      stmt,
+      NEW_VARIANT(
+        LilyAstStmt, await, item->location, NEW(LilyAstStmtAwait, expr)));
 }
 
 TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self)
