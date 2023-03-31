@@ -2363,7 +2363,7 @@ parse_fun_body_item__LilyParser(LilyParser *self,
                     push__Vec(body,
                               NEW_VARIANT(LilyAstBodyFunItem, expr, expr));
                 }
-            } while (HAS_REACHED_THE_END(exprs_block));
+            } while (!HAS_REACHED_THE_END(exprs_block));
         }
         default: {
             LilyAstBodyFunItem *stmt = parse_stmt__LilyParser(self, item);
