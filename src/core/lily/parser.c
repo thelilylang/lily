@@ -129,10 +129,75 @@ static LilyAstBodyFunItem *
 parse_await_stmt__LilyParser(LilyParser *self,
                              const LilyPreparserFunBodyItem *item);
 
+// Parse block statement.
+static LilyAstBodyFunItem *
+parse_block_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item);
+
 // Parse break statement.
 static LilyAstBodyFunItem *
 parse_break_stmt__LilyParser(LilyParser *self,
                              const LilyPreparserFunBodyItem *item);
+
+// Parse defer statement.
+static LilyAstBodyFunItem *
+parse_defer_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item);
+
+// Parse drop statement.
+static LilyAstBodyFunItem *
+parse_drop_stmt__LilyParser(LilyParser *self,
+                            const LilyPreparserFunBodyItem *item);
+
+// Parse for statement.
+static LilyAstBodyFunItem *
+parse_for_stmt__LilyParser(LilyParser *self,
+                           const LilyPreparserFunBodyItem *item);
+
+// Parse if statement.
+static LilyAstBodyFunItem *
+parse_if_stmt__LilyParser(LilyParser *self,
+                          const LilyPreparserFunBodyItem *item);
+
+// Parse match statement.
+static LilyAstBodyFunItem *
+parse_match_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item);
+
+// Parse next statement.
+static LilyAstBodyFunItem *
+parse_next_stmt__LilyParser(LilyParser *self,
+                            const LilyPreparserFunBodyItem *item);
+
+// Parse return statement.
+static LilyAstBodyFunItem *
+parse_return_stmt__LilyParser(LilyParser *self,
+                              const LilyPreparserFunBodyItem *item);
+
+// Parse try statement.
+static LilyAstBodyFunItem *
+parse_try_stmt__LilyParser(LilyParser *self,
+                           const LilyPreparserFunBodyItem *item);
+
+// Parse variable statement.
+static LilyAstBodyFunItem *
+parse_variable_stmt__LilyParser(LilyParser *self,
+                                const LilyPreparserFunBodyItem *item);
+
+// Parse while statement.
+static LilyAstBodyFunItem *
+parse_while_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item);
+
+// Parse statement.
+static LilyAstBodyFunItem *
+parse_stmt__LilyParser(LilyParser *self, const LilyPreparserFunBodyItem *item);
+
+// Parse item of the body of the fun/method.
+// NOTE: It's used to parse expr/stmt in statement (e.g. defer).
+static LilyAstBodyFunItem *
+parse_fun_body_item_for_stmt__LilyParser(LilyParser *self,
+                                         const LilyPreparserFunBodyItem *item);
 
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
@@ -2083,6 +2148,13 @@ parse_await_stmt__LilyParser(LilyParser *self,
 }
 
 LilyAstBodyFunItem *
+parse_block_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item)
+{
+    TODO("Issue #35");
+}
+
+LilyAstBodyFunItem *
 parse_break_stmt__LilyParser(LilyParser *self,
                              const LilyPreparserFunBodyItem *item)
 {
@@ -2101,6 +2173,145 @@ parse_break_stmt__LilyParser(LilyParser *self,
       stmt,
       NEW_VARIANT(
         LilyAstStmt, break, item->location, NEW(LilyAstStmtBreak, NULL)));
+}
+
+LilyAstBodyFunItem *
+parse_defer_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item)
+{
+    LilyAstBodyFunItem *item_ast =
+      parse_fun_body_item_for_stmt__LilyParser(self, item->stmt_defer.item);
+
+    if (!item_ast) {
+        return NULL;
+    }
+
+    return NEW_VARIANT(
+      LilyAstBodyFunItem,
+      stmt,
+      NEW_VARIANT(
+        LilyAstStmt, defer, item->location, NEW(LilyAstStmtDefer, item_ast)));
+}
+
+LilyAstBodyFunItem *
+parse_drop_stmt__LilyParser(LilyParser *self,
+                            const LilyPreparserFunBodyItem *item)
+{
+    TODO("Issue #38");
+}
+
+LilyAstBodyFunItem *
+parse_for_stmt__LilyParser(LilyParser *self,
+                           const LilyPreparserFunBodyItem *item)
+{
+    TODO("Issue #39");
+}
+
+LilyAstBodyFunItem *
+parse_if_stmt__LilyParser(LilyParser *self,
+                          const LilyPreparserFunBodyItem *item)
+{
+    TODO("Issue #40");
+}
+
+LilyAstBodyFunItem *
+parse_match_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item)
+{
+    TODO("Issue #41");
+}
+
+LilyAstBodyFunItem *
+parse_next_stmt__LilyParser(LilyParser *self,
+                            const LilyPreparserFunBodyItem *item)
+{
+    TODO("Issue #42");
+}
+
+LilyAstBodyFunItem *
+parse_return_stmt__LilyParser(LilyParser *self,
+                              const LilyPreparserFunBodyItem *item)
+{
+    TODO("Issue #43");
+}
+
+LilyAstBodyFunItem *
+parse_try_stmt__LilyParser(LilyParser *self,
+                           const LilyPreparserFunBodyItem *item)
+{
+    TODO("Issue #101");
+}
+
+LilyAstBodyFunItem *
+parse_variable_stmt__LilyParser(LilyParser *self,
+                                const LilyPreparserFunBodyItem *item)
+{
+    TODO("Issue #102");
+}
+
+LilyAstBodyFunItem *
+parse_while_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item)
+{
+    TODO("Issue #103");
+}
+
+LilyAstBodyFunItem *
+parse_stmt__LilyParser(LilyParser *self, const LilyPreparserFunBodyItem *item)
+{
+    switch (item->kind) {
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM:
+            return parse_asm_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_AWAIT:
+            return parse_await_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:
+            return parse_block_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER:
+            return parse_defer_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DROP:
+            return parse_drop_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
+            return parse_for_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF:
+            return parse_if_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH:
+            return parse_match_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_NEXT:
+            return parse_next_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RETURN:
+            return parse_return_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY:
+            return parse_try_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE:
+            return parse_variable_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE:
+            return parse_while_stmt__LilyParser(self, item);
+        default:
+            UNREACHABLE("no other statement");
+    }
+
+    return NULL;
+}
+
+LilyAstBodyFunItem *
+parse_fun_body_item_for_stmt__LilyParser(LilyParser *self,
+                                         const LilyPreparserFunBodyItem *item)
+{
+    switch (item->kind) {
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS: {
+            LilyParseBlock exprs_block =
+              NEW(LilyParseBlock, self, item->exprs.tokens);
+            LilyAstExpr *expr = parse_expr__LilyParseBlock(&exprs_block);
+
+            if (!expr) {
+                return NULL;
+            }
+
+            return NEW_VARIANT(LilyAstBodyFunItem, expr, expr);
+        }
+        default:
+            return parse_stmt__LilyParser(self, item);
+    }
 }
 
 TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self)
