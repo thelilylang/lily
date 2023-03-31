@@ -2130,7 +2130,7 @@ get_token__LilyScanner(LilyScanner *self)
             return NULL;
         }
 
-        // multi line string literal
+        // multiline string literal
         case '\\':
             if (c1 == (char *)'\\') {
                 String *res = scan_multiline_string__LilyScanner(self);
