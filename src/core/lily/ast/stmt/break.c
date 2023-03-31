@@ -28,6 +28,10 @@
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtBreak, const LilyAstStmtBreak *self)
 {
-    return format__String("LilyAstStmtBreak{{ name = {S} }", self->name);
+    if (self->name) {
+        return format__String("LilyAstStmtBreak{{ name = {S} }", self->name);
+    }
+
+    return from__String("LilyAstStmtBreak{ name = NULL }");
 }
 #endif

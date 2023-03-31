@@ -31,7 +31,7 @@
 
 typedef struct LilyAstStmtBreak
 {
-    String *name;
+    String *name; // String*?
 } LilyAstStmtBreak;
 
 inline CONSTRUCTOR(LilyAstStmtBreak, LilyAstStmtBreak, String *name)
