@@ -23,8 +23,8 @@ Work in progress...
 
 ## Progression
 
-- Scanner: 90% finished
-- Preparser: 75% finished
+- Scanner: 95% finished
+- Preparser: 85% finished
 - Precompiler: 60% finished
 - Parser: 45% finished
 - Analysis: 0% finished
