@@ -46,6 +46,9 @@ static VARIANT_DESTRUCTOR(LilyAstPattern, exception, LilyAstPattern *self);
 // Free LilyAstPattern type (LILY_AST_PATTERN_KIND_LITERAL).
 static VARIANT_DESTRUCTOR(LilyAstPattern, literal, LilyAstPattern *self);
 
+// Free LilyAstPattern type (LILY_AST_PATTERN_KIND_NAME).
+static VARIANT_DESTRUCTOR(LilyAstPattern, name, LilyAstPattern *self);
+
 // Free LilyAstPattern type (LILY_AST_PATTERN_KIND_RANGE).
 static VARIANT_DESTRUCTOR(LilyAstPattern, range, LilyAstPattern *self);
 
@@ -145,6 +148,21 @@ VARIANT_CONSTRUCTOR(LilyAstPattern *,
     self->kind = LILY_AST_PATTERN_KIND_LITERAL;
     self->location = location;
     self->literal = literal;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    name,
+                    Location location,
+                    LilyAstPatternName name)
+{
+    LilyAstPattern *self = lily_malloc(sizeof(LilyAstPattern));
+
+    self->kind = LILY_AST_PATTERN_KIND_NAME;
+    self->location = location;
+    self->name = name;
 
     return self;
 }
@@ -271,6 +289,14 @@ IMPL_FOR_DEBUG(to_string, LilyAstPattern, const LilyAstPattern *self)
 
             break;
         }
+        case LILY_AST_PATTERN_KIND_NAME: {
+            char *s = format(", name = {Sr} }",
+                             to_string__Debug__LilyAstPatternName(&self->name));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_AST_PATTERN_KIND_RANGE: {
             char *s =
               format(", range = {Sr} }",
@@ -345,6 +371,12 @@ VARIANT_DESTRUCTOR(LilyAstPattern, literal, LilyAstPattern *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyAstPattern, name, LilyAstPattern *self)
+{
+    FREE(LilyAstPatternName, &self->name);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyAstPattern, range, LilyAstPattern *self)
 {
     FREE(LilyAstPatternRange, &self->range);
@@ -387,6 +419,9 @@ DESTRUCTOR(LilyAstPattern, LilyAstPattern *self)
             break;
         case LILY_AST_PATTERN_KIND_LITERAL:
             FREE_VARIANT(LilyAstPattern, literal, self);
+            break;
+        case LILY_AST_PATTERN_KIND_NAME:
+            FREE_VARIANT(LilyAstPattern, name, self);
             break;
         case LILY_AST_PATTERN_KIND_RANGE:
             FREE_VARIANT(LilyAstPattern, range, self);

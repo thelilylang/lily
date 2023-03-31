@@ -29,6 +29,7 @@
 #include <core/lily/ast/pattern/as.h>
 #include <core/lily/ast/pattern/exception.h>
 #include <core/lily/ast/pattern/literal.h>
+#include <core/lily/ast/pattern/name.h>
 #include <core/lily/ast/pattern/range.h>
 #include <core/lily/ast/pattern/record_call.h>
 #include <core/lily/ast/pattern/tuple.h>
@@ -43,6 +44,7 @@ enum LilyAstPatternKind
     LILY_AST_PATTERN_KIND_AUTO_COMPLETE,
     LILY_AST_PATTERN_KIND_EXCEPTION,
     LILY_AST_PATTERN_KIND_LITERAL,
+    LILY_AST_PATTERN_KIND_NAME,
     LILY_AST_PATTERN_KIND_RANGE,
     LILY_AST_PATTERN_KIND_RECORD_CALL,
     LILY_AST_PATTERN_KIND_TUPLE,
@@ -70,6 +72,7 @@ typedef struct LilyAstPattern
         LilyAstPatternAs as;
         LilyAstPatternException exception;
         LilyAstPatternLiteral literal;
+        LilyAstPatternName name;
         LilyAstPatternRange range;
         LilyAstPatternRecordCall record_call;
         LilyAstPatternTuple tuple;
@@ -116,6 +119,16 @@ VARIANT_CONSTRUCTOR(LilyAstPattern *,
                     literal,
                     Location location,
                     LilyAstPatternLiteral literal);
+
+/**
+ *
+ * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_NAME).
+ */
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    name,
+                    Location location,
+                    LilyAstPatternName name);
 
 /**
  *
