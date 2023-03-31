@@ -118,8 +118,9 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtKind, enum LilyAstStmtKind self)
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmt, const LilyAstStmt *self)
 {
-    String *res = format__String("LilyAstStmt{{ kind = {s}",
-                                 to_string__Debug__LilyAstStmtKind(self->kind));
+    String *res = format__String("LilyAstStmt{{ kind = {s}, location = {sa}",
+                                 to_string__Debug__LilyAstStmtKind(self->kind),
+                                 to_string__Debug__Location(&self->location));
 
     switch (self->kind) {
         case LILY_AST_STMT_KIND_ASM: {
