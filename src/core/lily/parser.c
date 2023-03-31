@@ -130,7 +130,7 @@ parse_await_stmt__LilyParser(LilyParser *self,
                              const LilyPreparserFunBodyItem *item);
 
 // Parse block statement.
-static LilyAstBodyFunItem *
+static inline LilyAstBodyFunItem *
 parse_block_stmt__LilyParser(LilyParser *self,
                              const LilyPreparserFunBodyItem *item);
 
@@ -201,10 +201,14 @@ parse_fun_body_item_for_stmt__LilyParser(LilyParser *self,
 
 // Parse item of the body of the fun/method.
 /// @param body Vec<LilyAstBodyFunItem*>*
-void
+static void
 parse_fun_body_item__LilyParser(LilyParser *self,
                                 const LilyPreparserFunBodyItem *item,
                                 Vec *body);
+
+/// @return Vec<LilyAstBodyFunItem*>*
+static Vec *
+parse_fun_body__LilyParser(LilyParser *self, Vec *block);
 
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
@@ -2158,18 +2162,14 @@ LilyAstBodyFunItem *
 parse_block_stmt__LilyParser(LilyParser *self,
                              const LilyPreparserFunBodyItem *item)
 {
-    Vec *body = NEW(Vec); // Vec<LilyAstBodyFunItem*>*
-
-    for (Usize i = 0; i < item->stmt_block.block->len; i++) {
-        parse_fun_body_item__LilyParser(
-          self, get__Vec(item->stmt_block.block, i), body);
-    }
-
-    return NEW_VARIANT(
-      LilyAstBodyFunItem,
-      stmt,
-      NEW_VARIANT(
-        LilyAstStmt, block, item->location, NEW(LilyAstStmtBlock, body)));
+    return NEW_VARIANT(LilyAstBodyFunItem,
+                       stmt,
+                       NEW_VARIANT(LilyAstStmt,
+                                   block,
+                                   item->location,
+                                   NEW(LilyAstStmtBlock,
+                                       parse_fun_body__LilyParser(
+                                         self, item->stmt_block.block))));
 }
 
 LilyAstBodyFunItem *
@@ -2247,7 +2247,57 @@ LilyAstBodyFunItem *
 parse_for_stmt__LilyParser(LilyParser *self,
                            const LilyPreparserFunBodyItem *item)
 {
-    TODO("Issue #39");
+    LilyParseBlock expr_block = NEW(LilyParseBlock, self, item->stmt_for.expr);
+    LilyAstExpr *expr_left = parse_primary_expr__LilyParseBlock(&expr_block);
+
+    if (!expr_left) {
+        return NULL;
+    }
+
+    switch (expr_block.current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_IN:
+            next_token__LilyParseBlock(&expr_block);
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          expr_block.file,
+                          &expr_block.current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                          NULL,
+                          NULL,
+                          from__String("expected `in` keyword")),
+              expr_block.count_error);
+    }
+
+    LilyAstExpr *expr_right = parse_primary_expr__LilyParseBlock(&expr_block);
+
+    if (!expr_right) {
+        FREE(LilyAstExpr, expr_left);
+
+        return NULL;
+    }
+
+    if (!HAS_REACHED_THE_END(expr_block)) {
+        emit__Diagnostic(
+          NEW_VARIANT(
+            Diagnostic,
+            simple_lily_error,
+            expr_block.file,
+            &expr_block.current->location,
+            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION),
+            NULL,
+            init__Vec(1, from__String("<expr> in <expr>")),
+            from__String("expected `in` expression")),
+          expr_block.count_error);
+    }
+
+    return NEW_VARIANT(
+      LilyAstBodyFunItem,
+      stmt,
+      NEW_VARIANT(
+        LilyAstStmt, for, item->location, NEW(LilyAstStmtFor, expr_left, expr_right, parse_fun_body__LilyParser(self, item->stmt_for.block))));
 }
 
 LilyAstBodyFunItem *
@@ -2400,6 +2450,18 @@ parse_fun_body_item__LilyParser(LilyParser *self,
             }
         }
     }
+}
+
+Vec *
+parse_fun_body__LilyParser(LilyParser *self, Vec *block)
+{
+    Vec *body = NEW(Vec); // Vec<LilyAstBodyFunItem*>*
+
+    for (Usize i = 0; i < block->len; i++) {
+        parse_fun_body_item__LilyParser(self, get__Vec(block, i), body);
+    }
+
+    return body;
 }
 
 TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self)
