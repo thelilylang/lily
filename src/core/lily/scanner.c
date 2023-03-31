@@ -175,6 +175,9 @@ scan_char__LilyScanner(LilyScanner *self);
 static String *
 scan_string__LilyScanner(LilyScanner *self);
 
+static String *
+scan_multiline_string__LilyScanner(LilyScanner *self);
+
 static LilyToken *
 scan_hex__LilyScanner(LilyScanner *self);
 
@@ -1241,6 +1244,43 @@ scan_string__LilyScanner(LilyScanner *self)
     return res;
 }
 
+String *
+scan_multiline_string__LilyScanner(LilyScanner *self)
+{
+    String *res = NEW(String);
+
+scan_line : {
+    jump__LilyScanner(self, 2); // skip `\\`
+
+    while (self->source.cursor.current != '\n') {
+        next_char__Source(&self->source);
+
+        String *c = get_character__LilyScanner(
+          self, self->source.file->content[self->source.cursor.position - 1]);
+
+        if (!c) {
+            FREE(String, res);
+
+            return NULL;
+        }
+
+        APPEND_AND_FREE(res, c);
+    }
+
+    skip_space__LilyScanner(self);
+}
+
+    if (self->source.cursor.current == '\\' &&
+        peek_char__LilyScanner(self, 1) == (char *)'\\') {
+        push_str__String(res, "\\n");
+        goto scan_line;
+    } else {
+        push_str__String(res, "\\n");
+    }
+
+    return res;
+}
+
 LilyToken *
 scan_hex__LilyScanner(LilyScanner *self)
 {
@@ -2090,6 +2130,23 @@ get_token__LilyScanner(LilyScanner *self)
             return NULL;
         }
 
+        // multi line string literal
+        case '\\':
+            if (c1 == (char *)'\\') {
+                String *res = scan_multiline_string__LilyScanner(self);
+
+                if (res) {
+                    return NEW_VARIANT(LilyToken,
+                                       literal_string,
+                                       clone__Location(&self->location),
+                                       res);
+                }
+
+                return NULL;
+            } else {
+                goto unexpected_character;
+            }
+
         // identifier operator
         case '`': {
             next_char__Source(&self->source);
@@ -2234,6 +2291,7 @@ get_token__LilyScanner(LilyScanner *self)
             }
 
         default: {
+        unexpected_character : {
             Location location_error = clone__Location(&self->location);
 
             end__Location(&location_error,
@@ -2257,6 +2315,7 @@ get_token__LilyScanner(LilyScanner *self)
             next_char__Source(&self->source);
 
             return NULL;
+        }
         }
     }
 
