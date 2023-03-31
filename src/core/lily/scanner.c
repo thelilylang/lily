@@ -1278,6 +1278,8 @@ scan_line : {
         push_str__String(res, "\\n");
     }
 
+    previous_char__Source(&self->source);
+
     return res;
 }
 
