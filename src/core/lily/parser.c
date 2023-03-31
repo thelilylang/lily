@@ -218,7 +218,7 @@ parse_array_pattern__LilyParseBlock(LilyParseBlock *self);
 // Parse as pattern
 // _ as a
 static LilyAstPattern *
-parse_as_pattern__LilyParseBlock(LilyParseBlock *self);
+parse_as_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *pattern);
 
 // Parse exception pattern
 // error InvalidFile:x
@@ -2552,9 +2552,44 @@ parse_array_pattern__LilyParseBlock(LilyParseBlock *self)
 }
 
 LilyAstPattern *
-parse_as_pattern__LilyParseBlock(LilyParseBlock *self)
+parse_as_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *pattern)
 {
-    TODO("Issue #59");
+    Location location = clone__Location(&pattern->location);
+
+    next_token__LilyParseBlock(self);
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyParseBlock(self);
+
+            return NEW_VARIANT(
+              LilyAstPattern,
+              as,
+              location,
+              NEW(LilyAstPatternAs, pattern, self->current->identifier_normal));
+        default: {
+            String *token_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->previous->location,
+                NEW_VARIANT(LilyError, unexpected_token, token_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected identifier after `as` keyword")),
+              self->count_error);
+
+            FREE(String, token_s);
+
+            return NULL;
+        }
+    }
 }
 
 LilyAstPattern *
@@ -2672,12 +2707,12 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
             break;
         default:
             // ERROR: unexpected token.
-            break;
+            return NULL;
     }
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_AS:
-            break;
+            return parse_as_pattern__LilyParseBlock(self, pattern);
         case LILY_TOKEN_KIND_DOT_DOT:
             break;
         default:
