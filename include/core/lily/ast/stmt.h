@@ -206,9 +206,15 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt,
  *
  * @brief Construct LilyAstStmt type (LILY_AST_STMT_KIND_IF).
  */
-inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, if, LilyAstStmtIf if_)
+inline VARIANT_CONSTRUCTOR(LilyAstStmt,
+                           LilyAstStmt,
+                           if,
+                           Location location,
+                           LilyAstStmtIf if_)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_IF, .if_ = if_ };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_IF,
+                          .location = location,
+                          .if_ = if_ };
 }
 
 /**

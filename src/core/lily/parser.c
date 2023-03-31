@@ -241,6 +241,25 @@ parse_fun_body__LilyParser(LilyParser *self, Vec *block);
 // Check if the ParseBlock has reached the end.
 #define HAS_REACHED_THE_END(block) (block.position == block.tokens->len - 1)
 
+#define CHECK_EXPR(expr, expr_block, help, detail_msg, block_free)        \
+    if (!expr) {                                                          \
+        block_free;                                                       \
+    }                                                                     \
+                                                                          \
+    if (!HAS_REACHED_THE_END(expr_block)) {                               \
+        emit__Diagnostic(                                                 \
+          NEW_VARIANT(                                                    \
+            Diagnostic,                                                   \
+            simple_lily_error,                                            \
+            expr_block.file,                                              \
+            &expr_block.current->location,                                \
+            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION), \
+            NULL,                                                         \
+            help,                                                         \
+            from__String(detail_msg)),                                    \
+          expr_block.count_error);                                        \
+    }
+
 CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
 {
     Location location_eof =
@@ -2092,27 +2111,13 @@ parse_asm_stmt__LilyParser(LilyParser *self,
               NEW(LilyParseBlock, self, get__Vec(item->stmt_asm.params, i));
             LilyAstExpr *param = parse_expr__LilyParseBlock(&param_block);
 
-            if (!param) {
-                // Clean up
+            CHECK_EXPR(param, param_block, NULL, "expected `,`", {
                 FREE(LilyAstExpr, value);
                 FREE_BUFFER_ITEMS(params->buffer, params->len, LilyAstExpr);
                 FREE(Vec, params);
 
                 return NULL;
-            }
-
-            if (!HAS_REACHED_THE_END(param_block)) {
-                emit__Diagnostic(
-                  NEW_VARIANT(Diagnostic,
-                              simple_lily_error,
-                              param_block.file,
-                              &param_block.current->location,
-                              NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
-                              NULL,
-                              NULL,
-                              from__String("expected `,`")),
-                  param_block.count_error);
-            }
+            });
 
             push__Vec(params, param);
         }
@@ -2218,23 +2223,7 @@ parse_drop_stmt__LilyParser(LilyParser *self,
     LilyParseBlock expr_block = NEW(LilyParseBlock, self, item->stmt_drop.expr);
     LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
 
-    if (!expr) {
-        return NULL;
-    }
-
-    if (!HAS_REACHED_THE_END(expr_block)) {
-        emit__Diagnostic(
-          NEW_VARIANT(
-            Diagnostic,
-            simple_lily_error,
-            expr_block.file,
-            &expr_block.current->location,
-            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION),
-            NULL,
-            NULL,
-            from__String("expected `;`")),
-          expr_block.count_error);
-    }
+    CHECK_EXPR(expr, expr_block, NULL, "expected `;`", { return NULL; });
 
     return NEW_VARIANT(
       LilyAstBodyFunItem,
@@ -2273,25 +2262,14 @@ parse_for_stmt__LilyParser(LilyParser *self,
 
     LilyAstExpr *expr_right = parse_primary_expr__LilyParseBlock(&expr_block);
 
-    if (!expr_right) {
-        FREE(LilyAstExpr, expr_left);
-
-        return NULL;
-    }
-
-    if (!HAS_REACHED_THE_END(expr_block)) {
-        emit__Diagnostic(
-          NEW_VARIANT(
-            Diagnostic,
-            simple_lily_error,
-            expr_block.file,
-            &expr_block.current->location,
-            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION),
-            NULL,
-            init__Vec(1, from__String("<expr> in <expr>")),
-            from__String("expected `in` expression")),
-          expr_block.count_error);
-    }
+    CHECK_EXPR(expr_right,
+               expr_block,
+               init__Vec(1, from__String("<expr> in <expr>")),
+               "expected `do` keyword",
+               {
+                   FREE(LilyAstExpr, expr_left);
+                   return NULL;
+               });
 
     return NEW_VARIANT(
       LilyAstBodyFunItem,
@@ -2304,7 +2282,64 @@ LilyAstBodyFunItem *
 parse_if_stmt__LilyParser(LilyParser *self,
                           const LilyPreparserFunBodyItem *item)
 {
-    TODO("Issue #40");
+    // 1. Parse if expression
+    LilyParseBlock if_expr_block =
+      NEW(LilyParseBlock, self, item->stmt_if.if_expr);
+    LilyAstExpr *if_expr = parse_expr__LilyParseBlock(&if_expr_block);
+
+    CHECK_EXPR(if_expr, if_expr_block, NULL, "expected `do` keyword", {});
+
+    // 2. Parse if block
+    Vec *if_body = parse_fun_body__LilyParser(self, item->stmt_if.if_block);
+
+    Vec *elif_exprs = NULL;  // Vec<LilyAstExpr*>*
+    Vec *elif_bodies = NULL; // Vec<Vec<LilyAstBodyFunItem*>*>*
+
+    if (item->stmt_if.elif_exprs) {
+        // 3. Parse elif expressions
+        elif_exprs = NEW(Vec); // Vec<LilyAstExpr*>*
+
+        for (Usize i = 0; i < item->stmt_if.elif_exprs->len; i++) {
+            LilyParseBlock expr_block =
+              NEW(LilyParseBlock, self, get__Vec(item->stmt_if.elif_exprs, i));
+            LilyAstExpr *elif_expr = parse_expr__LilyParseBlock(&expr_block);
+
+            CHECK_EXPR(
+              elif_expr, expr_block, NULL, "expected `do` keyword", {});
+
+            if (elif_expr) {
+                push__Vec(elif_exprs, elif_expr);
+            }
+        }
+
+        // 4. Parse elif blocks
+        elif_bodies = NEW(Vec); // Vec<Vec<LilyAstBodyFunItem*>*>*
+
+        for (Usize i = 0; i < item->stmt_if.elif_blocks->len; i++) {
+            push__Vec(elif_bodies,
+                      parse_fun_body__LilyParser(
+                        self, get__Vec(item->stmt_if.elif_blocks, i)));
+        }
+    }
+
+    Vec *else_body = NULL;
+
+    if (item->stmt_if.else_block) {
+        // 4. Parse else block
+        else_body = parse_fun_body__LilyParser(self, item->stmt_if.else_block);
+    }
+
+    return NEW_VARIANT(LilyAstBodyFunItem,
+                       stmt,
+                       NEW_VARIANT(LilyAstStmt,
+                                   if,
+                                   item->location,
+                                   NEW(LilyAstStmtIf,
+                                       if_expr,
+                                       if_body,
+                                       elif_exprs,
+                                       elif_bodies,
+                                       else_body)));
 }
 
 LilyAstBodyFunItem *
@@ -2398,23 +2433,8 @@ parse_fun_body_item_for_stmt__LilyParser(LilyParser *self,
               NEW(LilyParseBlock, self, item->exprs.tokens);
             LilyAstExpr *expr = parse_expr__LilyParseBlock(&exprs_block);
 
-            if (!expr) {
-                return NULL;
-            }
-
-            if (!HAS_REACHED_THE_END(exprs_block)) {
-                emit__Diagnostic(
-                  NEW_VARIANT(Diagnostic,
-                              simple_lily_error,
-                              exprs_block.file,
-                              &exprs_block.current->location,
-                              NEW(LilyError,
-                                  LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION),
-                              NULL,
-                              NULL,
-                              from__String("expected `;`")),
-                  exprs_block.count_error);
-            }
+            CHECK_EXPR(
+              expr, exprs_block, NULL, "expected `;`", { return NULL; });
 
             return NEW_VARIANT(LilyAstBodyFunItem, expr, expr);
         }
