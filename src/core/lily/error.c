@@ -139,6 +139,8 @@ to_msg__LilyError(const LilyError *self)
             return "expected asm param(s)";
         case LILY_ERROR_KIND_EXPECTED_COMPTIME_STRING_LITERAL:
             return "expected comptime string literal";
+        case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION:
+            return "expected only one expression";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -252,6 +254,8 @@ to_code__LilyError(const LilyError *self)
             return "0051";
         case LILY_ERROR_KIND_EXPECTED_COMPTIME_STRING_LITERAL:
             return "0052";
+        case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION:
+            return "0053";
         default:
             UNREACHABLE("unknown variant");
     }
