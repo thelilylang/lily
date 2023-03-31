@@ -359,6 +359,23 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserFunBodyItemStmtMatch *self);
 #endif
 
+typedef struct LilyPreparserFunBodyItemStmtNext
+{
+    String *name; // String*?
+} LilyPreparserFunBodyItemStmtNext;
+
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemStmtNext in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtNext,
+               const LilyPreparserFunBodyItemStmtNext *self);
+#endif
+
 typedef struct LilyPreparserFunBodyItemStmtReturn
 {
     Vec *expr; // Vec<LilyToken*>*?
@@ -447,6 +464,7 @@ enum LilyPreparserFunBodyItemKind
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_NEXT,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RETURN,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE,
@@ -481,6 +499,7 @@ struct LilyPreparserFunBodyItem
         LilyPreparserFunBodyItemStmtFor stmt_for;
         LilyPreparserFunBodyItemStmtIf stmt_if;
         LilyPreparserFunBodyItemStmtMatch stmt_match;
+        LilyPreparserFunBodyItemStmtNext stmt_next;
         LilyPreparserFunBodyItemStmtReturn stmt_return;
         LilyPreparserFunBodyItemStmtTry stmt_try;
         LilyPreparserFunBodyItemStmtVariable stmt_var;
