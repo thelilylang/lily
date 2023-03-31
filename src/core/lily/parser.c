@@ -119,6 +119,11 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self);
 static LilyAstExpr *
 parse_expr__LilyParseBlock(LilyParseBlock *self);
 
+// Parse asm statement.
+static LilyAstBodyFunItem *
+parse_asm_stmt__LilyParser(LilyParser *self,
+                           const LilyPreparserFunBodyItem *item);
+
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
            self->current->kind != LILY_TOKEN_KIND_EOF) { \
@@ -146,6 +151,9 @@ parse_expr__LilyParseBlock(LilyParseBlock *self);
                 break;                                                        \
         }                                                                     \
     }
+
+// Check if the ParseBlock has reached the end.
+#define HAS_REACHED_THE_END(block) (block.position == block.tokens->len - 1)
 
 CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
 {
@@ -1969,6 +1977,77 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
             return parse_binary_expr__LilyParseBlock(self, expr);
         default:
             return expr;
+    }
+}
+
+LilyAstBodyFunItem *
+parse_asm_stmt__LilyParser(LilyParser *self,
+                           const LilyPreparserFunBodyItem *item)
+{
+    if (item->stmt_asm.params->len > 0) {
+        // 1. Parse first expression
+        LilyAstExpr *value = NULL;
+
+        {
+            LilyParseBlock value_block =
+              NEW(LilyParseBlock, self, get__Vec(item->stmt_asm.params, 0));
+            value = parse_primary_expr__LilyParseBlock(&value_block);
+
+            if (!value) {
+                return NULL;
+            }
+        }
+
+        // 2. Parse all other params
+        Vec *params = NEW(Vec); // Vec<LilyAstExpr*>*
+
+        for (Usize i = 1; i < item->stmt_asm.params->len; i++) {
+            LilyParseBlock param_block =
+              NEW(LilyParseBlock, self, get__Vec(item->stmt_asm.params, i));
+            LilyAstExpr *param = parse_expr__LilyParseBlock(&param_block);
+
+            if (!param) {
+                // Clean up
+                FREE(LilyAstExpr, value);
+                FREE_BUFFER_ITEMS(params->buffer, params->len, LilyAstExpr);
+                FREE(Vec, params);
+
+                return NULL;
+            }
+
+            if (!HAS_REACHED_THE_END(param_block)) {
+                emit__Diagnostic(
+                  NEW_VARIANT(Diagnostic,
+                              simple_lily_error,
+                              param_block.file,
+                              &param_block.current->location,
+                              NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                              NULL,
+                              NULL,
+                              from__String("expected `,`")),
+                  param_block.count_error);
+            }
+
+            push__Vec(params, param);
+        }
+
+        return NEW_VARIANT(
+          LilyAstBodyFunItem,
+          stmt,
+          NEW_VARIANT(LilyAstStmt, asm, NEW(LilyAstStmtAsm, value, params)));
+    } else {
+        emit__Diagnostic(
+          NEW_VARIANT(Diagnostic,
+                      simple_lily_error,
+                      &self->package->file,
+                      &item->location,
+                      NEW(LilyError, LILY_ERROR_KIND_EXPECTED_ASM_PARAM),
+                      NULL,
+                      NULL,
+                      NULL),
+          &self->package->count_error);
+
+        return NULL;
     }
 }
 
