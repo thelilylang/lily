@@ -1297,6 +1297,7 @@ typedef struct LilyPreparser
     LilyToken *current;
     Usize position;
     Usize count_error;
+    Usize count_warning;
     const char *default_package_access; // const char*?
 } LilyPreparser;
 

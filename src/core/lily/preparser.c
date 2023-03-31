@@ -2323,8 +2323,8 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS";
-		case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM:
-			return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_AWAIT:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_AWAIT";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:
@@ -7449,7 +7449,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
                                       NULL,
                                       NULL,
                                       NULL),
-                          &self->count_error);
+                          &self->count_warning);
 
                         next_token__LilyPreparser(self);
                     default:
@@ -11718,6 +11718,7 @@ CONSTRUCTOR(LilyPreparser,
                             .current = NULL,
                             .position = 0,
                             .count_error = 0,
+                            .count_warning = 0,
                             .default_package_access = default_package_access };
 }
 
