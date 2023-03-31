@@ -22,13 +22,19 @@
  * SOFTWARE.
  */
 
+#include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/stmt/defer.h>
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtDefer, const LilyAstStmtDefer *self)
 {
-    return format__String("LilyAstStmtDefer{{ expr = {Sr} }",
-                          to_string__Debug__LilyAstExpr(self->expr));
+    return format__String("LilyAstStmtDefer{{ item = {Sr} }",
+                          to_string__Debug__LilyAstBodyFunItem(self->item));
 }
 #endif
+
+DESTRUCTOR(LilyAstStmtDefer, const LilyAstStmtDefer *self)
+{
+    FREE(LilyAstBodyFunItem, self->item);
+}

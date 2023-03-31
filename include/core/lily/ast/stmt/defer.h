@@ -25,20 +25,20 @@
 #ifndef LILY_CORE_LILY_AST_STMT_DEFER_H
 #define LILY_CORE_LILY_AST_STMT_DEFER_H
 
-#include <core/lily/ast/expr.h>
-
 #ifdef ENV_DEBUG
 #include <base/string.h>
 #endif
 
+typedef struct LilyAstBodyFunItem LilyAstBodyFunItem;
+
 typedef struct LilyAstStmtDefer
 {
-    LilyAstExpr *expr;
+    LilyAstBodyFunItem *item;
 } LilyAstStmtDefer;
 
-inline CONSTRUCTOR(LilyAstStmtDefer, LilyAstStmtDefer, LilyAstExpr *expr)
+inline CONSTRUCTOR(LilyAstStmtDefer, LilyAstStmtDefer, LilyAstBodyFunItem *item)
 {
-    return (LilyAstStmtDefer){ .expr = expr };
+    return (LilyAstStmtDefer){ .item = item };
 }
 
 /**
@@ -51,9 +51,10 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtDefer, const LilyAstStmtDefer *self);
 #endif
 
-inline DESTRUCTOR(LilyAstStmtDefer, const LilyAstStmtDefer *self)
-{
-    FREE(LilyAstExpr, self->expr);
-}
+/**
+ *
+ * @brief Free LilyAstStmtDefer type.
+ */
+DESTRUCTOR(LilyAstStmtDefer, const LilyAstStmtDefer *self);
 
 #endif // LILY_CORE_LILY_AST_STMT_DEFER_H
