@@ -129,6 +129,11 @@ static LilyAstBodyFunItem *
 parse_await_stmt__LilyParser(LilyParser *self,
                              const LilyPreparserFunBodyItem *item);
 
+// Parse break statement.
+static LilyAstBodyFunItem *
+parse_break_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item);
+
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
            self->current->kind != LILY_TOKEN_KIND_EOF) { \
@@ -2075,6 +2080,27 @@ parse_await_stmt__LilyParser(LilyParser *self,
       stmt,
       NEW_VARIANT(
         LilyAstStmt, await, item->location, NEW(LilyAstStmtAwait, expr)));
+}
+
+LilyAstBodyFunItem *
+parse_break_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item)
+{
+    if (item->stmt_break.name) {
+        return NEW_VARIANT(
+          LilyAstBodyFunItem,
+          stmt,
+          NEW_VARIANT(LilyAstStmt,
+                      break,
+                      item->location,
+                      NEW(LilyAstStmtBreak, item->stmt_break.name)));
+    }
+
+    return NEW_VARIANT(
+      LilyAstBodyFunItem,
+      stmt,
+      NEW_VARIANT(
+        LilyAstStmt, break, item->location, NEW(LilyAstStmtBreak, NULL)));
 }
 
 TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self)
