@@ -2621,13 +2621,13 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
 
             break;
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-			// Check if it's a path
-			switch (self->current->kind) {
-				case LILY_TOKEN_KIND_DOT:
-					break;
-				default:
-					break;
-			}
+            // Check if it's a path
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_DOT:
+                    break;
+                default:
+                    break;
+            }
 
             if (!strcmp(self->previous->identifier_normal->buffer, "_")) {
                 pattern = NEW(LilyAstPattern,
@@ -2654,15 +2654,15 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
 
             break;
         default:
-			// ERROR: unexpected token.
+            // ERROR: unexpected token.
             break;
     }
 
     switch (self->current->kind) {
-		case LILY_TOKEN_KIND_KEYWORD_AS:
-			break;
-		case LILY_TOKEN_KIND_DOT_DOT:
-			break;
+        case LILY_TOKEN_KIND_KEYWORD_AS:
+            break;
+        case LILY_TOKEN_KIND_DOT_DOT:
+            break;
         default:
             break;
     }
