@@ -7710,6 +7710,12 @@ preparse_block__LilyPreparser(LilyPreparser *self)
         case LILY_TOKEN_KIND_KEYWORD_MATCH:
             return preparse_match_block__LilyPreparser(self);
 
+		/*
+		   next <name>;
+		*/
+		case LILY_TOKEN_KIND_KEYWORD_NEXT:
+			return preparse_next_block__LilyPreparser(self);
+
         /*
             return <expr>;
         */
