@@ -29,9 +29,12 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+typedef struct LilyAstExpr LilyAstExpr;
+
+// asm(<value>, <params>);
 typedef struct LilyAstStmtAsm
 {
-    String *value;
+    LilyAstExpr *value;
     Vec *params; // Vec<LilyAstExpr*>*
 } LilyAstStmtAsm;
 
@@ -39,7 +42,10 @@ typedef struct LilyAstStmtAsm
  *
  * @brief Construct LilyAstStmtAsm type.
  */
-inline CONSTRUCTOR(LilyAstStmtAsm, LilyAstStmtAsm, String *value, Vec *params)
+inline CONSTRUCTOR(LilyAstStmtAsm,
+                   LilyAstStmtAsm,
+                   LilyAstExpr *value,
+                   Vec *params)
 {
     return (LilyAstStmtAsm){ .value = value, .params = params };
 }

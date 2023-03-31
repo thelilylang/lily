@@ -135,6 +135,10 @@ to_msg__LilyError(const LilyError *self)
             return "expected one or many characters";
         case LILY_ERROR_KIND_FEATURE_NOT_YET_SUPPORTED:
             return "feature not yet supported";
+        case LILY_ERROR_KIND_EXPECTED_ASM_PARAM:
+            return "expected asm param(s)";
+        case LILY_ERROR_KIND_EXPECTED_COMPTIME_STRING_LITERAL:
+            return "expected comptime string literal";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -244,6 +248,10 @@ to_code__LilyError(const LilyError *self)
             return "0049";
         case LILY_ERROR_KIND_FEATURE_NOT_YET_SUPPORTED:
             return "0050";
+        case LILY_ERROR_KIND_EXPECTED_ASM_PARAM:
+            return "0051";
+        case LILY_ERROR_KIND_EXPECTED_COMPTIME_STRING_LITERAL:
+            return "0052";
         default:
             UNREACHABLE("unknown variant");
     }

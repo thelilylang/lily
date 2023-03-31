@@ -31,8 +31,8 @@
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtAsm, const LilyAstStmtAsm *self)
 {
-    String *res =
-      format__String("LilyAstStmtAsm{{ value = {S}, params =", self->value);
+    String *res = format__String("LilyAstStmtAsm{{ value = {Sr}, params =",
+                                 to_string__Debug__LilyAstExpr(self->value));
 
     DEBUG_VEC_STRING(self->params, res, LilyAstExpr);
 
@@ -44,7 +44,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtAsm, const LilyAstStmtAsm *self)
 
 DESTRUCTOR(LilyAstStmtAsm, const LilyAstStmtAsm *self)
 {
-    FREE_MOVE(self->params, FREE(String, self->value));
+    FREE(LilyAstExpr, self->value);
     FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, LilyAstExpr);
     FREE(Vec, self->params);
 }
