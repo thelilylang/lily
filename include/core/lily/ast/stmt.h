@@ -77,6 +77,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtKind, enum LilyAstStmtKind self);
 typedef struct LilyAstStmt
 {
     enum LilyAstStmtKind kind;
+    Location location;
     union
     {
         LilyAstStmtAsm asm_;
@@ -100,9 +101,15 @@ typedef struct LilyAstStmt
  *
  * @brief Construct LilyAstStmt type (LILY_AST_STMT_KIND_ASM).
  */
-inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, asm, LilyAstStmtAsm asm_)
+inline VARIANT_CONSTRUCTOR(LilyAstStmt,
+                           LilyAstStmt,
+                           asm,
+                           Location location,
+                           LilyAstStmtAsm asm_)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_ASM, .asm_ = asm_ };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_ASM,
+                          .location = location,
+                          .asm_ = asm_ };
 }
 
 /**
@@ -112,9 +119,12 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, asm, LilyAstStmtAsm asm_)
 inline VARIANT_CONSTRUCTOR(LilyAstStmt,
                            LilyAstStmt,
                            await,
+                           Location location,
                            LilyAstStmtAwait await)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_AWAIT, .await = await };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_AWAIT,
+                          .location = location,
+                          .await = await };
 }
 
 /**
@@ -124,9 +134,12 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt,
 inline VARIANT_CONSTRUCTOR(LilyAstStmt,
                            LilyAstStmt,
                            block,
+                           Location location,
                            LilyAstStmtBlock block)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_BLOCK, .block = block };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_BLOCK,
+                          .location = location,
+                          .block = block };
 }
 
 /**
@@ -136,9 +149,12 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt,
 inline VARIANT_CONSTRUCTOR(LilyAstStmt,
                            LilyAstStmt,
                            break,
+                           Location location,
                            LilyAstStmtBreak break_)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_BREAK, .break_ = break_ };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_BREAK,
+                          .location = location,
+                          .break_ = break_ };
 }
 
 /**
@@ -148,18 +164,27 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt,
 inline VARIANT_CONSTRUCTOR(LilyAstStmt,
                            LilyAstStmt,
                            defer,
+                           Location location,
                            LilyAstStmtDefer defer)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_DEFER, .defer = defer };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_DEFER,
+                          .location = location,
+                          .defer = defer };
 }
 
 /**
  *
  * @brief Construct LilyAstStmt type (LILY_AST_STMT_KIND_DROP).
  */
-inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, drop, LilyAstStmtDrop drop)
+inline VARIANT_CONSTRUCTOR(LilyAstStmt,
+                           LilyAstStmt,
+                           drop,
+                           Location location,
+                           LilyAstStmtDrop drop)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_DROP, .drop = drop };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_DROP,
+                          .location = location,
+                          .drop = drop };
 }
 
 /**
@@ -169,9 +194,12 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, drop, LilyAstStmtDrop drop)
 inline VARIANT_CONSTRUCTOR(LilyAstStmt,
                            LilyAstStmt,
                            for,
+						   Location location,
                            LilyAstStmtFor for_)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_FOR, .for_ = for_ };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_FOR,
+                          .location = location,
+                          .for_ = for_ };
 }
 
 /**
@@ -190,18 +218,27 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, if, LilyAstStmtIf if_)
 inline VARIANT_CONSTRUCTOR(LilyAstStmt,
                            LilyAstStmt,
                            match,
+                           Location location,
                            LilyAstStmtMatch match)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_MATCH, .match = match };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_MATCH,
+                          .location = location,
+                          .match = match };
 }
 
 /**
  *
  * @brief Construct LilyAstStmt type (LILY_AST_STMT_KIND_NEXT).
  */
-inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, next, LilyAstStmtNext next)
+inline VARIANT_CONSTRUCTOR(LilyAstStmt,
+                           LilyAstStmt,
+                           next,
+                           Location location,
+                           LilyAstStmtNext next)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_NEXT, .next = next };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_NEXT,
+                          .location = location,
+                          .next = next };
 }
 
 /**
@@ -211,9 +248,11 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, next, LilyAstStmtNext next)
 inline VARIANT_CONSTRUCTOR(LilyAstStmt,
                            LilyAstStmt,
                            return,
+                           Location location,
                            LilyAstStmtReturn return_)
 {
     return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_RETURN,
+                          .location = location,
                           .return_ = return_ };
 }
 
@@ -221,9 +260,15 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt,
  *
  * @brief Construct LilyAstStmt type (LILY_AST_STMT_KIND_TRY).
  */
-inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, try, LilyAstStmtTry try)
+inline VARIANT_CONSTRUCTOR(LilyAstStmt,
+                           LilyAstStmt,
+                           try,
+                           Location location,
+                           LilyAstStmtTry try)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_TRY, .try = try };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_TRY,
+                          .location = location,
+                          .try = try };
 }
 
 /**
@@ -233,9 +278,11 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt, LilyAstStmt, try, LilyAstStmtTry try)
 inline VARIANT_CONSTRUCTOR(LilyAstStmt,
                            LilyAstStmt,
                            variable,
+                           Location location,
                            LilyAstStmtVariable variable)
 {
     return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_VARIABLE,
+                          .location = location,
                           .variable = variable };
 }
 
@@ -246,9 +293,12 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt,
 inline VARIANT_CONSTRUCTOR(LilyAstStmt,
                            LilyAstStmt,
                            while,
+                           Location location,
                            LilyAstStmtWhile while_)
 {
-    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_WHILE, .while_ = while_ };
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_WHILE,
+                          .location = location,
+                          .while_ = while_ };
 }
 
 /**
