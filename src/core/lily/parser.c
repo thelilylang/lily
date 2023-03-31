@@ -2284,6 +2284,8 @@ parse_stmt__LilyParser(LilyParser *self, const LilyPreparserFunBodyItem *item)
             return parse_await_stmt__LilyParser(self, item);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:
             return parse_block_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BREAK:
+            return parse_break_stmt__LilyParser(self, item);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DEFER:
             return parse_defer_stmt__LilyParser(self, item);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_DROP:
