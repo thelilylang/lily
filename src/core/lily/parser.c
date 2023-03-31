@@ -210,6 +210,50 @@ parse_fun_body_item__LilyParser(LilyParser *self,
 static Vec *
 parse_fun_body__LilyParser(LilyParser *self, Vec *block);
 
+// Parse array pattern
+// [a, _, b, ..]
+static LilyAstPattern *
+parse_array_pattern__LilyParseBlock(LilyParseBlock *self);
+
+// Parse as pattern
+// _ as a
+static LilyAstPattern *
+parse_as_pattern__LilyParseBlock(LilyParseBlock *self);
+
+// Parse exception pattern
+// error InvalidFile:x
+static LilyAstPattern *
+parse_exception_pattern__LilyParseBlock(LilyParseBlock *self);
+
+// Parse literal pattern
+// "Hello"
+static LilyAstPattern *
+parse_literal_pattern__LilyParseBlock(LilyParseBlock *self);
+
+// Parse range pattern
+// 'a' .. 'z'
+static LilyAstPattern *
+parse_range_pattern__LilyParseBlock(LilyParseBlock *self);
+
+// Parse record call pattern
+// Person { name, .. }
+static LilyAstPattern *
+parse_record_call_pattern__LilyParseBlock(LilyParseBlock *self);
+
+// Parse tuple pattern
+// (1, 2, _)
+static LilyAstPattern *
+parse_tuple_pattern__LilyParseBlock(LilyParseBlock *self);
+
+// Parse variant call pattern
+// Cat:cat
+static LilyAstPattern *
+parse_variant_call_pattern__LilyParseBlock(LilyParseBlock *self);
+
+// Parse all patterns.
+static LilyAstPattern *
+parse_pattern__LilyParseBlock(LilyParseBlock *self);
+
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
            self->current->kind != LILY_TOKEN_KIND_EOF) { \
@@ -2482,6 +2526,148 @@ parse_fun_body__LilyParser(LilyParser *self, Vec *block)
     }
 
     return body;
+}
+
+LilyAstPattern *
+parse_array_pattern__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #58");
+}
+
+LilyAstPattern *
+parse_as_pattern__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #59");
+}
+
+LilyAstPattern *
+parse_exception_pattern__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #60");
+}
+
+LilyAstPattern *
+parse_literal_pattern__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #61");
+}
+
+LilyAstPattern *
+parse_range_pattern__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #61");
+}
+
+LilyAstPattern *
+parse_record_call_pattern__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #62");
+}
+
+LilyAstPattern *
+parse_tuple_pattern__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #63");
+}
+
+LilyAstPattern *
+parse_variant_call_pattern__LilyParseBlock(LilyParseBlock *self)
+{
+    TODO("Issue #64");
+}
+
+LilyAstPattern *
+parse_pattern__LilyParseBlock(LilyParseBlock *self)
+{
+    next_token__LilyParseBlock(self);
+
+    LilyAstPattern *pattern = NULL;
+
+    switch (self->previous->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_TRUE:
+        case LILY_TOKEN_KIND_KEYWORD_FALSE:
+        case LILY_TOKEN_KIND_KEYWORD_NIL:
+        case LILY_TOKEN_KIND_KEYWORD_UNDEF:
+        case LILY_TOKEN_KIND_LITERAL_BYTE:
+        case LILY_TOKEN_KIND_LITERAL_BYTES:
+        case LILY_TOKEN_KIND_LITERAL_CHAR:
+        case LILY_TOKEN_KIND_LITERAL_FLOAT:
+        case LILY_TOKEN_KIND_LITERAL_INT_2:
+        case LILY_TOKEN_KIND_LITERAL_INT_8:
+        case LILY_TOKEN_KIND_LITERAL_INT_10:
+        case LILY_TOKEN_KIND_LITERAL_INT_16:
+        case LILY_TOKEN_KIND_LITERAL_STRING:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
+        case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
+            pattern = parse_literal_pattern__LilyParseBlock(self);
+
+            break;
+        case LILY_TOKEN_KIND_L_HOOK:
+            pattern = parse_array_pattern__LilyParseBlock(self);
+
+            break;
+        case LILY_TOKEN_KIND_KEYWORD_ERROR:
+            pattern = parse_exception_pattern__LilyParseBlock(self);
+
+            break;
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+			// Check if it's a path
+			switch (self->current->kind) {
+				case LILY_TOKEN_KIND_DOT:
+					break;
+				default:
+					break;
+			}
+
+            if (!strcmp(self->previous->identifier_normal->buffer, "_")) {
+                pattern = NEW(LilyAstPattern,
+                              self->previous->location,
+                              LILY_AST_PATTERN_KIND_WILDCARD);
+            } else {
+                pattern = NEW_VARIANT(
+                  LilyAstPattern,
+                  name,
+                  self->previous->location,
+                  NEW(LilyAstPatternName,
+                      clone__String(self->previous->identifier_normal)));
+            }
+
+            break;
+        case LILY_TOKEN_KIND_L_PAREN:
+            pattern = parse_tuple_pattern__LilyParseBlock(self);
+
+            break;
+        case LILY_TOKEN_KIND_DOT_DOT:
+            pattern = NEW(LilyAstPattern,
+                          self->previous->location,
+                          LILY_AST_PATTERN_KIND_AUTO_COMPLETE);
+
+            break;
+        default:
+			// ERROR: unexpected token.
+            break;
+    }
+
+    switch (self->current->kind) {
+		case LILY_TOKEN_KIND_KEYWORD_AS:
+			break;
+		case LILY_TOKEN_KIND_DOT_DOT:
+			break;
+        default:
+            break;
+    }
+
+    return pattern;
 }
 
 TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self)
