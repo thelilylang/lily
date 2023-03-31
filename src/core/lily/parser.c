@@ -2215,7 +2215,32 @@ LilyAstBodyFunItem *
 parse_drop_stmt__LilyParser(LilyParser *self,
                             const LilyPreparserFunBodyItem *item)
 {
-    TODO("Issue #38");
+    LilyParseBlock expr_block = NEW(LilyParseBlock, self, item->stmt_drop.expr);
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+    if (!expr) {
+        return NULL;
+    }
+
+    if (!HAS_REACHED_THE_END(expr_block)) {
+        emit__Diagnostic(
+          NEW_VARIANT(
+            Diagnostic,
+            simple_lily_error,
+            expr_block.file,
+            &expr_block.current->location,
+            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION),
+            NULL,
+            NULL,
+            from__String("expected `;`")),
+          expr_block.count_error);
+    }
+
+    return NEW_VARIANT(
+      LilyAstBodyFunItem,
+      stmt,
+      NEW_VARIANT(
+        LilyAstStmt, drop, item->location, NEW(LilyAstStmtDrop, expr)));
 }
 
 LilyAstBodyFunItem *
