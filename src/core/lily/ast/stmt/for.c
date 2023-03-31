@@ -25,17 +25,25 @@
 #include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/stmt/for.h>
 
-CONSTRUCTOR(LilyAstStmtFor, LilyAstStmtFor, LilyAstExpr *expr, Vec *body)
+CONSTRUCTOR(LilyAstStmtFor,
+            LilyAstStmtFor,
+            LilyAstExpr *expr_left,
+            LilyAstExpr *expr_right,
+            Vec *body)
 {
-    return (LilyAstStmtFor){ .expr = expr, .body = body };
+    return (LilyAstStmtFor){ .expr_left = expr_left,
+                             .expr_right = expr_right,
+                             .body = body };
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtFor, const LilyAstStmtFor *self)
 {
-    String *res = format__String("LilyAstStmtFor{{ expr = {Sr}, body =",
-                                 to_string__Debug__LilyAstExpr(self->expr));
+    String *res = format__String(
+      "LilyAstStmtFor{{ expr_left = {Sr}, expr_right = {Sr}, body =",
+      to_string__Debug__LilyAstExpr(self->expr_left),
+      to_string__Debug__LilyAstExpr(self->expr_right));
 
     DEBUG_VEC_STRING(self->body, res, LilyAstBodyFunItem);
 
@@ -47,7 +55,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtFor, const LilyAstStmtFor *self)
 
 DESTRUCTOR(LilyAstStmtFor, const LilyAstStmtFor *self)
 {
-    FREE(LilyAstExpr, self->expr);
+    FREE(LilyAstExpr, self->expr_left);
+    FREE(LilyAstExpr, self->expr_right);
     FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyAstBodyFunItem);
     FREE(Vec, self->body);
 }

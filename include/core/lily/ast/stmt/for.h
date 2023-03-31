@@ -27,9 +27,13 @@
 
 #include <core/lily/ast/expr.h>
 
+// for <expr_left> in <expr_right> do
+//   <body>
+// end
 typedef struct LilyAstStmtFor
 {
-    LilyAstExpr *expr;
+    LilyAstExpr *expr_left;
+    LilyAstExpr *expr_right;
     Vec *body; // Vec<LilyAstBodyFunItem*>*
 } LilyAstStmtFor;
 
@@ -37,7 +41,11 @@ typedef struct LilyAstStmtFor
  *
  * @brief Construct LilyAstStmtFor type.
  */
-CONSTRUCTOR(LilyAstStmtFor, LilyAstStmtFor, LilyAstExpr *expr, Vec *body);
+CONSTRUCTOR(LilyAstStmtFor,
+            LilyAstStmtFor,
+            LilyAstExpr *expr_left,
+            LilyAstExpr *expr_right,
+            Vec *body);
 
 /**
  *
