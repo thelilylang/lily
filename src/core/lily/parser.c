@@ -2531,7 +2531,24 @@ parse_fun_body__LilyParser(LilyParser *self, Vec *block)
 LilyAstPattern *
 parse_array_pattern__LilyParseBlock(LilyParseBlock *self)
 {
-    TODO("Issue #58");
+    Location location = clone__Location(&self->previous->location);
+    Vec *patterns = NEW(Vec); // Vec<LilyAstPattern*>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
+        LilyAstPattern *pattern = parse_pattern__LilyParseBlock(self);
+
+        if (pattern) {
+            push__Vec(patterns, pattern);
+        }
+    }
+
+    end__Location(&location,
+                  self->current->location.end_line,
+                  self->current->location.end_column);
+    next_token__LilyParseBlock(self);
+
+    return NEW_VARIANT(
+      LilyAstPattern, array, location, NEW(LilyAstPatternArray, patterns));
 }
 
 LilyAstPattern *
