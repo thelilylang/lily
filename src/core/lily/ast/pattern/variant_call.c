@@ -34,23 +34,15 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstPatternVariantCall,
                const LilyAstPatternVariantCall *self)
 {
-    String *res =
-      format__String("LilyAstPatternVariantCall{{ id = {Sr}, patterns =",
-                     to_string__Debug__LilyAstExpr(self->id));
-
-    DEBUG_VEC_STRING(self->patterns, res, LilyAstPattern);
-
-    push_str__String(res, " }");
-
-    return res;
+    return format__String(
+      "LilyAstPatternVariantCall{{ id = {Sr}, pattern = {Sr} }",
+      to_string__Debug__LilyAstExpr(self->id),
+      to_string__Debug__LilyAstPattern(self->pattern));
 }
 #endif
 
 DESTRUCTOR(LilyAstPatternVariantCall, const LilyAstPatternVariantCall *self)
 {
     FREE(LilyAstExpr, self->id);
-
-    FREE_BUFFER_ITEMS(
-      self->patterns->buffer, self->patterns->len, LilyAstPattern);
-    FREE(Vec, self->patterns);
+    FREE(LilyAstPattern, self->pattern);
 }

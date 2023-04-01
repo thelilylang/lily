@@ -2700,7 +2700,19 @@ LilyAstPattern *
 parse_variant_call_pattern__LilyParseBlock(LilyParseBlock *self,
                                            LilyAstExpr *id)
 {
-    TODO("Issue #64");
+    Location location = clone__Location(&id->location);
+
+    next_token__LilyParseBlock(self); // skip `:`
+
+    LilyAstPattern *pattern = parse_pattern__LilyParseBlock(self);
+
+    end__Location(
+      &location, pattern->location.end_line, pattern->location.end_column);
+
+    return NEW_VARIANT(LilyAstPattern,
+                       variant_call,
+                       location,
+                       NEW(LilyAstPatternVariantCall, id, pattern));
 }
 
 LilyAstPattern *
