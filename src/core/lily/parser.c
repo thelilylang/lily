@@ -2379,6 +2379,21 @@ parse_fun_body_item_for_stmt__LilyParser(LilyParser *self,
 
             return NEW_VARIANT(LilyAstBodyFunItem, expr, expr);
         }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE:
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                &self->package->file,
+                &item->location,
+                NEW(LilyError,
+                    LILY_ERROR_KIND_VARIABLE_DECLARATION_IS_NOT_EXPECTED),
+                NULL,
+                NULL,
+                NULL),
+              &self->package->count_error);
+
+            return NULL;
         default:
             return parse_stmt__LilyParser(self, item);
     }
