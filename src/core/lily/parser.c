@@ -1182,7 +1182,7 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
 }
 
 // NOTE: only used to parse expression between (), {}, [] by example.
-#define PARSE_CLOSING(closing)                                         \
+#define EXPR_PARSE_CLOSING(closing)                                    \
     Vec *exprs = NEW(Vec); /* Vec<LilyAstExpr*>* */                    \
     while (self->current->kind != closing) {                           \
         LilyAstExpr *expr = parse_expr__LilyParseBlock(self);          \
@@ -1211,7 +1211,7 @@ parse_array_expr__LilyParseBlock(LilyParseBlock *self)
 {
     Location location = clone__Location(&self->previous->location);
 
-    PARSE_CLOSING(LILY_TOKEN_KIND_R_HOOK);
+    EXPR_PARSE_CLOSING(LILY_TOKEN_KIND_R_HOOK);
 
     return NEW_VARIANT(
       LilyAstExpr, array, location, NEW(LilyAstExprArray, exprs));
@@ -1222,7 +1222,7 @@ parse_tuple_expr__LilyParseBlock(LilyParseBlock *self)
 {
     Location location = clone__Location(&self->previous->location);
 
-    PARSE_CLOSING(LILY_TOKEN_KIND_R_PAREN);
+    EXPR_PARSE_CLOSING(LILY_TOKEN_KIND_R_PAREN);
 
     return NEW_VARIANT(
       LilyAstExpr, tuple, location, NEW(LilyAstExprTuple, exprs));
@@ -2440,33 +2440,38 @@ parse_fun_body__LilyParser(LilyParser *self, Vec *block)
     return body;
 }
 
+// NOTE: only used to parse expression between (), {}, [] by example.
+#define PATTERN_PARSE_CLOSING(closing)                                 \
+    Vec *patterns = NEW(Vec); /* Vec<LilyAstPattern*>* */              \
+    while (self->current->kind != closing) {                           \
+        LilyAstPattern *pattern = parse_pattern__LilyParseBlock(self); \
+                                                                       \
+        if (pattern) {                                                 \
+            push__Vec(patterns, pattern);                              \
+        } else {                                                       \
+            SKIP_TO_TOKEN(closing);                                    \
+                                                                       \
+            FREE_BUFFER_ITEMS(                                         \
+              patterns->buffer, patterns->len, LilyAstPattern);        \
+            FREE(Vec, patterns);                                       \
+                                                                       \
+            return NULL;                                               \
+        }                                                              \
+                                                                       \
+        CHECK_COMMA(closing)                                           \
+    }                                                                  \
+                                                                       \
+    end__Location(&location,                                           \
+                  self->current->location.end_line,                    \
+                  self->current->location.end_column);                 \
+    next_token__LilyParseBlock(self); /* skip closing */
+
 LilyAstPattern *
 parse_array_pattern__LilyParseBlock(LilyParseBlock *self)
 {
     Location location = clone__Location(&self->previous->location);
-    Vec *patterns = NEW(Vec); // Vec<LilyAstPattern*>*
 
-    while (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
-        LilyAstPattern *pattern = parse_pattern__LilyParseBlock(self);
-
-        if (pattern) {
-            push__Vec(patterns, pattern);
-        } else {
-            FREE_BUFFER_ITEMS(patterns->buffer, patterns->len, LilyAstPattern);
-            FREE(Vec, patterns);
-
-            SKIP_TO_TOKEN(LILY_TOKEN_KIND_R_HOOK);
-
-            return NULL;
-        }
-
-        CHECK_COMMA(LILY_TOKEN_KIND_R_HOOK);
-    }
-
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
-    next_token__LilyParseBlock(self);
+    PATTERN_PARSE_CLOSING(LILY_TOKEN_KIND_R_HOOK);
 
     return NEW_VARIANT(
       LilyAstPattern, array, location, NEW(LilyAstPatternArray, patterns));
@@ -2683,7 +2688,12 @@ parse_record_call_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
 LilyAstPattern *
 parse_tuple_pattern__LilyParseBlock(LilyParseBlock *self)
 {
-    TODO("Issue #63");
+    Location location = clone__Location(&self->previous->location);
+
+    PATTERN_PARSE_CLOSING(LILY_TOKEN_KIND_R_PAREN);
+
+    return NEW_VARIANT(
+      LilyAstPattern, tuple, location, NEW(LilyAstPatternTuple, patterns));
 }
 
 LilyAstPattern *
