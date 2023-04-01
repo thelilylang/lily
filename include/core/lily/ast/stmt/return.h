@@ -33,7 +33,7 @@
 
 typedef struct LilyAstStmtReturn
 {
-    LilyAstExpr *expr;
+    LilyAstExpr *expr; // LilyAstExpr*?
 } LilyAstStmtReturn;
 
 inline CONSTRUCTOR(LilyAstStmtReturn, LilyAstStmtReturn, LilyAstExpr *expr)
@@ -53,7 +53,9 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtReturn, const LilyAstStmtReturn *self);
 
 inline DESTRUCTOR(LilyAstStmtReturn, const LilyAstStmtReturn *self)
 {
-    FREE(LilyAstExpr, self->expr);
+    if (self->expr) {
+        FREE(LilyAstExpr, self->expr);
+    }
 }
 
 #endif // LILY_CORE_LILY_AST_STMT_RETURN_H
