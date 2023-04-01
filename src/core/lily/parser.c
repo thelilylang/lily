@@ -2595,7 +2595,53 @@ parse_as_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *pattern)
 LilyAstPattern *
 parse_exception_pattern__LilyParseBlock(LilyParseBlock *self)
 {
-    TODO("Issue #60");
+    Location location = clone__Location(&self->previous->location);
+    LilyAstExpr *id = parse_expr__LilyParseBlock(self);
+
+    if (!id) {
+        return NULL;
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_COLON:
+            next_token__LilyParseBlock(self);
+
+            break;
+        default: {
+            String *token_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->previous->location,
+                NEW_VARIANT(LilyError, unexpected_token, token_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `:`")),
+              self->count_error);
+
+            FREE(String, token_s);
+
+            break;
+        }
+    }
+
+    LilyAstPattern *pattern = parse_pattern__LilyParseBlock(self);
+
+    if (!pattern) {
+        return NULL;
+    }
+
+    end__Location(&location,
+                  self->previous->location.end_line,
+                  self->previous->location.end_column);
+
+    return NEW_VARIANT(LilyAstPattern,
+                       exception,
+                       location,
+                       NEW(LilyAstPatternException, id, pattern));
 }
 
 LilyAstPattern *
