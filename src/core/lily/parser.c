@@ -2391,7 +2391,25 @@ LilyAstBodyFunItem *
 parse_return_stmt__LilyParser(LilyParser *self,
                               const LilyPreparserFunBodyItem *item)
 {
-    TODO("Issue #43");
+    if (item->stmt_return.expr) {
+        LilyParseBlock expr_block =
+          NEW(LilyParseBlock, self, item->stmt_return.expr);
+        LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+        CHECK_EXPR(expr, expr_block, NULL, "expected `;`", { return NULL; });
+
+        return NEW_VARIANT(
+          LilyAstBodyFunItem,
+          stmt,
+          NEW_VARIANT(
+            LilyAstStmt, return, item->location, NEW(LilyAstStmtReturn, expr)));
+    }
+
+    return NEW_VARIANT(
+      LilyAstBodyFunItem,
+      stmt,
+      NEW_VARIANT(
+        LilyAstStmt, return, item->location, NEW(LilyAstStmtReturn, NULL)));
 }
 
 LilyAstBodyFunItem *
