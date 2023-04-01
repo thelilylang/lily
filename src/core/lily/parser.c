@@ -325,6 +325,25 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self);
           pattern_block.count_error);                                       \
     }
 
+#define CHECK_DATA_TYPE(dt, dt_block, help, detail_msg, block_free)      \
+    if (!dt) {                                                           \
+        block_free;                                                      \
+    }                                                                    \
+                                                                         \
+    if (!HAS_REACHED_THE_END(dt_block)) {                                \
+        emit__Diagnostic(                                                \
+          NEW_VARIANT(                                                   \
+            Diagnostic,                                                  \
+            simple_lily_error,                                           \
+            dt_block.file,                                               \
+            &dt_block.current->location,                                 \
+            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_ONLY_ONE_DATA_TYPE), \
+            NULL,                                                        \
+            help,                                                        \
+            from__String(detail_msg)),                                   \
+          dt_block.count_error);                                         \
+    }
+
 CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
 {
     Location location_eof =
@@ -2447,7 +2466,38 @@ LilyAstBodyFunItem *
 parse_variable_stmt__LilyParser(LilyParser *self,
                                 const LilyPreparserFunBodyItem *item)
 {
-    TODO("Issue #102");
+	// 1. Parse data type
+    LilyAstDataType *data_type = NULL;
+
+    if (item->stmt_var.data_type) {
+        LilyParseBlock data_type_block =
+          NEW(LilyParseBlock, self, item->stmt_var.data_type);
+        data_type = parse_data_type__LilyParseBlock(&data_type_block);
+
+        CHECK_DATA_TYPE(
+          data_type, data_type_block, NULL, "expected `:=`", { return NULL; });
+    }
+
+	// 2. Parse expression
+    LilyParseBlock expr_block =
+      NEW(LilyParseBlock, self, item->stmt_var.expr);
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+    CHECK_EXPR(expr, expr_block, NULL, "expected `;`", { return NULL; });
+
+    return NEW_VARIANT(LilyAstBodyFunItem,
+                       stmt,
+                       NEW_VARIANT(LilyAstStmt,
+                                   variable,
+                                   item->location,
+                                   NEW(LilyAstStmtVariable,
+                                       item->stmt_var.name,
+                                       data_type,
+                                       expr,
+                                       item->stmt_var.is_mut,
+                                       item->stmt_var.is_trace,
+                                       item->stmt_var.is_ref,
+                                       item->stmt_var.is_drop)));
 }
 
 LilyAstBodyFunItem *
