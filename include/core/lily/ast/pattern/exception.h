@@ -28,10 +28,13 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+typedef struct LilyAstExpr LilyAstExpr;
+typedef struct LilyAstPattern LilyAstPattern;
+
 typedef struct LilyAstPatternException
 {
-    String *name;
-    Vec *patterns; // Vec<LilyAstPattern*>*
+    LilyAstExpr *id;
+    LilyAstPattern *pattern;
 } LilyAstPatternException;
 
 /**
@@ -40,10 +43,10 @@ typedef struct LilyAstPatternException
  */
 inline CONSTRUCTOR(LilyAstPatternException,
                    LilyAstPatternException,
-                   String *name,
-                   Vec *patterns)
+                   LilyAstExpr *id,
+                   LilyAstPattern *pattern)
 {
-    return (LilyAstPatternException){ .name = name, .patterns = patterns };
+    return (LilyAstPatternException){ .id = id, .pattern = pattern };
 }
 
 /**
