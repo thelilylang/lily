@@ -2861,9 +2861,26 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
                           LILY_AST_PATTERN_KIND_AUTO_COMPLETE);
 
             break;
-        default:
-            // ERROR: unexpected token.
+        default: {
+            String *token_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->previous->location,
+                NEW_VARIANT(LilyError, unexpected_token, token_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected literal value, `[`, `error`, "
+                             "identifier, `(` or `..`")),
+              self->count_error);
+
+            FREE(String, token_s);
+
             return NULL;
+        }
     }
 
     if (!pattern) {
