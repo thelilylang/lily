@@ -233,7 +233,7 @@ parse_literal_pattern__LilyParseBlock(LilyParseBlock *self);
 // Parse range pattern
 // 'a' .. 'z'
 static LilyAstPattern *
-parse_range_pattern__LilyParseBlock(LilyParseBlock *self);
+parse_range_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *left);
 
 // Parse record call pattern
 // Person { name, .. }
@@ -2548,9 +2548,8 @@ parse_exception_pattern__LilyParseBlock(LilyParseBlock *self)
         return NULL;
     }
 
-    end__Location(&location,
-                  self->previous->location.end_line,
-                  self->previous->location.end_column);
+    end__Location(
+      &location, pattern->location.end_line, pattern->location.end_column);
 
     return NEW_VARIANT(LilyAstPattern,
                        exception,
@@ -2565,9 +2564,19 @@ parse_literal_pattern__LilyParseBlock(LilyParseBlock *self)
 }
 
 LilyAstPattern *
-parse_range_pattern__LilyParseBlock(LilyParseBlock *self)
+parse_range_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *left)
 {
-    TODO("Issue #61");
+    Location location = clone__Location(&left->location);
+
+    next_token__LilyParseBlock(self); // skip `..`
+
+    LilyAstPattern *right = parse_pattern__LilyParseBlock(self);
+
+    end__Location(
+      &location, right->location.end_line, right->location.end_column);
+
+    return NEW_VARIANT(
+      LilyAstPattern, range, location, NEW(LilyAstPatternRange, left, right));
 }
 
 LilyAstPattern *
@@ -2674,7 +2683,7 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_KEYWORD_AS:
             return parse_as_pattern__LilyParseBlock(self, pattern);
         case LILY_TOKEN_KIND_DOT_DOT:
-            break;
+            return parse_range_pattern__LilyParseBlock(self, pattern);
         default:
             break;
     }
