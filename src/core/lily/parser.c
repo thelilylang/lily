@@ -2466,7 +2466,7 @@ LilyAstBodyFunItem *
 parse_variable_stmt__LilyParser(LilyParser *self,
                                 const LilyPreparserFunBodyItem *item)
 {
-	// 1. Parse data type
+    // 1. Parse data type
     LilyAstDataType *data_type = NULL;
 
     if (item->stmt_var.data_type) {
@@ -2478,9 +2478,8 @@ parse_variable_stmt__LilyParser(LilyParser *self,
           data_type, data_type_block, NULL, "expected `:=`", { return NULL; });
     }
 
-	// 2. Parse expression
-    LilyParseBlock expr_block =
-      NEW(LilyParseBlock, self, item->stmt_var.expr);
+    // 2. Parse expression
+    LilyParseBlock expr_block = NEW(LilyParseBlock, self, item->stmt_var.expr);
     LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
 
     CHECK_EXPR(expr, expr_block, NULL, "expected `;`", { return NULL; });
@@ -2504,7 +2503,23 @@ LilyAstBodyFunItem *
 parse_while_stmt__LilyParser(LilyParser *self,
                              const LilyPreparserFunBodyItem *item)
 {
-    TODO("Issue #103");
+    // 1. Parse expression
+    LilyParseBlock expr_block =
+      NEW(LilyParseBlock, self, item->stmt_while.expr);
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+    CHECK_EXPR(
+      expr, expr_block, NULL, "expected `do` keyword", { return NULL; });
+
+    // 2. Parse body
+    Vec *body = parse_fun_body__LilyParser(self, item->stmt_while.block);
+
+    return NEW_VARIANT(LilyAstBodyFunItem,
+                       stmt,
+                       NEW_VARIANT(LilyAstStmt,
+                                   while,
+                                   item->location,
+                                   NEW(LilyAstStmtWhile, NULL, expr, body)));
 }
 
 LilyAstBodyFunItem *
