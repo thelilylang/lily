@@ -24,6 +24,7 @@
 
 #include <base/new.h>
 
+#include <core/lily/ast/expr.h>
 #include <core/lily/ast/pattern.h>
 #include <core/lily/ast/pattern/exception.h>
 
@@ -33,21 +34,15 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstPatternException,
                const LilyAstPatternException *self)
 {
-    String *res = format__String(
-      "LilyAstPatternException{{ name = {S}, patterns =", self->name);
-
-    DEBUG_VEC_STRING(self->patterns, res, LilyAstPattern);
-    push_str__String(res, " }");
-
-    return res;
+    return format__String(
+      "LilyAstPatternException{{ name = {Sr}, pattern = {Sr} }",
+      to_string__Debug__LilyAstExpr(self->id),
+      to_string__Debug__LilyAstPattern(self->pattern));
 }
 #endif
 
 DESTRUCTOR(LilyAstPatternException, const LilyAstPatternException *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
-
-    FREE_BUFFER_ITEMS(
-      self->patterns->buffer, self->patterns->len, LilyAstPattern);
-    FREE(Vec, self->patterns);
+    FREE(LilyAstExpr, self->id);
+    FREE(LilyAstPattern, self->pattern);
 }
