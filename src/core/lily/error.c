@@ -141,6 +141,8 @@ to_msg__LilyError(const LilyError *self)
             return "expected comptime string literal";
         case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION:
             return "expected only one expression";
+        case LILY_ERROR_KIND_VARIABLE_DECLARATION_IS_NOT_EXPECTED:
+            return "variable declaration is not expected";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -256,6 +258,8 @@ to_code__LilyError(const LilyError *self)
             return "0052";
         case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION:
             return "0053";
+        case LILY_ERROR_KIND_VARIABLE_DECLARATION_IS_NOT_EXPECTED:
+            return "0054";
         default:
             UNREACHABLE("unknown variant");
     }
