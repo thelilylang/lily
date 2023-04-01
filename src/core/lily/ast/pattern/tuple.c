@@ -42,7 +42,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstPatternTuple, const LilyAstPatternTuple *self)
 String *
 to_string__LilyAstPatternTuple(const LilyAstPatternTuple *self)
 {
-    String *res = from__String("[");
+    String *res = from__String("(");
 
     for (Usize i = 0; i < self->patterns->len; i++) {
         String *s = to_string__LilyAstPattern(get__Vec(self->patterns, i));
@@ -54,7 +54,7 @@ to_string__LilyAstPatternTuple(const LilyAstPatternTuple *self)
         }
     }
 
-    push__String(res, ']');
+    push__String(res, ')');
 
     return res;
 }
