@@ -145,6 +145,8 @@ to_msg__LilyError(const LilyError *self)
             return "variable declaration is not expected";
         case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_PATTERN:
             return "expected only one pattern";
+        case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_DATA_TYPE:
+            return "expected only one data type";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -264,6 +266,8 @@ to_code__LilyError(const LilyError *self)
             return "0054";
         case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_PATTERN:
             return "0055";
+        case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_DATA_TYPE:
+            return "0056";
         default:
             UNREACHABLE("unknown variant");
     }
