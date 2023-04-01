@@ -28,7 +28,11 @@
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtReturn, const LilyAstStmtReturn *self)
 {
-    return format__String("LilyAstStmtReturn{{ expr = {Sr} }",
-                          to_string__Debug__LilyAstExpr(self->expr));
+    if (self->expr) {
+        return format__String("LilyAstStmtReturn{{ expr = {Sr} }",
+                              to_string__Debug__LilyAstExpr(self->expr));
+    }
+
+    return from__String("LilyAstStmtReturn{{ expr = NULL }");
 }
 #endif
