@@ -1613,9 +1613,9 @@ parse_lambda_expr__LilyParseBlock(LilyParseBlock *self)
 #define PARSE_LITERAL(name, name_u)                                           \
     switch (self->previous->kind) {                                           \
         case LILY_TOKEN_KIND_KEYWORD_TRUE:                                    \
-            return VARIANT_LITERAL(name, bool_, true);                         \
+            return VARIANT_LITERAL(name, bool_, true);                        \
         case LILY_TOKEN_KIND_KEYWORD_FALSE:                                   \
-            return VARIANT_LITERAL(name, bool_, false);                        \
+            return VARIANT_LITERAL(name, bool_, false);                       \
         case LILY_TOKEN_KIND_KEYWORD_NIL:                                     \
             return LITERAL(name, LILY_AST_##name_u##_LITERAL_KIND_NIL);       \
         case LILY_TOKEN_KIND_KEYWORD_UNDEF:                                   \
