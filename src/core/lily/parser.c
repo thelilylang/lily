@@ -306,6 +306,25 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self);
           expr_block.count_error);                                        \
     }
 
+#define CHECK_PATTERN(pattern, pattern_block, help, detail_msg, block_free) \
+    if (!pattern) {                                                         \
+        block_free;                                                         \
+    }                                                                       \
+                                                                            \
+    if (!HAS_REACHED_THE_END(pattern_block)) {                              \
+        emit__Diagnostic(                                                   \
+          NEW_VARIANT(                                                      \
+            Diagnostic,                                                     \
+            simple_lily_error,                                              \
+            pattern_block.file,                                             \
+            &pattern_block.current->location,                               \
+            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_ONLY_ONE_PATTERN),      \
+            NULL,                                                           \
+            help,                                                           \
+            from__String(detail_msg)),                                      \
+          pattern_block.count_error);                                       \
+    }
+
 CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
 {
     Location location_eof =
@@ -2287,7 +2306,64 @@ LilyAstBodyFunItem *
 parse_match_stmt__LilyParser(LilyParser *self,
                              const LilyPreparserFunBodyItem *item)
 {
-    TODO("Issue #41");
+    // 1. Parse expression
+    LilyParseBlock expr_block =
+      NEW(LilyParseBlock, self, item->stmt_match.expr);
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+    CHECK_EXPR(
+      expr, expr_block, NULL, "expected `do` keyword", { return NULL; });
+
+    // 2. Parse case(s)
+    Vec *cases = NEW(Vec); // Vec<LilyAstStmtMatchCase*>*
+
+    for (Usize i = 0; i < item->stmt_match.patterns->len; i++) {
+        // 3. Parse pattern
+        LilyParseBlock pattern_block =
+          NEW(LilyParseBlock, self, get__Vec(item->stmt_match.patterns, i));
+        LilyAstPattern *pattern = parse_pattern__LilyParseBlock(&pattern_block);
+
+        CHECK_PATTERN(pattern, pattern_block, NULL, "expected `=>` or `?`", {
+            return NULL;
+        });
+
+        // 4. Parse expression
+        LilyAstExpr *cond = NULL;
+        {
+            Vec *cond_preparser = get__Vec(item->stmt_match.pattern_conds, i);
+
+            if (cond_preparser) {
+                LilyParseBlock cond_block =
+                  NEW(LilyParseBlock, self, cond_preparser);
+                cond = parse_expr__LilyParseBlock(&cond_block);
+
+                CHECK_EXPR(cond, cond_block, NULL, "expected `=>`", {});
+            }
+        }
+
+        // 5. Parse fun body item
+        LilyAstBodyFunItem *body_item =
+          parse_fun_body_item_for_stmt__LilyParser(
+            self, get__Vec(item->stmt_match.blocks, i));
+
+        if (body_item) {
+            push__Vec(cases,
+                      NEW(LilyAstStmtMatchCase, pattern, cond, body_item));
+        } else {
+            FREE(LilyAstPattern, pattern);
+
+            if (cond) {
+                FREE(LilyAstExpr, cond);
+            }
+        }
+    }
+
+    return NEW_VARIANT(LilyAstBodyFunItem,
+                       stmt,
+                       NEW_VARIANT(LilyAstStmt,
+                                   match,
+                                   item->location,
+                                   NEW(LilyAstStmtMatch, expr, cases)));
 }
 
 LilyAstBodyFunItem *
