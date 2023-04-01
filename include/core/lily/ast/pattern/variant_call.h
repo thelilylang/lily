@@ -27,10 +27,12 @@
 
 #include <core/lily/ast/expr.h>
 
+typedef struct LilyAstPattern LilyAstPattern;
+
 typedef struct LilyAstPatternVariantCall
 {
     LilyAstExpr *id;
-    Vec *patterns; // Vec<LilyAstPattern*>*
+    LilyAstPattern *pattern;
 } LilyAstPatternVariantCall;
 
 /**
@@ -40,9 +42,9 @@ typedef struct LilyAstPatternVariantCall
 inline CONSTRUCTOR(LilyAstPatternVariantCall,
                    LilyAstPatternVariantCall,
                    LilyAstExpr *id,
-                   Vec *patterns)
+                   LilyAstPattern *pattern)
 {
-    return (LilyAstPatternVariantCall){ .id = id, .patterns = patterns };
+    return (LilyAstPatternVariantCall){ .id = id, .pattern = pattern };
 }
 
 /**
