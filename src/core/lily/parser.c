@@ -2572,6 +2572,12 @@ parse_range_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *left)
 
     LilyAstPattern *right = parse_pattern__LilyParseBlock(self);
 
+	if (!right) {
+		FREE(LilyAstPattern, left);
+		
+		return NULL;
+	}
+
     end__Location(
       &location, right->location.end_line, right->location.end_column);
 
@@ -2678,6 +2684,10 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
             // ERROR: unexpected token.
             return NULL;
     }
+
+	if (!pattern) {
+		return NULL;
+	}
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_AS:
