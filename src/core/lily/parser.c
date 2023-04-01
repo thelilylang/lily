@@ -2631,7 +2631,7 @@ parse_exception_pattern__LilyParseBlock(LilyParseBlock *self)
     LilyAstPattern *pattern = parse_pattern__LilyParseBlock(self);
 
     if (!pattern) {
-		FREE(LilyAstExpr, id);
+        FREE(LilyAstExpr, id);
 
         return NULL;
     }
