@@ -2370,7 +2370,21 @@ LilyAstBodyFunItem *
 parse_next_stmt__LilyParser(LilyParser *self,
                             const LilyPreparserFunBodyItem *item)
 {
-    TODO("Issue #42");
+    if (item->stmt_next.name) {
+        return NEW_VARIANT(
+          LilyAstBodyFunItem,
+          stmt,
+          NEW_VARIANT(LilyAstStmt,
+                      next,
+                      item->location,
+                      NEW(LilyAstStmtNext, item->stmt_next.name)));
+    }
+
+    return NEW_VARIANT(
+      LilyAstBodyFunItem,
+      stmt,
+      NEW_VARIANT(
+        LilyAstStmt, next, item->location, NEW(LilyAstStmtNext, NULL)));
 }
 
 LilyAstBodyFunItem *
