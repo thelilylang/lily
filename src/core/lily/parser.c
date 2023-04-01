@@ -1181,46 +1181,29 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
     return NULL;
 }
 
-#define PARSE_CLOSING(closing)                                          \
-    Vec *exprs = NEW(Vec); /* Vec<LilyAstExpr*>* */                     \
-    while (self->current->kind != closing) {                            \
-        LilyAstExpr *expr = parse_expr__LilyParseBlock(self);           \
-                                                                        \
-        if (expr) {                                                     \
-            push__Vec(exprs, expr);                                     \
-        } else {                                                        \
-            SKIP_TO_TOKEN(closing);                                     \
-                                                                        \
-            FREE_BUFFER_ITEMS(exprs->buffer, exprs->len, LilyAstExpr);  \
-            FREE(Vec, exprs);                                           \
-                                                                        \
-            return NULL;                                                \
-        }                                                               \
-                                                                        \
-        if (self->current->kind != closing) {                           \
-            switch (self->current->kind) {                              \
-                case LILY_TOKEN_KIND_COMMA:                             \
-                    next_token__LilyParseBlock(self);                   \
-                    break;                                              \
-                default:                                                \
-                    emit__Diagnostic(                                   \
-                      NEW_VARIANT(                                      \
-                        Diagnostic,                                     \
-                        simple_lily_error,                              \
-                        self->file,                                     \
-                        &self->current->location,                       \
-                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN), \
-                        NULL,                                           \
-                        NULL,                                           \
-                        from__String("expected `,`")),                  \
-                      self->count_error);                               \
-            }                                                           \
-        }                                                               \
-    }                                                                   \
-                                                                        \
-    end__Location(&location,                                            \
-                  self->current->location.end_line,                     \
-                  self->current->location.end_column);                  \
+// NOTE: only used to parse expression between (), {}, [] by example.
+#define PARSE_CLOSING(closing)                                         \
+    Vec *exprs = NEW(Vec); /* Vec<LilyAstExpr*>* */                    \
+    while (self->current->kind != closing) {                           \
+        LilyAstExpr *expr = parse_expr__LilyParseBlock(self);          \
+                                                                       \
+        if (expr) {                                                    \
+            push__Vec(exprs, expr);                                    \
+        } else {                                                       \
+            SKIP_TO_TOKEN(closing);                                    \
+                                                                       \
+            FREE_BUFFER_ITEMS(exprs->buffer, exprs->len, LilyAstExpr); \
+            FREE(Vec, exprs);                                          \
+                                                                       \
+            return NULL;                                               \
+        }                                                              \
+                                                                       \
+        CHECK_COMMA(closing)                                           \
+    }                                                                  \
+                                                                       \
+    end__Location(&location,                                           \
+                  self->current->location.end_line,                    \
+                  self->current->location.end_column);                 \
     next_token__LilyParseBlock(self); /* skip closing */
 
 LilyAstExpr *
@@ -2453,7 +2436,16 @@ parse_array_pattern__LilyParseBlock(LilyParseBlock *self)
 
         if (pattern) {
             push__Vec(patterns, pattern);
+        } else {
+            FREE_BUFFER_ITEMS(patterns->buffer, patterns->len, LilyAstPattern);
+            FREE(Vec, patterns);
+
+            SKIP_TO_TOKEN(LILY_TOKEN_KIND_R_HOOK);
+
+            return NULL;
         }
+
+        CHECK_COMMA(LILY_TOKEN_KIND_R_HOOK);
     }
 
     end__Location(&location,
