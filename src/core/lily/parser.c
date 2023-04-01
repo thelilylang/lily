@@ -2416,7 +2416,31 @@ LilyAstBodyFunItem *
 parse_try_stmt__LilyParser(LilyParser *self,
                            const LilyPreparserFunBodyItem *item)
 {
-    TODO("Issue #101");
+    Vec *body = parse_fun_body__LilyParser(self, item->stmt_try.block);
+    LilyAstExpr *catch_expr = NULL;
+    Vec *catch_body = NULL;
+
+    if (item->stmt_try.catch_expr) {
+        LilyParseBlock catch_expr_block =
+          NEW(LilyParseBlock, self, item->stmt_try.catch_expr);
+        catch_expr = parse_expr__LilyParseBlock(&catch_expr_block);
+
+        CHECK_EXPR(
+          catch_expr, catch_expr_block, NULL, "expected `do` keyword", {
+              return NULL;
+          });
+
+        catch_body =
+          parse_fun_body__LilyParser(self, item->stmt_try.catch_block);
+    }
+
+    return NEW_VARIANT(
+      LilyAstBodyFunItem,
+      stmt,
+      NEW_VARIANT(LilyAstStmt,
+                  try,
+                  item->location,
+                  NEW(LilyAstStmtTry, body, catch_expr, catch_body)));
 }
 
 LilyAstBodyFunItem *
