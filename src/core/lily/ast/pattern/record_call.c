@@ -28,6 +28,49 @@
 #include <core/lily/ast/pattern.h>
 #include <core/lily/ast/pattern/record_call.h>
 
+CONSTRUCTOR(LilyAstPatternRecordField *,
+            LilyAstPatternRecordField,
+            String *name,
+            LilyAstPattern *pattern)
+{
+    LilyAstPatternRecordField *self =
+      lily_malloc(sizeof(LilyAstPatternRecordField));
+
+    self->name = name;
+    self->pattern = pattern;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstPatternRecordField,
+               const LilyAstPatternRecordField *self)
+{
+    if (self->name) {
+        return format__String(
+          "LilyAstPatternRecordField{{ name = {S}, pattern = {Sr} }",
+          self->name,
+          to_string__Debug__LilyAstPattern(self->pattern));
+    }
+
+    return format__String(
+      "LilyAstPatternRecordField{{ name = NULL, pattern = {Sr} }",
+      to_string__Debug__LilyAstPattern(self->pattern));
+}
+#endif
+
+DESTRUCTOR(LilyAstPatternRecordField, LilyAstPatternRecordField *self)
+{
+    if (self->name) {
+        FREE(String, self->name);
+    }
+
+    FREE(LilyAstPattern, self->pattern);
+    lily_free(self);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -37,13 +80,13 @@ IMPL_FOR_DEBUG(to_string,
     String *res = NULL;
 
     if (self->id) {
-        res = format__String("LilyAstPatternRecordCall{{ id = {Sr}, patterns =",
+        res = format__String("LilyAstPatternRecordCall{{ id = {Sr}, fields =",
                              to_string__Debug__LilyAstExpr(self->id));
     } else {
-        res = from__String("LilyAstPatternRecordCall{ id = NULL, patterns =");
+        res = from__String("LilyAstPatternRecordCall{ id = NULL, fields =");
     }
 
-    DEBUG_VEC_STRING(self->patterns, res, LilyAstPattern);
+    DEBUG_VEC_STRING(self->fields, res, LilyAstPatternRecordField);
 
     push_str__String(res, " }");
 
@@ -58,6 +101,6 @@ DESTRUCTOR(LilyAstPatternRecordCall, const LilyAstPatternRecordCall *self)
     }
 
     FREE_BUFFER_ITEMS(
-      self->patterns->buffer, self->patterns->len, LilyAstPattern);
-    FREE(Vec, self->patterns);
+      self->fields->buffer, self->fields->len, LilyAstPatternRecordField);
+    FREE(Vec, self->fields);
 }

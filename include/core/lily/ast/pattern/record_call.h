@@ -32,10 +32,45 @@
 
 typedef struct LilyAstPattern LilyAstPattern;
 
+// <name> = <pattern>
+// <pattern>
+typedef struct LilyAstPatternRecordField
+{
+    String *name; // String*?
+    LilyAstPattern *pattern;
+} LilyAstPatternRecordField;
+
+/**
+ *
+ * @brief Construct LilyAstPatternRecordField type.
+ */
+CONSTRUCTOR(LilyAstPatternRecordField *,
+            LilyAstPatternRecordField,
+            String *name,
+            LilyAstPattern *pattern);
+
+/**
+ *
+ * @brief Convert LilyAstPatternRecordField in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstPatternRecordField,
+               const LilyAstPatternRecordField *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstPatternRecordField type.
+ */
+DESTRUCTOR(LilyAstPatternRecordField, LilyAstPatternRecordField *self);
+
 typedef struct LilyAstPatternRecordCall
 {
     LilyAstExpr *id; // LilyAstExpr*?
-    Vec *patterns;   // Vec<LilyAstPattern*>*
+    Vec *fields;     // Vec<LilyAstPatternRecordField*>*
 } LilyAstPatternRecordCall;
 
 /**
@@ -45,9 +80,9 @@ typedef struct LilyAstPatternRecordCall
 inline CONSTRUCTOR(LilyAstPatternRecordCall,
                    LilyAstPatternRecordCall,
                    LilyAstExpr *id,
-                   Vec *patterns)
+                   Vec *fields)
 {
-    return (LilyAstPatternRecordCall){ .id = id, .patterns = patterns };
+    return (LilyAstPatternRecordCall){ .id = id, .fields = fields };
 }
 
 /**
