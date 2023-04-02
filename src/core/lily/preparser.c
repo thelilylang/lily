@@ -5052,11 +5052,11 @@ DESTRUCTOR(LilyPreparserRecord, const LilyPreparserRecord *self)
     FREE(String, self->name);
 #endif
 
-	if (self->generic_params) {
-		FREE_BUFFER_ITEMS_2(
-		  self->generic_params->buffer, self->generic_params->len, LilyToken);
-		FREE(Vec, self->generic_params);
-	}
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS_2(
+          self->generic_params->buffer, self->generic_params->len, LilyToken);
+        FREE(Vec, self->generic_params);
+    }
 
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyPreparserRecordBodyItem);
