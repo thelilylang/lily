@@ -256,6 +256,68 @@ parse_variant_call_pattern__LilyParseBlock(LilyParseBlock *self,
 static LilyAstPattern *
 parse_pattern__LilyParseBlock(LilyParseBlock *self);
 
+// Parse alias declaration.
+static LilyAstDecl *
+parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse attribute declaration.
+static LilyAstBodyClassItem *
+parse_attribute_decl__LilyParser(LilyParser *self,
+                                 LilyPreparserClassBodyItem *item);
+
+// Parse class declaration.
+static LilyAstDecl *
+parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse constant declaration.
+static LilyAstDecl *
+parse_constant_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse enum declaration.
+static LilyAstDecl *
+parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse enum object declaration.
+static LilyAstDecl *
+parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse fun declaration.
+static LilyAstDecl *
+parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse method declaration.
+static LilyAstBodyClassItem *
+parse_method_decl__LilyParser(LilyParser *self,
+                              LilyPreparserClassBodyItem *item);
+
+// Parse object declaration.
+static LilyAstDecl *
+parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse prototype declaration.
+static LilyAstBodyTraitItem *
+parse_prototype_decl__LilyParser(LilyParser *self,
+                                 LilyPreparserTraitBodyItem *item);
+
+// Parse record declaration.
+static LilyAstDecl *
+parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse record object declaration.
+static LilyAstDecl *
+parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse trait declaration.
+static LilyAstDecl *
+parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse type declaration.
+static LilyAstDecl *
+parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+static LilyAstDecl *
+parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
            self->current->kind != LILY_TOKEN_KIND_EOF) { \
@@ -3096,6 +3158,114 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
     return pattern;
 }
 
+LilyAstDecl *
+parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue #72");
+}
+
+LilyAstBodyClassItem *
+parse_attribute_decl__LilyParser(LilyParser *self,
+                                 LilyPreparserClassBodyItem *item)
+{
+    TODO("Issue #73");
+}
+
+LilyAstDecl *
+parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue #74");
+}
+
+LilyAstDecl *
+parse_constant_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue #75");
+}
+
+LilyAstDecl *
+parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue #76");
+}
+
+LilyAstDecl *
+parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue #77");
+}
+
+LilyAstDecl *
+parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue #78");
+}
+
+LilyAstBodyClassItem *
+parse_method_decl__LilyParser(LilyParser *self,
+                              LilyPreparserClassBodyItem *item)
+{
+    TODO("Issue #79");
+}
+
+LilyAstDecl *
+parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue 80");
+}
+
+LilyAstBodyTraitItem *
+parse_prototype_decl__LilyParser(LilyParser *self,
+                                 LilyPreparserTraitBodyItem *item)
+{
+    TODO("Issue #81");
+}
+
+LilyAstDecl *
+parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue #82");
+}
+
+LilyAstDecl *
+parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue #83");
+}
+
+LilyAstDecl *
+parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue #84");
+}
+
+LilyAstDecl *
+parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    TODO("Issue #85");
+}
+
+LilyAstDecl *
+parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    switch (decl->kind) {
+        case LILY_PREPARSER_DECL_KIND_CONSTANT:
+            return parse_constant_decl__LilyParser(self, decl);
+        case LILY_PREPARSER_DECL_KIND_FUN:
+            return parse_fun_decl__LilyParser(self, decl);
+        case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
+            return NULL;
+        case LILY_PREPARSER_DECL_KIND_MODULE:
+            return NULL;
+        case LILY_PREPARSER_DECL_KIND_OBJECT:
+            return parse_object_decl__LilyParser(self, decl);
+        case LILY_PREPARSER_DECL_KIND_TYPE:
+            return parse_type_decl__LilyParser(self, decl);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self)
 {
     return parse_data_type__LilyParseBlock(self);
@@ -3107,8 +3277,17 @@ TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self)
 }
 
 void
-run__LilyParser(LilyParser *self)
+run__LilyParser(LilyParser *self, LilyPackage *root_package)
 {
+    for (Usize i = 0; i < self->package->preparser_info.decls->len; i++) {
+        LilyAstDecl *decl = parse_decl__LilyParser(
+          self, get__Vec(self->package->preparser_info.decls, i));
+
+        if (decl) {
+            push__Vec(self->decls, decl);
+        }
+    }
+
 #ifdef DEBUG_PARSER
     printf("====Parser(%s)====\n", self->package->file.name);
 

@@ -92,7 +92,7 @@ TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self);
  * @brief Run the parser.
  */
 void
-run__LilyParser(LilyParser *self);
+run__LilyParser(LilyParser *self, LilyPackage *root_package);
 
 /**
  *
