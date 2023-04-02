@@ -824,6 +824,7 @@ static DESTRUCTOR(LilyPreparserObject, const LilyPreparserObject *self);
 static inline CONSTRUCTOR(LilyPreparserAlias,
                           LilyPreparserAlias,
                           String *name,
+                          Vec *generic_params,
                           Vec *data_type,
                           enum LilyVisibility visibility);
 
@@ -865,6 +866,7 @@ static DESTRUCTOR(LilyPreparserEnumBodyItem, LilyPreparserEnumBodyItem *self);
 static inline CONSTRUCTOR(LilyPreparserEnum,
                           LilyPreparserEnum,
                           String *name,
+                          Vec *generic_params,
                           Vec *body,
                           enum LilyVisibility visibility);
 
@@ -907,6 +909,7 @@ static DESTRUCTOR(LilyPreparserRecordBodyItem,
 static inline CONSTRUCTOR(LilyPreparserRecord,
                           LilyPreparserRecord,
                           String *name,
+                          Vec *generic_params,
                           Vec *body,
                           enum LilyVisibility visibility);
 
@@ -1309,7 +1312,9 @@ static LilyPreparserRecordBodyItem *
 preparse_macro_expand_for_record__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserDecl *
-preparse_record__LilyPreparser(LilyPreparser *self, String *name);
+preparse_record__LilyPreparser(LilyPreparser *self,
+                               String *name,
+                               Vec *generic_params);
 
 static LilyPreparserEnumVariant *
 preparse_enum_variant__LilyPreparser(LilyPreparser *self);
@@ -1318,10 +1323,14 @@ static LilyPreparserEnumBodyItem *
 preparse_macro_expand_for_enum__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserDecl *
-preparse_enum__LilyPreparser(LilyPreparser *self, String *name);
+preparse_enum__LilyPreparser(LilyPreparser *self,
+                             String *name,
+                             Vec *generic_params);
 
 static LilyPreparserDecl *
-preparse_alias__LilyPreparser(LilyPreparser *self, String *name);
+preparse_alias__LilyPreparser(LilyPreparser *self,
+                              String *name,
+                              Vec *generic_params);
 
 static LilyPreparserDecl *
 preparse_macro_expand__LilyPreparser(LilyPreparser *self);
@@ -4759,10 +4768,12 @@ DESTRUCTOR(LilyPreparserRecordBodyItem, LilyPreparserRecordBodyItem *self)
 CONSTRUCTOR(LilyPreparserAlias,
             LilyPreparserAlias,
             String *name,
+            Vec *generic_params,
             Vec *data_type,
             enum LilyVisibility visibility)
 {
     return (LilyPreparserAlias){ .name = name,
+                                 .generic_params = generic_params,
                                  .data_type = data_type,
                                  .visibility = visibility };
 }
@@ -4771,9 +4782,16 @@ CONSTRUCTOR(LilyPreparserAlias,
 String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserAlias, const LilyPreparserAlias *self)
 {
-    String *res = format__String("LilyPreparserAlias{{ name = {S}, data_type =",
-                                 self->name);
+    String *res = format__String(
+      "LilyPreparserAlias{{ name = {S}, generic_params =", self->name);
 
+    if (self->generic_params) {
+        DEBUG_VEC_STR(self->generic_params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", data_type =");
     DEBUG_VEC_STR(self->data_type, res, LilyToken);
 
     {
@@ -4792,6 +4810,12 @@ DESTRUCTOR(LilyPreparserAlias, const LilyPreparserAlias *self)
 #ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
 #endif
+
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS_2(
+          self->generic_params->buffer, self->generic_params->len, LilyToken);
+        FREE(Vec, self->generic_params);
+    }
 
     FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
     FREE(Vec, self->data_type);
@@ -4928,10 +4952,12 @@ DESTRUCTOR(LilyPreparserEnumBodyItem, LilyPreparserEnumBodyItem *self)
 CONSTRUCTOR(LilyPreparserEnum,
             LilyPreparserEnum,
             String *name,
+            Vec *generic_params,
             Vec *body,
             enum LilyVisibility visibility)
 {
     return (LilyPreparserEnum){ .name = name,
+                                .generic_params = generic_params,
                                 .body = body,
                                 .visibility = visibility };
 }
@@ -4940,9 +4966,16 @@ CONSTRUCTOR(LilyPreparserEnum,
 String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserEnum, const LilyPreparserEnum *self)
 {
-    String *res =
-      format__String("LilyPreparserEnum{{ name = {S}, body =", self->name);
+    String *res = format__String(
+      "LilyPreparserEnum{{ name = {S}, generic_params =", self->name);
 
+    if (self->generic_params) {
+        DEBUG_VEC_STR_2(self->generic_params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", body =");
     DEBUG_VEC_STRING(self->body, res, LilyPreparserEnumBodyItem);
 
     {
@@ -4962,6 +4995,12 @@ DESTRUCTOR(LilyPreparserEnum, const LilyPreparserEnum *self)
     FREE(String, self->name);
 #endif
 
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS_2(
+          self->generic_params->buffer, self->generic_params->len, LilyToken);
+        FREE(Vec, self->generic_params);
+    }
+
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyPreparserEnumBodyItem);
     FREE(Vec, self->body);
@@ -4970,10 +5009,12 @@ DESTRUCTOR(LilyPreparserEnum, const LilyPreparserEnum *self)
 CONSTRUCTOR(LilyPreparserRecord,
             LilyPreparserRecord,
             String *name,
+            Vec *generic_params,
             Vec *body,
             enum LilyVisibility visibility)
 {
     return (LilyPreparserRecord){ .name = name,
+                                  .generic_params = generic_params,
                                   .body = body,
                                   .visibility = visibility };
 }
@@ -4982,9 +5023,16 @@ CONSTRUCTOR(LilyPreparserRecord,
 String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserRecord, const LilyPreparserRecord *self)
 {
-    String *res =
-      format__String("LilyPreparserRecord{{ name = {S}, fields =", self->name);
+    String *res = format__String(
+      "LilyPreparserRecord{{ name = {S}, generic_params =", self->name);
 
+    if (self->generic_params) {
+        DEBUG_VEC_STR_2(self->generic_params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", body =");
     DEBUG_VEC_STRING(self->body, res, LilyPreparserRecordBodyItem);
 
     {
@@ -5003,6 +5051,12 @@ DESTRUCTOR(LilyPreparserRecord, const LilyPreparserRecord *self)
 #ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
 #endif
+
+	if (self->generic_params) {
+		FREE_BUFFER_ITEMS_2(
+		  self->generic_params->buffer, self->generic_params->len, LilyToken);
+		FREE(Vec, self->generic_params);
+	}
 
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyPreparserRecordBodyItem);
@@ -10934,6 +10988,18 @@ preparse_type__LilyPreparser(LilyPreparser *self)
             name = from__String("__error__");
     }
 
+    // 3. Parse generic params
+    Vec *generic_params = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_HOOK:
+            generic_params = preparse_hook_with_comma_sep__LilyPreparser(self);
+
+            break;
+        default:
+            break;
+    }
+
     // 2. Check kind of type
     enum LilyTokenKind kind_of_type = self->current->kind;
 
@@ -10962,11 +11028,11 @@ preparse_type__LilyPreparser(LilyPreparser *self)
 
     switch (kind_of_type) {
         case LILY_TOKEN_KIND_KEYWORD_ALIAS:
-            return preparse_alias__LilyPreparser(self, name);
+            return preparse_alias__LilyPreparser(self, name, generic_params);
         case LILY_TOKEN_KIND_KEYWORD_ENUM:
-            return preparse_enum__LilyPreparser(self, name);
+            return preparse_enum__LilyPreparser(self, name, generic_params);
         case LILY_TOKEN_KIND_KEYWORD_RECORD:
-            return preparse_record__LilyPreparser(self, name);
+            return preparse_record__LilyPreparser(self, name, generic_params);
         default:
             emit__Diagnostic(
               NEW_VARIANT(
@@ -11135,7 +11201,9 @@ preparse_macro_expand_for_record__LilyPreparser(LilyPreparser *self)
 }
 
 LilyPreparserDecl *
-preparse_record__LilyPreparser(LilyPreparser *self, String *name)
+preparse_record__LilyPreparser(LilyPreparser *self,
+                               String *name,
+                               Vec *generic_params)
 {
     enum LilyVisibility visibility = visibility_decl;
     Location location = location_decl;
@@ -11317,9 +11385,10 @@ preparse_record__LilyPreparser(LilyPreparser *self, String *name)
       LilyPreparserDecl,
       type,
       location,
-      NEW_VARIANT(LilyPreparserType,
-                  record,
-                  NEW(LilyPreparserRecord, name, body, visibility)));
+      NEW_VARIANT(
+        LilyPreparserType,
+        record,
+        NEW(LilyPreparserRecord, name, generic_params, body, visibility)));
 }
 
 static LilyPreparserEnumVariant *
@@ -11412,7 +11481,9 @@ preparse_macro_expand_for_enum__LilyPreparser(LilyPreparser *self)
 }
 
 LilyPreparserDecl *
-preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
+preparse_enum__LilyPreparser(LilyPreparser *self,
+                             String *name,
+                             Vec *generic_params)
 {
     enum LilyVisibility visibility = visibility_decl;
     Location location = location_decl;
@@ -11536,13 +11607,16 @@ preparse_enum__LilyPreparser(LilyPreparser *self, String *name)
       LilyPreparserDecl,
       type,
       location,
-      NEW_VARIANT(LilyPreparserType,
-                  enum_,
-                  NEW(LilyPreparserEnum, name, body, visibility)));
+      NEW_VARIANT(
+        LilyPreparserType,
+        enum_,
+        NEW(LilyPreparserEnum, name, generic_params, body, visibility)));
 }
 
 LilyPreparserDecl *
-preparse_alias__LilyPreparser(LilyPreparser *self, String *name)
+preparse_alias__LilyPreparser(LilyPreparser *self,
+                              String *name,
+                              Vec *generic_params)
 {
     Vec *data_type = NEW(Vec); // Vec<LilyToken*>*
 
@@ -11584,13 +11658,16 @@ preparse_alias__LilyPreparser(LilyPreparser *self, String *name)
             UNREACHABLE("this way is impossible");
     }
 
-    return NEW_VARIANT(
-      LilyPreparserDecl,
-      type,
-      location_decl,
-      NEW_VARIANT(LilyPreparserType,
-                  alias,
-                  NEW(LilyPreparserAlias, name, data_type, visibility_decl)));
+    return NEW_VARIANT(LilyPreparserDecl,
+                       type,
+                       location_decl,
+                       NEW_VARIANT(LilyPreparserType,
+                                   alias,
+                                   NEW(LilyPreparserAlias,
+                                       name,
+                                       generic_params,
+                                       data_type,
+                                       visibility_decl)));
 }
 
 LilyPreparserDecl *
