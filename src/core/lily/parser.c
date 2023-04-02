@@ -3320,6 +3320,9 @@ parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     LilyAstDataType *data_type =
       parse_data_type__LilyParseBlock(&data_type_block);
 
+    CHECK_DATA_TYPE(
+      data_type, data_type_block, NULL, "expected `;`", { return NULL; });
+
     return NEW_VARIANT(LilyAstDecl,
                        type,
                        decl->location,
