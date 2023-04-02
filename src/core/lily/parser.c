@@ -3306,7 +3306,30 @@ parse_generic_params__LilyParser(LilyParser *self, Vec *generic_params)
 LilyAstDecl *
 parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #72");
+    // 1. Parse generic params
+    Vec *generic_params = NULL;
+
+    if (decl->type.alias.generic_params) {
+        generic_params = parse_generic_params__LilyParser(
+          self, decl->type.alias.generic_params);
+    }
+
+    // 2. Parse alias data type
+    LilyParseBlock data_type_block =
+      NEW(LilyParseBlock, self, decl->type.alias.data_type);
+    LilyAstDataType *data_type =
+      parse_data_type__LilyParseBlock(&data_type_block);
+
+    return NEW_VARIANT(LilyAstDecl,
+                       type,
+                       decl->location,
+                       NEW_VARIANT(LilyAstDeclType,
+                                   alias,
+                                   NEW(LilyAstDeclAlias,
+                                       decl->type.alias.name,
+                                       generic_params,
+                                       data_type,
+                                       decl->type.alias.visibility)));
 }
 
 LilyAstBodyClassItem *
