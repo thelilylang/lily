@@ -53,8 +53,8 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyAstGenericParamConstraint
 {
-    LilyAstExpr *id;
-    Vec *constraints; // Vec<LilyAstExpr*>*
+    String *name;
+    Vec *constraints; // Vec<LilyAstDataType*>*
 } LilyAstGenericParamConstraint;
 
 /**
@@ -63,10 +63,10 @@ typedef struct LilyAstGenericParamConstraint
  */
 inline CONSTRUCTOR(LilyAstGenericParamConstraint,
                    LilyAstGenericParamConstraint,
-                   LilyAstExpr *id,
+                   String *name,
                    Vec *constraints)
 {
-    return (LilyAstGenericParamConstraint){ .id = id,
+    return (LilyAstGenericParamConstraint){ .name = name,
                                             .constraints = constraints };
 }
 
@@ -92,10 +92,11 @@ DESTRUCTOR(LilyAstGenericParamConstraint,
 typedef struct LilyAstGenericParam
 {
     enum LilyAstGenericParamKind kind;
+    Location location;
     union
     {
         LilyAstGenericParamConstraint constraint;
-        LilyAstExpr *normal; // expected an identifier for normal param
+        String *normal; // expected an identifier for normal param
     };
 } LilyAstGenericParam;
 
@@ -107,6 +108,7 @@ typedef struct LilyAstGenericParam
 VARIANT_CONSTRUCTOR(LilyAstGenericParam *,
                     LilyAstGenericParam,
                     constraint,
+                    Location location,
                     LilyAstGenericParamConstraint constraint);
 
 /**
@@ -117,7 +119,8 @@ VARIANT_CONSTRUCTOR(LilyAstGenericParam *,
 VARIANT_CONSTRUCTOR(LilyAstGenericParam *,
                     LilyAstGenericParam,
                     normal,
-                    LilyAstExpr *normal);
+                    Location location,
+                    String *normal);
 
 /**
  *

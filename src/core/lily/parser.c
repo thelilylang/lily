@@ -256,6 +256,12 @@ parse_variant_call_pattern__LilyParseBlock(LilyParseBlock *self,
 static LilyAstPattern *
 parse_pattern__LilyParseBlock(LilyParseBlock *self);
 
+static LilyAstGenericParam *
+parse_generic_param__LilyParseBlock(LilyParseBlock *self);
+
+static Vec *
+parse_generic_params__LilyParser(LilyParser *self, Vec *generic_params);
+
 // Parse alias declaration.
 static LilyAstDecl *
 parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
@@ -1298,6 +1304,31 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
                                                                        \
             FREE_BUFFER_ITEMS(exprs->buffer, exprs->len, LilyAstExpr); \
             FREE(Vec, exprs);                                          \
+                                                                       \
+            return NULL;                                               \
+        }                                                              \
+                                                                       \
+        CHECK_COMMA(closing)                                           \
+    }                                                                  \
+                                                                       \
+    end__Location(&location,                                           \
+                  self->current->location.end_line,                    \
+                  self->current->location.end_column);                 \
+    next_token__LilyParseBlock(self); /* skip closing */
+
+// NOTE: only used to parse data type between (), {}, [] by example.
+#define DATA_TYPE_PARSE_CLOSING(closing)                               \
+    Vec *dts = NEW(Vec); /* Vec<LilyAstDataType*>* */                  \
+    while (self->current->kind != closing) {                           \
+        LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);   \
+                                                                       \
+        if (dt) {                                                      \
+            push__Vec(dts, dt);                                        \
+        } else {                                                       \
+            SKIP_TO_TOKEN(closing);                                    \
+                                                                       \
+            FREE_BUFFER_ITEMS(dts->buffer, dts->len, LilyAstDataType); \
+            FREE(Vec, dts);                                            \
                                                                        \
             return NULL;                                               \
         }                                                              \
@@ -3162,6 +3193,116 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
     return pattern;
 }
 
+LilyAstGenericParam *
+parse_generic_param__LilyParseBlock(LilyParseBlock *self)
+{
+    Location location = clone__Location(&self->current->location);
+
+    // 1. Parse name
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+
+            next_token__LilyParseBlock(self);
+
+            break;
+        default: {
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->previous->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                          NULL,
+                          NULL,
+                          NULL),
+              self->count_error);
+
+            return NULL;
+        }
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_COLON: {
+            // 2. Parse generic param constraint
+            next_token__LilyParseBlock(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_L_HOOK: {
+                    next_token__LilyParseBlock(self);
+
+                    DATA_TYPE_PARSE_CLOSING(LILY_TOKEN_KIND_R_HOOK);
+
+                    return NEW_VARIANT(
+                      LilyAstGenericParam,
+                      constraint,
+                      location,
+                      NEW(LilyAstGenericParamConstraint, name, dts));
+                }
+                default: {
+                    LilyAstDataType *data_type =
+                      parse_data_type__LilyParseBlock(self);
+
+                    if (!data_type) {
+                        return NULL;
+                    }
+
+                    end__Location(&location,
+                                  data_type->location.end_line,
+                                  data_type->location.end_column);
+
+                    return NEW_VARIANT(LilyAstGenericParam,
+                                       constraint,
+                                       location,
+                                       NEW(LilyAstGenericParamConstraint,
+                                           name,
+                                           init__Vec(1, data_type)));
+                }
+            }
+        }
+        default:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            return NEW_VARIANT(LilyAstGenericParam, normal, location, name);
+    }
+}
+
+Vec *
+parse_generic_params__LilyParser(LilyParser *self, Vec *generic_params)
+{
+    Vec *res = NEW(Vec); // Vec<LilyAstGenericParam*>*
+
+    for (Usize i = 0; i < generic_params->len; i++) {
+        LilyParseBlock generic_param_block =
+          NEW(LilyParseBlock, self, get__Vec(generic_params, i));
+        LilyAstGenericParam *generic_param =
+          parse_generic_param__LilyParseBlock(&generic_param_block);
+
+        if (!HAS_REACHED_THE_END(generic_param_block)) {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                generic_param_block.file,
+                &generic_param_block.current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_ONLY_ONE_GENERIC_PARAM),
+                NULL,
+                NULL,
+                from__String("expected `,`")),
+              generic_param_block.count_error);
+        }
+
+        if (generic_param) {
+            push__Vec(res, generic_param);
+        }
+    }
+
+    return res;
+}
+
 LilyAstDecl *
 parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
@@ -3252,7 +3393,7 @@ parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 void
 apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-	TODO("Issue #119");
+    TODO("Issue #119");
 }
 
 LilyAstDecl *
@@ -3266,7 +3407,7 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
         case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
             return NULL;
         case LILY_PREPARSER_DECL_KIND_MODULE:
-			apply_macro_expansion__LilyParser(self, decl);
+            apply_macro_expansion__LilyParser(self, decl);
 
             return NULL;
         case LILY_PREPARSER_DECL_KIND_OBJECT:

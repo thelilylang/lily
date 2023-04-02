@@ -147,6 +147,8 @@ to_msg__LilyError(const LilyError *self)
             return "expected only one pattern";
         case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_DATA_TYPE:
             return "expected only one data type";
+        case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_GENERIC_PARAM:
+            return "expected only one generic param";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -268,6 +270,8 @@ to_code__LilyError(const LilyError *self)
             return "0055";
         case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_DATA_TYPE:
             return "0056";
+        case LILY_ERROR_KIND_EXPECTED_ONLY_ONE_GENERIC_PARAM:
+            return "0057";
         default:
             UNREACHABLE("unknown variant");
     }

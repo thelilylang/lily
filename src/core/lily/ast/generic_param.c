@@ -63,11 +63,10 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstGenericParamConstraint,
                const LilyAstGenericParamConstraint *self)
 {
-    String *res =
-      format__String("LilyAstGenericParamConstraint{{ id = {Sr}, constraints =",
-                     to_string__Debug__LilyAstExpr(self->id));
+    String *res = format__String(
+      "LilyAstGenericParamConstraint{{ name = {S}, constraints =", self->name);
 
-    DEBUG_VEC_STRING(self->constraints, res, LilyAstGenericParamConstraint);
+    DEBUG_VEC_STRING(self->constraints, res, LilyAstDataType);
     push_str__String(res, " }");
 
     return res;
@@ -77,20 +76,22 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyAstGenericParamConstraint,
            const LilyAstGenericParamConstraint *self)
 {
-    FREE(LilyAstExpr, self->id);
+    FREE_MOVE(self->name, FREE(String, self->name));
     FREE_BUFFER_ITEMS(
-      self->constraints->buffer, self->constraints->len, LilyAstExpr);
+      self->constraints->buffer, self->constraints->len, LilyAstDataType);
     FREE(Vec, self->constraints);
 }
 
 VARIANT_CONSTRUCTOR(LilyAstGenericParam *,
                     LilyAstGenericParam,
                     normal,
-                    LilyAstExpr *normal)
+                    Location location,
+                    String *normal)
 {
     LilyAstGenericParam *self = lily_malloc(sizeof(LilyAstGenericParam));
 
     self->kind = LILY_AST_GENERIC_PARAM_KIND_NORMAL;
+    self->location = location;
     self->normal = normal;
 
     return self;
@@ -99,11 +100,13 @@ VARIANT_CONSTRUCTOR(LilyAstGenericParam *,
 VARIANT_CONSTRUCTOR(LilyAstGenericParam *,
                     LilyAstGenericParam,
                     constraint,
+                    Location location,
                     LilyAstGenericParamConstraint constraint)
 {
     LilyAstGenericParam *self = lily_malloc(sizeof(LilyAstGenericParam));
 
     self->kind = LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT;
+    self->location = location;
     self->constraint = constraint;
 
     return self;
@@ -114,8 +117,9 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyAstGenericParam, const LilyAstGenericParam *self)
 {
     String *res =
-      format__String("LilyAstGenericParam{{ kind = {s}",
-                     to_string__Debug__LilyAstGenericParamKind(self->kind));
+      format__String("LilyAstGenericParam{{ kind = {s}, location = {sa}",
+                     to_string__Debug__LilyAstGenericParamKind(self->kind),
+                     to_string__Debug__Location(&self->location));
 
     switch (self->kind) {
         case LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT: {
@@ -128,8 +132,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstGenericParam, const LilyAstGenericParam *self)
             break;
         }
         case LILY_AST_GENERIC_PARAM_KIND_NORMAL: {
-            char *s = format(", normal = {Sr} }",
-                             to_string__Debug__LilyAstExpr(self->normal));
+            char *s = format(", normal = {S} }", self->normal);
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -151,7 +154,7 @@ VARIANT_DESTRUCTOR(LilyAstGenericParam, constraint, LilyAstGenericParam *self)
 
 VARIANT_DESTRUCTOR(LilyAstGenericParam, normal, LilyAstGenericParam *self)
 {
-    FREE(LilyAstExpr, self->normal);
+    FREE_MOVE(self->normal, FREE(String, self->normal));
     lily_free(self);
 }
 
