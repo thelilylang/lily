@@ -315,6 +315,10 @@ parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 static LilyAstDecl *
 parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
+static void
+apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse declaration.
 static LilyAstDecl *
 parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
@@ -3245,6 +3249,12 @@ parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     TODO("Issue #85");
 }
 
+void
+apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+	TODO("Issue #119");
+}
+
 LilyAstDecl *
 parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
@@ -3256,6 +3266,8 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
         case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
             return NULL;
         case LILY_PREPARSER_DECL_KIND_MODULE:
+			apply_macro_expansion__LilyParser(self, decl);
+
             return NULL;
         case LILY_PREPARSER_DECL_KIND_OBJECT:
             return parse_object_decl__LilyParser(self, decl);
