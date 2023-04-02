@@ -29,11 +29,13 @@
 #include <base/string.h>
 
 #include <core/lily/ast/data_type.h>
+#include <core/lily/ast/generic_param.h>
 #include <core/lily/visibility.h>
 
 typedef struct LilyAstDeclAlias
 {
     String *name;
+    Vec *generic_params; // Vec<LilyAstGenericParam*>*?
     LilyAstDataType *data_type;
     enum LilyVisibility visibility;
 } LilyAstDeclAlias;
@@ -45,10 +47,12 @@ typedef struct LilyAstDeclAlias
 inline CONSTRUCTOR(LilyAstDeclAlias,
                    LilyAstDeclAlias,
                    String *name,
+                   Vec *generic_params,
                    LilyAstDataType *data_type,
                    enum LilyVisibility visibility)
 {
     return (LilyAstDeclAlias){ .name = name,
+                               .generic_params = generic_params,
                                .data_type = data_type,
                                .visibility = visibility };
 }
