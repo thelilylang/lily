@@ -145,7 +145,7 @@ build__LilyPackage(const CompileConfig *config,
                                      config->dump_ir);
 
     run__LilyPrecompile(&self->precompile, &dump_config, self);
-    run__LilyParser(&self->parser);
+    run__LilyParser(&self->parser, self);
 
 #ifdef RUN_UNTIL_PRECOMPILE
     FREE(LilyPackage, self);
