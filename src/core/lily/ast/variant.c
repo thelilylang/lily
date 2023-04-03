@@ -23,20 +23,49 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
+
 #include <core/lily/ast/variant.h>
+
+CONSTRUCTOR(LilyAstVariant *,
+            LilyAstVariant,
+            String *name,
+            LilyAstDataType *data_type,
+            Location location)
+{
+    LilyAstVariant *self = lily_malloc(sizeof(LilyAstVariant));
+
+    self->name = name;
+    self->data_type = data_type;
+    self->location = location;
+
+    return self;
+}
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstVariant, const LilyAstVariant *self)
 {
-    return format__String("LilyAstVariant{{ name = {S}, data_type = {Sr} }",
-                          self->name,
-                          to_string__Debug__LilyAstDataType(self->data_type));
+    if (self->data_type) {
+        return format__String(
+          "LilyAstVariant{{ name = {S}, data_type = {Sr}, location = {sa} }",
+          self->name,
+          to_string__Debug__LilyAstDataType(self->data_type),
+          to_string__Debug__Location(&self->location));
+    }
+
+    return format__String(
+      "LilyAstVariant{{ name = {S}, data_type = NULL, location = {sa} }",
+      self->name,
+      to_string__Debug__Location(&self->location));
 }
 #endif
 
 DESTRUCTOR(LilyAstVariant, const LilyAstVariant *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
-    FREE(LilyAstDataType, self->data_type);
+
+    if (self->data_type) {
+        FREE(LilyAstDataType, self->data_type);
+    }
 }
