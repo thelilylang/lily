@@ -3600,7 +3600,18 @@ parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 LilyAstDecl *
 parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #85");
+	switch (decl->type.kind) {
+		case LILY_PREPARSER_TYPE_KIND_ALIAS:
+			return parse_alias_decl__LilyParser(self, decl);
+		case LILY_PREPARSER_TYPE_KIND_ENUM:
+			return parse_enum_decl__LilyParser(self, decl);
+		case LILY_PREPARSER_TYPE_KIND_RECORD:
+			return parse_record_decl__LilyParser(self, decl);
+		default:
+			UNREACHABLE("unknown variant");
+	}
+
+	return NULL;
 }
 
 void
