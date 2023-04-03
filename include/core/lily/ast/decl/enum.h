@@ -34,17 +34,20 @@
 typedef struct LilyAstDeclEnum
 {
     String *name;
-    Vec *variants; // Vec<LilyAstVariant*>*
+    Vec *generic_params; // Vec<LilyAstGenericParam*>*
+    Vec *variants;       // Vec<LilyAstVariant*>*
     enum LilyVisibility visibility;
 } LilyAstDeclEnum;
 
 inline CONSTRUCTOR(LilyAstDeclEnum,
                    LilyAstDeclEnum,
                    String *name,
+                   Vec *generic_params,
                    Vec *variants,
                    enum LilyVisibility visibility)
 {
     return (LilyAstDeclEnum){ .name = name,
+                              .generic_params = generic_params,
                               .variants = variants,
                               .visibility = visibility };
 }
