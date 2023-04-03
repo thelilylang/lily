@@ -3339,7 +3339,41 @@ LilyAstBodyClassItem *
 parse_attribute_decl__LilyParser(LilyParser *self,
                                  LilyPreparserClassBodyItem *item)
 {
-    TODO("Issue #73");
+    // 1. Parse data type
+    LilyParseBlock data_type_block =
+      NEW(LilyParseBlock, self, item->attribute.data_type);
+    LilyAstDataType *data_type =
+      parse_data_type__LilyParseBlock(&data_type_block);
+
+    CHECK_DATA_TYPE(
+      data_type, data_type_block, NULL, "expected `:=`, `::` or `;`", {
+          return NULL;
+      });
+
+    // 2. Parse expression
+    LilyAstExpr *expr = NULL;
+
+    if (item->attribute.default_expr) {
+        LilyParseBlock expr_block =
+          NEW(LilyParseBlock, self, item->attribute.default_expr);
+        expr = parse_expr__LilyParseBlock(&expr_block);
+
+        CHECK_EXPR(expr, expr_block, NULL, "expected `::` or `;`", {
+            FREE(LilyAstDataType, data_type);
+            return NULL;
+        });
+    }
+
+    return NEW_VARIANT(LilyAstBodyClassItem,
+                       attribute,
+					   item->location,
+                       NEW(LilyAstDeclAttribute,
+                           item->attribute.name,
+                           data_type,
+                           expr,
+                           item->attribute.is_set,
+                           item->attribute.is_get,
+                           item->attribute.visibility));
 }
 
 LilyAstDecl *
