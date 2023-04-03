@@ -11436,6 +11436,7 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
         next_token__LilyPreparser(self);
 
         while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+               self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
                self->current->kind != LILY_TOKEN_KIND_EOF) {
             push__Vec(data_type, clone__LilyToken(self->current));
             next_token__LilyPreparser(self);
@@ -11443,6 +11444,8 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
     }
 
     switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_END:
+            break;
         case LILY_TOKEN_KIND_SEMICOLON:
             next_token__LilyPreparser(self);
 
@@ -11482,12 +11485,12 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
                 from__String("expected `:` or `;`")),
               &self->count_error);
 
-			FREE(String, name);
+            FREE(String, name);
             FREE(String, current_s);
 
             next_token__LilyPreparser(self);
 
-			return NULL;
+            return NULL;
         }
     }
 
