@@ -3513,7 +3513,30 @@ parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 LilyAstDecl *
 parse_constant_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #75");
+    LilyParseBlock expr_block =
+      NEW(LilyParseBlock, self, decl->constant.simple->expr);
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+    CHECK_EXPR(expr, expr_block, NULL, "expected `:=`", { return NULL; });
+
+    LilyParseBlock data_type_block =
+      NEW(LilyParseBlock, self, decl->constant.simple->data_type);
+    LilyAstDataType *data_type =
+      parse_data_type__LilyParseBlock(&data_type_block);
+
+    CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `;`", {
+        FREE(LilyAstExpr, expr);
+        return NULL;
+    });
+
+    return NEW_VARIANT(LilyAstDecl,
+                       constant,
+                       decl->location,
+                       NEW(LilyAstDeclConstant,
+                           decl->constant.simple->name,
+                           data_type,
+                           expr,
+                           decl->constant.simple->visibility));
 }
 
 LilyAstDecl *
