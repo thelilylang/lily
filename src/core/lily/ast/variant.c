@@ -69,5 +69,5 @@ DESTRUCTOR(LilyAstVariant, LilyAstVariant *self)
         FREE(LilyAstDataType, self->data_type);
     }
 
-	lily_free(self);
+    lily_free(self);
 }
