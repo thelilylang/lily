@@ -453,67 +453,67 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataType, const LilyAstDataType *self)
     switch (self->kind) {
         case LILY_AST_DATA_TYPE_KIND_ARRAY:
             return format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa}, array = {Sr} }",
+              "LilyAstDataType{{ kind = {s}, location = {sa}, array = {Sr} }",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataTypeArray(&self->array));
         case LILY_AST_DATA_TYPE_KIND_CUSTOM:
             return format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa}, custom = {Sr} }",
+              "LilyAstDataType{{ kind = {s}, location = {sa}, custom = {Sr} }",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataTypeCustom(&self->custom));
         case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
             return format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa}, exception = {Sr} "
+              "LilyAstDataType{{ kind = {s}, location = {sa}, exception = {Sr} "
               "}",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataType(self->exception));
         case LILY_AST_DATA_TYPE_KIND_LAMBDA:
             return format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa}, lambda = {Sr} }",
+              "LilyAstDataType{{ kind = {s}, location = {sa}, lambda = {Sr} }",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataTypeLambda(&self->lambda));
         case LILY_AST_DATA_TYPE_KIND_MUT:
             return format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa}, mut = {Sr} "
+              "LilyAstDataType{{ kind = {s}, location = {sa}, mut = {Sr} "
               "}",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataType(self->mut));
         case LILY_AST_DATA_TYPE_KIND_OPTIONAL:
             return format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa}, optional = {Sr} "
+              "LilyAstDataType{{ kind = {s}, location = {sa}, optional = {Sr} "
               "}",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataType(self->optional));
         case LILY_AST_DATA_TYPE_KIND_PTR:
             return format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa}, ptr = {Sr} "
+              "LilyAstDataType{{ kind = {s}, location = {sa}, ptr = {Sr} "
               "}",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataType(self->ptr));
         case LILY_AST_DATA_TYPE_KIND_REF:
             return format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa}, ref = {Sr} "
+              "LilyAstDataType{{ kind = {s}, location = {sa}, ref = {Sr} "
               "}",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataType(self->ref));
         case LILY_AST_DATA_TYPE_KIND_TRACE:
             return format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa}, trace = {Sr} "
+              "LilyAstDataType{{ kind = {s}, location = {sa}, trace = {Sr} "
               "}",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataType(self->trace));
         case LILY_AST_DATA_TYPE_KIND_TUPLE: {
             String *res = format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa}, tuple = {{ ",
+              "LilyAstDataType{{ kind = {s}, location = {sa}, tuple = {{ ",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location));
 
@@ -531,7 +531,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataType, const LilyAstDataType *self)
         }
         default:
             return format__String(
-              "LilyAstDataType{ kind = {s}, location = {sa} }",
+              "LilyAstDataType{{ kind = {s}, location = {sa} }",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location));
     }
