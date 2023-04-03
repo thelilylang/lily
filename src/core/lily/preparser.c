@@ -11467,8 +11467,28 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
             FREE(Vec, data_type);
 
             return NULL;
-        default:
-            UNREACHABLE("this way is impossible");
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `:` or `;`")),
+              &self->count_error);
+
+			FREE(String, name);
+            FREE(String, current_s);
+
+            next_token__LilyPreparser(self);
+
+			return NULL;
+        }
     }
 
     return NEW(LilyPreparserEnumVariant, name, data_type);
