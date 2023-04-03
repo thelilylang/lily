@@ -1703,7 +1703,7 @@ get_token__LilyScanner(LilyScanner *self)
                            clone__Location(&self->location));
             } else if (c1 == (char *)'$') {
                 return NEW(LilyToken,
-                           LILY_TOKEN_KIND_DOLLAR,
+                           LILY_TOKEN_KIND_COLON_DOLLAR,
                            clone__Location(&self->location));
             } else if (c1 == (char *)'=') {
                 return NEW(LilyToken,
