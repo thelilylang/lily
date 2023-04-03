@@ -4186,7 +4186,12 @@ IMPL_FOR_DEBUG(to_string,
     String *res = format__String(
       "LilyPreparserEnumVariant{{ name = {S}, data_type =", self->name);
 
-    DEBUG_VEC_STR(self->data_type, res, LilyToken);
+    if (self->data_type) {
+        DEBUG_VEC_STR(self->data_type, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     push_str__String(res, " }");
 
     return res;
@@ -4199,8 +4204,11 @@ DESTRUCTOR(LilyPreparserEnumVariant, const LilyPreparserEnumVariant *self)
     FREE(String, self->name);
 #endif
 
-    FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
-    FREE(Vec, self->data_type);
+    if (self->data_type) {
+        FREE_BUFFER_ITEMS(
+          self->data_type->buffer, self->data_type->len, LilyToken);
+        FREE(Vec, self->data_type);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -11420,12 +11428,18 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
     }
 
     // 2. Preparse data type.
-    Vec *data_type = NEW(Vec); // Vec<LilyToken*>*
+    Vec *data_type = NULL; // Vec<LilyToken*>*?
 
-    while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
-           self->current->kind != LILY_TOKEN_KIND_EOF) {
-        push__Vec(data_type, clone__LilyToken(self->current));
+    if (self->current->kind == LILY_TOKEN_KIND_COLON) {
+        data_type = NEW(Vec);
+
         next_token__LilyPreparser(self);
+
+        while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+               self->current->kind != LILY_TOKEN_KIND_EOF) {
+            push__Vec(data_type, clone__LilyToken(self->current));
+            next_token__LilyPreparser(self);
+        }
     }
 
     switch (self->current->kind) {
