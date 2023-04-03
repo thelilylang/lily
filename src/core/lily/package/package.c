@@ -247,6 +247,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
 
     FREE(LilyScanner, &self->scanner);
     FREE(LilyPreparserInfo, &self->preparser_info);
+	FREE(LilyPrecompile, &self->precompile);
     FREE(LilyParser, &self->parser);
 
     lily_free(self);
