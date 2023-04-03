@@ -11589,7 +11589,7 @@ preparse_enum__LilyPreparser(LilyPreparser *self,
                     NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
                     NULL,
                     NULL,
-                    from__String("expected `mut` keyword or identifier")),
+                    from__String("expected identifier")),
                   &self->count_error);
 
                 FREE(String, current_s);
