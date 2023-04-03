@@ -259,8 +259,17 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self);
 static LilyAstGenericParam *
 parse_generic_param__LilyParseBlock(LilyParseBlock *self);
 
+/// @param generic_params Vec<Vec<LilyToken*>*>*
 static Vec *
 parse_generic_params__LilyParser(LilyParser *self, Vec *generic_params);
+
+/// @param inherit_params Vec<Vec<LilyToken*>*>*
+static Vec *
+parse_inherit_params__LilyParser(LilyParser *self, Vec *inherit_params);
+
+/// @param impl_params Vec<Vec<LilyToken*>*>*
+static Vec *
+parse_impl_params__LilyParser(LilyParser *self, Vec *impl_params);
 
 // Parse alias declaration.
 static LilyAstDecl *
@@ -270,6 +279,11 @@ parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 static LilyAstBodyClassItem *
 parse_attribute_decl__LilyParser(LilyParser *self,
                                  LilyPreparserClassBodyItem *item);
+
+// Parse body of class.
+/// @param body Vec<LilyPreparserClassBodyItem*>*
+static Vec *
+parse_class_body__LilyParser(LilyParser *self, Vec *body);
 
 // Parse class declaration.
 static LilyAstDecl *
@@ -3303,6 +3317,44 @@ parse_generic_params__LilyParser(LilyParser *self, Vec *generic_params)
     return res;
 }
 
+Vec *
+parse_inherit_params__LilyParser(LilyParser *self, Vec *inherit_params)
+{
+    Vec *res = NEW(Vec); // Vec<LilyAstInheritParam*>*
+
+    for (Usize i = 0; i < inherit_params->len; i++) {
+        LilyParseBlock data_type_block =
+          NEW(LilyParseBlock, self, get__Vec(inherit_params, i));
+        LilyAstDataType *data_type =
+          parse_data_type__LilyParseBlock(&data_type_block);
+
+        CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `,`", {});
+
+        push__Vec(res, NEW(LilyAstInheritParam, data_type));
+    }
+
+    return res;
+}
+
+Vec *
+parse_impl_params__LilyParser(LilyParser *self, Vec *impl_params)
+{
+    Vec *res = NEW(Vec); // Vec<LilyAstImplParam*>*
+
+    for (Usize i = 0; i < impl_params->len; i++) {
+        LilyParseBlock data_type_block =
+          NEW(LilyParseBlock, self, get__Vec(impl_params, i));
+        LilyAstDataType *data_type =
+          parse_data_type__LilyParseBlock(&data_type_block);
+
+        CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `,`", {});
+
+        push__Vec(res, NEW(LilyAstImplParam, data_type));
+    }
+
+    return res;
+}
+
 LilyAstDecl *
 parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
@@ -3372,7 +3424,7 @@ parse_attribute_decl__LilyParser(LilyParser *self,
 
     return NEW_VARIANT(LilyAstBodyClassItem,
                        attribute,
-					   item->location,
+                       item->location,
                        NEW(LilyAstDeclAttribute,
                            item->attribute.name,
                            data_type,
@@ -3382,10 +3434,80 @@ parse_attribute_decl__LilyParser(LilyParser *self,
                            item->attribute.visibility));
 }
 
+Vec *
+parse_class_body__LilyParser(LilyParser *self, Vec *body)
+{
+    Vec *res = NEW(Vec); // Vec<LilyAstBodyClassItem*>*
+
+    for (Usize i = 0; i < body->len; i++) {
+        LilyPreparserClassBodyItem *pre_item = get__Vec(body, i);
+        LilyAstBodyClassItem *item = NULL;
+
+        switch (pre_item->kind) {
+            case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE:
+                item = parse_attribute_decl__LilyParser(self, pre_item);
+
+                break;
+            case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND: {
+                TODO("macro expand #119");
+
+                break;
+            }
+            case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD: {
+                item = parse_method_decl__LilyParser(self, pre_item);
+
+                break;
+            }
+        }
+
+        if (item) {
+            push__Vec(res, item);
+        }
+    }
+
+    return res;
+}
+
 LilyAstDecl *
 parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #74");
+    // 1. Parse generic params
+    Vec *generic_params = NULL;
+
+    if (decl->object.class.generic_params) {
+        generic_params = parse_generic_params__LilyParser(
+          self, decl->object.class.generic_params);
+    }
+
+    // 2. Parse inherit params
+    Vec *inherit_params = NULL;
+
+    if (decl->object.class.inherits) {
+        inherit_params =
+          parse_inherit_params__LilyParser(self, decl->object.class.inherits);
+    }
+
+    // 3. Parse impl params
+    Vec *impl_params = NULL;
+
+    if (decl->object.class.implements) {
+        impl_params =
+          parse_impl_params__LilyParser(self, decl->object.class.implements);
+    }
+
+    return NEW_VARIANT(LilyAstDecl,
+                       object,
+                       decl->location,
+                       NEW_VARIANT(LilyAstDeclObject,
+                                   class,
+                                   NEW(LilyAstDeclClass,
+                                       decl->object.class.name,
+                                       generic_params,
+                                       inherit_params,
+                                       impl_params,
+                                       parse_class_body__LilyParser(
+                                         self, decl->object.class.body),
+                                       decl->object.class.visibility)));
 }
 
 LilyAstDecl *
