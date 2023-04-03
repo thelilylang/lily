@@ -221,4 +221,10 @@ run__LilyPrecompile(LilyPrecompile *self,
                     const LilyDumpConfig *dump_config,
                     LilyPackage *root_package);
 
+/**
+ *
+ * @brief Free LilyPrecompile type.
+ */
+DESTRUCTOR(LilyPrecompile, const LilyPrecompile *self);
+
 #endif // LILY_CORE_LILY_PRECOMPILE_H

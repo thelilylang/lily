@@ -1200,3 +1200,11 @@ run__LilyPrecompile(LilyPrecompile *self,
     }
 #endif
 }
+
+DESTRUCTOR(LilyPrecompile, const LilyPrecompile *self)
+{
+	if (self->dependency_trees) {
+		FREE_BUFFER_ITEMS(self->dependency_trees->buffer, self->dependency_trees->len, LilyPackageDependencyTree);
+		FREE(Vec, self->dependency_trees);
+	}
+}
