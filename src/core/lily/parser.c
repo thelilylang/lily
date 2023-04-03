@@ -3588,14 +3588,17 @@ LilyAstDecl *
 parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
     switch (decl->kind) {
-        case LILY_PREPARSER_DECL_KIND_CONSTANT:
+        case LILY_PREPARSER_DECL_KIND_CONSTANT: {
             return parse_constant_decl__LilyParser(self, decl);
+        }
         case LILY_PREPARSER_DECL_KIND_FUN:
             return parse_fun_decl__LilyParser(self, decl);
         case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
+            apply_macro_expansion__LilyParser(self, decl);
+
             return NULL;
         case LILY_PREPARSER_DECL_KIND_MODULE:
-            apply_macro_expansion__LilyParser(self, decl);
+            TODO("module");
 
             return NULL;
         case LILY_PREPARSER_DECL_KIND_OBJECT:
