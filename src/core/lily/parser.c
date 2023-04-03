@@ -3510,24 +3510,26 @@ parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                                        decl->object.class.visibility)));
 }
 
+#define PARSE_CONSTANT_INFO(info)                                          \
+    LilyParseBlock expr_block = NEW(LilyParseBlock, self, info->expr);     \
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);           \
+                                                                           \
+    CHECK_EXPR(expr, expr_block, NULL, "expected `:=`", { return NULL; }); \
+                                                                           \
+    LilyParseBlock data_type_block =                                       \
+      NEW(LilyParseBlock, self, info->data_type);                          \
+    LilyAstDataType *data_type =                                           \
+      parse_data_type__LilyParseBlock(&data_type_block);                   \
+                                                                           \
+    CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `;`", {    \
+        FREE(LilyAstExpr, expr);                                           \
+        return NULL;                                                       \
+    });
+
 LilyAstDecl *
 parse_constant_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    LilyParseBlock expr_block =
-      NEW(LilyParseBlock, self, decl->constant.simple->expr);
-    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
-
-    CHECK_EXPR(expr, expr_block, NULL, "expected `:=`", { return NULL; });
-
-    LilyParseBlock data_type_block =
-      NEW(LilyParseBlock, self, decl->constant.simple->data_type);
-    LilyAstDataType *data_type =
-      parse_data_type__LilyParseBlock(&data_type_block);
-
-    CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `;`", {
-        FREE(LilyAstExpr, expr);
-        return NULL;
-    });
+    PARSE_CONSTANT_INFO(decl->constant.simple)
 
     return NEW_VARIANT(LilyAstDecl,
                        constant,
@@ -3612,7 +3614,29 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
     switch (decl->kind) {
         case LILY_PREPARSER_DECL_KIND_CONSTANT: {
-            return parse_constant_decl__LilyParser(self, decl);
+            switch (decl->constant.kind) {
+                case LILY_PREPARSER_CONSTANT_KIND_SIMPLE:
+                    return parse_constant_decl__LilyParser(self, decl);
+                case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE:
+                    for (Usize i = 0; i < decl->constant.multiple->len; i++) {
+                        LilyPreparserConstantInfo *info =
+                          get__Vec(decl->constant.multiple, i);
+
+                        PARSE_CONSTANT_INFO(info);
+
+                        push__Vec(self->decls,
+                                  NEW_VARIANT(LilyAstDecl,
+                                              constant,
+                                              decl->location,
+                                              NEW(LilyAstDeclConstant,
+                                                  info->name,
+                                                  data_type,
+                                                  expr,
+                                                  info->visibility)));
+                    }
+
+                    return NULL;
+            }
         }
         case LILY_PREPARSER_DECL_KIND_FUN:
             return parse_fun_decl__LilyParser(self, decl);
