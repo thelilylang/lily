@@ -293,6 +293,10 @@ parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 static LilyAstDecl *
 parse_constant_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
+static LilyAstVariant *
+parse_enum_variant__LilyParser(LilyParser *self,
+                               LilyPreparserEnumBodyItem *item);
+
 // Parse enum declaration.
 static LilyAstDecl *
 parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
@@ -3541,10 +3545,63 @@ parse_constant_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                            decl->constant.simple->visibility));
 }
 
+LilyAstVariant *
+parse_enum_variant__LilyParser(LilyParser *self,
+                               LilyPreparserEnumBodyItem *item)
+{
+    LilyAstDataType *data_type = NULL;
+
+    if (item->variant.data_type) {
+        LilyParseBlock data_type_block =
+          NEW(LilyParseBlock, self, item->variant.data_type);
+        data_type = parse_data_type__LilyParseBlock(&data_type_block);
+
+        CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `;`", {});
+    }
+
+    return NEW(LilyAstVariant, item->variant.name, data_type, item->location);
+}
+
 LilyAstDecl *
 parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #76");
+    // 1. Parse generic params
+    Vec *generic_params = NULL;
+
+    if (decl->type.enum_.generic_params) {
+        generic_params = parse_generic_params__LilyParser(
+          self, decl->type.enum_.generic_params);
+    }
+
+    // 2. Parse body
+    Vec *variants = NEW(Vec); // Vec<LilyAstVariant*>*
+
+    for (Usize i = 0; i < decl->type.enum_.body->len; i++) {
+        LilyPreparserEnumBodyItem *item = get__Vec(decl->type.enum_.body, i);
+
+        switch (item->kind) {
+            case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND:
+                TODO("macro expand");
+                break;
+            case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT:
+                push__Vec(variants, parse_enum_variant__LilyParser(self, item));
+
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    return NEW_VARIANT(LilyAstDecl,
+                       type,
+                       decl->location,
+                       NEW_VARIANT(LilyAstDeclType,
+                                   enum,
+                                   NEW(LilyAstDeclEnum,
+                                       decl->type.enum_.name,
+                                       generic_params,
+                                       variants,
+                                       decl->type.enum_.visibility)));
 }
 
 LilyAstDecl *

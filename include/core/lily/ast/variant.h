@@ -33,20 +33,19 @@
 typedef struct LilyAstVariant
 {
     String *name;
-    LilyAstDataType *data_type;
+    LilyAstDataType *data_type; // LilyAstDataType*?
+    Location location;
 } LilyAstVariant;
 
 /**
  *
  * @brief Construct LilyAstVariant type.
  */
-inline CONSTRUCTOR(LilyAstVariant,
-                   LilyAstVariant,
-                   String *name,
-                   LilyAstDataType *data_type)
-{
-    return (LilyAstVariant){ .name = name, .data_type = data_type };
-}
+CONSTRUCTOR(LilyAstVariant *,
+            LilyAstVariant,
+            String *name,
+            LilyAstDataType *data_type,
+            Location location);
 
 /**
  *

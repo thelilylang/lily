@@ -915,7 +915,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserEnumVariant
 {
     String *name;
-    Vec *data_type; // Vec<LilyToken*>*
+    Vec *data_type; // Vec<LilyToken*>*?
 } LilyPreparserEnumVariant;
 
 /**
