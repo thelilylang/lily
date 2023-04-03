@@ -25,6 +25,11 @@
 #include <core/lily/ast/decl/alias.h>
 
 #ifdef ENV_DEBUG
+#include <base/alloc.h>
+#include <base/format.h>
+#endif
+
+#ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDeclAlias, const LilyAstDeclAlias *self)
 {
