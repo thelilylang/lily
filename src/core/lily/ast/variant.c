@@ -61,11 +61,13 @@ IMPL_FOR_DEBUG(to_string, LilyAstVariant, const LilyAstVariant *self)
 }
 #endif
 
-DESTRUCTOR(LilyAstVariant, const LilyAstVariant *self)
+DESTRUCTOR(LilyAstVariant, LilyAstVariant *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
 
     if (self->data_type) {
         FREE(LilyAstDataType, self->data_type);
     }
+
+	lily_free(self);
 }

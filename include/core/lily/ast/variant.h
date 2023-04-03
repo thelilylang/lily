@@ -61,6 +61,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstVariant, const LilyAstVariant *self);
  *
  * @brief Free LilyAstVariant type.
  */
-DESTRUCTOR(LilyAstVariant, const LilyAstVariant *self);
+DESTRUCTOR(LilyAstVariant, LilyAstVariant *self);
 
 #endif // LILY_CORE_LILY_AST_VARIANT_H
