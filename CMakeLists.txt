@@ -247,7 +247,7 @@ add_library(lily_command STATIC ${COMMAND_SRC})
 target_link_libraries(lily_command lily_base lily_cli lily_core)
 
 add_library(lily_core STATIC ${CORE_SRC})
-target_link_libraries(lily_core lily_base)
+target_link_libraries(lily_core lily_base LLVM)
 
 add_executable(lily src/bin/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)
