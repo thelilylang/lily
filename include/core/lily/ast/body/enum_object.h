@@ -28,6 +28,7 @@
 #include <base/macros.h>
 
 #include <core/lily/ast/decl/constant.h>
+#include <core/lily/ast/decl/method.h>
 #include <core/lily/ast/variant.h>
 #include <core/shared/location.h>
 
@@ -38,6 +39,7 @@
 enum LilyAstBodyEnumObjectItemKind
 {
     LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_CONSTANT,
+    LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_METHOD,
     LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT
 };
 
@@ -60,7 +62,8 @@ typedef struct LilyAstBodyEnumObjectItem
     union
     {
         LilyAstDeclConstant constant;
-        LilyAstVariant variant;
+        LilyAstDeclMethod method;
+        LilyAstVariant *variant;
     };
 } LilyAstBodyEnumObjectItem;
 
@@ -78,13 +81,24 @@ VARIANT_CONSTRUCTOR(LilyAstBodyEnumObjectItem *,
 /**
  *
  * @brief Construct LilyAstBodyEnumObjectItem type
+ * (LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_METHOD).
+ */
+VARIANT_CONSTRUCTOR(LilyAstBodyEnumObjectItem *,
+                    LilyAstBodyEnumObjectItem,
+                    method,
+                    Location location,
+                    LilyAstDeclMethod method);
+
+/**
+ *
+ * @brief Construct LilyAstBodyEnumObjectItem type
  * (LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT).
  */
 VARIANT_CONSTRUCTOR(LilyAstBodyEnumObjectItem *,
                     LilyAstBodyEnumObjectItem,
                     variant,
                     Location location,
-                    LilyAstVariant variant);
+                    LilyAstVariant *variant);
 
 /**
  *
