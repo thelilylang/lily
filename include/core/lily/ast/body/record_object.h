@@ -26,13 +26,15 @@
 #define LILY_CORE_LILY_AST_BODY_RECORD_OBJECT_H
 
 #include <core/lily/ast/decl/constant.h>
+#include <core/lily/ast/decl/method.h>
 #include <core/lily/ast/field_object.h>
 #include <core/shared/location.h>
 
 enum LilyAstBodyRecordObjectItemKind
 {
     LILY_AST_BODY_RECORD_OBJECT_ITEM_KIND_CONSTANT,
-    LILY_AST_BODY_RECORD_OBJECT_ITEM_KIND_FIELD
+    LILY_AST_BODY_RECORD_OBJECT_ITEM_KIND_FIELD,
+    LILY_AST_BODY_RECORD_OBJECT_ITEM_KIND_METHOD
 };
 
 /**
@@ -55,6 +57,7 @@ typedef struct LilyAstBodyRecordObjectItem
     {
         LilyAstDeclConstant constant;
         LilyAstFieldObject field;
+        LilyAstDeclMethod method;
     };
 } LilyAstBodyRecordObjectItem;
 
@@ -79,6 +82,17 @@ VARIANT_CONSTRUCTOR(LilyAstBodyRecordObjectItem *,
                     variant,
                     Location location,
                     LilyAstFieldObject field);
+
+/**
+ *
+ * @brief Construct LilyAstBodyRecordObjectItem type
+ * (LILY_AST_BODY_RECORD_OBJECT_ITEM_KIND_METHOD).
+ */
+VARIANT_CONSTRUCTOR(LilyAstBodyRecordObjectItem *,
+                    LilyAstBodyRecordObjectItem,
+                    method,
+                    Location location,
+                    LilyAstDeclMethod method);
 
 /**
  *

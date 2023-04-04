@@ -35,6 +35,11 @@ static VARIANT_DESTRUCTOR(LilyAstBodyEnumObjectItem,
                           constant,
                           LilyAstBodyEnumObjectItem *self);
 
+// (LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_METHOD).
+static VARIANT_DESTRUCTOR(LilyAstBodyEnumObjectItem,
+                          method,
+                          LilyAstBodyEnumObjectItem *self);
+
 // Free LilyAstBodyEnumObjectItem type
 // (LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT).
 static VARIANT_DESTRUCTOR(LilyAstBodyEnumObjectItem,
@@ -50,8 +55,10 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_CONSTANT:
             return "LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_CONSTANT";
+        case LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_METHOD:
+            return "LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_METHOD";
         case LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT:
-            return "LILY_AST_BODY_ENUM_OBJECT_ITE_KIND_VARIANT";
+            return "LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -76,9 +83,25 @@ VARIANT_CONSTRUCTOR(LilyAstBodyEnumObjectItem *,
 
 VARIANT_CONSTRUCTOR(LilyAstBodyEnumObjectItem *,
                     LilyAstBodyEnumObjectItem,
+                    method,
+                    Location location,
+                    LilyAstDeclMethod method)
+{
+    LilyAstBodyEnumObjectItem *self =
+      lily_malloc(sizeof(LilyAstBodyEnumObjectItem));
+
+    self->kind = LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_METHOD;
+    self->location = location;
+    self->method = method;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstBodyEnumObjectItem *,
+                    LilyAstBodyEnumObjectItem,
                     variant,
                     Location location,
-                    LilyAstVariant variant)
+                    LilyAstVariant *variant)
 {
     LilyAstBodyEnumObjectItem *self =
       lily_malloc(sizeof(LilyAstBodyEnumObjectItem));
@@ -104,13 +127,20 @@ IMPL_FOR_DEBUG(to_string,
               to_string__Debug__LilyAstBodyEnumObjectItemKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDeclConstant(&self->constant));
+        case LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_METHOD:
+            return format__String(
+              "LilyAstBodyEnumObjectItem{{ kind = {s}, location = {sa}, "
+              "method = {Sr} }",
+              to_string__Debug__LilyAstBodyEnumObjectItemKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDeclMethod(&self->method));
         case LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT:
             return format__String(
               "LilyAstBodyEnumObjectItem{{ kind = {s}, location = {sa}, "
               "variant = {Sr} }",
               to_string__Debug__LilyAstBodyEnumObjectItemKind(self->kind),
               to_string__Debug__Location(&self->location),
-              to_string__Debug__LilyAstVariant(&self->variant));
+              to_string__Debug__LilyAstVariant(self->variant));
         default:
             UNREACHABLE("unknown variant");
     }
@@ -126,10 +156,18 @@ VARIANT_DESTRUCTOR(LilyAstBodyEnumObjectItem,
 }
 
 VARIANT_DESTRUCTOR(LilyAstBodyEnumObjectItem,
+                   method,
+                   LilyAstBodyEnumObjectItem *self)
+{
+    FREE(LilyAstDeclMethod, &self->method);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstBodyEnumObjectItem,
                    variant,
                    LilyAstBodyEnumObjectItem *self)
 {
-    FREE(LilyAstVariant, &self->variant);
+    FREE(LilyAstVariant, self->variant);
     lily_free(self);
 }
 
@@ -138,6 +176,9 @@ DESTRUCTOR(LilyAstBodyEnumObjectItem, LilyAstBodyEnumObjectItem *self)
     switch (self->kind) {
         case LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_CONSTANT:
             FREE_VARIANT(LilyAstBodyEnumObjectItem, constant, self);
+            break;
+        case LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_METHOD:
+            FREE_VARIANT(LilyAstBodyEnumObjectItem, method, self);
             break;
         case LILY_AST_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT:
             FREE_VARIANT(LilyAstBodyEnumObjectItem, variant, self);

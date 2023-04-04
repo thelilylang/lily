@@ -4399,9 +4399,11 @@ VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
     FREE(String, self->variant.name);
 #endif
 
-    FREE_BUFFER_ITEMS(
-      self->variant.data_type->buffer, self->variant.data_type->len, LilyToken);
-    FREE(Vec, self->variant.data_type);
+	if (self->variant.data_type) {
+		FREE_BUFFER_ITEMS(
+		  self->variant.data_type->buffer, self->variant.data_type->len, LilyToken);
+		FREE(Vec, self->variant.data_type);
+	}
 
     lily_free(self);
 }
