@@ -15,6 +15,9 @@ if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
   set(CMAKE_C_FLAGS "/wd4710 /wd4711 /wd4255") 
 endif()
 
+find_package(LLVM 15.0 REQUIRED)
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+
 set(BASE_SRC
 	src/base/alloc.c
 	src/base/atof.c
