@@ -291,11 +291,33 @@ parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 // Parse constant declaration.
 static LilyAstDecl *
-parse_constant_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+parse_constant_decl__LilyParser(LilyParser *self,
+                                LilyPreparserConstantInfo *info,
+                                Location *location);
 
+// Parse constant declaration for enum object.
+static LilyAstBodyEnumObjectItem *
+parse_constant_decl_for_enum_object__LilyParser(LilyParser *self,
+                                                LilyPreparserConstantInfo *info,
+                                                Location *location);
+
+// Parse constant declaration for record object.
+static LilyAstBodyRecordObjectItem *
+parse_constant_decl_for_record_object__LilyParser(
+  LilyParser *self,
+  LilyPreparserConstantInfo *info,
+  Location *location);
+
+// Parse enum variant.
 static LilyAstVariant *
 parse_enum_variant__LilyParser(LilyParser *self,
                                LilyPreparserEnumBodyItem *item);
+
+// Parse enum variant for enum object.
+static LilyAstVariant *
+parse_enum_variant_for_enum_object__LilyParser(
+  LilyParser *self,
+  LilyPreparserEnumObjectBodyItem *item);
 
 // Parse enum declaration.
 static LilyAstDecl *
@@ -3514,7 +3536,7 @@ parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                                        decl->object.class.visibility)));
 }
 
-#define PARSE_CONSTANT_INFO(info)                                          \
+#define PARSE_CONSTANT_INFO(self, info, location, dt)                      \
     LilyParseBlock expr_block = NEW(LilyParseBlock, self, info->expr);     \
     LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);           \
                                                                            \
@@ -3528,36 +3550,66 @@ parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `;`", {    \
         FREE(LilyAstExpr, expr);                                           \
         return NULL;                                                       \
-    });
+    });                                                                    \
+                                                                           \
+    return NEW_VARIANT(                                                    \
+      dt,                                                                  \
+      constant,                                                            \
+      *location,                                                           \
+      NEW(                                                                 \
+        LilyAstDeclConstant, info->name, data_type, expr, info->visibility));
 
 LilyAstDecl *
-parse_constant_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+parse_constant_decl__LilyParser(LilyParser *self,
+                                LilyPreparserConstantInfo *info,
+                                Location *location)
 {
-    PARSE_CONSTANT_INFO(decl->constant.simple)
-
-    return NEW_VARIANT(LilyAstDecl,
-                       constant,
-                       decl->location,
-                       NEW(LilyAstDeclConstant,
-                           decl->constant.simple->name,
-                           data_type,
-                           expr,
-                           decl->constant.simple->visibility));
+    PARSE_CONSTANT_INFO(self, info, location, LilyAstDecl);
 }
+
+LilyAstBodyEnumObjectItem *
+parse_constant_decl_for_enum_object__LilyParser(LilyParser *self,
+                                                LilyPreparserConstantInfo *info,
+                                                Location *location)
+{
+    PARSE_CONSTANT_INFO(self, info, location, LilyAstBodyEnumObjectItem);
+}
+
+LilyAstBodyRecordObjectItem *
+parse_constant_decl_for_record_object__LilyParser(
+  LilyParser *self,
+  LilyPreparserConstantInfo *info,
+  Location *location)
+{
+    PARSE_CONSTANT_INFO(self, info, location, LilyAstBodyRecordObjectItem);
+}
+
+#define PARSE_ENUM_VARIANT(item)                                               \
+    LilyAstDataType *data_type = NULL;                                         \
+                                                                               \
+    if (item->variant.data_type) {                                             \
+        LilyParseBlock data_type_block =                                       \
+          NEW(LilyParseBlock, self, item->variant.data_type);                  \
+        data_type = parse_data_type__LilyParseBlock(&data_type_block);         \
+                                                                               \
+        CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `;`", {}); \
+    }
 
 LilyAstVariant *
 parse_enum_variant__LilyParser(LilyParser *self,
                                LilyPreparserEnumBodyItem *item)
 {
-    LilyAstDataType *data_type = NULL;
+    PARSE_ENUM_VARIANT(item);
 
-    if (item->variant.data_type) {
-        LilyParseBlock data_type_block =
-          NEW(LilyParseBlock, self, item->variant.data_type);
-        data_type = parse_data_type__LilyParseBlock(&data_type_block);
+    return NEW(LilyAstVariant, item->variant.name, data_type, item->location);
+}
 
-        CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `;`", {});
-    }
+LilyAstVariant *
+parse_enum_variant_for_enum_object__LilyParser(
+  LilyParser *self,
+  LilyPreparserEnumObjectBodyItem *item)
+{
+    PARSE_ENUM_VARIANT(item);
 
     return NEW(LilyAstVariant, item->variant.name, data_type, item->location);
 }
@@ -3607,7 +3659,95 @@ parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 LilyAstDecl *
 parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #77");
+    // 1. Parse generic params
+    Vec *generic_params = NULL;
+
+    if (decl->object.enum_.generic_params) {
+        generic_params = parse_generic_params__LilyParser(
+          self, decl->object.enum_.generic_params);
+    }
+
+    // 2. Parse implement params
+    Vec *impl_params = NULL;
+
+    if (decl->object.enum_.implements) {
+        impl_params =
+          parse_impl_params__LilyParser(self, decl->object.enum_.implements);
+    }
+
+    // 3. Parse body
+    Vec *body = NEW(Vec); // Vec<LilyAstBodyEnumObjectItem*>*
+
+    for (Usize i = 0; i < decl->object.enum_.body->len; i++) {
+        LilyPreparserEnumObjectBodyItem *item =
+          get__Vec(decl->object.enum_.body, i);
+
+        switch (item->kind) {
+            case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_CONSTANT:
+                switch (item->constant.kind) {
+                    case LILY_PREPARSER_CONSTANT_KIND_SIMPLE: {
+                        LilyAstBodyEnumObjectItem *constant =
+                          parse_constant_decl_for_enum_object__LilyParser(
+                            self, item->constant.simple, &item->location);
+
+                        if (constant) {
+                            push__Vec(body, constant);
+                        }
+
+                        break;
+                    }
+                    case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE: {
+                        for (Usize i = 0; i < item->constant.multiple->len;
+                             i++) {
+                            LilyAstBodyEnumObjectItem *constant =
+                              parse_constant_decl_for_enum_object__LilyParser(
+                                self,
+                                get__Vec(item->constant.multiple, i),
+                                &item->location);
+
+                            if (constant) {
+                                push__Vec(body, constant);
+                            }
+                        }
+
+                        break;
+                    }
+                }
+
+                break;
+            case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND:
+                TODO("macro expand");
+
+                break;
+            case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD:
+                TODO("method");
+
+                break;
+            case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_VARIANT: {
+                push__Vec(
+                  body,
+                  NEW_VARIANT(LilyAstBodyEnumObjectItem,
+                              variant,
+                              item->location,
+                              parse_enum_variant_for_enum_object__LilyParser(
+                                self, item)));
+
+                break;
+            }
+        }
+    }
+
+    return NEW_VARIANT(LilyAstDecl,
+                       object,
+                       decl->location,
+                       NEW_VARIANT(LilyAstDeclObject,
+                                   enum,
+                                   NEW(LilyAstDeclEnumObject,
+                                       decl->object.enum_.name,
+                                       generic_params,
+                                       impl_params,
+                                       body,
+                                       decl->object.enum_.visibility)));
 }
 
 LilyAstDecl *
@@ -3626,7 +3766,20 @@ parse_method_decl__LilyParser(LilyParser *self,
 LilyAstDecl *
 parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue 80");
+	switch (decl->object.kind) {
+		case LILY_PREPARSER_OBJECT_KIND_CLASS:
+			return parse_class_decl__LilyParser(self, decl);
+		case LILY_PREPARSER_OBJECT_KIND_ENUM:
+			return parse_enum_object_decl__LilyParser(self, decl);
+		case LILY_PREPARSER_OBJECT_KIND_RECORD:
+			return parse_record_object_decl__LilyParser(self, decl);
+		case LILY_PREPARSER_OBJECT_KIND_TRAIT:
+			return parse_trait_decl__LilyParser(self, decl);
+		default:
+			UNREACHABLE("unknown variant");
+	}
+
+	return NULL;
 }
 
 LilyAstBodyTraitItem *
@@ -3684,23 +3837,18 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
         case LILY_PREPARSER_DECL_KIND_CONSTANT: {
             switch (decl->constant.kind) {
                 case LILY_PREPARSER_CONSTANT_KIND_SIMPLE:
-                    return parse_constant_decl__LilyParser(self, decl);
+                    return parse_constant_decl__LilyParser(
+                      self, decl->constant.simple, &decl->location);
                 case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE:
                     for (Usize i = 0; i < decl->constant.multiple->len; i++) {
-                        LilyPreparserConstantInfo *info =
-                          get__Vec(decl->constant.multiple, i);
+                        LilyAstDecl *constant = parse_constant_decl__LilyParser(
+                          self,
+                          get__Vec(decl->constant.multiple, i),
+                          &decl->location);
 
-                        PARSE_CONSTANT_INFO(info);
-
-                        push__Vec(self->decls,
-                                  NEW_VARIANT(LilyAstDecl,
-                                              constant,
-                                              decl->location,
-                                              NEW(LilyAstDeclConstant,
-                                                  info->name,
-                                                  data_type,
-                                                  expr,
-                                                  info->visibility)));
+                        if (constant) {
+                            push__Vec(self->decls, constant);
+                        }
                     }
 
                     return NULL;
