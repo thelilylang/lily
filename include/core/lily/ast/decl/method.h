@@ -40,6 +40,8 @@ enum LilyAstDeclMethodParamKind
     LILY_AST_DECL_METHOD_PARAM_KIND_DEFAULT,
     LILY_AST_DECL_METHOD_PARAM_KIND_NORMAL,
     LILY_AST_DECL_METHOD_PARAM_KIND_MUT_SELF,
+    LILY_AST_DECL_METHOD_PARAM_KIND_REF_MUT_SELF,
+    LILY_AST_DECL_METHOD_PARAM_KIND_REF_SELF,
     LILY_AST_DECL_METHOD_PARAM_KIND_SELF
 };
 
@@ -57,9 +59,12 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyAstDeclMethodParam
 {
-    String *name; // String*? only if kind is equal to
-                  // LILY_AST_DECL_FUN_PARAM_KIND_SELF or
-                  // LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF
+    String *name;               // String*? only if kind is equal to
+                                // LILY_AST_DECL_FUN_PARAM_KIND_SELF,
+                                // LILY_AST_DECL_FUN_PARAM_KIND_MUT_SELF
+                                // LILY_AST_DECL_FUN_PARAM_KIND_REF_MUT_SELF or
+                                // LILY_AST_DECL_FUN_PARAM_KIND_REF_SELF
+    LilyAstDataType *data_type; // LilyAstDataType*?
     enum LilyAstDeclMethodParamKind kind;
     Location location;
     union
@@ -77,6 +82,7 @@ VARIANT_CONSTRUCTOR(LilyAstDeclMethodParam *,
                     LilyAstDeclMethodParam,
                     default,
                     String *name,
+                    LilyAstDataType *data_type,
                     Location location,
                     LilyAstExpr *default_);
 
@@ -89,6 +95,7 @@ VARIANT_CONSTRUCTOR(LilyAstDeclMethodParam *,
                     LilyAstDeclMethodParam,
                     normal,
                     String *name,
+                    LilyAstDataType *data_type,
                     Location location);
 
 /**
