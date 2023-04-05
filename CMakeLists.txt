@@ -252,10 +252,7 @@ target_link_libraries(lily_command lily_base lily_cli lily_core)
 
 add_library(lily_core STATIC ${CORE_SRC})
 target_link_libraries(lily_core lily_base LLVM)
-
-if (LILY_LINUX)
-	target_include_directories(lily_core PUBLIC /usr/include)
-endif()
+target_include_directories(lily_core PUBLIC lib/local)
 
 add_executable(lily src/bin/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)
