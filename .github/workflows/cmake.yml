@@ -44,6 +44,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Set CC compiler
+      run: export CC='clang-15'
+
+    - name: Set CXX compiler
+      run: export CXX='clang++-15'
+
     - name: Download & Install LLVM
       # Install LLVM with `brew` package manager
       run: brew install llvm@15
