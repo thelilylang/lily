@@ -171,6 +171,7 @@ set(CORE_SRC
 	src/core/lily/checked/field.c
 	src/core/lily/checked/field_object.c
 	src/core/lily/checked/pattern.c
+	src/core/lily/checked/scope.c
 	src/core/lily/checked/stmt.c
 	src/core/lily/checked/variant.c
 	src/core/lily/ir/cc/builder/constant.c
