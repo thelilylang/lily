@@ -22,56 +22,36 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_SCOPE_H
-#define LILY_CORE_LILY_CHECKED_SCOPE_H
+#include <base/alloc.h>
+#include <base/new.h>
 
-#include <base/string.h>
-#include <base/types.h>
-#include <base/vec.h>
+#include <core/lily/checked/scope.h>
 
-enum LilyCheckedScopeKind
-{
-    LILY_CHECKED_SCOPE_KIND_ATTRIBUTE,
-    LILY_CHECKED_SCOPE_KIND_CLASS,
-    LILY_CHECKED_SCOPE_KIND_CONSTANT,
-    LILY_CHECKED_SCOPE_KIND_ENUM,
-    LILY_CHECKED_SCOPE_KIND_ENUM_OBJECT,
-    LILY_CHECKED_SCOPE_KIND_FIELD,
-    LILY_CHECKED_SCOPE_KIND_FIELD_OBJECT,
-    LILY_CHECKED_SCOPE_KIND_FUN,
-    LILY_CHECKED_SCOPE_KIND_METHOD,
-    LILY_CHECKED_SCOPE_KIND_MODULE,
-    LILY_CHECKED_SCOPE_KIND_PROTOTYPE,
-    LILY_CHECKED_SCOPE_KIND_RECORD,
-    LILY_CHECKED_SCOPE_KIND_RECORD_OBJECT,
-    LILY_CHECKED_SCOPE_KIND_TRAIT,
-    LILY_CHECKED_SCOPE_KIND_VARIANT,
-    LILY_CHECKED_SCOPE_KIND_VARIANT_OBJECT,
-} LilyCheckedScopeKind;
-
-typedef Usize LilyCheckedScopeId;
-
-typedef struct LilyCheckedScope
-{
-    enum LilyCheckedScopeKind kind;
-    Vec *access; // Vec<String*>*
-    Vec *children; // Vec<LilyCheckedScope*>*?
-} LilyCheckedScope;
-
-/**
- *
- * @brief Construct LilyCheckedScope type.
- */
 CONSTRUCTOR(LilyCheckedScope *,
             LilyCheckedScope,
             enum LilyCheckedScopeKind kind,
             Vec *access,
-            Vec *children);
+            Vec *children)
+{
+    LilyCheckedScope *self = lily_malloc(sizeof(LilyCheckedScope));
 
-/**
- *
- * @brief Free LilyCheckedScope type.
- */
-DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self);
+    self->kind = kind;
+    self->access = access;
+    self->children = children;
 
-#endif // LILY_CORE_LILY_CHECKED_SCOPE_H
+    return self;
+}
+
+DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
+{
+	FREE_BUFFER_ITEMS(self->access->buffer, self->access->len, String);
+	FREE(Vec, self->access);
+
+    if (self->children) {
+        FREE_BUFFER_ITEMS(
+          self->children->buffer, self->children->len, LilyCheckedScope);
+        FREE(Vec, self->children);
+    }
+
+    lily_free(self);
+}
