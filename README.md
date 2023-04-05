@@ -1,6 +1,5 @@
 # Lily
 
-![Total lines](https://img.shields.io/tokei/lines/github/ArthurPV/lily?style=for-the-badge)
 ![Code size](https://img.shields.io/github/languages/code-size/ArthurPV/lily?style=for-the-badge)
 ![Codacy code quality](https://img.shields.io/codacy/grade/7f4284cccba541ca9ec576272fa88134?style=for-the-badge)
 ![Build state](https://img.shields.io/github/actions/workflow/status/ArthurPV/lily/cmake.yml?branch=main&style=for-the-badge)
@@ -24,7 +23,7 @@ Work in progress...
 ## Progression
 
 - Scanner: 95% finished
-- Preparser: 85% finished
+- Preparser: 90% finished
 - Precompiler: 60% finished
 - Parser: 80% finished
 - Analysis: 0% finished
