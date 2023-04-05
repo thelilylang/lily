@@ -135,7 +135,7 @@ IMPL_FOR_DEBUG(to_string,
               to_string__Debug__LilyAstBodyRecordObjectItemKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstFieldObject(&self->field));
-        case LILY_AST_BODY_RECORD_OBJECT_ITEM_KIND_FIELD:
+        case LILY_AST_BODY_RECORD_OBJECT_ITEM_KIND_METHOD:
             return format__String(
               "LilyAstBodyRecordObjectItem{{ kind = {s}, location = {sa}, "
               "method = {Sr} }",
