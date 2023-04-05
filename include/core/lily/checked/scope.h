@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_SCOPE_H
-#define LILY_CORE_LILY_CHECKED_SCOPE_H
+#ifndef LILY_CORE_LILY_CHECKED_LOCAL_SCOPE_H
+#define LILY_CORE_LILY_CHECKED_LOCAL_SCOPE_H
 
 #include <base/alloc.h>
 #include <base/macros.h>
@@ -35,56 +35,58 @@
 #include <core/lily/package.h>
 #include <core/lily/visibility.h>
 
-enum LilyCheckedScopeKind
+enum LilyCheckedLocalScopeKind
 {
-    LILY_CHECKED_SCOPE_KIND_ATTRIBUTE,
-    LILY_CHECKED_SCOPE_KIND_CLASS,
-    LILY_CHECKED_SCOPE_KIND_CONSTANT,
-    LILY_CHECKED_SCOPE_KIND_ENUM,
-    LILY_CHECKED_SCOPE_KIND_ENUM_OBJECT,
-    LILY_CHECKED_SCOPE_KIND_FIELD,
-    LILY_CHECKED_SCOPE_KIND_FIELD_OBJECT,
-    LILY_CHECKED_SCOPE_KIND_FUN,
-    LILY_CHECKED_SCOPE_KIND_METHOD,
-    LILY_CHECKED_SCOPE_KIND_MODULE,
-    LILY_CHECKED_SCOPE_KIND_PROTOTYPE,
-    LILY_CHECKED_SCOPE_KIND_RECORD,
-    LILY_CHECKED_SCOPE_KIND_RECORD_OBJECT,
-    LILY_CHECKED_SCOPE_KIND_TRAIT,
-    LILY_CHECKED_SCOPE_KIND_VARIANT,
-    LILY_CHECKED_SCOPE_KIND_VARIANT_OBJECT,
-} LilyCheckedScopeKind;
+    LILY_CHECKED_LOCAL_SCOPE_KIND_ATTRIBUTE,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_CLASS,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_CONSTANT,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_ENUM,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_ENUM_OBJECT,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_FIELD,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_FIELD_OBJECT,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_FUN,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_METHOD,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_MODULE,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_PROTOTYPE,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_RECORD,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_RECORD_OBJECT,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_TRAIT,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_VARIANT,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_VARIANT_OBJECT,
+} LilyCheckedLocalScopeKind;
 
 /**
  *
- * @brief Convert LilyCheckedScopeKind in string.
+ * @brief Convert LilyCheckedLocalScopeKind in string.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyCheckedScopeKind, enum LilyCheckedScopeKind self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedLocalScopeKind,
+               enum LilyCheckedLocalScopeKind self);
 #endif
 
-typedef Usize LilyCheckedScopeId;
+typedef Usize LilyCheckedLocalScopeId;
 
-typedef struct LilyCheckedScope
+typedef struct LilyCheckedLocalScope
 {
-    enum LilyCheckedScopeKind kind;
-    LilyCheckedScopeId id;
+    enum LilyCheckedLocalScopeKind kind;
+    LilyCheckedLocalScopeId id;
     Vec *access;   // Vec<String*>*
-    Vec *children; // Vec<LilyCheckedScope*>*?
+    Vec *children; // Vec<LilyCheckedLocalScope*>*?
     enum LilyVisibility visibility;
     Location location;
-} LilyCheckedScope;
+} LilyCheckedLocalScope;
 
 /**
  *
- * @brief Construct LilyCheckedScope type.
+ * @brief Construct LilyCheckedLocalScope type.
  */
-CONSTRUCTOR(LilyCheckedScope *,
-            LilyCheckedScope,
-            enum LilyCheckedScopeKind kind,
-            LilyCheckedScopeId id,
+CONSTRUCTOR(LilyCheckedLocalScope *,
+            LilyCheckedLocalScope,
+            enum LilyCheckedLocalScopeKind kind,
+            LilyCheckedLocalScopeId id,
             Vec *access,
             Vec *children,
             enum LilyVisibility visibility,
@@ -92,19 +94,21 @@ CONSTRUCTOR(LilyCheckedScope *,
 
 /**
  *
- * @brief Convert LilyCheckedScope in String.
+ * @brief Convert LilyCheckedLocalScope in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedLocalScope,
+               const LilyCheckedLocalScope *self);
 #endif
 
 /**
  *
- * @brief Free LilyCheckedScope type.
+ * @brief Free LilyCheckedLocalScope type.
  */
-DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self);
+DESTRUCTOR(LilyCheckedLocalScope, LilyCheckedLocalScope *self);
 
 enum LilyCheckedExternScopeKind
 {
@@ -127,6 +131,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedExternScope
 {
+    LilyCheckedLocalScope *local; // LilyCheckedLocalScope* (&)
     enum LilyCheckedExternScopeKind kind;
     union
     {
@@ -144,6 +149,7 @@ typedef struct LilyCheckedExternScope
 VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
                     LilyCheckedExternScope,
                     file,
+                    LilyCheckedLocalScope *local,
                     LilyFile *file);
 
 /**
@@ -154,6 +160,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
 VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
                     LilyCheckedExternScope,
                     library,
+                    LilyCheckedLocalScope *local,
                     LilyLibrary *library);
 
 /**
@@ -164,6 +171,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
 VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
                     LilyCheckedExternScope,
                     package,
+                    LilyCheckedLocalScope *local,
                     LilyPackage *package);
 
 /**
@@ -175,4 +183,48 @@ inline DESTRUCTOR(LilyCheckedExternScope, LilyCheckedExternScope *self)
     lily_free(self);
 }
 
-#endif // LILY_CORE_LILY_CHECKED_SCOPE_H
+enum LilyCheckedScopeKind
+{
+    LILY_CHECKED_SCOPE_KIND_EXTERN,
+    LILY_CHECKED_SCOPE_KIND_LOCAL
+};
+
+typedef struct LilyCheckedScope
+{
+    enum LilyCheckedScopeKind kind;
+    union
+    {
+        const LilyCheckedExternScope
+          *extern_;                         // const LilyCheckedExternScope* (&)
+        const LilyCheckedLocalScope *local; // const LilyCheckedLocalScope* (&)
+    };
+} LilyCheckedScope;
+
+/**
+ *
+ * @brief Construct LilyCheckedScope type
+ * (LILY_CHECKED_LOCAL_SCOPE_KIND_EXTERN).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedScope,
+                           LilyCheckedScope,
+                           extern,
+                           const LilyCheckedExternScope *extern_)
+{
+    return (LilyCheckedScope){ .kind = LILY_CHECKED_SCOPE_KIND_EXTERN,
+                               .extern_ = extern_ };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedScope type (LILY_CHECKED_LOCAL_SCOPE_KIND_LOCAL).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedScope,
+                           LilyCheckedScope,
+                           local,
+                           const LilyCheckedLocalScope *local)
+{
+    return (LilyCheckedScope){ .kind = LILY_CHECKED_SCOPE_KIND_LOCAL,
+                               .local = local };
+}
+
+#endif // LILY_CORE_LILY_CHECKED_LOCAL_SCOPE_H
