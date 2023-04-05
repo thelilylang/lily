@@ -82,8 +82,14 @@ VARIANT_CONSTRUCTOR(LilyAstBodyFunItem *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstBodyFunItem, const LilyAstBodyFunItem *self)
 {
-    // TODO: Debug LilyAstBodyFunItem.
-    return from__String("LilyAstBodyFunItem{}");
+	switch (self->kind) {
+        case LILY_AST_BODY_FUN_ITEM_KIND_EXPR:
+			return to_string__Debug__LilyAstExpr(self->expr);
+		case LILY_AST_BODY_FUN_ITEM_KIND_STMT:
+			return to_string__Debug__LilyAstStmt(&self->stmt);
+		default:
+			UNREACHABLE("unknown variant");
+	}
 }
 #endif
 
