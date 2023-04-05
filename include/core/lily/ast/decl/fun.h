@@ -55,6 +55,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyAstDeclFunParam
 {
     String *name;
+    LilyAstDataType *data_type; // LilyAstDataType*?
     enum LilyAstDeclFunParamKind kind;
     Location location;
     union
@@ -72,6 +73,7 @@ VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
                     LilyAstDeclFunParam,
                     default,
                     String *name,
+                    LilyAstDataType *data_type,
                     Location location,
                     LilyAstExpr *default_);
 
@@ -84,6 +86,7 @@ VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
                     LilyAstDeclFunParam,
                     normal,
                     String *name,
+                    LilyAstDataType *data_type,
                     Location location);
 
 /**

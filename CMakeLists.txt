@@ -15,6 +15,13 @@ if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
   set(CMAKE_C_FLAGS "/wd4710 /wd4711 /wd4255") 
 endif()
 
+if(UNIX AND NOT APPLE)
+	set(LILY_LINUX 1)
+endif()
+
+find_package(LLVM 15.0 REQUIRED)
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+
 set(BASE_SRC
 	src/base/alloc.c
 	src/base/atof.c
@@ -244,7 +251,8 @@ add_library(lily_command STATIC ${COMMAND_SRC})
 target_link_libraries(lily_command lily_base lily_cli lily_core)
 
 add_library(lily_core STATIC ${CORE_SRC})
-target_link_libraries(lily_core lily_base)
+target_link_libraries(lily_core lily_base LLVM)
+target_include_directories(lily_core PUBLIC lib/local)
 
 add_executable(lily src/bin/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)

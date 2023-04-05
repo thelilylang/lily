@@ -327,6 +327,14 @@ parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 static LilyAstDecl *
 parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
+static LilyAstDeclFunParam *
+parse_fun_param__LilyParseBlock(LilyParseBlock *self);
+
+// Parse fun params.
+/// @param params Vec<Vec<LilyToken*>*>*
+static Vec *
+parse_fun_params__LilyParser(LilyParser *self, Vec *params);
+
 // Parse fun declaration.
 static LilyAstDecl *
 parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
@@ -1802,24 +1810,28 @@ parse_lambda_expr__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_LITERAL_INT_10:                                  \
         case LILY_TOKEN_KIND_LITERAL_INT_16: {                                \
             int base = 10;                                                    \
+            String *literal_int = NULL;                                       \
                                                                               \
             switch (self->previous->kind) {                                   \
                 case LILY_TOKEN_KIND_LITERAL_INT_2:                           \
                     base = 2;                                                 \
+                    literal_int = self->previous->literal_int_2;              \
                     break;                                                    \
                 case LILY_TOKEN_KIND_LITERAL_INT_8:                           \
                     base = 8;                                                 \
+                    literal_int = self->previous->literal_int_8;              \
                     break;                                                    \
                 case LILY_TOKEN_KIND_LITERAL_INT_16:                          \
                     base = 16;                                                \
+                    literal_int = self->previous->literal_int_16;             \
                     break;                                                    \
                 default:                                                      \
+                    literal_int = self->previous->literal_int_10;             \
                     break;                                                    \
             }                                                                 \
                                                                               \
             /* try to cast to Int32 */                                        \
-            Optional *op =                                                    \
-              atoi_safe__Int32(self->previous->literal_int_2->buffer, base);  \
+            Optional *op = atoi_safe__Int32(literal_int->buffer, base);       \
                                                                               \
             if (is_some__Optional(op)) {                                      \
                 Int32 int32 = (Int32)(Uptr)get__Optional(op);                 \
@@ -1831,8 +1843,7 @@ parse_lambda_expr__LilyParseBlock(LilyParseBlock *self)
                 FREE(Optional, op);                                           \
                                                                               \
                 /* try to cast to Int64 */                                    \
-                op = atoi_safe__Int64(self->previous->literal_int_2->buffer,  \
-                                      base);                                  \
+                op = atoi_safe__Int64(literal_int->buffer, base);             \
                                                                               \
                 if (is_some__Optional(op)) {                                  \
                     Int64 int64 = (Int64)(Uptr)get__Optional(op);             \
@@ -2751,6 +2762,8 @@ parse_fun_body_item__LilyParser(LilyParser *self,
                               NEW_VARIANT(LilyAstBodyFunItem, expr, expr));
                 }
             } while (!HAS_REACHED_THE_END(exprs_block));
+
+            break;
         }
         default: {
             LilyAstBodyFunItem *stmt = parse_stmt__LilyParser(self, item);
@@ -3750,10 +3763,190 @@ parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                                        decl->object.enum_.visibility)));
 }
 
+LilyAstDeclFunParam *
+parse_fun_param__LilyParseBlock(LilyParseBlock *self)
+{
+    Location location = clone__Location(&self->current->location);
+
+    // 1. Parse name
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+            next_token__LilyParseBlock(self);
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                          NULL,
+                          NULL,
+                          NULL),
+              self->count_error);
+
+            name = from__String("__error__");
+
+            break;
+    }
+
+    LilyAstExpr *expr = NULL;
+    LilyAstDataType *data_type = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_COLON_EQ:
+        parse_expr : {
+            next_token__LilyParseBlock(self);
+
+            expr = parse_expr__LilyParseBlock(self);
+
+            if (expr) {
+                return NEW_VARIANT(LilyAstDeclFunParam,
+                                   default,
+                                   name,
+                                   data_type,
+                                   location,
+                                   expr);
+            }
+
+            return NEW_VARIANT(
+              LilyAstDeclFunParam, normal, name, data_type, location);
+        }
+        case LILY_TOKEN_KIND_EOF:
+            end__Location(&location,
+                          self->previous->location.end_line,
+                          self->previous->location.end_column);
+
+            return NEW_VARIANT(
+              LilyAstDeclFunParam, normal, name, NULL, location);
+        default:
+            data_type = parse_data_type__LilyParseBlock(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_COLON_EQ:
+                    goto parse_expr;
+                default: {
+                    CHECK_DATA_TYPE(
+                      data_type, (*self), NULL, "expected `,`", {});
+
+                    return NEW_VARIANT(
+                      LilyAstDeclFunParam, normal, name, data_type, location);
+                }
+            }
+
+            break;
+    }
+
+    return NULL;
+}
+
+Vec *
+parse_fun_params__LilyParser(LilyParser *self, Vec *params)
+{
+    Vec *res = NEW(Vec); // Vec<LilyAstDeclFunParam*>*
+
+    for (Usize i = 0; i < params->len; i++) {
+        LilyParseBlock param_block =
+          NEW(LilyParseBlock, self, get__Vec(params, i));
+        LilyAstDeclFunParam *param =
+          parse_fun_param__LilyParseBlock(&param_block);
+
+        if (param) {
+            push__Vec(res, param);
+        }
+    }
+
+    return res;
+}
+
 LilyAstDecl *
 parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #78");
+    // 1. Parse generic params
+    Vec *generic_params = NULL; // Vec<LilyAstGenericParam*>*?
+
+    if (decl->fun.generic_params) {
+        generic_params =
+          parse_generic_params__LilyParser(self, decl->fun.generic_params);
+    }
+
+    // 2. Parse params
+    Vec *params = NULL; // Vec<LilyAstDeclFunParam>*?
+
+    if (decl->fun.params) {
+        params = parse_fun_params__LilyParser(self, decl->fun.params);
+    }
+
+    // 3. Parse return data type
+    LilyAstDataType *return_data_type = NULL;
+
+    if (decl->fun.return_data_type) {
+        LilyParseBlock return_data_type_block =
+          NEW(LilyParseBlock, self, decl->fun.return_data_type);
+        return_data_type =
+          parse_data_type__LilyParseBlock(&return_data_type_block);
+
+        CHECK_DATA_TYPE(
+          return_data_type, return_data_type_block, NULL, "expected `=`", {});
+    }
+
+    // 4. Parse body
+    Vec *body = parse_fun_body__LilyParser(self, decl->fun.body);
+
+    // 5. Parse req
+    Vec *req = NULL; // Vec<LilyAstExpr*>*?
+
+    if (decl->fun.req) {
+        req = NEW(Vec);
+
+        for (Usize i = 0; i < decl->fun.req->len; i++) {
+            LilyParseBlock expr_block =
+              NEW(LilyParseBlock, self, get__Vec(decl->fun.req, i));
+            LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+            if (expr) {
+                push__Vec(req, expr);
+            }
+        }
+    }
+
+    // 6. Parse when
+    Vec *when = NULL; // Vec<LilyAstExpr*>*?
+
+    if (decl->fun.when) {
+        when = NEW(Vec);
+
+        for (Usize i = 0; i < decl->fun.when->len; i++) {
+            LilyParseBlock expr_block =
+              NEW(LilyParseBlock, self, get__Vec(decl->fun.when, i));
+            LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+            if (expr) {
+                push__Vec(when, expr);
+            }
+        }
+    }
+
+    return NEW_VARIANT(LilyAstDecl,
+                       fun,
+                       decl->location,
+                       NEW(LilyAstDeclFun,
+                           decl->fun.name,
+                           generic_params,
+                           params,
+                           return_data_type,
+                           body,
+                           req,
+                           when,
+                           decl->fun.visibility,
+                           decl->fun.is_async,
+                           decl->fun.is_operator,
+                           decl->fun.req_is_comptime,
+                           decl->fun.when_is_comptime));
 }
 
 LilyAstBodyClassItem *
@@ -3766,20 +3959,20 @@ parse_method_decl__LilyParser(LilyParser *self,
 LilyAstDecl *
 parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-	switch (decl->object.kind) {
-		case LILY_PREPARSER_OBJECT_KIND_CLASS:
-			return parse_class_decl__LilyParser(self, decl);
-		case LILY_PREPARSER_OBJECT_KIND_ENUM:
-			return parse_enum_object_decl__LilyParser(self, decl);
-		case LILY_PREPARSER_OBJECT_KIND_RECORD:
-			return parse_record_object_decl__LilyParser(self, decl);
-		case LILY_PREPARSER_OBJECT_KIND_TRAIT:
-			return parse_trait_decl__LilyParser(self, decl);
-		default:
-			UNREACHABLE("unknown variant");
-	}
+    switch (decl->object.kind) {
+        case LILY_PREPARSER_OBJECT_KIND_CLASS:
+            return parse_class_decl__LilyParser(self, decl);
+        case LILY_PREPARSER_OBJECT_KIND_ENUM:
+            return parse_enum_object_decl__LilyParser(self, decl);
+        case LILY_PREPARSER_OBJECT_KIND_RECORD:
+            return parse_record_object_decl__LilyParser(self, decl);
+        case LILY_PREPARSER_OBJECT_KIND_TRAIT:
+            return parse_trait_decl__LilyParser(self, decl);
+        default:
+            UNREACHABLE("unknown variant");
+    }
 
-	return NULL;
+    return NULL;
 }
 
 LilyAstBodyTraitItem *

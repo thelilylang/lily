@@ -47,7 +47,7 @@ VARIANT_CONSTRUCTOR(Optional *, Optional, none)
 void *
 get__Optional(const Optional *self)
 {
-    ASSERT(self->some);
+    ASSERT(self->state);
 
     return self->some;
 }

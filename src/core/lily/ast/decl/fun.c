@@ -64,12 +64,14 @@ VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
                     LilyAstDeclFunParam,
                     default,
                     String *name,
+                    LilyAstDataType *data_type,
                     Location location,
                     LilyAstExpr *default_)
 {
     LilyAstDeclFunParam *self = lily_malloc(sizeof(LilyAstDeclFunParam));
 
     self->name = name;
+    self->data_type = data_type;
     self->kind = LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT;
     self->location = location;
     self->default_ = default_;
@@ -81,11 +83,13 @@ VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
                     LilyAstDeclFunParam,
                     normal,
                     String *name,
+                    LilyAstDataType *data_type,
                     Location location)
 {
     LilyAstDeclFunParam *self = lily_malloc(sizeof(LilyAstDeclFunParam));
 
     self->name = name;
+    self->data_type = data_type;
     self->kind = LILY_AST_DECL_FUN_PARAM_KIND_NORMAL;
     self->location = location;
 
@@ -96,11 +100,20 @@ VARIANT_CONSTRUCTOR(LilyAstDeclFunParam *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDeclFunParam, const LilyAstDeclFunParam *self)
 {
-    String *res = format__String(
-      "LilyAstDeclFunParam{{ name = {S}, kind = {s}, location = {sa}",
-      self->name,
-      to_string__Debug__LilyAstDeclFunParamKind(self->kind),
-      to_string__Debug__Location(&self->location));
+    String *res =
+      format__String("LilyAstDeclFunParam{{ name = {S}, kind = {s}, location = "
+                     "{sa}, data_type =",
+                     self->name,
+                     to_string__Debug__LilyAstDeclFunParamKind(self->kind),
+                     to_string__Debug__Location(&self->location));
+
+    if (self->data_type) {
+        String *s = to_string__Debug__LilyAstDataType(self->data_type);
+
+        APPEND_AND_FREE(res, s);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     switch (self->kind) {
         case LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT: {
@@ -124,6 +137,11 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclFunParam, const LilyAstDeclFunParam *self)
 VARIANT_DESTRUCTOR(LilyAstDeclFunParam, default, LilyAstDeclFunParam *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
+
+    if (self->data_type) {
+        FREE(LilyAstDataType, self->data_type);
+    }
+
     FREE(LilyAstExpr, self->default_);
     lily_free(self);
 }
@@ -131,6 +149,11 @@ VARIANT_DESTRUCTOR(LilyAstDeclFunParam, default, LilyAstDeclFunParam *self)
 VARIANT_DESTRUCTOR(LilyAstDeclFunParam, normal, LilyAstDeclFunParam *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
+
+    if (self->data_type) {
+        FREE(LilyAstDataType, self->data_type);
+    }
+
     lily_free(self);
 }
 
@@ -217,18 +240,34 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclFun, const LilyAstDeclFun *self)
 DESTRUCTOR(LilyAstDeclFun, const LilyAstDeclFun *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
-    FREE_BUFFER_ITEMS(self->generic_params->buffer,
-                      self->generic_params->len,
-                      LilyAstGenericParam);
-    FREE(Vec, self->generic_params);
-    FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, LilyAstDeclFunParam);
-    FREE(Vec, self->params);
-    FREE(LilyAstDataType, self->return_data_type);
+
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(self->generic_params->buffer,
+                          self->generic_params->len,
+                          LilyAstGenericParam);
+        FREE(Vec, self->generic_params);
+    }
+
+    if (self->params) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyAstDeclFunParam);
+        FREE(Vec, self->params);
+    }
+
+    if (self->return_data_type) {
+        FREE(LilyAstDataType, self->return_data_type);
+    }
+
     FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyAstBodyFunItem);
     FREE(Vec, self->body);
-    FREE_BUFFER_ITEMS(self->req->buffer, self->req->len, LilyAstExpr);
-    FREE(Vec, self->req);
-    FREE_BUFFER_ITEMS(self->when->buffer, self->when->len, LilyAstExpr);
-    FREE(Vec, self->when);
+
+    if (self->req) {
+        FREE_BUFFER_ITEMS(self->req->buffer, self->req->len, LilyAstExpr);
+        FREE(Vec, self->req);
+    }
+
+    if (self->when) {
+        FREE_BUFFER_ITEMS(self->when->buffer, self->when->len, LilyAstExpr);
+        FREE(Vec, self->when);
+    }
 }

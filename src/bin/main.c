@@ -33,6 +33,8 @@
 
 #include <command/compile.h>
 
+#include <llvm-c/Core.h>
+
 #include <stdio.h>
 
 int
@@ -102,6 +104,8 @@ main(int argc, char **argv)
 
         return 1;
     }
+
+    LLVMShutdown();
 
     return 0;
 }
