@@ -29,6 +29,9 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/lily/visibility.h>
+#include <core/shared/location.h>
+
 enum LilyCheckedScopeKind
 {
     LILY_CHECKED_SCOPE_KIND_ATTRIBUTE,
@@ -57,6 +60,7 @@ typedef struct LilyCheckedScope
     LilyCheckedScopeId id;
     Vec *access;   // Vec<String*>*
     Vec *children; // Vec<LilyCheckedScope*>*?
+	enum LilyVisibility visibility;
 } LilyCheckedScope;
 
 /**
@@ -68,12 +72,16 @@ CONSTRUCTOR(LilyCheckedScope *,
             enum LilyCheckedScopeKind kind,
             LilyCheckedScopeId id,
             Vec *access,
-            Vec *children);
+            Vec *children,
+			enum LilyVisibility visibility);
 
 /**
  *
  * @brief Free LilyCheckedScope type.
  */
 DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self);
+
+// typedef struct LilyCheckedImportedScope {
+// } LilyCheckedImportedScope;
 
 #endif // LILY_CORE_LILY_CHECKED_SCOPE_H

@@ -32,7 +32,8 @@ CONSTRUCTOR(LilyCheckedScope *,
             enum LilyCheckedScopeKind kind,
             LilyCheckedScopeId id,
             Vec *access,
-            Vec *children)
+            Vec *children,
+			enum LilyVisibility visibility)
 {
     LilyCheckedScope *self = lily_malloc(sizeof(LilyCheckedScope));
 
@@ -40,6 +41,7 @@ CONSTRUCTOR(LilyCheckedScope *,
     self->id = id;
     self->access = access;
     self->children = children;
+	self->visibility = visibility;
 
     return self;
 }
