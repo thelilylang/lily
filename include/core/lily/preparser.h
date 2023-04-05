@@ -544,10 +544,10 @@ typedef struct LilyPreparserFun
     String *object_impl;   // String*?
     Vec *generic_params;   // Vec<Vec<LilyToken*>*>*?
     Vec *params;           // Vec<Vec<LilyToken*>*>*?
-    Vec *return_data_type; // Vec<LilyToken*>*
+    Vec *return_data_type; // Vec<LilyToken*>*?
     Vec *body;             // Vec<LilyPreparserFunBodyItem*>*
-    Vec *req;              // Vec<Vec<LilyToken*>*>*
-    Vec *when;             // Vec<Vec<LilyToken*>*>*
+    Vec *req;              // Vec<Vec<LilyToken*>*>*?
+    Vec *when;             // Vec<Vec<LilyToken*>*>*?
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
