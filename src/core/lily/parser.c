@@ -2763,7 +2763,7 @@ parse_fun_body_item__LilyParser(LilyParser *self,
                 }
             } while (!HAS_REACHED_THE_END(exprs_block));
 
-			break;
+            break;
         }
         default: {
             LilyAstBodyFunItem *stmt = parse_stmt__LilyParser(self, item);

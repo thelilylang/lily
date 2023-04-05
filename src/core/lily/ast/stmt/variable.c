@@ -57,9 +57,9 @@ DESTRUCTOR(LilyAstStmtVariable, const LilyAstStmtVariable *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
 
-	if (self->data_type) {
-		FREE(LilyAstDataType, self->data_type);
-	}
+    if (self->data_type) {
+        FREE(LilyAstDataType, self->data_type);
+    }
 
     FREE(LilyAstExpr, self->expr);
 }
