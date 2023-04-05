@@ -232,6 +232,7 @@ set(CORE_SRC
 	src/core/lily/ast.c
 	src/core/lily/checked.c
 	src/core/lily/error.c
+	src/core/lily/file.c
 	src/core/lily/ir.c
 	src/core/lily/package.c
 	src/core/lily/parser.c
