@@ -1753,9 +1753,9 @@ parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
 {
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_L_BRACE:
-            return parse_fun_call__LilyParseBlock(self, id);
-        case LILY_TOKEN_KIND_L_PAREN:
             return parse_record_call__LilyParseBlock(self, id);
+        case LILY_TOKEN_KIND_L_PAREN:
+            return parse_fun_call__LilyParseBlock(self, id);
         case LILY_TOKEN_KIND_COLON:
             return parse_variant_call__LilyParseBlock(self, id);
         default: {
