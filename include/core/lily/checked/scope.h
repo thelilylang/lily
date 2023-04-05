@@ -25,12 +25,15 @@
 #ifndef LILY_CORE_LILY_CHECKED_SCOPE_H
 #define LILY_CORE_LILY_CHECKED_SCOPE_H
 
+#include <base/alloc.h>
+#include <base/macros.h>
 #include <base/string.h>
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/lily/file.h>
+#include <core/lily/package.h>
 #include <core/lily/visibility.h>
-#include <core/shared/location.h>
 
 enum LilyCheckedScopeKind
 {
@@ -52,6 +55,16 @@ enum LilyCheckedScopeKind
     LILY_CHECKED_SCOPE_KIND_VARIANT_OBJECT,
 } LilyCheckedScopeKind;
 
+/**
+ *
+ * @brief Convert LilyCheckedScopeKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyCheckedScopeKind, enum LilyCheckedScopeKind self);
+#endif
+
 typedef Usize LilyCheckedScopeId;
 
 typedef struct LilyCheckedScope
@@ -60,7 +73,7 @@ typedef struct LilyCheckedScope
     LilyCheckedScopeId id;
     Vec *access;   // Vec<String*>*
     Vec *children; // Vec<LilyCheckedScope*>*?
-	enum LilyVisibility visibility;
+    enum LilyVisibility visibility;
 } LilyCheckedScope;
 
 /**
@@ -73,7 +86,17 @@ CONSTRUCTOR(LilyCheckedScope *,
             LilyCheckedScopeId id,
             Vec *access,
             Vec *children,
-			enum LilyVisibility visibility);
+            enum LilyVisibility visibility);
+
+/**
+ *
+ * @brief Convert LilyCheckedScope in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self);
+#endif
 
 /**
  *
@@ -81,7 +104,73 @@ CONSTRUCTOR(LilyCheckedScope *,
  */
 DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self);
 
-// typedef struct LilyCheckedImportedScope {
-// } LilyCheckedImportedScope;
+enum LilyCheckedExternScopeKind
+{
+    LILY_CHECKED_EXTERN_SCOPE_KIND_FILE,
+    LILY_CHECKED_EXTERN_SCOPE_KIND_LIBRARY,
+    LILY_CHECKED_EXTERN_SCOPE_KIND_PACKAGE,
+};
+
+/**
+ *
+ * @brief Convert LilyCheckedDataTypeArray in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExternScopeKind,
+               enum LilyCheckedExternScopeKind self);
+#endif
+
+typedef struct LilyCheckedExternScope
+{
+    enum LilyCheckedExternScopeKind kind;
+    union
+    {
+        LilyFile *file;       // LilyFile* (&)
+        LilyLibrary *library; // LilyLibrary* (&)
+        LilyPackage *package; // LilyPackage* (&)
+    };
+} LilyCheckedExternScope;
+
+/**
+ *
+ * @brief Construct LilyCheckedExternScope type
+ * (LILY_CHECKED_EXTERN_SCOPE_KIND_FILE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
+                    LilyCheckedExternScope,
+                    file,
+                    LilyFile *file);
+
+/**
+ *
+ * @brief Construct LilyCheckedExternScope type
+ * (LILY_CHECKED_EXTERN_SCOPE_KIND_LIBRARY).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
+                    LilyCheckedExternScope,
+                    library,
+                    LilyLibrary *library);
+
+/**
+ *
+ * @brief Construct LilyCheckedExternScope type
+ * (LILY_CHECKED_EXTERN_SCOPE_KIND_PACKAGE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
+                    LilyCheckedExternScope,
+                    package,
+                    LilyPackage *package);
+
+/**
+ *
+ * @brief Free LilyCheckedExternScope type.
+ */
+inline DESTRUCTOR(LilyCheckedExternScope, LilyCheckedExternScope *self)
+{
+    lily_free(self);
+}
 
 #endif // LILY_CORE_LILY_CHECKED_SCOPE_H
