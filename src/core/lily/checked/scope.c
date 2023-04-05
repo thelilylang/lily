@@ -44,8 +44,8 @@ CONSTRUCTOR(LilyCheckedScope *,
 
 DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
 {
-	FREE_BUFFER_ITEMS(self->access->buffer, self->access->len, String);
-	FREE(Vec, self->access);
+    FREE_BUFFER_ITEMS(self->access->buffer, self->access->len, String);
+    FREE(Vec, self->access);
 
     if (self->children) {
         FREE_BUFFER_ITEMS(

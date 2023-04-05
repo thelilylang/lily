@@ -54,7 +54,7 @@ typedef Usize LilyCheckedScopeId;
 typedef struct LilyCheckedScope
 {
     enum LilyCheckedScopeKind kind;
-    Vec *access; // Vec<String*>*
+    Vec *access;   // Vec<String*>*
     Vec *children; // Vec<LilyCheckedScope*>*?
 } LilyCheckedScope;
 
