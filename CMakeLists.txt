@@ -250,7 +250,7 @@ add_library(lily_core STATIC ${CORE_SRC})
 target_link_libraries(lily_core lily_base LLVM)
 
 add_executable(lily src/bin/main.c)
-target_link_libraries(lily lily_base lily_cli lily_command)
+target_link_libraries(lily lily_base lily_cli lily_command LLVM)
 
 if (DEBUG)
 	message("Move `tests` directory in build directory")
