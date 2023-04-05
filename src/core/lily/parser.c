@@ -339,10 +339,30 @@ parse_fun_params__LilyParser(LilyParser *self, Vec *params);
 static LilyAstDecl *
 parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
+static LilyAstDeclMethodParam *
+parse_method_param__LilyParseBlock(LilyParseBlock *self);
+
+// Parse method params.
+/// @param params Vec<Vec<LilyToken*>*>*
+static Vec *
+parse_method_params__LilyParser(LilyParser *self, Vec *params);
+
 // Parse method declaration.
 static LilyAstBodyClassItem *
 parse_method_decl__LilyParser(LilyParser *self,
                               LilyPreparserClassBodyItem *item);
+
+// Parse method declaration for enum object.
+static LilyAstBodyEnumObjectItem *
+parse_method_decl_for_enum_object__LilyParser(
+  LilyParser *self,
+  LilyPreparserEnumObjectBodyItem *item);
+
+// Parse method declaration.
+static LilyAstBodyRecordObjectItem *
+parse_method_decl_for_record_object__LilyParser(
+  LilyParser *self,
+  LilyPreparserRecordObjectBodyItem *item);
 
 // Parse object declaration.
 static LilyAstDecl *
@@ -3732,10 +3752,16 @@ parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                 TODO("macro expand");
 
                 break;
-            case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD:
-                TODO("method");
+            case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_METHOD: {
+                LilyAstBodyEnumObjectItem *method =
+                  parse_method_decl_for_enum_object__LilyParser(self, item);
+
+                if (method) {
+                    push__Vec(body, method);
+                }
 
                 break;
+            }
             case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_VARIANT: {
                 push__Vec(
                   body,
@@ -3949,11 +3975,372 @@ parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                            decl->fun.when_is_comptime));
 }
 
+LilyAstDeclMethodParam *
+parse_method_param__LilyParseBlock(LilyParseBlock *self)
+{
+    Location location = clone__Location(&self->current->location);
+
+    // 1. Parse name
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+            next_token__LilyParseBlock(self);
+
+            break;
+        case LILY_TOKEN_KIND_KEYWORD_MUT:
+            next_token__LilyParseBlock(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_KEYWORD_SELF:
+                    end__Location(&location,
+                                  self->current->location.end_line,
+                                  self->current->location.end_column);
+                    next_token__LilyParseBlock(self);
+
+                    if (!HAS_REACHED_THE_END((*self))) {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->file,
+                            &self->current->location,
+                            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                            NULL,
+                            NULL,
+                            from__String("expected `,`")),
+                          self->count_error);
+
+                        return NULL;
+                    }
+
+                    return NEW(LilyAstDeclMethodParam,
+                               LILY_AST_DECL_METHOD_PARAM_KIND_MUT_SELF,
+                               location);
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected `self`")),
+                      self->count_error);
+
+                    return NULL;
+            }
+        case LILY_TOKEN_KIND_KEYWORD_REF:
+            next_token__LilyParseBlock(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_KEYWORD_SELF:
+                    end__Location(&location,
+                                  self->current->location.end_line,
+                                  self->current->location.end_column);
+                    next_token__LilyParseBlock(self);
+
+                    if (!HAS_REACHED_THE_END((*self))) {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->file,
+                            &self->current->location,
+                            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                            NULL,
+                            NULL,
+                            from__String("expected `,`")),
+                          self->count_error);
+
+                        return NULL;
+                    }
+
+                    return NEW(LilyAstDeclMethodParam,
+                               LILY_AST_DECL_METHOD_PARAM_KIND_REF_SELF,
+                               location);
+                case LILY_TOKEN_KIND_KEYWORD_MUT:
+                    next_token__LilyParseBlock(self);
+
+                    switch (self->current->kind) {
+                        case LILY_TOKEN_KIND_KEYWORD_SELF:
+                            end__Location(&location,
+                                          self->current->location.end_line,
+                                          self->current->location.end_column);
+                            next_token__LilyParseBlock(self);
+
+                            if (!HAS_REACHED_THE_END((*self))) {
+                                emit__Diagnostic(
+                                  NEW_VARIANT(
+                                    Diagnostic,
+                                    simple_lily_error,
+                                    self->file,
+                                    &self->current->location,
+                                    NEW(LilyError,
+                                        LILY_ERROR_KIND_EXPECTED_TOKEN),
+                                    NULL,
+                                    NULL,
+                                    from__String("expected `,`")),
+                                  self->count_error);
+
+                                return NULL;
+                            }
+
+                            return NEW(
+                              LilyAstDeclMethodParam,
+                              LILY_AST_DECL_METHOD_PARAM_KIND_REF_MUT_SELF,
+                              location);
+                        default:
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->file,
+                                &self->current->location,
+                                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                                NULL,
+                                NULL,
+                                from__String("expected `self`")),
+                              self->count_error);
+
+                            return NULL;
+                    }
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected `self` or `mut`")),
+                      self->count_error);
+
+                    return NULL;
+            }
+        case LILY_TOKEN_KIND_KEYWORD_SELF:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyParseBlock(self);
+
+            if (!HAS_REACHED_THE_END((*self))) {
+                emit__Diagnostic(
+                  NEW_VARIANT(Diagnostic,
+                              simple_lily_error,
+                              self->file,
+                              &self->current->location,
+                              NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                              NULL,
+                              NULL,
+                              from__String("expected `,`")),
+                  self->count_error);
+
+                return NULL;
+            }
+
+            return NEW(LilyAstDeclMethodParam,
+                       LILY_AST_DECL_METHOD_PARAM_KIND_SELF,
+                       location);
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                          NULL,
+                          NULL,
+                          NULL),
+              self->count_error);
+
+            name = from__String("__error__");
+
+            break;
+    }
+
+    LilyAstExpr *expr = NULL;
+    LilyAstDataType *data_type = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_COLON_EQ:
+        parse_expr : {
+            next_token__LilyParseBlock(self);
+
+            expr = parse_expr__LilyParseBlock(self);
+
+            if (expr) {
+                return NEW_VARIANT(LilyAstDeclMethodParam,
+                                   default,
+                                   name,
+                                   data_type,
+                                   location,
+                                   expr);
+            }
+
+            return NEW_VARIANT(
+              LilyAstDeclMethodParam, normal, name, data_type, location);
+        }
+        case LILY_TOKEN_KIND_EOF:
+            end__Location(&location,
+                          self->previous->location.end_line,
+                          self->previous->location.end_column);
+
+            return NEW_VARIANT(
+              LilyAstDeclMethodParam, normal, name, NULL, location);
+        default:
+            data_type = parse_data_type__LilyParseBlock(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_COLON_EQ:
+                    goto parse_expr;
+                default: {
+                    CHECK_DATA_TYPE(
+                      data_type, (*self), NULL, "expected `,`", {});
+
+                    return NEW_VARIANT(LilyAstDeclMethodParam,
+                                       normal,
+                                       name,
+                                       data_type,
+                                       location);
+                }
+            }
+
+            break;
+    }
+
+    return NULL;
+}
+
+Vec *
+parse_method_params__LilyParser(LilyParser *self, Vec *params)
+{
+    Vec *res = NEW(Vec); // Vec<LilyAstDeclMethodParam*>*
+
+    for (Usize i = 0; i < params->len; i++) {
+        LilyParseBlock param_block =
+          NEW(LilyParseBlock, self, get__Vec(params, i));
+        LilyAstDeclMethodParam *param =
+          parse_method_param__LilyParseBlock(&param_block);
+
+        if (param) {
+            push__Vec(res, param);
+        }
+    }
+
+    return res;
+}
+
+#define PARSE_METHOD_DECL(self, item, dt)                                      \
+    /* 1. Parse generic params */                                              \
+    Vec *generic_params = NULL; /* Vec<LilyAstGenericParam*>*? */              \
+                                                                               \
+    if (item->method.generic_params) {                                         \
+        generic_params =                                                       \
+          parse_generic_params__LilyParser(self, item->method.generic_params); \
+    }                                                                          \
+                                                                               \
+    /* 2. Parse params */                                                      \
+    Vec *params = NULL; /* Vec<LilyAstDeclFunParam>*? */                       \
+                                                                               \
+    if (item->method.params) {                                                 \
+        params = parse_method_params__LilyParser(self, item->method.params);   \
+    }                                                                          \
+                                                                               \
+    /* 3. Parse return data type */                                            \
+    LilyAstDataType *return_data_type = NULL;                                  \
+                                                                               \
+    if (item->method.return_data_type) {                                       \
+        LilyParseBlock return_data_type_block =                                \
+          NEW(LilyParseBlock, self, item->method.return_data_type);            \
+        return_data_type =                                                     \
+          parse_data_type__LilyParseBlock(&return_data_type_block);            \
+                                                                               \
+        CHECK_DATA_TYPE(                                                       \
+          return_data_type, return_data_type_block, NULL, "expected `=`", {}); \
+    }                                                                          \
+                                                                               \
+    /* 4. Parse body */                                                        \
+    Vec *body = parse_fun_body__LilyParser(self, item->method.body);           \
+                                                                               \
+    /* 5. Parse req */                                                         \
+    Vec *req = NULL; /* Vec<LilyAstExpr*>*? */                                 \
+                                                                               \
+    if (item->method.req) {                                                    \
+        req = NEW(Vec);                                                        \
+                                                                               \
+        for (Usize i = 0; i < item->method.req->len; i++) {                    \
+            LilyParseBlock expr_block =                                        \
+              NEW(LilyParseBlock, self, get__Vec(item->method.req, i));        \
+            LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);       \
+                                                                               \
+            if (expr) {                                                        \
+                push__Vec(req, expr);                                          \
+            }                                                                  \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    /* 6. Parse when */                                                        \
+    Vec *when = NULL; /* Vec<LilyAstExpr*>*? */                                \
+                                                                               \
+    if (item->method.when) {                                                   \
+        when = NEW(Vec);                                                       \
+                                                                               \
+        for (Usize i = 0; i < item->method.when->len; i++) {                   \
+            LilyParseBlock expr_block =                                        \
+              NEW(LilyParseBlock, self, get__Vec(item->method.when, i));       \
+            LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);       \
+                                                                               \
+            if (expr) {                                                        \
+                push__Vec(when, expr);                                         \
+            }                                                                  \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    return NEW_VARIANT(dt,                                                     \
+                       method,                                                 \
+                       item->location,                                         \
+                       NEW(LilyAstDeclMethod,                                  \
+                           item->method.name,                                  \
+                           item->method.object_impl,                           \
+                           generic_params,                                     \
+                           params,                                             \
+                           return_data_type,                                   \
+                           body,                                               \
+                           req,                                                \
+                           when,                                               \
+                           item->method.visibility,                            \
+                           item->method.is_async,                              \
+                           item->method.is_operator,                           \
+                           item->method.req_is_comptime,                       \
+                           item->method.when_is_comptime));
+
+LilyAstBodyEnumObjectItem *
+parse_method_decl_for_enum_object__LilyParser(
+  LilyParser *self,
+  LilyPreparserEnumObjectBodyItem *item)
+{
+    PARSE_METHOD_DECL(self, item, LilyAstBodyEnumObjectItem);
+}
+
+LilyAstBodyRecordObjectItem *
+parse_method_decl_for_record_object__LilyParser(
+  LilyParser *self,
+  LilyPreparserRecordObjectBodyItem *item)
+{
+    PARSE_METHOD_DECL(self, item, LilyAstBodyRecordObjectItem);
+}
+
 LilyAstBodyClassItem *
 parse_method_decl__LilyParser(LilyParser *self,
                               LilyPreparserClassBodyItem *item)
 {
-    TODO("Issue #79");
+    PARSE_METHOD_DECL(self, item, LilyAstBodyClassItem);
 }
 
 LilyAstDecl *
