@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(lily C)
+project(lily LANGUAGES C CXX)
 
 set(DEBUG 1) # 0 for release, 1 for debug
 
@@ -19,7 +19,7 @@ if(UNIX AND NOT APPLE)
 	set(LILY_LINUX 1)
 endif()
 
-find_package(LLVM 15.0 REQUIRED)
+find_package(LLVM 15.0 CONFIG REQUIRED)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 
 set(BASE_SRC
