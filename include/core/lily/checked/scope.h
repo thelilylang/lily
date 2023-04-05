@@ -74,6 +74,7 @@ typedef struct LilyCheckedScope
     Vec *access;   // Vec<String*>*
     Vec *children; // Vec<LilyCheckedScope*>*?
     enum LilyVisibility visibility;
+    Location location;
 } LilyCheckedScope;
 
 /**
@@ -86,7 +87,8 @@ CONSTRUCTOR(LilyCheckedScope *,
             LilyCheckedScopeId id,
             Vec *access,
             Vec *children,
-            enum LilyVisibility visibility);
+            enum LilyVisibility visibility,
+            Location location);
 
 /**
  *

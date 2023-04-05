@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/format.h>
 #include <base/new.h>
 
 #include <core/lily/checked/scope.h>
@@ -80,7 +81,8 @@ CONSTRUCTOR(LilyCheckedScope *,
             LilyCheckedScopeId id,
             Vec *access,
             Vec *children,
-            enum LilyVisibility visibility)
+            enum LilyVisibility visibility,
+            Location location)
 {
     LilyCheckedScope *self = lily_malloc(sizeof(LilyCheckedScope));
 
@@ -89,6 +91,7 @@ CONSTRUCTOR(LilyCheckedScope *,
     self->access = access;
     self->children = children;
     self->visibility = visibility;
+    self->location = location;
 
     return self;
 }
@@ -121,9 +124,13 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
         push_str__String(res, " NULL");
     }
 
-    push_str__String(res, ", visibility = ");
-    push_str__String(res, to_string__Debug__LilyVisibility(self->visibility));
-    push_str__String(res, " }");
+    {
+        char *s = format(", visibility = {s}, location = {sa} }",
+                         to_string__Debug__LilyVisibility(self->visibility),
+                         to_string__Debug__Location(&self->location));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
