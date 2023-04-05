@@ -26,7 +26,7 @@ Work in progress...
 - Scanner: 95% finished
 - Preparser: 85% finished
 - Precompiler: 60% finished
-- Parser: 60% finished
+- Parser: 80% finished
 - Analysis: 0% finished
 - Code generator: 0% finished
 
