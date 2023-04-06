@@ -29,302 +29,82 @@
 
 /**
  *
- * @brief Cast `i1` to `i8`.
+ * @brief Cast to `i1`.
  */
 inline LLVMValueRef
-i1_cast_i8__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i8__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i1` to `i16`.
- */
-inline LLVMValueRef
-i1_cast_i16__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i16__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i1` to `i32`.
- */
-inline LLVMValueRef
-i1_cast_i32__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i32__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i1` to `i64`.
- */
-inline LLVMValueRef
-i1_cast_i64__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i64__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i1` to `i128`.
- */
-inline LLVMValueRef
-i1_cast_i128__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i128__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i8` to `i1`.
- */
-inline LLVMValueRef
-i8_cast_i1__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
+cast_to_i1__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
 {
     return LLVMBuildSExt(self->builder, value, i1__LilyIrLlvm(self), "");
 }
 
 /**
  *
- * @brief Cast `i8` to `i16`.
+ * @brief Cast to `i8`.
  */
 inline LLVMValueRef
-i8_cast_i16__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i16__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i8` to `i32`.
- */
-inline LLVMValueRef
-i8_cast_i32__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i32__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i8` to `i64`.
- */
-inline LLVMValueRef
-i8_cast_i64__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i64__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i8` to `i128`.
- */
-inline LLVMValueRef
-i8_cast_i128__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i128__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i16` to `i1`.
- */
-inline LLVMValueRef
-i16_cast_i1__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i1__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i16` to `i8`.
- */
-inline LLVMValueRef
-i16_cast_i8__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
+cast_to_i8__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
 {
     return LLVMBuildSExt(self->builder, value, i8__LilyIrLlvm(self), "");
 }
 
 /**
  *
- * @brief Cast `i16` to `i32`.
+ * @brief Cast to `i16`.
  */
 inline LLVMValueRef
-i16_cast_i32__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i32__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i16` to `i64`.
- */
-inline LLVMValueRef
-i16_cast_i64__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i64__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i16` to `i128`.
- */
-inline LLVMValueRef
-i16_cast_i128__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i128__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i32` to `i1`.
- */
-inline LLVMValueRef
-i32_cast_i1__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i1__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i32` to `i8`.
- */
-inline LLVMValueRef
-i32_cast_i8__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i8__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i32` to `i16`.
- */
-inline LLVMValueRef
-i32_cast_i16__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
+cast_to_i16__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
 {
     return LLVMBuildSExt(self->builder, value, i16__LilyIrLlvm(self), "");
 }
 
 /**
  *
- * @brief Cast `i32` to `i64`.
+ * @brief Cast to `i32`.
  */
 inline LLVMValueRef
-i32_cast_i64__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i64__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i32` to `i128`.
- */
-inline LLVMValueRef
-i32_cast_i128__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i128__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i64` to `i1`.
- */
-inline LLVMValueRef
-i64_cast_i1__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i1__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i64` to `i8`.
- */
-inline LLVMValueRef
-i64_cast_i8__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i8__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i64` to `i16`.
- */
-inline LLVMValueRef
-i64_cast_i16__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i16__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i64` to `i32`.
- */
-inline LLVMValueRef
-i64_cast_i32__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
+cast_to_i32__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
 {
     return LLVMBuildSExt(self->builder, value, i32__LilyIrLlvm(self), "");
 }
 
 /**
  *
- * @brief Cast `i64` to `i128`.
+ * @brief Cast to `i64`.
  */
 inline LLVMValueRef
-i64_cast_i128__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
+cast_to_i64__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
+{
+    return LLVMBuildSExt(self->builder, value, i64__LilyIrLlvm(self), "");
+}
+
+/**
+ *
+ * @brief Cast to `i128`.
+ */
+inline LLVMValueRef
+cast_to_i128__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
 {
     return LLVMBuildSExt(self->builder, value, i128__LilyIrLlvm(self), "");
 }
 
 /**
  *
- * @brief Cast `i128` to `i1`.
+ * @brief Cast to `float`.
  */
 inline LLVMValueRef
-i128_cast_i1__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
+cast_to_float__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
 {
-    return LLVMBuildSExt(self->builder, value, i1__LilyIrLlvm(self), "");
+    return LLVMBuildSExt(self->builder, value, float__LilyIrLlvm(self), "");
 }
 
 /**
  *
- * @brief Cast `i128` to `i8`.
+ * @brief Cast to `double`.
  */
 inline LLVMValueRef
-i128_cast_i8__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
+cast_to_double__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
 {
-    return LLVMBuildSExt(self->builder, value, i8__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i128` to `i16`.
- */
-inline LLVMValueRef
-i128_cast_i16__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i16__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i128` to `i32`.
- */
-inline LLVMValueRef
-i128_cast_i32__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i32__LilyIrLlvm(self), "");
-}
-
-/**
- *
- * @brief Cast `i128` to `i64`.
- */
-inline LLVMValueRef
-i128_cast_i64__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
-{
-    return LLVMBuildSExt(self->builder, value, i64__LilyIrLlvm(self), "");
+    return LLVMBuildSExt(self->builder, value, double__LilyIrLlvm(self), "");
 }
 
 #endif // LILY_CORE_LILY_IR_LLVM_CAST_H
