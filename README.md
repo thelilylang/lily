@@ -58,6 +58,7 @@ end
 
 - CMake >= 3.20
 - GCC >= 4.6 or Clang >= 3.0
+- LLVM 15
 
 ## Contribute
 
