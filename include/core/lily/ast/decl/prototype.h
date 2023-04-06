@@ -34,8 +34,8 @@
 typedef struct LilyAstDeclPrototype
 {
     String *name;
-    Vec *generic_params;               // Vec<LilyAstGenericParam*>*
-    Vec *params;                       // Vec<LilyAstDataType*>*
+    Vec *generic_params;               // Vec<LilyAstGenericParam*>*?
+    Vec *params;                       // Vec<LilyAstDataType*>*?
     LilyAstDataType *return_data_type; // LilyAstDataType*?
 } LilyAstDeclPrototype;
 

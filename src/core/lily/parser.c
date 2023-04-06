@@ -4366,7 +4366,55 @@ LilyAstBodyTraitItem *
 parse_prototype_decl__LilyParser(LilyParser *self,
                                  LilyPreparserTraitBodyItem *item)
 {
-    TODO("Issue #81");
+    // 1. Parse generic params
+    Vec *generic_params = NULL;
+
+    if (item->prototype.generic_params) {
+        generic_params = parse_generic_params__LilyParser(
+          self, item->prototype.generic_params);
+    }
+
+    // 2. Parse params
+    Vec *params = NULL;
+
+    if (item->prototype.params) {
+        params = NEW(Vec);
+
+        for (Usize i = 0; i < item->prototype.params->len; i++) {
+            LilyParseBlock param_block =
+              NEW(LilyParseBlock, self, get__Vec(item->prototype.params, i));
+            LilyAstDataType *param =
+              parse_data_type__LilyParseBlock(&param_block);
+
+            CHECK_DATA_TYPE(param, param_block, NULL, "expected `,`", {});
+
+            if (param) {
+                push__Vec(params, param);
+            }
+        }
+    }
+
+    // 3. Parse return data type
+    LilyAstDataType *return_data_type = NULL;
+
+    if (item->prototype.return_data_type) {
+        LilyParseBlock return_data_type_block =
+          NEW(LilyParseBlock, self, item->prototype.return_data_type);
+        return_data_type =
+          parse_data_type__LilyParseBlock(&return_data_type_block);
+
+        CHECK_DATA_TYPE(
+          return_data_type, return_data_type_block, NULL, "expected `;`", {});
+    }
+
+    return NEW_VARIANT(LilyAstBodyTraitItem,
+                       prototype,
+                       item->location,
+                       NEW(LilyAstDeclPrototype,
+                           item->prototype.name,
+                           generic_params,
+                           params,
+                           return_data_type));
 }
 
 LilyAstDecl *
