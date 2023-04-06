@@ -4530,6 +4530,10 @@ run__LilyParser(LilyParser *self, LilyPackage *root_package)
         CALL_DEBUG(LilyAstDecl, get__Vec(self->decls, i));
     }
 #endif
+
+    if (self->package->count_error > 0) {
+        exit(1);
+    }
 }
 
 DESTRUCTOR(LilyParser, const LilyParser *self)
