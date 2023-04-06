@@ -126,7 +126,7 @@ typedef struct LilyAstExprAccess
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_GLOBAL).
+ * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_GLOBAL).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
@@ -139,7 +139,7 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_HOOK).
+ * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_HOOK).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
@@ -152,7 +152,7 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_OBJECT).
+ * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_OBJECT).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
@@ -165,7 +165,7 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_PATH).
+ * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_PATH).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
@@ -178,7 +178,7 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT).
+ * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
@@ -191,7 +191,7 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 
 /**
  *
- * @brief Construct LilyAstExprAccess (LILY_AST_EXPR_ACCESS_KIND_SELF).
+ * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_SELF).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
