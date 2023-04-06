@@ -224,6 +224,10 @@ set(CORE_SRC
 	src/core/lily/ir/cpp/generator.c
 	src/core/lily/ir/llvm/generator.c
 	src/core/lily/ir/llvm/linker.c
+	src/core/lily/ir/cc.c
+	src/core/lily/ir/cpp.c
+	src/core/lily/ir/js.c
+	src/core/lily/ir/llvm.c
 	src/core/lily/package/default_path.c
 	src/core/lily/package/dependency_tree.c
 	src/core/lily/package/library.c
