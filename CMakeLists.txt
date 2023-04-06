@@ -19,7 +19,7 @@ if(UNIX AND NOT APPLE)
 	set(LILY_LINUX 1)
 endif()
 
-find_package(LLVM 15.0 CONFIG REQUIRED)
+find_package(LLVM 15 CONFIG REQUIRED)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 
 set(BASE_SRC
