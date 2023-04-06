@@ -87,6 +87,7 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/ir/cpp/builder/function/*.c
 	${CLANG_FORMAT} ./src/core/lily/ir/cpp/generator/*.c
 	${CLANG_FORMAT} ./src/core/lily/ir/llvm/*.c
+	${CLANG_FORMAT} ./src/core/lily/ir/*.c
 	${CLANG_FORMAT} ./src/core/lily/package/*.c
 	${CLANG_FORMAT} ./src/core/shared/*.c
 	${CLANG_FORMAT} ./benchmarks/base/*.c
