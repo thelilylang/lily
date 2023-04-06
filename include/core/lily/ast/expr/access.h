@@ -178,7 +178,8 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 
 /**
  *
- * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT).
+ * @brief Construct LilyAstExprAccess type
+ * (LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
