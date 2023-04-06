@@ -222,6 +222,14 @@ set(CORE_SRC
 	src/core/lily/ir/cpp/generator/record.c
 	src/core/lily/ir/cpp/generator/record_object.c
 	src/core/lily/ir/cpp/generator.c
+	src/core/lily/ir/llvm/generator/class.c
+	src/core/lily/ir/llvm/generator/constant.c
+	src/core/lily/ir/llvm/generator/enum_object.c
+	src/core/lily/ir/llvm/generator/enum.c
+	src/core/lily/ir/llvm/generator/error.c
+	src/core/lily/ir/llvm/generator/function.c
+	src/core/lily/ir/llvm/generator/record_object.c
+	src/core/lily/ir/llvm/generator/record.c
 	src/core/lily/ir/llvm/generator.c
 	src/core/lily/ir/llvm/linker.c
 	src/core/lily/ir/cc.c
