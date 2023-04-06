@@ -100,7 +100,7 @@ format:
 profile:
 	@mkdir -p build && cd build && cmake .. -G Ninja && ninja
 	@mkdir -p build/profile
-	@gcc -Wall -O3 -pg -L build/ -llily_base -llily_cli -llily_command -I include -o build/profile/lily \
+	@gcc -Wall -O3 -pg -lLLVM -L build/ -llily_base -llily_cli -llily_command -I include -o build/profile/lily \
 		src/bin/main.c \
 		src/base/*.c \
 		src/cli/option/*.c \
