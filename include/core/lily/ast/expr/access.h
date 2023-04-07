@@ -104,12 +104,6 @@ IMPL_FOR_DEBUG(to_string,
                const LilyAstExprAccessObject *self);
 #endif
 
-/**
- *
- * @brief Free LilyAstExprAccessObject type.
- */
-DESTRUCTOR(LilyAstExprAccessObject, const LilyAstExprAccessObject *self);
-
 typedef struct LilyAstExprAccess
 {
     enum LilyAstExprAccessKind kind;

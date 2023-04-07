@@ -36,6 +36,9 @@
 // Free LilyAstExprAccessHook type.
 static DESTRUCTOR(LilyAstExprAccessHook, const LilyAstExprAccessHook *self);
 
+// Free LilyAstExprAccessObject type.
+static DESTRUCTOR(LilyAstExprAccessObject, const LilyAstExprAccessObject *self);
+
 // Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_GLOBAL).
 static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
                                  global,
@@ -108,7 +111,10 @@ DESTRUCTOR(LilyAstExprAccessHook, const LilyAstExprAccessHook *self)
 
 DESTRUCTOR(LilyAstExprAccessObject, const LilyAstExprAccessObject *self)
 {
-    FREE(LilyAstExpr, self->access);
+    if (self->access) {
+        FREE(LilyAstExpr, self->access);
+    }
+
     FREE_BUFFER_ITEMS(self->object->buffer, self->object->len, LilyAstDataType);
     FREE(Vec, self->object);
 }
