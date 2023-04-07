@@ -69,7 +69,11 @@ VARIANT_CONSTRUCTOR(CompileOption *,
 static CompileOption *
 get__CompileOption(const char *option)
 {
-    if (!strcmp(option, "--dump-ir"))
+    if (!strcmp(option, "--cc-ir"))
+        return NEW(CompileOption, COMPILE_OPTION_KIND_CC_IR);
+    else if (!strcmp(option, "--cpp-ir"))
+        return NEW(CompileOption, COMPILE_OPTION_KIND_CPP_IR);
+    else if (!strcmp(option, "--dump-ir"))
         return NEW(CompileOption, COMPILE_OPTION_KIND_DUMP_IR);
     else if (!strcmp(option, "--dump-parser"))
         return NEW(CompileOption, COMPILE_OPTION_KIND_DUMP_PARSER);
@@ -79,6 +83,8 @@ get__CompileOption(const char *option)
         return NEW(CompileOption, COMPILE_OPTION_KIND_DUMP_TYPECHECK);
     else if (!strcmp(option, "-h") || !strcmp(option, "--help"))
         return NEW(CompileOption, COMPILE_OPTION_KIND_HELP);
+    else if (!strcmp(option, "--js-ir"))
+        return NEW(CompileOption, COMPILE_OPTION_KIND_JS_IR);
     else if (!strcmp(option, "--run-ir"))
         return NEW(CompileOption, COMPILE_OPTION_KIND_RUN_IR);
     else if (!strcmp(option, "--run-parser"))

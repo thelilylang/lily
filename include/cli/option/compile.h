@@ -30,6 +30,8 @@
 
 enum CompileOptionKind
 {
+    COMPILE_OPTION_KIND_CC_IR,          // --cc-ir
+    COMPILE_OPTION_KIND_CPP_IR,         // --cpp-ir
     COMPILE_OPTION_KIND_DUMP_IR,        // --dump-ir
     COMPILE_OPTION_KIND_DUMP_PARSER,    // --dump-parser
     COMPILE_OPTION_KIND_DUMP_SCANNER,   // --dump-scanner
@@ -37,6 +39,7 @@ enum CompileOptionKind
     COMPILE_OPTION_KIND_ERROR,
     COMPILE_OPTION_KIND_FILENAME,
     COMPILE_OPTION_KIND_HELP,          // -h, --help
+    COMPILE_OPTION_KIND_JS_IR,         // --js-ir
     COMPILE_OPTION_KIND_RUN_IR,        // --run-ir
     COMPILE_OPTION_KIND_RUN_PARSER,    // --run-parser
     COMPILE_OPTION_KIND_RUN_SCANNER,   // --run-scanner

@@ -30,15 +30,26 @@
 typedef struct ToConfig
 {
     const char *filename;
+    bool from_cc;
+    bool from_cpp;
+    bool from_js;
 } ToConfig;
 
 /**
  *
  * @brief Construct ToConfig type.
  */
-inline CONSTRUCTOR(ToConfig, ToConfig, const char *filename)
+inline CONSTRUCTOR(ToConfig,
+                   ToConfig,
+                   const char *filename,
+                   bool from_cc,
+                   bool from_cpp,
+                   bool from_js)
 {
-    return (ToConfig){ .filename = filename };
+    return (ToConfig){ .filename = filename,
+                       .from_cc = from_cc,
+                       .from_cpp = from_cpp,
+                       .from_js = from_js };
 }
 
 #endif // LILY_CLI_CONFIG_TO_H

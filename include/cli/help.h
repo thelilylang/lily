@@ -44,6 +44,9 @@
     "  --run-scanner   Run only the scanner\n"     \
     "  --run-parser    Run only the parser\n"      \
     "  --run-tc        Run only the typecheck\n"   \
+    "  --cc-ir         Use C as IR\n"              \
+    "  --cpp-ir        Use C++ as IR\n"            \
+    "  --js-ir         Use JS as IR\n"             \
     "  -h, --help      Print compile's help\n"
 
 #define CPP_HELP                               \
@@ -74,6 +77,9 @@
 #define TO_HELP                               \
     "Usage: lily to [options] [FILENAME]\n\n" \
     "Options:\n\n"                            \
+    "  --from-cc       Transpile from C\n"    \
+    "  --from-cpp      Transpile from C++\n"  \
+    "  --from-js       Transpile from JS\n"   \
     "  -h, --help      Print to's help"
 
 #define HELP                                       \

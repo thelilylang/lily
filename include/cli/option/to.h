@@ -32,7 +32,10 @@ enum ToOptionKind
 {
     TO_OPTION_KIND_ERROR,
     TO_OPTION_KIND_FILENAME,
-    TO_OPTION_KIND_HELP // -h, --help
+    TO_OPTION_KIND_FROM_CC,
+    TO_OPTION_KIND_FROM_CPP,
+    TO_OPTION_KIND_FROM_JS,
+    TO_OPTION_KIND_HELP, // -h, --help
 };
 
 typedef struct ToOption

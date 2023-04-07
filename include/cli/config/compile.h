@@ -40,6 +40,9 @@ typedef struct CompileConfig
     bool dump_parser;
     bool dump_typecheck;
     bool dump_ir;
+    bool cc_ir;
+    bool cpp_ir;
+    bool js_ir;
 } CompileConfig;
 
 /**
@@ -56,7 +59,10 @@ inline CONSTRUCTOR(CompileConfig,
                    bool dump_scanner,
                    bool dump_parser,
                    bool dump_typecheck,
-                   bool dump_ir)
+                   bool dump_ir,
+                   bool cc_ir,
+                   bool cpp_ir,
+                   bool js_ir)
 {
     return (CompileConfig){ .filename = filename,
                             .run_scanner = run_scanner,
@@ -66,7 +72,10 @@ inline CONSTRUCTOR(CompileConfig,
                             .dump_scanner = dump_scanner,
                             .dump_parser = dump_parser,
                             .dump_typecheck = dump_typecheck,
-                            .dump_ir = dump_ir };
+                            .dump_ir = dump_ir,
+                            .cc_ir = cc_ir,
+                            .cpp_ir = cpp_ir,
+                            .js_ir = js_ir };
 }
 
 #endif // LILY_CLI_CONFIG_COMPILE_H

@@ -66,7 +66,13 @@ VARIANT_CONSTRUCTOR(ToOption *, ToOption, filename, const char *filename)
 ToOption *
 get__ToOption(const char *option)
 {
-    if (!strcmp(option, "-h") || !strcmp(option, "--help"))
+    if (!strcmp(option, "--from-cc"))
+        return NEW(ToOption, TO_OPTION_KIND_FROM_CC);
+    else if (!strcmp(option, "--from-cpp"))
+        return NEW(ToOption, TO_OPTION_KIND_FROM_CPP);
+    else if (!strcmp(option, "--from-js"))
+        return NEW(ToOption, TO_OPTION_KIND_FROM_JS);
+    else if (!strcmp(option, "-h") || !strcmp(option, "--help"))
         return NEW(ToOption, TO_OPTION_KIND_HELP);
     else
         return NEW_VARIANT(ToOption, error, option);

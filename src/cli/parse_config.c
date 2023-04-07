@@ -95,9 +95,16 @@ parse_compile__ParseConfig(const Option *op)
          dump_ir = false;
     bool run_scanner = false, run_parser = false, run_typecheck = false,
          run_ir = false;
+    bool cc_ir = false, cpp_ir = false, js_ir = false;
 
     for (Usize i = 0; i < op->compile->len; i++) {
         switch (CAST(CompileOption *, get__Vec(op->cpp, i))->kind) {
+            case COMPILE_OPTION_KIND_CC_IR:
+                cc_ir = true;
+                break;
+            case COMPILE_OPTION_KIND_CPP_IR:
+                cpp_ir = true;
+                break;
             case COMPILE_OPTION_KIND_DUMP_IR:
                 dump_ir = true;
                 break;
@@ -114,6 +121,9 @@ parse_compile__ParseConfig(const Option *op)
                 CHECK_IF_INPUT_IS_ALREADY_SET(filename);
                 filename =
                   (char *)CAST(CcOption *, get__Vec(op->compile, i))->filename;
+                break;
+            case COMPILE_OPTION_KIND_JS_IR:
+                js_ir = true;
                 break;
             case COMPILE_OPTION_KIND_RUN_IR:
                 run_ir = true;
@@ -143,7 +153,10 @@ parse_compile__ParseConfig(const Option *op)
                            dump_scanner,
                            dump_parser,
                            dump_typecheck,
-                           dump_ir));
+                           dump_ir,
+                           cc_ir,
+                           cpp_ir,
+                           js_ir));
 }
 
 Config
@@ -248,6 +261,7 @@ Config
 parse_to__ParseConfig(const Option *op)
 {
     char *filename = "";
+    bool from_cc = false, from_cpp = false, from_js = false;
 
     for (Usize i = 0; i < op->to->len; i++) {
         switch (CAST(ToOption *, get__Vec(op->to, i))->kind) {
@@ -256,12 +270,22 @@ parse_to__ParseConfig(const Option *op)
                 filename =
                   (char *)CAST(ToOption *, get__Vec(op->to, i))->filename;
                 break;
+            case TO_OPTION_KIND_FROM_CC:
+                from_cc = true;
+                break;
+            case TO_OPTION_KIND_FROM_CPP:
+                from_cpp = true;
+                break;
+            case TO_OPTION_KIND_FROM_JS:
+                from_js = true;
+                break;
             default:
                 break;
         }
     }
 
-    return NEW_VARIANT(Config, to, NEW(ToConfig, filename));
+    return NEW_VARIANT(
+      Config, to, NEW(ToConfig, filename, from_cc, from_cpp, from_js));
 }
 
 Config
