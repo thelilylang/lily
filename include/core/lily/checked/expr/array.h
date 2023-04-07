@@ -51,7 +51,9 @@ inline CONSTRUCTOR(LilyCheckedExprArray, LilyCheckedExprArray, Vec *items)
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedExprArray, const LilyCheckedExprArray *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprArray,
+               const LilyCheckedExprArray *self);
 #endif
 
 /**
