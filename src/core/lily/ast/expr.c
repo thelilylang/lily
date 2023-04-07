@@ -82,8 +82,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprKind, enum LilyAstExprKind self)
             return "LILY_AST_EXPR_KIND_BINARY";
         case LILY_AST_EXPR_KIND_CALL:
             return "LILY_AST_EXPR_KIND_CALL";
-		case LILY_AST_EXPR_KIND_CAST:
-			return "LILY_AST_EXPR_KIND_CAST";
+        case LILY_AST_EXPR_KIND_CAST:
+            return "LILY_AST_EXPR_KIND_CAST";
         case LILY_AST_EXPR_KIND_IDENTIFIER:
             return "LILY_AST_EXPR_KIND_IDENTIFIER";
         case LILY_AST_EXPR_KIND_LAMBDA:
@@ -342,7 +342,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstExpr, const LilyAstExpr *self)
 
             break;
         }
-		case LILY_AST_EXPR_KIND_CAST: {
+        case LILY_AST_EXPR_KIND_CAST: {
             char *s = format(", cast = {Sr} }",
                              to_string__Debug__LilyAstExprCast(&self->cast));
 
@@ -454,8 +454,8 @@ VARIANT_DESTRUCTOR(LilyAstExpr, call, LilyAstExpr *self)
 
 VARIANT_DESTRUCTOR(LilyAstExpr, cast, LilyAstExpr *self)
 {
-	FREE(LilyAstExprCast, &self->cast);
-	lily_free(self);
+    FREE(LilyAstExprCast, &self->cast);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyAstExpr, grouping, LilyAstExpr *self)
@@ -515,9 +515,9 @@ DESTRUCTOR(LilyAstExpr, LilyAstExpr *self)
         case LILY_AST_EXPR_KIND_CALL:
             FREE_VARIANT(LilyAstExpr, call, self);
             break;
-		case LILY_AST_EXPR_KIND_CAST:
-			FREE_VARIANT(LilyAstExpr, cast, self);
-			break;
+        case LILY_AST_EXPR_KIND_CAST:
+            FREE_VARIANT(LilyAstExpr, cast, self);
+            break;
         case LILY_AST_EXPR_KIND_GROUPING:
             FREE_VARIANT(LilyAstExpr, grouping, self);
             break;

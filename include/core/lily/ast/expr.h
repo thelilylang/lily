@@ -47,7 +47,7 @@ enum LilyAstExprKind
     LILY_AST_EXPR_KIND_ARRAY,
     LILY_AST_EXPR_KIND_BINARY,
     LILY_AST_EXPR_KIND_CALL,
-	LILY_AST_EXPR_KIND_CAST,
+    LILY_AST_EXPR_KIND_CAST,
     LILY_AST_EXPR_KIND_GROUPING,
     LILY_AST_EXPR_KIND_IDENTIFIER,
     LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR,
@@ -69,7 +69,7 @@ typedef struct LilyAstExpr
         LilyAstExprArray array;
         LilyAstExprBinary binary;
         LilyAstExprCall call;
-		LilyAstExprCast cast;
+        LilyAstExprCast cast;
         LilyAstExpr *grouping;
         LilyAstExprIdentifier identifier;
         LilyAstExprIdentifierDollar identifier_dollar;
