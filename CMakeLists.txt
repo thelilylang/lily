@@ -146,8 +146,6 @@ set(CORE_SRC
 	src/core/lily/checked/expr/binary.c
 	src/core/lily/checked/expr/call.c
 	src/core/lily/checked/expr/cast.c
-	src/core/lily/checked/expr/identifier.c
-	src/core/lily/checked/expr/identifier_macro.c
 	src/core/lily/checked/expr/lambda.c
 	src/core/lily/checked/expr/literal.c
 	src/core/lily/checked/expr/tuple.c
