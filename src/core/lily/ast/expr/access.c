@@ -73,8 +73,8 @@ IMPL_FOR_DEBUG(to_string,
                const LilyAstExprAccessHook *self)
 {
     return format("LilyAstExprAccessHook{{ access = {Sr}, expr = {Sr} }",
-                  to_string__LilyAstExpr(self->access),
-                  to_string__LilyAstExpr(self->expr));
+                  to_string__Debug__LilyAstExpr(self->access),
+                  to_string__Debug__LilyAstExpr(self->expr));
 }
 
 String *
