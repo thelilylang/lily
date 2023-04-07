@@ -158,8 +158,9 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self)
               to_string__Debug__LilyAstExprAccessKind(self->kind),
               to_string__Debug__LilyAstExprAccessHook(&self->hook));
         case LILY_AST_EXPR_ACCESS_KIND_OBJECT: {
-            String *res =
-              format__String("LilyAstExprAccess{{ kind = {s}, object =");
+            String *res = format__String(
+              "LilyAstExprAccess{{ kind = {s}, object =",
+              to_string__Debug__LilyAstExprAccessKind(self->kind));
 
             DEBUG_VEC_STRING(self->object.object, res, LilyAstDataType);
 
