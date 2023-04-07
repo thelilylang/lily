@@ -2230,7 +2230,7 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_MINUS:
         case LILY_TOKEN_KIND_KEYWORD_XOR:
             return parse_binary_expr__LilyParseBlock(self, expr);
-        case LILY_TOKEN_KIND_KEYWORD_CAST: {
+        case LILY_TOKEN_KIND_KEYWORD_CAST:
             do {
                 next_token__LilyParseBlock(self);
 
@@ -2255,7 +2255,6 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
             } while (self->current->kind == LILY_TOKEN_KIND_KEYWORD_CAST);
 
             return parse_binary_expr__LilyParseBlock(self, expr);
-        }
         default:
             return expr;
     }
