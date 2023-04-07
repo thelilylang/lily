@@ -215,6 +215,50 @@ VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExternScope,
+               const LilyCheckedExternScope *self)
+{
+    return format("LilyCheckedExternScope{{ kind = {s}, global = {Sr} }",
+                  to_string__Debug__LilyCheckedExternScopeKind(self->kind),
+                  to_string__Debug__LilyCheckedGlobalScope(self->global));
+}
+
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedLocalScopeKind,
+               enum LilyCheckedLocalScopeKind self)
+{
+    switch (self) {
+        case LILY_CHECKED_LOCAL_SCOPE_KIND_CONSTANT:
+            return "LILY_CHECKED_LOCAL_SCOPE_KIND_CONSTANT";
+        case LILY_CHECKED_LOCAL_SCOPE_KIND_GENERIC_DATA_TYPE:
+            return "LILY_CHECKED_LOCAL_SCOPE_KIND_GENERIC_DATA_TYPE";
+        case LILY_CHECKED_LOCAL_SCOPE_KIND_VARIABLE:
+            return "LILY_CHECKED_LOCAL_SCOPE_KIND_VARIABLE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+char *
+IMPL_FOR_DEBUG(to_string, LilyCheckedScopeKind, enum LilyCheckedScopeKind self)
+{
+    switch (self) {
+        case LILY_CHECKED_SCOPE_KIND_EXTERN:
+            return "LILY_CHECKED_SCOPE_KIND_EXTERN";
+        case LILY_CHECKED_SCOPE_KIND_GLOBAL:
+            return "LILY_CHECKED_SCOPE_KIND_GLOBAL";
+        case LILY_CHECKED_SCOPE_KIND_LOCAL:
+            return "LILY_CHECKED_SCOPE_KIND_LOCAL";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedLocalScope *,
             LilyCheckedLocalScope,
             enum LilyCheckedLocalScopeKind kind,
@@ -228,8 +272,59 @@ CONSTRUCTOR(LilyCheckedLocalScope *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedLocalScope,
+               const LilyCheckedLocalScope *self)
+{
+    String *res =
+      format__String("LilyCheckedLocalScope{{ kind = {s}, access = {{ ",
+                     to_string__Debug__LilyCheckedLocalScopeKind(self->kind));
+
+    for (Usize i = 0; i < self->access->len; i++) {
+        char *s = format("{d}", get__Vec(self->access, i));
+
+        PUSH_STR_AND_FREE(res, s);
+
+        if (i - 1 != self->access->len) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyCheckedLocalScope, LilyCheckedLocalScope *self)
 {
     FREE(Vec, self->access);
     lily_free(self);
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_SCOPE_KIND_EXTERN:
+            return format(
+              "LilyCheckedScope{{ kind = {s}, extern = {sa} }",
+              to_string__Debug__LilyCheckedScopeKind(self->kind),
+              to_string__Debug__LilyCheckedExternScope(self->extern_));
+        case LILY_CHECKED_SCOPE_KIND_GLOBAL:
+            return format(
+              "LilyCheckedScope{{ kind = {s}, global = {sa} }",
+              to_string__Debug__LilyCheckedScopeKind(self->kind),
+              to_string__Debug__LilyCheckedGlobalScope(self->global));
+        case LILY_CHECKED_SCOPE_KIND_LOCAL:
+            return format("LilyCheckedScope{{ kind = {s}, local = {sa} }",
+                          to_string__Debug__LilyCheckedScopeKind(self->kind),
+                          to_string__Debug__LilyCheckedLocalScope(self->local));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif

@@ -119,7 +119,7 @@ enum LilyCheckedExternScopeKind
 
 /**
  *
- * @brief Convert LilyCheckedDataTypeArray in string.
+ * @brief Convert LilyCheckedExternScopeKind in string.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
@@ -131,8 +131,8 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedExternScope
 {
-    LilyCheckedGlobalScope *global; // LilyCheckedGlobalScope* (&)
     enum LilyCheckedExternScopeKind kind;
+    LilyCheckedGlobalScope *global; // LilyCheckedGlobalScope* (&)
     union
     {
         LilyFile *file;       // LilyFile* (&)
@@ -176,6 +176,18 @@ VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
 
 /**
  *
+ * @brief Convert LilyCheckedExternScope in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExternScope,
+               const LilyCheckedExternScope *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedExternScope type.
  */
 inline DESTRUCTOR(LilyCheckedExternScope, LilyCheckedExternScope *self)
@@ -185,10 +197,22 @@ inline DESTRUCTOR(LilyCheckedExternScope, LilyCheckedExternScope *self)
 
 enum LilyCheckedLocalScopeKind
 {
-    LILY_CHECKED_LOCAL_SCOPE_KIND_VARIABLE,
     LILY_CHECKED_LOCAL_SCOPE_KIND_CONSTANT,
     LILY_CHECKED_LOCAL_SCOPE_KIND_GENERIC_DATA_TYPE,
+    LILY_CHECKED_LOCAL_SCOPE_KIND_VARIABLE,
 };
+
+/**
+ *
+ * @brief Convert LilyCheckedLocalScopeKind in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedLocalScopeKind,
+               enum LilyCheckedLocalScopeKind self);
+#endif
 
 typedef struct LilyCheckedLocalScope
 {
@@ -211,6 +235,18 @@ CONSTRUCTOR(LilyCheckedLocalScope *,
 
 /**
  *
+ * @brief Convert LilyCheckedLocalScope in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedLocalScope,
+               const LilyCheckedLocalScope *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedLocalScope type.
  */
 DESTRUCTOR(LilyCheckedLocalScope, LilyCheckedLocalScope *self);
@@ -221,6 +257,16 @@ enum LilyCheckedScopeKind
     LILY_CHECKED_SCOPE_KIND_GLOBAL,
     LILY_CHECKED_SCOPE_KIND_LOCAL
 };
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyCheckedScopeKind, enum LilyCheckedScopeKind self);
+#endif
 
 typedef struct LilyCheckedScope
 {
@@ -276,5 +322,15 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScope,
     return (LilyCheckedScope){ .kind = LILY_CHECKED_SCOPE_KIND_LOCAL,
                                .local = local };
 }
+
+/**
+ *
+ * @brief Convert LilyCheckedScope in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self);
+#endif
 
 #endif // LILY_CORE_LILY_CHECKED_SCOPE_H
