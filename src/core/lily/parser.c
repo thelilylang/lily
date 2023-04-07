@@ -1195,14 +1195,14 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 LilyAstExpr *
 parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin)
 {
-    Location location; 
+    Location location;
     Vec *access = NULL; // Vec<LilyAstExpr*>*
 
     if (begin) {
-		location = clone__Location(&begin->location);
+        location = clone__Location(&begin->location);
         access = init__Vec(1, begin);
     } else {
-		location = clone__Location(&self->current->location);
+        location = clone__Location(&self->current->location);
         access = NEW(Vec);
     }
 
