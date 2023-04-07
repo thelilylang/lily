@@ -32,6 +32,7 @@
 #include <core/lily/ast/expr/array.h>
 #include <core/lily/ast/expr/binary.h>
 #include <core/lily/ast/expr/call.h>
+#include <core/lily/ast/expr/cast.h>
 #include <core/lily/ast/expr/identifier.h>
 #include <core/lily/ast/expr/lambda.h>
 #include <core/lily/ast/expr/literal.h>
@@ -46,6 +47,7 @@ enum LilyAstExprKind
     LILY_AST_EXPR_KIND_ARRAY,
     LILY_AST_EXPR_KIND_BINARY,
     LILY_AST_EXPR_KIND_CALL,
+	LILY_AST_EXPR_KIND_CAST,
     LILY_AST_EXPR_KIND_GROUPING,
     LILY_AST_EXPR_KIND_IDENTIFIER,
     LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR,
@@ -67,6 +69,7 @@ typedef struct LilyAstExpr
         LilyAstExprArray array;
         LilyAstExprBinary binary;
         LilyAstExprCall call;
+		LilyAstExprCast cast;
         LilyAstExpr *grouping;
         LilyAstExprIdentifier identifier;
         LilyAstExprIdentifierDollar identifier_dollar;
@@ -116,6 +119,16 @@ VARIANT_CONSTRUCTOR(LilyAstExpr *,
                     call,
                     Location location,
                     LilyAstExprCall call);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_CAST).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    cast,
+                    Location location,
+                    LilyAstExprCast cast);
 
 /**
  *
