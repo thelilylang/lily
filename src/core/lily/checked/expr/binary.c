@@ -109,12 +109,15 @@ IMPL_FOR_DEBUG(to_string,
 }
 
 char *
-IMPL_FOR_DEBUG(to_string, LilyCheckedExprBinary, const LilyCheckedExprBinary *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprBinary,
+               const LilyCheckedExprBinary *self)
 {
-    return format("LilyCheckedExprBinary{{ kind = {s}, left = {Sr}, right = {Sr} }",
-                  to_string__Debug__LilyCheckedExprBinaryKind(self->kind),
-                  to_string__Debug__LilyCheckedExpr(self->left),
-                  to_string__Debug__LilyCheckedExpr(self->right));
+    return format(
+      "LilyCheckedExprBinary{{ kind = {s}, left = {Sr}, right = {Sr} }",
+      to_string__Debug__LilyCheckedExprBinaryKind(self->kind),
+      to_string__Debug__LilyCheckedExpr(self->left),
+      to_string__Debug__LilyCheckedExpr(self->right));
 }
 #endif
 

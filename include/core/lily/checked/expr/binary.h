@@ -88,7 +88,8 @@ inline CONSTRUCTOR(LilyCheckedExprBinary,
                    LilyCheckedExpr *left,
                    LilyCheckedExpr *right)
 {
-    return (LilyCheckedExprBinary){ .kind = kind, .left = left, .right = right };
+    return (
+      LilyCheckedExprBinary){ .kind = kind, .left = left, .right = right };
 }
 
 /**
@@ -110,7 +111,9 @@ IMPL_FOR_DEBUG(to_string,
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyCheckedExprBinary, const LilyCheckedExprBinary *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprBinary,
+               const LilyCheckedExprBinary *self);
 #endif
 
 /**
