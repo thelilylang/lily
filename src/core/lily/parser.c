@@ -2119,9 +2119,9 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
 {
     LilyAstExpr *expr = parse_primary_expr__LilyParseBlock(self);
 
-	if (!expr) {
-		return NULL;
-	}
+    if (!expr) {
+        return NULL;
+    }
 
     // Parse dereference
     switch (self->current->kind) {
@@ -2142,13 +2142,13 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
                                        expr));
             } while (self->current->kind == LILY_TOKEN_KIND_DOT_STAR);
 
-			if (self->current->kind == LILY_TOKEN_KIND_DOT) {
-				expr = parse_path_access__LilyParseBlock(self, expr);
+            if (self->current->kind == LILY_TOKEN_KIND_DOT) {
+                expr = parse_path_access__LilyParseBlock(self, expr);
 
-				if (!expr) {
-					return NULL;
-				}
-			}
+                if (!expr) {
+                    return NULL;
+                }
+            }
 
             break;
         default:
