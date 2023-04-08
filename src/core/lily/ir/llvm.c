@@ -22,33 +22,35 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
+
 #include <core/lily/ir/llvm.h>
 
 // Get default target triple.
-static inline const char *
+static inline char *
 get_triple();
 
 // Get CPU of the host.
-static inline const char *
+static inline char *
 get_cpu();
 
 // Get CPU features of the host.
-static inline const char *
+static inline char *
 get_cpu_features();
 
-const char *
+char *
 get_triple()
 {
     return LLVMGetDefaultTargetTriple();
 }
 
-const char *
+char *
 get_cpu()
 {
     return LLVMGetHostCPUName();
 }
 
-const char *
+char *
 get_cpu_features()
 {
     return LLVMGetHostCPUFeatures();
@@ -65,11 +67,15 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     LLVMModuleRef module = LLVMModuleCreateWithName(module_name);
     LLVMTargetRef target = LLVMGetFirstTarget();
 
+	char *triple = get_triple();
+	char *cpu = get_cpu();
+	char *cpu_features = get_cpu_features();
+
     LLVMTargetMachineRef machine =
       LLVMCreateTargetMachine(target,
-                              get_triple(),
-                              get_cpu(),
-                              get_cpu_features(),
+                              triple,
+                              cpu,
+                              cpu_features,
                               LLVMCodeGenLevelDefault,
                               LLVMRelocDefault,
                               LLVMCodeModelDefault);
@@ -77,10 +83,23 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     LLVMTargetDataRef target_data =
       LLVMCreateTargetData(LLVMGetDataLayoutStr(module));
 
+	lily_free(triple);
+	lily_free(cpu);
+	lily_free(cpu_features);
+
     return (LilyIrLlvm){ .context = LLVMContextCreate(),
                          .module = module,
                          .builder = LLVMCreateBuilder(),
                          .target = target,
                          .target_data = target_data,
                          .machine = machine };
+}
+
+DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self)
+{
+	LLVMContextDispose(self->context);
+	LLVMDisposeModule(self->module);
+	LLVMDisposeBuilder(self->builder);
+	LLVMDisposeTargetData(self->target_data);
+	LLVMDisposeTargetMachine(self->machine);
 }

@@ -47,4 +47,10 @@ typedef struct LilyIrLlvm
  */
 CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name);
 
+/**
+ *
+ * @brief Free LilyIrLlvm type.
+ */
+DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self);
+
 #endif // LILY_CORE_LILY_IR_LLVM_H
