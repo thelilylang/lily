@@ -250,17 +250,17 @@ end
 ## Import
 
 ```lily
-import "std"
-import "std.io.*" as io
+import "std";
+import "std.io.*" as io;
 ```
 
 ## Use
 
 ```lily
-import "std.io.*" as io
+import "std.io.*" as io;
 
 module X =
-    use io.x.y.z // like using namespace
+    use io.x.y.z; // like using namespace
 
     // z.
     // ...
