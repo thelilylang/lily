@@ -53,7 +53,7 @@ Phylosophy:
 
 ### C data types
 
-| type       | description                    |
+| Type       | Description                    |
 |------------|--------------------------------|
 | cshort     | Like `short` in c              |
 | cushort    | Like `unsigned short` in c     |
