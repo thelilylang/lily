@@ -374,6 +374,11 @@ static LilyAstBodyTraitItem *
 parse_prototype_decl__LilyParser(LilyParser *self,
                                  LilyPreparserTraitBodyItem *item);
 
+// Parse record field.
+static LilyAstField *
+parse_record_field__LilyParser(LilyParser *self,
+                               LilyPreparserRecordBodyItem *item);
+
 // Parse record declaration.
 static LilyAstDecl *
 parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
@@ -4463,10 +4468,83 @@ parse_prototype_decl__LilyParser(LilyParser *self,
                            return_data_type));
 }
 
+LilyAstField *
+parse_record_field__LilyParser(LilyParser *self,
+                               LilyPreparserRecordBodyItem *item)
+{
+    LilyParseBlock data_type_block =
+      NEW(LilyParseBlock, self, item->field.data_type);
+    LilyAstDataType *data_type =
+      parse_data_type__LilyParseBlock(&data_type_block);
+
+    CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `:=` or `;`", {
+        return NULL;
+    });
+
+    LilyAstExpr *expr = NULL;
+
+    if (item->field.optional_expr) {
+        LilyParseBlock expr_block =
+          NEW(LilyParseBlock, self, item->field.optional_expr);
+        expr = parse_expr__LilyParseBlock(&expr_block);
+
+        CHECK_EXPR(expr, expr_block, NULL, "expected `;`", {});
+    }
+
+    return NEW(LilyAstField,
+               item->field.name,
+               data_type,
+               expr,
+               item->field.visibility,
+               item->field.is_mut);
+}
+
 LilyAstDecl *
 parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #82");
+    // 1. Parse generic params
+    Vec *generic_params = NULL;
+
+    if (decl->type.record.generic_params) {
+        generic_params = parse_generic_params__LilyParser(
+          self, decl->type.record.generic_params);
+    }
+
+    // 2. Parse body
+    Vec *fields = NEW(Vec); // Vec<LilyAstField*>*
+
+    for (Usize i = 0; i < decl->type.record.body->len; i++) {
+        LilyPreparserRecordBodyItem *item = get__Vec(decl->type.record.body, i);
+
+        switch (item->kind) {
+            case LILY_PREPARSER_RECORD_BODY_ITEM_KIND_MACRO_EXPAND:
+                TODO("macro expand");
+                break;
+            case LILY_PREPARSER_RECORD_BODY_ITEM_KIND_FIELD: {
+                LilyAstField *field =
+                  parse_record_field__LilyParser(self, item);
+
+                if (field) {
+                    push__Vec(fields, field);
+                }
+
+                break;
+            }
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    return NEW_VARIANT(LilyAstDecl,
+                       type,
+                       decl->location,
+                       NEW_VARIANT(LilyAstDeclType,
+                                   record,
+                                   NEW(LilyAstDeclRecord,
+                                       decl->type.record.name,
+                                       generic_params,
+                                       fields,
+                                       decl->type.record.visibility)));
 }
 
 LilyAstDecl *
