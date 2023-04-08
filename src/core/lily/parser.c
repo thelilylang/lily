@@ -2194,6 +2194,36 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
             break;
     }
 
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_CAST:
+            do {
+                next_token__LilyParseBlock(self);
+
+                Location location = clone__Location(&expr->location);
+                LilyAstDataType *dest_data_type =
+                  parse_data_type__LilyParseBlock(self);
+
+                if (!dest_data_type) {
+                    FREE(LilyAstExpr, expr);
+
+                    return NULL;
+                }
+
+                end__Location(&location,
+                              dest_data_type->location.end_line,
+                              dest_data_type->location.end_column);
+
+                expr = NEW_VARIANT(LilyAstExpr,
+                                   cast,
+                                   location,
+                                   NEW(LilyAstExprCast, expr, dest_data_type));
+            } while (self->current->kind == LILY_TOKEN_KIND_KEYWORD_CAST);
+
+            break;
+        default:
+            break;
+    }
+
     // parse binary expression
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_PLUS:
@@ -2229,31 +2259,6 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_DOT_DOT:
         case LILY_TOKEN_KIND_MINUS:
         case LILY_TOKEN_KIND_KEYWORD_XOR:
-            return parse_binary_expr__LilyParseBlock(self, expr);
-        case LILY_TOKEN_KIND_KEYWORD_CAST:
-            do {
-                next_token__LilyParseBlock(self);
-
-                Location location = clone__Location(&expr->location);
-                LilyAstDataType *dest_data_type =
-                  parse_data_type__LilyParseBlock(self);
-
-                if (!dest_data_type) {
-                    FREE(LilyAstExpr, expr);
-
-                    return NULL;
-                }
-
-                end__Location(&location,
-                              dest_data_type->location.end_line,
-                              dest_data_type->location.end_column);
-
-                expr = NEW_VARIANT(LilyAstExpr,
-                                   cast,
-                                   location,
-                                   NEW(LilyAstExprCast, expr, dest_data_type));
-            } while (self->current->kind == LILY_TOKEN_KIND_KEYWORD_CAST);
-
             return parse_binary_expr__LilyParseBlock(self, expr);
         default:
             return expr;
