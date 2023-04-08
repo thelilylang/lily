@@ -55,12 +55,12 @@ Phylosophy:
 
 | Type       | Description                    |
 |------------|--------------------------------|
-| cshort     | Like `short` in c              |
-| cushort    | Like `unsigned short` in c     |
-| cint       | Like `int` in c                |
-| cuint      | Like `unsigned int` in c       |
-| clong      | Like `long` in c               |
-| culong     | Like `unsigned long` in c      |
+| CShort     | Like `short` in c              |
+| CUshort    | Like `unsigned short` in c     |
+| CInt       | Like `int` in c                |
+| CUint      | Like `unsigned int` in c       |
+| CLong      | Like `long` in c               |
+| CUlong     | Like `unsigned long` in c      |
 | CLonglong  | Like `long long` in C          |
 | CUlonglong | Like `unsigned long long` in C |
 | CFloat     | Like `float` in C              |
