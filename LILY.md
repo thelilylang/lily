@@ -80,8 +80,8 @@ object Person class =
     val age Uint8 :: get, set;
 
     pub fun new(name Str, age Uint8) =
-        @.name = name
-        @.age = age
+        @.name := name
+        @.age := age
     end
 end
 ```
@@ -141,8 +141,8 @@ pub fun@Person@Human get_name(self) = self.@Human.name; // can use object access
 pub fun@Person get_name(self) = self.name;
 
 pub fun@Person new(name Str, work_name Str) =
-    .@Human.name = name
-    .name = work_name
+    @.@Human.name := name
+    @.name := work_name
 end
 ```
 
