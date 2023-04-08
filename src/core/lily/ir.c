@@ -22,4 +22,17 @@
  * SOFTWARE.
  */
 
+#include <base/new.h>
+
 #include <core/lily/ir.h>
+
+DESTRUCTOR(LilyIr, const LilyIr *self)
+{
+	switch (self->kind) {
+		case LILY_IR_KIND_LLVM:
+			FREE(LilyIrLlvm, &self->llvm);
+			break;
+		default:
+			break;
+	}
+}

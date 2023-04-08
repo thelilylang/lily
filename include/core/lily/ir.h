@@ -88,4 +88,10 @@ inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, llvm, LilyIrLlvm llvm)
     return (LilyIr){ .kind = LILY_IR_KIND_LLVM, .llvm = llvm };
 }
 
+/**
+ *
+ * @brief Free LilyIr type.
+ */
+DESTRUCTOR(LilyIr, const LilyIr *self);
+
 #endif // LILY_CORE_LILY_IR_H
