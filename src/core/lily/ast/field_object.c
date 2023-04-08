@@ -30,23 +30,6 @@
 #include <base/format.h>
 #endif
 
-CONSTRUCTOR(LilyAstFieldObject *,
-            LilyAstFieldObject,
-            String *name,
-            LilyAstDataType *data_type,
-            LilyAstExpr *optional_expr,
-            enum LilyVisibility visibility)
-{
-    LilyAstFieldObject *self = lily_malloc(sizeof(LilyAstFieldObject));
-
-    self->name = name;
-    self->data_type = data_type;
-    self->optional_expr = optional_expr;
-    self->visibility = visibility;
-
-    return self;
-}
-
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstFieldObject, const LilyAstFieldObject *self)
@@ -75,7 +58,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstFieldObject, const LilyAstFieldObject *self)
 }
 #endif
 
-DESTRUCTOR(LilyAstFieldObject, LilyAstFieldObject *self)
+DESTRUCTOR(LilyAstFieldObject, const LilyAstFieldObject *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
     FREE(LilyAstDataType, self->data_type);
@@ -83,6 +66,4 @@ DESTRUCTOR(LilyAstFieldObject, LilyAstFieldObject *self)
     if (self->optional_expr) {
         FREE(LilyAstExpr, self->optional_expr);
     }
-
-    lily_free(self);
 }

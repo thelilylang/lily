@@ -43,12 +43,20 @@ typedef struct LilyAstFieldObject
  *
  * @brief Construct LilyAstFieldObject type.
  */
-CONSTRUCTOR(LilyAstFieldObject *,
+inline CONSTRUCTOR(LilyAstFieldObject,
             LilyAstFieldObject,
             String *name,
             LilyAstDataType *data_type,
             LilyAstExpr *optional_expr,
-            enum LilyVisibility visibility);
+            enum LilyVisibility visibility)
+{
+	return (LilyAstFieldObject){
+		.name = name,
+		.data_type = data_type,
+		.optional_expr = optional_expr,
+		.visibility = visibility
+	};
+}
 
 /**
  *
@@ -64,6 +72,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstFieldObject, const LilyAstFieldObject *self);
  *
  * @breif Free LilyAstFieldObject type.
  */
-DESTRUCTOR(LilyAstFieldObject, LilyAstFieldObject *self);
+DESTRUCTOR(LilyAstFieldObject, const LilyAstFieldObject *self);
 
 #endif // LILY_CORE_LILY_AST_FIELD_OBJECT_H
