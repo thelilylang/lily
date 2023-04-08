@@ -4491,12 +4491,8 @@ parse_record_field__LilyParser(LilyParser *self,
         CHECK_EXPR(expr, expr_block, NULL, "expected `;`", {});
     }
 
-    return NEW(LilyAstField,
-               item->field.name,
-               data_type,
-               expr,
-               item->field.visibility,
-               item->field.is_mut);
+    return NEW(
+      LilyAstField, item->field.name, data_type, expr, item->field.is_mut);
 }
 
 LilyAstDecl *
