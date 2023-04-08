@@ -4577,7 +4577,7 @@ parse_record_object_field__LilyParser(LilyParser *self,
 
     return NEW_VARIANT(LilyAstBodyRecordObjectItem,
                        field,
-					   item->location,
+                       item->location,
                        NEW(LilyAstFieldObject,
                            item->field.name,
                            data_type,

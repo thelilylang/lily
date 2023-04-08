@@ -44,18 +44,16 @@ typedef struct LilyAstFieldObject
  * @brief Construct LilyAstFieldObject type.
  */
 inline CONSTRUCTOR(LilyAstFieldObject,
-            LilyAstFieldObject,
-            String *name,
-            LilyAstDataType *data_type,
-            LilyAstExpr *optional_expr,
-            enum LilyVisibility visibility)
+                   LilyAstFieldObject,
+                   String *name,
+                   LilyAstDataType *data_type,
+                   LilyAstExpr *optional_expr,
+                   enum LilyVisibility visibility)
 {
-	return (LilyAstFieldObject){
-		.name = name,
-		.data_type = data_type,
-		.optional_expr = optional_expr,
-		.visibility = visibility
-	};
+    return (LilyAstFieldObject){ .name = name,
+                                 .data_type = data_type,
+                                 .optional_expr = optional_expr,
+                                 .visibility = visibility };
 }
 
 /**
