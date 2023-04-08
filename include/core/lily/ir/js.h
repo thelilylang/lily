@@ -25,8 +25,16 @@
 #ifndef LILY_CORE_LILY_IR_JS_H
 #define LILY_CORE_LILY_IR_JS_H
 
+#include <base/macros.h>
+
 typedef struct LilyIrJs
 {
 } LilyIrJs;
+
+/**
+ *
+ * @brief Construct LilyIrJs type.
+ */
+CONSTRUCTOR(LilyIrJs, LilyIrJs);
 
 #endif // LILY_CORE_LILY_IR_JS_H

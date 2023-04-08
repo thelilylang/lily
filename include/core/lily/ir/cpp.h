@@ -25,8 +25,16 @@
 #ifndef LILY_CORE_LILY_IR_CPP_H
 #define LILY_CORE_LILY_IR_CPP_H
 
+#include <base/macros.h>
+
 typedef struct LilyIrCpp
 {
 } LilyIrCpp;
+
+/**
+ *
+ * @brief Construct LilyIrCpp type.
+ */
+CONSTRUCTOR(LilyIrCpp, LilyIrCpp);
 
 #endif // LILY_CORE_LILY_IR_CPP_H
