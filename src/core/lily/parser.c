@@ -315,7 +315,7 @@ parse_enum_variant__LilyParser(LilyParser *self,
                                LilyPreparserEnumBodyItem *item);
 
 // Parse enum variant for enum object.
-static LilyAstVariant *
+static LilyAstBodyEnumObjectItem *
 parse_enum_variant_for_enum_object__LilyParser(
   LilyParser *self,
   LilyPreparserEnumObjectBodyItem *item);
@@ -3688,14 +3688,18 @@ parse_enum_variant__LilyParser(LilyParser *self,
     return NEW(LilyAstVariant, item->variant.name, data_type, item->location);
 }
 
-LilyAstVariant *
+LilyAstBodyEnumObjectItem *
 parse_enum_variant_for_enum_object__LilyParser(
   LilyParser *self,
   LilyPreparserEnumObjectBodyItem *item)
 {
     PARSE_ENUM_VARIANT(item);
 
-    return NEW(LilyAstVariant, item->variant.name, data_type, item->location);
+    return NEW_VARIANT(
+      LilyAstBodyEnumObjectItem,
+      variant,
+      item->location,
+      NEW(LilyAstVariant, item->variant.name, data_type, item->location));
 }
 
 LilyAstDecl *
@@ -3816,11 +3820,7 @@ parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
             case LILY_PREPARSER_ENUM_OBJECT_BODY_ITEM_KIND_VARIANT: {
                 push__Vec(
                   body,
-                  NEW_VARIANT(LilyAstBodyEnumObjectItem,
-                              variant,
-                              item->location,
-                              parse_enum_variant_for_enum_object__LilyParser(
-                                self, item)));
+                  parse_enum_variant_for_enum_object__LilyParser(self, item));
 
                 break;
             }
