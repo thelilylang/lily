@@ -26,6 +26,59 @@ Phylosophy:
 - Safe memory and safe type
 - No (explicit) lifetime
 
+## Data types
+
+### Primitive types
+
+| Type    | Description                                        |
+|---------|--------------------------------------------------- |
+| Int8    | A signed 8-bit integer                             |
+| Int16   | A signed 16-bit integer                            |
+| Int32   | A signed 32-bit integer                            |
+| Int64   | A signed 64-bit integer                            |
+| Int128  | A signed 128-bit integer                           |
+| Isize   | A signed pointer sized integer                     |
+| Uint8   | An unsigned 8-bit integer                          |
+| Uint16  | An unsigned 16-bit integer                         |
+| Uint32  | An unsigned 32-bit integer                         |
+| Uint64  | An unsigned 64-bit integer                         |
+| Uint128 | An unsigned 128-bit integer                        |
+| Usize   | An unsigned pointer sized integer                  |
+| Float32 | A 32-bit floating point                            |
+| Float64 | A 64-bit floating point                            |
+| Bool    | Like `i1` in LLVM IR (`0` or `1`)                  |
+| Never   | Like `_Noreturn` in C                              |
+| Unit    | Like `void` in C                                   |
+| Any     | Can take any type (to be used only in unsafe mode) |
+
+### C data types
+
+| type       | description                    |
+|------------|--------------------------------|
+| cshort     | Like `short` in c              |
+| cushort    | Like `unsigned short` in c     |
+| cint       | Like `int` in c                |
+| cuint      | Like `unsigned int` in c       |
+| clong      | Like `long` in c               |
+| culong     | Like `unsigned long` in c      |
+| CLonglong  | Like `long long` in C          |
+| CUlonglong | Like `unsigned long long` in C |
+| CFloat     | Like `float` in C              |
+| CDouble    | Like `double` in C             |
+| CStr       | Like `char*` in C              |
+| CVoid      | Like `void` in C               |
+
+### Other 
+
+| Type       | Description                          |
+|------------|------------------------------------- |
+| Str        | A string slice                       |
+| Bytes      | A string (Uint8) slice               |
+| Self       | Like `Self` in Rust                  |
+| Object     | Used to talk about child of `Self`   |
+| Char       | A single character                   |
+| Byte       | A single character (Uint8)           |
+
 ## Function
 
 ```lily
