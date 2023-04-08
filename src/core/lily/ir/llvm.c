@@ -67,9 +67,9 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     LLVMModuleRef module = LLVMModuleCreateWithName(module_name);
     LLVMTargetRef target = LLVMGetFirstTarget();
 
-	char *triple = get_triple();
-	char *cpu = get_cpu();
-	char *cpu_features = get_cpu_features();
+    char *triple = get_triple();
+    char *cpu = get_cpu();
+    char *cpu_features = get_cpu_features();
 
     LLVMTargetMachineRef machine =
       LLVMCreateTargetMachine(target,
@@ -83,9 +83,9 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     LLVMTargetDataRef target_data =
       LLVMCreateTargetData(LLVMGetDataLayoutStr(module));
 
-	lily_free(triple);
-	lily_free(cpu);
-	lily_free(cpu_features);
+    lily_free(triple);
+    lily_free(cpu);
+    lily_free(cpu_features);
 
     return (LilyIrLlvm){ .context = LLVMContextCreate(),
                          .module = module,
@@ -97,9 +97,9 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
 
 DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self)
 {
-	LLVMContextDispose(self->context);
-	LLVMDisposeModule(self->module);
-	LLVMDisposeBuilder(self->builder);
-	LLVMDisposeTargetData(self->target_data);
-	LLVMDisposeTargetMachine(self->machine);
+    LLVMContextDispose(self->context);
+    LLVMDisposeModule(self->module);
+    LLVMDisposeBuilder(self->builder);
+    LLVMDisposeTargetData(self->target_data);
+    LLVMDisposeTargetMachine(self->machine);
 }

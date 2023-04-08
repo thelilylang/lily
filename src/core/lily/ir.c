@@ -28,11 +28,11 @@
 
 DESTRUCTOR(LilyIr, const LilyIr *self)
 {
-	switch (self->kind) {
-		case LILY_IR_KIND_LLVM:
-			FREE(LilyIrLlvm, &self->llvm);
-			break;
-		default:
-			break;
-	}
+    switch (self->kind) {
+        case LILY_IR_KIND_LLVM:
+            FREE(LilyIrLlvm, &self->llvm);
+            break;
+        default:
+            break;
+    }
 }

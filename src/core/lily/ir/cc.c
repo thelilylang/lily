@@ -26,5 +26,5 @@
 
 CONSTRUCTOR(LilyIrCc, LilyIrCc)
 {
-	return (LilyIrCc){};
+    return (LilyIrCc){};
 }

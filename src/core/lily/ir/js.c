@@ -26,5 +26,5 @@
 
 CONSTRUCTOR(LilyIrJs, LilyIrJs)
 {
-	return (LilyIrJs){};
+    return (LilyIrJs){};
 }
