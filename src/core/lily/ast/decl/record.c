@@ -23,15 +23,26 @@
  */
 
 #include <core/lily/ast/decl/record.h>
+#include <core/lily/ast/generic_param.h>
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDeclRecord, const LilyAstDeclRecord *self)
 {
-    String *res =
-      format__String("LilyAstDeclRecord{{ name = {S}, fields =", self->name);
+    String *res = format__String(
+      "LilyAstDeclRecord{{ name = {S}, generic_params =", self->name);
 
+    if (self->generic_params) {
+        DEBUG_VEC_STRING(self->generic_params->buffer,
+                         self->generic_params->len,
+                         LilyAstGenericParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", fields =");
     DEBUG_VEC_STRING(self->fields, res, LilyAstField);
+
     push_str__String(res, ", visibility = ");
     push_str__String(res, to_string__Debug__LilyVisibility(self->visibility));
     push_str__String(res, " }");
@@ -43,6 +54,14 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclRecord, const LilyAstDeclRecord *self)
 DESTRUCTOR(LilyAstDeclRecord, const LilyAstDeclRecord *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
+
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(self->generic_params->buffer,
+                          self->generic_params->len,
+                          LilyAstGenericParam);
+        FREE(Vec, self->generic_params);
+    }
+
     FREE_BUFFER_ITEMS(self->fields->buffer, self->fields->len, LilyAstField);
     FREE(Vec, self->fields);
 }

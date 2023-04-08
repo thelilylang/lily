@@ -34,17 +34,20 @@
 typedef struct LilyAstDeclRecord
 {
     String *name;
-    Vec *fields; // Vec<LilyAstField*>*
+    Vec *generic_params; // Vec<LilyAstGenericParam*>*?
+    Vec *fields;         // Vec<LilyAstField*>*
     enum LilyVisibility visibility;
 } LilyAstDeclRecord;
 
 inline CONSTRUCTOR(LilyAstDeclRecord,
                    LilyAstDeclRecord,
                    String *name,
+                   Vec *generic_params,
                    Vec *fields,
                    enum LilyVisibility visibility)
 {
     return (LilyAstDeclRecord){ .name = name,
+                                .generic_params = generic_params,
                                 .fields = fields,
                                 .visibility = visibility };
 }
