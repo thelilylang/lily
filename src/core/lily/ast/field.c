@@ -32,7 +32,6 @@ CONSTRUCTOR(LilyAstField *,
             String *name,
             LilyAstDataType *data_type,
             LilyAstExpr *optional_expr,
-            enum LilyVisibility visibility,
             bool is_mut)
 {
     LilyAstField *self = lily_malloc(sizeof(LilyAstField));
@@ -40,7 +39,6 @@ CONSTRUCTOR(LilyAstField *,
     self->name = name;
     self->data_type = data_type;
     self->optional_expr = optional_expr;
-    self->visibility = visibility;
     self->is_mut = is_mut;
 
     return self;
@@ -64,9 +62,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstField, const LilyAstField *self)
     }
 
     {
-        char *s = format("visibility = {s}, is_mut = {b} }",
-                         to_string__Debug__LilyVisibility(self->visibility),
-                         self->is_mut);
+        char *s = format(", is_mut = {b} }", self->is_mut);
 
         PUSH_STR_AND_FREE(res, s);
     }

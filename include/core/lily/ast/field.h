@@ -31,14 +31,12 @@
 
 #include <core/lily/ast/data_type.h>
 #include <core/lily/ast/expr.h>
-#include <core/lily/visibility.h>
 
 typedef struct LilyAstField
 {
     String *name;
     LilyAstDataType *data_type;
     LilyAstExpr *optional_expr; // LilyAstExpr*?
-    enum LilyVisibility visibility;
     bool is_mut;
 } LilyAstField;
 
@@ -51,7 +49,6 @@ CONSTRUCTOR(LilyAstField *,
             String *name,
             LilyAstDataType *data_type,
             LilyAstExpr *optional_expr,
-            enum LilyVisibility visibility,
             bool is_mut);
 
 /**
