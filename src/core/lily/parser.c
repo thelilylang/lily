@@ -383,6 +383,11 @@ parse_record_field__LilyParser(LilyParser *self,
 static LilyAstDecl *
 parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
+// Parse record field object.
+static LilyAstBodyRecordObjectItem *
+parse_record_object_field__LilyParser(LilyParser *self,
+                                      LilyPreparserRecordObjectBodyItem *item);
+
 // Parse record object declaration.
 static LilyAstDecl *
 parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
@@ -4543,10 +4548,136 @@ parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                                        decl->type.record.visibility)));
 }
 
+LilyAstBodyRecordObjectItem *
+parse_record_object_field__LilyParser(LilyParser *self,
+                                      LilyPreparserRecordObjectBodyItem *item)
+{
+    LilyParseBlock data_type_block =
+      NEW(LilyParseBlock, self, item->field.data_type);
+    LilyAstDataType *data_type =
+      parse_data_type__LilyParseBlock(&data_type_block);
+
+    CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `:=` or `;`", {
+        return NULL;
+    });
+
+    LilyAstExpr *expr = NULL;
+
+    if (item->field.optional_expr) {
+        LilyParseBlock expr_block =
+          NEW(LilyParseBlock, self, item->field.optional_expr);
+        expr = parse_expr__LilyParseBlock(&expr_block);
+
+        CHECK_EXPR(expr, expr_block, NULL, "expected `;`", {});
+    }
+
+    return NEW_VARIANT(LilyAstBodyRecordObjectItem,
+                       field,
+                       item->location,
+                       NEW(LilyAstFieldObject,
+                           item->field.name,
+                           data_type,
+                           expr,
+                           item->field.visibility));
+}
+
 LilyAstDecl *
 parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #83");
+    // 1. Parse generic params
+    Vec *generic_params = NULL;
+
+    if (decl->object.record.generic_params) {
+        generic_params = parse_generic_params__LilyParser(
+          self, decl->object.record.generic_params);
+    }
+
+    // 2. Parse implement params
+    Vec *impl_params = NULL;
+
+    if (decl->object.record.implements) {
+        impl_params =
+          parse_impl_params__LilyParser(self, decl->object.record.implements);
+    }
+
+    // 3. Parse body
+    Vec *body = NEW(Vec); // Vec<LilyAstBodyRecordObjectItem*>*
+
+    for (Usize i = 0; i < decl->object.record.body->len; i++) {
+        LilyPreparserRecordObjectBodyItem *item =
+          get__Vec(decl->object.record.body, i);
+
+        switch (item->kind) {
+            case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT:
+                switch (item->constant.kind) {
+                    case LILY_PREPARSER_CONSTANT_KIND_SIMPLE: {
+                        LilyAstBodyEnumObjectItem *constant =
+                          parse_constant_decl_for_enum_object__LilyParser(
+                            self, item->constant.simple, &item->location);
+
+                        if (constant) {
+                            push__Vec(body, constant);
+                        }
+
+                        break;
+                    }
+                    case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE: {
+                        for (Usize i = 0; i < item->constant.multiple->len;
+                             i++) {
+                            LilyAstBodyRecordObjectItem *constant =
+                              parse_constant_decl_for_record_object__LilyParser(
+                                self,
+                                get__Vec(item->constant.multiple, i),
+                                &item->location);
+
+                            if (constant) {
+                                push__Vec(body, constant);
+                            }
+                        }
+
+                        break;
+                    }
+                }
+
+                break;
+            case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND:
+                TODO("macro expand");
+
+                break;
+            case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD: {
+                LilyAstBodyRecordObjectItem *method =
+                  parse_method_decl_for_record_object__LilyParser(self, item);
+
+                if (method) {
+                    push__Vec(body, method);
+                }
+
+                break;
+            }
+            case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_FIELD: {
+                LilyAstBodyRecordObjectItem *field =
+                  parse_record_object_field__LilyParser(self, item);
+
+                if (field) {
+                    push__Vec(body, field);
+                }
+
+                break;
+            }
+        }
+    }
+
+    return NEW_VARIANT(LilyAstDecl,
+                       object,
+                       decl->location,
+                       NEW_VARIANT(LilyAstDeclObject,
+                                   record,
+                                   NEW(LilyAstDeclRecordObject,
+                                       decl->object.record.name,
+                                       generic_params,
+                                       impl_params,
+                                       body,
+                                       decl->object.record.visibility)));
 }
 
 LilyAstDecl *

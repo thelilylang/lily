@@ -79,7 +79,7 @@ VARIANT_CONSTRUCTOR(LilyAstBodyRecordObjectItem *,
  */
 VARIANT_CONSTRUCTOR(LilyAstBodyRecordObjectItem *,
                     LilyAstBodyRecordObjectItem,
-                    variant,
+                    field,
                     Location location,
                     LilyAstFieldObject field);
 
