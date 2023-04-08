@@ -37,6 +37,7 @@
 #include <core/lily/preparser.h>
 #include <core/lily/scanner.h>
 #include <core/lily/visibility.h>
+#include <core/lily/ir.h>
 
 enum LilyPackageStatus
 {
@@ -83,6 +84,7 @@ typedef struct LilyPackage
     LilyPreparserInfo preparser_info;
     LilyPrecompile precompile; // LilyPrecompile
     LilyParser parser;
+	LilyIr ir;
     Usize count_error;
     Usize count_warning;
     // count all errors and warnings after the precompiler step

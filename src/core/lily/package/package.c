@@ -138,6 +138,16 @@ build__LilyPackage(const CompileConfig *config,
         self->global_name = from__String("main");
     }
 
+	if (config->cc_ir) {
+		self->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));
+	} else if (config->cpp_ir) {
+		self->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));
+	} else if (config->js_ir) {
+		self->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));
+	} else {
+		self->ir = NEW_VARIANT(LilyIr, llvm, NEW(LilyIrLlvm, self->global_name->buffer));
+	}
+
     LilyDumpConfig dump_config = NEW(LilyDumpConfig,
                                      config->dump_scanner,
                                      config->dump_scanner,
@@ -249,6 +259,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(LilyPreparserInfo, &self->preparser_info);
     FREE(LilyPrecompile, &self->precompile);
     FREE(LilyParser, &self->parser);
+	FREE(LilyIr, &self->ir);
 
     lily_free(self);
 }
