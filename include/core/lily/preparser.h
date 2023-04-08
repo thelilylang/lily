@@ -828,10 +828,10 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserTrait, const LilyPreparserTrait *self);
 typedef struct LilyPreparserRecordField
 {
     String *name;
-    Vec *data_type;     // Vec<LilyToken*>*
-    Vec *optional_expr; // Vec<LilyToken*>*?
-    enum LilyVisibility visibility;
-    bool is_mut; // only used in record type
+    Vec *data_type;                 // Vec<LilyToken*>*
+    Vec *optional_expr;             // Vec<LilyToken*>*?
+    enum LilyVisibility visibility; // only used in record object
+    bool is_mut;                    // only used in record type
 } LilyPreparserRecordField;
 
 /**
