@@ -689,6 +689,34 @@ fun main =
 end
 ```
 
+## Cast
+
+> The keyword cast is used to do 2 different actions. The first one is to be able to do type conversion on primaries. And the second is to access the parent or child class of a particular type.
+
+```lily
+val a := 30; // Int32
+val b := a cast Int64;
+```
+
+```lily
+object A class
+    fun new() =
+    end
+end
+
+object inherit A in B class
+    fun new() =
+    end
+end
+
+fun main =
+    val b := B.new(); // B
+    val a := b cast A; // A
+    // or
+    val a2 := b cast @B@A; // A
+end
+```
+
 ## Auto-drop
 
 Compiler option:
