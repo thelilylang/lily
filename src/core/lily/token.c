@@ -53,6 +53,9 @@ static inline VARIANT_DESTRUCTOR(LilyToken,
                                  identifier_operator,
                                  LilyToken *self);
 
+// Free LilyToken type (LILY_TOKEN_KIND_IDENTIFIER_STRING).
+static inline VARIANT_DESTRUCTOR(LilyToken, identifier_string, LilyToken *self);
+
 // Free LilyToken type (LILY_TOKEN_KIND_LITERAL_FLOAT).
 static inline VARIANT_DESTRUCTOR(LilyToken, literal_float, LilyToken *self);
 
@@ -169,6 +172,21 @@ VARIANT_CONSTRUCTOR(LilyToken *,
     self->kind = LILY_TOKEN_KIND_IDENTIFIER_OPERATOR;
     self->location = location;
     self->identifier_operator = identifier_operator;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    identifier_string,
+                    Location location,
+                    String *identifier_string)
+{
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
+
+    self->kind = LILY_TOKEN_KIND_IDENTIFIER_STRING;
+    self->location = location;
+    self->identifier_string = identifier_string;
 
     return self;
 }
@@ -562,6 +580,8 @@ to_string__LilyToken(LilyToken *self)
             return format__String("{S}", self->identifier_normal);
         case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
             return format__String("`{S}`", self->identifier_operator);
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            return format__String("@\"{S}\"", self->identifier_string);
         case LILY_TOKEN_KIND_INTERROGATION:
             return from__String("?");
         case LILY_TOKEN_KIND_INVERSE_ARROW:
@@ -888,6 +908,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_IDENTIFIER_NORMAL";
         case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
             return "LILY_TOKEN_KIND_IDENTIFIER_OPERATOR";
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            return "LILY_TOKEN_KIND_IDENTIFIER_STRING";
         case LILY_TOKEN_KIND_INTERROGATION:
             return "LILY_TOKEN_KIND_INTERROGATION";
         case LILY_TOKEN_KIND_INVERSE_ARROW:
@@ -1187,6 +1209,13 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->identifier_operator);
 
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "identifier_string = {S} }",
+                          CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->identifier_string);
+
         case LILY_TOKEN_KIND_LITERAL_BYTE:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_byte = b'{s}' }",
@@ -1385,6 +1414,11 @@ clone__LilyToken(const LilyToken *self)
                                identifier_operator,
                                self->location,
                                clone__String(self->identifier_operator));
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            return NEW_VARIANT(LilyToken,
+                               identifier_string,
+                               self->location,
+                               clone__String(self->identifier_string));
         case LILY_TOKEN_KIND_LITERAL_BYTE:
             return NEW_VARIANT(
               LilyToken, literal_byte, self->location, self->literal_byte);
@@ -1525,6 +1559,12 @@ VARIANT_DESTRUCTOR(LilyToken, identifier_normal, LilyToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyToken, identifier_string, LilyToken *self)
+{
+    FREE(String, self->identifier_string);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyToken, literal_float, LilyToken *self)
 {
     FREE(String, self->literal_float);
@@ -1583,6 +1623,9 @@ DESTRUCTOR(LilyToken, LilyToken *self)
             break;
         case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
             FREE_VARIANT(LilyToken, identifier_operator, self);
+            break;
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            FREE_VARIANT(LilyToken, identifier_string, self);
             break;
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
             FREE_VARIANT(LilyToken, literal_float, self);
