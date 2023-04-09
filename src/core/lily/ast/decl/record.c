@@ -33,9 +33,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclRecord, const LilyAstDeclRecord *self)
       "LilyAstDeclRecord{{ name = {S}, generic_params =", self->name);
 
     if (self->generic_params) {
-        DEBUG_VEC_STRING(self->generic_params->buffer,
-                         self->generic_params->len,
-                         LilyAstGenericParam);
+        DEBUG_VEC_STRING(self->generic_params, res, LilyAstGenericParam);
     } else {
         push_str__String(res, " NULL");
     }
