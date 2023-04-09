@@ -752,7 +752,9 @@ fun add(x trace *Int32) trace *Int32 = x;
 
 fun main =
     val x *Int32 := Ptr.new(100);
-    trace val y *Int32 := add(trace x);
+    val y := add(trace x);
+
+    drop x;
 end
 ```
 
@@ -804,7 +806,7 @@ end
 Compiler option:
 - allow-auto-drop
 
-When you pass `allow-auto-drop` as compile option, you can disable auto drop in a specific section of code with preprocess `disable_auto_drop`.
+When you pass `--allow-auto-drop` as compile option, you can disable auto drop in a specific section of code with preprocess `disable_auto_drop`.
 
 ```lily
 #[disable_auto_drop]
@@ -812,6 +814,12 @@ fun main =
 end
 #[end]
 ```
+
+## Unsafe
+
+- You can use raw pointer (*T)
+- You can use nil value on pointer
+- You can use Any data type
 
 ## Garbage collector (interpreter)
 
