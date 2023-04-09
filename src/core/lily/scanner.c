@@ -794,6 +794,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
         case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
         case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
         case LILY_TOKEN_KIND_KEYWORD_ALIAS:
         case LILY_TOKEN_KIND_KEYWORD_AND:
         case LILY_TOKEN_KIND_KEYWORD_AS:
@@ -1672,6 +1673,21 @@ get_token__LilyScanner(LilyScanner *self)
 
         // @
         case '@':
+            if (c1 == (char *)'\"') {
+                next_char__Source(&self->source);
+
+                String *res = scan_string__LilyScanner(self);
+
+                if (res) {
+                    return NEW_VARIANT(LilyToken,
+                                       identifier_string,
+                                       clone__Location(&self->location),
+                                       res);
+                }
+
+                return NULL;
+            }
+
             return NEW(
               LilyToken, LILY_TOKEN_KIND_AT, clone__Location(&self->location));
 
