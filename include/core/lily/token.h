@@ -70,6 +70,7 @@ enum LilyTokenKind
     LILY_TOKEN_KIND_IDENTIFIER_MACRO,
     LILY_TOKEN_KIND_IDENTIFIER_NORMAL,
     LILY_TOKEN_KIND_IDENTIFIER_OPERATOR,
+    LILY_TOKEN_KIND_IDENTIFIER_STRING,
     LILY_TOKEN_KIND_INTERROGATION,
     LILY_TOKEN_KIND_INVERSE_ARROW,
     LILY_TOKEN_KIND_KEYWORD_ALIAS,
@@ -210,6 +211,7 @@ typedef struct LilyToken
         String *identifier_macro;
         String *identifier_normal;
         String *identifier_operator;
+        String *identifier_string;
         Uint8 literal_byte;
         Uint8 *literal_bytes;
         char literal_char;
@@ -301,6 +303,16 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     identifier_operator,
                     Location location,
                     String *identifier_operator);
+
+/**
+ *
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_IDENTIFIER_STRING).
+ */
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    identifier_string,
+                    Location location,
+                    String *identifier_string);
 
 /**
  *
