@@ -821,6 +821,12 @@ end
 - You can use nil value on pointer
 - You can use Any data type
 
+## Safe mode
+
+- All pointers are traced
+- Pass by reference or by trace
+- All values are moved
+
 ## Garbage collector (interpreter)
 
 - Concurrent
