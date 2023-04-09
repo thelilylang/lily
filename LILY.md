@@ -236,7 +236,7 @@ end
 ## Error
 
 ```lily
-pub error BadArgument(Str);
+pub error BadArgument:Str;
 
 pub fun err() = raise BadArgument("failed");
 
@@ -335,9 +335,16 @@ end
 
 ```lily
 package =
+    // [pub] .<identifier_normal.<identifier_normal... | identifier_string>
+end
+```
+
+```lily
+package =
     pub .a;
     .b;
     .c;
+    .@"d";
 end
 ```
 
