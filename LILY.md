@@ -801,31 +801,19 @@ fun main =
 end
 ```
 
-## Auto-drop
-
-Compiler option:
-- allow-auto-drop
-
-When you pass `--allow-auto-drop` as compile option, you can disable auto drop in a specific section of code with preprocess `disable_auto_drop`.
-
-```lily
-#[disable_auto_drop]
-fun main =
-end
-#[end]
-```
-
 ## Unsafe
 
 - You can use raw pointer (*T)
 - You can use nil value on pointer
 - You can use Any data type
+- `auto-drop` is disabled
 
 ## Safe mode
 
 - All pointers are traced
 - Pass by reference or by trace
 - All values are moved
+- All values are automatically drop
 
 ## Garbage collector (interpreter)
 
