@@ -5986,43 +5986,41 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                     case LILY_TOKEN_KIND_IDENTIFIER_STRING:
                         // Check if self->current->identifier_string contains
                         // only alnum, `_` or `.` characters.
+                        if (last__String(self->current->identifier_string) ==
+                            '.') {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->file,
+                                &self->current->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_UNEXPECTED_CHARACTER),
+                                NULL,
+                                NULL,
+                                from__String("expected identifier after `.`")),
+                              &self->count_error);
+                        }
+
                         for (Usize i = 0;
                              i < self->current->identifier_string->len;
                              i++) {
-                            char *c =
-                              self->current->identifier_string->buffer + i++;
+                            char c =
+                              self->current->identifier_string->buffer[i++];
 
-                            if (isalpha(*c) || *c == '_') {
-                                c =
-                                  self->current->identifier_string->buffer + i;
+                            if (isalpha(c) || c == '_') {
+                                c = self->current->identifier_string->buffer[i];
 
-                                while (*c && *c != '.' &&
-                                       (isalnum(*c) || *c == '_')) {
-                                    c =
-                                      self->current->identifier_string->buffer +
-                                      i++;
+                                while (c && isalnum(c) || c == '_') {
+                                    c = self->current->identifier_string
+                                          ->buffer[++i];
                                 }
 
-                                if (*c != '.' && *c) {
-                                    goto unexpected_character;
-                                } else if (*c == '.' && !(*c)) {
-                                    emit__Diagnostic(
-                                      NEW_VARIANT(
-                                        Diagnostic,
-                                        simple_lily_error,
-                                        self->file,
-                                        &self->current->location,
-                                        NEW(
-                                          LilyError,
-                                          LILY_ERROR_KIND_UNEXPECTED_CHARACTER),
-                                        NULL,
-                                        NULL,
-                                        from__String(
-                                          "expected identifier after `.`")),
-                                      &self->count_error);
+                                if (c) {
+                                    if (c != '.') {
+                                        goto unexpected_character;
+                                    }
                                 }
-
-                                i++;
                             } else {
                             unexpected_character : {
                                 emit__Diagnostic(
@@ -6038,8 +6036,10 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                                       1,
                                       from__String("expected only identifier "
                                                    "or `.` character")),
-                                    format__String("unexpected `{c}`", *c)),
+                                    format__String("unexpected `{c}`", c)),
                                   &self->count_error);
+
+                                return 0;
                             }
                             }
                         }
