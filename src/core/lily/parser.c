@@ -2038,6 +2038,30 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
             }
 
             return parse_access_expr__LilyParseBlock(self);
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            if (!strcmp(self->previous->identifier_string->buffer, "_")) {
+                return NEW(LilyAstExpr,
+                           clone__Location(&self->previous->location),
+                           LILY_AST_EXPR_KIND_WILDCARD);
+            }
+
+            if (self->current->kind == LILY_TOKEN_KIND_DOT) {
+                return parse_path_access__LilyParseBlock(
+                  self,
+                  NEW_VARIANT(
+                    LilyAstExpr,
+                    identifier,
+                    clone__Location(&self->previous->location),
+                    NEW(LilyAstExprIdentifier,
+                        clone__String(self->previous->identifier_string))));
+            }
+
+            return NEW_VARIANT(
+              LilyAstExpr,
+              identifier,
+              clone__Location(&self->previous->location),
+              NEW(LilyAstExprIdentifier,
+                  clone__String(self->previous->identifier_string)));
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
             if (!strcmp(self->previous->identifier_normal->buffer, "_")) {
                 return NEW(LilyAstExpr,
@@ -3141,6 +3165,90 @@ parse_variant_call_pattern__LilyParseBlock(LilyParseBlock *self,
 LilyAstPattern *
 parse_pattern__LilyParseBlock(LilyParseBlock *self)
 {
+#define PARSE_IDENTIFIER(identifier_val)                                      \
+    /* Check if it's a path */                                                \
+    switch (self->current->kind) {                                            \
+        case LILY_TOKEN_KIND_L_BRACE:                                         \
+            pattern = parse_record_call_pattern__LilyParseBlock(              \
+              self,                                                           \
+              NEW_VARIANT(                                                    \
+                LilyAstExpr,                                                  \
+                identifier,                                                   \
+                self->previous->location,                                     \
+                NEW(LilyAstExprIdentifier, clone__String(identifier_val))));  \
+                                                                              \
+            break;                                                            \
+        case LILY_TOKEN_KIND_COLON:                                           \
+            pattern = parse_variant_call_pattern__LilyParseBlock(             \
+              self,                                                           \
+              NEW_VARIANT(                                                    \
+                LilyAstExpr,                                                  \
+                identifier,                                                   \
+                self->previous->location,                                     \
+                NEW(LilyAstExprIdentifier, clone__String(identifier_val))));  \
+                                                                              \
+            break;                                                            \
+        case LILY_TOKEN_KIND_DOT: {                                           \
+            /* Parse path access */                                           \
+            LilyAstExpr *path = parse_path_access__LilyParseBlock(            \
+              self,                                                           \
+              NEW_VARIANT(                                                    \
+                LilyAstExpr,                                                  \
+                identifier,                                                   \
+                self->previous->location,                                     \
+                NEW(LilyAstExprIdentifier, clone__String(identifier_val))));  \
+                                                                              \
+            /* Parse variant call or record call */                           \
+            switch (self->current->kind) {                                    \
+                case LILY_TOKEN_KIND_L_BRACE:                                 \
+                    pattern =                                                 \
+                      parse_record_call_pattern__LilyParseBlock(self, path);  \
+                                                                              \
+                    break;                                                    \
+                case LILY_TOKEN_KIND_COLON:                                   \
+                    pattern =                                                 \
+                      parse_variant_call_pattern__LilyParseBlock(self, path); \
+                                                                              \
+                    break;                                                    \
+                default: {                                                    \
+                    String *token_s = to_string__LilyToken(self->current);    \
+                                                                              \
+                    emit__Diagnostic(                                         \
+                      NEW_VARIANT(Diagnostic,                                 \
+                                  simple_lily_error,                          \
+                                  self->file,                                 \
+                                  &self->previous->location,                  \
+                                  NEW_VARIANT(LilyError,                      \
+                                              unexpected_token,               \
+                                              token_s->buffer),               \
+                                  NULL,                                       \
+                                  NULL,                                       \
+                                  from__String("expected `{`, `:`, or `.`")), \
+                      self->count_error);                                     \
+                                                                              \
+                    FREE(String, token_s);                                    \
+                                                                              \
+                    return NULL;                                              \
+                }                                                             \
+            }                                                                 \
+                                                                              \
+            break;                                                            \
+        }                                                                     \
+        default:                                                              \
+            if (!strcmp(identifier_val->buffer, "_")) {                       \
+                pattern = NEW(LilyAstPattern,                                 \
+                              self->previous->location,                       \
+                              LILY_AST_PATTERN_KIND_WILDCARD);                \
+            } else {                                                          \
+                pattern = NEW_VARIANT(                                        \
+                  LilyAstPattern,                                             \
+                  name,                                                       \
+                  self->previous->location,                                   \
+                  NEW(LilyAstPatternName, clone__String(identifier_val)));    \
+            }                                                                 \
+            break;                                                            \
+    }
+
     next_token__LilyParseBlock(self);
 
     LilyAstPattern *pattern = NULL;
@@ -3182,96 +3290,12 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
             pattern = parse_exception_pattern__LilyParseBlock(self);
 
             break;
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            PARSE_IDENTIFIER(self->previous->identifier_string);
+
+            break;
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            // Check if it's a path
-            switch (self->current->kind) {
-                case LILY_TOKEN_KIND_L_BRACE:
-                    pattern = parse_record_call_pattern__LilyParseBlock(
-                      self,
-                      NEW_VARIANT(
-                        LilyAstExpr,
-                        identifier,
-                        self->previous->location,
-                        NEW(LilyAstExprIdentifier,
-                            clone__String(self->current->identifier_normal))));
-
-                    break;
-                case LILY_TOKEN_KIND_COLON:
-                    pattern = parse_variant_call_pattern__LilyParseBlock(
-                      self,
-                      NEW_VARIANT(
-                        LilyAstExpr,
-                        identifier,
-                        self->previous->location,
-                        NEW(LilyAstExprIdentifier,
-                            clone__String(self->current->identifier_normal))));
-
-                    break;
-                case LILY_TOKEN_KIND_DOT: {
-                    // Parse path access
-                    LilyAstExpr *path = parse_path_access__LilyParseBlock(
-                      self,
-                      NEW_VARIANT(LilyAstExpr,
-                                  identifier,
-                                  self->previous->location,
-                                  NEW(LilyAstExprIdentifier,
-                                      self->previous->identifier_normal)));
-
-                    // Parse variant call or record call
-                    switch (self->current->kind) {
-                        case LILY_TOKEN_KIND_L_BRACE:
-                            pattern = parse_record_call_pattern__LilyParseBlock(
-                              self, path);
-
-                            break;
-                        case LILY_TOKEN_KIND_COLON:
-                            pattern =
-                              parse_variant_call_pattern__LilyParseBlock(self,
-                                                                         path);
-
-                            break;
-                        default: {
-                            String *token_s =
-                              to_string__LilyToken(self->current);
-
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                self->file,
-                                &self->previous->location,
-                                NEW_VARIANT(
-                                  LilyError, unexpected_token, token_s->buffer),
-                                NULL,
-                                NULL,
-                                from__String("expected `{`, `:`, or `.`")),
-                              self->count_error);
-
-                            FREE(String, token_s);
-
-                            return NULL;
-                        }
-                    }
-
-                    break;
-                }
-                default:
-                    if (!strcmp(self->previous->identifier_normal->buffer,
-                                "_")) {
-                        pattern = NEW(LilyAstPattern,
-                                      self->previous->location,
-                                      LILY_AST_PATTERN_KIND_WILDCARD);
-                    } else {
-                        pattern = NEW_VARIANT(
-                          LilyAstPattern,
-                          name,
-                          self->previous->location,
-                          NEW(
-                            LilyAstPatternName,
-                            clone__String(self->previous->identifier_normal)));
-                    }
-                    break;
-            }
+            PARSE_IDENTIFIER(self->previous->identifier_normal);
 
             break;
         case LILY_TOKEN_KIND_L_PAREN:
