@@ -31,6 +31,7 @@
 #include <core/lily/token.h>
 #include <core/shared/diagnostic.h>
 
+#include <ctype.h>
 #include <stdio.h>
 
 #ifdef ENV_DEBUG
@@ -1393,6 +1394,31 @@ preparse_when_condition__LilyPreparser(LilyPreparser *self);
     next_token__LilyPreparser(self);                                           \
                                                                                \
     return res;
+
+#define GET_NAME(self, detail)                                                 \
+    String *name = NULL;                                                       \
+    switch (self->current->kind) {                                             \
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:                                \
+            name = clone__String(self->current->identifier_normal);            \
+            next_token__LilyPreparser(self);                                   \
+            break;                                                             \
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:                                \
+            name = clone__String(self->current->identifier_string);            \
+            next_token__LilyPreparser(self);                                   \
+            break;                                                             \
+        default:                                                               \
+            emit__Diagnostic(                                                  \
+              NEW_VARIANT(Diagnostic,                                          \
+                          simple_lily_error,                                   \
+                          self->file,                                          \
+                          &self->current->location,                            \
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER), \
+                          NULL,                                                \
+                          NULL,                                                \
+                          detail),                                             \
+              &self->count_error);                                             \
+            name = from__String("__error__");                                  \
+    }
 
 static enum LilyVisibility visibility_decl = LILY_VISIBILITY_PRIVATE;
 static Location location_decl;
@@ -5761,31 +5787,10 @@ preparse_import__LilyPreparser(LilyPreparser *self)
 LilyPreparserMacro *
 preparse_macro__LilyPreparser(LilyPreparser *self)
 {
-    // 1. Get name of the macro.
-    String *name = NULL;
-
     next_token__LilyPreparser(self);
 
-    switch (self->current->kind) {
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            name = clone__String(self->current->identifier_normal);
-            next_token__LilyPreparser(self);
-            break;
-        default:
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-
-                          simple_lily_error,
-                          self->file,
-                          &self->current->location,
-                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
-                          NULL,
-                          NULL,
-                          NULL),
-              &self->count_error);
-
-            name = from__String("__error__");
-    }
+    // 1. Get name of the macro.
+    GET_NAME(self, NULL);
 
     // 2. Get params of the macro
     Vec *params = NULL;
@@ -5978,6 +5983,82 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                 next_token__LilyPreparser(self);
 
                 switch (self->current->kind) {
+                    case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+                        // Check if self->current->identifier_string contains
+                        // only alnum, `_` or `.` characters.
+                        for (Usize i = 0;
+                             i < self->current->identifier_string->len;
+                             i++) {
+                            char *c =
+                              self->current->identifier_string->buffer + i++;
+
+                            if (isalpha(*c) || *c == '_') {
+								c = self->current->identifier_string->buffer + i;
+
+                                while (*c && *c != '.' &&
+                                       (isalnum(*c) || *c == '_')) {
+                                    c =
+                                      self->current->identifier_string->buffer +
+                                      i++;
+                                }
+
+                                if (*c != '.' && *c) {
+                                    goto unexpected_character;
+                                } else if (*c == '.' && !(*c)) {
+                                    emit__Diagnostic(
+                                      NEW_VARIANT(
+                                        Diagnostic,
+                                        simple_lily_error,
+                                        self->file,
+                                        &self->current->location,
+                                        NEW(
+                                          LilyError,
+                                          LILY_ERROR_KIND_UNEXPECTED_CHARACTER),
+                                        NULL,
+                                        NULL,
+                                        from__String(
+                                          "expected identifier after `.`")),
+                                      &self->count_error);
+                                }
+
+                                i++;
+                            } else {
+                            unexpected_character : {
+                                emit__Diagnostic(
+                                  NEW_VARIANT(
+                                    Diagnostic,
+                                    simple_lily_error,
+                                    self->file,
+                                    &self->current->location,
+                                    NEW(LilyError,
+                                        LILY_ERROR_KIND_UNEXPECTED_CHARACTER),
+                                    NULL,
+                                    init__Vec(
+                                      1,
+                                      from__String("expected only identifier "
+                                                   "or `.` character")),
+                                    format__String("unexpected `{c}`", *c)),
+                                  &self->count_error);
+                            }
+                            }
+                        }
+
+                        sub_pkg_name =
+                          clone__String(self->current->identifier_string);
+
+                        if (self->default_package_access) {
+                            sub_pkg_global_name = from__String(
+                              (char *)self->default_package_access);
+                            append__String(sub_pkg_global_name,
+                                           self->current->identifier_string);
+                        } else {
+                            sub_pkg_global_name =
+                              clone__String(self->current->identifier_string);
+                        }
+
+                        next_token__LilyPreparser(self);
+
+                        goto expected_semicolon;
                     case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
                         if (self->default_package_access) {
                             sub_pkg_name =
@@ -6022,6 +6103,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                         if (self->current->kind !=
                               LILY_TOKEN_KIND_KEYWORD_END &&
                             self->current->kind == LILY_TOKEN_KIND_SEMICOLON) {
+                        expected_semicolon : {
                             switch (self->current->kind) {
                                 case LILY_TOKEN_KIND_SEMICOLON:
                                     next_token__LilyPreparser(self);
@@ -6047,6 +6129,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                                     FREE(String, current_s);
                                 }
                             }
+                        }
                         }
 
                         break;
@@ -7684,31 +7767,10 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
                                        bool is_drop)
 {
     Location location = clone__Location(&self->current->location);
-    String *name = NULL;
     Vec *data_type = NULL;
 
     // 1. Get the name of the variable.
-    switch (self->current->kind) {
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            name = clone__String(self->current->identifier_normal);
-            next_token__LilyPreparser(self);
-
-            break;
-        default: {
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          self->file,
-                          &self->current->location,
-                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
-                          NULL,
-                          NULL,
-                          from__String("expected name of variable")),
-              &self->count_error);
-
-            name = from__String("__error__");
-        }
-    }
+    GET_NAME(self, from__String("expected name of variable"));
 
     // 2. Get the data type of the variable (optional).
     if (self->current->kind != LILY_TOKEN_KIND_COLON_EQ) {
@@ -8491,30 +8553,7 @@ preparse_constant__LilyPreparser(LilyPreparser *self)
     Location location = location_decl;
 
     // 1. Get name of the constant.
-    String *name = NULL;
-
-    switch (self->current->kind) {
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            name = clone__String(self->current->identifier_normal);
-            next_token__LilyPreparser(self);
-
-            break;
-        default:
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          self->file,
-                          &self->current->location,
-                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
-                          NULL,
-                          NULL,
-                          from__String("expected name of the constant")),
-              &self->count_error);
-
-            name = from__String("__error__");
-
-            break;
-    }
+    GET_NAME(self, from__String("expected name of the constant"));
 
     // 2. Get data type of the constant.
     Vec *data_type = NEW(Vec);
@@ -8857,28 +8896,7 @@ preparse_attribute_for_class__LilyPreparser(LilyPreparser *self,
     next_token__LilyPreparser(self); // skip `val` keyword
 
     // 1. Get attribute's name
-    String *name = NULL;
-
-    switch (self->current->kind) {
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            name = clone__String(self->current->identifier_normal);
-            next_token__LilyPreparser(self);
-
-            break;
-        default:
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          self->file,
-                          &self->current->location,
-                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
-                          NULL,
-                          NULL,
-                          from__String("expected name of the attribute")),
-              &self->count_error);
-
-            name = from__String("__error__");
-    }
+    GET_NAME(self, from__String("expected name of the attribute"));
 
     // 2. Get attribute's data type
     Vec *data_type = NEW(Vec); // Vec<LilyToken*>*
@@ -9546,31 +9564,7 @@ preparse_prototype__LilyPreparser(LilyPreparser *self)
     next_token__LilyPreparser(self); // skip `fun` keyword
 
     // 1. Get name of prototype
-    String *name = NULL;
-
-    switch (self->current->kind) {
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            name = clone__String(self->current->identifier_normal);
-            next_token__LilyPreparser(self);
-
-            break;
-
-        default:
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          self->file,
-                          &self->current->location,
-                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
-                          NULL,
-                          NULL,
-                          from__String("expected name of protoype here")),
-              &self->count_error);
-
-            name = from__String("__error__");
-
-            break;
-    }
+    GET_NAME(self, from__String("expected name of the prototype here"));
 
     // 2. Preparse generic params.
     Vec *generic_params = NULL;
@@ -10828,29 +10822,7 @@ preparse_object__LilyPreparser(LilyPreparser *self)
     }
 
     // 2. Get object's name
-    String *name = NULL;
-
-    switch (self->current->kind) {
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            name = clone__String(self->current->identifier_normal);
-
-            next_token__LilyPreparser(self);
-
-            break;
-        default:
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          self->file,
-                          &self->current->location,
-                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
-                          NULL,
-                          NULL,
-                          from__String("expected name of object")),
-              &self->count_error);
-
-            name = from__String("__error__");
-    }
+    GET_NAME(self, from__String("expected name of the object"));
 
     // 3. Preparse generic params
     Vec *generic_params = NULL;
@@ -11008,30 +10980,7 @@ preparse_type__LilyPreparser(LilyPreparser *self)
     next_token__LilyPreparser(self); // skip `type` keyword
 
     // 1. Get type name
-    String *name = NULL;
-
-    switch (self->current->kind) {
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            name = clone__String(self->current->identifier_normal);
-
-            next_token__LilyPreparser(self);
-
-            break;
-
-        default:
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          self->file,
-                          &self->current->location,
-                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
-                          NULL,
-                          NULL,
-                          from__String("expected `type` identifier")),
-              &self->count_error);
-
-            name = from__String("__error__");
-    }
+    GET_NAME(self, from__String("expected `type` identifier"));
 
     // 3. Parse generic params
     Vec *generic_params = NULL;
