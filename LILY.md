@@ -499,7 +499,7 @@ end
 
 ```lily
 object Foo class =
-    @name Str;
+    val name Str;
 
     fun get_name(self) = self.name;
 end
@@ -601,6 +601,28 @@ NOTE: only available in unsafe mode
 ```lily
 fun main =
     val arr [*]Int32 := [1, 2, 3, 4, 5]; // [*]Int32 it same than Int32* in C
+end
+```
+
+### List
+
+```lily
+// {<dt>}
+```
+
+```lily
+fun main =
+    val list {Int32} := {1, 2, 3, 4, 5}; // Create a simple list
+    mut start ?*Int32 := none;
+    mut @"end" ?*Int32 := none;
+
+    match list do
+        {s, .., e} => @{
+            start = ref s
+            @"end" = ref e
+        }
+        _ => ()
+    end
 end
 ```
 
