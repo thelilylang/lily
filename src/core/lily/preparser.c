@@ -5993,7 +5993,8 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                               self->current->identifier_string->buffer + i++;
 
                             if (isalpha(*c) || *c == '_') {
-								c = self->current->identifier_string->buffer + i;
+                                c =
+                                  self->current->identifier_string->buffer + i;
 
                                 while (*c && *c != '.' &&
                                        (isalnum(*c) || *c == '_')) {
