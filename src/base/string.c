@@ -117,6 +117,14 @@ grow__String(String *self, Usize new_capacity)
 }
 
 char
+last__String(String *self)
+{
+    ASSERT(self->len > 0);
+
+    return self->buffer[self->len - 1];
+}
+
+char
 pop__String(String *self)
 {
     ASSERT(self->len > 0);

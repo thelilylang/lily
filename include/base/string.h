@@ -62,7 +62,6 @@ typedef struct String
 
 /**
  *
- * @brief Construct String type.
  */
 CONSTRUCTOR(String *, String);
 
@@ -118,6 +117,13 @@ is_empty__String(const String *self)
 {
     return self->len == 0;
 }
+
+/**
+ *
+ * @brief Get last character.
+ */
+char
+last__String(String *self);
 
 /**
  *
