@@ -581,7 +581,7 @@ to_string__LilyToken(LilyToken *self)
         case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
             return format__String("`{S}`", self->identifier_operator);
         case LILY_TOKEN_KIND_IDENTIFIER_STRING:
-            return format__String("@{S}", self->identifier_string);
+            return format__String("@\"{S}\"", self->identifier_string);
         case LILY_TOKEN_KIND_INTERROGATION:
             return from__String("?");
         case LILY_TOKEN_KIND_INVERSE_ARROW:
