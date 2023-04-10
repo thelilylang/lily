@@ -60,6 +60,9 @@ static VARIANT_DESTRUCTOR(LilyAstExpr, identifier_dollar, LilyAstExpr *self);
 // Free LilyAstExpr type (LILY_AST_EXPR_KIND_LAMBDA).
 static VARIANT_DESTRUCTOR(LilyAstExpr, lambda, LilyAstExpr *self);
 
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_LIST).
+static VARIANT_DESTRUCTOR(LilyAstExpr, list, LilyAstExpr *self);
+
 // Free LilyAstExpr type (LILY_AST_EXPR_KIND_LITERAL).
 static VARIANT_DESTRUCTOR(LilyAstExpr, literal, LilyAstExpr *self);
 
@@ -88,6 +91,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprKind, enum LilyAstExprKind self)
             return "LILY_AST_EXPR_KIND_IDENTIFIER";
         case LILY_AST_EXPR_KIND_LAMBDA:
             return "LILY_AST_EXPR_KIND_LAMBDA";
+        case LILY_AST_EXPR_KIND_LIST:
+            return "LILY_AST_EXPR_KIND_LIST";
         case LILY_AST_EXPR_KIND_LITERAL:
             return "LILY_AST_EXPR_KIND_LITERAL";
         case LILY_AST_EXPR_KIND_SELF:
@@ -243,6 +248,21 @@ VARIANT_CONSTRUCTOR(LilyAstExpr *,
 
 VARIANT_CONSTRUCTOR(LilyAstExpr *,
                     LilyAstExpr,
+                    list,
+                    Location location,
+                    LilyAstExprList list)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_LIST;
+    self->location = location;
+    self->list = list;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
                     literal,
                     Location location,
                     LilyAstExprLiteral literal)
@@ -385,6 +405,14 @@ IMPL_FOR_DEBUG(to_string, LilyAstExpr, const LilyAstExpr *self)
 
             break;
         }
+        case LILY_AST_EXPR_KIND_LIST: {
+            char *s = format(", list = {Sr} }",
+                             to_string__Debug__LilyAstExprList(&self->list));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_AST_EXPR_KIND_LITERAL: {
             char *s =
               format(", literal = {Sr} }",
@@ -482,6 +510,12 @@ VARIANT_DESTRUCTOR(LilyAstExpr, lambda, LilyAstExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyAstExpr, list, LilyAstExpr *self)
+{
+    FREE(LilyAstExprList, &self->list);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyAstExpr, literal, LilyAstExpr *self)
 {
     FREE(LilyAstExprLiteral, &self->literal);
@@ -529,6 +563,9 @@ DESTRUCTOR(LilyAstExpr, LilyAstExpr *self)
             break;
         case LILY_AST_EXPR_KIND_LAMBDA:
             FREE_VARIANT(LilyAstExpr, lambda, self);
+            break;
+        case LILY_AST_EXPR_KIND_LIST:
+            FREE_VARIANT(LilyAstExpr, list, self);
             break;
         case LILY_AST_EXPR_KIND_LITERAL:
             FREE_VARIANT(LilyAstExpr, literal, self);
