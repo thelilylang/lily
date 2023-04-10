@@ -1132,6 +1132,8 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
             LilyAstDataType *data_type = parse_data_type__LilyParseBlock(self);
 
             if (!data_type) {
+                SKIP_TO_TOKEN(LILY_TOKEN_KIND_R_BRACE);
+
                 return NULL;
             }
 
