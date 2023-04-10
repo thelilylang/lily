@@ -109,6 +109,10 @@ parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id);
 static LilyAstExpr *
 parse_lambda_expr__LilyParseBlock(LilyParseBlock *self);
 
+// Parse list expression
+static LilyAstExpr *
+parse_list_expr__LilyParseBlock(LilyParseBlock *self);
+
 // Parse literal expression
 static LilyAstExpr *
 parse_literal_expr__LilyParseBlock(LilyParseBlock *self);
@@ -1837,6 +1841,17 @@ parse_lambda_expr__LilyParseBlock(LilyParseBlock *self)
     TODO("Issue #20");
 }
 
+LilyAstExpr *
+parse_list_expr__LilyParseBlock(LilyParseBlock *self)
+{
+    Location location = clone__Location(&self->previous->location);
+
+    EXPR_PARSE_CLOSING(LILY_TOKEN_KIND_R_BRACE);
+
+    return NEW_VARIANT(
+      LilyAstExpr, list, location, NEW(LilyAstExprList, exprs));
+}
+
 #define VARIANT_LITERAL(name, variant, value) \
     NEW_VARIANT(LilyAst##name,                \
                 literal,                      \
@@ -2028,6 +2043,8 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
             return parse_literal_expr__LilyParseBlock(self);
         case LILY_TOKEN_KIND_L_HOOK:
             return parse_array_expr__LilyParseBlock(self);
+        case LILY_TOKEN_KIND_L_BRACE:
+            return parse_list_expr__LilyParseBlock(self);
         case LILY_TOKEN_KIND_L_PAREN: {
             LilyToken *peeked = self->current;
 
