@@ -1131,6 +1131,10 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_L_BRACE: {
             LilyAstDataType *data_type = parse_data_type__LilyParseBlock(self);
 
+            if (!data_type) {
+                return NULL;
+            }
+
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_R_BRACE:
                     end__Location(&location,
@@ -1152,7 +1156,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                         from__String("expected `}`")),
                       self->count_error);
 
-                    break;
+                    SKIP_TO_TOKEN(LILY_TOKEN_KIND_R_BRACE);
             }
 
             return NEW_VARIANT(LilyAstDataType, list, location, data_type);
