@@ -69,6 +69,8 @@ enum LilyAstExprBinaryKind
     LILY_AST_EXPR_BINARY_KIND_RANGE,              // ..
     LILY_AST_EXPR_BINARY_KIND_SUB,                // -
     LILY_AST_EXPR_BINARY_KIND_XOR,                // xor
+    LILY_AST_EXPR_BINARY_KIND_LIST_HEAD,          // ->
+    LILY_AST_EXPR_BINARY_KIND_LIST_TAIL,          // <-
 };
 
 typedef struct LilyAstExprBinary

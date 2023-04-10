@@ -235,6 +235,16 @@ parse_exception_pattern__LilyParseBlock(LilyParseBlock *self);
 static LilyAstPattern *
 parse_list_pattern__LilyParseBlock(LilyParseBlock *self);
 
+// Parse list head pattern
+// <head> -> <list>
+static LilyAstPattern *
+parse_list_head_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *left);
+
+// Parse list tail pattern
+// <list> <- <tail>
+static LilyAstPattern *
+parse_list_tail_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *left);
+
 // Parse literal pattern
 // "Hello"
 static LilyAstPattern *
@@ -1531,7 +1541,9 @@ parse_binary_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr)
            self->current->kind == LILY_TOKEN_KIND_R_SHIFT_R_SHIFT ||
            self->current->kind == LILY_TOKEN_KIND_DOT_DOT ||
            self->current->kind == LILY_TOKEN_KIND_MINUS ||
-           self->current->kind == LILY_TOKEN_KIND_KEYWORD_XOR) {
+           self->current->kind == LILY_TOKEN_KIND_KEYWORD_XOR ||
+		   self->current->kind == LILY_TOKEN_KIND_ARROW ||
+		   self->current->kind == LILY_TOKEN_KIND_INVERSE_ARROW) {
         enum LilyAstExprBinaryKind op =
           from_token__LilyAstExprBinary(self->current);
         Usize precedence = to_precedence__LilyAstExprBinaryKind(op);
@@ -2366,6 +2378,8 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_DOT_DOT:
         case LILY_TOKEN_KIND_MINUS:
         case LILY_TOKEN_KIND_KEYWORD_XOR:
+		case LILY_TOKEN_KIND_ARROW:
+		case LILY_TOKEN_KIND_INVERSE_ARROW:
             return parse_binary_expr__LilyParseBlock(self, expr);
         default:
             return expr;
@@ -3090,6 +3104,44 @@ parse_list_pattern__LilyParseBlock(LilyParseBlock *self)
 }
 
 LilyAstPattern *
+parse_list_head_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *left)
+{
+	next_token__LilyParseBlock(self);
+
+	Location location = clone__Location(&left->location);
+	LilyAstPattern *right = parse_pattern__LilyParseBlock(self);
+
+	if (!right) {
+		FREE(LilyAstPattern, left);
+
+		return NULL;
+	}
+
+	end__Location(&location, right->location.end_line, right->location.end_column);
+
+	return NEW_VARIANT(LilyAstPattern, list_head, location, NEW(LilyAstPatternListHead, left, right));
+}
+
+LilyAstPattern *
+parse_list_tail_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *left)
+{
+	next_token__LilyParseBlock(self);
+
+	Location location = clone__Location(&left->location);
+	LilyAstPattern *right = parse_pattern__LilyParseBlock(self);
+
+	if (!right) {
+		FREE(LilyAstPattern, left);
+
+		return NULL;
+	}
+
+	end__Location(&location, right->location.end_line, right->location.end_column);
+
+	return NEW_VARIANT(LilyAstPattern, list_tail, location, NEW(LilyAstPatternListTail, left, right));
+}
+
+LilyAstPattern *
 parse_literal_pattern__LilyParseBlock(LilyParseBlock *self)
 {
     PARSE_LITERAL(Pattern, PATTERN);
@@ -3414,6 +3466,10 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
             return parse_as_pattern__LilyParseBlock(self, pattern);
         case LILY_TOKEN_KIND_DOT_DOT:
             return parse_range_pattern__LilyParseBlock(self, pattern);
+		case LILY_TOKEN_KIND_ARROW:
+			return parse_list_head_pattern__LilyParseBlock(self, pattern);
+		case LILY_TOKEN_KIND_INVERSE_ARROW:
+			return parse_list_tail_pattern__LilyParseBlock(self, pattern);
         default:
             break;
     }

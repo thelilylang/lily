@@ -46,6 +46,12 @@ static VARIANT_DESTRUCTOR(LilyAstPattern, exception, LilyAstPattern *self);
 // Free LilyAstPattern type (LILY_AST_PATTERN_KIND_LIST).
 static VARIANT_DESTRUCTOR(LilyAstPattern, list, LilyAstPattern *self);
 
+// Free LilyAstPattern type (LILY_AST_PATTERN_KIND_LIST_HEAD).
+static VARIANT_DESTRUCTOR(LilyAstPattern, list_head, LilyAstPattern *self);
+
+// Free LilyAstPattern type (LILY_AST_PATTERN_KIND_LIST_TAIL).
+static VARIANT_DESTRUCTOR(LilyAstPattern, list_tail, LilyAstPattern *self);
+
 // Free LilyAstPattern type (LILY_AST_PATTERN_KIND_LITERAL).
 static VARIANT_DESTRUCTOR(LilyAstPattern, literal, LilyAstPattern *self);
 
@@ -79,6 +85,10 @@ IMPL_FOR_DEBUG(to_string, LilyAstPatternKind, enum LilyAstPatternKind self)
             return "LILY_AST_PATTERN_KIND_EXCEPTION";
         case LILY_AST_PATTERN_KIND_LIST:
             return "LILY_AST_PATTERN_KIND_LIST";
+		case LILY_AST_PATTERN_KIND_LIST_HEAD:
+            return "LILY_AST_PATTERN_KIND_LIST_HEAD";
+		case LILY_AST_PATTERN_KIND_LIST_TAIL:
+            return "LILY_AST_PATTERN_KIND_LIST_TAIL";
         case LILY_AST_PATTERN_KIND_LITERAL:
             return "LILY_AST_PATTERN_KIND_LITERAL";
         case LILY_AST_PATTERN_KIND_RANGE:
@@ -155,6 +165,36 @@ VARIANT_CONSTRUCTOR(LilyAstPattern *,
     self->list = list;
 
     return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    list_head,
+                    Location location,
+                    LilyAstPatternListHead list_head)
+{
+	LilyAstPattern *self = lily_malloc(sizeof(LilyAstPattern));
+
+	self->kind = LILY_AST_PATTERN_KIND_LIST_HEAD;
+	self->location = location;
+	self->list_head = list_head;
+
+	return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstPattern *,
+                    LilyAstPattern,
+                    list_tail,
+                    Location location,
+                    LilyAstPatternListTail list_tail)
+{
+	LilyAstPattern *self = lily_malloc(sizeof(LilyAstPattern));
+
+	self->kind = LILY_AST_PATTERN_KIND_LIST_TAIL;
+	self->location = location;
+	self->list_tail = list_tail;
+
+	return self;
 }
 
 VARIANT_CONSTRUCTOR(LilyAstPattern *,
@@ -308,6 +348,22 @@ IMPL_FOR_DEBUG(to_string, LilyAstPattern, const LilyAstPattern *self)
 
             break;
         }
+		case LILY_AST_PATTERN_KIND_LIST_HEAD: {
+            char *s = format(", list_head = {Sr} }",
+                             to_string__Debug__LilyAstPatternListHead(&self->list_head));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+		case LILY_AST_PATTERN_KIND_LIST_TAIL: {
+            char *s = format(", list_tail = {Sr} }",
+                             to_string__Debug__LilyAstPatternListTail(&self->list_tail));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_AST_PATTERN_KIND_LITERAL: {
             char *s =
               format(", literal = {Sr} }",
@@ -399,6 +455,18 @@ VARIANT_DESTRUCTOR(LilyAstPattern, list, LilyAstPattern *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyAstPattern, list_head, LilyAstPattern *self)
+{
+	FREE(LilyAstPatternListHead, &self->list_head);
+	lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstPattern, list_tail, LilyAstPattern *self)
+{
+	FREE(LilyAstPatternListTail, &self->list_tail);
+	lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyAstPattern, literal, LilyAstPattern *self)
 {
     FREE(LilyAstPatternLiteral, &self->literal);
@@ -454,6 +522,12 @@ DESTRUCTOR(LilyAstPattern, LilyAstPattern *self)
         case LILY_AST_PATTERN_KIND_LIST:
             FREE_VARIANT(LilyAstPattern, list, self);
             break;
+		case LILY_AST_PATTERN_KIND_LIST_HEAD:
+			FREE_VARIANT(LilyAstPattern, list_head, self);
+			break;
+		case LILY_AST_PATTERN_KIND_LIST_TAIL:
+			FREE_VARIANT(LilyAstPattern, list_tail, self);
+			break;
         case LILY_AST_PATTERN_KIND_LITERAL:
             FREE_VARIANT(LilyAstPattern, literal, self);
             break;
