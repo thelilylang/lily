@@ -67,5 +67,4 @@ to_string__LilyAstExprList(const LilyAstExprList *self);
  */
 DESTRUCTOR(LilyAstExprList, LilyAstExprList *self);
 
-
 #endif // LILY_CORE_LILY_AST_EXPR_LIST_H
