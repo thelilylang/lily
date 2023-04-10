@@ -109,6 +109,10 @@ parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id);
 static LilyAstExpr *
 parse_lambda_expr__LilyParseBlock(LilyParseBlock *self);
 
+// Parse list expression
+static LilyAstExpr *
+parse_list_expr__LilyParseBlock(LilyParseBlock *self);
+
 // Parse literal expression
 static LilyAstExpr *
 parse_literal_expr__LilyParseBlock(LilyParseBlock *self);
@@ -225,6 +229,11 @@ parse_as_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *pattern);
 // error InvalidFile:x
 static LilyAstPattern *
 parse_exception_pattern__LilyParseBlock(LilyParseBlock *self);
+
+// Parse list pattern
+// {a, _, b, ..}
+static LilyAstPattern *
+parse_list_pattern__LilyParseBlock(LilyParseBlock *self);
 
 // Parse literal pattern
 // "Hello"
@@ -1837,6 +1846,17 @@ parse_lambda_expr__LilyParseBlock(LilyParseBlock *self)
     TODO("Issue #20");
 }
 
+LilyAstExpr *
+parse_list_expr__LilyParseBlock(LilyParseBlock *self)
+{
+    Location location = clone__Location(&self->previous->location);
+
+    EXPR_PARSE_CLOSING(LILY_TOKEN_KIND_R_BRACE);
+
+    return NEW_VARIANT(
+      LilyAstExpr, list, location, NEW(LilyAstExprList, exprs));
+}
+
 #define VARIANT_LITERAL(name, variant, value) \
     NEW_VARIANT(LilyAst##name,                \
                 literal,                      \
@@ -2028,6 +2048,8 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
             return parse_literal_expr__LilyParseBlock(self);
         case LILY_TOKEN_KIND_L_HOOK:
             return parse_array_expr__LilyParseBlock(self);
+        case LILY_TOKEN_KIND_L_BRACE:
+            return parse_list_expr__LilyParseBlock(self);
         case LILY_TOKEN_KIND_L_PAREN: {
             LilyToken *peeked = self->current;
 
@@ -3057,6 +3079,17 @@ parse_exception_pattern__LilyParseBlock(LilyParseBlock *self)
 }
 
 LilyAstPattern *
+parse_list_pattern__LilyParseBlock(LilyParseBlock *self)
+{
+    Location location = clone__Location(&self->previous->location);
+
+    PATTERN_PARSE_CLOSING(LILY_TOKEN_KIND_R_BRACE);
+
+    return NEW_VARIANT(
+      LilyAstPattern, list, location, NEW(LilyAstPatternList, patterns));
+}
+
+LilyAstPattern *
 parse_literal_pattern__LilyParseBlock(LilyParseBlock *self)
 {
     PARSE_LITERAL(Pattern, PATTERN);
@@ -3322,6 +3355,10 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
             break;
         case LILY_TOKEN_KIND_L_HOOK:
             pattern = parse_array_pattern__LilyParseBlock(self);
+
+            break;
+        case LILY_TOKEN_KIND_L_BRACE:
+            pattern = parse_list_pattern__LilyParseBlock(self);
 
             break;
         case LILY_TOKEN_KIND_KEYWORD_ERROR:

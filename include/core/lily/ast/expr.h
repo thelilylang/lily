@@ -35,6 +35,7 @@
 #include <core/lily/ast/expr/cast.h>
 #include <core/lily/ast/expr/identifier.h>
 #include <core/lily/ast/expr/lambda.h>
+#include <core/lily/ast/expr/list.h>
 #include <core/lily/ast/expr/literal.h>
 #include <core/lily/ast/expr/tuple.h>
 #include <core/lily/ast/expr/unary.h>
@@ -52,6 +53,7 @@ enum LilyAstExprKind
     LILY_AST_EXPR_KIND_IDENTIFIER,
     LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR,
     LILY_AST_EXPR_KIND_LAMBDA,
+    LILY_AST_EXPR_KIND_LIST,
     LILY_AST_EXPR_KIND_LITERAL,
     LILY_AST_EXPR_KIND_SELF,
     LILY_AST_EXPR_KIND_TUPLE,
@@ -74,6 +76,7 @@ typedef struct LilyAstExpr
         LilyAstExprIdentifier identifier;
         LilyAstExprIdentifierDollar identifier_dollar;
         LilyAstExprLambda lambda;
+        LilyAstExprList list;
         LilyAstExprLiteral literal;
         LilyAstExprTuple tuple;
         LilyAstExprUnary unary;
@@ -169,6 +172,16 @@ VARIANT_CONSTRUCTOR(LilyAstExpr *,
                     lambda,
                     Location location,
                     LilyAstExprLambda lambda);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_LIST).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    list,
+                    Location location,
+                    LilyAstExprList list);
 
 /**
  *

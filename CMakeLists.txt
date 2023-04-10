@@ -95,12 +95,14 @@ set(CORE_SRC
 	src/core/lily/ast/expr/call.c
 	src/core/lily/ast/expr/cast.c
 	src/core/lily/ast/expr/lambda.c
+	src/core/lily/ast/expr/list.c
 	src/core/lily/ast/expr/literal.c
 	src/core/lily/ast/expr/tuple.c
 	src/core/lily/ast/expr/unary.c
 	src/core/lily/ast/pattern/array.c
 	src/core/lily/ast/pattern/as.c
 	src/core/lily/ast/pattern/exception.c
+	src/core/lily/ast/pattern/list.c
 	src/core/lily/ast/pattern/literal.c
 	src/core/lily/ast/pattern/name.c
 	src/core/lily/ast/pattern/range.c
