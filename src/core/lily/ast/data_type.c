@@ -501,7 +501,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataType, const LilyAstDataType *self)
               "LilyAstDataType{{ kind = {s}, location = {sa}, list = {Sr} }",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
-              to_string__Debug__LilyAstDataType(&self->list));
+              to_string__Debug__LilyAstDataType(self->list));
         case LILY_AST_DATA_TYPE_KIND_MUT:
             return format__String(
               "LilyAstDataType{{ kind = {s}, location = {sa}, mut = {Sr} "
