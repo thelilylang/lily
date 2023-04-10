@@ -1531,7 +1531,9 @@ parse_binary_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr)
            self->current->kind == LILY_TOKEN_KIND_R_SHIFT_R_SHIFT ||
            self->current->kind == LILY_TOKEN_KIND_DOT_DOT ||
            self->current->kind == LILY_TOKEN_KIND_MINUS ||
-           self->current->kind == LILY_TOKEN_KIND_KEYWORD_XOR) {
+           self->current->kind == LILY_TOKEN_KIND_KEYWORD_XOR ||
+		   self->current->kind == LILY_TOKEN_KIND_ARROW ||
+		   self->current->kind == LILY_TOKEN_KIND_INVERSE_ARROW) {
         enum LilyAstExprBinaryKind op =
           from_token__LilyAstExprBinary(self->current);
         Usize precedence = to_precedence__LilyAstExprBinaryKind(op);
@@ -2366,6 +2368,8 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_DOT_DOT:
         case LILY_TOKEN_KIND_MINUS:
         case LILY_TOKEN_KIND_KEYWORD_XOR:
+		case LILY_TOKEN_KIND_ARROW:
+		case LILY_TOKEN_KIND_INVERSE_ARROW:
             return parse_binary_expr__LilyParseBlock(self, expr);
         default:
             return expr;
