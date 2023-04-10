@@ -50,6 +50,7 @@ enum LilyAstDataTypeKind
     LILY_AST_DATA_TYPE_KIND_INT8,
     LILY_AST_DATA_TYPE_KIND_ISIZE,
     LILY_AST_DATA_TYPE_KIND_LAMBDA,
+    LILY_AST_DATA_TYPE_KIND_LIST,
     LILY_AST_DATA_TYPE_KIND_MUT,
     LILY_AST_DATA_TYPE_KIND_NEVER,
     LILY_AST_DATA_TYPE_KIND_OBJECT,
@@ -211,6 +212,7 @@ struct LilyAstDataType
         LilyAstDataTypeCustom custom;
         LilyAstDataType *exception;
         LilyAstDataTypeLambda lambda;
+        LilyAstDataType *list;
         LilyAstDataType *mut;
         LilyAstDataType *optional;
         LilyAstDataType *ptr;
@@ -267,6 +269,16 @@ VARIANT_CONSTRUCTOR(LilyAstDataType *,
                     lambda,
                     Location location,
                     LilyAstDataTypeLambda lambda);
+
+/**
+ *
+ * @brief Construct LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_LIST).
+ */
+VARIANT_CONSTRUCTOR(LilyAstDataType *,
+                    LilyAstDataType,
+                    list,
+                    Location location,
+                    LilyAstDataType *list);
 
 /**
  *
