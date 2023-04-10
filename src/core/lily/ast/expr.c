@@ -431,7 +431,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstExpr, const LilyAstExpr *self)
             break;
         }
         case LILY_AST_EXPR_KIND_UNARY: {
-            char *s = format(", unary = {sa} }",
+            char *s = format(", unary = {Sr} }",
                              to_string__Debug__LilyAstExprUnary(&self->unary));
 
             PUSH_STR_AND_FREE(res, s);
