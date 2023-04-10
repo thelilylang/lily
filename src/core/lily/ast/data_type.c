@@ -52,6 +52,9 @@ static VARIANT_DESTRUCTOR(LilyAstDataType, exception, LilyAstDataType *self);
 // Free LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_LAMBDA).
 static VARIANT_DESTRUCTOR(LilyAstDataType, lambda, LilyAstDataType *self);
 
+// Free LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_LIST).
+static VARIANT_DESTRUCTOR(LilyAstDataType, list, LilyAstDataType *self);
+
 // Free LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_MUT).
 static VARIANT_DESTRUCTOR(LilyAstDataType, mut, LilyAstDataType *self);
 
@@ -285,6 +288,21 @@ VARIANT_CONSTRUCTOR(LilyAstDataType *,
 
 VARIANT_CONSTRUCTOR(LilyAstDataType *,
                     LilyAstDataType,
+                    list,
+                    Location location,
+                    LilyAstDataType *list)
+{
+    LilyAstDataType *self = lily_malloc(sizeof(LilyAstDataType));
+
+    self->kind = LILY_AST_DATA_TYPE_KIND_LIST;
+    self->location = location;
+    self->list = list;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstDataType *,
+                    LilyAstDataType,
                     mut,
                     Location location,
                     LilyAstDataType *mut)
@@ -410,6 +428,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataTypeKind, enum LilyAstDataTypeKind self)
             return "LILY_AST_DATA_TYPE_KIND_ISIZE";
         case LILY_AST_DATA_TYPE_KIND_LAMBDA:
             return "LILY_AST_DATA_TYPE_KIND_LAMBDA";
+        case LILY_AST_DATA_TYPE_KIND_LIST:
+            return "LILY_AST_DATA_TYPE_KIND_LIST";
         case LILY_AST_DATA_TYPE_KIND_MUT:
             return "LILY_AST_DATA_TYPE_KIND_MUT";
         case LILY_AST_DATA_TYPE_KIND_NEVER:
@@ -476,6 +496,12 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataType, const LilyAstDataType *self)
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataTypeLambda(&self->lambda));
+        case LILY_AST_DATA_TYPE_KIND_LIST:
+            return format__String(
+              "LilyAstDataType{{ kind = {s}, location = {sa}, list = {Sr} }",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataType(&self->list));
         case LILY_AST_DATA_TYPE_KIND_MUT:
             return format__String(
               "LilyAstDataType{{ kind = {s}, location = {sa}, mut = {Sr} "
@@ -656,6 +682,9 @@ to_string__LilyAstDataType(const LilyAstDataType *self)
 
             return res;
         }
+        case LILY_AST_DATA_TYPE_KIND_LIST:
+            return format__String("{{{}}",
+                                  to_string__LilyAstDataType(self->list));
         case LILY_AST_DATA_TYPE_KIND_MUT:
             return format__String("mut {Sr}",
                                   to_string__LilyAstDataType(self->mut));
@@ -738,6 +767,12 @@ VARIANT_DESTRUCTOR(LilyAstDataType, lambda, LilyAstDataType *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyAstDataType, list, LilyAstDataType *self)
+{
+    FREE(LilyAstDataType, self->list);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyAstDataType, mut, LilyAstDataType *self)
 {
     FREE(LilyAstDataType, self->mut);
@@ -789,6 +824,9 @@ DESTRUCTOR(LilyAstDataType, LilyAstDataType *self)
             break;
         case LILY_AST_DATA_TYPE_KIND_LAMBDA:
             FREE_VARIANT(LilyAstDataType, lambda, self);
+            break;
+        case LILY_AST_DATA_TYPE_KIND_LIST:
+            FREE_VARIANT(LilyAstDataType, list, self);
             break;
         case LILY_AST_DATA_TYPE_KIND_MUT:
             FREE_VARIANT(LilyAstDataType, mut, self);

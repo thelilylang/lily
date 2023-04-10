@@ -556,13 +556,14 @@ bool
 is_data_type__LilyParseBlock(LilyParseBlock *self)
 {
     switch (self->current->kind) {
-        case LILY_TOKEN_KIND_L_HOOK:
         case LILY_TOKEN_KIND_BANG:
         case LILY_TOKEN_KIND_KEYWORD_FUN:
         case LILY_TOKEN_KIND_KEYWORD_MUT:
         case LILY_TOKEN_KIND_KEYWORD_OBJECT:
         case LILY_TOKEN_KIND_KEYWORD_REF:
         case LILY_TOKEN_KIND_KEYWORD_TRACE:
+        case LILY_TOKEN_KIND_L_BRACE:
+        case LILY_TOKEN_KIND_L_HOOK:
         case LILY_TOKEN_KIND_L_PAREN:
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
             return true;
@@ -592,6 +593,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
     // Int8
     // Isize
     // fun(<dt>, ...) <return_dt>
+    // {<dt>}
     // mut <dt>
     // Never
     // Object
@@ -1124,6 +1126,36 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
               lambda,
               location,
               NEW(LilyAstDataTypeLambda, params, return_data_type));
+        }
+
+        case LILY_TOKEN_KIND_L_BRACE: {
+            LilyAstDataType *data_type = parse_data_type__LilyParseBlock(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_R_BRACE:
+                    end__Location(&location,
+                                  self->current->location.end_line,
+                                  self->current->location.end_column);
+                    next_token__LilyParseBlock(self);
+
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected `}`")),
+                      self->count_error);
+
+                    break;
+            }
+
+            return NEW_VARIANT(LilyAstDataType, list, location, data_type);
         }
 
         case LILY_TOKEN_KIND_L_PAREN: {
