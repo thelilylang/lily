@@ -78,8 +78,8 @@ typedef struct LilyAstPattern
         LilyAstPatternAs as;
         LilyAstPatternException exception;
         LilyAstPatternList list;
-		LilyAstPatternListHead list_head;
-		LilyAstPatternListTail list_tail;
+        LilyAstPatternListHead list_head;
+        LilyAstPatternListTail list_tail;
         LilyAstPatternLiteral literal;
         LilyAstPatternName name;
         LilyAstPatternRange range;
