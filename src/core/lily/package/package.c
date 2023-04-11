@@ -29,6 +29,7 @@
 #include <cli/config/compile.h>
 #include <cli/emit.h>
 
+#include <core/lily/ir/llvm/generator.h>
 #include <core/lily/lily.h>
 #include <core/lily/package/package.h>
 
@@ -162,6 +163,8 @@ build__LilyPackage(const CompileConfig *config,
     FREE(LilyPackage, self);
     exit(0);
 #endif
+
+    run__LilyIrLlvmGenerator(self);
 
     return self;
 }
