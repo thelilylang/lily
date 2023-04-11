@@ -127,4 +127,14 @@ void__LilyIrLlvm(const LilyIrLlvm *self)
     return LLVMVoidTypeInContext(self->context);
 }
 
+/**
+ *
+ * @brief Return `*T` as LLVMTypeRef.
+ */
+inline LLVMTypeRef
+ptr__LilyIrLlvm(const LilyIrLlvm *self, LLVMTypeRef ptr_type)
+{
+    return LLVMPointerType(ptr_type, 0);
+}
+
 #endif // LILY_CORE_LILY_IR_LLVM_PRIMARY_H
