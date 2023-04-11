@@ -24,7 +24,6 @@
 
 #include <base/macros.h>
 
-#include <core/lily/ir/llvm/builtin.h>
 #include <core/lily/ir/llvm/dump.h>
 #include <core/lily/package.h>
 
@@ -33,8 +32,6 @@
 void
 run__LilyIrLlvmGenerator(LilyPackage *self)
 {
-    init_builtin__LilyIrLlvm(&self->ir.llvm);
-
 #ifdef ENV_DEBUG
     printf("====LLVM IR Generator(%s)====\n", self->global_name->buffer);
 
