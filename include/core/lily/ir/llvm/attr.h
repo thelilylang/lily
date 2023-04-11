@@ -33,6 +33,9 @@
     return LLVMCreateEnumAttribute(    \
       self->context, LLVMGetEnumAttributeKindForName(name, name_len), val);
 
+#define LLVM_ADD_FN_ATTR(fn, attr) \
+    LLVMAddAttributeAtIndex(fn, LLVMAttributeFunctionIndex, attr);
+
 /**
  *
  * @brief This indicates that the pointer value or vector of pointers has the
@@ -203,6 +206,19 @@ inline LLVMAttributeRef
 nonnull_attr__LilyIrLlvm(const LilyIrLlvm *self)
 {
     LLVM_ATTR("nonnull", 7, 0);
+}
+
+/**
+ *
+ * @brief This function attribute indicates that the function does not call
+ * itself either directly or indirectly down any possible call path. This
+ * produces undefined behavior at runtime if the function ever does recurse.
+ * @url https://llvm.org/docs/LangRef.html#parameter-attributes
+ */
+inline LLVMAttributeRef
+norecurse_attr__LilyIrLlvm(const LilyIrLlvm *self)
+{
+    LLVM_ATTR("norecurse", 9, 0);
 }
 
 /**
