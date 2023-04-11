@@ -228,7 +228,7 @@ The class can take an inheritance and an other class can take this class in inhe
 I think it's important to implement that in record object, enum object or class, because it's an avandage to implement that in a programming language.
 
 ```lily
-#[derive(Eq)]
+#[derive: Eq]
 object App class =
 end
 ```
@@ -801,6 +801,14 @@ fun main =
 end
 ```
 
+## Lib
+
+```lily
+#[link: "math"]
+lib Math =
+end
+```
+
 ## Unsafe
 
 - You can use raw pointer (*T)
@@ -909,6 +917,7 @@ impl
 include
 inherit
 is
+lib
 macro
 match
 module
