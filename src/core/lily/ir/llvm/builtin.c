@@ -27,11 +27,12 @@
 
 #include <stdbool.h>
 
-void
-init_builtin__LilyIrLlvm(LilyIrLlvm *self)
-{
-    // Init math builtin function
+static void
+init_math_builtin__LilyIrLlvm(LilyIrLlvm *self);
 
+void
+init_math_builtin__LilyIrLlvm(LilyIrLlvm *self)
+{
     // declare double acos(double)
     {
         LLVMTypeRef params[] = { double__LilyIrLlvm(self) };
@@ -208,7 +209,7 @@ init_builtin__LilyIrLlvm(LilyIrLlvm *self)
           LLVMFunctionType(double__LilyIrLlvm(self), params, 1, false));
     }
 
-	// declare double ceil(double)
+    // declare double ceil(double)
     {
         LLVMTypeRef params[] = { double__LilyIrLlvm(self) };
 
@@ -218,7 +219,7 @@ init_builtin__LilyIrLlvm(LilyIrLlvm *self)
           LLVMFunctionType(double__LilyIrLlvm(self), params, 1, false));
     }
 
-	// declare double fabs(double)
+    // declare double fabs(double)
     {
         LLVMTypeRef params[] = { double__LilyIrLlvm(self) };
 
@@ -228,7 +229,7 @@ init_builtin__LilyIrLlvm(LilyIrLlvm *self)
           LLVMFunctionType(double__LilyIrLlvm(self), params, 1, false));
     }
 
-	// declare double floor(double)
+    // declare double floor(double)
     {
         LLVMTypeRef params[] = { double__LilyIrLlvm(self) };
 
@@ -238,13 +239,20 @@ init_builtin__LilyIrLlvm(LilyIrLlvm *self)
           LLVMFunctionType(double__LilyIrLlvm(self), params, 1, false));
     }
 
-	// declare double fmod(double)
+    // declare double fmod(double)
     {
-        LLVMTypeRef params[] = { double__LilyIrLlvm(self), double__LilyIrLlvm(self) };
+        LLVMTypeRef params[] = { double__LilyIrLlvm(self),
+                                 double__LilyIrLlvm(self) };
 
         LLVMAddFunction(
           self->module,
           "fmod",
           LLVMFunctionType(double__LilyIrLlvm(self), params, 2, false));
     }
+}
+
+void
+init_builtin__LilyIrLlvm(LilyIrLlvm *self)
+{
+    init_math_builtin__LilyIrLlvm(self);
 }
