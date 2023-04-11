@@ -29,11 +29,14 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstPatternListTail, const LilyAstPatternListTail *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyAstPatternListTail,
+               const LilyAstPatternListTail *self)
 {
-    return format__String("LilyAstPatternListTail{{ left = {Sr}, right = {Sr} }",
-                          to_string__Debug__LilyAstPattern(self->left),
-                          to_string__Debug__LilyAstPattern(self->right));
+    return format__String(
+      "LilyAstPatternListTail{{ left = {Sr}, right = {Sr} }",
+      to_string__Debug__LilyAstPattern(self->left),
+      to_string__Debug__LilyAstPattern(self->right));
 }
 #endif
 

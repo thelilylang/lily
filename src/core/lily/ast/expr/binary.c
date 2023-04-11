@@ -101,10 +101,10 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_AST_EXPR_BINARY_KIND_SUB";
         case LILY_AST_EXPR_BINARY_KIND_XOR:
             return "LILY_AST_EXPR_BINARY_KIND_XOR";
-		case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD:
-			return "LILY_AST_EXPR_BINARY_KIND_LIST_HEAD";
-		case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
-			return "LILY_AST_EXPR_BINARY_KIND_LIST_TAIL";
+        case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD:
+            return "LILY_AST_EXPR_BINARY_KIND_LIST_HEAD";
+        case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
+            return "LILY_AST_EXPR_BINARY_KIND_LIST_TAIL";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -225,12 +225,12 @@ to_string__LilyAstExprBinary(const LilyAstExprBinary *self)
         case LILY_AST_EXPR_BINARY_KIND_XOR:
             push_str__String(res, " xor ");
             break;
-		case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD:
-			push_str__String(res, " -> ");
-			break;
-		case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
-			push_str__String(res, " <- ");
-			break;
+        case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD:
+            push_str__String(res, " -> ");
+            break;
+        case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
+            push_str__String(res, " <- ");
+            break;
         default:
             UNREACHABLE("unknown variant");
     }
@@ -280,9 +280,9 @@ to_precedence__LilyAstExprBinaryKind(enum LilyAstExprBinaryKind self)
             return 45;
         case LILY_AST_EXPR_BINARY_KIND_RANGE:
             return 40;
-		case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD:
-		case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
-			return 35;
+        case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD:
+        case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
+            return 35;
         default:
             return 30;
     }
@@ -358,10 +358,10 @@ from_token__LilyAstExprBinary(const LilyToken *token)
             return LILY_AST_EXPR_BINARY_KIND_SUB;
         case LILY_TOKEN_KIND_KEYWORD_XOR:
             return LILY_AST_EXPR_BINARY_KIND_XOR;
-		case LILY_TOKEN_KIND_ARROW:
-			return LILY_AST_EXPR_BINARY_KIND_LIST_HEAD;
-		case LILY_TOKEN_KIND_INVERSE_ARROW:
-			return LILY_AST_EXPR_BINARY_KIND_LIST_TAIL;
+        case LILY_TOKEN_KIND_ARROW:
+            return LILY_AST_EXPR_BINARY_KIND_LIST_HEAD;
+        case LILY_TOKEN_KIND_INVERSE_ARROW:
+            return LILY_AST_EXPR_BINARY_KIND_LIST_TAIL;
         default:
             UNREACHABLE(
               "impossible to convert this token in LilyAstExprBinaryKind");

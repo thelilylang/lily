@@ -52,7 +52,9 @@ inline CONSTRUCTOR(LilyAstPatternListHead,
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstPatternListHead, const LilyAstPatternListHead *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyAstPatternListHead,
+               const LilyAstPatternListHead *self);
 #endif
 
 /**
