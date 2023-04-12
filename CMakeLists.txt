@@ -244,6 +244,14 @@ set(CORE_SRC
 	src/core/lily/package/dependency_tree.c
 	src/core/lily/package/library.c
 	src/core/lily/package/package.c
+	src/core/lily/preprocess/align.c
+	src/core/lily/preprocess/allow.c
+	src/core/lily/preprocess/deny.c
+	src/core/lily/preprocess/doc.c
+	src/core/lily/preprocess/forbid.c
+	src/core/lily/preprocess/link_info.c
+	src/core/lily/preprocess/repr.c
+	src/core/lily/preprocess/warn.c
 	src/core/lily/analysis.c
 	src/core/lily/ast.c
 	src/core/lily/checked.c
@@ -254,6 +262,7 @@ set(CORE_SRC
 	src/core/lily/parser.c
 	src/core/lily/precompile.c
 	src/core/lily/preparser.c
+	src/core/lily/preprocess.c
 	src/core/lily/scanner.c
 	src/core/lily/token.c
 	src/core/lily/visibility.c
