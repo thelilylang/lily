@@ -1214,10 +1214,137 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserType, const LilyPreparserType *self);
 #endif
 
+typedef struct LilyPreparserLibConstantPrototype
+{
+    String *name;
+    Vec *data_type; // Vec<LilyToken*>*
+} LilyPreparserLibConstantPrototype;
+
+/**
+ *
+ * @brief Convert LilyPreparserLibConstantPrototype in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserLibConstantPrototype,
+               const LilyPreparserLibConstantPrototype *self);
+#endif
+
+typedef struct LilyPreparserLibFunPrototype
+{
+    String *name;
+    String *new_name;      // String*?
+    Vec *params;           // Vec<Vec<LilyToken*>*>*?
+    Vec *return_data_type; // Vec<LilyToken*>*
+} LilyPreparserLibFunPrototype;
+
+/**
+ *
+ * @brief Convert LilyPreparserLibFunPrototype in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserLibFunPrototype,
+               const LilyPreparserLibFunPrototype *self);
+#endif
+
+typedef struct LilyPreparserLibTypePrototype
+{
+    // TODO: complete this type definition
+} LilyPreparserLibTypePrototype;
+
+typedef struct LilyPreparserLibObjectPrototype
+{
+    // TODO: complete this type definition
+} LilyPreparserLibObjectPrototype;
+
+enum LilyPreparserLibBodyItemKind
+{
+    LILY_PREPARSER_LIB_BODY_ITEM_KIND_CONSTANT,
+    LILY_PREPARSER_LIB_BODY_ITEM_KIND_FUN,
+    LILY_PREPARSER_LIB_BODY_ITEM_KIND_TYPE,
+    LILY_PREPARSER_LIB_BODY_ITEM_KIND_OBJECT,
+};
+
+/**
+ *
+ * @brief Convert LilyPreparserLibBodyItemKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserLibBodyItemKind,
+               enum LilyPreparserLibBodyItemKind self);
+#endif
+
+typedef struct LilyPreparserLibBodyItem
+{
+    enum LilyPreparserLibBodyItemKind kind;
+    Location location;
+    union
+    {
+        LilyPreparserLibConstantPrototype constant;
+        LilyPreparserLibFunPrototype fun;
+        LilyPreparserLibTypePrototype type;
+        LilyPreparserLibObjectPrototype object;
+    };
+} LilyPreparserLibBodyItem;
+
+/**
+ *
+ * @brief Convert LilyPreparserLibBodyItem in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserLibBodyItem,
+               const LilyPreparserLibBodyItem *self);
+#endif
+
+enum LilyPreparserLibFrom
+{
+    LILY_PREPARSER_LIB_FROM_CC,
+    LILY_PREPARSER_LIB_FROM_CPP,
+};
+
+/**
+ *
+ * @brief Convert LilyPreparserLibFrom in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyPreparserLibFrom, enum LilyPreparserLibFrom self);
+#endif
+
+typedef struct LilyPreparserLib
+{
+    String *name; // String*?
+    enum LilyPreparserLibFrom from;
+    Vec *body; // Vec<LilyPreparserLibBodyItem*>*
+} LilyPreparserLib;
+
+/**
+ *
+ * @brief Convert LilyPreparserLib in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserLib, const LilyPreparserLib *self);
+#endif
+
 enum LilyPreparserDeclKind
 {
     LILY_PREPARSER_DECL_KIND_CONSTANT,
     LILY_PREPARSER_DECL_KIND_FUN,
+    LILY_PREPARSER_DECL_KIND_LIB,
     LILY_PREPARSER_DECL_KIND_MACRO_EXPAND,
     LILY_PREPARSER_DECL_KIND_MODULE,
     LILY_PREPARSER_DECL_KIND_OBJECT,
@@ -1244,6 +1371,7 @@ typedef struct LilyPreparserDecl
     {
         LilyPreparserConstant constant;
         LilyPreparserFun fun;
+        LilyPreparserLib lib;
         LilyPreparserMacroExpand macro_expand;
         LilyPreparserModule module;
         LilyPreparserObject object;

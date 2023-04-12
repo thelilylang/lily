@@ -953,6 +953,95 @@ static inline VARIANT_DESTRUCTOR(LilyPreparserType,
 // Free LilyPreparserType type.
 static DESTRUCTOR(LilyPreparserType, const LilyPreparserType *self);
 
+// Construct LilyPreparserLibConstantPrototype type.
+static inline CONSTRUCTOR(LilyPreparserLibConstantPrototype,
+                          LilyPreparserLibConstantPrototype,
+                          String *name,
+                          Vec *data_type);
+
+// Free LilyPreparserLibConstantPrototype type.
+static DESTRUCTOR(LilyPreparserLibConstantPrototype,
+                  const LilyPreparserLibConstantPrototype *self);
+
+// Construct LilyPreparserLibFunPrototype type.
+static inline CONSTRUCTOR(LilyPreparserLibFunPrototype,
+                          LilyPreparserLibFunPrototype,
+                          String *name,
+                          String *new_name,
+                          Vec *params,
+                          Vec *return_data_type);
+
+// Free LilyPreparserLibFunPrototype type.
+static DESTRUCTOR(LilyPreparserLibFunPrototype,
+                  const LilyPreparserLibFunPrototype *self);
+
+// Construct LilyPreparserLibBodyItem type
+// (LILY_PREPARSER_LIB_BODY_ITEM_KIND_CONSTANT).
+static VARIANT_CONSTRUCTOR(LilyPreparserLibBodyItem *,
+                           LilyPreparserLibBodyItem,
+                           constant,
+                           Location location,
+                           LilyPreparserLibConstantPrototype constant);
+
+// Construct LilyPreparserLibBodyItem type
+// (LILY_PREPARSER_LIB_BODY_ITEM_KIND_FUN).
+static VARIANT_CONSTRUCTOR(LilyPreparserLibBodyItem *,
+                           LilyPreparserLibBodyItem,
+                           fun,
+                           Location location,
+                           LilyPreparserLibFunPrototype fun);
+
+// Construct LilyPreparserLibBodyItem type
+// (LILY_PREPARSER_LIB_BODY_ITEM_KIND_TYPE).
+static VARIANT_CONSTRUCTOR(LilyPreparserLibBodyItem *,
+                           LilyPreparserLibBodyItem,
+                           type,
+                           Location location,
+                           LilyPreparserLibTypePrototype type);
+
+// Construct LilyPreparserLibBodyItem type
+// (LILY_PREPARSER_LIB_BODY_ITEM_KIND_OBJECT).
+static VARIANT_CONSTRUCTOR(LilyPreparserLibBodyItem *,
+                           LilyPreparserLibBodyItem,
+                           object,
+                           Location location,
+                           LilyPreparserLibObjectPrototype object);
+
+// Free LilyPreparserLibBodyItem type
+// (LILY_PREPARSER_LIB_BODY_ITEM_KIND_CONSTANT).
+static VARIANT_DESTRUCTOR(LilyPreparserLibBodyItem,
+                          constant,
+                          LilyPreparserLibBodyItem *self);
+
+// Free LilyPreparserLibBodyItem type (LILY_PREPARSER_LIB_BODY_ITEM_KIND_FUN).
+static VARIANT_DESTRUCTOR(LilyPreparserLibBodyItem,
+                          fun,
+                          LilyPreparserLibBodyItem *self);
+
+// Free LilyPreparserLibBodyItem type (LILY_PREPARSER_LIB_BODY_ITEM_KIND_TYPE).
+static VARIANT_DESTRUCTOR(LilyPreparserLibBodyItem,
+                          type,
+                          LilyPreparserLibBodyItem *self);
+
+// Free LilyPreparserLibBodyItem type
+// (LILY_PREPARSER_LIB_BODY_ITEM_KIND_OBJECT).
+static VARIANT_DESTRUCTOR(LilyPreparserLibBodyItem,
+                          object,
+                          LilyPreparserLibBodyItem *self);
+
+// Free LilyPreparserLibBodyItem type.
+static DESTRUCTOR(LilyPreparserLibBodyItem, LilyPreparserLibBodyItem *self);
+
+// Construct LilyPreparserLib type.
+static inline CONSTRUCTOR(LilyPreparserLib,
+                          LilyPreparserLib,
+                          String *name,
+                          enum LilyPreparserLibFrom from,
+                          Vec *body);
+
+// Free LilyPreparserLib type.
+static DESTRUCTOR(LilyPreparserLib, const LilyPreparserLib *self);
+
 // Construct LilyPreparserMacroExpand type.
 static inline CONSTRUCTOR(LilyPreparserMacroExpand,
                           LilyPreparserMacroExpand,
@@ -1013,6 +1102,13 @@ static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
                            Location location,
                            LilyPreparserFun fun);
 
+// Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_LIB).
+static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                           LilyPreparserDecl,
+                           lib,
+                           Location location,
+                           LilyPreparserLib lib);
+
 // Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_MACRO_EXPAND).
 static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
                            LilyPreparserDecl,
@@ -1046,6 +1142,9 @@ static VARIANT_DESTRUCTOR(LilyPreparserDecl, constant, LilyPreparserDecl *self);
 
 // Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_FUN).
 static VARIANT_DESTRUCTOR(LilyPreparserDecl, fun, LilyPreparserDecl *self);
+
+// Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_LIB).
+static VARIANT_DESTRUCTOR(LilyPreparserDecl, lib, LilyPreparserDecl *self);
 
 // Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_MACRO_EXPAND).
 static VARIANT_DESTRUCTOR(LilyPreparserDecl,
@@ -1332,6 +1431,15 @@ static LilyPreparserDecl *
 preparse_alias__LilyPreparser(LilyPreparser *self,
                               String *name,
                               Vec *generic_params);
+
+static LilyPreparserLibBodyItem *
+preparse_lib_constant_prototype__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserLibBodyItem *
+preparse_lib_fun_prototype__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserDecl *
+preparse_lib__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserDecl *
 preparse_macro_expand__LilyPreparser(LilyPreparser *self);
@@ -5245,6 +5353,338 @@ DESTRUCTOR(LilyPreparserType, const LilyPreparserType *self)
     }
 }
 
+CONSTRUCTOR(LilyPreparserLibConstantPrototype,
+            LilyPreparserLibConstantPrototype,
+            String *name,
+            Vec *data_type)
+{
+    return (LilyPreparserLibConstantPrototype){ .name = name,
+                                                .data_type = data_type };
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserLibConstantPrototype,
+               const LilyPreparserLibConstantPrototype *self)
+{
+    String *res = format__String(
+      "LilyPreparserLibConstantPrototype{{ name = {S}, data_type =",
+      self->name);
+
+    DEBUG_VEC_STR(self->data_type, res, LilyToken);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyPreparserLibConstantPrototype,
+           const LilyPreparserLibConstantPrototype *self)
+{
+#ifdef RUN_UNTIL_PREPARSER
+    FREE(String, self->name);
+#endif
+
+    FREE_BUFFER_ITEMS(self->data_type->buffer, self->data_type->len, LilyToken);
+    FREE(Vec, self->data_type);
+}
+
+CONSTRUCTOR(LilyPreparserLibFunPrototype,
+            LilyPreparserLibFunPrototype,
+            String *name,
+            String *new_name,
+            Vec *params,
+            Vec *return_data_type)
+{
+    return (LilyPreparserLibFunPrototype){ .name = name,
+                                           .new_name = new_name,
+                                           .params = params,
+                                           .return_data_type =
+                                             return_data_type };
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserLibFunPrototype,
+               const LilyPreparserLibFunPrototype *self)
+{
+    String *res = format__String(
+      "LilyPreparserLibFunPrototype{{ name = {S}, new_name = ", self->name);
+
+    if (self->new_name) {
+        append__String(res, self->new_name);
+    } else {
+        push_str__String(res, "NULL");
+    }
+
+    push_str__String(res, ", params =");
+
+    if (self->params) {
+        DEBUG_VEC_STR_2(self->params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", return_data_type =");
+    DEBUG_VEC_STR(self->return_data_type, res, LilyToken);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyPreparserLibFunPrototype,
+           const LilyPreparserLibFunPrototype *self)
+{
+#ifdef RUN_UNTIL_PREPARSER
+    FREE(String, self->name);
+
+    if (self->new_name) {
+        FREE(String, self->new_name);
+    }
+#endif
+
+    if (self->params) {
+        FREE_BUFFER_ITEMS_2(self->params->buffer, self->params->len, LilyToken);
+        FREE(Vec, self->params);
+    }
+
+    FREE_BUFFER_ITEMS(
+      self->return_data_type->buffer, self->return_data_type->len, LilyToken);
+    FREE(Vec, self->return_data_type);
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserLibBodyItemKind,
+               enum LilyPreparserLibBodyItemKind self)
+{
+    switch (self) {
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_CONSTANT:
+            return "LILY_PREPARSER_LIB_BODY_ITEM_KIND_CONSTANT";
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_FUN:
+            return "LILY_PREPARSER_LIB_BODY_ITEM_KIND_FUN";
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_TYPE:
+            return "LILY_PREPARSER_LIB_BODY_ITEM_KIND_TYPE";
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_OBJECT:
+            return "LILY_PREPARSER_LIB_BODY_ITEM_KIND_OBJECT";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+static VARIANT_CONSTRUCTOR(LilyPreparserLibBodyItem *,
+                           LilyPreparserLibBodyItem,
+                           constant,
+                           Location location,
+                           LilyPreparserLibConstantPrototype constant)
+{
+    LilyPreparserLibBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserLibBodyItem));
+
+    self->kind = LILY_PREPARSER_LIB_BODY_ITEM_KIND_CONSTANT;
+    self->location = location;
+    self->constant = constant;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserLibBodyItem *,
+                    LilyPreparserLibBodyItem,
+                    fun,
+                    Location location,
+                    LilyPreparserLibFunPrototype fun)
+{
+    LilyPreparserLibBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserLibBodyItem));
+
+    self->kind = LILY_PREPARSER_LIB_BODY_ITEM_KIND_FUN;
+    self->location = location;
+    self->fun = fun;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserLibBodyItem *,
+                    LilyPreparserLibBodyItem,
+                    type,
+                    Location location,
+                    LilyPreparserLibTypePrototype type)
+{
+    LilyPreparserLibBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserLibBodyItem));
+
+    self->kind = LILY_PREPARSER_LIB_BODY_ITEM_KIND_TYPE;
+    self->location = location;
+    self->type = type;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserLibBodyItem *,
+                    LilyPreparserLibBodyItem,
+                    object,
+                    Location location,
+                    LilyPreparserLibObjectPrototype object)
+{
+    LilyPreparserLibBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserLibBodyItem));
+
+    self->kind = LILY_PREPARSER_LIB_BODY_ITEM_KIND_OBJECT;
+    self->location = location;
+    self->object = object;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserLibBodyItem,
+               const LilyPreparserLibBodyItem *self)
+{
+    switch (self->kind) {
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_CONSTANT:
+            return format(
+              "LilyPreparserLibBodyItem{{ kind = {s}, location = {sa}, "
+              "constant = {Sr} }",
+              to_string__Debug__LilyPreparserLibBodyItemKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyPreparserLibConstantPrototype(
+                &self->constant));
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_FUN:
+            return format(
+              "LilyPreparserLibBodyItem{{ kind = {s}, location = {sa}, "
+              "fun= {Sr} }",
+              to_string__Debug__LilyPreparserLibBodyItemKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyPreparserLibFunPrototype(&self->fun));
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_TYPE:
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_OBJECT:
+            TODO("complete this variant");
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_DESTRUCTOR(LilyPreparserLibBodyItem,
+                   constant,
+                   LilyPreparserLibBodyItem *self)
+{
+    FREE(LilyPreparserLibConstantPrototype, &self->constant);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserLibBodyItem,
+                   fun,
+                   LilyPreparserLibBodyItem *self)
+{
+    FREE(LilyPreparserLibFunPrototype, &self->fun);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserLibBodyItem,
+                   type,
+                   LilyPreparserLibBodyItem *self)
+{
+    // FREE(LilyPreparserLibTypePrototype, &self->type);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserLibBodyItem,
+                   object,
+                   LilyPreparserLibBodyItem *self)
+{
+    // FREE(LilyPreparserLibObjectPrototype, &self->object);
+    lily_free(self);
+}
+
+DESTRUCTOR(LilyPreparserLibBodyItem, LilyPreparserLibBodyItem *self)
+{
+    switch (self->kind) {
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_CONSTANT:
+            FREE_VARIANT(LilyPreparserLibBodyItem, constant, self);
+            break;
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_FUN:
+            FREE_VARIANT(LilyPreparserLibBodyItem, fun, self);
+            break;
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_TYPE:
+            FREE_VARIANT(LilyPreparserLibBodyItem, type, self);
+            break;
+        case LILY_PREPARSER_LIB_BODY_ITEM_KIND_OBJECT:
+            FREE_VARIANT(LilyPreparserLibBodyItem, object, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyPreparserLibFrom, enum LilyPreparserLibFrom self)
+{
+    switch (self) {
+        case LILY_PREPARSER_LIB_FROM_CC:
+            return "LILY_PREPARSER_LIB_FROM_CC";
+        case LILY_PREPARSER_LIB_FROM_CPP:
+            return "LILY_PREPARSER_LIB_FROM_CPP";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+CONSTRUCTOR(LilyPreparserLib,
+            LilyPreparserLib,
+            String *name,
+            enum LilyPreparserLibFrom from,
+            Vec *body)
+{
+    return (LilyPreparserLib){ .name = name, .from = from, .body = body };
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserLib, const LilyPreparserLib *self)
+{
+    String *res = from__String("LilyPreparserLib{ name = ");
+
+    if (self->name) {
+        append__String(res, self->name);
+    } else {
+        push_str__String(res, "NULL");
+    }
+
+    push_str__String(res, ", from = ");
+    push_str__String(res, to_string__Debug__LilyPreparserLibFrom(self->from));
+
+    push_str__String(res, ", body =");
+    DEBUG_VEC_STR(self->body, res, LilyPreparserLibBodyItem);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyPreparserLib, const LilyPreparserLib *self)
+{
+#ifdef RUN_UNTIL_PREPARSER
+    if (self->name) {
+        FREE(String, self->name);
+    }
+#endif
+
+    FREE_BUFFER_ITEMS(
+      self->body->buffer, self->body->len, LilyPreparserLibBodyItem);
+    FREE(Vec, self->body);
+}
+
 CONSTRUCTOR(LilyPreparserMacroExpand,
             LilyPreparserMacroExpand,
             String *name,
@@ -5297,6 +5737,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_PREPARSER_DECL_KIND_CONSTANT";
         case LILY_PREPARSER_DECL_KIND_FUN:
             return "LILY_PREPARSER_DECL_KIND_FUN";
+		case LILY_PREPARSER_DECL_KIND_LIB:
+			return "LILY_PREPARSER_DECL_KIND_LIB";
         case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
             return "LILY_PREPARSER_DECL_KIND_MACRO_EXPAND";
         case LILY_PREPARSER_DECL_KIND_MODULE:
@@ -5337,6 +5779,21 @@ VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
     self->kind = LILY_PREPARSER_DECL_KIND_FUN;
     self->location = location;
     self->fun = fun;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                    LilyPreparserDecl,
+                    lib,
+                    Location location,
+                    LilyPreparserLib lib)
+{
+    LilyPreparserDecl *self = lily_malloc(sizeof(LilyPreparserDecl));
+
+    self->kind = LILY_PREPARSER_DECL_KIND_LIB;
+    self->location = location;
+    self->lib = lib;
 
     return self;
 }
@@ -5428,6 +5885,14 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserDecl, const LilyPreparserDecl *self)
 
             break;
         }
+        case LILY_PREPARSER_DECL_KIND_LIB: {
+            char *s = format(", lib = {Sr} }",
+                             to_string__Debug__LilyPreparserLib(&self->lib));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND: {
             char *s = format(
               ", macro_expand = {Sr} }",
@@ -5486,6 +5951,12 @@ VARIANT_DESTRUCTOR(LilyPreparserDecl, constant, LilyPreparserDecl *self)
 VARIANT_DESTRUCTOR(LilyPreparserDecl, fun, LilyPreparserDecl *self)
 {
     FREE(LilyPreparserFun, &self->fun);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserDecl, lib, LilyPreparserDecl *self)
+{
+    FREE(LilyPreparserLib, &self->lib);
     lily_free(self);
 }
 
@@ -11745,6 +12216,376 @@ preparse_macro_expand__LilyPreparser(LilyPreparser *self)
                        NEW(LilyPreparserMacroExpand, name, params));
 }
 
+// val <name> <data_type>;
+LilyPreparserLibBodyItem *
+preparse_lib_constant_prototype__LilyPreparser(LilyPreparser *self)
+{
+    Location location = clone__Location(&self->current->location);
+
+    next_token__LilyPreparser(self);
+
+    // 1. Get name
+    GET_NAME(self, from__String("expected name of the constant prototype"));
+
+    // 2. Preparse data type of the constant prototype
+    Vec *data_type = NEW(Vec);
+
+    while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        push__Vec(data_type, clone__LilyToken(self->current));
+		next_token__LilyPreparser(self);
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyPreparser(self);
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                          NULL,
+                          NULL,
+                          from__String("expected `;`")),
+              &self->count_error);
+
+            FREE(String, name);
+
+            return NULL;
+    }
+
+    return NEW_VARIANT(LilyPreparserLibBodyItem,
+                       constant,
+                       location,
+                       NEW(LilyPreparserLibConstantPrototype, name, data_type));
+}
+
+// fun <name>(<params>) <return_data_type> := <new_name>;
+LilyPreparserLibBodyItem *
+preparse_lib_fun_prototype__LilyPreparser(LilyPreparser *self)
+{
+    Location location = clone__Location(&self->current->location);
+
+    next_token__LilyPreparser(self);
+
+    // 1. Get name
+    GET_NAME(self, from__String("expected name of the fun prototype"));
+
+    // 2. Get params
+    Vec *params = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_PAREN:
+            params = preparse_paren_with_comma_sep__LilyPreparser(self);
+
+            break;
+        default:
+            break;
+    }
+
+    // 3. Get return data type of fun prototype
+    Vec *return_data_type = NEW(Vec); // Vec<LilyToken*>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+           self->current->kind != LILY_TOKEN_KIND_COLON_EQ &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        push__Vec(return_data_type, clone__LilyToken(self->current));
+        next_token__LilyPreparser(self);
+    }
+
+	switch (self->current->kind) {
+		case LILY_TOKEN_KIND_EOF:
+			FREE(String, name);
+
+			FREE_BUFFER_ITEMS_2(params->buffer, params->len, LilyToken);
+			FREE(Vec, params);
+
+			FREE_BUFFER_ITEMS(return_data_type->buffer, return_data_type->len, LilyToken);
+			FREE(Vec, return_data_type);
+
+			emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                        NULL,
+                        NULL,
+                        from__String("expected `:=` or `;`")),
+                      &self->count_error);
+
+			return NULL;
+	}
+
+    // 4. Get new name of fun prototype
+    String *new_name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_COLON_EQ:
+            next_token__LilyPreparser(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                    new_name = clone__String(self->current->identifier_normal);
+                    next_token__LilyPreparser(self);
+
+                    break;
+                case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+                    new_name = clone__String(self->current->identifier_string);
+                    next_token__LilyPreparser(self);
+
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                        NULL,
+                        NULL,
+                        from__String("expected identifier after `:=`")),
+                      &self->count_error);
+            }
+
+            break;
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyPreparser(self);
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                          NULL,
+                          NULL,
+                          from__String("expected `;`")),
+              &self->count_error);
+
+            break;
+    }
+
+    return NEW_VARIANT(LilyPreparserLibBodyItem,
+                       fun,
+                       location,
+                       NEW(LilyPreparserLibFunPrototype,
+                           name,
+                           new_name,
+                           params,
+                           return_data_type));
+}
+
+// lib("C") App =
+// end
+LilyPreparserDecl *
+preparse_lib__LilyPreparser(LilyPreparser *self)
+{
+    Location location = clone__Location(&self->current->location);
+
+    next_token__LilyPreparser(self);
+
+    // 1. Parse target language.
+    enum LilyPreparserLibFrom from = -1;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_PAREN:
+            next_token__LilyPreparser(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_LITERAL_STRING:
+                    if (!strcmp(self->current->literal_string->buffer, "C") ||
+                        !strcmp(self->current->literal_string->buffer, "CC")) {
+                        from = LILY_PREPARSER_LIB_FROM_CC;
+                    } else if (!strcmp(self->current->literal_string->buffer,
+                                       "CPP")) {
+                        from = LILY_PREPARSER_LIB_FROM_CPP;
+                    } else {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->file,
+                            &self->current->location,
+                            NEW(LilyError,
+                                LILY_ERROR_KIND_UNKNOWN_FROM_VALUE_IN_LIB),
+                            NULL,
+                            NULL,
+                            NULL),
+                          &self->count_error);
+
+                        return NULL;
+                    }
+
+                    next_token__LilyPreparser(self);
+
+                    switch (self->current->kind) {
+                        case LILY_TOKEN_KIND_R_PAREN:
+                            next_token__LilyPreparser(self);
+
+                            break;
+                        default:
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->file,
+                                &self->current->location,
+                                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                                NULL,
+                                NULL,
+                                from__String("expected `)`")),
+                              &self->count_error);
+                    }
+
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected string literal")),
+                      &self->count_error);
+            }
+
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                          NULL,
+                          NULL,
+                          from__String("expected `(`")),
+              &self->count_error);
+    }
+
+    // 2. Get name of lib.
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+            next_token__LilyPreparser(self);
+
+            break;
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            name = clone__String(self->current->identifier_string);
+            next_token__LilyPreparser(self);
+
+            break;
+        default:
+            break;
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_EQ:
+            next_token__LilyPreparser(self);
+            break;
+        default:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                          NULL,
+                          NULL,
+                          from__String("expected `=`")),
+              &self->count_error);
+    }
+
+    // 3. Preparse body
+    Vec *body = NEW(Vec); // Vec<LilyPreparserLibBodyItem*>*
+
+    while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
+           self->current->kind != LILY_TOKEN_KIND_EOF) {
+        LilyPreparserLibBodyItem *item = NULL;
+
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_KEYWORD_VAL:
+                item = preparse_lib_constant_prototype__LilyPreparser(self);
+
+                break;
+            case LILY_TOKEN_KIND_KEYWORD_FUN:
+                item = preparse_lib_fun_prototype__LilyPreparser(self);
+
+                break;
+            case LILY_TOKEN_KIND_KEYWORD_TYPE:
+                TODO("preparse type prototype");
+            case LILY_TOKEN_KIND_KEYWORD_OBJECT:
+                TODO("preparse object prototype");
+            default:
+                emit__Diagnostic(
+                  NEW_VARIANT(Diagnostic,
+                              simple_lily_error,
+                              self->file,
+                              &self->current->location,
+                              NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_TOKEN),
+                              NULL,
+                              NULL,
+                              NULL),
+                  &self->count_error);
+
+                break;
+        }
+
+        if (item) {
+            push__Vec(body, item);
+        }
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_KEYWORD_END:
+            end__Location(&location,
+                          self->current->location.end_line,
+                          self->current->location.end_column);
+            next_token__LilyPreparser(self);
+
+            break;
+        case LILY_TOKEN_KIND_EOF:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                          NULL,
+                          NULL,
+                          from__String("expected `end`")),
+              &self->count_error);
+    }
+
+    return NEW_VARIANT(LilyPreparserDecl,
+                       lib,
+                       location,
+                       NEW(LilyPreparserLib, name, from, body));
+}
+
 void
 preparse_preprocess__LilyPreparser(LilyPreparser *self)
 {
@@ -12084,6 +12925,16 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 
                 if (type) {
                     push__Vec(info->decls, type);
+                }
+
+                break;
+            }
+
+            case LILY_TOKEN_KIND_KEYWORD_LIB: {
+                LilyPreparserDecl *lib = preparse_lib__LilyPreparser(self);
+
+                if (lib) {
+                    push__Vec(info->decls, lib);
                 }
 
                 break;
