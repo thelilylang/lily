@@ -27,8 +27,6 @@
 
 enum LilyPreprocessKind
 {
-    // #[align: <value>]
-    LILY_PREPROCESS_KIND_ALIGN,
     // #[allow: <value>]
     LILY_PREPROCESS_KIND_ALLOW,
     // #[alwaysinline]
