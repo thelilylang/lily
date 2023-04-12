@@ -233,6 +233,77 @@ object App class =
 end
 ```
 
+## Preprocess
+
+### Testing
+
+```
+test
+skip
+```
+
+### Diagnostics
+
+```
+allow
+warn
+deny
+forbid
+deprecated
+must_use
+```
+
+### ABI linking, symbols and FFI
+
+```
+link
+repr
+main
+no_overload
+```
+
+### Code generation
+
+```
+align
+alwaysinline
+builtin
+cold
+hot
+immarg
+noalias
+nobuiltin
+nocallback
+noinline
+nonnull
+norecurse
+noreturn
+nosync
+nounwind
+readonly
+readnone
+speculatable
+writeonly
+willreturn
+
+inline
+target_feature
+instruction_set
+```
+
+### Documentation
+
+```
+doc
+```
+
+### Preludes
+
+```
+no_std
+enable_sys
+```
+
 ## Error
 
 ```lily
