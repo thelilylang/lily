@@ -650,6 +650,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String("inherit");
         case LILY_TOKEN_KIND_KEYWORD_IS:
             return from__String("is");
+        case LILY_TOKEN_KIND_KEYWORD_LIB:
+            return from__String("lib");
         case LILY_TOKEN_KIND_KEYWORD_MACRO:
             return from__String("macro");
         case LILY_TOKEN_KIND_KEYWORD_MATCH:
@@ -978,6 +980,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_KEYWORD_INHERIT";
         case LILY_TOKEN_KIND_KEYWORD_IS:
             return "LILY_TOKEN_KIND_KEYWORD_IS";
+        case LILY_TOKEN_KIND_KEYWORD_LIB:
+            return "LILY_TOKEN_KIND_KEYWORD_LIB";
         case LILY_TOKEN_KIND_KEYWORD_MACRO:
             return "LILY_TOKEN_KIND_KEYWORD_MACRO";
         case LILY_TOKEN_KIND_KEYWORD_MATCH:
