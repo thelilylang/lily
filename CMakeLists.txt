@@ -244,7 +244,6 @@ set(CORE_SRC
 	src/core/lily/package/dependency_tree.c
 	src/core/lily/package/library.c
 	src/core/lily/package/package.c
-	src/core/lily/preprocess/align.c
 	src/core/lily/preprocess/allow.c
 	src/core/lily/preprocess/deny.c
 	src/core/lily/preprocess/doc.c
