@@ -784,97 +784,6 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_COMMENT_DOC:
         case LILY_TOKEN_KIND_COMMENT_LINE:
             return;
-        case LILY_TOKEN_KIND_NOT_EQ:
-        case LILY_TOKEN_KIND_XOR_EQ:
-        case LILY_TOKEN_KIND_L_BRACE:
-        case LILY_TOKEN_KIND_L_HOOK:
-        case LILY_TOKEN_KIND_L_PAREN:
-        case LILY_TOKEN_KIND_R_BRACE:
-        case LILY_TOKEN_KIND_R_HOOK:
-        case LILY_TOKEN_KIND_R_PAREN:
-        case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-        case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
-        case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
-        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
-        case LILY_TOKEN_KIND_KEYWORD_ALIAS:
-        case LILY_TOKEN_KIND_KEYWORD_AND:
-        case LILY_TOKEN_KIND_KEYWORD_AS:
-        case LILY_TOKEN_KIND_KEYWORD_ASM:
-        case LILY_TOKEN_KIND_KEYWORD_ASYNC:
-        case LILY_TOKEN_KIND_KEYWORD_AWAIT:
-        case LILY_TOKEN_KIND_KEYWORD_BEGIN:
-        case LILY_TOKEN_KIND_KEYWORD_BREAK:
-        case LILY_TOKEN_KIND_KEYWORD_CAST:
-        case LILY_TOKEN_KIND_KEYWORD_CATCH:
-        case LILY_TOKEN_KIND_KEYWORD_CLASS:
-        case LILY_TOKEN_KIND_KEYWORD_COMPTIME:
-        case LILY_TOKEN_KIND_KEYWORD_DEFER:
-        case LILY_TOKEN_KIND_KEYWORD_DO:
-        case LILY_TOKEN_KIND_KEYWORD_DROP:
-        case LILY_TOKEN_KIND_KEYWORD_ELIF:
-        case LILY_TOKEN_KIND_KEYWORD_ELSE:
-        case LILY_TOKEN_KIND_KEYWORD_END:
-        case LILY_TOKEN_KIND_KEYWORD_ENUM:
-        case LILY_TOKEN_KIND_KEYWORD_ERROR:
-        case LILY_TOKEN_KIND_KEYWORD_FALSE:
-        case LILY_TOKEN_KIND_KEYWORD_FOR:
-        case LILY_TOKEN_KIND_KEYWORD_FUN:
-        case LILY_TOKEN_KIND_KEYWORD_GET:
-        case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
-        case LILY_TOKEN_KIND_KEYWORD_IF:
-        case LILY_TOKEN_KIND_KEYWORD_IMPL:
-        case LILY_TOKEN_KIND_KEYWORD_IMPORT:
-        case LILY_TOKEN_KIND_KEYWORD_IN:
-        case LILY_TOKEN_KIND_KEYWORD_INCLUDE:
-        case LILY_TOKEN_KIND_KEYWORD_INHERIT:
-        case LILY_TOKEN_KIND_KEYWORD_IS:
-        case LILY_TOKEN_KIND_KEYWORD_LIB:
-        case LILY_TOKEN_KIND_KEYWORD_MACRO:
-        case LILY_TOKEN_KIND_KEYWORD_MATCH:
-        case LILY_TOKEN_KIND_KEYWORD_MODULE:
-        case LILY_TOKEN_KIND_KEYWORD_MUT:
-        case LILY_TOKEN_KIND_KEYWORD_NEXT:
-        case LILY_TOKEN_KIND_KEYWORD_NIL:
-        case LILY_TOKEN_KIND_KEYWORD_NONE:
-        case LILY_TOKEN_KIND_KEYWORD_NOT:
-        case LILY_TOKEN_KIND_KEYWORD_object:
-        case LILY_TOKEN_KIND_KEYWORD_OBJECT:
-        case LILY_TOKEN_KIND_KEYWORD_OR:
-        case LILY_TOKEN_KIND_KEYWORD_PACKAGE:
-        case LILY_TOKEN_KIND_KEYWORD_PUB:
-        case LILY_TOKEN_KIND_KEYWORD_RAISE:
-        case LILY_TOKEN_KIND_KEYWORD_RECORD:
-        case LILY_TOKEN_KIND_KEYWORD_REF:
-        case LILY_TOKEN_KIND_KEYWORD_REQ:
-        case LILY_TOKEN_KIND_KEYWORD_RETURN:
-        case LILY_TOKEN_KIND_KEYWORD_self:
-        case LILY_TOKEN_KIND_KEYWORD_SELF:
-        case LILY_TOKEN_KIND_KEYWORD_SET:
-        case LILY_TOKEN_KIND_KEYWORD_TEST:
-        case LILY_TOKEN_KIND_KEYWORD_TRACE:
-        case LILY_TOKEN_KIND_KEYWORD_TRAIT:
-        case LILY_TOKEN_KIND_KEYWORD_TRUE:
-        case LILY_TOKEN_KIND_KEYWORD_TRY:
-        case LILY_TOKEN_KIND_KEYWORD_TYPE:
-        case LILY_TOKEN_KIND_KEYWORD_UNDEF:
-        case LILY_TOKEN_KIND_KEYWORD_UNSAFE:
-        case LILY_TOKEN_KIND_KEYWORD_USE:
-        case LILY_TOKEN_KIND_KEYWORD_VAL:
-        case LILY_TOKEN_KIND_KEYWORD_WHEN:
-        case LILY_TOKEN_KIND_KEYWORD_WHILE:
-        case LILY_TOKEN_KIND_KEYWORD_XOR:
-        case LILY_TOKEN_KIND_LITERAL_BYTE:
-        case LILY_TOKEN_KIND_LITERAL_BYTES:
-        case LILY_TOKEN_KIND_LITERAL_CHAR:
-        case LILY_TOKEN_KIND_LITERAL_FLOAT:
-        case LILY_TOKEN_KIND_LITERAL_INT_2:
-        case LILY_TOKEN_KIND_LITERAL_INT_8:
-        case LILY_TOKEN_KIND_LITERAL_INT_10:
-        case LILY_TOKEN_KIND_LITERAL_INT_16:
-        case LILY_TOKEN_KIND_LITERAL_STRING:
-            next_char__Source(&self->source);
-            return;
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
@@ -891,13 +800,47 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
             jump__LilyScanner(self, 4);
             return;
-        default: {
-            String *token_s = to_string__LilyToken(token);
+        case LILY_TOKEN_KIND_AMPERSAND_EQ:
+        case LILY_TOKEN_KIND_ARROW:
+        case LILY_TOKEN_KIND_BAR_EQ:
+        case LILY_TOKEN_KIND_BAR_R_SHIFT:
+        case LILY_TOKEN_KIND_COLON_COLON:
+        case LILY_TOKEN_KIND_COLON_DOLLAR:
+        case LILY_TOKEN_KIND_COLON_EQ:
+        case LILY_TOKEN_KIND_DOT_DOT:
+        case LILY_TOKEN_KIND_DOT_INTERROGATION:
+        case LILY_TOKEN_KIND_DOT_STAR:
+        case LILY_TOKEN_KIND_EQ_EQ:
+        case LILY_TOKEN_KIND_FAT_ARROW:
+        case LILY_TOKEN_KIND_HAT_EQ:
+        case LILY_TOKEN_KIND_INVERSE_ARROW:
+        case LILY_TOKEN_KIND_L_SHIFT_EQ:
+        case LILY_TOKEN_KIND_L_SHIFT_L_SHIFT:
+        case LILY_TOKEN_KIND_MINUS_EQ:
+        case LILY_TOKEN_KIND_MINUS_MINUS:
+        case LILY_TOKEN_KIND_PERCENTAGE_EQ:
+        case LILY_TOKEN_KIND_PLUS_EQ:
+        case LILY_TOKEN_KIND_PLUS_PLUS:
+        case LILY_TOKEN_KIND_R_SHIFT_EQ:
+        case LILY_TOKEN_KIND_R_SHIFT_R_SHIFT:
+        case LILY_TOKEN_KIND_SLASH_EQ:
+        case LILY_TOKEN_KIND_STAR_EQ:
+        case LILY_TOKEN_KIND_STAR_STAR:
+        case LILY_TOKEN_KIND_WAVE_EQ:
+            jump__LilyScanner(self, 2);
+            return;
+        case LILY_TOKEN_KIND_DOT_DOT_DOT:
+        case LILY_TOKEN_KIND_L_SHIFT_L_SHIFT_EQ:
+        case LILY_TOKEN_KIND_MINUS_MINUS_EQ:
+        case LILY_TOKEN_KIND_PLUS_PLUS_EQ:
+        case LILY_TOKEN_KIND_R_SHIFT_R_SHIFT_EQ:
+        case LILY_TOKEN_KIND_STAR_STAR_EQ:
+            jump__LilyScanner(self, 3);
+            return;
+        default:
+            next_char__Source(&self->source);
 
-            jump__LilyScanner(self, token_s->len);
-
-            FREE(String, token_s);
-        }
+            return;
     }
 }
 
@@ -2407,8 +2350,6 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
                     default:
                         push_token__LilyScanner(self, token);
                 }
-
-                // FREE(String, token_s);
 
                 if (self->source.cursor.position >=
                     self->source.file->len - 1) {
