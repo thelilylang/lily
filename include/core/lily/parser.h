@@ -58,20 +58,22 @@ struct LilyParser
 {
     Vec *decls; // Vec<LilyAstDecl*>*
     LilyPackage *package;
+    LilyPackage *root_package;
     LilyPreparserDecl *current;
+    const LilyPreparserInfo *preparser_info; // LilyPreparserInfo* (&)
     Usize position;
 };
 
 /**
  *
  * @brief Construct LilyParser type.
+ * @param preparser_info LilyPreparserInfo*?
  */
-inline CONSTRUCTOR(LilyParser, LilyParser, LilyPackage *package)
-{
-    return (LilyParser){
-        .decls = NEW(Vec), .package = package, .current = NULL, .position = 0
-    };
-}
+CONSTRUCTOR(LilyParser,
+            LilyParser,
+            LilyPackage *package,
+            LilyPackage *root_package,
+            const LilyPreparserInfo *preparser_info);
 
 /**
  *
@@ -90,9 +92,10 @@ TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self);
 /**
  *
  * @brief Run the parser.
+ * @param Disable the debug when the parser parse into a macro expand.
  */
 void
-run__LilyParser(LilyParser *self, LilyPackage *root_package);
+run__LilyParser(LilyParser *self, bool parse_for_macro_expand);
 
 /**
  *
