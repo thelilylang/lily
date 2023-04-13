@@ -827,7 +827,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_STAR_EQ:
         case LILY_TOKEN_KIND_STAR_STAR:
         case LILY_TOKEN_KIND_WAVE_EQ:
-			next_char__Source(&self->source);
+            next_char__Source(&self->source);
             return;
         case LILY_TOKEN_KIND_DOT_DOT_DOT:
         case LILY_TOKEN_KIND_L_SHIFT_L_SHIFT_EQ:
@@ -1568,7 +1568,7 @@ get_closing__LilyScanner(LilyScanner *self, char target)
                     set_all__Location(&token->location, &self->location);
             }
 
-			next_char__Source(&self->source);
+            next_char__Source(&self->source);
 
             push_token__LilyScanner(self, token);
         }
@@ -1839,7 +1839,7 @@ get_token__LilyScanner(LilyScanner *self)
                     UNREACHABLE("this way is not possible");
             }
 
-			next_char__Source(&self->source);
+            next_char__Source(&self->source);
             push_token__LilyScanner(self, token);
 
             switch (match) {
@@ -2299,13 +2299,12 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
 
             LilyToken *token = get_token__LilyScanner(self);
 
-            if (token) { 
-				next_char_by_token__LilyScanner(self, token);
-				end_token__LilyScanner(self,
-									   self->source.cursor.line,
-									   self->source.cursor.column);
-				set_all__Location(&token->location, &self->location);
-				next_char__Source(&self->source);
+            if (token) {
+                next_char_by_token__LilyScanner(self, token);
+                end_token__LilyScanner(
+                  self, self->source.cursor.line, self->source.cursor.column);
+                set_all__Location(&token->location, &self->location);
+                next_char__Source(&self->source);
 
                 switch (token->kind) {
                     case LILY_TOKEN_KIND_COMMENT_LINE:
