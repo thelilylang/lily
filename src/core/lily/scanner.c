@@ -2354,21 +2354,59 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
             LilyToken *token = get_token__LilyScanner(self);
 
             if (token) {
-                String *token_s = to_string__LilyToken(token);
+				switch (token->kind) {
+					case LILY_TOKEN_KIND_AMPERSAND:
+					case LILY_TOKEN_KIND_ARROW:
+					case LILY_TOKEN_KIND_AT:
+					case LILY_TOKEN_KIND_BANG:
+					case LILY_TOKEN_KIND_BAR:
+					case LILY_TOKEN_KIND_COLON:
+					case LILY_TOKEN_KIND_COMMA:
+					case LILY_TOKEN_KIND_DOLLAR:
+					case LILY_TOKEN_KIND_DOT:
+					case LILY_TOKEN_KIND_EQ:
+					case LILY_TOKEN_KIND_HAT:
+					case LILY_TOKEN_KIND_L_BRACE:
+					case LILY_TOKEN_KIND_L_HOOK:
+					case LILY_TOKEN_KIND_L_PAREN:
+					case LILY_TOKEN_KIND_L_SHIFT:
+					case LILY_TOKEN_KIND_MINUS:
+					case LILY_TOKEN_KIND_PERCENTAGE:
+					case LILY_TOKEN_KIND_PLUS:
+					case LILY_TOKEN_KIND_R_BRACE:
+					case LILY_TOKEN_KIND_R_HOOK:
+					case LILY_TOKEN_KIND_R_PAREN:
+					case LILY_TOKEN_KIND_R_SHIFT:
+					case LILY_TOKEN_KIND_SEMICOLON:
+					case LILY_TOKEN_KIND_SLASH:
+					case LILY_TOKEN_KIND_STAR:
+					case LILY_TOKEN_KIND_WAVE:
+						end_token__LilyScanner(self, self->source.cursor.line, self->source.cursor.column);
+						set_all__Location(&token->location, &self->location);
+						next_char_by_token__LilyScanner(self, token);
 
-                if (token_s->len == 1) {
-                    end_token__LilyScanner(self,
-                                           self->source.cursor.line,
-                                           self->source.cursor.column);
-                    set_all__Location(&token->location, &self->location);
-                    next_char_by_token__LilyScanner(self, token);
-                } else if (token_s->len > 1) {
-                    next_char_by_token__LilyScanner(self, token);
-                    end_token__LilyScanner(self,
-                                           self->source.cursor.line,
-                                           self->source.cursor.column);
-                    set_all__Location(&token->location, &self->location);
-                }
+						break;
+					default:
+						next_char_by_token__LilyScanner(self, token);
+						end_token__LilyScanner(self, self->source.cursor.line, self->source.cursor.column);
+						set_all__Location(&token->location, &self->location);
+				}
+
+                // String *token_s = to_string__LilyToken(token);
+
+                // if (token_s->len == 1) {
+                //     end_token__LilyScanner(self,
+                //                            self->source.cursor.line,
+                //                            self->source.cursor.column);
+                //     set_all__Location(&token->location, &self->location);
+                //     next_char_by_token__LilyScanner(self, token);
+                // } else if (token_s->len > 1) {
+                //     next_char_by_token__LilyScanner(self, token);
+                //     end_token__LilyScanner(self,
+                //                            self->source.cursor.line,
+                //                            self->source.cursor.column);
+                //     set_all__Location(&token->location, &self->location);
+                // }
 
                 switch (token->kind) {
                     case LILY_TOKEN_KIND_COMMENT_LINE:
@@ -2379,7 +2417,7 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
                         push_token__LilyScanner(self, token);
                 }
 
-                FREE(String, token_s);
+                // FREE(String, token_s);
 
                 if (self->source.cursor.position >=
                     self->source.file->len - 1) {
