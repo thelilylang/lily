@@ -151,6 +151,10 @@ to_msg__LilyError(const LilyError *self)
             return "expected only one generic param";
         case LILY_ERROR_KIND_UNKNOWN_FROM_VALUE_IN_LIB:
             return "unknown from value in lib";
+        case LILY_ERROR_KIND_MACRO_IS_NOT_FOUND:
+            return "macro is not found";
+        case LILY_ERROR_KIND_MACRO_DO_NOTHING:
+            return "macro do nothing";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -276,6 +280,10 @@ to_code__LilyError(const LilyError *self)
             return "0057";
         case LILY_ERROR_KIND_UNKNOWN_FROM_VALUE_IN_LIB:
             return "0058";
+        case LILY_ERROR_KIND_MACRO_IS_NOT_FOUND:
+            return "0059";
+        case LILY_ERROR_KIND_MACRO_DO_NOTHING:
+            return "0060";
         default:
             UNREACHABLE("unknown variant");
     }
