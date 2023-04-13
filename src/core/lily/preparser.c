@@ -11775,7 +11775,7 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
     }
 
     // 2. Preparse data type.
-    Vec *data_type = NULL; // Vec<LilyToken*>*?
+    Vec *data_type = NULL; // Vec<LilyToken* (&)>*?
 
     if (self->current->kind == LILY_TOKEN_KIND_COLON) {
         data_type = NEW(Vec);
@@ -11785,7 +11785,7 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
         while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
                self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
                self->current->kind != LILY_TOKEN_KIND_EOF) {
-            push__Vec(data_type, clone__LilyToken(self->current));
+            push__Vec(data_type, self->current);
             next_token__LilyPreparser(self);
         }
     }
