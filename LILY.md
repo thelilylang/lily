@@ -304,6 +304,13 @@ no_std
 enable_sys
 ```
 
+# System
+
+```
+os
+arch
+```
+
 ## Error
 
 ```lily
@@ -877,6 +884,7 @@ end
 ```lily
 #[link: "math"]
 lib Math =
+    val PI Float64;
 end
 ```
 
