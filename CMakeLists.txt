@@ -245,10 +245,12 @@ set(CORE_SRC
 	src/core/lily/package/library.c
 	src/core/lily/package/package.c
 	src/core/lily/preprocess/allow.c
+	src/core/lily/preprocess/arch.c
 	src/core/lily/preprocess/deny.c
 	src/core/lily/preprocess/doc.c
 	src/core/lily/preprocess/forbid.c
 	src/core/lily/preprocess/link_info.c
+	src/core/lily/preprocess/os.c
 	src/core/lily/preprocess/repr.c
 	src/core/lily/preprocess/warn.c
 	src/core/lily/analysis.c
