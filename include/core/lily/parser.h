@@ -35,6 +35,7 @@
 #include <core/lily/preparser.h>
 
 typedef struct LilyPackage LilyPackage;
+typedef struct LilyDumpConfig LilyDumpConfig;
 typedef struct LilyParser LilyParser;
 
 typedef struct LilyParseBlock
@@ -95,7 +96,9 @@ TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self);
  * @param Disable the debug when the parser parse into a macro expand.
  */
 void
-run__LilyParser(LilyParser *self, bool parse_for_macro_expand);
+run__LilyParser(LilyParser *self,
+                const LilyDumpConfig *dump_config,
+                bool parse_for_macro_expand);
 
 /**
  *

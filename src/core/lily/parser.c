@@ -431,7 +431,9 @@ static LilyPreparserMacro *
 search_macro__LilyParser(const LilyParser *self, const String *name);
 
 static void
-apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+apply_macro_expansion__LilyParser(LilyParser *self,
+                                  const LilyDumpConfig *dump_config,
+                                  LilyPreparserDecl *decl);
 
 // Parse declaration.
 static LilyAstDecl *
@@ -5067,7 +5069,9 @@ search_macro__LilyParser(const LilyParser *self, const String *name)
 }
 
 void
-apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+apply_macro_expansion__LilyParser(LilyParser *self,
+                                  const LilyDumpConfig *dump_config,
+                                  LilyPreparserDecl *decl)
 {
     LilyPreparserMacro *macro =
       search_macro__LilyParser(self, decl->macro_expand.name);
@@ -5101,12 +5105,19 @@ apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     run__LilyPreparser(&preparse_macro_expand, &preparser_info);
 
     // TODO: Look for macros
+    LilyPrecompile precompile = NEW(LilyPrecompile,
+                                    &preparser_info,
+                                    &self->package->file,
+                                    self->package,
+                                    self->package->precompile.default_path);
+
+    run__LilyPrecompile(&precompile, dump_config, self->root_package, true);
 
     // FIXME: pass the right package when the macros is public.
     LilyParser parser =
       NEW(LilyParser, self->package, self->root_package, &preparser_info);
 
-    run__LilyParser(&parser, true);
+    run__LilyParser(&parser, dump_config, true);
 
     for (Usize i = 0; i < parser.decls->len; i++) {
         push__Vec(self->decls, get__Vec(parser.decls, i));
@@ -5145,10 +5156,6 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
         }
         case LILY_PREPARSER_DECL_KIND_FUN:
             return parse_fun_decl__LilyParser(self, decl);
-        case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
-            apply_macro_expansion__LilyParser(self, decl);
-
-            return NULL;
         case LILY_PREPARSER_DECL_KIND_MODULE:
             TODO("module");
 
@@ -5189,14 +5196,25 @@ TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self)
 }
 
 void
-run__LilyParser(LilyParser *self, bool parse_for_macro_expand)
+run__LilyParser(LilyParser *self,
+                const LilyDumpConfig *dump_config,
+                bool parse_for_macro_expand)
 {
     for (Usize i = 0; i < self->preparser_info->decls->len; i++) {
-        LilyAstDecl *decl = parse_decl__LilyParser(
-          self, get__Vec(self->preparser_info->decls, i));
+        LilyPreparserDecl *pre_decl = get__Vec(self->preparser_info->decls, i);
 
-        if (decl) {
-            push__Vec(self->decls, decl);
+        switch (pre_decl->kind) {
+            case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
+                apply_macro_expansion__LilyParser(self, dump_config, pre_decl);
+
+                break;
+            default: {
+                LilyAstDecl *decl = parse_decl__LilyParser(self, pre_decl);
+
+                if (decl) {
+                    push__Vec(self->decls, decl);
+                }
+            }
         }
     }
 
@@ -5208,6 +5226,10 @@ run__LilyParser(LilyParser *self, bool parse_for_macro_expand)
             CALL_DEBUG(LilyAstDecl, get__Vec(self->decls, i));
         }
 #endif
+
+        if (dump_config->dump_parser) {
+            TODO("dump parser");
+        }
     }
 
     if (self->package->count_error > 0) {

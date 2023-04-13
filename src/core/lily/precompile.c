@@ -40,6 +40,13 @@
 #include <base/print.h>
 #endif
 
+// Add the public macros in the root package and see if the names are not
+// duplicated. Plus it does the same process for private macros.
+static void
+check_macros__LilyPrecompile(LilyPrecompile *self,
+                             LilyPackage *root_package,
+                             bool precompile_macro_expand);
+
 // Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_ACCESS).
 static VARIANT_DESTRUCTOR(LilyImportValue, access, LilyImportValue *self);
 
@@ -960,8 +967,7 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
 
         run__LilyScanner(&res->scanner, dump_config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
-        run__LilyPrecompile(&res->precompile, dump_config, root_package);
-        run__LilyParser(&res->parser, false);
+        run__LilyPrecompile(&res->precompile, dump_config, root_package, false);
 
         FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
         FREE(Vec, split_pkg_name);
@@ -984,8 +990,7 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
 
         run__LilyScanner(&res->scanner, dump_config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
-        run__LilyPrecompile(&res->precompile, dump_config, root_package);
-        run__LilyParser(&res->parser, false);
+        run__LilyPrecompile(&res->precompile, dump_config, root_package, false);
 
         FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
         FREE(Vec, split_pkg_name);
@@ -996,39 +1001,27 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
 }
 
 void
-run__LilyPrecompile(LilyPrecompile *self,
-                    const LilyDumpConfig *dump_config,
-                    LilyPackage *root_package)
+check_macros__LilyPrecompile(LilyPrecompile *self,
+                             LilyPackage *root_package,
+                             bool precompile_macro_expand)
 {
-    // 1. Precompile all imports
-    for (Usize i = 0; i < self->info->public_imports->len; i++) {
-        LilyImport *import = precompile_import__LilyPrecompile(
-          self, get__Vec(self->info->public_imports, i));
-
-        if (import) {
-            push__Vec(self->package->public_imports, import);
-        }
-    }
-
-    for (Usize i = 0; i < self->info->private_imports->len; i++) {
-        LilyImport *import = precompile_import__LilyPrecompile(
-          self, get__Vec(self->info->private_imports, i));
-
-        if (import) {
-            push__Vec(self->package->private_imports, import);
-        }
-    }
-
-    // 2. Add the public macros obtained by the preparer to the public macros of
+    // 1. Add the public macros obtained by the preparer to the public macros of
     // root_package.
     while (self->info->public_macros->len > 0) {
         push__Vec(root_package->public_macros,
                   remove__Vec(self->info->public_macros, 0));
     }
 
-    self->package->private_macros = self->info->private_macros;
+    if (precompile_macro_expand) {
+        for (Usize i = 0; i < self->info->private_macros->len; i++) {
+            push__Vec(self->package->private_macros,
+                      get__Vec(self->info->private_macros, i));
+        }
+    } else {
+        self->package->private_macros = self->info->private_macros;
+    }
 
-    // 3. Check name conflict for macros.
+    // 2. Check name conflict for macros (public macros).
     for (Usize i = 0; i < root_package->public_macros->len; i++) {
         for (Usize j = i + 1; j < root_package->public_macros->len; j++) {
             if (!strcmp(CAST(LilyPreparserMacro *,
@@ -1071,6 +1064,7 @@ run__LilyPrecompile(LilyPrecompile *self,
         }
     }
 
+    // 3. Check name conflict for macros (private macros).
     for (Usize i = 0; i < self->package->private_macros->len; i++) {
         for (Usize j = i + 1; j < self->package->private_macros->len; j++) {
             if (!strcmp(CAST(LilyPreparserMacro *,
@@ -1109,6 +1103,7 @@ run__LilyPrecompile(LilyPrecompile *self,
         }
     }
 
+    // 4. Check name conflict for macros (all macros).
     for (Usize i = 0; i < self->package->private_macros->len; i++) {
         for (Usize j = 0; j < root_package->public_macros->len; j++) {
             if (!strcmp(CAST(LilyPreparserMacro *,
@@ -1150,6 +1145,35 @@ run__LilyPrecompile(LilyPrecompile *self,
             }
         }
     }
+}
+
+void
+run__LilyPrecompile(LilyPrecompile *self,
+                    const LilyDumpConfig *dump_config,
+                    LilyPackage *root_package,
+                    bool precompile_macro_expand)
+{
+    // 1. Precompile all imports
+    for (Usize i = 0; i < self->info->public_imports->len; i++) {
+        LilyImport *import = precompile_import__LilyPrecompile(
+          self, get__Vec(self->info->public_imports, i));
+
+        if (import) {
+            push__Vec(self->package->public_imports, import);
+        }
+    }
+
+    for (Usize i = 0; i < self->info->private_imports->len; i++) {
+        LilyImport *import = precompile_import__LilyPrecompile(
+          self, get__Vec(self->info->private_imports, i));
+
+        if (import) {
+            push__Vec(self->package->private_imports, import);
+        }
+    }
+
+    // 2. Check macros
+    check_macros__LilyPrecompile(self, root_package, precompile_macro_expand);
 
     // 4. Precompile all packages
     for (Usize i = 0; i < self->info->package->sub_packages->len; i++) {
@@ -1162,11 +1186,14 @@ run__LilyPrecompile(LilyPrecompile *self,
     }
 
     // 5. Init dependency tree.
-    if (!strcmp(self->package->name->buffer, root_package->name->buffer)) {
+    if (!strcmp(self->package->name->buffer, root_package->name->buffer) &&
+        !precompile_macro_expand) {
         self->dependency_trees = NEW(Vec);
 
         build_dependency_tree__LilyPrecompile(
           self, self->package, root_package);
+    } else {
+        // TODO: reload dependency tree
     }
 
 #ifdef DEBUG_PRECOMPILE
