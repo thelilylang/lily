@@ -421,6 +421,15 @@ parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 static LilyAstDecl *
 parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
+static LilyPreparserMacro *
+search_private_macro__LilyParser(const LilyParser *self, const String *name);
+
+static LilyPreparserMacro *
+search_public_macro__LilyParser(const LilyParser *self, const String *name);
+
+static LilyPreparserMacro *
+search_macro__LilyParser(const LilyParser *self, const String *name);
+
 static void
 apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
@@ -556,6 +565,9 @@ next_token__LilyParseBlock(LilyParseBlock *self)
     if (self->position + 1 < self->tokens->len) {
         self->previous = get__Vec(self->tokens, self->position++);
         self->current = get__Vec(self->tokens, self->position);
+    } else {
+        self->previous = last__Vec(self->tokens);
+        self->current = last__Vec(self->tokens);
     }
 }
 
@@ -2206,7 +2218,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
                     }
                 }
                 default:
-                    break;
+                    UNREACHABLE("this way is impossible");
             }
 
             Location location = clone__Location(&self->previous->location);
@@ -5009,10 +5021,102 @@ parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     return NULL;
 }
 
+LilyPreparserMacro *
+search_private_macro__LilyParser(const LilyParser *self, const String *name)
+{
+    for (Usize i = 0; i < self->package->private_macros->len; i++) {
+        LilyPreparserMacro *macro = get__Vec(self->package->private_macros, i);
+
+        if (!strcmp(macro->name->buffer, name->buffer)) {
+            return macro;
+        }
+    }
+}
+
+LilyPreparserMacro *
+search_public_macro__LilyParser(const LilyParser *self, const String *name)
+{
+    for (Usize i = 0; i < self->root_package->public_macros->len; i++) {
+        LilyPreparserMacro *macro =
+          get__Vec(self->root_package->public_macros, i);
+
+        if (!strcmp(macro->name->buffer, name->buffer)) {
+            return macro;
+        }
+    }
+}
+
+LilyPreparserMacro *
+search_macro__LilyParser(const LilyParser *self, const String *name)
+{
+    LilyPreparserMacro *private_macro =
+      search_private_macro__LilyParser(self, name);
+
+    if (private_macro) {
+        return private_macro;
+    }
+
+    LilyPreparserMacro *public_macro =
+      search_public_macro__LilyParser(self, name);
+
+    if (public_macro) {
+        return public_macro;
+    }
+
+    return NULL;
+}
+
 void
 apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #119");
+    LilyPreparserMacro *macro =
+      search_macro__LilyParser(self, decl->macro_expand.name);
+
+    if (!macro) {
+        const File *file = get_file_from_filename__LilyPackage(
+          self->root_package, decl->location.filename);
+
+        emit__Diagnostic(
+          NEW_VARIANT(Diagnostic,
+                      simple_lily_error,
+                      file,
+                      &decl->location,
+                      NEW(LilyError, LILY_ERROR_KIND_MACRO_IS_NOT_FOUND),
+                      NULL,
+                      NULL,
+                      NULL),
+          &self->package->count_error);
+
+        return;
+    }
+
+    // FIXME: Location are not right when the parser parse the result of the
+    // preparser (only the case in public macros).
+    const File *file = get_file_from_filename__LilyPackage(
+      self->root_package, macro->location.filename);
+    LilyPreparserInfo preparser_info = NEW(LilyPreparserInfo, NULL);
+    LilyPreparser preparse_macro_expand =
+      NEW(LilyPreparser, file, macro->tokens, NULL);
+
+    run__LilyPreparser(&preparse_macro_expand, &preparser_info);
+
+    // TODO: Look for macros
+
+    // FIXME: pass the right package when the macros is public.
+    LilyParser parser =
+      NEW(LilyParser, self->package, self->root_package, &preparser_info);
+
+    run__LilyParser(&parser, true);
+
+    for (Usize i = 0; i < parser.decls->len; i++) {
+        push__Vec(self->decls, get__Vec(parser.decls, i));
+    }
+
+    // Clean up allocations
+
+    FREE(LilyPreparserInfo, &preparser_info);
+    FREE(Vec, preparser_info.private_macros);
+    FREE(Vec, parser.decls);
 }
 
 LilyAstDecl *
@@ -5058,6 +5162,22 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     }
 }
 
+CONSTRUCTOR(LilyParser,
+            LilyParser,
+            LilyPackage *package,
+            LilyPackage *root_package,
+            const LilyPreparserInfo *preparser_info)
+{
+    return (LilyParser){ .decls = NEW(Vec),
+                         .package = package,
+                         .root_package = root_package,
+                         .current = NULL,
+                         .preparser_info = preparser_info
+                                             ? preparser_info
+                                             : &package->preparser_info,
+                         .position = 0 };
+}
+
 TEST(LilyAstDataType *, parse_data_type, LilyParseBlock *self)
 {
     return parse_data_type__LilyParseBlock(self);
@@ -5069,24 +5189,26 @@ TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self)
 }
 
 void
-run__LilyParser(LilyParser *self, LilyPackage *root_package)
+run__LilyParser(LilyParser *self, bool parse_for_macro_expand)
 {
-    for (Usize i = 0; i < self->package->preparser_info.decls->len; i++) {
+    for (Usize i = 0; i < self->preparser_info->decls->len; i++) {
         LilyAstDecl *decl = parse_decl__LilyParser(
-          self, get__Vec(self->package->preparser_info.decls, i));
+          self, get__Vec(self->preparser_info->decls, i));
 
         if (decl) {
             push__Vec(self->decls, decl);
         }
     }
 
+    if (!parse_for_macro_expand) {
 #ifdef DEBUG_PARSER
-    printf("====Parser(%s)====\n", self->package->file.name);
+        printf("====Parser(%s)====\n", self->package->file.name);
 
-    for (Usize i = 0; i < self->decls->len; i++) {
-        CALL_DEBUG(LilyAstDecl, get__Vec(self->decls, i));
-    }
+        for (Usize i = 0; i < self->decls->len; i++) {
+            CALL_DEBUG(LilyAstDecl, get__Vec(self->decls, i));
+        }
 #endif
+    }
 
     if (self->package->count_error > 0) {
         exit(1);
