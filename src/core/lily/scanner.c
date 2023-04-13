@@ -658,6 +658,8 @@ get_keyword(char *id)
         return LILY_TOKEN_KIND_KEYWORD_INHERIT;
     else if (!strcmp(id, "is"))
         return LILY_TOKEN_KIND_KEYWORD_IS;
+    else if (!strcmp(id, "lib"))
+        return LILY_TOKEN_KIND_KEYWORD_LIB;
     else if (!strcmp(id, "macro"))
         return LILY_TOKEN_KIND_KEYWORD_MACRO;
     else if (!strcmp(id, "match"))
@@ -827,6 +829,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_KEYWORD_INCLUDE:
         case LILY_TOKEN_KIND_KEYWORD_INHERIT:
         case LILY_TOKEN_KIND_KEYWORD_IS:
+        case LILY_TOKEN_KIND_KEYWORD_LIB:
         case LILY_TOKEN_KIND_KEYWORD_MACRO:
         case LILY_TOKEN_KIND_KEYWORD_MATCH:
         case LILY_TOKEN_KIND_KEYWORD_MODULE:
