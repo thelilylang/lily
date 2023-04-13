@@ -69,6 +69,8 @@ typedef struct LilyPreparserMacro
 {
     String *name;
     Vec *params; // Vec<Vec<LilyToken* (&)>*>*?
+    // NOTE: all the tokens are not free, except for the last tokens which must
+    // be free.
     Vec *tokens; // Vec<LilyToken* (&)>*
     Location location;
 } LilyPreparserMacro;
