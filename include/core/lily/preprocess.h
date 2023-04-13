@@ -25,6 +25,15 @@
 #ifndef LILY_CORE_LILY_PREPROCESS_H
 #define LILY_CORE_LILY_PREPROCESS_H
 
+#include <core/lily/preprocess/allow.h>
+#include <core/lily/preprocess/arch.h>
+#include <core/lily/preprocess/deny.h>
+#include <core/lily/preprocess/doc.h>
+#include <core/lily/preprocess/forbid.h>
+#include <core/lily/preprocess/os.h>
+#include <core/lily/preprocess/repr.h>
+#include <core/lily/preprocess/warn.h>
+
 enum LilyPreprocessKind
 {
     // #[allow: <value>]
@@ -86,6 +95,11 @@ enum LilyPreprocessKind
 typedef struct LilyPreprocess
 {
     enum LilyPreprocessKind kind;
+    union
+    {
+        LilyPreprocessAllow allow;
+        LilyPreprocessArch arch;
+    };
 } LilyPreprocess;
 
 #endif // LILY_CORE_LILY_PREPROCESS_H
