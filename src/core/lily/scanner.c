@@ -2395,22 +2395,6 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
 						set_all__Location(&token->location, &self->location);
 				}
 
-                // String *token_s = to_string__LilyToken(token);
-
-                // if (token_s->len == 1) {
-                //     end_token__LilyScanner(self,
-                //                            self->source.cursor.line,
-                //                            self->source.cursor.column);
-                //     set_all__Location(&token->location, &self->location);
-                //     next_char_by_token__LilyScanner(self, token);
-                // } else if (token_s->len > 1) {
-                //     next_char_by_token__LilyScanner(self, token);
-                //     end_token__LilyScanner(self,
-                //                            self->source.cursor.line,
-                //                            self->source.cursor.column);
-                //     set_all__Location(&token->location, &self->location);
-                // }
-
                 switch (token->kind) {
                     case LILY_TOKEN_KIND_COMMENT_LINE:
                     case LILY_TOKEN_KIND_COMMENT_BLOCK:
