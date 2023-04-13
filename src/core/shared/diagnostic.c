@@ -493,7 +493,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
         {
             Usize diff =
               self->location->end_column - self->location->start_column;
-            String *repeat = repeat__String("^", diff == 0 ? 1 : diff);
+            String *repeat = repeat__String("^", diff == 0 ? 1 : diff + 1);
 
             switch (level->kind) {
                 case DIAGNOSTIC_LEVEL_KIND_CC_ERROR:
