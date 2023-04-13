@@ -3724,7 +3724,7 @@ DESTRUCTOR(LilyPreparserPrototype, const LilyPreparserPrototype *self)
         FREE(Vec, self->params);
     }
 
-    if (self->return_data_type) { 
+    if (self->return_data_type) {
         FREE(Vec, self->return_data_type);
     }
 }
@@ -3926,8 +3926,7 @@ DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self)
     }
 
     if (self->inherits) {
-        FREE_BUFFER_ITEMS(
-          self->inherits->buffer, self->inherits->len, Vec);
+        FREE_BUFFER_ITEMS(self->inherits->buffer, self->inherits->len, Vec);
         FREE(Vec, self->inherits);
     }
 
@@ -3996,7 +3995,7 @@ DESTRUCTOR(LilyPreparserRecordField, const LilyPreparserRecordField *self)
     FREE(Vec, self->data_type);
 
     if (self->optional_expr) {
-		FREE(Vec, self->optional_expr);
+        FREE(Vec, self->optional_expr);
     }
 }
 
@@ -4274,8 +4273,7 @@ DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self)
     }
 
     if (self->implements) {
-        FREE_BUFFER_ITEMS(
-          self->implements->buffer, self->implements->len, Vec);
+        FREE_BUFFER_ITEMS(self->implements->buffer, self->implements->len, Vec);
         FREE(Vec, self->implements);
     }
 
@@ -4325,7 +4323,7 @@ DESTRUCTOR(LilyPreparserEnumVariant, const LilyPreparserEnumVariant *self)
     FREE(String, self->name);
 #endif
 
-    if (self->data_type) { 
+    if (self->data_type) {
         FREE(Vec, self->data_type);
     }
 }
@@ -4618,8 +4616,7 @@ DESTRUCTOR(LilyPreparserEnumObject, const LilyPreparserEnumObject *self)
     }
 
     if (self->implements) {
-        FREE_BUFFER_ITEMS(
-          self->implements->buffer, self->implements->len, Vec);
+        FREE_BUFFER_ITEMS(self->implements->buffer, self->implements->len, Vec);
         FREE(Vec, self->implements);
     }
 
@@ -12194,10 +12191,10 @@ preparse_lib_fun_prototype__LilyPreparser(LilyPreparser *self)
         case LILY_TOKEN_KIND_EOF:
             FREE(String, name);
 
-			if (params) {
-				FREE_BUFFER_ITEMS(params->buffer, params->len, Vec);
-				FREE(Vec, params);
-			}
+            if (params) {
+                FREE_BUFFER_ITEMS(params->buffer, params->len, Vec);
+                FREE(Vec, params);
+            }
 
             FREE(Vec, return_data_type);
 
