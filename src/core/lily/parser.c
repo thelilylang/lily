@@ -5033,6 +5033,8 @@ search_private_macro__LilyParser(const LilyParser *self, const String *name)
             return macro;
         }
     }
+
+	return NULL;
 }
 
 LilyPreparserMacro *
@@ -5046,6 +5048,8 @@ search_public_macro__LilyParser(const LilyParser *self, const String *name)
             return macro;
         }
     }
+
+	return NULL;
 }
 
 LilyPreparserMacro *
