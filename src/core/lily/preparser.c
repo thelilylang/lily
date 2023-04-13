@@ -1644,6 +1644,7 @@ DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self)
         FREE(Vec, self->params);
     }
 
+    FREE(LilyToken, pop__Vec(self->tokens));
     FREE(Vec, self->tokens);
 
     lily_free(self);
@@ -5672,9 +5673,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserMacroExpand, const LilyPreparserMacroExpand *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->params) {
         FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, Vec);
@@ -6220,7 +6219,7 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
     GET_NAME(self, NULL);
 
     // 2. Get params of the macro
-    Vec *params = NULL;
+    Vec *params = NULL; // Vec<Vec<LilyToken* (&)>*>*
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_L_PAREN:
@@ -6296,6 +6295,43 @@ get_tokens : {
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
             next_token__LilyPreparser(self);
+
+            if (tokens->len == 0) {
+                emit__Diagnostic(
+                  NEW_VARIANT(Diagnostic,
+                              simple_lily_error,
+                              self->file,
+                              &self->current->location,
+                              NEW(LilyError, LILY_ERROR_KIND_MACRO_DO_NOTHING),
+                              NULL,
+                              NULL,
+                              NULL),
+                  &self->count_error);
+
+                // Clean up allocations
+
+                if (!params) {
+                    FREE_BUFFER_ITEMS(params->buffer, params->len, Vec);
+                    FREE(Vec, params);
+                }
+
+                FREE(String, name);
+                FREE(Vec, tokens);
+
+                return NULL;
+            } else {
+                Location location_eof = clone__Location(
+                  &CAST(LilyToken *, last__Vec(tokens))->location);
+                start__Location(&location_eof,
+                                location_eof.end_line,
+                                location_eof.end_column);
+
+                push__Vec(tokens,
+                          NEW(LilyToken,
+                              LILY_TOKEN_KIND_EOF,
+                              location_eof)); // Add EOF.
+            }
+
             break;
         case LILY_TOKEN_KIND_EOF: {
             String *current_s = to_string__LilyToken(self->current);
