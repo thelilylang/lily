@@ -955,11 +955,13 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                pkg_filename->buffer,
                                LILY_PACKAGE_STATUS_SUB_MAIN,
                                default_path,
-                               sub_pkg->global_name->buffer);
+                               sub_pkg->global_name->buffer,
+                               root_package);
 
         run__LilyScanner(&res->scanner, dump_config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
         run__LilyPrecompile(&res->precompile, dump_config, root_package);
+        run__LilyParser(&res->parser, false);
 
         FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
         FREE(Vec, split_pkg_name);
@@ -977,11 +979,13 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                pkg_filename->buffer,
                                LILY_PACKAGE_STATUS_NORMAL,
                                self->default_path,
-                               self->package->global_name->buffer);
+                               self->package->global_name->buffer,
+                               root_package);
 
         run__LilyScanner(&res->scanner, dump_config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
         run__LilyPrecompile(&res->precompile, dump_config, root_package);
+        run__LilyParser(&res->parser, false);
 
         FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
         FREE(Vec, split_pkg_name);
