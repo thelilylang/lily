@@ -535,6 +535,11 @@ CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
                              .position = 0 };
 }
 
+inline DESTRUCTOR(LilyParseBlock, const LilyParseBlock *self)
+{
+    FREE(LilyToken, pop__Vec(self->tokens));
+}
+
 void
 next_decl__LilyParser(LilyParser *self)
 {
@@ -2401,6 +2406,8 @@ parse_asm_stmt__LilyParser(LilyParser *self,
               NEW(LilyParseBlock, self, get__Vec(item->stmt_asm.params, 0));
             value = parse_primary_expr__LilyParseBlock(&value_block);
 
+            FREE(LilyParseBlock, &value_block);
+
             if (!value) {
                 return NULL;
             }
@@ -2418,9 +2425,12 @@ parse_asm_stmt__LilyParser(LilyParser *self,
                 FREE(LilyAstExpr, value);
                 FREE_BUFFER_ITEMS(params->buffer, params->len, LilyAstExpr);
                 FREE(Vec, params);
+                FREE(LilyParseBlock, &param_block);
 
                 return NULL;
             });
+
+            FREE(LilyParseBlock, &param_block);
 
             push__Vec(params, param);
         }
@@ -2454,6 +2464,8 @@ parse_await_stmt__LilyParser(LilyParser *self,
     LilyParseBlock expr_block =
       NEW(LilyParseBlock, self, item->stmt_await.expr);
     LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+    FREE(LilyParseBlock, &expr_block);
 
     if (!expr) {
         return NULL;
@@ -2526,7 +2538,12 @@ parse_drop_stmt__LilyParser(LilyParser *self,
     LilyParseBlock expr_block = NEW(LilyParseBlock, self, item->stmt_drop.expr);
     LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
 
-    CHECK_EXPR(expr, expr_block, NULL, "expected `;`", { return NULL; });
+    CHECK_EXPR(expr, expr_block, NULL, "expected `;`", {
+        FREE(LilyParseBlock, &expr_block);
+        return NULL;
+    });
+
+    FREE(LilyParseBlock, &expr_block);
 
     return NEW_VARIANT(
       LilyAstBodyFunItem,
@@ -2571,8 +2588,11 @@ parse_for_stmt__LilyParser(LilyParser *self,
                "expected `do` keyword",
                {
                    FREE(LilyAstExpr, expr_left);
+                   FREE(LilyParseBlock, &expr_block);
                    return NULL;
                });
+
+    FREE(LilyParseBlock, &expr_block);
 
     return NEW_VARIANT(
       LilyAstBodyFunItem,
@@ -2592,6 +2612,8 @@ parse_if_stmt__LilyParser(LilyParser *self,
 
     CHECK_EXPR(if_expr, if_expr_block, NULL, "expected `do` keyword", {});
 
+    FREE(LilyParseBlock, &if_expr_block);
+
     // 2. Parse if block
     Vec *if_body = parse_fun_body__LilyParser(self, item->stmt_if.if_block);
 
@@ -2609,6 +2631,8 @@ parse_if_stmt__LilyParser(LilyParser *self,
 
             CHECK_EXPR(
               elif_expr, expr_block, NULL, "expected `do` keyword", {});
+
+            FREE(LilyParseBlock, &expr_block);
 
             if (elif_expr) {
                 push__Vec(elif_exprs, elif_expr);
@@ -2654,8 +2678,12 @@ parse_match_stmt__LilyParser(LilyParser *self,
       NEW(LilyParseBlock, self, item->stmt_match.expr);
     LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
 
-    CHECK_EXPR(
-      expr, expr_block, NULL, "expected `do` keyword", { return NULL; });
+    CHECK_EXPR(expr, expr_block, NULL, "expected `do` keyword", {
+        FREE(LilyParseBlock, &expr_block);
+        return NULL;
+    });
+
+    FREE(LilyParseBlock, &expr_block);
 
     // 2. Parse case(s)
     Vec *cases = NEW(Vec); // Vec<LilyAstStmtMatchCase*>*
@@ -2667,8 +2695,12 @@ parse_match_stmt__LilyParser(LilyParser *self,
         LilyAstPattern *pattern = parse_pattern__LilyParseBlock(&pattern_block);
 
         CHECK_PATTERN(pattern, pattern_block, NULL, "expected `=>` or `?`", {
+            FREE(LilyParseBlock, &pattern_block);
+
             return NULL;
         });
+
+        FREE(LilyParseBlock, &pattern_block);
 
         // 4. Parse expression
         LilyAstExpr *cond = NULL;
@@ -2681,6 +2713,8 @@ parse_match_stmt__LilyParser(LilyParser *self,
                 cond = parse_expr__LilyParseBlock(&cond_block);
 
                 CHECK_EXPR(cond, cond_block, NULL, "expected `=>`", {});
+
+                FREE(LilyParseBlock, &cond_block);
             }
         }
 
@@ -2739,7 +2773,12 @@ parse_return_stmt__LilyParser(LilyParser *self,
           NEW(LilyParseBlock, self, item->stmt_return.expr);
         LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
 
-        CHECK_EXPR(expr, expr_block, NULL, "expected `;`", { return NULL; });
+        CHECK_EXPR(expr, expr_block, NULL, "expected `;`", {
+            FREE(LilyParseBlock, &expr_block);
+            return NULL;
+        });
+
+        FREE(LilyParseBlock, &expr_block);
 
         return NEW_VARIANT(
           LilyAstBodyFunItem,
@@ -2770,8 +2809,11 @@ parse_try_stmt__LilyParser(LilyParser *self,
 
         CHECK_EXPR(
           catch_expr, catch_expr_block, NULL, "expected `do` keyword", {
+              FREE(LilyParseBlock, &catch_expr_block);
               return NULL;
           });
+
+        FREE(LilyParseBlock, &catch_expr_block);
 
         catch_body =
           parse_fun_body__LilyParser(self, item->stmt_try.catch_block);
@@ -2798,15 +2840,22 @@ parse_variable_stmt__LilyParser(LilyParser *self,
           NEW(LilyParseBlock, self, item->stmt_var.data_type);
         data_type = parse_data_type__LilyParseBlock(&data_type_block);
 
-        CHECK_DATA_TYPE(
-          data_type, data_type_block, NULL, "expected `:=`", { return NULL; });
+        CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `:=`", {
+            FREE(LilyParseBlock, &data_type_block);
+            return NULL;
+        });
+
+        FREE(LilyParseBlock, &data_type_block);
     }
 
     // 2. Parse expression
     LilyParseBlock expr_block = NEW(LilyParseBlock, self, item->stmt_var.expr);
     LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
 
-    CHECK_EXPR(expr, expr_block, NULL, "expected `;`", { return NULL; });
+    CHECK_EXPR(expr, expr_block, NULL, "expected `;`", {
+        FREE(LilyParseBlock, &expr_block);
+        return NULL;
+    });
 
     return NEW_VARIANT(LilyAstBodyFunItem,
                        stmt,
@@ -2832,8 +2881,12 @@ parse_while_stmt__LilyParser(LilyParser *self,
       NEW(LilyParseBlock, self, item->stmt_while.expr);
     LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
 
-    CHECK_EXPR(
-      expr, expr_block, NULL, "expected `do` keyword", { return NULL; });
+    CHECK_EXPR(expr, expr_block, NULL, "expected `do` keyword", {
+        FREE(LilyParseBlock, &expr_block);
+        return NULL;
+    });
+
+    FREE(LilyParseBlock, &expr_block);
 
     // 2. Parse body
     Vec *body = parse_fun_body__LilyParser(self, item->stmt_while.block);
@@ -2895,8 +2948,12 @@ parse_fun_body_item_for_stmt__LilyParser(LilyParser *self,
               NEW(LilyParseBlock, self, item->exprs.tokens);
             LilyAstExpr *expr = parse_expr__LilyParseBlock(&exprs_block);
 
-            CHECK_EXPR(
-              expr, exprs_block, NULL, "expected `;`", { return NULL; });
+            CHECK_EXPR(expr, exprs_block, NULL, "expected `;`", {
+                FREE(LilyParseBlock, &exprs_block);
+                return NULL;
+            });
+
+            FREE(LilyParseBlock, &exprs_block);
 
             return NEW_VARIANT(LilyAstBodyFunItem, expr, expr);
         }
@@ -2938,6 +2995,8 @@ parse_fun_body_item__LilyParser(LilyParser *self,
                               NEW_VARIANT(LilyAstBodyFunItem, expr, expr));
                 }
             } while (!HAS_REACHED_THE_END(exprs_block));
+
+            FREE(LilyParseBlock, &exprs_block);
 
             break;
         }
@@ -3591,6 +3650,8 @@ parse_generic_params__LilyParser(LilyParser *self, Vec *generic_params)
               generic_param_block.count_error);
         }
 
+        FREE(LilyParseBlock, &generic_param_block);
+
         if (generic_param) {
             push__Vec(res, generic_param);
         }
@@ -3612,6 +3673,8 @@ parse_inherit_params__LilyParser(LilyParser *self, Vec *inherit_params)
 
         CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `,`", {});
 
+        FREE(LilyParseBlock, &data_type_block);
+
         push__Vec(res, NEW(LilyAstInheritParam, data_type));
     }
 
@@ -3630,6 +3693,8 @@ parse_impl_params__LilyParser(LilyParser *self, Vec *impl_params)
           parse_data_type__LilyParseBlock(&data_type_block);
 
         CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `,`", {});
+
+        FREE(LilyParseBlock, &data_type_block);
 
         push__Vec(res, NEW(LilyAstImplParam, data_type));
     }
@@ -3660,8 +3725,13 @@ parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
               generic_params->buffer, generic_params->len, LilyAstGenericParam);
             FREE(Vec, generic_params);
         }
+
+        FREE(LilyParseBlock, &data_type_block);
+
         return NULL;
     });
+
+    FREE(LilyParseBlock, &data_type_block);
 
     return NEW_VARIANT(LilyAstDecl,
                        type,
@@ -3687,8 +3757,11 @@ parse_attribute_decl__LilyParser(LilyParser *self,
 
     CHECK_DATA_TYPE(
       data_type, data_type_block, NULL, "expected `:=`, `::` or `;`", {
+          FREE(LilyParseBlock, &data_type_block);
           return NULL;
       });
+
+    FREE(LilyParseBlock, &data_type_block);
 
     // 2. Parse expression
     LilyAstExpr *expr = NULL;
@@ -3700,8 +3773,12 @@ parse_attribute_decl__LilyParser(LilyParser *self,
 
         CHECK_EXPR(expr, expr_block, NULL, "expected `::` or `;`", {
             FREE(LilyAstDataType, data_type);
+            FREE(LilyParseBlock, &expr_block);
+
             return NULL;
         });
+
+        FREE(LilyParseBlock, &expr_block);
     }
 
     return NEW_VARIANT(LilyAstBodyClassItem,
@@ -3792,27 +3869,36 @@ parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                                        decl->object.class.visibility)));
 }
 
-#define PARSE_CONSTANT_INFO(self, info, location, dt)                      \
-    LilyParseBlock expr_block = NEW(LilyParseBlock, self, info->expr);     \
-    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);           \
-                                                                           \
-    CHECK_EXPR(expr, expr_block, NULL, "expected `:=`", { return NULL; }); \
-                                                                           \
-    LilyParseBlock data_type_block =                                       \
-      NEW(LilyParseBlock, self, info->data_type);                          \
-    LilyAstDataType *data_type =                                           \
-      parse_data_type__LilyParseBlock(&data_type_block);                   \
-                                                                           \
-    CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `;`", {    \
-        FREE(LilyAstExpr, expr);                                           \
-        return NULL;                                                       \
-    });                                                                    \
-                                                                           \
-    return NEW_VARIANT(                                                    \
-      dt,                                                                  \
-      constant,                                                            \
-      *location,                                                           \
-      NEW(                                                                 \
+#define PARSE_CONSTANT_INFO(self, info, location, dt)                   \
+    LilyParseBlock expr_block = NEW(LilyParseBlock, self, info->expr);  \
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);        \
+                                                                        \
+    CHECK_EXPR(expr, expr_block, NULL, "expected `:=`", {               \
+        FREE(LilyParseBlock, &expr_block);                              \
+        return NULL;                                                    \
+    });                                                                 \
+                                                                        \
+    FREE(LilyParseBlock, &expr_block);                                  \
+                                                                        \
+    LilyParseBlock data_type_block =                                    \
+      NEW(LilyParseBlock, self, info->data_type);                       \
+    LilyAstDataType *data_type =                                        \
+      parse_data_type__LilyParseBlock(&data_type_block);                \
+                                                                        \
+    CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `;`", { \
+        FREE(LilyAstExpr, expr);                                        \
+        FREE(LilyParseBlock, &expr_block);                              \
+                                                                        \
+        return NULL;                                                    \
+    });                                                                 \
+                                                                        \
+    FREE(LilyParseBlock, &data_type_block);                             \
+                                                                        \
+    return NEW_VARIANT(                                                 \
+      dt,                                                               \
+      constant,                                                         \
+      *location,                                                        \
+      NEW(                                                              \
         LilyAstDeclConstant, info->name, data_type, expr, info->visibility));
 
 LilyAstDecl *
@@ -3849,6 +3935,8 @@ parse_constant_decl_for_record_object__LilyParser(
         data_type = parse_data_type__LilyParseBlock(&data_type_block);         \
                                                                                \
         CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `;`", {}); \
+                                                                               \
+        FREE(LilyParseBlock, &data_type_block);                                \
     }
 
 LilyAstVariant *
@@ -4104,6 +4192,8 @@ parse_fun_params__LilyParser(LilyParser *self, Vec *params)
         LilyAstDeclFunParam *param =
           parse_fun_param__LilyParseBlock(&param_block);
 
+        FREE(LilyParseBlock, &param_block);
+
         if (param) {
             push__Vec(res, param);
         }
@@ -4141,6 +4231,8 @@ parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 
         CHECK_DATA_TYPE(
           return_data_type, return_data_type_block, NULL, "expected `=`", {});
+
+        FREE(LilyParseBlock, &return_data_type_block);
     }
 
     // 4. Parse body
@@ -4156,6 +4248,10 @@ parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
             LilyParseBlock expr_block =
               NEW(LilyParseBlock, self, get__Vec(decl->fun.req, i));
             LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+            CHECK_EXPR(expr, expr_block, NULL, "expected `]`", {});
+
+            FREE(LilyParseBlock, &expr_block);
 
             if (expr) {
                 push__Vec(req, expr);
@@ -4173,6 +4269,10 @@ parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
             LilyParseBlock expr_block =
               NEW(LilyParseBlock, self, get__Vec(decl->fun.when, i));
             LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+            CHECK_EXPR(expr, expr_block, NULL, "expected `]`", {});
+
+            FREE(LilyParseBlock, &expr_block);
 
             if (expr) {
                 push__Vec(when, expr);
@@ -4451,6 +4551,8 @@ parse_method_params__LilyParser(LilyParser *self, Vec *params)
         LilyAstDeclMethodParam *param =
           parse_method_param__LilyParseBlock(&param_block);
 
+        FREE(LilyParseBlock, &param_block);
+
         if (param) {
             push__Vec(res, param);
         }
@@ -4486,6 +4588,8 @@ parse_method_params__LilyParser(LilyParser *self, Vec *params)
                                                                                \
         CHECK_DATA_TYPE(                                                       \
           return_data_type, return_data_type_block, NULL, "expected `=`", {}); \
+                                                                               \
+        FREE(LilyParseBlock, &return_data_type_block);                         \
     }                                                                          \
                                                                                \
     /* 4. Parse body */                                                        \
@@ -4501,6 +4605,8 @@ parse_method_params__LilyParser(LilyParser *self, Vec *params)
             LilyParseBlock expr_block =                                        \
               NEW(LilyParseBlock, self, get__Vec(item->method.req, i));        \
             LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);       \
+                                                                               \
+            FREE(LilyParseBlock, &expr_block);                                 \
                                                                                \
             if (expr) {                                                        \
                 push__Vec(req, expr);                                          \
@@ -4518,6 +4624,8 @@ parse_method_params__LilyParser(LilyParser *self, Vec *params)
             LilyParseBlock expr_block =                                        \
               NEW(LilyParseBlock, self, get__Vec(item->method.when, i));       \
             LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);       \
+                                                                               \
+            FREE(LilyParseBlock, &expr_block);                                 \
                                                                                \
             if (expr) {                                                        \
                 push__Vec(when, expr);                                         \
@@ -4611,6 +4719,8 @@ parse_prototype_decl__LilyParser(LilyParser *self,
 
             CHECK_DATA_TYPE(param, param_block, NULL, "expected `,`", {});
 
+            FREE(LilyParseBlock, &param_block);
+
             if (param) {
                 push__Vec(params, param);
             }
@@ -4628,6 +4738,8 @@ parse_prototype_decl__LilyParser(LilyParser *self,
 
         CHECK_DATA_TYPE(
           return_data_type, return_data_type_block, NULL, "expected `;`", {});
+
+        FREE(LilyParseBlock, &return_data_type_block);
     }
 
     return NEW_VARIANT(LilyAstBodyTraitItem,
@@ -4650,8 +4762,11 @@ parse_record_field__LilyParser(LilyParser *self,
       parse_data_type__LilyParseBlock(&data_type_block);
 
     CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `:=` or `;`", {
+        FREE(LilyParseBlock, &data_type_block);
         return NULL;
     });
+
+    FREE(LilyParseBlock, &data_type_block);
 
     LilyAstExpr *expr = NULL;
 
@@ -4661,6 +4776,8 @@ parse_record_field__LilyParser(LilyParser *self,
         expr = parse_expr__LilyParseBlock(&expr_block);
 
         CHECK_EXPR(expr, expr_block, NULL, "expected `;`", {});
+
+        FREE(LilyParseBlock, &expr_block);
     }
 
     return NEW(
@@ -4725,8 +4842,11 @@ parse_record_object_field__LilyParser(LilyParser *self,
       parse_data_type__LilyParseBlock(&data_type_block);
 
     CHECK_DATA_TYPE(data_type, data_type_block, NULL, "expected `:=` or `;`", {
+        FREE(LilyParseBlock, &data_type_block);
         return NULL;
     });
+
+    FREE(LilyParseBlock, &data_type_block);
 
     LilyAstExpr *expr = NULL;
 
@@ -4736,6 +4856,8 @@ parse_record_object_field__LilyParser(LilyParser *self,
         expr = parse_expr__LilyParseBlock(&expr_block);
 
         CHECK_EXPR(expr, expr_block, NULL, "expected `;`", {});
+
+        FREE(LilyParseBlock, &expr_block);
     }
 
     return NEW_VARIANT(LilyAstBodyRecordObjectItem,

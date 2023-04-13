@@ -68,8 +68,8 @@ DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self);
 typedef struct LilyPreparserMacro
 {
     String *name;
-    Vec *params; // Vec<Vec<LilyToken*>*>*?
-    Vec *tokens; // Vec<LilyToken*>*
+    Vec *params; // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *tokens; // Vec<LilyToken* (&)>*
     Location location;
 } LilyPreparserMacro;
 
@@ -193,14 +193,14 @@ typedef struct LilyPreparserTest
     // TODO: change data type of body (Vec<LilyToken*>* ->
     // Vec<LilyPreparserFunBodyItem*>*)
     // TODO: update its constructor and its destructor.
-    Vec *body; // Vec<LilyToken*>*
+    Vec *body; // Vec<LilyToken* (&)>*
 } LilyPreparserTest;
 
 typedef struct LilyPreparserFunBodyItem LilyPreparserFunBodyItem;
 
 typedef struct LilyPreparserFunBodyItemExprs
 {
-    Vec *tokens; // Vec<LilyToken*>*
+    Vec *tokens; // Vec<LilyToken* (&)>*
 } LilyPreparserFunBodyItemExprs;
 
 /**
@@ -217,7 +217,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyPreparserFunBodyItemStmtAsm
 {
-    Vec *params; // Vec<Vec<LilyToken*>*>*
+    Vec *params; // Vec<Vec<LilyToken* (&)>*>*
 } LilyPreparserFunBodyItemStmtAsm;
 
 /**
@@ -234,7 +234,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyPreparserFunBodyItemStmtAwait
 {
-    Vec *expr; // Vec<LilyToken*>*
+    Vec *expr; // Vec<LilyToken* (&)>*
 } LilyPreparserFunBodyItemStmtAwait;
 
 /**
@@ -302,7 +302,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyPreparserFunBodyItemStmtDrop
 {
-    Vec *expr; // Vec<LilyToken*>*
+    Vec *expr; // Vec<LilyToken* (&)>*
 } LilyPreparserFunBodyItemStmtDrop;
 
 /**
@@ -319,7 +319,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyPreparserFunBodyItemStmtFor
 {
-    Vec *expr;  // Vec<LilyToken*>*
+    Vec *expr;  // Vec<LilyToken* (&)>*
     Vec *block; // Vec<LilyPreparserFunBodyItem*>*
 } LilyPreparserFunBodyItemStmtFor;
 
@@ -337,9 +337,9 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyPreparserFunBodyItemStmtIf
 {
-    Vec *if_expr;     // Vec<LilyToken*>*
-    Vec *if_block;    // Vec<LilyToken*>*
-    Vec *elif_exprs;  // Vec<Vec<LilyToken*>*?
+    Vec *if_expr;     // Vec<LilyToken* (&)>*
+    Vec *if_block;    // Vec<LilyPreparserFunBodyItem*>*
+    Vec *elif_exprs;  // Vec<Vec<LilyToken* (&)>*?
     Vec *elif_blocks; // Vec<Vec<LilyPreparserFunBodyItem*>*>*?
     Vec *else_block;  // Vec<LilyPreparserFunBodyItem>*?
 } LilyPreparserFunBodyItemStmtIf;
@@ -358,9 +358,9 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyPreparserFunBodyItemStmtMatch
 {
-    Vec *expr;          // Vec<LilyToken*>*
-    Vec *patterns;      // Vec<Vec<LilyToken*>*>*
-    Vec *pattern_conds; // Vec<Vec<LilyToken*>*?>*
+    Vec *expr;          // Vec<LilyToken* (&)>*
+    Vec *patterns;      // Vec<Vec<LilyToken* (&)>*>*
+    Vec *pattern_conds; // Vec<Vec<LilyToken* (&)>*?>*
     Vec *blocks;        // Vec<LilyPreparserFunBodyItem*>*
 } LilyPreparserFunBodyItemStmtMatch;
 
@@ -395,7 +395,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyPreparserFunBodyItemStmtReturn
 {
-    Vec *expr; // Vec<LilyToken*>*?
+    Vec *expr; // Vec<LilyToken* (&)>*?
 } LilyPreparserFunBodyItemStmtReturn;
 
 /**
@@ -413,7 +413,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserFunBodyItemStmtTry
 {
     Vec *block;       // Vec<LilyPreparserFunBodyItem*>*
-    Vec *catch_expr;  // Vec<LilyToken*>*?
+    Vec *catch_expr;  // Vec<LilyToken* (&)>*?
     Vec *catch_block; // Vec<LilyPreparserFunBodyItem*>*?
 } LilyPreparserFunBodyItemStmtTry;
 
@@ -432,8 +432,8 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserFunBodyItemStmtVariable
 {
     String *name;
-    Vec *data_type; // Vec<LilyToken*>*?
-    Vec *expr;      // Vec<LilyToken*>*
+    Vec *data_type; // Vec<LilyToken* (&)>*?
+    Vec *expr;      // Vec<LilyToken* (&)>*
     bool is_mut;
     bool is_trace;
     bool is_ref;
@@ -454,7 +454,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyPreparserFunBodyItemStmtWhile
 {
-    Vec *expr;  // Vec<LilyToken*>*
+    Vec *expr;  // Vec<LilyToken* (&)>*
     Vec *block; // Vec<LilyPreparserFunBodyItem*>*
 } LilyPreparserFunBodyItemStmtWhile;
 
@@ -542,12 +542,12 @@ typedef struct LilyPreparserFun
 {
     String *name;
     String *object_impl;   // String*?
-    Vec *generic_params;   // Vec<Vec<LilyToken*>*>*?
-    Vec *params;           // Vec<Vec<LilyToken*>*>*?
-    Vec *return_data_type; // Vec<LilyToken*>*?
+    Vec *generic_params;   // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *params;           // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *return_data_type; // Vec<LilyToken* (&)>*?
     Vec *body;             // Vec<LilyPreparserFunBodyItem*>*
-    Vec *req;              // Vec<Vec<LilyToken*>*>*?
-    Vec *when;             // Vec<Vec<LilyToken*>*>*?
+    Vec *req;              // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *when;             // Vec<Vec<LilyToken* (&)>*>*?
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
@@ -568,8 +568,8 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserFun, const LilyPreparserFun *self);
 typedef struct LilyPreparserConstantInfo
 {
     String *name;
-    Vec *expr;      // Vec<LilyToken*>*
-    Vec *data_type; // Vec<LilyToken*>*
+    Vec *expr;      // Vec<LilyToken* (&)>*
+    Vec *data_type; // Vec<LilyToken* (&)>*
     enum LilyVisibility visibility;
 } LilyPreparserConstantInfo;
 
@@ -628,7 +628,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserMacroExpand
 {
     String *name;
-    Vec *params; // Vec<Vec<LilyToken*>*>*?
+    Vec *params; // Vec<Vec<LilyToken* (&)>*>*?
 } LilyPreparserMacroExpand;
 
 /**
@@ -680,8 +680,8 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserMethod, const LilyPreparserMethod *self)
 typedef struct LilyPreparserAttribute
 {
     String *name;
-    Vec *data_type;    // Vec<LilyToken*>*
-    Vec *default_expr; // Vec<LilyToken*>*?
+    Vec *data_type;    // Vec<LilyToken* (&)>*
+    Vec *default_expr; // Vec<LilyToken* (&)>*?
     enum LilyVisibility visibility;
     bool is_get;
     bool is_set;
@@ -726,9 +726,9 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserClass
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
-    Vec *inherits;       // Vec<Vec<LilyToken*>*>*?
-    Vec *implements;     // Vec<Vec<LilyToken*>*>*?
+    Vec *generic_params; // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *inherits;       // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *implements;     // Vec<Vec<LilyToken* (&)>*>*?
     Vec *body;           // Vec<LilyPreparserClassBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserClass;
@@ -765,9 +765,9 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserPrototype
 {
     String *name;
-    Vec *generic_params;   // Vec<Vec<LilyToken*>*>*?
-    Vec *params;           // Vec<Vec<LilyToken*>*>*?
-    Vec *return_data_type; // Vec<LilyToken*>*?
+    Vec *generic_params;   // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *params;           // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *return_data_type; // Vec<LilyToken* (&)>*?
 } LilyPreparserPrototype;
 
 /**
@@ -809,8 +809,8 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserTrait
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
-    Vec *inherits;       // Vec<Vec<LilyToken*>*>*?
+    Vec *generic_params; // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *inherits;       // Vec<Vec<LilyToken* (&)>*>*?
     Vec *body;           // Vec<LilyPreparserTraitBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserTrait;
@@ -828,8 +828,8 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserTrait, const LilyPreparserTrait *self);
 typedef struct LilyPreparserRecordField
 {
     String *name;
-    Vec *data_type;                 // Vec<LilyToken*>*
-    Vec *optional_expr;             // Vec<LilyToken*>*?
+    Vec *data_type;                 // Vec<LilyToken* (&)>*
+    Vec *optional_expr;             // Vec<LilyToken* (&)>*?
     enum LilyVisibility visibility; // only used in record object
     bool is_mut;                    // only used in record type
 } LilyPreparserRecordField;
@@ -894,8 +894,8 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserRecordObject
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
-    Vec *implements;     // Vec<Vec<LilyToken*>*>*?
+    Vec *generic_params; // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *implements;     // Vec<Vec<LilyToken* (&)>*>*?
     Vec *body;           // Vec<LilyPreparserRecordObjectBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserRecordObject;
@@ -915,7 +915,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserEnumVariant
 {
     String *name;
-    Vec *data_type; // Vec<LilyToken*>*?
+    Vec *data_type; // Vec<LilyToken* (&)>*?
 } LilyPreparserEnumVariant;
 
 /**
@@ -978,8 +978,8 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserEnumObject
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
-    Vec *implements;     // Vec<Vec<LilyToken*>*>*?
+    Vec *generic_params; // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *implements;     // Vec<Vec<LilyToken* (&)>*>*?
     Vec *body;           // Vec<LilyPreparserEnumObjectBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserEnumObject;
@@ -1041,8 +1041,8 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserObject, const LilyPreparserObject *self);
 typedef struct LilyPreparserAlias
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
-    Vec *data_type;      // Vec<LilyToken*>*
+    Vec *generic_params; // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *data_type;      // Vec<LilyToken* (&)>*
     enum LilyVisibility visibility;
 } LilyPreparserAlias;
 
@@ -1100,7 +1100,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserEnum
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
+    Vec *generic_params; // Vec<Vec<LilyToken* (&)>*>*?
     Vec *body;           // Vec<LilyPreparserEnumBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserEnum;
@@ -1159,7 +1159,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyPreparserRecord
 {
     String *name;
-    Vec *generic_params; // Vec<Vec<LilyToken*>*>*?
+    Vec *generic_params; // Vec<Vec<LilyToken* (&)>*>*?
     Vec *body;           // Vec<LilyPreparserRecordBodyItem*>*
     enum LilyVisibility visibility;
 } LilyPreparserRecord;
@@ -1217,7 +1217,7 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserType, const LilyPreparserType *self);
 typedef struct LilyPreparserLibConstantPrototype
 {
     String *name;
-    Vec *data_type; // Vec<LilyToken*>*
+    Vec *data_type; // Vec<LilyToken* (&)>*
 } LilyPreparserLibConstantPrototype;
 
 /**
@@ -1236,8 +1236,8 @@ typedef struct LilyPreparserLibFunPrototype
 {
     String *name;
     String *new_name;      // String*?
-    Vec *params;           // Vec<Vec<LilyToken*>*>*?
-    Vec *return_data_type; // Vec<LilyToken*>*
+    Vec *params;           // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *return_data_type; // Vec<LilyToken* (&)>*
 } LilyPreparserLibFunPrototype;
 
 /**
