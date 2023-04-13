@@ -50,6 +50,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/ir/cpp/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/ir/llvm/*.h
 	${CLANG_FORMAT} ./include/core/lily/package/*.h	
+	${CLANG_FORMAT} ./include/core/lily/preprocess/*.h
 	${CLANG_FORMAT} ./include/core/shared/*.h
 	${CLANG_FORMAT} ./src/base/*.c
 	${CLANG_FORMAT} ./src/bin/*.c
@@ -89,6 +90,7 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/ir/llvm/*.c
 	${CLANG_FORMAT} ./src/core/lily/ir/*.c
 	${CLANG_FORMAT} ./src/core/lily/package/*.c
+	${CLANG_FORMAT} ./src/core/lily/preprocess/*.c
 	${CLANG_FORMAT} ./src/core/shared/*.c
 	${CLANG_FORMAT} ./benchmarks/base/*.c
 	${CLANG_FORMAT} ./tests/base/*.c
@@ -101,9 +103,9 @@ format:
 profile:
 	@mkdir -p build && cd build && cmake .. -G Ninja && ninja
 	@mkdir -p build/profile
-	@gcc -Wall -O3 -pg -lLLVM -L build/ -llily_base -llily_cli -llily_command -I include -o build/profile/lily \
-		src/bin/main.c \
+	@gcc -Wall -O3 -pg -lLLVM -L build/ -llily_base -llily_cli -llily_command -I include -I lib/local -o build/profile/lily \
 		src/base/*.c \
+		src/bin/main.c \
 		src/cli/option/*.c \
 		src/cli/*.c \
 		src/command/build/*.c \
@@ -137,7 +139,10 @@ profile:
 		src/core/lily/ir/cpp/generator/*.c \
 		src/core/lily/ir/cpp/*.c \
 		src/core/lily/ir/llvm/*.c \
+		src/core/lily/ir/llvm/generator/*.c \
+		src/core/lily/ir/*.c \
 		src/core/lily/package/*.c \
+		src/core/lily/preprocess/*.c \
 		src/core/lily/*.c \
 		src/core/shared/*.c
 
