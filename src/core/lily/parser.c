@@ -2222,8 +2222,25 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
             return NEW_VARIANT(
               LilyAstExpr, unary, location, NEW(LilyAstExprUnary, op, right));
         }
-        default:
+        default: {
+            String *previous_s = to_string__LilyToken(self->previous);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->previous->location,
+                NEW_VARIANT(LilyError, unexpected_token, previous_s->buffer),
+                NULL,
+                NULL,
+                NULL),
+              self->count_error);
+
+            FREE(String, previous_s);
+
             return NULL;
+        }
     }
 }
 
