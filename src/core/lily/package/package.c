@@ -45,7 +45,8 @@ CONSTRUCTOR(LilyPackage *,
             char *filename,
             enum LilyPackageStatus status,
             const char *default_path,
-            const char *default_package_access)
+            const char *default_package_access,
+            LilyPackage *root)
 {
     char *content = read_file__File(filename);
     char *file_ext = get_extension__File(filename);
@@ -96,7 +97,12 @@ CONSTRUCTOR(LilyPackage *,
 #ifndef RUN_UNTIL_PREPARSER
     self->precompile = NEW(
       LilyPrecompile, &self->preparser_info, &self->file, self, default_path);
-    self->parser = NEW(LilyParser, self);
+
+    if (root) {
+        self->parser = NEW(LilyParser, self, root, NULL);
+    } else {
+        self->parser = NEW(LilyParser, self, self, NULL);
+    }
 #endif
 
     lily_free(file_ext);
@@ -117,6 +123,7 @@ build__LilyPackage(const CompileConfig *config,
                             (char *)config->filename,
                             status,
                             default_path,
+                            NULL,
                             NULL);
 
     run__LilyScanner(&self->scanner, config->dump_scanner);
@@ -157,7 +164,7 @@ build__LilyPackage(const CompileConfig *config,
                                      config->dump_ir);
 
     run__LilyPrecompile(&self->precompile, &dump_config, self);
-    run__LilyParser(&self->parser, self);
+    run__LilyParser(&self->parser, false);
 
 #ifdef RUN_UNTIL_PRECOMPILE
     FREE(LilyPackage, self);
