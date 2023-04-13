@@ -1568,9 +1568,15 @@ get_closing__LilyScanner(LilyScanner *self, char target)
                     set_all__Location(&token->location, &self->location);
             }
 
-            next_char__Source(&self->source);
-
-            push_token__LilyScanner(self, token);
+            switch (token->kind) {
+                case LILY_TOKEN_KIND_COMMENT_LINE:
+                case LILY_TOKEN_KIND_COMMENT_BLOCK:
+                    FREE(LilyToken, token);
+                    break;
+                default:
+                    next_char__Source(&self->source);
+                    push_token__LilyScanner(self, token);
+            }
         }
     }
 
@@ -2304,7 +2310,6 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
                 end_token__LilyScanner(
                   self, self->source.cursor.line, self->source.cursor.column);
                 set_all__Location(&token->location, &self->location);
-                next_char__Source(&self->source);
 
                 switch (token->kind) {
                     case LILY_TOKEN_KIND_COMMENT_LINE:
@@ -2312,6 +2317,7 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
                         FREE(LilyToken, token);
                         break;
                     default:
+                        next_char__Source(&self->source);
                         push_token__LilyScanner(self, token);
                 }
 
