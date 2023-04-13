@@ -788,7 +788,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
-            jump__LilyScanner(self, 3);
+            jump__LilyScanner(self, 2);
             return;
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
@@ -798,7 +798,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
-            jump__LilyScanner(self, 4);
+            jump__LilyScanner(self, 3);
             return;
         case LILY_TOKEN_KIND_AMPERSAND_EQ:
         case LILY_TOKEN_KIND_ARROW:
@@ -827,7 +827,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_STAR_EQ:
         case LILY_TOKEN_KIND_STAR_STAR:
         case LILY_TOKEN_KIND_WAVE_EQ:
-            jump__LilyScanner(self, 2);
+			next_char__Source(&self->source);
             return;
         case LILY_TOKEN_KIND_DOT_DOT_DOT:
         case LILY_TOKEN_KIND_L_SHIFT_L_SHIFT_EQ:
@@ -835,11 +835,9 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_PLUS_PLUS_EQ:
         case LILY_TOKEN_KIND_R_SHIFT_R_SHIFT_EQ:
         case LILY_TOKEN_KIND_STAR_STAR_EQ:
-            jump__LilyScanner(self, 3);
+            jump__LilyScanner(self, 2);
             return;
         default:
-            next_char__Source(&self->source);
-
             return;
     }
 }
@@ -1557,9 +1555,9 @@ get_closing__LilyScanner(LilyScanner *self, char target)
         LilyToken *token = get_token__LilyScanner(self);
 
         if (token) {
+            next_char_by_token__LilyScanner(self, token);
             end_token__LilyScanner(
               self, self->source.cursor.line, self->source.cursor.column);
-            next_char_by_token__LilyScanner(self, token);
 
             switch (token->kind) {
                 case LILY_TOKEN_KIND_L_PAREN:
@@ -1569,6 +1567,8 @@ get_closing__LilyScanner(LilyScanner *self, char target)
                 default:
                     set_all__Location(&token->location, &self->location);
             }
+
+			next_char__Source(&self->source);
 
             push_token__LilyScanner(self, token);
         }
@@ -1839,7 +1839,7 @@ get_token__LilyScanner(LilyScanner *self)
                     UNREACHABLE("this way is not possible");
             }
 
-            next_char_by_token__LilyScanner(self, token);
+			next_char__Source(&self->source);
             push_token__LilyScanner(self, token);
 
             switch (match) {
@@ -2299,48 +2299,13 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
 
             LilyToken *token = get_token__LilyScanner(self);
 
-            if (token) {
-                switch (token->kind) {
-                    case LILY_TOKEN_KIND_AMPERSAND:
-                    case LILY_TOKEN_KIND_ARROW:
-                    case LILY_TOKEN_KIND_AT:
-                    case LILY_TOKEN_KIND_BANG:
-                    case LILY_TOKEN_KIND_BAR:
-                    case LILY_TOKEN_KIND_COLON:
-                    case LILY_TOKEN_KIND_COMMA:
-                    case LILY_TOKEN_KIND_DOLLAR:
-                    case LILY_TOKEN_KIND_DOT:
-                    case LILY_TOKEN_KIND_EQ:
-                    case LILY_TOKEN_KIND_HAT:
-                    case LILY_TOKEN_KIND_L_BRACE:
-                    case LILY_TOKEN_KIND_L_HOOK:
-                    case LILY_TOKEN_KIND_L_PAREN:
-                    case LILY_TOKEN_KIND_L_SHIFT:
-                    case LILY_TOKEN_KIND_MINUS:
-                    case LILY_TOKEN_KIND_PERCENTAGE:
-                    case LILY_TOKEN_KIND_PLUS:
-                    case LILY_TOKEN_KIND_R_BRACE:
-                    case LILY_TOKEN_KIND_R_HOOK:
-                    case LILY_TOKEN_KIND_R_PAREN:
-                    case LILY_TOKEN_KIND_R_SHIFT:
-                    case LILY_TOKEN_KIND_SEMICOLON:
-                    case LILY_TOKEN_KIND_SLASH:
-                    case LILY_TOKEN_KIND_STAR:
-                    case LILY_TOKEN_KIND_WAVE:
-                        end_token__LilyScanner(self,
-                                               self->source.cursor.line,
-                                               self->source.cursor.column);
-                        set_all__Location(&token->location, &self->location);
-                        next_char_by_token__LilyScanner(self, token);
-
-                        break;
-                    default:
-                        next_char_by_token__LilyScanner(self, token);
-                        end_token__LilyScanner(self,
-                                               self->source.cursor.line,
-                                               self->source.cursor.column);
-                        set_all__Location(&token->location, &self->location);
-                }
+            if (token) { 
+				next_char_by_token__LilyScanner(self, token);
+				end_token__LilyScanner(self,
+									   self->source.cursor.line,
+									   self->source.cursor.column);
+				set_all__Location(&token->location, &self->location);
+				next_char__Source(&self->source);
 
                 switch (token->kind) {
                     case LILY_TOKEN_KIND_COMMENT_LINE:
