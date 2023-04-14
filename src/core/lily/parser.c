@@ -5096,17 +5096,54 @@ apply_macro_expansion__LilyParser(LilyParser *self,
     // value(s) passed in the parameters of the expansion macro.
     if (decl->macro_expand.params && macro->params) {
         if (decl->macro_expand.params->len < macro->params->len) {
-            // ERROR: too many parameters
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                &self->package->file,
+                &decl->location,
+                NEW(LilyError,
+                    LILY_ERROR_KIND_MACRO_EXPAND_HAVE_TOO_MANY_PARAMS),
+                NULL,
+                NULL,
+                format__String(
+                  "expected {d} parameters, obtained {d} parameters",
+                  macro->params->len,
+                  decl->macro_expand.params->len)),
+              &self->package->count_error);
 
             return;
         } else if (decl->macro_expand.params->len > macro->params->len) {
-            // ERROR: miss few parameters
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                &self->package->file,
+                &decl->location,
+                NEW(LilyError, LILY_ERROR_KIND_MACRO_EXPAND_MISS_FEW_PARAMS),
+                NULL,
+                NULL,
+                format__String(
+                  "expected {d} parameters, obtained {d} parameters",
+                  macro->params->len,
+                  decl->macro_expand.params->len)),
+              &self->package->count_error);
 
             return;
         } else {
         }
     } else if (decl->macro_expand.params || macro->params) {
-        // ERROR: missing parameter
+        emit__Diagnostic(
+          NEW_VARIANT(
+            Diagnostic,
+            simple_lily_error,
+            &self->package->file,
+            &decl->location,
+            NEW(LilyError, LILY_ERROR_KIND_MACRO_EXPAND_MISS_FEW_PARAMS),
+            NULL,
+            NULL,
+            NULL),
+          &self->package->count_error);
 
         return;
     }
