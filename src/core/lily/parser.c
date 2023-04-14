@@ -5034,7 +5034,7 @@ search_private_macro__LilyParser(const LilyParser *self, const String *name)
         }
     }
 
-	return NULL;
+    return NULL;
 }
 
 LilyPreparserMacro *
@@ -5049,7 +5049,7 @@ search_public_macro__LilyParser(const LilyParser *self, const String *name)
         }
     }
 
-	return NULL;
+    return NULL;
 }
 
 LilyPreparserMacro *
@@ -5098,40 +5098,41 @@ apply_macro_expansion__LilyParser(LilyParser *self,
         return;
     }
 
-    // FIXME: Location are not right when the parser parse the result of the
-    // preparser (only the case in public macros).
-    const File *file = get_file_from_filename__LilyPackage(
-      self->root_package, macro->location.filename);
-    LilyPreparserInfo preparser_info = NEW(LilyPreparserInfo, NULL);
-    LilyPreparser preparse_macro_expand =
-      NEW(LilyPreparser, file, macro->tokens, NULL);
+    {
+        // FIXME: Location are not right when the parser parse the result of the
+        // preparser (only the case in public macros).
+        const File *file = get_file_from_filename__LilyPackage(
+          self->root_package, macro->location.filename);
+        LilyPreparserInfo preparser_info = NEW(LilyPreparserInfo, NULL);
+        LilyPreparser preparse_macro_expand =
+          NEW(LilyPreparser, file, macro->tokens, NULL);
 
-    run__LilyPreparser(&preparse_macro_expand, &preparser_info);
+        run__LilyPreparser(&preparse_macro_expand, &preparser_info);
 
-    // TODO: Look for macros
-    LilyPrecompile precompile = NEW(LilyPrecompile,
-                                    &preparser_info,
-                                    &self->package->file,
-                                    self->package,
-                                    self->package->precompile.default_path);
+        LilyPrecompile precompile = NEW(LilyPrecompile,
+                                        &preparser_info,
+                                        &self->package->file,
+                                        self->package,
+                                        self->package->precompile.default_path);
 
-    run__LilyPrecompile(&precompile, dump_config, self->root_package, true);
+        run__LilyPrecompile(&precompile, dump_config, self->root_package, true);
 
-    // FIXME: pass the right package when the macros is public.
-    LilyParser parser =
-      NEW(LilyParser, self->package, self->root_package, &preparser_info);
+        // FIXME: pass the right package when the macros is public.
+        LilyParser parser =
+          NEW(LilyParser, self->package, self->root_package, &preparser_info);
 
-    run__LilyParser(&parser, dump_config, true);
+        run__LilyParser(&parser, dump_config, true);
 
-    for (Usize i = 0; i < parser.decls->len; i++) {
-        push__Vec(self->decls, get__Vec(parser.decls, i));
+        for (Usize i = 0; i < parser.decls->len; i++) {
+            push__Vec(self->decls, get__Vec(parser.decls, i));
+        }
+
+        // Clean up allocations
+
+        FREE(LilyPreparserInfo, &preparser_info);
+        FREE(Vec, preparser_info.private_macros);
+        FREE(Vec, parser.decls);
     }
-
-    // Clean up allocations
-
-    FREE(LilyPreparserInfo, &preparser_info);
-    FREE(Vec, preparser_info.private_macros);
-    FREE(Vec, parser.decls);
 }
 
 LilyAstDecl *
