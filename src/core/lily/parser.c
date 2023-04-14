@@ -5118,8 +5118,10 @@ apply_macro_expansion__LilyParser(LilyParser *self,
         run__LilyPrecompile(&precompile, dump_config, self->root_package, true);
 
         // FIXME: pass the right package when the macros is public.
+        LilyPackage *package = search_package_from_filename__LilyPackage(
+          self->root_package, file->name);
         LilyParser parser =
-          NEW(LilyParser, self->package, self->root_package, &preparser_info);
+          NEW(LilyParser, package, self->root_package, &preparser_info);
 
         run__LilyParser(&parser, dump_config, true);
 
