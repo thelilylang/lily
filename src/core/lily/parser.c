@@ -5099,8 +5099,6 @@ apply_macro_expansion__LilyParser(LilyParser *self,
     }
 
     {
-        // FIXME: Location are not right when the parser parse the result of the
-        // preparser (only the case in public macros).
         const File *file = get_file_from_filename__LilyPackage(
           self->root_package, macro->location.filename);
         LilyPreparserInfo preparser_info = NEW(LilyPreparserInfo, NULL);
@@ -5117,7 +5115,6 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 
         run__LilyPrecompile(&precompile, dump_config, self->root_package, true);
 
-        // FIXME: pass the right package when the macros is public.
         LilyPackage *package = search_package_from_filename__LilyPackage(
           self->root_package, file->name);
         LilyParser parser =
