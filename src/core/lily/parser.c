@@ -421,13 +421,13 @@ parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 static LilyAstDecl *
 parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
-static LilyPreparserMacro *
+static LilyMacro *
 search_private_macro__LilyParser(const LilyParser *self, const String *name);
 
-static LilyPreparserMacro *
+static LilyMacro *
 search_public_macro__LilyParser(const LilyParser *self, const String *name);
 
-static LilyPreparserMacro *
+static LilyMacro *
 search_macro__LilyParser(const LilyParser *self, const String *name);
 
 static void
@@ -5023,11 +5023,11 @@ parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     return NULL;
 }
 
-LilyPreparserMacro *
+LilyMacro *
 search_private_macro__LilyParser(const LilyParser *self, const String *name)
 {
     for (Usize i = 0; i < self->package->private_macros->len; i++) {
-        LilyPreparserMacro *macro = get__Vec(self->package->private_macros, i);
+        LilyMacro *macro = get__Vec(self->package->private_macros, i);
 
         if (!strcmp(macro->name->buffer, name->buffer)) {
             return macro;
@@ -5037,12 +5037,11 @@ search_private_macro__LilyParser(const LilyParser *self, const String *name)
     return NULL;
 }
 
-LilyPreparserMacro *
+LilyMacro *
 search_public_macro__LilyParser(const LilyParser *self, const String *name)
 {
     for (Usize i = 0; i < self->root_package->public_macros->len; i++) {
-        LilyPreparserMacro *macro =
-          get__Vec(self->root_package->public_macros, i);
+        LilyMacro *macro = get__Vec(self->root_package->public_macros, i);
 
         if (!strcmp(macro->name->buffer, name->buffer)) {
             return macro;
@@ -5052,18 +5051,16 @@ search_public_macro__LilyParser(const LilyParser *self, const String *name)
     return NULL;
 }
 
-LilyPreparserMacro *
+LilyMacro *
 search_macro__LilyParser(const LilyParser *self, const String *name)
 {
-    LilyPreparserMacro *private_macro =
-      search_private_macro__LilyParser(self, name);
+    LilyMacro *private_macro = search_private_macro__LilyParser(self, name);
 
     if (private_macro) {
         return private_macro;
     }
 
-    LilyPreparserMacro *public_macro =
-      search_public_macro__LilyParser(self, name);
+    LilyMacro *public_macro = search_public_macro__LilyParser(self, name);
 
     if (public_macro) {
         return public_macro;
@@ -5078,17 +5075,13 @@ apply_macro_expansion__LilyParser(LilyParser *self,
                                   LilyPreparserDecl *decl)
 {
     // 1. Looks for the macro.
-    LilyPreparserMacro *macro =
-      search_macro__LilyParser(self, decl->macro_expand.name);
+    LilyMacro *macro = search_macro__LilyParser(self, decl->macro_expand.name);
 
     if (!macro) {
-        const File *file = get_file_from_filename__LilyPackage(
-          self->root_package, decl->location.filename);
-
         emit__Diagnostic(
           NEW_VARIANT(Diagnostic,
                       simple_lily_error,
-                      file,
+                      &self->package->file,
                       &decl->location,
                       NEW(LilyError, LILY_ERROR_KIND_MACRO_IS_NOT_FOUND),
                       NULL,
@@ -5099,7 +5092,26 @@ apply_macro_expansion__LilyParser(LilyParser *self,
         return;
     }
 
-    // 2. Prepare, precompile and parse the content of the macro, then expand
+    // 2. Check params of macro. Then replace the macro identifier(s) by the
+    // value(s) passed in the parameters of the expansion macro.
+    if (decl->macro_expand.params && macro->params) {
+        if (decl->macro_expand.params->len < macro->params->len) {
+            // ERROR: too many parameters
+
+            return;
+        } else if (decl->macro_expand.params->len > macro->params->len) {
+            // ERROR: miss few parameters
+
+            return;
+        } else {
+        }
+    } else if (decl->macro_expand.params || macro->params) {
+        // ERROR: missing parameter
+
+        return;
+    }
+
+    // 3. Prepare, precompile and parse the content of the macro, then expand
     // it.
     {
         const File *file = get_file_from_filename__LilyPackage(
@@ -5132,7 +5144,6 @@ apply_macro_expansion__LilyParser(LilyParser *self,
         // Clean up allocations
 
         FREE(LilyPreparserInfo, &preparser_info);
-        FREE(Vec, preparser_info.private_macros);
         FREE(Vec, parser.decls);
     }
 }
