@@ -165,6 +165,22 @@ to_msg__LilyError(const LilyError *self)
             return "unknown data type of macro param";
         case LILY_ERROR_KIND_EXPECTED_MACRO_DATA_TYPE:
             return "expected macro of data type";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_ID:
+            return "the macro expected an id";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_DT:
+            return "the macro expected a dt";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_TT:
+            return "the macro expected a tt";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_STMT:
+            return "the macro expected a stmt";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_EXPR:
+            return "the macro expected an expr";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_PATH:
+            return "the macro expected a path";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_PATT:
+            return "the macro expected a patt";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_BLOCK:
+            return "the macro expected a block";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -304,6 +320,22 @@ to_code__LilyError(const LilyError *self)
             return "0064";
         case LILY_ERROR_KIND_EXPECTED_MACRO_DATA_TYPE:
             return "0065";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_ID:
+            return "0066";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_DT:
+            return "0067";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_TT:
+            return "0068";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_STMT:
+            return "0069";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_EXPR:
+            return "0070";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_PATH:
+            return "0071";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_PATT:
+            return "0072";
+        case LILY_ERROR_KIND_MACRO_EXPECTED_BLOCK:
+            return "0073";
         default:
             UNREACHABLE("unknown variant");
     }
