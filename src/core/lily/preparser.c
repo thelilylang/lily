@@ -6223,12 +6223,22 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
     GET_NAME(self, NULL);
 
     // 2. Get params of the macro
-    Vec *params = NULL; // Vec<Vec<LilyToken* (&)>*>*
+    Vec *params = NULL; // Vec<Vec<LilyToken* (&)>*>*?
 
     switch (self->current->kind) {
-        case LILY_TOKEN_KIND_L_PAREN:
-            params = preparse_paren_with_comma_sep__LilyPreparser(self);
+        case LILY_TOKEN_KIND_L_PAREN: {
+            LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+            switch (peeked->kind) {
+                case LILY_TOKEN_KIND_R_PAREN:
+                    jump__LilyPreparser(self, 2);
+                    break;
+                default:
+                    params = preparse_paren_with_comma_sep__LilyPreparser(self);
+            }
+
             break;
+        }
 
         default:
             break;
