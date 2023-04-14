@@ -104,7 +104,7 @@ VARIANT_CONSTRUCTOR(LilyImportValue *, LilyImportValue, select, Vec *select);
 
 /**
  *
- * @brief Convert LilyImportValueKind in String.
+ * @brief Convert LilyImportValueKind in string.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
@@ -167,7 +167,7 @@ IMPL_FOR_DEBUG(to_string, LilyImport, const LilyImport *self);
 
 /**
  *
- * @brief Print debug LilyImport struct.
+ * @brief Print debug of LilyImport struct.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
@@ -180,6 +180,106 @@ IMPL_FOR_DEBUG(debug, LilyImport, const LilyImport *self);
  * @brief Free LilyImport type.
  */
 DESTRUCTOR(LilyImport, LilyImport *self);
+
+enum LilyMacroParamKind
+{
+    LILY_MACRO_PARAM_KIND_ID,
+    LILY_MACRO_PARAM_KIND_DT,
+    LILY_MACRO_PARAM_KIND_TT,
+    LILY_MACRO_PARAM_KIND_STMT,
+    LILY_MACRO_PARAM_KIND_EXPR,
+    LILY_MACRO_PARAM_KIND_PATH,
+    LILY_MACRO_PARAM_KIND_PATT,
+    LILY_MACRO_PARAM_KIND_BLOCK,
+};
+
+/**
+ *
+ * @brief Convert LilyMacroParamKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyMacroParamKind, enum LilyMacroParamKind self);
+#endif
+
+typedef struct LilyMacroParam
+{
+    enum LilyMacroParamKind kind;
+    String *name;
+    Location location;
+} LilyMacroParam;
+
+/**
+ *
+ * @brief Construct LilyMacroParam type.
+ */
+CONSTRUCTOR(LilyMacroParam *,
+            LilyMacroParam,
+            enum LilyMacroParamKind kind,
+            String *name,
+            Location location);
+
+/**
+ *
+ * @brief Convert LilyMacroParam in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyMacroParam, const LilyMacroParam *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyMacroParam type.
+ */
+DESTRUCTOR(LilyMacroParam, LilyMacroParam *self);
+
+typedef struct LilyMacro
+{
+    String *name;
+    Vec *params; // Vec<LilyMacroParam*>*?
+    Vec *tokens; // Vec<LilyToken* (&)>*
+    Location location;
+} LilyMacro;
+
+/**
+ *
+ * @brief Construct LilyMacro type.
+ */
+CONSTRUCTOR(LilyMacro *,
+            LilyMacro,
+            String *name,
+            Vec *params,
+            Vec *tokens,
+            Location location);
+
+/**
+ *
+ * @brief Convert LilyMacro in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyMacro, const LilyMacro *self);
+#endif
+
+/**
+ *
+ * @brief Print debug of LilyMacro struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyMacro, const LilyMacro *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyMacro type.
+ */
+DESTRUCTOR(LilyMacro, LilyMacro *self);
 
 typedef struct LilyPrecompile
 {

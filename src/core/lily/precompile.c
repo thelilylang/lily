@@ -40,13 +40,6 @@
 #include <base/print.h>
 #endif
 
-// Add the public macros in the root package and see if the names are not
-// duplicated. Plus it does the same process for private macros.
-static void
-check_macros__LilyPrecompile(LilyPrecompile *self,
-                             LilyPackage *root_package,
-                             bool precompile_macro_expand);
-
 // Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_ACCESS).
 static VARIANT_DESTRUCTOR(LilyImportValue, access, LilyImportValue *self);
 
@@ -125,6 +118,15 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                        const LilyPreparserSubPackage *sub_pkg,
                                        const LilyDumpConfig *dump_config,
                                        LilyPackage *root_package);
+
+static LilyMacro *
+precompile_macro__LilyPrecompile(LilyPrecompile *self,
+                                 const LilyPreparserMacro *macro);
+
+// Add the public macros in the root package and see if the names are not
+// duplicated. Plus it does the same process for private macros.
+static void
+check_macros__LilyPrecompile(LilyPrecompile *self, LilyPackage *root_package);
 
 CONSTRUCTOR(LilyImportValue *, LilyImportValue, enum LilyImportValueKind kind)
 {
@@ -406,6 +408,127 @@ DESTRUCTOR(LilyImport, LilyImport *self)
     FREE_BUFFER_ITEMS(self->values->buffer, self->values->len, LilyImportValue);
     FREE(Vec, self->values);
     FREE(String, self->as);
+    lily_free(self);
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyMacroParamKind, enum LilyMacroParamKind self)
+{
+    switch (self) {
+        case LILY_MACRO_PARAM_KIND_ID:
+            return "LILY_MACRO_PARAM_KIND_ID";
+        case LILY_MACRO_PARAM_KIND_DT:
+            return "LILY_MACRO_PARAM_KIND_DT";
+        case LILY_MACRO_PARAM_KIND_TT:
+            return "LILY_MACRO_PARAM_KIND_TT";
+        case LILY_MACRO_PARAM_KIND_STMT:
+            return "LILY_MACRO_PARAM_KIND_STMT";
+        case LILY_MACRO_PARAM_KIND_EXPR:
+            return "LILY_MACRO_PARAM_KIND_EXPR";
+        case LILY_MACRO_PARAM_KIND_PATH:
+            return "LILY_MACRO_PARAM_KIND_PATH";
+        case LILY_MACRO_PARAM_KIND_PATT:
+            return "LILY_MACRO_PARAM_KIND_PATT";
+        case LILY_MACRO_PARAM_KIND_BLOCK:
+            return "LILY_MACRO_PARAM_KIND_BLOCK";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+CONSTRUCTOR(LilyMacroParam *,
+            LilyMacroParam,
+            enum LilyMacroParamKind kind,
+            String *name,
+            Location location)
+{
+    LilyMacroParam *self = lily_malloc(sizeof(LilyMacroParam));
+
+    self->kind = kind;
+    self->name = name;
+    self->location = location;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyMacroParam, const LilyMacroParam *self)
+{
+    return format("LilyMacroParam{{ kind = {s}, name = {S}, location = {sa} }",
+                  to_string__Debug__LilyMacroParamKind(self->kind),
+                  self->name,
+                  to_string__Debug__Location(&self->location));
+}
+#endif
+
+DESTRUCTOR(LilyMacroParam, LilyMacroParam *self)
+{
+    FREE(String, self->name);
+    lily_free(self);
+}
+
+CONSTRUCTOR(LilyMacro *,
+            LilyMacro,
+            String *name,
+            Vec *params,
+            Vec *tokens,
+            Location location)
+{
+    LilyMacro *self = lily_malloc(sizeof(LilyMacro));
+
+    self->name = name;
+    self->params = params;
+    self->tokens = tokens;
+    self->location = location;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyMacro, const LilyMacro *self)
+{
+    String *res =
+      format__String("LilyMacro{{ name = {S}, params =", self->name);
+
+    DEBUG_VEC_STR(self->params, res, LilyMacroParam);
+
+    push_str__String(res, ", tokens =");
+    DEBUG_VEC_STR(self->tokens, res, LilyToken);
+
+    {
+        char *s = format(", location = {sa} }",
+                         to_string__Debug__Location(&self->location));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyMacro, const LilyMacro *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyMacro(self));
+}
+#endif
+
+DESTRUCTOR(LilyMacro, LilyMacro *self)
+{
+    FREE(String, self->name);
+
+    if (self->params) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyMacroParam);
+        FREE(Vec, self->params);
+    }
+
+    FREE(LilyToken, pop__Vec(self->tokens));
+    FREE(Vec, self->tokens);
+
     lily_free(self);
 }
 
@@ -925,6 +1048,23 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                        const LilyDumpConfig *dump_config,
                                        LilyPackage *root_package)
 {
+#define INIT_IR()                                                       \
+    switch (root_package->ir.kind) {                                    \
+        case LILY_IR_KIND_CC:                                           \
+            res->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));           \
+            break;                                                      \
+        case LILY_IR_KIND_CPP:                                          \
+            res->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));         \
+            break;                                                      \
+        case LILY_IR_KIND_JS:                                           \
+            res->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));           \
+            break;                                                      \
+        case LILY_IR_KIND_LLVM:                                         \
+            res->ir = NEW_VARIANT(                                      \
+              LilyIr, llvm, NEW(LilyIrLlvm, res->global_name->buffer)); \
+            break;                                                      \
+    }
+
     Vec *split_pkg_name = split__String(sub_pkg->name, '.');
 
 #ifdef LILY_WINDOWS_OS
@@ -965,6 +1105,8 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                sub_pkg->global_name->buffer,
                                root_package);
 
+        INIT_IR();
+
         run__LilyScanner(&res->scanner, dump_config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
         run__LilyPrecompile(&res->precompile, dump_config, root_package, false);
@@ -988,6 +1130,8 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                self->package->global_name->buffer,
                                root_package);
 
+        INIT_IR();
+
         run__LilyScanner(&res->scanner, dump_config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
         run__LilyPrecompile(&res->precompile, dump_config, root_package, false);
@@ -1000,43 +1144,214 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
     }
 }
 
+LilyMacro *
+precompile_macro__LilyPrecompile(LilyPrecompile *self,
+                                 const LilyPreparserMacro *macro)
+{
+    // 1. Parse params of macro.
+    Vec *params = NULL; // Vec<LilyMacroParam*>*?
+
+    if (macro->params) {
+        params = NEW(Vec);
+
+        for (Usize i = 0; i < macro->params->len; i++) {
+            Vec *param = get__Vec(macro->params, i);
+            Usize position = 0;
+            LilyToken *current = param->len > 0 ? get__Vec(param, 0) : NULL;
+
+            String *name = NULL;
+            enum LilyMacroParamKind kind = -1;
+            Location location;
+
+#define NEXT_TOKEN() \
+    current = ++position < param->len ? get__Vec(param, position) : NULL;
+#define HAS_REACHED_THE_END() (!current)
+
+            if (HAS_REACHED_THE_END()) {
+                String *current_s = from__String(",");
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &macro->location,
+                    NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                    NULL,
+                    NULL,
+                    NULL),
+                  &self->count_error);
+
+                FREE(String, current_s);
+
+                continue;
+            } else {
+                location = clone__Location(&current->location);
+
+                switch (current->kind) {
+                    case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
+                        name = clone__String(current->identifier_dollar);
+                        NEXT_TOKEN();
+
+                        break;
+                    default:
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->file,
+                            &current->location,
+                            NEW(LilyError,
+                                LILY_ERROR_KIND_EXPECTED_IDENTIFIER_DOLLAR),
+                            NULL,
+                            NULL,
+                            NULL),
+                          &self->count_error);
+
+                        continue;
+                }
+            }
+
+            if (HAS_REACHED_THE_END()) {
+                String *current_s = from__String(",");
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &macro->location,
+                    NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                    NULL,
+                    NULL,
+                    NULL),
+                  &self->count_error);
+
+                FREE(String, current_s);
+                FREE(String, name);
+
+                continue;
+            } else {
+                switch (current->kind) {
+                    case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                        if (!strcmp(current->identifier_normal->buffer, "id")) {
+                            kind = LILY_MACRO_PARAM_KIND_ID;
+                        } else if (!strcmp(current->identifier_normal->buffer,
+                                           "dt")) {
+                            kind = LILY_MACRO_PARAM_KIND_DT;
+                        } else if (!strcmp(current->identifier_normal->buffer,
+                                           "tt")) {
+                            kind = LILY_MACRO_PARAM_KIND_TT;
+                        } else if (!strcmp(current->identifier_normal->buffer,
+                                           "stmt")) {
+                            kind = LILY_MACRO_PARAM_KIND_STMT;
+                        } else if (!strcmp(current->identifier_normal->buffer,
+                                           "expr")) {
+                            kind = LILY_MACRO_PARAM_KIND_EXPR;
+                        } else if (!strcmp(current->identifier_normal->buffer,
+                                           "path")) {
+                            kind = LILY_MACRO_PARAM_KIND_PATH;
+                        } else if (!strcmp(current->identifier_normal->buffer,
+                                           "patt")) {
+                            kind = LILY_MACRO_PARAM_KIND_PATT;
+                        } else if (!strcmp(current->identifier_normal->buffer,
+                                           "block")) {
+                            kind = LILY_MACRO_PARAM_KIND_BLOCK;
+                        } else {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->file,
+                                &current->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_UNKNOWN_MACRO_DATA_TYPE),
+                                NULL,
+                                NULL,
+                                NULL),
+                              &self->count_error);
+
+                            FREE(String, name);
+
+                            continue;
+                        }
+
+                        break;
+                    default:
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->file,
+                            &current->location,
+                            NEW(LilyError,
+                                LILY_ERROR_KIND_EXPECTED_MACRO_DATA_TYPE),
+                            NULL,
+                            NULL,
+                            NULL),
+                          &self->count_error);
+
+                        FREE(String, name);
+
+                        continue;
+                }
+            }
+
+            if (position + 1 != param->len) {
+                emit__Diagnostic(
+                  NEW_VARIANT(Diagnostic,
+                              simple_lily_error,
+                              self->file,
+                              &current->location,
+                              NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                              NULL,
+                              NULL,
+                              from__String("expected `,`")),
+                  &self->count_error);
+            }
+
+            end__Location(&location,
+                          current->location.end_line,
+                          current->location.end_column);
+            push__Vec(params, NEW(LilyMacroParam, kind, name, location));
+        }
+    }
+
+    return NEW(LilyMacro, macro->name, params, macro->tokens, macro->location);
+}
+
 void
-check_macros__LilyPrecompile(LilyPrecompile *self,
-                             LilyPackage *root_package,
-                             bool precompile_macro_expand)
+check_macros__LilyPrecompile(LilyPrecompile *self, LilyPackage *root_package)
 {
     // 1. Add the public macros obtained by the preparer to the public macros of
     // root_package.
-    while (self->info->public_macros->len > 0) {
+    for (Usize i = 0; i < self->info->public_macros->len; i++) {
         push__Vec(root_package->public_macros,
-                  remove__Vec(self->info->public_macros, 0));
+                  precompile_macro__LilyPrecompile(
+                    self, get__Vec(self->info->public_macros, i)));
     }
 
-    if (precompile_macro_expand) {
-        for (Usize i = 0; i < self->info->private_macros->len; i++) {
-            push__Vec(self->package->private_macros,
-                      get__Vec(self->info->private_macros, i));
-        }
-    } else {
-        self->package->private_macros = self->info->private_macros;
+    // 2. Add the private macros obtained by the preparser to private macro of
+    // current package.
+    for (Usize i = 0; i < self->info->private_macros->len; i++) {
+        push__Vec(self->package->private_macros,
+                  precompile_macro__LilyPrecompile(
+                    self, get__Vec(self->info->private_macros, i)));
     }
 
-    // 2. Check name conflict for macros (public macros).
+    // 3. Check name conflict for macros (public macros).
     for (Usize i = 0; i < root_package->public_macros->len; i++) {
         for (Usize j = i + 1; j < root_package->public_macros->len; j++) {
-            if (!strcmp(CAST(LilyPreparserMacro *,
-                             get__Vec(root_package->public_macros, i))
-                          ->name->buffer,
-                        CAST(LilyPreparserMacro *,
-                             get__Vec(root_package->public_macros, j))
-                          ->name->buffer)) {
+            if (!strcmp(
+                  CAST(LilyMacro *, get__Vec(root_package->public_macros, i))
+                    ->name->buffer,
+                  CAST(LilyMacro *, get__Vec(root_package->public_macros, j))
+                    ->name->buffer)) {
                 const Location *location_i =
-                  &CAST(LilyPreparserMacro *,
-                        get__Vec(root_package->public_macros, i))
+                  &CAST(LilyMacro *, get__Vec(root_package->public_macros, i))
                      ->location;
                 const Location *location_j =
-                  &CAST(LilyPreparserMacro *,
-                        get__Vec(root_package->public_macros, j))
+                  &CAST(LilyMacro *, get__Vec(root_package->public_macros, j))
                      ->location;
 
                 const File *file_j = get_file_from_filename__LilyPackage(
@@ -1064,22 +1379,19 @@ check_macros__LilyPrecompile(LilyPrecompile *self,
         }
     }
 
-    // 3. Check name conflict for macros (private macros).
+    // 4. Check name conflict for macros (private macros).
     for (Usize i = 0; i < self->package->private_macros->len; i++) {
         for (Usize j = i + 1; j < self->package->private_macros->len; j++) {
-            if (!strcmp(CAST(LilyPreparserMacro *,
-                             get__Vec(self->package->private_macros, i))
-                          ->name->buffer,
-                        CAST(LilyPreparserMacro *,
-                             get__Vec(self->package->private_macros, j))
-                          ->name->buffer)) {
+            if (!strcmp(
+                  CAST(LilyMacro *, get__Vec(self->package->private_macros, i))
+                    ->name->buffer,
+                  CAST(LilyMacro *, get__Vec(self->package->private_macros, j))
+                    ->name->buffer)) {
                 const Location *location_i =
-                  &CAST(LilyPreparserMacro *,
-                        get__Vec(self->package->private_macros, i))
+                  &CAST(LilyMacro *, get__Vec(self->package->private_macros, i))
                      ->location;
                 const Location *location_j =
-                  &CAST(LilyPreparserMacro *,
-                        get__Vec(self->package->private_macros, j))
+                  &CAST(LilyMacro *, get__Vec(self->package->private_macros, j))
                      ->location;
 
                 emit__Diagnostic(
@@ -1103,23 +1415,20 @@ check_macros__LilyPrecompile(LilyPrecompile *self,
         }
     }
 
-    // 4. Check name conflict for macros (all macros).
+    // 5. Check name conflict for macros (all macros).
     for (Usize i = 0; i < self->package->private_macros->len; i++) {
         for (Usize j = 0; j < root_package->public_macros->len; j++) {
-            if (!strcmp(CAST(LilyPreparserMacro *,
-                             get__Vec(self->package->private_macros, i))
-                          ->name->buffer,
-                        CAST(LilyPreparserMacro *,
-                             get__Vec(root_package->public_macros, j))
-                          ->name->buffer) &&
+            if (!strcmp(
+                  CAST(LilyMacro *, get__Vec(self->package->private_macros, i))
+                    ->name->buffer,
+                  CAST(LilyMacro *, get__Vec(root_package->public_macros, j))
+                    ->name->buffer) &&
                 i <= j) {
                 const Location *location_i =
-                  &CAST(LilyPreparserMacro *,
-                        get__Vec(self->package->private_macros, i))
+                  &CAST(LilyMacro *, get__Vec(self->package->private_macros, i))
                      ->location;
                 const Location *location_j =
-                  &CAST(LilyPreparserMacro *,
-                        get__Vec(root_package->public_macros, j))
+                  &CAST(LilyMacro *, get__Vec(root_package->public_macros, j))
                      ->location;
                 const File *file_j = get_file_from_filename__LilyPackage(
                   root_package, location_j->filename);
@@ -1173,7 +1482,7 @@ run__LilyPrecompile(LilyPrecompile *self,
     }
 
     // 2. Check macros
-    check_macros__LilyPrecompile(self, root_package, precompile_macro_expand);
+    check_macros__LilyPrecompile(self, root_package);
 
     // 4. Precompile all packages
     for (Usize i = 0; i < self->info->package->sub_packages->len; i++) {
@@ -1215,16 +1524,14 @@ run__LilyPrecompile(LilyPrecompile *self,
         printf("\n====Precompile public macros(%s)====\n", self->file->name);
 
         for (Usize i = 0; i < self->package->public_macros->len; i++) {
-            CALL_DEBUG(LilyPreparserMacro,
-                       get__Vec(self->package->public_macros, i));
+            CALL_DEBUG(LilyMacro, get__Vec(self->package->public_macros, i));
         }
     }
 
     printf("\n====Precompile private macros(%s)====\n", self->file->name);
 
     for (Usize i = 0; i < self->package->private_macros->len; i++) {
-        CALL_DEBUG(LilyPreparserMacro,
-                   get__Vec(self->package->private_macros, i));
+        CALL_DEBUG(LilyMacro, get__Vec(self->package->private_macros, i));
     }
 
     for (Usize i = 0; i < self->package->sub_packages->len; i++) {
