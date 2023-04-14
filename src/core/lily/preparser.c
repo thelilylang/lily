@@ -1637,15 +1637,19 @@ IMPL_FOR_DEBUG(debug, LilyPreparserMacro, const LilyPreparserMacro *self)
 
 DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self)
 {
+#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
+#endif
 
     if (self->params) {
         FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, Vec);
         FREE(Vec, self->params);
     }
 
+#ifdef RUN_UNTIL_PREPARSER
     FREE(LilyToken, pop__Vec(self->tokens));
     FREE(Vec, self->tokens);
+#endif
 
     lily_free(self);
 }
@@ -12586,14 +12590,15 @@ DESTRUCTOR(LilyPreparserInfo, const LilyPreparserInfo *self)
                       LilyPreparserImport);
     FREE(Vec, self->private_imports);
 
+    FREE_BUFFER_ITEMS(self->public_macros->buffer,
+                      self->public_macros->len,
+                      LilyPreparserMacro);
     FREE(Vec, self->public_macros);
 
-#ifdef RUN_UNTIL_PREPARSER
     FREE_BUFFER_ITEMS(self->private_macros->buffer,
                       self->private_macros->len,
                       LilyPreparserMacro);
     FREE(Vec, self->private_macros);
-#endif
 
     FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, LilyPreparserDecl);
     FREE(Vec, self->decls);
