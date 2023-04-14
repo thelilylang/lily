@@ -5077,6 +5077,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
                                   const LilyDumpConfig *dump_config,
                                   LilyPreparserDecl *decl)
 {
+    // 1. Looks for the macro.
     LilyPreparserMacro *macro =
       search_macro__LilyParser(self, decl->macro_expand.name);
 
@@ -5098,6 +5099,8 @@ apply_macro_expansion__LilyParser(LilyParser *self,
         return;
     }
 
+    // 2. Prepare, precompile and parse the content of the macro, then expand
+    // it.
     {
         const File *file = get_file_from_filename__LilyPackage(
           self->root_package, macro->location.filename);
