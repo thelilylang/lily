@@ -1107,7 +1107,7 @@ check_macros__LilyPrecompile(LilyPrecompile *self,
     for (Usize i = 0; i < self->package->private_macros->len; i++) {
         for (Usize j = 0; j < root_package->public_macros->len; j++) {
             if (!strcmp(CAST(LilyPreparserMacro *,
-                             get__Vec(self->info->private_macros, i))
+                             get__Vec(self->package->private_macros, i))
                           ->name->buffer,
                         CAST(LilyPreparserMacro *,
                              get__Vec(root_package->public_macros, j))
@@ -1115,7 +1115,7 @@ check_macros__LilyPrecompile(LilyPrecompile *self,
                 i <= j) {
                 const Location *location_i =
                   &CAST(LilyPreparserMacro *,
-                        get__Vec(self->info->private_macros, i))
+                        get__Vec(self->package->private_macros, i))
                      ->location;
                 const Location *location_j =
                   &CAST(LilyPreparserMacro *,
