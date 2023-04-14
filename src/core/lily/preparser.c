@@ -6283,35 +6283,35 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
     // 3. Get tokens of the macro.
     Vec *tokens = NEW(Vec);
 
-	goto get_tokens;
+    goto get_tokens;
 
-get_brace_content: {
-	while (self->current->kind != LILY_TOKEN_KIND_R_BRACE) {
-		push__Vec(tokens, self->current);
-		next_token__LilyPreparser(self);
-	}
+get_brace_content : {
+    while (self->current->kind != LILY_TOKEN_KIND_R_BRACE) {
+        push__Vec(tokens, self->current);
+        next_token__LilyPreparser(self);
+    }
 
-	push__Vec(tokens, self->current);
-	next_token__LilyPreparser(self);
+    push__Vec(tokens, self->current);
+    next_token__LilyPreparser(self);
 
-	goto get_tokens;
+    goto get_tokens;
 }
 
 get_tokens : {
     while (self->current->kind != LILY_TOKEN_KIND_R_BRACE &&
-		   self->current->kind != LILY_TOKEN_KIND_L_BRACE &&
+           self->current->kind != LILY_TOKEN_KIND_L_BRACE &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
         push__Vec(tokens, self->current);
         next_token__LilyPreparser(self);
     }
 
-	switch (self->current->kind) {
-		case LILY_TOKEN_KIND_R_BRACE:
-			next_token__LilyPreparser(self);
-			break;
-		default:
-			break;
-	}
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_R_BRACE:
+            next_token__LilyPreparser(self);
+            break;
+        default:
+            break;
+    }
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
@@ -6354,8 +6354,8 @@ get_tokens : {
             }
 
             break;
-		case LILY_TOKEN_KIND_L_BRACE:
-			goto get_brace_content;
+        case LILY_TOKEN_KIND_L_BRACE:
+            goto get_brace_content;
         case LILY_TOKEN_KIND_EOF: {
             String *current_s = to_string__LilyToken(self->current);
 
