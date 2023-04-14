@@ -206,6 +206,26 @@ get_file_from_filename__LilyPackage(const LilyPackage *self,
 }
 
 LilyPackage *
+search_package_from_filename__LilyPackage(LilyPackage *self,
+                                          const char *filename)
+{
+    if (!strcmp(filename, self->file.name)) {
+        return self;
+    }
+
+    for (Usize i = 0; i < self->sub_packages->len; i++) {
+        LilyPackage *pkg = search_package_from_filename__LilyPackage(
+          get__Vec(self->sub_packages, i), filename);
+
+        if (pkg) {
+            return pkg;
+        }
+    }
+
+    return NULL;
+}
+
+LilyPackage *
 search_package_from_name__LilyPackage(LilyPackage *self, String *name)
 {
     if (!strcmp(name->buffer, self->name->buffer)) {

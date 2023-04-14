@@ -142,6 +142,15 @@ get_file_from_filename__LilyPackage(const LilyPackage *self,
 
 /**
  *
+ * @brief Look for the name of the file among all the packages and return the
+ * LilyPackage.
+ */
+LilyPackage *
+search_package_from_filename__LilyPackage(LilyPackage *self,
+                                          const char *filename);
+
+/**
+ *
  * @brief Search for the package from the name and return LilyPackage if found
  * otherwise return NULL.
  * @return LilyPackage*?
