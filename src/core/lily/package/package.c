@@ -61,7 +61,7 @@ CONSTRUCTOR(LilyPackage *,
     self->name = name;
     self->global_name = global_name;
 
-    self->private_macros = NULL;
+    self->private_macros = NEW(Vec);
 
 #ifndef RUN_UNTIL_PREPARSER
     if (status == LILY_PACKAGE_STATUS_MAIN) {
@@ -164,13 +164,13 @@ build__LilyPackage(const CompileConfig *config,
                                      config->dump_ir);
 
     run__LilyPrecompile(&self->precompile, &dump_config, self, false);
-    run__LilyParser(&self->parser, &dump_config, true);
 
 #ifdef RUN_UNTIL_PRECOMPILE
     FREE(LilyPackage, self);
     exit(0);
 #endif
 
+    run__LilyParser(&self->parser, &dump_config, true);
     run__LilyIrLlvmGenerator(self);
 
     return self;
@@ -250,15 +250,13 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(String, self->global_name);
 
     if (self->public_macros) {
-        FREE_BUFFER_ITEMS(self->public_macros->buffer,
-                          self->public_macros->len,
-                          LilyPreparserMacro);
+        FREE_BUFFER_ITEMS(
+          self->public_macros->buffer, self->public_macros->len, LilyMacro);
         FREE(Vec, self->public_macros);
     }
 
-    FREE_BUFFER_ITEMS(self->private_macros->buffer,
-                      self->private_macros->len,
-                      LilyPreparserMacro);
+    FREE_BUFFER_ITEMS(
+      self->private_macros->buffer, self->private_macros->len, LilyMacro);
     FREE(Vec, self->private_macros);
 
     FREE_BUFFER_ITEMS(

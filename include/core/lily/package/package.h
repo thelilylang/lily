@@ -71,8 +71,8 @@ typedef struct LilyPackage
 {
     String *name;
     String *global_name;
-    Vec *public_macros;        // Vec<LilyPreparserMacro*>*?
-    Vec *private_macros;       // Vec<LilyPreparserMacro*>*
+    Vec *public_macros;        // Vec<LilyMacro*>*?
+    Vec *private_macros;       // Vec<LilyMacro*>*
     Vec *public_imports;       // Vec<LilyImport*>*
     Vec *private_imports;      // Vec<LilyImport*>*
     Vec *sub_packages;         // Vec<LilyPackage*>*
