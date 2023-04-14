@@ -155,6 +155,16 @@ to_msg__LilyError(const LilyError *self)
             return "macro is not found";
         case LILY_ERROR_KIND_MACRO_DO_NOTHING:
             return "macro do nothing";
+        case LILY_ERROR_KIND_MACRO_EXPAND_MISS_FEW_PARAMS:
+            return "macro expand miss few params";
+        case LILY_ERROR_KIND_MACRO_EXPAND_HAVE_TOO_MANY_PARAMS:
+            return "macro expand have too many params";
+        case LILY_ERROR_KIND_EXPECTED_IDENTIFIER_DOLLAR:
+            return "expected identifier dollar";
+        case LILY_ERROR_KIND_UNKNOWN_MACRO_DATA_TYPE:
+            return "unknown macro of data type";
+        case LILY_ERROR_KIND_EXPECTED_MACRO_DATA_TYPE:
+            return "expected macro of data type";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -284,6 +294,16 @@ to_code__LilyError(const LilyError *self)
             return "0059";
         case LILY_ERROR_KIND_MACRO_DO_NOTHING:
             return "0060";
+        case LILY_ERROR_KIND_MACRO_EXPAND_MISS_FEW_PARAMS:
+            return "0061";
+        case LILY_ERROR_KIND_MACRO_EXPAND_HAVE_TOO_MANY_PARAMS:
+            return "0062";
+        case LILY_ERROR_KIND_EXPECTED_IDENTIFIER_DOLLAR:
+            return "0063";
+        case LILY_ERROR_KIND_UNKNOWN_MACRO_DATA_TYPE:
+            return "0064";
+        case LILY_ERROR_KIND_EXPECTED_MACRO_DATA_TYPE:
+            return "0065";
         default:
             UNREACHABLE("unknown variant");
     }
