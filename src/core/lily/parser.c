@@ -49,7 +49,7 @@ jump__LilyParseBlock(LilyParseBlock *self, Usize n);
 static LilyToken *
 peek_token__LilyParseBlock(LilyParseBlock *self, Usize n);
 
-// Check if it need to parse a data type.
+// Check if it needs to parse a data type.
 static inline bool
 is_data_type__LilyParseBlock(LilyParseBlock *self);
 
@@ -430,6 +430,38 @@ search_public_macro__LilyParser(const LilyParser *self, const String *name);
 static LilyMacro *
 search_macro__LilyParser(const LilyParser *self, const String *name);
 
+// Check if the token is an identifier.
+static bool
+is_id__LilyParser(const Vec *tokens);
+
+// Check if the first token can be a data type.
+static bool
+is_dt__LilyParser(const Vec *tokens);
+
+// Check if there are one token.
+static inline bool
+is_tt__LilyParser(const Vec *tokens);
+
+// Check if the first token can be a stmt.
+static bool
+is_stmt__LilyParser(const Vec *tokens);
+
+// Check if the first token can be an expr.
+static bool
+is_expr__LilyParser(const Vec *tokens);
+
+// Check if is a path.
+static bool
+is_path__LilyParser(const Vec *tokens);
+
+// Check if is a pattern.
+static bool
+is_patt__LilyParser(const Vec *tokens);
+
+// Check if is a block.
+static bool
+is_block__LilyParser(const Vec *tokens);
+
 static void
 apply_macro_expansion__LilyParser(LilyParser *self,
                                   const LilyDumpConfig *dump_config,
@@ -592,24 +624,27 @@ peek_token__LilyParseBlock(LilyParseBlock *self, Usize n)
     return NULL;
 }
 
+#define IS_DATA_TYPE(token)                     \
+    switch (token) {                            \
+        case LILY_TOKEN_KIND_BANG:              \
+        case LILY_TOKEN_KIND_KEYWORD_FUN:       \
+        case LILY_TOKEN_KIND_KEYWORD_MUT:       \
+        case LILY_TOKEN_KIND_KEYWORD_OBJECT:    \
+        case LILY_TOKEN_KIND_KEYWORD_REF:       \
+        case LILY_TOKEN_KIND_KEYWORD_TRACE:     \
+        case LILY_TOKEN_KIND_L_BRACE:           \
+        case LILY_TOKEN_KIND_L_HOOK:            \
+        case LILY_TOKEN_KIND_L_PAREN:           \
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: \
+            return true;                        \
+        default:                                \
+            return false;                       \
+    }
+
 bool
 is_data_type__LilyParseBlock(LilyParseBlock *self)
 {
-    switch (self->current->kind) {
-        case LILY_TOKEN_KIND_BANG:
-        case LILY_TOKEN_KIND_KEYWORD_FUN:
-        case LILY_TOKEN_KIND_KEYWORD_MUT:
-        case LILY_TOKEN_KIND_KEYWORD_OBJECT:
-        case LILY_TOKEN_KIND_KEYWORD_REF:
-        case LILY_TOKEN_KIND_KEYWORD_TRACE:
-        case LILY_TOKEN_KIND_L_BRACE:
-        case LILY_TOKEN_KIND_L_HOOK:
-        case LILY_TOKEN_KIND_L_PAREN:
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            return true;
-        default:
-            return false;
-    }
+    IS_DATA_TYPE(self->current->kind);
 }
 
 LilyAstDataType *
@@ -2117,9 +2152,9 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
             }
         }
         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
-        case LILY_TOKEN_KIND_KEYWORD_SELF:
+        case LILY_TOKEN_KIND_KEYWORD_self:
         case LILY_TOKEN_KIND_AT:
-            if (self->previous->kind == LILY_TOKEN_KIND_KEYWORD_SELF &&
+            if (self->previous->kind == LILY_TOKEN_KIND_KEYWORD_self &&
                 self->current->kind != LILY_TOKEN_KIND_DOT) {
                 return NEW(LilyAstExpr,
                            clone__Location(&self->previous->location),
@@ -5069,6 +5104,208 @@ search_macro__LilyParser(const LilyParser *self, const String *name)
     return NULL;
 }
 
+bool
+is_id__LilyParser(const Vec *tokens)
+{
+    if (tokens->len == 1) {
+        switch (CAST(LilyToken *, get__Vec(tokens, 0))->kind) {
+            case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
+            case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    return false;
+}
+
+bool
+is_dt__LilyParser(const Vec *tokens)
+{
+    if (tokens->len >= 1) {
+        IS_DATA_TYPE(CAST(LilyToken *, get__Vec(tokens, 0))->kind);
+    }
+
+    return false;
+}
+
+bool
+is_tt__LilyParser(const Vec *tokens)
+{
+    return tokens->len == 1;
+}
+
+bool
+is_stmt__LilyParser(const Vec *tokens)
+{
+    if (tokens->len >= 1) {
+        switch (CAST(LilyToken *, get__Vec(tokens, 0))->kind) {
+            case LILY_TOKEN_KIND_KEYWORD_ASM:
+            case LILY_TOKEN_KIND_KEYWORD_AWAIT:
+            case LILY_TOKEN_KIND_AT:
+            case LILY_TOKEN_KIND_KEYWORD_BEGIN:
+            case LILY_TOKEN_KIND_KEYWORD_BREAK:
+            case LILY_TOKEN_KIND_KEYWORD_DEFER:
+            case LILY_TOKEN_KIND_KEYWORD_DROP:
+            case LILY_TOKEN_KIND_KEYWORD_FOR:
+            case LILY_TOKEN_KIND_KEYWORD_IF:
+            case LILY_TOKEN_KIND_KEYWORD_MATCH:
+            case LILY_TOKEN_KIND_KEYWORD_NEXT:
+            case LILY_TOKEN_KIND_KEYWORD_RETURN:
+            case LILY_TOKEN_KIND_KEYWORD_TRY:
+            case LILY_TOKEN_KIND_KEYWORD_VAL:
+            case LILY_TOKEN_KIND_KEYWORD_MUT:
+            case LILY_TOKEN_KIND_KEYWORD_WHILE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    return false;
+}
+
+bool
+is_expr__LilyParser(const Vec *tokens)
+{
+    if (tokens->len >= 1) {
+        switch (CAST(LilyToken *, get__Vec(tokens, 0))->kind) {
+            case LILY_TOKEN_KIND_KEYWORD_TRUE:
+            case LILY_TOKEN_KIND_KEYWORD_FALSE:
+            case LILY_TOKEN_KIND_KEYWORD_NIL:
+            case LILY_TOKEN_KIND_KEYWORD_UNDEF:
+            case LILY_TOKEN_KIND_LITERAL_BYTE:
+            case LILY_TOKEN_KIND_LITERAL_BYTES:
+            case LILY_TOKEN_KIND_LITERAL_CHAR:
+            case LILY_TOKEN_KIND_LITERAL_FLOAT:
+            case LILY_TOKEN_KIND_LITERAL_INT_2:
+            case LILY_TOKEN_KIND_LITERAL_INT_8:
+            case LILY_TOKEN_KIND_LITERAL_INT_10:
+            case LILY_TOKEN_KIND_LITERAL_INT_16:
+            case LILY_TOKEN_KIND_LITERAL_STRING:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
+            case LILY_TOKEN_KIND_L_HOOK:
+            case LILY_TOKEN_KIND_L_BRACE:
+            case LILY_TOKEN_KIND_L_PAREN:
+            case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
+            case LILY_TOKEN_KIND_KEYWORD_self:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
+            case LILY_TOKEN_KIND_KEYWORD_FUN:
+            case LILY_TOKEN_KIND_KEYWORD_REF:
+            case LILY_TOKEN_KIND_KEYWORD_TRACE:
+            case LILY_TOKEN_KIND_MINUS:
+            case LILY_TOKEN_KIND_KEYWORD_NOT:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    return false;
+}
+
+bool
+is_path__LilyParser(const Vec *tokens)
+{
+    if (tokens->len >= 2) {
+        switch (CAST(LilyToken *, get__Vec(tokens, 0))->kind) {
+            case LILY_TOKEN_KIND_KEYWORD_self:
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
+                switch (CAST(LilyToken *, get__Vec(tokens, 1))->kind) {
+                    case LILY_TOKEN_KIND_DOT:
+                        return true;
+                    default:
+                        return false;
+                }
+            default:
+                return false;
+        }
+    }
+
+    return false;
+}
+
+bool
+is_patt__LilyParser(const Vec *tokens)
+{
+    if (tokens->len >= 1) {
+        switch (CAST(LilyToken *, get__Vec(tokens, 0))->kind) {
+            case LILY_TOKEN_KIND_KEYWORD_TRUE:
+            case LILY_TOKEN_KIND_KEYWORD_FALSE:
+            case LILY_TOKEN_KIND_KEYWORD_NIL:
+            case LILY_TOKEN_KIND_KEYWORD_UNDEF:
+            case LILY_TOKEN_KIND_LITERAL_BYTE:
+            case LILY_TOKEN_KIND_LITERAL_BYTES:
+            case LILY_TOKEN_KIND_LITERAL_CHAR:
+            case LILY_TOKEN_KIND_LITERAL_FLOAT:
+            case LILY_TOKEN_KIND_LITERAL_INT_2:
+            case LILY_TOKEN_KIND_LITERAL_INT_8:
+            case LILY_TOKEN_KIND_LITERAL_INT_10:
+            case LILY_TOKEN_KIND_LITERAL_INT_16:
+            case LILY_TOKEN_KIND_LITERAL_STRING:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT8:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_ISIZE:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT16:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT32:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT64:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_UINT8:
+            case LILY_TOKEN_KIND_LITERAL_SUFFIX_USIZE:
+            case LILY_TOKEN_KIND_L_HOOK:
+            case LILY_TOKEN_KIND_L_BRACE:
+            case LILY_TOKEN_KIND_KEYWORD_ERROR:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_L_PAREN:
+            case LILY_TOKEN_KIND_DOT_DOT:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    return false;
+}
+
+bool
+is_block__LilyParser(const Vec *tokens)
+{
+    if (tokens->len >= 1) {
+        switch (CAST(LilyToken *, get__Vec(tokens, 0))->kind) {
+            case LILY_TOKEN_KIND_AT:
+            case LILY_TOKEN_KIND_KEYWORD_BEGIN:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    return false;
+}
+
 void
 apply_macro_expansion__LilyParser(LilyParser *self,
                                   const LilyDumpConfig *dump_config,
@@ -5131,20 +5368,216 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 
             return;
         } else {
+            // NOTE: macro->params and macro_expand.params have the same length.
+            for (Usize i = 0; i < macro->params->len; i++) {
+                LilyMacroParam *param = get__Vec(macro->params, i);
+
+                switch (param->kind) {
+                    case LILY_MACRO_PARAM_KIND_ID:
+                        if (!is_id__LilyParser(
+                              get__Vec(decl->macro_expand.params, i))) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_ID),
+                                NULL,
+                                NULL,
+                                format__String("at parameter number {d}",
+                                               i + 1)),
+                              &self->package->count_error);
+
+                            continue;
+                        }
+
+                        break;
+                    case LILY_MACRO_PARAM_KIND_DT:
+                        if (!is_dt__LilyParser(
+                              get__Vec(decl->macro_expand.params, i))) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_DT),
+                                NULL,
+                                NULL,
+                                format__String("at parameter number {d}",
+                                               i + 1)),
+                              &self->package->count_error);
+
+                            continue;
+                        }
+
+                        break;
+                    case LILY_MACRO_PARAM_KIND_TT:
+                        if (!is_tt__LilyParser(
+                              get__Vec(decl->macro_expand.params, i))) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_TT),
+                                NULL,
+                                NULL,
+                                format__String("at parameter number {d}",
+                                               i + 1)),
+                              &self->package->count_error);
+
+                            continue;
+                        }
+
+                        break;
+                    case LILY_MACRO_PARAM_KIND_STMT:
+                        if (!is_stmt__LilyParser(
+                              get__Vec(decl->macro_expand.params, i))) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_STMT),
+                                NULL,
+                                NULL,
+                                format__String("at parameter number {d}",
+                                               i + 1)),
+                              &self->package->count_error);
+
+                            continue;
+                        }
+
+                        break;
+                    case LILY_MACRO_PARAM_KIND_EXPR:
+                        if (!is_expr__LilyParser(
+                              get__Vec(decl->macro_expand.params, i))) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_EXPR),
+                                NULL,
+                                NULL,
+                                format__String("at parameter number {d}",
+                                               i + 1)),
+                              &self->package->count_error);
+
+                            continue;
+                        }
+
+                        break;
+                    case LILY_MACRO_PARAM_KIND_PATH:
+                        if (!is_path__LilyParser(
+                              get__Vec(decl->macro_expand.params, i))) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_PATH),
+                                NULL,
+                                NULL,
+                                format__String("at parameter number {d}",
+                                               i + 1)),
+                              &self->package->count_error);
+
+                            continue;
+                        }
+
+                        break;
+                    case LILY_MACRO_PARAM_KIND_PATT:
+                        if (!is_patt__LilyParser(
+                              get__Vec(decl->macro_expand.params, i))) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_PATT),
+                                NULL,
+                                NULL,
+                                format__String("at parameter number {d}",
+                                               i + 1)),
+                              &self->package->count_error);
+
+                            continue;
+                        }
+
+                        break;
+                    case LILY_MACRO_PARAM_KIND_BLOCK:
+                        if (!is_block__LilyParser(
+                              get__Vec(decl->macro_expand.params, i))) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_BLOCK),
+                                NULL,
+                                NULL,
+                                format__String("at parameter number {d}",
+                                               i + 1)),
+                              &self->package->count_error);
+
+                            continue;
+                        }
+
+                        break;
+                    default:
+                        UNREACHABLE("unknown variant");
+                }
+            }
         }
     } else if (decl->macro_expand.params || macro->params) {
-        emit__Diagnostic(
-          NEW_VARIANT(
-            Diagnostic,
-            simple_lily_error,
-            &self->package->file,
-            &decl->location,
-            NEW(LilyError, LILY_ERROR_KIND_MACRO_EXPAND_MISS_FEW_PARAMS),
-            NULL,
-            NULL,
-            NULL),
-          &self->package->count_error);
+        if (decl->macro_expand.params) {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                &self->package->file,
+                &decl->location,
+                NEW(LilyError,
+                    LILY_ERROR_KIND_MACRO_EXPAND_HAVE_TOO_MANY_PARAMS),
+                NULL,
+                NULL,
+                NULL),
+              &self->package->count_error);
+        } else {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                &self->package->file,
+                &decl->location,
+                NEW(LilyError, LILY_ERROR_KIND_MACRO_EXPAND_MISS_FEW_PARAMS),
+                NULL,
+                NULL,
+                NULL),
+              &self->package->count_error);
+        }
 
+        return;
+    }
+
+    if (self->package->count_error > 0) {
         return;
     }
 
