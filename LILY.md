@@ -353,7 +353,7 @@ create_a_function!(add3, Int32)
 - expr -> expression: `x + 230`
 - path -> path: `X.Y.Z`
 - patt -> pattern: `_`
-- block -> block: `{ () }`
+- block -> block: `@{ () }`
 
 NOTE (rust compiler rules):
 
