@@ -162,7 +162,7 @@ to_msg__LilyError(const LilyError *self)
         case LILY_ERROR_KIND_EXPECTED_IDENTIFIER_DOLLAR:
             return "expected identifier dollar";
         case LILY_ERROR_KIND_UNKNOWN_MACRO_DATA_TYPE:
-            return "unknown macro of data type";
+            return "unknown data type of macro param";
         case LILY_ERROR_KIND_EXPECTED_MACRO_DATA_TYPE:
             return "expected macro of data type";
         default:
