@@ -47,7 +47,7 @@ main(int argc, char **argv)
         Vec *options = NEW(Vec); // Vec<char*>*
 
         // 1. Get the rest of argv
-        for (int i = 2; i < argc; i++)
+        for (int i = 2; i < argc; ++i)
             push__Vec(options, argv[i]);
 
         // 2. Parse comand

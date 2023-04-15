@@ -91,7 +91,7 @@ CONSTRUCTOR(ParseCommand,
             exit(0);                                                           \
         } else {                                                               \
             Vec *options = parse(self->options, self->options_size);           \
-            for (Usize i = 0; i < options->len; i++) {                         \
+            for (Usize i = 0; i < options->len; ++i) {                         \
                 option_type op = get__Vec(options, i);                         \
                 switch (op->kind) {                                            \
                     case u_name##_OPTION_KIND_ERROR: {                         \

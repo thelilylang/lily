@@ -34,10 +34,9 @@
 Vec *
 split__Str(const char *self, char separator)
 {
-
     Vec *res = NEW(Vec);
 
-    for (Usize i = 0; i < strlen(self); i++) {
+    for (Usize i = 0; i < strlen(self); ++i) {
         char *item = lily_malloc(1);
         item[0] = '\0';
         Usize item_size = 0;

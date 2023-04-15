@@ -54,14 +54,14 @@ push__Stack(Stack *self, void *item)
 
     if (!self->top) {
         self->top = item;
-        self->len++;
+        ++self->len;
 
         return;
     } else if (!self->buffer) {
         self->buffer = lily_malloc(PTR_SIZE);
         self->buffer[0] = self->top;
         self->top = item;
-        self->len++;
+        ++self->len;
 
         return;
     }
@@ -69,7 +69,7 @@ push__Stack(Stack *self, void *item)
     self->buffer = realloc(self->buffer, PTR_SIZE * self->len);
     self->buffer[self->len - 1] = self->top;
     self->top = item;
-    self->len++;
+    ++self->len;
 
     return;
 }
@@ -82,7 +82,7 @@ pop__Stack(Stack *self)
     void *res = NULL;
     SWAP(res, self->top);
 
-    self->len--;
+    --self->len;
 
     if (self->len > 0) {
         SWAP(self->top, self->buffer[self->len - 1]);

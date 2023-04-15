@@ -744,7 +744,7 @@ skip_space__LilyScanner(LilyScanner *self)
 void
 jump__LilyScanner(LilyScanner *self, Usize n)
 {
-    for (Usize i = 0; i < n; i++)
+    for (Usize i = 0; i < n; ++i)
         next_char__Source(&self->source);
 }
 
@@ -2341,14 +2341,14 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
     if (dump_scanner) {
         printf("====Scanner(%s)====\n", self->source.file->name);
 
-        for (Usize i = 0; i < self->tokens->len; i++) {
+        for (Usize i = 0; i < self->tokens->len; ++i) {
             PRINTLN("{Sr}", to_string__LilyToken(get__Vec(self->tokens, i)));
         }
     }
 #else
     printf("====Scanner(%s)====\n", self->source.file->name);
 
-    for (Usize i = 0; i < self->tokens->len; i++) {
+    for (Usize i = 0; i < self->tokens->len; ++i) {
         CALL_DEBUG(LilyToken, get__Vec(self->tokens, i));
     }
 #endif

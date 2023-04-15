@@ -2172,7 +2172,7 @@ IMPL_FOR_DEBUG(to_string,
 
     push_str__String(res, ", pattern_conds=");
 
-    for (Usize i = 0; i < self->pattern_conds->len; i++) {
+    for (Usize i = 0; i < self->pattern_conds->len; ++i) {
         String *item = NEW(String);
         Vec *pattern_cond = get__Vec(self->pattern_conds, i);
 
@@ -2206,7 +2206,7 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtMatch,
     FREE_BUFFER_ITEMS(self->patterns->buffer, self->patterns->len, Vec);
     FREE(Vec, self->patterns);
 
-    for (Usize i = 0; i < self->pattern_conds->len; i++) {
+    for (Usize i = 0; i < self->pattern_conds->len; ++i) {
         Vec *item = get__Vec(self->pattern_conds, i);
 
         if (item) {
@@ -6504,7 +6504,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 
                         for (Usize i = 0;
                              i < self->current->identifier_string->len;
-                             i++) {
+                             ++i) {
                             char c =
                               self->current->identifier_string->buffer[i++];
 
@@ -7997,7 +7997,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
                         FREE_BUFFER_ITEMS(patterns->buffer, patterns->len, Vec);
                         FREE(Vec, patterns);
 
-                        for (Usize i = 0; i < pattern_conds->len; i++) {
+                        for (Usize i = 0; i < pattern_conds->len; ++i) {
                             Vec *item = get__Vec(pattern_conds, i);
 
                             if (item) {
@@ -9280,7 +9280,7 @@ preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
           &self->count_error);
 
         // Fill exprs while exprs and names aren't the same length.
-        for (int i = 0; i < names->len - exprs->len; i++) {
+        for (int i = 0; i < names->len - exprs->len; ++i) {
             push__Vec(exprs, NEW(Vec));
         }
     } else if (exprs->len > names->len) {
@@ -9297,14 +9297,14 @@ preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
           &self->count_error);
 
         // Fill names while exprs and names aren't the same length.
-        for (int i = 0; i < exprs->len - names->len; i++) {
+        for (int i = 0; i < exprs->len - names->len; ++i) {
             push__Vec(exprs, NEW(Vec));
         }
     }
 
     Vec *multiple = NEW(Vec); // Vec<LilyPreparserConstantInfo*>*
 
-    for (Usize i = 0; i < names->len; i++) {
+    for (Usize i = 0; i < names->len; ++i) {
         push__Vec(multiple,
                   NEW(LilyPreparserConstantInfo,
                       get__Vec(names, i),
@@ -13040,37 +13040,37 @@ exit_preparser : {
 #ifdef DEBUG_PREPARSER
     printf("\n====Preparser(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < self->tokens->len; i++) {
+    for (Usize i = 0; i < self->tokens->len; ++i) {
         CALL_DEBUG(LilyToken, get__Vec(self->tokens, i));
     }
 
     printf("\n====Preparser public imports(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < info->public_imports->len; i++) {
+    for (Usize i = 0; i < info->public_imports->len; ++i) {
         CALL_DEBUG(LilyPreparserImport, get__Vec(info->public_imports, i));
     }
 
     printf("\n====Preparser private imports(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < info->private_imports->len; i++) {
+    for (Usize i = 0; i < info->private_imports->len; ++i) {
         CALL_DEBUG(LilyPreparserImport, get__Vec(info->private_imports, i));
     }
 
     printf("\n====Preparser public macros(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < info->public_macros->len; i++) {
+    for (Usize i = 0; i < info->public_macros->len; ++i) {
         CALL_DEBUG(LilyPreparserMacro, get__Vec(info->public_macros, i));
     }
 
     printf("\n====Preparser private macros(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < info->private_macros->len; i++) {
+    for (Usize i = 0; i < info->private_macros->len; ++i) {
         CALL_DEBUG(LilyPreparserMacro, get__Vec(info->private_macros, i));
     }
 
     printf("\n====Preparser decls(%s)====\n", self->file->name);
 
-    for (Usize i = 0; i < info->decls->len; i++) {
+    for (Usize i = 0; i < info->decls->len; ++i) {
         CALL_DEBUG(LilyPreparserDecl, get__Vec(info->decls, i));
     }
 

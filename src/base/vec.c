@@ -48,7 +48,7 @@ CONSTRUCTOR(Vec *, Vec)
 void
 append__Vec(Vec *self, const Vec *other)
 {
-    for (Usize i = 0; i < other->len; i++) {
+    for (Usize i = 0; i < other->len; ++i) {
         push__Vec(self, other->buffer[i]);
     }
 }
@@ -63,7 +63,7 @@ from__Vec(void **buffer, Usize len)
     self->capacity = len * 2;
     self->buffer = lily_malloc(PTR_SIZE * self->capacity);
 
-    for (Usize i = len; i--;) {
+    for (Usize i = len; --i;) {
         self->buffer[i] = buffer[i];
     }
 
@@ -95,7 +95,7 @@ init__Vec(Usize len, ...)
 
     va_start(vl, len);
 
-    for (Usize i = 0; i < len; i++) {
+    for (Usize i = 0; i < len; ++i) {
         push__Vec(self, va_arg(vl, void *));
     }
 
@@ -113,7 +113,7 @@ insert__Vec(Vec *self, void *item, Usize index)
 
     self->buffer[index] = item;
 
-    for (Usize i = index + 1; i < self->len; i++) {
+    for (Usize i = index + 1; i < self->len; ++i) {
         void *tmp_move = move;
         move = self->buffer[i];
 
@@ -132,7 +132,7 @@ insert_after__Vec(Vec *self, void *item, Usize index)
 
     self->buffer[index + 1] = item;
 
-    for (Usize i = index + 2; i < self->len; i++) {
+    for (Usize i = index + 2; i < self->len; ++i) {
         void *tmp_move = move;
         move = self->buffer[i];
 
@@ -147,7 +147,7 @@ join__Vec(const Vec *self, char c)
 {
     String *res = NEW(String);
 
-    for (Usize i = 0; i < self->len; i++) {
+    for (Usize i = 0; i < self->len; ++i) {
         push_str__String(res, CAST(String *, self->buffer[i])->buffer);
 
         if (i != self->len - 1) {
@@ -198,7 +198,7 @@ remove__Vec(Vec *self, Usize index)
     self->len -= 1;
 
     // Align the rest of the buffer
-    for (Usize i = index; i < self->len; i++) {
+    for (Usize i = index; i < self->len; ++i) {
         self->buffer[i] = self->buffer[i + 1];
     }
 

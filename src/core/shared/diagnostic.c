@@ -147,14 +147,14 @@ static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
     Vec *lines = NEW(Vec);                                                    \
     if (location->start_line == location->end_line) {                         \
         push__Vec(lines, get__Vec(split, location->start_line - 1));          \
-        for (Usize i = 0; i < split->len; i++) {                              \
+        for (Usize i = 0; i < split->len; ++i) {                              \
             if (i != location->start_line - 1)                                \
                 lily_free(split->buffer[i]);                                  \
         }                                                                     \
     } else {                                                                  \
         push__Vec(lines, get__Vec(split, location->start_line - 1));          \
         push__Vec(lines, get__Vec(split, location->end_line - 1));            \
-        for (Usize i = 0; i < split->len; i++) {                              \
+        for (Usize i = 0; i < split->len; ++i) {                              \
             if (i != location->start_line - 1 && i != location->end_line - 1) \
                 lily_free(split->buffer[i]);                                  \
         }                                                                     \
@@ -180,7 +180,7 @@ DESTRUCTOR(DiagnosticLevel, const DiagnosticLevel *self)
 
 DESTRUCTOR(DiagnosticDetail, const DiagnosticDetail *self)
 {
-    for (Usize i = 0; i < self->lines->len; i++)
+    for (Usize i = 0; i < self->lines->len; ++i)
         lily_free(self->lines->buffer[i]);
 
     FREE(Vec, self->lines);
@@ -206,7 +206,7 @@ to_string__DiagnosticLevelUtil(const DiagnosticLevelUtil *self)
     String *res = NEW(String);
 
     if (self->helps) {
-        for (Usize i = 0; i < self->helps->len; i++) {
+        for (Usize i = 0; i < self->helps->len; ++i) {
             char *s =
               format("{Sr} {sa}: {S}\n",
                      repeat__String(
@@ -219,7 +219,7 @@ to_string__DiagnosticLevelUtil(const DiagnosticLevelUtil *self)
     }
 
     if (self->notes) {
-        for (Usize i = 0; i < self->notes->len; i++) {
+        for (Usize i = 0; i < self->notes->len; ++i) {
             char *s =
               format("{Sr} {sa}: {S}\n",
                      repeat__String(
@@ -298,7 +298,7 @@ to_string__DiagnosticReferencing(const DiagnosticReferencing *self,
 {
     String *res = NEW(String);
 
-    for (Usize i = 0; i < self->items->len; i++) {
+    for (Usize i = 0; i < self->items->len; ++i) {
         APPEND_AND_FREE(
           res,
           to_string__DiagnosticReferencingItem(self->items->buffer[i], level));
@@ -476,7 +476,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
 
         push__String(res, ' ');
 
-        for (Usize i = 0; i < count_whitespace; i++) {
+        for (Usize i = 0; i < count_whitespace; ++i) {
             push__String(res, line[i]);
         }
 
@@ -1187,7 +1187,7 @@ emit_warning__Diagnostic(Diagnostic self,
             UNREACHABLE("expected warning diagnostic");
     }
 
-    for (Usize i = 0; i < disable_codes->len; i++) {
+    for (Usize i = 0; i < disable_codes->len; ++i) {
         if (!strcmp(CAST(String *, disable_codes->buffer[i])->buffer, code)) {
             FREE(Diagnostic, &self);
             return;

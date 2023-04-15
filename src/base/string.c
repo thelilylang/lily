@@ -90,7 +90,7 @@ from__String(char *buffer)
     self->buffer = lily_malloc(self->capacity);
     self->len = strlen(buffer);
 
-    for (int i = 0; i < self->len; i++) {
+    for (int i = 0; i < self->len; ++i) {
         self->buffer[i] = buffer[i];
     }
 
@@ -164,7 +164,7 @@ repeat__String(char *s, Usize n)
 {
     String *res = NEW(String);
 
-    for (Usize i = 0; i < n; i++) {
+    for (Usize i = 0; i < n; ++i) {
         push_str__String(res, s);
     }
 
@@ -176,7 +176,7 @@ split__String(String *self, char separator)
 {
     Vec *res = NEW(Vec);
 
-    for (Usize i = 0; i < self->len; i++) {
+    for (Usize i = 0; i < self->len; ++i) {
         String *item = NEW(String);
 
         while (self->buffer[i]) {
@@ -200,7 +200,7 @@ take_slice__String(String *self, Usize index)
 
     String *res = NEW(String);
 
-    for (Usize i = index; i < self->len; i++) {
+    for (Usize i = index; i < self->len; ++i) {
         push__String(res, self->buffer[i]);
     }
 

@@ -58,7 +58,6 @@ format(const char *fmt, ...)
 
     res[0] = '\0';
     va_start(vl, fmt);
-
     for (Usize i = 0; i < len;) {
         switch (fmt[i]) {
             case '{':
@@ -242,14 +241,14 @@ format(const char *fmt, ...)
                 if ((fmt[i - 2] != '{' && fmt[i - 1] != '{') && fmt[i] != '}') {
                     FAILED("expected `}`");
                 } else
-                    i++;
+                    ++i;
 
                 break;
             default:
                 res = lily_realloc(res, buffer_size + 2);
                 res[buffer_size] = fmt[i];
                 res[++buffer_size] = '\0';
-                i++;
+                ++i;
         }
     }
 

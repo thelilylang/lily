@@ -2121,7 +2121,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_L_PAREN: {
             LilyToken *peeked = self->current;
 
-            for (Usize i = 1; peeked; i++) {
+            for (Usize i = 1; peeked; ++i) {
                 if (peeked->kind == LILY_TOKEN_KIND_COMMA) {
                     return parse_tuple_expr__LilyParseBlock(self);
                 } else if (peeked->kind == LILY_TOKEN_KIND_R_PAREN) {
@@ -2482,7 +2482,7 @@ parse_asm_stmt__LilyParser(LilyParser *self,
         // 2. Parse all other params
         Vec *params = NEW(Vec); // Vec<LilyAstExpr*>*
 
-        for (Usize i = 1; i < item->stmt_asm.params->len; i++) {
+        for (Usize i = 1; i < item->stmt_asm.params->len; ++i) {
             LilyParseBlock param_block =
               NEW(LilyParseBlock, self, get__Vec(item->stmt_asm.params, i));
             LilyAstExpr *param = parse_expr__LilyParseBlock(&param_block);
@@ -2690,7 +2690,7 @@ parse_if_stmt__LilyParser(LilyParser *self,
         // 3. Parse elif expressions
         elif_exprs = NEW(Vec); // Vec<LilyAstExpr*>*
 
-        for (Usize i = 0; i < item->stmt_if.elif_exprs->len; i++) {
+        for (Usize i = 0; i < item->stmt_if.elif_exprs->len; ++i) {
             LilyParseBlock expr_block =
               NEW(LilyParseBlock, self, get__Vec(item->stmt_if.elif_exprs, i));
             LilyAstExpr *elif_expr = parse_expr__LilyParseBlock(&expr_block);
@@ -2708,7 +2708,7 @@ parse_if_stmt__LilyParser(LilyParser *self,
         // 4. Parse elif blocks
         elif_bodies = NEW(Vec); // Vec<Vec<LilyAstBodyFunItem*>*>*
 
-        for (Usize i = 0; i < item->stmt_if.elif_blocks->len; i++) {
+        for (Usize i = 0; i < item->stmt_if.elif_blocks->len; ++i) {
             push__Vec(elif_bodies,
                       parse_fun_body__LilyParser(
                         self, get__Vec(item->stmt_if.elif_blocks, i)));
@@ -2754,7 +2754,7 @@ parse_match_stmt__LilyParser(LilyParser *self,
     // 2. Parse case(s)
     Vec *cases = NEW(Vec); // Vec<LilyAstStmtMatchCase*>*
 
-    for (Usize i = 0; i < item->stmt_match.patterns->len; i++) {
+    for (Usize i = 0; i < item->stmt_match.patterns->len; ++i) {
         // 3. Parse pattern
         LilyParseBlock pattern_block =
           NEW(LilyParseBlock, self, get__Vec(item->stmt_match.patterns, i));
@@ -3081,7 +3081,7 @@ parse_fun_body__LilyParser(LilyParser *self, Vec *block)
 {
     Vec *body = NEW(Vec); // Vec<LilyAstBodyFunItem*>*
 
-    for (Usize i = 0; i < block->len; i++) {
+    for (Usize i = 0; i < block->len; ++i) {
         parse_fun_body_item__LilyParser(self, get__Vec(block, i), body);
     }
 
@@ -3696,7 +3696,7 @@ parse_generic_params__LilyParser(LilyParser *self, Vec *generic_params)
 {
     Vec *res = NEW(Vec); // Vec<LilyAstGenericParam*>*
 
-    for (Usize i = 0; i < generic_params->len; i++) {
+    for (Usize i = 0; i < generic_params->len; ++i) {
         LilyParseBlock generic_param_block =
           NEW(LilyParseBlock, self, get__Vec(generic_params, i));
         LilyAstGenericParam *generic_param =
@@ -3731,7 +3731,7 @@ parse_inherit_params__LilyParser(LilyParser *self, Vec *inherit_params)
 {
     Vec *res = NEW(Vec); // Vec<LilyAstInheritParam*>*
 
-    for (Usize i = 0; i < inherit_params->len; i++) {
+    for (Usize i = 0; i < inherit_params->len; ++i) {
         LilyParseBlock data_type_block =
           NEW(LilyParseBlock, self, get__Vec(inherit_params, i));
         LilyAstDataType *data_type =
@@ -3752,7 +3752,7 @@ parse_impl_params__LilyParser(LilyParser *self, Vec *impl_params)
 {
     Vec *res = NEW(Vec); // Vec<LilyAstImplParam*>*
 
-    for (Usize i = 0; i < impl_params->len; i++) {
+    for (Usize i = 0; i < impl_params->len; ++i) {
         LilyParseBlock data_type_block =
           NEW(LilyParseBlock, self, get__Vec(impl_params, i));
         LilyAstDataType *data_type =
@@ -3864,7 +3864,7 @@ parse_class_body__LilyParser(LilyParser *self, Vec *body)
 {
     Vec *res = NEW(Vec); // Vec<LilyAstBodyClassItem*>*
 
-    for (Usize i = 0; i < body->len; i++) {
+    for (Usize i = 0; i < body->len; ++i) {
         LilyPreparserClassBodyItem *pre_item = get__Vec(body, i);
         LilyAstBodyClassItem *item = NULL;
 
@@ -4042,7 +4042,7 @@ parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     // 2. Parse body
     Vec *variants = NEW(Vec); // Vec<LilyAstVariant*>*
 
-    for (Usize i = 0; i < decl->type.enum_.body->len; i++) {
+    for (Usize i = 0; i < decl->type.enum_.body->len; ++i) {
         LilyPreparserEnumBodyItem *item = get__Vec(decl->type.enum_.body, i);
 
         switch (item->kind) {
@@ -4092,7 +4092,7 @@ parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     // 3. Parse body
     Vec *body = NEW(Vec); // Vec<LilyAstBodyEnumObjectItem*>*
 
-    for (Usize i = 0; i < decl->object.enum_.body->len; i++) {
+    for (Usize i = 0; i < decl->object.enum_.body->len; ++i) {
         LilyPreparserEnumObjectBodyItem *item =
           get__Vec(decl->object.enum_.body, i);
 
@@ -4112,7 +4112,7 @@ parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                     }
                     case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE: {
                         for (Usize i = 0; i < item->constant.multiple->len;
-                             i++) {
+                             ++i) {
                             LilyAstBodyEnumObjectItem *constant =
                               parse_constant_decl_for_enum_object__LilyParser(
                                 self,
@@ -4252,7 +4252,7 @@ parse_fun_params__LilyParser(LilyParser *self, Vec *params)
 {
     Vec *res = NEW(Vec); // Vec<LilyAstDeclFunParam*>*
 
-    for (Usize i = 0; i < params->len; i++) {
+    for (Usize i = 0; i < params->len; ++i) {
         LilyParseBlock param_block =
           NEW(LilyParseBlock, self, get__Vec(params, i));
         LilyAstDeclFunParam *param =
@@ -4310,7 +4310,7 @@ parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     if (decl->fun.req) {
         req = NEW(Vec);
 
-        for (Usize i = 0; i < decl->fun.req->len; i++) {
+        for (Usize i = 0; i < decl->fun.req->len; ++i) {
             LilyParseBlock expr_block =
               NEW(LilyParseBlock, self, get__Vec(decl->fun.req, i));
             LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
@@ -4331,7 +4331,7 @@ parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     if (decl->fun.when) {
         when = NEW(Vec);
 
-        for (Usize i = 0; i < decl->fun.when->len; i++) {
+        for (Usize i = 0; i < decl->fun.when->len; ++i) {
             LilyParseBlock expr_block =
               NEW(LilyParseBlock, self, get__Vec(decl->fun.when, i));
             LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
@@ -4611,7 +4611,7 @@ parse_method_params__LilyParser(LilyParser *self, Vec *params)
 {
     Vec *res = NEW(Vec); // Vec<LilyAstDeclMethodParam*>*
 
-    for (Usize i = 0; i < params->len; i++) {
+    for (Usize i = 0; i < params->len; ++i) {
         LilyParseBlock param_block =
           NEW(LilyParseBlock, self, get__Vec(params, i));
         LilyAstDeclMethodParam *param =
@@ -4667,7 +4667,7 @@ parse_method_params__LilyParser(LilyParser *self, Vec *params)
     if (item->method.req) {                                                    \
         req = NEW(Vec);                                                        \
                                                                                \
-        for (Usize i = 0; i < item->method.req->len; i++) {                    \
+        for (Usize i = 0; i < item->method.req->len; ++i) {                    \
             LilyParseBlock expr_block =                                        \
               NEW(LilyParseBlock, self, get__Vec(item->method.req, i));        \
             LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);       \
@@ -4686,7 +4686,7 @@ parse_method_params__LilyParser(LilyParser *self, Vec *params)
     if (item->method.when) {                                                   \
         when = NEW(Vec);                                                       \
                                                                                \
-        for (Usize i = 0; i < item->method.when->len; i++) {                   \
+        for (Usize i = 0; i < item->method.when->len; ++i) {                   \
             LilyParseBlock expr_block =                                        \
               NEW(LilyParseBlock, self, get__Vec(item->method.when, i));       \
             LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);       \
@@ -4777,7 +4777,7 @@ parse_prototype_decl__LilyParser(LilyParser *self,
     if (item->prototype.params) {
         params = NEW(Vec);
 
-        for (Usize i = 0; i < item->prototype.params->len; i++) {
+        for (Usize i = 0; i < item->prototype.params->len; ++i) {
             LilyParseBlock param_block =
               NEW(LilyParseBlock, self, get__Vec(item->prototype.params, i));
             LilyAstDataType *param =
@@ -4864,7 +4864,7 @@ parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     // 2. Parse body
     Vec *fields = NEW(Vec); // Vec<LilyAstField*>*
 
-    for (Usize i = 0; i < decl->type.record.body->len; i++) {
+    for (Usize i = 0; i < decl->type.record.body->len; ++i) {
         LilyPreparserRecordBodyItem *item = get__Vec(decl->type.record.body, i);
 
         switch (item->kind) {
@@ -4958,7 +4958,7 @@ parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     // 3. Parse body
     Vec *body = NEW(Vec); // Vec<LilyAstBodyRecordObjectItem*>*
 
-    for (Usize i = 0; i < decl->object.record.body->len; i++) {
+    for (Usize i = 0; i < decl->object.record.body->len; ++i) {
         LilyPreparserRecordObjectBodyItem *item =
           get__Vec(decl->object.record.body, i);
 
@@ -4978,7 +4978,7 @@ parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                     }
                     case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE: {
                         for (Usize i = 0; i < item->constant.multiple->len;
-                             i++) {
+                             ++i) {
                             LilyAstBodyRecordObjectItem *constant =
                               parse_constant_decl_for_record_object__LilyParser(
                                 self,
@@ -5061,7 +5061,7 @@ parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 LilyMacro *
 search_private_macro__LilyParser(const LilyParser *self, const String *name)
 {
-    for (Usize i = 0; i < self->package->private_macros->len; i++) {
+    for (Usize i = 0; i < self->package->private_macros->len; ++i) {
         LilyMacro *macro = get__Vec(self->package->private_macros, i);
 
         if (!strcmp(macro->name->buffer, name->buffer)) {
@@ -5075,7 +5075,7 @@ search_private_macro__LilyParser(const LilyParser *self, const String *name)
 LilyMacro *
 search_public_macro__LilyParser(const LilyParser *self, const String *name)
 {
-    for (Usize i = 0; i < self->root_package->public_macros->len; i++) {
+    for (Usize i = 0; i < self->root_package->public_macros->len; ++i) {
         LilyMacro *macro = get__Vec(self->root_package->public_macros, i);
 
         if (!strcmp(macro->name->buffer, name->buffer)) {
@@ -5371,7 +5371,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
             return;
         } else {
             // NOTE: macro->params and macro_expand.params have the same length.
-            for (Usize i = 0; i < macro->params->len; i++) {
+            for (Usize i = 0; i < macro->params->len; ++i) {
                 LilyMacroParam *param = get__Vec(macro->params, i);
 
                 // Checks if the values passed as parameters are valid with
@@ -5563,7 +5563,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
                             // parameter in the macro declaration, otherwise
                             // issues an error saying that `the macro identifier
                             // is not found`.
-                            for (Usize j = 0; j < macro->params->len; j++) {
+                            for (Usize j = 0; j < macro->params->len; ++j) {
                                 LilyMacroParam *param =
                                   get__Vec(macro->params, j);
 
@@ -5580,7 +5580,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
                                     if (i > macro_tokens_copy.len) {
                                         for (Usize k = 0;
                                              k < macro_expand_param->len;
-                                             k++) {
+                                             ++k) {
                                             push__Vec(
                                               &macro_tokens_copy,
                                               get__Vec(macro_expand_param, k));
@@ -5588,7 +5588,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
                                     } else {
                                         for (Usize k = 0;
                                              k < macro_expand_param->len;
-                                             k++) {
+                                             ++k) {
                                             insert__Vec(
                                               &macro_tokens_copy,
                                               get__Vec(macro_expand_param, k),
@@ -5700,7 +5700,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 
         run__LilyParser(&parser, dump_config, true);
 
-        for (Usize i = 0; i < parser.decls->len; i++) {
+        for (Usize i = 0; i < parser.decls->len; ++i) {
             push__Vec(self->decls, get__Vec(parser.decls, i));
         }
 
@@ -5721,7 +5721,7 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                     return parse_constant_decl__LilyParser(
                       self, decl->constant.simple, &decl->location);
                 case LILY_PREPARSER_CONSTANT_KIND_MULTIPLE:
-                    for (Usize i = 0; i < decl->constant.multiple->len; i++) {
+                    for (Usize i = 0; i < decl->constant.multiple->len; ++i) {
                         LilyAstDecl *constant = parse_constant_decl__LilyParser(
                           self,
                           get__Vec(decl->constant.multiple, i),
@@ -5781,7 +5781,7 @@ run__LilyParser(LilyParser *self,
                 const LilyDumpConfig *dump_config,
                 bool parse_for_macro_expand)
 {
-    for (Usize i = 0; i < self->preparser_info->decls->len; i++) {
+    for (Usize i = 0; i < self->preparser_info->decls->len; ++i) {
         LilyPreparserDecl *pre_decl = get__Vec(self->preparser_info->decls, i);
 
         switch (pre_decl->kind) {
@@ -5803,7 +5803,7 @@ run__LilyParser(LilyParser *self,
 #ifdef DEBUG_PARSER
         printf("====Parser(%s)====\n", self->package->file.name);
 
-        for (Usize i = 0; i < self->decls->len; i++) {
+        for (Usize i = 0; i < self->decls->len; ++i) {
             CALL_DEBUG(LilyAstDecl, get__Vec(self->decls, i));
         }
 #endif

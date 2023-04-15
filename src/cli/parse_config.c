@@ -54,7 +54,7 @@ parse_build__ParseConfig(const Option *op)
 {
     bool verbose = false;
 
-    for (Usize i = 0; i < op->build->len; i++) {
+    for (Usize i = 0; i < op->build->len; ++i) {
         switch (CAST(BuildOption *, get__Vec(op->build, i))->kind) {
             case BUILD_OPTION_KIND_VERBOSE:
                 verbose = true;
@@ -72,7 +72,7 @@ parse_cc__ParseConfig(const Option *op)
 {
     char *filename = "";
 
-    for (Usize i = 0; i < op->cc->len; i++) {
+    for (Usize i = 0; i < op->cc->len; ++i) {
         switch (CAST(CcOption *, get__Vec(op->cc, i))->kind) {
             case CC_OPTION_KIND_FILENAME:
                 CHECK_IF_INPUT_IS_ALREADY_SET(filename);
@@ -97,7 +97,7 @@ parse_compile__ParseConfig(const Option *op)
          run_ir = false;
     bool cc_ir = false, cpp_ir = false, js_ir = false;
 
-    for (Usize i = 0; i < op->compile->len; i++) {
+    for (Usize i = 0; i < op->compile->len; ++i) {
         switch (CAST(CompileOption *, get__Vec(op->cpp, i))->kind) {
             case COMPILE_OPTION_KIND_CC_IR:
                 cc_ir = true;
@@ -164,7 +164,7 @@ parse_cpp__ParseConfig(const Option *op)
 {
     char *filename = "";
 
-    for (Usize i = 0; i < op->cpp->len; i++) {
+    for (Usize i = 0; i < op->cpp->len; ++i) {
         switch (CAST(CppOption *, get__Vec(op->cpp, i))->kind) {
             case CPP_OPTION_KIND_FILENAME:
                 CHECK_IF_INPUT_IS_ALREADY_SET(filename);
@@ -184,7 +184,7 @@ parse_init__ParseConfig(const Option *op)
 {
     char *path = "";
 
-    for (Usize i = 0; i < op->init->len; i++) {
+    for (Usize i = 0; i < op->init->len; ++i) {
         switch (CAST(InitOption *, get__Vec(op->init, i))->kind) {
             case INIT_OPTION_KIND_PATH:
                 CHECK_IF_INPUT_IS_ALREADY_SET(path);
@@ -203,7 +203,7 @@ parse_new__ParseConfig(const Option *op)
 {
     char *name = "";
 
-    for (Usize i = 0; i < op->new->len; i++) {
+    for (Usize i = 0; i < op->new->len; ++i) {
         switch (CAST(NewOption *, get__Vec(op->new, i))->kind) {
             case NEW_OPTION_KIND_NAME:
                 CHECK_IF_INPUT_IS_ALREADY_SET(name);
@@ -222,7 +222,7 @@ parse_run__ParseConfig(const Option *op)
 {
     char *filename = "";
 
-    for (Usize i = 0; i < op->run->len; i++) {
+    for (Usize i = 0; i < op->run->len; ++i) {
         switch (CAST(RunOption *, get__Vec(op->run, i))->kind) {
             case RUN_OPTION_KIND_FILENAME:
                 CHECK_IF_INPUT_IS_ALREADY_SET(filename);
@@ -242,7 +242,7 @@ parse_test__ParseConfig(const Option *op)
 {
     char *filename = "";
 
-    for (Usize i = 0; i < op->test->len; i++) {
+    for (Usize i = 0; i < op->test->len; ++i) {
         switch (CAST(TestOption *, get__Vec(op->test, i))->kind) {
             case TEST_OPTION_KIND_FILENAME:
                 CHECK_IF_INPUT_IS_ALREADY_SET(filename);
@@ -263,7 +263,7 @@ parse_to__ParseConfig(const Option *op)
     char *filename = "";
     bool from_cc = false, from_cpp = false, from_js = false;
 
-    for (Usize i = 0; i < op->to->len; i++) {
+    for (Usize i = 0; i < op->to->len; ++i) {
         switch (CAST(ToOption *, get__Vec(op->to, i))->kind) {
             case TO_OPTION_KIND_FILENAME:
                 CHECK_IF_INPUT_IS_ALREADY_SET(filename);

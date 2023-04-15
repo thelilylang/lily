@@ -77,7 +77,7 @@ parse__InitOption(const char **options, const Usize options_size)
 {
     Vec *res = NEW(Vec);
 
-    for (Usize i = 0; i < options_size; i++) {
+    for (Usize i = 0; i < options_size; ++i) {
         if (options[i][0] == '-') {
             push__Vec(res, get__InitOption(options[i]));
         } else {

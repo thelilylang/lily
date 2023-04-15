@@ -27,8 +27,8 @@
 void
 next_line__Cursor(Cursor *cursor, char current)
 {
-    cursor->position++;
-    cursor->line++;
+    ++cursor->position;
+    ++cursor->line;
     cursor->column = 1;
     cursor->current = current;
 }
@@ -36,15 +36,15 @@ next_line__Cursor(Cursor *cursor, char current)
 void
 next__Cursor(Cursor *cursor, char current)
 {
-    cursor->position++;
-    cursor->column++;
+    ++cursor->position;
+    ++cursor->column;
     cursor->current = current;
 }
 
 void
 previous__Cursor(Cursor *cursor, char current)
 {
-    cursor->position--;
-    cursor->column--;
+    --cursor->position;
+    --cursor->column;
     cursor->current = current;
 }
