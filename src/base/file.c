@@ -27,8 +27,8 @@
 #ifdef LILY_WINDOWS_OS
 #include <windows.h>
 #else
-#include <sys/stat.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #endif
 
 #include <base/alloc.h>
@@ -93,8 +93,8 @@ get_extension__File(const char *path)
 Usize
 get_size__File(const char *path)
 {
-	// TODO: get size of the file
-	return 0;
+    // TODO: get size of the file
+    return 0;
 }
 
 char *
@@ -137,9 +137,9 @@ struct stat st;
 Usize
 get_size__File(const char *path)
 {
-	stat(path, &st);
+    stat(path, &st);
 
-	return st.st_size;
+    return st.st_size;
 }
 
 char *
@@ -157,15 +157,17 @@ read_file__File(const char *path)
         exit(1);
     }
 
-	stat(path, &st);
+    stat(path, &st);
 
-	Usize size = st.st_size + 1;
-	char *content = lily_malloc(size);
+    Usize size = st.st_size + 2;
+    char *content = lily_malloc(size);
 
-	memset(content, 0, size); 
-	fread(content, size, 1, file);
+    memset(content, 0, size);
+    fread(content, size, 1, file);
 
-	fclose(file);
+    content[size - 1] = '\n';
+
+    fclose(file);
 
     return content;
 }
