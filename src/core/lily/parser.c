@@ -5331,6 +5331,8 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 
     // 2. Check params of macro. Then replace the macro identifier(s) by the
     // value(s) passed in the parameters of the expansion macro.
+    Vec macro_tokens_copy = *macro->tokens;
+
     if (decl->macro_expand.params && macro->params) {
         if (decl->macro_expand.params->len < macro->params->len) {
             emit__Diagnostic(
@@ -5550,6 +5552,88 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 
                 // Replaces all uses of the parameter in the macro with the
                 // value passed in the macro expansion.
+
+                for (Usize i = 0; i < macro_tokens_copy.len;) {
+                    LilyToken *token = get__Vec(&macro_tokens_copy, i);
+
+                    // Looks for identifier macro.
+                    switch (token->kind) {
+                        case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
+                            // Check
+                            for (Usize j = 0; j < macro->params->len; j++) {
+                                LilyMacroParam *param =
+                                  get__Vec(macro->params, j);
+
+                                if (!strcmp(token->identifier_macro->buffer,
+                                            param->name->buffer)) {
+                                    Vec *macro_expand_param =
+                                      get__Vec(decl->macro_expand.params, j);
+
+                                    remove__Vec(&macro_tokens_copy, i);
+
+                                    // See if it is possible to push otherwise
+                                    // inserted at the position of the
+                                    // `identifier_macro`..
+                                    if (i > macro_tokens_copy.len) {
+                                        for (Usize k = 0;
+                                             k < macro_expand_param->len;
+                                             k++) {
+                                            push__Vec(
+                                              &macro_tokens_copy,
+                                              get__Vec(macro_expand_param, k));
+                                        }
+                                    } else {
+                                        for (Usize k = 0;
+                                             k < macro_expand_param->len;
+                                             k++) {
+                                            insert__Vec(
+                                              &macro_tokens_copy,
+                                              get__Vec(macro_expand_param, k),
+                                              i + k);
+                                        }
+                                    }
+
+                                    i += macro_expand_param->len;
+
+                                    goto exit_loop;
+                                }
+                            }
+
+                            {
+                                const File *file =
+                                  get_file_from_filename__LilyPackage(
+                                    self->root_package,
+                                    macro->location.filename);
+
+                                emit__Diagnostic(
+                                  NEW_VARIANT(
+                                    Diagnostic,
+                                    simple_lily_error,
+                                    file,
+                                    &token->location,
+                                    NEW(
+                                      LilyError,
+                                      LILY_ERROR_KIND_MACRO_IDENTIFIER_NOT_FOUND),
+                                    NULL,
+                                    NULL,
+                                    format__String(
+                                      "unknown macro identifier named {S}",
+                                      token->identifier_macro)),
+                                  &self->package->count_error);	
+
+								return;
+                            }
+
+                        exit_loop : {
+                        }
+
+                        break;
+                        default:
+                            break;
+                    }
+
+                    ++i;
+                }
             }
         }
     } else if (decl->macro_expand.params || macro->params) {
@@ -5594,7 +5678,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
           self->root_package, macro->location.filename);
         LilyPreparserInfo preparser_info = NEW(LilyPreparserInfo, NULL);
         LilyPreparser preparse_macro_expand =
-          NEW(LilyPreparser, file, macro->tokens, NULL);
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
 
         run__LilyPreparser(&preparse_macro_expand, &preparser_info);
 
