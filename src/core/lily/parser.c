@@ -5559,7 +5559,10 @@ apply_macro_expansion__LilyParser(LilyParser *self,
                     // Looks for identifier macro.
                     switch (token->kind) {
                         case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
-                            // Check
+                            // Checks if the macro identifier matches a
+                            // parameter in the macro declaration, otherwise
+                            // issues an error saying that `the macro identifier
+                            // is not found`.
                             for (Usize j = 0; j < macro->params->len; j++) {
                                 LilyMacroParam *param =
                                   get__Vec(macro->params, j);
@@ -5573,7 +5576,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 
                                     // See if it is possible to push otherwise
                                     // inserted at the position of the
-                                    // `identifier_macro`..
+                                    // `identifier_macro`.
                                     if (i > macro_tokens_copy.len) {
                                         for (Usize k = 0;
                                              k < macro_expand_param->len;
@@ -5619,9 +5622,9 @@ apply_macro_expansion__LilyParser(LilyParser *self,
                                     format__String(
                                       "unknown macro identifier named {S}",
                                       token->identifier_macro)),
-                                  &self->package->count_error);	
+                                  &self->package->count_error);
 
-								return;
+                                return;
                             }
 
                         exit_loop : {
