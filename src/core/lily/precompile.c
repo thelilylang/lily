@@ -1315,7 +1315,8 @@ precompile_macro__LilyPrecompile(LilyPrecompile *self,
 
             end__Location(&location,
                           current->location.end_line,
-                          current->location.end_column);
+                          current->location.end_column,
+                          current->location.end_position);
             push__Vec(params, NEW(LilyMacroParam, kind, name, location));
         }
     }

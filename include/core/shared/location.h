@@ -28,6 +28,13 @@
 #include <base/macros.h>
 #include <base/types.h>
 
+#define START_LOCATION(self, other) \
+    start__Location(                \
+      self, other.start_line, other.start_column, other.start_position)
+
+#define END_LOCATION(self, other) \
+    end__Location(self, other.end_line, other.end_column, other.end_position)
+
 typedef struct Location
 {
     const char *filename;
@@ -35,7 +42,8 @@ typedef struct Location
     Usize end_line;
     Usize start_column;
     Usize end_column;
-    Usize position; // Position in the file content
+    Usize start_position; // Start position in the file content
+    Usize end_position;   // End position in the file content
 } Location;
 
 /**
@@ -49,14 +57,16 @@ inline CONSTRUCTOR(Location,
                    Usize end_line,
                    Usize start_column,
                    Usize end_column,
-                   Usize position)
+                   Usize start_position,
+                   Usize end_position)
 {
     return (Location){ .filename = filename,
                        .start_line = start_line,
                        .end_line = end_line,
                        .start_column = start_column,
                        .end_column = end_column,
-                       .position = position };
+                       .start_position = start_position,
+                       .end_position = end_position };
 }
 
 /**
@@ -72,7 +82,8 @@ default__Location(const char *filename)
                        .end_line = 1,
                        .start_column = 1,
                        .end_column = 1,
-                       .position = 0 };
+                       .start_position = 0,
+                       .end_position = 0 };
 }
 
 /**
@@ -87,7 +98,7 @@ start__Location(Location *self, Usize line, Usize column, Usize position);
  * @brief Set end_line and end_column.
  */
 void
-end__Location(Location *self, Usize line, Usize column);
+end__Location(Location *self, Usize line, Usize column, Usize position);
 
 /**
  *
@@ -109,7 +120,8 @@ clone__Location(const Location *self)
                        .end_line = self->end_line,
                        .start_column = self->start_column,
                        .end_column = self->end_column,
-                       .position = self->position };
+                       .start_position = self->start_position,
+                       .end_position = self->end_position };
 }
 
 /**

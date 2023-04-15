@@ -291,7 +291,8 @@ get_token__LilyScanner(LilyScanner *self);
         LilyToken *token_res = NULL;                                           \
         end__Location(&location_error,                                         \
                       self->source.cursor.line,                                \
-                      self->source.cursor.column);                             \
+                      self->source.cursor.column,                              \
+                      self->source.cursor.position);                           \
                                                                                \
         char *c1 = peek_char__LilyScanner(self, 1);                            \
                                                                                \
@@ -938,7 +939,8 @@ get_character__LilyScanner(LilyScanner *self, char previous)
                 default:
                     end__Location(&location_error,
                                   self->source.cursor.line,
-                                  self->source.cursor.column);
+                                  self->source.cursor.column,
+                                  self->source.cursor.position);
 
                     if (self->source.cursor.position >=
                         self->source.file->len - 1) {
@@ -1008,7 +1010,8 @@ skip_comment_block__LilyScanner(LilyScanner *self)
         if (self->source.cursor.position >= self->source.file->len - 2) {
             end__Location(&location_error,
                           self->source.cursor.line,
-                          self->source.cursor.column);
+                          self->source.cursor.column,
+                          self->source.cursor.position);
 
             {
                 emit__Diagnostic(
@@ -1089,7 +1092,8 @@ scan_char__LilyScanner(LilyScanner *self)
 
         end__Location(&location_error,
                       self->source.cursor.line,
-                      self->source.cursor.column);
+                      self->source.cursor.column,
+                      self->source.cursor.position);
 
         if (target != '\'' && self->source.cursor.current != '\'') {
             emit__Diagnostic(
@@ -1123,8 +1127,10 @@ scan_char__LilyScanner(LilyScanner *self)
         return NULL;
     }
 
-    end__Location(
-      &location_error, self->source.cursor.line, self->source.cursor.column);
+    end__Location(&location_error,
+                  self->source.cursor.line,
+                  self->source.cursor.column,
+                  self->source.cursor.position);
 
     emit__Diagnostic(
       NEW_VARIANT(
@@ -1157,7 +1163,8 @@ scan_string__LilyScanner(LilyScanner *self)
         if (self->source.cursor.position > self->source.file->len - 2) {
             end__Location(&location_error,
                           self->source.cursor.line,
-                          self->source.cursor.column);
+                          self->source.cursor.column,
+                          self->source.cursor.position);
 
             emit__Diagnostic(
               NEW_VARIANT(
@@ -1268,7 +1275,8 @@ scan_hex__LilyScanner(LilyScanner *self)
     if (is_empty__String(res)) {
         end__Location(&location_error,
                       self->source.cursor.line,
-                      self->source.cursor.column);
+                      self->source.cursor.column,
+                      self->source.cursor.position);
 
         emit__Diagnostic(
           NEW_VARIANT(
@@ -1324,7 +1332,8 @@ scan_oct__LilyScanner(LilyScanner *self)
     if (is_empty__String(res)) {
         end__Location(&location_error,
                       self->source.cursor.line,
-                      self->source.cursor.column);
+                      self->source.cursor.column,
+                      self->source.cursor.position);
 
         emit__Diagnostic(
           NEW_VARIANT(Diagnostic,
@@ -1379,7 +1388,8 @@ scan_bin__LilyScanner(LilyScanner *self)
     if (is_empty__String(res)) {
         end__Location(&location_error,
                       self->source.cursor.line,
-                      self->source.cursor.column);
+                      self->source.cursor.column,
+                      self->source.cursor.position);
 
         emit__Diagnostic(
           NEW_VARIANT(Diagnostic,
@@ -1428,7 +1438,8 @@ scan_num__LilyScanner(LilyScanner *self)
                             self->source.cursor.position);
             end__Location(&location_error,
                           self->source.cursor.line,
-                          self->source.cursor.column);
+                          self->source.cursor.column,
+                          self->source.cursor.position);
 
             next_char__Source(&self->source);
 
@@ -1470,7 +1481,8 @@ scan_num__LilyScanner(LilyScanner *self)
                             self->source.cursor.position);
             end__Location(&location_error,
                           self->source.cursor.line,
-                          self->source.cursor.column);
+                          self->source.cursor.column,
+                          self->source.cursor.position);
 
             next_char__Source(&self->source);
 
@@ -1500,7 +1512,8 @@ scan_num__LilyScanner(LilyScanner *self)
     if (is_float || is_scientific) {
         end__Location(&location_error,
                       self->source.cursor.line,
-                      self->source.cursor.column);
+                      self->source.cursor.column,
+                      self->source.cursor.position);
         SCAN_LITERAL_SUFFIX(res->buffer, 10, false);
 
         return NEW_VARIANT(
@@ -1822,7 +1835,8 @@ get_token__LilyScanner(LilyScanner *self)
 
                             end__Location(&location_error,
                                           self->source.cursor.line,
-                                          self->source.cursor.column);
+                                          self->source.cursor.column,
+                                          self->source.cursor.position);
 
                             emit__Diagnostic(
                               NEW_VARIANT(
@@ -2152,7 +2166,8 @@ get_token__LilyScanner(LilyScanner *self)
 
                 end__Location(&location_error,
                               self->source.cursor.line,
-                              self->source.cursor.column);
+                              self->source.cursor.column,
+                              self->source.cursor.position);
 
                 emit__Diagnostic(
                   NEW_VARIANT(
@@ -2284,7 +2299,8 @@ get_token__LilyScanner(LilyScanner *self)
 
             end__Location(&location_error,
                           self->source.cursor.line,
-                          self->source.cursor.column);
+                          self->source.cursor.column,
+                          self->source.cursor.position);
 
             emit__Diagnostic(
               NEW_VARIANT(

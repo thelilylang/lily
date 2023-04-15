@@ -566,7 +566,7 @@ CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
     start__Location(&location_eof,
                     location_eof.end_line,
                     location_eof.end_column,
-                    location_eof.position);
+                    location_eof.end_position);
 
     push__Vec(tokens,
               NEW(LilyToken, LILY_TOKEN_KIND_EOF, location_eof)); // Add EOF.
@@ -694,9 +694,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 
     switch (self->previous->kind) {
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            end__Location(&location,
-                          self->previous->location.end_line,
-                          self->previous->location.end_column);
+            END_LOCATION(&location, self->previous->location);
 
             if (!strcmp(self->previous->identifier_normal->buffer, "Any")) {
                 return NEW(
@@ -864,23 +862,18 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                             }
                         }
 
-                        end__Location(&location,
-                                      self->current->location.end_line,
-                                      self->current->location.end_column);
+                        END_LOCATION(&location, self->current->location);
                         next_token__LilyParseBlock(self);
 
                         break;
-                    default:
-                        end__Location(
-                          &location,
-                          CAST(LilyToken *,
-                               get__Vec(self->tokens, self->position - 1))
-                            ->location.end_line,
-                          CAST(LilyToken *,
-                               get__Vec(self->tokens, self->position - 1))
-                            ->location.end_column);
+                    default: {
+                        LilyToken *token =
+                          get__Vec(self->tokens, self->position - 1);
+
+                        END_LOCATION(&location, token->location);
 
                         break;
+                    }
                 }
 
                 return NEW_VARIANT(LilyAstDataType,
@@ -891,9 +884,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 
         case LILY_TOKEN_KIND_KEYWORD_OBJECT:
         case LILY_TOKEN_KIND_KEYWORD_SELF:
-            end__Location(&location,
-                          self->previous->location.end_line,
-                          self->previous->location.end_column);
+            END_LOCATION(&location, self->previous->location);
 
             switch (self->previous->kind) {
                 case LILY_TOKEN_KIND_KEYWORD_OBJECT:
@@ -936,14 +927,11 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
             return NULL;                                                  \
         }                                                                 \
                                                                           \
-        end__Location(                                                    \
-          &location, dt->location.end_line, dt->location.end_column);     \
+        END_LOCATION(&location, dt->location);                            \
     } else {                                                              \
         LilyToken *previous = get__Vec(self->tokens, self->position - 1); \
                                                                           \
-        end__Location(&location,                                          \
-                      previous->location.end_line,                        \
-                      previous->location.end_column);                     \
+        END_LOCATION(&location, previous->location);                      \
     }
 
             switch (self->current->kind) {
@@ -1088,8 +1076,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                 return NULL;
             }
 
-            end__Location(
-              &location, dt->location.end_line, dt->location.end_column);
+            END_LOCATION(&location, dt->location);
 
             switch (kind) {
                 case LILY_TOKEN_KIND_BANG:
@@ -1176,25 +1163,17 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                     return NULL;
                 }
 
-                end__Location(&location,
-                              return_data_type->location.end_line,
-                              return_data_type->location.end_column);
+                END_LOCATION(&location, return_data_type->location);
             } else {
                 if (params) {
-                    end__Location(
-                      &location,
-                      CAST(LilyToken *, last__Vec(params))->location.end_line,
-                      CAST(LilyToken *, last__Vec(params))
-                        ->location.end_column);
+                    LilyToken *last = last__Vec(params);
+
+                    END_LOCATION(&location, last->location);
                 } else {
-                    end__Location(
-                      &location,
-                      CAST(LilyToken *,
-                           get__Vec(self->tokens, self->position - 1))
-                        ->location.end_line,
-                      CAST(LilyToken *,
-                           get__Vec(self->tokens, self->position - 1))
-                        ->location.end_column);
+                    LilyToken *token =
+                      get__Vec(self->tokens, self->position - 1);
+
+                    END_LOCATION(&location, token->location);
                 }
             }
 
@@ -1216,9 +1195,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_R_BRACE:
-                    end__Location(&location,
-                                  self->current->location.end_line,
-                                  self->current->location.end_column);
+                    END_LOCATION(&location, self->current->location);
                     next_token__LilyParseBlock(self);
 
                     break;
@@ -1280,9 +1257,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                 }
             }
 
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyParseBlock(self);
 
             return NEW_VARIANT(LilyAstDataType, tuple, location, tuple);
@@ -1370,9 +1345,7 @@ parse_hook_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_R_HOOK:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyParseBlock(self);
 
             return NEW_VARIANT(
@@ -1435,8 +1408,7 @@ parse_object_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
     {
         LilyAstDataType *last = last__Vec(object);
 
-        end__Location(
-          &location, last->location.end_line, last->location.end_column);
+        END_LOCATION(&location, last->location);
     }
 
     return NEW_VARIANT(
@@ -1457,8 +1429,7 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
     LilyAstExpr *path = parse_path_access__LilyParseBlock(self, NULL);
 
     if (path) {
-        end__Location(
-          &location, path->location.end_line, path->location.end_column);
+        END_LOCATION(&location, path->location);
     } else {
         return NULL;
     }
@@ -1507,9 +1478,7 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
         CHECK_COMMA(closing)                                           \
     }                                                                  \
                                                                        \
-    end__Location(&location,                                           \
-                  self->current->location.end_line,                    \
-                  self->current->location.end_column);                 \
+    END_LOCATION(&location, self->current->location);                  \
     next_token__LilyParseBlock(self); /* skip closing */
 
 // NOTE: only used to parse data type between (), {}, [] by example.
@@ -1532,9 +1501,7 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
         CHECK_COMMA(closing)                                           \
     }                                                                  \
                                                                        \
-    end__Location(&location,                                           \
-                  self->current->location.end_line,                    \
-                  self->current->location.end_column);                 \
+    END_LOCATION(&location, self->current->location);                  \
     next_token__LilyParseBlock(self); /* skip closing */
 
 LilyAstExpr *
@@ -1716,9 +1683,7 @@ parse_fun_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
                             return NULL;
                         }
 
-                        end__Location(&location_param,
-                                      value->location.end_line,
-                                      value->location.end_column);
+                        END_LOCATION(&location_param, value->location);
                         push__Vec(params,
                                   NEW_VARIANT(LilyAstExprFunParamCall,
                                               default_,
@@ -1746,9 +1711,7 @@ parse_fun_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
                     return NULL;
                 }
 
-                end__Location(&location_param,
-                              value->location.end_line,
-                              value->location.end_column);
+                END_LOCATION(&location_param, value->location);
                 push__Vec(
                   params,
                   NEW_VARIANT(
@@ -1762,9 +1725,7 @@ parse_fun_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
         CHECK_COMMA(LILY_TOKEN_KIND_R_PAREN);
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
     next_token__LilyParseBlock(self); // skip `)`
 
     return NEW_VARIANT(
@@ -1839,9 +1800,7 @@ parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
         push__Vec(params, NEW(LilyAstExprRecordParamCall, name, value));
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
     next_token__LilyParseBlock(self); // skip `}`
 
     return NEW_VARIANT(LilyAstExpr,
@@ -1867,8 +1826,7 @@ parse_variant_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
         return NULL;
     }
 
-    end__Location(
-      &location, expr->location.end_line, expr->location.end_column);
+    END_LOCATION(&location, expr->location);
 
     return NEW_VARIANT(LilyAstExpr,
                        call,
@@ -2137,9 +2095,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
 
                     switch (self->current->kind) {
                         case LILY_TOKEN_KIND_R_PAREN:
-                            end__Location(&location,
-                                          self->current->location.end_line,
-                                          self->current->location.end_column);
+                            END_LOCATION(&location, self->current->location);
                             next_token__LilyParseBlock(self);
 
                             return NEW_VARIANT(
@@ -2267,8 +2223,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
                 return NULL;
             }
 
-            end__Location(
-              &location, right->location.end_line, right->location.end_column);
+            END_LOCATION(&location, right->location);
 
             return NEW_VARIANT(
               LilyAstExpr, unary, location, NEW(LilyAstExprUnary, op, right));
@@ -2310,9 +2265,7 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
             do {
                 Location location = clone__Location(&expr->location);
 
-                end__Location(&location,
-                              self->current->location.end_line,
-                              self->current->location.end_column);
+                END_LOCATION(&location, self->current->location);
                 next_token__LilyParseBlock(self);
 
                 expr = NEW_VARIANT(LilyAstExpr,
@@ -2403,9 +2356,7 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
                     return NULL;
                 }
 
-                end__Location(&location,
-                              dest_data_type->location.end_line,
-                              dest_data_type->location.end_column);
+                END_LOCATION(&location, dest_data_type->location);
 
                 expr = NEW_VARIANT(LilyAstExpr,
                                    cast,
@@ -3111,9 +3062,7 @@ parse_fun_body__LilyParser(LilyParser *self, Vec *block)
         CHECK_COMMA(closing)                                           \
     }                                                                  \
                                                                        \
-    end__Location(&location,                                           \
-                  self->current->location.end_line,                    \
-                  self->current->location.end_column);                 \
+    END_LOCATION(&location, self->current->location);                  \
     next_token__LilyParseBlock(self); /* skip closing */
 
 LilyAstPattern *
@@ -3136,9 +3085,7 @@ parse_as_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *pattern)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyParseBlock(self);
 
             return NEW_VARIANT(
@@ -3212,8 +3159,7 @@ parse_exception_pattern__LilyParseBlock(LilyParseBlock *self)
         return NULL;
     }
 
-    end__Location(
-      &location, pattern->location.end_line, pattern->location.end_column);
+    END_LOCATION(&location, pattern->location);
 
     return NEW_VARIANT(LilyAstPattern,
                        exception,
@@ -3247,8 +3193,7 @@ parse_list_head_pattern__LilyParseBlock(LilyParseBlock *self,
         return NULL;
     }
 
-    end__Location(
-      &location, right->location.end_line, right->location.end_column);
+    END_LOCATION(&location, right->location);
 
     return NEW_VARIANT(LilyAstPattern,
                        list_head,
@@ -3271,8 +3216,7 @@ parse_list_tail_pattern__LilyParseBlock(LilyParseBlock *self,
         return NULL;
     }
 
-    end__Location(
-      &location, right->location.end_line, right->location.end_column);
+    END_LOCATION(&location, right->location);
 
     return NEW_VARIANT(LilyAstPattern,
                        list_tail,
@@ -3301,8 +3245,7 @@ parse_range_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstPattern *left)
         return NULL;
     }
 
-    end__Location(
-      &location, right->location.end_line, right->location.end_column);
+    END_LOCATION(&location, right->location);
 
     return NEW_VARIANT(
       LilyAstPattern, range, location, NEW(LilyAstPatternRange, left, right));
@@ -3383,9 +3326,7 @@ parse_record_call_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
     }
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
     next_token__LilyParseBlock(self);
 
     return NEW_VARIANT(LilyAstPattern,
@@ -3415,8 +3356,7 @@ parse_variant_call_pattern__LilyParseBlock(LilyParseBlock *self,
 
     LilyAstPattern *pattern = parse_pattern__LilyParseBlock(self);
 
-    end__Location(
-      &location, pattern->location.end_line, pattern->location.end_column);
+    END_LOCATION(&location, pattern->location);
 
     return NEW_VARIANT(LilyAstPattern,
                        variant_call,
@@ -3672,9 +3612,7 @@ parse_generic_param__LilyParseBlock(LilyParseBlock *self)
                         return NULL;
                     }
 
-                    end__Location(&location,
-                                  data_type->location.end_line,
-                                  data_type->location.end_column);
+                    END_LOCATION(&location, data_type->location);
 
                     return NEW_VARIANT(LilyAstGenericParam,
                                        constraint,
@@ -3686,9 +3624,8 @@ parse_generic_param__LilyParseBlock(LilyParseBlock *self)
             }
         }
         default:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
+
             return NEW_VARIANT(LilyAstGenericParam, normal, location, name);
     }
 }
@@ -4222,9 +4159,7 @@ parse_fun_param__LilyParseBlock(LilyParseBlock *self)
               LilyAstDeclFunParam, normal, name, data_type, location);
         }
         case LILY_TOKEN_KIND_EOF:
-            end__Location(&location,
-                          self->previous->location.end_line,
-                          self->previous->location.end_column);
+            END_LOCATION(&location, self->previous->location);
 
             return NEW_VARIANT(
               LilyAstDeclFunParam, normal, name, NULL, location);
@@ -4385,9 +4320,7 @@ parse_method_param__LilyParseBlock(LilyParseBlock *self)
 
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_KEYWORD_SELF:
-                    end__Location(&location,
-                                  self->current->location.end_line,
-                                  self->current->location.end_column);
+                    END_LOCATION(&location, self->current->location);
                     next_token__LilyParseBlock(self);
 
                     if (!HAS_REACHED_THE_END((*self))) {
@@ -4429,9 +4362,7 @@ parse_method_param__LilyParseBlock(LilyParseBlock *self)
 
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_KEYWORD_SELF:
-                    end__Location(&location,
-                                  self->current->location.end_line,
-                                  self->current->location.end_column);
+                    END_LOCATION(&location, self->current->location);
                     next_token__LilyParseBlock(self);
 
                     if (!HAS_REACHED_THE_END((*self))) {
@@ -4458,9 +4389,7 @@ parse_method_param__LilyParseBlock(LilyParseBlock *self)
 
                     switch (self->current->kind) {
                         case LILY_TOKEN_KIND_KEYWORD_SELF:
-                            end__Location(&location,
-                                          self->current->location.end_line,
-                                          self->current->location.end_column);
+                            END_LOCATION(&location, self->current->location);
                             next_token__LilyParseBlock(self);
 
                             if (!HAS_REACHED_THE_END((*self))) {
@@ -4515,9 +4444,7 @@ parse_method_param__LilyParseBlock(LilyParseBlock *self)
                     return NULL;
             }
         case LILY_TOKEN_KIND_KEYWORD_SELF:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyParseBlock(self);
 
             if (!HAS_REACHED_THE_END((*self))) {
@@ -4578,9 +4505,7 @@ parse_method_param__LilyParseBlock(LilyParseBlock *self)
               LilyAstDeclMethodParam, normal, name, data_type, location);
         }
         case LILY_TOKEN_KIND_EOF:
-            end__Location(&location,
-                          self->previous->location.end_line,
-                          self->previous->location.end_column);
+            END_LOCATION(&location, self->previous->location);
 
             return NEW_VARIANT(
               LilyAstDeclMethodParam, normal, name, NULL, location);

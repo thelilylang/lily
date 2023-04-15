@@ -6184,9 +6184,7 @@ preparse_import__LilyPreparser(LilyPreparser *self)
             break;
     }
 
-    end__Location(&location_decl,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location_decl, self->current->location);
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
@@ -6360,7 +6358,7 @@ get_tokens : {
                 start__Location(&location_eof,
                                 location_eof.end_line,
                                 location_eof.end_column,
-                                location_eof.position);
+                                location_eof.end_position);
 
                 push__Vec(tokens,
                           NEW(LilyToken,
@@ -6395,9 +6393,7 @@ get_tokens : {
     }
 }
 
-    end__Location(&location_decl,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location_decl, self->current->location);
 
     return NEW(LilyPreparserMacro, name, params, tokens, location_decl);
 }
@@ -6872,9 +6868,7 @@ parse_module_name : {
         }
     }
 
-    end__Location(&module_location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&module_location, self->current->location);
 
     if (self->current->kind == LILY_TOKEN_KIND_EOF) {
         FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserDecl);
@@ -7021,9 +7015,7 @@ preparse_asm_block__LilyPreparser(LilyPreparser *self)
 
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_SEMICOLON:
-                    end__Location(&location,
-                                  self->current->location.end_line,
-                                  self->current->location.end_column);
+                    END_LOCATION(&location, self->current->location);
                     next_token__LilyPreparser(self);
 
                     break;
@@ -7095,9 +7087,7 @@ preparse_await_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON: {
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -7136,9 +7126,7 @@ preparse_break_block__LilyPreparser(LilyPreparser *self)
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON: {
         finish_to_preparse_break_stmt : {
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -7195,9 +7183,7 @@ preparse_defer_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -7244,9 +7230,7 @@ preparse_drop_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -7417,9 +7401,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
 
                     switch (self->current->kind) {
                         case LILY_TOKEN_KIND_KEYWORD_END: {
-                            end__Location(&location,
-                                          self->current->location.end_line,
-                                          self->current->location.end_column);
+                            END_LOCATION(&location, self->current->location);
 
                             return NEW_VARIANT(
                               LilyPreparserFunBodyItem,
@@ -7441,9 +7423,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                 }
 
                 case LILY_TOKEN_KIND_KEYWORD_END: {
-                    end__Location(&location,
-                                  self->current->location.end_line,
-                                  self->current->location.end_column);
+                    END_LOCATION(&location, self->current->location);
                     next_token__LilyPreparser(self); // skip `end` keyword
 
                     return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -7530,9 +7510,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                 return NULL;
             }
 
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self); // skip `end` keyword
 
             return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -7547,9 +7525,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
         }
 
         case LILY_TOKEN_KIND_KEYWORD_END: {
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self); // skip `end` keyword
 
             return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -7639,9 +7615,7 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
         return NULL;
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
     next_token__LilyPreparser(self); // skip `end` keyword
 
     return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -7698,9 +7672,7 @@ preparse_while_block__LilyPreparser(LilyPreparser *self)
         return NULL;
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
     next_token__LilyPreparser(self); // skip `end` keyword
 
     return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -7721,9 +7693,7 @@ preparse_return_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON: {
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -7742,9 +7712,7 @@ preparse_return_block__LilyPreparser(LilyPreparser *self)
 
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_SEMICOLON: {
-                    end__Location(&location,
-                                  self->current->location.end_line,
-                                  self->current->location.end_column);
+                    END_LOCATION(&location, self->current->location);
                     next_token__LilyPreparser(self);
 
                     return NEW_VARIANT(
@@ -7787,9 +7755,7 @@ preparse_try_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_END: {
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self); // skip `end` keyword
 
             return NEW_VARIANT(
@@ -7859,9 +7825,7 @@ preparse_try_block__LilyPreparser(LilyPreparser *self)
                 return NULL;
             }
 
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self); // skip `end` keyword
 
             return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -8103,9 +8067,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_END:
-            end__Location(&location_match,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location_match, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -8136,9 +8098,7 @@ preparse_next_block__LilyPreparser(LilyPreparser *self)
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON: {
         finish_to_preparse_break_stmt : {
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -8190,9 +8150,7 @@ preparse_basic_block__LilyPreparser(LilyPreparser *self)
     Vec *basic_block_body = preparse_body__LilyPreparser(
       self, &must_close_basic_block__LilyPreparser);
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
     next_token__LilyPreparser(self); // skip `end` keyword
 
     return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -8215,9 +8173,7 @@ preparse_basic_brace_block__LilyPreparser(LilyPreparser *self)
         }
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
     next_token__LilyPreparser(self); // skip `}` keyword
 
     return NEW_VARIANT(LilyPreparserFunBodyItem,
@@ -8302,9 +8258,7 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -8616,9 +8570,7 @@ preparse_block__LilyPreparser(LilyPreparser *self)
 
             LilyToken *previous = self->tokens->buffer[self->position - 1];
 
-            end__Location(&location,
-                          previous->location.end_line,
-                          previous->location.end_column);
+            END_LOCATION(&location, previous->location);
 
             return NEW_VARIANT(LilyPreparserFunBodyItem,
                                exprs,
@@ -8975,9 +8927,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
             UNREACHABLE("this way is not possible");
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
     next_token__LilyPreparser(self); // skip `end` keyword
 
     // TODO: Check if the function is an operator.
@@ -9078,9 +9028,7 @@ preparse_constant__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -9316,9 +9264,7 @@ preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -9543,9 +9489,7 @@ preparse_attribute_for_class__LilyPreparser(LilyPreparser *self,
 return_attribute : {
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -9568,9 +9512,7 @@ return_attribute : {
         }
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
 
     return NEW_VARIANT(LilyPreparserClassBodyItem,
                        attribute,
@@ -9989,9 +9931,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
             UNREACHABLE("this way is possible");
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
 
     return NEW_VARIANT(LilyPreparserDecl,
                        object,
@@ -10073,9 +10013,7 @@ preparse_prototype__LilyPreparser(LilyPreparser *self)
               &self->count_error);
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
 
     return NEW_VARIANT(LilyPreparserTraitBodyItem,
                        prototype,
@@ -10405,9 +10343,7 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
         }
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
     next_token__LilyPreparser(self);
 
     return NEW_VARIANT(LilyPreparserDecl,
@@ -10547,9 +10483,8 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                                 LilyToken *previous =
                                   self->tokens->buffer[self->position - 1];
 
-                                end__Location(&location_field,
-                                              previous->location.end_line,
-                                              previous->location.end_column);
+                                END_LOCATION(&location_field,
+                                             previous->location);
                             }
 
                             if (field) {
@@ -10669,9 +10604,8 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                                 LilyToken *previous =
                                   self->tokens->buffer[self->position - 1];
 
-                                end__Location(&location_field,
-                                              previous->location.end_line,
-                                              previous->location.end_column);
+                                END_LOCATION(&location_field,
+                                             previous->location);
                             }
 
                             visibility_decl = LILY_VISIBILITY_PRIVATE;
@@ -10766,9 +10700,7 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
             UNREACHABLE("this way is impossible");
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
 
     return NEW_VARIANT(LilyPreparserDecl,
                        object,
@@ -10907,9 +10839,9 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
                             {
                                 LilyToken *previous =
                                   self->tokens->buffer[self->position - 1];
-                                end__Location(&location_variant,
-                                              previous->location.end_line,
-                                              previous->location.end_column);
+
+                                END_LOCATION(&location_variant,
+                                             previous->location);
                             }
 
                             if (variant) {
@@ -11023,9 +10955,7 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
             UNREACHABLE("this way is impossible");
     }
 
-    end__Location(&location,
-                  self->current->location.end_line,
-                  self->current->location.end_column);
+    END_LOCATION(&location, self->current->location);
 
     return NEW_VARIANT(LilyPreparserDecl,
                        object,
@@ -11673,9 +11603,8 @@ preparse_record__LilyPreparser(LilyPreparser *self,
                                 LilyToken *previous =
                                   self->tokens->buffer[self->position - 1];
 
-                                end__Location(&location_field,
-                                              previous->location.end_line,
-                                              previous->location.end_column);
+                                END_LOCATION(&location_field,
+                                             previous->location);
                             }
 
                             visibility_decl = LILY_VISIBILITY_PRIVATE;
@@ -11719,9 +11648,8 @@ preparse_record__LilyPreparser(LilyPreparser *self,
                                 LilyToken *previous =
                                   self->tokens->buffer[self->position - 1];
 
-                                end__Location(&location_field,
-                                              previous->location.end_line,
-                                              previous->location.end_column);
+                                END_LOCATION(&location_field,
+                                             previous->location);
                             }
 
                             visibility_decl = LILY_VISIBILITY_PRIVATE;
@@ -11776,9 +11704,7 @@ preparse_record__LilyPreparser(LilyPreparser *self,
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_END:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
 
             next_token__LilyPreparser(self);
 
@@ -11978,9 +11904,9 @@ preparse_enum__LilyPreparser(LilyPreparser *self,
                             {
                                 LilyToken *previous =
                                   self->tokens->buffer[self->position - 1];
-                                end__Location(&location_variant,
-                                              previous->location.end_line,
-                                              previous->location.end_column);
+
+                                END_LOCATION(&location_variant,
+                                             previous->location);
                             }
 
                             if (variant) {
@@ -12027,9 +11953,7 @@ preparse_enum__LilyPreparser(LilyPreparser *self,
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_END:
-            end__Location(&location,
-                          self->current->location.end_column,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
 
             next_token__LilyPreparser(self);
 
@@ -12086,9 +12010,7 @@ preparse_alias__LilyPreparser(LilyPreparser *self,
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location_decl,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location_decl, self->current->location);
 
             next_token__LilyPreparser(self);
 
@@ -12152,9 +12074,7 @@ preparse_macro_expand__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -12199,9 +12119,7 @@ preparse_lib_constant_prototype__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -12327,9 +12245,7 @@ preparse_lib_fun_prototype__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -12526,9 +12442,7 @@ preparse_lib__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_END:
-            end__Location(&location,
-                          self->current->location.end_line,
-                          self->current->location.end_column);
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
