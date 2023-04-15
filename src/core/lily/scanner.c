@@ -906,8 +906,10 @@ get_character__LilyScanner(LilyScanner *self, char previous)
     String *res = NULL;
     Location location_error = default__Location(self->source.file->name);
 
-    start__Location(
-      &location_error, self->source.cursor.line, self->source.cursor.column);
+    start__Location(&location_error,
+                    self->source.cursor.line,
+                    self->source.cursor.column,
+                    self->source.cursor.position);
 
     switch (previous) {
         case '\\':
@@ -996,8 +998,10 @@ skip_comment_block__LilyScanner(LilyScanner *self)
 {
     Location location_error = default__Location(self->source.file->name);
 
-    start__Location(
-      &location_error, self->source.cursor.line, self->source.cursor.column);
+    start__Location(&location_error,
+                    self->source.cursor.line,
+                    self->source.cursor.column,
+                    self->source.cursor.position);
 
     while (self->source.cursor.current != '*' ||
            peek_char__LilyScanner(self, 1) != (char *)'/') {
@@ -1070,8 +1074,10 @@ scan_char__LilyScanner(LilyScanner *self)
 {
     Location location_error = default__Location(self->source.file->name);
 
-    start__Location(
-      &location_error, self->source.cursor.line, self->source.cursor.column);
+    start__Location(&location_error,
+                    self->source.cursor.line,
+                    self->source.cursor.column,
+                    self->source.cursor.position);
     next_char__Source(&self->source);
 
     if (self->source.cursor.current != '\'') {
@@ -1141,8 +1147,10 @@ scan_string__LilyScanner(LilyScanner *self)
     Location location_error = default__Location(self->source.file->name);
     String *res = NEW(String);
 
-    start__Location(
-      &location_error, self->source.cursor.line, self->source.cursor.column);
+    start__Location(&location_error,
+                    self->source.cursor.line,
+                    self->source.cursor.column,
+                    self->source.cursor.position);
     next_char__Source(&self->source);
 
     while (self->source.cursor.current != '\"') {
@@ -1234,8 +1242,10 @@ scan_hex__LilyScanner(LilyScanner *self)
     Location location_error = default__Location(self->source.file->name);
     String *res = NEW(String);
 
-    start__Location(
-      &location_error, self->source.cursor.line, self->source.cursor.column);
+    start__Location(&location_error,
+                    self->source.cursor.line,
+                    self->source.cursor.column,
+                    self->source.cursor.position);
 
     if (self->source.cursor.current == '0') {
         while (self->source.cursor.current == '0') {
@@ -1291,8 +1301,10 @@ scan_oct__LilyScanner(LilyScanner *self)
     Location location_error = default__Location(self->source.file->name);
     String *res = NEW(String);
 
-    start__Location(
-      &location_error, self->source.cursor.line, self->source.cursor.column);
+    start__Location(&location_error,
+                    self->source.cursor.line,
+                    self->source.cursor.column,
+                    self->source.cursor.position);
 
     if (self->source.cursor.current == '0') {
         while (self->source.cursor.current == '0') {
@@ -1344,8 +1356,10 @@ scan_bin__LilyScanner(LilyScanner *self)
     Location location_error = default__Location(self->source.file->name);
     String *res = NEW(String);
 
-    start__Location(
-      &location_error, self->source.cursor.line, self->source.cursor.column);
+    start__Location(&location_error,
+                    self->source.cursor.line,
+                    self->source.cursor.column,
+                    self->source.cursor.position);
 
     if (self->source.cursor.current == '0') {
         while (self->source.cursor.current == '0') {
@@ -1399,8 +1413,10 @@ scan_num__LilyScanner(LilyScanner *self)
     bool is_scientific = false;
     Location location_error = default__Location(self->source.file->name);
 
-    start__Location(
-      &location_error, self->source.cursor.line, self->source.cursor.column);
+    start__Location(&location_error,
+                    self->source.cursor.line,
+                    self->source.cursor.column,
+                    self->source.cursor.position);
 
     while (is_num__LilyScanner(self)) {
         if (self->source.cursor.current == '.' && !is_float) {
@@ -1408,7 +1424,8 @@ scan_num__LilyScanner(LilyScanner *self)
         } else if (self->source.cursor.current == '.' && is_float) {
             start__Location(&location_error,
                             self->source.cursor.line,
-                            self->source.cursor.column);
+                            self->source.cursor.column,
+                            self->source.cursor.position);
             end__Location(&location_error,
                           self->source.cursor.line,
                           self->source.cursor.column);
@@ -1449,7 +1466,8 @@ scan_num__LilyScanner(LilyScanner *self)
                    is_scientific) {
             start__Location(&location_error,
                             self->source.cursor.line,
-                            self->source.cursor.column);
+                            self->source.cursor.column,
+                            self->source.cursor.position);
             end__Location(&location_error,
                           self->source.cursor.line,
                           self->source.cursor.column);

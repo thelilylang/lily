@@ -35,6 +35,7 @@ typedef struct Location
     Usize end_line;
     Usize start_column;
     Usize end_column;
+    Usize position; // Position in the file content
 } Location;
 
 /**
@@ -47,13 +48,15 @@ inline CONSTRUCTOR(Location,
                    Usize start_line,
                    Usize end_line,
                    Usize start_column,
-                   Usize end_column)
+                   Usize end_column,
+                   Usize position)
 {
     return (Location){ .filename = filename,
                        .start_line = start_line,
                        .end_line = end_line,
                        .start_column = start_column,
-                       .end_column = end_column };
+                       .end_column = end_column,
+                       .position = position };
 }
 
 /**
@@ -68,7 +71,8 @@ default__Location(const char *filename)
                        .start_line = 1,
                        .end_line = 1,
                        .start_column = 1,
-                       .end_column = 1 };
+                       .end_column = 1,
+                       .position = 0 };
 }
 
 /**
@@ -76,7 +80,7 @@ default__Location(const char *filename)
  * @brief Set start_line and start_column.
  */
 void
-start__Location(Location *self, Usize line, Usize column);
+start__Location(Location *self, Usize line, Usize column, Usize position);
 
 /**
  *
@@ -104,7 +108,8 @@ clone__Location(const Location *self)
                        .start_line = self->start_line,
                        .end_line = self->end_line,
                        .start_column = self->start_column,
-                       .end_column = self->end_column };
+                       .end_column = self->end_column,
+                       .position = self->position };
 }
 
 /**

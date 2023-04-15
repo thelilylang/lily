@@ -6359,7 +6359,8 @@ get_tokens : {
                   &CAST(LilyToken *, last__Vec(tokens))->location);
                 start__Location(&location_eof,
                                 location_eof.end_line,
-                                location_eof.end_column);
+                                location_eof.end_column,
+                                location_eof.position);
 
                 push__Vec(tokens,
                           NEW(LilyToken,

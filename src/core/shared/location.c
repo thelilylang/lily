@@ -30,10 +30,11 @@
 #endif
 
 void
-start__Location(Location *self, Usize line, Usize column)
+start__Location(Location *self, Usize line, Usize column, Usize position)
 {
     self->start_line = line;
     self->start_column = column;
+    self->position = position;
 }
 
 void
@@ -50,6 +51,7 @@ set_all__Location(Location *self, const Location *other)
     self->start_column = other->start_column;
     self->end_line = other->end_line;
     self->end_column = other->end_column;
+    self->position = other->position;
 }
 
 #ifdef ENV_DEBUG
@@ -57,12 +59,13 @@ char *
 IMPL_FOR_DEBUG(to_string, Location, const Location *self)
 {
     return format("Location{{ filename = {s}, start_line = {d}, end_line = "
-                  "{d}, start_column = {d}, end_column = {d} }",
+                  "{d}, start_column = {d}, end_column = {d}, position = {d} }",
                   self->filename,
                   self->start_line,
                   self->end_line,
                   self->start_column,
-                  self->end_column);
+                  self->end_column,
+                  self->position);
 }
 
 void

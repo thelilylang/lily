@@ -563,8 +563,10 @@ CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
 {
     Location location_eof =
       clone__Location(&CAST(LilyToken *, last__Vec(tokens))->location);
-    start__Location(
-      &location_eof, location_eof.end_line, location_eof.end_column);
+    start__Location(&location_eof,
+                    location_eof.end_line,
+                    location_eof.end_column,
+                    location_eof.position);
 
     push__Vec(tokens,
               NEW(LilyToken, LILY_TOKEN_KIND_EOF, location_eof)); // Add EOF.
