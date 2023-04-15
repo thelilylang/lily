@@ -181,6 +181,8 @@ to_msg__LilyError(const LilyError *self)
             return "the macro expected a patt";
         case LILY_ERROR_KIND_MACRO_EXPECTED_BLOCK:
             return "the macro expected a block";
+        case LILY_ERROR_KIND_MACRO_DUPLICATE_PARAM:
+            return "the macro parameters are duplicate";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -336,6 +338,8 @@ to_code__LilyError(const LilyError *self)
             return "0072";
         case LILY_ERROR_KIND_MACRO_EXPECTED_BLOCK:
             return "0073";
+        case LILY_ERROR_KIND_MACRO_DUPLICATE_PARAM:
+            return "0074";
         default:
             UNREACHABLE("unknown variant");
     }
