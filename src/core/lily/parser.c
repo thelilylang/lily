@@ -5372,6 +5372,9 @@ apply_macro_expansion__LilyParser(LilyParser *self,
             for (Usize i = 0; i < macro->params->len; i++) {
                 LilyMacroParam *param = get__Vec(macro->params, i);
 
+                // Checks if the values passed as parameters are valid with
+                // respect to the type that is specified in the macro
+                // declaration.
                 switch (param->kind) {
                     case LILY_MACRO_PARAM_KIND_ID:
                         if (!is_id__LilyParser(
@@ -5544,6 +5547,9 @@ apply_macro_expansion__LilyParser(LilyParser *self,
                     default:
                         UNREACHABLE("unknown variant");
                 }
+
+                // Replaces all uses of the parameter in the macro with the
+                // value passed in the macro expansion.
             }
         }
     } else if (decl->macro_expand.params || macro->params) {
