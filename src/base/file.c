@@ -27,7 +27,7 @@
 #ifdef LILY_WINDOWS_OS
 #include <windows.h>
 #else
-#define _GNU_SOURCE
+#include <sys/stat.h>
 #include <dirent.h>
 #endif
 
@@ -89,6 +89,14 @@ get_extension__File(const char *path)
 }
 
 #ifdef LILY_WINDOWS_OS
+// TODO: optimize the read of file for Windows
+Usize
+get_size__File(const char *path)
+{
+	// TODO: get size of the file
+	return 0;
+}
+
 char *
 read_file__File(const char *path)
 {
@@ -124,6 +132,16 @@ read_file__File(const char *path)
     return content;
 }
 #else
+struct stat st;
+
+Usize
+get_size__File(const char *path)
+{
+	stat(path, &st);
+
+	return st.st_size;
+}
+
 char *
 read_file__File(const char *path)
 {
@@ -139,24 +157,15 @@ read_file__File(const char *path)
         exit(1);
     }
 
-    char *content = lily_malloc(1);
-    content[0] = '\0';
+	stat(path, &st);
 
-    char *line = NULL;
-    size_t len = 0;
-    size_t line_len = 0;
+	Usize size = st.st_size + 1;
+	char *content = lily_malloc(size);
 
-    while (getline(&line, &line_len, file) != -1) {
-        len += line_len;
-        content = lily_realloc(content, len + 1);
-        strcat(content, line);
-    }
+	memset(content, 0, size); 
+	fread(content, size, 1, file);
 
-    fclose(file);
-    lily_free(line);
-
-    content = lily_realloc(content, len + 2);
-    strcat(content, "\n\0");
+	fclose(file);
 
     return content;
 }

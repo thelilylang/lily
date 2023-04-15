@@ -28,6 +28,7 @@
 #include <base/alloc.h>
 #include <base/macros.h>
 #include <base/types.h>
+#include <base/file.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +46,7 @@ typedef struct File
  */
 inline CONSTRUCTOR(File, File, char *name, char *content)
 {
-    return (File){ .name = name, .content = content, .len = strlen(content) };
+    return (File){ .name = name, .content = content, .len = get_size__File(name) };
 }
 
 /**

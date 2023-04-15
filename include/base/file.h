@@ -27,6 +27,8 @@
 
 #include <stdbool.h>
 
+#include <base/types.h>
+
 /**
  *
  * @brief Check if the path is a directory.
@@ -40,6 +42,13 @@ is_directory__File(const char *path);
  */
 char *
 get_extension__File(const char *path);
+
+/**
+ *
+ * @brief Get size of the file.
+ */
+Usize
+get_size__File(const char *path);
 
 /**
  *
