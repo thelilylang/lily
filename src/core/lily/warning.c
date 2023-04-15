@@ -38,6 +38,8 @@ to_msg__LilyWarning(const LilyWarning *self)
             return "unused paren";
         case LILY_WARNING_KIND_UNUSED_SEMICOLON:
             return "unused semicolon";
+        case LILY_WARNING_KIND_UNUSED_MACRO_PARAM:
+            return "unused macro parameter";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -51,6 +53,8 @@ to_code__LilyWarning(const LilyWarning *self)
             return "0001";
         case LILY_WARNING_KIND_UNUSED_SEMICOLON:
             return "0002";
+        case LILY_WARNING_KIND_UNUSED_MACRO_PARAM:
+            return "0003";
         default:
             UNREACHABLE("unknown variant");
     }
