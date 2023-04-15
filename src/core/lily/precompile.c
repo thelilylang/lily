@@ -449,6 +449,7 @@ CONSTRUCTOR(LilyMacroParam *,
     self->kind = kind;
     self->name = name;
     self->location = location;
+    self->is_used = true;
 
     return self;
 }
@@ -457,10 +458,12 @@ CONSTRUCTOR(LilyMacroParam *,
 char *
 IMPL_FOR_DEBUG(to_string, LilyMacroParam, const LilyMacroParam *self)
 {
-    return format("LilyMacroParam{{ kind = {s}, name = {S}, location = {sa} }",
+    return format("LilyMacroParam{{ kind = {s}, name = {S}, location = {sa}, "
+                  "is_used = {b} }",
                   to_string__Debug__LilyMacroParamKind(self->kind),
                   self->name,
-                  to_string__Debug__Location(&self->location));
+                  to_string__Debug__Location(&self->location),
+                  self->is_used);
 }
 #endif
 
@@ -1347,20 +1350,21 @@ precompile_macro__LilyPrecompile(LilyPrecompile *self,
         // 3. See if the parameters of the macro are used.
         for (Usize i = 0; i < params->len; i++) {
             LilyMacroParam *param = get__Vec(params, i);
-            bool used = false;
+            bool is_used = false;
 
-            for (Usize j = 0; j < macro->tokens->len && !used; j++) {
+            for (Usize j = 0; j < macro->tokens->len && !is_used; j++) {
                 LilyToken *token = get__Vec(macro->tokens, j);
 
                 if (token->kind == LILY_TOKEN_KIND_IDENTIFIER_MACRO) {
                     if (!strcmp(param->name->buffer,
                                 token->identifier_macro->buffer)) {
-                        used = true;
+                        is_used = true;
+                        param->is_used = is_used;
                     }
                 }
             }
 
-            if (!used) {
+            if (!is_used) {
                 emit__Diagnostic(
                   NEW_VARIANT(
                     Diagnostic,

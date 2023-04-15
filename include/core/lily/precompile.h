@@ -208,6 +208,7 @@ typedef struct LilyMacroParam
     enum LilyMacroParamKind kind;
     String *name;
     Location location;
+    bool is_used;
 } LilyMacroParam;
 
 /**
