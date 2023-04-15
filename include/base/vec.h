@@ -159,6 +159,13 @@ insert__Vec(Vec *self, void *item, Usize index);
 
 /**
  *
+ * @brief Insert an item at n + 1 index.
+ */
+void
+insert_after__Vec(Vec *self, void *item, Usize index);
+
+/**
+ *
  * @brief Join each item with c param.
  * @param self Vec<String*>*
  */

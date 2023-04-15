@@ -123,6 +123,25 @@ insert__Vec(Vec *self, void *item, Usize index)
     push__Vec(self, move);
 }
 
+void
+insert_after__Vec(Vec *self, void *item, Usize index)
+{
+    ASSERT(index + 1 < self->len);
+
+    void *move = self->buffer[index + 1];
+
+    self->buffer[index + 1] = item;
+
+    for (Usize i = index + 2; i < self->len; i++) {
+        void *tmp_move = move;
+        move = self->buffer[i];
+
+        self->buffer[i] = tmp_move;
+    }
+
+    push__Vec(self, move);
+}
+
 String *
 join__Vec(const Vec *self, char c)
 {
