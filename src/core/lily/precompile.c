@@ -1313,10 +1313,7 @@ precompile_macro__LilyPrecompile(LilyPrecompile *self,
                   &self->count_error);
             }
 
-            end__Location(&location,
-                          current->location.end_line,
-                          current->location.end_column,
-                          current->location.end_position);
+            END_LOCATION(&location, current->location);
             push__Vec(params, NEW(LilyMacroParam, kind, name, location));
         }
     }
