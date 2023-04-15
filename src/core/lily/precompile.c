@@ -1317,6 +1317,65 @@ precompile_macro__LilyPrecompile(LilyPrecompile *self,
         }
     }
 
+    if (params) {
+        // 2. Check if the parameter names are not duplicated.
+        for (Usize i = 0; i < params->len; i++) {
+            LilyMacroParam *param_i = get__Vec(params, i);
+
+            for (Usize j = i + 1; j < params->len; j++) {
+                if (!strcmp(param_i->name->buffer,
+                            CAST(LilyMacroParam *, get__Vec(params, j))
+                              ->name->buffer)) {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &param_i->location,
+                        NEW(LilyError, LILY_ERROR_KIND_MACRO_DUPLICATE_PARAM),
+                        NULL,
+                        NULL,
+                        format__String(
+                          "duplicate at parameter number {d} and {d}",
+                          i + 1,
+                          j + 1)),
+                      &self->count_error);
+                }
+            }
+        }
+
+        // 3. See if the parameters of the macro are used.
+        for (Usize i = 0; i < params->len; i++) {
+            LilyMacroParam *param = get__Vec(params, i);
+            bool used = false;
+
+            for (Usize j = 0; j < macro->tokens->len && !used; j++) {
+                LilyToken *token = get__Vec(macro->tokens, j);
+
+                if (token->kind == LILY_TOKEN_KIND_IDENTIFIER_MACRO) {
+                    if (!strcmp(param->name->buffer,
+                                token->identifier_macro->buffer)) {
+                        used = true;
+                    }
+                }
+            }
+
+            if (!used) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_warning,
+                    self->file,
+                    &param->location,
+                    NEW(LilyWarning, LILY_WARNING_KIND_UNUSED_MACRO_PARAM),
+                    NULL,
+                    NULL,
+                    format__String("unused `{S}`", param->name)),
+                  &self->count_error);
+            }
+        }
+    }
+
     return NEW(LilyMacro, macro->name, params, macro->tokens, macro->location);
 }
 
