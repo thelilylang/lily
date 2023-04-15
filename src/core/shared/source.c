@@ -29,7 +29,7 @@
 void
 next_char__Source(Source *self)
 {
-    if (self->cursor.position < strlen(self->file->content) - 1) {
+    if (self->cursor.position < self->file->len - 1) {
         if (self->cursor.current == '\n') {
             next_line__Cursor(&self->cursor,
                               self->file->content[self->cursor.position + 1]);
