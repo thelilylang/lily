@@ -111,11 +111,17 @@ jump__LilyScanner(LilyScanner *self, Usize n);
 
 // Assign to line and column to start_line and start_column Location's field.
 static void
-start_token__LilyScanner(LilyScanner *self, Usize line, Usize column);
+start_token__LilyScanner(LilyScanner *self,
+                         Usize line,
+                         Usize column,
+                         Usize position);
 
 // Assign to line and column to end_line and end_column Location's field.
 static void
-end_token__LilyScanner(LilyScanner *self, Usize line, Usize column);
+end_token__LilyScanner(LilyScanner *self,
+                       Usize line,
+                       Usize column,
+                       Usize position);
 
 // Get character at position + n.
 static char *
@@ -750,17 +756,25 @@ jump__LilyScanner(LilyScanner *self, Usize n)
 }
 
 void
-start_token__LilyScanner(LilyScanner *self, Usize line, Usize column)
+start_token__LilyScanner(LilyScanner *self,
+                         Usize line,
+                         Usize column,
+                         Usize position)
 {
     self->location.start_line = line;
     self->location.start_column = column;
+    self->location.start_position = position;
 }
 
 void
-end_token__LilyScanner(LilyScanner *self, Usize line, Usize column)
+end_token__LilyScanner(LilyScanner *self,
+                       Usize line,
+                       Usize column,
+                       Usize position)
 {
     self->location.end_line = line;
     self->location.end_column = column;
+    self->location.end_position = position;
 }
 
 char *
@@ -1587,8 +1601,10 @@ get_closing__LilyScanner(LilyScanner *self, char target)
 
         if (token) {
             next_char_by_token__LilyScanner(self, token);
-            end_token__LilyScanner(
-              self, self->source.cursor.line, self->source.cursor.column);
+            end_token__LilyScanner(self,
+                                   self->source.cursor.line,
+                                   self->source.cursor.column,
+                                   self->source.cursor.position);
 
             switch (token->kind) {
                 case LILY_TOKEN_KIND_L_PAREN:
@@ -1611,8 +1627,10 @@ get_closing__LilyScanner(LilyScanner *self, char target)
         }
     }
 
-    start_token__LilyScanner(
-      self, self->source.cursor.line, self->source.cursor.column);
+    start_token__LilyScanner(self,
+                             self->source.cursor.line,
+                             self->source.cursor.column,
+                             self->source.cursor.position);
 
     switch (target) {
         case ')':
@@ -1638,8 +1656,10 @@ get_token__LilyScanner(LilyScanner *self)
     char *c1 = peek_char__LilyScanner(self, 1);
     char *c2 = peek_char__LilyScanner(self, 2);
 
-    start_token__LilyScanner(
-      self, self->source.cursor.line, self->source.cursor.column);
+    start_token__LilyScanner(self,
+                             self->source.cursor.line,
+                             self->source.cursor.column,
+                             self->source.cursor.position);
 
     switch (self->source.cursor.current) {
         // &= &
@@ -1805,8 +1825,10 @@ get_token__LilyScanner(LilyScanner *self)
         case '(': {
             char match = self->source.cursor.current;
 
-            end_token__LilyScanner(
-              self, self->source.cursor.line, self->source.cursor.column);
+            end_token__LilyScanner(self,
+                                   self->source.cursor.line,
+                                   self->source.cursor.column,
+                                   self->source.cursor.position);
 
             LilyToken *token = NULL;
 
@@ -1977,8 +1999,10 @@ get_token__LilyScanner(LilyScanner *self)
         case ')': {
             char match = self->source.cursor.current;
 
-            end_token__LilyScanner(
-              self, self->source.cursor.line, self->source.cursor.column);
+            end_token__LilyScanner(self,
+                                   self->source.cursor.line,
+                                   self->source.cursor.column,
+                                   self->source.cursor.position);
             next_char__Source(&self->source);
 
             Location location_error = clone__Location(&self->location);
@@ -2341,8 +2365,10 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
 
             if (token) {
                 next_char_by_token__LilyScanner(self, token);
-                end_token__LilyScanner(
-                  self, self->source.cursor.line, self->source.cursor.column);
+                end_token__LilyScanner(self,
+                                       self->source.cursor.line,
+                                       self->source.cursor.column,
+                                       self->source.cursor.position);
                 set_all__Location(&token->location, &self->location);
 
                 switch (token->kind) {
@@ -2363,10 +2389,14 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
         }
     }
 
-    start_token__LilyScanner(
-      self, self->source.cursor.line, self->source.cursor.column);
-    end_token__LilyScanner(
-      self, self->source.cursor.line, self->source.cursor.column);
+    start_token__LilyScanner(self,
+                             self->source.cursor.line,
+                             self->source.cursor.column,
+                             self->source.cursor.position);
+    end_token__LilyScanner(self,
+                           self->source.cursor.line,
+                           self->source.cursor.column,
+                           self->source.cursor.position);
     push__Vec(
       self->tokens,
       NEW(LilyToken, LILY_TOKEN_KIND_EOF, clone__Location(&self->location)));
