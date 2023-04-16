@@ -102,6 +102,13 @@ get__String(const String *self, Usize index);
 
 /**
  *
+ * @brief Get slice from String.
+ */
+char *
+get_slice__String(const String *self, Usize start, Usize end);
+
+/**
+ *
  * @brief Grow String buffer.
  * @param new_capacity New buffer capacity.
  */

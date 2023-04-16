@@ -23,11 +23,13 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/str.h>
 #include <base/types.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -55,4 +57,33 @@ split__Str(const char *self, char separator)
     }
 
     return res;
+}
+
+char *
+get_slice__Str(const char *self, Usize start, Usize end)
+{
+    ASSERT(start < end);
+
+    Usize size = (end - start) + 1;
+    char *res = lily_malloc(size);
+
+    memset(res, 0, size);
+
+    for (Usize i = start, j = 0; i < end; ++i) {
+        res[j++] = self[i];
+    }
+
+    return res;
+}
+
+void
+replace__Str(char *self, char target, char replace)
+{
+    Usize size = strlen(self);
+
+    for (Usize i = 0; i < size; ++i) {
+        if (self[i] == target) {
+            self[i] = replace;
+        }
+    }
 }

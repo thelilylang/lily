@@ -90,7 +90,7 @@ from__String(char *buffer)
     self->buffer = lily_malloc(self->capacity);
     self->len = strlen(buffer);
 
-    for (int i = 0; i < self->len; ++i) {
+    for (Usize i = 0; i < self->len; ++i) {
         self->buffer[i] = buffer[i];
     }
 
@@ -105,6 +105,23 @@ get__String(const String *self, Usize index)
     ASSERT(index < self->len);
 
     return self->buffer[index];
+}
+
+char *
+get_slice__String(const String *self, Usize start, Usize end)
+{
+    ASSERT(start < end);
+
+    Usize size = (end - start) + 1;
+    char *s = lily_malloc(size);
+
+    memset(s, 0, size);
+
+    for (Usize i = start, j = 0; i < end; ++i) {
+        s[j++] = get__String(self, i);
+    }
+
+    return s;
 }
 
 void

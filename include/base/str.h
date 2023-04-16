@@ -36,4 +36,18 @@
 Vec *
 split__Str(const char *self, char separator);
 
+/**
+ *
+ * @brief Get slice of Str.
+ */
+char *
+get_slice__Str(const char *self, Usize start, Usize end);
+
+/**
+ *
+ * @brief Replace target by replace character.
+ */
+void
+replace__Str(char *self, char target, char replace);
+
 #endif // LILY_BASE_STR_H
