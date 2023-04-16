@@ -420,8 +420,10 @@ IMPL_FOR_DEBUG(to_string, LilyMacroParamKind, enum LilyMacroParamKind self)
             return "LILY_MACRO_PARAM_KIND_ID";
         case LILY_MACRO_PARAM_KIND_DT:
             return "LILY_MACRO_PARAM_KIND_DT";
-        case LILY_MACRO_PARAM_KIND_TT:
-            return "LILY_MACRO_PARAM_KIND_TT";
+        case LILY_MACRO_PARAM_KIND_TK:
+            return "LILY_MACRO_PARAM_KIND_TK";
+        case LILY_MACRO_PARAM_KIND_TKS:
+            return "LILY_MACRO_PARAM_KIND_TKS";
         case LILY_MACRO_PARAM_KIND_STMT:
             return "LILY_MACRO_PARAM_KIND_STMT";
         case LILY_MACRO_PARAM_KIND_EXPR:
@@ -1247,8 +1249,11 @@ precompile_macro__LilyPrecompile(LilyPrecompile *self,
                                            "dt")) {
                             kind = LILY_MACRO_PARAM_KIND_DT;
                         } else if (!strcmp(current->identifier_normal->buffer,
-                                           "tt")) {
-                            kind = LILY_MACRO_PARAM_KIND_TT;
+                                           "tk")) {
+                            kind = LILY_MACRO_PARAM_KIND_TK;
+                        } else if (!strcmp(current->identifier_normal->buffer,
+                                           "tks")) {
+                            kind = LILY_MACRO_PARAM_KIND_TKS;
                         } else if (!strcmp(current->identifier_normal->buffer,
                                            "stmt")) {
                             kind = LILY_MACRO_PARAM_KIND_STMT;
