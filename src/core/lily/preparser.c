@@ -675,10 +675,6 @@ static VARIANT_DESTRUCTOR(LilyPreparserRecordObjectBodyItem,
                           method,
                           LilyPreparserRecordObjectBodyItem *self);
 
-// Free LilyPreparserRecordObjectBodyItem type.
-static DESTRUCTOR(LilyPreparserRecordObjectBodyItem,
-                  LilyPreparserRecordObjectBodyItem *self);
-
 // Construct LilyPreparserRecordObject type.
 static inline CONSTRUCTOR(LilyPreparserRecordObject,
                           LilyPreparserRecordObject,
@@ -8642,7 +8638,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
 {
     next_token__LilyPreparser(self); // skip `fun` keyword
 
-    Location location = location_decl;
+    Location location = clone__Location(&location_decl);
     String *object_impl = NULL;
     String *name = NULL;
     Vec *generic_params = NULL;   // Vec<Vec<LilyToken* (&)>*>*?
@@ -8958,7 +8954,7 @@ preparse_constant__LilyPreparser(LilyPreparser *self)
     }
 
     enum LilyVisibility visibility = visibility_decl;
-    Location location = location_decl;
+    Location location = clone__Location(&location_decl);
 
     // 1. Get name of the constant.
     GET_NAME(self, from__String("expected name of the constant"));
@@ -9054,7 +9050,7 @@ LilyPreparserDecl *
 preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
 {
     enum LilyVisibility visibility = visibility_decl;
-    Location location = location_decl;
+    Location location = clone__Location(&location_decl);
 
     next_token__LilyPreparser(self); // skip `(`
 
@@ -9603,7 +9599,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                               Vec *inherits,
                               Vec *generic_params)
 {
-    Location location = location_decl;
+    Location location = clone__Location(&location_decl);
     enum LilyVisibility visibility = visibility_decl;
 
     // 1. Preparse class body
@@ -10024,7 +10020,7 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
                               Vec *inherits,
                               Vec *generic_params)
 {
-    Location location = location_decl;
+    Location location = clone__Location(&location_decl);
     enum LilyVisibility visibility = visibility_decl;
 
     // 1. Preparse body.
@@ -10409,14 +10405,9 @@ preparse_constant_for_record__LilyPreparser(LilyPreparser *self)
     return NULL;
 }
 
-LilyPreparserDecl *
-preparse_record_object__LilyPreparser(LilyPreparser *self,
-                                      String *name,
-                                      Vec *impls,
-                                      Vec *generic_params)
+Vec *
+preparse_record_object_body__LilyPreparser(LilyPreparser *self)
 {
-    enum LilyVisibility visibility = visibility_decl;
-    Location location = location_decl;
     Vec *body = NEW(Vec); // Vec<LilyPreparserRecordObjectBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
@@ -10489,32 +10480,7 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                                               *field));
                                 lily_free(field);
                             } else {
-                            clean_up : {
-                                // Clean up allocations
-
-                                FREE(String, name);
-
-                                if (impls) {
-                                    FREE_BUFFER_ITEMS_2(
-                                      impls->buffer, impls->len, LilyToken);
-                                    FREE(Vec, impls);
-                                }
-
-                                if (generic_params) {
-                                    FREE_BUFFER_ITEMS_2(generic_params->buffer,
-                                                        generic_params->len,
-                                                        LilyToken);
-                                    FREE(Vec, generic_params);
-                                }
-
-                                FREE_BUFFER_ITEMS(
-                                  body->buffer,
-                                  body->len,
-                                  LilyPreparserRecordObjectBodyItem);
-                                FREE(Vec, body);
-
-                                return NULL;
-                            }
+                                goto clean_up;
                             }
 
                             break;
@@ -10651,6 +10617,32 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
         }
     }
 
+    return body;
+
+clean_up : {
+    FREE_BUFFER_ITEMS(
+      body->buffer, body->len, LilyPreparserRecordObjectBodyItem);
+    FREE(Vec, body);
+
+    return NULL;
+}
+}
+
+LilyPreparserDecl *
+preparse_record_object__LilyPreparser(LilyPreparser *self,
+                                      String *name,
+                                      Vec *impls,
+                                      Vec *generic_params)
+{
+    enum LilyVisibility visibility = visibility_decl;
+    Location location = clone__Location(&location_decl);
+
+    Vec *body = preparse_record_object_body__LilyPreparser(self);
+
+    if (!body) {
+        goto clean_up;
+    }
+
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_EOF:
             emit__Diagnostic(
@@ -10665,6 +10657,7 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                 from__String("expected `end` keyword to close record object")),
               &self->count_error);
 
+        clean_up : {
             FREE(String, name);
 
             if (impls) {
@@ -10678,11 +10671,14 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                 FREE(Vec, generic_params);
             }
 
-            FREE_BUFFER_ITEMS(
-              body->buffer, body->len, LilyPreparserRecordObjectBodyItem);
-            FREE(Vec, body);
+            if (body) {
+                FREE_BUFFER_ITEMS(
+                  body->buffer, body->len, LilyPreparserRecordObjectBodyItem);
+                FREE(Vec, body);
+            }
 
             return NULL;
+        }
 
         case LILY_TOKEN_KIND_KEYWORD_END:
             next_token__LilyPreparser(self);
@@ -10772,7 +10768,7 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
                                     Vec *generic_params)
 {
     enum LilyVisibility visibility = visibility_decl;
-    Location location = location_decl;
+    Location location = clone__Location(&location_decl);
     Vec *body = NEW(Vec); // Vec<LilyPreparserEnumObjectBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
@@ -11706,7 +11702,7 @@ preparse_record__LilyPreparser(LilyPreparser *self,
                                Vec *generic_params)
 {
     enum LilyVisibility visibility = visibility_decl;
-    Location location = location_decl;
+    Location location = clone__Location(&location_decl);
 
     Vec *body = preparse_record_body__LilyPreparser(self);
 
@@ -11974,7 +11970,7 @@ preparse_enum__LilyPreparser(LilyPreparser *self,
                              Vec *generic_params)
 {
     enum LilyVisibility visibility = visibility_decl;
-    Location location = location_decl;
+    Location location = clone__Location(&location_decl);
 
     Vec *body = preparse_enum_body__LilyPreparser(self);
 
