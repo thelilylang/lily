@@ -5261,7 +5261,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
     Vec macro_tokens_copy = *macro->tokens;
 
     if (decl->macro_expand.params && macro->params) {
-        if (decl->macro_expand.params->len < macro->params->len) {
+        if (decl->macro_expand.params->len > macro->params->len) {
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
@@ -5279,7 +5279,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
               &self->package->count_error);
 
             return;
-        } else if (decl->macro_expand.params->len > macro->params->len) {
+        } else if (decl->macro_expand.params->len < macro->params->len) {
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
