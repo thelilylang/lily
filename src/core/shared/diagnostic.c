@@ -566,7 +566,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
 
         lily_free(line);
     } else {
-		// TODO: diagnostic on one more line.
+        // TODO: diagnostic on one more line.
         // printf("%s\n", CAST(char*, get__Vec(self->lines, 0)));
         // printf("%s\n", CAST(char*, get__Vec(self->lines, 1)));
         char *first_line =
