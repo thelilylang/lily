@@ -497,7 +497,11 @@ IMPL_FOR_DEBUG(to_string, LilyMacro, const LilyMacro *self)
     String *res =
       format__String("LilyMacro{{ name = {S}, params =", self->name);
 
-    DEBUG_VEC_STR(self->params, res, LilyMacroParam);
+    if (self->params) {
+        DEBUG_VEC_STR(self->params, res, LilyMacroParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, ", tokens =");
     DEBUG_VEC_STR(self->tokens, res, LilyToken);
