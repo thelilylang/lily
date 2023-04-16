@@ -6,8 +6,8 @@ macro fn($i id, $param tks, $x expr) = {
 	fun {{i}}({{param}}) = {{x}} end
 };
 
-fn!(add, ${x, y}, x + y);
-fn!(sub, ${x, y}, x - y); // fun one = 1 end
+fn!(add, ${x, y}, x + y); // fun add(x, y) = x + y end
+fn!(sub, ${x, y}, x - y); // fun sub(x, y) = x - y end
 
 type Person record =
 	field!(age, Uint8);
