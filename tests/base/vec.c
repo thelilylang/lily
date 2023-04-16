@@ -44,7 +44,7 @@ test_from__Vec()
     ASSERT(v->capacity == 10);
     ASSERT(v->default_capacity == 5);
 
-    for (Usize i = 5; i--;) {
+    for (Usize i = 5; --i;) {
         ASSERT(v->buffer[i] == buffer[i]);
     }
 
