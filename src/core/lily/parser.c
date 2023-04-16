@@ -456,7 +456,11 @@ is_dt__LilyParser(const Vec *tokens);
 
 // Check if there are one token.
 static inline bool
-is_tt__LilyParser(const Vec *tokens);
+is_tk__LilyParser(const Vec *tokens);
+
+// Check if there are many tokens.
+static inline bool
+is_tks__LilyParser(const Vec *tokens);
 
 // Check if the first token can be a stmt.
 static bool
@@ -5127,9 +5131,19 @@ is_dt__LilyParser(const Vec *tokens)
 }
 
 bool
-is_tt__LilyParser(const Vec *tokens)
+is_tk__LilyParser(const Vec *tokens)
 {
     return tokens->len == 1;
+}
+
+bool
+is_tks__LilyParser(const Vec *tokens)
+{
+    return tokens->len >= 3 ? CAST(LilyToken *, get__Vec(tokens, 0))->kind ==
+                                  LILY_TOKEN_KIND_DOLLAR &&
+                                CAST(LilyToken *, get__Vec(tokens, 1))->kind ==
+                                  LILY_TOKEN_KIND_L_BRACE
+                            : 0;
 }
 
 bool
@@ -5419,8 +5433,8 @@ is_block__LilyParser(const Vec *tokens)
                         }                                                          \
                                                                                    \
                         break;                                                     \
-                    case LILY_MACRO_PARAM_KIND_TT:                                 \
-                        if (!is_tt__LilyParser(                                    \
+                    case LILY_MACRO_PARAM_KIND_TK:                                 \
+                        if (!is_tk__LilyParser(                                    \
                               get__Vec(decl->macro_expand.params, i))) {           \
                             emit__Diagnostic(                                      \
                               NEW_VARIANT(                                         \
@@ -5429,7 +5443,28 @@ is_block__LilyParser(const Vec *tokens)
                                 &self->package->file,                              \
                                 &decl->location,                                   \
                                 NEW(LilyError,                                     \
-                                    LILY_ERROR_KIND_MACRO_EXPECTED_TT),            \
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_TK),            \
+                                NULL,                                              \
+                                NULL,                                              \
+                                format__String("at parameter number {d}",          \
+                                               i + 1)),                            \
+                              &self->package->count_error);                        \
+                                                                                   \
+                            continue;                                              \
+                        }                                                          \
+                                                                                   \
+                        break;                                                     \
+                    case LILY_MACRO_PARAM_KIND_TKS:                                \
+                        if (!is_tks__LilyParser(                                   \
+                              get__Vec(decl->macro_expand.params, i))) {           \
+                            emit__Diagnostic(                                      \
+                              NEW_VARIANT(                                         \
+                                Diagnostic,                                        \
+                                simple_lily_error,                                 \
+                                &self->package->file,                              \
+                                &decl->location,                                   \
+                                NEW(LilyError,                                     \
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_TKS),           \
                                 NULL,                                              \
                                 NULL,                                              \
                                 format__String("at parameter number {d}",          \
@@ -5577,22 +5612,50 @@ is_block__LilyParser(const Vec *tokens)
                                     inserted at the position of the                \
                                     `identifier_macro`. */                         \
                                     if (i > macro_tokens_copy.len) {               \
-                                        for (Usize k = 0;                          \
-                                             k < macro_expand_param->len;          \
-                                             ++k) {                                \
-                                            push__Vec(                             \
-                                              &macro_tokens_copy,                  \
-                                              get__Vec(macro_expand_param,         \
-                                                       k));                        \
+                                        if (param->kind ==                         \
+                                            LILY_MACRO_PARAM_KIND_TKS) {           \
+                                            for (Usize k = 2;                      \
+                                                 k <                               \
+                                                 macro_expand_param->len - 1;      \
+                                                 ++k) {                            \
+                                                push__Vec(                         \
+                                                  &macro_tokens_copy,              \
+                                                  get__Vec(macro_expand_param,     \
+                                                           k));                    \
+                                            }                                      \
+                                        } else {                                   \
+                                            for (Usize k = 0;                      \
+                                                 k < macro_expand_param->len;      \
+                                                 ++k) {                            \
+                                                push__Vec(                         \
+                                                  &macro_tokens_copy,              \
+                                                  get__Vec(macro_expand_param,     \
+                                                           k));                    \
+                                            }                                      \
                                         }                                          \
                                     } else {                                       \
-                                        for (Usize k = 0;                          \
-                                             k < macro_expand_param->len;          \
-                                             ++k) {                                \
-                                            insert__Vec(                           \
-                                              &macro_tokens_copy,                  \
-                                              get__Vec(macro_expand_param, k),     \
-                                              i + k);                              \
+                                        if (param->kind ==                         \
+                                            LILY_MACRO_PARAM_KIND_TKS) {           \
+                                            for (Usize k = 2;                      \
+                                                 k <                               \
+                                                 macro_expand_param->len - 1;      \
+                                                 ++k) {                            \
+                                                insert__Vec(                       \
+                                                  &macro_tokens_copy,              \
+                                                  get__Vec(macro_expand_param,     \
+                                                           k),                     \
+                                                  i + (k - 2));                    \
+                                            }                                      \
+                                        } else {                                   \
+                                            for (Usize k = 0;                      \
+                                                 k < macro_expand_param->len;      \
+                                                 ++k) {                            \
+                                                insert__Vec(                       \
+                                                  &macro_tokens_copy,              \
+                                                  get__Vec(macro_expand_param,     \
+                                                           k),                     \
+                                                  i + k);                          \
+                                            }                                      \
                                         }                                          \
                                     }                                              \
                                                                                    \
