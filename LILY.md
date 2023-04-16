@@ -348,7 +348,8 @@ create_a_function!(add3, Int32)
 
 - id -> identifier: `x`
 - dt -> data type: `Int32`
-- tt -> token
+- tk -> token
+- tks -> tokens: `${x Int32}`
 - stmt -> statement: `val x := 32;`
 - expr -> expression: `x + 230`
 - path -> path: `X.Y.Z`
