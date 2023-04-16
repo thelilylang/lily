@@ -57,11 +57,13 @@ main()
 
     // Test Str
     test_split__Str();
+    test_get_slice__Str();
 
     // Test String
     test_new__String();
     test_clone__String();
     test_from__String();
+    test_get_slice__String();
     test_split__String();
     test_pop__String();
     test_push__String();

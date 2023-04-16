@@ -55,6 +55,19 @@ test_from__String()
 }
 
 void
+test_get_slice__String()
+{
+    String *s = from__String("Hello");
+    char *slice = get_slice__String(s, 0, 2);
+
+    ASSERT(slice[0] == 'H');
+    ASSERT(slice[1] == 'e');
+
+    FREE(String, s);
+    lily_free(slice);
+}
+
+void
 test_split__String()
 {
     String *s = from__String("Hello\nWorld");

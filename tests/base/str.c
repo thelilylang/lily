@@ -23,3 +23,16 @@ test_split__Str()
 
     FREE(Vec, split);
 }
+
+void
+test_get_slice__Str()
+{
+    char *s = "Hello";
+    char *slice = get_slice__Str(s, 0, 2);
+
+    ASSERT(slice[0] == 'H');
+    ASSERT(slice[1] == 'e');
+    ASSERT(slice[2] == '\0');
+
+    lily_free(slice);
+}
