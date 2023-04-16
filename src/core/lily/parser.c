@@ -343,7 +343,9 @@ parse_enum_variant_for_enum_object__LilyParser(
 
 // Parse enum declaration.
 static LilyAstDecl *
-parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+parse_enum_decl__LilyParser(LilyParser *self,
+                            const LilyDumpConfig *dump_config,
+                            LilyPreparserDecl *decl);
 
 // Parse enum object declaration.
 static LilyAstDecl *
@@ -472,6 +474,13 @@ apply_macro_expansion_in_record__LilyParser(LilyParser *self,
                                             const LilyDumpConfig *dump_config,
                                             LilyPreparserRecordBodyItem *item,
                                             Vec *body);
+
+/// @param body Body of enum
+static void
+apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
+                                          const LilyDumpConfig *dump_config,
+                                          LilyPreparserEnumBodyItem *item,
+                                          Vec *body);
 
 static void
 apply_macro_expansion__LilyParser(LilyParser *self,
@@ -3981,7 +3990,9 @@ parse_enum_variant_for_enum_object__LilyParser(
 }
 
 LilyAstDecl *
-parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+parse_enum_decl__LilyParser(LilyParser *self,
+                            const LilyDumpConfig *dump_config,
+                            LilyPreparserDecl *decl)
 {
     // 1. Parse generic params
     Vec *generic_params = NULL;
@@ -3999,7 +4010,9 @@ parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 
         switch (item->kind) {
             case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND:
-                TODO("macro expand");
+                apply_macro_expansion_in_enum__LilyParser(
+                  self, dump_config, item, variants);
+
                 break;
             case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT:
                 push__Vec(variants, parse_enum_variant__LilyParser(self, item));
@@ -4994,7 +5007,7 @@ parse_type_decl__LilyParser(LilyParser *self,
         case LILY_PREPARSER_TYPE_KIND_ALIAS:
             return parse_alias_decl__LilyParser(self, decl);
         case LILY_PREPARSER_TYPE_KIND_ENUM:
-            return parse_enum_decl__LilyParser(self, decl);
+            return parse_enum_decl__LilyParser(self, dump_config, decl);
         case LILY_PREPARSER_TYPE_KIND_RECORD:
             return parse_record_decl__LilyParser(self, dump_config, decl);
         default:
@@ -5274,7 +5287,15 @@ is_block__LilyParser(const Vec *tokens)
                                                                                    \
     /* 2. Check params of macro. Then replace the macro identifier(s) by the       \
     value(s) passed in the parameters of the expansion macro. */                   \
-    Vec macro_tokens_copy = *macro->tokens;                                        \
+    Vec macro_tokens_copy = { .buffer = lily_malloc(macro->tokens->capacity *      \
+                                                    PTR_SIZE),                     \
+                              .len = macro->tokens->len,                           \
+                              .capacity = macro->tokens->capacity,                 \
+                              .default_capacity = macro->tokens->capacity };       \
+                                                                                   \
+    memcpy(macro_tokens_copy.buffer,                                               \
+           macro->tokens->buffer,                                                  \
+           macro->tokens->capacity *PTR_SIZE);                                     \
                                                                                    \
     if (decl->macro_expand.params && macro->params) {                              \
         if (decl->macro_expand.params->len > macro->params->len) {                 \
@@ -5668,6 +5689,60 @@ apply_macro_expansion_in_record__LilyParser(LilyParser *self,
                           pre_record_body_items->len,
                           LilyPreparserRecordBodyItem);
         FREE(Vec, pre_record_body_items);
+        lily_free(macro_tokens_copy.buffer);
+    }
+}
+
+void
+apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
+                                          const LilyDumpConfig *dump_config,
+                                          LilyPreparserEnumBodyItem *item,
+                                          Vec *body)
+{
+    CHECK_MACRO(item);
+
+    /* 3. Prepare and parse the content of the macro, then expand
+    it. */
+    {
+        const File *file = get_file_from_filename__LilyPackage(
+          self->root_package, macro->location.filename);
+        LilyPreparser preparse_macro_expand =
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+
+        preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
+
+        Vec *pre_enum_body_items =
+          preparse_enum_body__LilyPreparser(&preparse_macro_expand);
+
+        if (!pre_enum_body_items) {
+            return;
+        }
+
+        LilyPackage *package = search_package_from_filename__LilyPackage(
+          self->root_package, file->name);
+        LilyParser parser = (LilyParser){ .decls = NULL,
+                                          .package = package,
+                                          .root_package = self->root_package,
+                                          .current = NULL,
+                                          .preparser_info = NULL,
+                                          .position = 0 };
+
+        for (Usize i = 0; i < pre_enum_body_items->len; ++i) {
+            LilyAstVariant *variant = parse_enum_variant__LilyParser(
+              &parser, get__Vec(pre_enum_body_items, i));
+
+            if (variant) {
+                push__Vec(body, variant);
+            }
+        }
+
+        // Clean up allocations
+
+        FREE_BUFFER_ITEMS(pre_enum_body_items->buffer,
+                          pre_enum_body_items->len,
+                          LilyPreparserEnumBodyItem);
+        FREE(Vec, pre_enum_body_items);
+        lily_free(macro_tokens_copy.buffer);
     }
 }
 
@@ -5712,6 +5787,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 
         FREE(LilyPreparserInfo, &preparser_info);
         FREE(Vec, parser.decls);
+        lily_free(macro_tokens_copy.buffer);
     }
 }
 
