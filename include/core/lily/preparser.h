@@ -1158,6 +1158,12 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserRecordBodyItem *self);
 #endif
 
+/**
+ *
+ * @brief Free LilyPreparserRecordBodyItem type.
+ */
+DESTRUCTOR(LilyPreparserRecordBodyItem, LilyPreparserRecordBodyItem *self);
+
 typedef struct LilyPreparserRecord
 {
     String *name;
@@ -1443,6 +1449,14 @@ CONSTRUCTOR(LilyPreparser,
             const File *file,
             const Vec *tokens,
             const char *default_package_access);
+
+/**
+ *
+ * @brief Preparse the body of record.
+ * @return Vec<LilyPreparserRecordBodyItem*>*?
+ */
+Vec *
+preparse_record_body__LilyPreparser(LilyPreparser *self);
 
 /**
  *

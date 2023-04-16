@@ -902,10 +902,6 @@ static VARIANT_DESTRUCTOR(LilyPreparserRecordBodyItem,
                           macro_expand,
                           LilyPreparserRecordBodyItem *self);
 
-// Free LilyPreparserRecordBodyItem type.
-static DESTRUCTOR(LilyPreparserRecordBodyItem,
-                  LilyPreparserRecordBodyItem *self);
-
 // Construct LilyPreparserRecord type.
 static inline CONSTRUCTOR(LilyPreparserRecord,
                           LilyPreparserRecord,
@@ -11559,14 +11555,9 @@ preparse_macro_expand_for_record__LilyPreparser(LilyPreparser *self)
     return NULL;
 }
 
-LilyPreparserDecl *
-preparse_record__LilyPreparser(LilyPreparser *self,
-                               String *name,
-                               Vec *generic_params)
+Vec *
+preparse_record_body__LilyPreparser(LilyPreparser *self)
 {
-    enum LilyVisibility visibility = visibility_decl;
-    Location location = location_decl;
-
     Vec *body = NEW(Vec); // Vec<LilyPreparserRecordBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
@@ -11700,6 +11691,30 @@ preparse_record__LilyPreparser(LilyPreparser *self,
             }
             }
         }
+    }
+
+    return body;
+
+clean_up : {
+    FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserRecordBodyItem);
+    FREE(Vec, body);
+
+    return NULL;
+}
+}
+
+LilyPreparserDecl *
+preparse_record__LilyPreparser(LilyPreparser *self,
+                               String *name,
+                               Vec *generic_params)
+{
+    enum LilyVisibility visibility = visibility_decl;
+    Location location = location_decl;
+
+    Vec *body = preparse_record_body__LilyPreparser(self);
+
+    if (!body) {
+        goto clean_up;
     }
 
     switch (self->current->kind) {
@@ -12053,7 +12068,7 @@ preparse_macro_expand__LilyPreparser(LilyPreparser *self)
 {
     ASSERT(self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL);
 
-    Location location = location_decl;
+    Location location = clone__Location(&self->current->location);
 
     // 1. Get name of the macro expand.
     String *name = clone__String(self->current->identifier_normal);
