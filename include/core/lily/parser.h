@@ -57,12 +57,16 @@ CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens);
 
 struct LilyParser
 {
-    Vec *decls; // Vec<LilyAstDecl*>*
+    Vec *decls; // Vec<LilyAstDecl*>*?
     LilyPackage *package;
     LilyPackage *root_package;
-    LilyPreparserDecl *current;
-    const LilyPreparserInfo *preparser_info; // LilyPreparserInfo* (&)
+    LilyPreparserDecl *current;              // LilyPreparserDecl*?
+    const LilyPreparserInfo *preparser_info; // LilyPreparserInfo*? (&)
     Usize position;
+    // NOTE: All optional null values of this struct are possible in case the
+    // parser is construct to apply macro-expansion in records, record objects,
+    // classes, traits, enums or enum objects. In other uses all values should
+    // be non-null.
 };
 
 /**

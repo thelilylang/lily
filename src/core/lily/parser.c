@@ -402,7 +402,9 @@ parse_record_field__LilyParser(LilyParser *self,
 
 // Parse record declaration.
 static LilyAstDecl *
-parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+parse_record_decl__LilyParser(LilyParser *self,
+                              const LilyDumpConfig *dump_config,
+                              LilyPreparserDecl *decl);
 
 // Parse record field object.
 static LilyAstBodyRecordObjectItem *
@@ -419,7 +421,9 @@ parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 // Parse type declaration.
 static LilyAstDecl *
-parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+parse_type_decl__LilyParser(LilyParser *self,
+                            const LilyDumpConfig *dump_config,
+                            LilyPreparserDecl *decl);
 
 static LilyMacro *
 search_private_macro__LilyParser(const LilyParser *self, const String *name);
@@ -462,6 +466,13 @@ is_patt__LilyParser(const Vec *tokens);
 static bool
 is_block__LilyParser(const Vec *tokens);
 
+/// @param body Body of record
+static void
+apply_macro_expansion_in_record__LilyParser(LilyParser *self,
+                                            const LilyDumpConfig *dump_config,
+                                            LilyPreparserRecordBodyItem *item,
+                                            Vec *body);
+
 static void
 apply_macro_expansion__LilyParser(LilyParser *self,
                                   const LilyDumpConfig *dump_config,
@@ -469,7 +480,9 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 
 // Parse declaration.
 static LilyAstDecl *
-parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+parse_decl__LilyParser(LilyParser *self,
+                       const LilyDumpConfig *dump_config,
+                       LilyPreparserDecl *decl);
 
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
@@ -4778,7 +4791,9 @@ parse_record_field__LilyParser(LilyParser *self,
 }
 
 LilyAstDecl *
-parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+parse_record_decl__LilyParser(LilyParser *self,
+                              const LilyDumpConfig *dump_config,
+                              LilyPreparserDecl *decl)
 {
     // 1. Parse generic params
     Vec *generic_params = NULL;
@@ -4796,7 +4811,9 @@ parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 
         switch (item->kind) {
             case LILY_PREPARSER_RECORD_BODY_ITEM_KIND_MACRO_EXPAND:
-                TODO("macro expand");
+                apply_macro_expansion_in_record__LilyParser(
+                  self, dump_config, item, fields);
+
                 break;
             case LILY_PREPARSER_RECORD_BODY_ITEM_KIND_FIELD: {
                 LilyAstField *field =
@@ -4969,7 +4986,9 @@ parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 }
 
 LilyAstDecl *
-parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+parse_type_decl__LilyParser(LilyParser *self,
+                            const LilyDumpConfig *dump_config,
+                            LilyPreparserDecl *decl)
 {
     switch (decl->type.kind) {
         case LILY_PREPARSER_TYPE_KIND_ALIAS:
@@ -4977,7 +4996,7 @@ parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
         case LILY_PREPARSER_TYPE_KIND_ENUM:
             return parse_enum_decl__LilyParser(self, decl);
         case LILY_PREPARSER_TYPE_KIND_RECORD:
-            return parse_record_decl__LilyParser(self, decl);
+            return parse_record_decl__LilyParser(self, dump_config, decl);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -5233,373 +5252,431 @@ is_block__LilyParser(const Vec *tokens)
     return false;
 }
 
+#define CHECK_MACRO(decl)                                                          \
+    /* 1. Looks for the macro. */                                                  \
+    LilyMacro *macro =                                                             \
+      search_macro__LilyParser(self, decl->macro_expand.name);                     \
+                                                                                   \
+    if (!macro) {                                                                  \
+        emit__Diagnostic(                                                          \
+          NEW_VARIANT(Diagnostic,                                                  \
+                      simple_lily_error,                                           \
+                      &self->package->file,                                        \
+                      &decl->location,                                             \
+                      NEW(LilyError, LILY_ERROR_KIND_MACRO_IS_NOT_FOUND),          \
+                      NULL,                                                        \
+                      NULL,                                                        \
+                      NULL),                                                       \
+          &self->package->count_error);                                            \
+                                                                                   \
+        return;                                                                    \
+    }                                                                              \
+                                                                                   \
+    /* 2. Check params of macro. Then replace the macro identifier(s) by the       \
+    value(s) passed in the parameters of the expansion macro. */                   \
+    Vec macro_tokens_copy = *macro->tokens;                                        \
+                                                                                   \
+    if (decl->macro_expand.params && macro->params) {                              \
+        if (decl->macro_expand.params->len > macro->params->len) {                 \
+            emit__Diagnostic(                                                      \
+              NEW_VARIANT(                                                         \
+                Diagnostic,                                                        \
+                simple_lily_error,                                                 \
+                &self->package->file,                                              \
+                &decl->location,                                                   \
+                NEW(LilyError,                                                     \
+                    LILY_ERROR_KIND_MACRO_EXPAND_HAVE_TOO_MANY_PARAMS),            \
+                NULL,                                                              \
+                NULL,                                                              \
+                format__String(                                                    \
+                  "expected {d} parameters, obtained {d} parameters",              \
+                  macro->params->len,                                              \
+                  decl->macro_expand.params->len)),                                \
+              &self->package->count_error);                                        \
+                                                                                   \
+            return;                                                                \
+        } else if (decl->macro_expand.params->len < macro->params->len) {          \
+            emit__Diagnostic(                                                      \
+              NEW_VARIANT(                                                         \
+                Diagnostic,                                                        \
+                simple_lily_error,                                                 \
+                &self->package->file,                                              \
+                &decl->location,                                                   \
+                NEW(LilyError, LILY_ERROR_KIND_MACRO_EXPAND_MISS_FEW_PARAMS),      \
+                NULL,                                                              \
+                NULL,                                                              \
+                format__String(                                                    \
+                  "expected {d} parameters, obtained {d} parameters",              \
+                  macro->params->len,                                              \
+                  decl->macro_expand.params->len)),                                \
+              &self->package->count_error);                                        \
+                                                                                   \
+            return;                                                                \
+        } else {                                                                   \
+            /* NOTE: macro->params and macro_expand.params have the same           \
+             * length. */                                                          \
+            for (Usize i = 0; i < macro->params->len; ++i) {                       \
+                LilyMacroParam *param = get__Vec(macro->params, i);                \
+                                                                                   \
+                /* Checks if the values passed as parameters are valid with        \
+                respect to the type that is specified in the macro                 \
+                declaration. */                                                    \
+                switch (param->kind) {                                             \
+                    case LILY_MACRO_PARAM_KIND_ID:                                 \
+                        if (!is_id__LilyParser(                                    \
+                              get__Vec(decl->macro_expand.params, i))) {           \
+                            emit__Diagnostic(                                      \
+                              NEW_VARIANT(                                         \
+                                Diagnostic,                                        \
+                                simple_lily_error,                                 \
+                                &self->package->file,                              \
+                                &decl->location,                                   \
+                                NEW(LilyError,                                     \
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_ID),            \
+                                NULL,                                              \
+                                NULL,                                              \
+                                format__String("at parameter number {d}",          \
+                                               i + 1)),                            \
+                              &self->package->count_error);                        \
+                                                                                   \
+                            continue;                                              \
+                        }                                                          \
+                                                                                   \
+                        break;                                                     \
+                    case LILY_MACRO_PARAM_KIND_DT:                                 \
+                        if (!is_dt__LilyParser(                                    \
+                              get__Vec(decl->macro_expand.params, i))) {           \
+                            emit__Diagnostic(                                      \
+                              NEW_VARIANT(                                         \
+                                Diagnostic,                                        \
+                                simple_lily_error,                                 \
+                                &self->package->file,                              \
+                                &decl->location,                                   \
+                                NEW(LilyError,                                     \
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_DT),            \
+                                NULL,                                              \
+                                NULL,                                              \
+                                format__String("at parameter number {d}",          \
+                                               i + 1)),                            \
+                              &self->package->count_error);                        \
+                                                                                   \
+                            continue;                                              \
+                        }                                                          \
+                                                                                   \
+                        break;                                                     \
+                    case LILY_MACRO_PARAM_KIND_TT:                                 \
+                        if (!is_tt__LilyParser(                                    \
+                              get__Vec(decl->macro_expand.params, i))) {           \
+                            emit__Diagnostic(                                      \
+                              NEW_VARIANT(                                         \
+                                Diagnostic,                                        \
+                                simple_lily_error,                                 \
+                                &self->package->file,                              \
+                                &decl->location,                                   \
+                                NEW(LilyError,                                     \
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_TT),            \
+                                NULL,                                              \
+                                NULL,                                              \
+                                format__String("at parameter number {d}",          \
+                                               i + 1)),                            \
+                              &self->package->count_error);                        \
+                                                                                   \
+                            continue;                                              \
+                        }                                                          \
+                                                                                   \
+                        break;                                                     \
+                    case LILY_MACRO_PARAM_KIND_STMT:                               \
+                        if (!is_stmt__LilyParser(                                  \
+                              get__Vec(decl->macro_expand.params, i))) {           \
+                            emit__Diagnostic(                                      \
+                              NEW_VARIANT(                                         \
+                                Diagnostic,                                        \
+                                simple_lily_error,                                 \
+                                &self->package->file,                              \
+                                &decl->location,                                   \
+                                NEW(LilyError,                                     \
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_STMT),          \
+                                NULL,                                              \
+                                NULL,                                              \
+                                format__String("at parameter number {d}",          \
+                                               i + 1)),                            \
+                              &self->package->count_error);                        \
+                                                                                   \
+                            continue;                                              \
+                        }                                                          \
+                                                                                   \
+                        break;                                                     \
+                    case LILY_MACRO_PARAM_KIND_EXPR:                               \
+                        if (!is_expr__LilyParser(                                  \
+                              get__Vec(decl->macro_expand.params, i))) {           \
+                            emit__Diagnostic(                                      \
+                              NEW_VARIANT(                                         \
+                                Diagnostic,                                        \
+                                simple_lily_error,                                 \
+                                &self->package->file,                              \
+                                &decl->location,                                   \
+                                NEW(LilyError,                                     \
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_EXPR),          \
+                                NULL,                                              \
+                                NULL,                                              \
+                                format__String("at parameter number {d}",          \
+                                               i + 1)),                            \
+                              &self->package->count_error);                        \
+                                                                                   \
+                            continue;                                              \
+                        }                                                          \
+                                                                                   \
+                        break;                                                     \
+                    case LILY_MACRO_PARAM_KIND_PATH:                               \
+                        if (!is_path__LilyParser(                                  \
+                              get__Vec(decl->macro_expand.params, i))) {           \
+                            emit__Diagnostic(                                      \
+                              NEW_VARIANT(                                         \
+                                Diagnostic,                                        \
+                                simple_lily_error,                                 \
+                                &self->package->file,                              \
+                                &decl->location,                                   \
+                                NEW(LilyError,                                     \
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_PATH),          \
+                                NULL,                                              \
+                                NULL,                                              \
+                                format__String("at parameter number {d}",          \
+                                               i + 1)),                            \
+                              &self->package->count_error);                        \
+                                                                                   \
+                            continue;                                              \
+                        }                                                          \
+                                                                                   \
+                        break;                                                     \
+                    case LILY_MACRO_PARAM_KIND_PATT:                               \
+                        if (!is_patt__LilyParser(                                  \
+                              get__Vec(decl->macro_expand.params, i))) {           \
+                            emit__Diagnostic(                                      \
+                              NEW_VARIANT(                                         \
+                                Diagnostic,                                        \
+                                simple_lily_error,                                 \
+                                &self->package->file,                              \
+                                &decl->location,                                   \
+                                NEW(LilyError,                                     \
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_PATT),          \
+                                NULL,                                              \
+                                NULL,                                              \
+                                format__String("at parameter number {d}",          \
+                                               i + 1)),                            \
+                              &self->package->count_error);                        \
+                                                                                   \
+                            continue;                                              \
+                        }                                                          \
+                                                                                   \
+                        break;                                                     \
+                    case LILY_MACRO_PARAM_KIND_BLOCK:                              \
+                        if (!is_block__LilyParser(                                 \
+                              get__Vec(decl->macro_expand.params, i))) {           \
+                            emit__Diagnostic(                                      \
+                              NEW_VARIANT(                                         \
+                                Diagnostic,                                        \
+                                simple_lily_error,                                 \
+                                &self->package->file,                              \
+                                &decl->location,                                   \
+                                NEW(LilyError,                                     \
+                                    LILY_ERROR_KIND_MACRO_EXPECTED_BLOCK),         \
+                                NULL,                                              \
+                                NULL,                                              \
+                                format__String("at parameter number {d}",          \
+                                               i + 1)),                            \
+                              &self->package->count_error);                        \
+                                                                                   \
+                            continue;                                              \
+                        }                                                          \
+                                                                                   \
+                        break;                                                     \
+                    default:                                                       \
+                        UNREACHABLE("unknown variant");                            \
+                }                                                                  \
+                                                                                   \
+                /* Replaces all uses of the parameter in the macro with the        \
+                value passed in the macro expansion. */                            \
+                                                                                   \
+                for (Usize i = 0; i < macro_tokens_copy.len;) {                    \
+                    LilyToken *token = get__Vec(&macro_tokens_copy, i);            \
+                                                                                   \
+                    /* Looks for identifier macro. */                              \
+                    switch (token->kind) {                                         \
+                        case LILY_TOKEN_KIND_IDENTIFIER_MACRO:                     \
+                            /* Checks if the macro identifier matches a            \
+                            parameter in the macro declaration, otherwise          \
+                            issues an error saying that `the macro identifier      \
+                            is not found`. */                                      \
+                            for (Usize j = 0; j < macro->params->len; ++j) {       \
+                                LilyMacroParam *param =                            \
+                                  get__Vec(macro->params, j);                      \
+                                                                                   \
+                                if (!strcmp(token->identifier_macro->buffer,       \
+                                            param->name->buffer)) {                \
+                                    Vec *macro_expand_param =                      \
+                                      get__Vec(decl->macro_expand.params, j);      \
+                                                                                   \
+                                    remove__Vec(&macro_tokens_copy, i);            \
+                                                                                   \
+                                    /* See if it is possible to push otherwise     \
+                                    inserted at the position of the                \
+                                    `identifier_macro`. */                         \
+                                    if (i > macro_tokens_copy.len) {               \
+                                        for (Usize k = 0;                          \
+                                             k < macro_expand_param->len;          \
+                                             ++k) {                                \
+                                            push__Vec(                             \
+                                              &macro_tokens_copy,                  \
+                                              get__Vec(macro_expand_param,         \
+                                                       k));                        \
+                                        }                                          \
+                                    } else {                                       \
+                                        for (Usize k = 0;                          \
+                                             k < macro_expand_param->len;          \
+                                             ++k) {                                \
+                                            insert__Vec(                           \
+                                              &macro_tokens_copy,                  \
+                                              get__Vec(macro_expand_param, k),     \
+                                              i + k);                              \
+                                        }                                          \
+                                    }                                              \
+                                                                                   \
+                                    i += macro_expand_param->len;                  \
+                                                                                   \
+                                    goto exit_loop;                                \
+                                }                                                  \
+                            }                                                      \
+                                                                                   \
+                            {                                                      \
+                                const File *file =                                 \
+                                  get_file_from_filename__LilyPackage(             \
+                                    self->root_package,                            \
+                                    macro->location.filename);                     \
+                                                                                   \
+                                emit__Diagnostic(                                  \
+                                  NEW_VARIANT(                                     \
+                                    Diagnostic,                                    \
+                                    simple_lily_error,                             \
+                                    file,                                          \
+                                    &token->location,                              \
+                                    NEW(                                           \
+                                      LilyError,                                   \
+                                      LILY_ERROR_KIND_MACRO_IDENTIFIER_NOT_FOUND), \
+                                    NULL,                                          \
+                                    NULL,                                          \
+                                    format__String(                                \
+                                      "unknown macro identifier named {S}",        \
+                                      token->identifier_macro)),                   \
+                                  &self->package->count_error);                    \
+                                                                                   \
+                                return;                                            \
+                            }                                                      \
+                                                                                   \
+                        exit_loop : {                                              \
+                        }                                                          \
+                                                                                   \
+                        break;                                                     \
+                        default:                                                   \
+                            break;                                                 \
+                    }                                                              \
+                                                                                   \
+                    ++i;                                                           \
+                }                                                                  \
+            }                                                                      \
+        }                                                                          \
+    } else if (decl->macro_expand.params || macro->params) {                       \
+        if (decl->macro_expand.params) {                                           \
+            emit__Diagnostic(                                                      \
+              NEW_VARIANT(                                                         \
+                Diagnostic,                                                        \
+                simple_lily_error,                                                 \
+                &self->package->file,                                              \
+                &decl->location,                                                   \
+                NEW(LilyError,                                                     \
+                    LILY_ERROR_KIND_MACRO_EXPAND_HAVE_TOO_MANY_PARAMS),            \
+                NULL,                                                              \
+                NULL,                                                              \
+                NULL),                                                             \
+              &self->package->count_error);                                        \
+        } else {                                                                   \
+            emit__Diagnostic(                                                      \
+              NEW_VARIANT(                                                         \
+                Diagnostic,                                                        \
+                simple_lily_error,                                                 \
+                &self->package->file,                                              \
+                &decl->location,                                                   \
+                NEW(LilyError, LILY_ERROR_KIND_MACRO_EXPAND_MISS_FEW_PARAMS),      \
+                NULL,                                                              \
+                NULL,                                                              \
+                NULL),                                                             \
+              &self->package->count_error);                                        \
+        }                                                                          \
+                                                                                   \
+        return;                                                                    \
+    }                                                                              \
+                                                                                   \
+    if (self->package->count_error > 0) {                                          \
+        return;                                                                    \
+    }
+
+void
+apply_macro_expansion_in_record__LilyParser(LilyParser *self,
+                                            const LilyDumpConfig *dump_config,
+                                            LilyPreparserRecordBodyItem *item,
+                                            Vec *body)
+{
+    CHECK_MACRO(item);
+
+    // 3. Prepare and parse the content of the macro, then expand
+    // it.
+    {
+        const File *file = get_file_from_filename__LilyPackage(
+          self->root_package, macro->location.filename);
+        LilyPreparser preparse_macro_expand =
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+
+        preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
+
+        Vec *pre_record_body_items =
+          preparse_record_body__LilyPreparser(&preparse_macro_expand);
+
+        if (!pre_record_body_items) {
+            return;
+        }
+
+        LilyPackage *package = search_package_from_filename__LilyPackage(
+          self->root_package, file->name);
+        LilyParser parser = (LilyParser){ .decls = NULL,
+                                          .package = package,
+                                          .root_package = self->root_package,
+                                          .current = NULL,
+                                          .preparser_info = NULL,
+                                          .position = 0 };
+
+        for (Usize i = 0; i < pre_record_body_items->len; ++i) {
+            LilyAstField *field = parse_record_field__LilyParser(
+              &parser, get__Vec(pre_record_body_items, i));
+
+            if (field) {
+                push__Vec(body, field);
+            }
+        }
+
+        // Clean up allocations
+
+        FREE_BUFFER_ITEMS(pre_record_body_items->buffer,
+                          pre_record_body_items->len,
+                          LilyPreparserRecordBodyItem);
+        FREE(Vec, pre_record_body_items);
+    }
+}
+
 void
 apply_macro_expansion__LilyParser(LilyParser *self,
                                   const LilyDumpConfig *dump_config,
                                   LilyPreparserDecl *decl)
 {
-    // 1. Looks for the macro.
-    LilyMacro *macro = search_macro__LilyParser(self, decl->macro_expand.name);
-
-    if (!macro) {
-        emit__Diagnostic(
-          NEW_VARIANT(Diagnostic,
-                      simple_lily_error,
-                      &self->package->file,
-                      &decl->location,
-                      NEW(LilyError, LILY_ERROR_KIND_MACRO_IS_NOT_FOUND),
-                      NULL,
-                      NULL,
-                      NULL),
-          &self->package->count_error);
-
-        return;
-    }
-
-    // 2. Check params of macro. Then replace the macro identifier(s) by the
-    // value(s) passed in the parameters of the expansion macro.
-    Vec macro_tokens_copy = *macro->tokens;
-
-    if (decl->macro_expand.params && macro->params) {
-        if (decl->macro_expand.params->len > macro->params->len) {
-            emit__Diagnostic(
-              NEW_VARIANT(
-                Diagnostic,
-                simple_lily_error,
-                &self->package->file,
-                &decl->location,
-                NEW(LilyError,
-                    LILY_ERROR_KIND_MACRO_EXPAND_HAVE_TOO_MANY_PARAMS),
-                NULL,
-                NULL,
-                format__String(
-                  "expected {d} parameters, obtained {d} parameters",
-                  macro->params->len,
-                  decl->macro_expand.params->len)),
-              &self->package->count_error);
-
-            return;
-        } else if (decl->macro_expand.params->len < macro->params->len) {
-            emit__Diagnostic(
-              NEW_VARIANT(
-                Diagnostic,
-                simple_lily_error,
-                &self->package->file,
-                &decl->location,
-                NEW(LilyError, LILY_ERROR_KIND_MACRO_EXPAND_MISS_FEW_PARAMS),
-                NULL,
-                NULL,
-                format__String(
-                  "expected {d} parameters, obtained {d} parameters",
-                  macro->params->len,
-                  decl->macro_expand.params->len)),
-              &self->package->count_error);
-
-            return;
-        } else {
-            // NOTE: macro->params and macro_expand.params have the same length.
-            for (Usize i = 0; i < macro->params->len; ++i) {
-                LilyMacroParam *param = get__Vec(macro->params, i);
-
-                // Checks if the values passed as parameters are valid with
-                // respect to the type that is specified in the macro
-                // declaration.
-                switch (param->kind) {
-                    case LILY_MACRO_PARAM_KIND_ID:
-                        if (!is_id__LilyParser(
-                              get__Vec(decl->macro_expand.params, i))) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_MACRO_EXPECTED_ID),
-                                NULL,
-                                NULL,
-                                format__String("at parameter number {d}",
-                                               i + 1)),
-                              &self->package->count_error);
-
-                            continue;
-                        }
-
-                        break;
-                    case LILY_MACRO_PARAM_KIND_DT:
-                        if (!is_dt__LilyParser(
-                              get__Vec(decl->macro_expand.params, i))) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_MACRO_EXPECTED_DT),
-                                NULL,
-                                NULL,
-                                format__String("at parameter number {d}",
-                                               i + 1)),
-                              &self->package->count_error);
-
-                            continue;
-                        }
-
-                        break;
-                    case LILY_MACRO_PARAM_KIND_TT:
-                        if (!is_tt__LilyParser(
-                              get__Vec(decl->macro_expand.params, i))) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_MACRO_EXPECTED_TT),
-                                NULL,
-                                NULL,
-                                format__String("at parameter number {d}",
-                                               i + 1)),
-                              &self->package->count_error);
-
-                            continue;
-                        }
-
-                        break;
-                    case LILY_MACRO_PARAM_KIND_STMT:
-                        if (!is_stmt__LilyParser(
-                              get__Vec(decl->macro_expand.params, i))) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_MACRO_EXPECTED_STMT),
-                                NULL,
-                                NULL,
-                                format__String("at parameter number {d}",
-                                               i + 1)),
-                              &self->package->count_error);
-
-                            continue;
-                        }
-
-                        break;
-                    case LILY_MACRO_PARAM_KIND_EXPR:
-                        if (!is_expr__LilyParser(
-                              get__Vec(decl->macro_expand.params, i))) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_MACRO_EXPECTED_EXPR),
-                                NULL,
-                                NULL,
-                                format__String("at parameter number {d}",
-                                               i + 1)),
-                              &self->package->count_error);
-
-                            continue;
-                        }
-
-                        break;
-                    case LILY_MACRO_PARAM_KIND_PATH:
-                        if (!is_path__LilyParser(
-                              get__Vec(decl->macro_expand.params, i))) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_MACRO_EXPECTED_PATH),
-                                NULL,
-                                NULL,
-                                format__String("at parameter number {d}",
-                                               i + 1)),
-                              &self->package->count_error);
-
-                            continue;
-                        }
-
-                        break;
-                    case LILY_MACRO_PARAM_KIND_PATT:
-                        if (!is_patt__LilyParser(
-                              get__Vec(decl->macro_expand.params, i))) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_MACRO_EXPECTED_PATT),
-                                NULL,
-                                NULL,
-                                format__String("at parameter number {d}",
-                                               i + 1)),
-                              &self->package->count_error);
-
-                            continue;
-                        }
-
-                        break;
-                    case LILY_MACRO_PARAM_KIND_BLOCK:
-                        if (!is_block__LilyParser(
-                              get__Vec(decl->macro_expand.params, i))) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_MACRO_EXPECTED_BLOCK),
-                                NULL,
-                                NULL,
-                                format__String("at parameter number {d}",
-                                               i + 1)),
-                              &self->package->count_error);
-
-                            continue;
-                        }
-
-                        break;
-                    default:
-                        UNREACHABLE("unknown variant");
-                }
-
-                // Replaces all uses of the parameter in the macro with the
-                // value passed in the macro expansion.
-
-                for (Usize i = 0; i < macro_tokens_copy.len;) {
-                    LilyToken *token = get__Vec(&macro_tokens_copy, i);
-
-                    // Looks for identifier macro.
-                    switch (token->kind) {
-                        case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
-                            // Checks if the macro identifier matches a
-                            // parameter in the macro declaration, otherwise
-                            // issues an error saying that `the macro identifier
-                            // is not found`.
-                            for (Usize j = 0; j < macro->params->len; ++j) {
-                                LilyMacroParam *param =
-                                  get__Vec(macro->params, j);
-
-                                if (!strcmp(token->identifier_macro->buffer,
-                                            param->name->buffer)) {
-                                    Vec *macro_expand_param =
-                                      get__Vec(decl->macro_expand.params, j);
-
-                                    remove__Vec(&macro_tokens_copy, i);
-
-                                    // See if it is possible to push otherwise
-                                    // inserted at the position of the
-                                    // `identifier_macro`.
-                                    if (i > macro_tokens_copy.len) {
-                                        for (Usize k = 0;
-                                             k < macro_expand_param->len;
-                                             ++k) {
-                                            push__Vec(
-                                              &macro_tokens_copy,
-                                              get__Vec(macro_expand_param, k));
-                                        }
-                                    } else {
-                                        for (Usize k = 0;
-                                             k < macro_expand_param->len;
-                                             ++k) {
-                                            insert__Vec(
-                                              &macro_tokens_copy,
-                                              get__Vec(macro_expand_param, k),
-                                              i + k);
-                                        }
-                                    }
-
-                                    i += macro_expand_param->len;
-
-                                    goto exit_loop;
-                                }
-                            }
-
-                            {
-                                const File *file =
-                                  get_file_from_filename__LilyPackage(
-                                    self->root_package,
-                                    macro->location.filename);
-
-                                emit__Diagnostic(
-                                  NEW_VARIANT(
-                                    Diagnostic,
-                                    simple_lily_error,
-                                    file,
-                                    &token->location,
-                                    NEW(
-                                      LilyError,
-                                      LILY_ERROR_KIND_MACRO_IDENTIFIER_NOT_FOUND),
-                                    NULL,
-                                    NULL,
-                                    format__String(
-                                      "unknown macro identifier named {S}",
-                                      token->identifier_macro)),
-                                  &self->package->count_error);
-
-                                return;
-                            }
-
-                        exit_loop : {
-                        }
-
-                        break;
-                        default:
-                            break;
-                    }
-
-                    ++i;
-                }
-            }
-        }
-    } else if (decl->macro_expand.params || macro->params) {
-        if (decl->macro_expand.params) {
-            emit__Diagnostic(
-              NEW_VARIANT(
-                Diagnostic,
-                simple_lily_error,
-                &self->package->file,
-                &decl->location,
-                NEW(LilyError,
-                    LILY_ERROR_KIND_MACRO_EXPAND_HAVE_TOO_MANY_PARAMS),
-                NULL,
-                NULL,
-                NULL),
-              &self->package->count_error);
-        } else {
-            emit__Diagnostic(
-              NEW_VARIANT(
-                Diagnostic,
-                simple_lily_error,
-                &self->package->file,
-                &decl->location,
-                NEW(LilyError, LILY_ERROR_KIND_MACRO_EXPAND_MISS_FEW_PARAMS),
-                NULL,
-                NULL,
-                NULL),
-              &self->package->count_error);
-        }
-
-        return;
-    }
-
-    if (self->package->count_error > 0) {
-        return;
-    }
+    CHECK_MACRO(decl);
 
     // 3. Prepare, precompile and parse the content of the macro, then expand
     // it.
@@ -5639,7 +5716,9 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 }
 
 LilyAstDecl *
-parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+parse_decl__LilyParser(LilyParser *self,
+                       const LilyDumpConfig *dump_config,
+                       LilyPreparserDecl *decl)
 {
     switch (decl->kind) {
         case LILY_PREPARSER_DECL_KIND_CONSTANT: {
@@ -5671,7 +5750,7 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
         case LILY_PREPARSER_DECL_KIND_OBJECT:
             return parse_object_decl__LilyParser(self, decl);
         case LILY_PREPARSER_DECL_KIND_TYPE:
-            return parse_type_decl__LilyParser(self, decl);
+            return parse_type_decl__LilyParser(self, dump_config, decl);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -5717,7 +5796,8 @@ run__LilyParser(LilyParser *self,
 
                 break;
             default: {
-                LilyAstDecl *decl = parse_decl__LilyParser(self, pre_decl);
+                LilyAstDecl *decl =
+                  parse_decl__LilyParser(self, dump_config, pre_decl);
 
                 if (decl) {
                     push__Vec(self->decls, decl);
