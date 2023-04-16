@@ -1,6 +1,6 @@
-// macro field($i id, $t dt) = {
-// 	{{i}} {{t}};
-// };
+macro field($i id, $t dt) = {
+	{{i}} {{t}};
+};
 
 macro fn($i id, $param tks, $x expr) = {
 	fun {{i}}({{param}}) = {{x}} end
@@ -9,23 +9,23 @@ macro fn($i id, $param tks, $x expr) = {
 fn!(add, ${x, y}, x + y);
 fn!(sub, ${x, y}, x - y); // fun one = 1 end
 
-// type Person record =
-// 	field!(age, Uint8);
-// 	field!(name, Str);
-// 	field!(work, Str);
-// end
-// 
-// macro variant($i id, $t dt) = {
-// 	{{i}}:{{t}};
-// };
-// 
-// type Color enum =
-// 	variant!(Red, Int32);
-// 	variant!(Green, Int32);
-// 	variant!(Blue, Int32);
-// end
-// 
-// object Person record =
-// 	field!(age, Uint8);
-// 	field!(name, Str);
-// end
+type Person record =
+	field!(age, Uint8);
+	field!(name, Str);
+	field!(work, Str);
+end
+
+macro variant($i id, $t dt) = {
+	{{i}}:{{t}};
+};
+
+type Color enum =
+	variant!(Red, Int32);
+	variant!(Green, Int32);
+	variant!(Blue, Int32);
+end
+
+object Person record =
+	field!(age, Uint8);
+	field!(name, Str);
+end
