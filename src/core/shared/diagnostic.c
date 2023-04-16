@@ -142,24 +142,54 @@ to_string__Diagnostic(const Diagnostic *self);
 // Free Diagnostic type.
 static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
 
-#define LINES(location, file)                                                 \
-    Vec *split = split__Str(file->content, '\n');                             \
-    Vec *lines = NEW(Vec);                                                    \
-    if (location->start_line == location->end_line) {                         \
-        push__Vec(lines, get__Vec(split, location->start_line - 1));          \
-        for (Usize i = 0; i < split->len; ++i) {                              \
-            if (i != location->start_line - 1)                                \
-                lily_free(split->buffer[i]);                                  \
-        }                                                                     \
-    } else {                                                                  \
-        push__Vec(lines, get__Vec(split, location->start_line - 1));          \
-        push__Vec(lines, get__Vec(split, location->end_line - 1));            \
-        for (Usize i = 0; i < split->len; ++i) {                              \
-            if (i != location->start_line - 1 && i != location->end_line - 1) \
-                lily_free(split->buffer[i]);                                  \
-        }                                                                     \
-    }                                                                         \
-    FREE(Vec, split);
+#define LINES(location, file)                                                  \
+    Usize start_position = location->start_position;                           \
+    Usize end_position = location->end_position;                               \
+                                                                               \
+    for (; start_position > 0 && file->content[start_position] != '\n';        \
+         --start_position)                                                     \
+        ;                                                                      \
+    for (; end_position < file->len && (file->content[end_position] != '\n' && \
+                                        file->content[end_position]);          \
+         ++end_position)                                                       \
+        ;                                                                      \
+                                                                               \
+    ++start_position;                                                          \
+                                                                               \
+    Vec *lines = NULL;                                                         \
+                                                                               \
+    if (location->end_line - location->start_line == 0) {                      \
+        char *slice =                                                          \
+          get_slice__Str(file->content, start_position, end_position);         \
+                                                                               \
+        lines = split__Str(slice, '\n');                                       \
+                                                                               \
+        lily_free(slice);                                                      \
+    } else {                                                                   \
+        String *slice = NEW(String);                                           \
+        Usize position = start_position;                                       \
+                                                                               \
+        for (Usize i = location->start_line; i < location->end_line; ++i) {    \
+            while (file->content[position] != '\n' &&                          \
+                   file->content[position]) {                                  \
+                push__String(slice, file->content[position++]);                \
+            }                                                                  \
+                                                                               \
+            ++position;                                                        \
+        }                                                                      \
+                                                                               \
+        while (position < end_position) {                                      \
+            push__String(slice, file->content[position++]);                    \
+        }                                                                      \
+                                                                               \
+        lines = split__String(slice, '\n');                                    \
+                                                                               \
+        FREE(String, slice);                                                   \
+    }                                                                          \
+                                                                               \
+    if (lines->len == 0) {                                                     \
+        push__Vec(lines, NEW(String));                                         \
+    }
 
 DESTRUCTOR(DiagnosticLevel, const DiagnosticLevel *self)
 {
@@ -447,8 +477,8 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
         char *line = format("{s}", CAST(char *, get__Vec(self->lines, 0)));
         Usize count_whitespace = 0;
 
-        for (Usize i = 0; line[i++];) {
-            if (isblank(line[i - 1])) {
+        for (Usize i = 0; line[i]; ++i) {
+            if (isblank(line[i])) {
                 count_whitespace++;
             } else
                 break;
@@ -481,11 +511,13 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
         }
 
         {
-            char *s = format("{Sr}",
-                             repeat__String(" ",
-                                            self->location->start_column >= 1
-                                              ? self->location->start_column - 1
-                                              : 0));
+            char *s =
+              format("{Sr}",
+                     repeat__String(
+                       " ",
+                       self->location->start_column - count_whitespace >= 1
+                         ? self->location->start_column - count_whitespace - 1
+                         : 0));
 
             PUSH_STR_AND_FREE(res, s);
         }
@@ -534,6 +566,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
 
         lily_free(line);
     } else {
+		// TODO: diagnostic on one more line.
         // printf("%s\n", CAST(char*, get__Vec(self->lines, 0)));
         // printf("%s\n", CAST(char*, get__Vec(self->lines, 1)));
         char *first_line =
