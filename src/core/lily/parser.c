@@ -390,7 +390,9 @@ parse_method_decl_for_record_object__LilyParser(
 
 // Parse object declaration.
 static LilyAstDecl *
-parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+parse_object_decl__LilyParser(LilyParser *self,
+                              const LilyDumpConfig *dump_config,
+                              LilyPreparserDecl *decl);
 
 // Parse prototype declaration.
 static LilyAstBodyTraitItem *
@@ -413,9 +415,17 @@ static LilyAstBodyRecordObjectItem *
 parse_record_object_field__LilyParser(LilyParser *self,
                                       LilyPreparserRecordObjectBodyItem *item);
 
+// Parse body of record object.
+static Vec *
+parse_record_object_body__LilyParser(LilyParser *self,
+                                     const LilyDumpConfig *dump_config,
+                                     Vec *pre_body);
+
 // Parse record object declaration.
 static LilyAstDecl *
-parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+parse_record_object_decl__LilyParser(LilyParser *self,
+                                     const LilyDumpConfig *dump_config,
+                                     LilyPreparserDecl *decl);
 
 // Parse trait declaration.
 static LilyAstDecl *
@@ -481,6 +491,14 @@ apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
                                           const LilyDumpConfig *dump_config,
                                           LilyPreparserEnumBodyItem *item,
                                           Vec *body);
+
+/// @param body Body of record object
+static void
+apply_macro_expansion_in_record_object__LilyParser(
+  LilyParser *self,
+  const LilyDumpConfig *dump_config,
+  LilyPreparserRecordObjectBodyItem *item,
+  Vec *body);
 
 static void
 apply_macro_expansion__LilyParser(LilyParser *self,
@@ -4694,7 +4712,9 @@ parse_method_decl__LilyParser(LilyParser *self,
 }
 
 LilyAstDecl *
-parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+parse_object_decl__LilyParser(LilyParser *self,
+                              const LilyDumpConfig *dump_config,
+                              LilyPreparserDecl *decl)
 {
     switch (decl->object.kind) {
         case LILY_PREPARSER_OBJECT_KIND_CLASS:
@@ -4702,7 +4722,8 @@ parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
         case LILY_PREPARSER_OBJECT_KIND_ENUM:
             return parse_enum_object_decl__LilyParser(self, decl);
         case LILY_PREPARSER_OBJECT_KIND_RECORD:
-            return parse_record_object_decl__LilyParser(self, decl);
+            return parse_record_object_decl__LilyParser(
+              self, dump_config, decl);
         case LILY_PREPARSER_OBJECT_KIND_TRAIT:
             return parse_trait_decl__LilyParser(self, decl);
         default:
@@ -4893,31 +4914,15 @@ parse_record_object_field__LilyParser(LilyParser *self,
                            item->field.visibility));
 }
 
-LilyAstDecl *
-parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+Vec *
+parse_record_object_body__LilyParser(LilyParser *self,
+                                     const LilyDumpConfig *dump_config,
+                                     Vec *pre_body)
 {
-    // 1. Parse generic params
-    Vec *generic_params = NULL;
-
-    if (decl->object.record.generic_params) {
-        generic_params = parse_generic_params__LilyParser(
-          self, decl->object.record.generic_params);
-    }
-
-    // 2. Parse implement params
-    Vec *impl_params = NULL;
-
-    if (decl->object.record.implements) {
-        impl_params =
-          parse_impl_params__LilyParser(self, decl->object.record.implements);
-    }
-
-    // 3. Parse body
     Vec *body = NEW(Vec); // Vec<LilyAstBodyRecordObjectItem*>*
 
-    for (Usize i = 0; i < decl->object.record.body->len; ++i) {
-        LilyPreparserRecordObjectBodyItem *item =
-          get__Vec(decl->object.record.body, i);
+    for (Usize i = 0; i < pre_body->len; ++i) {
+        LilyPreparserRecordObjectBodyItem *item = get__Vec(pre_body, i);
 
         switch (item->kind) {
             case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_CONSTANT:
@@ -4953,7 +4958,8 @@ parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 
                 break;
             case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND:
-                TODO("macro expand");
+                apply_macro_expansion_in_record_object__LilyParser(
+                  self, dump_config, item, body);
 
                 break;
             case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD: {
@@ -4978,6 +4984,34 @@ parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
             }
         }
     }
+
+    return body;
+}
+
+LilyAstDecl *
+parse_record_object_decl__LilyParser(LilyParser *self,
+                                     const LilyDumpConfig *dump_config,
+                                     LilyPreparserDecl *decl)
+{
+    // 1. Parse generic params
+    Vec *generic_params = NULL;
+
+    if (decl->object.record.generic_params) {
+        generic_params = parse_generic_params__LilyParser(
+          self, decl->object.record.generic_params);
+    }
+
+    // 2. Parse implement params
+    Vec *impl_params = NULL;
+
+    if (decl->object.record.implements) {
+        impl_params =
+          parse_impl_params__LilyParser(self, decl->object.record.implements);
+    }
+
+    // 3. Parse body
+    Vec *body = parse_record_object_body__LilyParser(
+      self, dump_config, decl->object.record.body);
 
     return NEW_VARIANT(LilyAstDecl,
                        object,
@@ -5747,6 +5781,57 @@ apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
 }
 
 void
+apply_macro_expansion_in_record_object__LilyParser(
+  LilyParser *self,
+  const LilyDumpConfig *dump_config,
+  LilyPreparserRecordObjectBodyItem *item,
+  Vec *body)
+{
+    CHECK_MACRO(item);
+
+    // 3. Prepare and parse the content of the macro, then expand
+    // it.
+    {
+        const File *file = get_file_from_filename__LilyPackage(
+          self->root_package, macro->location.filename);
+        LilyPreparser preparse_macro_expand =
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+
+        preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
+
+        Vec *pre_record_object_body_items =
+          preparse_record_object_body__LilyPreparser(&preparse_macro_expand);
+
+        if (!pre_record_object_body_items) {
+            return;
+        }
+
+        LilyPackage *package = search_package_from_filename__LilyPackage(
+          self->root_package, file->name);
+        LilyParser parser = (LilyParser){ .decls = NULL,
+                                          .package = package,
+                                          .root_package = self->root_package,
+                                          .current = NULL,
+                                          .preparser_info = NULL,
+                                          .position = 0 };
+
+        Vec *expand_body = parse_record_object_body__LilyParser(
+          &parser, dump_config, pre_record_object_body_items);
+
+        append__Vec(body, expand_body);
+
+        // Clean up allocations
+
+        FREE_BUFFER_ITEMS(pre_record_object_body_items->buffer,
+                          pre_record_object_body_items->len,
+                          LilyPreparserRecordObjectBodyItem);
+        FREE(Vec, pre_record_object_body_items);
+        FREE(Vec, expand_body);
+        lily_free(macro_tokens_copy.buffer);
+    }
+}
+
+void
 apply_macro_expansion__LilyParser(LilyParser *self,
                                   const LilyDumpConfig *dump_config,
                                   LilyPreparserDecl *decl)
@@ -5824,7 +5909,7 @@ parse_decl__LilyParser(LilyParser *self,
 
             return NULL;
         case LILY_PREPARSER_DECL_KIND_OBJECT:
-            return parse_object_decl__LilyParser(self, decl);
+            return parse_object_decl__LilyParser(self, dump_config, decl);
         case LILY_PREPARSER_DECL_KIND_TYPE:
             return parse_type_decl__LilyParser(self, dump_config, decl);
         default:
