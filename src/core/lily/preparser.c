@@ -860,9 +860,6 @@ static VARIANT_DESTRUCTOR(LilyPreparserEnumBodyItem,
                           variant,
                           LilyPreparserEnumBodyItem *self);
 
-// Free LilyPreparserEnumBodyItem type.
-static DESTRUCTOR(LilyPreparserEnumBodyItem, LilyPreparserEnumBodyItem *self);
-
 // Construct LilyPreparserEnum type.
 static inline CONSTRUCTOR(LilyPreparserEnum,
                           LilyPreparserEnum,
@@ -11879,14 +11876,9 @@ preparse_macro_expand_for_enum__LilyPreparser(LilyPreparser *self)
     return NULL;
 }
 
-LilyPreparserDecl *
-preparse_enum__LilyPreparser(LilyPreparser *self,
-                             String *name,
-                             Vec *generic_params)
+Vec *
+preparse_enum_body__LilyPreparser(LilyPreparser *self)
 {
-    enum LilyVisibility visibility = visibility_decl;
-    Location location = location_decl;
-
     Vec *body = NEW(Vec); // Vec<LilyPreparserEnumBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
@@ -11964,6 +11956,30 @@ preparse_enum__LilyPreparser(LilyPreparser *self,
                 break;
             }
         }
+    }
+
+    return body;
+
+clean_up : {
+    FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserEnumBodyItem);
+    FREE(Vec, body);
+
+    return NULL;
+}
+}
+
+LilyPreparserDecl *
+preparse_enum__LilyPreparser(LilyPreparser *self,
+                             String *name,
+                             Vec *generic_params)
+{
+    enum LilyVisibility visibility = visibility_decl;
+    Location location = location_decl;
+
+    Vec *body = preparse_enum_body__LilyPreparser(self);
+
+    if (!body) {
+        goto clean_up;
     }
 
     switch (self->current->kind) {
