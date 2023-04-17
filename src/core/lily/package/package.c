@@ -125,8 +125,12 @@ build__LilyPackage(const CompileConfig *config,
                             default_path,
                             NULL,
                             NULL);
+    LilyPackageConfig pkg_config =
+      from_CompileConfig__LilyPackageConfig(config);
 
-    run__LilyScanner(&self->scanner, config->dump_scanner);
+    self->config = &pkg_config;
+
+    run__LilyScanner(&self->scanner, pkg_config.dump_scanner);
     run__LilyPreparser(&self->preparser, &self->preparser_info);
 
 #ifdef RUN_UNTIL_PREPARSER
@@ -157,20 +161,14 @@ build__LilyPackage(const CompileConfig *config,
           NEW_VARIANT(LilyIr, llvm, NEW(LilyIrLlvm, self->global_name->buffer));
     }
 
-    LilyDumpConfig dump_config = NEW(LilyDumpConfig,
-                                     config->dump_scanner,
-                                     config->dump_scanner,
-                                     config->dump_typecheck,
-                                     config->dump_ir);
-
-    run__LilyPrecompile(&self->precompile, &dump_config, self, false);
+    run__LilyPrecompile(&self->precompile, self, false);
 
 #ifdef RUN_UNTIL_PRECOMPILE
     FREE(LilyPackage, self);
     exit(0);
 #endif
 
-    run__LilyParser(&self->parser, &dump_config, false);
+    run__LilyParser(&self->parser, false);
     run__LilyIrLlvmGenerator(self);
 
     return self;

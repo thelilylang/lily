@@ -30,7 +30,6 @@
 #include <core/lily/package/dependency_tree.h>
 #include <core/lily/preparser.h>
 
-typedef struct LilyDumpConfig LilyDumpConfig;
 typedef struct LilyPackage LilyPackage;
 
 enum LilyImportValueKind
@@ -320,7 +319,6 @@ inline CONSTRUCTOR(LilyPrecompile,
  */
 void
 run__LilyPrecompile(LilyPrecompile *self,
-                    const LilyDumpConfig *dump_config,
                     LilyPackage *root_package,
                     bool precompile_macro_expand);
 

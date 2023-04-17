@@ -116,7 +116,6 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
 static LilyPackage *
 precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                        const LilyPreparserSubPackage *sub_pkg,
-                                       const LilyDumpConfig *dump_config,
                                        LilyPackage *root_package);
 
 static LilyMacro *
@@ -1054,7 +1053,6 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
 LilyPackage *
 precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                        const LilyPreparserSubPackage *sub_pkg,
-                                       const LilyDumpConfig *dump_config,
                                        LilyPackage *root_package)
 {
 #define INIT_IR()                                                       \
@@ -1114,11 +1112,13 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                sub_pkg->global_name->buffer,
                                root_package);
 
+        res->config = root_package->config;
+
         INIT_IR();
 
-        run__LilyScanner(&res->scanner, dump_config->dump_scanner);
+        run__LilyScanner(&res->scanner, res->config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
-        run__LilyPrecompile(&res->precompile, dump_config, root_package, false);
+        run__LilyPrecompile(&res->precompile, root_package, false);
 
         FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
         FREE(Vec, split_pkg_name);
@@ -1139,11 +1139,13 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
                                self->package->global_name->buffer,
                                root_package);
 
+        res->config = root_package->config;
+
         INIT_IR();
 
-        run__LilyScanner(&res->scanner, dump_config->dump_scanner);
+        run__LilyScanner(&res->scanner, res->config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
-        run__LilyPrecompile(&res->precompile, dump_config, root_package, false);
+        run__LilyPrecompile(&res->precompile, root_package, false);
 
         FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
         FREE(Vec, split_pkg_name);
@@ -1528,7 +1530,6 @@ check_macros__LilyPrecompile(LilyPrecompile *self, LilyPackage *root_package)
 
 void
 run__LilyPrecompile(LilyPrecompile *self,
-                    const LilyDumpConfig *dump_config,
                     LilyPackage *root_package,
                     bool precompile_macro_expand)
 {
@@ -1560,7 +1561,6 @@ run__LilyPrecompile(LilyPrecompile *self,
                   precompile_sub_package__LilyPrecompile(
                     self,
                     get__Vec(self->info->package->sub_packages, i),
-                    dump_config,
                     root_package));
     }
 

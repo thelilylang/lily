@@ -32,6 +32,7 @@
 #include <cli/config/compile.h>
 
 #include <core/lily/ir.h>
+#include <core/lily/package/config.h>
 #include <core/lily/package/library.h>
 #include <core/lily/parser.h>
 #include <core/lily/precompile.h>
@@ -46,38 +47,18 @@ enum LilyPackageStatus
     LILY_PACKAGE_STATUS_SUB_MAIN,
 };
 
-typedef struct LilyDumpConfig
-{
-    bool dump_scanner;
-    bool dump_parser;
-    bool dump_typecheck;
-    bool dump_ir;
-} LilyDumpConfig;
-
-inline CONSTRUCTOR(LilyDumpConfig,
-                   LilyDumpConfig,
-                   bool dump_scanner,
-                   bool dump_parser,
-                   bool dump_typecheck,
-                   bool dump_ir)
-{
-    return (LilyDumpConfig){ .dump_scanner = dump_scanner,
-                             .dump_parser = dump_parser,
-                             .dump_typecheck = dump_typecheck,
-                             .dump_ir = dump_ir };
-}
-
 typedef struct LilyPackage
 {
     String *name;
     String *global_name;
-    Vec *public_macros;        // Vec<LilyMacro*>*?
-    Vec *private_macros;       // Vec<LilyMacro*>*
-    Vec *public_imports;       // Vec<LilyImport*>*
-    Vec *private_imports;      // Vec<LilyImport*>*
-    Vec *sub_packages;         // Vec<LilyPackage*>*
-    Vec *package_dependencies; // Vec<LilyPackage* (&)>*
-    Vec *lib_dependencies;     // Vec<LilyLibrary*>*
+    Vec *public_macros;              // Vec<LilyMacro*>*?
+    Vec *private_macros;             // Vec<LilyMacro*>*
+    Vec *public_imports;             // Vec<LilyImport*>*
+    Vec *private_imports;            // Vec<LilyImport*>*
+    Vec *sub_packages;               // Vec<LilyPackage*>*
+    Vec *package_dependencies;       // Vec<LilyPackage* (&)>*
+    Vec *lib_dependencies;           // Vec<LilyLibrary*>*
+    const LilyPackageConfig *config; // LilyPackageConfig* (&)
     File file;
     LilyScanner scanner;     // LilyScanner
     LilyPreparser preparser; // LilyPreparser

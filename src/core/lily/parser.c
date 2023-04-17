@@ -343,9 +343,7 @@ parse_enum_variant_for_enum_object__LilyParser(
 
 // Parse enum declaration.
 static LilyAstDecl *
-parse_enum_decl__LilyParser(LilyParser *self,
-                            const LilyDumpConfig *dump_config,
-                            LilyPreparserDecl *decl);
+parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 // Parse enum object declaration.
 static LilyAstDecl *
@@ -390,9 +388,7 @@ parse_method_decl_for_record_object__LilyParser(
 
 // Parse object declaration.
 static LilyAstDecl *
-parse_object_decl__LilyParser(LilyParser *self,
-                              const LilyDumpConfig *dump_config,
-                              LilyPreparserDecl *decl);
+parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 // Parse prototype declaration.
 static LilyAstBodyTraitItem *
@@ -406,9 +402,7 @@ parse_record_field__LilyParser(LilyParser *self,
 
 // Parse record declaration.
 static LilyAstDecl *
-parse_record_decl__LilyParser(LilyParser *self,
-                              const LilyDumpConfig *dump_config,
-                              LilyPreparserDecl *decl);
+parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 // Parse record field object.
 static LilyAstBodyRecordObjectItem *
@@ -417,15 +411,11 @@ parse_record_object_field__LilyParser(LilyParser *self,
 
 // Parse body of record object.
 static Vec *
-parse_record_object_body__LilyParser(LilyParser *self,
-                                     const LilyDumpConfig *dump_config,
-                                     Vec *pre_body);
+parse_record_object_body__LilyParser(LilyParser *self, Vec *pre_body);
 
 // Parse record object declaration.
 static LilyAstDecl *
-parse_record_object_decl__LilyParser(LilyParser *self,
-                                     const LilyDumpConfig *dump_config,
-                                     LilyPreparserDecl *decl);
+parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 // Parse trait declaration.
 static LilyAstDecl *
@@ -433,9 +423,7 @@ parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 // Parse type declaration.
 static LilyAstDecl *
-parse_type_decl__LilyParser(LilyParser *self,
-                            const LilyDumpConfig *dump_config,
-                            LilyPreparserDecl *decl);
+parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 static LilyMacro *
 search_private_macro__LilyParser(const LilyParser *self, const String *name);
@@ -485,14 +473,12 @@ is_block__LilyParser(const Vec *tokens);
 /// @param body Body of record
 static void
 apply_macro_expansion_in_record__LilyParser(LilyParser *self,
-                                            const LilyDumpConfig *dump_config,
                                             LilyPreparserRecordBodyItem *item,
                                             Vec *body);
 
 /// @param body Body of enum
 static void
 apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
-                                          const LilyDumpConfig *dump_config,
                                           LilyPreparserEnumBodyItem *item,
                                           Vec *body);
 
@@ -500,20 +486,15 @@ apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
 static void
 apply_macro_expansion_in_record_object__LilyParser(
   LilyParser *self,
-  const LilyDumpConfig *dump_config,
   LilyPreparserRecordObjectBodyItem *item,
   Vec *body);
 
 static void
-apply_macro_expansion__LilyParser(LilyParser *self,
-                                  const LilyDumpConfig *dump_config,
-                                  LilyPreparserDecl *decl);
+apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 // Parse declaration.
 static LilyAstDecl *
-parse_decl__LilyParser(LilyParser *self,
-                       const LilyDumpConfig *dump_config,
-                       LilyPreparserDecl *decl);
+parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
@@ -4012,9 +3993,7 @@ parse_enum_variant_for_enum_object__LilyParser(
 }
 
 LilyAstDecl *
-parse_enum_decl__LilyParser(LilyParser *self,
-                            const LilyDumpConfig *dump_config,
-                            LilyPreparserDecl *decl)
+parse_enum_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
     // 1. Parse generic params
     Vec *generic_params = NULL;
@@ -4032,8 +4011,7 @@ parse_enum_decl__LilyParser(LilyParser *self,
 
         switch (item->kind) {
             case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_MACRO_EXPAND:
-                apply_macro_expansion_in_enum__LilyParser(
-                  self, dump_config, item, variants);
+                apply_macro_expansion_in_enum__LilyParser(self, item, variants);
 
                 break;
             case LILY_PREPARSER_ENUM_BODY_ITEM_KIND_VARIANT:
@@ -4716,9 +4694,7 @@ parse_method_decl__LilyParser(LilyParser *self,
 }
 
 LilyAstDecl *
-parse_object_decl__LilyParser(LilyParser *self,
-                              const LilyDumpConfig *dump_config,
-                              LilyPreparserDecl *decl)
+parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
     switch (decl->object.kind) {
         case LILY_PREPARSER_OBJECT_KIND_CLASS:
@@ -4726,8 +4702,7 @@ parse_object_decl__LilyParser(LilyParser *self,
         case LILY_PREPARSER_OBJECT_KIND_ENUM:
             return parse_enum_object_decl__LilyParser(self, decl);
         case LILY_PREPARSER_OBJECT_KIND_RECORD:
-            return parse_record_object_decl__LilyParser(
-              self, dump_config, decl);
+            return parse_record_object_decl__LilyParser(self, decl);
         case LILY_PREPARSER_OBJECT_KIND_TRAIT:
             return parse_trait_decl__LilyParser(self, decl);
         default:
@@ -4829,9 +4804,7 @@ parse_record_field__LilyParser(LilyParser *self,
 }
 
 LilyAstDecl *
-parse_record_decl__LilyParser(LilyParser *self,
-                              const LilyDumpConfig *dump_config,
-                              LilyPreparserDecl *decl)
+parse_record_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
     // 1. Parse generic params
     Vec *generic_params = NULL;
@@ -4849,8 +4822,7 @@ parse_record_decl__LilyParser(LilyParser *self,
 
         switch (item->kind) {
             case LILY_PREPARSER_RECORD_BODY_ITEM_KIND_MACRO_EXPAND:
-                apply_macro_expansion_in_record__LilyParser(
-                  self, dump_config, item, fields);
+                apply_macro_expansion_in_record__LilyParser(self, item, fields);
 
                 break;
             case LILY_PREPARSER_RECORD_BODY_ITEM_KIND_FIELD: {
@@ -4919,9 +4891,7 @@ parse_record_object_field__LilyParser(LilyParser *self,
 }
 
 Vec *
-parse_record_object_body__LilyParser(LilyParser *self,
-                                     const LilyDumpConfig *dump_config,
-                                     Vec *pre_body)
+parse_record_object_body__LilyParser(LilyParser *self, Vec *pre_body)
 {
     Vec *body = NEW(Vec); // Vec<LilyAstBodyRecordObjectItem*>*
 
@@ -4963,7 +4933,7 @@ parse_record_object_body__LilyParser(LilyParser *self,
                 break;
             case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_MACRO_EXPAND:
                 apply_macro_expansion_in_record_object__LilyParser(
-                  self, dump_config, item, body);
+                  self, item, body);
 
                 break;
             case LILY_PREPARSER_RECORD_OBJECT_BODY_ITEM_KIND_METHOD: {
@@ -4993,9 +4963,7 @@ parse_record_object_body__LilyParser(LilyParser *self,
 }
 
 LilyAstDecl *
-parse_record_object_decl__LilyParser(LilyParser *self,
-                                     const LilyDumpConfig *dump_config,
-                                     LilyPreparserDecl *decl)
+parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
     // 1. Parse generic params
     Vec *generic_params = NULL;
@@ -5014,8 +4982,8 @@ parse_record_object_decl__LilyParser(LilyParser *self,
     }
 
     // 3. Parse body
-    Vec *body = parse_record_object_body__LilyParser(
-      self, dump_config, decl->object.record.body);
+    Vec *body =
+      parse_record_object_body__LilyParser(self, decl->object.record.body);
 
     return NEW_VARIANT(LilyAstDecl,
                        object,
@@ -5037,17 +5005,15 @@ parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 }
 
 LilyAstDecl *
-parse_type_decl__LilyParser(LilyParser *self,
-                            const LilyDumpConfig *dump_config,
-                            LilyPreparserDecl *decl)
+parse_type_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
     switch (decl->type.kind) {
         case LILY_PREPARSER_TYPE_KIND_ALIAS:
             return parse_alias_decl__LilyParser(self, decl);
         case LILY_PREPARSER_TYPE_KIND_ENUM:
-            return parse_enum_decl__LilyParser(self, dump_config, decl);
+            return parse_enum_decl__LilyParser(self, decl);
         case LILY_PREPARSER_TYPE_KIND_RECORD:
-            return parse_record_decl__LilyParser(self, dump_config, decl);
+            return parse_record_decl__LilyParser(self, decl);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -5739,7 +5705,6 @@ is_block__LilyParser(const Vec *tokens)
 
 void
 apply_macro_expansion_in_record__LilyParser(LilyParser *self,
-                                            const LilyDumpConfig *dump_config,
                                             LilyPreparserRecordBodyItem *item,
                                             Vec *body)
 {
@@ -5792,7 +5757,6 @@ apply_macro_expansion_in_record__LilyParser(LilyParser *self,
 
 void
 apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
-                                          const LilyDumpConfig *dump_config,
                                           LilyPreparserEnumBodyItem *item,
                                           Vec *body)
 {
@@ -5846,7 +5810,6 @@ apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
 void
 apply_macro_expansion_in_record_object__LilyParser(
   LilyParser *self,
-  const LilyDumpConfig *dump_config,
   LilyPreparserRecordObjectBodyItem *item,
   Vec *body)
 {
@@ -5879,7 +5842,7 @@ apply_macro_expansion_in_record_object__LilyParser(
                                           .position = 0 };
 
         Vec *expand_body = parse_record_object_body__LilyParser(
-          &parser, dump_config, pre_record_object_body_items);
+          &parser, pre_record_object_body_items);
 
         append__Vec(body, expand_body);
 
@@ -5895,9 +5858,7 @@ apply_macro_expansion_in_record_object__LilyParser(
 }
 
 void
-apply_macro_expansion__LilyParser(LilyParser *self,
-                                  const LilyDumpConfig *dump_config,
-                                  LilyPreparserDecl *decl)
+apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
     CHECK_MACRO(decl);
 
@@ -5918,14 +5879,14 @@ apply_macro_expansion__LilyParser(LilyParser *self,
                                         self->package,
                                         self->package->precompile.default_path);
 
-        run__LilyPrecompile(&precompile, dump_config, self->root_package, true);
+        run__LilyPrecompile(&precompile, self->root_package, true);
 
         LilyPackage *package = search_package_from_filename__LilyPackage(
           self->root_package, file->name);
         LilyParser parser =
           NEW(LilyParser, package, self->root_package, &preparser_info);
 
-        run__LilyParser(&parser, dump_config, true);
+        run__LilyParser(&parser, true);
 
         for (Usize i = 0; i < parser.decls->len; ++i) {
             push__Vec(self->decls, get__Vec(parser.decls, i));
@@ -5940,9 +5901,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 }
 
 LilyAstDecl *
-parse_decl__LilyParser(LilyParser *self,
-                       const LilyDumpConfig *dump_config,
-                       LilyPreparserDecl *decl)
+parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
     switch (decl->kind) {
         case LILY_PREPARSER_DECL_KIND_CONSTANT: {
@@ -5972,9 +5931,9 @@ parse_decl__LilyParser(LilyParser *self,
 
             return NULL;
         case LILY_PREPARSER_DECL_KIND_OBJECT:
-            return parse_object_decl__LilyParser(self, dump_config, decl);
+            return parse_object_decl__LilyParser(self, decl);
         case LILY_PREPARSER_DECL_KIND_TYPE:
-            return parse_type_decl__LilyParser(self, dump_config, decl);
+            return parse_type_decl__LilyParser(self, decl);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -6007,21 +5966,18 @@ TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self)
 }
 
 void
-run__LilyParser(LilyParser *self,
-                const LilyDumpConfig *dump_config,
-                bool parse_for_macro_expand)
+run__LilyParser(LilyParser *self, bool parse_for_macro_expand)
 {
     for (Usize i = 0; i < self->preparser_info->decls->len; ++i) {
         LilyPreparserDecl *pre_decl = get__Vec(self->preparser_info->decls, i);
 
         switch (pre_decl->kind) {
             case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
-                apply_macro_expansion__LilyParser(self, dump_config, pre_decl);
+                apply_macro_expansion__LilyParser(self, pre_decl);
 
                 break;
             default: {
-                LilyAstDecl *decl =
-                  parse_decl__LilyParser(self, dump_config, pre_decl);
+                LilyAstDecl *decl = parse_decl__LilyParser(self, pre_decl);
 
                 if (decl) {
                     push__Vec(self->decls, decl);
@@ -6039,7 +5995,7 @@ run__LilyParser(LilyParser *self,
         }
 #endif
 
-        if (dump_config->dump_parser) {
+        if (self->package->config->dump_parser) {
             TODO("dump parser");
         }
     }
