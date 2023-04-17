@@ -754,10 +754,6 @@ static VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
                           variant,
                           LilyPreparserEnumObjectBodyItem *self);
 
-// Free LilyPreparserEnumObjectBodyItem type.
-static DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
-                  LilyPreparserEnumObjectBodyItem *self);
-
 // Construct LilyPreparserEnumObject type.
 static inline CONSTRUCTOR(LilyPreparserEnumObject,
                           LilyPreparserEnumObject,
