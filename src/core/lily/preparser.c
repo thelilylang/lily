@@ -4507,9 +4507,6 @@ VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
 #endif
 
     if (self->variant.data_type) {
-        FREE_BUFFER_ITEMS(self->variant.data_type->buffer,
-                          self->variant.data_type->len,
-                          LilyToken);
         FREE(Vec, self->variant.data_type);
     }
 
@@ -7277,7 +7274,6 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
               "expected `do` keyword after `if` statement expression")),
           &self->count_error);
 
-        FREE_BUFFER_ITEMS(if_expr->buffer, if_expr->len, LilyToken);
         FREE(Vec, if_expr);
 
         return NULL;
@@ -9826,14 +9822,12 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                     FREE(String, name);
 
                     if (impls) {
-                        FREE_BUFFER_ITEMS_2(
-                          impls->buffer, impls->len, LilyToken);
+                        FREE_BUFFER_ITEMS(impls->buffer, impls->len, Vec);
                         FREE(Vec, impls);
                     }
 
                     if (inherits) {
-                        FREE_BUFFER_ITEMS_2(
-                          inherits->buffer, inherits->len, LilyToken);
+                        FREE_BUFFER_ITEMS(inherits->buffer, inherits->len, Vec);
                         FREE(Vec, inherits);
                     }
 
@@ -9895,12 +9889,12 @@ preparse_class__LilyPreparser(LilyPreparser *self,
             FREE(String, name);
 
             if (impls) {
-                FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken);
+                FREE_BUFFER_ITEMS(impls->buffer, impls->len, Vec);
                 FREE(Vec, impls);
             }
 
             if (inherits) {
-                FREE_BUFFER_ITEMS_2(inherits->buffer, inherits->len, LilyToken);
+                FREE_BUFFER_ITEMS(inherits->buffer, inherits->len, Vec);
                 FREE(Vec, inherits);
             }
 
@@ -10280,15 +10274,13 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
                     FREE(String, name);
 
                     if (inherits) {
-                        FREE_BUFFER_ITEMS_2(
-                          inherits->buffer, inherits->len, LilyToken);
+                        FREE_BUFFER_ITEMS(inherits->buffer, inherits->len, Vec);
                         FREE(Vec, inherits);
                     }
 
                     if (generic_params) {
-                        FREE_BUFFER_ITEMS_2(generic_params->buffer,
-                                            generic_params->len,
-                                            LilyToken);
+                        FREE_BUFFER_ITEMS(
+                          generic_params->buffer, generic_params->len, Vec);
                         FREE(Vec, generic_params);
                     }
 
@@ -10657,13 +10649,13 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
             FREE(String, name);
 
             if (impls) {
-                FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken);
+                FREE_BUFFER_ITEMS(impls->buffer, impls->len, Vec);
                 FREE(Vec, impls);
             }
 
             if (generic_params) {
-                FREE_BUFFER_ITEMS_2(
-                  generic_params->buffer, generic_params->len, LilyToken);
+                FREE_BUFFER_ITEMS(
+                  generic_params->buffer, generic_params->len, Vec);
                 FREE(Vec, generic_params);
             }
 
@@ -11816,8 +11808,6 @@ preparse_enum_variant__LilyPreparser(LilyPreparser *self)
               &self->count_error);
 
             FREE(String, name);
-
-            FREE_BUFFER_ITEMS(data_type->buffer, data_type->len, LilyToken);
             FREE(Vec, data_type);
 
             return NULL;
