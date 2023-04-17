@@ -131,7 +131,7 @@ help()
 void
 version()
 {
-    printf("lily v%s", VERSION);
+    printf("lily v%s\n", VERSION);
     exit(0);
 }
 
