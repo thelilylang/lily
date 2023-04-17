@@ -56,7 +56,7 @@ CONSTRUCTOR(ParseCommand,
         command_kind = COMMAND_CC;
     else if (!strcmp(command, "compile"))
         command_kind = COMMAND_COMPILE;
-    else if (!strcmp(command, "cpp"))
+    else if (!strcmp(command, "c++"))
         command_kind = COMMAND_CPP;
     else if (!strcmp(command, "help") || !strcmp(command, "--help") ||
              !strcmp(command, "-h"))
