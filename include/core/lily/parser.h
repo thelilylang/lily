@@ -32,10 +32,10 @@
 
 #include <core/lily/ast/data_type.h>
 #include <core/lily/ast/expr.h>
+#include <core/lily/package/config.h>
 #include <core/lily/preparser.h>
 
 typedef struct LilyPackage LilyPackage;
-typedef struct LilyDumpConfig LilyDumpConfig;
 typedef struct LilyParser LilyParser;
 
 typedef struct LilyParseBlock
@@ -62,6 +62,7 @@ struct LilyParser
     LilyPackage *root_package;
     LilyPreparserDecl *current;              // LilyPreparserDecl*?
     const LilyPreparserInfo *preparser_info; // LilyPreparserInfo*? (&)
+    // LilyDumpConfig *dump_config;
     Usize position;
     // NOTE: All optional null values of this struct are possible in case the
     // parser is construct to apply macro-expansion in records, record objects,
@@ -100,9 +101,7 @@ TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self);
  * @param Disable the debug when the parser parse into a macro expand.
  */
 void
-run__LilyParser(LilyParser *self,
-                const LilyDumpConfig *dump_config,
-                bool parse_for_macro_expand);
+run__LilyParser(LilyParser *self, bool parse_for_macro_expand);
 
 /**
  *
