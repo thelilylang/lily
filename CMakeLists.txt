@@ -271,6 +271,8 @@ set(CORE_SRC
 	src/core/shared/cursor.c
 	src/core/shared/diagnostic.c
 	src/core/shared/location.c
+	src/core/shared/target/arch.c
+	src/core/shared/target/os.c
 	src/core/shared/source.c)
 
 add_library(lily_base STATIC ${BASE_SRC})
