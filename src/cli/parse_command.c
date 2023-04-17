@@ -98,12 +98,11 @@ CONSTRUCTOR(ParseCommand,
                         char *msg = format("unknown option `{s}`", op->error); \
                         EMIT_ERROR(msg);                                       \
                         lily_free(msg);                                        \
-                        break;                                                 \
+                        exit(1);                                               \
                     }                                                          \
                     case u_name##_OPTION_KIND_HELP:                            \
                         puts(u_name##_HELP);                                   \
                         exit(0);                                               \
-                        break;                                                 \
                     default:                                                   \
                         break;                                                 \
                 }                                                              \

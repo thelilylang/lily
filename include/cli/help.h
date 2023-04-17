@@ -35,18 +35,24 @@
     "Options:\n\n"                            \
     "  -h, --help      Print cc's help"
 
-#define COMPILE_HELP                               \
-    "Usage: lily compile [options] [FILENAME]\n\n" \
-    "Options:\n\n"                                 \
-    "  --dump-scanner  Dump scanner output\n"      \
-    "  --dump-parser   Dump parser output\n"       \
-    "  --dump-tc       Dump typecheck output\n"    \
-    "  --run-scanner   Run only the scanner\n"     \
-    "  --run-parser    Run only the parser\n"      \
-    "  --run-tc        Run only the typecheck\n"   \
-    "  --cc-ir         Use C as IR\n"              \
-    "  --cpp-ir        Use C++ as IR\n"            \
-    "  --js-ir         Use JS as IR\n"             \
+#define COMPILE_HELP                                            \
+    "Usage: lily compile [options] [FILENAME]\n\n"              \
+    "Options:\n\n"                                              \
+    "  --dump-scanner  Dump scanner output\n"                   \
+    "  --dump-parser   Dump parser output\n"                    \
+    "  --dump-tc       Dump typecheck output\n"                 \
+    "  --dump-ir       Dump IR output\n"                        \
+    "  --run-scanner   Run until the scanner\n"                 \
+    "  --run-parser    Run until the parser\n"                  \
+    "  --run-tc        Run until the typecheck\n"               \
+    "  --run-ir        Run until the IR\n"                      \
+    "  --llvm-ir       Run LLVM as IR (by default)\n"           \
+    "  --cc-ir         Use C as IR\n"                           \
+    "  --cpp-ir        Use C++ as IR\n"                         \
+    "  --js-ir         Use JS as IR\n"                          \
+    "  --wasm-ir	   Use WASM as IR\n"                           \
+    "  --target=       Specify the target of the compilation\n" \
+    "  <os>-<arch>\n"                                           \
     "  -h, --help      Print compile's help\n"
 
 #define CPP_HELP                               \

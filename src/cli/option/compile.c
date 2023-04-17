@@ -24,6 +24,7 @@
 
 #include <base/alloc.h>
 #include <base/new.h>
+#include <base/str.h>
 
 #include <cli/option/compile.h>
 
@@ -33,6 +34,8 @@
 // Convert option in CompileOption struct.
 static CompileOption *
 get__CompileOption(const char *option);
+
+static VARIANT_DESTRUCTOR(CompileOption, target, CompileOption *self);
 
 CONSTRUCTOR(CompileOption *, CompileOption, enum CompileOptionKind kind)
 {
@@ -66,6 +69,16 @@ VARIANT_CONSTRUCTOR(CompileOption *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CompileOption *, CompileOption, target, String *target)
+{
+    CompileOption *self = lily_malloc(sizeof(CompileOption));
+
+    self->kind = COMPILE_OPTION_KIND_TARGET;
+    self->target = target;
+
+    return self;
+}
+
 static CompileOption *
 get__CompileOption(const char *option)
 {
@@ -85,6 +98,8 @@ get__CompileOption(const char *option)
         return NEW(CompileOption, COMPILE_OPTION_KIND_HELP);
     else if (!strcmp(option, "--js-ir"))
         return NEW(CompileOption, COMPILE_OPTION_KIND_JS_IR);
+    else if (!strcmp(option, "--llvm-ir"))
+        return NEW(CompileOption, COMPILE_OPTION_KIND_LLVM_IR);
     else if (!strcmp(option, "--run-ir"))
         return NEW(CompileOption, COMPILE_OPTION_KIND_RUN_IR);
     else if (!strcmp(option, "--run-parser"))
@@ -93,6 +108,18 @@ get__CompileOption(const char *option)
         return NEW(CompileOption, COMPILE_OPTION_KIND_RUN_SCANNER);
     else if (!strcmp(option, "--run-tc"))
         return NEW(CompileOption, COMPILE_OPTION_KIND_RUN_TYPECHECK);
+    else if (option[0] == 't' && option[1] == 'a' && option[2] == 'r' &&
+             option[3] == 'g' && option[4] == 'e' && option[5] == 't' &&
+             option[6] == '=') {
+        String *target = NEW(String);
+
+        for (Usize i = 0; option[i]; ++i) {
+            push__String(target, option[i]);
+        }
+
+        return NEW_VARIANT(CompileOption, target, target);
+    } else if (!strcmp(option, "--wasm-ir"))
+        return NEW(CompileOption, COMPILE_OPTION_KIND_WASM_IR);
     else
         return NEW_VARIANT(CompileOption, error, option);
 }
@@ -113,7 +140,19 @@ parse__CompileOption(const char **options, const Usize options_size)
     return res;
 }
 
+VARIANT_DESTRUCTOR(CompileOption, target, CompileOption *self)
+{
+    FREE(String, self->target);
+    lily_free(self);
+}
+
 DESTRUCTOR(CompileOption, CompileOption *self)
 {
-    lily_free(self);
+    switch (self->kind) {
+        case COMPILE_OPTION_KIND_TARGET:
+            FREE_VARIANT(CompileOption, target, self);
+            break;
+        default:
+            lily_free(self);
+    }
 }

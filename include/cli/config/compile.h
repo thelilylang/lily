@@ -32,6 +32,7 @@
 typedef struct CompileConfig
 {
     const char *filename;
+    const char *target; // const char*?
     bool run_scanner;
     bool run_parser;
     bool run_typecheck;
@@ -43,6 +44,8 @@ typedef struct CompileConfig
     bool cc_ir;
     bool cpp_ir;
     bool js_ir;
+    bool llvm_ir;
+    bool wasm_ir;
 } CompileConfig;
 
 /**
@@ -52,6 +55,7 @@ typedef struct CompileConfig
 inline CONSTRUCTOR(CompileConfig,
                    CompileConfig,
                    const char *filename,
+                   const char *target,
                    bool run_scanner,
                    bool run_parser,
                    bool run_typecheck,
@@ -62,9 +66,12 @@ inline CONSTRUCTOR(CompileConfig,
                    bool dump_ir,
                    bool cc_ir,
                    bool cpp_ir,
-                   bool js_ir)
+                   bool js_ir,
+                   bool llvm_ir,
+                   bool wasm_ir)
 {
     return (CompileConfig){ .filename = filename,
+                            .target = target,
                             .run_scanner = run_scanner,
                             .run_parser = run_parser,
                             .run_typecheck = run_typecheck,
@@ -75,7 +82,9 @@ inline CONSTRUCTOR(CompileConfig,
                             .dump_ir = dump_ir,
                             .cc_ir = cc_ir,
                             .cpp_ir = cpp_ir,
-                            .js_ir = js_ir };
+                            .js_ir = js_ir,
+                            .llvm_ir = llvm_ir,
+                            .wasm_ir = wasm_ir };
 }
 
 #endif // LILY_CLI_CONFIG_COMPILE_H

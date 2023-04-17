@@ -26,6 +26,7 @@
 #define LILY_CLI_OPTION_COMPILE_H
 
 #include <base/macros.h>
+#include <base/string.h>
 #include <base/vec.h>
 
 enum CompileOptionKind
@@ -40,10 +41,13 @@ enum CompileOptionKind
     COMPILE_OPTION_KIND_FILENAME,
     COMPILE_OPTION_KIND_HELP,          // -h, --help
     COMPILE_OPTION_KIND_JS_IR,         // --js-ir
+    COMPILE_OPTION_KIND_LLVM_IR,       // --llvm-ir
     COMPILE_OPTION_KIND_RUN_IR,        // --run-ir
     COMPILE_OPTION_KIND_RUN_PARSER,    // --run-parser
     COMPILE_OPTION_KIND_RUN_SCANNER,   // --run-scanner
     COMPILE_OPTION_KIND_RUN_TYPECHECK, // --run-tc
+    COMPILE_OPTION_KIND_TARGET,        // --target=<os>-<arch>
+    COMPILE_OPTION_KIND_WASM_IR,       // --wasm-ir
 };
 
 typedef struct CompileOption
@@ -53,6 +57,7 @@ typedef struct CompileOption
     {
         const char *error;
         const char *filename;
+        String *target;
     };
 } CompileOption;
 
@@ -76,6 +81,12 @@ VARIANT_CONSTRUCTOR(CompileOption *,
                     CompileOption,
                     filename,
                     const char *filename);
+
+/**
+ *
+ * @brief Construct CompileOption type (COMPILE_OPTION_KIND_TARGET).
+ */
+VARIANT_CONSTRUCTOR(CompileOption *, CompileOption, target, String *target);
 
 /**
  *
