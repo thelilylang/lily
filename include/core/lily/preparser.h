@@ -984,6 +984,13 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserEnumObjectBodyItem *self);
 #endif
 
+/**
+ *
+ * @brief Free LilyPreparserEnumObjectBodyItem type.
+ */
+DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
+           LilyPreparserEnumObjectBodyItem *self);
+
 typedef struct LilyPreparserEnumObject
 {
     String *name;
@@ -1486,6 +1493,14 @@ preparse_enum_body__LilyPreparser(LilyPreparser *self);
  */
 Vec *
 preparse_record_object_body__LilyPreparser(LilyPreparser *self);
+
+/**
+ *
+ * @brief Preparse the body of enum object.
+ * @return Vec<LilyPreparserEnumObjectBodyItem*>*?
+ */
+Vec *
+preparse_enum_object_body__LilyPreparser(LilyPreparser *self);
 
 /**
  *
