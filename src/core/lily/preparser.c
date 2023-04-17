@@ -10749,14 +10749,9 @@ preparse_method_for_enum__LilyPreparser(LilyPreparser *self)
     return NULL;
 }
 
-LilyPreparserDecl *
-preparse_enum_object__LilyPreparser(LilyPreparser *self,
-                                    String *name,
-                                    Vec *impls,
-                                    Vec *generic_params)
+Vec *
+preparse_enum_object_body__LilyPreparser(LilyPreparser *self)
 {
-    enum LilyVisibility visibility = visibility_decl;
-    Location location = clone__Location(&location_decl);
     Vec *body = NEW(Vec); // Vec<LilyPreparserEnumObjectBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
@@ -10830,37 +10825,25 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
                                               *variant));
                                 lily_free(variant);
                             } else {
-                            clean_up : {
-                                // Clean up allocations
-
-                                FREE(String, name);
-
-                                if (impls) {
-                                    FREE_BUFFER_ITEMS_2(
-                                      impls->buffer, impls->len, LilyToken);
-                                    FREE(Vec, impls);
-                                }
-
-                                if (generic_params) {
-                                    FREE_BUFFER_ITEMS_2(generic_params->buffer,
-                                                        generic_params->len,
-                                                        LilyToken);
-                                    FREE(Vec, generic_params);
-                                }
-
-                                FREE_BUFFER_ITEMS(
-                                  body->buffer,
-                                  body->len,
-                                  LilyPreparserEnumObjectBodyItem);
-                                FREE(Vec, body);
-
-                                return NULL;
-                            }
+                                goto clean_up;
                             }
                             break;
                         }
                     }
                 } else {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                        NULL,
+                        NULL,
+                        from__String("expected `!` or data type")),
+                      &self->count_error);
+
+                    goto clean_up;
                 }
 
                 break;
@@ -10890,6 +10873,33 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
         }
     }
 
+    return body;
+
+clean_up : {
+    // Clean up allocations
+
+    FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserEnumObjectBodyItem);
+    FREE(Vec, body);
+
+    return NULL;
+}
+}
+
+LilyPreparserDecl *
+preparse_enum_object__LilyPreparser(LilyPreparser *self,
+                                    String *name,
+                                    Vec *impls,
+                                    Vec *generic_params)
+{
+    enum LilyVisibility visibility = visibility_decl;
+    Location location = clone__Location(&location_decl);
+
+    Vec *body = preparse_enum_object_body__LilyPreparser(self);
+
+    if (!body) {
+        goto clean_up;
+    }
+
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_EOF:
             emit__Diagnostic(
@@ -10904,24 +10914,28 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
                 from__String("expected `end` keyword to close enum object")),
               &self->count_error);
 
+        clean_up : {
             FREE(String, name);
 
             if (impls) {
-                FREE_BUFFER_ITEMS_2(impls->buffer, impls->len, LilyToken);
+                FREE_BUFFER_ITEMS(impls->buffer, impls->len, Vec);
                 FREE(Vec, impls);
             }
 
             if (generic_params) {
-                FREE_BUFFER_ITEMS_2(
-                  generic_params->buffer, generic_params->len, LilyToken);
+                FREE_BUFFER_ITEMS(
+                  generic_params->buffer, generic_params->len, Vec);
                 FREE(Vec, generic_params);
             }
 
-            FREE_BUFFER_ITEMS(
-              body->buffer, body->len, LilyPreparserEnumObjectBodyItem);
-            FREE(Vec, body);
+            if (body) {
+                FREE_BUFFER_ITEMS(
+                  body->buffer, body->len, LilyPreparserEnumObjectBodyItem);
+                FREE(Vec, body);
+            }
 
             return NULL;
+        }
 
         case LILY_TOKEN_KIND_KEYWORD_END:
             next_token__LilyPreparser(self);
