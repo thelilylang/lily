@@ -10363,7 +10363,6 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
     }
 
     END_LOCATION(&location, self->current->location);
-    next_token__LilyPreparser(self);
 
     return NEW_VARIANT(LilyPreparserDecl,
                        object,
