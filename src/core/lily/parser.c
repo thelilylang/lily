@@ -298,9 +298,22 @@ static LilyAstDecl *
 parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 // Parse attribute declaration.
-static LilyAstBodyClassItem *
+static void
 parse_attribute_decl__LilyParser(LilyParser *self,
-                                 LilyPreparserClassBodyItem *item);
+                                 const LilyPreparserAttribute *pre_attribute,
+                                 LilyAstDeclAttribute *attribute);
+
+// Parse attribute declaration for class.
+static LilyAstBodyClassItem *
+parse_attribute_decl_for_class__LilyParser(
+  LilyParser *self,
+  const LilyPreparserClassBodyItem *item);
+
+// Parse attribute declaration for trait.
+static LilyAstBodyTraitItem *
+parse_attribute_decl_for_trait__LilyParser(
+  LilyParser *self,
+  const LilyPreparserTraitBodyItem *item);
 
 // Parse body of class.
 /// @param body Vec<LilyPreparserClassBodyItem*>*
@@ -681,6 +694,7 @@ peek_token__LilyParseBlock(LilyParseBlock *self, Usize n)
         case LILY_TOKEN_KIND_KEYWORD_OBJECT:    \
         case LILY_TOKEN_KIND_KEYWORD_REF:       \
         case LILY_TOKEN_KIND_KEYWORD_TRACE:     \
+        case LILY_TOKEN_KIND_KEYWORD_SELF:      \
         case LILY_TOKEN_KIND_L_BRACE:           \
         case LILY_TOKEN_KIND_L_HOOK:            \
         case LILY_TOKEN_KIND_L_PAREN:           \
@@ -3935,52 +3949,98 @@ parse_alias_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                                        decl->type.alias.visibility)));
 }
 
-LilyAstBodyClassItem *
+void
 parse_attribute_decl__LilyParser(LilyParser *self,
-                                 LilyPreparserClassBodyItem *item)
+                                 const LilyPreparserAttribute *pre_attribute,
+                                 LilyAstDeclAttribute *attribute)
 {
+    attribute->name = pre_attribute->name;
+    attribute->is_set = pre_attribute->is_set;
+    attribute->is_get = pre_attribute->is_get;
+    attribute->visibility = pre_attribute->visibility;
+
     // 1. Parse data type
     LilyParseBlock data_type_block =
-      NEW(LilyParseBlock, self, item->attribute.data_type);
-    LilyAstDataType *data_type =
-      parse_data_type__LilyParseBlock(&data_type_block);
+      NEW(LilyParseBlock, self, pre_attribute->data_type);
+    attribute->data_type = parse_data_type__LilyParseBlock(&data_type_block);
 
-    CHECK_DATA_TYPE(
-      data_type, data_type_block, NULL, "expected `:=`, `::` or `;`", {
-          FREE(LilyParseBlock, &data_type_block);
-          return NULL;
-      });
+    CHECK_DATA_TYPE(attribute->data_type,
+                    data_type_block,
+                    NULL,
+                    "expected `:=`, `::` or `;`",
+                    {
+                        FREE(LilyParseBlock, &data_type_block);
+                        return;
+                    });
 
     FREE(LilyParseBlock, &data_type_block);
 
     // 2. Parse expression
-    LilyAstExpr *expr = NULL;
+    attribute->optional_expr = NULL;
 
-    if (item->attribute.default_expr) {
+    if (pre_attribute->default_expr) {
         LilyParseBlock expr_block =
-          NEW(LilyParseBlock, self, item->attribute.default_expr);
-        expr = parse_expr__LilyParseBlock(&expr_block);
+          NEW(LilyParseBlock, self, pre_attribute->default_expr);
+        attribute->optional_expr = parse_expr__LilyParseBlock(&expr_block);
 
-        CHECK_EXPR(expr, expr_block, NULL, "expected `::` or `;`", {
-            FREE(LilyAstDataType, data_type);
-            FREE(LilyParseBlock, &expr_block);
+        CHECK_EXPR(
+          attribute->optional_expr, expr_block, NULL, "expected `::` or `;`", {
+              FREE(LilyAstDataType, attribute->data_type);
+              FREE(LilyParseBlock, &expr_block);
 
-            return NULL;
-        });
+              return;
+          });
 
         FREE(LilyParseBlock, &expr_block);
     }
+}
 
-    return NEW_VARIANT(LilyAstBodyClassItem,
-                       attribute,
-                       item->location,
-                       NEW(LilyAstDeclAttribute,
-                           item->attribute.name,
-                           data_type,
-                           expr,
-                           item->attribute.is_set,
-                           item->attribute.is_get,
-                           item->attribute.visibility));
+LilyAstBodyClassItem *
+parse_attribute_decl_for_class__LilyParser(
+  LilyParser *self,
+  const LilyPreparserClassBodyItem *item)
+{
+    LilyAstDeclAttribute attribute;
+    parse_attribute_decl__LilyParser(self, &item->attribute, &attribute);
+
+    // NOTE: The destructor doesn't expect a NULL pointer on
+    // `attribute.data_type`.
+    if (!attribute.data_type) {
+        FREE(String, attribute.name);
+
+        if (attribute.optional_expr) {
+            FREE(LilyAstExpr, attribute.optional_expr);
+        }
+
+        return NULL;
+    }
+
+    return NEW_VARIANT(
+      LilyAstBodyClassItem, attribute, item->location, attribute);
+}
+
+LilyAstBodyTraitItem *
+parse_attribute_decl_for_trait__LilyParser(
+  LilyParser *self,
+  const LilyPreparserTraitBodyItem *item)
+{
+    LilyAstDeclAttribute attribute;
+    parse_attribute_decl__LilyParser(self, &item->attribute, &attribute);
+
+    // NOTE: The destructor doesn't expect a NULL pointer on
+    // attribute.data_type.
+    if (!attribute.data_type) {
+        FREE(String, attribute.name);
+
+        if (attribute.optional_expr) {
+            FREE(LilyAstExpr, attribute.optional_expr);
+        }
+
+        return NULL;
+    }
+
+    return NEW_VARIANT(
+      LilyAstBodyTraitItem, attribute, item->location, attribute);
 }
 
 Vec *
@@ -3994,7 +4054,8 @@ parse_class_body__LilyParser(LilyParser *self, Vec *body)
 
         switch (pre_item->kind) {
             case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE:
-                item = parse_attribute_decl__LilyParser(self, pre_item);
+                item =
+                  parse_attribute_decl_for_class__LilyParser(self, pre_item);
 
                 break;
             case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND: {
@@ -5170,6 +5231,42 @@ parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 Vec *
 parse_trait_body__LilyParser(LilyParser *self, Vec *pre_body)
 {
+    Vec *body = NEW(Vec); // Vec<LilyAstBodyTraitItem*>*
+
+    for (Usize i = 0; i < pre_body->len; ++i) {
+        LilyPreparserTraitBodyItem *item = get__Vec(pre_body, i);
+
+        switch (item->kind) {
+            case LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_ATTRIBUTE: {
+                LilyAstBodyTraitItem *res =
+                  parse_attribute_decl_for_trait__LilyParser(self, item);
+
+                if (res) {
+                    push__Vec(body, res);
+                }
+
+                break;
+            }
+            case LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_MACRO_EXPAND:
+                apply_macro_expansion_in_trait__LilyParser(self, item, body);
+
+                break;
+            case LILY_PREPARSER_TRAIT_BODY_ITEM_KIND_PROTOTYPE: {
+                LilyAstBodyTraitItem *res =
+                  parse_prototype_decl__LilyParser(self, item);
+
+                if (res) {
+                    push__Vec(body, res);
+                }
+
+                break;
+            }
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    return body;
 }
 
 LilyAstDecl *
