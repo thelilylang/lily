@@ -2358,7 +2358,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
                     FREE(LilyParseBlock, &expr_block);
 
                     return NULL;
-                }   
+                }
                 default:
                     emit__Diagnostic(
                       NEW_VARIANT(
@@ -6152,7 +6152,7 @@ apply_macro_expansion_in_record_object__LilyParser(
 
         CLEAN_UP_CHECK_MACRO(pre_record_object_body_items,
                              LilyPreparserRecordObjectBodyItem);
-		FREE(Vec, expand_body);
+        FREE(Vec, expand_body);
     }
 }
 
@@ -6197,7 +6197,7 @@ apply_macro_expansion_in_enum_object__LilyParser(
 
         CLEAN_UP_CHECK_MACRO(pre_enum_object_body_items,
                              LilyPreparserEnumObjectBodyItem);
-		FREE(Vec, expand_body);
+        FREE(Vec, expand_body);
     }
 }
 
@@ -6240,7 +6240,7 @@ apply_macro_expansion_in_trait__LilyParser(LilyParser *self,
         append__Vec(body, expand_body);
 
         CLEAN_UP_CHECK_MACRO(pre_trait_body_items, LilyPreparserTraitBodyItem);
-		FREE(Vec, expand_body);
+        FREE(Vec, expand_body);
     }
 }
 
