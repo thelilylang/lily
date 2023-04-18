@@ -42,6 +42,9 @@ static VARIANT_DESTRUCTOR(LilyAstDecl, constant, LilyAstDecl *self);
 // Free LilyAstDecl type (LILY_AST_DECL_KIND_FUN).
 static VARIANT_DESTRUCTOR(LilyAstDecl, fun, LilyAstDecl *self);
 
+// Free LilyAstDecl type (LILY_AST_DECL_KIND_MODULE).
+static VARIANT_DESTRUCTOR(LilyAstDecl, module, LilyAstDecl *self);
+
 // Free LilyAstDecl type (LILY_AST_DECL_KIND_METHOD).
 static VARIANT_DESTRUCTOR(LilyAstDecl, method, LilyAstDecl *self);
 
@@ -64,6 +67,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclKind, enum LilyAstDeclKind self)
             return "LILY_AST_DECL_KIND_FUN";
         case LILY_AST_DECL_KIND_METHOD:
             return "LILY_AST_DECL_KIND_METHOD";
+        case LILY_AST_DECL_KIND_MODULE:
+            return "LILY_AST_DECL_KIND_MODULE";
         case LILY_AST_DECL_KIND_OBJECT:
             return "LILY_AST_DECL_KIND_OBJECT";
         case LILY_AST_DECL_KIND_TYPE:
@@ -136,6 +141,21 @@ VARIANT_CONSTRUCTOR(LilyAstDecl *,
 
 VARIANT_CONSTRUCTOR(LilyAstDecl *,
                     LilyAstDecl,
+                    module,
+                    Location location,
+                    LilyAstDeclModule module)
+{
+    LilyAstDecl *self = lily_malloc(sizeof(LilyAstDecl));
+
+    self->kind = LILY_AST_DECL_KIND_METHOD;
+    self->location = location;
+    self->module = module;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstDecl *,
+                    LilyAstDecl,
                     object,
                     Location location,
                     LilyAstDeclObject object)
@@ -187,6 +207,12 @@ IMPL_FOR_DEBUG(to_string, LilyAstDecl, const LilyAstDecl *self)
               to_string__Debug__LilyAstDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDeclFun(&self->fun));
+        case LILY_AST_DECL_KIND_MODULE:
+            return format__String(
+              "LilyAstDecl{{ kind = {s}, location = {sa}, module = {Sr} }",
+              to_string__Debug__LilyAstDeclKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDeclModule(&self->module));
         case LILY_AST_DECL_KIND_METHOD:
             return format__String(
               "LilyAstDecl{{ kind = {s}, location = {sa}, method = {Sr} }",
@@ -241,6 +267,12 @@ VARIANT_DESTRUCTOR(LilyAstDecl, method, LilyAstDecl *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyAstDecl, module, LilyAstDecl *self)
+{
+    FREE(LilyAstDeclModule, &self->module);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyAstDecl, object, LilyAstDecl *self)
 {
     FREE(LilyAstDeclObject, &self->object);
@@ -267,6 +299,9 @@ DESTRUCTOR(LilyAstDecl, LilyAstDecl *self)
             break;
         case LILY_AST_DECL_KIND_METHOD:
             FREE_VARIANT(LilyAstDecl, method, self);
+            break;
+        case LILY_AST_DECL_KIND_MODULE:
+            FREE_VARIANT(LilyAstDecl, module, self);
             break;
         case LILY_AST_DECL_KIND_OBJECT:
             FREE_VARIANT(LilyAstDecl, object, self);

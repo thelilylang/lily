@@ -30,6 +30,7 @@
 #include <core/lily/ast/decl/alias.h>
 #include <core/lily/ast/decl/fun.h>
 #include <core/lily/ast/decl/method.h>
+#include <core/lily/ast/decl/module.h>
 #include <core/lily/ast/decl/object.h>
 #include <core/lily/ast/decl/type.h>
 
@@ -39,6 +40,7 @@ enum LilyAstDeclKind
     LILY_AST_DECL_KIND_CONSTANT,
     LILY_AST_DECL_KIND_FUN,
     LILY_AST_DECL_KIND_METHOD,
+    LILY_AST_DECL_KIND_MODULE,
     LILY_AST_DECL_KIND_OBJECT,
     LILY_AST_DECL_KIND_TYPE
 };
@@ -63,6 +65,7 @@ typedef struct LilyAstDecl
         LilyAstDeclConstant constant;
         LilyAstDeclFun fun;
         LilyAstDeclMethod method;
+        LilyAstDeclModule module;
         LilyAstDeclObject object;
         LilyAstDeclType type;
     };
@@ -107,6 +110,16 @@ VARIANT_CONSTRUCTOR(LilyAstDecl *,
                     method,
                     Location location,
                     LilyAstDeclMethod method);
+
+/**
+ *
+ * @brief Construct LilyAstDecl type (LILY_AST_DECL_KIND_MODULE).
+ */
+VARIANT_CONSTRUCTOR(LilyAstDecl *,
+                    LilyAstDecl,
+                    module,
+                    Location location,
+                    LilyAstDeclModule module);
 
 /**
  *
