@@ -83,8 +83,6 @@ IMPL_FOR_DEBUG(to_string, LilyTokenExpandKind, enum LilyTokenExpandKind self)
             return "LILY_TOKEN_EXPAND_KIND_EXPR";
         case LILY_TOKEN_EXPAND_KIND_PATT:
             return "LILY_TOKEN_EXPAND_KIND_PATT";
-        case LILY_TOKEN_EXPAND_KIND_ID:
-            return "LILY_TOKEN_EXPAND_KIND_ID";
         case LILY_TOKEN_EXPAND_KIND_PATH:
             return "LILY_TOKEN_EXPAND_KIND_PATH";
         case LILY_TOKEN_EXPAND_KIND_DT:

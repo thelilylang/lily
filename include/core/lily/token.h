@@ -201,11 +201,10 @@ enum LilyTokenKind
 
 enum LilyTokenExpandKind
 {
+    LILY_TOKEN_EXPAND_KIND_DT,
     LILY_TOKEN_EXPAND_KIND_EXPR,
     LILY_TOKEN_EXPAND_KIND_PATT,
-    LILY_TOKEN_EXPAND_KIND_ID,
     LILY_TOKEN_EXPAND_KIND_PATH,
-    LILY_TOKEN_EXPAND_KIND_DT
 };
 
 /**
@@ -239,8 +238,7 @@ inline CONSTRUCTOR(LilyTokenExpand,
                    enum LilyTokenExpandKind kind,
                    Vec *tokens)
 {
-    return (LilyTokenExpand){ .kind = LILY_TOKEN_KIND_EXPAND,
-                              .tokens = tokens };
+    return (LilyTokenExpand){ .kind = kind, .tokens = tokens };
 }
 
 typedef struct LilyToken
