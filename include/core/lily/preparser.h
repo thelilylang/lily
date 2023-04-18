@@ -808,6 +808,12 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserTraitBodyItem *self);
 #endif
 
+/**
+ *
+ * @brief Free LilyPreparserTraitBodyItem type.
+ */
+DESTRUCTOR(LilyPreparserTraitBodyItem, LilyPreparserTraitBodyItem *self);
+
 typedef struct LilyPreparserTrait
 {
     String *name;
@@ -1501,6 +1507,14 @@ preparse_record_object_body__LilyPreparser(LilyPreparser *self);
  */
 Vec *
 preparse_enum_object_body__LilyPreparser(LilyPreparser *self);
+
+/**
+ *
+ * @brief Preparse the body of trait.
+ * @return Vec<LilyPreparserTraitBodyItem*>*?
+ */
+Vec *
+preparse_trait_body__LilyPreparser(LilyPreparser *self);
 
 /**
  *
