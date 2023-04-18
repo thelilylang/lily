@@ -421,6 +421,10 @@ parse_record_object_body__LilyParser(LilyParser *self, Vec *pre_body);
 static LilyAstDecl *
 parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
+// Parse body of trait.
+static Vec *
+parse_trait_body__LilyParser(LilyParser *self, Vec *pre_body);
+
 // Parse trait declaration.
 static LilyAstDecl *
 parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
@@ -499,6 +503,12 @@ apply_macro_expansion_in_enum_object__LilyParser(
   LilyParser *self,
   LilyPreparserEnumObjectBodyItem *item,
   Vec *body);
+
+/// @param body Body of trait
+static void
+apply_macro_expansion_in_trait__LilyParser(LilyParser *self,
+                                           LilyPreparserTraitBodyItem *item,
+                                           Vec *body);
 
 static void
 apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
@@ -2264,6 +2274,11 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
             return NEW_VARIANT(
               LilyAstExpr, unary, location, NEW(LilyAstExprUnary, op, right));
         }
+		case LILY_TOKEN_KIND_EXPAND: {
+			LilyParseBlock expr_block = NEW(LilyParseBlock, 
+
+			break;
+		}
         default: {
             String *previous_s = to_string__LilyToken(self->previous);
 
@@ -5018,10 +5033,44 @@ parse_record_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                                        decl->object.record.visibility)));
 }
 
+Vec *
+parse_trait_body__LilyParser(LilyParser *self, Vec *pre_body)
+{
+}
+
 LilyAstDecl *
 parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
-    TODO("Issue #84");
+    // 1. Parse generic params
+    Vec *generic_params = NULL;
+
+    if (decl->object.trait.generic_params) {
+        generic_params = parse_generic_params__LilyParser(
+          self, decl->object.record.generic_params);
+    }
+
+    // 2. Parse implement params
+    Vec *inherit_params = NULL;
+
+    if (decl->object.trait.inherits) {
+        inherit_params =
+          parse_inherit_params__LilyParser(self, decl->object.trait.inherits);
+    }
+
+    // 3. Parse body
+    Vec *body = parse_trait_body__LilyParser(self, decl->object.trait.body);
+
+    return NEW_VARIANT(LilyAstDecl,
+                       object,
+                       decl->location,
+                       NEW_VARIANT(LilyAstDeclObject,
+                                   trait,
+                                   NEW(LilyAstDeclTrait,
+                                       decl->object.trait.name,
+                                       generic_params,
+                                       inherit_params,
+                                       body,
+                                       decl->object.trait.visibility)));
 }
 
 LilyAstDecl *
@@ -5326,6 +5375,7 @@ is_block__LilyParser(const Vec *tokens)
                               .len = macro->tokens->len,                           \
                               .capacity = macro->tokens->capacity,                 \
                               .default_capacity = macro->tokens->capacity };       \
+    Vec *expand_tokens = NULL; /* Vec<LilyToken*?>*? */                            \
                                                                                    \
     memcpy(macro_tokens_copy.buffer,                                               \
            macro->tokens->buffer,                                                  \
@@ -5370,6 +5420,8 @@ is_block__LilyParser(const Vec *tokens)
         } else {                                                                   \
             /* NOTE: macro->params and macro_expand.params have the same           \
              * length. */                                                          \
+            expand_tokens = NEW(Vec);                                              \
+                                                                                   \
             for (Usize i = 0; i < macro->params->len; ++i) {                       \
                 LilyMacroParam *param = get__Vec(macro->params, i);                \
                                                                                    \
@@ -5570,6 +5622,85 @@ is_block__LilyParser(const Vec *tokens)
                         UNREACHABLE("unknown variant");                            \
                 }                                                                  \
                                                                                    \
+                /* Fill in the vector of expansion tokens to be able to save       \
+                 * them locally and free them at the end of the analysis of        \
+                 * the macro. */                                                   \
+                for (Usize i = 0; i < macro->params->len; ++i) {                   \
+                    Location location = clone__Location(                           \
+                      &CAST(LilyToken *,                                           \
+                            CAST(Vec *, decl->macro_expand.params->buffer[i])      \
+                              ->buffer[0])                                         \
+                         ->location);                                              \
+                    {                                                              \
+                        LilyToken *last =                                          \
+                          last__Vec(decl->macro_expand.params->buffer[i]);         \
+                        end__Location(&location,                                   \
+                                      last->location.end_line,                     \
+                                      last->location.end_column,                   \
+                                      last->location.end_position);                \
+                    }                                                              \
+                    switch (CAST(LilyMacroParam *, get__Vec(macro->params, i))     \
+                              ->kind) {                                            \
+                        case LILY_MACRO_PARAM_KIND_EXPR:                           \
+                            push__Vec(                                             \
+                              expand_tokens,                                       \
+                              NEW_VARIANT(                                         \
+                                LilyToken,                                         \
+                                expand,                                            \
+                                location,                                          \
+                                NEW(LilyTokenExpand,                               \
+                                    LILY_TOKEN_EXPAND_KIND_EXPR,                   \
+                                    get__Vec(decl->macro_expand.params, i))));     \
+                            break;                                                 \
+                        case LILY_MACRO_PARAM_KIND_PATT:                           \
+                            push__Vec(                                             \
+                              expand_tokens,                                       \
+                              NEW_VARIANT(                                         \
+                                LilyToken,                                         \
+                                expand,                                            \
+                                location,                                          \
+                                NEW(LilyTokenExpand,                               \
+                                    LILY_TOKEN_EXPAND_KIND_PATT,                   \
+                                    get__Vec(decl->macro_expand.params, i))));     \
+                            break;                                                 \
+                        case LILY_MACRO_PARAM_KIND_ID:                             \
+                            push__Vec(                                             \
+                              expand_tokens,                                       \
+                              NEW_VARIANT(                                         \
+                                LilyToken,                                         \
+                                expand,                                            \
+                                location,                                          \
+                                NEW(LilyTokenExpand,                               \
+                                    LILY_TOKEN_EXPAND_KIND_ID,                     \
+                                    get__Vec(decl->macro_expand.params, i))));     \
+                            break;                                                 \
+                        case LILY_MACRO_PARAM_KIND_PATH:                           \
+                            push__Vec(                                             \
+                              expand_tokens,                                       \
+                              NEW_VARIANT(                                         \
+                                LilyToken,                                         \
+                                expand,                                            \
+                                location,                                          \
+                                NEW(LilyTokenExpand,                               \
+                                    LILY_TOKEN_EXPAND_KIND_PATH,                   \
+                                    get__Vec(decl->macro_expand.params, i))));     \
+                            break;                                                 \
+                        case LILY_MACRO_PARAM_KIND_DT:                             \
+                            push__Vec(                                             \
+                              expand_tokens,                                       \
+                              NEW_VARIANT(                                         \
+                                LilyToken,                                         \
+                                expand,                                            \
+                                location,                                          \
+                                NEW(LilyTokenExpand,                               \
+                                    LILY_TOKEN_EXPAND_KIND_DT,                     \
+                                    get__Vec(decl->macro_expand.params, i))));     \
+                            break;                                                 \
+                        default:                                                   \
+                            push__Vec(expand_tokens, NULL);                        \
+                    }                                                              \
+                }                                                                  \
+                                                                                   \
                 /* Replaces all uses of the parameter in the macro with the        \
                 value passed in the macro expansion. */                            \
                                                                                    \
@@ -5598,50 +5729,79 @@ is_block__LilyParser(const Vec *tokens)
                                     inserted at the position of the                \
                                     `identifier_macro`. */                         \
                                     if (i > macro_tokens_copy.len) {               \
-                                        if (param->kind ==                         \
-                                            LILY_MACRO_PARAM_KIND_TKS) {           \
-                                            for (Usize k = 2;                      \
-                                                 k <                               \
-                                                 macro_expand_param->len - 1;      \
-                                                 ++k) {                            \
+                                        switch (param->kind) {                     \
+                                            case LILY_MACRO_PARAM_KIND_TKS:        \
+                                                for (Usize k = 2;                  \
+                                                     k <                           \
+                                                     macro_expand_param->len -     \
+                                                       1;                          \
+                                                     ++k) {                        \
+                                                    push__Vec(                     \
+                                                      &macro_tokens_copy,          \
+                                                      get__Vec(                    \
+                                                        macro_expand_param,        \
+                                                        k));                       \
+                                                }                                  \
+                                                break;                             \
+                                            case LILY_MACRO_PARAM_KIND_EXPR:       \
+                                            case LILY_MACRO_PARAM_KIND_PATT:       \
+                                            case LILY_MACRO_PARAM_KIND_ID:         \
+                                            case LILY_MACRO_PARAM_KIND_PATH:       \
+                                            case LILY_MACRO_PARAM_KIND_DT:         \
                                                 push__Vec(                         \
                                                   &macro_tokens_copy,              \
-                                                  get__Vec(macro_expand_param,     \
-                                                           k));                    \
-                                            }                                      \
-                                        } else {                                   \
-                                            for (Usize k = 0;                      \
-                                                 k < macro_expand_param->len;      \
-                                                 ++k) {                            \
-                                                push__Vec(                         \
-                                                  &macro_tokens_copy,              \
-                                                  get__Vec(macro_expand_param,     \
-                                                           k));                    \
-                                            }                                      \
+                                                  get__Vec(expand_tokens, j));     \
+                                                break;                             \
+                                            default:                               \
+                                                for (Usize k = 0;                  \
+                                                     k <                           \
+                                                     macro_expand_param->len;      \
+                                                     ++k) {                        \
+                                                    push__Vec(                     \
+                                                      &macro_tokens_copy,          \
+                                                      get__Vec(                    \
+                                                        macro_expand_param,        \
+                                                        k));                       \
+                                                }                                  \
                                         }                                          \
                                     } else {                                       \
-                                        if (param->kind ==                         \
-                                            LILY_MACRO_PARAM_KIND_TKS) {           \
-                                            for (Usize k = 2;                      \
-                                                 k <                               \
-                                                 macro_expand_param->len - 1;      \
-                                                 ++k) {                            \
+                                        switch (param->kind) {                     \
+                                            case LILY_MACRO_PARAM_KIND_TKS:        \
+                                                for (Usize k = 2;                  \
+                                                     k <                           \
+                                                     macro_expand_param->len -     \
+                                                       1;                          \
+                                                     ++k) {                        \
+                                                    insert__Vec(                   \
+                                                      &macro_tokens_copy,          \
+                                                      get__Vec(                    \
+                                                        macro_expand_param,        \
+                                                        k),                        \
+                                                      i + (k - 2));                \
+                                                }                                  \
+                                                break;                             \
+                                            case LILY_MACRO_PARAM_KIND_EXPR:       \
+                                            case LILY_MACRO_PARAM_KIND_PATT:       \
+                                            case LILY_MACRO_PARAM_KIND_ID:         \
+                                            case LILY_MACRO_PARAM_KIND_PATH:       \
+                                            case LILY_MACRO_PARAM_KIND_DT:         \
                                                 insert__Vec(                       \
                                                   &macro_tokens_copy,              \
-                                                  get__Vec(macro_expand_param,     \
-                                                           k),                     \
-                                                  i + (k - 2));                    \
-                                            }                                      \
-                                        } else {                                   \
-                                            for (Usize k = 0;                      \
-                                                 k < macro_expand_param->len;      \
-                                                 ++k) {                            \
-                                                insert__Vec(                       \
-                                                  &macro_tokens_copy,              \
-                                                  get__Vec(macro_expand_param,     \
-                                                           k),                     \
-                                                  i + k);                          \
-                                            }                                      \
+                                                  get__Vec(expand_tokens, j),      \
+                                                  i);                              \
+                                                break;                             \
+                                            default:                               \
+                                                for (Usize k = 0;                  \
+                                                     k <                           \
+                                                     macro_expand_param->len;      \
+                                                     ++k) {                        \
+                                                    insert__Vec(                   \
+                                                      &macro_tokens_copy,          \
+                                                      get__Vec(                    \
+                                                        macro_expand_param,        \
+                                                        k),                        \
+                                                      i + k);                      \
+                                                }                                  \
                                         }                                          \
                                     }                                              \
                                                                                    \
@@ -5723,6 +5883,20 @@ is_block__LilyParser(const Vec *tokens)
         return;                                                                    \
     }
 
+#define CLEAN_UP_CHECK_MACRO(id, dt)                       \
+    FREE_BUFFER_ITEMS(id->buffer, id->len, dt);            \
+    FREE(Vec, id);                                         \
+    lily_free(macro_tokens_copy.buffer);                   \
+    if (expand_tokens) {                                   \
+        for (Usize i = 0; i < expand_tokens->len; ++i) {   \
+            LilyToken *token = get__Vec(expand_tokens, i); \
+            if (token) {                                   \
+                FREE(LilyToken, token);                    \
+            }                                              \
+        }                                                  \
+        FREE(Vec, expand_tokens);                          \
+    }
+
 void
 apply_macro_expansion_in_record__LilyParser(LilyParser *self,
                                             LilyPreparserRecordBodyItem *item,
@@ -5765,13 +5939,8 @@ apply_macro_expansion_in_record__LilyParser(LilyParser *self,
             }
         }
 
-        // Clean up allocations
-
-        FREE_BUFFER_ITEMS(pre_record_body_items->buffer,
-                          pre_record_body_items->len,
-                          LilyPreparserRecordBodyItem);
-        FREE(Vec, pre_record_body_items);
-        lily_free(macro_tokens_copy.buffer);
+        CLEAN_UP_CHECK_MACRO(pre_record_body_items,
+                             LilyPreparserRecordBodyItem);
     }
 }
 
@@ -5817,13 +5986,7 @@ apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
             }
         }
 
-        // Clean up allocations
-
-        FREE_BUFFER_ITEMS(pre_enum_body_items->buffer,
-                          pre_enum_body_items->len,
-                          LilyPreparserEnumBodyItem);
-        FREE(Vec, pre_enum_body_items);
-        lily_free(macro_tokens_copy.buffer);
+        CLEAN_UP_CHECK_MACRO(pre_enum_body_items, LilyPreparserEnumBodyItem);
     }
 }
 
@@ -5866,14 +6029,8 @@ apply_macro_expansion_in_record_object__LilyParser(
 
         append__Vec(body, expand_body);
 
-        // Clean up allocations
-
-        FREE_BUFFER_ITEMS(pre_record_object_body_items->buffer,
-                          pre_record_object_body_items->len,
-                          LilyPreparserRecordObjectBodyItem);
-        FREE(Vec, pre_record_object_body_items);
-        FREE(Vec, expand_body);
-        lily_free(macro_tokens_copy.buffer);
+        CLEAN_UP_CHECK_MACRO(pre_record_object_body_items,
+                             LilyPreparserRecordObjectBodyItem);
     }
 }
 
@@ -5916,14 +6073,50 @@ apply_macro_expansion_in_enum_object__LilyParser(
 
         append__Vec(body, expand_body);
 
-        // Clean up allocations
+        CLEAN_UP_CHECK_MACRO(pre_enum_object_body_items,
+                             LilyPreparserEnumObjectBodyItem);
+    }
+}
 
-        FREE_BUFFER_ITEMS(pre_enum_object_body_items->buffer,
-                          pre_enum_object_body_items->len,
-                          LilyPreparserEnumObjectBodyItem);
-        FREE(Vec, pre_enum_object_body_items);
-        FREE(Vec, expand_body);
-        lily_free(macro_tokens_copy.buffer);
+void
+apply_macro_expansion_in_trait__LilyParser(LilyParser *self,
+                                           LilyPreparserTraitBodyItem *item,
+                                           Vec *body)
+{
+    CHECK_MACRO(item);
+
+    // 3. Prepare and parse the content of the macro, then expand
+    // it.
+    {
+        const File *file = get_file_from_filename__LilyPackage(
+          self->root_package, macro->location.filename);
+        LilyPreparser preparse_macro_expand =
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+
+        preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
+
+        Vec *pre_trait_body_items =
+          preparse_trait_body__LilyPreparser(&preparse_macro_expand);
+
+        if (!pre_trait_body_items) {
+            return;
+        }
+
+        LilyPackage *package = search_package_from_filename__LilyPackage(
+          self->root_package, file->name);
+        LilyParser parser = (LilyParser){ .decls = NULL,
+                                          .package = package,
+                                          .root_package = self->root_package,
+                                          .current = NULL,
+                                          .preparser_info = NULL,
+                                          .position = 0 };
+
+        Vec *expand_body =
+          parse_trait_body__LilyParser(&parser, pre_trait_body_items);
+
+        append__Vec(body, expand_body);
+
+        CLEAN_UP_CHECK_MACRO(pre_trait_body_items, LilyPreparserTraitBodyItem);
     }
 }
 
@@ -5967,6 +6160,18 @@ apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
         FREE(LilyPreparserInfo, &preparser_info);
         FREE(Vec, parser.decls);
         lily_free(macro_tokens_copy.buffer);
+
+        if (expand_tokens) {
+            for (Usize i = 0; i < expand_tokens->len; ++i) {
+                LilyToken *token = get__Vec(expand_tokens, i);
+
+                if (token) {
+                    FREE(LilyToken, token);
+                }
+            }
+
+            FREE(Vec, expand_tokens);
+        }
     }
 }
 
