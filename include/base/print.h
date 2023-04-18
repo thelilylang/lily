@@ -34,7 +34,7 @@
 #define PRINT(fmt, ...)                     \
     {                                       \
         char *f = format(fmt, __VA_ARGS__); \
-		fputs(f, stdout); \
+        fputs(f, stdout);                   \
         lily_free(f);                       \
     }
 
