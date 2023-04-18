@@ -74,6 +74,40 @@ static inline VARIANT_DESTRUCTOR(LilyToken, literal_int_16, LilyToken *self);
 // Free LilyToken type (LILY_TOKEN_KIND_LITERAL_STRING).
 static inline VARIANT_DESTRUCTOR(LilyToken, literal_string, LilyToken *self);
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyTokenExpandKind, enum LilyTokenExpandKind self)
+{
+    switch (self) {
+        case LILY_TOKEN_EXPAND_KIND_EXPR:
+            return "LILY_TOKEN_EXPAND_KIND_EXPR";
+        case LILY_TOKEN_EXPAND_KIND_PATT:
+            return "LILY_TOKEN_EXPAND_KIND_PATT";
+        case LILY_TOKEN_EXPAND_KIND_ID:
+            return "LILY_TOKEN_EXPAND_KIND_ID";
+        case LILY_TOKEN_EXPAND_KIND_PATH:
+            return "LILY_TOKEN_EXPAND_KIND_PATH";
+        case LILY_TOKEN_EXPAND_KIND_DT:
+            return "LILY_TOKEN_EXPAND_KIND_DT";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+String *
+IMPL_FOR_DEBUG(to_string, LilyTokenExpand, const LilyTokenExpand *self)
+{
+    String *res =
+      format__String("LilyTokenExpand{{ kind = {s}, tokens =",
+                     to_string__Debug__LilyTokenExpandKind(self->kind));
+
+    DEBUG_VEC_STR(self->tokens->buffer, self->tokens->len, LilyToken);
+    push_str__String(" }");
+
+    return res;
+}
+#endif
+
 CONSTRUCTOR(LilyToken *, LilyToken, enum LilyTokenKind kind, Location location)
 {
     LilyToken *self = lily_malloc(sizeof(LilyToken));
@@ -112,6 +146,21 @@ VARIANT_CONSTRUCTOR(LilyToken *,
     self->kind = LILY_TOKEN_KIND_COMMENT_DOC;
     self->location = location;
     self->comment_doc = comment_doc;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    expand,
+                    Location location,
+                    LilyTokenExpand expand)
+{
+    LilyToken *self = lily_malloc(sizeof(LilyToken));
+
+    self->kind = LILY_TOKEN_KIND_EXPAND;
+    self->location = location;
+    self->expand = expand;
 
     return self;
 }
@@ -564,6 +613,24 @@ to_string__LilyToken(LilyToken *self)
             return from__String("==");
         case LILY_TOKEN_KIND_EQ:
             return from__String("=");
+        case LILY_TOKEN_KIND_EXPAND: {
+            String *res = from__String("EXPAND: {");
+
+            for (Usize i = 0; i < self->expand.tokens->len; ++i) {
+                String *s =
+                  to_string__LilyToken(get__Vec(self->expand.tokens, i));
+
+                APPEND_AND_FREE(res, s);
+
+                if (i + 1 != self->expand.tokens->len) {
+                    push_str__String(res, ", ");
+                }
+            }
+
+            push_str__String(res, " }");
+
+            return res;
+        }
         case LILY_TOKEN_KIND_FAT_ARROW:
             return from__String("=>");
         case LILY_TOKEN_KIND_HASHTAG:
@@ -894,6 +961,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_EQ_EQ";
         case LILY_TOKEN_KIND_EQ:
             return "LILY_TOKEN_KIND_EQ";
+        case LILY_TOKEN_KIND_EXPAND:
+            return "LILY_TOKEN_KIND_EXPAND";
         case LILY_TOKEN_KIND_FAT_ARROW:
             return "LILY_TOKEN_KIND_FAT_ARROW";
         case LILY_TOKEN_KIND_HASHTAG:
@@ -1185,6 +1254,13 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->comment_doc);
 
+        case LILY_TOKEN_KIND_EXPAND:
+            return format(
+              "LilyToken{{ kind = {s}, location = {sa}, expand = {Sr} }",
+              CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+              CALL_DEBUG(to_string, Location, &self->location),
+              CALL_DEBUG_IMPL(to_string, Lily));
+
         case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "identifier_dollar = {S} }",
@@ -1398,6 +1474,12 @@ clone__LilyToken(const LilyToken *self)
                                comment_doc,
                                self->location,
                                clone__String(self->comment_doc));
+        case LILY_TOKEN_KIND_EXPAND:
+            return NEW_VARIANT(
+              LilyToken,
+              expand,
+              self->location,
+              NEW(LilyTokenExpand, self->expand.kind, self->expand.tokens));
         case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
             return NEW_VARIANT(LilyToken,
                                identifier_dollar,

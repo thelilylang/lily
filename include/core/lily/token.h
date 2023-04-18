@@ -62,6 +62,7 @@ enum LilyTokenKind
     LILY_TOKEN_KIND_EOF,
     LILY_TOKEN_KIND_EQ_EQ,
     LILY_TOKEN_KIND_EQ,
+    LILY_TOKEN_KIND_EXPAND,
     LILY_TOKEN_KIND_FAT_ARROW,
     LILY_TOKEN_KIND_HASHTAG,
     LILY_TOKEN_KIND_HAT_EQ,
@@ -198,6 +199,50 @@ enum LilyTokenKind
     LILY_TOKEN_KIND_XOR_EQ
 };
 
+enum LilyTokenExpandKind
+{
+    LILY_TOKEN_EXPAND_KIND_EXPR,
+    LILY_TOKEN_EXPAND_KIND_PATT,
+    LILY_TOKEN_EXPAND_KIND_ID,
+    LILY_TOKEN_EXPAND_KIND_PATH,
+    LILY_TOKEN_EXPAND_KIND_DT
+};
+
+/**
+ *
+ * @brief Convert LilyTokenExpandKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyTokenExpandKind, enum LilyTokenExpandKind self);
+#endif
+
+typedef struct LilyTokenExpand
+{
+    enum LilyTokenExpandKind kind;
+    Vec *tokens; // Vec<LilyToken*>* (&)
+} LilyTokenExpand;
+
+/**
+ *
+ * @brief Convert LilyTokenExpand in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyTokenExpand, const LilyTokenExpand *self);
+#endif
+
+inline CONSTRUCTOR(LilyTokenExpand,
+                   LilyTokenExpand,
+                   enum LilyTokenExpandKind kind,
+                   Vec *tokens)
+{
+    return (LilyTokenExpand){ .kind = LILY_TOKEN_KIND_EXPAND,
+                              .tokens = tokens };
+}
+
 typedef struct LilyToken
 {
     enum LilyTokenKind kind;
@@ -208,6 +253,7 @@ typedef struct LilyToken
         String *comment_debug;
 #endif
         String *comment_doc;
+        LilyTokenExpand expand;
         String *identifier_dollar;
         String *identifier_macro;
         String *identifier_normal;
@@ -264,6 +310,16 @@ VARIANT_CONSTRUCTOR(LilyToken *,
                     comment_doc,
                     Location location,
                     String *comment_doc);
+
+/**
+ *
+ * @brief Construct LilyToken type (LILY_TOKEN_KIND_EXPAND).
+ */
+VARIANT_CONSTRUCTOR(LilyToken *,
+                    LilyToken,
+                    expand,
+                    Location location,
+                    LilyTokenExpand expand);
 
 /**
  *
