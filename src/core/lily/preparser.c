@@ -10248,6 +10248,8 @@ preparse_trait_body__LilyPreparser(LilyPreparser *self)
                     goto clean_up;
                 }
                 }
+
+                break;
             }
 
             case LILY_TOKEN_KIND_KEYWORD_FUN: {
