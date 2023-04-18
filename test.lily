@@ -8,6 +8,8 @@ macro fn($i id, $param tks, $x expr) = {
 
 fn!(add, ${x, y}, x + y); // fun add(x, y) = x + y end
 fn!(sub, ${x, y}, x - y); // fun sub(x, y) = x - y end
+fn!(mul, ${x, y}, x * y); // fun mul(x, y) = x * y end
+fn!(div, ${x, y}, x / y); // fun div(x, y) = x / y end
 
 type Person record =
 	field!(age, Uint8);
@@ -28,4 +30,10 @@ end
 object Person record =
 	field!(age, Uint8);
 	field!(name, Str);
+end
+
+object Color enum =
+	variant!(Red, Int32);
+	variant!(Green, Int32);
+	variant!(Blue, Int32);
 end
