@@ -40,6 +40,7 @@ typedef struct LilyParser LilyParser;
 
 typedef struct LilyParseBlock
 {
+    LilyParser *parser;
     Vec *tokens; // Vec<LilyToken*>*
     LilyToken *current;
     LilyToken *previous;

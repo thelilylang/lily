@@ -617,7 +617,8 @@ CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
     push__Vec(tokens,
               NEW(LilyToken, LILY_TOKEN_KIND_EOF, location_eof)); // Add EOF.
 
-    return (LilyParseBlock){ .tokens = tokens,
+    return (LilyParseBlock){ .parser = parser,
+                             .tokens = tokens,
                              .current = get__Vec(tokens, 0),
                              .previous = get__Vec(tokens, 0),
                              .file = &parser->package->file,
@@ -1309,6 +1310,41 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
             return NEW_VARIANT(LilyAstDataType, tuple, location, tuple);
         }
 
+        case LILY_TOKEN_KIND_EXPAND:
+            switch (self->previous->expand.kind) {
+                case LILY_TOKEN_EXPAND_KIND_DT: {
+                    LilyParseBlock dt_block =
+                      NEW(LilyParseBlock,
+                          self->parser,
+                          self->previous->expand.tokens);
+                    LilyAstDataType *dt =
+                      parse_data_type__LilyParseBlock(&dt_block);
+
+                    CHECK_DATA_TYPE(
+                      dt, dt_block, NULL, "expected only one data type", {});
+
+                    FREE(LilyParseBlock, &dt_block);
+
+                    return dt;
+                }
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->previous->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_DATA_TYPE),
+                        init__Vec(1,
+                                  from__String("expected `dt` as the data type "
+                                               "of the macro param")),
+                        NULL,
+                        NULL),
+                      self->count_error);
+
+                    return NULL;
+            }
+
         default: {
             String *token_s = to_string__LilyToken(self->previous);
 
@@ -1317,7 +1353,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                 Diagnostic,
                 simple_lily_error,
                 self->file,
-                &self->current->location,
+                &self->previous->location,
                 NEW_VARIANT(LilyError, unexpected_token, token_s->buffer),
                 NULL,
                 NULL,
@@ -2274,11 +2310,74 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
             return NEW_VARIANT(
               LilyAstExpr, unary, location, NEW(LilyAstExprUnary, op, right));
         }
-		case LILY_TOKEN_KIND_EXPAND: {
-			LilyParseBlock expr_block = NEW(LilyParseBlock, 
+        case LILY_TOKEN_KIND_EXPAND: {
+            switch (self->previous->expand.kind) {
+                case LILY_TOKEN_EXPAND_KIND_EXPR: {
+                    LilyParseBlock expr_block =
+                      NEW(LilyParseBlock,
+                          self->parser,
+                          self->previous->expand.tokens);
 
-			break;
-		}
+                    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+                    CHECK_EXPR(expr,
+                               expr_block,
+                               NULL,
+                               "expected only one expression",
+                               {});
+
+                    FREE(LilyParseBlock, &expr_block);
+
+                    return expr;
+                }
+                case LILY_TOKEN_EXPAND_KIND_PATH: {
+                    LilyParseBlock expr_block =
+                      NEW(LilyParseBlock,
+                          self->parser,
+                          self->previous->expand.tokens);
+
+                    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+                    if (expr) {
+                        LilyAstExpr *path =
+                          parse_path_access__LilyParseBlock(&expr_block, expr);
+
+                        CHECK_EXPR(
+                          path, expr_block, NULL, "expected only one path", {
+                              FREE(LilyAstExpr, expr);
+                              FREE(LilyParseBlock, &expr_block);
+
+                              return NULL;
+                          });
+
+                        FREE(LilyParseBlock, &expr_block);
+
+                        return path;
+                    }
+
+                    FREE(LilyParseBlock, &expr_block);
+
+                    return NULL;
+                }   
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->previous->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_EXPRESSION),
+                        init__Vec(
+                          1,
+                          from__String("expected `expr` or `path` as the "
+                                       "data type of the macro param")),
+                        NULL,
+                        NULL),
+                      self->count_error);
+
+                    return NULL;
+            }
+        }
         default: {
             String *previous_s = to_string__LilyToken(self->previous);
 
@@ -3565,6 +3664,41 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
                           LILY_AST_PATTERN_KIND_AUTO_COMPLETE);
 
             break;
+        case LILY_TOKEN_KIND_EXPAND:
+            switch (self->previous->expand.kind) {
+                case LILY_TOKEN_EXPAND_KIND_PATT: {
+                    LilyParseBlock patt_block =
+                      NEW(LilyParseBlock,
+                          self->parser,
+                          self->previous->expand.tokens);
+                    LilyAstPattern *patt =
+                      parse_pattern__LilyParseBlock(&patt_block);
+
+                    CHECK_PATTERN(
+                      patt, patt_block, NULL, "expected only one pattern", {});
+
+                    FREE(LilyParseBlock, &patt_block);
+
+                    return patt;
+                }
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->previous->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_PATTERN),
+                        init__Vec(
+                          1,
+                          from__String("expected `patt` as the data type "
+                                       "of the macro param")),
+                        NULL,
+                        NULL),
+                      self->count_error);
+
+                    return NULL;
+            }
         default: {
             String *token_s = to_string__LilyToken(self->current);
 
@@ -5663,17 +5797,6 @@ is_block__LilyParser(const Vec *tokens)
                                     LILY_TOKEN_EXPAND_KIND_PATT,                   \
                                     get__Vec(decl->macro_expand.params, i))));     \
                             break;                                                 \
-                        case LILY_MACRO_PARAM_KIND_ID:                             \
-                            push__Vec(                                             \
-                              expand_tokens,                                       \
-                              NEW_VARIANT(                                         \
-                                LilyToken,                                         \
-                                expand,                                            \
-                                location,                                          \
-                                NEW(LilyTokenExpand,                               \
-                                    LILY_TOKEN_EXPAND_KIND_ID,                     \
-                                    get__Vec(decl->macro_expand.params, i))));     \
-                            break;                                                 \
                         case LILY_MACRO_PARAM_KIND_PATH:                           \
                             push__Vec(                                             \
                               expand_tokens,                                       \
@@ -5745,7 +5868,6 @@ is_block__LilyParser(const Vec *tokens)
                                                 break;                             \
                                             case LILY_MACRO_PARAM_KIND_EXPR:       \
                                             case LILY_MACRO_PARAM_KIND_PATT:       \
-                                            case LILY_MACRO_PARAM_KIND_ID:         \
                                             case LILY_MACRO_PARAM_KIND_PATH:       \
                                             case LILY_MACRO_PARAM_KIND_DT:         \
                                                 push__Vec(                         \
@@ -5782,7 +5904,6 @@ is_block__LilyParser(const Vec *tokens)
                                                 break;                             \
                                             case LILY_MACRO_PARAM_KIND_EXPR:       \
                                             case LILY_MACRO_PARAM_KIND_PATT:       \
-                                            case LILY_MACRO_PARAM_KIND_ID:         \
                                             case LILY_MACRO_PARAM_KIND_PATH:       \
                                             case LILY_MACRO_PARAM_KIND_DT:         \
                                                 insert__Vec(                       \
@@ -6031,6 +6152,7 @@ apply_macro_expansion_in_record_object__LilyParser(
 
         CLEAN_UP_CHECK_MACRO(pre_record_object_body_items,
                              LilyPreparserRecordObjectBodyItem);
+		FREE(Vec, expand_body);
     }
 }
 
@@ -6075,6 +6197,7 @@ apply_macro_expansion_in_enum_object__LilyParser(
 
         CLEAN_UP_CHECK_MACRO(pre_enum_object_body_items,
                              LilyPreparserEnumObjectBodyItem);
+		FREE(Vec, expand_body);
     }
 }
 
@@ -6117,6 +6240,7 @@ apply_macro_expansion_in_trait__LilyParser(LilyParser *self,
         append__Vec(body, expand_body);
 
         CLEAN_UP_CHECK_MACRO(pre_trait_body_items, LilyPreparserTraitBodyItem);
+		FREE(Vec, expand_body);
     }
 }
 
