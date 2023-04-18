@@ -143,18 +143,22 @@ to_string__Diagnostic(const Diagnostic *self);
 static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
 
 #define LINES(location, file)                                                  \
-    Usize start_position = location->start_position;                           \
+    Usize start_position = location->start_position == file->len - 1           \
+                             ? location->start_position - 1                    \
+                             : location->start_position;                       \
     Usize end_position = location->end_position;                               \
                                                                                \
     for (; start_position > 0 && file->content[start_position] != '\n';        \
          --start_position)                                                     \
         ;                                                                      \
-    for (; end_position < file->len && (file->content[end_position] != '\n' && \
-                                        file->content[end_position]);          \
+    for (;                                                                     \
+         end_position < file->len - 1 &&                                       \
+         (file->content[end_position] != '\n' && file->content[end_position]); \
          ++end_position)                                                       \
         ;                                                                      \
                                                                                \
-    ++start_position;                                                          \
+    if (start_position + 1 != file->len - 1)                                   \
+        ++start_position;                                                      \
                                                                                \
     Vec *lines = NULL;                                                         \
                                                                                \
