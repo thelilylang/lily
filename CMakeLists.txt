@@ -138,22 +138,34 @@ set(CORE_SRC
 	src/core/lily/ast/pattern.c
 	src/core/lily/ast/stmt.c
 	src/core/lily/ast/variant.c
+	src/core/lily/checked/body/class.c
+	src/core/lily/checked/body/enum_object.c
+	src/core/lily/checked/body/fun.c
+	src/core/lily/checked/body/record_object.c
+	src/core/lily/checked/body/trait.c
 	src/core/lily/checked/decl/alias.c
+	src/core/lily/checked/decl/attribute.c
 	src/core/lily/checked/decl/class.c
+	src/core/lily/checked/decl/constant.c
 	src/core/lily/checked/decl/enum.c
 	src/core/lily/checked/decl/enum_object.c
-	src/core/lily/checked/decl/function.c
-	src/core/lily/checked/decl/macro.c
+	src/core/lily/checked/decl/error.c
+	src/core/lily/checked/decl/fun.c
 	src/core/lily/checked/decl/method.c
-	src/core/lily/checked/decl/property.c
+	src/core/lily/checked/decl/module.c
+	src/core/lily/checked/decl/object.c
+	src/core/lily/checked/decl/prototype.c
 	src/core/lily/checked/decl/record.c
 	src/core/lily/checked/decl/record_object.c
+	src/core/lily/checked/decl/trait.c
+	src/core/lily/checked/decl/type.c
 	src/core/lily/checked/expr/access.c
 	src/core/lily/checked/expr/array.c
 	src/core/lily/checked/expr/binary.c
 	src/core/lily/checked/expr/call.c
 	src/core/lily/checked/expr/cast.c
 	src/core/lily/checked/expr/lambda.c
+	src/core/lily/checked/expr/list.c
 	src/core/lily/checked/expr/literal.c
 	src/core/lily/checked/expr/tuple.c
 	src/core/lily/checked/expr/unary.c
@@ -168,6 +180,7 @@ set(CORE_SRC
 	src/core/lily/checked/stmt/match.c
 	src/core/lily/checked/stmt/next.c
 	src/core/lily/checked/stmt/return.c
+	src/core/lily/checked/stmt/try.c
 	src/core/lily/checked/stmt/variable.c
 	src/core/lily/checked/stmt/while.c
 	src/core/lily/checked/data_type.c
@@ -175,6 +188,9 @@ set(CORE_SRC
 	src/core/lily/checked/expr.c
 	src/core/lily/checked/field.c
 	src/core/lily/checked/field_object.c
+	src/core/lily/checked/generic_param.c
+	src/core/lily/checked/impl_param.c
+	src/core/lily/checked/inherit_param.c
 	src/core/lily/checked/parent.c
 	src/core/lily/checked/pattern.c
 	src/core/lily/checked/scope.c
