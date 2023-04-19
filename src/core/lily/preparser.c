@@ -13032,7 +13032,7 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                 break;
 
             /*
-                error <error_name>[:<dt>];
+                error <error_name>[[<generic_params>]] [:<dt>];
             */
             case LILY_TOKEN_KIND_KEYWORD_ERROR: {
                 LilyPreparserDecl *error = preparse_error__LilyPreparser(self);
@@ -13045,7 +13045,7 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
             }
 
             /*
-                fun[@<object_name>] <name>(<params>) [when [<cond>] + ...,
+                fun[@<object_name>] <name>[[<generic_params>]][(<params>)] [when [<cond>] + ...,
                req
                [<cond>] + ...] <return_type> = <body> end
             */
