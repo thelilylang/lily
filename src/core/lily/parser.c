@@ -403,6 +403,10 @@ parse_method_decl_for_record_object__LilyParser(
   LilyParser *self,
   LilyPreparserRecordObjectBodyItem *item);
 
+// Parse module declaration.
+static LilyAstDecl *
+parse_module_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
 // Parse object declaration.
 static LilyAstDecl *
 parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
@@ -524,11 +528,16 @@ apply_macro_expansion_in_trait__LilyParser(LilyParser *self,
                                            Vec *body);
 
 static void
-apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+apply_macro_expansion__LilyParser(LilyParser *self,
+                                  LilyPreparserDecl *decl,
+                                  Vec *decls);
 
 // Parse declaration.
 static LilyAstDecl *
 parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+static void
+parse_decls__LilyParser(LilyParser *self, Vec *decls, const Vec *pre_decls);
 
 #define SKIP_TO_TOKEN(k)                                 \
     while (self->current->kind != k &&                   \
@@ -4924,6 +4933,19 @@ parse_method_decl__LilyParser(LilyParser *self,
 }
 
 LilyAstDecl *
+parse_module_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    Vec *body = NEW(Vec); // Vec<LilyAstDecl*>*
+    parse_decls__LilyParser(self, body, decl->module.body);
+
+    return NEW_VARIANT(
+      LilyAstDecl,
+      module,
+      decl->location,
+      NEW(LilyAstDeclModule, decl->module.name, body, decl->module.visibility));
+}
+
+LilyAstDecl *
 parse_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 {
     switch (decl->object.kind) {
@@ -6342,7 +6364,9 @@ apply_macro_expansion_in_trait__LilyParser(LilyParser *self,
 }
 
 void
-apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+apply_macro_expansion__LilyParser(LilyParser *self,
+                                  LilyPreparserDecl *decl,
+                                  Vec *decls)
 {
     CHECK_MACRO(decl);
 
@@ -6373,7 +6397,7 @@ apply_macro_expansion__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
         run__LilyParser(&parser, true);
 
         for (Usize i = 0; i < parser.decls->len; ++i) {
-            push__Vec(self->decls, get__Vec(parser.decls, i));
+            push__Vec(decls, get__Vec(parser.decls, i));
         }
 
         // Clean up allocations
@@ -6423,9 +6447,7 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
         case LILY_PREPARSER_DECL_KIND_FUN:
             return parse_fun_decl__LilyParser(self, decl);
         case LILY_PREPARSER_DECL_KIND_MODULE:
-            TODO("module");
-
-            return NULL;
+            return parse_module_decl__LilyParser(self, decl);
         case LILY_PREPARSER_DECL_KIND_OBJECT:
             return parse_object_decl__LilyParser(self, decl);
         case LILY_PREPARSER_DECL_KIND_TYPE:
@@ -6462,25 +6484,31 @@ TEST(LilyAstExpr *, parse_expr, LilyParseBlock *self)
 }
 
 void
-run__LilyParser(LilyParser *self, bool parse_for_macro_expand)
+parse_decls__LilyParser(LilyParser *self, Vec *decls, const Vec *pre_decls)
 {
-    for (Usize i = 0; i < self->preparser_info->decls->len; ++i) {
-        LilyPreparserDecl *pre_decl = get__Vec(self->preparser_info->decls, i);
+    for (Usize i = 0; i < pre_decls->len; ++i) {
+        LilyPreparserDecl *pre_decl = get__Vec(pre_decls, i);
 
         switch (pre_decl->kind) {
             case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
-                apply_macro_expansion__LilyParser(self, pre_decl);
+                apply_macro_expansion__LilyParser(self, pre_decl, decls);
 
                 break;
             default: {
                 LilyAstDecl *decl = parse_decl__LilyParser(self, pre_decl);
 
                 if (decl) {
-                    push__Vec(self->decls, decl);
+                    push__Vec(decls, decl);
                 }
             }
         }
     }
+}
+
+void
+run__LilyParser(LilyParser *self, bool parse_for_macro_expand)
+{
+    parse_decls__LilyParser(self, self->decls, self->preparser_info->decls);
 
     if (!parse_for_macro_expand) {
 #ifdef DEBUG_PARSER

@@ -99,8 +99,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenExpand, const LilyTokenExpand *self)
       format__String("LilyTokenExpand{{ kind = {s}, tokens =",
                      to_string__Debug__LilyTokenExpandKind(self->kind));
 
-    DEBUG_VEC_STR(self->tokens->buffer, self->tokens->len, LilyToken);
-    push_str__String(" }");
+    DEBUG_VEC_STR(self->tokens, res, LilyToken);
+    push_str__String(res, " }");
 
     return res;
 }
@@ -1256,8 +1256,8 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, expand = {Sr} }",
               CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
-              CALL_DEBUG(to_string, Location, &self->location),
-              CALL_DEBUG_IMPL(to_string, Lily));
+              CALL_DEBUG_IMPL(to_string, Location, &self->location),
+              CALL_DEBUG_IMPL(to_string, LilyTokenExpand, &self->expand));
 
         case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
