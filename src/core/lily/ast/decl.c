@@ -61,8 +61,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclKind, enum LilyAstDeclKind self)
     switch (self) {
         case LILY_AST_DECL_KIND_CONSTANT:
             return "LILY_AST_DECL_KIND_CONSTANT";
-		case LILY_AST_DECL_KIND_ERROR:
-			return "LILY_AST_DECL_KIND_ERROR";
+        case LILY_AST_DECL_KIND_ERROR:
+            return "LILY_AST_DECL_KIND_ERROR";
         case LILY_AST_DECL_KIND_FUN:
             return "LILY_AST_DECL_KIND_FUN";
         case LILY_AST_DECL_KIND_METHOD:
@@ -188,14 +188,14 @@ VARIANT_CONSTRUCTOR(LilyAstDecl *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDecl, const LilyAstDecl *self)
 {
-    switch (self->kind) { 
+    switch (self->kind) {
         case LILY_AST_DECL_KIND_CONSTANT:
             return format__String(
               "LilyAstDecl{{ kind = {s}, location = {sa}, constant = {Sr} }",
               to_string__Debug__LilyAstDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDeclConstant(&self->constant));
-		case LILY_AST_DECL_KIND_ERROR:
+        case LILY_AST_DECL_KIND_ERROR:
             return format__String(
               "LilyAstDecl{{ kind = {s}, location = {sa}, error = {Sr} }",
               to_string__Debug__LilyAstDeclKind(self->kind),
@@ -251,8 +251,8 @@ VARIANT_DESTRUCTOR(LilyAstDecl, constant, LilyAstDecl *self)
 
 VARIANT_DESTRUCTOR(LilyAstDecl, error, LilyAstDecl *self)
 {
-	FREE(LilyAstDeclError, &self->error);
-	lily_free(self);
+    FREE(LilyAstDeclError, &self->error);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyAstDecl, fun, LilyAstDecl *self)
@@ -291,9 +291,9 @@ DESTRUCTOR(LilyAstDecl, LilyAstDecl *self)
         case LILY_AST_DECL_KIND_CONSTANT:
             FREE_VARIANT(LilyAstDecl, constant, self);
             break;
-		case LILY_AST_DECL_KIND_ERROR:
-			FREE_VARIANT(LilyAstDecl, error, self);
-			break;
+        case LILY_AST_DECL_KIND_ERROR:
+            FREE_VARIANT(LilyAstDecl, error, self);
+            break;
         case LILY_AST_DECL_KIND_FUN:
             FREE_VARIANT(LilyAstDecl, fun, self);
             break;

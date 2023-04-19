@@ -37,7 +37,7 @@
 enum LilyAstDeclKind
 {
     LILY_AST_DECL_KIND_CONSTANT,
-	LILY_AST_DECL_KIND_ERROR,
+    LILY_AST_DECL_KIND_ERROR,
     LILY_AST_DECL_KIND_FUN,
     LILY_AST_DECL_KIND_METHOD,
     LILY_AST_DECL_KIND_MODULE,
@@ -62,7 +62,7 @@ typedef struct LilyAstDecl
     union
     {
         LilyAstDeclConstant constant;
-		LilyAstDeclError error;
+        LilyAstDeclError error;
         LilyAstDeclFun fun;
         LilyAstDeclMethod method;
         LilyAstDeclModule module;

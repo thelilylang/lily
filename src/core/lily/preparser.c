@@ -12272,7 +12272,7 @@ preparse_error__LilyPreparser(LilyPreparser *self)
             next_token__LilyPreparser(self);
             break;
         case LILY_TOKEN_KIND_COLON:
-			next_token__LilyPreparser(self);
+            next_token__LilyPreparser(self);
 
             data_type = NEW(Vec);
 
@@ -12303,33 +12303,32 @@ preparse_error__LilyPreparser(LilyPreparser *self)
                     break;
             }
 
-			break;
-		default: {
-			String *current_s = to_string__LilyToken(self->current);
+            break;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
 
-			emit__Diagnostic(
-                      NEW_VARIANT(
-                        Diagnostic,
-                        simple_lily_error,
-                        self->file,
-                        &self->current->location,
-                        NEW_VARIANT(LilyError, unexpected_token, current_s),
-                        init__Vec(1,
-                                  from__String("expected `;` or `:`")),
-                        NULL,
-                        NULL),
-                      &self->count_error);
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW_VARIANT(LilyError, unexpected_token, current_s),
+                          init__Vec(1, from__String("expected `;` or `:`")),
+                          NULL,
+                          NULL),
+              &self->count_error);
 
-			FREE(String, current_s);
-			FREE(String, name);
+            FREE(String, current_s);
+            FREE(String, name);
 
-			if (generic_params) {
-				FREE_BUFFER_ITEMS(generic_params->buffer, generic_params->len, Vec);
-				FREE(Vec, generic_params);
-			}
+            if (generic_params) {
+                FREE_BUFFER_ITEMS(
+                  generic_params->buffer, generic_params->len, Vec);
+                FREE(Vec, generic_params);
+            }
 
-			return NULL;
-		}
+            return NULL;
+        }
     }
 
     END_LOCATION(&location, self->current->location);
@@ -13045,8 +13044,8 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
             }
 
             /*
-                fun[@<object_name>] <name>[[<generic_params>]][(<params>)] [when [<cond>] + ...,
-               req
+                fun[@<object_name>] <name>[[<generic_params>]][(<params>)] [when
+               [<cond>] + ..., req
                [<cond>] + ...] <return_type> = <body> end
             */
             case LILY_TOKEN_KIND_KEYWORD_FUN: {

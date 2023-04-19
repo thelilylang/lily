@@ -22,44 +22,53 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
+#include <base/format.h>
+
 #include <core/lily/ast/decl/error.h>
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDeclError, const LilyAstDeclError *self)
 {
-	String *res = format__String("LilyAstDeclError{{ name = {S}, generic_params =", self->name);
+    String *res = format__String(
+      "LilyAstDeclError{{ name = {S}, generic_params =", self->name);
 
-	if (self->generic_params) {
-		DEBUG_VEC_STRING(self->generic_params, res, LilyAstGenericParam);
-	} else {
-		push_str__String(res, " NULL");
-	}
+    if (self->generic_params) {
+        DEBUG_VEC_STRING(self->generic_params, res, LilyAstGenericParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
-	if (self->data_type) {
-		char *s = format(", data_type = {Sr}, visibility = {s} }", to_string__Debug__LilyAstDataType(self->data_type), to_string__Debug__LilyVisibility(self->visibility));
+    if (self->data_type) {
+        char *s = format(", data_type = {Sr}, visibility = {s} }",
+                         to_string__Debug__LilyAstDataType(self->data_type),
+                         to_string__Debug__LilyVisibility(self->visibility));
 
-		PUSH_STR_AND_FREE(res, s);
-	} else {
-		char *s = format(", data_type = NULL, visibility = {s} }", to_string__Debug__LilyVisibility(self->visibility));
+        PUSH_STR_AND_FREE(res, s);
+    } else {
+        char *s = format(", data_type = NULL, visibility = {s} }",
+                         to_string__Debug__LilyVisibility(self->visibility));
 
-		PUSH_STR_AND_FREE(res, s);
-	}
+        PUSH_STR_AND_FREE(res, s);
+    }
 
-	return res;
+    return res;
 }
 #endif
 
 DESTRUCTOR(LilyAstDeclError, const LilyAstDeclError *self)
 {
-	FREE_MOVE(self->name, FREE(String, self->name));
+    FREE_MOVE(self->name, FREE(String, self->name));
 
-	if (self->generic_params) {
-		FREE_BUFFER_ITEMS(self->generic_params->buffer, self->generic_params->len, LilyAstGenericParam);
-		FREE(Vec, self->generic_params);
-	}
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(self->generic_params->buffer,
+                          self->generic_params->len,
+                          LilyAstGenericParam);
+        FREE(Vec, self->generic_params);
+    }
 
-	if (self->data_type) {
-		FREE(LilyAstDataType, self->data_type);
-	}
+    if (self->data_type) {
+        FREE(LilyAstDataType, self->data_type);
+    }
 }

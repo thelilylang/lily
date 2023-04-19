@@ -2405,6 +2405,8 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
                     return NULL;
             }
         }
+        case LILY_TOKEN_KIND_SEMICOLON:
+            return NULL;
         default: {
             String *previous_s = to_string__LilyToken(self->previous);
 
