@@ -33,11 +33,11 @@
 #include <base/print.h>
 #endif
 
-// Free LilyAstDecl type (LILY_AST_DECL_KIND_ALIAS).
-static VARIANT_DESTRUCTOR(LilyAstDecl, alias, LilyAstDecl *self);
-
 // Free LilyAstDecl type (LILY_AST_DECL_KIND_CONSTANT).
 static VARIANT_DESTRUCTOR(LilyAstDecl, constant, LilyAstDecl *self);
+
+// Free LilyAstDecl type (LILY_AST_DECL_KIND_ERROR).
+static VARIANT_DESTRUCTOR(LilyAstDecl, error, LilyAstDecl *self);
 
 // Free LilyAstDecl type (LILY_AST_DECL_KIND_FUN).
 static VARIANT_DESTRUCTOR(LilyAstDecl, fun, LilyAstDecl *self);
@@ -59,10 +59,10 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyAstDeclKind, enum LilyAstDeclKind self)
 {
     switch (self) {
-        case LILY_AST_DECL_KIND_ALIAS:
-            return "LILY_AST_DECL_KIND_ALIAS";
         case LILY_AST_DECL_KIND_CONSTANT:
             return "LILY_AST_DECL_KIND_CONSTANT";
+		case LILY_AST_DECL_KIND_ERROR:
+			return "LILY_AST_DECL_KIND_ERROR";
         case LILY_AST_DECL_KIND_FUN:
             return "LILY_AST_DECL_KIND_FUN";
         case LILY_AST_DECL_KIND_METHOD:
@@ -81,21 +81,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclKind, enum LilyAstDeclKind self)
 
 VARIANT_CONSTRUCTOR(LilyAstDecl *,
                     LilyAstDecl,
-                    alias,
-                    Location location,
-                    LilyAstDeclAlias alias)
-{
-    LilyAstDecl *self = lily_malloc(sizeof(LilyAstDecl));
-
-    self->kind = LILY_AST_DECL_KIND_ALIAS;
-    self->location = location;
-    self->alias = alias;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyAstDecl *,
-                    LilyAstDecl,
                     constant,
                     Location location,
                     LilyAstDeclConstant constant)
@@ -105,6 +90,21 @@ VARIANT_CONSTRUCTOR(LilyAstDecl *,
     self->kind = LILY_AST_DECL_KIND_CONSTANT;
     self->location = location;
     self->constant = constant;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstDecl *,
+                    LilyAstDecl,
+                    error,
+                    Location location,
+                    LilyAstDeclError error)
+{
+    LilyAstDecl *self = lily_malloc(sizeof(LilyAstDecl));
+
+    self->kind = LILY_AST_DECL_KIND_ERROR;
+    self->location = location;
+    self->error = error;
 
     return self;
 }
@@ -188,19 +188,19 @@ VARIANT_CONSTRUCTOR(LilyAstDecl *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDecl, const LilyAstDecl *self)
 {
-    switch (self->kind) {
-        case LILY_AST_DECL_KIND_ALIAS:
-            return format__String(
-              "LilyAstDecl{{ kind = {s}, location = {sa}, alias = {Sr} }",
-              to_string__Debug__LilyAstDeclKind(self->kind),
-              to_string__Debug__Location(&self->location),
-              to_string__Debug__LilyAstDeclAlias(&self->alias));
+    switch (self->kind) { 
         case LILY_AST_DECL_KIND_CONSTANT:
             return format__String(
               "LilyAstDecl{{ kind = {s}, location = {sa}, constant = {Sr} }",
               to_string__Debug__LilyAstDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDeclConstant(&self->constant));
+		case LILY_AST_DECL_KIND_ERROR:
+            return format__String(
+              "LilyAstDecl{{ kind = {s}, location = {sa}, error = {Sr} }",
+              to_string__Debug__LilyAstDeclKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDeclError(&self->error));
         case LILY_AST_DECL_KIND_FUN:
             return format__String(
               "LilyAstDecl{{ kind = {s}, location = {sa}, fun = {Sr} }",
@@ -243,16 +243,16 @@ IMPL_FOR_DEBUG(debug, LilyAstDecl, const LilyAstDecl *self)
 }
 #endif
 
-VARIANT_DESTRUCTOR(LilyAstDecl, alias, LilyAstDecl *self)
-{
-    FREE(LilyAstDeclAlias, &self->alias);
-    lily_free(self);
-}
-
 VARIANT_DESTRUCTOR(LilyAstDecl, constant, LilyAstDecl *self)
 {
     FREE(LilyAstDeclConstant, &self->constant);
     lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstDecl, error, LilyAstDecl *self)
+{
+	FREE(LilyAstDeclError, &self->error);
+	lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyAstDecl, fun, LilyAstDecl *self)
@@ -288,12 +288,12 @@ VARIANT_DESTRUCTOR(LilyAstDecl, type, LilyAstDecl *self)
 DESTRUCTOR(LilyAstDecl, LilyAstDecl *self)
 {
     switch (self->kind) {
-        case LILY_AST_DECL_KIND_ALIAS:
-            FREE_VARIANT(LilyAstDecl, alias, self);
-            break;
         case LILY_AST_DECL_KIND_CONSTANT:
             FREE_VARIANT(LilyAstDecl, constant, self);
             break;
+		case LILY_AST_DECL_KIND_ERROR:
+			FREE_VARIANT(LilyAstDecl, error, self);
+			break;
         case LILY_AST_DECL_KIND_FUN:
             FREE_VARIANT(LilyAstDecl, fun, self);
             break;
