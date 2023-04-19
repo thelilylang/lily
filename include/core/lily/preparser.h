@@ -1377,7 +1377,8 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserLib, const LilyPreparserLib *self);
 typedef struct LilyPreparserError
 {
     String *name;
-    Vec *data_type; // Vec<LilyToken* (&)>*?
+    Vec *data_type;      // Vec<LilyToken* (&)>*?
+    Vec *generic_params; // Vec<Vec<LilyToken* (&)>*>*?
     enum LilyVisibility visibility;
 } LilyPreparserError;
 

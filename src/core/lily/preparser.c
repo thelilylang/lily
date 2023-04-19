@@ -1029,6 +1029,7 @@ static inline CONSTRUCTOR(LilyPreparserError,
                           LilyPreparserError,
                           String *name,
                           Vec *data_type,
+                          Vec *generic_params,
                           enum LilyVisibility visibility);
 
 // Free LilyPreparserError type.
@@ -5652,10 +5653,12 @@ CONSTRUCTOR(LilyPreparserError,
             LilyPreparserError,
             String *name,
             Vec *data_type,
+            Vec *generic_params,
             enum LilyVisibility visibility)
 {
     return (LilyPreparserError){ .name = name,
                                  .data_type = data_type,
+                                 .generic_params = generic_params,
                                  .visibility = visibility };
 }
 
@@ -5668,6 +5671,14 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserError, const LilyPreparserError *self)
 
     if (self->data_type) {
         DEBUG_VEC_STR(self->data_type, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", generic_params =");
+
+    if (self->generic_params) {
+        DEBUG_VEC_STR_2(self->generic_params, res, LilyToken);
     } else {
         push_str__String(res, " NULL");
     }
@@ -10052,8 +10063,8 @@ preparse_prototype__LilyPreparser(LilyPreparser *self)
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_L_HOOK:
             generic_params = preparse_hook_with_comma_sep__LilyPreparser(self);
-            break;
 
+            break;
         default:
             break;
     }
@@ -12243,7 +12254,17 @@ preparse_error__LilyPreparser(LilyPreparser *self)
     // 1. Get name of error
     GET_NAME(self, from__String("expected name of the error"));
 
-    // 2. Preparse data type of error.
+    // 2. Preparse generic params.
+    Vec *generic_params = NULL; // Vec<Vec<LilyToken* (&)>*>*?
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_HOOK:
+            generic_params = preparse_hook_with_comma_sep__LilyPreparser(self);
+        default:
+            break;
+    }
+
+    // 3. Preparse data type of error.
     Vec *data_type = NULL; // Vec<LilyToken* (&)>*?
 
     switch (self->current->kind) {
@@ -12281,11 +12302,14 @@ preparse_error__LilyPreparser(LilyPreparser *self)
             }
     }
 
+    END_LOCATION(&location, self->current->location);
+
     return NEW_VARIANT(
       LilyPreparserDecl,
       error,
       location,
-      NEW(LilyPreparserError, name, data_type, visibility_decl));
+      NEW(
+        LilyPreparserError, name, data_type, generic_params, visibility_decl));
 }
 
 LilyPreparserDecl *
