@@ -81,6 +81,7 @@ set(CORE_SRC
 	src/core/lily/ast/decl/constant.c
 	src/core/lily/ast/decl/enum.c
 	src/core/lily/ast/decl/enum_object.c
+	src/core/lily/ast/decl/error.c
 	src/core/lily/ast/decl/fun.c
 	src/core/lily/ast/decl/method.c
 	src/core/lily/ast/decl/module.c
