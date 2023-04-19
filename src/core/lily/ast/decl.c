@@ -147,7 +147,7 @@ VARIANT_CONSTRUCTOR(LilyAstDecl *,
 {
     LilyAstDecl *self = lily_malloc(sizeof(LilyAstDecl));
 
-    self->kind = LILY_AST_DECL_KIND_METHOD;
+    self->kind = LILY_AST_DECL_KIND_MODULE;
     self->location = location;
     self->module = module;
 
