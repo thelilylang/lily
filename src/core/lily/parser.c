@@ -281,15 +281,15 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self);
 static LilyAstGenericParam *
 parse_generic_param__LilyParseBlock(LilyParseBlock *self);
 
-/// @param generic_params Vec<Vec<LilyToken*>*>*
+/// @param generic_params Vec<Vec<LilyToken* (&)>*>*
 static Vec *
 parse_generic_params__LilyParser(LilyParser *self, Vec *generic_params);
 
-/// @param inherit_params Vec<Vec<LilyToken*>*>*
+/// @param inherit_params Vec<Vec<LilyToken* (&)>*>*
 static Vec *
 parse_inherit_params__LilyParser(LilyParser *self, Vec *inherit_params);
 
-/// @param impl_params Vec<Vec<LilyToken*>*>*
+/// @param impl_params Vec<Vec<LilyToken* (&)>*>*
 static Vec *
 parse_impl_params__LilyParser(LilyParser *self, Vec *impl_params);
 
@@ -365,6 +365,10 @@ parse_enum_object_body__LilyParser(LilyParser *self, Vec *pre_body);
 // Parse enum object declaration.
 static LilyAstDecl *
 parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
+// Parse error declaration.
+static LilyAstDecl *
+parse_error_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
 static LilyAstDeclFunParam *
 parse_fun_param__LilyParseBlock(LilyParseBlock *self);
@@ -4370,6 +4374,39 @@ parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                                        decl->object.enum_.visibility)));
 }
 
+LilyAstDecl *
+parse_error_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    // 1. Parse data type
+    LilyAstDataType *data_type = NULL;
+
+    if (decl->error.data_type) {
+        LilyParseBlock data_type_block =
+          NEW(LilyParseBlock, self, decl->error.data_type);
+        data_type = parse_data_type__LilyParseBlock(&data_type_block);
+
+        CHECK_DATA_TYPE(
+          data_type, data_type_block, NULL, "expected only one data type", {});
+    }
+
+    // 2. Parse generic params
+    Vec *generic_params = NULL;
+
+    if (decl->error.generic_params) {
+        generic_params =
+          parse_generic_params__LilyParser(self, decl->error.generic_params);
+    }
+
+    return NEW_VARIANT(LilyAstDecl,
+                       error,
+                       decl->location,
+                       NEW(LilyAstDeclError,
+                           decl->error.name,
+                           generic_params,
+                           data_type,
+                           decl->error.visibility));
+}
+
 LilyAstDeclFunParam *
 parse_fun_param__LilyParseBlock(LilyParseBlock *self)
 {
@@ -6444,6 +6481,8 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                     return NULL;
             }
         }
+        case LILY_PREPARSER_DECL_KIND_ERROR:
+            return parse_error_decl__LilyParser(self, decl);
         case LILY_PREPARSER_DECL_KIND_FUN:
             return parse_fun_decl__LilyParser(self, decl);
         case LILY_PREPARSER_DECL_KIND_MODULE:
