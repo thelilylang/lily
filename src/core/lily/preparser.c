@@ -5753,7 +5753,7 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_PREPARSER_DECL_KIND_CONSTANT:
             return "LILY_PREPARSER_DECL_KIND_CONSTANT";
-        case LILY_PREPARSER_DECL_KIND_ERRROR:
+        case LILY_PREPARSER_DECL_KIND_ERROR:
             return "LILY_PREPARSER_DECL_KIND_ERROR";
         case LILY_PREPARSER_DECL_KIND_FUN:
             return "LILY_PREPARSER_DECL_KIND_FUN";
@@ -12271,7 +12271,9 @@ preparse_error__LilyPreparser(LilyPreparser *self)
         case LILY_TOKEN_KIND_SEMICOLON:
             next_token__LilyPreparser(self);
             break;
-        default:
+        case LILY_TOKEN_KIND_COLON:
+			next_token__LilyPreparser(self);
+
             data_type = NEW(Vec);
 
             while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
@@ -12300,6 +12302,34 @@ preparse_error__LilyPreparser(LilyPreparser *self)
                     next_token__LilyPreparser(self);
                     break;
             }
+
+			break;
+		default: {
+			String *current_s = to_string__LilyToken(self->current);
+
+			emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW_VARIANT(LilyError, unexpected_token, current_s),
+                        init__Vec(1,
+                                  from__String("expected `;` or `:`")),
+                        NULL,
+                        NULL),
+                      &self->count_error);
+
+			FREE(String, current_s);
+			FREE(String, name);
+
+			if (generic_params) {
+				FREE_BUFFER_ITEMS(generic_params->buffer, generic_params->len, Vec);
+				FREE(Vec, generic_params);
+			}
+
+			return NULL;
+		}
     }
 
     END_LOCATION(&location, self->current->location);
