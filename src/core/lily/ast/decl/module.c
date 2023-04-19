@@ -31,7 +31,7 @@
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDeclModule, const LilyAstDeclModule *self)
 {
-    String *res = format__String("LilyAstDeclModule{{ name = {S}, decls =");
+    String *res = format__String("LilyAstDeclModule{{ name = {S}, decls =", self->name);
 
     DEBUG_VEC_STRING(self->decls, res, LilyAstDecl);
     push_str__String(res, " }");
