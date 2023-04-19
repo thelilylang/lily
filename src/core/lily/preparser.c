@@ -1024,6 +1024,17 @@ static inline CONSTRUCTOR(LilyPreparserLib,
 // Free LilyPreparserLib type.
 static DESTRUCTOR(LilyPreparserLib, const LilyPreparserLib *self);
 
+// Construct LilyPreparserError type.
+static inline CONSTRUCTOR(LilyPreparserError,
+                          LilyPreparserError,
+                          String *name,
+                          Vec *data_type,
+                          Vec *generic_params,
+                          enum LilyVisibility visibility);
+
+// Free LilyPreparserError type.
+static DESTRUCTOR(LilyPreparserError, const LilyPreparserError *self);
+
 // Construct LilyPreparserMacroExpand type.
 static inline CONSTRUCTOR(LilyPreparserMacroExpand,
                           LilyPreparserMacroExpand,
@@ -1077,6 +1088,13 @@ static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
                            Location location,
                            LilyPreparserConstant constant);
 
+// Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_ERROR).
+static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                           LilyPreparserDecl,
+                           error,
+                           Location location,
+                           LilyPreparserError error);
+
 // Construct LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_FUN).
 static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
                            LilyPreparserDecl,
@@ -1121,6 +1139,9 @@ static VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
 
 // Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_CONSTANT).
 static VARIANT_DESTRUCTOR(LilyPreparserDecl, constant, LilyPreparserDecl *self);
+
+// Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_ERROR).
+static VARIANT_DESTRUCTOR(LilyPreparserDecl, error, LilyPreparserDecl *self);
 
 // Free LilyPreparserDecl type (LILY_PREPARSER_DECL_KIND_FUN).
 static VARIANT_DESTRUCTOR(LilyPreparserDecl, fun, LilyPreparserDecl *self);
@@ -1422,6 +1443,9 @@ preparse_lib_fun_prototype__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserDecl *
 preparse_lib__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserDecl *
+preparse_error__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserDecl *
 preparse_macro_expand__LilyPreparser(LilyPreparser *self);
@@ -5625,6 +5649,62 @@ DESTRUCTOR(LilyPreparserLib, const LilyPreparserLib *self)
     FREE(Vec, self->body);
 }
 
+CONSTRUCTOR(LilyPreparserError,
+            LilyPreparserError,
+            String *name,
+            Vec *data_type,
+            Vec *generic_params,
+            enum LilyVisibility visibility)
+{
+    return (LilyPreparserError){ .name = name,
+                                 .data_type = data_type,
+                                 .generic_params = generic_params,
+                                 .visibility = visibility };
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserError, const LilyPreparserError *self)
+{
+    String *res = format__String("LilyPreparserError{{ name = {S}, data_type =",
+                                 self->name);
+
+    if (self->data_type) {
+        DEBUG_VEC_STR(self->data_type, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", generic_params =");
+
+    if (self->generic_params) {
+        DEBUG_VEC_STR_2(self->generic_params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    {
+        char *s = format(", visibility = {s} }",
+                         to_string__Debug__LilyVisibility(self->visibility));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyPreparserError, const LilyPreparserError *self)
+{
+#ifdef RUN_UNTIL_PREPARSER
+    FREE(String, self->name);
+#endif
+
+    if (self->data_type) {
+        FREE(Vec, self->data_type);
+    }
+}
+
 CONSTRUCTOR(LilyPreparserMacroExpand,
             LilyPreparserMacroExpand,
             String *name,
@@ -5673,6 +5753,8 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_PREPARSER_DECL_KIND_CONSTANT:
             return "LILY_PREPARSER_DECL_KIND_CONSTANT";
+        case LILY_PREPARSER_DECL_KIND_ERROR:
+            return "LILY_PREPARSER_DECL_KIND_ERROR";
         case LILY_PREPARSER_DECL_KIND_FUN:
             return "LILY_PREPARSER_DECL_KIND_FUN";
         case LILY_PREPARSER_DECL_KIND_LIB:
@@ -5702,6 +5784,21 @@ VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
     self->kind = LILY_PREPARSER_DECL_KIND_CONSTANT;
     self->location = location;
     self->constant = constant;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserDecl *,
+                    LilyPreparserDecl,
+                    error,
+                    Location location,
+                    LilyPreparserError error)
+{
+    LilyPreparserDecl *self = lily_malloc(sizeof(LilyPreparserDecl));
+
+    self->kind = LILY_PREPARSER_DECL_KIND_ERROR;
+    self->location = location;
+    self->error = error;
 
     return self;
 }
@@ -5815,6 +5912,15 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserDecl, const LilyPreparserDecl *self)
 
             break;
         }
+        case LILY_PREPARSER_DECL_KIND_ERROR: {
+            char *s =
+              format(", error = {Sr} }",
+                     to_string__Debug__LilyPreparserError(&self->error));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_PREPARSER_DECL_KIND_FUN: {
             char *s = format(", fun = {Sr} }",
                              to_string__Debug__LilyPreparserFun(&self->fun));
@@ -5886,6 +5992,12 @@ VARIANT_DESTRUCTOR(LilyPreparserDecl, constant, LilyPreparserDecl *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyPreparserDecl, error, LilyPreparserDecl *self)
+{
+    FREE(LilyPreparserError, &self->error);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyPreparserDecl, fun, LilyPreparserDecl *self)
 {
     FREE(LilyPreparserFun, &self->fun);
@@ -5927,6 +6039,10 @@ DESTRUCTOR(LilyPreparserDecl, LilyPreparserDecl *self)
     switch (self->kind) {
         case LILY_PREPARSER_DECL_KIND_CONSTANT:
             FREE_VARIANT(LilyPreparserDecl, constant, self);
+            break;
+
+        case LILY_PREPARSER_DECL_KIND_ERROR:
+            FREE_VARIANT(LilyPreparserDecl, error, self);
             break;
 
         case LILY_PREPARSER_DECL_KIND_FUN:
@@ -6680,6 +6796,8 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_KEYWORD_VAL:
                     return preparse_constant__LilyPreparser(self);
+                case LILY_TOKEN_KIND_KEYWORD_ERROR:
+                    return preparse_error__LilyPreparser(self);
                 case LILY_TOKEN_KIND_KEYWORD_TYPE:
                     return preparse_type__LilyPreparser(self);
                 case LILY_TOKEN_KIND_KEYWORD_MODULE:
@@ -6703,14 +6821,21 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
                                                  NULL),
                                      &self->count_error);
 
+                    visibility_decl = LILY_VISIBILITY_PRIVATE;
+
                     FREE(String, current_s);
 
                     return NULL;
                 }
             }
+
+            visibility_decl = LILY_VISIBILITY_PRIVATE;
+
             break;
         case LILY_TOKEN_KIND_KEYWORD_TYPE:
             return preparse_type__LilyPreparser(self);
+        case LILY_TOKEN_KIND_KEYWORD_ERROR:
+            return preparse_error__LilyPreparser(self);
         case LILY_TOKEN_KIND_KEYWORD_MODULE:
             return preparse_module__LilyPreparser(self);
         case LILY_TOKEN_KIND_KEYWORD_FUN:
@@ -9938,8 +10063,8 @@ preparse_prototype__LilyPreparser(LilyPreparser *self)
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_L_HOOK:
             generic_params = preparse_hook_with_comma_sep__LilyPreparser(self);
-            break;
 
+            break;
         default:
             break;
     }
@@ -12120,6 +12245,104 @@ preparse_alias__LilyPreparser(LilyPreparser *self,
 }
 
 LilyPreparserDecl *
+preparse_error__LilyPreparser(LilyPreparser *self)
+{
+    Location location = clone__Location(&location_decl);
+
+    next_token__LilyPreparser(self); // skip `error`
+
+    // 1. Get name of error
+    GET_NAME(self, from__String("expected name of the error"));
+
+    // 2. Preparse generic params.
+    Vec *generic_params = NULL; // Vec<Vec<LilyToken* (&)>*>*?
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_HOOK:
+            generic_params = preparse_hook_with_comma_sep__LilyPreparser(self);
+        default:
+            break;
+    }
+
+    // 3. Preparse data type of error.
+    Vec *data_type = NULL; // Vec<LilyToken* (&)>*?
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            next_token__LilyPreparser(self);
+            break;
+        case LILY_TOKEN_KIND_COLON:
+			next_token__LilyPreparser(self);
+
+            data_type = NEW(Vec);
+
+            while (self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+                   self->current->kind != LILY_TOKEN_KIND_EOF) {
+                push__Vec(data_type, self->current);
+                next_token__LilyPreparser(self);
+            }
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_EOF:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                        init__Vec(1,
+                                  from__String("expected `;` to close error")),
+                        NULL,
+                        NULL),
+                      &self->count_error);
+
+                    break;
+                default:
+                    next_token__LilyPreparser(self);
+                    break;
+            }
+
+			break;
+		default: {
+			String *current_s = to_string__LilyToken(self->current);
+
+			emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW_VARIANT(LilyError, unexpected_token, current_s),
+                        init__Vec(1,
+                                  from__String("expected `;` or `:`")),
+                        NULL,
+                        NULL),
+                      &self->count_error);
+
+			FREE(String, current_s);
+			FREE(String, name);
+
+			if (generic_params) {
+				FREE_BUFFER_ITEMS(generic_params->buffer, generic_params->len, Vec);
+				FREE(Vec, generic_params);
+			}
+
+			return NULL;
+		}
+    }
+
+    END_LOCATION(&location, self->current->location);
+
+    return NEW_VARIANT(
+      LilyPreparserDecl,
+      error,
+      location,
+      NEW(
+        LilyPreparserError, name, data_type, generic_params, visibility_decl));
+}
+
+LilyPreparserDecl *
 preparse_macro_expand__LilyPreparser(LilyPreparser *self)
 {
     ASSERT(self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL);
@@ -12809,7 +13032,20 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                 break;
 
             /*
-                fun[@<object_name>] <name>(<params>) [when [<cond>] + ...,
+                error <error_name>[[<generic_params>]] [:<dt>];
+            */
+            case LILY_TOKEN_KIND_KEYWORD_ERROR: {
+                LilyPreparserDecl *error = preparse_error__LilyPreparser(self);
+
+                if (error) {
+                    push__Vec(info->decls, error);
+                }
+
+                break;
+            }
+
+            /*
+                fun[@<object_name>] <name>[[<generic_params>]][(<params>)] [when [<cond>] + ...,
                req
                [<cond>] + ...] <return_type> = <body> end
             */

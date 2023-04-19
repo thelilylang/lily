@@ -1374,9 +1374,28 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserLib, const LilyPreparserLib *self);
 #endif
 
+typedef struct LilyPreparserError
+{
+    String *name;
+    Vec *data_type;      // Vec<LilyToken* (&)>*?
+    Vec *generic_params; // Vec<Vec<LilyToken* (&)>*>*?
+    enum LilyVisibility visibility;
+} LilyPreparserError;
+
+/**
+ *
+ * @brief Convert LilyPreparserError in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserError, const LilyPreparserError *self);
+#endif
+
 enum LilyPreparserDeclKind
 {
     LILY_PREPARSER_DECL_KIND_CONSTANT,
+    LILY_PREPARSER_DECL_KIND_ERROR,
     LILY_PREPARSER_DECL_KIND_FUN,
     LILY_PREPARSER_DECL_KIND_LIB,
     LILY_PREPARSER_DECL_KIND_MACRO_EXPAND,
@@ -1404,6 +1423,7 @@ typedef struct LilyPreparserDecl
     union
     {
         LilyPreparserConstant constant;
+        LilyPreparserError error;
         LilyPreparserFun fun;
         LilyPreparserLib lib;
         LilyPreparserMacroExpand macro_expand;

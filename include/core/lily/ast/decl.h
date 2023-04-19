@@ -27,7 +27,7 @@
 
 #include <base/macros.h>
 
-#include <core/lily/ast/decl/alias.h>
+#include <core/lily/ast/decl/error.h>
 #include <core/lily/ast/decl/fun.h>
 #include <core/lily/ast/decl/method.h>
 #include <core/lily/ast/decl/module.h>
@@ -36,8 +36,8 @@
 
 enum LilyAstDeclKind
 {
-    LILY_AST_DECL_KIND_ALIAS,
     LILY_AST_DECL_KIND_CONSTANT,
+	LILY_AST_DECL_KIND_ERROR,
     LILY_AST_DECL_KIND_FUN,
     LILY_AST_DECL_KIND_METHOD,
     LILY_AST_DECL_KIND_MODULE,
@@ -61,8 +61,8 @@ typedef struct LilyAstDecl
     Location location;
     union
     {
-        LilyAstDeclAlias alias;
         LilyAstDeclConstant constant;
+		LilyAstDeclError error;
         LilyAstDeclFun fun;
         LilyAstDeclMethod method;
         LilyAstDeclModule module;
@@ -73,16 +73,6 @@ typedef struct LilyAstDecl
 
 /**
  *
- * @brief Construct LilyAstDecl type (LILY_AST_DECL_KIND_ALIAS).
- */
-VARIANT_CONSTRUCTOR(LilyAstDecl *,
-                    LilyAstDecl,
-                    alias,
-                    Location location,
-                    LilyAstDeclAlias alias);
-
-/**
- *
  * @brief Construct LilyAstDecl type (LILY_AST_DECL_KIND_CONSTANT).
  */
 VARIANT_CONSTRUCTOR(LilyAstDecl *,
@@ -90,6 +80,16 @@ VARIANT_CONSTRUCTOR(LilyAstDecl *,
                     constant,
                     Location location,
                     LilyAstDeclConstant constant);
+
+/**
+ *
+ * @brief Construct LilyAstDecl type (LILY_AST_DECL_KIND_ERROR).
+ */
+VARIANT_CONSTRUCTOR(LilyAstDecl *,
+                    LilyAstDecl,
+                    error,
+                    Location location,
+                    LilyAstDeclError error);
 
 /**
  *
