@@ -4389,6 +4389,8 @@ parse_error_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 
         CHECK_DATA_TYPE(
           data_type, data_type_block, NULL, "expected only one data type", {});
+
+        FREE(LilyParseBlock, &data_type_block);
     }
 
     // 2. Parse generic params
