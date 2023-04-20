@@ -79,7 +79,7 @@ inline DESTRUCTOR(LilyCheckedExprIdentifier,
 typedef struct LilyCheckedExprIdentifierDollar
 {
     String *name;
-	LilyCheckedScope scope;
+    LilyCheckedScope scope;
 } LilyCheckedExprIdentifierDollar;
 
 /**
@@ -89,7 +89,7 @@ typedef struct LilyCheckedExprIdentifierDollar
 inline CONSTRUCTOR(LilyCheckedExprIdentifierDollar,
                    LilyCheckedExprIdentifierDollar,
                    String *name,
-				   LilyCheckedScope scope)
+                   LilyCheckedScope scope)
 {
     return (LilyCheckedExprIdentifierDollar){ .name = name, .scope = scope };
 }
@@ -104,10 +104,12 @@ inline String *
 IMPL_FOR_DEBUG(to_string,
                LilyCheckedExprIdentifierDollar,
                const LilyCheckedExprIdentifierDollar *self,
-			   LilyCheckedScope scope)
+               LilyCheckedScope scope)
 {
-    return format__String("LilyCheckedExpridentifierDollar{{ name = {S}, scope = {sa} }",
-                          self->name, to_string__Debug__LilyCheckedScope(&self->scope));
+    return format__String(
+      "LilyCheckedExpridentifierDollar{{ name = {S}, scope = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedScope(&self->scope));
 }
 #endif
 
