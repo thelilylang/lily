@@ -44,13 +44,7 @@ IMPL_FOR_DEBUG(to_string,
 
     DEBUG_VEC_STRING(self->items, res, LilyCheckedExprTuple);
 
-    {
-        char *s =
-          format(", data_type = {Sr} }",
-                 to_string__Debug__LilyCheckedDataType(self->data_type));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
+    push_str__String(res, " }");
 
     return res;
 }
@@ -61,5 +55,4 @@ DESTRUCTOR(LilyCheckedExprTuple, const LilyCheckedExprTuple *self)
     FREE_BUFFER_ITEMS(
       self->items->buffer, self->items->len, LilyCheckedExprTuple);
     FREE(Vec, self->items);
-    FREE(LilyCheckedDataType, self->data_type);
 }

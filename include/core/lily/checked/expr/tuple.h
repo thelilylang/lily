@@ -27,24 +27,18 @@
 
 #include <base/vec.h>
 
-#include <core/lily/checked/data_type.h>
-
 typedef struct LilyCheckedExprTuple
 {
     Vec *items; // Vec<LilyCheckedExpr*>*
-    LilyCheckedDataType *data_type;
 } LilyCheckedExprTuple;
 
 /**
  *
  * @brief Construct LilyCheckedExprTuple type.
  */
-inline CONSTRUCTOR(LilyCheckedExprTuple,
-                   LilyCheckedExprTuple,
-                   Vec *items,
-                   LilyCheckedDataType *data_type)
+inline CONSTRUCTOR(LilyCheckedExprTuple, LilyCheckedExprTuple, Vec *items)
 {
-    return (LilyCheckedExprTuple){ .items = items, .data_type = data_type };
+    return (LilyCheckedExprTuple){ .items = items };
 }
 
 /**
