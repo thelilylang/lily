@@ -28,6 +28,7 @@
 #include <base/string.h>
 
 #include <core/shared/location.h>
+#include <core/lily/checked/data_type.h>
 
 enum LilyCheckedExprKind
 {
@@ -51,6 +52,7 @@ typedef struct LilyCheckedExpr
 {
     enum LilyCheckedExprKind kind;
     Location location;
+    LilyCheckedDataType *data_type;
 } LilyCheckedExpr;
 
 /**
