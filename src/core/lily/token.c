@@ -565,6 +565,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String("->");
         case LILY_TOKEN_KIND_AT:
             return from__String("@");
+        case LILY_TOKEN_KIND_BACKSLASH:
+            return from__String("\\");
         case LILY_TOKEN_KIND_BANG:
             return from__String("!");
         case LILY_TOKEN_KIND_BAR_EQ:
@@ -915,6 +917,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_ARROW";
         case LILY_TOKEN_KIND_AT:
             return "LILY_TOKEN_KIND_AT";
+        case LILY_TOKEN_KIND_BACKSLASH:
+            return "LILY_TOKEN_KIND_BACKSLASH";
         case LILY_TOKEN_KIND_BANG:
             return "LILY_TOKEN_KIND_BANG";
         case LILY_TOKEN_KIND_BAR_EQ:
