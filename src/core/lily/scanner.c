@@ -2156,7 +2156,7 @@ get_token__LilyScanner(LilyScanner *self)
             return NULL;
         }
 
-        // multiline string literal
+        /* multiline string literal, \ */
         case '\\':
             if (c1 == (char *)'\\') {
                 String *res = scan_multiline_string__LilyScanner(self);
@@ -2170,7 +2170,9 @@ get_token__LilyScanner(LilyScanner *self)
 
                 return NULL;
             } else {
-                goto unexpected_character;
+                return NEW(LilyToken,
+                           LILY_TOKEN_KIND_BACKSLASH,
+                           clone__Location(&self->location));
             }
 
         // identifier operator
@@ -2318,7 +2320,6 @@ get_token__LilyScanner(LilyScanner *self)
             }
 
         default: {
-        unexpected_character : {
             Location location_error = clone__Location(&self->location);
 
             end__Location(&location_error,
@@ -2343,7 +2344,6 @@ get_token__LilyScanner(LilyScanner *self)
             next_char__Source(&self->source);
 
             return NULL;
-        }
         }
     }
 
