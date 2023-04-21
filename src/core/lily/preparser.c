@@ -92,6 +92,19 @@ static inline CONSTRUCTOR(LilyPreparserFunBodyItemExprs,
 static DESTRUCTOR(LilyPreparserFunBodyItemExprs,
                   const LilyPreparserFunBodyItemExprs *self);
 
+// Construct LilyPreparserFunBodyItemLambda type.
+static inline CONSTRUCTOR(LilyPreparserFunBodyItemLambda,
+                          LilyPreparserFunBodyItemLambda,
+                          String *name,
+                          Vec *params,
+                          Vec *return_data_type,
+                          LilyPreparserFunBodyItem *item,
+                          Vec *params_call);
+
+// Free LilyPreparserFunBodyItemExprs type.
+static DESTRUCTOR(LilyPreparserFunBodyItemLambda,
+                  const LilyPreparserFunBodyItemLambda *self);
+
 // Construct LilyPreparserFunBodyItemStmtAsm type.
 static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtAsm,
                           LilyPreparserFunBodyItemStmtAsm,
@@ -244,6 +257,14 @@ static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            Location location);
 
 // Construct LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA).
+static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                           LilyPreparserFunBodyItem,
+                           lambda,
+                           LilyPreparserFunBodyItemLambda lambda,
+                           Location location);
+
+// Construct LilyPreparserFunBodyItem type
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM).
 static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            LilyPreparserFunBodyItem,
@@ -357,7 +378,13 @@ static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
 
 // Free LilyPreparserFunBodyItem type (LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS).
 static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
-                          expr,
+                          exprs,
+                          LilyPreparserFunBodyItem *self);
+
+// Free LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA).
+static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                          lambda,
                           LilyPreparserFunBodyItem *self);
 
 // Free LilyPreparserFunBodyItem type
@@ -1289,6 +1316,9 @@ static LilyPreparserFunBodyItem *
 preparse_for_block__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserFunBodyItem *
+preparse_lambda__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserFunBodyItem *
 preparse_while_block__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserFunBodyItem *
@@ -1532,6 +1562,38 @@ preparse_when_condition__LilyPreparser(LilyPreparser *self);
                           detail),                                             \
               &self->count_error);                                             \
             name = from__String("__error__");                                  \
+    }
+
+#define PREPARSE_EXPR(v, until)                                           \
+    while (until) {                                                       \
+        switch (self->current->kind) {                                    \
+            case LILY_TOKEN_KIND_L_BRACE:                                 \
+                do {                                                      \
+                    push__Vec(v, self->current);                          \
+                    next_token__LilyPreparser(self);                      \
+                } while (self->current->kind != LILY_TOKEN_KIND_R_BRACE); \
+                                                                          \
+                goto default_preparse_expr;                               \
+            case LILY_TOKEN_KIND_L_HOOK:                                  \
+                do {                                                      \
+                    push__Vec(v, self->current);                          \
+                    next_token__LilyPreparser(self);                      \
+                } while (self->current->kind != LILY_TOKEN_KIND_R_HOOK);  \
+                                                                          \
+                goto default_preparse_expr;                               \
+            case LILY_TOKEN_KIND_L_PAREN:                                 \
+                do {                                                      \
+                    push__Vec(v, self->current);                          \
+                    next_token__LilyPreparser(self);                      \
+                } while (self->current->kind != LILY_TOKEN_KIND_R_PAREN); \
+                                                                          \
+                goto default_preparse_expr;                               \
+            default:                                                      \
+            default_preparse_expr : {                                     \
+                push__Vec(v, self->current);                              \
+                next_token__LilyPreparser(self);                          \
+            }                                                             \
+        }                                                                 \
     }
 
 static enum LilyVisibility visibility_decl = LILY_VISIBILITY_PRIVATE;
@@ -1860,6 +1922,101 @@ DESTRUCTOR(LilyPreparserFunBodyItemExprs,
            const LilyPreparserFunBodyItemExprs *self)
 {
     FREE(Vec, self->tokens);
+}
+
+CONSTRUCTOR(LilyPreparserFunBodyItemLambda,
+            LilyPreparserFunBodyItemLambda,
+            String *name,
+            Vec *params,
+            Vec *return_data_type,
+            LilyPreparserFunBodyItem *item,
+            Vec *params_call)
+{
+    return (LilyPreparserFunBodyItemLambda){ .name = name,
+                                             .params = params,
+                                             .return_data_type =
+                                               return_data_type,
+                                             .item = item,
+                                             .params_call = params_call };
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemLambda,
+               const LilyPreparserFunBodyItemLambda *self)
+{
+    String *res = NULL;
+
+    if (self->name) {
+        res = format__String(
+          "LilyPreparserFunBodyItemLambda{{ name = {S}, params =", self->name);
+    } else {
+        res =
+          from__String("LilyPreparserFunBodyItemLambda{ name = NULL, params =");
+    }
+
+    if (self->params) {
+        DEBUG_VEC_STR_2(self->params, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", return_data_type =");
+
+    if (self->return_data_type) {
+        DEBUG_VEC_STR(self->return_data_type, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", item = ");
+
+    {
+        char *s = to_string__Debug__LilyPreparserFunBodyItemLambda(self->item);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    push_str__String(res, ", params_call =");
+
+    if (self->params_call) {
+        DEBUG_VEC_STR_2(self->params_call, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyPreparserFunBodyItemLambda,
+           const LilyPreparserFunBodyItemLambda *self)
+{
+#ifdef RUN_UNTIL_PREPARSER
+    if (self->name) {
+        FREE(String, self->name);
+    }
+#endif
+
+    if (self->params) {
+        FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, Vec);
+        FREE(Vec, self->params);
+    }
+
+    if (self->return_data_type) {
+        FREE(Vec, self->return_data_type);
+    }
+
+    FREE(LilyPreparserFunBodyItem, self->item);
+
+    if (self->params_call) {
+        FREE_BUFFER_ITEMS(
+          self->params_call->buffer, self->params_call->len, Vec);
+        FREE(Vec, self->params_call);
+    }
 }
 
 CONSTRUCTOR(LilyPreparserFunBodyItemStmtAsm,
@@ -2460,6 +2617,8 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_AWAIT:
@@ -2505,6 +2664,22 @@ VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
 
     self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS;
     self->exprs = exprs;
+    self->location = location;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                    LilyPreparserFunBodyItem,
+                    lambda,
+                    LilyPreparserFunBodyItemLambda lambda,
+                    Location location)
+{
+    LilyPreparserFunBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserFunBodyItem));
+
+    self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA;
+    self->lambda = lambda;
     self->location = location;
 
     return self;
@@ -2755,6 +2930,15 @@ IMPL_FOR_DEBUG(to_string,
 
             break;
         }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA: {
+            String *s =
+              to_string__Debug__LilyPreparserFunBodyItemLambda(&self->lambda);
+
+            push_str__String(res, ", lambda =");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM: {
             String *s = to_string__Debug__LilyPreparserFunBodyItemStmtAsm(
               &self->stmt_asm);
@@ -2892,10 +3076,18 @@ IMPL_FOR_DEBUG(to_string,
 #endif
 
 VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
-                   expr,
+                   exprs,
                    LilyPreparserFunBodyItem *self)
 {
     FREE(LilyPreparserFunBodyItemExprs, &self->exprs);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                   lambda,
+                   LilyPreparserFunBodyItem *self)
+{
+    FREE(LilyPreparserFunBodyItemLambda, &self->lambda);
     lily_free(self);
 }
 
@@ -3015,7 +3207,10 @@ DESTRUCTOR(LilyPreparserFunBodyItem, LilyPreparserFunBodyItem *self)
 {
     switch (self->kind) {
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS:
-            FREE_VARIANT(LilyPreparserFunBodyItem, expr, self);
+            FREE_VARIANT(LilyPreparserFunBodyItem, exprs, self);
+            break;
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA:
+            FREE_VARIANT(LilyPreparserFunBodyItem, lambda, self);
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM:
             FREE_VARIANT(LilyPreparserFunBodyItem, stmt_asm, self);
@@ -7728,6 +7923,200 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
 }
 
 LilyPreparserFunBodyItem *
+preparse_lambda__LilyPreparser(LilyPreparser *self)
+{
+    Location location = clone__Location(&self->current->location);
+
+    next_token__LilyPreparser(self);
+
+    // 1. Get the name of the lambda.
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+            next_token__LilyPreparser(self);
+
+            break;
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            name = clone__String(self->current->identifier_string);
+            next_token__LilyPreparser(self);
+
+            break;
+        default:
+            break;
+    }
+
+    // 2. Preparse params.
+    Vec *params = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_PAREN:
+            params = preparse_paren_with_comma_sep__LilyPreparser(self);
+            break;
+        default:
+            break;
+    }
+
+    // 3. Preparse return data type.
+    Vec *return_data_type = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_ARROW:
+            break;
+        default:
+            return_data_type = NEW(Vec);
+
+            while (self->current->kind != LILY_TOKEN_KIND_ARROW &&
+                   self->current->kind != LILY_TOKEN_KIND_EOF) {
+                push__Vec(return_data_type, self->current);
+                next_token__LilyPreparser(self);
+            }
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_EOF:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                        NULL,
+                        NULL,
+                        from__String("expected `->`")),
+                      &self->count_error);
+
+                    // Clean up allocations
+                    FREE(Vec, return_data_type);
+
+                    return NULL;
+                default:
+                    next_token__LilyPreparser(self);
+            }
+
+            break;
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_ARROW:
+            next_token__LilyPreparser(self);
+
+            break;
+        default: {
+            String *current_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected `->`")),
+              &self->count_error);
+
+            FREE(String, current_s);
+        }
+    }
+
+    // 4. Preparse fun body item.
+    LilyPreparserFunBodyItem *item = preparse_block__LilyPreparser(self);
+
+    if (!item) {
+        if (params) {
+            FREE_BUFFER_ITEMS(params->buffer, params->len, Vec);
+            FREE(Vec, params);
+        }
+
+        if (return_data_type) {
+            FREE(Vec, return_data_type);
+        }
+
+        return NULL;
+    }
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON:
+            switch (item->kind) {
+                case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS:
+                    next_token__LilyPreparser(self);
+                    break;
+                default: {
+                    String *current_s = to_string__LilyToken(self->current);
+
+                    emit__Diagnostic(
+                      NEW_VARIANT(Diagnostic,
+                                  simple_lily_error,
+                                  self->file,
+                                  &self->current->location,
+                                  NEW_VARIANT(LilyError,
+                                              unexpected_token,
+                                              current_s->buffer),
+                                  NULL,
+                                  NULL,
+                                  from__String("you may have forgotten `\\`")),
+                      &self->count_error);
+
+                    FREE(String, current_s);
+
+                    next_token__LilyPreparser(self);
+
+                    break;
+                }
+            }
+        default:
+            break;
+    }
+
+    // 5. Preparse params call
+    Vec *params_call = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_BACKSLASH:
+            next_token__LilyPreparser(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_L_PAREN:
+                    params_call =
+                      preparse_paren_with_comma_sep__LilyPreparser(self);
+
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected `(`")),
+                      &self->count_error);
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    END_LOCATION(&location, item->location);
+
+    return NEW_VARIANT(LilyPreparserFunBodyItem,
+                       lambda,
+                       NEW(LilyPreparserFunBodyItemLambda,
+                           name,
+                           params,
+                           return_data_type,
+                           item,
+                           params_call),
+                       location);
+}
+
+LilyPreparserFunBodyItem *
 preparse_while_block__LilyPreparser(LilyPreparser *self)
 {
     Location location = location_fun_body_item;
@@ -8409,6 +8798,7 @@ must_preparse_exprs(LilyPreparser *self)
                 return peeked->kind != LILY_TOKEN_KIND_L_BRACE;
             case LILY_TOKEN_KIND_KEYWORD_BEGIN:
             case LILY_TOKEN_KIND_KEYWORD_FOR:
+            case LILY_TOKEN_KIND_KEYWORD_FUN:
             case LILY_TOKEN_KIND_KEYWORD_IF:
             case LILY_TOKEN_KIND_KEYWORD_MATCH:
             case LILY_TOKEN_KIND_KEYWORD_TRY:
@@ -8431,6 +8821,7 @@ must_preparse_exprs(LilyPreparser *self)
         switch (self->current->kind) {
             case LILY_TOKEN_KIND_KEYWORD_BEGIN:
             case LILY_TOKEN_KIND_KEYWORD_FOR:
+            case LILY_TOKEN_KIND_KEYWORD_FUN:
             case LILY_TOKEN_KIND_KEYWORD_IF:
             case LILY_TOKEN_KIND_KEYWORD_MATCH:
             case LILY_TOKEN_KIND_KEYWORD_TRY:
@@ -8522,6 +8913,12 @@ preparse_block__LilyPreparser(LilyPreparser *self)
         */
         case LILY_TOKEN_KIND_KEYWORD_FOR:
             return preparse_for_block__LilyPreparser(self);
+
+        /*
+            fun [<name>][(<params>)] [<return_data_type>] -> <item> [;]
+        */
+        case LILY_TOKEN_KIND_KEYWORD_FUN:
+            return preparse_lambda__LilyPreparser(self);
 
         /*
             if <expr> do
@@ -12308,14 +12705,15 @@ preparse_error__LilyPreparser(LilyPreparser *self)
             String *current_s = to_string__LilyToken(self->current);
 
             emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          self->file,
-                          &self->current->location,
-                          NEW_VARIANT(LilyError, unexpected_token, current_s),
-                          init__Vec(1, from__String("expected `;` or `:`")),
-                          NULL,
-                          NULL),
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
+                init__Vec(1, from__String("expected `;` or `:`")),
+                NULL,
+                NULL),
               &self->count_error);
 
             FREE(String, current_s);

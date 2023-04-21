@@ -217,6 +217,27 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserFunBodyItemExprs *self);
 #endif
 
+typedef struct LilyPreparserFunBodyItemLambda
+{
+    String *name;          // String*?
+    Vec *params;           // Vec<Vec<LilyToken* (&)>*>*?
+    Vec *return_data_type; // Vec<LilyToken* (&)>*?
+    LilyPreparserFunBodyItem *item;
+    Vec *params_call; // Vec<Vec<LilyToken* (&)>*>*?
+} LilyPreparserFunBodyItemLambda;
+
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemLambda in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemLambda,
+               const LilyPreparserFunBodyItemLambda *self);
+#endif
+
 typedef struct LilyPreparserFunBodyItemStmtAsm
 {
     Vec *params; // Vec<Vec<LilyToken* (&)>*>*
@@ -475,6 +496,7 @@ IMPL_FOR_DEBUG(to_string,
 enum LilyPreparserFunBodyItemKind
 {
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_AWAIT,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK,
@@ -511,6 +533,7 @@ struct LilyPreparserFunBodyItem
     union
     {
         LilyPreparserFunBodyItemExprs exprs;
+        LilyPreparserFunBodyItemLambda lambda;
         LilyPreparserFunBodyItemStmtAsm stmt_asm;
         LilyPreparserFunBodyItemStmtAwait stmt_await;
         LilyPreparserFunBodyItemStmtBlock stmt_block;
