@@ -30,6 +30,7 @@
 #include <core/lily/ast/data_type.h>
 
 typedef struct LilyAstExpr LilyAstExpr;
+typedef struct LilyAstBodyFunItem LilyAstBodyFunItem;
 
 enum LilyAstExprLambdaParamKind
 {
@@ -105,11 +106,80 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyAstExprLambdaParam, LilyAstExprLambdaParam *self);
 
+enum LilyAstExprLambdaParamCallKind
+{
+    LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_DEFAULT,
+    LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_NORMAL
+};
+
+/**
+ *
+ * @brief Convert LilyAstExprLambdaParamCallKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprLambdaParamCallKind,
+               enum LilyAstExprLambdaParamCallKind self);
+#endif
+
+typedef struct LilyAstExprLambdaParamCall
+{
+    enum LilyAstExprLambdaParamCallKind kind;
+    LilyAstExpr *expr;
+    union
+    {
+        String *name;
+    };
+} LilyAstExprLambdaParamCall;
+
+/**
+ *
+ * @brief Construct LilyAstExprLambdaParamCall type
+ * (LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_DEFAULT).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
+                    LilyAstExprLambdaParamCall,
+                    default,
+                    LilyAstExpr *expr,
+                    String *name);
+
+/**
+ *
+ * @brief Construct LilyAstExprLambdaParamCall type
+ * (LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_NORMAL).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
+                    LilyAstExprLambdaParamCall,
+                    normal,
+                    LilyAstExpr *expr);
+
+/**
+ *
+ * @brief Convert LilyAstExprLambdaParamCall in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprLambdaParamCall,
+               const LilyAstExprLambdaParamCall *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstExprLambdaParamCall type.
+ */
+DESTRUCTOR(LilyAstExprLambdaParamCall, LilyAstExprLambdaParamCall *self);
+
 typedef struct LilyAstExprLambda
 {
+    String *name;                      // String*?
     Vec *params;                       // Vec<LilyAstExprLambdaParam*>*?
     LilyAstDataType *return_data_type; // LilyAstDataType*?
-    Vec *body;                         // Vec<LilyAstBodyFunItem*>*
+    LilyAstBodyFunItem *item;
+    Vec *params_call; // Vec<LilyAstExprLambdaParamCall*>*?
 } LilyAstExprLambda;
 
 /**
@@ -118,13 +188,17 @@ typedef struct LilyAstExprLambda
  */
 inline CONSTRUCTOR(LilyAstExprLambda,
                    LilyAstExprLambda,
+                   String *name,
                    Vec *params,
                    LilyAstDataType *return_data_type,
-                   Vec *body)
+                   LilyAstBodyFunItem *item,
+                   Vec *params_call)
 {
-    return (LilyAstExprLambda){ .params = params,
+    return (LilyAstExprLambda){ .name = name,
+                                .params = params,
                                 .return_data_type = return_data_type,
-                                .body = body };
+                                .item = item,
+                                .params_call = params_call };
 }
 
 /**

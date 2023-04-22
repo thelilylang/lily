@@ -33,13 +33,25 @@
 
 // Free LilyAstExprLambdaParam type (LILY_AST_EXPR_LAMBDA_PARAM_KIND_DEFAULT).
 static VARIANT_DESTRUCTOR(LilyAstExprLambdaParam,
-                          default_,
+                          default,
                           LilyAstExprLambdaParam *self);
 
 // Free LilyAstExprLambdaParam type (LILY_AST_EXPR_LAMBDA_PARAM_KIND_NORMAL).
 static VARIANT_DESTRUCTOR(LilyAstExprLambdaParam,
                           normal,
                           LilyAstExprLambdaParam *self);
+
+// Free LilyAstExprLambdaParamCall type
+// (LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_DEFAULT).
+static VARIANT_DESTRUCTOR(LilyAstExprLambdaParamCall,
+                          default,
+                          LilyAstExprLambdaParamCall *self);
+
+// Free LilyAstExprLambdaParamCall type
+// (LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_NORMAL).
+static VARIANT_DESTRUCTOR(LilyAstExprLambdaParamCall,
+                          normal,
+                          LilyAstExprLambdaParamCall *self);
 
 #ifdef ENV_DEBUG
 char *
@@ -137,7 +149,7 @@ IMPL_FOR_DEBUG(to_string,
 #endif
 
 VARIANT_DESTRUCTOR(LilyAstExprLambdaParam,
-                   default_,
+                   default,
                    LilyAstExprLambdaParam *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
@@ -166,7 +178,7 @@ DESTRUCTOR(LilyAstExprLambdaParam, LilyAstExprLambdaParam *self)
 {
     switch (self->kind) {
         case LILY_AST_EXPR_LAMBDA_PARAM_KIND_DEFAULT:
-            FREE_VARIANT(LilyAstExprLambdaParam, default_, self);
+            FREE_VARIANT(LilyAstExprLambdaParam, default, self);
             break;
         case LILY_AST_EXPR_LAMBDA_PARAM_KIND_NORMAL:
             FREE_VARIANT(LilyAstExprLambdaParam, normal, self);
@@ -177,10 +189,123 @@ DESTRUCTOR(LilyAstExprLambdaParam, LilyAstExprLambdaParam *self)
 }
 
 #ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprLambdaParamCallKind,
+               enum LilyAstExprLambdaParamCallKind self)
+{
+    switch (self) {
+        case LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_DEFAULT:
+            return "LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_DEFAULT";
+        case LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_NORMAL:
+            return "LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_NORMAL";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
+                    LilyAstExprLambdaParamCall,
+                    default,
+                    LilyAstExpr *expr,
+                    String *name)
+{
+    LilyAstExprLambdaParamCall *self =
+      lily_malloc(sizeof(LilyAstExprLambdaParamCall));
+
+    self->kind = LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_DEFAULT;
+    self->expr = expr;
+    self->name = name;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
+                    LilyAstExprLambdaParamCall,
+                    normal,
+                    LilyAstExpr *expr)
+{
+    LilyAstExprLambdaParamCall *self =
+      lily_malloc(sizeof(LilyAstExprLambdaParamCall));
+
+    self->kind = LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_NORMAL;
+    self->expr = expr;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprLambdaParamCall,
+               const LilyAstExprLambdaParamCall *self)
+{
+
+    switch (self->kind) {
+        case LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_DEFAULT:
+            return format__String(
+              "LilyAstExprLambdaParamCall{{ kind = {s}, expr = {Sr}, name = "
+              "{S} }",
+              to_string__Debug__LilyAstExprLambdaParamCallKind(self->kind),
+              to_string__Debug__LilyAstExpr(self->expr),
+              self->name);
+        case LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_NORMAL:
+            return format__String(
+              "LilyAstExprLambdaParamCall{{ kind = {s}, expr = {Sr} }",
+              to_string__Debug__LilyAstExprLambdaParamCallKind(self->kind),
+              to_string__Debug__LilyAstExpr(self->expr));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
+}
+#endif
+
+VARIANT_DESTRUCTOR(LilyAstExprLambdaParamCall,
+                   default,
+                   LilyAstExprLambdaParamCall *self)
+{
+    FREE(LilyAstExpr, self->expr);
+    FREE(String, self->name);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExprLambdaParamCall,
+                   normal,
+                   LilyAstExprLambdaParamCall *self)
+{
+    FREE(LilyAstExpr, self->expr);
+    lily_free(self);
+}
+
+DESTRUCTOR(LilyAstExprLambdaParamCall, LilyAstExprLambdaParamCall *self)
+{
+    switch (self->kind) {
+        case LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_DEFAULT:
+            FREE_VARIANT(LilyAstExprLambdaParamCall, default, self);
+            break;
+        case LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_NORMAL:
+            FREE_VARIANT(LilyAstExprLambdaParamCall, normal, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+#ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstExprLambda, const LilyAstExprLambda *self)
 {
-    String *res = from__String("LilyAstExprLambda{ params =");
+    String *res = NULL;
+
+    if (self->name) {
+        res =
+          format__String("LilyAstExprLambda{ name = {S}, params =", self->name);
+    } else {
+        res = from__String("LilyAstExprLambda{ name = NULL, params =");
+    }
 
     if (self->params) {
         DEBUG_VEC_STRING(self->params, res, LilyAstExprLambdaParam);
@@ -198,9 +323,20 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprLambda, const LilyAstExprLambda *self)
         push_str__String(res, "NULL");
     }
 
-    push_str__String(res, " body =");
+    {
+        char *s = format(", body = {Sr}",
+                         to_string__Debug__LilyAstBodyFunItem(self->item));
 
-    DEBUG_VEC_STRING(self->body, res, LilyAstBodyFunItem);
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    push_str__String(res, ", params_call =");
+
+    if (self->params_call) {
+        DEBUG_VEC_STR(self->params_call, res, LilyAstExprLambdaParamCall);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, " }");
 
@@ -220,6 +356,12 @@ DESTRUCTOR(LilyAstExprLambda, const LilyAstExprLambda *self)
         FREE(LilyAstDataType, self->return_data_type);
     }
 
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyAstBodyFunItem);
-    FREE(Vec, self->body);
+    FREE(LilyAstBodyFunItem, self->item);
+
+    if (self->params_call) {
+        FREE_BUFFER_ITEMS(self->params_call->buffer,
+                          self->params_call->len,
+                          LilyAstExprLambdaParamCall);
+        FREE(Vec, self->params_call);
+    }
 }
