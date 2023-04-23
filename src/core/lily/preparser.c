@@ -1598,8 +1598,6 @@ preparse_when_condition__LilyPreparser(LilyPreparser *self);
                     PUSH_TOKEN(v, self->current); \
             }                                     \
         }                                         \
-        \ 
-                                            \
     }
 
 static enum LilyVisibility visibility_decl = LILY_VISIBILITY_PRIVATE;
