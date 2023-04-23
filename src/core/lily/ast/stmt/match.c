@@ -82,6 +82,7 @@ DESTRUCTOR(LilyAstStmtMatchCase, LilyAstStmtMatchCase *self)
     }
 
     FREE(LilyAstBodyFunItem, self->body_item);
+    lily_free(self);
 }
 
 #ifdef ENV_DEBUG
