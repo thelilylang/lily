@@ -70,7 +70,7 @@ typedef struct LilyAstExprLambdaParam
  */
 VARIANT_CONSTRUCTOR(LilyAstExprLambdaParam *,
                     LilyAstExprLambdaParam,
-                    default_,
+                    default,
                     Location location,
                     String *name,
                     LilyAstDataType *data_type,
@@ -128,6 +128,7 @@ typedef struct LilyAstExprLambdaParamCall
 {
     enum LilyAstExprLambdaParamCallKind kind;
     LilyAstExpr *expr;
+    Location location;
     union
     {
         String *name;
@@ -143,6 +144,7 @@ VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
                     LilyAstExprLambdaParamCall,
                     default,
                     LilyAstExpr *expr,
+                    Location location,
                     String *name);
 
 /**
@@ -153,7 +155,8 @@ VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
 VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
                     LilyAstExprLambdaParamCall,
                     normal,
-                    LilyAstExpr *expr);
+                    LilyAstExpr *expr,
+                    Location location);
 
 /**
  *
