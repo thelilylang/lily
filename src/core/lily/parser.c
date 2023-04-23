@@ -105,9 +105,19 @@ parse_variant_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id);
 static LilyAstExpr *
 parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id);
 
-// Parse lambda expression
+/// @return Vec<LilyAstExprLambdaParam*>*
+static Vec *
+parse_lambda_params__LilyParser(LilyParser *self, const Vec *pre_params);
+
+/// @return Vec<LilyAstExprLambdaParamCall*>*
+static Vec *
+parse_lambda_params_call__LilyParser(LilyParser *self,
+                                     const Vec *pre_params_call);
+
+// Parse lambda expression.
 static LilyAstExpr *
-parse_lambda_expr__LilyParseBlock(LilyParseBlock *self);
+parse_lambda_expr__LilyParser(LilyParser *self,
+                              const LilyPreparserFunBodyItem *lambda);
 
 // Parse list expression
 static LilyAstExpr *
@@ -1977,10 +1987,264 @@ parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
     }
 }
 
-LilyAstExpr *
-parse_lambda_expr__LilyParseBlock(LilyParseBlock *self)
+Vec *
+parse_lambda_params__LilyParser(LilyParser *self, const Vec *pre_params)
 {
-    TODO("Issue #20");
+    Vec *params = NEW(Vec);
+
+    for (Usize i = 0; i < pre_params->len; ++i) {
+        LilyParseBlock block =
+          NEW(LilyParseBlock, self, get__Vec(pre_params, i));
+
+        LilyAstExprLambdaParam *param = NULL;
+
+        Location location = clone__Location(&block.current->location);
+
+        // Get name of the param.
+        String *name = NULL;
+
+        switch (block.current->kind) {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                name = clone__String(block.current->identifier_normal);
+                next_token__LilyParseBlock(&block);
+
+                break;
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+                name = clone__String(block.current->identifier_string);
+                next_token__LilyParseBlock(&block);
+
+                break;
+            default:
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    block.file,
+                    &block.current->location,
+                    NEW(LilyError, LILY_ERROR_KIND_EXPECTED_IDENTIFIER),
+                    NULL,
+                    NULL,
+                    NULL),
+                  block.count_error);
+
+                name = from__String("__error__");
+        }
+
+        switch (block.current->kind) {
+            case LILY_TOKEN_KIND_COLON_EQ: {
+                next_token__LilyParseBlock(&block);
+
+                LilyAstExpr *expr = parse_expr__LilyParseBlock(&block);
+
+                CHECK_EXPR(expr, block, NULL, "expected `,`", {});
+
+                END_LOCATION(&location, expr->location);
+
+                param = NEW_VARIANT(
+                  LilyAstExprLambdaParam, default, location, name, NULL, expr);
+
+                break;
+            }
+            case LILY_TOKEN_KIND_EOF: {
+                END_LOCATION(&location, block.current->location);
+
+                param = NEW_VARIANT(
+                  LilyAstExprLambdaParam, normal, location, name, NULL);
+
+                break;
+            }
+            default: {
+                LilyAstDataType *data_type =
+                  parse_data_type__LilyParseBlock(&block);
+
+                switch (block.current->kind) {
+                    case LILY_TOKEN_KIND_COLON_EQ: {
+                        next_token__LilyParseBlock(&block);
+
+                        LilyAstExpr *expr = parse_expr__LilyParseBlock(&block);
+
+                        CHECK_EXPR(expr, block, NULL, "expected `,`", {});
+
+                        END_LOCATION(&location, block.current->location);
+
+                        param = NEW_VARIANT(LilyAstExprLambdaParam,
+                                            default,
+                                            location,
+                                            name,
+                                            data_type,
+                                            expr);
+
+                        break;
+                    }
+                    case LILY_TOKEN_KIND_EOF: {
+                        END_LOCATION(&location, block.current->location);
+
+                        param = NEW_VARIANT(LilyAstExprLambdaParam,
+                                            normal,
+                                            location,
+                                            name,
+                                            data_type);
+
+                        break;
+                    }
+                    default: {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            block.file,
+                            &block.current->location,
+                            NEW(LilyError,
+                                LILY_ERROR_KIND_EXPECTED_ONLY_ONE_DATA_TYPE),
+                            NULL,
+                            NULL,
+                            from__String("expected `,`")),
+                          block.count_error);
+
+                        END_LOCATION(&location, block.current->location);
+
+                        param = NEW_VARIANT(LilyAstExprLambdaParam,
+                                            normal,
+                                            location,
+                                            name,
+                                            data_type);
+                    }
+                }
+            }
+        }
+
+        push__Vec(params, param);
+
+        FREE(LilyParseBlock, &block);
+    }
+
+    return params;
+}
+
+Vec *
+parse_lambda_params_call__LilyParser(LilyParser *self,
+                                     const Vec *pre_params_call)
+{
+    Vec *params = NEW(Vec);
+
+    for (Usize i = 0; i < pre_params_call->len; ++i) {
+        LilyParseBlock block =
+          NEW(LilyParseBlock, self, get__Vec(pre_params_call, i));
+
+        String *name = NULL;
+        Location location = clone__Location(&block.current->location);
+        LilyToken *peeked = peek_token__LilyParseBlock(&block, 1);
+
+        if (peeked) {
+            switch (peeked->kind) {
+                case LILY_TOKEN_KIND_COLON_EQ:
+                    switch (block.current->kind) {
+                        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                            name =
+                              clone__String(block.current->identifier_normal);
+                            next_token__LilyParseBlock(&block);
+
+                            break;
+                        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+                            name =
+                              clone__String(block.current->identifier_string);
+                            next_token__LilyParseBlock(&block);
+
+                            break;
+                        default:
+                            break;
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (name) {
+            switch (block.current->kind) {
+                case LILY_TOKEN_KIND_COLON_EQ:
+                    next_token__LilyParseBlock(&block);
+                    break;
+                default:
+                    UNREACHABLE("this way is impossible");
+            }
+
+            LilyAstExpr *expr = parse_expr__LilyParseBlock(&block);
+
+            CHECK_EXPR(expr, block, NULL, "expected `,`", {
+                FREE(String, name);
+                continue;
+            });
+
+            END_LOCATION(&location, block.current->location);
+
+            push__Vec(
+              params,
+              NEW_VARIANT(
+                LilyAstExprLambdaParamCall, default, expr, location, name));
+        } else {
+            LilyAstExpr *expr = parse_expr__LilyParseBlock(&block);
+
+            CHECK_EXPR(expr, block, NULL, "expected `,`", { continue; });
+
+            push__Vec(
+              params,
+              NEW_VARIANT(
+                LilyAstExprLambdaParamCall, normal, expr, expr->location));
+        }
+
+        FREE(LilyParseBlock, &block);
+    }
+
+    return params;
+}
+
+LilyAstExpr *
+parse_lambda_expr__LilyParser(LilyParser *self,
+                              const LilyPreparserFunBodyItem *lambda)
+{
+    // 1. Parse lambda params.
+    Vec *params = NULL;
+
+    if (lambda->lambda.params) {
+        params = parse_lambda_params__LilyParser(self, lambda->lambda.params);
+    }
+
+    // 2. Parse return_data_type
+    LilyAstDataType *return_data_type = NULL;
+
+    if (lambda->lambda.return_data_type) {
+        LilyParseBlock block_return_data_type =
+          NEW(LilyParseBlock, self, lambda->lambda.return_data_type);
+
+        return_data_type =
+          parse_data_type__LilyParseBlock(&block_return_data_type);
+
+        FREE(LilyParseBlock, &block_return_data_type);
+    }
+
+    // 3. Parse fun body item
+    LilyAstBodyFunItem *item =
+      parse_fun_body_item_for_stmt__LilyParser(self, lambda->lambda.item);
+
+    // 4. Parse params call.
+    Vec *params_call = NULL;
+
+    if (lambda->lambda.params_call) {
+        params_call = parse_lambda_params_call__LilyParser(
+          self, lambda->lambda.params_call);
+    }
+
+    return NEW_VARIANT(LilyAstExpr,
+                       lambda,
+                       lambda->location,
+                       NEW(LilyAstExprLambda,
+                           lambda->lambda.name,
+                           params,
+                           return_data_type,
+                           item,
+                           params_call));
 }
 
 LilyAstExpr *
@@ -2288,8 +2552,6 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
               clone__Location(&self->previous->location),
               NEW(LilyAstExprIdentifierDollar,
                   clone__String(self->previous->identifier_dollar)));
-        case LILY_TOKEN_KIND_KEYWORD_FUN:
-            return parse_lambda_expr__LilyParseBlock(self);
         case LILY_TOKEN_KIND_KEYWORD_REF:
         case LILY_TOKEN_KIND_KEYWORD_TRACE:
         case LILY_TOKEN_KIND_MINUS:
@@ -2432,7 +2694,110 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
 LilyAstExpr *
 parse_expr__LilyParseBlock(LilyParseBlock *self)
 {
-    LilyAstExpr *expr = parse_primary_expr__LilyParseBlock(self);
+    LilyAstExpr *expr = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_PAREN: {
+            LilyToken *peeked = peek_token__LilyParseBlock(self, 1);
+
+            if (peeked) {
+                switch (peeked->kind) {
+                    case LILY_TOKEN_KIND_KEYWORD_FUN: {
+                        next_token__LilyParseBlock(self);
+
+                        // Remove (fun ...)
+                        // 				  ^
+                        {
+                            Usize position_r_paren = self->position;
+
+                            for (; position_r_paren < self->tokens->len;) {
+                                if (CAST(
+                                      LilyToken *,
+                                      get__Vec(self->tokens, position_r_paren))
+                                      ->kind == LILY_TOKEN_KIND_L_PAREN) {
+                                    ++position_r_paren;
+
+                                    int count = 0;
+
+                                    do {
+                                        switch (CAST(LilyToken *,
+                                                     get__Vec(self->tokens,
+                                                              position_r_paren))
+                                                  ->kind) {
+                                            case LILY_TOKEN_KIND_L_PAREN:
+                                                ++count;
+                                                ++position_r_paren;
+
+                                                break;
+                                            case LILY_TOKEN_KIND_R_PAREN:
+                                                --count;
+                                                ++position_r_paren;
+
+                                                break;
+                                            default:
+                                                ++position_r_paren;
+                                        }
+                                    } while (CAST(LilyToken *,
+                                                  get__Vec(self->tokens,
+                                                           position_r_paren))
+                                                   ->kind !=
+                                                 LILY_TOKEN_KIND_R_PAREN
+                                               ? 1
+                                               : count > 0);
+                                    ++position_r_paren;
+                                } else if (CAST(LilyToken *,
+                                                get__Vec(self->tokens,
+                                                         position_r_paren))
+                                             ->kind ==
+                                           LILY_TOKEN_KIND_R_PAREN) {
+                                    break;
+                                } else {
+                                    ++position_r_paren;
+                                }
+                            }
+
+                            remove__Vec(self->tokens, position_r_paren);
+                        }
+
+                        LilyPreparser preparser =
+                          NEW(LilyPreparser, self->file, self->tokens, NULL);
+
+                        preparser.position = self->position;
+                        preparser.current =
+                          get__Vec(preparser.tokens, preparser.position);
+
+                        LilyPreparserFunBodyItem *lambda =
+                          preparse_lambda__LilyPreparser(&preparser);
+
+                        if (lambda) {
+                            self->position = preparser.position;
+                            self->current =
+                              get__Vec(self->tokens, self->position);
+                            self->previous =
+                              get__Vec(self->tokens, self->position - 1);
+                            *self->count_error += preparser.count_error;
+                            *self->count_warning += preparser.count_warning;
+
+                            expr = parse_lambda_expr__LilyParser(self->parser,
+                                                                 lambda);
+
+                            FREE(LilyPreparserFunBodyItem, lambda);
+                        } else {
+                            return NULL;
+                        }
+
+                        break;
+                    }
+                    default:
+                        expr = parse_primary_expr__LilyParseBlock(self);
+                }
+            }
+
+            break;
+        }
+        default:
+            expr = parse_primary_expr__LilyParseBlock(self);
+    }
 
     if (!expr) {
         return NULL;
@@ -2778,7 +3143,7 @@ parse_for_stmt__LilyParser(LilyParser *self,
               expr_block.count_error);
     }
 
-    LilyAstExpr *expr_right = parse_primary_expr__LilyParseBlock(&expr_block);
+    LilyAstExpr *expr_right = parse_expr__LilyParseBlock(&expr_block);
 
     CHECK_EXPR(expr_right,
                expr_block,
@@ -3055,6 +3420,8 @@ parse_variable_stmt__LilyParser(LilyParser *self,
         return NULL;
     });
 
+    FREE(LilyParseBlock, &expr_block);
+
     return NEW_VARIANT(LilyAstBodyFunItem,
                        stmt,
                        NEW_VARIANT(LilyAstStmt,
@@ -3155,6 +3522,15 @@ parse_fun_body_item_for_stmt__LilyParser(LilyParser *self,
 
             return NEW_VARIANT(LilyAstBodyFunItem, expr, expr);
         }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA: {
+            LilyAstExpr *expr = parse_lambda_expr__LilyParser(self, item);
+
+            if (!expr) {
+                return NULL;
+            }
+
+            return NEW_VARIANT(LilyAstBodyFunItem, expr, expr);
+        }
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE:
             emit__Diagnostic(
               NEW_VARIANT(
@@ -3195,6 +3571,15 @@ parse_fun_body_item__LilyParser(LilyParser *self,
             } while (!HAS_REACHED_THE_END(exprs_block));
 
             FREE(LilyParseBlock, &exprs_block);
+
+            break;
+        }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA: {
+            LilyAstExpr *expr = parse_lambda_expr__LilyParser(self, item);
+
+            if (expr) {
+                push__Vec(body, NEW_VARIANT(LilyAstBodyFunItem, expr, expr));
+            }
 
             break;
         }
