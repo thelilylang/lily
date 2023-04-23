@@ -2706,7 +2706,7 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
                         next_token__LilyParseBlock(self);
 
                         // Remove (fun ...)
-                        // 				  ^
+                        //                ^
                         {
                             Usize position_r_paren = self->position;
 
