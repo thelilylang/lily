@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/format.h>
 
 #include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/expr.h>
@@ -72,7 +73,7 @@ IMPL_FOR_DEBUG(to_string,
 
 VARIANT_CONSTRUCTOR(LilyAstExprLambdaParam *,
                     LilyAstExprLambdaParam,
-                    default_,
+                    default,
                     Location location,
                     String *name,
                     LilyAstDataType *data_type,
@@ -209,6 +210,7 @@ VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
                     LilyAstExprLambdaParamCall,
                     default,
                     LilyAstExpr *expr,
+                    Location location,
                     String *name)
 {
     LilyAstExprLambdaParamCall *self =
@@ -216,6 +218,7 @@ VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
 
     self->kind = LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_DEFAULT;
     self->expr = expr;
+    self->location = location;
     self->name = name;
 
     return self;
@@ -224,13 +227,15 @@ VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
 VARIANT_CONSTRUCTOR(LilyAstExprLambdaParamCall *,
                     LilyAstExprLambdaParamCall,
                     normal,
-                    LilyAstExpr *expr)
+                    LilyAstExpr *expr,
+                    Location location)
 {
     LilyAstExprLambdaParamCall *self =
       lily_malloc(sizeof(LilyAstExprLambdaParamCall));
 
     self->kind = LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_NORMAL;
     self->expr = expr;
+    self->location = location;
 
     return self;
 }
@@ -244,22 +249,24 @@ IMPL_FOR_DEBUG(to_string,
 
     switch (self->kind) {
         case LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_DEFAULT:
-            return format__String(
-              "LilyAstExprLambdaParamCall{{ kind = {s}, expr = {Sr}, name = "
+            return format(
+              "LilyAstExprLambdaParamCall{{ kind = {s}, expr = {Sr}, location "
+              "= {sa}, name = "
               "{S} }",
               to_string__Debug__LilyAstExprLambdaParamCallKind(self->kind),
               to_string__Debug__LilyAstExpr(self->expr),
+              to_string__Debug__Location(&self->location),
               self->name);
         case LILY_AST_EXPR_LAMBDA_PARAM_CALL_KIND_NORMAL:
-            return format__String(
-              "LilyAstExprLambdaParamCall{{ kind = {s}, expr = {Sr} }",
+            return format(
+              "LilyAstExprLambdaParamCall{{ kind = {s}, expr = {Sr}, location "
+              "= {sa} }",
               to_string__Debug__LilyAstExprLambdaParamCallKind(self->kind),
-              to_string__Debug__LilyAstExpr(self->expr));
+              to_string__Debug__LilyAstExpr(self->expr),
+              to_string__Debug__Location(&self->location));
         default:
             UNREACHABLE("unknown variant");
     }
-
-    return res;
 }
 #endif
 
@@ -301,8 +308,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprLambda, const LilyAstExprLambda *self)
     String *res = NULL;
 
     if (self->name) {
-        res =
-          format__String("LilyAstExprLambda{ name = {S}, params =", self->name);
+        res = format__String("LilyAstExprLambda{{ name = {S}, params =",
+                             self->name);
     } else {
         res = from__String("LilyAstExprLambda{ name = NULL, params =");
     }
@@ -346,6 +353,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprLambda, const LilyAstExprLambda *self)
 
 DESTRUCTOR(LilyAstExprLambda, const LilyAstExprLambda *self)
 {
+    FREE_MOVE(self->name, FREE(String, self->name));
+
     if (self->params) {
         FREE_BUFFER_ITEMS(
           self->params->buffer, self->params->len, LilyAstExprLambdaParam);
