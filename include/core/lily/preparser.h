@@ -563,6 +563,12 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserFunBodyItem *self);
 #endif
 
+/**
+ *
+ * @brief Free LilyPreparserFunBodyItem type.
+ */
+DESTRUCTOR(LilyPreparserFunBodyItem, LilyPreparserFunBodyItem *self);
+
 typedef struct LilyPreparserFun
 {
     String *name;
@@ -1558,6 +1564,14 @@ preparse_enum_object_body__LilyPreparser(LilyPreparser *self);
  */
 Vec *
 preparse_trait_body__LilyPreparser(LilyPreparser *self);
+
+/**
+ *
+ * @brief Preparse a lambda expression.
+ * @return LilyPreparserFunBodyItem*?
+ */
+LilyPreparserFunBodyItem *
+preparse_lambda__LilyPreparser(LilyPreparser *self);
 
 /**
  *
