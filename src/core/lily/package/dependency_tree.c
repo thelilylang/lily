@@ -79,38 +79,41 @@ add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
                                        Vec *trees,
                                        LilyPackage *package)
 {
-    Vec *dependencies = NEW(Vec);
+    if (!is_added__LilyPackageDependencyTree(self, package)) {
+        Vec *dependencies = NEW(Vec);
 
-    for (Usize i = 0; i < package->package_dependencies->len; ++i) {
-        LilyPackage *dependency_pkg =
-          get__Vec(package->package_dependencies, i);
-        LilyPackageDependencyTree *dependency = NULL;
+        for (Usize i = 0; i < package->package_dependencies->len; ++i) {
+            LilyPackage *dependency_pkg =
+              get__Vec(package->package_dependencies, i);
+            LilyPackageDependencyTree *dependency = NULL;
 
-    add_dependency : {
-        for (Usize i = 0; i < trees->len && !dependency; ++i) {
-            dependency = is_added__LilyPackageDependencyTree(get__Vec(trees, i),
-                                                             dependency_pkg);
-        }
+        add_dependency : {
+            for (Usize i = 0; i < trees->len && !dependency; ++i) {
+                dependency = is_added__LilyPackageDependencyTree(
+                  get__Vec(trees, i), dependency_pkg);
+            }
 
-        if (dependency) {
-            push__Vec(dependencies, dependency);
-        } else {
-            LilyPackageDependencyTree *tree =
-              determine_tree__LilyPackageDependencyTree(trees, dependency_pkg);
-
-            if (tree) {
-                add_package__LilyPackageDependencyTree(
-                  tree, trees, dependency_pkg);
-                goto add_dependency;
+            if (dependency) {
+                push__Vec(dependencies, dependency);
             } else {
-                UNREACHABLE("tree is NULL");
+                LilyPackageDependencyTree *tree =
+                  determine_tree__LilyPackageDependencyTree(trees,
+                                                            dependency_pkg);
+
+                if (tree) {
+                    add_package__LilyPackageDependencyTree(
+                      tree, trees, dependency_pkg);
+                    goto add_dependency;
+                } else {
+                    UNREACHABLE("tree is NULL");
+                }
             }
         }
-    }
-    }
+        }
 
-    push__Vec(self->children,
-              NEW(LilyPackageDependencyTree, package, dependencies));
+        push__Vec(self->children,
+                  NEW(LilyPackageDependencyTree, package, dependencies));
+    }
 }
 
 Vec *
