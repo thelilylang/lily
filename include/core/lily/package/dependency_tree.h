@@ -68,18 +68,18 @@ CONSTRUCTOR(LilyPackageDependencyTree *,
 /**
  *
  * @brief Add package to dependency tree.
- * @param file_dependencies Vec<LilyPackage* (&)>*
+ * @param trees Vec<LilyPackageDependencyTree*>*
  */
 void
 add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
-                                       LilyPackage *package,
-                                       Vec *file_dependencies);
+                                       Vec *trees,
+                                       LilyPackage *package);
 
 /**
  *
  * @brief Verify if the package is added in the tree.
  */
-bool
+LilyPackageDependencyTree *
 is_added__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
                                     LilyPackage *package);
 

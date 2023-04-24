@@ -29,6 +29,10 @@
 
 #include <string.h>
 
+/// @param trees Vec<LilyPackageDependencyTree*>*
+static LilyPackageDependencyTree *
+determine_tree__LilyPackageDependencyTree(Vec *trees, LilyPackage *package);
+
 /// @return Vec<LilyPackageDependencyTree* (&)>*?
 static Vec *
 collect_dependencies__LilyPackageDependencyTree(
@@ -52,12 +56,63 @@ CONSTRUCTOR(LilyPackageDependencyTree *,
     return self;
 }
 
+LilyPackageDependencyTree *
+determine_tree__LilyPackageDependencyTree(Vec *trees, LilyPackage *package)
+{
+    for (Usize i = 0; i < package->package_dependencies->len; ++i) {
+        LilyPackage *dependency = get__Vec(package->package_dependencies, i);
+
+        for (Usize j = 0; j < trees->len; ++j) {
+            LilyPackageDependencyTree *res =
+              is_added__LilyPackageDependencyTree(get__Vec(trees, j),
+                                                  dependency);
+
+            if (res) {
+                return res;
+            }
+        }
+    }
+
+    return NULL;
+}
+
 void
 add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
-                                       LilyPackage *package,
-                                       Vec *file_dependencies)
+                                       Vec *trees,
+                                       LilyPackage *package)
 {
-    // TODO: add package
+    Vec *dependencies = NEW(Vec);
+
+    for (Usize i = 0; i < package->package_dependencies->len; ++i) {
+        LilyPackage *dependency_pkg =
+          get__Vec(package->package_dependencies, i);
+        LilyPackageDependencyTree *dependency = NULL;
+
+    add_dependency : {
+        for (Usize i = 0; i < trees->len && !dependency; ++i) {
+            dependency = is_added__LilyPackageDependencyTree(get__Vec(trees, i),
+                                                             dependency_pkg);
+        }
+
+        if (dependency) {
+            push__Vec(dependencies, dependency);
+        } else {
+            LilyPackageDependencyTree *tree =
+              determine_tree__LilyPackageDependencyTree(trees, dependency_pkg);
+
+            if (tree) {
+                add_package__LilyPackageDependencyTree(
+                  tree, trees, dependency_pkg);
+                goto add_dependency;
+            } else {
+                UNREACHABLE("tree is NULL");
+            }
+        }
+    }
+    }
+
+    push__Vec(self->children,
+              NEW(LilyPackageDependencyTree, package, dependencies));
 }
 
 Vec *
@@ -89,26 +144,26 @@ collect_dependencies__LilyPackageDependencyTree(
     return NULL;
 }
 
-bool
+LilyPackageDependencyTree *
 is_added__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
                                     LilyPackage *package)
 {
     // 1. Check if package is found.
     if (!strcmp(self->package->name->buffer, package->name->buffer)) {
-        return true;
+        return self;
     }
 
     // 2. Search package name.
     for (Usize i = 0; i < self->children->len; i++) {
-        bool res = is_added__LilyPackageDependencyTree(
+        LilyPackageDependencyTree *res = is_added__LilyPackageDependencyTree(
           get__Vec(self->children, i), package);
 
         if (res) {
-            return true;
+            return res;
         }
     }
 
-    return false;
+    return NULL;
 }
 
 DESTRUCTOR(LilyPackageDependencyTree, LilyPackageDependencyTree *self)
