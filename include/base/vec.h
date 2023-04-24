@@ -209,7 +209,7 @@ reverse__Vec(Vec *self);
 
 /**
  *
- * @brief Take a slice of vector.
+ * @brief Take a slice of the vector.
  */
 Vec *
 slice__Vec(Vec *self, Usize start, Usize end);
