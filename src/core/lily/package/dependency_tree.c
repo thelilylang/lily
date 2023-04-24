@@ -23,10 +23,12 @@
  */
 
 #include <base/macros.h>
+#include <base/print.h>
 
 #include <core/lily/package/dependency_tree.h>
 #include <core/lily/package/package.h>
 
+#include <stdio.h>
 #include <string.h>
 
 /// @return Vec<LilyPackageDependencyTree* (&)>*?
@@ -161,6 +163,68 @@ is_added__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
 
     return NULL;
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPackageDependencyTree,
+               const LilyPackageDependencyTree *self)
+{
+    String *res = format__String(
+      "LilyPackageDependencyTree{{ package.global_name = {S}, children = {{ ",
+      self->package->global_name);
+
+    for (Usize i = 0; i < self->children->len; ++i) {
+        char *s =
+          format("package.global_name = {S}",
+                 CAST(LilyPackageDependencyTree *, get__Vec(self->children, i))
+                   ->package->global_name);
+
+        PUSH_STR_AND_FREE(res, s);
+
+        if (i + 1 != self->children->len) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, " }");
+
+    push_str__String(res, ", dependencies =");
+
+    if (self->dependencies) {
+        push_str__String(res, " {");
+
+        for (Usize i = 0; i < self->children->len; ++i) {
+            char *s = format(
+              "package.global_name = {S}",
+              CAST(LilyPackageDependencyTree *, get__Vec(self->children, i))
+                ->package->global_name);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            if (i + 1 != self->children->len) {
+                push_str__String(res, ", ");
+            }
+        }
+
+        push_str__String(res, " }");
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+
+void
+IMPL_FOR_DEBUG(debug,
+               LilyPackageDependencyTree,
+               const LilyPackageDependencyTree *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyPackageDependencyTree(self));
+}
+#endif
 
 DESTRUCTOR(LilyPackageDependencyTree, LilyPackageDependencyTree *self)
 {

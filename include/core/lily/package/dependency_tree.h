@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_PACKAGE_DEPENDENCY_TREE_H
 #define LILY_CORE_LILY_PACKAGE_DEPENDENCY_TREE_H
 
+#include <base/macros.h>
 #include <base/vec.h>
 
 typedef struct LilyPackage LilyPackage;
@@ -91,6 +92,30 @@ add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
 LilyPackageDependencyTree *
 is_added__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
                                     LilyPackage *package);
+
+/**
+ *
+ * @brief Convert LilyPackageDependencyTree in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPackageDependencyTree,
+               const LilyPackageDependencyTree *self);
+#endif
+
+/**
+ *
+ * @brief Print debug of LilyPackageDependencyTree struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug,
+               LilyPackageDependencyTree,
+               const LilyPackageDependencyTree *self);
+#endif
 
 /**
  *
