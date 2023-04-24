@@ -58,8 +58,8 @@ type Letter enum =
 	X2;
 	Y2;
 	Z2;
-	app!();
-	app2!();
+	// app!();
+	// app2!();
 end
 
 type Animal enum =
@@ -69,7 +69,7 @@ type Animal enum =
 end
 
 type Person record =
-	app!();
+	// app!();
 	mut name Str;
 	age Uint8; 
 end

@@ -1,3 +1,6 @@
+error Fail: Str;
+error FileNotFound: Str;
+
 macro field($i id, $t dt) = {
 	{{i}} {{t}};
 };
@@ -36,4 +39,23 @@ object Color enum =
 	variant!(Red, Int32);
 	variant!(Green, Int32);
 	variant!(Blue, Int32);
+end
+
+macro prototype($i id, $params tks, $ret dt) = {
+	fun {{i}}({{params}}) {{ret}};
+};
+
+object Clone trait =
+	prototype!(clone, ${ref Self}, Self);
+end
+
+module Operation =
+	fn!(add, ${x, y}, x + y); // fun add(x, y) = x + y end
+end
+
+fun main =	
+	val x := 40;
+	val y := 60;
+	fun -> x + y;\();
+	// val res := (fun -> x + y; \()) + 40;
 end
