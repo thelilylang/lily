@@ -92,9 +92,7 @@ package_is_find_in_dependencies_order__LilyPrecompile(Vec *dependencies_order,
                                                       LilyPackage *package);
 
 static void
-build_tree__LilyPrecompile(LilyPrecompile *self,
-                           Vec *dependencies_order,
-                           LilyPackage *package);
+build_tree__LilyPrecompile(LilyPrecompile *self, LilyPackage *package);
 
 /// @param self Is the root LilyPrecompile.
 static void
@@ -659,9 +657,7 @@ package_is_find_in_dependencies_order__LilyPrecompile(Vec *dependencies_order,
 }
 
 void
-build_tree__LilyPrecompile(LilyPrecompile *self,
-                           Vec *dependencies_order,
-                           LilyPackage *package)
+build_tree__LilyPrecompile(LilyPrecompile *self, LilyPackage *package)
 {
     LilyPackageDependencyTree *tree = determine_tree__LilyPackageDependencyTree(
       self->dependency_trees, package);
@@ -673,7 +669,7 @@ build_tree__LilyPrecompile(LilyPrecompile *self,
         LilyPackage *p = get__Vec(package->package_dependencies, i);
 
         if (p->package_dependencies->len > 0) {
-            build_tree__LilyPrecompile(self, dependencies_order, p);
+            build_tree__LilyPrecompile(self, p);
         }
     }
 }
@@ -752,8 +748,7 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
 
     // 4.2 Push all other packages.
     for (Usize i = 0; i < dependencies_order->len; ++i) {
-        build_tree__LilyPrecompile(
-          self, dependencies_order, get__Vec(dependencies_order, i));
+        build_tree__LilyPrecompile(self, get__Vec(dependencies_order, i));
     }
 
     FREE(Vec, dependencies_order);
