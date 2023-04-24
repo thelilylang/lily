@@ -382,10 +382,15 @@ IMPL_FOR_DEBUG(to_string, LilyImport, const LilyImport *self)
         }
     }
 
-    {
+    if (self->as) {
         char *s = format("}, location = {sa}, as = {S} }",
                          to_string__Debug__Location(&self->location),
                          self->as);
+
+        PUSH_STR_AND_FREE(res, s);
+    } else {
+        char *s = format("}, location = {sa} }",
+                         to_string__Debug__Location(&self->location));
 
         PUSH_STR_AND_FREE(res, s);
     }
@@ -404,7 +409,11 @@ DESTRUCTOR(LilyImport, LilyImport *self)
 {
     FREE_BUFFER_ITEMS(self->values->buffer, self->values->len, LilyImportValue);
     FREE(Vec, self->values);
-    FREE(String, self->as);
+
+    if (self->as) {
+        FREE(String, self->as);
+    }
+
     lily_free(self);
 }
 
@@ -1568,6 +1577,15 @@ run__LilyPrecompile(LilyPrecompile *self,
 
 #ifdef DEBUG_PRECOMPILE
     printf("\n====Precompile(%s)====\n", self->file->name);
+
+    if (self->dependency_trees) {
+        printf("\n====Precompile dependency trees(%s)====\n", self->file->name);
+
+        for (Usize i = 0; i < self->dependency_trees->len; ++i) {
+            CALL_DEBUG(LilyPackageDependencyTree,
+                       get__Vec(self->dependency_trees, i));
+        }
+    }
 
     printf("\n====Precompile public imports(%s)====\n", self->file->name);
 
