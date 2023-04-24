@@ -100,8 +100,10 @@ CONSTRUCTOR(LilyPackage *,
 
     if (root) {
         self->parser = NEW(LilyParser, self, root, NULL);
+		self->analysis = NEW(LilyAnalysis, self, root, &self->parser);
     } else {
         self->parser = NEW(LilyParser, self, self, NULL);
+		self->analysis = NEW(LilyAnalysis, self, self, &self->parser);
     }
 #endif
 
@@ -286,6 +288,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(LilyPreparserInfo, &self->preparser_info);
     FREE(LilyPrecompile, &self->precompile);
     FREE(LilyParser, &self->parser);
+	FREE(LilyAnalysis, &self->analysis);
     FREE(LilyIr, &self->ir);
 
     lily_free(self);
