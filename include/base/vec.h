@@ -209,6 +209,13 @@ reverse__Vec(Vec *self);
 
 /**
  *
+ * @brief Take a slice of vector.
+ */
+Vec *
+slice__Vec(Vec *self, Usize start, Usize end);
+
+/**
+ *
  * @brief Ungrow Vec buffer.
  * @param new_capacity New buffer capacity.
  */

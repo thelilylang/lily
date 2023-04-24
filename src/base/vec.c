@@ -223,6 +223,18 @@ reverse__Vec(Vec *self)
     }
 }
 
+Vec *
+slice__Vec(Vec *self, Usize start, Usize end)
+{
+	Vec *slice = NEW(Vec);
+
+	for (Usize i = start; i < end; ++i) {
+		push__Vec(slice, get__Vec(self, i));
+	}
+
+	return slice;
+}
+
 void
 ungrow__Vec(Vec *self)
 {
