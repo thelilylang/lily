@@ -23,6 +23,7 @@
 # SOFTWARE.
 
 FILE="./tests/mypkg/main.lily"
+COMPILE="./build/Debug/lily compile $FILE"
 
 function print_commands {
 	echo "Commands:"
@@ -45,10 +46,16 @@ function print_commands {
 	echo "  #h: Print the help"
 	echo "  rupc: Run until precompiler"
 	echo "  rupp: Run until preparser"
+	echo "  time: Run a command to calculate the time"
+	echo "  valgrind: Run valgrind to check the memory leak of a command"
 }
 
 function do_nothing {
 	echo "do nothing for the moment."
+}
+
+function compile {
+	./build/Debug/lily compile "$FILE"
 }
 
 echo "Welcome to the debug REPL."
@@ -71,7 +78,7 @@ do
 			clear
 			;;
 		"compile")
-			./build/Debug/lily compile "$FILE"
+			compile
 			;;
 		"da")
 			do_nothing
@@ -104,6 +111,7 @@ do
 			echo -n "file> "
 			read file
 			FILE=$file
+			COMPILE="./build/Debug/lily compile $FILE"
 			echo "A new file has been successfully configured."
 			;;
 		"git")
@@ -133,6 +141,34 @@ do
 			;;
 		"rupp")
 			do_nothing
+			;;
+		"time")
+			echo -n "time> "
+			read time_command 
+			case $time_command in
+				"compile")
+					time compile
+					;;
+				"")
+					;;
+				*)
+					echo "error: bad command"
+					;;
+			esac
+			;;
+		"valgrind")
+			echo -n "valgrind> "
+			read valgrind_command
+			case $valgrind_command in
+				"compile")
+					valgrind --leak-check=full $COMPILE
+					;;
+				"")
+					;;
+				*)
+					echo "error: bad command"
+					;;
+			esac
 			;;
 		"")
 			;;
