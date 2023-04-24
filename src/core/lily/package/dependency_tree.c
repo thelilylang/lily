@@ -29,10 +29,6 @@
 
 #include <string.h>
 
-/// @param trees Vec<LilyPackageDependencyTree*>*
-static LilyPackageDependencyTree *
-determine_tree__LilyPackageDependencyTree(Vec *trees, LilyPackage *package);
-
 /// @return Vec<LilyPackageDependencyTree* (&)>*?
 static Vec *
 collect_dependencies__LilyPackageDependencyTree(

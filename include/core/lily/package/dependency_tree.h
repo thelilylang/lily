@@ -67,6 +67,15 @@ CONSTRUCTOR(LilyPackageDependencyTree *,
 
 /**
  *
+ * @brief Determine the right tree to push the package according the package
+ * dependencies.
+ * @param trees Vec<LilyPackageDependencyTree*>*
+ */
+LilyPackageDependencyTree *
+determine_tree__LilyPackageDependencyTree(Vec *trees, LilyPackage *package);
+
+/**
+ *
  * @brief Add package to dependency tree.
  * @param trees Vec<LilyPackageDependencyTree*>*
  */

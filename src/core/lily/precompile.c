@@ -91,9 +91,6 @@ static bool
 package_is_find_in_dependencies_order__LilyPrecompile(Vec *dependencies_order,
                                                       LilyPackage *package);
 
-static LilyPackageDependencyTree *
-determine_tree__LilyPrecompile(LilyPrecompile *self, LilyPackage *package);
-
 static void
 build_tree__LilyPrecompile(LilyPrecompile *self,
                            Vec *dependencies_order,
@@ -661,33 +658,13 @@ package_is_find_in_dependencies_order__LilyPrecompile(Vec *dependencies_order,
     return false;
 }
 
-LilyPackageDependencyTree *
-determine_tree__LilyPrecompile(LilyPrecompile *self, LilyPackage *package)
-{
-    for (Usize i = 0; i < package->package_dependencies->len; ++i) {
-        LilyPackage *dependency = get__Vec(package->package_dependencies, i);
-
-        for (Usize j = 0; j < self->dependency_trees->len; ++j) {
-            LilyPackageDependencyTree *tree =
-              is_added__LilyPackageDependencyTree(
-                get__Vec(self->dependency_trees, j), dependency);
-
-            if (tree) {
-                return tree;
-            }
-        }
-    }
-
-    return NULL;
-}
-
 void
 build_tree__LilyPrecompile(LilyPrecompile *self,
                            Vec *dependencies_order,
                            LilyPackage *package)
-{ 
-    LilyPackageDependencyTree *tree =
-      determine_tree__LilyPrecompile(self, package);
+{
+    LilyPackageDependencyTree *tree = determine_tree__LilyPackageDependencyTree(
+      self->dependency_trees, package);
 
     add_package__LilyPackageDependencyTree(
       tree, self->dependency_trees, package);
