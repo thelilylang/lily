@@ -41,6 +41,6 @@ CONSTRUCTOR(LilyAnalysis,
 
 DESTRUCTOR(LilyAnalysis, const LilyAnalysis *self)
 {
-	FREE(Vec, self->decls);
-	// TODO: free items of the vector (self->decls).
+    FREE(Vec, self->decls);
+    // TODO: free items of the vector (self->decls).
 }

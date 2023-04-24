@@ -31,6 +31,7 @@
 
 #include <cli/config/compile.h>
 
+#include <core/lily/analysis.h>
 #include <core/lily/ir.h>
 #include <core/lily/package/config.h>
 #include <core/lily/package/library.h>
@@ -39,7 +40,6 @@
 #include <core/lily/preparser.h>
 #include <core/lily/scanner.h>
 #include <core/lily/visibility.h>
-#include <core/lily/analysis.h>
 
 enum LilyPackageStatus
 {
@@ -66,7 +66,7 @@ typedef struct LilyPackage
     LilyPreparserInfo preparser_info;
     LilyPrecompile precompile; // LilyPrecompile
     LilyParser parser;
-	LilyAnalysis analysis;
+    LilyAnalysis analysis;
     LilyIr ir;
     Usize count_error;
     Usize count_warning;
