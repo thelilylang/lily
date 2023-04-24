@@ -286,8 +286,6 @@ typedef struct LilyPrecompile
 {
     LilyPreparserInfo *info;
     Vec *dependency_trees; // Vec<LilyPackageDependencyTree*>*?
-    // LilyPackageDependencyTree *dependency_tree; //
-    // LilyPackageDependencyTree*?
     const File *file;
     LilyPackage *package;
     Usize count_error;

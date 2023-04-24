@@ -92,6 +92,9 @@ package_is_find_in_dependencies_order__LilyPrecompile(Vec *dependencies_order,
                                                       LilyPackage *package);
 
 static LilyPackageDependencyTree *
+determine_tree__LilyPrecompile(LilyPrecompile *self, LilyPackage *package);
+
+static void
 build_tree__LilyPrecompile(LilyPrecompile *self,
                            Vec *dependencies_order,
                            LilyPackage *package);
@@ -659,29 +662,43 @@ package_is_find_in_dependencies_order__LilyPrecompile(Vec *dependencies_order,
 }
 
 LilyPackageDependencyTree *
+determine_tree__LilyPrecompile(LilyPrecompile *self, LilyPackage *package)
+{
+    for (Usize i = 0; i < package->package_dependencies->len; ++i) {
+        LilyPackage *dependency = get__Vec(package->package_dependencies, i);
+
+        for (Usize j = 0; j < self->dependency_trees->len; ++j) {
+            LilyPackageDependencyTree *tree =
+              is_added__LilyPackageDependencyTree(
+                get__Vec(self->dependency_trees, j), dependency);
+
+            if (tree) {
+                return tree;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+void
 build_tree__LilyPrecompile(LilyPrecompile *self,
                            Vec *dependencies_order,
                            LilyPackage *package)
-{
-    // Check if all dependencies of this package all well pushed.
-    // for (Usize i = 0; i < package->package_dependencies->len; ++i) {
-    //     if (package_is_find_in_dependencies_order__LilyPrecompile(
-    //           dependencies_order, get__Vec(package->package_dependencies,
-    //           i))) {
-    //         LilyPackageDependencyTree *dependency =
-    //           build_tree__LilyPrecompile(self, dependencies_order, package);
-    //     }
-    // }
-
+{ 
     LilyPackageDependencyTree *tree =
-      NEW(LilyPackageDependencyTree, package, NULL);
+      determine_tree__LilyPrecompile(self, package);
+
+    add_package__LilyPackageDependencyTree(
+      tree, self->dependency_trees, package);
 
     for (Usize i = 0; i < package->package_dependencies->len; ++i) {
-        build_tree__LilyPrecompile(
-          self, dependencies_order, get__Vec(package->package_dependencies, i));
-    }
+        LilyPackage *p = get__Vec(package->package_dependencies, i);
 
-    return tree;
+        if (p->package_dependencies->len > 0) {
+            build_tree__LilyPrecompile(self, dependencies_order, p);
+        }
+    }
 }
 
 // 1. Check import (only with `@package`).
@@ -752,7 +769,7 @@ build_dependency_tree__LilyPrecompile(LilyPrecompile *self,
                           NULL));
             remove__Vec(dependencies_order, i);
         } else {
-            i++;
+            ++i;
         }
     }
 
