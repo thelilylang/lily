@@ -12777,9 +12777,25 @@ preparse_macro_expand__LilyPreparser(LilyPreparser *self)
     Vec *params = NULL; // Vec<Vec<LilyToken* (&)>*>*?
 
     switch (self->current->kind) {
-        case LILY_TOKEN_KIND_L_PAREN:
-            params = preparse_paren_with_comma_sep__LilyPreparser(self);
+        case LILY_TOKEN_KIND_L_PAREN: {
+            LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+            if (peeked) {
+                switch (peeked->kind) {
+                    case LILY_TOKEN_KIND_R_PAREN:
+                        jump__LilyPreparser(self, 2);
+
+                        break;
+                    default:
+                        params =
+                          preparse_paren_with_comma_sep__LilyPreparser(self);
+
+                        break;
+                }
+            }
+
             break;
+        }
         default:
             break;
     }
