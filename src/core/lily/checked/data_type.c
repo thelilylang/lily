@@ -465,6 +465,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_DATA_TYPE_KIND_UINT8";
         case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
             return "LILY_CHECKED_DATA_TYPE_KIND_UNIT";
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+            return "LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN";
         case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
             return "LILY_CHECKED_DATA_TYPE_KIND_USIZE";
         default:
@@ -733,6 +735,8 @@ to_string__LilyCheckedDataType(const LilyCheckedDataType *self)
             return from__String("Uint8");
         case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
             return from__String("Unit");
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+            return from__String("Unknown");
         case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
             return from__String("Usize");
         default:
