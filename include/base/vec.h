@@ -123,6 +123,14 @@ append__Vec(Vec *self, const Vec *other);
 
 /**
  *
+ * @brief Return true if the Vec contains an element with the given String.
+ * @param self Vec<String*>*
+ */
+bool
+contains__Vec(const Vec *self, const String *s);
+
+/**
+ *
  * @brief Construct Vec type with default buffer items.
  */
 Vec *

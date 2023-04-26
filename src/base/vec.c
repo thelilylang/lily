@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 CONSTRUCTOR(Vec *, Vec)
 {
@@ -51,6 +52,18 @@ append__Vec(Vec *self, const Vec *other)
     for (Usize i = 0; i < other->len; ++i) {
         push__Vec(self, other->buffer[i]);
     }
+}
+
+bool
+contains__Vec(const Vec *self, const String *s)
+{
+    for (Usize i = 0; i < self->len; ++i) {
+        if (!strcmp(CAST(String *, get__Vec(self, i))->buffer, s->buffer)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 Vec *
