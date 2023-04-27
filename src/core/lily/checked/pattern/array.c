@@ -62,6 +62,6 @@ to_string__LilyCheckedPatternArray(const LilyCheckedPatternArray *self)
 
 DESTRUCTOR(LilyCheckedPatternArray, LilyCheckedPatternArray *self)
 {
-    FREE_BUFFER_ITEMS(self->patterns->buffer, self->patterns->len, LilyCheckedExpr);
+    FREE_BUFFER_ITEMS(self->patterns->buffer, self->patterns->len, LilyCheckedPattern);
     FREE(Vec, self->patterns);
 }
