@@ -26,8 +26,10 @@ Work in progress...
 - Preparser: 90% finished
 - Precompiler: 75% finished
 - Parser: 85% finished
-- Analysis: 0% finished
-- Code generator: 0% finished
+- Analysis: 10% finished
+- Code generator (LLVM): 0% finished
+- Code generator (C): 0% finished
+- Code generator (C++): 0% finished
 
 ## Examples
 
