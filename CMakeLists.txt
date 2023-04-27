@@ -169,6 +169,18 @@ set(CORE_SRC
 	src/core/lily/checked/expr/literal.c
 	src/core/lily/checked/expr/tuple.c
 	src/core/lily/checked/expr/unary.c
+	src/core/lily/checked/pattern/array.c
+	src/core/lily/checked/pattern/as.c
+	src/core/lily/checked/pattern/exception.c
+	src/core/lily/checked/pattern/list_head.c
+	src/core/lily/checked/pattern/list_tail.c
+	src/core/lily/checked/pattern/list.c
+	src/core/lily/checked/pattern/literal.c
+	src/core/lily/checked/pattern/name.c
+	src/core/lily/checked/pattern/range.c
+	src/core/lily/checked/pattern/record_call.c
+	src/core/lily/checked/pattern/tuple.c
+	src/core/lily/checked/pattern/variant_call.c
 	src/core/lily/checked/stmt/asm.c
 	src/core/lily/checked/stmt/await.c
 	src/core/lily/checked/stmt/block.c
