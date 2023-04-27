@@ -67,7 +67,7 @@ inline CONSTRUCTOR(LilyCheckedGenericParamConstraint,
                    Vec *constraints)
 {
     return (LilyCheckedGenericParamConstraint){ .name = name,
-                                            .constraints = constraints };
+                                                .constraints = constraints };
 }
 
 /**
@@ -129,7 +129,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedGenericParam, const LilyCheckedGenericParam *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedGenericParam,
+               const LilyCheckedGenericParam *self);
 #endif
 
 /**

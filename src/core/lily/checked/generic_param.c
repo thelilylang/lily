@@ -30,7 +30,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Free LilyCheckedGenericParam type (LILY_CHECKED_GENERIC_PARAM_KIND_CONSTRAINT).
+// Free LilyCheckedGenericParam type
+// (LILY_CHECKED_GENERIC_PARAM_KIND_CONSTRAINT).
 static VARIANT_DESTRUCTOR(LilyCheckedGenericParam,
                           constraint,
                           LilyCheckedGenericParam *self);
@@ -64,7 +65,8 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedGenericParamConstraint *self)
 {
     String *res = format__String(
-      "LilyCheckedGenericParamConstraint{{ name = {S}, constraints =", self->name);
+      "LilyCheckedGenericParamConstraint{{ name = {S}, constraints =",
+      self->name);
 
     DEBUG_VEC_STRING(self->constraints, res, LilyCheckedDataType);
     push_str__String(res, " }");
@@ -88,7 +90,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
                     Location location,
                     String *normal)
 {
-    LilyCheckedGenericParam *self = lily_malloc(sizeof(LilyCheckedGenericParam));
+    LilyCheckedGenericParam *self =
+      lily_malloc(sizeof(LilyCheckedGenericParam));
 
     self->kind = LILY_CHECKED_GENERIC_PARAM_KIND_NORMAL;
     self->location = location;
@@ -103,7 +106,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
                     Location location,
                     LilyCheckedGenericParamConstraint constraint)
 {
-    LilyCheckedGenericParam *self = lily_malloc(sizeof(LilyCheckedGenericParam));
+    LilyCheckedGenericParam *self =
+      lily_malloc(sizeof(LilyCheckedGenericParam));
 
     self->kind = LILY_CHECKED_GENERIC_PARAM_KIND_CONSTRAINT;
     self->location = location;
@@ -114,7 +118,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedGenericParam, const LilyCheckedGenericParam *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedGenericParam,
+               const LilyCheckedGenericParam *self)
 {
     String *res =
       format__String("LilyCheckedGenericParam{{ kind = {s}, location = {sa}",
@@ -123,9 +129,10 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedGenericParam, const LilyCheckedGenericParam
 
     switch (self->kind) {
         case LILY_CHECKED_GENERIC_PARAM_KIND_CONSTRAINT: {
-            char *s = format(", constraint = {Sr} }",
-                             to_string__Debug__LilyCheckedGenericParamConstraint(
-                               &self->constraint));
+            char *s =
+              format(", constraint = {Sr} }",
+                     to_string__Debug__LilyCheckedGenericParamConstraint(
+                       &self->constraint));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -146,13 +153,17 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedGenericParam, const LilyCheckedGenericParam
 }
 #endif
 
-VARIANT_DESTRUCTOR(LilyCheckedGenericParam, constraint, LilyCheckedGenericParam *self)
+VARIANT_DESTRUCTOR(LilyCheckedGenericParam,
+                   constraint,
+                   LilyCheckedGenericParam *self)
 {
     FREE(LilyCheckedGenericParamConstraint, &self->constraint);
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyCheckedGenericParam, normal, LilyCheckedGenericParam *self)
+VARIANT_DESTRUCTOR(LilyCheckedGenericParam,
+                   normal,
+                   LilyCheckedGenericParam *self)
 {
     FREE_MOVE(self->normal, FREE(String, self->normal));
     lily_free(self);

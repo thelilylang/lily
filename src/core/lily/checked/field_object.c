@@ -32,7 +32,9 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedFieldObject, const LilyCheckedFieldObject *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedFieldObject,
+               const LilyCheckedFieldObject *self)
 {
     String *res = format__String(
       "LilyCheckedFieldObject{{ name = {S}, data_type = {Sr}, optional_expr =",
@@ -67,4 +69,3 @@ DESTRUCTOR(LilyCheckedFieldObject, const LilyCheckedFieldObject *self)
         FREE(LilyCheckedExpr, self->optional_expr);
     }
 }
-

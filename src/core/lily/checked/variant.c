@@ -47,7 +47,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedVariant, const LilyCheckedVariant *self)
 {
     if (self->data_type) {
         return format__String(
-          "LilyCheckedVariant{{ name = {S}, data_type = {Sr}, location = {sa} }",
+          "LilyCheckedVariant{{ name = {S}, data_type = {Sr}, location = {sa} "
+          "}",
           self->name,
           to_string__Debug__LilyCheckedDataType(self->data_type),
           to_string__Debug__Location(&self->location));
