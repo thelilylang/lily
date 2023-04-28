@@ -131,3 +131,15 @@ IMPL_FOR_DEBUG(to_string,
                   self->id);
 }
 #endif
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedAccessScope,
+               const LilyCheckedAccessScope *self)
+{
+    return format("LilyCheckedAccessFun{{ module = {sa}, id = {d} }",
+                  to_string__Debug__LilyCheckedAccessModule(&self->module),
+                  self->id);
+}
+#endif

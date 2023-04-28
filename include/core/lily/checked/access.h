@@ -307,4 +307,34 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedAccessFun *self);
 #endif
 
+typedef struct LilyCheckedAccessScope
+{
+    LilyCheckedAccessModule module;
+    Usize id;
+} LilyCheckedAccessScope;
+
+/**
+ *
+ * @brief Construct LilyCheckedAccessScope type.
+ */
+inline CONSTRUCTOR(LilyCheckedAccessScope,
+                   LilyCheckedAccessScope,
+                   LilyCheckedAccessModule module,
+                   Usize id)
+{
+    return (LilyCheckedAccessScope){ .module = module, .id = id };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedAccessScope in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedAccessScope,
+               const LilyCheckedAccessScope *self);
+#endif
+
 #endif // LILY_CORE_LILY_CHECKED_ACCESS_H
