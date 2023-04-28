@@ -407,6 +407,14 @@ to_string__LilyCheckedDataType(const LilyCheckedDataType *self);
 
 /**
  *
+ * @brief Returns true if the both data types are equal otherwise returns false.
+ */
+bool
+eq__LilyCheckedDataType(const LilyCheckedDataType *self,
+                        const LilyCheckedDataType *other);
+
+/**
+ *
  * @brief Free LilyCheckedDataType.
  */
 DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self);

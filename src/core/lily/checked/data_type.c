@@ -744,6 +744,124 @@ to_string__LilyCheckedDataType(const LilyCheckedDataType *self)
     }
 }
 
+bool
+eq__LilyCheckedDataType(const LilyCheckedDataType *self,
+                        const LilyCheckedDataType *other)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ANY:
+        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
+        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+        case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
+        case LILY_CHECKED_DATA_TYPE_KIND_STR:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+            return other->kind == self->kind;
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+            switch (other->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+                    return self->array.kind == other->array.kind
+                             ? self->array.kind ==
+                                   LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED
+                                 ? self->array.size == other->array.size &&
+                                     eq__LilyCheckedDataType(
+                                       self->array.data_type,
+                                       other->array.data_type)
+                                 : eq__LilyCheckedDataType(
+                                     self->array.data_type,
+                                     other->array.data_type)
+                             : 0;
+                default:
+                    return false;
+            }
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+            switch (other->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                    // TODO: compare generics
+                    return !strcmp(self->custom.name->buffer,
+                                   other->custom.name->buffer) &&
+                           self->custom.kind == other->custom.kind;
+                default:
+                    return false;
+            }
+        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+            return self->kind == other->kind
+                     ? eq__LilyCheckedDataType(self->exception,
+                                               other->exception)
+                     : false;
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
+            if (self->lambda.params->len == other->lambda.params->len) {
+                for (Usize i = 0; i < self->lambda.params->len; ++i) {
+                    if (!eq__LilyCheckedDataType(
+                          get__Vec(self->lambda.params, i),
+                          get__Vec(other->lambda.params, i))) {
+                        return false;
+                    }
+                }
+            } else {
+                return false;
+            }
+
+            return eq__LilyCheckedDataType(self->lambda.return_type,
+                                           other->lambda.return_type);
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            return self->kind == other->kind
+                     ? eq__LilyCheckedDataType(self->mut, other->mut)
+                     : false;
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+            return self->kind == other->kind
+                     ? eq__LilyCheckedDataType(self->optional, other->optional)
+                     : false;
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+            return self->kind == other->kind
+                     ? eq__LilyCheckedDataType(self->ptr, other->ptr)
+                     : false;
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            return self->kind == other->kind
+                     ? eq__LilyCheckedDataType(self->ref, other->ref)
+                     : false;
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+            return self->kind == other->kind
+                     ? eq__LilyCheckedDataType(self->trace, other->trace)
+                     : false;
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
+            switch (other->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
+                    if (self->tuple->len == other->tuple->len) {
+                        for (Usize i = 0; i < self->tuple->len; ++i) {
+                            if (!eq__LilyCheckedDataType(
+                                  get__Vec(self->tuple, i),
+                                  get__Vec(other->tuple, i))) {
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    }
+
+                    return false;
+                default:
+                    return false;
+            }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedDataType, array, LilyCheckedDataType *self)
 {
     FREE(LilyCheckedDataTypeArray, &self->array);
