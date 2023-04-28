@@ -195,6 +195,7 @@ set(CORE_SRC
 	src/core/lily/checked/stmt/try.c
 	src/core/lily/checked/stmt/variable.c
 	src/core/lily/checked/stmt/while.c
+	src/core/lily/checked/access.c
 	src/core/lily/checked/data_type.c
 	src/core/lily/checked/decl.c
 	src/core/lily/checked/expr.c
@@ -205,6 +206,7 @@ set(CORE_SRC
 	src/core/lily/checked/inherit_param.c
 	src/core/lily/checked/parent.c
 	src/core/lily/checked/pattern.c
+	src/core/lily/checked/safety_mode.c
 	src/core/lily/checked/scope.c
 	src/core/lily/checked/stmt.c
 	src/core/lily/checked/variant.c
