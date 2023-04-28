@@ -208,6 +208,7 @@ set(CORE_SRC
 	src/core/lily/checked/pattern.c
 	src/core/lily/checked/safety_mode.c
 	src/core/lily/checked/scope.c
+	src/core/lily/checked/scope_container.c
 	src/core/lily/checked/stmt.c
 	src/core/lily/checked/variant.c
 	src/core/lily/ir/cc/builder/constant.c
