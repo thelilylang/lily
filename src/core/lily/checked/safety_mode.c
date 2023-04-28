@@ -24,20 +24,22 @@
 
 #include <core/lily/checked/safety_mode.h>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyCheckedSafetyMode, enum LilyCheckedSafetyMode self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedSafetyMode,
+               enum LilyCheckedSafetyMode self)
 {
-	switch (self) {
-		case LILY_CHECKED_SAFETY_MODE_SAFE:
-			return "LILY_CHECKED_SAFETY_MODE_SAFE";
-		case LILY_CHECKED_SAFETY_MODE_UNSAFE:
-			return "LILY_CHECKED_SAFETY_MODE_UNSAFE";
-		default:
-			UNREACHABLE("unknown variant");
-	}
+    switch (self) {
+        case LILY_CHECKED_SAFETY_MODE_SAFE:
+            return "LILY_CHECKED_SAFETY_MODE_SAFE";
+        case LILY_CHECKED_SAFETY_MODE_UNSAFE:
+            return "LILY_CHECKED_SAFETY_MODE_UNSAFE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 #endif

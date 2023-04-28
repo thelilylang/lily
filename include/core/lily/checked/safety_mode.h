@@ -27,9 +27,10 @@
 
 #include <base/macros.h>
 
-enum LilyCheckedSafetyMode {
-	LILY_CHECKED_SAFETY_MODE_SAFE,
-	LILY_CHECKED_SAFETY_MODE_UNSAFE
+enum LilyCheckedSafetyMode
+{
+    LILY_CHECKED_SAFETY_MODE_SAFE,
+    LILY_CHECKED_SAFETY_MODE_UNSAFE
 };
 
 /**
@@ -39,7 +40,9 @@ enum LilyCheckedSafetyMode {
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyCheckedSafetyMode, enum LilyCheckedSafetyMode self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedSafetyMode,
+               enum LilyCheckedSafetyMode self);
 #endif
 
 #endif // LILY_CORE_LILY_CHECKED_SAFETY_MODE_H
