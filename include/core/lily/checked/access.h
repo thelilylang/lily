@@ -67,6 +67,36 @@ eq__LilyCheckedAccessModule(const LilyCheckedAccessModule *self,
     return self->id == other->id;
 }
 
+typedef struct LilyCheckedAccessConstant
+{
+    LilyCheckedAccessModule module;
+    Usize id;
+} LilyCheckedAccessConstant;
+
+/**
+ *
+ * @brief Construct LilyCheckedAccessConstant type.
+ */
+inline CONSTRUCTOR(LilyCheckedAccessConstant,
+                   LilyCheckedAccessConstant,
+                   LilyCheckedAccessModule module,
+                   Usize id)
+{
+    return (LilyCheckedAccessConstant){ .module = module, .id = id };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedAccessConstant in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedAccessConstant,
+               const LilyCheckedAccessConstant *self);
+#endif
+
 typedef struct LilyCheckedAccessEnum
 {
     LilyCheckedAccessModule module;
