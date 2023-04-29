@@ -1,14 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
 project(lily LANGUAGES C CXX)
 
-set(DEBUG 1) # 0 for release, 1 for debug
-
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 if (NOT WIN32)
-add_compile_options(-Wall -O3 -fdiagnostics-color=always)
+	add_compile_options(-Wall -O3 -fdiagnostics-color=always)
 endif()
 
 if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
@@ -330,7 +328,7 @@ function(move_tests_dir)
 	message("Move `tests` directory in build directory")
 endfunction()
 
-if (DEBUG)
+if (LILY_DEBUG)
 	if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/tests)
 		file(REMOVE tests)
 		move_tests_dir()
