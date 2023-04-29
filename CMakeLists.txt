@@ -325,9 +325,18 @@ target_include_directories(lily_core PUBLIC lib/local)
 add_executable(lily src/bin/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)
 
-if (DEBUG)
-	message("Move `tests` directory in build directory")
+function(move_tests_dir)
 	file(COPY tests DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+	message("Move `tests` directory in build directory")
+endfunction()
+
+if (DEBUG)
+	if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/tests)
+		file(REMOVE tests)
+		move_tests_dir()
+	else()
+		move_tests_dir()
+	endif()
 
 	enable_testing()
 
