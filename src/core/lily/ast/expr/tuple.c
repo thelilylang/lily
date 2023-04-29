@@ -33,12 +33,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <core/lily/ast/expr.h>
+
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstExprTuple, const LilyAstExprTuple *self)
 {
     String *res = from__String("LilyAstExprTuple{ items =");
 
-    DEBUG_VEC_STRING(self->items, res, LilyAstExprTuple);
+    DEBUG_VEC_STRING(self->items, res, LilyAstExpr);
 
     push_str__String(res, " }");
 
@@ -48,6 +50,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprTuple, const LilyAstExprTuple *self)
 
 DESTRUCTOR(LilyAstExprTuple, const LilyAstExprTuple *self)
 {
-    FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, LilyAstExprTuple);
+    FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, LilyAstExpr);
     FREE(Vec, self->items);
 }
