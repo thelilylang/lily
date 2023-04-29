@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <base/new.h>
+
 #include <core/lily/checked/scope_container.h>
 
 CONSTRUCTOR(LilyCheckedScopeContainerModule *,
@@ -153,15 +155,23 @@ CONSTRUCTOR(LilyCheckedScopeContainerTrait *,
 CONSTRUCTOR(LilyCheckedScopeContainerFun *,
             LilyCheckedScopeContainerFun,
             String *name,
-            LilyCheckedAccessFun access)
+            Vec *accesses)
 {
     LilyCheckedScopeContainerFun *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerFun));
 
     self->name = name;
-    self->access = access;
+    self->accesses = accesses;
 
     return self;
+}
+
+DESTRUCTOR(LilyCheckedScopeContainerFun, LilyCheckedScopeContainerFun *self)
+{
+    FREE(Vec, self->accesses);
+    FREE_BUFFER_ITEMS(
+      self->accesses->buffer, self->accesses->len, LilyCheckedAccessFun);
+    lily_free(self);
 }
 
 CONSTRUCTOR(LilyCheckedScopeContainerVariable *,

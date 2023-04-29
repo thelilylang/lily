@@ -27,6 +27,7 @@
 
 #include <base/alloc.h>
 #include <base/string.h>
+#include <base/vec.h>
 
 #include <core/lily/checked/access.h>
 
@@ -258,7 +259,8 @@ inline DESTRUCTOR(LilyCheckedScopeContainerTrait,
 typedef struct LilyCheckedScopeContainerFun
 {
     String *name; // String* (&)
-    LilyCheckedAccessFun access;
+    // overload of function
+    Vec *accesses; // Vec<LilyCheckedAccessFun*>*
 } LilyCheckedScopeContainerFun;
 
 /**
@@ -268,17 +270,13 @@ typedef struct LilyCheckedScopeContainerFun
 CONSTRUCTOR(LilyCheckedScopeContainerFun *,
             LilyCheckedScopeContainerFun,
             String *name,
-            LilyCheckedAccessFun access);
+            Vec *accesses);
 
 /**
  *
  * @brief Free LilyCheckedScopeContainerFun type.
  */
-inline DESTRUCTOR(LilyCheckedScopeContainerFun,
-                  LilyCheckedScopeContainerFun *self)
-{
-    lily_free(self);
-}
+DESTRUCTOR(LilyCheckedScopeContainerFun, LilyCheckedScopeContainerFun *self);
 
 typedef struct LilyCheckedScopeContainerVariable
 {
