@@ -32,299 +32,88 @@
 #include <stdlib.h>
 #endif
 
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedGlobalScopeKind,
-               enum LilyCheckedGlobalScopeKind self)
+CONSTRUCTOR(LilyCheckedScope *,
+            LilyCheckedScope,
+            LilyCheckedAccessScope *parent)
 {
-    switch (self) {
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_ATTRIBUTE:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_ATTRIBUTE";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_CLASS:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_CLASS";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_CONSTANT:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_CONSTANT";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_ENUM:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_ENUM";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_ENUM_OBJECT:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_ENUM_OBJECT";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_FIELD:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_FIELD";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_FIELD_OBJECT:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_FIELD_OBJECT";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_FUN:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_FUN";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_METHOD:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_METHOD";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_MODULE:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_MODULE";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_PROTOTYPE:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_PROTOTYPE";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_RECORD:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_RECORD";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_RECORD_OBJECT:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_RECORD_OBJECT";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_TRAIT:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_TRAIT";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_VARIANT:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_VARIANT";
-        case LILY_CHECKED_GLOBAL_SCOPE_KIND_VARIANT_OBJECT:
-            return "LILY_CHECKED_GLOBAL_SCOPE_KIND_VARIANT_OBJECT";
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-#endif
+    LilyCheckedScope *self = lily_malloc(sizeof(LilyCheckedScope));
 
-CONSTRUCTOR(LilyCheckedGlobalScope *,
-            LilyCheckedGlobalScope,
-            enum LilyCheckedGlobalScopeKind kind,
-            LilyCheckedGlobalScopeId id,
-            Vec *access,
-            Vec *children,
-            enum LilyVisibility visibility,
-            Location location)
-{
-    LilyCheckedGlobalScope *self = lily_malloc(sizeof(LilyCheckedGlobalScope));
-
-    self->kind = kind;
-    self->id = id;
-    self->access = access;
-    self->children = children;
-    self->visibility = visibility;
-    self->location = location;
+    self->modules = NEW(Vec);
+    self->constants = NEW(Vec);
+    self->enums = NEW(Vec);
+    self->records = NEW(Vec);
+    self->aliases = NEW(Vec);
+    self->enums_object = NEW(Vec);
+    self->records_object = NEW(Vec);
+    self->classes = NEW(Vec);
+    self->traits = NEW(Vec);
+    self->funs = NEW(Vec);
+    self->variables = NEW(Vec);
+    self->parent = parent;
+    self->children = NEW(Vec);
 
     return self;
 }
 
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedGlobalScope,
-               const LilyCheckedGlobalScope *self)
+DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
 {
-    String *res = format__String(
-      "LilyCheckedGlobalScopeKind{ kind = {s}, id = {d}, access = { ",
-      to_string__Debug__LilyCheckedGlobalScopeKind(self->kind),
-      self->id);
+    FREE_BUFFER_ITEMS(self->modules->buffer,
+                      self->modules->len,
+                      LilyCheckedScopeContainerModule);
+    FREE(Vec, self->modules);
 
-    for (Usize i = 0; i < self->access->len; i++) {
-        String *item = get__Vec(self->access, i);
+    FREE_BUFFER_ITEMS(self->constants->buffer,
+                      self->constants->len,
+                      LilyCheckedScopeContainerConstant);
+    FREE(Vec, self->constants);
 
-        DEBUG_STRING(item, res);
+    FREE_BUFFER_ITEMS(
+      self->enums->buffer, self->enums->len, LilyCheckedScopeContainerEnum);
+    FREE(Vec, self->enums);
 
-        if (i != self->access->len - 1) {
-            push_str__String(res, ", ");
-        }
+    FREE_BUFFER_ITEMS(self->records->buffer,
+                      self->records->len,
+                      LilyCheckedScopeContainerRecord);
+    FREE(Vec, self->records);
+
+    FREE_BUFFER_ITEMS(self->aliases->buffer,
+                      self->aliases->len,
+                      LilyCheckedScopeContainerAlias);
+    FREE(Vec, self->aliases);
+
+    FREE_BUFFER_ITEMS(self->enums_object->buffer,
+                      self->enums_object->len,
+                      LilyCheckedScopeContainerEnumObject);
+    FREE(Vec, self->enums_object);
+
+    FREE_BUFFER_ITEMS(self->records_object->buffer,
+                      self->records_object->len,
+                      LilyCheckedScopeContainerRecordObject);
+    FREE(Vec, self->records_object);
+
+    FREE_BUFFER_ITEMS(self->classes->buffer,
+                      self->classes->len,
+                      LilyCheckedScopeContainerClass);
+    FREE(Vec, self->classes);
+
+    FREE_BUFFER_ITEMS(
+      self->traits->buffer, self->traits->len, LilyCheckedScopeContainerTrait);
+    FREE(Vec, self->traits);
+
+    FREE_BUFFER_ITEMS(
+      self->funs->buffer, self->funs->len, LilyCheckedScopeContainerFun);
+    FREE(Vec, self->funs);
+
+    FREE_BUFFER_ITEMS(self->variables->buffer,
+                      self->variables->len,
+                      LilyCheckedScopeContainerVariable);
+    FREE(Vec, self->variables);
+
+    if (self->parent) {
+        FREE(LilyCheckedAccessScope, self->parent);
     }
 
-    push_str__String(res, " }");
-    push_str__String(res, ", children =");
-
-    if (self->children) {
-        DEBUG_VEC_STRING(self->children, res, LilyCheckedGlobalScope);
-    } else {
-        push_str__String(res, " NULL");
-    }
-
-    {
-        char *s = format(", visibility = {s}, location = {sa} }",
-                         to_string__Debug__LilyVisibility(self->visibility),
-                         to_string__Debug__Location(&self->location));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
-
-    return res;
+    FREE_BUFFER_ITEMS(
+      self->children->buffer, self->children->len, LilyCheckedAccessScope);
+    FREE(Vec, self->children);
 }
-#endif
-
-DESTRUCTOR(LilyCheckedGlobalScope, LilyCheckedGlobalScope *self)
-{
-    if (self->children) {
-        FREE_BUFFER_ITEMS(
-          self->children->buffer, self->children->len, LilyCheckedGlobalScope);
-        FREE(Vec, self->children);
-    }
-
-    lily_free(self);
-}
-
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedExternScopeKind,
-               enum LilyCheckedExternScopeKind self)
-{
-    switch (self) {
-        case LILY_CHECKED_EXTERN_SCOPE_KIND_FILE:
-            return "LILY_CHECKED_EXTERN_SCOPE_KIND_FILE";
-        case LILY_CHECKED_EXTERN_SCOPE_KIND_LIBRARY:
-            return "LILY_CHECKED_EXTERN_SCOPE_KIND_LIBRARY";
-        case LILY_CHECKED_EXTERN_SCOPE_KIND_PACKAGE:
-            return "LILY_CHECKED_EXTERN_SCOPE_KIND_PACKAGE";
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-#endif
-
-VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
-                    LilyCheckedExternScope,
-                    file,
-                    LilyCheckedGlobalScope *global,
-                    LilyFile *file)
-{
-    LilyCheckedExternScope *self = lily_malloc(sizeof(LilyCheckedExternScope));
-
-    self->global = global;
-    self->kind = LILY_CHECKED_EXTERN_SCOPE_KIND_FILE;
-    self->file = file;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
-                    LilyCheckedExternScope,
-                    library,
-                    LilyCheckedGlobalScope *global,
-                    LilyLibrary *library)
-{
-    LilyCheckedExternScope *self = lily_malloc(sizeof(LilyCheckedExternScope));
-
-    self->global = global;
-    self->kind = LILY_CHECKED_EXTERN_SCOPE_KIND_LIBRARY;
-    self->library = library;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyCheckedExternScope *,
-                    LilyCheckedExternScope,
-                    package,
-                    LilyCheckedGlobalScope *global,
-                    LilyPackage *package)
-{
-    LilyCheckedExternScope *self = lily_malloc(sizeof(LilyCheckedExternScope));
-
-    self->global = global;
-    self->kind = LILY_CHECKED_EXTERN_SCOPE_KIND_PACKAGE;
-    self->package = package;
-
-    return self;
-}
-
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedExternScope,
-               const LilyCheckedExternScope *self)
-{
-    return format("LilyCheckedExternScope{{ kind = {s}, global = {Sr} }",
-                  to_string__Debug__LilyCheckedExternScopeKind(self->kind),
-                  to_string__Debug__LilyCheckedGlobalScope(self->global));
-}
-
-char *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedLocalScopeKind,
-               enum LilyCheckedLocalScopeKind self)
-{
-    switch (self) {
-        case LILY_CHECKED_LOCAL_SCOPE_KIND_CONSTANT:
-            return "LILY_CHECKED_LOCAL_SCOPE_KIND_CONSTANT";
-        case LILY_CHECKED_LOCAL_SCOPE_KIND_GENERIC_DATA_TYPE:
-            return "LILY_CHECKED_LOCAL_SCOPE_KIND_GENERIC_DATA_TYPE";
-        case LILY_CHECKED_LOCAL_SCOPE_KIND_VARIABLE:
-            return "LILY_CHECKED_LOCAL_SCOPE_KIND_VARIABLE";
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-
-char *
-IMPL_FOR_DEBUG(to_string, LilyCheckedScopeKind, enum LilyCheckedScopeKind self)
-{
-    switch (self) {
-        case LILY_CHECKED_SCOPE_KIND_EXTERN:
-            return "LILY_CHECKED_SCOPE_KIND_EXTERN";
-        case LILY_CHECKED_SCOPE_KIND_GLOBAL:
-            return "LILY_CHECKED_SCOPE_KIND_GLOBAL";
-        case LILY_CHECKED_SCOPE_KIND_LOCAL:
-            return "LILY_CHECKED_SCOPE_KIND_LOCAL";
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-#endif
-
-CONSTRUCTOR(LilyCheckedLocalScope *,
-            LilyCheckedLocalScope,
-            enum LilyCheckedLocalScopeKind kind,
-            Vec *access)
-{
-    LilyCheckedLocalScope *self = lily_malloc(sizeof(LilyCheckedLocalScope));
-
-    self->kind = kind;
-    self->access = access;
-
-    return self;
-}
-
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedLocalScope,
-               const LilyCheckedLocalScope *self)
-{
-    String *res =
-      format__String("LilyCheckedLocalScope{{ kind = {s}, access = {{ ",
-                     to_string__Debug__LilyCheckedLocalScopeKind(self->kind));
-
-    for (Usize i = 0; i < self->access->len; i++) {
-        char *s = format("{d}", get__Vec(self->access, i));
-
-        PUSH_STR_AND_FREE(res, s);
-
-        if (i - 1 != self->access->len) {
-            push_str__String(res, ", ");
-        }
-    }
-
-    push_str__String(res, " }");
-
-    return res;
-}
-#endif
-
-DESTRUCTOR(LilyCheckedLocalScope, LilyCheckedLocalScope *self)
-{
-    FREE(Vec, self->access);
-    lily_free(self);
-}
-
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
-{
-    switch (self->kind) {
-        case LILY_CHECKED_SCOPE_KIND_EXTERN:
-            return format(
-              "LilyCheckedScope{{ kind = {s}, extern = {sa} }",
-              to_string__Debug__LilyCheckedScopeKind(self->kind),
-              to_string__Debug__LilyCheckedExternScope(self->extern_));
-        case LILY_CHECKED_SCOPE_KIND_GLOBAL:
-            return format(
-              "LilyCheckedScope{{ kind = {s}, global = {sa} }",
-              to_string__Debug__LilyCheckedScopeKind(self->kind),
-              to_string__Debug__LilyCheckedGlobalScope(self->global));
-        case LILY_CHECKED_SCOPE_KIND_LOCAL:
-            return format("LilyCheckedScope{{ kind = {s}, local = {sa} }",
-                          to_string__Debug__LilyCheckedScopeKind(self->kind),
-                          to_string__Debug__LilyCheckedLocalScope(self->local));
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-#endif
