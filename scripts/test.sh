@@ -1,6 +1,6 @@
 #!/bin/sh
 
-make clean
-make debug
-ninja -C build/Debug
+make clean > /dev/null
+make debug > /dev/null
+ninja -C build/Debug > /dev/null
 ctest --test-dir build/Debug

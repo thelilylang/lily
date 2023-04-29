@@ -1,5 +1,7 @@
 #!/bin/sh
 
+ninja -C build/Debug > /dev/null
+
 ./build/Debug/test_core_scanner
 
 echo
