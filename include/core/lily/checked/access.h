@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_CHECKED_ACCESS_H
 #define LILY_CORE_LILY_CHECKED_ACCESS_H
 
+#include <base/alloc.h>
 #include <base/macros.h>
 #include <base/types.h>
 
@@ -317,13 +318,10 @@ typedef struct LilyCheckedAccessFun
  *
  * @brief Construct LilyCheckedAccessFun type.
  */
-inline CONSTRUCTOR(LilyCheckedAccessFun,
-                   LilyCheckedAccessFun,
-                   LilyCheckedAccessModule module,
-                   Usize id)
-{
-    return (LilyCheckedAccessFun){ .module = module, .id = id };
-}
+CONSTRUCTOR(LilyCheckedAccessFun *,
+            LilyCheckedAccessFun,
+            LilyCheckedAccessModule module,
+            Usize id);
 
 /**
  *
@@ -337,6 +335,11 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedAccessFun *self);
 #endif
 
+inline DESTRUCTOR(LilyCheckedAccessFun, LilyCheckedAccessFun *self)
+{
+    lily_free(self);
+}
+
 typedef struct LilyCheckedAccessScope
 {
     LilyCheckedAccessModule module;
@@ -347,13 +350,10 @@ typedef struct LilyCheckedAccessScope
  *
  * @brief Construct LilyCheckedAccessScope type.
  */
-inline CONSTRUCTOR(LilyCheckedAccessScope,
-                   LilyCheckedAccessScope,
-                   LilyCheckedAccessModule module,
-                   Usize id)
-{
-    return (LilyCheckedAccessScope){ .module = module, .id = id };
-}
+CONSTRUCTOR(LilyCheckedAccessScope *,
+            LilyCheckedAccessScope,
+            LilyCheckedAccessModule module,
+            Usize id);
 
 /**
  *
@@ -366,5 +366,14 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedAccessScope,
                const LilyCheckedAccessScope *self);
 #endif
+
+/**
+ *
+ * @brief Free LilyCheckedAccessScope type.
+ */
+inline DESTRUCTOR(LilyCheckedAccessScope, LilyCheckedAccessScope *self)
+{
+    lily_free(self);
+}
 
 #endif // LILY_CORE_LILY_CHECKED_ACCESS_H

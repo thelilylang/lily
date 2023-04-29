@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/format.h>
 
 #include <core/lily/checked/access.h>
@@ -132,6 +133,19 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+CONSTRUCTOR(LilyCheckedAccessFun *,
+            LilyCheckedAccessFun,
+            LilyCheckedAccessModule module,
+            Usize id)
+{
+    LilyCheckedAccessFun *self = lily_malloc(sizeof(LilyCheckedAccessFun));
+
+    self->module = module;
+    self->id = id;
+
+    return self;
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -143,6 +157,19 @@ IMPL_FOR_DEBUG(to_string,
                   self->id);
 }
 #endif
+
+CONSTRUCTOR(LilyCheckedAccessScope *,
+            LilyCheckedAccessScope,
+            LilyCheckedAccessModule module,
+            Usize id)
+{
+    LilyCheckedAccessScope *self = lily_malloc(sizeof(LilyCheckedAccessScope));
+
+    self->module = module;
+    self->id = id;
+
+    return self;
+}
 
 #ifdef ENV_DEBUG
 char *
