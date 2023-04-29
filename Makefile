@@ -8,7 +8,7 @@ configure:
 	@mkdir -p build && cd build && cmake .. -G Ninja
 
 debug:
-	@mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -s Debug/compile_commands.json .
+	@mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -s Debug/compile_commands.json .
 
 format:
 	${CLANG_FORMAT} ./include/base/*.h
@@ -52,6 +52,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/package/*.h	
 	${CLANG_FORMAT} ./include/core/lily/preprocess/*.h
 	${CLANG_FORMAT} ./include/core/shared/*.h
+	${CLANG_FORMAT} ./include/core/shared/target/*.h
 	${CLANG_FORMAT} ./src/base/*.c
 	${CLANG_FORMAT} ./src/bin/*.c
 	${CLANG_FORMAT} ./src/cli/*.c
@@ -92,6 +93,7 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/package/*.c
 	${CLANG_FORMAT} ./src/core/lily/preprocess/*.c
 	${CLANG_FORMAT} ./src/core/shared/*.c
+	${CLANG_FORMAT} ./src/core/shared/target/*.c
 	${CLANG_FORMAT} ./benchmarks/base/*.c
 	${CLANG_FORMAT} ./tests/base/*.c
 	${CLANG_FORMAT} ./tests/core/lily/parser/*.c
@@ -103,9 +105,9 @@ format:
 profile:
 	@mkdir -p build && cd build && cmake .. -G Ninja && ninja
 	@mkdir -p build/profile
-	@gcc -Wall -O3 -pg -lLLVM -L build/ -llily_base -llily_cli -llily_command -I include -I lib/local -o build/profile/lily \
-		src/base/*.c \
+	@clang -Wall -O3 -pg -lLLVM -L build/ -llily_base -llily_cli -llily_command -llily_core -I include -I lib/local -o build/profile/lily \
 		src/bin/main.c \
+		src/base/*.c \
 		src/cli/option/*.c \
 		src/cli/*.c \
 		src/command/build/*.c \
@@ -125,10 +127,10 @@ profile:
 		src/core/lily/ast/pattern/*.c \
 		src/core/lily/ast/stmt/*.c \
 		src/core/lily/ast/*.c \
-		src/core/lily/checked/decl/*.c \
-		src/core/lily/checked/expr/*.c \
-		src/core/lily/checked/stmt/*.c \
 		src/core/lily/checked/*.c \
+		src/core/lily/checked/body/*.c \
+		src/core/lily/checked/decl/*.c \
+		src/core/lily/checked/stmt/*.c \
 		src/core/lily/ir/cc/builder/function/*.c \
 		src/core/lily/ir/cc/builder/*.c \
 		src/core/lily/ir/cc/generator/*.c \
@@ -144,7 +146,8 @@ profile:
 		src/core/lily/package/*.c \
 		src/core/lily/preprocess/*.c \
 		src/core/lily/*.c \
-		src/core/shared/*.c
+		src/core/shared/*.c \
+		src/core/shared/target/*.c
 
 clean:
 	@rm -rf build
