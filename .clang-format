@@ -1,0 +1,8 @@
+TabWidth: 4
+IndentWidth: 4
+
+# UseTab: Never
+Language: Cpp
+BasedOnStyle: Mozilla
+PointerAlignment: Right
+AlignEscapedNewlines: true
