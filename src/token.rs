@@ -70,8 +70,9 @@ impl ToString for Keyword {
             Self::Unsigned => "unsigned",
             Self::Void => "void",
             Self::Volatile => "volatile",
-            Self::While => "while"
-        }.to_string()
+            Self::While => "while",
+        }
+        .to_string()
     }
 }
 
@@ -88,12 +89,10 @@ enum LiteralConstant {
 impl ToString for LiteralConstant {
     fn to_string(&self) -> String {
         match &self {
-            Self::Int(s) |
-            Self::Float(s) |
-            Self::Octal(s) |
-            Self::Hex(s) |
-            Self::String(s) => s.clone(),
-            Self::Character(c) => format!("{}", c)
+            Self::Int(s) | Self::Float(s) | Self::Octal(s) | Self::Hex(s) | Self::String(s) => {
+                s.clone()
+            }
+            Self::Character(c) => format!("{}", c),
         }
     }
 }
@@ -119,7 +118,6 @@ pub enum TokenKind {
     Minus,
     Bang,
     Ampersand,
-    Sizeof,
     Star,
     Slash,
     Percentage,
@@ -148,10 +146,11 @@ pub enum TokenKind {
     AmpersandEq,
     HatEq,
     BarEq,
+    Identifier(String),
 }
 
 impl ToString for TokenKind {
-    fn to_string(&self) -> String { 
+    fn to_string(&self) -> String {
         match &self {
             Self::Keyword(k) => k.to_string(),
             Self::LiteralConstant(l) => l.to_string(),
@@ -172,7 +171,6 @@ impl ToString for TokenKind {
             Self::Minus => "-".to_string(),
             Self::Bang => "!".to_string(),
             Self::Ampersand => "&".to_string(),
-            Self::Sizeof => "sizeof".to_string(),
             Self::Star => "*".to_string(),
             Self::Slash => "/".to_string(),
             Self::Percentage => "%".to_string(),
@@ -201,6 +199,7 @@ impl ToString for TokenKind {
             Self::AmpersandEq => "&=".to_string(),
             Self::HatEq => "^=".to_string(),
             Self::BarEq => "|=".to_string(),
+            Self::Identifier(s) => s.clone(),
         }
     }
 }
@@ -215,4 +214,11 @@ impl<'a> Token<'a> {
     pub fn new(kind: TokenKind, location: Location<'a>) -> Self {
         Self { kind, location }
     }
+}
+
+#[macro_export]
+macro_rules! keyword {
+    ($k: ident) => {
+        TokenKind::Keyword(Keyword::$k)
+    };
 }
