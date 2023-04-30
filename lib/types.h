@@ -50,6 +50,6 @@ typedef double f64;
 
 typedef uintptr_t uptr;
 
-typedef char* str;
+typedef char *str;
 
 #endif // C_COMPTIME_GEN_TYPES_H
