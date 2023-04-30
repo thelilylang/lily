@@ -77,11 +77,12 @@ impl ToString for Keyword {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum LiteralConstant {
+pub enum LiteralConstant {
     Int(String),
     Float(String),
     Octal(String),
     Hex(String),
+    Bin(String),
     Character(char),
     String(String),
 }
@@ -89,10 +90,27 @@ enum LiteralConstant {
 impl ToString for LiteralConstant {
     fn to_string(&self) -> String {
         match &self {
-            Self::Int(s) | Self::Float(s) | Self::Octal(s) | Self::Hex(s) | Self::String(s) => {
+            Self::Int(s) | Self::Float(s) | Self::Octal(s) | Self::Hex(s) | Self::Bin(s) | Self::String(s) => {
                 s.clone()
             }
             Self::Character(c) => format!("{}", c),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Comment {
+    Line(String),
+    Block,
+    Doc,
+}
+
+impl ToString for Comment {
+    fn to_string(&self) -> String {
+        match &self {
+            Self::Line(comment) => format!("// {}", comment),
+            Self::Block => "/**/".to_string(),
+            Self::Doc => "/** */".to_string(),
         }
     }
 }
@@ -146,7 +164,10 @@ pub enum TokenKind {
     AmpersandEq,
     HatEq,
     BarEq,
+    Wave,
+    WaveEq,
     Identifier(String),
+    Comment(Comment),
 }
 
 impl ToString for TokenKind {
@@ -199,20 +220,33 @@ impl ToString for TokenKind {
             Self::AmpersandEq => "&=".to_string(),
             Self::HatEq => "^=".to_string(),
             Self::BarEq => "|=".to_string(),
+            Self::Wave => "~".to_string(),
+            Self::WaveEq => "~=".to_string(),
             Self::Identifier(s) => s.clone(),
+            Self::Comment(comment) => comment.to_string(),
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token<'a> {
-    kind: TokenKind,
-    location: Location<'a>,
+    pub kind: TokenKind,
+    pub location: Location<'a>,
 }
 
 impl<'a> Token<'a> {
     pub fn new(kind: TokenKind, location: Location<'a>) -> Self {
         Self { kind, location }
+    }
+
+    #[inline]
+    pub fn start_token(&mut self, line: usize, column: usize) {
+        self.location.start(line, column)
+    }
+
+    #[inline]
+    pub fn end_token(&mut self, line: usize, column: usize) {
+        self.location.end(line, column);
     }
 }
 
