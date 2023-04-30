@@ -23,4 +23,16 @@ impl<'a> Location<'a> {
             filename,
         }
     }
+
+    #[inline]
+    pub fn start(&mut self, line: usize, column: usize) {
+        self.start_line = line;
+        self.start_column = column;
+    }
+
+    #[inline]
+    pub fn end(&mut self, line: usize, column: usize) {
+        self.end_line = line;
+        self.end_column = column;
+    }
 }
