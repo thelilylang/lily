@@ -111,9 +111,9 @@ end
 
 ```lily
 type Level enum =
-    A,
-    B,
-    C
+    A;
+    B;
+    C;
 end
 ```
 
@@ -203,10 +203,10 @@ end
 
 ```lily
 object Letter enum =
-    A,
-    B,
-    C,
-    D
+    A;
+    B;
+    C;
+    D;
 end
 
 pub fun@Letter to_string(self) =
