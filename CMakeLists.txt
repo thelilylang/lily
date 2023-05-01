@@ -190,6 +190,7 @@ set(CORE_SRC
 	src/core/lily/checked/stmt/if.c
 	src/core/lily/checked/stmt/match.c
 	src/core/lily/checked/stmt/next.c
+	src/core/lily/checked/stmt/raise.c
 	src/core/lily/checked/stmt/return.c
 	src/core/lily/checked/stmt/try.c
 	src/core/lily/checked/stmt/variable.c
