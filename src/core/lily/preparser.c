@@ -9175,6 +9175,15 @@ preparse_block__LilyPreparser(LilyPreparser *self,
             PREPARSE_UNTIL(exprs,
                            must_preparse_exprs(self) && !must_close(self));
 
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_SEMICOLON:
+                    next_token__LilyPreparser(self);
+
+                    break;
+                default:
+                    break;
+            }
+
             LilyToken *previous = self->tokens->buffer[self->position - 1];
 
             END_LOCATION(&location, previous->location);
