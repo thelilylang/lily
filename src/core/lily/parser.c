@@ -2573,6 +2573,8 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
                     } else {
                         op = LILY_AST_EXPR_UNARY_KIND_REF;
                     }
+
+                    break;
                 }
                 case LILY_TOKEN_KIND_KEYWORD_TRACE: {
                     if (self->current->kind == LILY_TOKEN_KIND_KEYWORD_MUT) {
@@ -2582,6 +2584,8 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
                     } else {
                         op = LILY_AST_EXPR_UNARY_KIND_TRACE;
                     }
+
+                    break;
                 }
                 default:
                     UNREACHABLE("this way is impossible");
