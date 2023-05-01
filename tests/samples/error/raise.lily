@@ -1,0 +1,5 @@
+error Failed:Str; 
+
+fun main =
+    raise Failed:"failed";
+end

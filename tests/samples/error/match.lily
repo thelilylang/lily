@@ -1,0 +1,17 @@
+error Failed:Str;
+
+fun is_failed(x Bool) =
+    if x do
+        raise Failed:"failed";
+    end
+
+    0
+end
+
+fun main =
+    match is_failed(true) do
+        error Failed:_ => ();
+        0 => ();
+        _ => ();
+    end
+end
