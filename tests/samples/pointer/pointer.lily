@@ -1,0 +1,8 @@
+fun get_ptr(x *Int32) *Int32 =
+    x
+end
+
+fun main =
+    val a := 20;
+    _ = get_ptr(a) // `a` pointer is moved here, you cannot use `a` after this point
+end

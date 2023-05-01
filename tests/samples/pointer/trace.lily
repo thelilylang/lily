@@ -1,0 +1,8 @@
+fun get_ptr(x trace *Int32) trace *Int32 =
+    x
+end
+
+fun main =
+    val a := 10;
+    _ = get_ptr(trace a); // `a` pointer is copied here
+end

@@ -1,0 +1,4 @@
+fun main =
+    _ = not true  // => false
+    _ = not false // => true
+end

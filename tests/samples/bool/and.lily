@@ -1,0 +1,6 @@
+fun main =
+    _ = true and false          // => false
+    _ = true and true           // => true
+    _ = false and false         // => false
+    _ = true and true           // => true
+end

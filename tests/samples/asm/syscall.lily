@@ -1,0 +1,9 @@
+fun main =
+    asm
+    \\mov rax, 0x1
+    \\mov rdi, 0x1
+    \\mov rsi, "Hello"
+    \\mov rdx, 5
+    \\syscall
+    ;
+end

@@ -1,0 +1,4 @@
+fun main =
+    _ = (0, true)
+    _ = (0, false, "Hello")
+end
