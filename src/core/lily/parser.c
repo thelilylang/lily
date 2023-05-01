@@ -2570,6 +2570,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
               clone__Location(&self->previous->location),
               NEW(LilyAstExprIdentifierDollar,
                   clone__String(self->previous->identifier_dollar)));
+        case LILY_TOKEN_KIND_STAR:
         case LILY_TOKEN_KIND_KEYWORD_REF:
         case LILY_TOKEN_KIND_KEYWORD_TRACE:
         case LILY_TOKEN_KIND_MINUS:
@@ -2577,6 +2578,9 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
             enum LilyAstExprUnaryKind op = 0;
 
             switch (self->previous->kind) {
+                case LILY_TOKEN_KIND_STAR:
+                    op = LILY_AST_EXPR_UNARY_KIND_DEREFERENCE;
+                    break;
                 case LILY_TOKEN_KIND_MINUS:
                     op = LILY_AST_EXPR_UNARY_KIND_NEG;
                     break;
