@@ -12,3 +12,6 @@ echo
 
 echo
 ./build/Debug/test_core_parser
+
+echo 
+./scripts/test_samples.py
