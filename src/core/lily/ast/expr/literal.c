@@ -90,6 +90,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_AST_EXPR_LITERAL_KIND_UINT64";
         case LILY_AST_EXPR_LITERAL_KIND_UNDEF:
             return "LILY_AST_EXPR_LITERAL_KIND_UNDEF";
+        case LILY_AST_EXPR_LITERAL_KIND_UNIT:
+            return "LILY_AST_EXPR_LITERAL_KIND_UNIT";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -161,6 +163,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprLiteral, const LilyAstExprLiteral *self)
         }
         case LILY_AST_EXPR_LITERAL_KIND_UNDEF:
         case LILY_AST_EXPR_LITERAL_KIND_NIL:
+        case LILY_AST_EXPR_LITERAL_KIND_UNIT:
             break;
         case LILY_AST_EXPR_LITERAL_KIND_STR: {
             char *s = format("str = {S} }", self->str);
