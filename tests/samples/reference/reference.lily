@@ -1,0 +1,6 @@
+fun modify_ref(x ref Int32) ref Int32 = x end
+
+fun main =
+    mut a := 20;
+    _ = modify_ref(ref a)
+end
