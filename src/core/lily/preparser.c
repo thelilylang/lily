@@ -203,6 +203,15 @@ static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtNext,
 static DESTRUCTOR(LilyPreparserFunBodyItemStmtNext,
                   const LilyPreparserFunBodyItemStmtNext *self);
 
+// Construct LilyPreparserFunBodyItemStmtRaise type.
+static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtRaise,
+                          LilyPreparserFunBodyItemStmtRaise,
+                          Vec *expr);
+
+// Free LilyPreparserFunBodyItemStmtRaise type.
+static DESTRUCTOR(LilyPreparserFunBodyItemStmtRaise,
+                  const LilyPreparserFunBodyItemStmtRaise *self);
+
 // Construct LilyPreparserFunBodyItemStmtReturn type.
 static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtReturn,
                           LilyPreparserFunBodyItemStmtReturn,
@@ -345,6 +354,14 @@ static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            Location location);
 
 // Construct LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RAISE).
+static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                           LilyPreparserFunBodyItem,
+                           stmt_raise,
+                           LilyPreparserFunBodyItemStmtRaise stmt_raise,
+                           Location location);
+
+// Construct LilyPreparserFunBodyItem type
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RETURN).
 static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            LilyPreparserFunBodyItem,
@@ -445,6 +462,12 @@ static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_NEXT).
 static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                           stmt_next,
+                          LilyPreparserFunBodyItem *self);
+
+// Free LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RAISE).
+static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                          stmt_raise,
                           LilyPreparserFunBodyItem *self);
 
 // Free LilyPreparserFunBodyItem type
@@ -1326,6 +1349,9 @@ preparse_for_block__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserFunBodyItem *
 preparse_while_block__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserFunBodyItem *
+preparse_raise_block__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserFunBodyItem *
 preparse_return_block__LilyPreparser(LilyPreparser *self);
@@ -2418,6 +2444,35 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtNext,
     }
 }
 
+CONSTRUCTOR(LilyPreparserFunBodyItemStmtRaise,
+            LilyPreparserFunBodyItemStmtRaise,
+            Vec *expr)
+{
+    return (LilyPreparserFunBodyItemStmtRaise){ .expr = expr };
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtRaise,
+               const LilyPreparserFunBodyItemStmtRaise *self)
+{
+    String *res = from__String("LilyPreparserFunBodyItemStmtRaise{ expr =");
+
+    DEBUG_VEC_STR(self->expr, res, LilyToken);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyPreparserFunBodyItemStmtRaise,
+           const LilyPreparserFunBodyItemStmtRaise *self)
+{
+    FREE(Vec, self->expr);
+}
+
 CONSTRUCTOR(LilyPreparserFunBodyItemStmtReturn,
             LilyPreparserFunBodyItemStmtReturn,
             Vec *expr)
@@ -2851,6 +2906,22 @@ VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
 
 VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                     LilyPreparserFunBodyItem,
+                    stmt_raise,
+                    LilyPreparserFunBodyItemStmtRaise stmt_raise,
+                    Location location)
+{
+    LilyPreparserFunBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserFunBodyItem));
+
+    self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RAISE;
+    self->stmt_raise = stmt_raise;
+    self->location = location;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                    LilyPreparserFunBodyItem,
                     stmt_return,
                     LilyPreparserFunBodyItemStmtReturn stmt_return,
                     Location location)
@@ -3033,6 +3104,15 @@ IMPL_FOR_DEBUG(to_string,
 
             break;
         }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RAISE: {
+            String *s = to_string__Debug__LilyPreparserFunBodyItemStmtRaise(
+              &self->stmt_raise);
+
+            push_str__String(res, ", stmt_raise = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RETURN: {
             String *s = to_string__Debug__LilyPreparserFunBodyItemStmtReturn(
               &self->stmt_return);
@@ -3176,6 +3256,14 @@ VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 }
 
 VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                   stmt_raise,
+                   LilyPreparserFunBodyItem *self)
+{
+    FREE(LilyPreparserFunBodyItemStmtRaise, &self->stmt_raise);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                    stmt_return,
                    LilyPreparserFunBodyItem *self)
 {
@@ -3245,6 +3333,9 @@ DESTRUCTOR(LilyPreparserFunBodyItem, LilyPreparserFunBodyItem *self)
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_NEXT:
             FREE_VARIANT(LilyPreparserFunBodyItem, stmt_next, self);
+            break;
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RAISE:
+            FREE_VARIANT(LilyPreparserFunBodyItem, stmt_raise, self);
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RETURN:
             FREE_VARIANT(LilyPreparserFunBodyItem, stmt_return, self);
@@ -8197,6 +8288,48 @@ preparse_while_block__LilyPreparser(LilyPreparser *self)
 }
 
 LilyPreparserFunBodyItem *
+preparse_raise_block__LilyPreparser(LilyPreparser *self)
+{
+    Location location = location_fun_body_item;
+
+    next_token__LilyPreparser(self); // skip `raise` keyword
+
+    Vec *expr = NEW(Vec);
+
+    PREPARSE_UNTIL(expr,
+                   self->current->kind != LILY_TOKEN_KIND_SEMICOLON &&
+                     self->current->kind != LILY_TOKEN_KIND_EOF);
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_SEMICOLON: {
+            END_LOCATION(&location, self->current->location);
+            next_token__LilyPreparser(self);
+
+            return NEW_VARIANT(LilyPreparserFunBodyItem,
+                               stmt_raise,
+                               NEW(LilyPreparserFunBodyItemStmtRaise, expr),
+                               location);
+        }
+        default: {
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                          NULL,
+                          NULL,
+                          from__String("expected `;` to close raise block")),
+              &self->count_error);
+
+            FREE(Vec, expr);
+
+            return NULL;
+        }
+    }
+}
+
+LilyPreparserFunBodyItem *
 preparse_return_block__LilyPreparser(LilyPreparser *self)
 {
     Location location = location_fun_body_item;
@@ -8999,6 +9132,12 @@ preparse_block__LilyPreparser(LilyPreparser *self,
         */
         case LILY_TOKEN_KIND_KEYWORD_NEXT:
             return preparse_next_block__LilyPreparser(self);
+
+        /*
+          raise <expr>;
+        */
+        case LILY_TOKEN_KIND_KEYWORD_RAISE:
+            return preparse_raise_block__LilyPreparser(self);
 
         /*
             return <expr>;

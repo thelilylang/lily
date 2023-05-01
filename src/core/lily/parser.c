@@ -187,6 +187,11 @@ static LilyAstBodyFunItem *
 parse_next_stmt__LilyParser(LilyParser *self,
                             const LilyPreparserFunBodyItem *item);
 
+// Parse raise statement.
+static LilyAstBodyFunItem *
+parse_raise_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item);
+
 // Parse return statement.
 static LilyAstBodyFunItem *
 parse_return_stmt__LilyParser(LilyParser *self,
@@ -3394,6 +3399,49 @@ parse_next_stmt__LilyParser(LilyParser *self,
 }
 
 LilyAstBodyFunItem *
+parse_raise_stmt__LilyParser(LilyParser *self,
+                             const LilyPreparserFunBodyItem *item)
+{
+    if (item->stmt_raise.expr->len == 0) {
+        Location location = clone__Location(&item->location);
+
+        location.start_line = location.end_line;
+        location.start_column = location.end_column;
+        location.start_position = location.end_position;
+
+        emit__Diagnostic(
+          NEW_VARIANT(Diagnostic,
+                      simple_lily_error,
+                      &self->package->file,
+                      &location,
+                      NEW(LilyError, LILY_ERROR_KIND_EXPECTED_EXPRESSION),
+                      NULL,
+                      NULL,
+                      NULL),
+          &self->package->count_error);
+
+        return NULL;
+    }
+
+    LilyParseBlock expr_block =
+      NEW(LilyParseBlock, self, item->stmt_raise.expr);
+    LilyAstExpr *expr = parse_expr__LilyParseBlock(&expr_block);
+
+    CHECK_EXPR(expr, expr_block, NULL, "expected `;`", {
+        FREE(LilyParseBlock, &expr_block);
+        return NULL;
+    });
+
+    FREE(LilyParseBlock, &expr_block);
+
+    return NEW_VARIANT(
+      LilyAstBodyFunItem,
+      stmt,
+      NEW_VARIANT(
+        LilyAstStmt, raise, item->location, NEW(LilyAstStmtRaise, expr)));
+}
+
+LilyAstBodyFunItem *
 parse_return_stmt__LilyParser(LilyParser *self,
                               const LilyPreparserFunBodyItem *item)
 {
@@ -3554,6 +3602,8 @@ parse_stmt__LilyParser(LilyParser *self, const LilyPreparserFunBodyItem *item)
             return parse_match_stmt__LilyParser(self, item);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_NEXT:
             return parse_next_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RAISE:
+            return parse_raise_stmt__LilyParser(self, item);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RETURN:
             return parse_return_stmt__LilyParser(self, item);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY:
