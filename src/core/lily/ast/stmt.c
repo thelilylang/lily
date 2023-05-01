@@ -63,6 +63,9 @@ static inline VARIANT_DESTRUCTOR(LilyAstStmt, match, const LilyAstStmt *self);
 // Free LilyAstStmt type (LILY_AST_STMT_KIND_NEXT).
 static inline VARIANT_DESTRUCTOR(LilyAstStmt, next, const LilyAstStmt *self);
 
+// Free LilyAstStmt type (LILY_AST_STMT_KIND_RAISE).
+static inline VARIANT_DESTRUCTOR(LilyAstStmt, raise, const LilyAstStmt *self);
+
 // Free LilyAstStmt type (LILY_AST_STMT_KIND_RETURN).
 static inline VARIANT_DESTRUCTOR(LilyAstStmt, return, const LilyAstStmt *self);
 
@@ -102,6 +105,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtKind, enum LilyAstStmtKind self)
             return "LILY_AST_STMT_KIND_MATCH";
         case LILY_AST_STMT_KIND_NEXT:
             return "LILY_AST_STMT_KIND_NEXT";
+        case LILY_AST_STMT_KIND_RAISE:
+            return "LILY_AST_STMT_KIND_RAISE";
         case LILY_AST_STMT_KIND_RETURN:
             return "LILY_AST_STMT_KIND_RETURN";
         case LILY_AST_STMT_KIND_TRY:
@@ -203,6 +208,14 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmt, const LilyAstStmt *self)
 
             break;
         }
+        case LILY_AST_STMT_KIND_RAISE: {
+            char *s = format(", raise = {Sr} }",
+                             to_string__Debug__LilyAstStmtRaise(&self->raise));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_AST_STMT_KIND_RETURN: {
             char *s =
               format(", return = {Sr} }",
@@ -295,6 +308,11 @@ VARIANT_DESTRUCTOR(LilyAstStmt, next, const LilyAstStmt *self)
     FREE(LilyAstStmtNext, &self->next);
 }
 
+VARIANT_DESTRUCTOR(LilyAstStmt, raise, const LilyAstStmt *self)
+{
+    FREE(LilyAstStmtRaise, &self->raise);
+}
+
 VARIANT_DESTRUCTOR(LilyAstStmt, return, const LilyAstStmt *self)
 {
     FREE(LilyAstStmtReturn, &self->return_);
@@ -347,6 +365,9 @@ DESTRUCTOR(LilyAstStmt, const LilyAstStmt *self)
             break;
         case LILY_AST_STMT_KIND_NEXT:
             FREE_VARIANT(LilyAstStmt, next, self);
+            break;
+        case LILY_AST_STMT_KIND_RAISE:
+            FREE_VARIANT(LilyAstStmt, raise, self);
             break;
         case LILY_AST_STMT_KIND_RETURN:
             FREE_VARIANT(LilyAstStmt, return, self);

@@ -37,6 +37,7 @@
 #include <core/lily/ast/stmt/if.h>
 #include <core/lily/ast/stmt/match.h>
 #include <core/lily/ast/stmt/next.h>
+#include <core/lily/ast/stmt/raise.h>
 #include <core/lily/ast/stmt/return.h>
 #include <core/lily/ast/stmt/try.h>
 #include <core/lily/ast/stmt/variable.h>
@@ -58,6 +59,7 @@ enum LilyAstStmtKind
     LILY_AST_STMT_KIND_IF,
     LILY_AST_STMT_KIND_MATCH,
     LILY_AST_STMT_KIND_NEXT,
+    LILY_AST_STMT_KIND_RAISE,
     LILY_AST_STMT_KIND_RETURN,
     LILY_AST_STMT_KIND_TRY,
     LILY_AST_STMT_KIND_VARIABLE,
@@ -90,6 +92,7 @@ typedef struct LilyAstStmt
         LilyAstStmtIf if_;
         LilyAstStmtMatch match;
         LilyAstStmtNext next;
+        LilyAstStmtRaise raise;
         LilyAstStmtReturn return_;
         LilyAstStmtTry try;
         LilyAstStmtVariable variable;
@@ -245,6 +248,21 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt,
     return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_NEXT,
                           .location = location,
                           .next = next };
+}
+
+/**
+ *
+ * @brief Construct LilyAstStmt type (LILY_AST_STMT_KIND_RAISE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstStmt,
+                           LilyAstStmt,
+                           raise,
+                           Location location,
+                           LilyAstStmtRaise raise)
+{
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_RAISE,
+                          .location = location,
+                          .raise = raise };
 }
 
 /**
