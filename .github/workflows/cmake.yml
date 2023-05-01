@@ -30,7 +30,7 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build/Debug' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=${{ $(brew --prefix llvm@15)/bin/clang }} -DCMAKE_CXX_COMPILER=${{ $(brew --prefix llvm@15)/bin/clang++ }}
+      run: cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 
     - name: Build
       # Build your program with the given configuration
@@ -45,14 +45,16 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Download & Install LLVM
+      run: brew install llvm@15
+    
     - name: Download & Install python requirements
       run: cd ${{github.workspace}} && pip install -r requirements.txt
 
-    - name: Setup LLVM_DIR
-      run: export LLVM_DIR=$(brew --prefix llvm@15)
-
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=${{ $(brew --prefix llvm@15)/bin/clang }} -DCMAKE_CXX_COMPILER=${{ $(brew --prefix llvm@15)/bin/clang++ }}
+    - name: Setup LLVM & Configure CMake
+      run: |
+        export LLVM_DIR=$(brew --prefix llvm@15)
+        cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=$(brew --prefix llvm@15)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build/Debug
