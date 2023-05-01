@@ -30,49 +30,48 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build/Debug' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1
+      run: cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=${{ $(brew --prefix llvm@15)/bin/clang }} -DCMAKE_CXX_COMPILER=${{ $(brew --prefix llvm@15)/bin/clang++ }}
 
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build/Debug
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: |
-        cd ${{github.workspace}}
-        ./scripts/full_test.sh
-  # build-macos:
-  #   runs-on: macos-latest
+      working-directory: ${{github.workspace}}
+      run: ./scripts/full_test.sh
+  build-macos:
+    runs-on: macos-latest
 
-  #   steps:
-  #   - uses: actions/checkout@v3
+    steps:
+    - uses: actions/checkout@v3
 
-  #   - name: Setup LLVM_DIR
-  #     run: export LLVM_DIR=$(brew --prefix llvm@15)
+    - name: Download & Install python requirements
+      run: cd ${{github.workspace}} && pip install -r requirements.txt
 
-  #   - name: Configure CMake
-  #     run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -D CMAKE_C_COMPILER=$(brew --prefix llvm@15)/bin/clang -D CMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++ -D LLVM_PATH=$(brew --prefix llvm@15)
+    - name: Setup LLVM_DIR
+      run: export LLVM_DIR=$(brew --prefix llvm@15)
 
-  #   - name: Build
-  #     run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=${{ $(brew --prefix llvm@15)/bin/clang }} -DCMAKE_CXX_COMPILER=${{ $(brew --prefix llvm@15)/bin/clang++ }}
 
-  #   - name: Test
-  #     working-directory: ${{github.workspace}}/build
-  #     run: ctest -C ${{env.BUILD_TYPE}}
-        #  build-windows:
-        #    runs-on: windows-latest
-        #
-        #    steps:
-        #    - uses: actions/checkout@v3
-        #
-        #    - name: Configure CMake
-        #      run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-        #
-        #    - name: Build
-        #      run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
-        #
-        #    - name: Test
-        #      working-directory: ${{github.workspace}}\build
-        #      run: ctest -C ${{env.BUILD_TYPE}}
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build/Debug
+
+    - name: Test
+      working-directory: ${{github.workspace}}
+      run: ./scripts/full_test.sh
+  #  build-windows:
+  #    runs-on: windows-latest
+  #
+  #    steps:
+  #    - uses: actions/checkout@v3
+  #
+  #    - name: Configure CMake
+  #      run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+  #
+  #    - name: Build
+  #      run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
+  #
+  #    - name: Test
+  #      working-directory: ${{github.workspace}}\build
+  #      run: ctest -C ${{env.BUILD_TYPE}}
