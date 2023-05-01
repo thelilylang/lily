@@ -2454,6 +2454,24 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_L_PAREN: {
             LilyToken *peeked = self->current;
 
+            switch (peeked->kind) {
+                case LILY_TOKEN_KIND_R_PAREN: {
+                    Location location =
+                      clone__Location(&self->current->location);
+
+                    next_token__LilyParseBlock(self);
+                    END_LOCATION(&location, self->previous->location);
+
+                    return NEW_VARIANT(
+                      LilyAstExpr,
+                      literal,
+                      location,
+                      NEW(LilyAstExprLiteral, LILY_AST_EXPR_LITERAL_KIND_UNIT));
+                }
+                default:
+                    break;
+            }
+
             for (Usize i = 1; peeked; ++i) {
                 if (peeked->kind == LILY_TOKEN_KIND_COMMA) {
                     return parse_tuple_expr__LilyParseBlock(self);
