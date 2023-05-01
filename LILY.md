@@ -602,7 +602,7 @@ end
 
 fun main() =
     val a Foo := Foo.new();
-    drop val b *Foo := Foo.new();
+    drop: val b *Foo := Foo.new();
 end
 ```
 
@@ -673,7 +673,7 @@ Dynamic array
 
 ```lily
 fun main =
-    drop val arr [_]Int32 := [];
+    drop: val arr [_]Int32 := [];
     Array.append(ref arr, [1, 2, 3]) // append new elements
 end
 ```
@@ -741,7 +741,7 @@ I think `move` value is better than copy value because it avoid to write program
 
 ```lily
 fun main =
-    drop val x *Int32 := Ptr.new(20); // you must specifie drop except when you precise to the compiler that the drops are automaticly manage by the compiler
+    drop: val x *Int32 := Ptr.new(20); // you must specifie drop except when you precise to the compiler that the drops are automaticly manage by the compiler
     val y *Int32 := nil; // error in safe mode
 
     unsafe =
@@ -773,7 +773,7 @@ fun add(x ref Int32) ref Int32 = x;
 
 fun main =
     val x Int32 := 20;
-    ref val y Int32 := add(ref x); // Int32 -> ref Int32 = Int32* in C
+    ref: val y Int32 := add(ref x); // Int32 -> ref Int32 = Int32* in C
     // the value (x) is available in this scope, so the value (y) is available
     // or
     // val y ref Int32 := add(&x)
@@ -815,7 +815,7 @@ end
 
 fun main =
     val p := Person { name: "John", age: 20 };
-    ref val name := ref p |> get_name; 
+    ref: val name := ref p |> get_name;
     // both reference values are available in the actual scope
 end
 ```
