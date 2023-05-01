@@ -8527,9 +8527,10 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
 
         if (block) {
             if (block->kind == LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS) {
-                switch (self->current->kind) {
+                switch (
+                  CAST(LilyToken *, get__Vec(self->tokens, self->position - 1))
+                    ->kind) {
                     case LILY_TOKEN_KIND_SEMICOLON:
-                        next_token__LilyPreparser(self);
                         break;
                     default:
                         emit__Diagnostic(
