@@ -121,6 +121,7 @@ set(CORE_SRC
 	src/core/lily/ast/stmt/if.c
 	src/core/lily/ast/stmt/match.c
 	src/core/lily/ast/stmt/next.c
+	src/core/lily/ast/stmt/raise.c
 	src/core/lily/ast/stmt/return.c
 	src/core/lily/ast/stmt/try.c
 	src/core/lily/ast/stmt/variable.c
