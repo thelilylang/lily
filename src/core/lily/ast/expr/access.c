@@ -66,6 +66,11 @@ static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
 
 // Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_SELF).
 static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
+                                 Self,
+                                 const LilyAstExprAccess *self);
+
+// Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_self).
+static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
                                  self,
                                  const LilyAstExprAccess *self);
 
@@ -138,6 +143,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT";
         case LILY_AST_EXPR_ACCESS_KIND_SELF:
             return "LILY_AST_EXPR_ACCESS_KIND_SELF";
+        case LILY_AST_EXPR_ACCESS_KIND_self:
+            return "LILY_AST_EXPR_ACCESS_KIND_self";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -185,6 +192,11 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self)
               to_string__Debug__LilyAstExprAccessKind(self->kind),
               to_string__Debug__LilyAstExpr(self->property_init));
         case LILY_AST_EXPR_ACCESS_KIND_SELF:
+            return format__String(
+              "LilyAstExprAccess{{ kind = {s}, Self = {Sr} }",
+              to_string__Debug__LilyAstExprAccessKind(self->kind),
+              to_string__Debug__LilyAstExpr(self->Self));
+        case LILY_AST_EXPR_ACCESS_KIND_self:
             return format__String(
               "LilyAstExprAccess{{ kind = {s}, self = {Sr} }",
               to_string__Debug__LilyAstExprAccessKind(self->kind),
@@ -239,6 +251,9 @@ to_string__LilyAstExprAccess(const LilyAstExprAccess *self)
             return format__String("@.{Sr}",
                                   to_string__LilyAstExpr(self->property_init));
         case LILY_AST_EXPR_ACCESS_KIND_SELF:
+            return format__String("Self.{Sr}",
+                                  to_string__LilyAstExpr(self->self));
+        case LILY_AST_EXPR_ACCESS_KIND_self:
             return format__String("self.{Sr}",
                                   to_string__LilyAstExpr(self->self));
         default:
@@ -274,6 +289,11 @@ VARIANT_DESTRUCTOR(LilyAstExprAccess,
     FREE(LilyAstExpr, self->property_init);
 }
 
+VARIANT_DESTRUCTOR(LilyAstExprAccess, Self, const LilyAstExprAccess *self)
+{
+    FREE(LilyAstExpr, self->Self);
+}
+
 VARIANT_DESTRUCTOR(LilyAstExprAccess, self, const LilyAstExprAccess *self)
 {
     FREE(LilyAstExpr, self->self);
@@ -298,6 +318,9 @@ DESTRUCTOR(LilyAstExprAccess, const LilyAstExprAccess *self)
             FREE_VARIANT(LilyAstExprAccess, property_init, self);
             break;
         case LILY_AST_EXPR_ACCESS_KIND_SELF:
+            FREE_VARIANT(LilyAstExprAccess, Self, self);
+            break;
+        case LILY_AST_EXPR_ACCESS_KIND_self:
             FREE_VARIANT(LilyAstExprAccess, self, self);
             break;
         default:

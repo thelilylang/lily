@@ -65,6 +65,11 @@ static inline VARIANT_DESTRUCTOR(LilyCheckedExprAccess,
 
 // Free LilyCheckedExprAccess type (LILY_CHECKED_EXPR_ACCESS_KIND_SELF).
 static inline VARIANT_DESTRUCTOR(LilyCheckedExprAccess,
+                                 Self,
+                                 const LilyCheckedExprAccess *self);
+
+// Free LilyCheckedExprAccess type (LILY_CHECKED_EXPR_ACCESS_KIND_self).
+static inline VARIANT_DESTRUCTOR(LilyCheckedExprAccess,
                                  self,
                                  const LilyCheckedExprAccess *self);
 
@@ -136,6 +141,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_EXPR_ACCESS_KIND_PROPERTY_INIT";
         case LILY_CHECKED_EXPR_ACCESS_KIND_SELF:
             return "LILY_CHECKED_EXPR_ACCESS_KIND_SELF";
+        case LILY_CHECKED_EXPR_ACCESS_KIND_self:
+            return "LILY_CHECKED_EXPR_ACCESS_KIND_self";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -193,6 +200,12 @@ IMPL_FOR_DEBUG(to_string,
               to_string__Debug__LilyCheckedExpr(self->property_init));
         case LILY_CHECKED_EXPR_ACCESS_KIND_SELF:
             return format__String(
+              "LilyCheckedExprAccess{{ kind = {s}, scope = {sa}, Self = {Sr} }",
+              to_string__Debug__LilyCheckedExprAccessKind(self->kind),
+              to_string__Debug__LilyCheckedScope(&self->scope),
+              to_string__Debug__LilyCheckedExpr(self->Self));
+        case LILY_CHECKED_EXPR_ACCESS_KIND_self:
+            return format__String(
               "LilyCheckedExprAccess{{ kind = {s}, scope = {sa}, self = {Sr} }",
               to_string__Debug__LilyCheckedExprAccessKind(self->kind),
               to_string__Debug__LilyCheckedScope(&self->scope),
@@ -240,6 +253,13 @@ VARIANT_DESTRUCTOR(LilyCheckedExprAccess,
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedExprAccess,
+                   Self,
+                   const LilyCheckedExprAccess *self)
+{
+    FREE(LilyCheckedExpr, self->Self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedExprAccess,
                    self,
                    const LilyCheckedExprAccess *self)
 {
@@ -260,6 +280,8 @@ DESTRUCTOR(LilyCheckedExprAccess, const LilyCheckedExprAccess *self)
         case LILY_CHECKED_EXPR_ACCESS_KIND_PROPERTY_INIT:
             FREE_VARIANT(LilyCheckedExprAccess, property_init, self);
         case LILY_CHECKED_EXPR_ACCESS_KIND_SELF:
+            FREE_VARIANT(LilyCheckedExprAccess, Self, self);
+        case LILY_CHECKED_EXPR_ACCESS_KIND_self:
             FREE_VARIANT(LilyCheckedExprAccess, self, self);
         default:
             UNREACHABLE("unknown variant");

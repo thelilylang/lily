@@ -41,6 +41,7 @@ enum LilyCheckedExprAccessKind
     LILY_CHECKED_EXPR_ACCESS_KIND_PATH,
     LILY_CHECKED_EXPR_ACCESS_KIND_PROPERTY_INIT,
     LILY_CHECKED_EXPR_ACCESS_KIND_SELF,
+    LILY_CHECKED_EXPR_ACCESS_KIND_self
 };
 
 typedef struct LilyCheckedExprAccessHook
@@ -118,6 +119,7 @@ typedef struct LilyCheckedExprAccess
         Vec *path; // Vec<LilyCheckedExpr*>*
         LilyCheckedExpr *property_init;
         LilyCheckedExpr *self;
+        LilyCheckedExpr *Self;
     };
 } LilyCheckedExprAccess;
 
@@ -211,11 +213,26 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprAccess,
  */
 inline VARIANT_CONSTRUCTOR(LilyCheckedExprAccess,
                            LilyCheckedExprAccess,
+                           Self,
+                           LilyCheckedScope scope,
+                           LilyCheckedExpr *Self)
+{
+    return (LilyCheckedExprAccess){ .kind = LILY_CHECKED_EXPR_ACCESS_KIND_SELF,
+                                    .scope = scope,
+                                    .Self = Self };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprAccess type (LILY_AST_EXPR_ACCESS_KIND_self).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprAccess,
+                           LilyCheckedExprAccess,
                            self,
                            LilyCheckedScope scope,
                            LilyCheckedExpr *self)
 {
-    return (LilyCheckedExprAccess){ .kind = LILY_CHECKED_EXPR_ACCESS_KIND_SELF,
+    return (LilyCheckedExprAccess){ .kind = LILY_CHECKED_EXPR_ACCESS_KIND_self,
                                     .scope = scope,
                                     .self = self };
 }

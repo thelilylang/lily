@@ -39,6 +39,7 @@ enum LilyAstExprAccessKind
     LILY_AST_EXPR_ACCESS_KIND_PATH,
     LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT,
     LILY_AST_EXPR_ACCESS_KIND_SELF,
+    LILY_AST_EXPR_ACCESS_KIND_self
 };
 
 typedef struct LilyAstExprAccessHook
@@ -114,6 +115,7 @@ typedef struct LilyAstExprAccess
         LilyAstExprAccessObject object;
         Vec *path; // Vec<LilyAstExpr*>*
         LilyAstExpr *property_init;
+        LilyAstExpr *Self;
         LilyAstExpr *self;
     };
 } LilyAstExprAccess;
@@ -190,10 +192,23 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
+                           Self,
+                           LilyAstExpr *Self)
+{
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_SELF,
+                                .Self = Self };
+}
+
+/**
+ *
+ * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_self).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
+                           LilyAstExprAccess,
                            self,
                            LilyAstExpr *self)
 {
-    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_SELF,
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_self,
                                 .self = self };
 }
 
