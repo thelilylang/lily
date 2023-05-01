@@ -28,4 +28,7 @@ if __name__ == "__main__":
 
         print_summary(success, failed)
 
+    if failed > 0:
+        exit(1)
+
     print("")
