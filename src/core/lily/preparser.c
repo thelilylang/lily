@@ -10003,8 +10003,8 @@ preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
         push__Vec(multiple,
                   NEW(LilyPreparserConstantInfo,
                       get__Vec(names, i),
-                      get__Vec(data_types, i),
                       get__Vec(exprs, i),
+                      get__Vec(data_types, i),
                       visibility));
     }
 
