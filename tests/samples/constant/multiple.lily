@@ -1,0 +1,4 @@
+val (A Int32, B Int32) := (340, 400);
+
+fun main =
+end

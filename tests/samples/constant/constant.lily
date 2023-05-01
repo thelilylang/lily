@@ -1,0 +1,4 @@
+val A Int32 := 30;
+
+fun main =
+end
