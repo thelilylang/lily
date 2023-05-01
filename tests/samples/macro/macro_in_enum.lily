@@ -1,0 +1,11 @@
+macro variant($i id) = {
+    {{i}};
+};
+
+type Letter enum =
+    variant!(A);
+    variant!(B);
+end
+
+fun main =
+end

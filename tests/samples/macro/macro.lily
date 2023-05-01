@@ -1,0 +1,9 @@
+macro fn($i id, $v expr) = {
+	fun {{i}} = {{v}} end 
+};
+
+fn!(zero, 0);
+
+fun main =
+    _ = zero()
+end

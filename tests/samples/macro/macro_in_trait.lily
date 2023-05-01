@@ -1,0 +1,10 @@
+macro prototype($i id, $params tks, $ret dt) = {
+	fun {{i}}({{params}}) {{ret}};
+};
+
+object Clone trait =
+	prototype!(clone, ${ref Self}, Self);
+end
+
+fun main =
+end

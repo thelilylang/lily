@@ -1,0 +1,11 @@
+macro field($i id, $t dt) = {
+    {{i}} {{t}};
+};
+
+type Person record =
+    field!(name, Str);
+    field!(age, Uint8);
+end
+
+fun main =
+end
