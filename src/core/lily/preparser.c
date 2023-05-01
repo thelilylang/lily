@@ -8824,8 +8824,8 @@ must_preparse_exprs(LilyPreparser *self)
                 return false;
             case LILY_TOKEN_KIND_KEYWORD_REF:
             case LILY_TOKEN_KIND_KEYWORD_TRACE:
-                return peeked->kind != LILY_TOKEN_KIND_KEYWORD_VAL &&
-                       peeked->kind != LILY_TOKEN_KIND_KEYWORD_MUT;
+            case LILY_TOKEN_KIND_KEYWORD_DROP:
+                return peeked->kind != LILY_TOKEN_KIND_COLON;
             default:
                 return true;
         }
@@ -8914,6 +8914,8 @@ preparse_block__LilyPreparser(LilyPreparser *self,
             return preparse_defer_block__LilyPreparser(self);
 
         /*
+           drop: val <name> [data_type] := <expr>;
+           drop: mut <name> [data_type] := <expr>;
            drop <expr|stmt>;
         */
         case LILY_TOKEN_KIND_KEYWORD_DROP: {
@@ -8921,18 +8923,40 @@ preparse_block__LilyPreparser(LilyPreparser *self,
 
             if (peeked) {
                 switch (peeked->kind) {
-                    case LILY_TOKEN_KIND_KEYWORD_VAL:
+                    case LILY_TOKEN_KIND_COLON:
                         jump__LilyPreparser(self, 2);
 
-                        return preparse_variable_block__LilyPreparser(
-                          self, false, false, false, true);
-                    case LILY_TOKEN_KIND_KEYWORD_MUT:
-                        jump__LilyPreparser(self, 2);
+                        switch (self->current->kind) {
+                            case LILY_TOKEN_KIND_KEYWORD_VAL:
+                                next_token__LilyPreparser(self);
 
-                        return preparse_variable_block__LilyPreparser(
-                          self, true, false, false, true);
+                                return preparse_variable_block__LilyPreparser(
+                                  self, false, false, false, true);
+                            case LILY_TOKEN_KIND_KEYWORD_MUT:
+                                next_token__LilyPreparser(self);
+
+                                return preparse_variable_block__LilyPreparser(
+                                  self, true, false, false, true);
+                            default:
+                                emit__Diagnostic(
+                                  NEW_VARIANT(
+                                    Diagnostic,
+                                    simple_lily_error,
+                                    self->file,
+                                    &self->current->location,
+                                    NEW(LilyError,
+                                        LILY_ERROR_KIND_EXPECTED_TOKEN),
+                                    NULL,
+                                    NULL,
+                                    from__String(
+                                      "expected `val` or `mut` keyword")),
+                                  &self->count_error);
+
+                                return preparse_variable_block__LilyPreparser(
+                                  self, false, false, true, false);
+                        }
                     default:
-                        break;
+                        goto preparse_exprs;
                 }
             }
 
@@ -9012,34 +9036,52 @@ preparse_block__LilyPreparser(LilyPreparser *self,
             return preparse_while_block__LilyPreparser(self);
 
         /*
-            ref val <name> [data_type] := <expr>;
-            ref mut <name> [data_type] := <expr>;
+            ref: val <name> [data_type] := <expr>;
+            ref: mut <name> [data_type] := <expr>;
         */
         case LILY_TOKEN_KIND_KEYWORD_REF: {
             LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
             if (peeked) {
                 switch (peeked->kind) {
-                    case LILY_TOKEN_KIND_KEYWORD_VAL:
+                    case LILY_TOKEN_KIND_COLON:
                         jump__LilyPreparser(self, 2);
 
-                        return preparse_variable_block__LilyPreparser(
-                          self, false, false, true, false);
+                        switch (self->current->kind) {
+                            case LILY_TOKEN_KIND_KEYWORD_VAL:
+                                next_token__LilyPreparser(self);
 
-                    case LILY_TOKEN_KIND_KEYWORD_MUT:
-                        jump__LilyPreparser(self, 2);
+                                return preparse_variable_block__LilyPreparser(
+                                  self, false, false, true, false);
+                            case LILY_TOKEN_KIND_KEYWORD_MUT:
+                                next_token__LilyPreparser(self);
 
-                        return preparse_variable_block__LilyPreparser(
-                          self, true, false, true, false);
+                                return preparse_variable_block__LilyPreparser(
+                                  self, true, false, true, false);
+                            default:
+                                emit__Diagnostic(
+                                  NEW_VARIANT(
+                                    Diagnostic,
+                                    simple_lily_error,
+                                    self->file,
+                                    &self->current->location,
+                                    NEW(LilyError,
+                                        LILY_ERROR_KIND_EXPECTED_TOKEN),
+                                    NULL,
+                                    NULL,
+                                    from__String(
+                                      "expected `val` or `mut` keyword")),
+                                  &self->count_error);
 
+                                return preparse_variable_block__LilyPreparser(
+                                  self, false, false, true, false);
+                        }
                     default:
                         goto preparse_exprs;
                 }
             } else {
                 goto preparse_exprs;
             }
-
-            break;
         }
 
         /*
@@ -9052,34 +9094,52 @@ preparse_block__LilyPreparser(LilyPreparser *self,
               self, true, false, false, false);
 
         /*
-            trace val <name> [data_type] := <expr>;
-            trace mut <name> [data_type] := <expr>;
+            trace: val <name> [data_type] := <expr>;
+            trace: mut <name> [data_type] := <expr>;
         */
         case LILY_TOKEN_KIND_KEYWORD_TRACE: {
             LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
             if (peeked) {
                 switch (peeked->kind) {
-                    case LILY_TOKEN_KIND_KEYWORD_VAL:
+                    case LILY_TOKEN_KIND_COLON:
                         jump__LilyPreparser(self, 2);
 
-                        return preparse_variable_block__LilyPreparser(
-                          self, false, true, false, false);
+                        switch (self->current->kind) {
+                            case LILY_TOKEN_KIND_KEYWORD_VAL:
+                                next_token__LilyPreparser(self);
 
-                    case LILY_TOKEN_KIND_KEYWORD_MUT:
-                        jump__LilyPreparser(self, 2);
+                                return preparse_variable_block__LilyPreparser(
+                                  self, false, true, false, false);
+                            case LILY_TOKEN_KIND_KEYWORD_MUT:
+                                next_token__LilyPreparser(self);
 
-                        return preparse_variable_block__LilyPreparser(
-                          self, true, true, false, false);
+                                return preparse_variable_block__LilyPreparser(
+                                  self, true, true, false, false);
+                            default:
+                                emit__Diagnostic(
+                                  NEW_VARIANT(
+                                    Diagnostic,
+                                    simple_lily_error,
+                                    self->file,
+                                    &self->current->location,
+                                    NEW(LilyError,
+                                        LILY_ERROR_KIND_EXPECTED_TOKEN),
+                                    NULL,
+                                    NULL,
+                                    from__String(
+                                      "expected `val` or `mut` keyword")),
+                                  &self->count_error);
 
+                                return preparse_variable_block__LilyPreparser(
+                                  self, false, false, true, false);
+                        }
                     default:
                         goto preparse_exprs;
                 }
             } else {
                 goto preparse_exprs;
             }
-
-            break;
         }
 
         /*
