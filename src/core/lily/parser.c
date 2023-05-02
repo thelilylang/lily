@@ -5126,7 +5126,7 @@ parse_method_param__LilyParseBlock(LilyParseBlock *self)
             next_token__LilyParseBlock(self);
 
             switch (self->current->kind) {
-                case LILY_TOKEN_KIND_KEYWORD_SELF:
+                case LILY_TOKEN_KIND_KEYWORD_self:
                     END_LOCATION(&location, self->current->location);
                     next_token__LilyParseBlock(self);
 
@@ -5168,7 +5168,7 @@ parse_method_param__LilyParseBlock(LilyParseBlock *self)
             next_token__LilyParseBlock(self);
 
             switch (self->current->kind) {
-                case LILY_TOKEN_KIND_KEYWORD_SELF:
+                case LILY_TOKEN_KIND_KEYWORD_self:
                     END_LOCATION(&location, self->current->location);
                     next_token__LilyParseBlock(self);
 
@@ -5195,7 +5195,7 @@ parse_method_param__LilyParseBlock(LilyParseBlock *self)
                     next_token__LilyParseBlock(self);
 
                     switch (self->current->kind) {
-                        case LILY_TOKEN_KIND_KEYWORD_SELF:
+                        case LILY_TOKEN_KIND_KEYWORD_self:
                             END_LOCATION(&location, self->current->location);
                             next_token__LilyParseBlock(self);
 
@@ -5250,7 +5250,7 @@ parse_method_param__LilyParseBlock(LilyParseBlock *self)
 
                     return NULL;
             }
-        case LILY_TOKEN_KIND_KEYWORD_SELF:
+        case LILY_TOKEN_KIND_KEYWORD_self:
             END_LOCATION(&location, self->current->location);
             next_token__LilyParseBlock(self);
 
