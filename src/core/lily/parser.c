@@ -5094,9 +5094,11 @@ parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
     }
 
     // 2. Parse params
-    Vec *params = NULL; // Vec<LilyAstDeclFunParam>*?
+    Vec *params = NULL; // Vec<LilyAstDeclFunParam*|LilyAstDeclMethodParam*>*?
 
-    if (decl->fun.params) {
+    if (decl->fun.params && decl->fun.object_impl) {
+        params = parse_method_params__LilyParser(self, decl->fun.params);
+    } else if (decl->fun.params && !decl->fun.object_impl) {
         params = parse_fun_params__LilyParser(self, decl->fun.params);
     }
 
@@ -5165,6 +5167,7 @@ parse_fun_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                        decl->location,
                        NEW(LilyAstDeclFun,
                            decl->fun.name,
+                           decl->fun.object_impl,
                            generic_params,
                            params,
                            return_data_type,
