@@ -1,0 +1,5 @@
+fun main =
+	val l := {1, 2, 3};
+	l = 0 -> l
+	l = -1 -> l
+end

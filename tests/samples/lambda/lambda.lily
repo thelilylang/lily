@@ -1,0 +1,9 @@
+fun main =
+	val add := (fun (x, y) -> x + y);
+	val sub := (fun (x, y) -> x - y);
+
+	val is_zero := (fun (x) -> match x do
+		0 => true;
+		_ => false;
+	end);
+end

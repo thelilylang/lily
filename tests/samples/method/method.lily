@@ -1,0 +1,10 @@
+object Animal class =
+	val name Str;
+end
+
+fun@Animal get_name(ref self) Str =
+	return self.name;
+end
+
+fun main =
+end

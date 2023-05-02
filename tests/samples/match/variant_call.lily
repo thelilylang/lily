@@ -1,0 +1,15 @@
+type Letter enum =
+	A;
+	B;
+	C;
+end
+
+fun main =
+	val l := Letter.A;
+
+	match l do
+		A:$ => ();
+		B:$ => ();
+		C:$ => ();
+	end
+end

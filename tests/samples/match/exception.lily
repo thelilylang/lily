@@ -1,0 +1,16 @@
+error Failed:Str;
+
+fun is_err(x) =
+	if x do
+		raise Failed:"error";
+	end
+
+	0
+end
+
+fun main =
+	match is_err(true) do
+		error Failed:_ => ();
+		0 => ();
+	end
+end
