@@ -36,14 +36,14 @@ IMPL_FOR_DEBUG(to_string,
 {
     if (self->pattern) {
         return format__String(
-        "LilyAstPatternException{{ name = {Sr}, pattern = {Sr} }",
-        to_string__Debug__LilyAstExpr(self->id),
-        to_string__Debug__LilyAstPattern(self->pattern));
+          "LilyAstPatternException{{ name = {Sr}, pattern = {Sr} }",
+          to_string__Debug__LilyAstExpr(self->id),
+          to_string__Debug__LilyAstPattern(self->pattern));
     }
 
     return format__String(
-        "LilyAstPatternException{{ name = {Sr}, pattern = NULL }",
-        to_string__Debug__LilyAstExpr(self->id));
+      "LilyAstPatternException{{ name = {Sr}, pattern = NULL }",
+      to_string__Debug__LilyAstExpr(self->id));
 }
 #endif
 
