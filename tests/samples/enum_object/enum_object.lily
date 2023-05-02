@@ -1,0 +1,7 @@
+object Animal enum =
+	Cat;
+	Dog;
+end
+
+fun main =
+end

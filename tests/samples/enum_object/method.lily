@@ -1,0 +1,14 @@
+object Animal enum =
+	Cat;
+	Dog;
+
+	fun is_cat(ref self) =
+		match ref self do
+			Self.Cat:$ => true;
+			_ => false;
+		end
+	end
+end
+
+fun main =
+end

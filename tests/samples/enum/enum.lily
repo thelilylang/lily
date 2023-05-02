@@ -1,0 +1,8 @@
+type Letter enum =
+	A;
+	B;
+	C;
+end
+
+fun main =
+end
