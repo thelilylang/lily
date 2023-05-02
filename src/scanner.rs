@@ -1,6 +1,6 @@
 use crate::keyword;
 use crate::location::Location;
-use crate::token::{Keyword, LiteralConstant, Token, TokenKind};
+use crate::token::{Comment, Keyword, LiteralConstant, Token, TokenKind};
 
 use std::fs;
 
@@ -213,6 +213,23 @@ impl<'a> Scanner<'a> {
         )
     }
 
+    fn scan_comment_line(&mut self) -> Token<'a> {
+        let mut s = String::new();
+
+        self.jump(2);
+
+        while self.cursor.current.is_whitespace() && self.cursor.current != '\n' {
+            self.next();
+        }
+
+        while self.cursor.current != '\n' {
+            s.push(self.cursor.current);
+            self.next();
+        }
+
+        Token::new(TokenKind::Comment(Comment::Line(s)), self.location.clone())
+    }
+
     fn get_token(&mut self) -> Token<'a> {
         self.location.start(self.line, self.column);
 
@@ -241,6 +258,7 @@ impl<'a> Scanner<'a> {
             ('&', _, _) => Token::new(TokenKind::Ampersand, self.location.clone()),
             ('*', Some('='), _) => Token::new(TokenKind::StarEq, self.location.clone()),
             ('*', _, _) => Token::new(TokenKind::Star, self.location.clone()),
+            ('/', Some('/'), _) => self.scan_comment_line(),
             ('/', Some('='), _) => Token::new(TokenKind::SlashEq, self.location.clone()),
             ('/', _, _) => Token::new(TokenKind::Slash, self.location.clone()),
             ('%', Some('='), _) => Token::new(TokenKind::PercentageEq, self.location.clone()),
@@ -270,7 +288,7 @@ impl<'a> Scanner<'a> {
             ('~', _, _) => Token::new(TokenKind::Wave, self.location.clone()),
             ('a'..='z', _, _) | ('A'..='Z', _, _) | ('_', _, _) => self.scan_id(),
             ('0', _, _) => todo!("hex, oct, bin, float, int"),
-            ('1' ..= '9', _, _) => todo!("int, float"),
+            ('1'..='9', _, _) => todo!("int, float"),
             ('\"', _, _) => self.scan_string(),
             ('\'', _, _) => {
                 self.next();

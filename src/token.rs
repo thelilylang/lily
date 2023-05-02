@@ -90,9 +90,12 @@ pub enum LiteralConstant {
 impl ToString for LiteralConstant {
     fn to_string(&self) -> String {
         match &self {
-            Self::Int(s) | Self::Float(s) | Self::Octal(s) | Self::Hex(s) | Self::Bin(s) | Self::String(s) => {
-                s.clone()
-            }
+            Self::Int(s)
+            | Self::Float(s)
+            | Self::Octal(s)
+            | Self::Hex(s)
+            | Self::Bin(s)
+            | Self::String(s) => s.clone(),
             Self::Character(c) => format!("{}", c),
         }
     }
