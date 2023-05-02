@@ -10513,6 +10513,8 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                         }
                     }
                 }
+
+                break;
             }
             case LILY_TOKEN_KIND_KEYWORD_VAL: {
                 LilyPreparserClassBodyItem *attribute =
