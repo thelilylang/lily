@@ -5,3 +5,4 @@
 /cmake-build-debug
 /.vc
 /out
+/src/core/cc/comptime_gen/target
