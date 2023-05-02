@@ -1,0 +1,25 @@
+{
+  "name": "lily",
+  "displayName": "lily",
+  "description": "The Lily programming language",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.77.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "lily",
+      "aliases": ["Lily", "lily"],
+      "extensions": [".lily"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "lily",
+      "scopeName": "main.lily lib.lily",
+      "path": "./syntaxes/lily.tmLanguage.json"
+    }]
+  }
+}
