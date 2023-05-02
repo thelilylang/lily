@@ -1,0 +1,6 @@
+type Container[T] record =
+	T value;
+end
+
+fun main =
+end

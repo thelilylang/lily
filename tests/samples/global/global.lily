@@ -1,0 +1,5 @@
+fun add(x) = x end
+
+fun main =
+	_ = global.add(3)
+end

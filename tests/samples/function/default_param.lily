@@ -1,0 +1,4 @@
+fun add(x := 0, y := 0) = x + y end
+
+fun main =
+end

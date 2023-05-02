@@ -1,0 +1,6 @@
+fun main =
+	val h := 0xff;
+	val o := 0o33;
+	val b := 0b10;
+	val i := 1_000;
+end
