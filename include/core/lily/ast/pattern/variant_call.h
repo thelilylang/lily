@@ -32,7 +32,7 @@ typedef struct LilyAstPattern LilyAstPattern;
 typedef struct LilyAstPatternVariantCall
 {
     LilyAstExpr *id;
-    LilyAstPattern *pattern;
+    LilyAstPattern *pattern; // LilyAstPattern*?
 } LilyAstPatternVariantCall;
 
 /**
