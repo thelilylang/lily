@@ -1,0 +1,12 @@
+object A class =
+	fun new() = end
+end
+
+object inherit A in B class =
+	fun new() = end
+end
+
+fun main =
+	val b := B.new();
+	val a := b cast A;
+end

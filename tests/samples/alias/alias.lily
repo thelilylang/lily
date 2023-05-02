@@ -1,0 +1,4 @@
+type MyInt alias = Int32;
+
+fun main =
+end
