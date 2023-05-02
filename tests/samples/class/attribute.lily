@@ -1,0 +1,7 @@
+object Person class =
+	val name Str;
+	val age Uint8;
+end
+
+fun main =
+end

@@ -1,0 +1,8 @@
+object Animal trait =
+end
+
+object impl Animal in Cat class =
+end
+
+fun main =
+end

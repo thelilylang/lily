@@ -1,9 +1,9 @@
 object A class =
-	fun new() = end
+	fun new = end
 end
 
 object inherit A in B class =
-	fun new() = end
+	fun new = end
 end
 
 fun main =

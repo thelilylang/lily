@@ -1,0 +1,6 @@
+object Math class =
+	val pi Float32 := 3;
+end
+
+fun main =
+end

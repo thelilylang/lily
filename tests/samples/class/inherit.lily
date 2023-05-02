@@ -1,0 +1,17 @@
+object A class =
+	fun new = end
+end
+
+object B class =
+	fun new = end
+end
+
+object inherit [A, B] in C class =
+	fun new = end
+end
+
+fun main =
+	val c := C.new();
+	val a := c cast A;
+	val b := c cast B;
+end
