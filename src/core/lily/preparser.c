@@ -9436,7 +9436,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
                           self->current->identifier_normal->buffer);
                         next_token__LilyPreparser(self);
                     } else {
-                        object_impl = self->current->identifier_normal;
+                        object_impl = clone__String(self->current->identifier_normal);
                         next_token__LilyPreparser(self);
                     }
 
