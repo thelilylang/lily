@@ -209,8 +209,10 @@ DESTRUCTOR(LilyAstDeclMethodParam, LilyAstDeclMethodParam *self)
         case LILY_AST_DECL_METHOD_PARAM_KIND_NORMAL:
             FREE_VARIANT(LilyAstDeclMethodParam, normal, self);
             break;
+        case LILY_AST_DECL_METHOD_PARAM_KIND_REF_MUT_SELF:
         case LILY_AST_DECL_METHOD_PARAM_KIND_MUT_SELF:
         case LILY_AST_DECL_METHOD_PARAM_KIND_SELF:
+        case LILY_AST_DECL_METHOD_PARAM_KIND_REF_SELF:
             lily_free(self);
             break;
         default:
