@@ -29,6 +29,7 @@
 
 #include <core/lily/ast/body/fun.h>
 #include <core/lily/ast/data_type.h>
+#include <core/lily/ast/decl/method.h>
 #include <core/lily/ast/expr.h>
 #include <core/lily/ast/generic_param.h>
 #include <core/lily/visibility.h>
@@ -108,8 +109,9 @@ DESTRUCTOR(LilyAstDeclFunParam, LilyAstDeclFunParam *self);
 typedef struct LilyAstDeclFun
 {
     String *name;
-    Vec *generic_params;               // Vec<LilyAstGenericParam>*?
-    Vec *params;                       // Vec<LilyAstDeclFunParam*>*?
+    String *object_impl; // String*?
+    Vec *generic_params; // Vec<LilyAstGenericParam>*?
+    Vec *params;         // Vec<LilyAstDeclFunParam*|LilyAstDeclMethodParam*>*?
     LilyAstDataType *return_data_type; // LilyAstDataType*?
     Vec *body;                         // Vec<LilyAstBodyFunItem*>*
     Vec *req;                          // Vec<LilyAstExpr*>*?
@@ -128,6 +130,7 @@ typedef struct LilyAstDeclFun
 inline CONSTRUCTOR(LilyAstDeclFun,
                    LilyAstDeclFun,
                    String *name,
+                   String *object_impl,
                    Vec *generic_params,
                    Vec *params,
                    LilyAstDataType *return_data_type,
@@ -141,6 +144,7 @@ inline CONSTRUCTOR(LilyAstDeclFun,
                    bool when_is_comptime)
 {
     return (LilyAstDeclFun){ .name = name,
+                             .object_impl = object_impl,
                              .params = params,
                              .return_data_type = return_data_type,
                              .body = body,

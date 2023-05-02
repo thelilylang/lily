@@ -175,8 +175,16 @@ DESTRUCTOR(LilyAstDeclFunParam, LilyAstDeclFunParam *self)
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDeclFun, const LilyAstDeclFun *self)
 {
-    String *res = format__String(
-      "LilyAstDeclFun{{ name = {S}, generic_params =", self->name);
+    String *res =
+      format__String("LilyAstDeclFun{{ name = {S}, object_impl = ", self->name);
+
+    if (self->object_impl) {
+        append__String(res, self->object_impl);
+    } else {
+        push_str__String(res, "NULL");
+    }
+
+    push_str__String(res, ", generic_params =");
 
     if (self->generic_params) {
         DEBUG_VEC_STRING(self->generic_params, res, LilyAstGenericParam);
@@ -186,7 +194,9 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclFun, const LilyAstDeclFun *self)
 
     push_str__String(res, ", params =");
 
-    if (self->params) {
+    if (self->params && self->object_impl) {
+        DEBUG_VEC_STRING(self->params, res, LilyAstDeclMethodParam);
+    } else if (self->params && !self->object_impl) {
         DEBUG_VEC_STRING(self->params, res, LilyAstDeclFunParam);
     } else {
         push_str__String(res, " NULL");
@@ -248,7 +258,12 @@ DESTRUCTOR(LilyAstDeclFun, const LilyAstDeclFun *self)
         FREE(Vec, self->generic_params);
     }
 
-    if (self->params) {
+    if (self->params && self->object_impl) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyAstDeclMethodParam);
+        FREE(Vec, self->params);
+        FREE_MOVE(self->object_impl, FREE(String, self->object_impl));
+    } else if (self->params && !self->object_impl) {
         FREE_BUFFER_ITEMS(
           self->params->buffer, self->params->len, LilyAstDeclFunParam);
         FREE(Vec, self->params);
