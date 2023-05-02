@@ -1,11 +1,15 @@
+mod ast;
+mod generator;
 mod help;
 mod location;
+mod parser;
 mod scanner;
 mod token;
 
 use std::env;
 use std::process::exit;
 
+use generator::Generator;
 use scanner::{Scanner, Source};
 
 fn main() {
@@ -21,6 +25,10 @@ fn main() {
             let mut scanner = Scanner::new(&source);
 
             scanner.run();
+
+            let mut generator = Generator::new(&source, &scanner);
+
+            generator.run();
         }
     }
 }
