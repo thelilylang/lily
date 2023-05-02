@@ -10599,6 +10599,8 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                     return NULL;
                 }
                 }
+
+                break;
             }
             default: {
                 String *current_s = to_string__LilyToken(self->current);
