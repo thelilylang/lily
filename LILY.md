@@ -903,6 +903,50 @@ end
 - All values are moved
 - All values are automatically drop
 
+## Operators
+
+```
++
+and
++=
+&=
+<<=
+|=
+>>=
+/=
+**=
+%=
+*=
+-=
+xor=
+=
+&
+|
+|>
+/
+==
+**
+>=
+>
+<<
+<=
+<
+%
+*
+not=
+or
+>>
+..
+-
+xor
+->
+<-
+[]
+[n..n]
+[n..]
+[..n]
+```
+
 ## Garbage collector (interpreter)
 
 - Concurrent
