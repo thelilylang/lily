@@ -9418,6 +9418,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
     Vec *req = NULL;              // Vec<Vec<LilyToken* (&)>*>*?
     Vec *body = NULL;             // Vec<LilyPreparserFunBodyItem*>*
     Vec *return_data_type = NULL; // Vec<LilyToken* (&)>*?
+    bool is_operator = false;
     bool req_is_comptime = false;
     bool when_is_comptime = false;
 
@@ -9475,6 +9476,13 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
             name = clone__String(self->current->identifier_normal);
             next_token__LilyPreparser(self);
+            break;
+        case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
+            is_operator = true;
+            name = clone__String(self->current->identifier_operator);
+
+            next_token__LilyPreparser(self);
+
             break;
         default:
             emit__Diagnostic(
@@ -9684,7 +9692,6 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
     END_LOCATION(&location, self->current->location);
     next_token__LilyPreparser(self); // skip `end` keyword
 
-    // TODO: Check if the function is an operator.
     // TODO: Check if the function is async.
 
     return NEW_VARIANT(LilyPreparserDecl,
@@ -9701,7 +9708,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
                            when,
                            visibility_decl,
                            false,
-                           false,
+                           is_operator,
                            when_is_comptime,
                            req_is_comptime));
 }
