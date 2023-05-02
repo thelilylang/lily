@@ -34,15 +34,24 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstPatternException,
                const LilyAstPatternException *self)
 {
+    if (self->pattern) {
+        return format__String(
+        "LilyAstPatternException{{ name = {Sr}, pattern = {Sr} }",
+        to_string__Debug__LilyAstExpr(self->id),
+        to_string__Debug__LilyAstPattern(self->pattern));
+    }
+
     return format__String(
-      "LilyAstPatternException{{ name = {Sr}, pattern = {Sr} }",
-      to_string__Debug__LilyAstExpr(self->id),
-      to_string__Debug__LilyAstPattern(self->pattern));
+        "LilyAstPatternException{{ name = {Sr}, pattern = NULL }",
+        to_string__Debug__LilyAstExpr(self->id));
 }
 #endif
 
 DESTRUCTOR(LilyAstPatternException, const LilyAstPatternException *self)
 {
     FREE(LilyAstExpr, self->id);
-    FREE(LilyAstPattern, self->pattern);
+
+    if (self->pattern) {
+        FREE(LilyAstPattern, self->pattern);
+    }
 }

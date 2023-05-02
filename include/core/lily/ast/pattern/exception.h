@@ -34,7 +34,7 @@ typedef struct LilyAstPattern LilyAstPattern;
 typedef struct LilyAstPatternException
 {
     LilyAstExpr *id;
-    LilyAstPattern *pattern;
+    LilyAstPattern *pattern; // LilyAstPattern*?
 } LilyAstPatternException;
 
 /**
