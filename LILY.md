@@ -209,12 +209,12 @@ object Letter enum =
     D;
 end
 
-pub fun@Letter to_string(self) =
-    match self do
-        A => "A";
-        B => "B";
-        C => "C";
-        D => "D";
+pub fun@Letter to_string(ref self) =
+    match ref self do
+        A:$ => "A";
+        B:$ => "B";
+        C:$ => "C";
+        D:$ => "D";
     end
 end
 ```
