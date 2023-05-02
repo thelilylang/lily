@@ -118,11 +118,17 @@ format(const char *fmt, ...)
                             case '.':
                                 TODO("add more precision option");
                                 break;
+                            case '3': {
+                                TODO("add support for {f32}");
+                            }
+                            case '6': {
+                                TODO("add support for {f64}");
+                            }
                             default: {
                                 Float64 f = va_arg(vl, Float64);
                                 char s[24];
 
-                                sprintf(s, "%f", f);
+                                sprintf(s, "%lf", f);
 
                                 PUSH_STR(s);
 
