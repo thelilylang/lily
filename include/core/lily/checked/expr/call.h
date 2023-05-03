@@ -28,15 +28,21 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+#include <core/lily/checked/access.h>
 #include <core/lily/checked/data_type.h>
-#include <core/lily/checked/scope.h>
-
-typedef struct LilyCheckedExpr LilyCheckedExpr;
 
 enum LilyCheckedExprCallKind
 {
+    LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE,
+    LILY_CHECKED_EXPR_CALL_KIND_CLASS,
+    LILY_CHECKED_EXPR_CALL_KIND_CONSTANT,
+    LILY_CHECKED_EXPR_CALL_KIND_ERROR,
+    LILY_CHECKED_EXPR_CALL_KIND_FIELD,
     LILY_CHECKED_EXPR_CALL_KIND_FUN,
+    LILY_CHECKED_EXPR_CALL_KIND_METHOD,
+    LILY_CHECKED_EXPR_CALL_KIND_MODULE,
     LILY_CHECKED_EXPR_CALL_KIND_RECORD,
+    LILY_CHECKED_EXPR_CALL_KIND_VARIABLE,
     LILY_CHECKED_EXPR_CALL_KIND_VARIANT,
 };
 
@@ -52,42 +58,70 @@ IMPL_FOR_DEBUG(to_string,
                enum LilyCheckedExprCallKind self);
 #endif
 
-enum LilyCheckedExprFunParamCallKind
+typedef struct LilyCheckedExprCallError
 {
-    LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_DEFAULT,
-    LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_NORMAL,
+    Vec *params; // Vec<LilyCheckedExpr*>*?
+} LilyCheckedExprCallError;
+
+inline CONSTRUCTOR(LilyCheckedExprCallError,
+                   LilyCheckedExprCallError,
+                   Vec *params)
+{
+    return (LilyCheckedExprCallError){ .params = params };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCallError in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallError,
+               const LilyCheckedExprCallError *self);
+#endif
+
+enum LilyCheckedExprCallFunParamKind
+{
+    LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT,
+    LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT_OVERWRITE,
+    LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_NORMAL,
 };
 
 /**
  *
- * @brief Convert LilyCheckedExprFunParamCallKind in string.
+ * @brief Convert LilyCheckedExprCallFunParamKind in string.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
-               LilyCheckedExprFunParamCallKind,
-               enum LilyCheckedExprFunParamCallKind self);
+               LilyCheckedExprCallFunParamKind,
+               enum LilyCheckedExprCallFunParamKind self);
 #endif
 
-typedef struct LilyCheckedExprFunParamCall
+typedef struct LilyCheckedExprCallFunParam
 {
-    enum LilyCheckedExprFunParamCallKind kind;
-    LilyCheckedExpr *value;
+    enum LilyCheckedExprCallFunParamKind kind;
+    // NOTE: the pointer is a copy when kind is equal to
+    // `LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT`
+    LilyCheckedExpr *value; // LilyCheckedExpr* | LilyCheckedExpr* (&)
     Location location;
     union
     {
         String *default_; // <default_> := <value>
     };
-} LilyCheckedExprFunParamCall;
+} LilyCheckedExprCallFunParam;
 
 /**
  *
- * @brief Construct LilyCheckedExprFunParamCall type
- * (LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_DEFAULT).
+ * @brief Construct LilyCheckedExprCallFunParam type
+ * (LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT).
+ * @param value LilyCheckedExpr* (&)
  */
-VARIANT_CONSTRUCTOR(LilyCheckedExprFunParamCall *,
-                    LilyCheckedExprFunParamCall,
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
+                    LilyCheckedExprCallFunParam,
                     default_,
                     LilyCheckedExpr *value,
                     Location location,
@@ -95,49 +129,51 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprFunParamCall *,
 
 /**
  *
- * @brief Construct LilyCheckedExprFunParamCall type
- * (LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_NORMAL).
+ * @brief Construct LilyCheckedExprCallFunParam type
+ * (LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT_OVERWRITE).
  */
-VARIANT_CONSTRUCTOR(LilyCheckedExprFunParamCall *,
-                    LilyCheckedExprFunParamCall,
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
+                    LilyCheckedExprCallFunParam,
+                    default_overwrite,
+                    LilyCheckedExpr *value,
+                    Location location,
+                    String *default_);
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCallFunParam type
+ * (LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_NORMAL).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
+                    LilyCheckedExprCallFunParam,
                     normal,
                     LilyCheckedExpr *value,
                     Location location);
 
 /**
  *
- * @brief Convert LilyCheckedExprFunParamCall in String.
+ * @brief Convert LilyCheckedExprCallFunParam in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
-               LilyCheckedExprFunParamCall,
-               const LilyCheckedExprFunParamCall *self);
+               LilyCheckedExprCallFunParam,
+               const LilyCheckedExprCallFunParam *self);
 #endif
-
-/**
- *
- * @brief Free LilyCheckedExprFunParamCall type.
- */
-DESTRUCTOR(LilyCheckedExprFunParamCall, LilyCheckedExprFunParamCall *self);
 
 typedef struct LilyCheckedExprCallFun
 {
-    LilyCheckedExpr *id;
-    Vec *params; // Vec<LilyCheckedExprFunParamCall*>*
+    Vec *params; // Vec<LilyCheckedExprCallFunParam*>*
 } LilyCheckedExprCallFun;
 
 /**
  *
  * @brief Construct LilyCheckedExprCallFun type.
  */
-inline CONSTRUCTOR(LilyCheckedExprCallFun,
-                   LilyCheckedExprCallFun,
-                   LilyCheckedExpr *id,
-                   Vec *params)
+inline CONSTRUCTOR(LilyCheckedExprCallFun, LilyCheckedExprCallFun, Vec *params)
 {
-    return (LilyCheckedExprCallFun){ .id = id, .params = params };
+    return (LilyCheckedExprCallFun){ .params = params };
 }
 
 /**
@@ -152,50 +188,164 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedExprCallFun *self);
 #endif
 
-/**
- *
- * @brief Free LilyCheckedExprCallFun type.
- */
-DESTRUCTOR(LilyCheckedExprCallFun, const LilyCheckedExprCallFun *self);
-
-typedef struct LilyCheckedExprRecordParamCall
+enum LilyCheckedExprCallMethodParamKind
 {
-    String *name;
-    LilyCheckedExpr *value;
-} LilyCheckedExprRecordParamCall;
+    LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT,
+    LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT_OVERWRITE,
+    LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_NORMAL,
+    LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_SELF,
+    LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_REF_SELF,
+    LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_MUT_SELF,
+    LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_REF_MUT_SELF
+};
 
 /**
  *
- * @brief Construct LilyCheckedExprRecordParamCall type.
+ * @brief Convert LilyCheckedExprCallMethodParamKind in string.
+ * @note This function is only used to debug.
  */
-CONSTRUCTOR(LilyCheckedExprRecordParamCall *,
-            LilyCheckedExprRecordParamCall,
-            String *name,
-            LilyCheckedExpr *value);
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallMethodParamKind,
+               enum LilyCheckedExprCallMethodParamKind self);
+#endif
+
+typedef struct LilyCheckedExprCallMethodParam
+{
+    enum LilyCheckedExprCallMethodParamKind kind;
+    // NOTE: the pointer is a copy when kind is equal to
+    // `LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT`
+    LilyCheckedExpr *value; // LilyCheckedExpr*? | LilyCheckedExpr* (&)
+    Location location;
+    union
+    {
+        String *default_; // <default_> := <value>
+    };
+} LilyCheckedExprCallMethodParam;
 
 /**
  *
- * @brief Convert LilyCheckedExprRecordParamCall in String.
+ * @brief Construct LilyCheckedExprCallMethodParam type
+ * (LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT).
+ * @param value LilyCheckedExpr* (&)
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallMethodParam *,
+                    LilyCheckedExprCallMethodParam,
+                    default_,
+                    LilyCheckedExpr *value,
+                    Location location,
+                    String *default_);
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCallMethodParam type
+ * (LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT_OVERWRITE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallMethodParam *,
+                    LilyCheckedExprCallMethodParam,
+                    default_overwrite,
+                    LilyCheckedExpr *value,
+                    Location location,
+                    String *default_);
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCallMethodParam type
+ * (LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_NORMAL).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallMethodParam *,
+                    LilyCheckedExprCallMethodParam,
+                    normal,
+                    LilyCheckedExpr *value,
+                    Location location);
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCallMethodParam type.
+ */
+CONSTRUCTOR(LilyCheckedExprCallMethodParam *,
+            LilyCheckedExprCallMethodParam,
+            enum LilyCheckedExprCallMethodParamKind kind,
+            Location location);
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCallMethodParam in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
-               LilyCheckedExprRecordParamCall,
-               const LilyCheckedExprRecordParamCall *self);
+               LilyCheckedExprCallMethodParam,
+               const LilyCheckedExprCallMethodParam *self);
+#endif
+
+typedef struct LilyCheckedExprCallMethod
+{
+    Vec *params; // Vec<LilyCheckedExprCallMethodParam*>*
+} LilyCheckedExprCallMethod;
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCallMethod type.
+ */
+inline CONSTRUCTOR(LilyCheckedExprCallMethod,
+                   LilyCheckedExprCallMethod,
+                   Vec *params)
+{
+    return (LilyCheckedExprCallMethod){ .params = params };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCallMethod in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallMethod,
+               const LilyCheckedExprCallMethod *self);
+#endif
+
+typedef struct LilyCheckedExprCallRecordParam
+{
+    String *name;
+    LilyCheckedExpr *value;
+} LilyCheckedExprCallRecordParam;
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCallRecordParam type.
+ */
+CONSTRUCTOR(LilyCheckedExprCallRecordParam *,
+            LilyCheckedExprCallRecordParam,
+            String *name,
+            LilyCheckedExpr *value);
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCallRecordParam in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallRecordParam,
+               const LilyCheckedExprCallRecordParam *self);
 #endif
 
 /**
  *
- * @brief Free LilyCheckedExprRecordParamCall type.
+ * @brief Free LilyCheckedExprCallRecordParam type.
  */
-DESTRUCTOR(LilyCheckedExprRecordParamCall,
-           LilyCheckedExprRecordParamCall *self);
+DESTRUCTOR(LilyCheckedExprCallRecordParam,
+           LilyCheckedExprCallRecordParam *self);
 
 typedef struct LilyCheckedExprCallRecord
 {
-    LilyCheckedExpr *id;
-    Vec *params; // Vec<LilyCheckedExprRecordParamCall*>*
+    Vec *params; // Vec<LilyCheckedExprCallRecordParam*>*
 } LilyCheckedExprCallRecord;
 
 /**
@@ -204,10 +354,9 @@ typedef struct LilyCheckedExprCallRecord
  */
 inline CONSTRUCTOR(LilyCheckedExprCallRecord,
                    LilyCheckedExprCallRecord,
-                   LilyCheckedExpr *id,
                    Vec *params)
 {
-    return (LilyCheckedExprCallRecord){ .id = id, .params = params };
+    return (LilyCheckedExprCallRecord){ .params = params };
 }
 
 /**
@@ -222,16 +371,9 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedExprCallRecord *self);
 #endif
 
-/**
- *
- * @brief Free LilyCheckedExprCallRecord type.
- */
-DESTRUCTOR(LilyCheckedExprCallRecord, const LilyCheckedExprCallRecord *self);
-
 typedef struct LilyCheckedExprCallVariant
 {
-    LilyCheckedExpr *id;
-    LilyCheckedExpr *value;
+    Vec *params; // Vec<LilyCheckedExpr*>*?
 } LilyCheckedExprCallVariant;
 
 /**
@@ -240,10 +382,9 @@ typedef struct LilyCheckedExprCallVariant
  */
 inline CONSTRUCTOR(LilyCheckedExprCallVariant,
                    LilyCheckedExprCallVariant,
-                   LilyCheckedExpr *id,
-                   LilyCheckedExpr *value)
+                   Vec *params)
 {
-    return (LilyCheckedExprCallVariant){ .id = id, .value = value };
+    return (LilyCheckedExprCallVariant){ .params = params };
 }
 
 /**
@@ -258,86 +399,18 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedExprCallVariant *self);
 #endif
 
-/**
- *
- * @brief Free LilyCheckedExprCallVariant type.
- */
-DESTRUCTOR(LilyCheckedExprCallVariant, const LilyCheckedExprCallVariant *self);
-
 typedef struct LilyCheckedExprCall
 {
     enum LilyCheckedExprCallKind kind;
-    LilyCheckedScope scope;
+    LilyCheckedAccessScope scope;
     union
     {
+        LilyCheckedExprCallError error;
         LilyCheckedExprCallFun fun;
+        LilyCheckedExprCallMethod method;
         LilyCheckedExprCallRecord record;
         LilyCheckedExprCallVariant variant;
     };
 } LilyCheckedExprCall;
-
-/**
- *
- * @brief Construct LilyCheckedExprCall type
- * (LILY_CHECKED_EXPR_CALL_KIND_FUN).
- */
-inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
-                           LilyCheckedExprCall,
-                           fun,
-                           LilyCheckedScope scope,
-                           LilyCheckedExprCallFun fun)
-{
-    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_FUN,
-                                  .scope = scope,
-                                  .fun = fun };
-}
-
-/**
- *
- * @brief Construct LilyCheckedExprCall type
- * (LILY_CHECKED_EXPR_CALL_KIND_RECORD).
- */
-inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
-                           LilyCheckedExprCall,
-                           record,
-                           LilyCheckedScope scope,
-                           LilyCheckedExprCallRecord record)
-{
-    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_RECORD,
-                                  .scope = scope,
-                                  .record = record };
-}
-
-/**
- *
- * @brief Construct LilyCheckedExprCall type
- * (LILY_CHECKED_EXPR_CALL_KIND_VARIANT).
- */
-inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
-                           LilyCheckedExprCall,
-                           variant,
-                           LilyCheckedScope scope,
-                           LilyCheckedExprCallVariant variant)
-{
-    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_VARIANT,
-                                  .scope = scope,
-                                  .variant = variant };
-}
-
-/**
- *
- * @brief Convert LilyCheckedExprCall in String.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self);
-#endif
-
-/**
- *
- * @brief Free LilyCheckedExprCall type.
- */
-DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self);
 
 #endif // LILY_CORE_LILY_CHECKED_EXPR_CALL_H
