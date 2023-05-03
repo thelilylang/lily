@@ -91,6 +91,10 @@ IMPL_FOR_DEBUG(to_string, LilyAstPatternKind, enum LilyAstPatternKind self)
             return "LILY_AST_PATTERN_KIND_LIST_TAIL";
         case LILY_AST_PATTERN_KIND_LITERAL:
             return "LILY_AST_PATTERN_KIND_LITERAL";
+        case LILY_AST_PATTERN_KIND_NAME:
+            return "LILY_AST_PATTERN_KIND_NAME";
+        case LILY_AST_PATTERN_KIND_NONE:
+            return "LILY_AST_PATTERN_KIND_NONE";
         case LILY_AST_PATTERN_KIND_RANGE:
             return "LILY_AST_PATTERN_KIND_RANGE";
         case LILY_AST_PATTERN_KIND_RECORD_CALL:
@@ -329,6 +333,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstPattern, const LilyAstPattern *self)
         }
         case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
         case LILY_AST_PATTERN_KIND_WILDCARD:
+        case LILY_AST_PATTERN_KIND_NONE:
             push_str__String(res, " }");
             break;
         case LILY_AST_PATTERN_KIND_EXCEPTION: {
@@ -516,6 +521,7 @@ DESTRUCTOR(LilyAstPattern, LilyAstPattern *self)
             break;
         case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
         case LILY_AST_PATTERN_KIND_WILDCARD:
+        case LILY_AST_PATTERN_KIND_NONE:
             lily_free(self);
             break;
         case LILY_AST_PATTERN_KIND_EXCEPTION:
