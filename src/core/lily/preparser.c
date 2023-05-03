@@ -9219,11 +9219,9 @@ preparse_block__LilyPreparser(LilyPreparser *self,
                                   self, false, false, true, false);
                         }
                     default:
-                        goto preparse_exprs;
+                        return preparse_drop_block__LilyPreparser(self);
                 }
             }
-
-            return preparse_drop_block__LilyPreparser(self);
         }
 
         /*
