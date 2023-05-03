@@ -400,13 +400,6 @@ IMPL_FOR_DEBUG(debug, LilyCheckedDataType, const LilyCheckedDataType *self);
 
 /**
  *
- * @brief Convert LilyCheckedDataType in String.
- */
-String *
-to_string__LilyCheckedDataType(const LilyCheckedDataType *self);
-
-/**
- *
  * @brief Returns true if the both data types are equal otherwise returns false.
  */
 bool
