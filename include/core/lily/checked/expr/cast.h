@@ -26,7 +26,8 @@
 #define LILY_CORE_LILY_CHECKED_EXPR_CAST_H
 
 #include <core/lily/checked/data_type.h>
-#include <core/lily/checked/expr.h>
+
+typedef struct LilyCheckedExpr LilyCheckedExpr;
 
 typedef struct LilyCheckedExprCast
 {

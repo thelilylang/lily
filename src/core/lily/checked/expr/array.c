@@ -41,26 +41,6 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
-String *
-to_string__LilyCheckedExprArray(const LilyCheckedExprArray *self)
-{
-    String *res = from__String("[");
-
-    for (Usize i = 0; i < self->items->len; i++) {
-        String *s = to_string__LilyCheckedExpr(get__Vec(self->items, i));
-
-        APPEND_AND_FREE(res, s);
-
-        if (i != self->items->len - 1) {
-            push_str__String(res, ", ");
-        }
-    }
-
-    push__String(res, ']');
-
-    return res;
-}
-
 DESTRUCTOR(LilyCheckedExprArray, LilyCheckedExprArray *self)
 {
     FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, LilyCheckedExpr);

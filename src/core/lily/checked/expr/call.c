@@ -34,29 +34,90 @@
 #include <stdlib.h>
 #endif
 
-// @brief Free LilyCheckedExprFunParamCall type
-// (LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_DEFAULT).
-static VARIANT_DESTRUCTOR(LilyCheckedExprFunParamCall,
+/// @brief Free LilyCheckedExprCallError type.
+static DESTRUCTOR(LilyCheckedExprCallError,
+                  const LilyCheckedExprCallError *self);
+
+/// @brief Free LilyCheckedExprCallFunParam type
+/// (LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT).
+static VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
                           default_,
-                          LilyCheckedExprFunParamCall *self);
+                          LilyCheckedExprCallFunParam *self);
 
-// @brief Free LilyCheckedExprFunParamCall type
-// (LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_NORMAL).
-static VARIANT_DESTRUCTOR(LilyCheckedExprFunParamCall,
+/// @brief Free LilyCheckedExprCallFunParam type
+/// (LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT_OVERWRITE).
+static VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
+                          default_overwrite,
+                          LilyCheckedExprCallFunParam *self);
+
+/// @brief Free LilyCheckedExprCallFunParam type
+/// (LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_NORMAL).
+static VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
                           normal,
-                          LilyCheckedExprFunParamCall *self);
+                          LilyCheckedExprCallFunParam *self);
 
-// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_FUN).
+/// @brief Free LilyCheckedExprCallFunParam type.
+static DESTRUCTOR(LilyCheckedExprCallFunParam,
+                  LilyCheckedExprCallFunParam *self);
+
+/// @brief Free LilyCheckedExprCallFun type.
+static DESTRUCTOR(LilyCheckedExprCallFun, const LilyCheckedExprCallFun *self);
+
+/// @brief Free LilyCheckedExprCallMethodParam type
+/// (LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT).
+static VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
+                          default_,
+                          LilyCheckedExprCallMethodParam *self);
+
+/// @brief Free LilyCheckedExprCallMethodParam type
+/// (LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT_OVERWRITE).
+static VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
+                          default_overwrite,
+                          LilyCheckedExprCallMethodParam *self);
+
+/// @brief Free LilyCheckedExprCallMethodParam type
+/// (LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_NORMAL).
+static VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
+                          normal,
+                          LilyCheckedExprCallMethodParam *self);
+
+/// @brief Free LilyCheckedExprCallMethodParam type.
+static DESTRUCTOR(LilyCheckedExprCallMethodParam,
+                  LilyCheckedExprCallMethodParam *self);
+
+/// @brief Free LilyCheckedExprCallMethod type.
+static DESTRUCTOR(LilyCheckedExprCallMethod,
+                  const LilyCheckedExprCallMethod *self);
+
+/// @brief Free LilyCheckedExprCallRecord type.
+static DESTRUCTOR(LilyCheckedExprCallRecord,
+                  const LilyCheckedExprCallRecord *self);
+
+/// @brief Free LilyCheckedExprCallVariant type.
+static DESTRUCTOR(LilyCheckedExprCallVariant,
+                  const LilyCheckedExprCallVariant *self);
+
+/// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_ERROR).
+static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
+                                 error,
+                                 const LilyCheckedExprCall *self);
+
+/// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_FUN).
 static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                                  fun,
                                  const LilyCheckedExprCall *self);
 
-// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_RECORD).
+/// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_METHOD).
+static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
+                                 method,
+                                 const LilyCheckedExprCall *self);
+
+/// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_RECORD).
 static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                                  record,
                                  const LilyCheckedExprCall *self);
 
-// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_VARIANT).
+/// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_VARIANT).
 static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                                  variant,
                                  const LilyCheckedExprCall *self);
@@ -68,10 +129,26 @@ IMPL_FOR_DEBUG(to_string,
                enum LilyCheckedExprCallKind self)
 {
     switch (self) {
+        case LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE:
+            return "LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE";
+        case LILY_CHECKED_EXPR_CALL_KIND_CLASS:
+            return "LILY_CHECKED_EXPR_CALL_KIND_CLASS";
+        case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
+            return "LILY_CHECKED_EXPR_CALL_KIND_CONSTANT";
+        case LILY_CHECKED_EXPR_CALL_KIND_ERROR:
+            return "LILY_CHECKED_EXPR_CALL_KIND_ERROR";
+        case LILY_CHECKED_EXPR_CALL_KIND_FIELD:
+            return "LILY_CHECKED_EXPR_CALL_KIND_FIELD";
         case LILY_CHECKED_EXPR_CALL_KIND_FUN:
             return "LILY_CHECKED_EXPR_CALL_KIND_FUN";
+        case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
+            return "LILY_CHECKED_EXPR_CALL_KIND_METHOD";
+        case LILY_CHECKED_EXPR_CALL_KIND_MODULE:
+            return "LILY_CHECKED_EXPR_CALL_KIND_MODULE";
         case LILY_CHECKED_EXPR_CALL_KIND_RECORD:
             return "LILY_CHECKED_EXPR_CALL_KIND_RECORD";
+        case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
+            return "LILY_CHECKED_EXPR_CALL_KIND_VARIABLE";
         case LILY_CHECKED_EXPR_CALL_KIND_VARIANT:
             return "LILY_CHECKED_EXPR_CALL_KIND_VARIANT";
         default:
@@ -81,33 +158,64 @@ IMPL_FOR_DEBUG(to_string,
 #endif
 
 #ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallError,
+               const LilyCheckedExprCallError *self)
+{
+    String *res = format__String("LilyCheckedExprCallError{{ params =");
+
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, LilyCheckedExpr);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyCheckedExprCallError, const LilyCheckedExprCallError *self)
+{
+    if (self->params) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyCheckedExpr);
+        FREE(Vec, self->params);
+    }
+}
+
+#ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
-               LilyCheckedExprFunParamCallKind,
-               enum LilyCheckedExprFunParamCallKind self)
+               LilyCheckedExprCallFunParamKind,
+               enum LilyCheckedExprCallFunParamKind self)
 {
     switch (self) {
-        case LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
-            return "LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_DEFAULT";
-        case LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
-            return "LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_NORMAL";
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT:
+            return "LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT";
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT_OVERWRITE:
+            return "LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_OVERWRITE";
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_NORMAL:
+            return "LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_NORMAL";
         default:
             UNREACHABLE("unknown variant");
     }
 }
 #endif
 
-VARIANT_CONSTRUCTOR(LilyCheckedExprFunParamCall *,
-                    LilyCheckedExprFunParamCall,
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
+                    LilyCheckedExprCallFunParam,
                     default_,
                     LilyCheckedExpr *value,
                     Location location,
                     String *default_)
 {
-    LilyCheckedExprFunParamCall *self =
-      lily_malloc(sizeof(LilyCheckedExprFunParamCall));
+    LilyCheckedExprCallFunParam *self =
+      lily_malloc(sizeof(LilyCheckedExprCallFunParam));
 
-    self->kind = LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_DEFAULT;
+    self->kind = LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT;
     self->value = value;
     self->location = location;
     self->default_ = default_;
@@ -115,16 +223,34 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprFunParamCall *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(LilyCheckedExprFunParamCall *,
-                    LilyCheckedExprFunParamCall,
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
+                    LilyCheckedExprCallFunParam,
+                    default_overwrite,
+                    LilyCheckedExpr *value,
+                    Location location,
+                    String *default_)
+{
+    LilyCheckedExprCallFunParam *self =
+      lily_malloc(sizeof(LilyCheckedExprCallFunParam));
+
+    self->kind = LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT_OVERWRITE;
+    self->value = value;
+    self->location = location;
+    self->default_ = default_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
+                    LilyCheckedExprCallFunParam,
                     normal,
                     LilyCheckedExpr *value,
                     Location location)
 {
-    LilyCheckedExprFunParamCall *self =
-      lily_malloc(sizeof(LilyCheckedExprFunParamCall));
+    LilyCheckedExprCallFunParam *self =
+      lily_malloc(sizeof(LilyCheckedExprCallFunParam));
 
-    self->kind = LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_NORMAL;
+    self->kind = LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_NORMAL;
     self->value = value;
     self->location = location;
 
@@ -134,25 +260,26 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprFunParamCall *,
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
-               LilyCheckedExprFunParamCall,
-               const LilyCheckedExprFunParamCall *self)
+               LilyCheckedExprCallFunParam,
+               const LilyCheckedExprCallFunParam *self)
 {
     switch (self->kind) {
-        case LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT:
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT_OVERWRITE:
             return format__String(
-              "LilyCheckedExprFunParamCall{{ kind = {s}, value = {Sr}, "
+              "LilyCheckedExprCallFunParam{{ kind = {s}, value = {Sr}, "
               "location = "
               "{sa}, default = {S} }",
-              to_string__Debug__LilyCheckedExprFunParamCallKind(self->kind),
+              to_string__Debug__LilyCheckedExprCallFunParamKind(self->kind),
               to_string__Debug__LilyCheckedExpr(self->value),
               to_string__Debug__Location(&self->location),
               self->default_);
-        case LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_NORMAL:
             return format__String(
-              "LilyCheckedExprFunParamCall{{ kind = {s}, value = {Sr}, "
+              "LilyCheckedExprCallFunParam{{ kind = {s}, value = {Sr}, "
               "location = "
               "{sa} }",
-              to_string__Debug__LilyCheckedExprFunParamCallKind(self->kind),
+              to_string__Debug__LilyCheckedExprCallFunParamKind(self->kind),
               to_string__Debug__LilyCheckedExpr(self->value),
               to_string__Debug__Location(&self->location));
         default:
@@ -161,31 +288,42 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
-VARIANT_DESTRUCTOR(LilyCheckedExprFunParamCall,
+VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
                    default_,
-                   LilyCheckedExprFunParamCall *self)
+                   LilyCheckedExprCallFunParam *self)
 {
     FREE(LilyCheckedExpr, self->value);
     FREE_MOVE(self->default_, FREE(String, self->default_));
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyCheckedExprFunParamCall,
+VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
+                   default_overwrite,
+                   LilyCheckedExprCallFunParam *self)
+{
+    FREE_MOVE(self->default_, FREE(String, self->default_));
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
                    normal,
-                   LilyCheckedExprFunParamCall *self)
+                   LilyCheckedExprCallFunParam *self)
 {
     FREE(LilyCheckedExpr, self->value);
     lily_free(self);
 }
 
-DESTRUCTOR(LilyCheckedExprFunParamCall, LilyCheckedExprFunParamCall *self)
+DESTRUCTOR(LilyCheckedExprCallFunParam, LilyCheckedExprCallFunParam *self)
 {
     switch (self->kind) {
-        case LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
-            FREE_VARIANT(LilyCheckedExprFunParamCall, default_, self);
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT:
+            FREE_VARIANT(LilyCheckedExprCallFunParam, default_, self);
             break;
-        case LILY_CHECKED_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
-            FREE_VARIANT(LilyCheckedExprFunParamCall, normal, self);
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT_OVERWRITE:
+            FREE_VARIANT(LilyCheckedExprCallFunParam, default_overwrite, self);
+            break;
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_NORMAL:
+            FREE_VARIANT(LilyCheckedExprCallFunParam, normal, self);
             break;
         default:
             UNREACHABLE("unknown variant");
@@ -198,10 +336,13 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedExprCallFun,
                const LilyCheckedExprCallFun *self)
 {
-    String *res = format__String("LilyCheckedExprCallFun{{ id = {Sr}, params =",
-                                 to_string__Debug__LilyCheckedExpr(self->id));
+    String *res = from__String("LilyCheckedExprCallFun{ params =");
 
-    DEBUG_VEC_STRING(self->params, res, LilyCheckedExprFunParamCall);
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallFunParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, " }");
 
@@ -211,20 +352,234 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedExprCallFun, const LilyCheckedExprCallFun *self)
 {
-    FREE(LilyCheckedExpr, self->id);
-
-    FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, LilyCheckedExprFunParamCall);
-    FREE(Vec, self->params);
+    if (self->params) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyCheckedExprCallFunParam);
+        FREE(Vec, self->params);
+    }
 }
 
-CONSTRUCTOR(LilyCheckedExprRecordParamCall *,
-            LilyCheckedExprRecordParamCall,
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallMethodParamKind,
+               enum LilyCheckedExprCallMethodParamKind self)
+{
+    switch (self) {
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT:
+            return "LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT";
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT_OVERWRITE:
+            return "LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_OVERWRITE";
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_NORMAL:
+            return "LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_NORMAL";
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_SELF:
+            return "LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_SELF";
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_REF_SELF:
+            return "LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_REF_SELF";
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_MUT_SELF:
+            return "LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_MUT_SELF";
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_REF_MUT_SELF:
+            return "LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_REF_MUT_SELF";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallMethodParam *,
+                    LilyCheckedExprCallMethodParam,
+                    default_,
+                    LilyCheckedExpr *value,
+                    Location location,
+                    String *default_)
+{
+    LilyCheckedExprCallMethodParam *self =
+      lily_malloc(sizeof(LilyCheckedExprCallMethodParam));
+
+    self->kind = LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT;
+    self->value = value;
+    self->location = location;
+    self->default_ = default_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallMethodParam *,
+                    LilyCheckedExprCallMethodParam,
+                    default_overwrite,
+                    LilyCheckedExpr *value,
+                    Location location,
+                    String *default_)
+{
+    LilyCheckedExprCallMethodParam *self =
+      lily_malloc(sizeof(LilyCheckedExprCallMethodParam));
+
+    self->kind = LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT_OVERWRITE;
+    self->value = value;
+    self->location = location;
+    self->default_ = default_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedExprCallMethodParam *,
+                    LilyCheckedExprCallMethodParam,
+                    normal,
+                    LilyCheckedExpr *value,
+                    Location location)
+{
+    LilyCheckedExprCallMethodParam *self =
+      lily_malloc(sizeof(LilyCheckedExprCallMethodParam));
+
+    self->kind = LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_NORMAL;
+    self->value = value;
+    self->location = location;
+
+    return self;
+}
+
+CONSTRUCTOR(LilyCheckedExprCallMethodParam *,
+            LilyCheckedExprCallMethodParam,
+            enum LilyCheckedExprCallMethodParamKind kind,
+            Location location)
+{
+    LilyCheckedExprCallMethodParam *self =
+      lily_malloc(sizeof(LilyCheckedExprCallMethodParam));
+
+    self->kind = kind;
+    self->value = NULL;
+    self->location = location;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallMethodParam,
+               const LilyCheckedExprCallMethodParam *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT:
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT_OVERWRITE:
+            return format__String(
+              "LilyCheckedExprCallMethodParam{{ kind = {s}, value = {Sr}, "
+              "location = "
+              "{sa}, default = {S} }",
+              to_string__Debug__LilyCheckedExprCallMethodParamKind(self->kind),
+              to_string__Debug__LilyCheckedExpr(self->value),
+              to_string__Debug__Location(&self->location),
+              self->default_);
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_NORMAL:
+            return format__String(
+              "LilyCheckedExprCallMethodParam{{ kind = {s}, value = {Sr}, "
+              "location = "
+              "{sa} }",
+              to_string__Debug__LilyCheckedExprCallMethodParamKind(self->kind),
+              to_string__Debug__LilyCheckedExpr(self->value),
+              to_string__Debug__Location(&self->location));
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_SELF:
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_REF_SELF:
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_MUT_SELF:
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_REF_MUT_SELF:
+            return format__String(
+              "LilyCheckedExprCallFunMethodParam{{ kind = {s}, value = NULL, "
+              "location = "
+              "{sa} }",
+              to_string__Debug__LilyCheckedExprCallMethodParamKind(self->kind),
+              to_string__Debug__Location(&self->location));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
+                   default_,
+                   LilyCheckedExprCallMethodParam *self)
+{
+    FREE(LilyCheckedExpr, self->value);
+    FREE_MOVE(self->default_, FREE(String, self->default_));
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
+                   default_overwrite,
+                   LilyCheckedExprCallMethodParam *self)
+{
+    FREE_MOVE(self->default_, FREE(String, self->default_));
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
+                   normal,
+                   LilyCheckedExprCallMethodParam *self)
+{
+    FREE(LilyCheckedExpr, self->value);
+    lily_free(self);
+}
+
+DESTRUCTOR(LilyCheckedExprCallMethodParam, LilyCheckedExprCallMethodParam *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT:
+            FREE_VARIANT(LilyCheckedExprCallMethodParam, default_, self);
+            break;
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT_OVERWRITE:
+            FREE_VARIANT(
+              LilyCheckedExprCallMethodParam, default_overwrite, self);
+            break;
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_NORMAL:
+            FREE_VARIANT(LilyCheckedExprCallMethodParam, normal, self);
+            break;
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_SELF:
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_REF_SELF:
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_MUT_SELF:
+        case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_REF_MUT_SELF:
+            lily_free(self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallMethod,
+               const LilyCheckedExprCallMethod *self)
+{
+    String *res = from__String("LilyCheckedExprCallMethod{ params =");
+
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallMethodParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyCheckedExprCallMethod, const LilyCheckedExprCallMethod *self)
+{
+    if (self->params) {
+        FREE_BUFFER_ITEMS(self->params->buffer,
+                          self->params->len,
+                          LilyCheckedExprCallMethodParam);
+        FREE(Vec, self->params);
+    }
+}
+
+CONSTRUCTOR(LilyCheckedExprCallRecordParam *,
+            LilyCheckedExprCallRecordParam,
             String *name,
             LilyCheckedExpr *value)
 {
-    LilyCheckedExprRecordParamCall *self =
-      lily_malloc(sizeof(LilyCheckedExprRecordParamCall));
+    LilyCheckedExprCallRecordParam *self =
+      lily_malloc(sizeof(LilyCheckedExprCallRecordParam));
 
     self->name = name;
     self->value = value;
@@ -235,17 +590,17 @@ CONSTRUCTOR(LilyCheckedExprRecordParamCall *,
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
-               LilyCheckedExprRecordParamCall,
-               const LilyCheckedExprRecordParamCall *self)
+               LilyCheckedExprCallRecordParam,
+               const LilyCheckedExprCallRecordParam *self)
 {
     return format__String(
-      "LilyCheckedExprRecordParamCall{{ name = {S}, value = {Sr} }",
+      "LilyCheckedExprCallRecordParam{{ name = {S}, value = {Sr} }",
       self->name,
       to_string__Debug__LilyCheckedExpr(self->value));
 }
 #endif
 
-DESTRUCTOR(LilyCheckedExprRecordParamCall, LilyCheckedExprRecordParamCall *self)
+DESTRUCTOR(LilyCheckedExprCallRecordParam, LilyCheckedExprCallRecordParam *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
     FREE(LilyCheckedExpr, self->value);
@@ -258,11 +613,13 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedExprCallRecord,
                const LilyCheckedExprCallRecord *self)
 {
-    String *res =
-      format__String("LilyCheckedExprCallRecord{{ id = {S}, params =",
-                     to_string__Debug__LilyCheckedExpr(self->id));
+    String *res = from__String("LilyCheckedExprCallRecord{{ params =");
 
-    DEBUG_VEC_STRING(self->params, res, LilyCheckedExprRecordParamCall);
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallRecordParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, " }");
 
@@ -272,10 +629,12 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedExprCallRecord, const LilyCheckedExprCallRecord *self)
 {
-    FREE(LilyCheckedExpr, self->id);
-    FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, LilyCheckedExprRecordParamCall);
-    FREE(Vec, self->params);
+    if (self->params) {
+        FREE_BUFFER_ITEMS(self->params->buffer,
+                          self->params->len,
+                          LilyCheckedExprCallRecordParam);
+        FREE(Vec, self->params);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -284,17 +643,27 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedExprCallVariant,
                const LilyCheckedExprCallVariant *self)
 {
-    return format__String(
-      "LilyCheckedExprCallVariant{{ id = {Sr}, value = {Sr} }",
-      to_string__Debug__LilyCheckedExpr(self->id),
-      to_string__Debug__LilyCheckedExpr(self->value));
+    String *res = from__String("LilyCheckedExprCallVariant{ params =");
+
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, LilyCheckedExpr);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
 }
 #endif
 
 DESTRUCTOR(LilyCheckedExprCallVariant, const LilyCheckedExprCallVariant *self)
 {
-    FREE(LilyCheckedExpr, self->id);
-    FREE(LilyCheckedExpr, self->value);
+    if (self->params) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyCheckedExpr);
+        FREE(Vec, self->params);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -304,13 +673,31 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
     String *res =
       format__String("LilyCheckedExprCall{{ kind = {s}, scope = {sa}",
                      to_string__Debug__LilyCheckedExprCallKind(self->kind),
-                     to_string__Debug__LilyCheckedScope(&self->scope));
+                     to_string__Debug__LilyCheckedAccessScope(&self->scope));
 
     switch (self->kind) {
+        case LILY_CHECKED_EXPR_CALL_KIND_ERROR: {
+            char *s =
+              format(", error = {Sr} }",
+                     to_string__Debug__LilyCheckedExprCallError(&self->error));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
             char *s =
               format(", fun = {Sr} }",
                      to_string__Debug__LilyCheckedExprCallFun(&self->fun));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_CALL_KIND_METHOD: {
+            char *s = format(
+              ", method = {Sr} }",
+              to_string__Debug__LilyCheckedExprCallMethod(&self->method));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -334,6 +721,13 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
 
             break;
         }
+        case LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE:
+        case LILY_CHECKED_EXPR_CALL_KIND_CLASS:
+        case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
+        case LILY_CHECKED_EXPR_CALL_KIND_FIELD:
+        case LILY_CHECKED_EXPR_CALL_KIND_MODULE:
+        case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
+            break;
         default:
             UNREACHABLE("unknown variant");
     }
@@ -342,9 +736,19 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
 }
 #endif
 
+VARIANT_DESTRUCTOR(LilyCheckedExprCall, error, const LilyCheckedExprCall *self)
+{
+    FREE(LilyCheckedExprCallError, &self->error);
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedExprCall, fun, const LilyCheckedExprCall *self)
 {
     FREE(LilyCheckedExprCallFun, &self->fun);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedExprCall, method, const LilyCheckedExprCall *self)
+{
+    FREE(LilyCheckedExprCallMethod, &self->method);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedExprCall, record, const LilyCheckedExprCall *self)
@@ -362,8 +766,14 @@ VARIANT_DESTRUCTOR(LilyCheckedExprCall,
 DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self)
 {
     switch (self->kind) {
+        case LILY_CHECKED_EXPR_CALL_KIND_ERROR:
+            FREE_VARIANT(LilyCheckedExprCall, error, self);
+            break;
         case LILY_CHECKED_EXPR_CALL_KIND_FUN:
             FREE_VARIANT(LilyCheckedExprCall, fun, self);
+            break;
+        case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
+            FREE_VARIANT(LilyCheckedExprCall, method, self);
             break;
         case LILY_CHECKED_EXPR_CALL_KIND_RECORD:
             FREE_VARIANT(LilyCheckedExprCall, record, self);

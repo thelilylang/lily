@@ -89,6 +89,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprKind, enum LilyAstExprKind self)
             return "LILY_AST_EXPR_KIND_CAST";
         case LILY_AST_EXPR_KIND_IDENTIFIER:
             return "LILY_AST_EXPR_KIND_IDENTIFIER";
+        case LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR:
+            return "LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR";
         case LILY_AST_EXPR_KIND_LAMBDA:
             return "LILY_AST_EXPR_KIND_LAMBDA";
         case LILY_AST_EXPR_KIND_LIST:

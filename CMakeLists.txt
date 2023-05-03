@@ -161,7 +161,6 @@ set(CORE_SRC
 	src/core/lily/checked/decl/record_object.c
 	src/core/lily/checked/decl/trait.c
 	src/core/lily/checked/decl/type.c
-	src/core/lily/checked/expr/access.c
 	src/core/lily/checked/expr/array.c
 	src/core/lily/checked/expr/binary.c
 	src/core/lily/checked/expr/call.c

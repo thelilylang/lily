@@ -27,20 +27,29 @@
 
 #include <base/string.h>
 
-#include <core/shared/location.h>
+#include <core/lily/ast/expr.h>
 #include <core/lily/checked/data_type.h>
+#include <core/lily/checked/expr/array.h>
+#include <core/lily/checked/expr/binary.h>
+#include <core/lily/checked/expr/call.h>
+#include <core/lily/checked/expr/cast.h>
+#include <core/lily/checked/expr/lambda.h>
+#include <core/lily/checked/expr/list.h>
+#include <core/lily/checked/expr/literal.h>
+#include <core/lily/checked/expr/tuple.h>
+#include <core/lily/checked/expr/unary.h>
+
+#include <core/shared/location.h>
 
 enum LilyCheckedExprKind
 {
-    LILY_CHECKED_EXPR_KIND_ACCESS,
     LILY_CHECKED_EXPR_KIND_ARRAY,
     LILY_CHECKED_EXPR_KIND_BINARY,
     LILY_CHECKED_EXPR_KIND_CALL,
     LILY_CHECKED_EXPR_KIND_CAST,
     LILY_CHECKED_EXPR_KIND_GROUPING,
-    LILY_CHECKED_EXPR_KIND_IDENTIFIER,
-    LILY_CHECKED_EXPR_KIND_IDENTIFIER_DOLLAR,
     LILY_CHECKED_EXPR_KIND_LAMBDA,
+    LILY_CHECKED_EXPR_KIND_LIST,
     LILY_CHECKED_EXPR_KIND_LITERAL,
     LILY_CHECKED_EXPR_KIND_SELF,
     LILY_CHECKED_EXPR_KIND_TUPLE,
@@ -52,8 +61,143 @@ typedef struct LilyCheckedExpr
 {
     enum LilyCheckedExprKind kind;
     Location location;
-    LilyCheckedDataType *data_type;
+    LilyCheckedDataType
+      *data_type;          // This is the result data type of the expression.
+    LilyAstExpr *ast_expr; // LilyAstExpr* (&)
+    union
+    {
+        LilyCheckedExprArray array;
+        LilyCheckedExprBinary binary;
+        LilyCheckedExprCall call;
+        LilyCheckedExprCast cast;
+        LilyCheckedExpr *grouping;
+        LilyCheckedExprLambda lambda;
+        LilyCheckedExprList list;
+        LilyCheckedExprLiteral literal;
+        LilyCheckedExprTuple tuple;
+        LilyCheckedExprUnary unary;
+    };
 } LilyCheckedExpr;
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_ARRAY).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    array,
+                    Location location,
+                    LilyAstExpr *ast_expr,
+                    LilyCheckedExprArray array);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_BINARY).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    binary,
+                    Location location,
+                    LilyAstExpr *ast_expr,
+                    LilyCheckedExprBinary binary);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_CALL).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    call,
+                    Location location,
+                    LilyAstExpr *ast_expr,
+                    LilyCheckedExprCall call);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_CAST).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    cast,
+                    Location location,
+                    LilyAstExpr *ast_expr,
+                    LilyCheckedExprCast cast);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_GROUPING).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    grouping,
+                    Location location,
+                    LilyAstExpr *ast_expr,
+                    LilyCheckedExpr *grouping);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_LAMBDA).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    lambda,
+                    Location location,
+                    LilyAstExpr *ast_expr,
+                    LilyCheckedExprLambda lambda);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_LIST).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    list,
+                    Location location,
+                    LilyAstExpr *ast_expr,
+                    LilyCheckedExprList list);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_LITERAL).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    literal,
+                    Location location,
+                    LilyAstExpr *ast_expr,
+                    LilyCheckedExprLiteral literal);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_TUPLE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    tuple,
+                    Location location,
+                    LilyAstExpr *ast_expr,
+                    LilyCheckedExprTuple tuple);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_UNARY).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    unary,
+                    Location location,
+                    LilyAstExpr *ast_expr,
+                    LilyCheckedExprUnary unary);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type.
+ */
+CONSTRUCTOR(LilyCheckedExpr *,
+            LilyCheckedExpr,
+            Location location,
+            LilyAstExpr *ast_expr,
+            enum LilyCheckedExprKind kind);
 
 /**
  *
@@ -74,13 +218,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self);
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self);
 #endif
-
-/**
- *
- * @brief Convert LilyCheckedExpr in String.
- */
-String *
-to_string__LilyCheckedExpr(const LilyCheckedExpr *self);
 
 /**
  *

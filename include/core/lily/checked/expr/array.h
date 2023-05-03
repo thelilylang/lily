@@ -58,13 +58,6 @@ IMPL_FOR_DEBUG(to_string,
 
 /**
  *
- * @brief Convert LilyCheckedExprArray in String.
- */
-String *
-to_string__LilyCheckedExprArray(const LilyCheckedExprArray *self);
-
-/**
- *
  * @brief Free LilyCheckedExprArray type.
  */
 DESTRUCTOR(LilyCheckedExprArray, LilyCheckedExprArray *self);

@@ -56,13 +56,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprList, const LilyCheckedExprList *self);
 
 /**
  *
- * @brief Convert LilyCheckedExprList in String.
- */
-String *
-to_string__LilyCheckedExprList(const LilyCheckedExprList *self);
-
-/**
- *
  * @brief Free LilyCheckedExprList type.
  */
 DESTRUCTOR(LilyCheckedExprList, LilyCheckedExprList *self);

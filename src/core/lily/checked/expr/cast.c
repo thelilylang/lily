@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <core/lily/checked/expr.h>
 #include <core/lily/checked/expr/cast.h>
 
 #ifdef ENV_DEBUG
