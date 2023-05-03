@@ -1,0 +1,8 @@
+fun main =
+	val n ?Int32 := 230;
+
+	match n do
+		n => ();
+		none => ();
+	end
+end
