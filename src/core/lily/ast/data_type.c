@@ -473,7 +473,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataType, const LilyAstDataType *self)
     switch (self->kind) {
         case LILY_AST_DATA_TYPE_KIND_ARRAY:
             return format__String(
-              "LilyAstDataType{{ kind = {s}, location = {sa}, array = {Sr} }",
+              "LilyAstDataType{{ kind = {s}, location = {sa}, array = {sa} }",
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataTypeArray(&self->array));
