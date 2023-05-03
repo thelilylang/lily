@@ -130,6 +130,8 @@ IMPL_FOR_DEBUG(to_string,
     switch (self->kind) {
         case LILY_AST_DECL_METHOD_PARAM_KIND_SELF:
         case LILY_AST_DECL_METHOD_PARAM_KIND_MUT_SELF:
+        case LILY_AST_DECL_METHOD_PARAM_KIND_REF_SELF:
+        case LILY_AST_DECL_METHOD_PARAM_KIND_REF_MUT_SELF:
             push_str__String(res, "NULL");
             break;
         default:
