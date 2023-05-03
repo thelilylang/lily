@@ -23,6 +23,7 @@
  */
 
 #include <core/lily/checked/expr/cast.h>
+#include <core/lily/checked/expr.h>
 
 #ifdef ENV_DEBUG
 String *
