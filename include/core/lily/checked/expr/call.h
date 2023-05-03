@@ -507,6 +507,16 @@ inline CONSTRUCTOR(LilyCheckedExprCall,
 
 /**
  *
+ * @brief Convert LilyCheckedExprCall in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedExprCall type.
  */
 DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self);

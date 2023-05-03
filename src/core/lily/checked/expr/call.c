@@ -475,7 +475,7 @@ IMPL_FOR_DEBUG(to_string,
               "LilyCheckedExprCallMethodParam{{ kind = {s}, value = {Sr}, "
               "location = "
               "{sa} }",
-              to_string__Debug__LilyCheckedExprCallFunMethodKind(self->kind),
+              to_string__Debug__LilyCheckedExprCallMethodParamKind(self->kind),
               to_string__Debug__LilyCheckedExpr(self->value),
               to_string__Debug__Location(&self->location));
         case LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_SELF:
@@ -486,7 +486,7 @@ IMPL_FOR_DEBUG(to_string,
               "LilyCheckedExprCallFunMethodParam{{ kind = {s}, value = NULL, "
               "location = "
               "{sa} }",
-              to_string__Debug__LilyCheckedExprCallFunMethodKind(self->kind),
+              to_string__Debug__LilyCheckedExprCallMethodParamKind(self->kind),
               to_string__Debug__Location(&self->location));
         default:
             UNREACHABLE("unknown variant");
@@ -673,7 +673,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
     String *res =
       format__String("LilyCheckedExprCall{{ kind = {s}, scope = {sa}",
                      to_string__Debug__LilyCheckedExprCallKind(self->kind),
-                     to_string__Debug__LilyCheckedScope(&self->scope));
+                     to_string__Debug__LilyCheckedAccessScope(&self->scope));
 
     switch (self->kind) {
         case LILY_CHECKED_EXPR_CALL_KIND_ERROR: {
