@@ -4209,6 +4209,12 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
             PARSE_IDENTIFIER(self->previous->identifier_normal);
 
             break;
+        case LILY_TOKEN_KIND_KEYWORD_NONE:
+            pattern = NEW(LilyAstPattern,
+                          self->previous->location,
+                          LILY_AST_PATTERN_KIND_NONE);
+
+            break;
         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
         case LILY_TOKEN_KIND_KEYWORD_SELF: {
             LilyAstExpr *access = parse_access_expr__LilyParseBlock(self);
