@@ -281,7 +281,113 @@ CONSTRUCTOR(LilyCheckedExpr *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
 {
-    TODO("to_string__Debug__LilyCheckedExpr");
+    String *res =
+      format__String("LilyAstExpr{{ kind = {s}, location = {sa}, data_type = "
+                     "{Sr}, ast_expr = {Sr}",
+                     to_string__Debug__LilyAstExprKind(self->kind),
+                     to_string__Debug__Location(&self->location),
+                     to_string__Debug__LilyCheckedDataType(self->data_type),
+                     to_string__Debug__LilyAstExpr(self->ast_expr));
+
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_KIND_ARRAY: {
+            char *s =
+              format(", array = {Sr} }",
+                     to_string__Debug__LilyCheckedExprArray(&self->array));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_BINARY: {
+            char *s =
+              format(", binary = {sa} }",
+                     to_string__Debug__LilyCheckedExprBinary(&self->binary));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_CALL: {
+            char *s =
+              format(", call = {Sr} }",
+                     to_string__Debug__LilyCheckedExprCall(&self->call));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_CAST: {
+            char *s =
+              format(", cast = {Sr} }",
+                     to_string__Debug__LilyCheckedExprCast(&self->cast));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_GROUPING: {
+            char *s = format(", grouping = {Sr} }",
+                             to_string__Debug__LilyCheckedExpr(self->grouping));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_LAMBDA: {
+            char *s =
+              format(", lambda = {Sr} }",
+                     to_string__Debug__LilyCheckedExprLambda(&self->lambda));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_LIST: {
+            char *s =
+              format(", list = {Sr} }",
+                     to_string__Debug__LilyCheckedExprList(&self->list));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_LITERAL: {
+            char *s =
+              format(", literal = {Sr} }",
+                     to_string__Debug__LilyCheckedExprLiteral(&self->literal));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_TUPLE: {
+            char *s =
+              format(", tuple = {Sr} }",
+                     to_string__Debug__LilyCheckedExprTuple(&self->tuple));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_UNARY: {
+            char *s =
+              format(", unary = {Sr} }",
+                     to_string__Debug__LilyCheckedExprUnary(&self->unary));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_SELF:
+        case LILY_CHECKED_EXPR_KIND_WILDCARD:
+            push_str__String(res, " }");
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
 }
 #endif
 
