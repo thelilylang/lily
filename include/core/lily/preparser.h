@@ -469,6 +469,23 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserFunBodyItemStmtTry *self);
 #endif
 
+typedef struct LilyPreparserFunBodyItemStmtUnsafe
+{
+    Vec *block; // Vec<LilyPreparserFunBodyItem*>*
+} LilyPreparserFunBodyItemStmtUnsafe;
+
+/**
+ *
+ * @brief Convert LilyPreparserFunBodyItemStmtUnsafe in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtUnsafe,
+               const LilyPreparserFunBodyItemStmtUnsafe *self);
+#endif
+
 typedef struct LilyPreparserFunBodyItemStmtVariable
 {
     String *name;
@@ -527,6 +544,7 @@ enum LilyPreparserFunBodyItemKind
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RAISE,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RETURN,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_UNSAFE,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE
 };
@@ -565,6 +583,7 @@ struct LilyPreparserFunBodyItem
         LilyPreparserFunBodyItemStmtRaise stmt_raise;
         LilyPreparserFunBodyItemStmtReturn stmt_return;
         LilyPreparserFunBodyItemStmtTry stmt_try;
+        LilyPreparserFunBodyItemStmtUnsafe stmt_unsafe;
         LilyPreparserFunBodyItemStmtVariable stmt_var;
         LilyPreparserFunBodyItemStmtWhile stmt_while;
     };

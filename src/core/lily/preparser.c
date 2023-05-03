@@ -232,6 +232,15 @@ static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtTry,
 static DESTRUCTOR(LilyPreparserFunBodyItemStmtTry,
                   const LilyPreparserFunBodyItemStmtTry *self);
 
+// Construct LilyPreparserFunBodyItemStmtUnsafe type.
+static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtUnsafe,
+                          LilyPreparserFunBodyItemStmtUnsafe,
+                          Vec *block);
+
+// Free LilyPreparserFunBodyItemStmtUnsafe type.
+static DESTRUCTOR(LilyPreparserFunBodyItemStmtUnsafe,
+                  const LilyPreparserFunBodyItemStmtUnsafe *self);
+
 // Construct LilyPreparserFunBodyItemStmtVariable type.
 static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtVariable,
                           LilyPreparserFunBodyItemStmtVariable,
@@ -378,6 +387,14 @@ static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            Location location);
 
 // Construct LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_UNSAFE).
+static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                           LilyPreparserFunBodyItem,
+                           stmt_unsafe,
+                           LilyPreparserFunBodyItemStmtUnsafe stmt_unsafe,
+                           Location location);
+
+// Construct LilyPreparserFunBodyItem type
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE).
 static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            LilyPreparserFunBodyItem,
@@ -480,6 +497,12 @@ static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY).
 static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                           stmt_try,
+                          LilyPreparserFunBodyItem *self);
+
+// Free LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_UNSAFE).
+static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                          stmt_unsafe,
                           LilyPreparserFunBodyItem *self);
 
 // Free LilyPreparserFunBodyItem type
@@ -1321,6 +1344,10 @@ must_close_basic_block__LilyPreparser(LilyPreparser *self);
 /// @brief Check if the basic brace block could be closed.
 static inline bool
 must_close_basic_brace_block__LilyPreparser(LilyPreparser *self);
+
+/// @brief Check if the unsafe block could be closed.
+static inline bool
+must_close_unsafe_block__LilyPreparser(LilyPreparser *self);
 
 /// @brief Check if the `fun` block could be closed.
 static inline bool
@@ -2567,6 +2594,37 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtTry,
     }
 }
 
+CONSTRUCTOR(LilyPreparserFunBodyItemStmtUnsafe,
+            LilyPreparserFunBodyItemStmtUnsafe,
+            Vec *block)
+{
+    return (LilyPreparserFunBodyItemStmtUnsafe){ .block = block };
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserFunBodyItemStmtUnsafe,
+               const LilyPreparserFunBodyItemStmtUnsafe *self)
+{
+    String *res = from__String("LilyPreparserFunBodyItemStmtUnsafe{ block =");
+
+    DEBUG_VEC_STRING(self->block, res, LilyPreparserFunBodyItem);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyPreparserFunBodyItemStmtUnsafe,
+           const LilyPreparserFunBodyItemStmtUnsafe *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->block->buffer, self->block->len, LilyPreparserFunBodyItem);
+    FREE(Vec, self->block);
+}
+
 CONSTRUCTOR(LilyPreparserFunBodyItemStmtVariable,
             LilyPreparserFunBodyItemStmtVariable,
             String *name,
@@ -2704,6 +2762,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_RETURN";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY";
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_UNSAFE:
+            return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_UNSAFE";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE:
             return "LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE";
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE:
@@ -2956,6 +3016,22 @@ VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
 
 VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                     LilyPreparserFunBodyItem,
+                    stmt_unsafe,
+                    LilyPreparserFunBodyItemStmtUnsafe stmt_unsafe,
+                    Location location)
+{
+    LilyPreparserFunBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserFunBodyItem));
+
+    self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_UNSAFE;
+    self->stmt_unsafe = stmt_unsafe;
+    self->location = location;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                    LilyPreparserFunBodyItem,
                     stmt_var,
                     LilyPreparserFunBodyItemStmtVariable stmt_var,
                     Location location)
@@ -3133,6 +3209,15 @@ IMPL_FOR_DEBUG(to_string,
 
             break;
         }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_UNSAFE: {
+            String *s = to_string__Debug__LilyPreparserFunBodyItemStmtUnsafe(
+              &self->stmt_unsafe);
+
+            push_str__String(res, ", stmt_unsafe = ");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE: {
             String *s = to_string__Debug__LilyPreparserFunBodyItemStmtVariable(
               &self->stmt_var);
@@ -3282,6 +3367,14 @@ VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 }
 
 VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                   stmt_unsafe,
+                   LilyPreparserFunBodyItem *self)
+{
+    FREE(LilyPreparserFunBodyItemStmtUnsafe, &self->stmt_unsafe);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                    stmt_var,
                    LilyPreparserFunBodyItem *self)
 {
@@ -3344,6 +3437,9 @@ DESTRUCTOR(LilyPreparserFunBodyItem, LilyPreparserFunBodyItem *self)
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY:
             FREE_VARIANT(LilyPreparserFunBodyItem, stmt_try, self);
+            break;
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_UNSAFE:
+            FREE_VARIANT(LilyPreparserFunBodyItem, stmt_unsafe, self);
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE:
             FREE_VARIANT(LilyPreparserFunBodyItem, stmt_var, self);
@@ -7387,6 +7483,13 @@ must_close_basic_brace_block__LilyPreparser(LilyPreparser *self)
 }
 
 bool
+must_close_unsafe_block__LilyPreparser(LilyPreparser *self)
+{
+    return self->current->kind == LILY_TOKEN_KIND_KEYWORD_END ||
+           self->current->kind == LILY_TOKEN_KIND_EOF;
+}
+
+bool
 must_close_fun_block__LilyPreparser(LilyPreparser *self)
 {
     switch (self->current->kind) {
@@ -8818,11 +8921,35 @@ preparse_basic_brace_block__LilyPreparser(LilyPreparser *self)
     }
 
     END_LOCATION(&location, self->current->location);
-    next_token__LilyPreparser(self); // skip `}` keyword
+    next_token__LilyPreparser(self); // skip `}`
 
     return NEW_VARIANT(LilyPreparserFunBodyItem,
                        stmt_block,
                        NEW(LilyPreparserFunBodyItemStmtBlock, body),
+                       location);
+}
+
+LilyPreparserFunBodyItem *
+preparse_unsafe_block__LilyPreparser(LilyPreparser *self)
+{
+    Location location = location_fun_body_item;
+    Vec *body = NEW(Vec); // Vec<LilyPreparserFunBodyItem*>*
+
+    while (!must_close_unsafe_block__LilyPreparser(self)) {
+        LilyPreparserFunBodyItem *item = preparse_block__LilyPreparser(
+          self, &must_close_unsafe_block__LilyPreparser);
+
+        if (item) {
+            push__Vec(body, item);
+        }
+    }
+
+    END_LOCATION(&location, self->current->location);
+    next_token__LilyPreparser(self); // skip `end` keyword
+
+    return NEW_VARIANT(LilyPreparserFunBodyItem,
+                       stmt_unsafe,
+                       NEW(LilyPreparserFunBodyItemStmtUnsafe, body),
                        location);
 }
 
@@ -9283,6 +9410,37 @@ preparse_block__LilyPreparser(LilyPreparser *self,
                 goto preparse_exprs;
             }
         }
+
+        /*
+          unsafe =
+            <block>
+          end
+        */
+        case LILY_TOKEN_KIND_KEYWORD_UNSAFE:
+            next_token__LilyPreparser(self);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_EQ:
+                    next_token__LilyPreparser(self);
+
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected `=`")),
+                      &self->count_error);
+
+                    break;
+            }
+
+            return preparse_unsafe_block__LilyPreparser(self);
 
         /*
             val <name> [data_type] := <expr>;
