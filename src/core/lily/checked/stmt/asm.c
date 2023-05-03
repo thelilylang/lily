@@ -32,8 +32,9 @@
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedStmtAsm, const LilyCheckedStmtAsm *self)
 {
-    String *res = format__String("LilyCheckedStmtAsm{{ value = {Sr}, params =",
-                                 to_string__Debug__LilyCheckedExpr(self->value));
+    String *res =
+      format__String("LilyCheckedStmtAsm{{ value = {Sr}, params =",
+                     to_string__Debug__LilyCheckedExpr(self->value));
 
     DEBUG_VEC_STRING(self->params, res, LilyCheckedExpr);
 
