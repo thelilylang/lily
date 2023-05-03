@@ -202,6 +202,11 @@ static LilyAstBodyFunItem *
 parse_try_stmt__LilyParser(LilyParser *self,
                            const LilyPreparserFunBodyItem *item);
 
+// Parse unsafe statement.
+static inline LilyAstBodyFunItem *
+parse_unsafe_stmt__LilyParser(LilyParser *self,
+                              const LilyPreparserFunBodyItem *item);
+
 // Parse variable statement.
 static LilyAstBodyFunItem *
 parse_variable_stmt__LilyParser(LilyParser *self,
@@ -3506,6 +3511,20 @@ parse_try_stmt__LilyParser(LilyParser *self,
 }
 
 LilyAstBodyFunItem *
+parse_unsafe_stmt__LilyParser(LilyParser *self,
+                              const LilyPreparserFunBodyItem *item)
+{
+    return NEW_VARIANT(LilyAstBodyFunItem,
+                       stmt,
+                       NEW_VARIANT(LilyAstStmt,
+                                   unsafe,
+                                   item->location,
+                                   NEW(LilyAstStmtUnsafe,
+                                       parse_fun_body__LilyParser(
+                                         self, item->stmt_unsafe.block))));
+}
+
+LilyAstBodyFunItem *
 parse_variable_stmt__LilyParser(LilyParser *self,
                                 const LilyPreparserFunBodyItem *item)
 {
@@ -3608,6 +3627,8 @@ parse_stmt__LilyParser(LilyParser *self, const LilyPreparserFunBodyItem *item)
             return parse_return_stmt__LilyParser(self, item);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY:
             return parse_try_stmt__LilyParser(self, item);
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_UNSAFE:
+            return parse_unsafe_stmt__LilyParser(self, item);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE:
             return parse_variable_stmt__LilyParser(self, item);
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE:
