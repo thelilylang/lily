@@ -165,7 +165,11 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res = format__String("LilyCheckedExprCallError{{ params =");
 
-    DEBUG_VEC_STRING(self->params, res, LilyCheckedExpr);
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, LilyCheckedExpr);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, " }");
 
@@ -334,7 +338,11 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res = from__String("LilyCheckedExprCallFun{ params =");
 
-    DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallFunParam);
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallFunParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, " }");
 
@@ -344,9 +352,11 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedExprCallFun, const LilyCheckedExprCallFun *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, LilyCheckedExprCallFunParam);
-    FREE(Vec, self->params);
+    if (self->params) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyCheckedExprCallFunParam);
+        FREE(Vec, self->params);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -541,7 +551,11 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res = from__String("LilyCheckedExprCallMethod{ params =");
 
-    DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallMethodParam);
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallMethodParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, " }");
 
@@ -551,9 +565,12 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedExprCallMethod, const LilyCheckedExprCallMethod *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, LilyCheckedExprCallMethodParam);
-    FREE(Vec, self->params);
+    if (self->params) {
+        FREE_BUFFER_ITEMS(self->params->buffer,
+                          self->params->len,
+                          LilyCheckedExprCallMethodParam);
+        FREE(Vec, self->params);
+    }
 }
 
 CONSTRUCTOR(LilyCheckedExprCallRecordParam *,
@@ -598,7 +615,11 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res = from__String("LilyCheckedExprCallRecord{{ params =");
 
-    DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallRecordParam);
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallRecordParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, " }");
 
@@ -608,9 +629,12 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedExprCallRecord, const LilyCheckedExprCallRecord *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, LilyCheckedExprCallRecordParam);
-    FREE(Vec, self->params);
+    if (self->params) {
+        FREE_BUFFER_ITEMS(self->params->buffer,
+                          self->params->len,
+                          LilyCheckedExprCallRecordParam);
+        FREE(Vec, self->params);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -621,7 +645,11 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res = from__String("LilyCheckedExprCallVariant{ params =");
 
-    DEBUG_VEC_STRING(self->params, res, LilyCheckedExpr);
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, LilyCheckedExpr);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, " }");
 

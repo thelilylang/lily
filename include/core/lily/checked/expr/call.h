@@ -164,7 +164,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedExprCallFun
 {
-    Vec *params; // Vec<LilyCheckedExprCallFunParam*>*
+    Vec *params; // Vec<LilyCheckedExprCallFunParam*>*?
 } LilyCheckedExprCallFun;
 
 /**
@@ -283,7 +283,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedExprCallMethod
 {
-    Vec *params; // Vec<LilyCheckedExprCallMethodParam*>*
+    Vec *params; // Vec<LilyCheckedExprCallMethodParam*>*?
 } LilyCheckedExprCallMethod;
 
 /**
@@ -345,7 +345,7 @@ DESTRUCTOR(LilyCheckedExprCallRecordParam,
 
 typedef struct LilyCheckedExprCallRecord
 {
-    Vec *params; // Vec<LilyCheckedExprCallRecordParam*>*
+    Vec *params; // Vec<LilyCheckedExprCallRecordParam*>*?
 } LilyCheckedExprCallRecord;
 
 /**
