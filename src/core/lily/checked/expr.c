@@ -34,8 +34,6 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self)
 {
     switch (self) {
-        case LILY_CHECKED_EXPR_KIND_ACCESS:
-            return "LILY_CHECKED_EXPR_KIND_ACCESS";
         case LILY_CHECKED_EXPR_KIND_ARRAY:
             return "LILY_CHECKED_EXPR_KIND_ARRAY";
         case LILY_CHECKED_EXPR_KIND_BINARY:
@@ -73,12 +71,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
     TODO("to_string__Debug__LilyCheckedExpr");
 }
 #endif
-
-String *
-to_string__LilyCheckedExpr(const LilyCheckedExpr *self)
-{
-    TODO("to_string__LilyCheckedExpr");
-}
 
 DESTRUCTOR(LilyCheckedExpr, LilyCheckedExpr *self)
 {
