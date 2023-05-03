@@ -32,7 +32,6 @@
 #include <core/lily/checked/expr/binary.h>
 #include <core/lily/checked/expr/call.h>
 #include <core/lily/checked/expr/cast.h>
-#include <core/lily/checked/expr/identifier.h>
 #include <core/lily/checked/expr/lambda.h>
 #include <core/lily/checked/expr/list.h>
 #include <core/lily/checked/expr/literal.h>
@@ -48,8 +47,6 @@ enum LilyCheckedExprKind
     LILY_CHECKED_EXPR_KIND_CALL,
     LILY_CHECKED_EXPR_KIND_CAST,
     LILY_CHECKED_EXPR_KIND_GROUPING,
-    LILY_CHECKED_EXPR_KIND_IDENTIFIER,
-    LILY_CHECKED_EXPR_KIND_IDENTIFIER_DOLLAR,
     LILY_CHECKED_EXPR_KIND_LAMBDA,
     LILY_CHECKED_EXPR_KIND_LIST,
     LILY_CHECKED_EXPR_KIND_LITERAL,
@@ -72,8 +69,6 @@ typedef struct LilyCheckedExpr
         LilyCheckedExprCall call;
         LilyCheckedExprCast cast;
         LilyCheckedExpr *grouping;
-        LilyCheckedExprIdentifier identifier;
-        LilyCheckedExprIdentifierDollar identifier_dollar;
         LilyCheckedExprLambda lambda;
         LilyCheckedExprList list;
         LilyCheckedExprLiteral literal;
@@ -131,27 +126,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     grouping,
                     Location location,
                     LilyCheckedExpr *grouping);
-
-/**
- *
- * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_IDENTIFIER).
- */
-VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
-                    LilyCheckedExpr,
-                    identifier,
-                    Location location,
-                    LilyCheckedExprIdentifier identifier);
-
-/**
- *
- * @brief Construct LilyCheckedExpr type
- * (LILY_CHECKED_EXPR_KIND_IDENTIFIER_DOLLAR).
- */
-VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
-                    LilyCheckedExpr,
-                    identifier_dollar,
-                    Location location,
-                    LilyCheckedExprIdentifierDollar identifier_dollar);
 
 /**
  *

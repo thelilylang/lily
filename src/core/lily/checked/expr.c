@@ -42,8 +42,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self)
             return "LILY_CHECKED_EXPR_KIND_CALL";
         case LILY_CHECKED_EXPR_KIND_CAST:
             return "LILY_CHECKED_EXPR_KIND_CAST";
-        case LILY_CHECKED_EXPR_KIND_IDENTIFIER:
-            return "LILY_CHECKED_EXPR_KIND_IDENTIFIER";
         case LILY_CHECKED_EXPR_KIND_LAMBDA:
             return "LILY_CHECKED_EXPR_KIND_LAMBDA";
         case LILY_CHECKED_EXPR_KIND_LIST:
