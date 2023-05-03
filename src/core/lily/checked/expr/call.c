@@ -721,6 +721,13 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
 
             break;
         }
+        case LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE:
+        case LILY_CHECKED_EXPR_CALL_KIND_CLASS:
+        case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
+        case LILY_CHECKED_EXPR_CALL_KIND_FIELD:
+        case LILY_CHECKED_EXPR_CALL_KIND_MODULE:
+        case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
+            break;
         default:
             UNREACHABLE("unknown variant");
     }
