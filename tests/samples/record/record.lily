@@ -1,0 +1,7 @@
+type Person record =
+	name Str;
+	age Uint8;
+end
+
+fun main =
+end

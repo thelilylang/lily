@@ -1,0 +1,6 @@
+object Clone trait =
+	fun clone(ref Self) Self;
+end
+
+fun main =
+end
