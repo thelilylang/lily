@@ -44,7 +44,7 @@ to_string__LilyAstExprList(const LilyAstExprList *self)
 {
     String *res = from__String("[");
 
-    for (Usize i = 0; i < self->items->len; i++) {
+    for (Usize i = 0; i < self->items->len; ++i) {
         String *s = to_string__LilyAstExpr(get__Vec(self->items, i));
 
         APPEND_AND_FREE(res, s);

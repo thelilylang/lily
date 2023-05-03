@@ -44,7 +44,7 @@ to_string__LilyAstPatternList(const LilyAstPatternList *self)
 {
     String *res = from__String("[");
 
-    for (Usize i = 0; i < self->patterns->len; i++) {
+    for (Usize i = 0; i < self->patterns->len; ++i) {
         String *s = to_string__LilyAstPattern(get__Vec(self->patterns, i));
 
         APPEND_AND_FREE(res, s);
