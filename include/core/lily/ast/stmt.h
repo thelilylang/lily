@@ -40,6 +40,7 @@
 #include <core/lily/ast/stmt/raise.h>
 #include <core/lily/ast/stmt/return.h>
 #include <core/lily/ast/stmt/try.h>
+#include <core/lily/ast/stmt/unsafe.h>
 #include <core/lily/ast/stmt/variable.h>
 #include <core/lily/ast/stmt/while.h>
 
@@ -62,6 +63,7 @@ enum LilyAstStmtKind
     LILY_AST_STMT_KIND_RAISE,
     LILY_AST_STMT_KIND_RETURN,
     LILY_AST_STMT_KIND_TRY,
+    LILY_AST_STMT_KIND_UNSAFE,
     LILY_AST_STMT_KIND_VARIABLE,
     LILY_AST_STMT_KIND_WHILE
 };
@@ -95,6 +97,7 @@ typedef struct LilyAstStmt
         LilyAstStmtRaise raise;
         LilyAstStmtReturn return_;
         LilyAstStmtTry try;
+        LilyAstStmtUnsafe unsafe;
         LilyAstStmtVariable variable;
         LilyAstStmtWhile while_;
     };
@@ -293,6 +296,21 @@ inline VARIANT_CONSTRUCTOR(LilyAstStmt,
     return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_TRY,
                           .location = location,
                           .try = try };
+}
+
+/**
+ *
+ * @brief Construct LilyAstStmt type (LILY_AST_STMT_KIND_UNSAFE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstStmt,
+                           LilyAstStmt,
+                           unsafe,
+                           Location location,
+                           LilyAstStmtUnsafe unsafe)
+{
+    return (LilyAstStmt){ .kind = LILY_AST_STMT_KIND_UNSAFE,
+                          .location = location,
+                          .unsafe = unsafe };
 }
 
 /**

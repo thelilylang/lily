@@ -72,6 +72,9 @@ static inline VARIANT_DESTRUCTOR(LilyAstStmt, return, const LilyAstStmt *self);
 // Free LilyAstStmt type (LILY_AST_STMT_KIND_TRY).
 static inline VARIANT_DESTRUCTOR(LilyAstStmt, try, const LilyAstStmt *self);
 
+// Free LilyAstStmt type (LILY_AST_STMT_KIND_UNSAFE).
+static inline VARIANT_DESTRUCTOR(LilyAstStmt, unsafe, const LilyAstStmt *self);
+
 // Free LilyAstStmt type (LILY_AST_STMT_KIND_VARIABLE).
 static inline VARIANT_DESTRUCTOR(LilyAstStmt,
                                  variable,
@@ -111,6 +114,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtKind, enum LilyAstStmtKind self)
             return "LILY_AST_STMT_KIND_RETURN";
         case LILY_AST_STMT_KIND_TRY:
             return "LILY_AST_STMT_KIND_TRY";
+        case LILY_AST_STMT_KIND_UNSAFE:
+            return "LILY_AST_STMT_KIND_UNSAFE";
         case LILY_AST_STMT_KIND_VARIABLE:
             return "LILY_AST_STMT_KIND_VARIABLE";
         case LILY_AST_STMT_KIND_WHILE:
@@ -233,6 +238,15 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmt, const LilyAstStmt *self)
 
             break;
         }
+        case LILY_AST_STMT_KIND_UNSAFE: {
+            char *s =
+              format(", unsafe = {Sr} }",
+                     to_string__Debug__LilyAstStmtUnsafe(&self->unsafe));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_AST_STMT_KIND_VARIABLE: {
             char *s =
               format(", variable = {Sr} }",
@@ -323,6 +337,11 @@ VARIANT_DESTRUCTOR(LilyAstStmt, try, const LilyAstStmt *self)
     FREE(LilyAstStmtTry, &self->try);
 }
 
+VARIANT_DESTRUCTOR(LilyAstStmt, unsafe, const LilyAstStmt *self)
+{
+    FREE(LilyAstStmtUnsafe, &self->unsafe);
+}
+
 VARIANT_DESTRUCTOR(LilyAstStmt, variable, const LilyAstStmt *self)
 {
     FREE(LilyAstStmtVariable, &self->variable);
@@ -374,6 +393,9 @@ DESTRUCTOR(LilyAstStmt, const LilyAstStmt *self)
             break;
         case LILY_AST_STMT_KIND_TRY:
             FREE_VARIANT(LilyAstStmt, try, self);
+            break;
+        case LILY_AST_STMT_KIND_UNSAFE:
+            FREE_VARIANT(LilyAstStmt, unsafe, self);
             break;
         case LILY_AST_STMT_KIND_VARIABLE:
             FREE_VARIANT(LilyAstStmt, variable, self);
