@@ -413,4 +413,102 @@ typedef struct LilyCheckedExprCall
     };
 } LilyCheckedExprCall;
 
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_ERROR).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           error,
+                           LilyCheckedAccessScope scope,
+                           LilyCheckedExprCallError error)
+{
+    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_ERROR,
+                                  .scope = scope,
+                                  .error = error };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_FUN).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           fun,
+                           LilyCheckedAccessScope scope,
+                           LilyCheckedExprCallFun fun)
+{
+    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_FUN,
+                                  .scope = scope,
+                                  .fun = fun };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_METHOD).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           method,
+                           LilyCheckedAccessScope scope,
+                           LilyCheckedExprCallMethod method)
+{
+    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_METHOD,
+                                  .scope = scope,
+                                  .method = method };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_RECORD).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           record,
+                           LilyCheckedAccessScope scope,
+                           LilyCheckedExprCallRecord record)
+{
+    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_RECORD,
+                                  .scope = scope,
+                                  .record = record };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_VARIANT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           variant,
+                           LilyCheckedAccessScope scope,
+                           LilyCheckedExprCallVariant variant)
+{
+    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_VARIANT,
+                                  .scope = scope,
+                                  .variant = variant };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type.
+ */
+inline CONSTRUCTOR(LilyCheckedExprCall,
+                   LilyCheckedExprCall,
+                   enum LilyCheckedExprCallKind kind,
+                   LilyCheckedAccessScope scope)
+{
+    return (LilyCheckedExprCall){ .kind = kind, .scope = scope };
+}
+
+/**
+ *
+ * @brief Free LilyCheckedExprCall type.
+ */
+DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self);
+
 #endif // LILY_CORE_LILY_CHECKED_EXPR_CALL_H
