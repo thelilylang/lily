@@ -126,6 +126,7 @@ set(CORE_SRC
 	src/core/lily/ast/stmt/raise.c
 	src/core/lily/ast/stmt/return.c
 	src/core/lily/ast/stmt/try.c
+	src/core/lily/ast/stmt/unsafe.c
 	src/core/lily/ast/stmt/variable.c
 	src/core/lily/ast/stmt/while.c
 	src/core/lily/ast/data_type.c
