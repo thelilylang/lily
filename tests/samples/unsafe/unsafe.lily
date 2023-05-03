@@ -1,0 +1,5 @@
+fun main =
+    unsafe =
+        val a := nil;
+    end
+end
