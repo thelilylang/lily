@@ -26,6 +26,10 @@
 
 #include <core/lily/checked/scope_container.h>
 
+#ifdef ENV_DEBUG
+#include <base/format.h>
+#endif
+
 CONSTRUCTOR(LilyCheckedScopeContainerModule *,
             LilyCheckedScopeContainerModule,
             String *name,
@@ -39,6 +43,19 @@ CONSTRUCTOR(LilyCheckedScopeContainerModule *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerModule,
+               const LilyCheckedScopeContainerModule *self)
+{
+    return format(
+      "LilyCheckedScopeContainerModule{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessModule(&self->access));
+}
+#endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerConstant *,
             LilyCheckedScopeContainerConstant,
@@ -54,6 +71,19 @@ CONSTRUCTOR(LilyCheckedScopeContainerConstant *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerConstant,
+               const LilyCheckedScopeContainerConstant *self)
+{
+    return format(
+      "LilyCheckedScopeContainerConstant{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessConstant(&self->access));
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedScopeContainerEnum *,
             LilyCheckedScopeContainerEnum,
             String *name,
@@ -67,6 +97,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerEnum *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerEnum,
+               const LilyCheckedScopeContainerEnum *self)
+{
+    return format("LilyCheckedScopeContainerEnum{{ name = {S}, access = {sa} }",
+                  self->name,
+                  to_string__Debug__LilyCheckedAccessEnum(&self->access));
+}
+#endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerRecord *,
             LilyCheckedScopeContainerRecord,
@@ -82,6 +124,19 @@ CONSTRUCTOR(LilyCheckedScopeContainerRecord *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerRecord,
+               const LilyCheckedScopeContainerRecord *self)
+{
+    return format(
+      "LilyCheckedScopeContainerRecord{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessRecord(&self->access));
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedScopeContainerAlias *,
             LilyCheckedScopeContainerAlias,
             String *name,
@@ -95,6 +150,19 @@ CONSTRUCTOR(LilyCheckedScopeContainerAlias *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerAlias,
+               const LilyCheckedScopeContainerAlias *self)
+{
+    return format(
+      "LilyCheckedScopeContainerAlias{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessAlias(&self->access));
+}
+#endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerEnumObject *,
             LilyCheckedScopeContainerEnumObject,
@@ -110,6 +178,19 @@ CONSTRUCTOR(LilyCheckedScopeContainerEnumObject *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerEnumObject,
+               const LilyCheckedScopeContainerEnumObject *self)
+{
+    return format(
+      "LilyCheckedScopeContainerEnumObject{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessEnumObject(&self->access));
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedScopeContainerRecordObject *,
             LilyCheckedScopeContainerRecordObject,
             String *name,
@@ -123,6 +204,19 @@ CONSTRUCTOR(LilyCheckedScopeContainerRecordObject *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerRecordObject,
+               const LilyCheckedScopeContainerRecordObject *self)
+{
+    return format(
+      "LilyCheckedScopeContainerRecordObject{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessRecordObject(&self->access));
+}
+#endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerClass *,
             LilyCheckedScopeContainerClass,
@@ -138,6 +232,19 @@ CONSTRUCTOR(LilyCheckedScopeContainerClass *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerClass,
+               const LilyCheckedScopeContainerClass *self)
+{
+    return format(
+      "LilyCheckedScopeContainerClass{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessClass(&self->access));
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedScopeContainerTrait *,
             LilyCheckedScopeContainerTrait,
             String *name,
@@ -152,6 +259,19 @@ CONSTRUCTOR(LilyCheckedScopeContainerTrait *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerTrait,
+               const LilyCheckedScopeContainerTrait *self)
+{
+    return format(
+      "LilyCheckedScopeContainerTrait{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessTrait(&self->access));
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedScopeContainerFun *,
             LilyCheckedScopeContainerFun,
             String *name,
@@ -165,6 +285,22 @@ CONSTRUCTOR(LilyCheckedScopeContainerFun *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerFun,
+               const LilyCheckedScopeContainerFun *self)
+{
+    String *res = format__String(
+      "LilyCheckedScopeContainerFun{{ name = {S}, access =", self->name);
+
+    DEBUG_VEC_STR(self->accesses, res, LilyCheckedAccessFun);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyCheckedScopeContainerFun, LilyCheckedScopeContainerFun *self)
 {
@@ -187,3 +323,16 @@ CONSTRUCTOR(LilyCheckedScopeContainerVariable *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerVariable,
+               const LilyCheckedScopeContainerVariable *self)
+{
+    return format(
+      "LilyCheckedScopeContainerVariable{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessScope(&self->access));
+}
+#endif

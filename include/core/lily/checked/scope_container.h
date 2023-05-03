@@ -48,6 +48,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerModule *,
 
 /**
  *
+ * @brief Convert LilyCheckedScopeContainerModule in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerModule,
+               const LilyCheckedScopeContainerModule *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedScopeContainerModule type.
  */
 inline DESTRUCTOR(LilyCheckedScopeContainerModule,
@@ -70,6 +82,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerConstant *,
             LilyCheckedScopeContainerConstant,
             String *name,
             LilyCheckedAccessConstant access);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerConstant in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerConstant,
+               const LilyCheckedScopeContainerConstant *self);
+#endif
 
 /**
  *
@@ -98,6 +122,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerEnum *,
 
 /**
  *
+ * @brief Convert LilyCheckedScopeContainerEnum in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerEnum,
+               const LilyCheckedScopeContainerEnum *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedScopeContainerEnum type.
  */
 inline DESTRUCTOR(LilyCheckedScopeContainerEnum,
@@ -120,6 +156,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerRecord *,
             LilyCheckedScopeContainerRecord,
             String *name,
             LilyCheckedAccessRecord access);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerRecord in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerRecord,
+               const LilyCheckedScopeContainerRecord *self);
+#endif
 
 /**
  *
@@ -148,6 +196,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerAlias *,
 
 /**
  *
+ * @brief Convert LilyCheckedScopeContainerAlias in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerAlias,
+               const LilyCheckedScopeContainerAlias *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedScopeContainerAlias type.
  */
 inline DESTRUCTOR(LilyCheckedScopeContainerAlias,
@@ -170,6 +230,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerEnumObject *,
             LilyCheckedScopeContainerEnumObject,
             String *name,
             LilyCheckedAccessEnumObject access);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerEnumObject in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerEnumObject,
+               const LilyCheckedScopeContainerEnumObject *self);
+#endif
 
 /**
  *
@@ -198,6 +270,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerRecordObject *,
 
 /**
  *
+ * @brief Convert LilyCheckedScopeContainerRecordObject in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerRecordObject,
+               const LilyCheckedScopeContainerRecordObject *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedScopeContainerRecordObject type.
  */
 inline DESTRUCTOR(LilyCheckedScopeContainerRecordObject,
@@ -223,6 +307,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerClass *,
 
 /**
  *
+ * @brief Convert LilyCheckedScopeContainerClass in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerClass,
+               const LilyCheckedScopeContainerClass *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedScopeContainerClass type.
  */
 inline DESTRUCTOR(LilyCheckedScopeContainerClass,
@@ -245,6 +341,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerTrait *,
             LilyCheckedScopeContainerTrait,
             String *name,
             LilyCheckedAccessTrait access);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerTrait in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerTrait,
+               const LilyCheckedScopeContainerTrait *self);
+#endif
 
 /**
  *
@@ -274,6 +382,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerFun *,
 
 /**
  *
+ * @brief Convert LilyCheckedScopeContainerFun in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerFun,
+               const LilyCheckedScopeContainerFun *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedScopeContainerFun type.
  */
 DESTRUCTOR(LilyCheckedScopeContainerFun, LilyCheckedScopeContainerFun *self);
@@ -292,6 +412,18 @@ CONSTRUCTOR(LilyCheckedScopeContainerVariable *,
             LilyCheckedScopeContainerVariable,
             String *name,
             LilyCheckedAccessScope access);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerVariable in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerVariable,
+               const LilyCheckedScopeContainerVariable *self);
+#endif
 
 /**
  *
