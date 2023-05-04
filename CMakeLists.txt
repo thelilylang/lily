@@ -99,6 +99,7 @@ set(CORE_SRC
 	src/core/lily/ast/expr/lambda.c
 	src/core/lily/ast/expr/list.c
 	src/core/lily/ast/expr/literal.c
+	src/core/lily/ast/expr/try.c
 	src/core/lily/ast/expr/tuple.c
 	src/core/lily/ast/expr/unary.c
 	src/core/lily/ast/pattern/array.c
