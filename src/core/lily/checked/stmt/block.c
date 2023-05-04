@@ -35,7 +35,7 @@ IMPL_FOR_DEBUG(to_string,
 
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyFunItem);
 
-    push_str__String(res, ", scope =");
+    push_str__String(res, ", scope = ");
 
     {
         String *s = to_string__Debug__LilyCheckedScope(self->scope);
