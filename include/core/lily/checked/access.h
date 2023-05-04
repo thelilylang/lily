@@ -340,6 +340,38 @@ inline DESTRUCTOR(LilyCheckedAccessFun, LilyCheckedAccessFun *self)
     lily_free(self);
 }
 
+typedef struct LilyCheckedAccessLabel
+{
+    LilyCheckedAccessModule module;
+    Usize id;
+} LilyCheckedAccessLabel;
+
+/**
+ *
+ * @brief Construct LilyCheckedAccessLabel type.
+ */
+CONSTRUCTOR(LilyCheckedAccessLabel *,
+            LilyCheckedAccessLabel,
+            LilyCheckedAccessModule module,
+            Usize id);
+
+/**
+ *
+ * @brief Convert LilyCheckedAccessLabel in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedAccessLabel,
+               const LilyCheckedAccessLabel *self);
+#endif
+
+inline DESTRUCTOR(LilyCheckedAccessLabel, LilyCheckedAccessLabel *self)
+{
+    lily_free(self);
+}
+
 typedef struct LilyCheckedAccessScope
 {
     LilyCheckedAccessModule module;

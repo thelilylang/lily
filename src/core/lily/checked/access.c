@@ -158,6 +158,31 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+CONSTRUCTOR(LilyCheckedAccessLabel *,
+            LilyCheckedAccessLabel,
+            LilyCheckedAccessModule module,
+            Usize id)
+{
+    LilyCheckedAccessLabel *self = lily_malloc(sizeof(LilyCheckedAccessLabel));
+
+    self->module = module;
+    self->id = id;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedAccessLabel,
+               const LilyCheckedAccessLabel *self)
+{
+    return format("LilyCheckedAccessLabel{{ module = {sa}, id = {d} }",
+                  to_string__Debug__LilyCheckedAccessModule(&self->module),
+                  self->id);
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedAccessScope *,
             LilyCheckedAccessScope,
             LilyCheckedAccessModule module,
