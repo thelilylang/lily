@@ -194,6 +194,7 @@ set(CORE_SRC
 	src/core/lily/checked/stmt/raise.c
 	src/core/lily/checked/stmt/return.c
 	src/core/lily/checked/stmt/try.c
+	src/core/lily/checked/stmt/unsafe.c
 	src/core/lily/checked/stmt/variable.c
 	src/core/lily/checked/stmt/while.c
 	src/core/lily/checked/access.c
