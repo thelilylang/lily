@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_CHECKED_PATTERN_H
 #define LILY_CORE_LILY_CHECKED_PATTERN_H
 
+#include <core/lily/checked/data_type.h>
 #include <core/lily/checked/pattern/array.h>
 #include <core/lily/checked/pattern/as.h>
 #include <core/lily/checked/pattern/exception.h>
@@ -75,6 +76,7 @@ typedef struct LilyCheckedPattern
 {
     enum LilyCheckedPatternKind kind;
     Location location;
+    LilyCheckedDataType *data_type;
     union
     {
         LilyCheckedPatternArray array;
@@ -100,6 +102,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     array,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternArray array);
 
 /**
@@ -110,6 +113,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     as,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternAs as);
 
 /**
@@ -121,6 +125,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     exception,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternException exception);
 
 /**
@@ -131,6 +136,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     list,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternList list);
 
 /**
@@ -142,6 +148,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     list_head,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternListHead list_head);
 
 /**
@@ -153,6 +160,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     list_tail,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternListTail list_tail);
 
 /**
@@ -163,6 +171,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     literal,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternLiteral literal);
 
 /**
@@ -173,6 +182,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     name,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternName name);
 
 /**
@@ -183,6 +193,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     range,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternRange range);
 
 /**
@@ -194,6 +205,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     record_call,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternRecordCall record_call);
 
 /**
@@ -204,6 +216,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     tuple,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternTuple tuple);
 
 /**
@@ -215,6 +228,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     variant_call,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     LilyCheckedPatternVariantCall variant_call);
 
 /**
@@ -223,8 +237,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
  */
 CONSTRUCTOR(LilyCheckedPattern *,
             LilyCheckedPattern,
+            enum LilyCheckedPatternKind kind,
             Location location,
-            enum LilyCheckedPatternKind kind);
+            LilyCheckedDataType *data_type);
 
 /**
  *
