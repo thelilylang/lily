@@ -2742,6 +2742,19 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
                     return NULL;
             }
         }
+        case LILY_TOKEN_KIND_KEYWORD_TRY: {
+            Location location = clone__Location(&self->previous->location);
+            LilyAstExpr *expr = parse_expr__LilyParseBlock(self);
+
+            if (!expr) {
+                return NULL;
+            }
+
+            END_LOCATION(&location, self->previous->location);
+
+            return NEW_VARIANT(
+              LilyAstExpr, try, location, NEW(LilyAstExprTry, expr));
+        }
         case LILY_TOKEN_KIND_SEMICOLON:
             return NULL;
         default: {
