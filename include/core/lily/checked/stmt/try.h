@@ -35,9 +35,11 @@
 
 typedef struct LilyCheckedStmtTry
 {
-    Vec *try_body;               // Vec<LilyCheckedBodyFunItem*>*
-    LilyCheckedExpr *catch_expr; // LilyCheckedExpr*?
-    Vec *catch_body;             // Vec<LilyCheckedBodyFunItem*>*?
+    Vec *try_body; // Vec<LilyCheckedBodyFunItem*>*
+    LilyCheckedScope *try_scope;
+    LilyCheckedExpr *catch_expr;   // LilyCheckedExpr*?
+    Vec *catch_body;               // Vec<LilyCheckedBodyFunItem*>*?
+    LilyCheckedScope *catch_scope; // LilyCheckedScope*?
 } LilyCheckedStmtTry;
 
 /**
@@ -47,12 +49,16 @@ typedef struct LilyCheckedStmtTry
 inline CONSTRUCTOR(LilyCheckedStmtTry,
                    LilyCheckedStmtTry,
                    Vec *try_body,
+                   LilyCheckedScope *try_scope,
                    LilyCheckedExpr *catch_expr,
-                   Vec *catch_body)
+                   Vec *catch_body,
+                   LilyCheckedScope *catch_scope)
 {
     return (LilyCheckedStmtTry){ .try_body = try_body,
+                                 .try_scope = try_scope,
                                  .catch_expr = catch_expr,
-                                 .catch_body = catch_body };
+                                 .catch_body = catch_body,
+                                 .catch_scope = catch_scope };
 }
 
 /**

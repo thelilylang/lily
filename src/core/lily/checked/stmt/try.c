@@ -33,6 +33,14 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtTry, const LilyCheckedStmtTry *self)
 
     DEBUG_VEC_STRING(self->try_body, res, LilyCheckedBodyFunItem);
 
+    push_str__String(res, ", try_scope = ");
+
+    {
+        String *s = to_string__Debug__LilyCheckedScope(self->try_scope);
+
+        APPEND_AND_FREE(res, s);
+    }
+
     if (self->catch_expr) {
         String *s = to_string__Debug__LilyCheckedExpr(self->catch_expr);
 
@@ -41,6 +49,14 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtTry, const LilyCheckedStmtTry *self)
 
         push_str__String(res, ", catch_body =");
         DEBUG_VEC_STRING(self->catch_body, res, LilyCheckedBodyFunItem);
+
+        push_str__String(res, ", catch_scope = ");
+
+        {
+            String *s = to_string__Debug__LilyCheckedScope(self->catch_scope);
+
+            APPEND_AND_FREE(res, s);
+        }
 
         push_str__String(res, " }");
     } else {
@@ -57,6 +73,8 @@ DESTRUCTOR(LilyCheckedStmtTry, const LilyCheckedStmtTry *self)
       self->try_body->buffer, self->try_body->len, LilyCheckedBodyFunItem);
     FREE(Vec, self->try_body);
 
+    FREE(LilyCheckedScope, self->try_scope);
+
     if (self->catch_expr) {
         FREE(LilyCheckedExpr, self->catch_expr);
 
@@ -64,5 +82,7 @@ DESTRUCTOR(LilyCheckedStmtTry, const LilyCheckedStmtTry *self)
                           self->catch_body->len,
                           LilyCheckedBodyFunItem);
         FREE(Vec, self->catch_body);
+
+        FREE(LilyCheckedScope, self->catch_scope);
     }
 }
