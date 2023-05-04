@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <core/lily/ast/stmt/break.h>
+#include <core/lily/checked/stmt/break.h>
 
 #ifdef ENV_DEBUG
 String *
