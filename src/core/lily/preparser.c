@@ -9218,7 +9218,7 @@ preparse_block__LilyPreparser(LilyPreparser *self,
                                   &self->count_error);
 
                                 return preparse_variable_block__LilyPreparser(
-                                  self, false, false, true, false);
+                                  self, false, false, false, true);
                         }
                     default:
                         return preparse_drop_block__LilyPreparser(self);
@@ -9401,7 +9401,7 @@ preparse_block__LilyPreparser(LilyPreparser *self,
                                   &self->count_error);
 
                                 return preparse_variable_block__LilyPreparser(
-                                  self, false, false, true, false);
+                                  self, false, true, false, false);
                         }
                     default:
                         goto preparse_exprs;
