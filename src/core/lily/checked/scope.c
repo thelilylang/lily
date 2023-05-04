@@ -56,6 +56,79 @@ CONSTRUCTOR(LilyCheckedScope *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
+{
+    String *res = format__String("LilyCheckedScope{{ modules =");
+
+    DEBUG_VEC_STR(self->modules, res, LilyCheckedScopeContainerModule);
+
+    push_str__String(res, ", constants =");
+
+    DEBUG_VEC_STR(self->constants, res, LilyCheckedScopeContainerConstant);
+
+    push_str__String(res, ", enums =");
+
+    DEBUG_VEC_STR(self->enums, res, LilyCheckedScopeContainerEnum);
+
+    push_str__String(res, ", records =");
+
+    DEBUG_VEC_STR(self->records, res, LilyCheckedScopeContainerRecord);
+
+    push_str__String(res, ", aliases =");
+
+    DEBUG_VEC_STR(self->aliases, res, LilyCheckedScopeContainerAlias);
+
+    push_str__String(res, ", enums_object =");
+
+    DEBUG_VEC_STR(self->enums_object, res, LilyCheckedScopeContainerEnumObject);
+
+    push_str__String(res, ", records_object =");
+
+    DEBUG_VEC_STR(
+      self->records_object, res, LilyCheckedScopeContainerRecordObject);
+
+    push_str__String(res, ", classes =");
+
+    DEBUG_VEC_STR(self->classes, res, LilyCheckedScopeContainerClass);
+
+    push_str__String(res, ", traits =");
+
+    DEBUG_VEC_STR(self->traits, res, LilyCheckedScopeContainerTrait);
+
+    push_str__String(res, ", funs =");
+
+    DEBUG_VEC_STRING(self->funs, res, LilyCheckedScopeContainerFun);
+
+    push_str__String(res, ", labels =");
+
+    DEBUG_VEC_STR(self->labels, res, LilyCheckedScopeContainerLabel);
+
+    push_str__String(res, ", variables =");
+
+    DEBUG_VEC_STR(self->variables, res, LilyCheckedScopeContainerVariable);
+
+    push_str__String(res, ", parent = ");
+
+    if (self->parent) {
+        char *s = to_string__Debug__LilyCheckedAccessScope(self->parent);
+
+        PUSH_STR_AND_FREE(res, s);
+    } else {
+        push_str__String(res, "NULL");
+    }
+
+    push_str__String(res, ", children =");
+
+    DEBUG_VEC_STR(self->children, res, LilyCheckedAccessScope);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
 {
     FREE_BUFFER_ITEMS(self->modules->buffer,

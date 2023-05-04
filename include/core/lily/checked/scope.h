@@ -65,6 +65,16 @@ CONSTRUCTOR(LilyCheckedScope *,
 
 /**
  *
+ * @brief Convert LilyCheckedScope in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedScope type.
  */
 DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self);
