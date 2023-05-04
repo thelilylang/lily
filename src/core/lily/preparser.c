@@ -9076,7 +9076,6 @@ must_preparse_exprs(LilyPreparser *self)
             case LILY_TOKEN_KIND_KEYWORD_FUN:
             case LILY_TOKEN_KIND_KEYWORD_IF:
             case LILY_TOKEN_KIND_KEYWORD_MATCH:
-            case LILY_TOKEN_KIND_KEYWORD_TRY:
             case LILY_TOKEN_KIND_KEYWORD_WHILE:
             case LILY_TOKEN_KIND_KEYWORD_MUT:
             case LILY_TOKEN_KIND_KEYWORD_VAL:
@@ -9085,6 +9084,8 @@ must_preparse_exprs(LilyPreparser *self)
             case LILY_TOKEN_KIND_R_BRACE:
             case LILY_TOKEN_KIND_SEMICOLON:
                 return false;
+            case LILY_TOKEN_KIND_KEYWORD_TRY:
+                return peeked->kind != LILY_TOKEN_KIND_KEYWORD_DO;
             case LILY_TOKEN_KIND_KEYWORD_REF:
             case LILY_TOKEN_KIND_KEYWORD_TRACE:
             case LILY_TOKEN_KIND_KEYWORD_DROP:
