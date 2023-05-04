@@ -27,6 +27,23 @@
 
 #include <base/macros.h>
 
+#include <core/lily/ast/stmt.h>
+#include <core/lily/checked/stmt/asm.h>
+#include <core/lily/checked/stmt/await.h>
+#include <core/lily/checked/stmt/block.h>
+#include <core/lily/checked/stmt/break.h>
+#include <core/lily/checked/stmt/drop.h>
+#include <core/lily/checked/stmt/for.h>
+#include <core/lily/checked/stmt/if.h>
+#include <core/lily/checked/stmt/match.h>
+#include <core/lily/checked/stmt/next.h>
+#include <core/lily/checked/stmt/raise.h>
+#include <core/lily/checked/stmt/return.h>
+#include <core/lily/checked/stmt/try.h>
+#include <core/lily/checked/stmt/unsafe.h>
+#include <core/lily/checked/stmt/variable.h>
+#include <core/lily/checked/stmt/while.h>
+
 #ifdef ENV_DEBUG
 #include <base/string.h>
 #endif
@@ -62,9 +79,283 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtKind, enum LilyCheckedStmtKind self);
 
 typedef struct LilyCheckedStmt
 {
-    enum LilyAstStmtKind kind;
+    enum LilyCheckedStmtKind kind;
+    const LilyAstStmt *ast_stmt; // const LilyAstStmt* (&)
     Location location;
+    union
+    {
+        LilyCheckedStmtAsm asm_;
+        LilyCheckedStmtAwait await;
+        LilyCheckedStmtBlock block;
+        LilyCheckedStmtBreak break_;
+        LilyCheckedStmtDrop drop;
+        LilyCheckedStmtFor for_;
+        LilyCheckedStmtIf if_;
+        LilyCheckedStmtMatch match;
+        LilyCheckedStmtNext next;
+        LilyCheckedStmtRaise raise;
+        LilyCheckedStmtReturn return_;
+        LilyCheckedStmtTry try;
+        LilyCheckedStmtUnsafe unsafe;
+        LilyCheckedStmtVariable variable;
+        LilyCheckedStmtWhile while_;
+    };
 } LilyCheckedStmt;
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_ASM).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           asm,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtAsm asm_)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_ASM,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .asm_ = asm_ };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_AWAIT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           await,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtAwait await)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_AWAIT,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .await = await };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_BLOCK).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           block,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtBlock block)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_BLOCK,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .block = block };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_BREAK).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           break,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtBreak break_)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_BREAK,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .break_ = break_ };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_DROP).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           drop,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtDrop drop)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_DROP,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .drop = drop };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_FOR).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           for,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtFor for_)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_FOR,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .for_ = for_ };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_IF).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           if,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtIf if_)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_IF,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .if_ = if_ };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_MATCH).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           match,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtMatch match)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_MATCH,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .match = match };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_NEXT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           next,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtNext next)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_NEXT,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .next = next };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_RAISE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           raise,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtRaise raise)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_RAISE,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .raise = raise };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_RETURN).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           return,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtReturn return_)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_RETURN,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .return_ = return_ };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_TRY).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           try,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtTry try)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_TRY,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .try = try };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_UNSAFE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           unsafe,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtUnsafe unsafe)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_UNSAFE,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .unsafe = unsafe };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_VARIABLE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           variable,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtVariable variable)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_VARIABLE,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .variable = variable };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_WHILE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           while,
+                           const LilyAstStmt *ast_stmt,
+                           Location location,
+                           LilyCheckedStmtWhile while_)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_WHILE,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .while_ = while_ };
+}
 
 /**
  *
