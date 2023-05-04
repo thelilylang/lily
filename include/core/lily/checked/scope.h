@@ -48,6 +48,7 @@ typedef struct LilyCheckedScope
     Vec *classes;        // Vec<LilyCheckedScopeContainerClass*>*
     Vec *traits;         // Vec<LilyCheckedScopeContainerTrait*>*
     Vec *funs;           // Vec<LilyCheckedScopeContainerFun*>*
+    Vec *labels;         // Vec<LilyCheckedScopeContainerLabel*>*
     Vec *variables;      // Vec<LilyCheckedScopeContainerVariable*>*
     LilyCheckedAccessScope *parent; // LilyCheckedAccessScope*?
     Vec *children;                  // Vec<LilyCheckedAccessScope*>*

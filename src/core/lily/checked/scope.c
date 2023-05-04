@@ -47,6 +47,7 @@ CONSTRUCTOR(LilyCheckedScope *,
     self->records_object = NEW(Vec);
     self->classes = NEW(Vec);
     self->traits = NEW(Vec);
+    self->labels = NEW(Vec);
     self->funs = NEW(Vec);
     self->variables = NEW(Vec);
     self->parent = parent;
@@ -99,6 +100,10 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
     FREE_BUFFER_ITEMS(
       self->traits->buffer, self->traits->len, LilyCheckedScopeContainerTrait);
     FREE(Vec, self->traits);
+
+    FREE_BUFFER_ITEMS(
+      self->labels->buffer, self->labels->len, LilyCheckedScopeContainerLabel);
+    FREE(Vec, self->labels);
 
     FREE_BUFFER_ITEMS(
       self->funs->buffer, self->funs->len, LilyCheckedScopeContainerFun);
