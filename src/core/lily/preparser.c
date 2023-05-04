@@ -2640,6 +2640,7 @@ CONSTRUCTOR(LilyPreparserFunBodyItemStmtVariable,
                                                    .expr = expr,
                                                    .is_mut = is_mut,
                                                    .is_trace = is_trace,
+                                                   .is_ref = is_ref,
                                                    .is_drop = is_drop };
 }
 
