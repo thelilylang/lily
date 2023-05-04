@@ -34,6 +34,15 @@ IMPL_FOR_DEBUG(to_string,
     String *res = from__String("LilyCheckedStmtBlock{ body =");
 
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyFunItem);
+
+    push_str__String(res, ", scope =");
+
+    {
+        String *s = to_string__Debug__LilyCheckedScope(self->scope);
+
+        APPEND_AND_FREE(res, s);
+    }
+
     push_str__String(res, " }");
 
     return res;
