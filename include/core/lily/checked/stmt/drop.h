@@ -36,7 +36,9 @@ typedef struct LilyCheckedStmtDrop
     LilyCheckedExpr *expr;
 } LilyCheckedStmtDrop;
 
-inline CONSTRUCTOR(LilyCheckedStmtDrop, LilyCheckedStmtDrop, LilyCheckedExpr *expr)
+inline CONSTRUCTOR(LilyCheckedStmtDrop,
+                   LilyCheckedStmtDrop,
+                   LilyCheckedExpr *expr)
 {
     return (LilyCheckedStmtDrop){ .expr = expr };
 }
