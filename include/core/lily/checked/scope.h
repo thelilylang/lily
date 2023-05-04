@@ -40,7 +40,7 @@ typedef struct LilyCheckedScope
 {
     Vec *modules;        // Vec<LilyCheckedScopeContainerModule*>*
     Vec *constants;      // Vec<LilyCheckedScopeContainerConstant*>*
-    Vec *enums;          // Vec<LilyCheckedScopeContainerenum*>*
+    Vec *enums;          // Vec<LilyCheckedScopeContainerEnum*>*
     Vec *records;        // Vec<LilyCheckedScopeContainerRecord*>*
     Vec *aliases;        // Vec<LilyCheckedScopeContainerAlias*>*
     Vec *enums_object;   // Vec<LilyCheckedScopeContainerEnumObject*>*
