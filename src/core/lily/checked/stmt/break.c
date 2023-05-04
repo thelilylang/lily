@@ -26,10 +26,13 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedStmtBreak, const LilyCheckedStmtBreak *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtBreak,
+               const LilyCheckedStmtBreak *self)
 {
     if (self->name) {
-        return format__String("LilyCheckedStmtBreak{{ name = {S} }", self->name);
+        return format__String("LilyCheckedStmtBreak{{ name = {S} }",
+                              self->name);
     }
 
     return from__String("LilyCheckedStmtBreak{ name = NULL }");

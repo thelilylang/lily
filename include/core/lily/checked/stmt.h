@@ -61,7 +61,8 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyCheckedStmtKind, enum LilyCheckedStmtKind self);
 #endif
 
-typedef struct LilyCheckedStmt {
+typedef struct LilyCheckedStmt
+{
     enum LilyAstStmtKind kind;
     Location location;
 } LilyCheckedStmt;

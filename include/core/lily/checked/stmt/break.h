@@ -46,7 +46,9 @@ inline CONSTRUCTOR(LilyCheckedStmtBreak, LilyCheckedStmtBreak, String *name)
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedStmtBreak, const LilyCheckedStmtBreak *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtBreak,
+               const LilyCheckedStmtBreak *self);
 #endif
 
 inline DESTRUCTOR(LilyCheckedStmtBreak, const LilyCheckedStmtBreak *self)
