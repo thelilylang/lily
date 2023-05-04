@@ -22,12 +22,41 @@
  * SOFTWARE.
  */
 
-#include <core/lily/checked/stmt/next.h>
+#ifndef LILY_CORE_LILY_CHECKED_STMT_UNSAFE_H
+#define LILY_CORE_LILY_CHECKED_STMT_UNSAFE_H
 
+#include <base/vec.h>
+
+typedef struct LilyCheckedStmtUnsafe
+{
+    Vec *body; // Vec<LilyCheckedBodyFunItem*>*
+} LilyCheckedStmtUnsafe;
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtUnsafe type.
+ */
+inline CONSTRUCTOR(LilyCheckedStmtUnsafe, LilyCheckedStmtUnsafe, Vec *body)
+{
+    return (LilyCheckedStmtUnsafe){ .body = body };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedStmtUnsafe in String.
+ * @note This function is only used to debug.
+ */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedStmtNext, const LilyCheckedStmtNext *self)
-{
-    return format__String("LilyCheckedStmtNext{{ name = {S} }", self->name);
-}
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtUnsafe,
+               const LilyCheckedStmtUnsafe *self);
 #endif
+
+/**
+ *
+ * @brief Free LilyCheckedStmtUnsafe type.
+ */
+DESTRUCTOR(LilyCheckedStmtUnsafe, const LilyCheckedStmtUnsafe *self);
+
+#endif // LILY_CORE_LILY_CHECKED_STMT_UNSAFE_H

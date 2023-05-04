@@ -22,12 +22,27 @@
  * SOFTWARE.
  */
 
-#include <core/lily/checked/stmt/next.h>
+#include <core/lily/checked/body/fun.h>
+#include <core/lily/checked/stmt/unsafe.h>
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedStmtNext, const LilyCheckedStmtNext *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtUnsafe,
+               const LilyCheckedStmtUnsafe *self)
 {
-    return format__String("LilyCheckedStmtNext{{ name = {S} }", self->name);
+    String *res = from__String("LilyCheckedStmtUnsafe{ body =");
+
+    DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyFunItem);
+    push_str__String(res, " }");
+
+    return res;
 }
 #endif
+
+DESTRUCTOR(LilyCheckedStmtUnsafe, const LilyCheckedStmtUnsafe *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->body->buffer, self->body->len, LilyCheckedBodyFunItem);
+    FREE(Vec, self->body);
+}
