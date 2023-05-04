@@ -2319,6 +2319,8 @@ parse_list_expr__LilyParseBlock(LilyParseBlock *self)
             return VARIANT_LITERAL(name, bool_, false);                       \
         case LILY_TOKEN_KIND_KEYWORD_NIL:                                     \
             return LITERAL(name, LILY_AST_##name_u##_LITERAL_KIND_NIL);       \
+        case LILY_TOKEN_KIND_KEYWORD_NONE:                                    \
+            return LITERAL(name, LILY_AST_##name_u##_LITERAL_KIND_NONE);      \
         case LILY_TOKEN_KIND_KEYWORD_UNDEF:                                   \
             return LITERAL(name, LILY_AST_##name_u##_LITERAL_KIND_UNDEF);     \
         case LILY_TOKEN_KIND_LITERAL_BYTE:                                    \
@@ -2466,6 +2468,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
         case LILY_TOKEN_KIND_KEYWORD_FALSE:
         case LILY_TOKEN_KIND_KEYWORD_NIL:
         case LILY_TOKEN_KIND_KEYWORD_UNDEF:
+        case LILY_TOKEN_KIND_KEYWORD_NONE:
         case LILY_TOKEN_KIND_LITERAL_BYTE:
         case LILY_TOKEN_KIND_LITERAL_BYTES:
         case LILY_TOKEN_KIND_LITERAL_CHAR:
@@ -4199,6 +4202,7 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_KEYWORD_FALSE:
         case LILY_TOKEN_KIND_KEYWORD_NIL:
         case LILY_TOKEN_KIND_KEYWORD_UNDEF:
+        case LILY_TOKEN_KIND_KEYWORD_NONE:
         case LILY_TOKEN_KIND_LITERAL_BYTE:
         case LILY_TOKEN_KIND_LITERAL_BYTES:
         case LILY_TOKEN_KIND_LITERAL_CHAR:
@@ -4241,12 +4245,6 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
             break;
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
             PARSE_IDENTIFIER(self->previous->identifier_normal);
-
-            break;
-        case LILY_TOKEN_KIND_KEYWORD_NONE:
-            pattern = NEW(LilyAstPattern,
-                          self->previous->location,
-                          LILY_AST_PATTERN_KIND_NONE);
 
             break;
         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
@@ -4295,7 +4293,26 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
             break;
         }
         case LILY_TOKEN_KIND_L_PAREN:
-            pattern = parse_tuple_pattern__LilyParseBlock(self);
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_R_PAREN: {
+                    Location location =
+                      clone__Location(&self->current->location);
+
+                    next_token__LilyParseBlock(self);
+                    END_LOCATION(&location, self->previous->location);
+
+                    pattern =
+                      NEW_VARIANT(LilyAstPattern,
+                                  literal,
+                                  location,
+                                  NEW(LilyAstPatternLiteral,
+                                      LILY_AST_PATTERN_LITERAL_KIND_UNIT));
+
+                    break;
+                }
+                default:
+                    pattern = parse_tuple_pattern__LilyParseBlock(self);
+            }
 
             break;
         case LILY_TOKEN_KIND_DOT_DOT:
@@ -6128,6 +6145,7 @@ is_expr__LilyParser(const Vec *tokens)
             case LILY_TOKEN_KIND_KEYWORD_FALSE:
             case LILY_TOKEN_KIND_KEYWORD_NIL:
             case LILY_TOKEN_KIND_KEYWORD_UNDEF:
+            case LILY_TOKEN_KIND_KEYWORD_NONE:
             case LILY_TOKEN_KIND_LITERAL_BYTE:
             case LILY_TOKEN_KIND_LITERAL_BYTES:
             case LILY_TOKEN_KIND_LITERAL_CHAR:
@@ -6154,14 +6172,18 @@ is_expr__LilyParser(const Vec *tokens)
             case LILY_TOKEN_KIND_L_PAREN:
             case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
             case LILY_TOKEN_KIND_KEYWORD_self:
+            case LILY_TOKEN_KIND_KEYWORD_SELF:
+            case LILY_TOKEN_KIND_AT:
             case LILY_TOKEN_KIND_IDENTIFIER_STRING:
             case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
             case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
             case LILY_TOKEN_KIND_KEYWORD_FUN:
+            case LILY_TOKEN_KIND_STAR:
             case LILY_TOKEN_KIND_KEYWORD_REF:
             case LILY_TOKEN_KIND_KEYWORD_TRACE:
             case LILY_TOKEN_KIND_MINUS:
             case LILY_TOKEN_KIND_KEYWORD_NOT:
+            case LILY_TOKEN_KIND_KEYWORD_TRY:
                 return true;
             default:
                 return false;
@@ -6203,6 +6225,7 @@ is_patt__LilyParser(const Vec *tokens)
             case LILY_TOKEN_KIND_KEYWORD_FALSE:
             case LILY_TOKEN_KIND_KEYWORD_NIL:
             case LILY_TOKEN_KIND_KEYWORD_UNDEF:
+            case LILY_TOKEN_KIND_KEYWORD_NONE:
             case LILY_TOKEN_KIND_LITERAL_BYTE:
             case LILY_TOKEN_KIND_LITERAL_BYTES:
             case LILY_TOKEN_KIND_LITERAL_CHAR:
@@ -6229,6 +6252,8 @@ is_patt__LilyParser(const Vec *tokens)
             case LILY_TOKEN_KIND_KEYWORD_ERROR:
             case LILY_TOKEN_KIND_IDENTIFIER_STRING:
             case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
+            case LILY_TOKEN_KIND_KEYWORD_SELF:
             case LILY_TOKEN_KIND_L_PAREN:
             case LILY_TOKEN_KIND_DOT_DOT:
                 return true;
