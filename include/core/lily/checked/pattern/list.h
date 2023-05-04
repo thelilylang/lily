@@ -56,13 +56,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPatternList, const LilyCheckedPatternList *
 
 /**
  *
- * @brief Convert LilyCheckedPatternList in String.
- */
-String *
-to_string__LilyCheckedPatternList(const LilyCheckedPatternList *self);
-
-/**
- *
  * @brief Free LilyCheckedPatternList type.
  */
 DESTRUCTOR(LilyCheckedPatternList, LilyCheckedPatternList *self);

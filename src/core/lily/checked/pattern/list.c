@@ -39,26 +39,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPatternList, const LilyCheckedPatternList *
 }
 #endif
 
-String *
-to_string__LilyCheckedPatternList(const LilyCheckedPatternList *self)
-{
-    String *res = from__String("[");
-
-    for (Usize i = 0; i < self->patterns->len; ++i) {
-        String *s = to_string__LilyCheckedPattern(get__Vec(self->patterns, i));
-
-        APPEND_AND_FREE(res, s);
-
-        if (i != self->patterns->len - 1) {
-            push_str__String(res, ", ");
-        }
-    }
-
-    push__String(res, ']');
-
-    return res;
-}
-
 DESTRUCTOR(LilyCheckedPatternList, LilyCheckedPatternList *self)
 {
     FREE_BUFFER_ITEMS(
