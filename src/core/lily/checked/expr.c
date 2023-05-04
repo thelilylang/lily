@@ -97,7 +97,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     array,
                     Location location,
-                    LilyAstExpr *ast_expr,
+                    const LilyAstExpr *ast_expr,
                     LilyCheckedExprArray array)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -114,7 +114,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     binary,
                     Location location,
-                    LilyAstExpr *ast_expr,
+                    const LilyAstExpr *ast_expr,
                     LilyCheckedExprBinary binary)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -131,7 +131,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     call,
                     Location location,
-                    LilyAstExpr *ast_expr,
+                    const LilyAstExpr *ast_expr,
                     LilyCheckedExprCall call)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -148,7 +148,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     cast,
                     Location location,
-                    LilyAstExpr *ast_expr,
+                    const LilyAstExpr *ast_expr,
                     LilyCheckedExprCast cast)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -165,7 +165,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     grouping,
                     Location location,
-                    LilyAstExpr *ast_expr,
+                    const LilyAstExpr *ast_expr,
                     LilyCheckedExpr *grouping)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -182,7 +182,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     lambda,
                     Location location,
-                    LilyAstExpr *ast_expr,
+                    const LilyAstExpr *ast_expr,
                     LilyCheckedExprLambda lambda)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -199,7 +199,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     list,
                     Location location,
-                    LilyAstExpr *ast_expr,
+                    const LilyAstExpr *ast_expr,
                     LilyCheckedExprList list)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -216,7 +216,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     literal,
                     Location location,
-                    LilyAstExpr *ast_expr,
+                    const LilyAstExpr *ast_expr,
                     LilyCheckedExprLiteral literal)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -233,7 +233,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     tuple,
                     Location location,
-                    LilyAstExpr *ast_expr,
+                    const LilyAstExpr *ast_expr,
                     LilyCheckedExprTuple tuple)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -250,7 +250,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     unary,
                     Location location,
-                    LilyAstExpr *ast_expr,
+                    const LilyAstExpr *ast_expr,
                     LilyCheckedExprUnary unary)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -266,7 +266,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
 CONSTRUCTOR(LilyCheckedExpr *,
             LilyCheckedExpr,
             Location location,
-            LilyAstExpr *ast_expr,
+            const LilyAstExpr *ast_expr,
             enum LilyCheckedExprKind kind)
 {
     LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
@@ -284,7 +284,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
     String *res =
       format__String("LilyAstExpr{{ kind = {s}, location = {sa}, data_type = "
                      "{Sr}, ast_expr = {Sr}",
-                     to_string__Debug__LilyAstExprKind(self->kind),
+                     to_string__Debug__LilyCheckedExprKind(self->kind),
                      to_string__Debug__Location(&self->location),
                      to_string__Debug__LilyCheckedDataType(self->data_type),
                      to_string__Debug__LilyAstExpr(self->ast_expr));
