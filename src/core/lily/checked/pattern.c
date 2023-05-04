@@ -22,10 +22,65 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
+#include <base/macros.h>
+
 #include <core/lily/checked/pattern.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef ENV_DEBUG
+#include <base/format.h>
+#endif
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_ARRAY).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern, array, LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_AS).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern, as, LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_EXCEPTION).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern,
+                          exception,
+                          LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_LIST).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern, list, LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_LIST_HEAD).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern,
+                          list_head,
+                          LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_LIST_TAIL).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern,
+                          list_tail,
+                          LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_LITERAL).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern,
+                          literal,
+                          LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_NAME).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern, name, LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_RANGE).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern, range, LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_RECORD_CALL).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern,
+                          record_call,
+                          LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_TUPLE).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern, tuple, LilyCheckedPattern *self);
+
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_VARIANT_CALL).
+static VARIANT_DESTRUCTOR(LilyCheckedPattern,
+                          variant_call,
+                          LilyCheckedPattern *self);
 
 #ifdef ENV_DEBUG
 char *
@@ -50,6 +105,10 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_PATTERN_KIND_LIST_TAIL";
         case LILY_CHECKED_PATTERN_KIND_LITERAL:
             return "LILY_CHECKED_PATTERN_KIND_LITERAL";
+        case LILY_CHECKED_PATTERN_KIND_NAME:
+            return "LILY_CHECKED_PATTERN_KIND_NAME";
+        case LILY_CHECKED_PATTERN_KIND_NONE:
+            return "LILY_CHECKED_PATTERN_KIND_NONE";
         case LILY_CHECKED_PATTERN_KIND_RANGE:
             return "LILY_CHECKED_PATTERN_KIND_RANGE";
         case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
@@ -66,18 +125,446 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    array,
+                    Location location,
+                    LilyCheckedPatternArray array)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_ARRAY;
+    self->location = location;
+    self->array = array;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    as,
+                    Location location,
+                    LilyCheckedPatternAs as)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_AS;
+    self->location = location;
+    self->as = as;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    exception,
+                    Location location,
+                    LilyCheckedPatternException exception)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_EXCEPTION;
+    self->location = location;
+    self->exception = exception;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    list,
+                    Location location,
+                    LilyCheckedPatternList list)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_LIST;
+    self->location = location;
+    self->list = list;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    list_head,
+                    Location location,
+                    LilyCheckedPatternListHead list_head)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_LIST_HEAD;
+    self->location = location;
+    self->list_head = list_head;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    list_tail,
+                    Location location,
+                    LilyCheckedPatternListTail list_tail)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_LIST_TAIL;
+    self->location = location;
+    self->list_tail = list_tail;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    literal,
+                    Location location,
+                    LilyCheckedPatternLiteral literal)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_LITERAL;
+    self->location = location;
+    self->literal = literal;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    name,
+                    Location location,
+                    LilyCheckedPatternName name)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_NAME;
+    self->location = location;
+    self->name = name;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    range,
+                    Location location,
+                    LilyCheckedPatternRange range)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_RANGE;
+    self->location = location;
+    self->range = range;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    record_call,
+                    Location location,
+                    LilyCheckedPatternRecordCall record_call)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_RECORD_CALL;
+    self->location = location;
+    self->record_call = record_call;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    tuple,
+                    Location location,
+                    LilyCheckedPatternTuple tuple)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_TUPLE;
+    self->location = location;
+    self->tuple = tuple;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    variant_call,
+                    Location location,
+                    LilyCheckedPatternVariantCall variant_call)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_VARIANT_CALL;
+    self->location = location;
+    self->variant_call = variant_call;
+
+    return self;
+}
+
+CONSTRUCTOR(LilyCheckedPattern *,
+            LilyCheckedPattern,
+            Location location,
+            enum LilyCheckedPatternKind kind)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = kind;
+    self->location = location;
+
+    return self;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)
 {
-    TODO("impl to_string__Debug__LilyCheckedPattern");
+    String *res =
+      format__String("LilyCheckedPattern{{ kind = {s}, location = {sa}",
+                     to_string__Debug__LilyCheckedPatternKind(self->kind),
+                     to_string__Debug__Location(&self->location));
+
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY: {
+            char *s =
+              format(", array = {Sr} }",
+                     to_string__Debug__LilyCheckedPatternArray(&self->array));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_AS: {
+            char *s = format(", as = {Sr} }",
+                             to_string__Debug__LilyCheckedPatternAs(&self->as));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
+        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
+        case LILY_CHECKED_PATTERN_KIND_NONE:
+            push_str__String(res, " }");
+            break;
+        case LILY_CHECKED_PATTERN_KIND_EXCEPTION: {
+            char *s = format(
+              ", exception = {Sr} }",
+              to_string__Debug__LilyCheckedPatternException(&self->exception));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_LIST: {
+            char *s =
+              format(", list = {Sr} }",
+                     to_string__Debug__LilyCheckedPatternList(&self->list));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD: {
+            char *s = format(
+              ", list_head = {Sr} }",
+              to_string__Debug__LilyCheckedPatternListHead(&self->list_head));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL: {
+            char *s = format(
+              ", list_tail = {Sr} }",
+              to_string__Debug__LilyCheckedPatternListTail(&self->list_tail));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_LITERAL: {
+            char *s = format(
+              ", literal = {Sr} }",
+              to_string__Debug__LilyCheckedPatternLiteral(&self->literal));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_NAME: {
+            char *s =
+              format(", name = {Sr} }",
+                     to_string__Debug__LilyCheckedPatternName(&self->name));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_RANGE: {
+            char *s =
+              format(", range = {Sr} }",
+                     to_string__Debug__LilyCheckedPatternRange(&self->range));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL: {
+            char *s = format(", record_call = {Sr} }",
+                             to_string__Debug__LilyCheckedPatternRecordCall(
+                               &self->record_call));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_TUPLE: {
+            char *s =
+              format(", tuple = {Sr} }",
+                     to_string__Debug__LilyCheckedPatternTuple(&self->tuple));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL: {
+            char *s = format(", variant_call = {Sr} }",
+                             to_string__Debug__LilyCheckedPatternVariantCall(
+                               &self->variant_call));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
 }
 #endif
 
-String *
-to_string__LilyCheckedPattern(const LilyCheckedPattern *self)
+VARIANT_DESTRUCTOR(LilyCheckedPattern, array, LilyCheckedPattern *self)
 {
-    TODO("impl to_string__LilyCheckedPattern");
+    FREE(LilyCheckedPatternArray, &self->array);
+    lily_free(self);
 }
 
-DESTRUCTOR(LilyCheckedPattern, LilyCheckedPattern *self) {}
+VARIANT_DESTRUCTOR(LilyCheckedPattern, as, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternAs, &self->as);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedPattern, exception, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternException, &self->exception);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedPattern, list, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternList, &self->list);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedPattern, list_head, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternListHead, &self->list_head);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedPattern, list_tail, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternListTail, &self->list_tail);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedPattern, literal, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternLiteral, &self->literal);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedPattern, name, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternName, &self->name);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedPattern, range, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternRange, &self->range);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedPattern, record_call, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternRecordCall, &self->record_call);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedPattern, tuple, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternTuple, &self->tuple);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedPattern, variant_call, LilyCheckedPattern *self)
+{
+    FREE(LilyCheckedPatternVariantCall, &self->variant_call);
+    lily_free(self);
+}
+
+DESTRUCTOR(LilyCheckedPattern, LilyCheckedPattern *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY:
+            FREE_VARIANT(LilyCheckedPattern, array, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_AS:
+            FREE_VARIANT(LilyCheckedPattern, as, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
+        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
+        case LILY_CHECKED_PATTERN_KIND_NONE:
+            lily_free(self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_EXCEPTION:
+            FREE_VARIANT(LilyCheckedPattern, exception, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST:
+            FREE_VARIANT(LilyCheckedPattern, list, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
+            FREE_VARIANT(LilyCheckedPattern, list_head, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
+            FREE_VARIANT(LilyCheckedPattern, list_tail, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LITERAL:
+            FREE_VARIANT(LilyCheckedPattern, literal, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_NAME:
+            FREE_VARIANT(LilyCheckedPattern, name, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_RANGE:
+            FREE_VARIANT(LilyCheckedPattern, range, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
+            FREE_VARIANT(LilyCheckedPattern, record_call, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_TUPLE:
+            FREE_VARIANT(LilyCheckedPattern, tuple, self);
+            break;
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
+            FREE_VARIANT(LilyCheckedPattern, variant_call, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
