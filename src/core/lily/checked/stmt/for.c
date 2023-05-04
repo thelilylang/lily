@@ -29,11 +29,13 @@ CONSTRUCTOR(LilyCheckedStmtFor,
             LilyCheckedStmtFor,
             LilyCheckedExpr *expr_left,
             LilyCheckedExpr *expr_right,
-            Vec *body)
+            Vec *body,
+            LilyCheckedScope *scope)
 {
     return (LilyCheckedStmtFor){ .expr_left = expr_left,
                                  .expr_right = expr_right,
-                                 .body = body };
+                                 .body = body,
+                                 .scope = scope };
 }
 
 #ifdef ENV_DEBUG
@@ -46,6 +48,14 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtFor, const LilyCheckedStmtFor *self)
       to_string__Debug__LilyCheckedExpr(self->expr_right));
 
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyFunItem);
+
+    push_str__String(res, ", scope = ");
+
+    {
+        String *s = to_string__Debug__LilyCheckedScope(self->scope);
+
+        APPEND_AND_FREE(res, s);
+    }
 
     push_str__String(res, " }");
 
@@ -60,4 +70,5 @@ DESTRUCTOR(LilyCheckedStmtFor, const LilyCheckedStmtFor *self)
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyCheckedBodyFunItem);
     FREE(Vec, self->body);
+    FREE(LilyCheckedScope, self->scope);
 }

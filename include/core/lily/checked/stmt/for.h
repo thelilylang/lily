@@ -26,6 +26,7 @@
 #define LILY_CORE_LILY_CHECKED_STMT_FOR_H
 
 #include <core/lily/checked/expr.h>
+#include <core/lily/checked/scope.h>
 
 #include <base/vec.h>
 
@@ -34,6 +35,7 @@ typedef struct LilyCheckedStmtFor
     LilyCheckedExpr *expr_left;
     LilyCheckedExpr *expr_right;
     Vec *body; // Vec<LilyCheckedBodyFunItem*>*
+    LilyCheckedScope *scope;
 } LilyCheckedStmtFor;
 
 /**
@@ -44,7 +46,8 @@ CONSTRUCTOR(LilyCheckedStmtFor,
             LilyCheckedStmtFor,
             LilyCheckedExpr *expr_left,
             LilyCheckedExpr *expr_right,
-            Vec *body);
+            Vec *body,
+            LilyCheckedScope *scope);
 
 /**
  *
