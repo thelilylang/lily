@@ -13,7 +13,7 @@
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, PATTERNESS OR
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
@@ -51,6 +51,7 @@ enum LilyCheckedPatternKind
     LILY_CHECKED_PATTERN_KIND_LIST_TAIL,
     LILY_CHECKED_PATTERN_KIND_LITERAL,
     LILY_CHECKED_PATTERN_KIND_NAME,
+    LILY_CHECKED_PATTERN_KIND_NONE,
     LILY_CHECKED_PATTERN_KIND_RANGE,
     LILY_CHECKED_PATTERN_KIND_RECORD_CALL,
     LILY_CHECKED_PATTERN_KIND_TUPLE,
@@ -75,8 +76,155 @@ typedef struct LilyCheckedPattern
     enum LilyCheckedPatternKind kind;
     Location location;
     union
-    {};
+    {
+        LilyCheckedPatternArray array;
+        LilyCheckedPatternAs as;
+        LilyCheckedPatternException exception;
+        LilyCheckedPatternList list;
+        LilyCheckedPatternListHead list_head;
+        LilyCheckedPatternListTail list_tail;
+        LilyCheckedPatternLiteral literal;
+        LilyCheckedPatternName name;
+        LilyCheckedPatternRange range;
+        LilyCheckedPatternRecordCall record_call;
+        LilyCheckedPatternTuple tuple;
+        LilyCheckedPatternVariantCall variant_call;
+    };
 } LilyCheckedPattern;
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_ARRAY).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    array,
+                    Location location,
+                    LilyCheckedPatternArray array);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_AS).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    as,
+                    Location location,
+                    LilyCheckedPatternAs as);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type
+ * (LILY_CHECKED_PATTERN_KIND_EXCEPTION).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    exception,
+                    Location location,
+                    LilyCheckedPatternException exception);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_LIST).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    list,
+                    Location location,
+                    LilyCheckedPatternList list);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type
+ * (LILY_CHECKED_PATTERN_KIND_LIST_HEAD).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    list_head,
+                    Location location,
+                    LilyCheckedPatternListHead list_head);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type
+ * (LILY_CHECKED_PATTERN_KIND_LIST_TAIL).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    list_tail,
+                    Location location,
+                    LilyCheckedPatternListTail list_tail);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_LITERAL).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    literal,
+                    Location location,
+                    LilyCheckedPatternLiteral literal);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_NAME).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    name,
+                    Location location,
+                    LilyCheckedPatternName name);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_RANGE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    range,
+                    Location location,
+                    LilyCheckedPatternRange range);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type
+ * (LILY_CHECKED_PATTERN_KIND_RECORD_CALL).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    record_call,
+                    Location location,
+                    LilyCheckedPatternRecordCall record_call);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_TUPLE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    tuple,
+                    Location location,
+                    LilyCheckedPatternTuple tuple);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type
+ * (LILY_CHECKED_PATTERN_KIND_VARIANT_CALL).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    variant_call,
+                    Location location,
+                    LilyCheckedPatternVariantCall variant_call);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type.
+ */
+CONSTRUCTOR(LilyCheckedPattern *,
+            LilyCheckedPattern,
+            Location location,
+            enum LilyCheckedPatternKind kind);
 
 /**
  *
@@ -87,13 +235,6 @@ typedef struct LilyCheckedPattern
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self);
 #endif
-
-/**
- *
- * @brief Convert LilyCheckedPattern in String.
- */
-String *
-to_string__LilyCheckedPattern(const LilyCheckedPattern *self);
 
 /**
  *

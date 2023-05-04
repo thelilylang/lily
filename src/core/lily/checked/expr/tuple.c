@@ -52,7 +52,6 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedExprTuple, const LilyCheckedExprTuple *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->items->buffer, self->items->len, LilyCheckedExprTuple);
+    FREE_BUFFER_ITEMS(self->items->buffer, self->items->len, LilyCheckedExpr);
     FREE(Vec, self->items);
 }
