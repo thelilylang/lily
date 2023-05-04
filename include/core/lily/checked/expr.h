@@ -87,6 +87,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     array,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprArray array);
 
@@ -98,6 +99,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     binary,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprBinary binary);
 
@@ -109,6 +111,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     call,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprCall call);
 
@@ -120,6 +123,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     cast,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprCast cast);
 
@@ -131,6 +135,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     grouping,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExpr *grouping);
 
@@ -142,6 +147,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     lambda,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprLambda lambda);
 
@@ -153,6 +159,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     list,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprList list);
 
@@ -164,6 +171,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     literal,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprLiteral literal);
 
@@ -175,6 +183,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     tuple,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprTuple tuple);
 
@@ -186,6 +195,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
                     unary,
                     Location location,
+                    LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprUnary unary);
 
@@ -196,6 +206,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
 CONSTRUCTOR(LilyCheckedExpr *,
             LilyCheckedExpr,
             Location location,
+            LilyCheckedDataType *data_type,
             const LilyAstExpr *ast_expr,
             enum LilyCheckedExprKind kind);
 
