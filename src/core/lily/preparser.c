@@ -9013,7 +9013,7 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
                 NULL,
                 NULL,
                 from__String(
-                  "expected `:=` before the expresion of the variable")),
+                  "expected `:=` before the expression of the variable")),
               &self->count_error);
     }
 
