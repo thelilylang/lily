@@ -61,6 +61,6 @@ to_string__LilyAstPatternTuple(const LilyAstPatternTuple *self)
 
 DESTRUCTOR(LilyAstPatternTuple, LilyAstPatternTuple *self)
 {
-    FREE_BUFFER_ITEMS(self->patterns->buffer, self->patterns->len, LilyAstExpr);
+    FREE_BUFFER_ITEMS(self->patterns->buffer, self->patterns->len, LilyAstPattern);
     FREE(Vec, self->patterns);
 }
