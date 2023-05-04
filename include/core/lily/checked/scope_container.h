@@ -398,6 +398,43 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedScopeContainerFun, LilyCheckedScopeContainerFun *self);
 
+typedef struct LilyCheckedScopeContainerLabel
+{
+    String *name; // String* (&)
+    LilyCheckedAccessLabel access;
+} LilyCheckedScopeContainerLabel;
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeContainerLabel type.
+ */
+CONSTRUCTOR(LilyCheckedScopeContainerLabel *,
+            LilyCheckedScopeContainerLabel,
+            String *name,
+            LilyCheckedAccessLabel access);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerLabel in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerLabel,
+               const LilyCheckedScopeContainerLabel *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedScopeContainerLabel type.
+ */
+inline DESTRUCTOR(LilyCheckedScopeContainerLabel,
+                  LilyCheckedScopeContainerLabel *self)
+{
+    lily_free(self);
+}
+
 typedef struct LilyCheckedScopeContainerVariable
 {
     String *name; // String* (&)

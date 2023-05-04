@@ -310,6 +310,33 @@ DESTRUCTOR(LilyCheckedScopeContainerFun, LilyCheckedScopeContainerFun *self)
     lily_free(self);
 }
 
+CONSTRUCTOR(LilyCheckedScopeContainerLabel *,
+            LilyCheckedScopeContainerLabel,
+            String *name,
+            LilyCheckedAccessLabel access)
+{
+    LilyCheckedScopeContainerLabel *self =
+      lily_malloc(sizeof(LilyCheckedScopeContainerLabel));
+
+    self->name = name;
+    self->access = access;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerLabel,
+               const LilyCheckedScopeContainerLabel *self)
+{
+    return format(
+      "LilyCheckedScopeContainerLabel{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessLabel(&self->access));
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedScopeContainerVariable *,
             LilyCheckedScopeContainerVariable,
             String *name,
