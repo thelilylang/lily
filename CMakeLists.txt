@@ -186,7 +186,6 @@ set(CORE_SRC
 	src/core/lily/checked/stmt/await.c
 	src/core/lily/checked/stmt/block.c
 	src/core/lily/checked/stmt/break.c
-	src/core/lily/checked/stmt/defer.c
 	src/core/lily/checked/stmt/drop.c
 	src/core/lily/checked/stmt/for.c
 	src/core/lily/checked/stmt/if.c
