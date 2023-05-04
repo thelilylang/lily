@@ -66,6 +66,9 @@ static VARIANT_DESTRUCTOR(LilyAstExpr, list, LilyAstExpr *self);
 // Free LilyAstExpr type (LILY_AST_EXPR_KIND_LITERAL).
 static VARIANT_DESTRUCTOR(LilyAstExpr, literal, LilyAstExpr *self);
 
+// Free LilyAstExpr type (LILY_AST_EXPR_KIND_TRY).
+static VARIANT_DESTRUCTOR(LilyAstExpr, try, LilyAstExpr *self);
+
 // Free LilyAstExpr type (LILY_AST_EXPR_KIND_TUPLE).
 static VARIANT_DESTRUCTOR(LilyAstExpr, tuple, LilyAstExpr *self);
 
@@ -99,6 +102,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprKind, enum LilyAstExprKind self)
             return "LILY_AST_EXPR_KIND_LITERAL";
         case LILY_AST_EXPR_KIND_SELF:
             return "LILY_AST_EXPR_KIND_SELF";
+        case LILY_AST_EXPR_KIND_TRY:
+            return "LILY_AST_EXPR_KIND_TRY";
         case LILY_AST_EXPR_KIND_TUPLE:
             return "LILY_AST_EXPR_KIND_TUPLE";
         case LILY_AST_EXPR_KIND_UNARY:
@@ -280,6 +285,21 @@ VARIANT_CONSTRUCTOR(LilyAstExpr *,
 
 VARIANT_CONSTRUCTOR(LilyAstExpr *,
                     LilyAstExpr,
+                    try,
+                    Location location,
+                    LilyAstExprTry try)
+{
+    LilyAstExpr *self = lily_malloc(sizeof(LilyAstExpr));
+
+    self->kind = LILY_AST_EXPR_KIND_TRY;
+    self->location = location;
+    self->try = try;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
                     tuple,
                     Location location,
                     LilyAstExprTuple tuple)
@@ -424,6 +444,14 @@ IMPL_FOR_DEBUG(to_string, LilyAstExpr, const LilyAstExpr *self)
 
             break;
         }
+        case LILY_AST_EXPR_KIND_TRY: {
+            char *s = format(", try = {Sr} }",
+                             to_string__Debug__LilyAstExprTry(&self->try));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_AST_EXPR_KIND_TUPLE: {
             char *s = format(", tuple = {Sr} }",
                              to_string__Debug__LilyAstExprTuple(&self->tuple));
@@ -524,6 +552,12 @@ VARIANT_DESTRUCTOR(LilyAstExpr, literal, LilyAstExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyAstExpr, try, LilyAstExpr *self)
+{
+    FREE(LilyAstExprTry, &self->try);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyAstExpr, tuple, LilyAstExpr *self)
 {
     FREE(LilyAstExprTuple, &self->tuple);
@@ -571,6 +605,9 @@ DESTRUCTOR(LilyAstExpr, LilyAstExpr *self)
             break;
         case LILY_AST_EXPR_KIND_LITERAL:
             FREE_VARIANT(LilyAstExpr, literal, self);
+            break;
+        case LILY_AST_EXPR_KIND_TRY:
+            FREE_VARIANT(LilyAstExpr, try, self);
             break;
         case LILY_AST_EXPR_KIND_TUPLE:
             FREE_VARIANT(LilyAstExpr, tuple, self);

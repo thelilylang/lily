@@ -37,6 +37,7 @@
 #include <core/lily/ast/expr/lambda.h>
 #include <core/lily/ast/expr/list.h>
 #include <core/lily/ast/expr/literal.h>
+#include <core/lily/ast/expr/try.h>
 #include <core/lily/ast/expr/tuple.h>
 #include <core/lily/ast/expr/unary.h>
 
@@ -56,6 +57,7 @@ enum LilyAstExprKind
     LILY_AST_EXPR_KIND_LIST,
     LILY_AST_EXPR_KIND_LITERAL,
     LILY_AST_EXPR_KIND_SELF,
+    LILY_AST_EXPR_KIND_TRY,
     LILY_AST_EXPR_KIND_TUPLE,
     LILY_AST_EXPR_KIND_UNARY,
     LILY_AST_EXPR_KIND_WILDCARD
@@ -78,6 +80,7 @@ typedef struct LilyAstExpr
         LilyAstExprLambda lambda;
         LilyAstExprList list;
         LilyAstExprLiteral literal;
+        LilyAstExprTry try;
         LilyAstExprTuple tuple;
         LilyAstExprUnary unary;
     };
@@ -192,6 +195,16 @@ VARIANT_CONSTRUCTOR(LilyAstExpr *,
                     literal,
                     Location location,
                     LilyAstExprLiteral literal);
+
+/**
+ *
+ * @brief Construct LilyAstExpr type (LILY_AST_EXPR_KIND_TRY).
+ */
+VARIANT_CONSTRUCTOR(LilyAstExpr *,
+                    LilyAstExpr,
+                    try,
+                    Location location,
+                    LilyAstExprTry try);
 
 /**
  *
