@@ -216,6 +216,43 @@ inline DESTRUCTOR(LilyCheckedScopeContainerAlias,
     lily_free(self);
 }
 
+typedef struct LilyCheckedScopeContainerError
+{
+    String *name; // String* (&)
+    LilyCheckedAccessError access;
+} LilyCheckedScopeContainerError;
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeContainerError type.
+ */
+CONSTRUCTOR(LilyCheckedScopeContainerError *,
+            LilyCheckedScopeContainerError,
+            String *name,
+            LilyCheckedAccessError access);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerError in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerError,
+               const LilyCheckedScopeContainerError *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedScopeContainerError type.
+ */
+inline DESTRUCTOR(LilyCheckedScopeContainerError,
+                  LilyCheckedScopeContainerError *self)
+{
+    lily_free(self);
+}
+
 typedef struct LilyCheckedScopeContainerEnumObject
 {
     String *name; // String* (&)

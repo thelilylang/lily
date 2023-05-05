@@ -164,6 +164,33 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+CONSTRUCTOR(LilyCheckedScopeContainerError *,
+            LilyCheckedScopeContainerError,
+            String *name,
+            LilyCheckedAccessError access)
+{
+    LilyCheckedScopeContainerError *self =
+      lily_malloc(sizeof(LilyCheckedScopeContainerError));
+
+    self->name = name;
+    self->access = access;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerError,
+               const LilyCheckedScopeContainerError *self)
+{
+    return format(
+      "LilyCheckedScopeContainerError{{ name = {S}, access = {sa} }",
+      self->name,
+      to_string__Debug__LilyCheckedAccessError(&self->access));
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedScopeContainerEnumObject *,
             LilyCheckedScopeContainerEnumObject,
             String *name,
