@@ -22,170 +22,67 @@
  * SOFTWARE.
  */
 
-#include <base/alloc.h>
-
-#include <core/lily/checked/body/record_object.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-
-// Free LilyCheckedBodyRecordObjectItem type
-// (LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_CONSTANT).
-VARIANT_DESTRUCTOR(LilyCheckedBodyRecordObjectItem,
-                   constant,
-                   LilyCheckedBodyRecordObjectItem *self);
-
-// Free LilyCheckedBodyRecordObjectItem type
-// (LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_FIELD).
-VARIANT_DESTRUCTOR(LilyCheckedBodyRecordObjectItem,
-                   field,
-                   LilyCheckedBodyRecordObjectItem *self);
-
-// Free LilyCheckedBodyRecordObjectItem type
-// (LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_METHOD).
-VARIANT_DESTRUCTOR(LilyCheckedBodyRecordObjectItem,
-                   method,
-                   LilyCheckedBodyRecordObjectItem *self);
-
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedBodyRecordObjectItemKind,
-               enum LilyCheckedBodyRecordObjectItemKind self)
-{
-    switch (self) {
-        case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_CONSTANT:
-            return "LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_CONSTANT";
-        case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_FIELD:
-            return "LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_FIELD";
-        case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_METHOD:
-            return "LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_METHOD";
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-#endif
-
-VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
-                    LilyCheckedBodyRecordObjectItem,
-                    constant,
-                    Location location,
-                    LilyCheckedDeclConstant constant)
-{
-    LilyCheckedBodyRecordObjectItem *self =
-      lily_malloc(sizeof(LilyCheckedBodyRecordObjectItem));
-
-    self->kind = LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_CONSTANT;
-    self->location = location;
-    self->constant = constant;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
-                    LilyCheckedBodyRecordObjectItem,
-                    field,
-                    Location location,
-                    LilyCheckedFieldObject field)
-{
-    LilyCheckedBodyRecordObjectItem *self =
-      lily_malloc(sizeof(LilyCheckedBodyRecordObjectItem));
-
-    self->kind = LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_FIELD;
-    self->location = location;
-    self->field = field;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
-                    LilyCheckedBodyRecordObjectItem,
-                    method,
-                    Location location,
-                    LilyCheckedDeclMethod method)
-{
-    LilyCheckedBodyRecordObjectItem *self =
-      lily_malloc(sizeof(LilyCheckedBodyRecordObjectItem));
-
-    self->kind = LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_METHOD;
-    self->location = location;
-    self->method = method;
-
-    return self;
-}
+#include <core/lily/checked/decl/record_object.h>
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
-               LilyCheckedBodyRecordObjectItem,
-               const LilyCheckedBodyRecordObjectItem *self)
+               LilyCheckedDeclRecordObject,
+               const LilyCheckedDeclRecordObject *self)
 {
-    switch (self->kind) {
-        case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_CONSTANT:
-            return format__String(
-              "LilyCheckedBodyRecordObjectItem{{ kind = {s}, location = {sa}, "
-              "constant = {Sr} }",
-              to_string__Debug__LilyCheckedBodyRecordObjectItemKind(self->kind),
-              to_string__Debug__Location(&self->location),
-              to_string__Debug__LilyCheckedDeclConstant(&self->constant));
-        case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_FIELD:
-            return format__String(
-              "LilyCheckedBodyRecordObjectItem{{ kind = {s}, location = {sa}, "
-              "field = {Sr} }",
-              to_string__Debug__LilyCheckedBodyRecordObjectItemKind(self->kind),
-              to_string__Debug__Location(&self->location),
-              to_string__Debug__LilyCheckedFieldObject(&self->field));
-        case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_METHOD:
-            return format__String(
-              "LilyCheckedBodyRecordObjectItem{{ kind = {s}, location = {sa}, "
-              "method = {Sr} }",
-              to_string__Debug__LilyCheckedBodyRecordObjectItemKind(self->kind),
-              to_string__Debug__Location(&self->location),
-              to_string__Debug__LilyCheckedDeclMethod(&self->method));
-        default:
-            UNREACHABLE("unknown variant");
+    String *res = format__String(
+      "LilyCheckedDeclRecordObject{{ name = {S}, generic_params =", self->name);
+
+    if (self->generic_params) {
+        DEBUG_VEC_STRING(self->generic_params, res, LilyCheckedGenericParam);
+    } else {
+        push_str__String(res, " NULL");
     }
+
+    push_str__String(res, ", impl_params =");
+
+    if (self->generic_params) {
+        DEBUG_VEC_STRING(self->impl_params, res, LilyCheckedImplParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", body =");
+    DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyRecordObjectItem);
+
+    {
+        char *s = format(", scope = {Sr}, visibility = {s} }",
+                         to_string__Debug__LilyCheckedScope(self->scope),
+                         to_string__Debug__LilyVisibility(self->visibility));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
 }
 #endif
 
-VARIANT_DESTRUCTOR(LilyCheckedBodyRecordObjectItem,
-                   constant,
-                   LilyCheckedBodyRecordObjectItem *self)
+DESTRUCTOR(LilyCheckedDeclRecordObject, const LilyCheckedDeclRecordObject *self)
 {
-    FREE(LilyCheckedDeclConstant, &self->constant);
-    lily_free(self);
-}
+    FREE_MOVE(self->name, FREE(String, self->name));
 
-VARIANT_DESTRUCTOR(LilyCheckedBodyRecordObjectItem,
-                   field,
-                   LilyCheckedBodyRecordObjectItem *self)
-{
-    FREE(LilyCheckedFieldObject, &self->field);
-    lily_free(self);
-}
-
-VARIANT_DESTRUCTOR(LilyCheckedBodyRecordObjectItem,
-                   method,
-                   LilyCheckedBodyRecordObjectItem *self)
-{
-    FREE(LilyCheckedDeclMethod, &self->method);
-    lily_free(self);
-}
-
-DESTRUCTOR(LilyCheckedBodyRecordObjectItem,
-           LilyCheckedBodyRecordObjectItem *self)
-{
-    switch (self->kind) {
-        case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_CONSTANT:
-            FREE_VARIANT(LilyCheckedBodyRecordObjectItem, constant, self);
-            break;
-        case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_FIELD:
-            FREE_VARIANT(LilyCheckedBodyRecordObjectItem, field, self);
-            break;
-        case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_METHOD:
-            FREE_VARIANT(LilyCheckedBodyRecordObjectItem, method, self);
-            break;
-        default:
-            UNREACHABLE("unknown variant");
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(self->generic_params->buffer,
+                          self->generic_params->len,
+                          LilyCheckedGenericParam);
+        FREE(Vec, self->generic_params);
     }
+
+    if (self->impl_params) {
+        FREE_BUFFER_ITEMS(self->impl_params->buffer,
+                          self->impl_params->len,
+                          LilyCheckedImplParam);
+        FREE(Vec, self->impl_params);
+    }
+
+    FREE_BUFFER_ITEMS(
+      self->body->buffer, self->body->len, LilyCheckedBodyRecordObjectItem);
+    FREE(Vec, self->body);
+
+    FREE(LilyCheckedScope, self->scope);
 }
