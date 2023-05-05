@@ -82,7 +82,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclKind, enum LilyCheckedDeclKind self)
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     constant,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclConstant constant)
 {
     LilyCheckedDecl *self = lily_malloc(sizeof(LilyCheckedDecl));
@@ -90,6 +91,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
     self->kind = LILY_CHECKED_DECL_KIND_CONSTANT;
     self->location = location;
     self->is_checked = false;
+    self->ast_decl = ast_decl;
     self->constant = constant;
 
     return self;
@@ -98,7 +100,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     error,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclError error)
 {
     LilyCheckedDecl *self = lily_malloc(sizeof(LilyCheckedDecl));
@@ -106,6 +109,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
     self->kind = LILY_CHECKED_DECL_KIND_ERROR;
     self->location = location;
     self->is_checked = false;
+    self->ast_decl = ast_decl;
     self->error = error;
 
     return self;
@@ -114,7 +118,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     fun,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclFun fun)
 {
     LilyCheckedDecl *self = lily_malloc(sizeof(LilyCheckedDecl));
@@ -122,6 +127,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
     self->kind = LILY_CHECKED_DECL_KIND_FUN;
     self->location = location;
     self->is_checked = false;
+    self->ast_decl = ast_decl;
     self->fun = fun;
 
     return self;
@@ -130,7 +136,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     method,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclMethod method)
 {
     LilyCheckedDecl *self = lily_malloc(sizeof(LilyCheckedDecl));
@@ -138,6 +145,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
     self->kind = LILY_CHECKED_DECL_KIND_METHOD;
     self->location = location;
     self->is_checked = false;
+    self->ast_decl = ast_decl;
     self->method = method;
 
     return self;
@@ -146,7 +154,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     module,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclModule module)
 {
     LilyCheckedDecl *self = lily_malloc(sizeof(LilyCheckedDecl));
@@ -154,6 +163,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
     self->kind = LILY_CHECKED_DECL_KIND_MODULE;
     self->location = location;
     self->is_checked = false;
+    self->ast_decl = ast_decl;
     self->module = module;
 
     return self;
@@ -162,7 +172,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     object,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclObject object)
 {
     LilyCheckedDecl *self = lily_malloc(sizeof(LilyCheckedDecl));
@@ -170,6 +181,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
     self->kind = LILY_CHECKED_DECL_KIND_OBJECT;
     self->location = location;
     self->is_checked = false;
+    self->ast_decl = ast_decl;
     self->object = object;
 
     return self;
@@ -178,7 +190,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     type,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclType type)
 {
     LilyCheckedDecl *self = lily_malloc(sizeof(LilyCheckedDecl));
@@ -186,6 +199,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
     self->kind = LILY_CHECKED_DECL_KIND_TYPE;
     self->location = location;
     self->is_checked = false;
+    self->ast_decl = ast_decl;
     self->type = type;
 
     return self;
@@ -199,58 +213,65 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDecl, const LilyCheckedDecl *self)
         case LILY_CHECKED_DECL_KIND_CONSTANT:
             return format__String(
               "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, constant = {Sr} }",
+              "{b}, ast_decl = {Sr}, constant = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               self->is_checked,
+              to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclConstant(&self->constant));
         case LILY_CHECKED_DECL_KIND_ERROR:
             return format__String(
               "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, error = {Sr} }",
+              "{b}, ast_decl = {Sr}, error = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               self->is_checked,
+              to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclError(&self->error));
         case LILY_CHECKED_DECL_KIND_FUN:
             return format__String(
               "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, fun = {Sr} }",
+              "{b}, ast_decl = {Sr}, fun = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               self->is_checked,
+              to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclFun(&self->fun));
         case LILY_CHECKED_DECL_KIND_MODULE:
             return format__String(
               "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, module = {Sr} }",
+              "{b}, ast_decl = {Sr}, module = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               self->is_checked,
+              to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclModule(&self->module));
         case LILY_CHECKED_DECL_KIND_METHOD:
             return format__String(
               "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, method = {Sr} }",
+              "{b}, ast_decl = {Sr}, method = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               self->is_checked,
+              to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclMethod(&self->method));
         case LILY_CHECKED_DECL_KIND_OBJECT:
             return format__String(
               "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, object = {Sr} }",
+              "{b}, ast_decl = {Sr}, object = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               self->is_checked,
+              to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclObject(&self->object));
         case LILY_CHECKED_DECL_KIND_TYPE:
             return format__String(
               "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, type = {Sr} }",
+              "{b}, ast_decl = {Sr}, type = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               self->is_checked,
+              to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclType(&self->type));
         default:
             UNREACHABLE("unknown variant");

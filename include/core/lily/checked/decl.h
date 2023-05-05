@@ -27,6 +27,7 @@
 
 #include <base/macros.h>
 
+#include <core/lily/ast/decl.h>
 #include <core/lily/checked/decl/error.h>
 #include <core/lily/checked/decl/fun.h>
 #include <core/lily/checked/decl/method.h>
@@ -58,8 +59,9 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclKind, enum LilyCheckedDeclKind self);
 typedef struct LilyCheckedDecl
 {
     enum LilyCheckedDeclKind kind;
-    Location location;
+    const Location *location; // const Location* (&)
     bool is_checked;
+    const LilyAstDecl *ast_decl; // const LilyAstDecl* (&)
     union
     {
         LilyCheckedDeclConstant constant;
@@ -79,7 +81,8 @@ typedef struct LilyCheckedDecl
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     constant,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclConstant constant);
 
 /**
@@ -89,7 +92,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     error,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclError error);
 
 /**
@@ -99,7 +103,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     fun,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclFun fun);
 
 /**
@@ -109,7 +114,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     method,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclMethod method);
 
 /**
@@ -119,7 +125,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     module,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclModule module);
 
 /**
@@ -129,7 +136,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     object,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclObject object);
 
 /**
@@ -139,7 +147,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
                     LilyCheckedDecl,
                     type,
-                    Location location,
+                    const Location *location,
+                    const LilyAstDecl *ast_decl,
                     LilyCheckedDeclType type);
 
 /**
