@@ -188,6 +188,36 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedAccessAlias *self);
 #endif
 
+typedef struct LilyCheckedAccessError
+{
+    LilyCheckedAccessModule module;
+    Usize id;
+} LilyCheckedAccessError;
+
+/**
+ *
+ * @brief Construct LilyCheckedAccessError type.
+ */
+inline CONSTRUCTOR(LilyCheckedAccessError,
+                   LilyCheckedAccessError,
+                   LilyCheckedAccessModule module,
+                   Usize id)
+{
+    return (LilyCheckedAccessError){ .module = module, .id = id };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedAccessError in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedAccessError,
+               const LilyCheckedAccessError *self);
+#endif
+
 typedef struct LilyCheckedAccessEnumObject
 {
     LilyCheckedAccessModule module;
