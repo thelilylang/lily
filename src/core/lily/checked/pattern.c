@@ -128,8 +128,9 @@ IMPL_FOR_DEBUG(to_string,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     array,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternArray array)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -137,6 +138,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_ARRAY;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->array = array;
 
     return self;
@@ -145,8 +147,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     as,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternAs as)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -154,6 +157,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_AS;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->as = as;
 
     return self;
@@ -162,8 +166,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     exception,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternException exception)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -171,6 +176,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_EXCEPTION;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->exception = exception;
 
     return self;
@@ -179,8 +185,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     list,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternList list)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -188,6 +195,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_LIST;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->list = list;
 
     return self;
@@ -196,8 +204,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     list_head,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternListHead list_head)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -205,6 +214,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_LIST_HEAD;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->list_head = list_head;
 
     return self;
@@ -213,8 +223,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     list_tail,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternListTail list_tail)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -222,6 +233,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_LIST_TAIL;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->list_tail = list_tail;
 
     return self;
@@ -230,8 +242,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     literal,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternLiteral literal)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -239,6 +252,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_LITERAL;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->literal = literal;
 
     return self;
@@ -247,8 +261,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     name,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternName name)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -256,6 +271,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_NAME;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->name = name;
 
     return self;
@@ -264,8 +280,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     range,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternRange range)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -273,6 +290,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_RANGE;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->range = range;
 
     return self;
@@ -281,8 +299,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     record_call,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternRecordCall record_call)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -290,6 +309,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_RECORD_CALL;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->record_call = record_call;
 
     return self;
@@ -298,8 +318,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     tuple,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternTuple tuple)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -307,6 +328,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_TUPLE;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->tuple = tuple;
 
     return self;
@@ -315,8 +337,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     variant_call,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternVariantCall variant_call)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
@@ -324,6 +347,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->kind = LILY_CHECKED_PATTERN_KIND_VARIANT_CALL;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
     self->variant_call = variant_call;
 
     return self;
@@ -332,14 +356,16 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 CONSTRUCTOR(LilyCheckedPattern *,
             LilyCheckedPattern,
             enum LilyCheckedPatternKind kind,
-            Location location,
-            LilyCheckedDataType *data_type)
+            const Location *location,
+            LilyCheckedDataType *data_type,
+            const LilyAstPattern *ast_pattern)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
 
     self->kind = kind;
     self->location = location;
     self->data_type = data_type;
+    self->ast_pattern = ast_pattern;
 
     return self;
 }
@@ -348,11 +374,13 @@ CONSTRUCTOR(LilyCheckedPattern *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)
 {
-    String *res = format__String(
-      "LilyCheckedPattern{{ kind = {s}, location = {sa}, data_type = {Sr}",
-      to_string__Debug__LilyCheckedPatternKind(self->kind),
-      to_string__Debug__Location(&self->location),
-      to_string__Debug__LilyCheckedDataType(self->data_type));
+    String *res =
+      format__String("LilyCheckedPattern{{ kind = {s}, location = {sa}, "
+                     "data_type = {Sr}, ast_pattern = {Sr}",
+                     to_string__Debug__LilyCheckedPatternKind(self->kind),
+                     to_string__Debug__Location(self->location),
+                     to_string__Debug__LilyCheckedDataType(self->data_type),
+                     to_string__Debug__LilyAstPattern(self->ast_pattern));
 
     switch (self->kind) {
         case LILY_CHECKED_PATTERN_KIND_ARRAY: {

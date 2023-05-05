@@ -75,8 +75,10 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyCheckedPattern
 {
     enum LilyCheckedPatternKind kind;
-    Location location;
-    LilyCheckedDataType *data_type;
+    const Location *location; // const Location* (&)
+    LilyCheckedDataType
+      *data_type; // This is the result data type of the pattern.
+    const LilyAstPattern *ast_pattern; // const LilyAstPattern* (&)
     union
     {
         LilyCheckedPatternArray array;
@@ -101,8 +103,9 @@ typedef struct LilyCheckedPattern
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     array,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternArray array);
 
 /**
@@ -112,8 +115,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     as,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternAs as);
 
 /**
@@ -124,8 +128,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     exception,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternException exception);
 
 /**
@@ -135,8 +140,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     list,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternList list);
 
 /**
@@ -147,8 +153,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     list_head,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternListHead list_head);
 
 /**
@@ -159,8 +166,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     list_tail,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternListTail list_tail);
 
 /**
@@ -170,8 +178,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     literal,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternLiteral literal);
 
 /**
@@ -181,8 +190,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     name,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternName name);
 
 /**
@@ -192,8 +202,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     range,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternRange range);
 
 /**
@@ -204,8 +215,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     record_call,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternRecordCall record_call);
 
 /**
@@ -215,8 +227,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     tuple,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternTuple tuple);
 
 /**
@@ -227,8 +240,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
                     variant_call,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternVariantCall variant_call);
 
 /**
@@ -238,8 +252,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 CONSTRUCTOR(LilyCheckedPattern *,
             LilyCheckedPattern,
             enum LilyCheckedPatternKind kind,
-            Location location,
-            LilyCheckedDataType *data_type);
+            const Location *location,
+            LilyCheckedDataType *data_type,
+            const LilyAstPattern *ast_pattern);
 
 /**
  *
