@@ -59,6 +59,7 @@ typedef struct LilyCheckedDecl
 {
     enum LilyCheckedDeclKind kind;
     Location location;
+    bool is_checked;
     union
     {
         LilyCheckedDeclConstant constant;

@@ -89,6 +89,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_CONSTANT;
     self->location = location;
+    self->is_checked = false;
     self->constant = constant;
 
     return self;
@@ -104,6 +105,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_ERROR;
     self->location = location;
+    self->is_checked = false;
     self->error = error;
 
     return self;
@@ -119,6 +121,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_FUN;
     self->location = location;
+    self->is_checked = false;
     self->fun = fun;
 
     return self;
@@ -134,6 +137,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_METHOD;
     self->location = location;
+    self->is_checked = false;
     self->method = method;
 
     return self;
@@ -149,6 +153,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_MODULE;
     self->location = location;
+    self->is_checked = false;
     self->module = module;
 
     return self;
@@ -164,6 +169,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_OBJECT;
     self->location = location;
+    self->is_checked = false;
     self->object = object;
 
     return self;
@@ -179,6 +185,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_TYPE;
     self->location = location;
+    self->is_checked = false;
     self->type = type;
 
     return self;
@@ -191,45 +198,59 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDecl, const LilyCheckedDecl *self)
     switch (self->kind) {
         case LILY_CHECKED_DECL_KIND_CONSTANT:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, constant = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
+              "{b}, constant = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
+              self->is_checked,
               to_string__Debug__LilyCheckedDeclConstant(&self->constant));
         case LILY_CHECKED_DECL_KIND_ERROR:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, error = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
+              "{b}, error = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
+              self->is_checked,
               to_string__Debug__LilyCheckedDeclError(&self->error));
         case LILY_CHECKED_DECL_KIND_FUN:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, fun = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
+              "{b}, fun = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
+              self->is_checked,
               to_string__Debug__LilyCheckedDeclFun(&self->fun));
         case LILY_CHECKED_DECL_KIND_MODULE:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, module = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
+              "{b}, module = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
+              self->is_checked,
               to_string__Debug__LilyCheckedDeclModule(&self->module));
         case LILY_CHECKED_DECL_KIND_METHOD:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, method = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
+              "{b}, method = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
+              self->is_checked,
               to_string__Debug__LilyCheckedDeclMethod(&self->method));
         case LILY_CHECKED_DECL_KIND_OBJECT:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, object = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
+              "{b}, object = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
+              self->is_checked,
               to_string__Debug__LilyCheckedDeclObject(&self->object));
         case LILY_CHECKED_DECL_KIND_TYPE:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, type = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
+              "{b}, type = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
+              self->is_checked,
               to_string__Debug__LilyCheckedDeclType(&self->type));
         default:
             UNREACHABLE("unknown variant");
