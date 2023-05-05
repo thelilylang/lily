@@ -36,7 +36,7 @@
 typedef struct LilyCheckedDeclError
 {
     String *name;
-    Vec *generic_params;        // Vec<LilyCheckedGenericParam*>*?
+    Vec *generic_params;            // Vec<LilyCheckedGenericParam*>*?
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
     enum LilyVisibility visibility;
 } LilyCheckedDeclError;
@@ -53,9 +53,9 @@ inline CONSTRUCTOR(LilyCheckedDeclError,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclError){ .name = name,
-                               .generic_params = generic_params,
-                               .data_type = data_type,
-                               .visibility = visibility };
+                                   .generic_params = generic_params,
+                                   .data_type = data_type,
+                                   .visibility = visibility };
 }
 
 /**
@@ -65,7 +65,9 @@ inline CONSTRUCTOR(LilyCheckedDeclError,
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedDeclError, const LilyCheckedDeclError *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDeclError,
+               const LilyCheckedDeclError *self);
 #endif
 
 /**

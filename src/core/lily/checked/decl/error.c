@@ -29,7 +29,9 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedDeclError, const LilyCheckedDeclError *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDeclError,
+               const LilyCheckedDeclError *self)
 {
     String *res = format__String(
       "LilyCheckedDeclError{{ name = {S}, generic_params =", self->name);
