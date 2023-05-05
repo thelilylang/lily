@@ -171,6 +171,7 @@ build__LilyPackage(const CompileConfig *config,
 #endif
 
     run__LilyParser(&self->parser, false);
+    run__LilyAnalysis(&self->analysis);
     run__LilyIrLlvmGenerator(self);
 
     return self;
