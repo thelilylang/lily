@@ -1,0 +1,170 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2022-2023 ArthurPV
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#ifndef LILY_CORE_LILY_CHECKED_DECL_H
+#define LILY_CORE_LILY_CHECKED_DECL_H
+
+#include <base/macros.h>
+
+#include <core/lily/checked/decl/error.h>
+#include <core/lily/checked/decl/fun.h>
+#include <core/lily/checked/decl/method.h>
+#include <core/lily/checked/decl/module.h>
+#include <core/lily/checked/decl/object.h>
+#include <core/lily/checked/decl/type.h>
+
+enum LilyCheckedDeclKind
+{
+    LILY_CHECKED_DECL_KIND_CONSTANT,
+    LILY_CHECKED_DECL_KIND_ERROR,
+    LILY_CHECKED_DECL_KIND_FUN,
+    LILY_CHECKED_DECL_KIND_METHOD,
+    LILY_CHECKED_DECL_KIND_MODULE,
+    LILY_CHECKED_DECL_KIND_OBJECT,
+    LILY_CHECKED_DECL_KIND_TYPE
+};
+
+/**
+ *
+ * @brief Convert LilyCheckedDeclKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyCheckedDeclKind, enum LilyCheckedDeclKind self);
+#endif
+
+typedef struct LilyCheckedDecl
+{
+    enum LilyCheckedDeclKind kind;
+    Location location;
+    union
+    {
+        LilyCheckedDeclConstant constant;
+        LilyCheckedDeclError error;
+        LilyCheckedDeclFun fun;
+        LilyCheckedDeclMethod method;
+        LilyCheckedDeclModule module;
+        LilyCheckedDeclObject object;
+        LilyCheckedDeclType type;
+    };
+} LilyCheckedDecl;
+
+/**
+ *
+ * @brief Construct LilyCheckedDecl type (LILY_CHECKED_DECL_KIND_CONSTANT).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
+                    LilyCheckedDecl,
+                    constant,
+                    Location location,
+                    LilyCheckedDeclConstant constant);
+
+/**
+ *
+ * @brief Construct LilyCheckedDecl type (LILY_CHECKED_DECL_KIND_ERROR).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
+                    LilyCheckedDecl,
+                    error,
+                    Location location,
+                    LilyCheckedDeclError error);
+
+/**
+ *
+ * @brief Construct LilyCheckedDecl type (LILY_CHECKED_DECL_KIND_FUN).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
+                    LilyCheckedDecl,
+                    fun,
+                    Location location,
+                    LilyCheckedDeclFun fun);
+
+/**
+ *
+ * @brief Construct LilyCheckedDecl type (LILY_CHECKED_DECL_KIND_METHOD).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
+                    LilyCheckedDecl,
+                    method,
+                    Location location,
+                    LilyCheckedDeclMethod method);
+
+/**
+ *
+ * @brief Construct LilyCheckedDecl type (LILY_CHECKED_DECL_KIND_MODULE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
+                    LilyCheckedDecl,
+                    module,
+                    Location location,
+                    LilyCheckedDeclModule module);
+
+/**
+ *
+ * @brief Construct LilyCheckedDecl type (LILY_CHECKED_DECL_KIND_OBJECT).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
+                    LilyCheckedDecl,
+                    object,
+                    Location location,
+                    LilyCheckedDeclObject object);
+
+/**
+ *
+ * @brief Construct LilyCheckedDecl type (LILY_CHECKED_DECL_KIND_TYPE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
+                    LilyCheckedDecl,
+                    type,
+                    Location location,
+                    LilyCheckedDeclType type);
+
+/**
+ *
+ * @brief Convert LilyCheckedDecl in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedDecl, const LilyCheckedDecl *self);
+#endif
+
+/**
+ *
+ * @brief Print debug LilyCheckedDecl struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyCheckedDecl, const LilyCheckedDecl *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedDecl type.
+ */
+DESTRUCTOR(LilyCheckedDecl, LilyCheckedDecl *self);
+
+#endif // LILY_CORE_LILY_CHECKED_DECL_H
