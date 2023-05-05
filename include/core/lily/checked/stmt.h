@@ -80,8 +80,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtKind, enum LilyCheckedStmtKind self);
 typedef struct LilyCheckedStmt
 {
     enum LilyCheckedStmtKind kind;
+    const Location *location;    // const Location* (&)
     const LilyAstStmt *ast_stmt; // const LilyAstStmt* (&)
-    Location location;
     union
     {
         LilyCheckedStmtAsm asm_;
@@ -109,8 +109,8 @@ typedef struct LilyCheckedStmt
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            asm,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtAsm asm_)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_ASM,
@@ -126,8 +126,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            await,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtAwait await)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_AWAIT,
@@ -143,8 +143,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            block,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtBlock block)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_BLOCK,
@@ -160,8 +160,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            break,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtBreak break_)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_BREAK,
@@ -177,8 +177,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            drop,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtDrop drop)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_DROP,
@@ -194,8 +194,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            for,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtFor for_)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_FOR,
@@ -211,8 +211,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            if,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtIf if_)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_IF,
@@ -228,8 +228,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            match,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtMatch match)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_MATCH,
@@ -245,8 +245,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            next,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtNext next)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_NEXT,
@@ -262,8 +262,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            raise,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtRaise raise)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_RAISE,
@@ -279,8 +279,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            return,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtReturn return_)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_RETURN,
@@ -296,8 +296,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            try,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtTry try)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_TRY,
@@ -313,8 +313,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            unsafe,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtUnsafe unsafe)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_UNSAFE,
@@ -330,8 +330,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            variable,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtVariable variable)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_VARIABLE,
@@ -347,8 +347,8 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
 inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                            LilyCheckedStmt,
                            while,
+                           const Location *location,
                            const LilyAstStmt *ast_stmt,
-                           Location location,
                            LilyCheckedStmtWhile while_)
 {
     return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_WHILE,
