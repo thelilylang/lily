@@ -42,6 +42,7 @@ typedef struct LilyCheckedScope
     Vec *enums;          // Vec<LilyCheckedScopeContainerEnum*>*
     Vec *records;        // Vec<LilyCheckedScopeContainerRecord*>*
     Vec *aliases;        // Vec<LilyCheckedScopeContainerAlias*>*
+    Vec *errors;         // Vec<LilyCheckedScopeContainerError*>*
     Vec *enums_object;   // Vec<LilyCheckedScopeContainerEnumObject*>*
     Vec *records_object; // Vec<LilyCheckedScopeContainerRecordObject*>*
     Vec *classes;        // Vec<LilyCheckedScopeContainerClass*>*
@@ -61,6 +62,62 @@ typedef struct LilyCheckedScope
 CONSTRUCTOR(LilyCheckedScope *,
             LilyCheckedScope,
             LilyCheckedAccessScope *parent);
+
+/**
+ *
+ * @brief Add module to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_module__LilyCheckedScope(LilyCheckedScope *self,
+                             LilyCheckedScopeContainerModule *module);
+
+/**
+ *
+ * @brief Add constant to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_constant__LilyCheckedScope(LilyCheckedScope *self,
+                               LilyCheckedScopeContainerConstant *constant);
+
+/**
+ *
+ * @brief Add enum to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_enum__LilyCheckedScope(LilyCheckedScope *self,
+                           LilyCheckedScopeContainerEnum *enum_);
+
+/**
+ *
+ * @brief Add record to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_record__LilyCheckedScope(LilyCheckedScope *self,
+                             LilyCheckedScopeContainerRecord *record);
+
+/**
+ *
+ *
+ * @brief Add alias to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_alias__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerAlias *alias);
+
+/**
+ *
+ *
+ * @brief Add error to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_error__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerError *error);
 
 /**
  *

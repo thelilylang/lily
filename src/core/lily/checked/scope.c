@@ -32,6 +32,8 @@
 #include <stdlib.h>
 #endif
 
+#include <string.h>
+
 CONSTRUCTOR(LilyCheckedScope *,
             LilyCheckedScope,
             LilyCheckedAccessScope *parent)
@@ -43,6 +45,7 @@ CONSTRUCTOR(LilyCheckedScope *,
     self->enums = NEW(Vec);
     self->records = NEW(Vec);
     self->aliases = NEW(Vec);
+    self->errors = NEW(Vec);
     self->enums_object = NEW(Vec);
     self->records_object = NEW(Vec);
     self->classes = NEW(Vec);
@@ -54,6 +57,88 @@ CONSTRUCTOR(LilyCheckedScope *,
     self->children = NEW(Vec);
 
     return self;
+}
+
+#define CHECK_IF_EXISTS(container, item, container_name)                    \
+    for (Usize i = 0; i < container->len; ++i) {                            \
+        if (!strcmp(                                                        \
+              CAST(container_name *, get__Vec(container, i))->name->buffer, \
+              item->name->buffer)) {                                        \
+            return 1;                                                       \
+        }                                                                   \
+    }
+
+#define ADD_TO_SCOPE(container, item, container_name) \
+    CHECK_IF_EXISTS(container, item, container_name); \
+                                                      \
+    push__Vec(self->modules, item);                   \
+                                                      \
+    return 0;
+
+int
+add_module__LilyCheckedScope(LilyCheckedScope *self,
+                             LilyCheckedScopeContainerModule *module)
+{
+    ADD_TO_SCOPE(self->modules, module, LilyCheckedScopeContainerModule);
+}
+
+int
+add_constant__LilyCheckedScope(LilyCheckedScope *self,
+                               LilyCheckedScopeContainerConstant *constant)
+{
+    ADD_TO_SCOPE(self->constants, constant, LilyCheckedScopeContainerConstant);
+}
+
+int
+add_enum__LilyCheckedScope(LilyCheckedScope *self,
+                           LilyCheckedScopeContainerEnum *enum_)
+{
+    CHECK_IF_EXISTS(self->records, enum_, LilyCheckedScopeContainerRecord);
+    CHECK_IF_EXISTS(self->aliases, enum_, LilyCheckedScopeContainerAlias);
+    CHECK_IF_EXISTS(
+      self->records_object, enum_, LilyCheckedScopeContainerRecordObject);
+    CHECK_IF_EXISTS(
+      self->enums_object, enum_, LilyCheckedScopeContainerEnumObject);
+    CHECK_IF_EXISTS(self->classes, enum_, LilyCheckedScopeContainerClass);
+    CHECK_IF_EXISTS(self->traits, enum_, LilyCheckedScopeContainerTrait);
+    ADD_TO_SCOPE(self->enums, enum_, LilyCheckedScopeContainerEnum);
+}
+
+int
+add_record__LilyCheckedScope(LilyCheckedScope *self,
+                             LilyCheckedScopeContainerRecord *record)
+{
+    CHECK_IF_EXISTS(self->enums, record, LilyCheckedScopeContainerEnum);
+    CHECK_IF_EXISTS(self->aliases, record, LilyCheckedScopeContainerAlias);
+    CHECK_IF_EXISTS(
+      self->records_object, record, LilyCheckedScopeContainerRecordObject);
+    CHECK_IF_EXISTS(
+      self->enums_object, record, LilyCheckedScopeContainerEnumObject);
+    CHECK_IF_EXISTS(self->classes, record, LilyCheckedScopeContainerClass);
+    CHECK_IF_EXISTS(self->traits, record, LilyCheckedScopeContainerTrait);
+    ADD_TO_SCOPE(self->records, record, LilyCheckedScopeContainerRecord);
+}
+
+int
+add_alias__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerAlias *alias)
+{
+    CHECK_IF_EXISTS(self->enums, alias, LilyCheckedScopeContainerEnum);
+    CHECK_IF_EXISTS(self->records, alias, LilyCheckedScopeContainerRecord);
+    CHECK_IF_EXISTS(
+      self->records_object, alias, LilyCheckedScopeContainerRecordObject);
+    CHECK_IF_EXISTS(
+      self->enums_object, alias, LilyCheckedScopeContainerEnumObject);
+    CHECK_IF_EXISTS(self->classes, alias, LilyCheckedScopeContainerClass);
+    CHECK_IF_EXISTS(self->traits, alias, LilyCheckedScopeContainerTrait);
+    ADD_TO_SCOPE(self->aliases, alias, LilyCheckedScopeContainerAlias);
+}
+
+int
+add_error__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerError *error)
+{
+    ADD_TO_SCOPE(self->errors, error, LilyCheckedScopeContainerError);
 }
 
 #ifdef ENV_DEBUG
@@ -79,6 +164,10 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
     push_str__String(res, ", aliases =");
 
     DEBUG_VEC_STR(self->aliases, res, LilyCheckedScopeContainerAlias);
+
+    push_str__String(res, ", errors =");
+
+    DEBUG_VEC_STR(self->errors, res, LilyCheckedScopeContainerError);
 
     push_str__String(res, ", enums_object =");
 
@@ -154,6 +243,10 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
                       self->aliases->len,
                       LilyCheckedScopeContainerAlias);
     FREE(Vec, self->aliases);
+
+    FREE_BUFFER_ITEMS(
+      self->errors->buffer, self->errors->len, LilyCheckedScopeContainerError);
+    FREE(Vec, self->errors);
 
     FREE_BUFFER_ITEMS(self->enums_object->buffer,
                       self->enums_object->len,
