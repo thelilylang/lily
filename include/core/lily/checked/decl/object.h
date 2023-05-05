@@ -66,7 +66,8 @@ typedef struct LilyCheckedDeclObject
 
 /**
  *
- * @brief Construct LilyCheckedDeclObject type (LILY_CHECKED_DECL_OBJECT_KIND_CLASS).
+ * @brief Construct LilyCheckedDeclObject type
+ * (LILY_CHECKED_DECL_OBJECT_KIND_CLASS).
  */
 inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
                            LilyCheckedDeclObject,
@@ -74,12 +75,13 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
                            LilyCheckedDeclClass class)
 {
     return (LilyCheckedDeclObject){ .kind = LILY_CHECKED_DECL_OBJECT_KIND_CLASS,
-                                .class = class };
+                                    .class = class };
 }
 
 /**
  *
- * @brief Construct LilyCheckedDeclObject type (LILY_CHECKED_DECL_OBJECT_KIND_ENUM).
+ * @brief Construct LilyCheckedDeclObject type
+ * (LILY_CHECKED_DECL_OBJECT_KIND_ENUM).
  */
 inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
                            LilyCheckedDeclObject,
@@ -87,25 +89,28 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
                            LilyCheckedDeclEnumObject enum_)
 {
     return (LilyCheckedDeclObject){ .kind = LILY_CHECKED_DECL_OBJECT_KIND_ENUM,
-                                .enum_ = enum_ };
+                                    .enum_ = enum_ };
 }
 
 /**
  *
- * @brief Construct LilyCheckedDeclObject type (LILY_CHECKED_DECL_OBJECT_KIND_RECORD).
+ * @brief Construct LilyCheckedDeclObject type
+ * (LILY_CHECKED_DECL_OBJECT_KIND_RECORD).
  */
 inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
                            LilyCheckedDeclObject,
                            record,
                            LilyCheckedDeclRecordObject record)
 {
-    return (LilyCheckedDeclObject){ .kind = LILY_CHECKED_DECL_OBJECT_KIND_RECORD,
-                                .record = record };
+    return (LilyCheckedDeclObject){ .kind =
+                                      LILY_CHECKED_DECL_OBJECT_KIND_RECORD,
+                                    .record = record };
 }
 
 /**
  *
- * @brief Construct LilyCheckedDeclObject type (LILY_CHECKED_DECL_OBJECT_KIND_TRAIT).
+ * @brief Construct LilyCheckedDeclObject type
+ * (LILY_CHECKED_DECL_OBJECT_KIND_TRAIT).
  */
 inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
                            LilyCheckedDeclObject,
@@ -113,7 +118,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
                            LilyCheckedDeclTrait trait)
 {
     return (LilyCheckedDeclObject){ .kind = LILY_CHECKED_DECL_OBJECT_KIND_TRAIT,
-                                .trait = trait };
+                                    .trait = trait };
 }
 
 /**
@@ -123,7 +128,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedDeclObject, const LilyCheckedDeclObject *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDeclObject,
+               const LilyCheckedDeclObject *self);
 #endif
 
 /**

@@ -43,7 +43,9 @@ enum LilyCheckedDeclTypeKind
  */
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyCheckedDeclTypeKind, enum LilyCheckedDeclTypeKind self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDeclTypeKind,
+               enum LilyCheckedDeclTypeKind self);
 #endif
 
 typedef struct LilyCheckedDeclType
@@ -59,7 +61,8 @@ typedef struct LilyCheckedDeclType
 
 /**
  *
- * @brief Construct LilyCheckedDeclType type (LILY_CHECKED_DECL_TYPE_KIND_ALIAS).
+ * @brief Construct LilyCheckedDeclType type
+ * (LILY_CHECKED_DECL_TYPE_KIND_ALIAS).
  */
 inline VARIANT_CONSTRUCTOR(LilyCheckedDeclType,
                            LilyCheckedDeclType,
@@ -67,7 +70,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclType,
                            LilyCheckedDeclAlias alias)
 {
     return (LilyCheckedDeclType){ .kind = LILY_CHECKED_DECL_TYPE_KIND_ALIAS,
-                              .alias = alias };
+                                  .alias = alias };
 }
 
 /**
@@ -80,12 +83,13 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclType,
                            LilyCheckedDeclEnum enum_)
 {
     return (LilyCheckedDeclType){ .kind = LILY_CHECKED_DECL_TYPE_KIND_ENUM,
-                              .enum_ = enum_ };
+                                  .enum_ = enum_ };
 }
 
 /**
  *
- * @brief Construct LilyCheckedDeclType type (LILY_CHECKED_DECL_TYPE_KIND_RECORD).
+ * @brief Construct LilyCheckedDeclType type
+ * (LILY_CHECKED_DECL_TYPE_KIND_RECORD).
  */
 inline VARIANT_CONSTRUCTOR(LilyCheckedDeclType,
                            LilyCheckedDeclType,
@@ -93,7 +97,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclType,
                            LilyCheckedDeclRecord record)
 {
     return (LilyCheckedDeclType){ .kind = LILY_CHECKED_DECL_TYPE_KIND_RECORD,
-                              .record = record };
+                                  .record = record };
 }
 
 /**

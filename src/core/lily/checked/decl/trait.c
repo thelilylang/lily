@@ -31,7 +31,9 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedDeclTrait, const LilyCheckedDeclTrait *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDeclTrait,
+               const LilyCheckedDeclTrait *self)
 {
     String *res = format__String(
       "LilyCheckedDeclTrait{{ name = {S}, generic_params =", self->name);

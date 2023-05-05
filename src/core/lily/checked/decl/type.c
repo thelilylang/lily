@@ -44,7 +44,9 @@ static inline VARIANT_DESTRUCTOR(LilyCheckedDeclType,
 
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, LilyCheckedDeclTypeKind, enum LilyCheckedDeclTypeKind self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDeclTypeKind,
+               enum LilyCheckedDeclTypeKind self)
 {
     switch (self) {
         case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:

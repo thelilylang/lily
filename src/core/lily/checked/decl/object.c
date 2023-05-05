@@ -68,7 +68,9 @@ IMPL_FOR_DEBUG(to_string,
 }
 
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedDeclObject, const LilyCheckedDeclObject *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDeclObject,
+               const LilyCheckedDeclObject *self)
 {
     switch (self->kind) {
         case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
@@ -97,22 +99,30 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclObject, const LilyCheckedDeclObject *se
 }
 #endif
 
-VARIANT_DESTRUCTOR(LilyCheckedDeclObject, class, const LilyCheckedDeclObject *self)
+VARIANT_DESTRUCTOR(LilyCheckedDeclObject,
+                   class,
+                   const LilyCheckedDeclObject *self)
 {
     FREE(LilyCheckedDeclClass, &self->class);
 }
 
-VARIANT_DESTRUCTOR(LilyCheckedDeclObject, enum, const LilyCheckedDeclObject *self)
+VARIANT_DESTRUCTOR(LilyCheckedDeclObject,
+                   enum,
+                   const LilyCheckedDeclObject *self)
 {
     FREE(LilyCheckedDeclEnumObject, &self->enum_);
 }
 
-VARIANT_DESTRUCTOR(LilyCheckedDeclObject, record, const LilyCheckedDeclObject *self)
+VARIANT_DESTRUCTOR(LilyCheckedDeclObject,
+                   record,
+                   const LilyCheckedDeclObject *self)
 {
     FREE(LilyCheckedDeclRecordObject, &self->record);
 }
 
-VARIANT_DESTRUCTOR(LilyCheckedDeclObject, trait, const LilyCheckedDeclObject *self)
+VARIANT_DESTRUCTOR(LilyCheckedDeclObject,
+                   trait,
+                   const LilyCheckedDeclObject *self)
 {
     FREE(LilyCheckedDeclTrait, &self->trait);
 }

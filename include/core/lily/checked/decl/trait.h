@@ -56,10 +56,10 @@ inline CONSTRUCTOR(LilyCheckedDeclTrait,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclTrait){ .name = name,
-                               .generic_params = generic_params,
-                               .inherit_params = inherit_params,
-                               .body = body,
-                               .visibility = visibility };
+                                   .generic_params = generic_params,
+                                   .inherit_params = inherit_params,
+                                   .body = body,
+                                   .visibility = visibility };
 }
 
 /**
@@ -69,7 +69,9 @@ inline CONSTRUCTOR(LilyCheckedDeclTrait,
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedDeclTrait, const LilyCheckedDeclTrait *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDeclTrait,
+               const LilyCheckedDeclTrait *self);
 #endif
 
 /**
