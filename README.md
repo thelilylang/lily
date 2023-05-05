@@ -5,6 +5,7 @@
 ![Build state](https://img.shields.io/github/actions/workflow/status/ArthurPV/lily/cmake.yml?branch=main&style=for-the-badge)
 ![Issues](https://img.shields.io/github/issues/ArthurPV/lily?style=for-the-badge)
 ![Pull requests](https://img.shields.io/github/issues-pr/ArthurPV/lily?style=for-the-badge)
+![Lines of code](https://img.shields.io/tokei/lines/github/ArthurPV/lily?style=for-the-badge&category=code)
 ![Commit activity](https://img.shields.io/github/commit-activity/w/ArthurPV/lily?style=for-the-badge)
 ![Last commit](https://img.shields.io/github/last-commit/ArthurPV/lily?style=for-the-badge)
 ![License](https://img.shields.io/github/license/ArthurPV/lily?style=for-the-badge)
