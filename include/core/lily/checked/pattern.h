@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_CHECKED_PATTERN_H
 #define LILY_CORE_LILY_CHECKED_PATTERN_H
 
+#include <core/lily/ast/pattern.h>
 #include <core/lily/checked/data_type.h>
 #include <core/lily/checked/pattern/array.h>
 #include <core/lily/checked/pattern/as.h>

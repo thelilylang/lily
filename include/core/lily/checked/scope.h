@@ -33,7 +33,6 @@
 
 #include <core/lily/checked/scope_container.h>
 #include <core/lily/file.h>
-#include <core/lily/package.h>
 #include <core/lily/visibility.h>
 
 typedef struct LilyCheckedScope

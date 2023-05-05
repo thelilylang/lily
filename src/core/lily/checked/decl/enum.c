@@ -27,6 +27,8 @@
 #include <core/lily/checked/generic_param.h>
 
 #ifdef ENV_DEBUG
+#include <base/format.h>
+
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedDeclEnum, const LilyCheckedDeclEnum *self)
 {

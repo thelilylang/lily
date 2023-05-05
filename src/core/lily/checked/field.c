@@ -43,6 +43,8 @@ CONSTRUCTOR(LilyCheckedField *,
 }
 
 #ifdef ENV_DEBUG
+#include <base/format.h>
+
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedField, const LilyCheckedField *self)
 {

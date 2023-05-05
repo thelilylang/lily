@@ -25,6 +25,8 @@
 #include <core/lily/checked/decl/record_object.h>
 
 #ifdef ENV_DEBUG
+#include <base/format.h>
+
 String *
 IMPL_FOR_DEBUG(to_string,
                LilyCheckedDeclRecordObject,

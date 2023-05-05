@@ -29,6 +29,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef ENV_DEBUG
+#include <base/format.h>
+#endif
+
 // Free LilyCheckedExpr type (LILY_AST_EXPR_KIND_ARRAY).
 static VARIANT_DESTRUCTOR(LilyCheckedExpr, array, LilyCheckedExpr *self);
 
