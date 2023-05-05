@@ -41,6 +41,6 @@ CONSTRUCTOR(LilyAnalysis,
 
 DESTRUCTOR(LilyAnalysis, const LilyAnalysis *self)
 {
+    FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, LilyCheckedDecl);
     FREE(Vec, self->decls);
-    // TODO: free items of the vector (self->decls).
 }
