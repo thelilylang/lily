@@ -55,6 +55,13 @@ CONSTRUCTOR(LilyAnalysis,
 
 /**
  *
+ * @brief Run the analysis.
+ */
+void
+run__LilyAnalysis(LilyAnalysis *self);
+
+/**
+ *
  * @brief Free LilyAnalysis type.
  */
 DESTRUCTOR(LilyAnalysis, const LilyAnalysis *self);

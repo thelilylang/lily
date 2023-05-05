@@ -39,6 +39,11 @@ CONSTRUCTOR(LilyAnalysis,
                            .position = 0 };
 }
 
+void
+run__LilyAnalysis(LilyAnalysis *self)
+{
+}
+
 DESTRUCTOR(LilyAnalysis, const LilyAnalysis *self)
 {
     FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, LilyCheckedDecl);
