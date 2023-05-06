@@ -121,6 +121,71 @@ add_error__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
+ * @brief Add enum object to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_enum_object__LilyCheckedScope(
+  LilyCheckedScope *self,
+  LilyCheckedScopeContainerEnumObject *enum_object);
+
+/**
+ *
+ * @brief Add record object to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_record_object__LilyCheckedScope(
+  LilyCheckedScope *self,
+  LilyCheckedScopeContainerRecordObject *record_object);
+
+/**
+ *
+ * @brief Add class to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_class__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerClass *class);
+
+/**
+ *
+ * @brief Add trait to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_trait__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerTrait *trait);
+
+/**
+ *
+ * @brief Add fun to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_fun__LilyCheckedScope(LilyCheckedScope *self,
+                          LilyCheckedScopeContainerFun *fun);
+
+/**
+ *
+ * @brief Add label to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_label__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerLabel *label);
+
+/**
+ *
+ * @brief Add variable to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_variable__LilyCheckedScope(LilyCheckedScope *self,
+                               LilyCheckedScopeContainerVariable *variable);
+
+/**
+ *
  * @brief Convert LilyCheckedScope in String.
  * @note This function is only used to debug.
  */

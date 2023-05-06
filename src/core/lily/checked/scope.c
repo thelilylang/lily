@@ -141,6 +141,97 @@ add_error__LilyCheckedScope(LilyCheckedScope *self,
     ADD_TO_SCOPE(self->errors, error, LilyCheckedScopeContainerError);
 }
 
+int
+add_enum_object__LilyCheckedScope(
+  LilyCheckedScope *self,
+  LilyCheckedScopeContainerEnumObject *enum_object)
+{
+    CHECK_IF_EXISTS(self->enums, enum_object, LilyCheckedScopeContainerEnum);
+    CHECK_IF_EXISTS(
+      self->records, enum_object, LilyCheckedScopeContainerRecord);
+    CHECK_IF_EXISTS(
+      self->records_object, enum_object, LilyCheckedScopeContainerRecordObject);
+    CHECK_IF_EXISTS(self->aliases, enum_object, LilyCheckedScopeContainerAlias);
+    CHECK_IF_EXISTS(self->classes, enum_object, LilyCheckedScopeContainerClass);
+    CHECK_IF_EXISTS(self->traits, enum_object, LilyCheckedScopeContainerTrait);
+    ADD_TO_SCOPE(
+      self->enums_object, enum_object, LilyCheckedScopeContainerEnumObject);
+}
+
+int
+add_record_object__LilyCheckedScope(
+  LilyCheckedScope *self,
+  LilyCheckedScopeContainerRecordObject *record_object)
+{
+    CHECK_IF_EXISTS(self->enums, record_object, LilyCheckedScopeContainerEnum);
+    CHECK_IF_EXISTS(
+      self->records, record_object, LilyCheckedScopeContainerRecord);
+    CHECK_IF_EXISTS(
+      self->aliases, record_object, LilyCheckedScopeContainerAlias);
+    CHECK_IF_EXISTS(
+      self->enums_object, record_object, LilyCheckedScopeContainerEnumObject);
+    CHECK_IF_EXISTS(
+      self->classes, record_object, LilyCheckedScopeContainerClass);
+    CHECK_IF_EXISTS(
+      self->traits, record_object, LilyCheckedScopeContainerTrait);
+    ADD_TO_SCOPE(self->records_object,
+                 record_object,
+                 LilyCheckedScopeContainerRecordObject);
+}
+
+int
+add_class__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerClass *class)
+{
+    CHECK_IF_EXISTS(self->enums, class, LilyCheckedScopeContainerEnum);
+    CHECK_IF_EXISTS(self->records, class, LilyCheckedScopeContainerRecord);
+    CHECK_IF_EXISTS(
+      self->records_object, class, LilyCheckedScopeContainerRecordObject);
+    CHECK_IF_EXISTS(
+      self->enums_object, class, LilyCheckedScopeContainerEnumObject);
+    CHECK_IF_EXISTS(self->aliases, class, LilyCheckedScopeContainerAlias);
+    CHECK_IF_EXISTS(self->traits, class, LilyCheckedScopeContainerTrait);
+    ADD_TO_SCOPE(self->classes, class, LilyCheckedScopeContainerClass);
+}
+
+int
+add_trait__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerTrait *trait)
+{
+    CHECK_IF_EXISTS(self->enums, trait, LilyCheckedScopeContainerEnum);
+    CHECK_IF_EXISTS(self->records, trait, LilyCheckedScopeContainerRecord);
+    CHECK_IF_EXISTS(
+      self->records_object, trait, LilyCheckedScopeContainerRecordObject);
+    CHECK_IF_EXISTS(
+      self->enums_object, trait, LilyCheckedScopeContainerEnumObject);
+    CHECK_IF_EXISTS(self->classes, trait, LilyCheckedScopeContainerClass);
+    CHECK_IF_EXISTS(self->aliases, trait, LilyCheckedScopeContainerAlias);
+    ADD_TO_SCOPE(self->traits, trait, LilyCheckedScopeContainerTrait);
+}
+
+int
+add_fun__LilyCheckedScope(LilyCheckedScope *self,
+                          LilyCheckedScopeContainerFun *fun)
+{
+    ADD_TO_SCOPE(self->funs, fun, LilyCheckedScopeContainerFun);
+}
+
+int
+add_label__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerLabel *label)
+{
+    CHECK_IF_EXISTS(self->variables, label, LilyCheckedScopeContainerVariable);
+    ADD_TO_SCOPE(self->labels, label, LilyCheckedScopeContainerLabel);
+}
+
+int
+add_variable__LilyCheckedScope(LilyCheckedScope *self,
+                               LilyCheckedScopeContainerVariable *variable)
+{
+    CHECK_IF_EXISTS(self->labels, variable, LilyCheckedScopeContainerLabel);
+    ADD_TO_SCOPE(self->variables, variable, LilyCheckedScopeContainerVariable);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
