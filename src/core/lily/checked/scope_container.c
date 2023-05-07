@@ -320,7 +320,7 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedScopeContainerFun *self)
 {
     String *res = format__String(
-      "LilyCheckedScopeContainerFun{{ name = {S}, access =", self->name);
+      "LilyCheckedScopeContainerFun{{ name = {S}, accesses =", self->name);
 
     DEBUG_VEC_STR(self->accesses, res, LilyCheckedAccessFun);
     push_str__String(res, " }");
