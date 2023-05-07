@@ -35,7 +35,7 @@ typedef struct LilyPackage LilyPackage;
 
 typedef struct LilyAnalysis
 {
-    Vec *decls; // Vec<LilyCheckedDecl*>*
+    LilyCheckedDeclModule module;
     LilyPackage *package;
     LilyPackage *root_package;
     LilyAstDecl *current;
@@ -47,11 +47,24 @@ typedef struct LilyAnalysis
  *
  * @brief Construct LilyAnalysis type.
  */
-CONSTRUCTOR(LilyAnalysis,
-            LilyAnalysis,
-            LilyPackage *package,
-            LilyPackage *root_package,
-            const LilyParser *parser);
+inline CONSTRUCTOR(LilyAnalysis,
+                   LilyAnalysis,
+                   LilyPackage *package,
+                   LilyPackage *root_package,
+                   const LilyParser *parser)
+{
+    return (LilyAnalysis){ .module = NEW(LilyCheckedDeclModule,
+                                         from__String("global"),
+                                         NEW(Vec),
+                                         NEW(LilyCheckedScope, NULL),
+                                         NEW(LilyCheckedAccessModule, 0),
+                                         LILY_VISIBILITY_PUBLIC),
+                           .package = package,
+                           .root_package = root_package,
+                           .current = NULL,
+                           .parser = parser,
+                           .position = 0 };
+}
 
 /**
  *
