@@ -52,6 +52,7 @@ enum LilyCheckedDataTypeKind
     LILY_CHECKED_DATA_TYPE_KIND_INT8,
     LILY_CHECKED_DATA_TYPE_KIND_ISIZE,
     LILY_CHECKED_DATA_TYPE_KIND_LAMBDA,
+    LILY_CHECKED_DATA_TYPE_KIND_LIST,
     LILY_CHECKED_DATA_TYPE_KIND_MUT,
     LILY_CHECKED_DATA_TYPE_KIND_NEVER,
     LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL,
@@ -235,13 +236,14 @@ IMPL_FOR_DEBUG(to_string,
 struct LilyCheckedDataType
 {
     enum LilyCheckedDataTypeKind kind;
-    Location location;
+    const Location *location;
     union
     {
         LilyCheckedDataTypeArray array;
         LilyCheckedDataTypeCustom custom;
         LilyCheckedDataType *exception;
         LilyCheckedDataTypeLambda lambda;
+        LilyCheckedDataType *list;
         LilyCheckedDataType *mut;
         LilyCheckedDataType *optional;
         LilyCheckedDataType *ptr;
@@ -258,7 +260,7 @@ struct LilyCheckedDataType
 CONSTRUCTOR(LilyCheckedDataType *,
             LilyCheckedDataType,
             enum LilyCheckedDataTypeKind kind,
-            Location location);
+            const Location *location);
 
 /**
  *
@@ -268,7 +270,7 @@ CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     array,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataTypeArray array);
 
 /**
@@ -279,7 +281,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     custom,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataTypeCustom custom);
 
 /**
@@ -290,7 +292,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     exception,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *exception);
 /**
  *
@@ -300,8 +302,19 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     lambda,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataTypeLambda lambda);
+
+/**
+ *
+ * @brief Construct LilyCheckedDataType type
+ * (LILY_CHECKED_DATA_TYPE_KIND_LIST).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    list,
+                    const Location *location,
+                    LilyCheckedDataType *list);
 
 /**
  *
@@ -310,7 +323,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     mut,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *mut);
 
 /**
@@ -321,7 +334,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     optional,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *optional);
 
 /**
@@ -331,7 +344,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     ptr,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *ptr);
 
 /**
@@ -341,7 +354,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     ref,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *ref);
 
 /**
@@ -352,7 +365,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     trace,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *trace);
 
 /**
@@ -363,7 +376,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     tuple,
-                    Location location,
+                    const Location *location,
                     Vec *tuple);
 
 /**

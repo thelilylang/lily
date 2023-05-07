@@ -66,6 +66,9 @@ static VARIANT_DESTRUCTOR(LilyCheckedDataType,
                           lambda,
                           LilyCheckedDataType *self);
 
+// Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_LIST).
+static VARIANT_DESTRUCTOR(LilyCheckedDataType, list, LilyCheckedDataType *self);
+
 // Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_MUT).
 static VARIANT_DESTRUCTOR(LilyCheckedDataType, mut, LilyCheckedDataType *self);
 
@@ -241,7 +244,7 @@ DESTRUCTOR(LilyCheckedDataTypeCustom, const LilyCheckedDataTypeCustom *self)
 CONSTRUCTOR(LilyCheckedDataType *,
             LilyCheckedDataType,
             enum LilyCheckedDataTypeKind kind,
-            Location location)
+            const Location *location)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
 
@@ -254,7 +257,7 @@ CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     array,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataTypeArray array)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
@@ -269,7 +272,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     custom,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataTypeCustom custom)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
@@ -284,7 +287,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     exception,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *exception)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
@@ -299,7 +302,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     lambda,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataTypeLambda lambda)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
@@ -313,8 +316,23 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
+                    list,
+                    const Location *location,
+                    LilyCheckedDataType *list)
+{
+    LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
+
+    self->kind = LILY_CHECKED_DATA_TYPE_KIND_LIST;
+    self->location = location;
+    self->list = list;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
                     mut,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *mut)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
@@ -329,7 +347,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     optional,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *optional)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
@@ -344,7 +362,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     ptr,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *ptr)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
@@ -359,7 +377,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     ref,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *ref)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
@@ -374,7 +392,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     trace,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDataType *trace)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
@@ -389,7 +407,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     tuple,
-                    Location location,
+                    const Location *location,
                     Vec *tuple)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
@@ -440,6 +458,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_DATA_TYPE_KIND_ISIZE";
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
             return "LILY_CHECKED_DATA_TYPE_KIND_LAMBDA";
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+            return "LILY_CHECKED_DATA_TYPE_KIND_LIST";
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
             return "LILY_CHECKED_DATA_TYPE_KIND_MUT";
         case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
@@ -484,14 +504,14 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
               "LilyCheckedDataType{{ kind = {s}, location = {sa}, array = {Sr} "
               "}",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDataTypeArray(&self->array));
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             return format__String(
               "LilyCheckedDataType{{ kind = {s}, location = {sa}, custom = "
               "{Sr} }",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDataTypeCustom(&self->custom));
         case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
             return format__String(
@@ -499,21 +519,29 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
               "{Sr} "
               "}",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDataType(self->exception));
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
             return format__String(
               "LilyCheckedDataType{{ kind = {s}, location = {sa}, lambda = "
               "{Sr} }",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDataTypeLambda(&self->lambda));
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+            return format__String(
+              "LilyCheckedDataType{{ kind = {s}, location = {sa}, list = "
+              "{Sr} "
+              "}",
+              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
+              to_string__Debug__Location(self->location),
+              to_string__Debug__LilyCheckedDataType(self->exception));
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
             return format__String(
               "LilyCheckedDataType{{ kind = {s}, location = {sa}, mut = {Sr} "
               "}",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDataType(self->mut));
         case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
             return format__String(
@@ -521,34 +549,34 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
               "{Sr} "
               "}",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDataType(self->optional));
         case LILY_CHECKED_DATA_TYPE_KIND_PTR:
             return format__String(
               "LilyCheckedDataType{{ kind = {s}, location = {sa}, ptr = {Sr} "
               "}",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDataType(self->ptr));
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             return format__String(
               "LilyCheckedDataType{{ kind = {s}, location = {sa}, ref = {Sr} "
               "}",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDataType(self->ref));
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return format__String(
               "LilyCheckedDataType{{ kind = {s}, location = {sa}, trace = {Sr} "
               "}",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDataType(self->trace));
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
             String *res = format__String(
               "LilyCheckedDataType{{ kind = {s}, location = {sa}, tuple = {{ ",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location));
+              to_string__Debug__Location(self->location));
 
             for (Usize i = 0; i < self->tuple->len; i++) {
                 String *s =
@@ -567,7 +595,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
             return format__String(
               "LilyCheckedDataType{{ kind = {s}, location = {sa} }",
               to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location));
+              to_string__Debug__Location(self->location));
     }
 }
 
@@ -652,6 +680,10 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
 
             return eq__LilyCheckedDataType(self->lambda.return_type,
                                            other->lambda.return_type);
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+            return self->kind == other->kind
+                     ? eq__LilyCheckedDataType(self->list, other->list)
+                     : false;
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
             return self->kind == other->kind
                      ? eq__LilyCheckedDataType(self->mut, other->mut)
@@ -720,6 +752,12 @@ VARIANT_DESTRUCTOR(LilyCheckedDataType, lambda, LilyCheckedDataType *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyCheckedDataType, list, LilyCheckedDataType *self)
+{
+    FREE(LilyCheckedDataType, self->list);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedDataType, mut, LilyCheckedDataType *self)
 {
     FREE(LilyCheckedDataType, self->mut);
@@ -772,6 +810,9 @@ DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self)
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
             FREE_VARIANT(LilyCheckedDataType, lambda, self);
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+            FREE_VARIANT(LilyCheckedDataType, list, self);
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
             FREE_VARIANT(LilyCheckedDataType, mut, self);
