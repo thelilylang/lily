@@ -32,6 +32,7 @@
 #include <core/lily/checked/body/trait.h>
 #include <core/lily/checked/generic_param.h>
 #include <core/lily/checked/inherit_param.h>
+#include <core/lily/checked/scope.h>
 #include <core/lily/visibility.h>
 
 typedef struct LilyCheckedDeclTrait
@@ -40,6 +41,7 @@ typedef struct LilyCheckedDeclTrait
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     Vec *inherit_params; // Vec<LilyCheckedInheritParam*>*?
     Vec *body;           // Vec<LilyCheckedBodyTraitItem*>*
+    LilyCheckedScope *scope;
     enum LilyVisibility visibility;
 } LilyCheckedDeclTrait;
 
@@ -53,12 +55,14 @@ inline CONSTRUCTOR(LilyCheckedDeclTrait,
                    Vec *generic_params,
                    Vec *inherit_params,
                    Vec *body,
+                   LilyCheckedScope *scope,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclTrait){ .name = name,
                                    .generic_params = generic_params,
                                    .inherit_params = inherit_params,
                                    .body = body,
+                                   .scope = scope,
                                    .visibility = visibility };
 }
 

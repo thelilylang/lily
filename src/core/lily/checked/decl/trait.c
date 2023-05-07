@@ -56,7 +56,8 @@ IMPL_FOR_DEBUG(to_string,
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyTraitItem);
 
     {
-        char *s = format(", visibility = {s} }",
+        char *s = format(", scope = {Sr}, visibility = {s} }",
+                         to_string__Debug__LilyCheckedScope(self->scope),
                          to_string__Debug__LilyVisibility(self->visibility));
 
         PUSH_STR_AND_FREE(res, s);
@@ -87,4 +88,6 @@ DESTRUCTOR(LilyCheckedDeclTrait, const LilyCheckedDeclTrait *self)
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyCheckedBodyTraitItem);
     FREE(Vec, self->body);
+
+    FREE(LilyCheckedScope, self->scope);
 }
