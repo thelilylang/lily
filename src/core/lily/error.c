@@ -205,6 +205,12 @@ to_msg__LilyError(const LilyError *self)
             return "duplicate record object";
         case LILY_ERROR_KIND_DUPLICATE_TRAIT:
             return "duplicate trait";
+        case LILY_ERROR_KIND_DUPLICATE_ALIAS:
+            return "duplicate alias";
+        case LILY_ERROR_KIND_DUPLICATE_ENUM:
+            return "duplicate enum";
+        case LILY_ERROR_KIND_DUPLICATE_RECORD:
+            return "duplicate record";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -384,6 +390,12 @@ to_code__LilyError(const LilyError *self)
             return "0084";
         case LILY_ERROR_KIND_DUPLICATE_TRAIT:
             return "0085";
+        case LILY_ERROR_KIND_DUPLICATE_ALIAS:
+            return "0086";
+        case LILY_ERROR_KIND_DUPLICATE_ENUM:
+            return "0087";
+        case LILY_ERROR_KIND_DUPLICATE_RECORD:
+            return "0088";
         default:
             UNREACHABLE("unknown variant");
     }
