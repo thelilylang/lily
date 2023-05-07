@@ -46,6 +46,22 @@ push_fun__LilyAnalysis(LilyAnalysis *self,
                        LilyAstDecl *fun,
                        LilyCheckedDeclModule *module);
 
+static inline void
+push_module__LilyAnalysis(LilyAnalysis *self,
+                          LilyAstDecl *module_decl,
+                          LilyCheckedDeclModule *module,
+                          Usize i);
+
+static inline void
+push_class__LilyAnalysis(LilyAnalysis *self,
+                         LilyAstDecl *class,
+                         LilyCheckedDeclModule *module);
+
+static inline void
+push_enum_object__LilyAnalysis(LilyAnalysis *self,
+                               LilyAstDecl *enum_object,
+                               LilyCheckedDeclModule *module);
+
 static void
 push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                              const Vec *decls,
@@ -108,6 +124,79 @@ push_fun__LilyAnalysis(LilyAnalysis *self,
                               fun->fun.visibility,
                               fun->fun.is_async,
                               fun->fun.is_operator)));
+}
+
+void
+push_module__LilyAnalysis(LilyAnalysis *self,
+                          LilyAstDecl *module_decl,
+                          LilyCheckedDeclModule *module,
+                          Usize i)
+{
+    push__Vec(
+      module->decls,
+      NEW_VARIANT(
+        LilyCheckedDecl,
+        module,
+        &module_decl->location,
+        module_decl,
+        NEW(LilyCheckedDeclModule,
+            module_decl->module.name,
+            NULL,
+            NEW(LilyCheckedScope,
+                NEW_VARIANT(LilyCheckedParent, module, module->scope, module)),
+            NEW(LilyCheckedAccessModule, i),
+            module_decl->module.visibility)));
+}
+
+void
+push_class__LilyAnalysis(LilyAnalysis *self,
+                         LilyAstDecl *class,
+                         LilyCheckedDeclModule *module)
+{
+    push__Vec(module->decls,
+              NEW_VARIANT(
+                LilyCheckedDecl,
+                object,
+                &class->location,
+                class,
+                NEW_VARIANT(
+                  LilyCheckedDeclObject,
+                  class,
+                  NEW(LilyCheckedDeclClass,
+                      class->object.class.name,
+                      NULL,
+                      NULL,
+                      NULL,
+                      NULL,
+                      NEW(LilyCheckedScope,
+                          NEW_VARIANT(
+                            LilyCheckedParent, module, module->scope, module)),
+                      class->object.class.visibility))));
+}
+
+void
+push_enum_object__LilyAnalysis(LilyAnalysis *self,
+                               LilyAstDecl *enum_object,
+                               LilyCheckedDeclModule *module)
+{
+    push__Vec(module->decls,
+              NEW_VARIANT(
+                LilyCheckedDecl,
+                object,
+                &enum_object->location,
+                enum_object,
+                NEW_VARIANT(
+                  LilyCheckedDeclObject,
+                  enum,
+                  NEW(LilyCheckedDeclEnumObject,
+                      enum_object->object.enum_.name,
+                      NULL,
+                      NULL,
+                      NULL,
+                      NEW(LilyCheckedScope,
+                          NEW_VARIANT(
+                            LilyCheckedParent, module, module->scope, module)),
+                      enum_object->object.enum_.visibility))));
 }
 
 void
@@ -178,21 +267,124 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                 break;
             }
             case LILY_AST_DECL_KIND_FUN: {
-                LilyCheckedScopeContainerFun *overload_fun =
-                  search_fun__LilyCheckedScope(module->scope, decl->fun.name);
+                if (!decl->fun.object_impl) {
+                    LilyCheckedScopeContainerFun *overload_fun =
+                      search_fun__LilyCheckedScope(module->scope,
+                                                   decl->fun.name);
 
-                push_fun__LilyAnalysis(self, decl, module);
+                    push_fun__LilyAnalysis(self, decl, module);
 
-                if (overload_fun) {
-                    push__Vec(overload_fun->accesses,
-                              NEW(LilyCheckedAccessFun, module->access, i));
-                } else {
-                    add_fun__LilyCheckedScope(
-                      module->scope,
-                      NEW(LilyCheckedScopeContainerFun,
-                          decl->fun.name,
-                          init__Vec(
-                            1, NEW(LilyCheckedAccessFun, module->access, i))));
+                    if (overload_fun) {
+                        push__Vec(overload_fun->accesses,
+                                  NEW(LilyCheckedAccessFun, module->access, i));
+                    } else {
+                        add_fun__LilyCheckedScope(
+                          module->scope,
+                          NEW(LilyCheckedScopeContainerFun,
+                              decl->fun.name,
+                              init__Vec(
+                                1,
+                                NEW(LilyCheckedAccessFun, module->access, i))));
+                    }
+                }
+
+                break;
+            }
+            case LILY_AST_DECL_KIND_MODULE: {
+                push_module__LilyAnalysis(self, decl, module, i);
+
+                LilyCheckedScopeContainerModule *sc_module =
+                  NEW(LilyCheckedScopeContainerModule,
+                      decl->module.name,
+                      NEW(LilyCheckedAccessModule, i));
+
+                int status =
+                  add_module__LilyCheckedScope(module->scope, sc_module);
+
+                if (status) {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        &self->package->file,
+                        &decl->location,
+                        NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_MODULE),
+                        NULL,
+                        NULL,
+                        NULL),
+                      &self->package->count_error);
+
+                    FREE(LilyCheckedScopeContainerModule, sc_module);
+                }
+
+                break;
+            }
+            case LILY_AST_DECL_KIND_OBJECT: {
+                switch (decl->object.kind) {
+                    case LILY_AST_DECL_OBJECT_KIND_CLASS: {
+                        push_class__LilyAnalysis(self, decl, module);
+
+                        LilyCheckedScopeContainerClass *sc_class =
+                          NEW(LilyCheckedScopeContainerClass,
+                              decl->object.class.name,
+                              NEW(LilyCheckedAccessClass, module->access, i));
+
+                        int status =
+                          add_class__LilyCheckedScope(module->scope, sc_class);
+
+                        if (status) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_CLASS),
+                                NULL,
+                                NULL,
+                                NULL),
+                              &self->package->count_error);
+
+                            FREE(LilyCheckedScopeContainerClass, sc_class);
+                        }
+
+                        break;
+                    }
+                    case LILY_AST_DECL_OBJECT_KIND_ENUM: {
+                        push_enum_object__LilyAnalysis(self, decl, module);
+
+                        LilyCheckedScopeContainerEnumObject *sc_enum_object =
+                          NEW(LilyCheckedScopeContainerEnumObject,
+                              decl->object.enum_.name,
+                              NEW(LilyCheckedAccessEnumObject,
+                                  module->access,
+                                  i));
+
+                        int status = add_enum_object__LilyCheckedScope(
+                          module->scope, sc_enum_object);
+
+                        if (status) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_DUPLICATE_ENUM_OBJECT),
+                                NULL,
+                                NULL,
+                                NULL),
+                              &self->package->count_error);
+
+                            FREE(LilyCheckedScopeContainerEnumObject,
+                                 sc_enum_object);
+                        }
+
+                        break;
+                    }
+                    default:
+                        break;
                 }
 
                 break;
