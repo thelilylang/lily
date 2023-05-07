@@ -34,31 +34,6 @@
 
 #include <string.h>
 
-CONSTRUCTOR(LilyCheckedScope *,
-            LilyCheckedScope,
-            LilyCheckedAccessScope *parent)
-{
-    LilyCheckedScope *self = lily_malloc(sizeof(LilyCheckedScope));
-
-    self->modules = NEW(Vec);
-    self->constants = NEW(Vec);
-    self->enums = NEW(Vec);
-    self->records = NEW(Vec);
-    self->aliases = NEW(Vec);
-    self->errors = NEW(Vec);
-    self->enums_object = NEW(Vec);
-    self->records_object = NEW(Vec);
-    self->classes = NEW(Vec);
-    self->traits = NEW(Vec);
-    self->labels = NEW(Vec);
-    self->funs = NEW(Vec);
-    self->variables = NEW(Vec);
-    self->parent = parent;
-    self->children = NEW(Vec);
-
-    return self;
-}
-
 #define CHECK_IF_EXISTS(container, item, container_name)                    \
     for (Usize i = 0; i < container->len; ++i) {                            \
         if (!strcmp(                                                        \
@@ -83,6 +58,29 @@ CONSTRUCTOR(LilyCheckedScope *,
         }                                                \
     }                                                    \
     return NULL;
+
+CONSTRUCTOR(LilyCheckedScope *, LilyCheckedScope, LilyCheckedParent *parent)
+{
+    LilyCheckedScope *self = lily_malloc(sizeof(LilyCheckedScope));
+
+    self->modules = NEW(Vec);
+    self->constants = NEW(Vec);
+    self->enums = NEW(Vec);
+    self->records = NEW(Vec);
+    self->aliases = NEW(Vec);
+    self->errors = NEW(Vec);
+    self->enums_object = NEW(Vec);
+    self->records_object = NEW(Vec);
+    self->classes = NEW(Vec);
+    self->traits = NEW(Vec);
+    self->labels = NEW(Vec);
+    self->funs = NEW(Vec);
+    self->variables = NEW(Vec);
+    self->parent = parent;
+    self->children = NEW(Vec);
+
+    return self;
+}
 
 int
 add_module__LilyCheckedScope(LilyCheckedScope *self,
@@ -307,9 +305,9 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
     push_str__String(res, ", parent = ");
 
     if (self->parent) {
-        char *s = to_string__Debug__LilyCheckedAccessScope(self->parent);
+        String *s = to_string__Debug__LilyCheckedParent(self->parent);
 
-        PUSH_STR_AND_FREE(res, s);
+        APPEND_AND_FREE(res, s);
     } else {
         push_str__String(res, "NULL");
     }
@@ -387,7 +385,7 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
     FREE(Vec, self->variables);
 
     if (self->parent) {
-        FREE(LilyCheckedAccessScope, self->parent);
+        FREE(LilyCheckedParent, self->parent);
     }
 
     FREE_BUFFER_ITEMS(

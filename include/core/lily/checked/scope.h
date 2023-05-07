@@ -31,27 +31,28 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/lily/checked/parent.h>
 #include <core/lily/checked/scope_container.h>
 #include <core/lily/file.h>
 #include <core/lily/visibility.h>
 
 typedef struct LilyCheckedScope
 {
-    Vec *modules;        // Vec<LilyCheckedScopeContainerModule*>*
-    Vec *constants;      // Vec<LilyCheckedScopeContainerConstant*>*
-    Vec *enums;          // Vec<LilyCheckedScopeContainerEnum*>*
-    Vec *records;        // Vec<LilyCheckedScopeContainerRecord*>*
-    Vec *aliases;        // Vec<LilyCheckedScopeContainerAlias*>*
-    Vec *errors;         // Vec<LilyCheckedScopeContainerError*>*
-    Vec *enums_object;   // Vec<LilyCheckedScopeContainerEnumObject*>*
-    Vec *records_object; // Vec<LilyCheckedScopeContainerRecordObject*>*
-    Vec *classes;        // Vec<LilyCheckedScopeContainerClass*>*
-    Vec *traits;         // Vec<LilyCheckedScopeContainerTrait*>*
-    Vec *funs;           // Vec<LilyCheckedScopeContainerFun*>*
-    Vec *labels;         // Vec<LilyCheckedScopeContainerLabel*>*
-    Vec *variables;      // Vec<LilyCheckedScopeContainerVariable*>*
-    LilyCheckedAccessScope *parent; // LilyCheckedAccessScope*?
-    Vec *children;                  // Vec<LilyCheckedAccessScope*>*
+    Vec *modules;              // Vec<LilyCheckedScopeContainerModule*>*
+    Vec *constants;            // Vec<LilyCheckedScopeContainerConstant*>*
+    Vec *enums;                // Vec<LilyCheckedScopeContainerEnum*>*
+    Vec *records;              // Vec<LilyCheckedScopeContainerRecord*>*
+    Vec *aliases;              // Vec<LilyCheckedScopeContainerAlias*>*
+    Vec *errors;               // Vec<LilyCheckedScopeContainerError*>*
+    Vec *enums_object;         // Vec<LilyCheckedScopeContainerEnumObject*>*
+    Vec *records_object;       // Vec<LilyCheckedScopeContainerRecordObject*>*
+    Vec *classes;              // Vec<LilyCheckedScopeContainerClass*>*
+    Vec *traits;               // Vec<LilyCheckedScopeContainerTrait*>*
+    Vec *funs;                 // Vec<LilyCheckedScopeContainerFun*>*
+    Vec *labels;               // Vec<LilyCheckedScopeContainerLabel*>*
+    Vec *variables;            // Vec<LilyCheckedScopeContainerVariable*>*
+    LilyCheckedParent *parent; // LilyCheckedParent*?
+    Vec *children;             // Vec<LilyCheckedAccessScope*>*
 } LilyCheckedScope;
 
 /**
@@ -59,9 +60,7 @@ typedef struct LilyCheckedScope
  * @brief Construct LilyCheckedScope type.
  * @param parent LilyCheckedAccessScope*?
  */
-CONSTRUCTOR(LilyCheckedScope *,
-            LilyCheckedScope,
-            LilyCheckedAccessScope *parent);
+CONSTRUCTOR(LilyCheckedScope *, LilyCheckedScope, LilyCheckedParent *parent);
 
 /**
  *
