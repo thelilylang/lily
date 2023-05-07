@@ -189,6 +189,12 @@ to_msg__LilyError(const LilyError *self)
             return "the macro identifier is not found";
         case LILY_ERROR_KIND_EXPECTED_PATTERN:
             return "expected pattern";
+        case LILY_ERROR_KIND_DUPLICATE_CONSTANT:
+            return "duplicate constant";
+        case LILY_ERROR_KIND_DUPLICATE_ERROR:
+            return "duplicate error";
+        case LILY_ERROR_KIND_DUPLICATE_FUN:
+            return "duplicate fun";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -352,6 +358,12 @@ to_code__LilyError(const LilyError *self)
             return "0076";
         case LILY_ERROR_KIND_EXPECTED_PATTERN:
             return "0077";
+        case LILY_ERROR_KIND_DUPLICATE_CONSTANT:
+            return "0078";
+        case LILY_ERROR_KIND_DUPLICATE_ERROR:
+            return "0079";
+        case LILY_ERROR_KIND_DUPLICATE_FUN:
+            return "0080";
         default:
             UNREACHABLE("unknown variant");
     }
