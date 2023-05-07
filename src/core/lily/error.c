@@ -195,6 +195,12 @@ to_msg__LilyError(const LilyError *self)
             return "duplicate error";
         case LILY_ERROR_KIND_DUPLICATE_FUN:
             return "duplicate fun";
+        case LILY_ERROR_KIND_DUPLICATE_MODULE:
+            return "duplicate module";
+        case LILY_ERROR_KIND_DUPLICATE_CLASS:
+            return "duplicate class";
+        case LILY_ERROR_KIND_DUPLICATE_ENUM_OBJECT:
+            return "duplicate enum object";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -364,6 +370,12 @@ to_code__LilyError(const LilyError *self)
             return "0079";
         case LILY_ERROR_KIND_DUPLICATE_FUN:
             return "0080";
+        case LILY_ERROR_KIND_DUPLICATE_MODULE:
+            return "0081";
+        case LILY_ERROR_KIND_DUPLICATE_CLASS:
+            return "0082";
+        case LILY_ERROR_KIND_DUPLICATE_ENUM_OBJECT:
+            return "0083";
         default:
             UNREACHABLE("unknown variant");
     }
