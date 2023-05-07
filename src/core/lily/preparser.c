@@ -13070,7 +13070,9 @@ preparse_error__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
+
             break;
         case LILY_TOKEN_KIND_COLON:
             next_token__LilyPreparser(self);
@@ -13098,7 +13100,9 @@ preparse_error__LilyPreparser(LilyPreparser *self)
 
                     break;
                 default:
+                    END_LOCATION(&location, self->current->location);
                     next_token__LilyPreparser(self);
+
                     break;
             }
 
@@ -13130,8 +13134,6 @@ preparse_error__LilyPreparser(LilyPreparser *self)
             return NULL;
         }
     }
-
-    END_LOCATION(&location, self->current->location);
 
     return NEW_VARIANT(
       LilyPreparserDecl,
