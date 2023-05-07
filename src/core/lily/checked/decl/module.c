@@ -28,6 +28,8 @@
 #include <core/lily/checked/decl/module.h>
 
 #ifdef ENV_DEBUG
+#include <base/format.h>
+
 String *
 IMPL_FOR_DEBUG(to_string,
                LilyCheckedDeclModule,
@@ -37,7 +39,16 @@ IMPL_FOR_DEBUG(to_string,
       format__String("LilyCheckedDeclModule{{ name = {S}, decls =", self->name);
 
     DEBUG_VEC_STRING(self->decls, res, LilyCheckedDecl);
-    push_str__String(res, " }");
+
+    {
+        char *s =
+          format(", scope = {Sr}, access = {Sr}, visibility = {s} }",
+                 to_string__Debug__LilyCheckedScope(self->scope),
+                 to_string__Debug__LilyCheckedAccessModule(&self->access),
+                 to_string__Debug__LilyVisibility(self->visibility));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
