@@ -25,22 +25,80 @@
 #ifndef LILY_CORE_LILY_CHECKED_PARENT_H
 #define LILY_CORE_LILY_CHECKED_PARENT_H
 
-#include <core/lily/checked/scope.h>
+typedef struct LilyCheckedDecl LilyCheckedDecl;
+typedef struct LilyCheckedDeclModule LilyCheckedDeclModule;
+typedef struct LilyCheckedScope LilyCheckedScope;
+
+enum LilyCheckedParentKind
+{
+    LILY_CHECKED_PARENT_KIND_DECL,
+    LILY_CHECKED_PARENT_KIND_MODULE,
+    LILY_CHECKED_PARENT_KIND_SCOPE
+};
+
+/**
+ *
+ * @brief Convert LilyCheckedParentKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedParentKind,
+               enum LilyCheckedParentKind self);
+#endif
 
 typedef struct LilyCheckedParent
 {
-    const Vec *scopes; // const Vec<LilyCheckedScope*>* (&)
-    const Vec *body;   // const Vec<LilyCheckedBodyFunItem*>* (&)
+    enum LilyCheckedParentKind kind;
+    LilyCheckedScope *scope; // LilyCheckedScope* (&)
+    union
+    {
+        LilyCheckedDecl *decl;         // LilyCheckedDecl* (&)
+        LilyCheckedDeclModule *module; // LilyCheckedDeclModule* (&)
+        Vec *scope_body;               // Vec<LilyCheckedBodyFunItem*>* (&)
+    };
 } LilyCheckedParent;
 
 /**
  *
- * @brief Construct LilyCheckedParent type.
+ * @brief Construct LilyCheckedParent type (LILY_CHECKED_PARENT_KIND_DECL).
  */
-CONSTRUCTOR(LilyCheckedParent *,
-            LilyCheckedParent,
-            const Vec *scopes,
-            const Vec *body);
+VARIANT_CONSTRUCTOR(LilyCheckedParent *,
+                    LilyCheckedParent,
+                    decl,
+                    LilyCheckedScope *scope,
+                    LilyCheckedDecl *decl);
+
+/**
+ *
+ * @brief Construct LilyCheckedParent type (LILY_CHECKED_PARENT_KIND_MODULE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedParent *,
+                    LilyCheckedParent,
+                    module,
+                    LilyCheckedScope *scope,
+                    LilyCheckedDeclModule *module);
+
+/**
+ *
+ * @brief Construct LilyCheckedParent type (LILY_CHECKED_PARENT_KIND_SCOPE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedParent *,
+                    LilyCheckedParent,
+                    scope,
+                    LilyCheckedScope *scope,
+                    Vec *scope_body);
+
+/**
+ *
+ * @brief Convert LilyCheckedParent in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedParent, const LilyCheckedParent *self);
+#endif
 
 /**
  *

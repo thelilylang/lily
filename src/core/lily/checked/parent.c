@@ -22,17 +22,116 @@
  * SOFTWARE.
  */
 
-#include <core/lily/checked/parent.h>
+#include <base/format.h>
 
-CONSTRUCTOR(LilyCheckedParent *,
-            LilyCheckedParent,
-            const Vec *scopes,
-            const Vec *body)
+#include <core/lily/checked/decl.h>
+#include <core/lily/checked/parent.h>
+#include <core/lily/checked/scope.h>
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedParentKind,
+               enum LilyCheckedParentKind self)
+{
+    switch (self) {
+        case LILY_CHECKED_PARENT_KIND_DECL:
+            return "LILY_CHECKED_PARENT_KIND_DECL";
+        case LILY_CHECKED_PARENT_KIND_MODULE:
+            return "LILY_CHECKED_PARENT_KIND_MODULE";
+        case LILY_CHECKED_PARENT_KIND_SCOPE:
+            return "LILY_CHECKED_PARENT_KIND_SCOPE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_CONSTRUCTOR(LilyCheckedParent *,
+                    LilyCheckedParent,
+                    decl,
+                    LilyCheckedScope *scope,
+                    LilyCheckedDecl *decl)
 {
     LilyCheckedParent *self = lily_malloc(sizeof(LilyCheckedParent));
 
-    self->scopes = scopes;
-    self->body = body;
+    self->kind = LILY_CHECKED_PARENT_KIND_DECL;
+    self->scope = scope;
+    self->decl = decl;
 
     return self;
 }
+
+VARIANT_CONSTRUCTOR(LilyCheckedParent *,
+                    LilyCheckedParent,
+                    module,
+                    LilyCheckedScope *scope,
+                    LilyCheckedDeclModule *module)
+{
+    LilyCheckedParent *self = lily_malloc(sizeof(LilyCheckedParent));
+
+    self->kind = LILY_CHECKED_PARENT_KIND_MODULE;
+    self->scope = scope;
+    self->module = module;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedParent *,
+                    LilyCheckedParent,
+                    scope,
+                    LilyCheckedScope *scope,
+                    Vec *scope_body)
+{
+    LilyCheckedParent *self = lily_malloc(sizeof(LilyCheckedParent));
+
+    self->kind = LILY_CHECKED_PARENT_KIND_SCOPE;
+    self->scope = scope;
+    self->scope_body = scope_body;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedParent, const LilyCheckedParent *self)
+{
+    String *res =
+      format__String("LilyCheckedParent{{ kind = {s}, scope = {Sr}",
+                     to_string__Debug__LilyCheckedParentKind(self->kind),
+                     to_string__Debug__LilyCheckedScope(self->scope));
+
+    switch (self->kind) {
+        case LILY_CHECKED_PARENT_KIND_DECL: {
+            char *s = format(", decl = {Sr} }",
+                             to_string__Debug__LilyCheckedDecl(self->decl));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PARENT_KIND_MODULE: {
+            char *s =
+              format(", module = {Sr} }",
+                     to_string__Debug__LilyCheckedDeclModule(self->module));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_PARENT_KIND_SCOPE: {
+            push_str__String(res, ", scope_body =");
+
+            DEBUG_VEC_STRING(self->scope_body, res, LilyCheckedBodyFunItem);
+
+            push_str__String(res, " }");
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return res;
+}
+#endif
