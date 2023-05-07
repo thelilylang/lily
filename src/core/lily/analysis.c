@@ -46,7 +46,7 @@ push_fun__LilyAnalysis(LilyAnalysis *self,
                        LilyAstDecl *fun,
                        LilyCheckedDeclModule *module);
 
-static inline void
+static void
 push_module__LilyAnalysis(LilyAnalysis *self,
                           LilyAstDecl *module_decl,
                           LilyCheckedDeclModule *module,
@@ -157,20 +157,23 @@ push_module__LilyAnalysis(LilyAnalysis *self,
                           LilyCheckedDeclModule *module,
                           Usize i)
 {
-    push__Vec(
-      module->decls,
-      NEW_VARIANT(
-        LilyCheckedDecl,
-        module,
-        &module_decl->location,
-        module_decl,
-        NEW(LilyCheckedDeclModule,
-            module_decl->module.name,
-            NULL,
-            NEW(LilyCheckedScope,
-                NEW_VARIANT(LilyCheckedParent, module, module->scope, module)),
-            NEW(LilyCheckedAccessModule, i),
-            module_decl->module.visibility)));
+    LilyCheckedDecl *checked_module = NEW_VARIANT(
+      LilyCheckedDecl,
+      module,
+      &module_decl->location,
+      module_decl,
+      NEW(LilyCheckedDeclModule,
+          module_decl->module.name,
+          NEW(Vec),
+          NEW(LilyCheckedScope,
+              NEW_VARIANT(LilyCheckedParent, module, module->scope, module)),
+          NEW(LilyCheckedAccessModule, i),
+          module_decl->module.visibility));
+
+    push_all_delcs__LilyAnalysis(
+      self, module_decl->module.decls, &checked_module->module);
+
+    push__Vec(module->decls, checked_module);
 }
 
 void
