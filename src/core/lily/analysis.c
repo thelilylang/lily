@@ -62,6 +62,16 @@ push_enum_object__LilyAnalysis(LilyAnalysis *self,
                                LilyAstDecl *enum_object,
                                LilyCheckedDeclModule *module);
 
+static inline void
+push_record_object__LilyAnalysis(LilyAnalysis *self,
+                                 LilyAstDecl *record_object,
+                                 LilyCheckedDeclModule *module);
+
+static inline void
+push_trait__LilyAnalysis(LilyAnalysis *self,
+                         LilyAstDecl *trait,
+                         LilyCheckedDeclModule *module);
+
 static void
 push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                              const Vec *decls,
@@ -197,6 +207,56 @@ push_enum_object__LilyAnalysis(LilyAnalysis *self,
                           NEW_VARIANT(
                             LilyCheckedParent, module, module->scope, module)),
                       enum_object->object.enum_.visibility))));
+}
+
+void
+push_record_object__LilyAnalysis(LilyAnalysis *self,
+                                 LilyAstDecl *record_object,
+                                 LilyCheckedDeclModule *module)
+{
+    push__Vec(module->decls,
+              NEW_VARIANT(
+                LilyCheckedDecl,
+                object,
+                &record_object->location,
+                record_object,
+                NEW_VARIANT(
+                  LilyCheckedDeclObject,
+                  record,
+                  NEW(LilyCheckedDeclRecordObject,
+                      record_object->object.record.name,
+                      NULL,
+                      NULL,
+                      NULL,
+                      NEW(LilyCheckedScope,
+                          NEW_VARIANT(
+                            LilyCheckedParent, module, module->scope, module)),
+                      record_object->object.record.visibility))));
+}
+
+void
+push_trait__LilyAnalysis(LilyAnalysis *self,
+                         LilyAstDecl *trait,
+                         LilyCheckedDeclModule *module)
+{
+    push__Vec(module->decls,
+              NEW_VARIANT(
+                LilyCheckedDecl,
+                object,
+                &trait->location,
+                trait,
+                NEW_VARIANT(
+                  LilyCheckedDeclObject,
+                  trait,
+                  NEW(LilyCheckedDeclTrait,
+                      trait->object.trait.name,
+                      NULL,
+                      NULL,
+                      NULL,
+                      NEW(LilyCheckedScope,
+                          NEW_VARIANT(
+                            LilyCheckedParent, module, module->scope, module)),
+                      trait->object.trait.visibility))));
 }
 
 void
@@ -379,6 +439,69 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
 
                             FREE(LilyCheckedScopeContainerEnumObject,
                                  sc_enum_object);
+                        }
+
+                        break;
+                    }
+                    case LILY_AST_DECL_OBJECT_KIND_RECORD: {
+                        push_record_object__LilyAnalysis(self, decl, module);
+
+                        LilyCheckedScopeContainerRecordObject
+                          *sc_record_object =
+                            NEW(LilyCheckedScopeContainerRecordObject,
+                                decl->object.record.name,
+                                NEW(LilyCheckedAccessRecordObject,
+                                    module->access,
+                                    i));
+
+                        int status = add_record_object__LilyCheckedScope(
+                          module->scope, sc_record_object);
+
+                        if (status) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_DUPLICATE_RECORD_OBJECT),
+                                NULL,
+                                NULL,
+                                NULL),
+                              &self->package->count_error);
+
+                            FREE(LilyCheckedScopeContainerRecordObject,
+                                 sc_record_object);
+                        }
+
+                        break;
+                    }
+                    case LILY_AST_DECL_OBJECT_KIND_TRAIT: {
+                        push_trait__LilyAnalysis(self, decl, module);
+
+                        LilyCheckedScopeContainerTrait *sc_trait =
+                          NEW(LilyCheckedScopeContainerTrait,
+                              decl->object.trait.name,
+                              NEW(LilyCheckedAccessTrait, module->access, i));
+
+                        int status =
+                          add_trait__LilyCheckedScope(module->scope, sc_trait);
+
+                        if (status) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &decl->location,
+                                NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_TRAIT),
+                                NULL,
+                                NULL,
+                                NULL),
+                              &self->package->count_error);
+
+                            FREE(LilyCheckedScopeContainerTrait, sc_trait);
                         }
 
                         break;
