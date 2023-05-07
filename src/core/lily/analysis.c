@@ -92,8 +92,25 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                              const Vec *decls,
                              LilyCheckedDeclModule *module);
 
+static LilyCheckedDataType *
+check_data_type__LilyAnalysis(LilyAnalysis *self,
+                              LilyAstDataType *data_type,
+                              LilyCheckedScope *scope);
+
 static void
+check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun);
+
+// Apply import.
+static void
+run_step0__LilyAnalysis(LilyAnalysis *self);
+
+// Push all declarations.
+static inline void
 run_step1__LilyAnalysis(LilyAnalysis *self);
+
+// Check all declarations.
+static void
+run_step2__LilyAnalysis(LilyAnalysis *self);
 
 void
 push_constant__LilyAnalysis(LilyAnalysis *self,
@@ -693,9 +710,185 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                 break;
             }
             default:
-                TODO("analysis step 1");
+                UNREACHABLE("unknown variant");
         }
     }
+}
+
+LilyCheckedDataType *
+check_data_type__LilyAnalysis(LilyAnalysis *self,
+                              LilyAstDataType *data_type,
+                              LilyCheckedScope *scope)
+{
+    switch (data_type->kind) {
+        case LILY_AST_DATA_TYPE_KIND_ANY:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_ANY,
+                       &data_type->location);
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+            switch (data_type->array.kind) {
+                case LILY_AST_DATA_TYPE_ARRAY_KIND_SIZED:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      array,
+                      &data_type->location,
+                      NEW_VARIANT(LilyCheckedDataTypeArray,
+                                  sized,
+                                  check_data_type__LilyAnalysis(
+                                    self, data_type->array.data_type, scope),
+                                  data_type->array.size));
+                default:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      array,
+                      &data_type->location,
+                      NEW(LilyCheckedDataTypeArray,
+                          (enum LilyCheckedDataTypeArrayKind)(
+                            int)data_type->array.kind,
+                          check_data_type__LilyAnalysis(
+                            self, data_type->array.data_type, scope)));
+            }
+        case LILY_AST_DATA_TYPE_KIND_BOOL:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_BYTE:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_BYTE,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_BYTES:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_BYTES,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_CHAR:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_CHAR,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_CUSTOM:
+            TODO("check custom data type");
+        case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
+            return NEW_VARIANT(
+              LilyCheckedDataType,
+              exception,
+              &data_type->location,
+              check_data_type__LilyAnalysis(self, data_type->exception, scope));
+        case LILY_AST_DATA_TYPE_KIND_FLOAT32:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_FLOAT32,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_FLOAT64:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_FLOAT64,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_INT16:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_INT16,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_INT32:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_INT32,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_INT64:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_INT64,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_INT8:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_INT8,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_ISIZE:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_ISIZE,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_LAMBDA:
+            TODO("check lambda");
+        case LILY_AST_DATA_TYPE_KIND_LIST:
+            return NEW_VARIANT(
+              LilyCheckedDataType,
+              list,
+              &data_type->location,
+              check_data_type__LilyAnalysis(self, data_type->list, scope));
+        case LILY_AST_DATA_TYPE_KIND_MUT:
+            return NEW_VARIANT(
+              LilyCheckedDataType,
+              mut,
+              &data_type->location,
+              check_data_type__LilyAnalysis(self, data_type->mut, scope));
+        case LILY_AST_DATA_TYPE_KIND_NEVER:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_NEVER,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_OBJECT:
+            TODO("check Object data type");
+        case LILY_AST_DATA_TYPE_KIND_OPTIONAL:
+            return NEW_VARIANT(
+              LilyCheckedDataType,
+              optional,
+              &data_type->location,
+              check_data_type__LilyAnalysis(self, data_type->optional, scope));
+        case LILY_AST_DATA_TYPE_KIND_PTR:
+            return NEW_VARIANT(
+              LilyCheckedDataType,
+              ptr,
+              &data_type->location,
+              check_data_type__LilyAnalysis(self, data_type->ptr, scope));
+        case LILY_AST_DATA_TYPE_KIND_REF:
+            return NEW_VARIANT(
+              LilyCheckedDataType,
+              ref,
+              &data_type->location,
+              check_data_type__LilyAnalysis(self, data_type->ref, scope));
+        case LILY_AST_DATA_TYPE_KIND_SELF:
+            TODO("Check Self data type");
+        case LILY_AST_DATA_TYPE_KIND_STR:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_STR,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_TRACE:
+            return NEW_VARIANT(
+              LilyCheckedDataType,
+              trace,
+              &data_type->location,
+              check_data_type__LilyAnalysis(self, data_type->ref, scope));
+        case LILY_AST_DATA_TYPE_KIND_TUPLE:
+            TODO("check tuple");
+        case LILY_AST_DATA_TYPE_KIND_UINT16:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_UINT16,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_UINT32:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_UINT32,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_UINT64:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_UINT64,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_UINT8:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_UINT8,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_UNIT:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_UNIT,
+                       &data_type->location);
+        case LILY_AST_DATA_TYPE_KIND_USIZE:
+            return NEW(LilyCheckedDataType,
+                       LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                       &data_type->location);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+void
+check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
+{
+}
+
+static void
+run_step0__LilyAnalysis(LilyAnalysis *self)
+{
 }
 
 void
@@ -705,9 +898,30 @@ run_step1__LilyAnalysis(LilyAnalysis *self)
 }
 
 void
+run_step2__LilyAnalysis(LilyAnalysis *self)
+{
+    for (Usize i = 0; i < self->module.decls->len; ++i) {
+        LilyCheckedDecl *decl = get__Vec(self->module.decls, i);
+
+        if (!decl->is_checked) {
+            switch (decl->kind) {
+                case LILY_CHECKED_DECL_KIND_FUN:
+                    check_fun__LilyAnalysis(self, decl);
+
+                    break;
+                default:
+                    TODO("analysis declaration");
+            }
+        }
+    }
+}
+
+void
 run__LilyAnalysis(LilyAnalysis *self)
 {
+    run_step0__LilyAnalysis(self);
     run_step1__LilyAnalysis(self);
+    run_step2__LilyAnalysis(self);
 
     if (self->package->count_error > 0) {
         exit(1);
