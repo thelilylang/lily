@@ -11290,6 +11290,7 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
         }
 
         case LILY_TOKEN_KIND_KEYWORD_END:
+            END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
@@ -11297,8 +11298,6 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
         default:
             UNREACHABLE("this way is impossible");
     }
-
-    END_LOCATION(&location, self->current->location);
 
     return NEW_VARIANT(LilyPreparserDecl,
                        object,
