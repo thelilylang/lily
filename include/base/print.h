@@ -31,18 +31,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define PRINT(fmt, ...)                     \
-    {                                       \
-        char *f = format(fmt, __VA_ARGS__); \
-        fputs(f, stdout);                   \
-        lily_free(f);                       \
+#define PRINT(...)                     \
+    {                                  \
+        char *f = format(__VA_ARGS__); \
+        fputs(f, stdout);              \
+        lily_free(f);                  \
     }
 
-#define PRINTLN(fmt, ...)                   \
-    {                                       \
-        char *f = format(fmt, __VA_ARGS__); \
-        puts(f);                            \
-        lily_free(f);                       \
+#define PRINTLN(...)                   \
+    {                                  \
+        char *f = format(__VA_ARGS__); \
+        puts(f);                       \
+        lily_free(f);                  \
     }
 
 #endif // LILY_BASE_PRINT_H
