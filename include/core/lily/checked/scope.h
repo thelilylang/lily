@@ -65,7 +65,7 @@ CONSTRUCTOR(LilyCheckedScope *,
 
 /**
  *
- * @brief Add module to the scope.
+ * @brief Add a module to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -74,7 +74,7 @@ add_module__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
- * @brief Add constant to the scope.
+ * @brief Add a constant to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -83,7 +83,7 @@ add_constant__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
- * @brief Add enum to the scope.
+ * @brief Add an enum to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -92,7 +92,7 @@ add_enum__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
- * @brief Add record to the scope.
+ * @brief Add a record to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -102,7 +102,7 @@ add_record__LilyCheckedScope(LilyCheckedScope *self,
 /**
  *
  *
- * @brief Add alias to the scope.
+ * @brief Add an alias to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -112,7 +112,7 @@ add_alias__LilyCheckedScope(LilyCheckedScope *self,
 /**
  *
  *
- * @brief Add error to the scope.
+ * @brief Add an error to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -121,7 +121,7 @@ add_error__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
- * @brief Add enum object to the scope.
+ * @brief Add an enum object to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -131,7 +131,7 @@ add_enum_object__LilyCheckedScope(
 
 /**
  *
- * @brief Add record object to the scope.
+ * @brief Add a record object to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -141,7 +141,7 @@ add_record_object__LilyCheckedScope(
 
 /**
  *
- * @brief Add class to the scope.
+ * @brief Add a class to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -150,7 +150,7 @@ add_class__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
- * @brief Add trait to the scope.
+ * @brief Add a trait to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -159,7 +159,7 @@ add_trait__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
- * @brief Add fun to the scope.
+ * @brief Add a fun to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -168,7 +168,7 @@ add_fun__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
- * @brief Add label to the scope.
+ * @brief Add a label to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
@@ -177,12 +177,19 @@ add_label__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
- * @brief Add variable to the scope.
+ * @brief Add a variable to the scope.
  * @return Return the status 0 for success otherwise 1 for failure.
  */
 int
 add_variable__LilyCheckedScope(LilyCheckedScope *self,
                                LilyCheckedScopeContainerVariable *variable);
+
+/**
+ *
+ * @brief Search a fun in the scope.
+ */
+LilyCheckedScopeContainerFun *
+search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *

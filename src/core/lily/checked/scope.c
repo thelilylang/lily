@@ -71,9 +71,18 @@ CONSTRUCTOR(LilyCheckedScope *,
 #define ADD_TO_SCOPE(container, item, container_name) \
     CHECK_IF_EXISTS(container, item, container_name); \
                                                       \
-    push__Vec(self->modules, item);                   \
+    push__Vec(container, item);                       \
                                                       \
     return 0;
+
+#define SEARCH_IN_THE_SCOPE(container, container_name)   \
+    for (Usize i = 0; i < container->len; ++i) {         \
+        container_name *item = get__Vec(container, i);   \
+        if (!strcmp(item->name->buffer, name->buffer)) { \
+            return item;                                 \
+        }                                                \
+    }                                                    \
+    return NULL;
 
 int
 add_module__LilyCheckedScope(LilyCheckedScope *self,
@@ -230,6 +239,12 @@ add_variable__LilyCheckedScope(LilyCheckedScope *self,
 {
     CHECK_IF_EXISTS(self->labels, variable, LilyCheckedScopeContainerLabel);
     ADD_TO_SCOPE(self->variables, variable, LilyCheckedScopeContainerVariable);
+}
+
+LilyCheckedScopeContainerFun *
+search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    SEARCH_IN_THE_SCOPE(self->funs, LilyCheckedScopeContainerFun);
 }
 
 #ifdef ENV_DEBUG
