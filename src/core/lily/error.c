@@ -215,6 +215,10 @@ to_msg__LilyError(const LilyError *self)
             return "duplicate param name";
         case LILY_ERROR_KIND_DUPLICATE_VARIABLE:
             return "duplicate variable";
+        case LILY_ERROR_KIND_BREAK_IS_NOT_EXPECTED_IN_THIS_CONTEXT:
+            return "break is not expected in this context";
+        case LILY_ERROR_KIND_NEXT_IS_NOT_EXPECTED_IN_THIS_CONTEXT:
+            return "next is not expected in this context";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -404,6 +408,10 @@ to_code__LilyError(const LilyError *self)
             return "0089";
         case LILY_ERROR_KIND_DUPLICATE_VARIABLE:
             return "0090";
+        case LILY_ERROR_KIND_BREAK_IS_NOT_EXPECTED_IN_THIS_CONTEXT:
+            return "0091";
+        case LILY_ERROR_KIND_NEXT_IS_NOT_EXPECTED_IN_THIS_CONTEXT:
+            return "0092";
         default:
             UNREACHABLE("unknown variant");
     }
