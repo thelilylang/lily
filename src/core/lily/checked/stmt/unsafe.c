@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <base/format.h>
+
 #include <core/lily/checked/body/fun.h>
 #include <core/lily/checked/stmt/unsafe.h>
 
@@ -34,7 +36,13 @@ IMPL_FOR_DEBUG(to_string,
     String *res = from__String("LilyCheckedStmtUnsafe{ body =");
 
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyFunItem);
-    push_str__String(res, " }");
+
+    {
+        char *s = format(", scope = {Sr} }",
+                         to_string__Debug__LilyCheckedScope(self->scope));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
@@ -45,4 +53,5 @@ DESTRUCTOR(LilyCheckedStmtUnsafe, const LilyCheckedStmtUnsafe *self)
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyCheckedBodyFunItem);
     FREE(Vec, self->body);
+    FREE(LilyCheckedScope, self->scope);
 }

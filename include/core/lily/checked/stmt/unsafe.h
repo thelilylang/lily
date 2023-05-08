@@ -30,15 +30,19 @@
 typedef struct LilyCheckedStmtUnsafe
 {
     Vec *body; // Vec<LilyCheckedBodyFunItem*>*
+    LilyCheckedScope *scope;
 } LilyCheckedStmtUnsafe;
 
 /**
  *
  * @brief Construct LilyCheckedStmtUnsafe type.
  */
-inline CONSTRUCTOR(LilyCheckedStmtUnsafe, LilyCheckedStmtUnsafe, Vec *body)
+inline CONSTRUCTOR(LilyCheckedStmtUnsafe,
+                   LilyCheckedStmtUnsafe,
+                   Vec *body,
+                   LilyCheckedScope *scope)
 {
-    return (LilyCheckedStmtUnsafe){ .body = body };
+    return (LilyCheckedStmtUnsafe){ .body = body, .scope = scope };
 }
 
 /**
