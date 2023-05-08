@@ -34,7 +34,8 @@
 LLVMValueRef
 generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                           const LilyCheckedStmt *stmt,
-                          LLVMValueRef fun)
+                          LLVMValueRef fun,
+                          LLVMBasicBlockRef exit_block)
 {
     switch (stmt->kind) {
         case LILY_CHECKED_STMT_KIND_ASM:
@@ -47,12 +48,15 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
             LLVMPositionBuilderAtEnd(self->builder, loop_block);
 
-            GENERATE_FUNCTION_BODY(stmt->block.body, fun);
+            GENERATE_FUNCTION_BODY(stmt->block.body, fun, NULL);
 
             return NULL;
         }
-        case LILY_CHECKED_STMT_KIND_BREAK:
-            TODO("generate break stmt");
+        case LILY_CHECKED_STMT_KIND_BREAK: {
+            LLVMBuildBr(self->builder, exit_block);
+
+            return NULL;
+        }
         case LILY_CHECKED_STMT_KIND_DROP:
             TODO("generate drop stmt");
         case LILY_CHECKED_STMT_KIND_FOR:
@@ -61,8 +65,12 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             TODO("generate if stmt");
         case LILY_CHECKED_STMT_KIND_MATCH:
             TODO("generate match stmt");
-        case LILY_CHECKED_STMT_KIND_NEXT:
-            TODO("generate next stmt");
+        case LILY_CHECKED_STMT_KIND_NEXT: {
+            LLVMBasicBlockRef current_block = LLVMGetInsertBlock(self->builder);
+            LLVMBuildBr(self->builder, current_block);
+
+            return NULL;
+        }
         case LILY_CHECKED_STMT_KIND_RAISE:
             TODO("generate raise stmt");
         case LILY_CHECKED_STMT_KIND_RETURN:
@@ -72,12 +80,13 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_STMT_KIND_TRY:
             TODO("generate try stmt");
         case LILY_CHECKED_STMT_KIND_UNSAFE: {
-            LLVMBasicBlockRef loop_unsafe_block = LLVMAppendBasicBlock(fun, "ublock");
+            LLVMBasicBlockRef loop_unsafe_block =
+              LLVMAppendBasicBlock(fun, "ublock");
             LLVMBuildBr(self->builder, loop_unsafe_block);
 
             LLVMPositionBuilderAtEnd(self->builder, loop_unsafe_block);
 
-            GENERATE_FUNCTION_BODY(stmt->block.body, fun);
+            GENERATE_FUNCTION_BODY(stmt->block.body, fun, NULL);
 
             return NULL;
         }
@@ -108,7 +117,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                             loop_while_block,
                             loop_while_exit);
 
-            GENERATE_FUNCTION_BODY(stmt->while_.body, fun);
+            GENERATE_FUNCTION_BODY(stmt->while_.body, fun, loop_while_exit);
 
             LLVMPositionBuilderAtEnd(self->builder, loop_while_exit);
 
