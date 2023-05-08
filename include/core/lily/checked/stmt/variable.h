@@ -49,14 +49,13 @@ inline CONSTRUCTOR(LilyCheckedStmtVariable,
                    String *name,
                    LilyCheckedDataType *data_type,
                    LilyCheckedExpr *expr,
-                   bool is_mut,
-                   bool is_dropped)
+                   bool is_mut)
 {
     return (LilyCheckedStmtVariable){ .name = name,
                                       .data_type = data_type,
                                       .expr = expr,
                                       .is_mut = is_mut,
-                                      .is_dropped = is_dropped };
+                                      .is_dropped = false };
 }
 
 /**
