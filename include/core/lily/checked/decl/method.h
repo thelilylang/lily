@@ -129,7 +129,7 @@ DESTRUCTOR(LilyCheckedDeclMethodParam, LilyCheckedDeclMethodParam *self);
 
 typedef struct LilyCheckedDeclMethod
 {
-    String *name; // String* (&)
+    String *name;                          // String* (&)
     String *object_impl;                   // String*? (&)
     Vec *generic_params;                   // Vec<LilyCheckedGenericParam*>*?
     Vec *params;                           // Vec<LilyCheckedDeclMethodParam*>*?

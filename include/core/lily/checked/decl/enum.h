@@ -34,7 +34,7 @@
 
 typedef struct LilyCheckedDeclEnum
 {
-    String *name; // String* (&)
+    String *name;        // String* (&)
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*
     Vec *variants;       // Vec<LilyCheckedVariant*>*
     LilyCheckedScope *scope;

@@ -38,7 +38,7 @@
 
 typedef struct LilyCheckedDeclClass
 {
-    String *name; // String* (&)
+    String *name;        // String* (&)
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     Vec *inherit_params; // Vec<LilyCheckedInheritParam*>*?
     Vec *impl_params;    // Vec<LilyCheckedImplParam*>*?

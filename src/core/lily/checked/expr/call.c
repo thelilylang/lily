@@ -47,8 +47,8 @@ static VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
 /// @brief Free LilyCheckedExprCallFunParam type
 /// (LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT_OVERWRITE).
 static inline VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
-                          default_overwrite,
-                          LilyCheckedExprCallFunParam *self);
+                                 default_overwrite,
+                                 LilyCheckedExprCallFunParam *self);
 
 /// @brief Free LilyCheckedExprCallFunParam type
 /// (LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_NORMAL).
@@ -72,8 +72,8 @@ static VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
 /// @brief Free LilyCheckedExprCallMethodParam type
 /// (LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT_OVERWRITE).
 static inline VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
-                          default_overwrite,
-                          LilyCheckedExprCallMethodParam *self);
+                                 default_overwrite,
+                                 LilyCheckedExprCallMethodParam *self);
 
 /// @brief Free LilyCheckedExprCallMethodParam type
 /// (LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_NORMAL).

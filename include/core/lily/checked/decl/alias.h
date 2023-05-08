@@ -34,7 +34,7 @@
 
 typedef struct LilyCheckedDeclAlias
 {
-    String *name; // String* (&)
+    String *name;        // String* (&)
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     LilyCheckedDataType *data_type;
     enum LilyVisibility visibility;

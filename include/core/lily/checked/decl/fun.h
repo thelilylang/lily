@@ -58,7 +58,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedDeclFunParam
 {
-    String *name; // String* (&)
+    String *name;                   // String* (&)
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
     enum LilyCheckedDeclFunParamKind kind;
     Location location;
@@ -113,7 +113,7 @@ DESTRUCTOR(LilyCheckedDeclFunParam, LilyCheckedDeclFunParam *self);
 
 typedef struct LilyCheckedDeclFun
 {
-    String *name; // String* (&)
+    String *name;                          // String* (&)
     Vec *generic_params;                   // Vec<LilyCheckedGenericParam*>*?
     Vec *params;                           // Vec<LilyCheckedDeclFunParam*>*?
     LilyCheckedDataType *return_data_type; // LilyCheckedDataType*?

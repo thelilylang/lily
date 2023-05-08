@@ -199,7 +199,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedDataTypeCustom
 {
-    String *name; // String* (&)
+    String *name;  // String* (&)
     Vec *generics; // Vec<LilyCheckedDataType*>*?
     enum LilyCheckedDataTypeCustomKind kind;
 } LilyCheckedDataTypeCustom;
@@ -214,9 +214,9 @@ inline CONSTRUCTOR(LilyCheckedDataTypeCustom,
                    Vec *generics,
                    enum LilyCheckedDataTypeCustomKind kind)
 {
-    return (LilyCheckedDataTypeCustom){
-        .name = name, .generics = generics, .kind = kind
-    };
+    return (LilyCheckedDataTypeCustom){ .name = name,
+                                        .generics = generics,
+                                        .kind = kind };
 }
 
 /**

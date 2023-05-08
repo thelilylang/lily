@@ -38,8 +38,8 @@ static VARIANT_DESTRUCTOR(LilyCheckedGenericParam,
 
 // Free LilyCheckedGenericParam type (LILY_CHECKED_GENERIC_PARAM_KIND_NORMAL).
 static inline VARIANT_DESTRUCTOR(LilyCheckedGenericParam,
-                          normal,
-                          LilyCheckedGenericParam *self);
+                                 normal,
+                                 LilyCheckedGenericParam *self);
 
 #ifdef ENV_DEBUG
 char *

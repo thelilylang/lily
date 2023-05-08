@@ -36,7 +36,7 @@
 typedef struct LilyCheckedDeclModule
 {
     String *name; // String* (&)
-    Vec *decls; // Vec<LilyCheckedDecl*>*
+    Vec *decls;   // Vec<LilyCheckedDecl*>*
     LilyCheckedScope *scope;
     LilyCheckedAccessModule access;
     enum LilyVisibility visibility;
