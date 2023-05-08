@@ -1310,8 +1310,22 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             TODO("analysis try stmt");
         case LILY_AST_STMT_KIND_UNSAFE:
             TODO("analysis unsafe stmt");
-        case LILY_AST_STMT_KIND_VARIABLE:
-            TODO("analysis variable stmt");
+        case LILY_AST_STMT_KIND_VARIABLE: {
+            LilyCheckedExpr *expr = check_expr__LilyAnalysis(
+              self, stmt->variable.expr, scope, LILY_CHECKED_SAFETY_MODE_SAFE);
+
+            return NEW_VARIANT(LilyCheckedBodyFunItem,
+                               stmt,
+                               NEW_VARIANT(LilyCheckedStmt,
+                                           variable,
+                                           &stmt->location,
+                                           stmt,
+                                           NEW(LilyCheckedStmtVariable,
+                                               stmt->variable.name,
+                                               expr->data_type,
+                                               expr,
+                                               stmt->variable.is_mut)));
+        }
         case LILY_AST_STMT_KIND_WHILE:
             TODO("analysis while stmt");
         default:

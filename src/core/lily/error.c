@@ -213,6 +213,8 @@ to_msg__LilyError(const LilyError *self)
             return "duplicate record";
         case LILY_ERROR_KIND_DUPLICATE_PARAM_NAME:
             return "duplicate param name";
+        case LILY_ERROR_KIND_DUPLICATE_VARIABLE:
+            return "duplicate variable";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -400,6 +402,8 @@ to_code__LilyError(const LilyError *self)
             return "0088";
         case LILY_ERROR_KIND_DUPLICATE_PARAM_NAME:
             return "0089";
+        case LILY_ERROR_KIND_DUPLICATE_VARIABLE:
+            return "0090";
         default:
             UNREACHABLE("unknown variant");
     }
