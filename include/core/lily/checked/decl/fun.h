@@ -144,9 +144,12 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
                    bool is_operator)
 {
     return (LilyCheckedDeclFun){ .name = name,
+                                 .generic_params = generic_params,
                                  .params = params,
                                  .return_data_type = return_data_type,
                                  .body = body,
+                                 .scope = scope,
+                                 .access = NULL,
                                  .visibility = visibility,
                                  .is_async = is_async,
                                  .is_operator = is_operator,
