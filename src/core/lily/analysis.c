@@ -135,30 +135,30 @@ run_step1__LilyAnalysis(LilyAnalysis *self);
 static void
 run_step2__LilyAnalysis(LilyAnalysis *self);
 
-#define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop)                   \
-    for (Usize j = 0; j < ast_body->len; ++j) {                              \
-        LilyAstBodyFunItem *item = get__Vec(ast_body, j);                    \
-                                                                             \
-        switch (item->kind) {                                                \
-            case LILY_AST_BODY_FUN_ITEM_KIND_EXPR:                           \
-                push__Vec(                                                   \
-                  body,                                                      \
-                  NEW_VARIANT(LilyCheckedBodyFunItem,                        \
-                              expr,                                          \
-                              check_expr__LilyAnalysis(                      \
-                                self, item->expr, scope, safety_mode)));     \
-                                                                             \
-                break;                                                       \
-            case LILY_AST_BODY_FUN_ITEM_KIND_STMT:                           \
-                push__Vec(                                                   \
-                  body,                                                      \
-                  check_stmt__LilyAnalysis(                                  \
+#define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop)            \
+    for (Usize j = 0; j < ast_body->len; ++j) {                                \
+        LilyAstBodyFunItem *item = get__Vec(ast_body, j);                      \
+                                                                               \
+        switch (item->kind) {                                                  \
+            case LILY_AST_BODY_FUN_ITEM_KIND_EXPR:                             \
+                push__Vec(                                                     \
+                  body,                                                        \
+                  NEW_VARIANT(LilyCheckedBodyFunItem,                          \
+                              expr,                                            \
+                              check_expr__LilyAnalysis(                        \
+                                self, item->expr, scope, safety_mode)));       \
+                                                                               \
+                break;                                                         \
+            case LILY_AST_BODY_FUN_ITEM_KIND_STMT:                             \
+                push__Vec(                                                     \
+                  body,                                                        \
+                  check_stmt__LilyAnalysis(                                    \
                     self, &item->stmt, scope, j, in_loop, safety_mode, body)); \
-                                                                             \
-                break;                                                       \
-            default:                                                         \
-                UNREACHABLE("unknown variant");                              \
-        }                                                                    \
+                                                                               \
+                break;                                                         \
+            default:                                                           \
+                UNREACHABLE("unknown variant");                                \
+        }                                                                      \
     }
 
 void
@@ -1304,8 +1304,24 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             TODO("analysis asm stmt");
         case LILY_AST_STMT_KIND_AWAIT:
             TODO("analysis await stmt");
-        case LILY_AST_STMT_KIND_BLOCK:
-            TODO("analysis block stmt");
+        case LILY_AST_STMT_KIND_BLOCK: {
+            Vec *body = NEW(Vec);
+            LilyCheckedScope *scope_block =
+              NEW(LilyCheckedScope,
+                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body));
+
+            CHECK_FUN_BODY(
+              stmt->block.body, scope_block, body, safety_mode, false);
+
+            return NEW_VARIANT(
+              LilyCheckedBodyFunItem,
+              stmt,
+              NEW_VARIANT(LilyCheckedStmt,
+                          block,
+                          &stmt->location,
+                          stmt,
+                          NEW(LilyCheckedStmtBlock, body, scope_block)));
+        }
         case LILY_AST_STMT_KIND_BREAK:
             if (!in_loop) {
                 emit__Diagnostic(
@@ -1384,8 +1400,27 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_STMT_KIND_TRY:
             TODO("analysis try stmt");
-        case LILY_AST_STMT_KIND_UNSAFE:
-            TODO("analysis unsafe stmt");
+        case LILY_AST_STMT_KIND_UNSAFE: {
+            Vec *body = NEW(Vec);
+            LilyCheckedScope *scope_unsafe =
+              NEW(LilyCheckedScope,
+                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body));
+
+            CHECK_FUN_BODY(stmt->unsafe.body,
+                           scope_unsafe,
+                           body,
+                           LILY_CHECKED_SAFETY_MODE_UNSAFE,
+                           false);
+
+            return NEW_VARIANT(
+              LilyCheckedBodyFunItem,
+              stmt,
+              NEW_VARIANT(LilyCheckedStmt,
+                          unsafe,
+                          &stmt->location,
+                          stmt,
+                          NEW(LilyCheckedStmtUnsafe, body, scope_unsafe)));
+        }
         case LILY_AST_STMT_KIND_VARIABLE: {
             LilyCheckedExpr *expr = check_expr__LilyAnalysis(
               self, stmt->variable.expr, scope, safety_mode);
@@ -1429,24 +1464,24 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             LilyCheckedExpr *expr = check_expr__LilyAnalysis(
               self, stmt->while_.expr, scope, safety_mode);
             Vec *body = NEW(Vec);
+            LilyCheckedScope *scope_while =
+              NEW(LilyCheckedScope,
+                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body));
 
-            CHECK_FUN_BODY(stmt->while_.body, scope, body, safety_mode, true);
+            CHECK_FUN_BODY(
+              stmt->while_.body, scope_while, body, safety_mode, true);
 
-            return NEW_VARIANT(
-              LilyCheckedBodyFunItem,
-              stmt,
-              NEW_VARIANT(
-                LilyCheckedStmt,
-                while,
-                &stmt->location,
-                stmt,
-                NEW(LilyCheckedStmtWhile,
-                    stmt->while_.name,
-                    expr,
-                    body,
-                    NEW(LilyCheckedScope,
-                        NEW_VARIANT(
-                          LilyCheckedParent, scope, scope, current_body)))));
+            return NEW_VARIANT(LilyCheckedBodyFunItem,
+                               stmt,
+                               NEW_VARIANT(LilyCheckedStmt,
+                                           while,
+                                           &stmt->location,
+                                           stmt,
+                                           NEW(LilyCheckedStmtWhile,
+                                               stmt->while_.name,
+                                               expr,
+                                               body,
+                                               scope_while)));
         }
         default:
             UNREACHABLE("unknown variant");
