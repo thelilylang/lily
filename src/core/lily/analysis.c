@@ -105,9 +105,9 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyCheckedScope *scope,
                          enum LilyCheckedSafetyMode safety_mode);
 
-static LilyCheckedStmt *
+static LilyCheckedBodyFunItem *
 check_stmt__LilyAnalysis(LilyAnalysis *self,
-                         LilyAstStmt *stmt,
+                         const LilyAstStmt *stmt,
                          LilyCheckedScope *scope);
 
 /// @return Vec<LilyCheckedFunParam*>*
@@ -1260,11 +1260,63 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
     }
 }
 
-LilyCheckedStmt *
+LilyCheckedBodyFunItem *
 check_stmt__LilyAnalysis(LilyAnalysis *self,
-                         LilyAstStmt *stmt,
+                         const LilyAstStmt *stmt,
                          LilyCheckedScope *scope)
 {
+    switch (stmt->kind) {
+        case LILY_AST_STMT_KIND_ASM:
+            TODO("analysis asm stmt");
+        case LILY_AST_STMT_KIND_AWAIT:
+            TODO("analysis await stmt");
+        case LILY_AST_STMT_KIND_BLOCK:
+            TODO("analysis block stmt");
+        case LILY_AST_STMT_KIND_BREAK:
+            TODO("analysis break stmt");
+        case LILY_AST_STMT_KIND_DEFER:
+            TODO("analysis defer stmt");
+        case LILY_AST_STMT_KIND_DROP:
+            TODO("analysis drop stmt");
+        case LILY_AST_STMT_KIND_FOR:
+            TODO("analysis for stmt");
+        case LILY_AST_STMT_KIND_IF:
+            TODO("analysis if stmt");
+        case LILY_AST_STMT_KIND_MATCH:
+            TODO("analysis match stmt");
+        case LILY_AST_STMT_KIND_NEXT:
+            TODO("analysis next stmt");
+        case LILY_AST_STMT_KIND_RAISE:
+            TODO("analysis raise stmt");
+        case LILY_AST_STMT_KIND_RETURN: {
+            LilyCheckedExpr *expr = NULL;
+
+            if (stmt->return_.expr) {
+                expr = check_expr__LilyAnalysis(self,
+                                                stmt->return_.expr,
+                                                scope,
+                                                LILY_CHECKED_SAFETY_MODE_SAFE);
+            }
+
+            return NEW_VARIANT(LilyCheckedBodyFunItem,
+                               stmt,
+                               NEW_VARIANT(LilyCheckedStmt,
+                                           return,
+                                           &stmt->location,
+                                           stmt,
+                                           NEW(LilyCheckedStmtReturn, expr)));
+        }
+        case LILY_AST_STMT_KIND_TRY:
+            TODO("analysis try stmt");
+        case LILY_AST_STMT_KIND_UNSAFE:
+            TODO("analysis unsafe stmt");
+        case LILY_AST_STMT_KIND_VARIABLE:
+            TODO("analysis variable stmt");
+        case LILY_AST_STMT_KIND_WHILE:
+            TODO("analysis while stmt");
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 Vec *
@@ -1389,7 +1441,13 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
                 break;
             case LILY_AST_BODY_FUN_ITEM_KIND_STMT:
-                TODO("check statement");
+                push__Vec(
+                  fun->fun.body,
+                  check_stmt__LilyAnalysis(self, &item->stmt, fun->fun.scope));
+
+                break;
+            default:
+                UNREACHABLE("unknown variant");
         }
     }
 
