@@ -96,6 +96,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self)
             UNREACHABLE("unknown variant");
     }
 }
+#endif
 
 VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
@@ -304,6 +305,7 @@ CONSTRUCTOR(LilyCheckedExpr *,
     return self;
 }
 
+#ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
 {
