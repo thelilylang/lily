@@ -28,6 +28,10 @@
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtNext, const LilyAstStmtNext *self)
 {
-    return format__String("LilyAstStmtNext{{ name = {S} }", self->name);
+    if (self->name) {
+        return format__String("LilyAstStmtNext{{ name = {S} }", self->name);
+    }
+
+    return from__String("LilyAstStmtNext{ name = NULL }");
 }
 #endif

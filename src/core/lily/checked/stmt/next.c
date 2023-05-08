@@ -28,6 +28,10 @@
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedStmtNext, const LilyCheckedStmtNext *self)
 {
-    return format__String("LilyCheckedStmtNext{{ name = {S} }", self->name);
+    if (self->name) {
+        return format__String("LilyCheckedStmtNext{{ name = {S} }", self->name);
+    }
+
+    return from__String("LilyCheckedStmtNext{ name = NULL }");
 }
 #endif
