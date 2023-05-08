@@ -91,7 +91,8 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
             TODO("generate tuple data type");
         case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
-            UNREACHABLE("impossible to get unknown data type");
+            // TODO: Replace todo with unreachable after performing a type inference system.
+            TODO("impossible to get unknown data type");
         default:
             UNREACHABLE("unknown variant");
     }
