@@ -109,7 +109,8 @@ static LilyCheckedBodyFunItem *
 check_stmt__LilyAnalysis(LilyAnalysis *self,
                          const LilyAstStmt *stmt,
                          LilyCheckedScope *scope,
-                         Usize i);
+                         Usize i,
+                         bool in_loop);
 
 /// @return Vec<LilyCheckedFunParam*>*
 static Vec *
@@ -1265,7 +1266,8 @@ LilyCheckedBodyFunItem *
 check_stmt__LilyAnalysis(LilyAnalysis *self,
                          const LilyAstStmt *stmt,
                          LilyCheckedScope *scope,
-                         Usize i)
+                         Usize i,
+                         bool in_loop)
 {
     switch (stmt->kind) {
         case LILY_AST_STMT_KIND_ASM:
@@ -1275,7 +1277,29 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_STMT_KIND_BLOCK:
             TODO("analysis block stmt");
         case LILY_AST_STMT_KIND_BREAK:
-            TODO("analysis break stmt");
+            if (!in_loop) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    &self->package->file,
+                    &stmt->location,
+                    NEW(LilyError,
+                        LILY_ERROR_KIND_BREAK_IS_NOT_EXPECTED_IN_THIS_CONTEXT),
+                    NULL,
+                    NULL,
+                    NULL),
+                  &self->package->count_error);
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedBodyFunItem,
+              stmt,
+              NEW_VARIANT(LilyCheckedStmt,
+                          break,
+                          &stmt->location,
+                          stmt,
+                          NEW(LilyCheckedStmtBreak, stmt->break_.name)));
         case LILY_AST_STMT_KIND_DEFER:
             TODO("analysis defer stmt");
         case LILY_AST_STMT_KIND_DROP:
@@ -1287,7 +1311,29 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_STMT_KIND_MATCH:
             TODO("analysis match stmt");
         case LILY_AST_STMT_KIND_NEXT:
-            TODO("analysis next stmt");
+            if (!in_loop) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    &self->package->file,
+                    &stmt->location,
+                    NEW(LilyError,
+                        LILY_ERROR_KIND_NEXT_IS_NOT_EXPECTED_IN_THIS_CONTEXT),
+                    NULL,
+                    NULL,
+                    NULL),
+                  &self->package->count_error);
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedBodyFunItem,
+              stmt,
+              NEW_VARIANT(LilyCheckedStmt,
+                          next,
+                          &stmt->location,
+                          stmt,
+                          NEW(LilyCheckedStmtNext, stmt->next.name)));
         case LILY_AST_STMT_KIND_RAISE:
             TODO("analysis raise stmt");
         case LILY_AST_STMT_KIND_RETURN: {
@@ -1482,7 +1528,7 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
             case LILY_AST_BODY_FUN_ITEM_KIND_STMT:
                 push__Vec(fun->fun.body,
                           check_stmt__LilyAnalysis(
-                            self, &item->stmt, fun->fun.scope, i));
+                            self, &item->stmt, fun->fun.scope, i, false));
 
                 break;
             default:
