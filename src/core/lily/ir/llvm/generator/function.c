@@ -59,7 +59,7 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
     LLVMPositionBuilderAtEnd(self->builder, entry_block);
 
-    GENERATE_FUNCTION_BODY(fun->body, fun_llvm);
+    GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL);
 
     FREE(Vec, params);
 }
