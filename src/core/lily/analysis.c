@@ -108,7 +108,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 static LilyCheckedBodyFunItem *
 check_stmt__LilyAnalysis(LilyAnalysis *self,
                          const LilyAstStmt *stmt,
-                         LilyCheckedScope *scope);
+                         LilyCheckedScope *scope,
+                         Usize i);
 
 /// @return Vec<LilyCheckedFunParam*>*
 static Vec *
@@ -1263,7 +1264,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 LilyCheckedBodyFunItem *
 check_stmt__LilyAnalysis(LilyAnalysis *self,
                          const LilyAstStmt *stmt,
-                         LilyCheckedScope *scope)
+                         LilyCheckedScope *scope,
+                         Usize i)
 {
     switch (stmt->kind) {
         case LILY_AST_STMT_KIND_ASM:
@@ -1313,6 +1315,29 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_STMT_KIND_VARIABLE: {
             LilyCheckedExpr *expr = check_expr__LilyAnalysis(
               self, stmt->variable.expr, scope, LILY_CHECKED_SAFETY_MODE_SAFE);
+
+            LilyCheckedScopeContainerVariable *sc_variable =
+              NEW(LilyCheckedScopeContainerVariable,
+                  stmt->variable.name,
+                  (LilyCheckedAccessScope){
+                    .module = (LilyCheckedAccessModule){ .id = 0 }, .id = i });
+            int status = add_variable__LilyCheckedScope(scope, sc_variable);
+
+            if (status) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    &self->package->file,
+                    &stmt->location,
+                    NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_VARIABLE),
+                    NULL,
+                    NULL,
+                    NULL),
+                  &self->package->count_error);
+
+                FREE(LilyCheckedScopeContainerVariable, sc_variable);
+            }
 
             return NEW_VARIANT(LilyCheckedBodyFunItem,
                                stmt,
@@ -1455,9 +1480,9 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
                 break;
             case LILY_AST_BODY_FUN_ITEM_KIND_STMT:
-                push__Vec(
-                  fun->fun.body,
-                  check_stmt__LilyAnalysis(self, &item->stmt, fun->fun.scope));
+                push__Vec(fun->fun.body,
+                          check_stmt__LilyAnalysis(
+                            self, &item->stmt, fun->fun.scope, i));
 
                 break;
             default:
