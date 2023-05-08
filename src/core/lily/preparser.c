@@ -7916,6 +7916,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                     switch (self->current->kind) {
                         case LILY_TOKEN_KIND_KEYWORD_END: {
                             END_LOCATION(&location, self->current->location);
+                            next_token__LilyPreparser(self);
 
                             return NEW_VARIANT(
                               LilyPreparserFunBodyItem,
