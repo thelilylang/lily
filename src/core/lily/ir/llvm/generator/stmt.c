@@ -41,8 +41,16 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             TODO("generate asm stmt");
         case LILY_CHECKED_STMT_KIND_AWAIT:
             TODO("generate await stmt");
-        case LILY_CHECKED_STMT_KIND_BLOCK:
-            TODO("generate block stmt");
+        case LILY_CHECKED_STMT_KIND_BLOCK: {
+            LLVMBasicBlockRef loop_block = LLVMAppendBasicBlock(fun, "block");
+            LLVMBuildBr(self->builder, loop_block);
+
+            LLVMPositionBuilderAtEnd(self->builder, loop_block);
+
+            GENERATE_FUNCTION_BODY(stmt->block.body, fun);
+
+            return NULL;
+        }
         case LILY_CHECKED_STMT_KIND_BREAK:
             TODO("generate break stmt");
         case LILY_CHECKED_STMT_KIND_DROP:
@@ -63,8 +71,16 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
               generate_expr__LilyIrLlvm(self, stmt->return_.expr));
         case LILY_CHECKED_STMT_KIND_TRY:
             TODO("generate try stmt");
-        case LILY_CHECKED_STMT_KIND_UNSAFE:
-            TODO("generate unsafe stmt");
+        case LILY_CHECKED_STMT_KIND_UNSAFE: {
+            LLVMBasicBlockRef loop_unsafe_block = LLVMAppendBasicBlock(fun, "ublock");
+            LLVMBuildBr(self->builder, loop_unsafe_block);
+
+            LLVMPositionBuilderAtEnd(self->builder, loop_unsafe_block);
+
+            GENERATE_FUNCTION_BODY(stmt->block.body, fun);
+
+            return NULL;
+        }
         case LILY_CHECKED_STMT_KIND_VARIABLE: {
             LLVMTypeRef variable_data_type =
               generate_data_type__LilyIrLlvm(self, stmt->variable.data_type);
