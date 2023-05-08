@@ -31,7 +31,7 @@
 
 typedef struct LilyCheckedStmtBreak
 {
-    String *name; // String*?
+    String *name; // String*? (&)
 } LilyCheckedStmtBreak;
 
 inline CONSTRUCTOR(LilyCheckedStmtBreak, LilyCheckedStmtBreak, String *name)
@@ -50,10 +50,5 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedStmtBreak,
                const LilyCheckedStmtBreak *self);
 #endif
-
-inline DESTRUCTOR(LilyCheckedStmtBreak, const LilyCheckedStmtBreak *self)
-{
-    FREE_MOVE(self->name, FREE(String, self->name));
-}
 
 #endif // LILY_CORE_LILY_CHECKED_STMT_BREAK_H

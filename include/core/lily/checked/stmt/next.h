@@ -31,7 +31,7 @@
 
 typedef struct LilyCheckedStmtNext
 {
-    String *name;
+    String *name; // String*? (&)
 } LilyCheckedStmtNext;
 
 inline CONSTRUCTOR(LilyCheckedStmtNext, LilyCheckedStmtNext, String *name)
@@ -48,10 +48,5 @@ inline CONSTRUCTOR(LilyCheckedStmtNext, LilyCheckedStmtNext, String *name)
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedStmtNext, const LilyCheckedStmtNext *self);
 #endif
-
-inline DESTRUCTOR(LilyCheckedStmtNext, const LilyCheckedStmtNext *self)
-{
-    FREE_MOVE(self->name, FREE(String, self->name));
-}
 
 #endif // LILY_CORE_LILY_CHECKED_STMT_NEXT_H

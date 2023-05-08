@@ -48,11 +48,6 @@ static inline VARIANT_DESTRUCTOR(LilyCheckedStmt,
                                  block,
                                  const LilyCheckedStmt *self);
 
-// Free LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_BREAK).
-static inline VARIANT_DESTRUCTOR(LilyCheckedStmt,
-                                 break,
-                                 const LilyCheckedStmt *self);
-
 // Free LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_DROP).
 static inline VARIANT_DESTRUCTOR(LilyCheckedStmt,
                                  drop,
@@ -69,11 +64,6 @@ static inline VARIANT_DESTRUCTOR(LilyCheckedStmt,
 // Free LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_MATCH).
 static inline VARIANT_DESTRUCTOR(LilyCheckedStmt,
                                  match,
-                                 const LilyCheckedStmt *self);
-
-// Free LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_NEXT).
-static inline VARIANT_DESTRUCTOR(LilyCheckedStmt,
-                                 next,
                                  const LilyCheckedStmt *self);
 
 // Free LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_RAISE).
@@ -310,11 +300,6 @@ VARIANT_DESTRUCTOR(LilyCheckedStmt, block, const LilyCheckedStmt *self)
     FREE(LilyCheckedStmtBlock, &self->block);
 }
 
-VARIANT_DESTRUCTOR(LilyCheckedStmt, break, const LilyCheckedStmt *self)
-{
-    FREE(LilyCheckedStmtBreak, &self->break_);
-}
-
 VARIANT_DESTRUCTOR(LilyCheckedStmt, drop, const LilyCheckedStmt *self)
 {
     FREE(LilyCheckedStmtDrop, &self->drop);
@@ -333,11 +318,6 @@ VARIANT_DESTRUCTOR(LilyCheckedStmt, if, const LilyCheckedStmt *self)
 VARIANT_DESTRUCTOR(LilyCheckedStmt, match, const LilyCheckedStmt *self)
 {
     FREE(LilyCheckedStmtMatch, &self->match);
-}
-
-VARIANT_DESTRUCTOR(LilyCheckedStmt, next, const LilyCheckedStmt *self)
-{
-    FREE(LilyCheckedStmtNext, &self->next);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedStmt, raise, const LilyCheckedStmt *self)
@@ -382,9 +362,6 @@ DESTRUCTOR(LilyCheckedStmt, const LilyCheckedStmt *self)
         case LILY_CHECKED_STMT_KIND_BLOCK:
             FREE_VARIANT(LilyCheckedStmt, block, self);
             break;
-        case LILY_CHECKED_STMT_KIND_BREAK:
-            FREE_VARIANT(LilyCheckedStmt, break, self);
-            break;
         case LILY_CHECKED_STMT_KIND_DROP:
             FREE_VARIANT(LilyCheckedStmt, drop, self);
             break;
@@ -396,9 +373,6 @@ DESTRUCTOR(LilyCheckedStmt, const LilyCheckedStmt *self)
             break;
         case LILY_CHECKED_STMT_KIND_MATCH:
             FREE_VARIANT(LilyCheckedStmt, match, self);
-            break;
-        case LILY_CHECKED_STMT_KIND_NEXT:
-            FREE_VARIANT(LilyCheckedStmt, next, self);
             break;
         case LILY_CHECKED_STMT_KIND_RAISE:
             FREE_VARIANT(LilyCheckedStmt, raise, self);
@@ -417,6 +391,9 @@ DESTRUCTOR(LilyCheckedStmt, const LilyCheckedStmt *self)
             break;
         case LILY_CHECKED_STMT_KIND_WHILE:
             FREE_VARIANT(LilyCheckedStmt, while, self);
+            break;
+        case LILY_CHECKED_STMT_KIND_BREAK:
+        case LILY_CHECKED_STMT_KIND_NEXT:
             break;
         default:
             UNREACHABLE("unknown variant");
