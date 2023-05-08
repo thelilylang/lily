@@ -33,7 +33,7 @@
  * @brief Generate a function in LLVM IR.
  */
 void
-generate_function__LilyIr(const LilyIrLlvm *self,
-                          const LilyCheckedDeclFun *fun);
+generate_function__LilyIrLlvm(const LilyIrLlvm *self,
+                              const LilyCheckedDeclFun *fun);
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_FUNCTION_H

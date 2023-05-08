@@ -25,6 +25,7 @@
 #include <core/lily/ir/llvm/generator/function.h>
 
 void
-generate_function__LilyIr(const LilyIrLlvm *self, const LilyCheckedDeclFun *fun)
+generate_function__LilyIrLlvm(const LilyIrLlvm *self,
+                              const LilyCheckedDeclFun *fun)
 {
 }
