@@ -25,22 +25,22 @@
 #ifndef LILY_CORE_LILY_IR_LLVM_GENERATOR_BODY_FUNCTION_H
 #define LILY_CORE_LILY_IR_LLVM_GENERATOR_BODY_FUNCTION_H
 
-#define GENERATE_FUNCTION_BODY(body, fun)                          \
-    for (Usize i = 0; i < body->len; ++i) {                        \
-        LilyCheckedBodyFunItem *item = get__Vec(body, i);          \
-                                                                   \
-        switch (item->kind) {                                      \
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:             \
-                generate_expr__LilyIrLlvm(self, item->expr);       \
-                                                                   \
-                break;                                             \
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:             \
-                generate_stmt__LilyIrLlvm(self, &item->stmt, fun); \
-                                                                   \
-                break;                                             \
-            default:                                               \
-                UNREACHABLE("unknown variant");                    \
-        }                                                          \
+#define GENERATE_FUNCTION_BODY(body, fun, exit_block)                          \
+    for (Usize i = 0; i < body->len; ++i) {                                    \
+        LilyCheckedBodyFunItem *item = get__Vec(body, i);                      \
+                                                                               \
+        switch (item->kind) {                                                  \
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:                         \
+                generate_expr__LilyIrLlvm(self, item->expr);                   \
+                                                                               \
+                break;                                                         \
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:                         \
+                generate_stmt__LilyIrLlvm(self, &item->stmt, fun, exit_block); \
+                                                                               \
+                break;                                                         \
+            default:                                                           \
+                UNREACHABLE("unknown variant");                                \
+        }                                                                      \
     }
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_BODY_FUNCTION_H
