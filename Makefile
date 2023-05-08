@@ -49,6 +49,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/ir/cpp/builder/function/*.h
 	${CLANG_FORMAT} ./include/core/lily/ir/cpp/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/ir/llvm/*.h
+	${CLANG_FORMAT} ./include/core/lily/ir/llvm/generator/body/*.h
 	${CLANG_FORMAT} ./include/core/lily/ir/llvm/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/package/*.h	
 	${CLANG_FORMAT} ./include/core/lily/preprocess/*.h
