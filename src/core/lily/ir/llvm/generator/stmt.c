@@ -35,7 +35,8 @@ LLVMValueRef
 generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                           const LilyCheckedStmt *stmt,
                           LLVMValueRef fun,
-                          LLVMBasicBlockRef exit_block)
+                          LLVMBasicBlockRef exit_block,
+                          LLVMBasicBlockRef cond_block)
 {
     switch (stmt->kind) {
         case LILY_CHECKED_STMT_KIND_ASM:
@@ -48,7 +49,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
             LLVMPositionBuilderAtEnd(self->builder, loop_block);
 
-            GENERATE_FUNCTION_BODY(stmt->block.body, fun, NULL);
+            GENERATE_FUNCTION_BODY(stmt->block.body, fun, NULL, NULL);
 
             return NULL;
         }
@@ -66,8 +67,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_STMT_KIND_MATCH:
             TODO("generate match stmt");
         case LILY_CHECKED_STMT_KIND_NEXT: {
-            LLVMBasicBlockRef current_block = LLVMGetInsertBlock(self->builder);
-            LLVMBuildBr(self->builder, current_block);
+            LLVMBuildBr(self->builder, cond_block);
 
             return NULL;
         }
@@ -86,7 +86,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
             LLVMPositionBuilderAtEnd(self->builder, loop_unsafe_block);
 
-            GENERATE_FUNCTION_BODY(stmt->block.body, fun, NULL);
+            GENERATE_FUNCTION_BODY(stmt->block.body, fun, NULL, NULL);
 
             return NULL;
         }
@@ -103,21 +103,37 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             return variable;
         }
         case LILY_CHECKED_STMT_KIND_WHILE: {
+            LLVMBasicBlockRef loop_while_block_cond =
+              LLVMAppendBasicBlock(fun, "lwbc");
+
+            LLVMBuildBr(self->builder, loop_while_block_cond);
+
+            LLVMPositionBuilderAtEnd(self->builder, loop_while_block_cond);
+
             LLVMValueRef loop_while_cond =
               generate_expr__LilyIrLlvm(self, stmt->while_.expr);
 
             LLVMBasicBlockRef loop_while_block =
               LLVMAppendBasicBlock(fun, "lwb");
-            LLVMBuildBr(self->builder, loop_while_block);
             LLVMBasicBlockRef loop_while_exit =
               LLVMAppendBasicBlock(fun, "lwe");
-            LLVMPositionBuilderAtEnd(self->builder, loop_while_block);
+
             LLVMBuildCondBr(self->builder,
                             loop_while_cond,
                             loop_while_block,
                             loop_while_exit);
 
-            GENERATE_FUNCTION_BODY(stmt->while_.body, fun, loop_while_exit);
+            LLVMPositionBuilderAtEnd(self->builder, loop_while_block);
+
+            if (stmt->while_.body->len == 0) {
+                LLVMBuildBr(self->builder, loop_while_exit);
+            } else {
+                GENERATE_FUNCTION_BODY(stmt->while_.body,
+                                       fun,
+                                       loop_while_exit,
+                                       loop_while_block_cond);
+                LLVMBuildBr(self->builder, loop_while_block_cond);
+            }
 
             LLVMPositionBuilderAtEnd(self->builder, loop_while_exit);
 
