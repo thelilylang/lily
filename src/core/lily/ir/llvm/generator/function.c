@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <core/lily/ir/llvm/generator/body/function.h>
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/expr.h>
 #include <core/lily/ir/llvm/generator/function.h>
@@ -58,22 +59,7 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
     LLVMPositionBuilderAtEnd(self->builder, entry_block);
 
-    for (Usize i = 0; i < fun->body->len; ++i) {
-        LilyCheckedBodyFunItem *item = get__Vec(fun->body, i);
-
-        switch (item->kind) {
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
-                generate_expr__LilyIrLlvm(self, item->expr);
-
-                break;
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
-                generate_stmt__LilyIrLlvm(self, &item->stmt);
-
-                break;
-            default:
-                UNREACHABLE("unknown variant");
-        }
-    }
+    GENERATE_FUNCTION_BODY(fun->body, fun_llvm);
 
     FREE(Vec, params);
 }
