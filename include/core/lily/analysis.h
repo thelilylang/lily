@@ -27,11 +27,11 @@
 
 #include <base/vec.h>
 
-#include <core/lily/ast.h>
 #include <core/lily/checked.h>
 #include <core/lily/parser.h>
 
 typedef struct LilyPackage LilyPackage;
+typedef struct LilyAstDecl LilyAstDecl;
 
 typedef struct LilyAnalysis
 {
