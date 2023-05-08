@@ -211,6 +211,8 @@ to_msg__LilyError(const LilyError *self)
             return "duplicate enum";
         case LILY_ERROR_KIND_DUPLICATE_RECORD:
             return "duplicate record";
+        case LILY_ERROR_KIND_DUPLICATE_PARAM_NAME:
+            return "duplicate param name";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -396,6 +398,8 @@ to_code__LilyError(const LilyError *self)
             return "0087";
         case LILY_ERROR_KIND_DUPLICATE_RECORD:
             return "0088";
+        case LILY_ERROR_KIND_DUPLICATE_PARAM_NAME:
+            return "0089";
         default:
             UNREACHABLE("unknown variant");
     }
