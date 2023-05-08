@@ -30,6 +30,7 @@
 #include <core/lily/checked/safety_mode.h>
 #include <core/lily/lily.h>
 #include <core/lily/package.h>
+#include <core/lily/checked/expr/literal.h>
 
 #include <core/shared/diagnostic.h>
 
