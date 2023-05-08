@@ -113,7 +113,7 @@ LLVMValueRef
 generate_expr__LilyIrLlvm(const LilyIrLlvm *self, const LilyCheckedExpr *expr)
 {
     switch (expr->kind) {
-        case LILY_AST_EXPR_KIND_LITERAL:
+        case LILY_CHECKED_EXPR_KIND_LITERAL:
             return generate_literal_expr__LilyIrLlvm(self, &expr->literal);
         default:
             TODO("generate expression in LLVM IR");

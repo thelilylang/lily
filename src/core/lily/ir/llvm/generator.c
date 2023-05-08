@@ -25,6 +25,8 @@
 #include <base/macros.h>
 
 #include <core/lily/ir/llvm/dump.h>
+#include <core/lily/ir/llvm/generator.h>
+#include <core/lily/ir/llvm/generator/function.h>
 #include <core/lily/package.h>
 
 #include <stdio.h>
@@ -32,6 +34,30 @@
 void
 run__LilyIrLlvmGenerator(LilyPackage *self)
 {
+    for (Usize i = 0; i < self->analysis.module.decls->len; ++i) {
+        LilyCheckedDecl *decl = get__Vec(self->analysis.module.decls, i);
+
+        switch (decl->kind) {
+            case LILY_CHECKED_DECL_KIND_CONSTANT:
+                TODO("generate constant");
+            case LILY_CHECKED_DECL_KIND_ERROR:
+                TODO("generate error");
+            case LILY_CHECKED_DECL_KIND_FUN:
+                generate_function__LilyIrLlvm(&self->ir.llvm, &decl->fun);
+                break;
+            case LILY_CHECKED_DECL_KIND_METHOD:
+                TODO("generate method");
+            case LILY_CHECKED_DECL_KIND_MODULE:
+                TODO("generate module");
+            case LILY_CHECKED_DECL_KIND_OBJECT:
+                TODO("generate object");
+            case LILY_CHECKED_DECL_KIND_TYPE:
+                TODO("generate type");
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
 #ifdef ENV_DEBUG
     printf("====LLVM IR Generator(%s)====\n", self->global_name->buffer);
 

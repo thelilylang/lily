@@ -22,10 +22,58 @@
  * SOFTWARE.
  */
 
+#include <core/lily/ir/llvm/generator/data_type.h>
+#include <core/lily/ir/llvm/generator/expr.h>
 #include <core/lily/ir/llvm/generator/function.h>
+#include <core/lily/ir/llvm/generator/stmt.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 void
 generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               const LilyCheckedDeclFun *fun)
 {
+    LLVMTypeRef return_data_type =
+      generate_data_type__LilyIrLlvm(self, fun->return_data_type);
+    Vec *params = NEW(Vec); // Vec<LLVMTypeRef>*
+
+    if (fun->params) {
+        for (Usize i = 0; i < fun->params->len; ++i) {
+            push__Vec(
+              params,
+              generate_data_type__LilyIrLlvm(
+                self,
+                CAST(LilyCheckedDeclFunParam *, get__Vec(fun->params, i))
+                  ->data_type));
+        }
+    }
+
+    // TODO: check va_arg param
+    LLVMTypeRef fun_data_type = LLVMFunctionType(
+      return_data_type, (LLVMTypeRef *)params->buffer, params->len, false);
+    LLVMValueRef fun_llvm = LLVMAddFunction(
+      self->module, (const char *)fun->name->buffer, fun_data_type);
+
+    LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
+    LLVMPositionBuilderAtEnd(self->builder, entry_block);
+
+    for (Usize i = 0; i < fun->body->len; ++i) {
+        LilyCheckedBodyFunItem *item = get__Vec(fun->body, i);
+
+        switch (item->kind) {
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
+                generate_expr__LilyIrLlvm(self, item->expr);
+
+                break;
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
+                generate_stmt__LilyIrLlvm(self, &item->stmt);
+
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    FREE(Vec, params);
 }
