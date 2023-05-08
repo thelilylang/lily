@@ -33,6 +33,8 @@
  * @brief Generate statement in LLVM IR.
  */
 LLVMValueRef
-generate_stmt__LilyIrLlvm(const LilyIrLlvm *self, const LilyCheckedStmt *stmt);
+generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
+                          const LilyCheckedStmt *stmt,
+                          LLVMValueRef fun);
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_STMT_H

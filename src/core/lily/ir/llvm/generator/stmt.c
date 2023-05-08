@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <core/lily/ir/llvm/generator/body/function.h>
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/expr.h>
 #include <core/lily/ir/llvm/generator/stmt.h>
@@ -31,7 +32,9 @@
 #include <stdlib.h>
 
 LLVMValueRef
-generate_stmt__LilyIrLlvm(const LilyIrLlvm *self, const LilyCheckedStmt *stmt)
+generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
+                          const LilyCheckedStmt *stmt,
+                          LLVMValueRef fun)
 {
     switch (stmt->kind) {
         case LILY_CHECKED_STMT_KIND_ASM:
@@ -74,8 +77,27 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self, const LilyCheckedStmt *stmt)
 
             return variable;
         }
-        case LILY_CHECKED_STMT_KIND_WHILE:
-            TODO("generate while stmt");
+        case LILY_CHECKED_STMT_KIND_WHILE: {
+            LLVMValueRef loop_while_cond =
+              generate_expr__LilyIrLlvm(self, stmt->while_.expr);
+
+            LLVMBasicBlockRef loop_while_block =
+              LLVMAppendBasicBlock(fun, "lwb");
+            LLVMBuildBr(self->builder, loop_while_block);
+            LLVMBasicBlockRef loop_while_exit =
+              LLVMAppendBasicBlock(fun, "lwe");
+            LLVMPositionBuilderAtEnd(self->builder, loop_while_block);
+            LLVMBuildCondBr(self->builder,
+                            loop_while_cond,
+                            loop_while_block,
+                            loop_while_exit);
+
+            GENERATE_FUNCTION_BODY(stmt->while_.body, fun);
+
+            LLVMPositionBuilderAtEnd(self->builder, loop_while_exit);
+
+            return NULL;
+        }
         default:
             UNREACHABLE("unknown variant");
     }
