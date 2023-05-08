@@ -468,7 +468,6 @@ VARIANT_DESTRUCTOR(LilyCheckedExpr, list, LilyCheckedExpr *self)
 
 VARIANT_DESTRUCTOR(LilyCheckedExpr, literal, LilyCheckedExpr *self)
 {
-    FREE(LilyCheckedExprLiteral, &self->literal);
     FREE(LilyCheckedDataType, self->data_type);
     lily_free(self);
 }
