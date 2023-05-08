@@ -55,8 +55,6 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedStmtVariable, const LilyCheckedStmtVariable *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
-
     if (self->data_type) {
         FREE(LilyCheckedDataType, self->data_type);
     }

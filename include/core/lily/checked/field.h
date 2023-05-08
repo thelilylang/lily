@@ -35,7 +35,7 @@
 
 typedef struct LilyCheckedField
 {
-    String *name;
+    String *name; // String* (&)
     LilyCheckedDataType *data_type;
     LilyCheckedExpr *optional_expr; // LilyCheckedExpr*?
     enum LilyVisibility visibility;

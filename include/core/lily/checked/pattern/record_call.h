@@ -26,6 +26,7 @@
 #define LILY_CORE_LILY_CHECKED_PATTERN_RECORD_CALL_H
 
 #include <base/string.h>
+#include <base/macros.h>
 #include <base/vec.h>
 
 #include <core/lily/checked/expr.h>
@@ -36,7 +37,7 @@ typedef struct LilyCheckedPattern LilyCheckedPattern;
 // <pattern>
 typedef struct LilyCheckedPatternRecordField
 {
-    String *name; // String*?
+    String *name; // String*? (&)
     LilyCheckedPattern *pattern;
 } LilyCheckedPatternRecordField;
 

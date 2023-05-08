@@ -232,8 +232,6 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDataTypeCustom, const LilyCheckedDataTypeCustom *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
-
     if (self->generics) {
         FREE_BUFFER_ITEMS(
           self->generics->buffer, self->generics->len, LilyCheckedDataType);

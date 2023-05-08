@@ -33,7 +33,7 @@
 
 typedef struct LilyCheckedDeclPrototype
 {
-    String *name;
+    String *name; // String* (&)
     Vec *generic_params;                   // Vec<LilyCheckedGenericParam*>*?
     Vec *params;                           // Vec<LilyCheckedDataType*>*?
     LilyCheckedDataType *return_data_type; // LilyCheckedDataType*?

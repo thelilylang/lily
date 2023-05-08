@@ -42,7 +42,6 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDeclConstant, const LilyCheckedDeclConstant *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
     FREE(LilyCheckedDataType, self->data_type);
     FREE(LilyCheckedExpr, self->expr);
 }

@@ -34,7 +34,7 @@
 
 typedef struct LilyCheckedDeclConstant
 {
-    String *name;
+    String *name; // String* (&)
     LilyCheckedDataType *data_type;
     LilyCheckedExpr *expr;
     enum LilyVisibility visibility;

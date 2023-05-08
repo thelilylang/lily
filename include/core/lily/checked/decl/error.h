@@ -35,7 +35,7 @@
 
 typedef struct LilyCheckedDeclError
 {
-    String *name;
+    String *name; // String* (&)
     Vec *generic_params;            // Vec<LilyCheckedGenericParam*>*?
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
     enum LilyVisibility visibility;

@@ -46,7 +46,7 @@ static VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
 
 /// @brief Free LilyCheckedExprCallFunParam type
 /// (LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT_OVERWRITE).
-static VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
+static inline VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
                           default_overwrite,
                           LilyCheckedExprCallFunParam *self);
 
@@ -71,7 +71,7 @@ static VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
 
 /// @brief Free LilyCheckedExprCallMethodParam type
 /// (LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT_OVERWRITE).
-static VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
+static inline VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
                           default_overwrite,
                           LilyCheckedExprCallMethodParam *self);
 
@@ -293,7 +293,6 @@ VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
                    LilyCheckedExprCallFunParam *self)
 {
     FREE(LilyCheckedExpr, self->value);
-    FREE_MOVE(self->default_, FREE(String, self->default_));
     lily_free(self);
 }
 
@@ -301,7 +300,6 @@ VARIANT_DESTRUCTOR(LilyCheckedExprCallFunParam,
                    default_overwrite,
                    LilyCheckedExprCallFunParam *self)
 {
-    FREE_MOVE(self->default_, FREE(String, self->default_));
     lily_free(self);
 }
 
@@ -499,7 +497,6 @@ VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
                    LilyCheckedExprCallMethodParam *self)
 {
     FREE(LilyCheckedExpr, self->value);
-    FREE_MOVE(self->default_, FREE(String, self->default_));
     lily_free(self);
 }
 
@@ -507,7 +504,6 @@ VARIANT_DESTRUCTOR(LilyCheckedExprCallMethodParam,
                    default_overwrite,
                    LilyCheckedExprCallMethodParam *self)
 {
-    FREE_MOVE(self->default_, FREE(String, self->default_));
     lily_free(self);
 }
 
@@ -602,7 +598,6 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedExprCallRecordParam, LilyCheckedExprCallRecordParam *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
     FREE(LilyCheckedExpr, self->value);
     lily_free(self);
 }

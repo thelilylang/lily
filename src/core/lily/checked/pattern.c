@@ -545,14 +545,12 @@ VARIANT_DESTRUCTOR(LilyCheckedPattern, list_tail, LilyCheckedPattern *self)
 
 VARIANT_DESTRUCTOR(LilyCheckedPattern, literal, LilyCheckedPattern *self)
 {
-    FREE(LilyCheckedPatternLiteral, &self->literal);
     FREE(LilyCheckedDataType, self->data_type);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedPattern, name, LilyCheckedPattern *self)
 {
-    FREE(LilyCheckedPatternName, &self->name);
     FREE(LilyCheckedDataType, self->data_type);
     lily_free(self);
 }

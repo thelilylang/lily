@@ -62,7 +62,6 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedFieldObject, const LilyCheckedFieldObject *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
     FREE(LilyCheckedDataType, self->data_type);
 
     if (self->optional_expr) {

@@ -35,7 +35,7 @@
 
 typedef struct LilyCheckedDeclModule
 {
-    String *name;
+    String *name; // String* (&)
     Vec *decls; // Vec<LilyCheckedDecl*>*
     LilyCheckedScope *scope;
     LilyCheckedAccessModule access;

@@ -36,7 +36,7 @@
 
 typedef struct LilyCheckedDeclRecordObject
 {
-    String *name;
+    String *name; // String* (&)
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     Vec *impl_params;    // Vec<LilyCheckedImplParam*>*?
     Vec *body;           // Vec<LilyCheckedBodyRecordObjectItem*>*

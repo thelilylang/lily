@@ -80,7 +80,7 @@ typedef struct LilyCheckedExprLiteral
     {
         bool bool_;
         Uint8 byte;
-        Uint8 *bytes;
+        Uint8 *bytes; // Uint8* (&)
         char char_;
         Float32 float32;
         Float64 float64;

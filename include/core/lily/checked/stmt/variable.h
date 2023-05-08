@@ -33,7 +33,7 @@
 
 typedef struct LilyCheckedStmtVariable
 {
-    String *name;
+    String *name; // String* (&)
     LilyCheckedDataType *data_type; // LilyCheckedDataType* (&)
     LilyCheckedExpr *expr;          // LilyCheckedExpr*
     bool is_mut;

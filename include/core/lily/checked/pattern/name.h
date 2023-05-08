@@ -31,7 +31,7 @@
 
 typedef struct LilyCheckedPatternName
 {
-    String *name;
+    String *name; // String* (&)
 } LilyCheckedPatternName;
 
 /**
@@ -52,14 +52,5 @@ inline CONSTRUCTOR(LilyCheckedPatternName, LilyCheckedPatternName, String *name)
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedPatternName, const LilyCheckedPatternName *self);
 #endif
-
-/**
- *
- * @brief Free LilyCheckedPatternName type.
- */
-inline DESTRUCTOR(LilyCheckedPatternName, const LilyCheckedPatternName *self)
-{
-    FREE_MOVE(self->name, FREE(String, self->name));
-}
 
 #endif // LILY_CORE_LILY_CHECKED_PATTERN_NAME_H

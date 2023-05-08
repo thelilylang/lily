@@ -61,7 +61,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedDeclMethodParam
 {
-    String *name; // String*? only if kind is equal to
+    String *name; // String*? (&) only if kind is equal to
                   // LILY_CHECKED_DECL_FUN_PARAM_KIND_SELF,
                   // LILY_CHECKED_DECL_FUN_PARAM_KIND_MUT_SELF
                   // LILY_CHECKED_DECL_FUN_PARAM_KIND_REF_MUT_SELF or
@@ -129,8 +129,8 @@ DESTRUCTOR(LilyCheckedDeclMethodParam, LilyCheckedDeclMethodParam *self);
 
 typedef struct LilyCheckedDeclMethod
 {
-    String *name;
-    String *object_impl;                   // String*?
+    String *name; // String* (&)
+    String *object_impl;                   // String*? (&)
     Vec *generic_params;                   // Vec<LilyCheckedGenericParam*>*?
     Vec *params;                           // Vec<LilyCheckedDeclMethodParam*>*?
     LilyCheckedDataType *return_data_type; // LilyCheckedDataType*?

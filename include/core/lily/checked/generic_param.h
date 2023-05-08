@@ -53,7 +53,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedGenericParamConstraint
 {
-    String *name;
+    String *name; // String* (&)
     Vec *constraints; // Vec<LilyCheckedDataType*>*
 } LilyCheckedGenericParamConstraint;
 
@@ -96,7 +96,7 @@ typedef struct LilyCheckedGenericParam
     union
     {
         LilyCheckedGenericParamConstraint constraint;
-        String *normal; // expected an identifier for normal param
+        String *normal; // String* (&) expected an identifier for normal param
     };
 } LilyCheckedGenericParam;
 

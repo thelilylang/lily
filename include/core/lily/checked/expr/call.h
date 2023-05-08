@@ -110,7 +110,7 @@ typedef struct LilyCheckedExprCallFunParam
     Location location;
     union
     {
-        String *default_; // <default_> := <value>
+        String *default_; // String* (&) <default_> := <value>
     };
 } LilyCheckedExprCallFunParam;
 
@@ -220,7 +220,7 @@ typedef struct LilyCheckedExprCallMethodParam
     Location location;
     union
     {
-        String *default_; // <default_> := <value>
+        String *default_; // String* (&) <default_> := <value>
     };
 } LilyCheckedExprCallMethodParam;
 
@@ -311,7 +311,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedExprCallRecordParam
 {
-    String *name;
+    String *name; // String* (&)
     LilyCheckedExpr *value;
 } LilyCheckedExprCallRecordParam;
 

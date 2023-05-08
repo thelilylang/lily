@@ -56,7 +56,6 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDeclModule, const LilyCheckedDeclModule *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
     FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, LilyCheckedDecl);
     FREE(Vec, self->decls);
 

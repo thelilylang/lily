@@ -37,7 +37,7 @@ static VARIANT_DESTRUCTOR(LilyCheckedGenericParam,
                           LilyCheckedGenericParam *self);
 
 // Free LilyCheckedGenericParam type (LILY_CHECKED_GENERIC_PARAM_KIND_NORMAL).
-static VARIANT_DESTRUCTOR(LilyCheckedGenericParam,
+static inline VARIANT_DESTRUCTOR(LilyCheckedGenericParam,
                           normal,
                           LilyCheckedGenericParam *self);
 
@@ -78,7 +78,6 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyCheckedGenericParamConstraint,
            const LilyCheckedGenericParamConstraint *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
     FREE_BUFFER_ITEMS(
       self->constraints->buffer, self->constraints->len, LilyCheckedDataType);
     FREE(Vec, self->constraints);
@@ -165,7 +164,6 @@ VARIANT_DESTRUCTOR(LilyCheckedGenericParam,
                    normal,
                    LilyCheckedGenericParam *self)
 {
-    FREE_MOVE(self->normal, FREE(String, self->normal));
     lily_free(self);
 }
 

@@ -142,8 +142,6 @@ VARIANT_DESTRUCTOR(LilyCheckedDeclFunParam,
                    default,
                    LilyCheckedDeclFunParam *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
-
     if (self->data_type) {
         FREE(LilyCheckedDataType, self->data_type);
     }
@@ -156,8 +154,6 @@ VARIANT_DESTRUCTOR(LilyCheckedDeclFunParam,
                    normal,
                    LilyCheckedDeclFunParam *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
-
     if (self->data_type) {
         FREE(LilyCheckedDataType, self->data_type);
     }
@@ -232,8 +228,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
-
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
                           self->generic_params->len,

@@ -63,10 +63,6 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedPatternRecordField, LilyCheckedPatternRecordField *self)
 {
-    if (self->name) {
-        FREE(String, self->name);
-    }
-
     FREE(LilyCheckedPattern, self->pattern);
     lily_free(self);
 }
