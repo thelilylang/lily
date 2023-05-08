@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_CHECKED_H
 #define LILY_CORE_LILY_CHECKED_H
 
+#include <core/lily/checked/data_type.h>
 #include <core/lily/checked/decl.h>
 #include <core/lily/checked/expr.h>
 #include <core/lily/checked/stmt.h>
