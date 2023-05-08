@@ -23,10 +23,14 @@
  */
 
 #include <base/format.h>
+#include <base/macros.h>
 
 #include <core/lily/checked/decl.h>
 #include <core/lily/checked/parent.h>
 #include <core/lily/checked/scope.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifdef ENV_DEBUG
 char *
