@@ -73,8 +73,8 @@ CONSTRUCTOR(LilyCheckedScope *, LilyCheckedScope, LilyCheckedParent *parent)
     self->records_object = NEW(Vec);
     self->classes = NEW(Vec);
     self->traits = NEW(Vec);
-    self->labels = NEW(Vec);
     self->funs = NEW(Vec);
+    self->labels = NEW(Vec);
     self->variables = NEW(Vec);
     self->parent = parent;
     self->children = NEW(Vec);
