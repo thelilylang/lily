@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+#include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/expr.h>
 #include <core/lily/ir/llvm/generator/stmt.h>
-#include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/primary.h>
 
 #include <stdio.h>
@@ -63,11 +63,14 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self, const LilyCheckedStmt *stmt)
         case LILY_CHECKED_STMT_KIND_UNSAFE:
             TODO("generate unsafe stmt");
         case LILY_CHECKED_STMT_KIND_VARIABLE: {
-            LLVMTypeRef variable_data_type = generate_data_type__LilyIrLlvm(self, stmt->variable.data_type);
-            LLVMValueRef variable_expr = generate_expr__LilyIrLlvm(self, stmt->variable.expr);
-            LLVMValueRef variable = LLVMBuildAlloca(self->builder, variable_data_type, stmt->variable.name->buffer);
+            LLVMTypeRef variable_data_type =
+              generate_data_type__LilyIrLlvm(self, stmt->variable.data_type);
+            LLVMValueRef variable_expr =
+              generate_expr__LilyIrLlvm(self, stmt->variable.expr);
+            LLVMValueRef variable = LLVMBuildAlloca(
+              self->builder, variable_data_type, stmt->variable.name->buffer);
 
-            LLVMBuildStore(self->builder, variable, variable_expr);
+            LLVMBuildStore(self->builder, variable_expr, variable);
 
             return variable;
         }
