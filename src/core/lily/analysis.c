@@ -1244,7 +1244,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                 default:
                     UNREACHABLE("unknown variant");
             }
-            TODO("literal expression");
         case LILY_AST_EXPR_KIND_SELF:
             TODO("self expression");
         case LILY_AST_EXPR_KIND_TRY:
@@ -1368,6 +1367,29 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
     } else {
         fun->fun.return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, NULL);
+    }
+
+    // 3. Check body.
+    fun->fun.body = NEW(Vec);
+
+    for (Usize i = 0; i < fun->ast_decl->fun.body->len; ++i) {
+        LilyAstBodyFunItem *item = get__Vec(fun->ast_decl->fun.body, i);
+
+        switch (item->kind) {
+            case LILY_AST_BODY_FUN_ITEM_KIND_EXPR:
+                push__Vec(fun->fun.body,
+                          NEW_VARIANT(LilyCheckedBodyFunItem,
+                                      expr,
+                                      check_expr__LilyAnalysis(
+                                        self,
+                                        item->expr,
+                                        fun->fun.scope,
+                                        LILY_CHECKED_SAFETY_MODE_SAFE)));
+
+                break;
+            case LILY_AST_BODY_FUN_ITEM_KIND_STMT:
+                TODO("check statement");
+        }
     }
 
     fun->is_checked = true;
