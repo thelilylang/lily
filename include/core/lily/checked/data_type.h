@@ -236,7 +236,7 @@ IMPL_FOR_DEBUG(to_string,
 struct LilyCheckedDataType
 {
     enum LilyCheckedDataTypeKind kind;
-    const Location *location;
+    const Location *location; // const Location*? (&)
     union
     {
         LilyCheckedDataTypeArray array;
