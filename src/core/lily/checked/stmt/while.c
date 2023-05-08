@@ -66,7 +66,6 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedStmtWhile, const LilyCheckedStmtWhile *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
     FREE(LilyCheckedExpr, self->expr);
 
     FREE_BUFFER_ITEMS(

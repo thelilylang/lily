@@ -30,7 +30,7 @@
 
 typedef struct LilyCheckedStmtWhile
 {
-    String *name; // String*?
+    String *name; // String*? (&)
     LilyCheckedExpr *expr;
     Vec *body; // Vec<LilyCheckedBodyFunItem*>*
     LilyCheckedScope *scope;
