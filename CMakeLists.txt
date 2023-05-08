@@ -264,6 +264,7 @@ set(CORE_SRC
 	src/core/lily/ir/cpp/generator.c
 	src/core/lily/ir/llvm/generator/class.c
 	src/core/lily/ir/llvm/generator/constant.c
+	src/core/lily/ir/llvm/generator/data_type.c
 	src/core/lily/ir/llvm/generator/enum_object.c
 	src/core/lily/ir/llvm/generator/enum.c
 	src/core/lily/ir/llvm/generator/error.c
