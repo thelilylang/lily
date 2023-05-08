@@ -32,7 +32,7 @@
  *
  * @brief Generate expression in LLVM IR.
  */
-void
-generate_expr__LilyIr(const LilyIrLlvm *self, const LilyCheckedExpr *expr);
+LLVMValueRef
+generate_expr__LilyIrLlvm(const LilyIrLlvm *self, const LilyCheckedExpr *expr);
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_EXPR_H

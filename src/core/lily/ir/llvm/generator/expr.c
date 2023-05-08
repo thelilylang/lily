@@ -23,26 +23,98 @@
  */
 
 #include <core/lily/ir/llvm/generator/expr.h>
+#include <core/lily/ir/llvm/primary.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-static void
-generate_literal_expr__LilyIr(const LilyIrLlvm *self,
-                              const LilyCheckedExprLiteral *literal);
+static LLVMValueRef
+generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
+                                  const LilyCheckedExprLiteral *literal);
 
-void
-generate_literal_expr__LilyIr(const LilyIrLlvm *self,
-                              const LilyCheckedExprLiteral *literal)
+LLVMValueRef
+generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
+                                  const LilyCheckedExprLiteral *literal)
 {
+    switch (literal->kind) {
+        case LILY_CHECKED_EXPR_LITERAL_KIND_BOOL:
+            return LLVMConstInt(i1__LilyIrLlvm(self), literal->bool_, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_BYTE:
+            return LLVMConstInt(i8__LilyIrLlvm(self), literal->byte, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_BYTES:
+            TODO("generate bytes expression");
+        case LILY_CHECKED_EXPR_LITERAL_KIND_CHAR:
+            return LLVMConstInt(i8__LilyIrLlvm(self), literal->char_, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT32:
+            return LLVMConstReal(float__LilyIrLlvm(self), literal->float32);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT64:
+            return LLVMConstReal(double__LilyIrLlvm(self), literal->float64);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_INT32:
+            return LLVMConstInt(i32__LilyIrLlvm(self), literal->int32, true);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_INT64:
+            return LLVMConstInt(i64__LilyIrLlvm(self), literal->int64, true);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_NIL:
+            return LLVMConstNull(ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self)));
+        case LILY_CHECKED_EXPR_LITERAL_KIND_NONE:
+            TODO("generate none expression");
+        case LILY_CHECKED_EXPR_LITERAL_KIND_STR:
+            return LLVMConstString(
+              literal->str->buffer, literal->str->len, true);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT32:
+            return LLVMConstReal(float__LilyIrLlvm(self),
+                                 literal->suffix_float32);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT64:
+            return LLVMConstReal(double__LilyIrLlvm(self),
+                                 literal->suffix_float64);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT16:
+            return LLVMConstInt(
+              i16__LilyIrLlvm(self), literal->suffix_int16, true);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT32:
+            return LLVMConstInt(
+              i32__LilyIrLlvm(self), literal->suffix_int32, true);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT64:
+            return LLVMConstInt(
+              i64__LilyIrLlvm(self), literal->suffix_int64, true);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT8:
+            return LLVMConstInt(
+              i8__LilyIrLlvm(self), literal->suffix_int8, true);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_ISIZE:
+            return LLVMConstInt(
+              intptr__LilyIrLlvm(self), literal->suffix_isize, true);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT16:
+            return LLVMConstInt(
+              i16__LilyIrLlvm(self), literal->suffix_uint16, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT32:
+            return LLVMConstInt(
+              i32__LilyIrLlvm(self), literal->suffix_uint32, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT64:
+            return LLVMConstInt(
+              i64__LilyIrLlvm(self), literal->suffix_uint64, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT8:
+            return LLVMConstInt(
+              i8__LilyIrLlvm(self), literal->suffix_uint8, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_USIZE:
+            return LLVMConstInt(
+              intptr__LilyIrLlvm(self), literal->suffix_usize, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_UINT32:
+            return LLVMConstInt(i32__LilyIrLlvm(self), literal->uint32, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_UINT64:
+            return LLVMConstInt(i64__LilyIrLlvm(self), literal->uint64, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_UNDEF:
+            return LLVMGetUndef(ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self)));
+        case LILY_CHECKED_EXPR_LITERAL_KIND_UNIT:
+            UNREACHABLE("cannot return unit value");
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
-void
-generate_expr__LilyIr(const LilyIrLlvm *self, const LilyCheckedExpr *expr)
+LLVMValueRef
+generate_expr__LilyIrLlvm(const LilyIrLlvm *self, const LilyCheckedExpr *expr)
 {
     switch (expr->kind) {
         case LILY_AST_EXPR_KIND_LITERAL:
-            generate_literal_expr__LilyIr(self, &expr->literal);
+            return generate_literal_expr__LilyIrLlvm(self, &expr->literal);
         default:
             TODO("generate expression in LLVM IR");
     }
