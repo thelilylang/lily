@@ -86,7 +86,7 @@ typedef struct LilyCheckedExprLiteral
         Float64 float64;
         Int32 int32;
         Int64 int64;
-        String *str;
+        String *str; // String* (&)
         Float32 suffix_float32;
         Float64 suffix_float64;
         Int8 suffix_int8;
@@ -482,31 +482,5 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedExprLiteral,
                const LilyCheckedExprLiteral *self);
 #endif
-
-/**
- *
- * @brief Free LilyCheckedExprLiteral type (LILY_CHECKED_EXPR_LITERAL_KIND_STR).
- */
-inline VARIANT_DESTRUCTOR(LilyCheckedExprLiteral,
-                          str,
-                          const LilyCheckedExprLiteral *self)
-{
-    FREE_MOVE(self->str, FREE(String, self->str));
-}
-
-/**
- *
- * @brief Free LilyCheckedExprLiteral type.
- */
-inline DESTRUCTOR(LilyCheckedExprLiteral, const LilyCheckedExprLiteral *self)
-{
-    switch (self->kind) {
-        case LILY_CHECKED_EXPR_LITERAL_KIND_STR:
-            FREE_VARIANT(LilyCheckedExprLiteral, str, self);
-            break;
-        default:
-            break;
-    }
-}
 
 #endif // LILY_CORE_LILY_CHECKED_EXPR_LITERAL_H
