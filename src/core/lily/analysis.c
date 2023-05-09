@@ -242,7 +242,6 @@ push_module__LilyAnalysis(LilyAnalysis *self,
           NEW(Vec),
           NEW(LilyCheckedScope,
               NEW_VARIANT(LilyCheckedParent, module, module->scope, module)),
-          NEW(LilyCheckedAccessModule, i),
           module_decl->module.visibility));
 
     push_all_delcs__LilyAnalysis(
@@ -431,10 +430,8 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
             case LILY_AST_DECL_KIND_CONSTANT: {
                 push_constant__LilyAnalysis(self, decl, module);
 
-                LilyCheckedScopeContainerConstant *sc_constant =
-                  NEW(LilyCheckedScopeContainerConstant,
-                      decl->constant.name,
-                      NEW(LilyCheckedAccessConstant, module->access, i));
+                LilyCheckedScopeContainerConstant *sc_constant = NEW(
+                  LilyCheckedScopeContainerConstant, decl->constant.name, i);
 
                 int status =
                   add_constant__LilyCheckedScope(module->scope, sc_constant);
@@ -461,9 +458,7 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                 push_error__LilyAnalysis(self, decl, module);
 
                 LilyCheckedScopeContainerError *sc_error =
-                  NEW(LilyCheckedScopeContainerError,
-                      decl->error.name,
-                      NEW(LilyCheckedAccessError, module->access, i));
+                  NEW(LilyCheckedScopeContainerError, decl->error.name, i);
 
                 int status =
                   add_error__LilyCheckedScope(module->scope, sc_error);
@@ -495,16 +490,13 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                     push_fun__LilyAnalysis(self, decl, module);
 
                     if (overload_fun) {
-                        push__Vec(overload_fun->accesses,
-                                  NEW(LilyCheckedAccessFun, module->access, i));
+                        push__Vec(overload_fun->ids, (Usize *)i);
                     } else {
                         add_fun__LilyCheckedScope(
                           module->scope,
                           NEW(LilyCheckedScopeContainerFun,
                               decl->fun.name,
-                              init__Vec(
-                                1,
-                                NEW(LilyCheckedAccessFun, module->access, i))));
+                              init__Vec(1, (Usize *)i)));
                     }
                 }
 
@@ -514,9 +506,7 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                 push_module__LilyAnalysis(self, decl, module, i);
 
                 LilyCheckedScopeContainerModule *sc_module =
-                  NEW(LilyCheckedScopeContainerModule,
-                      decl->module.name,
-                      NEW(LilyCheckedAccessModule, i));
+                  NEW(LilyCheckedScopeContainerModule, decl->module.name, i);
 
                 int status =
                   add_module__LilyCheckedScope(module->scope, sc_module);
@@ -547,7 +537,7 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                         LilyCheckedScopeContainerClass *sc_class =
                           NEW(LilyCheckedScopeContainerClass,
                               decl->object.class.name,
-                              NEW(LilyCheckedAccessClass, module->access, i));
+                              i);
 
                         int status =
                           add_class__LilyCheckedScope(module->scope, sc_class);
@@ -576,9 +566,7 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                         LilyCheckedScopeContainerEnumObject *sc_enum_object =
                           NEW(LilyCheckedScopeContainerEnumObject,
                               decl->object.enum_.name,
-                              NEW(LilyCheckedAccessEnumObject,
-                                  module->access,
-                                  i));
+                              i);
 
                         int status = add_enum_object__LilyCheckedScope(
                           module->scope, sc_enum_object);
@@ -610,9 +598,7 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                           *sc_record_object =
                             NEW(LilyCheckedScopeContainerRecordObject,
                                 decl->object.record.name,
-                                NEW(LilyCheckedAccessRecordObject,
-                                    module->access,
-                                    i));
+                                i);
 
                         int status = add_record_object__LilyCheckedScope(
                           module->scope, sc_record_object);
@@ -643,7 +629,7 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                         LilyCheckedScopeContainerTrait *sc_trait =
                           NEW(LilyCheckedScopeContainerTrait,
                               decl->object.trait.name,
-                              NEW(LilyCheckedAccessTrait, module->access, i));
+                              i);
 
                         int status =
                           add_trait__LilyCheckedScope(module->scope, sc_trait);
@@ -680,7 +666,7 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                         LilyCheckedScopeContainerAlias *sc_alias =
                           NEW(LilyCheckedScopeContainerAlias,
                               decl->type.alias.name,
-                              NEW(LilyCheckedAccessAlias, module->access, i));
+                              i);
 
                         int status =
                           add_alias__LilyCheckedScope(module->scope, sc_alias);
@@ -709,7 +695,7 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                         LilyCheckedScopeContainerEnum *sc_enum =
                           NEW(LilyCheckedScopeContainerEnum,
                               decl->type.enum_.name,
-                              NEW(LilyCheckedAccessEnum, module->access, i));
+                              i);
 
                         int status =
                           add_enum__LilyCheckedScope(module->scope, sc_enum);
@@ -738,7 +724,7 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
                         LilyCheckedScopeContainerRecord *sc_record =
                           NEW(LilyCheckedScopeContainerRecord,
                               decl->type.record.name,
-                              NEW(LilyCheckedAccessRecord, module->access, i));
+                              i);
 
                         int status = add_record__LilyCheckedScope(module->scope,
                                                                   sc_record);
@@ -1612,10 +1598,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
               self, stmt->variable.expr, scope, safety_mode);
 
             LilyCheckedScopeContainerVariable *sc_variable =
-              NEW(LilyCheckedScopeContainerVariable,
-                  stmt->variable.name,
-                  (LilyCheckedAccessScope){
-                    .module = (LilyCheckedAccessModule){ .id = 0 }, .id = i });
+              NEW(LilyCheckedScopeContainerVariable, stmt->variable.name, i);
             int status = add_variable__LilyCheckedScope(scope, sc_variable);
 
             if (status) {
@@ -1733,10 +1716,7 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
         }
 
         LilyCheckedScopeContainerVariable *sc_variable =
-          NEW(LilyCheckedScopeContainerVariable,
-              param->name,
-              (LilyCheckedAccessScope){
-                .module = (LilyCheckedAccessModule){ .id = 0 }, .id = i });
+          NEW(LilyCheckedScopeContainerVariable, param->name, i);
 
         int is_failed = add_variable__LilyCheckedScope(scope, sc_variable);
 
