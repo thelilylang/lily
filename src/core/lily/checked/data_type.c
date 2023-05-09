@@ -497,85 +497,87 @@ IMPL_FOR_DEBUG(to_string,
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
 {
+    String *res = NULL;
+
+    if (self->location) {
+        res =
+          format__String("LilyCheckedDataType{{ kind = {s}, location = {sa}",
+                         to_string__Debug__Location(self->location));
+    } else {
+        res =
+          format__String("LilyCheckedDataType{{ kind = {s}, location = NULL",
+                         to_string__Debug__LilyCheckedDataTypeKind(self->kind));
+    }
+
     switch (self->kind) {
-        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, array = {Sr} "
-              "}",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location),
-              to_string__Debug__LilyCheckedDataTypeArray(&self->array));
-        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, custom = "
-              "{Sr} }",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location),
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY: {
+            char *s =
+              format(", array = {Sr} }",
+                     to_string__Debug__LilyCheckedDataTypeArray(&self->array));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
+            char *s = format(
+              ", custom = {Sr} }",
               to_string__Debug__LilyCheckedDataTypeCustom(&self->custom));
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, exception = "
-              "{Sr} "
-              "}",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location),
-              to_string__Debug__LilyCheckedDataType(self->exception));
-        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, lambda = "
-              "{Sr} }",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location),
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION: {
+            char *s =
+              format(", exception = {Sr}",
+                     to_string__Debug__LilyCheckedDataType(self->exception));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
+            char *s = format(
+              ", lambda = {Sr}",
               to_string__Debug__LilyCheckedDataTypeLambda(&self->lambda));
-        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, list = "
-              "{Sr} "
-              "}",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location),
-              to_string__Debug__LilyCheckedDataType(self->exception));
-        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, mut = {Sr} "
-              "}",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location),
-              to_string__Debug__LilyCheckedDataType(self->mut));
-        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, optional = "
-              "{Sr} "
-              "}",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location),
-              to_string__Debug__LilyCheckedDataType(self->optional));
-        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, ptr = {Sr} "
-              "}",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location),
-              to_string__Debug__LilyCheckedDataType(self->ptr));
-        case LILY_CHECKED_DATA_TYPE_KIND_REF:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, ref = {Sr} "
-              "}",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location),
-              to_string__Debug__LilyCheckedDataType(self->ref));
-        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, trace = {Sr} "
-              "}",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location),
-              to_string__Debug__LilyCheckedDataType(self->trace));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST: {
+            char *s = format(", list = {Sr} }",
+                             to_string__Debug__LilyCheckedDataType(self->list));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT: {
+            char *s = format(", mut = {Sr} }",
+                             to_string__Debug__LilyCheckedDataType(self->mut));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL: {
+            char *s =
+              format(", optional = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->optional));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR: {
+            char *s = format(", ptr = {Sr} }",
+                             to_string__Debug__LilyCheckedDataType(self->ptr));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_REF: {
+            char *s = format(", ref = {Sr} }",
+                             to_string__Debug__LilyCheckedDataType(self->ref));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE: {
+            char *s =
+              format(", trace = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->trace));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
-            String *res = format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa}, tuple = {{ ",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location));
+            push_str__String(res, ", tuple = { ");
 
             for (Usize i = 0; i < self->tuple->len; i++) {
                 String *s =
@@ -591,11 +593,10 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
             return res;
         }
         default:
-            return format__String(
-              "LilyCheckedDataType{{ kind = {s}, location = {sa} }",
-              to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-              to_string__Debug__Location(self->location));
+            push_str__String(res, " }");
     }
+
+    return res;
 }
 
 void
