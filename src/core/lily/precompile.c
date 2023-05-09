@@ -213,6 +213,8 @@ IMPL_FOR_DEBUG(to_string, LilyImportValueKind, enum LilyImportValueKind self)
             return "LILY_IMPORT_VALUE_KIND_SELECT";
         case LILY_IMPORT_VALUE_KIND_STD:
             return "LILY_IMPORT_VALUE_KIND_STD";
+        case LILY_IMPORT_VALUE_KIND_SYS:
+            return "LILY_IMPORT_VALUE_KIND_SYS";
         case LILY_IMPORT_VALUE_KIND_URL:
             return "LILY_IMPORT_VALUE_KIND_URL";
         default:
@@ -931,13 +933,39 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
         }
 
         if (!strcmp(name->buffer, "builtin")) {
+            self->package->builtin_is_loaded = true;
+
             push__Vec(values,
                       NEW(LilyImportValue, LILY_IMPORT_VALUE_KIND_BUILTIN));
         } else if (!strcmp(name->buffer, "core")) {
+            self->package->core_is_loaded = true;
+
             push__Vec(values,
                       NEW(LilyImportValue, LILY_IMPORT_VALUE_KIND_CORE));
         } else if (!strcmp(name->buffer, "std")) {
+            self->package->std_is_loaded = true;
+
             push__Vec(values, NEW(LilyImportValue, LILY_IMPORT_VALUE_KIND_STD));
+        } else if (!strcmp(name->buffer, "sys")) {
+            self->package->sys_is_loaded = true;
+
+            if (position != import->value->len) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &import->location,
+                    NEW(
+                      LilyError,
+                      LILY_ERROR_KIND_PATH_IS_NOT_EXPECTED_AFTER_SYS_IMPORT_FLAG),
+                    NULL,
+                    NULL,
+                    NULL),
+                  &self->count_error);
+            }
+
+            push__Vec(values, NEW(LilyImportValue, LILY_IMPORT_VALUE_KIND_SYS));
         } else if (strcmp(name->buffer, "file") &&
                    strcmp(name->buffer, "library") &&
                    strcmp(name->buffer, "package")) {
@@ -948,9 +976,10 @@ precompile_import__LilyPrecompile(LilyPrecompile *self,
                 self->file,
                 &import->location,
                 NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_IMPORT_AT_FLAG),
-                init__Vec(1,
-                          from__String("expected `@builtin`, `@core`, `@file`, "
-                                       "`@library`, `@package`, `@std`")),
+                init__Vec(
+                  1,
+                  from__String("expected `@builtin`, `@core`, `@file`, "
+                               "`@library`, `@package`, `@sys`, `@std`")),
                 NULL,
                 NULL),
               &self->count_error);
