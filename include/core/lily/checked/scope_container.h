@@ -29,12 +29,10 @@
 #include <base/string.h>
 #include <base/vec.h>
 
-#include <core/lily/checked/access.h>
-
 typedef struct LilyCheckedScopeContainerModule
 {
     String *name; // String* (&)
-    LilyCheckedAccessModule access;
+    Usize id;
 } LilyCheckedScopeContainerModule;
 
 /**
@@ -44,7 +42,7 @@ typedef struct LilyCheckedScopeContainerModule
 CONSTRUCTOR(LilyCheckedScopeContainerModule *,
             LilyCheckedScopeContainerModule,
             String *name,
-            LilyCheckedAccessModule access);
+            Usize id);
 
 /**
  *
@@ -71,7 +69,7 @@ inline DESTRUCTOR(LilyCheckedScopeContainerModule,
 typedef struct LilyCheckedScopeContainerConstant
 {
     String *name; // String* (&)
-    LilyCheckedAccessConstant access;
+    Usize id;
 } LilyCheckedScopeContainerConstant;
 
 /**
@@ -81,7 +79,7 @@ typedef struct LilyCheckedScopeContainerConstant
 CONSTRUCTOR(LilyCheckedScopeContainerConstant *,
             LilyCheckedScopeContainerConstant,
             String *name,
-            LilyCheckedAccessConstant access);
+            Usize id);
 
 /**
  *
@@ -108,7 +106,7 @@ inline DESTRUCTOR(LilyCheckedScopeContainerConstant,
 typedef struct LilyCheckedScopeContainerEnum
 {
     String *name; // String* (&)
-    LilyCheckedAccessEnum access;
+    Usize id;
 } LilyCheckedScopeContainerEnum;
 
 /**
@@ -118,7 +116,7 @@ typedef struct LilyCheckedScopeContainerEnum
 CONSTRUCTOR(LilyCheckedScopeContainerEnum *,
             LilyCheckedScopeContainerEnum,
             String *name,
-            LilyCheckedAccessEnum access);
+            Usize id);
 
 /**
  *
@@ -145,7 +143,7 @@ inline DESTRUCTOR(LilyCheckedScopeContainerEnum,
 typedef struct LilyCheckedScopeContainerRecord
 {
     String *name; // String* (&)
-    LilyCheckedAccessRecord access;
+    Usize id;
 } LilyCheckedScopeContainerRecord;
 
 /**
@@ -155,7 +153,7 @@ typedef struct LilyCheckedScopeContainerRecord
 CONSTRUCTOR(LilyCheckedScopeContainerRecord *,
             LilyCheckedScopeContainerRecord,
             String *name,
-            LilyCheckedAccessRecord access);
+            Usize id);
 
 /**
  *
@@ -182,7 +180,7 @@ inline DESTRUCTOR(LilyCheckedScopeContainerRecord,
 typedef struct LilyCheckedScopeContainerAlias
 {
     String *name; // String* (&)
-    LilyCheckedAccessAlias access;
+    Usize id;
 } LilyCheckedScopeContainerAlias;
 
 /**
@@ -192,7 +190,7 @@ typedef struct LilyCheckedScopeContainerAlias
 CONSTRUCTOR(LilyCheckedScopeContainerAlias *,
             LilyCheckedScopeContainerAlias,
             String *name,
-            LilyCheckedAccessAlias access);
+            Usize id);
 
 /**
  *
@@ -219,7 +217,7 @@ inline DESTRUCTOR(LilyCheckedScopeContainerAlias,
 typedef struct LilyCheckedScopeContainerError
 {
     String *name; // String* (&)
-    LilyCheckedAccessError access;
+    Usize id;
 } LilyCheckedScopeContainerError;
 
 /**
@@ -229,7 +227,7 @@ typedef struct LilyCheckedScopeContainerError
 CONSTRUCTOR(LilyCheckedScopeContainerError *,
             LilyCheckedScopeContainerError,
             String *name,
-            LilyCheckedAccessError access);
+            Usize id);
 
 /**
  *
@@ -256,7 +254,7 @@ inline DESTRUCTOR(LilyCheckedScopeContainerError,
 typedef struct LilyCheckedScopeContainerEnumObject
 {
     String *name; // String* (&)
-    LilyCheckedAccessEnumObject access;
+    Usize id;
 } LilyCheckedScopeContainerEnumObject;
 
 /**
@@ -266,7 +264,7 @@ typedef struct LilyCheckedScopeContainerEnumObject
 CONSTRUCTOR(LilyCheckedScopeContainerEnumObject *,
             LilyCheckedScopeContainerEnumObject,
             String *name,
-            LilyCheckedAccessEnumObject access);
+            Usize id);
 
 /**
  *
@@ -293,7 +291,7 @@ inline DESTRUCTOR(LilyCheckedScopeContainerEnumObject,
 typedef struct LilyCheckedScopeContainerRecordObject
 {
     String *name; // String* (&)
-    LilyCheckedAccessRecordObject access;
+    Usize id;
 } LilyCheckedScopeContainerRecordObject;
 
 /**
@@ -303,7 +301,7 @@ typedef struct LilyCheckedScopeContainerRecordObject
 CONSTRUCTOR(LilyCheckedScopeContainerRecordObject *,
             LilyCheckedScopeContainerRecordObject,
             String *name,
-            LilyCheckedAccessRecordObject access);
+            Usize id);
 
 /**
  *
@@ -330,7 +328,7 @@ inline DESTRUCTOR(LilyCheckedScopeContainerRecordObject,
 typedef struct LilyCheckedScopeContainerClass
 {
     String *name; // String* (&)
-    LilyCheckedAccessClass access;
+    Usize id;
 } LilyCheckedScopeContainerClass;
 
 /**
@@ -340,7 +338,7 @@ typedef struct LilyCheckedScopeContainerClass
 CONSTRUCTOR(LilyCheckedScopeContainerClass *,
             LilyCheckedScopeContainerClass,
             String *name,
-            LilyCheckedAccessClass access);
+            Usize id);
 
 /**
  *
@@ -367,7 +365,7 @@ inline DESTRUCTOR(LilyCheckedScopeContainerClass,
 typedef struct LilyCheckedScopeContainerTrait
 {
     String *name; // String* (&)
-    LilyCheckedAccessTrait access;
+    Usize id;
 } LilyCheckedScopeContainerTrait;
 
 /**
@@ -377,7 +375,7 @@ typedef struct LilyCheckedScopeContainerTrait
 CONSTRUCTOR(LilyCheckedScopeContainerTrait *,
             LilyCheckedScopeContainerTrait,
             String *name,
-            LilyCheckedAccessTrait access);
+            Usize id);
 
 /**
  *
@@ -405,7 +403,7 @@ typedef struct LilyCheckedScopeContainerFun
 {
     String *name; // String* (&)
     // overload of function
-    Vec *accesses; // Vec<LilyCheckedAccessFun*>*
+    Vec *ids; // Vec<Usize*>*
 } LilyCheckedScopeContainerFun;
 
 /**
@@ -415,7 +413,7 @@ typedef struct LilyCheckedScopeContainerFun
 CONSTRUCTOR(LilyCheckedScopeContainerFun *,
             LilyCheckedScopeContainerFun,
             String *name,
-            Vec *accesses);
+            Vec *ids);
 
 /**
  *
@@ -438,7 +436,7 @@ DESTRUCTOR(LilyCheckedScopeContainerFun, LilyCheckedScopeContainerFun *self);
 typedef struct LilyCheckedScopeContainerLabel
 {
     String *name; // String* (&)
-    LilyCheckedAccessLabel access;
+    Usize id;
 } LilyCheckedScopeContainerLabel;
 
 /**
@@ -448,7 +446,7 @@ typedef struct LilyCheckedScopeContainerLabel
 CONSTRUCTOR(LilyCheckedScopeContainerLabel *,
             LilyCheckedScopeContainerLabel,
             String *name,
-            LilyCheckedAccessLabel access);
+            Usize id);
 
 /**
  *
@@ -475,7 +473,7 @@ inline DESTRUCTOR(LilyCheckedScopeContainerLabel,
 typedef struct LilyCheckedScopeContainerVariable
 {
     String *name; // String* (&)
-    LilyCheckedAccessScope access;
+    Usize id;
 } LilyCheckedScopeContainerVariable;
 
 /**
@@ -485,7 +483,7 @@ typedef struct LilyCheckedScopeContainerVariable
 CONSTRUCTOR(LilyCheckedScopeContainerVariable *,
             LilyCheckedScopeContainerVariable,
             String *name,
-            LilyCheckedAccessScope access);
+            Usize id);
 
 /**
  *

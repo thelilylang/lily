@@ -33,13 +33,13 @@
 CONSTRUCTOR(LilyCheckedScopeContainerModule *,
             LilyCheckedScopeContainerModule,
             String *name,
-            LilyCheckedAccessModule access)
+            Usize id)
 {
     LilyCheckedScopeContainerModule *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerModule));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -50,23 +50,22 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedScopeContainerModule,
                const LilyCheckedScopeContainerModule *self)
 {
-    return format(
-      "LilyCheckedScopeContainerModule{{ name = {S}, access = {sa} }",
-      self->name,
-      to_string__Debug__LilyCheckedAccessModule(&self->access));
+    return format("LilyCheckedScopeContainerModule{{ name = {S}, id = {d} }",
+                  self->name,
+                  self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerConstant *,
             LilyCheckedScopeContainerConstant,
             String *name,
-            LilyCheckedAccessConstant access)
+            Usize id)
 {
     LilyCheckedScopeContainerConstant *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerConstant));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -77,23 +76,22 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedScopeContainerConstant,
                const LilyCheckedScopeContainerConstant *self)
 {
-    return format(
-      "LilyCheckedScopeContainerConstant{{ name = {S}, access = {sa} }",
-      self->name,
-      to_string__Debug__LilyCheckedAccessConstant(&self->access));
+    return format("LilyCheckedScopeContainerConstant{{ name = {S}, id = {d} }",
+                  self->name,
+                  self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerEnum *,
             LilyCheckedScopeContainerEnum,
             String *name,
-            LilyCheckedAccessEnum access)
+            Usize id)
 {
     LilyCheckedScopeContainerEnum *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerEnum));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -104,22 +102,22 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedScopeContainerEnum,
                const LilyCheckedScopeContainerEnum *self)
 {
-    return format("LilyCheckedScopeContainerEnum{{ name = {S}, access = {sa} }",
+    return format("LilyCheckedScopeContainerEnum{{ name = {S}, id = {d} }",
                   self->name,
-                  to_string__Debug__LilyCheckedAccessEnum(&self->access));
+                  self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerRecord *,
             LilyCheckedScopeContainerRecord,
             String *name,
-            LilyCheckedAccessRecord access)
+            Usize id)
 {
     LilyCheckedScopeContainerRecord *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerRecord));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -130,23 +128,22 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedScopeContainerRecord,
                const LilyCheckedScopeContainerRecord *self)
 {
-    return format(
-      "LilyCheckedScopeContainerRecord{{ name = {S}, access = {sa} }",
-      self->name,
-      to_string__Debug__LilyCheckedAccessRecord(&self->access));
+    return format("LilyCheckedScopeContainerRecord{{ name = {S}, id = {d} }",
+                  self->name,
+                  self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerAlias *,
             LilyCheckedScopeContainerAlias,
             String *name,
-            LilyCheckedAccessAlias access)
+            Usize id)
 {
     LilyCheckedScopeContainerAlias *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerAlias));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -157,23 +154,22 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedScopeContainerAlias,
                const LilyCheckedScopeContainerAlias *self)
 {
-    return format(
-      "LilyCheckedScopeContainerAlias{{ name = {S}, access = {sa} }",
-      self->name,
-      to_string__Debug__LilyCheckedAccessAlias(&self->access));
+    return format("LilyCheckedScopeContainerAlias{{ name = {S}, id = {d} }",
+                  self->name,
+                  self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerError *,
             LilyCheckedScopeContainerError,
             String *name,
-            LilyCheckedAccessError access)
+            Usize id)
 {
     LilyCheckedScopeContainerError *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerError));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -184,23 +180,22 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedScopeContainerError,
                const LilyCheckedScopeContainerError *self)
 {
-    return format(
-      "LilyCheckedScopeContainerError{{ name = {S}, access = {sa} }",
-      self->name,
-      to_string__Debug__LilyCheckedAccessError(&self->access));
+    return format("LilyCheckedScopeContainerError{{ name = {S}, id = {d} }",
+                  self->name,
+                  self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerEnumObject *,
             LilyCheckedScopeContainerEnumObject,
             String *name,
-            LilyCheckedAccessEnumObject access)
+            Usize id)
 {
     LilyCheckedScopeContainerEnumObject *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerEnumObject));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -212,22 +207,22 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedScopeContainerEnumObject *self)
 {
     return format(
-      "LilyCheckedScopeContainerEnumObject{{ name = {S}, access = {sa} }",
+      "LilyCheckedScopeContainerEnumObject{{ name = {S}, id = {d} }",
       self->name,
-      to_string__Debug__LilyCheckedAccessEnumObject(&self->access));
+      self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerRecordObject *,
             LilyCheckedScopeContainerRecordObject,
             String *name,
-            LilyCheckedAccessRecordObject access)
+            Usize id)
 {
     LilyCheckedScopeContainerRecordObject *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerRecordObject));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -239,22 +234,22 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedScopeContainerRecordObject *self)
 {
     return format(
-      "LilyCheckedScopeContainerRecordObject{{ name = {S}, access = {sa} }",
+      "LilyCheckedScopeContainerRecordObject{{ name = {S}, id = {d} }",
       self->name,
-      to_string__Debug__LilyCheckedAccessRecordObject(&self->access));
+      self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerClass *,
             LilyCheckedScopeContainerClass,
             String *name,
-            LilyCheckedAccessClass access)
+            Usize id)
 {
     LilyCheckedScopeContainerClass *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerClass));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -265,23 +260,22 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedScopeContainerClass,
                const LilyCheckedScopeContainerClass *self)
 {
-    return format(
-      "LilyCheckedScopeContainerClass{{ name = {S}, access = {sa} }",
-      self->name,
-      to_string__Debug__LilyCheckedAccessClass(&self->access));
+    return format("LilyCheckedScopeContainerClass{{ name = {S}, id = {d} }",
+                  self->name,
+                  self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerTrait *,
             LilyCheckedScopeContainerTrait,
             String *name,
-            LilyCheckedAccessTrait access)
+            Usize id)
 {
     LilyCheckedScopeContainerTrait *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerTrait));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -292,23 +286,22 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedScopeContainerTrait,
                const LilyCheckedScopeContainerTrait *self)
 {
-    return format(
-      "LilyCheckedScopeContainerTrait{{ name = {S}, access = {sa} }",
-      self->name,
-      to_string__Debug__LilyCheckedAccessTrait(&self->access));
+    return format("LilyCheckedScopeContainerTrait{{ name = {S}, id = {d} }",
+                  self->name,
+                  self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerFun *,
             LilyCheckedScopeContainerFun,
             String *name,
-            Vec *accesses)
+            Vec *ids)
 {
     LilyCheckedScopeContainerFun *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerFun));
 
     self->name = name;
-    self->accesses = accesses;
+    self->ids = ids;
 
     return self;
 }
@@ -320,9 +313,22 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedScopeContainerFun *self)
 {
     String *res = format__String(
-      "LilyCheckedScopeContainerFun{{ name = {S}, accesses =", self->name);
+      "LilyCheckedScopeContainerFun{{ name = {S}, ids = {{ ", self->name);
 
-    DEBUG_VEC_STR(self->accesses, res, LilyCheckedAccessFun);
+    for (Usize i = 0; i < self->ids->len; ++i) {
+        if (i != self->ids->len - 1) {
+            char *s = format(
+              "{d}, ", (Usize)(Uptr)CAST(Usize *, get__Vec(self->ids, i)));
+
+            PUSH_STR_AND_FREE(res, s);
+        } else {
+            char *s = format(
+              "{d} }", (Usize)(Uptr)CAST(Usize *, get__Vec(self->ids, i)));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+    }
+
     push_str__String(res, " }");
 
     return res;
@@ -331,22 +337,20 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedScopeContainerFun, LilyCheckedScopeContainerFun *self)
 {
-    FREE(Vec, self->accesses);
-    FREE_BUFFER_ITEMS(
-      self->accesses->buffer, self->accesses->len, LilyCheckedAccessFun);
+    FREE(Vec, self->ids);
     lily_free(self);
 }
 
 CONSTRUCTOR(LilyCheckedScopeContainerLabel *,
             LilyCheckedScopeContainerLabel,
             String *name,
-            LilyCheckedAccessLabel access)
+            Usize id)
 {
     LilyCheckedScopeContainerLabel *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerLabel));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -357,23 +361,22 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedScopeContainerLabel,
                const LilyCheckedScopeContainerLabel *self)
 {
-    return format(
-      "LilyCheckedScopeContainerLabel{{ name = {S}, access = {sa} }",
-      self->name,
-      to_string__Debug__LilyCheckedAccessLabel(&self->access));
+    return format("LilyCheckedScopeContainerLabel{{ name = {S}, id = {d} }",
+                  self->name,
+                  self->id);
 }
 #endif
 
 CONSTRUCTOR(LilyCheckedScopeContainerVariable *,
             LilyCheckedScopeContainerVariable,
             String *name,
-            LilyCheckedAccessScope access)
+            Usize id)
 {
     LilyCheckedScopeContainerVariable *self =
       lily_malloc(sizeof(LilyCheckedScopeContainerVariable));
 
     self->name = name;
-    self->access = access;
+    self->id = id;
 
     return self;
 }
@@ -384,9 +387,8 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedScopeContainerVariable,
                const LilyCheckedScopeContainerVariable *self)
 {
-    return format(
-      "LilyCheckedScopeContainerVariable{{ name = {S}, access = {sa} }",
-      self->name,
-      to_string__Debug__LilyCheckedAccessScope(&self->access));
+    return format("LilyCheckedScopeContainerVariable{{ name = {S}, id = {d} }",
+                  self->name,
+                  self->id);
 }
 #endif
