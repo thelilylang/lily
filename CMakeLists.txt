@@ -201,6 +201,7 @@ set(CORE_SRC
 	src/core/lily/checked/access.c
 	src/core/lily/checked/data_type.c
 	src/core/lily/checked/decl.c
+	src/core/lily/checked/scope_decls.c
 	src/core/lily/checked/expr.c
 	src/core/lily/checked/field.c
 	src/core/lily/checked/field_object.c
