@@ -510,8 +510,8 @@ push_all_delcs__LilyAnalysis(LilyAnalysis *self,
             case LILY_AST_DECL_KIND_FUN: {
                 if (!decl->fun.object_impl) {
                     LilyCheckedScopeContainerFun *overload_fun =
-                      search_fun__LilyCheckedScope(module->scope,
-                                                   decl->fun.name);
+                      search_fun_in_current_scope__LilyCheckedScope(
+                        module->scope, decl->fun.name);
 
                     push_fun__LilyAnalysis(self, decl, module);
 
