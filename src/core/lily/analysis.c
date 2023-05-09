@@ -1352,8 +1352,76 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             TODO("analysis drop stmt");
         case LILY_AST_STMT_KIND_FOR:
             TODO("analysis for stmt");
-        case LILY_AST_STMT_KIND_IF:
-            TODO("analysis if stmt");
+        case LILY_AST_STMT_KIND_IF: {
+            LilyCheckedExpr *if_cond = check_expr__LilyAnalysis(
+              self, stmt->if_.if_expr, scope, safety_mode);
+            Vec *if_body = NEW(Vec);
+            LilyCheckedScope *if_scope =
+              NEW(LilyCheckedScope,
+                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body));
+
+            CHECK_FUN_BODY(
+              stmt->if_.if_body, if_scope, if_body, safety_mode, false);
+
+            Vec *elifs = NULL; // Vec<LilyCheckedStmtIfBranch*>*?
+
+            if (stmt->if_.elif_exprs) {
+                elifs = NEW(Vec);
+
+                for (Usize k = 0; k < stmt->if_.elif_exprs->len; ++k) {
+                    LilyCheckedExpr *elif_cond = check_expr__LilyAnalysis(
+                      self,
+                      get__Vec(stmt->if_.elif_exprs, k),
+                      scope,
+                      safety_mode);
+                    Vec *elif_body = NEW(Vec);
+                    LilyCheckedScope *elif_scope =
+                      NEW(LilyCheckedScope,
+                          NEW_VARIANT(
+                            LilyCheckedParent, scope, scope, current_body));
+                    Vec *ast_elif_body = get__Vec(stmt->if_.elif_bodies, k);
+
+                    CHECK_FUN_BODY(
+                      ast_elif_body, elif_scope, elif_body, safety_mode, false);
+
+                    push__Vec(elifs,
+                              NEW(LilyCheckedStmtIfBranch,
+                                  elif_cond,
+                                  elif_body,
+                                  elif_scope));
+                }
+            }
+
+            LilyCheckedStmtElseBranch *else_ = NULL;
+
+            if (stmt->if_.else_body) {
+                LilyCheckedScope *else_scope = NEW(
+                  LilyCheckedScope,
+                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body));
+                Vec *else_body = NEW(Vec);
+
+                CHECK_FUN_BODY(stmt->if_.else_body,
+                               else_scope,
+                               else_body,
+                               safety_mode,
+                               false);
+
+                else_ = NEW(LilyCheckedStmtElseBranch, else_body, else_scope);
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedBodyFunItem,
+              stmt,
+              NEW_VARIANT(
+                LilyCheckedStmt,
+                if,
+                &stmt->location,
+                stmt,
+                NEW(LilyCheckedStmtIf,
+                    NEW(LilyCheckedStmtIfBranch, if_cond, if_body, if_scope),
+                    elifs,
+                    else_)));
+        }
         case LILY_AST_STMT_KIND_MATCH:
             TODO("analysis match stmt");
         case LILY_AST_STMT_KIND_NEXT:
