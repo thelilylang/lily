@@ -26,8 +26,8 @@
 #define LILY_CORE_LILY_IR_LLVM_GENERATOR_BODY_FUNCTION_H
 
 #define GENERATE_FUNCTION_BODY(body, fun, exit_block, cond_block)  \
-    for (Usize i = 0; i < body->len; ++i) {                        \
-        LilyCheckedBodyFunItem *item = get__Vec(body, i);          \
+    for (Usize x = 0; x < body->len; ++x) {                        \
+        LilyCheckedBodyFunItem *item = get__Vec(body, x);          \
                                                                    \
         switch (item->kind) {                                      \
             case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:             \
