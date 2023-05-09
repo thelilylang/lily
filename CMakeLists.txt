@@ -309,6 +309,7 @@ set(CORE_SRC
 	src/core/lily/preparser.c
 	src/core/lily/preprocess.c
 	src/core/lily/scanner.c
+	src/core/lily/sys.c
 	src/core/lily/token.c
 	src/core/lily/visibility.c
 	src/core/lily/warning.c
