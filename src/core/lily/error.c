@@ -219,6 +219,8 @@ to_msg__LilyError(const LilyError *self)
             return "break is not expected in this context";
         case LILY_ERROR_KIND_NEXT_IS_NOT_EXPECTED_IN_THIS_CONTEXT:
             return "next is not expected in this context";
+        case LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH:
+            return "data type don't match";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -412,6 +414,8 @@ to_code__LilyError(const LilyError *self)
             return "0091";
         case LILY_ERROR_KIND_NEXT_IS_NOT_EXPECTED_IN_THIS_CONTEXT:
             return "0092";
+        case LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH:
+            return "0093";
         default:
             UNREACHABLE("unknown variant");
     }
