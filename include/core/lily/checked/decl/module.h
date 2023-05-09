@@ -52,10 +52,9 @@ inline CONSTRUCTOR(LilyCheckedDeclModule,
                    LilyCheckedScope *scope,
                    enum LilyVisibility visibility)
 {
-    return (LilyCheckedDeclModule){ .name = name,
-                                    .decls = decls,
-                                    .scope = scope,
-                                    .visibility = visibility };
+    return (LilyCheckedDeclModule){
+        .name = name, .decls = decls, .scope = scope, .visibility = visibility
+    };
 }
 
 /**
