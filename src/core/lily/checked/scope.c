@@ -26,6 +26,8 @@
 #include <base/new.h>
 
 #include <core/lily/checked/body/fun.h>
+#include <core/lily/checked/decl.h>
+#include <core/lily/checked/parent.h>
 #include <core/lily/checked/scope.h>
 
 #ifdef ENV_DEBUG
@@ -72,6 +74,8 @@ CONSTRUCTOR(LilyCheckedScope *,
     self->funs = NEW(Vec);
     self->labels = NEW(Vec);
     self->variables = NEW(Vec);
+    self->params = NEW(Vec);
+    self->generics = NEW(Vec);
     self->parent = parent;
     self->decls = decls;
 
@@ -250,26 +254,59 @@ search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
     return NULL;
 }
 
-LilyCheckedStmtVariable *
+LilyCheckedScopeResponse
 search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
-    for (Usize i = 0; i < self->variables->len; ++i) {
-        LilyCheckedScopeContainerVariable *variable =
-          get__Vec(self->variables, i);
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE:
+            for (Usize i = 0; i < self->variables->len; ++i) {
+                LilyCheckedScopeContainerVariable *variable =
+                  get__Vec(self->variables, i);
 
-        if (!strcmp(variable->name->buffer, name->buffer)) {
-            return &CAST(LilyCheckedBodyFunItem *,
-                         get__Vec(self->decls.scope, variable->id))
-                      ->stmt.variable;
-        }
+                if (!strcmp(variable->name->buffer, name->buffer)) {
+                    LilyCheckedBodyFunItem *item =
+                      CAST(LilyCheckedBodyFunItem *,
+                           get__Vec(self->decls.decl->fun.body, variable->id));
+
+                    return NEW_VARIANT(LilyCheckedScopeResponse,
+                                       variable,
+                                       item->stmt.location,
+                                       &item->stmt.variable);
+                }
+            }
+
+            break;
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            if (self->decls.decl->kind == LILY_CHECKED_DECL_KIND_FUN) {
+                for (Usize i = 0; i < self->params->len; ++i) {
+                    LilyCheckedScopeContainerVariable *variable =
+                      get__Vec(self->params, i);
+
+                    if (!strcmp(variable->name->buffer, name->buffer)) {
+                        LilyCheckedDeclFunParam *param =
+                          get__Vec(self->decls.decl->fun.params, variable->id);
+
+                        return NEW_VARIANT(LilyCheckedScopeResponse,
+                                           fun_param,
+                                           &param->location,
+                                           param);
+                    }
+                }
+            }
+
+            break;
+        default:
+            return NEW(LilyCheckedScopeResponse);
     }
 
-    if (self->parent && self->parent->scope->decls.kind ==
-                          LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE) {
+    if (self->parent && (self->parent->scope->decls.kind ==
+                           LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE ||
+                         self->parent->scope->decls.kind ==
+                           LILY_CHECKED_SCOPE_DECLS_KIND_DECL)) {
         return search_variable__LilyCheckedScope(self->parent->scope, name);
     }
 
-    return NULL;
+    return NEW(LilyCheckedScopeResponse);
 }
 
 #ifdef ENV_DEBUG
@@ -407,6 +444,21 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
                       self->variables->len,
                       LilyCheckedScopeContainerVariable);
     FREE(Vec, self->variables);
+
+    FREE_BUFFER_ITEMS(self->params->buffer,
+                      self->params->len,
+                      LilyCheckedScopeContainerVariable);
+    FREE(Vec, self->params);
+
+    FREE_BUFFER_ITEMS(self->generics->buffer,
+                      self->generics->len,
+                      LilyCheckedScopeContainerGeneric);
+    FREE(Vec, self->generics);
+
+    FREE_BUFFER_ITEMS(self->methods->buffer,
+                      self->methods->len,
+                      LilyCheckedScopeContainerMethod);
+    FREE(Vec, self->methods);
 
     if (self->parent) {
         FREE(LilyCheckedParent, self->parent);

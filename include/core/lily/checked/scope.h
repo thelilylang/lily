@@ -31,12 +31,13 @@
 #include <base/types.h>
 #include <base/vec.h>
 
-#include <core/lily/checked/parent.h>
 #include <core/lily/checked/scope_container.h>
 #include <core/lily/checked/scope_decls.h>
+#include <core/lily/checked/scope_response.h>
 #include <core/lily/file.h>
 #include <core/lily/visibility.h>
 
+typedef struct LilyCheckedParent LilyCheckedParent;
 typedef struct LilyCheckedStmtVariable LilyCheckedStmtVariable;
 
 typedef struct LilyCheckedScope
@@ -55,6 +56,9 @@ typedef struct LilyCheckedScope
     Vec *funs;                 // Vec<LilyCheckedScopeContainerFun*>*
     Vec *labels;               // Vec<LilyCheckedScopeContainerLabel*>*
     Vec *variables;            // Vec<LilyCheckedScopeContainerVariable*>*
+    Vec *params;               // Vec<LilyCheckedScopeContainerVariable*>*
+    Vec *generics;             // Vec<LilyCheckedScopeContainerGeneric*>*
+    Vec *methods;              // Vec<LilyCheckedScopeContainerMethod*>*
     LilyCheckedParent *parent; // LilyCheckedParent*?
     LilyCheckedScopeDecls decls;
 } LilyCheckedScope;
@@ -202,7 +206,7 @@ search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
  *
  * @brief Search a variable in the scope.
  */
-LilyCheckedStmtVariable *
+LilyCheckedScopeResponse
 search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
