@@ -32,7 +32,7 @@
 
 #include <core/shared/location.h>
 
-#include <core/lily/checked/scope.h>
+typedef struct LilyCheckedScope LilyCheckedScope;
 
 enum LilyCheckedDataTypeKind
 {

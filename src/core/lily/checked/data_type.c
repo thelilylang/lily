@@ -25,6 +25,7 @@
 #include <base/format.h>
 
 #include <core/lily/checked/data_type.h>
+#include <core/lily/checked/scope.h>
 
 #include <stdio.h>
 #include <stdlib.h>
