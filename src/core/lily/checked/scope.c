@@ -58,7 +58,10 @@
         }                                                \
     }
 
-CONSTRUCTOR(LilyCheckedScope *, LilyCheckedScope, LilyCheckedParent *parent)
+CONSTRUCTOR(LilyCheckedScope *,
+            LilyCheckedScope,
+            LilyCheckedParent *parent,
+            LilyCheckedScopeDecls decls)
 {
     LilyCheckedScope *self = lily_malloc(sizeof(LilyCheckedScope));
 
@@ -77,6 +80,7 @@ CONSTRUCTOR(LilyCheckedScope *, LilyCheckedScope, LilyCheckedParent *parent)
     self->labels = NEW(Vec);
     self->variables = NEW(Vec);
     self->parent = parent;
+    self->decls = decls;
 
     return self;
 }

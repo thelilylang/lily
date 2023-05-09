@@ -33,6 +33,7 @@
 
 #include <core/lily/checked/parent.h>
 #include <core/lily/checked/scope_container.h>
+#include <core/lily/checked/scope_decls.h>
 #include <core/lily/file.h>
 #include <core/lily/visibility.h>
 
@@ -53,6 +54,7 @@ typedef struct LilyCheckedScope
     Vec *labels;               // Vec<LilyCheckedScopeContainerLabel*>*
     Vec *variables;            // Vec<LilyCheckedScopeContainerVariable*>*
     LilyCheckedParent *parent; // LilyCheckedParent*?
+    LilyCheckedScopeDecls decls;
 } LilyCheckedScope;
 
 /**
@@ -60,7 +62,10 @@ typedef struct LilyCheckedScope
  * @brief Construct LilyCheckedScope type.
  * @param parent LilyCheckedAccessScope*?
  */
-CONSTRUCTOR(LilyCheckedScope *, LilyCheckedScope, LilyCheckedParent *parent);
+CONSTRUCTOR(LilyCheckedScope *,
+            LilyCheckedScope,
+            LilyCheckedParent *parent,
+            LilyCheckedScopeDecls decls);
 
 /**
  *
