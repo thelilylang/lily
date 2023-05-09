@@ -31,6 +31,38 @@
 
 #include <stdbool.h>
 
+typedef struct LilyCheckedAccessScope
+{
+    Usize id;
+} LilyCheckedAccessScope;
+
+/**
+ *
+ * @brief Construct LilyCheckedAccessScope type.
+ */
+CONSTRUCTOR(LilyCheckedAccessScope *, LilyCheckedAccessScope, Usize id);
+
+/**
+ *
+ * @brief Convert LilyCheckedAccessScope in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedAccessScope,
+               const LilyCheckedAccessScope *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedAccessScope type.
+ */
+inline DESTRUCTOR(LilyCheckedAccessScope, LilyCheckedAccessScope *self)
+{
+    lily_free(self);
+}
+
 typedef struct LilyCheckedAccessModule
 {
     Usize id;
@@ -70,7 +102,7 @@ eq__LilyCheckedAccessModule(const LilyCheckedAccessModule *self,
 
 typedef struct LilyCheckedAccessConstant
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessConstant;
 
@@ -80,10 +112,10 @@ typedef struct LilyCheckedAccessConstant
  */
 inline CONSTRUCTOR(LilyCheckedAccessConstant,
                    LilyCheckedAccessConstant,
-                   LilyCheckedAccessModule module,
+                   LilyCheckedAccessScope scope,
                    Usize id)
 {
-    return (LilyCheckedAccessConstant){ .module = module, .id = id };
+    return (LilyCheckedAccessConstant){ .scope = scope, .id = id };
 }
 
 /**
@@ -100,7 +132,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedAccessEnum
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessEnum;
 
@@ -110,10 +142,10 @@ typedef struct LilyCheckedAccessEnum
  */
 inline CONSTRUCTOR(LilyCheckedAccessEnum,
                    LilyCheckedAccessEnum,
-                   LilyCheckedAccessModule module,
+                   LilyCheckedAccessScope scope,
                    Usize id)
 {
-    return (LilyCheckedAccessEnum){ .module = module, .id = id };
+    return (LilyCheckedAccessEnum){ .scope = scope, .id = id };
 }
 
 /**
@@ -130,7 +162,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedAccessRecord
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessRecord;
 
@@ -140,10 +172,10 @@ typedef struct LilyCheckedAccessRecord
  */
 inline CONSTRUCTOR(LilyCheckedAccessRecord,
                    LilyCheckedAccessRecord,
-                   LilyCheckedAccessModule module,
+                   LilyCheckedAccessScope scope,
                    Usize id)
 {
-    return (LilyCheckedAccessRecord){ .module = module, .id = id };
+    return (LilyCheckedAccessRecord){ .scope = scope, .id = id };
 }
 
 /**
@@ -160,7 +192,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedAccessAlias
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessAlias;
 
@@ -170,10 +202,10 @@ typedef struct LilyCheckedAccessAlias
  */
 inline CONSTRUCTOR(LilyCheckedAccessAlias,
                    LilyCheckedAccessAlias,
-                   LilyCheckedAccessModule module,
+                   LilyCheckedAccessScope scope,
                    Usize id)
 {
-    return (LilyCheckedAccessAlias){ .module = module, .id = id };
+    return (LilyCheckedAccessAlias){ .scope = scope, .id = id };
 }
 
 /**
@@ -190,7 +222,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedAccessError
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessError;
 
@@ -200,10 +232,10 @@ typedef struct LilyCheckedAccessError
  */
 inline CONSTRUCTOR(LilyCheckedAccessError,
                    LilyCheckedAccessError,
-                   LilyCheckedAccessModule module,
+                   LilyCheckedAccessScope scope,
                    Usize id)
 {
-    return (LilyCheckedAccessError){ .module = module, .id = id };
+    return (LilyCheckedAccessError){ .scope = scope, .id = id };
 }
 
 /**
@@ -220,7 +252,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedAccessEnumObject
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessEnumObject;
 
@@ -230,10 +262,10 @@ typedef struct LilyCheckedAccessEnumObject
  */
 inline CONSTRUCTOR(LilyCheckedAccessEnumObject,
                    LilyCheckedAccessEnumObject,
-                   LilyCheckedAccessModule module,
+                   LilyCheckedAccessScope scope,
                    Usize id)
 {
-    return (LilyCheckedAccessEnumObject){ .module = module, .id = id };
+    return (LilyCheckedAccessEnumObject){ .scope = scope, .id = id };
 }
 
 /**
@@ -250,7 +282,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedAccessRecordObject
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessRecordObject;
 
@@ -260,10 +292,10 @@ typedef struct LilyCheckedAccessRecordObject
  */
 inline CONSTRUCTOR(LilyCheckedAccessRecordObject,
                    LilyCheckedAccessRecordObject,
-                   LilyCheckedAccessModule module,
+                   LilyCheckedAccessScope scope,
                    Usize id)
 {
-    return (LilyCheckedAccessRecordObject){ .module = module, .id = id };
+    return (LilyCheckedAccessRecordObject){ .scope = scope, .id = id };
 }
 
 /**
@@ -280,7 +312,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedAccessClass
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessClass;
 
@@ -290,10 +322,10 @@ typedef struct LilyCheckedAccessClass
  */
 inline CONSTRUCTOR(LilyCheckedAccessClass,
                    LilyCheckedAccessClass,
-                   LilyCheckedAccessModule module,
+                   LilyCheckedAccessScope scope,
                    Usize id)
 {
-    return (LilyCheckedAccessClass){ .module = module, .id = id };
+    return (LilyCheckedAccessClass){ .scope = scope, .id = id };
 }
 
 /**
@@ -310,7 +342,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedAccessTrait
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessTrait;
 
@@ -320,10 +352,10 @@ typedef struct LilyCheckedAccessTrait
  */
 inline CONSTRUCTOR(LilyCheckedAccessTrait,
                    LilyCheckedAccessTrait,
-                   LilyCheckedAccessModule module,
+                   LilyCheckedAccessScope scope,
                    Usize id)
 {
-    return (LilyCheckedAccessTrait){ .module = module, .id = id };
+    return (LilyCheckedAccessTrait){ .scope = scope, .id = id };
 }
 
 /**
@@ -340,7 +372,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedAccessFun
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessFun;
 
@@ -350,7 +382,7 @@ typedef struct LilyCheckedAccessFun
  */
 CONSTRUCTOR(LilyCheckedAccessFun *,
             LilyCheckedAccessFun,
-            LilyCheckedAccessModule module,
+            LilyCheckedAccessScope scope,
             Usize id);
 
 /**
@@ -372,7 +404,7 @@ inline DESTRUCTOR(LilyCheckedAccessFun, LilyCheckedAccessFun *self)
 
 typedef struct LilyCheckedAccessLabel
 {
-    LilyCheckedAccessModule module;
+    LilyCheckedAccessScope scope;
     Usize id;
 } LilyCheckedAccessLabel;
 
@@ -382,7 +414,7 @@ typedef struct LilyCheckedAccessLabel
  */
 CONSTRUCTOR(LilyCheckedAccessLabel *,
             LilyCheckedAccessLabel,
-            LilyCheckedAccessModule module,
+            LilyCheckedAccessScope scope,
             Usize id);
 
 /**
@@ -398,42 +430,6 @@ IMPL_FOR_DEBUG(to_string,
 #endif
 
 inline DESTRUCTOR(LilyCheckedAccessLabel, LilyCheckedAccessLabel *self)
-{
-    lily_free(self);
-}
-
-typedef struct LilyCheckedAccessScope
-{
-    LilyCheckedAccessModule module;
-    Usize id;
-} LilyCheckedAccessScope;
-
-/**
- *
- * @brief Construct LilyCheckedAccessScope type.
- */
-CONSTRUCTOR(LilyCheckedAccessScope *,
-            LilyCheckedAccessScope,
-            LilyCheckedAccessModule module,
-            Usize id);
-
-/**
- *
- * @brief Convert LilyCheckedAccessScope in string.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedAccessScope,
-               const LilyCheckedAccessScope *self);
-#endif
-
-/**
- *
- * @brief Free LilyCheckedAccessScope type.
- */
-inline DESTRUCTOR(LilyCheckedAccessScope, LilyCheckedAccessScope *self)
 {
     lily_free(self);
 }
