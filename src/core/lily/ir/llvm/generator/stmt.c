@@ -133,7 +133,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                         if (i < stmt->if_.elifs->len - 2) {
                             next_elif_block_cond =
                               LLVMAppendBasicBlock(fun, "elif_cond");
-                            next_elif_block = LLVMAppendBasicBlock(fun, "elif_block");
+                            next_elif_block =
+                              LLVMAppendBasicBlock(fun, "elif_block");
                         }
                     }
 
