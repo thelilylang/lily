@@ -38,6 +38,7 @@
 
 typedef struct LilyCheckedScope
 {
+    Usize id;
     Vec *modules;              // Vec<LilyCheckedScopeContainerModule*>*
     Vec *constants;            // Vec<LilyCheckedScopeContainerConstant*>*
     Vec *enums;                // Vec<LilyCheckedScopeContainerEnum*>*
@@ -52,7 +53,6 @@ typedef struct LilyCheckedScope
     Vec *labels;               // Vec<LilyCheckedScopeContainerLabel*>*
     Vec *variables;            // Vec<LilyCheckedScopeContainerVariable*>*
     LilyCheckedParent *parent; // LilyCheckedParent*?
-    Vec *children;             // Vec<LilyCheckedAccessScope*>*
 } LilyCheckedScope;
 
 /**
@@ -189,6 +189,13 @@ add_variable__LilyCheckedScope(LilyCheckedScope *self,
  */
 LilyCheckedScopeContainerFun *
 search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
+ * @brief Search a variable in the scope.
+ */
+LilyCheckedScopeContainerVariable *
+search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *

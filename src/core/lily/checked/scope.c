@@ -56,13 +56,13 @@
         if (!strcmp(item->name->buffer, name->buffer)) { \
             return item;                                 \
         }                                                \
-    }                                                    \
-    return NULL;
+    }
 
 CONSTRUCTOR(LilyCheckedScope *, LilyCheckedScope, LilyCheckedParent *parent)
 {
     LilyCheckedScope *self = lily_malloc(sizeof(LilyCheckedScope));
 
+    self->id = parent ? parent->scope->id + 1 : 0;
     self->modules = NEW(Vec);
     self->constants = NEW(Vec);
     self->enums = NEW(Vec);
@@ -77,7 +77,6 @@ CONSTRUCTOR(LilyCheckedScope *, LilyCheckedScope, LilyCheckedParent *parent)
     self->labels = NEW(Vec);
     self->variables = NEW(Vec);
     self->parent = parent;
-    self->children = NEW(Vec);
 
     return self;
 }
@@ -243,13 +242,32 @@ LilyCheckedScopeContainerFun *
 search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
     SEARCH_IN_THE_SCOPE(self->funs, LilyCheckedScopeContainerFun);
+
+    if (self->parent) {
+        return search_fun__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NULL;
+}
+
+LilyCheckedScopeContainerVariable *
+search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    SEARCH_IN_THE_SCOPE(self->variables, LilyCheckedScopeContainerVariable);
+
+    if (self->parent) {
+        return search_variable__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NULL;
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
 {
-    String *res = format__String("LilyCheckedScope{{ modules =");
+    String *res =
+      format__String("LilyCheckedScope{{ id = {d}, modules =", self->id);
 
     DEBUG_VEC_STR(self->modules, res, LilyCheckedScopeContainerModule);
 
@@ -311,10 +329,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
     } else {
         push_str__String(res, "NULL");
     }
-
-    push_str__String(res, ", children =");
-
-    DEBUG_VEC_STR(self->children, res, LilyCheckedAccessScope);
 
     push_str__String(res, " }");
 
@@ -387,8 +401,4 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
     if (self->parent) {
         FREE(LilyCheckedParent, self->parent);
     }
-
-    FREE_BUFFER_ITEMS(
-      self->children->buffer, self->children->len, LilyCheckedAccessScope);
-    FREE(Vec, self->children);
 }
