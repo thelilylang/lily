@@ -27,6 +27,7 @@
 
 #include <core/lily/analysis.h>
 #include <core/lily/ast.h>
+#include <core/lily/checked/parent.h>
 #include <core/lily/checked/safety_mode.h>
 #include <core/lily/lily.h>
 #include <core/lily/package.h>
