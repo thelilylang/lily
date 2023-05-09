@@ -43,7 +43,7 @@ push_error__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *error,
                          LilyCheckedDeclModule *module);
 
-static inline void
+static void
 push_fun__LilyAnalysis(LilyAnalysis *self,
                        LilyAstDecl *fun,
                        LilyCheckedDeclModule *module);
@@ -54,22 +54,22 @@ push_module__LilyAnalysis(LilyAnalysis *self,
                           LilyCheckedDeclModule *module,
                           Usize i);
 
-static inline void
+static void
 push_class__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *class,
                          LilyCheckedDeclModule *module);
 
-static inline void
+static void
 push_enum_object__LilyAnalysis(LilyAnalysis *self,
                                LilyAstDecl *enum_object,
                                LilyCheckedDeclModule *module);
 
-static inline void
+static void
 push_record_object__LilyAnalysis(LilyAnalysis *self,
                                  LilyAstDecl *record_object,
                                  LilyCheckedDeclModule *module);
 
-static inline void
+static void
 push_trait__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *trait,
                          LilyCheckedDeclModule *module);
@@ -79,12 +79,12 @@ push_alias__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *alias,
                          LilyCheckedDeclModule *module);
 
-static inline void
+static void
 push_enum__LilyAnalysis(LilyAnalysis *self,
                         LilyAstDecl *enum_,
                         LilyCheckedDeclModule *module);
 
-static inline void
+static void
 push_record__LilyAnalysis(LilyAnalysis *self,
                           LilyAstDecl *record,
                           LilyCheckedDeclModule *module);
@@ -206,6 +206,8 @@ push_fun__LilyAnalysis(LilyAnalysis *self,
                        LilyAstDecl *fun,
                        LilyCheckedDeclModule *module)
 {
+    Vec *body = NEW(Vec);
+
     push__Vec(
       module->decls,
       NEW_VARIANT(
@@ -218,9 +220,10 @@ push_fun__LilyAnalysis(LilyAnalysis *self,
             NULL,
             NULL,
             NULL,
-            NULL,
+            body,
             NEW(LilyCheckedScope,
-                NEW_VARIANT(LilyCheckedParent, module, module->scope, module)),
+                NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+                NEW_VARIANT(LilyCheckedScopeDecls, scope, body)),
             fun->fun.visibility,
             fun->fun.is_async,
             fun->fun.is_operator)));
@@ -232,17 +235,21 @@ push_module__LilyAnalysis(LilyAnalysis *self,
                           LilyCheckedDeclModule *module,
                           Usize i)
 {
-    LilyCheckedDecl *checked_module = NEW_VARIANT(
-      LilyCheckedDecl,
-      module,
-      &module_decl->location,
-      module_decl,
-      NEW(LilyCheckedDeclModule,
-          module_decl->module.name,
-          NEW(Vec),
-          NEW(LilyCheckedScope,
-              NEW_VARIANT(LilyCheckedParent, module, module->scope, module)),
-          module_decl->module.visibility));
+    LilyCheckedDecl *checked_module =
+      NEW_VARIANT(LilyCheckedDecl,
+                  module,
+                  &module_decl->location,
+                  module_decl,
+                  NEW(LilyCheckedDeclModule,
+                      module_decl->module.name,
+                      NEW(Vec),
+                      NULL,
+                      module_decl->module.visibility));
+
+    checked_module->module.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+          NEW_VARIANT(LilyCheckedScopeDecls, module, &checked_module->module));
 
     push_all_delcs__LilyAnalysis(
       self, module_decl->module.decls, &checked_module->module);
@@ -255,25 +262,29 @@ push_class__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *class,
                          LilyCheckedDeclModule *module)
 {
-    push__Vec(module->decls,
-              NEW_VARIANT(
-                LilyCheckedDecl,
-                object,
-                &class->location,
-                class,
-                NEW_VARIANT(
-                  LilyCheckedDeclObject,
+
+    LilyCheckedDecl *checked_class =
+      NEW_VARIANT(LilyCheckedDecl,
+                  object,
+                  &class->location,
                   class,
-                  NEW(LilyCheckedDeclClass,
-                      class->object.class.name,
-                      NULL,
-                      NULL,
-                      NULL,
-                      NULL,
-                      NEW(LilyCheckedScope,
-                          NEW_VARIANT(
-                            LilyCheckedParent, module, module->scope, module)),
-                      class->object.class.visibility))));
+                  NEW_VARIANT(LilyCheckedDeclObject,
+                              class,
+                              NEW(LilyCheckedDeclClass,
+                                  class->object.class.name,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  class->object.class.visibility)));
+
+    checked_class->object.class.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+          NEW_VARIANT(LilyCheckedScopeDecls, decl, checked_class));
+
+    push__Vec(module->decls, checked_class);
 }
 
 void
@@ -281,24 +292,27 @@ push_enum_object__LilyAnalysis(LilyAnalysis *self,
                                LilyAstDecl *enum_object,
                                LilyCheckedDeclModule *module)
 {
-    push__Vec(module->decls,
-              NEW_VARIANT(
-                LilyCheckedDecl,
-                object,
-                &enum_object->location,
-                enum_object,
-                NEW_VARIANT(
-                  LilyCheckedDeclObject,
-                  enum,
-                  NEW(LilyCheckedDeclEnumObject,
-                      enum_object->object.enum_.name,
-                      NULL,
-                      NULL,
-                      NULL,
-                      NEW(LilyCheckedScope,
-                          NEW_VARIANT(
-                            LilyCheckedParent, module, module->scope, module)),
-                      enum_object->object.enum_.visibility))));
+    LilyCheckedDecl *checked_enum_object =
+      NEW_VARIANT(LilyCheckedDecl,
+                  object,
+                  &enum_object->location,
+                  enum_object,
+                  NEW_VARIANT(LilyCheckedDeclObject,
+                              enum,
+                              NEW(LilyCheckedDeclEnumObject,
+                                  enum_object->object.enum_.name,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  enum_object->object.enum_.visibility)));
+
+    checked_enum_object->object.enum_.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+          NEW_VARIANT(LilyCheckedScopeDecls, decl, checked_enum_object));
+
+    push__Vec(module->decls, checked_enum_object);
 }
 
 void
@@ -306,24 +320,27 @@ push_record_object__LilyAnalysis(LilyAnalysis *self,
                                  LilyAstDecl *record_object,
                                  LilyCheckedDeclModule *module)
 {
-    push__Vec(module->decls,
-              NEW_VARIANT(
-                LilyCheckedDecl,
-                object,
-                &record_object->location,
-                record_object,
-                NEW_VARIANT(
-                  LilyCheckedDeclObject,
-                  record,
-                  NEW(LilyCheckedDeclRecordObject,
-                      record_object->object.record.name,
-                      NULL,
-                      NULL,
-                      NULL,
-                      NEW(LilyCheckedScope,
-                          NEW_VARIANT(
-                            LilyCheckedParent, module, module->scope, module)),
-                      record_object->object.record.visibility))));
+    LilyCheckedDecl *checked_record_object =
+      NEW_VARIANT(LilyCheckedDecl,
+                  object,
+                  &record_object->location,
+                  record_object,
+                  NEW_VARIANT(LilyCheckedDeclObject,
+                              record,
+                              NEW(LilyCheckedDeclRecordObject,
+                                  record_object->object.record.name,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  record_object->object.record.visibility)));
+
+    checked_record_object->object.record.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+          NEW_VARIANT(LilyCheckedScopeDecls, decl, checked_record_object));
+
+    push__Vec(module->decls, checked_record_object);
 }
 
 void
@@ -331,24 +348,27 @@ push_trait__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *trait,
                          LilyCheckedDeclModule *module)
 {
-    push__Vec(module->decls,
-              NEW_VARIANT(
-                LilyCheckedDecl,
-                object,
-                &trait->location,
-                trait,
-                NEW_VARIANT(
-                  LilyCheckedDeclObject,
+    LilyCheckedDecl *checked_trait =
+      NEW_VARIANT(LilyCheckedDecl,
+                  object,
+                  &trait->location,
                   trait,
-                  NEW(LilyCheckedDeclTrait,
-                      trait->object.trait.name,
-                      NULL,
-                      NULL,
-                      NULL,
-                      NEW(LilyCheckedScope,
-                          NEW_VARIANT(
-                            LilyCheckedParent, module, module->scope, module)),
-                      trait->object.trait.visibility))));
+                  NEW_VARIANT(LilyCheckedDeclObject,
+                              trait,
+                              NEW(LilyCheckedDeclTrait,
+                                  trait->object.trait.name,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  trait->object.trait.visibility)));
+
+    checked_trait->object.trait.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+          NEW_VARIANT(LilyCheckedScopeDecls, decl, checked_trait));
+
+    push__Vec(module->decls, checked_trait);
 }
 
 void
@@ -375,23 +395,26 @@ push_enum__LilyAnalysis(LilyAnalysis *self,
                         LilyAstDecl *enum_,
                         LilyCheckedDeclModule *module)
 {
-    push__Vec(module->decls,
-              NEW_VARIANT(
-                LilyCheckedDecl,
-                type,
-                &enum_->location,
-                enum_,
-                NEW_VARIANT(
-                  LilyCheckedDeclType,
-                  enum,
-                  NEW(LilyCheckedDeclEnum,
-                      enum_->type.enum_.name,
-                      NULL,
-                      NULL,
-                      NEW(LilyCheckedScope,
-                          NEW_VARIANT(
-                            LilyCheckedParent, module, module->scope, module)),
-                      enum_->type.enum_.visibility))));
+    LilyCheckedDecl *checked_enum =
+      NEW_VARIANT(LilyCheckedDecl,
+                  type,
+                  &enum_->location,
+                  enum_,
+                  NEW_VARIANT(LilyCheckedDeclType,
+                              enum,
+                              NEW(LilyCheckedDeclEnum,
+                                  enum_->type.enum_.name,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  enum_->type.enum_.visibility)));
+
+    checked_enum->type.enum_.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+          NEW_VARIANT(LilyCheckedScopeDecls, decl, checked_enum));
+
+    push__Vec(module->decls, checked_enum);
 }
 
 void
@@ -399,23 +422,26 @@ push_record__LilyAnalysis(LilyAnalysis *self,
                           LilyAstDecl *record,
                           LilyCheckedDeclModule *module)
 {
-    push__Vec(module->decls,
-              NEW_VARIANT(
-                LilyCheckedDecl,
-                type,
-                &record->location,
-                record,
-                NEW_VARIANT(
-                  LilyCheckedDeclType,
+    LilyCheckedDecl *checked_record =
+      NEW_VARIANT(LilyCheckedDecl,
+                  type,
+                  &record->location,
                   record,
-                  NEW(LilyCheckedDeclRecord,
-                      record->type.record.name,
-                      NULL,
-                      NULL,
-                      NEW(LilyCheckedScope,
-                          NEW_VARIANT(
-                            LilyCheckedParent, module, module->scope, module)),
-                      record->type.record.visibility))));
+                  NEW_VARIANT(LilyCheckedDeclType,
+                              record,
+                              NEW(LilyCheckedDeclRecord,
+                                  record->type.record.name,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  record->type.record.visibility)));
+
+    checked_record->type.record.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+          NEW_VARIANT(LilyCheckedScopeDecls, decl, checked_record));
+
+    push__Vec(module->decls, checked_record);
 }
 
 void
@@ -1412,7 +1438,8 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             Vec *body = NEW(Vec);
             LilyCheckedScope *scope_block =
               NEW(LilyCheckedScope,
-                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body));
+                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
+                  NEW_VARIANT(LilyCheckedScopeDecls, scope, body));
 
             CHECK_FUN_BODY(
               stmt->block.body, scope_block, body, safety_mode, false);
@@ -1462,7 +1489,8 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             Vec *if_body = NEW(Vec);
             LilyCheckedScope *if_scope =
               NEW(LilyCheckedScope,
-                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body));
+                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
+                  NEW_VARIANT(LilyCheckedScopeDecls, scope, if_body));
 
             CHECK_FUN_BODY(
               stmt->if_.if_body, if_scope, if_body, safety_mode, false);
@@ -1482,7 +1510,8 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                     LilyCheckedScope *elif_scope =
                       NEW(LilyCheckedScope,
                           NEW_VARIANT(
-                            LilyCheckedParent, scope, scope, current_body));
+                            LilyCheckedParent, scope, scope, current_body),
+                          NEW_VARIANT(LilyCheckedScopeDecls, scope, elif_body));
                     Vec *ast_elif_body = get__Vec(stmt->if_.elif_bodies, k);
 
                     CHECK_FUN_BODY(
@@ -1499,10 +1528,11 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             LilyCheckedStmtElseBranch *else_ = NULL;
 
             if (stmt->if_.else_body) {
+                Vec *else_body = NEW(Vec);
                 LilyCheckedScope *else_scope = NEW(
                   LilyCheckedScope,
-                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body));
-                Vec *else_body = NEW(Vec);
+                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
+                  NEW_VARIANT(LilyCheckedScopeDecls, scope, else_body));
 
                 CHECK_FUN_BODY(stmt->if_.else_body,
                                else_scope,
@@ -1576,7 +1606,8 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             Vec *body = NEW(Vec);
             LilyCheckedScope *scope_unsafe =
               NEW(LilyCheckedScope,
-                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body));
+                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
+                  NEW_VARIANT(LilyCheckedScopeDecls, scope, body));
 
             CHECK_FUN_BODY(stmt->unsafe.body,
                            scope_unsafe,
@@ -1635,7 +1666,8 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             Vec *body = NEW(Vec);
             LilyCheckedScope *scope_while =
               NEW(LilyCheckedScope,
-                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body));
+                  NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
+                  NEW_VARIANT(LilyCheckedScopeDecls, scope, body));
 
             CHECK_FUN_BODY(
               stmt->while_.body, scope_while, body, safety_mode, true);
@@ -1802,6 +1834,11 @@ run_step2__LilyAnalysis(LilyAnalysis *self)
 void
 run__LilyAnalysis(LilyAnalysis *self)
 {
+    self->module.scope =
+      NEW(LilyCheckedScope,
+          NULL,
+          NEW_VARIANT(LilyCheckedScopeDecls, module, &self->module));
+
     run_step0__LilyAnalysis(self);
     run_step1__LilyAnalysis(self);
     run_step2__LilyAnalysis(self);
