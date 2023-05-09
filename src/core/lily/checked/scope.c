@@ -25,6 +25,7 @@
 #include <base/format.h>
 #include <base/new.h>
 
+#include <core/lily/checked/body/fun.h>
 #include <core/lily/checked/scope.h>
 
 #ifdef ENV_DEBUG
@@ -49,14 +50,6 @@
     push__Vec(container, item);                       \
                                                       \
     return 0;
-
-#define SEARCH_IN_THE_SCOPE(container, container_name)   \
-    for (Usize i = 0; i < container->len; ++i) {         \
-        container_name *item = get__Vec(container, i);   \
-        if (!strcmp(item->name->buffer, name->buffer)) { \
-            return item;                                 \
-        }                                                \
-    }
 
 CONSTRUCTOR(LilyCheckedScope *,
             LilyCheckedScope,
@@ -243,23 +236,36 @@ add_variable__LilyCheckedScope(LilyCheckedScope *self,
 }
 
 LilyCheckedScopeContainerFun *
-search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                              const String *name)
 {
-    SEARCH_IN_THE_SCOPE(self->funs, LilyCheckedScopeContainerFun);
+    for (Usize i = 0; i < self->funs->len; ++i) {
+        LilyCheckedScopeContainerFun *fun = get__Vec(self->funs, i);
 
-    if (self->parent) {
-        return search_fun__LilyCheckedScope(self->parent->scope, name);
+        if (!strcmp(fun->name->buffer, name->buffer)) {
+            return fun;
+        }
     }
 
     return NULL;
 }
 
-LilyCheckedScopeContainerVariable *
+LilyCheckedStmtVariable *
 search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
-    SEARCH_IN_THE_SCOPE(self->variables, LilyCheckedScopeContainerVariable);
+    for (Usize i = 0; i < self->variables->len; ++i) {
+        LilyCheckedScopeContainerVariable *variable =
+          get__Vec(self->variables, i);
 
-    if (self->parent) {
+        if (!strcmp(variable->name->buffer, name->buffer)) {
+            return &CAST(LilyCheckedBodyFunItem *,
+                         get__Vec(self->decls.scope, variable->id))
+                      ->stmt.variable;
+        }
+    }
+
+    if (self->parent && self->parent->scope->decls.kind ==
+                          LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE) {
         return search_variable__LilyCheckedScope(self->parent->scope, name);
     }
 

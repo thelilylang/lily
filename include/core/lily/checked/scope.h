@@ -37,6 +37,8 @@
 #include <core/lily/file.h>
 #include <core/lily/visibility.h>
 
+typedef struct LilyCheckedStmtVariable LilyCheckedStmtVariable;
+
 typedef struct LilyCheckedScope
 {
     Usize id;
@@ -193,13 +195,14 @@ add_variable__LilyCheckedScope(LilyCheckedScope *self,
  * @brief Search a fun in the scope.
  */
 LilyCheckedScopeContainerFun *
-search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                              const String *name);
 
 /**
  *
  * @brief Search a variable in the scope.
  */
-LilyCheckedScopeContainerVariable *
+LilyCheckedStmtVariable *
 search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
