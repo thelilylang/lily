@@ -100,6 +100,12 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                               LilyCheckedScope *scope);
 
 static LilyCheckedExpr *
+check_binary_expr__LilyAnalysis(LilyAnalysis *self,
+                                LilyAstExpr *expr,
+                                LilyCheckedScope *scope,
+                                enum LilyCheckedSafetyMode safety_mode);
+
+static LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *expr,
                          LilyCheckedScope *scope,
@@ -934,6 +940,117 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
 }
 
 LilyCheckedExpr *
+check_binary_expr__LilyAnalysis(LilyAnalysis *self,
+                                LilyAstExpr *expr,
+                                LilyCheckedScope *scope,
+                                enum LilyCheckedSafetyMode safety_mode)
+{
+    switch (expr->binary.kind) {
+        case LILY_AST_EXPR_BINARY_KIND_ADD:
+            TODO("analyze +");
+        case LILY_AST_EXPR_BINARY_KIND_AND:
+            TODO("analyze and");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN: {
+            LilyCheckedExpr *left = check_expr__LilyAnalysis(
+              self, expr->binary.left, scope, safety_mode);
+            LilyCheckedExpr *right = check_expr__LilyAnalysis(
+              self, expr->binary.right, scope, safety_mode);
+
+            if (!eq__LilyCheckedDataType(left->data_type, right->data_type)) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    &self->package->file,
+                    left->location,
+                    NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                    NULL,
+                    NULL,
+                    NULL),
+                  &self->package->count_error);
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedExpr,
+              binary,
+              &expr->location,
+              NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNIT, NULL),
+              expr,
+              NEW(LilyCheckedExprBinary,
+                  (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
+                  left,
+                  right));
+        }
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_ADD:
+            TODO("analyze +=");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+            TODO("analyze &=");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT:
+            TODO("analyze <<=");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+            TODO("analyze |=");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT:
+            TODO("analyze >>=");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_DIV:
+            TODO("analyze /=");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_EXP:
+            TODO("analyze **=");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_MOD:
+            TODO("analyze %=");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_MUL:
+            TODO("analyze *=");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_SUB:
+            TODO("analyze -=");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_XOR:
+            TODO("analyze xor=");
+        case LILY_AST_EXPR_BINARY_KIND_BIT_AND:
+            TODO("analyze &");
+        case LILY_AST_EXPR_BINARY_KIND_BIT_L_SHIFT:
+            TODO("analyze <<");
+        case LILY_AST_EXPR_BINARY_KIND_BIT_OR:
+            TODO("analyze |");
+        case LILY_AST_EXPR_BINARY_KIND_BIT_R_SHIFT:
+            TODO("analyze >>");
+        case LILY_AST_EXPR_BINARY_KIND_CHAIN:
+            TODO("analyze |>");
+        case LILY_AST_EXPR_BINARY_KIND_DIV:
+            TODO("analyze /");
+        case LILY_AST_EXPR_BINARY_KIND_EQ:
+            TODO("analyze ==");
+        case LILY_AST_EXPR_BINARY_KIND_EXP:
+            TODO("analyze **");
+        case LILY_AST_EXPR_BINARY_KIND_GREATER:
+            TODO("analyze >");
+        case LILY_AST_EXPR_BINARY_KIND_GREATER_EQ:
+            TODO("analyze >=");
+        case LILY_AST_EXPR_BINARY_KIND_LESS:
+            TODO("analyze <");
+        case LILY_AST_EXPR_BINARY_KIND_LESS_EQ:
+            TODO("analyze <=");
+        case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD:
+            TODO("analyze ->");
+        case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
+            TODO("analyze <-");
+        case LILY_AST_EXPR_BINARY_KIND_MOD:
+            TODO("analyze %");
+        case LILY_AST_EXPR_BINARY_KIND_MUL:
+            TODO("analyze *");
+        case LILY_AST_EXPR_BINARY_KIND_NOT_EQ:
+            TODO("analyze not=");
+        case LILY_AST_EXPR_BINARY_KIND_OR:
+            TODO("analyze or");
+        case LILY_AST_EXPR_BINARY_KIND_RANGE:
+            TODO("analyze ..");
+        case LILY_AST_EXPR_BINARY_KIND_SUB:
+            TODO("analyze -");
+        case LILY_AST_EXPR_BINARY_KIND_XOR:
+            TODO("analyze xor");
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *expr,
                          LilyCheckedScope *scope,
@@ -945,7 +1062,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_KIND_ARRAY:
             TODO("array expression");
         case LILY_AST_EXPR_KIND_BINARY:
-            TODO("binary expression");
+            return check_binary_expr__LilyAnalysis(
+              self, expr, scope, safety_mode);
         case LILY_AST_EXPR_KIND_CALL:
             TODO("call expression");
         case LILY_AST_EXPR_KIND_CAST:
@@ -1721,5 +1839,6 @@ run__LilyAnalysis(LilyAnalysis *self)
 
 DESTRUCTOR(LilyAnalysis, const LilyAnalysis *self)
 {
+    FREE(String, self->module.name);
     // FREE(LilyCheckedDeclModule, &self->module);
 }
