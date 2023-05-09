@@ -101,9 +101,11 @@ CONSTRUCTOR(LilyPackage *,
     if (root) {
         self->parser = NEW(LilyParser, self, root, NULL);
         self->analysis = NEW(LilyAnalysis, self, root, &self->parser);
+        self->builtins = NULL;
     } else {
         self->parser = NEW(LilyParser, self, self, NULL);
         self->analysis = NEW(LilyAnalysis, self, self, &self->parser);
+        self->builtins = load_builtins__LilyBuiltin();
     }
 #endif
 
@@ -291,6 +293,14 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(LilyParser, &self->parser);
     FREE(LilyAnalysis, &self->analysis);
     FREE(LilyIr, &self->ir);
+
+    if (self->builtins) {
+        for (Usize i = 0; i < BUILTINS_COUNT; ++i) {
+            FREE(LilyBuiltinFun, &self->builtins[i]);
+        }
+
+        lily_free(self->builtins);
+    }
 
     lily_free(self);
 }

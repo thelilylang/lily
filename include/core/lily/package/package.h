@@ -32,6 +32,7 @@
 #include <cli/config/compile.h>
 
 #include <core/lily/analysis.h>
+#include <core/lily/builtin.h>
 #include <core/lily/ir.h>
 #include <core/lily/package/config.h>
 #include <core/lily/package/library.h>
@@ -68,6 +69,7 @@ typedef struct LilyPackage
     LilyParser parser;
     LilyAnalysis analysis;
     LilyIr ir;
+    LilyBuiltinFun *builtins;
     Usize count_error;
     Usize count_warning;
     // count all errors and warnings after the precompiler step
