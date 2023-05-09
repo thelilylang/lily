@@ -38,6 +38,7 @@ typedef struct LilyCheckedStmtVariable
     LilyCheckedExpr *expr;          // LilyCheckedExpr*
     bool is_mut;
     bool is_dropped;
+    bool is_moved;
 } LilyCheckedStmtVariable;
 
 /**
@@ -55,7 +56,8 @@ inline CONSTRUCTOR(LilyCheckedStmtVariable,
                                       .data_type = data_type,
                                       .expr = expr,
                                       .is_mut = is_mut,
-                                      .is_dropped = false };
+                                      .is_dropped = false,
+                                      .is_moved = false };
 }
 
 /**

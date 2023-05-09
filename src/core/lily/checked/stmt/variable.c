@@ -34,21 +34,23 @@ IMPL_FOR_DEBUG(to_string,
         return format__String(
           "LilyCheckedStmtVariable{{ name = {S}, data_type = {Sr}, expr = "
           "{Sr}, "
-          "is_mut = {b}, is_dropped = {b} }",
+          "is_mut = {b}, is_dropped = {b}, is_moved = {b} }",
           self->name,
           to_string__Debug__LilyCheckedDataType(self->data_type),
           to_string__Debug__LilyCheckedExpr(self->expr),
           self->is_mut,
-          self->is_dropped);
+          self->is_dropped,
+          self->is_moved);
     } else {
         return format__String(
           "LilyCheckedStmtVariable{{ name = {S}, data_type = NULL, expr = "
           "{Sr}, "
-          "is_mut = {b}, is_dropped = {b} }",
+          "is_mut = {b}, is_dropped = {b}, is_moved = {b} }",
           self->name,
           to_string__Debug__LilyCheckedExpr(self->expr),
           self->is_mut,
-          self->is_dropped);
+          self->is_dropped,
+          self->is_moved);
     }
 }
 #endif
