@@ -75,6 +75,11 @@ typedef struct LilyPackage
     // count all errors and warnings after the precompiler step
     enum LilyVisibility visibility;
     enum LilyPackageStatus status;
+
+    bool sys_is_loaded;
+    bool std_is_loaded;
+    bool core_is_loaded;
+    bool builtin_is_loaded;
 } LilyPackage;
 
 /**

@@ -109,6 +109,11 @@ CONSTRUCTOR(LilyPackage *,
     }
 #endif
 
+    self->sys_is_loaded = false;
+    self->std_is_loaded = false;
+    self->core_is_loaded = false;
+    self->builtin_is_loaded = false;
+
     lily_free(file_ext);
 
     return self;
