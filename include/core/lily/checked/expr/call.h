@@ -28,8 +28,12 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+#include <core/lily/builtin.h>
 #include <core/lily/checked/access.h>
 #include <core/lily/checked/data_type.h>
+#include <core/lily/sys.h>
+
+typedef struct LilyCheckedExpr LilyCheckedExpr;
 
 enum LilyCheckedExprCallKind
 {
@@ -39,6 +43,8 @@ enum LilyCheckedExprCallKind
     LILY_CHECKED_EXPR_CALL_KIND_ERROR,
     LILY_CHECKED_EXPR_CALL_KIND_FIELD,
     LILY_CHECKED_EXPR_CALL_KIND_FUN,
+    LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS,
+    LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN,
     LILY_CHECKED_EXPR_CALL_KIND_METHOD,
     LILY_CHECKED_EXPR_CALL_KIND_MODULE,
     LILY_CHECKED_EXPR_CALL_KIND_RECORD,
@@ -402,11 +408,15 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyCheckedExprCall
 {
     enum LilyCheckedExprCallKind kind;
-    LilyCheckedAccessScope scope;
+    LilyCheckedAccessScope scope; // NOTE: undef when kind is equal to
+                                  // LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN or
+                                  // LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS
     union
     {
         LilyCheckedExprCallError error;
         LilyCheckedExprCallFun fun;
+        const LilyBuiltinFun *fun_builtin; // const LilyBuiltinFun* (&)
+        const LilySysFun *fun_sys;         // const LilySysFun* (&)
         LilyCheckedExprCallMethod method;
         LilyCheckedExprCallRecord record;
         LilyCheckedExprCallVariant variant;
@@ -443,6 +453,35 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_FUN,
                                   .scope = scope,
                                   .fun = fun };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           fun_builtin,
+                           const LilyBuiltinFun *fun_builtin)
+{
+    return (LilyCheckedExprCall){ .kind =
+                                    LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN,
+                                  .fun_builtin = fun_builtin };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           fun_sys,
+                           const LilySysFun *fun_sys)
+{
+    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS,
+                                  .fun_sys = fun_sys };
 }
 
 /**

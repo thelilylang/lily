@@ -141,6 +141,10 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_EXPR_CALL_KIND_FIELD";
         case LILY_CHECKED_EXPR_CALL_KIND_FUN:
             return "LILY_CHECKED_EXPR_CALL_KIND_FUN";
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
+            return "LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN";
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
+            return "LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS";
         case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
             return "LILY_CHECKED_EXPR_CALL_KIND_METHOD";
         case LILY_CHECKED_EXPR_CALL_KIND_MODULE:
@@ -665,10 +669,22 @@ DESTRUCTOR(LilyCheckedExprCallVariant, const LilyCheckedExprCallVariant *self)
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
 {
-    String *res =
-      format__String("LilyCheckedExprCall{{ kind = {s}, scope = {sa}",
-                     to_string__Debug__LilyCheckedExprCallKind(self->kind),
-                     to_string__Debug__LilyCheckedAccessScope(&self->scope));
+    String *res = NULL;
+
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
+            res = format__String(
+              "LilyCheckedExprCall{{ kind = {s}, scope = undef",
+              to_string__Debug__LilyCheckedExprCallKind(self->kind));
+
+            break;
+        default:
+            res = format__String(
+              "LilyCheckedExprCall{{ kind = {s}, scope = {sa}",
+              to_string__Debug__LilyCheckedExprCallKind(self->kind),
+              to_string__Debug__LilyCheckedAccessScope(&self->scope));
+    }
 
     switch (self->kind) {
         case LILY_CHECKED_EXPR_CALL_KIND_ERROR: {
@@ -684,6 +700,23 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
             char *s =
               format(", fun = {Sr} }",
                      to_string__Debug__LilyCheckedExprCallFun(&self->fun));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN: {
+            char *s =
+              format(", fun_builtin = {Sr} }",
+                     to_string__Debug__LilyBuiltinFun(self->fun_builtin));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS: {
+            char *s = format(", fun_sys = {Sr} }",
+                             to_string__Debug__LilySysFun(self->fun_sys));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -766,6 +799,9 @@ DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self)
             break;
         case LILY_CHECKED_EXPR_CALL_KIND_FUN:
             FREE_VARIANT(LilyCheckedExprCall, fun, self);
+            break;
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
             break;
         case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
             FREE_VARIANT(LilyCheckedExprCall, method, self);
