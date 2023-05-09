@@ -42,9 +42,8 @@ IMPL_FOR_DEBUG(to_string,
 
     {
         char *s =
-          format(", scope = {Sr}, access = {Sr}, visibility = {s} }",
+          format(", scope = {Sr}, visibility = {s} }",
                  to_string__Debug__LilyCheckedScope(self->scope),
-                 to_string__Debug__LilyCheckedAccessModule(&self->access),
                  to_string__Debug__LilyVisibility(self->visibility));
 
         PUSH_STR_AND_FREE(res, s);

@@ -38,7 +38,6 @@ typedef struct LilyCheckedDeclModule
     String *name; // String* (&)
     Vec *decls;   // Vec<LilyCheckedDecl*>*
     LilyCheckedScope *scope;
-    LilyCheckedAccessModule access;
     enum LilyVisibility visibility;
 } LilyCheckedDeclModule;
 
@@ -51,13 +50,11 @@ inline CONSTRUCTOR(LilyCheckedDeclModule,
                    String *name,
                    Vec *decls,
                    LilyCheckedScope *scope,
-                   LilyCheckedAccessModule access,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclModule){ .name = name,
                                     .decls = decls,
                                     .scope = scope,
-                                    .access = access,
                                     .visibility = visibility };
 }
 
