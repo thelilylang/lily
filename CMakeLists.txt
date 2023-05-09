@@ -295,10 +295,12 @@ set(CORE_SRC
 	src/core/lily/preprocess/warn.c
 	src/core/lily/analysis.c
 	src/core/lily/ast.c
+	src/core/lily/builtin.c
 	src/core/lily/checked.c
 	src/core/lily/error.c
 	src/core/lily/file.c
 	src/core/lily/ir.c
+	src/core/lily/operator.c
 	src/core/lily/package.c
 	src/core/lily/parser.c
 	src/core/lily/precompile.c
