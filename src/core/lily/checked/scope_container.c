@@ -392,3 +392,80 @@ IMPL_FOR_DEBUG(to_string,
                   self->id);
 }
 #endif
+
+CONSTRUCTOR(LilyCheckedScopeContainerGeneric *,
+            LilyCheckedScopeContainerGeneric,
+            String *name,
+            Usize id)
+{
+    LilyCheckedScopeContainerGeneric *self =
+      lily_malloc(sizeof(LilyCheckedScopeContainerGeneric));
+
+    self->name = name;
+    self->id = id;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerGeneric,
+               const LilyCheckedScopeContainerGeneric *self)
+{
+    return format("LilyCheckedScopeContainerGeneric{{ name = {S}, id = {d} }",
+                  self->name,
+                  self->id);
+}
+#endif
+
+CONSTRUCTOR(LilyCheckedScopeContainerMethod *,
+            LilyCheckedScopeContainerMethod,
+            String *name,
+            Vec *ids)
+{
+    LilyCheckedScopeContainerMethod *self =
+      lily_malloc(sizeof(LilyCheckedScopeContainerMethod));
+
+    self->name = name;
+    self->ids = ids;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerMethod,
+               const LilyCheckedScopeContainerMethod *self)
+{
+
+    String *res = format__String(
+      "LilyCheckedScopeContainerMethod{{ name = {S}, ids = {{ ", self->name);
+
+    for (Usize i = 0; i < self->ids->len; ++i) {
+        if (i != self->ids->len - 1) {
+            char *s = format(
+              "{d}, ", (Usize)(Uptr)CAST(Usize *, get__Vec(self->ids, i)));
+
+            PUSH_STR_AND_FREE(res, s);
+        } else {
+            char *s = format(
+              "{d} }", (Usize)(Uptr)CAST(Usize *, get__Vec(self->ids, i)));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyCheckedScopeContainerMethod,
+           LilyCheckedScopeContainerMethod *self)
+{
+    FREE(Vec, self->ids);
+    lily_free(self);
+}

@@ -507,4 +507,76 @@ inline DESTRUCTOR(LilyCheckedScopeContainerVariable,
     lily_free(self);
 }
 
+typedef struct LilyCheckedScopeContainerGeneric
+{
+    String *name; // String* (&)
+    Usize id;
+} LilyCheckedScopeContainerGeneric;
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeContainerVariable type.
+ */
+CONSTRUCTOR(LilyCheckedScopeContainerGeneric *,
+            LilyCheckedScopeContainerGeneric,
+            String *name,
+            Usize id);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerGeneric in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerGeneric,
+               const LilyCheckedScopeContainerGeneric *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedScopeContainerGeneric type.
+ */
+inline DESTRUCTOR(LilyCheckedScopeContainerGeneric,
+                  LilyCheckedScopeContainerGeneric *self)
+{
+    lily_free(self);
+}
+
+typedef struct LilyCheckedScopeContainerMethod
+{
+    String *name; // String* (&)
+    // overload of method
+    Vec *ids; // Vec<Usize*>*
+} LilyCheckedScopeContainerMethod;
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeContainerMethod type.
+ */
+CONSTRUCTOR(LilyCheckedScopeContainerMethod *,
+            LilyCheckedScopeContainerMethod,
+            String *name,
+            Vec *ids);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerMethod in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerMethod,
+               const LilyCheckedScopeContainerMethod *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedScopeContainerMethod type.
+ */
+DESTRUCTOR(LilyCheckedScopeContainerMethod,
+           LilyCheckedScopeContainerMethod *self);
+
 #endif // LILY_CORE_LILY_CHECKED_SCOPE_CONTAINER_H
