@@ -28,13 +28,13 @@
 #include <base/macros.h>
 #include <base/vec.h>
 
-#include <core/lily/checked.h>
+#include <core/lily/checked/data_type.h>
 
 #define BUILTINS_COUNT 0
 
 typedef struct LilyBuiltinFun
 {
-    char *name;
+    const char *name;
     LilyCheckedDataType *return_data_type;
     Vec *params; // Vec<LilyCheckedDataType*>*
 } LilyBuiltinFun;
@@ -45,6 +45,16 @@ typedef struct LilyBuiltinFun
  */
 LilyBuiltinFun *
 load_builtins__LilyBuiltin();
+
+/**
+ *
+ * @brief Convert LilyBuiltinFun in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyBuiltinFun, const LilyBuiltinFun *self);
+#endif
 
 /**
  *

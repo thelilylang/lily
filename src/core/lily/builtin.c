@@ -23,15 +23,35 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
+
 #include <core/lily/builtin.h>
 
 LilyBuiltinFun *
 load_builtins__LilyBuiltin()
 {
-    LilyBuiltinFun *builtins = lily_malloc(sizeof(LilyBuiltinFun) * 2);
+    LilyBuiltinFun *builtins =
+      lily_malloc(sizeof(LilyBuiltinFun) * BUILTINS_COUNT);
 
     return builtins;
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyBuiltinFun, const LilyBuiltinFun *self)
+{
+	String *res = format__String(
+      "LilyBuiltinFun{{ name = {s}, return_data_type = {Sr}, params =",
+      self->name,
+      to_string__Debug__LilyCheckedDataType(self->return_data_type));
+
+    DEBUG_VEC_STRING(self->params, res, LilyCheckedDataType);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyBuiltinFun, const LilyBuiltinFun *self)
 {
