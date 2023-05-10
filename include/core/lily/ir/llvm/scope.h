@@ -52,9 +52,31 @@ inline DESTRUCTOR(LilyLlvmValue, LilyLlvmValue *self)
     lily_free(self);
 }
 
+typedef struct LilyLlvmType
+{
+    String *name;     // String* (&)
+    LLVMTypeRef type; // LLVMTypeRef (&)
+} LilyLlvmType;
+
+/**
+ *
+ * @brief Construct LilyLlvmType type.
+ */
+CONSTRUCTOR(LilyLlvmType *, LilyLlvmType, String *name, LLVMTypeRef type);
+
+/**
+ *
+ * @brief Free LilyLlvmType type.
+ */
+inline DESTRUCTOR(LilyLlvmType, LilyLlvmType *self)
+{
+    lily_free(self);
+}
+
 typedef struct LilyLlvmScope
 {
     Vec *values;                  // Vec<LilyLlvmValue*>*
+    Vec *types;                   // Vec<LilyLlvmType*>*
     struct LilyLlvmScope *parent; // LilyLlvmScope*? (&)
 } LilyLlvmScope;
 
@@ -66,10 +88,17 @@ CONSTRUCTOR(LilyLlvmScope *, LilyLlvmScope, LilyLlvmScope *parent);
 
 /**
  *
- * @brief Search identifier in the scope.
+ * @brief Search a value in the scope.
  */
 LilyLlvmValue *
-search__LilyLlvmScope(LilyLlvmScope *self, String *name);
+search_value__LilyLlvmScope(LilyLlvmScope *self, String *name);
+
+/**
+ *
+ * @brief Search a type in the scope.
+ */
+LilyLlvmType *
+search_type__LilyLlvmScope(LilyLlvmScope *self, String *name);
 
 /**
  *

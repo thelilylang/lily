@@ -40,18 +40,29 @@ CONSTRUCTOR(LilyLlvmValue *, LilyLlvmValue, String *name, LLVMValueRef value)
     return self;
 }
 
+CONSTRUCTOR(LilyLlvmType *, LilyLlvmType, String *name, LLVMTypeRef type)
+{
+    LilyLlvmType *self = lily_malloc(sizeof(LilyLlvmType));
+
+    self->name = name;
+    self->type = type;
+
+    return self;
+}
+
 CONSTRUCTOR(LilyLlvmScope *, LilyLlvmScope, LilyLlvmScope *parent)
 {
     LilyLlvmScope *self = lily_malloc(sizeof(LilyLlvmScope));
 
     self->values = NEW(Vec);
+    self->types = NEW(Vec);
     self->parent = parent;
 
     return self;
 }
 
 LilyLlvmValue *
-search__LilyLlvmScope(LilyLlvmScope *self, String *name)
+search_value__LilyLlvmScope(LilyLlvmScope *self, String *name)
 {
     for (Usize i = 0; i < self->values->len; ++i) {
         LilyLlvmValue *value = get__Vec(self->values, i);
@@ -61,16 +72,36 @@ search__LilyLlvmScope(LilyLlvmScope *self, String *name)
         }
     }
 
-	if (self->parent) {
-		return search__LilyLlvmScope(self->parent, name);
-	}
+    if (self->parent) {
+        return search_value__LilyLlvmScope(self->parent, name);
+    }
 
-    UNREACHABLE("the analysis or the codegen have a bug!!");
+    UNREACHABLE("(search value) the analysis or the codegen have a bug!!");
+}
+
+LilyLlvmType *
+search_type__LilyLlvmScope(LilyLlvmScope *self, String *name)
+{
+    for (Usize i = 0; i < self->types->len; ++i) {
+        LilyLlvmType *type = get__Vec(self->types, i);
+
+        if (!strcmp(type->name->buffer, name->buffer)) {
+            return type;
+        }
+    }
+
+    if (self->parent) {
+        return search_type__LilyLlvmScope(self->parent, name);
+    }
+
+    UNREACHABLE("(search type) the analysis or the codegen have a bug!!");
 }
 
 DESTRUCTOR(LilyLlvmScope, LilyLlvmScope *self)
 {
     FREE_BUFFER_ITEMS(self->values->buffer, self->values->len, LilyLlvmValue);
     FREE(Vec, self->values);
+    FREE_BUFFER_ITEMS(self->types->buffer, self->types->len, LilyLlvmType);
+    FREE(Vec, self->types);
     lily_free(self);
 }
