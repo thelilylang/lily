@@ -25,6 +25,8 @@
 #ifndef LILY_CORE_LILY_CHECKED_SCOPE_RESPONSE_H
 #define LILY_CORE_LILY_CHECKED_SCOPE_RESPONSE_H
 
+#include <base/new.h>
+
 #include <core/shared/location.h>
 
 #include <core/lily/checked/scope_container.h>
@@ -73,6 +75,8 @@ enum LilyCheckedScopeResponseKind
 typedef struct LilyCheckedScopeResponse
 {
     enum LilyCheckedScopeResponseKind kind;
+    // NOTE: Location is always NULL when kind is equal to
+    // LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN.
     const Location *location; // const Location*? (&)
     LilyCheckedScopeContainer
       scope_container; // NOTE: scope_container is undef when kind is equal to
@@ -89,7 +93,7 @@ typedef struct LilyCheckedScopeResponse
         LilyCheckedDeclRecordObject *record_object;
         LilyCheckedDeclClass *class;
         LilyCheckedDeclTrait *trait;
-        LilyCheckedDeclFun *fun;
+        Vec *fun; // Vec<LilyCheckedDecl* (&)>*
         LilyCheckedStmtVariable *variable;
         LilyCheckedDeclFunParam *fun_param;
         LilyCheckedDeclMethodParam *method_param;
@@ -313,7 +317,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                            fun,
                            const Location *location,
                            LilyCheckedScopeContainer scope_container,
-                           LilyCheckedDeclFun *fun)
+                           Vec *fun)
 {
     return (LilyCheckedScopeResponse){ .kind =
                                          LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN,
@@ -418,6 +422,20 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .scope_container = scope_container,
         .generic = generic
     };
+}
+
+/**
+ *
+ * @brief Free LilyCheckedScopeResponse type.
+ * @note The destructor is only needed to call when kind is equal to
+ * LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN.
+ */
+inline DESTRUCTOR(LilyCheckedScopeResponse,
+                  const LilyCheckedScopeResponse *self)
+{
+    if (self->kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN) {
+        FREE(Vec, self->fun);
+    }
 }
 
 #endif // LILY_CORE_LILY_CHECKED_SCOPE_RESPONSE_H
