@@ -227,6 +227,14 @@ to_msg__LilyError(const LilyError *self)
             return "the identifier is not found";
         case LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED:
             return "the value has been moved";
+        case LILY_ERROR_KIND_CANNOT_USE_ANY_IN_SAFE_MODE:
+            return "you cannot use any in safe mode";
+        case LILY_ERROR_KIND_CANNOT_CAST_TO_ANY_IN_SAFE_MODE:
+            return "you cannot cast to any in safe mode";
+        case LILY_ERROR_KIND_BAD_LITERAL_CAST:
+            return "bad literal cast";
+        case LILY_ERROR_KIND_UNKNOWN_CAST:
+            return "unknown cast";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -428,6 +436,14 @@ to_code__LilyError(const LilyError *self)
             return "0095";
         case LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED:
             return "0096";
+        case LILY_ERROR_KIND_CANNOT_USE_ANY_IN_SAFE_MODE:
+            return "0097";
+        case LILY_ERROR_KIND_CANNOT_CAST_TO_ANY_IN_SAFE_MODE:
+            return "0098";
+        case LILY_ERROR_KIND_BAD_LITERAL_CAST:
+            return "0099";
+        case LILY_ERROR_KIND_UNKNOWN_CAST:
+            return "0100";
         default:
             UNREACHABLE("unknown variant");
     }
