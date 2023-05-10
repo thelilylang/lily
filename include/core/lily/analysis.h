@@ -55,6 +55,7 @@ inline CONSTRUCTOR(LilyAnalysis,
 {
     return (LilyAnalysis){ .module = NEW(LilyCheckedDeclModule,
                                          from__String("global"),
+                                         NULL,
                                          NEW(Vec),
                                          NULL,
                                          LILY_VISIBILITY_PUBLIC),
