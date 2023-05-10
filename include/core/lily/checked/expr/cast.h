@@ -29,8 +29,27 @@
 
 typedef struct LilyCheckedExpr LilyCheckedExpr;
 
+enum LilyCheckedExprCastKind
+{
+    LILY_CHECKED_EXPR_CAST_KIND_DYNAMIC,
+    LILY_CHECKED_EXPR_CAST_KIND_LITERAL,
+};
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCastKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCastKind,
+               enum LilyCheckedExprCastKind self);
+#endif
+
 typedef struct LilyCheckedExprCast
 {
+    enum LilyCheckedExprCastKind kind;
     LilyCheckedExpr *expr;
     LilyCheckedDataType *dest_data_type;
 } LilyCheckedExprCast;
@@ -41,10 +60,12 @@ typedef struct LilyCheckedExprCast
  */
 inline CONSTRUCTOR(LilyCheckedExprCast,
                    LilyCheckedExprCast,
+                   enum LilyCheckedExprCastKind kind,
                    LilyCheckedExpr *expr,
                    LilyCheckedDataType *dest_data_type)
 {
-    return (LilyCheckedExprCast){ .expr = expr,
+    return (LilyCheckedExprCast){ .kind = kind,
+                                  .expr = expr,
                                   .dest_data_type = dest_data_type };
 }
 
@@ -57,6 +78,27 @@ inline CONSTRUCTOR(LilyCheckedExprCast,
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedExprCast, const LilyCheckedExprCast *self);
 #endif
+
+/**
+ *
+ * @brief Check if a LLVM bitcast.
+ */
+bool
+is_llvm_bitcast__LilyCheckedExprCast(const LilyCheckedExprCast *self);
+
+/**
+ *
+ * @brief Check if a LLVM trunc cast.
+ */
+bool
+is_llvm_trunc__LilyCheckedExprCast(const LilyCheckedExprCast *self);
+
+/**
+ *
+ * @brief Check if a LLVM sext cast.
+ */
+bool
+is_llvm_sext__LilyCheckedExprCast(const LilyCheckedExprCast *self);
 
 /**
  *
