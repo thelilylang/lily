@@ -204,19 +204,19 @@ push_constant__LilyAnalysis(LilyAnalysis *self,
                             LilyAstDecl *constant,
                             LilyCheckedDeclModule *module)
 {
-    push__Vec(
-      module->decls,
-      NEW_VARIANT(
-        LilyCheckedDecl,
-        constant,
-        &constant->location,
-        constant,
-        NEW(LilyCheckedDeclConstant,
-            constant->constant.name,
-            format__String("{S}.{S}", module->global_name, constant->constant.name),
-            NULL,
-            NULL,
-            constant->constant.visibility)));
+    push__Vec(module->decls,
+              NEW_VARIANT(LilyCheckedDecl,
+                          constant,
+                          &constant->location,
+                          constant,
+                          NEW(LilyCheckedDeclConstant,
+                              constant->constant.name,
+                              format__String("{S}.{S}",
+                                             module->global_name,
+                                             constant->constant.name),
+                              NULL,
+                              NULL,
+                              constant->constant.visibility)));
 }
 
 void
@@ -224,18 +224,19 @@ push_error__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *error,
                          LilyCheckedDeclModule *module)
 {
-    push__Vec(module->decls,
-              NEW_VARIANT(
-                LilyCheckedDecl,
-                error,
-                &error->location,
-                error,
-                NEW(LilyCheckedDeclError,
-                    error->error.name,
-                    format__String("{S}.{S}", module->global_name, error->error.name),
-                    NULL,
-                    NULL,
-                    error->error.visibility)));
+    push__Vec(
+      module->decls,
+      NEW_VARIANT(
+        LilyCheckedDecl,
+        error,
+        &error->location,
+        error,
+        NEW(LilyCheckedDeclError,
+            error->error.name,
+            format__String("{S}.{S}", module->global_name, error->error.name),
+            NULL,
+            NULL,
+            error->error.visibility)));
 }
 
 void
@@ -280,7 +281,8 @@ push_module__LilyAnalysis(LilyAnalysis *self,
       module_decl,
       NEW(LilyCheckedDeclModule,
           module_decl->module.name,
-          format__String("{S}.{S}", module->global_name, module_decl->module.name),
+          format__String(
+            "{S}.{S}", module->global_name, module_decl->module.name),
           NEW(Vec),
           NULL,
           module_decl->module.visibility));
@@ -302,23 +304,24 @@ push_class__LilyAnalysis(LilyAnalysis *self,
                          LilyCheckedDeclModule *module)
 {
 
-    LilyCheckedDecl *checked_class = NEW_VARIANT(
-      LilyCheckedDecl,
-      object,
-      &class->location,
-      class,
-      NEW_VARIANT(
-        LilyCheckedDeclObject,
-        class,
-        NEW(LilyCheckedDeclClass,
-            class->object.class.name,
-            format__String("{S}.{S}", module->global_name, class->object.class.name),
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            class->object.class.visibility)));
+    LilyCheckedDecl *checked_class =
+      NEW_VARIANT(LilyCheckedDecl,
+                  object,
+                  &class->location,
+                  class,
+                  NEW_VARIANT(LilyCheckedDeclObject,
+                              class,
+                              NEW(LilyCheckedDeclClass,
+                                  class->object.class.name,
+                                  format__String("{S}.{S}",
+                                                 module->global_name,
+                                                 class->object.class.name),
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  class->object.class.visibility)));
 
     checked_class->object.class.scope =
       NEW(LilyCheckedScope,
@@ -395,22 +398,23 @@ push_trait__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *trait,
                          LilyCheckedDeclModule *module)
 {
-    LilyCheckedDecl *checked_trait = NEW_VARIANT(
-      LilyCheckedDecl,
-      object,
-      &trait->location,
-      trait,
-      NEW_VARIANT(
-        LilyCheckedDeclObject,
-        trait,
-        NEW(LilyCheckedDeclTrait,
-            trait->object.trait.name,
-            format__String("{S}.{S}", module->global_name, trait->object.trait.name),
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            trait->object.trait.visibility)));
+    LilyCheckedDecl *checked_trait =
+      NEW_VARIANT(LilyCheckedDecl,
+                  object,
+                  &trait->location,
+                  trait,
+                  NEW_VARIANT(LilyCheckedDeclObject,
+                              trait,
+                              NEW(LilyCheckedDeclTrait,
+                                  trait->object.trait.name,
+                                  format__String("{S}.{S}",
+                                                 module->global_name,
+                                                 trait->object.trait.name),
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  trait->object.trait.visibility)));
 
     checked_trait->object.trait.scope =
       NEW(LilyCheckedScope,
@@ -427,20 +431,20 @@ push_alias__LilyAnalysis(LilyAnalysis *self,
 {
     push__Vec(
       module->decls,
-      NEW_VARIANT(
-        LilyCheckedDecl,
-        type,
-        &alias->location,
-        alias,
-        NEW_VARIANT(
-          LilyCheckedDeclType,
-          alias,
-          NEW(LilyCheckedDeclAlias,
-              alias->type.alias.name,
-              format__String("{S}.{S}", module->global_name, alias->type.alias.name),
-              NULL,
-              NULL,
-              alias->type.alias.visibility))));
+      NEW_VARIANT(LilyCheckedDecl,
+                  type,
+                  &alias->location,
+                  alias,
+                  NEW_VARIANT(LilyCheckedDeclType,
+                              alias,
+                              NEW(LilyCheckedDeclAlias,
+                                  alias->type.alias.name,
+                                  format__String("{S}.{S}",
+                                                 module->global_name,
+                                                 alias->type.alias.name),
+                                  NULL,
+                                  NULL,
+                                  alias->type.alias.visibility))));
 }
 
 void
@@ -453,16 +457,16 @@ push_enum__LilyAnalysis(LilyAnalysis *self,
       type,
       &enum_->location,
       enum_,
-      NEW_VARIANT(
-        LilyCheckedDeclType,
-        enum,
-        NEW(LilyCheckedDeclEnum,
-            enum_->type.enum_.name,
-            format__String("{S}.{S}", module->global_name, enum_->type.enum_.name),
-            NULL,
-            NULL,
-            NULL,
-            enum_->type.enum_.visibility)));
+      NEW_VARIANT(LilyCheckedDeclType,
+                  enum,
+                  NEW(LilyCheckedDeclEnum,
+                      enum_->type.enum_.name,
+                      format__String(
+                        "{S}.{S}", module->global_name, enum_->type.enum_.name),
+                      NULL,
+                      NULL,
+                      NULL,
+                      enum_->type.enum_.visibility)));
 
     checked_enum->type.enum_.scope =
       NEW(LilyCheckedScope,
@@ -477,21 +481,22 @@ push_record__LilyAnalysis(LilyAnalysis *self,
                           LilyAstDecl *record,
                           LilyCheckedDeclModule *module)
 {
-    LilyCheckedDecl *checked_record = NEW_VARIANT(
-      LilyCheckedDecl,
-      type,
-      &record->location,
-      record,
-      NEW_VARIANT(
-        LilyCheckedDeclType,
-        record,
-        NEW(LilyCheckedDeclRecord,
-            record->type.record.name,
-            format__String("{S}.{S}", module->global_name, record->type.record.name),
-            NULL,
-            NULL,
-            NULL,
-            record->type.record.visibility)));
+    LilyCheckedDecl *checked_record =
+      NEW_VARIANT(LilyCheckedDecl,
+                  type,
+                  &record->location,
+                  record,
+                  NEW_VARIANT(LilyCheckedDeclType,
+                              record,
+                              NEW(LilyCheckedDeclRecord,
+                                  record->type.record.name,
+                                  format__String("{S}.{S}",
+                                                 module->global_name,
+                                                 record->type.record.name),
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  record->type.record.visibility)));
 
     checked_record->type.record.scope =
       NEW(LilyCheckedScope,
