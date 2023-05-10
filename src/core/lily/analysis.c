@@ -34,6 +34,9 @@
 
 #include <core/shared/diagnostic.h>
 
+// FIXME: You should look for the right File structure in the package because of
+// the expansion of a macro.
+
 static inline void
 push_constant__LilyAnalysis(LilyAnalysis *self,
                             LilyAstDecl *constant,
@@ -106,11 +109,16 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                 LilyCheckedScope *scope,
                                 enum LilyCheckedSafetyMode safety_mode);
 
+/// @param is_moved_expr If `is_moved_expr` is false it is when the expression
+/// that is passed is not surrounded by a reference or a trace. Also this
+/// parameter to know if when the variable is called it should be marked as
+/// moved.
 static LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *expr,
                          LilyCheckedScope *scope,
-                         enum LilyCheckedSafetyMode safety_mode);
+                         enum LilyCheckedSafetyMode safety_mode,
+                         bool is_moved_expr);
 
 static LilyCheckedBodyFunItem *
 check_stmt__LilyAnalysis(LilyAnalysis *self,
@@ -153,7 +161,7 @@ run_step2__LilyAnalysis(LilyAnalysis *self);
                   NEW_VARIANT(LilyCheckedBodyFunItem,                          \
                               expr,                                            \
                               check_expr__LilyAnalysis(                        \
-                                self, item->expr, scope, safety_mode)));       \
+                                self, item->expr, scope, safety_mode, true))); \
                                                                                \
                 break;                                                         \
             case LILY_AST_BODY_FUN_ITEM_KIND_STMT:                             \
@@ -965,9 +973,9 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
             TODO("analyze and");
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN: {
             LilyCheckedExpr *left = check_expr__LilyAnalysis(
-              self, expr->binary.left, scope, safety_mode);
+              self, expr->binary.left, scope, safety_mode, true);
             LilyCheckedExpr *right = check_expr__LilyAnalysis(
-              self, expr->binary.right, scope, safety_mode);
+              self, expr->binary.right, scope, safety_mode, true);
 
             if (!eq__LilyCheckedDataType(left->data_type, right->data_type)) {
                 emit__Diagnostic(
@@ -1067,7 +1075,8 @@ LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *expr,
                          LilyCheckedScope *scope,
-                         enum LilyCheckedSafetyMode safety_mode)
+                         enum LilyCheckedSafetyMode safety_mode,
+                         bool is_moved_expr)
 {
     switch (expr->kind) {
         case LILY_AST_EXPR_KIND_ACCESS:
@@ -1083,8 +1092,68 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
             TODO("cast expression");
         case LILY_AST_EXPR_KIND_GROUPING:
             TODO("grouping expression");
-        case LILY_AST_EXPR_KIND_IDENTIFIER:
-            TODO("identifier expression");
+        case LILY_AST_EXPR_KIND_IDENTIFIER: {
+            LilyCheckedScopeResponse response =
+              search_variable__LilyCheckedScope(scope, expr->identifier.name);
+
+            if (response.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    &self->package->file,
+                    &expr->location,
+                    NEW(LilyError, LILY_ERROR_KIND_IDENTIFIER_NOT_FOUND),
+                    NULL,
+                    NULL,
+                    NULL),
+                  &self->package->count_error);
+
+                return NULL;
+            } else {
+                LilyCheckedDataType *data_type = NULL;
+
+                switch (response.kind) {
+                    case LILY_CHECKED_SCOPE_RESPONSE_KIND_VARIABLE:
+                        if (response.variable->is_moved) {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &expr->location,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED),
+                                NULL,
+                                NULL,
+                                NULL),
+                              &self->package->count_error);
+                        }
+
+                        if (is_moved_expr) {
+                            response.variable->is_moved = true;
+                        }
+
+                        data_type = clone__LilyCheckedDataType(
+                          response.variable->data_type);
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr,
+                          call,
+                          &expr->location,
+                          data_type,
+                          expr,
+                          NEW(LilyCheckedExprCall,
+                              LILY_CHECKED_EXPR_CALL_KIND_VARIABLE,
+                              (LilyCheckedAccessScope){
+                                .id = response.scope_container.scope_id }));
+                    default:
+                        // TODO: emit a diagnostic
+                        FAILED("this kind of response is not expected in this "
+                               "context");
+                }
+            }
+        }
         case LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR:
             TODO("identifier dollar expression");
         case LILY_AST_EXPR_KIND_LAMBDA:
@@ -1486,7 +1555,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             TODO("analysis for stmt");
         case LILY_AST_STMT_KIND_IF: {
             LilyCheckedExpr *if_cond = check_expr__LilyAnalysis(
-              self, stmt->if_.if_expr, scope, safety_mode);
+              self, stmt->if_.if_expr, scope, safety_mode, true);
             Vec *if_body = NEW(Vec);
             LilyCheckedScope *if_scope =
               NEW(LilyCheckedScope,
@@ -1506,7 +1575,8 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                       self,
                       get__Vec(stmt->if_.elif_exprs, k),
                       scope,
-                      safety_mode);
+                      safety_mode,
+                      true);
                     Vec *elif_body = NEW(Vec);
                     LilyCheckedScope *elif_scope =
                       NEW(LilyCheckedScope,
@@ -1590,7 +1660,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
 
             if (stmt->return_.expr) {
                 expr = check_expr__LilyAnalysis(
-                  self, stmt->return_.expr, scope, safety_mode);
+                  self, stmt->return_.expr, scope, safety_mode, true);
             }
 
             return NEW_VARIANT(LilyCheckedBodyFunItem,
@@ -1627,7 +1697,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_STMT_KIND_VARIABLE: {
             LilyCheckedExpr *expr = check_expr__LilyAnalysis(
-              self, stmt->variable.expr, scope, safety_mode);
+              self, stmt->variable.expr, scope, safety_mode, true);
 
             LilyCheckedScopeContainerVariable *sc_variable =
               NEW(LilyCheckedScopeContainerVariable, stmt->variable.name, i);
@@ -1663,7 +1733,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_STMT_KIND_WHILE: {
             LilyCheckedExpr *expr = check_expr__LilyAnalysis(
-              self, stmt->while_.expr, scope, safety_mode);
+              self, stmt->while_.expr, scope, safety_mode, true);
             Vec *body = NEW(Vec);
             LilyCheckedScope *scope_while =
               NEW(LilyCheckedScope,
@@ -1712,8 +1782,12 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
 
         switch (param->kind) {
             case LILY_AST_DECL_FUN_PARAM_KIND_DEFAULT: {
-                LilyCheckedExpr *default_value = check_expr__LilyAnalysis(
-                  self, param->default_, scope, LILY_CHECKED_SAFETY_MODE_SAFE);
+                LilyCheckedExpr *default_value =
+                  check_expr__LilyAnalysis(self,
+                                           param->default_,
+                                           scope,
+                                           LILY_CHECKED_SAFETY_MODE_SAFE,
+                                           true);
 
                 if (default_value) {
                     push__Vec(checked_params,
@@ -1790,9 +1864,13 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, NULL);
     }
 
-    // 3. Check body.
-    fun->fun.body = NEW(Vec);
+    // 3. Init scope of body.
+    fun->fun.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, decl, fun->fun.scope, fun),
+          NEW_VARIANT(LilyCheckedScopeDecls, scope, fun->fun.body));
 
+    // 4. Check body.
     CHECK_FUN_BODY(fun->ast_decl->fun.body,
                    fun->fun.scope,
                    fun->fun.body,
