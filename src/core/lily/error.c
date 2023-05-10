@@ -223,6 +223,10 @@ to_msg__LilyError(const LilyError *self)
             return "data type don't match";
         case LILY_ERROR_KIND_PATH_IS_NOT_EXPECTED_AFTER_SYS_IMPORT_FLAG:
             return "the path is not expected after the `sys` import flag";
+        case LILY_ERROR_KIND_IDENTIFIER_NOT_FOUND:
+            return "the identifier is not found";
+        case LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED:
+            return "the value has been moved";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -420,6 +424,10 @@ to_code__LilyError(const LilyError *self)
             return "0093";
         case LILY_ERROR_KIND_PATH_IS_NOT_EXPECTED_AFTER_SYS_IMPORT_FLAG:
             return "0094";
+        case LILY_ERROR_KIND_IDENTIFIER_NOT_FOUND:
+            return "0095";
+        case LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED:
+            return "0096";
         default:
             UNREACHABLE("unknown variant");
     }
