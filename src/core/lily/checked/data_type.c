@@ -728,6 +728,136 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
     }
 }
 
+LilyCheckedDataType *
+clone__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ANY:
+        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
+        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+        case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
+        case LILY_CHECKED_DATA_TYPE_KIND_STR:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+            return NEW(LilyCheckedDataType, self->kind, self->location);
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+            switch (self->array.kind) {
+                case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED:
+                    return NEW_VARIANT(LilyCheckedDataType,
+                                       array,
+                                       self->location,
+                                       NEW_VARIANT(LilyCheckedDataTypeArray,
+                                                   sized,
+                                                   clone__LilyCheckedDataType(
+                                                     self->array.data_type),
+                                                   self->array.size));
+                default:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      array,
+                      self->location,
+                      NEW(LilyCheckedDataTypeArray,
+                          self->array.kind,
+                          clone__LilyCheckedDataType(self->array.data_type)));
+            }
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
+            Vec *generics = NULL;
+
+            if (self->custom.generics) {
+                for (Usize i = 0; i < self->custom.generics->len; ++i) {
+                    push__Vec(generics,
+                              clone__LilyCheckedDataType(
+                                get__Vec(self->custom.generics, i)));
+                }
+            }
+
+            return NEW_VARIANT(LilyCheckedDataType,
+                               custom,
+                               self->location,
+                               NEW(LilyCheckedDataTypeCustom,
+                                   self->custom.name,
+                                   generics,
+                                   self->custom.kind));
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
+            Vec *params = NULL;
+            LilyCheckedDataType *return_type =
+              clone__LilyCheckedDataType(self->lambda.return_type);
+
+            if (self->lambda.params) {
+                for (Usize i = 0; i < self->lambda.params->len; ++i) {
+                    push__Vec(params,
+                              clone__LilyCheckedDataType(
+                                get__Vec(self->lambda.params, i)));
+                }
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedDataType,
+              lambda,
+              self->location,
+              NEW(LilyCheckedDataTypeLambda, params, return_type));
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+            return NEW_VARIANT(LilyCheckedDataType,
+                               list,
+                               self->location,
+                               clone__LilyCheckedDataType(self->list));
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            return NEW_VARIANT(LilyCheckedDataType,
+                               mut,
+                               self->location,
+                               clone__LilyCheckedDataType(self->mut));
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+            return NEW_VARIANT(LilyCheckedDataType,
+                               optional,
+                               self->location,
+                               clone__LilyCheckedDataType(self->optional));
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+            return NEW_VARIANT(LilyCheckedDataType,
+                               ptr,
+                               self->location,
+                               clone__LilyCheckedDataType(self->ptr));
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            return NEW_VARIANT(LilyCheckedDataType,
+                               ref,
+                               self->location,
+                               clone__LilyCheckedDataType(self->ref));
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+            return NEW_VARIANT(LilyCheckedDataType,
+                               trace,
+                               self->location,
+                               clone__LilyCheckedDataType(self->trace));
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
+            Vec *tuple = NEW(Vec);
+
+            for (Usize i = 0; i < self->tuple->len; ++i) {
+                push__Vec(tuple,
+                          clone__LilyCheckedDataType(get__Vec(self->tuple, i)));
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedDataType, tuple, self->location, tuple);
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedDataType, array, LilyCheckedDataType *self)
 {
     FREE(LilyCheckedDataTypeArray, &self->array);

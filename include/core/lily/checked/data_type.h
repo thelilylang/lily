@@ -419,6 +419,13 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
 
 /**
  *
+ * @brief Clone LilyCheckedDataType type.
+ */
+LilyCheckedDataType *
+clone__LilyCheckedDataType(LilyCheckedDataType *self);
+
+/**
+ *
  * @brief Free LilyCheckedDataType.
  */
 DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self);
