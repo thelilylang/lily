@@ -180,7 +180,9 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 {
     String *res = format__String(
-      "LilyCheckedDeclFun{{ name = {S}, generic_params = ", self->name);
+      "LilyCheckedDeclFun{{ name = {S}, global_name = {S}, generic_params = ",
+      self->name,
+      self->global_name);
 
     if (self->generic_params) {
         DEBUG_VEC_STRING(self->generic_params, res, LilyCheckedGenericParam);
@@ -228,6 +230,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 {
+    FREE(String, self->global_name);
+
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
                           self->generic_params->len,

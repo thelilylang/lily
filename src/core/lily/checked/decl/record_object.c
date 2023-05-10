@@ -32,8 +32,10 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedDeclRecordObject,
                const LilyCheckedDeclRecordObject *self)
 {
-    String *res = format__String(
-      "LilyCheckedDeclRecordObject{{ name = {S}, generic_params =", self->name);
+    String *res = format__String("LilyCheckedDeclRecordObject{{ name = {S}, "
+                                 "global_name = {S}, generic_params =",
+                                 self->name,
+                                 self->global_name);
 
     if (self->generic_params) {
         DEBUG_VEC_STRING(self->generic_params, res, LilyCheckedGenericParam);
@@ -66,6 +68,8 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDeclRecordObject, const LilyCheckedDeclRecordObject *self)
 {
+    FREE(String, self->global_name);
+
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
                           self->generic_params->len,

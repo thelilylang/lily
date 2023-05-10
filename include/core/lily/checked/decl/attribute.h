@@ -34,6 +34,7 @@
 typedef struct LilyCheckedDeclAttribute
 {
     String *name; // String* (&)
+    String *global_name;
     LilyCheckedDataType *data_type;
     LilyCheckedExpr *optional_expr; // LilyCheckedExpr*?
     bool is_set;
@@ -48,6 +49,7 @@ typedef struct LilyCheckedDeclAttribute
 inline CONSTRUCTOR(LilyCheckedDeclAttribute,
                    LilyCheckedDeclAttribute,
                    String *name,
+                   String *global_name,
                    LilyCheckedDataType *data_type,
                    LilyCheckedExpr *optional_expr,
                    bool is_set,
@@ -55,6 +57,7 @@ inline CONSTRUCTOR(LilyCheckedDeclAttribute,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclAttribute){ .name = name,
+                                       .global_name = global_name,
                                        .data_type = data_type,
                                        .optional_expr = optional_expr,
                                        .is_set = is_set,

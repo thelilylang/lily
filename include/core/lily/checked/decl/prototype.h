@@ -33,7 +33,8 @@
 
 typedef struct LilyCheckedDeclPrototype
 {
-    String *name;                          // String* (&)
+    String *name; // String* (&)
+    String *global_name;
     Vec *generic_params;                   // Vec<LilyCheckedGenericParam*>*?
     Vec *params;                           // Vec<LilyCheckedDataType*>*?
     LilyCheckedDataType *return_data_type; // LilyCheckedDataType*?
@@ -46,11 +47,13 @@ typedef struct LilyCheckedDeclPrototype
 inline CONSTRUCTOR(LilyCheckedDeclPrototype,
                    LilyCheckedDeclPrototype,
                    String *name,
+                   String *global_name,
                    Vec *generic_params,
                    Vec *params,
                    LilyCheckedDataType *return_data_type)
 {
     return (LilyCheckedDeclPrototype){ .name = name,
+                                       .global_name = global_name,
                                        .generic_params = generic_params,
                                        .params = params,
                                        .return_data_type = return_data_type };

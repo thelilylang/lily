@@ -37,7 +37,8 @@
 
 typedef struct LilyCheckedDeclEnumObject
 {
-    String *name;        // String* (&)
+    String *name; // String* (&)
+    String *global_name;
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     Vec *impl_params;    // Vec<LilyCheckedImplParam*>*?
     Vec *body;           // Vec<LilyCheckedBodyEnumObjectItem*>*
@@ -52,6 +53,7 @@ typedef struct LilyCheckedDeclEnumObject
 inline CONSTRUCTOR(LilyCheckedDeclEnumObject,
                    LilyCheckedDeclEnumObject,
                    String *name,
+                   String *global_name,
                    Vec *generic_params,
                    Vec *impl_params,
                    Vec *body,
@@ -59,6 +61,7 @@ inline CONSTRUCTOR(LilyCheckedDeclEnumObject,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclEnumObject){ .name = name,
+                                        .global_name = global_name,
                                         .generic_params = generic_params,
                                         .impl_params = impl_params,
                                         .body = body,

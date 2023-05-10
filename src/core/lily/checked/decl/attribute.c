@@ -37,9 +37,11 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedDeclAttribute *self)
 {
     String *res =
-      format__String("LilyCheckedDeclAttribute{{ name = {S}, data_type = {Sr}, "
+      format__String("LilyCheckedDeclAttribute{{ name = {S}, global_name = "
+                     "{S}, data_type = {Sr}, "
                      "optional_expr =",
                      self->name,
+                     self->global_name,
                      to_string__Debug__LilyCheckedDataType(self->data_type));
 
     if (self->optional_expr) {
@@ -65,6 +67,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDeclAttribute, const LilyCheckedDeclAttribute *self)
 {
+    FREE(String, self->global_name);
     FREE(LilyCheckedDataType, self->data_type);
 
     if (self->optional_expr) {

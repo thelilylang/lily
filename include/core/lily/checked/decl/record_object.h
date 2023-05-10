@@ -36,7 +36,8 @@
 
 typedef struct LilyCheckedDeclRecordObject
 {
-    String *name;        // String* (&)
+    String *name; // String* (&)
+    String *global_name;
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     Vec *impl_params;    // Vec<LilyCheckedImplParam*>*?
     Vec *body;           // Vec<LilyCheckedBodyRecordObjectItem*>*
@@ -51,6 +52,7 @@ typedef struct LilyCheckedDeclRecordObject
 inline CONSTRUCTOR(LilyCheckedDeclRecordObject,
                    LilyCheckedDeclRecordObject,
                    String *name,
+                   String *global_name,
                    Vec *generic_params,
                    Vec *impl_params,
                    Vec *body,
@@ -58,6 +60,7 @@ inline CONSTRUCTOR(LilyCheckedDeclRecordObject,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclRecordObject){ .name = name,
+                                          .global_name = global_name,
                                           .generic_params = generic_params,
                                           .impl_params = impl_params,
                                           .body = body,

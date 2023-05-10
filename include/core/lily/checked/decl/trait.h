@@ -37,7 +37,8 @@
 
 typedef struct LilyCheckedDeclTrait
 {
-    String *name;        // String* (&)
+    String *name; // String* (&)
+    String *global_name;
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     Vec *inherit_params; // Vec<LilyCheckedInheritParam*>*?
     Vec *body;           // Vec<LilyCheckedBodyTraitItem*>*
@@ -52,6 +53,7 @@ typedef struct LilyCheckedDeclTrait
 inline CONSTRUCTOR(LilyCheckedDeclTrait,
                    LilyCheckedDeclTrait,
                    String *name,
+                   String *global_name,
                    Vec *generic_params,
                    Vec *inherit_params,
                    Vec *body,
@@ -59,6 +61,7 @@ inline CONSTRUCTOR(LilyCheckedDeclTrait,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclTrait){ .name = name,
+                                   .global_name = global_name,
                                    .generic_params = generic_params,
                                    .inherit_params = inherit_params,
                                    .body = body,

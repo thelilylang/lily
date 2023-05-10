@@ -35,6 +35,7 @@
 typedef struct LilyCheckedDeclConstant
 {
     String *name; // String* (&)
+    String *global_name;
     LilyCheckedDataType *data_type;
     LilyCheckedExpr *expr;
     enum LilyVisibility visibility;
@@ -47,11 +48,13 @@ typedef struct LilyCheckedDeclConstant
 inline CONSTRUCTOR(LilyCheckedDeclConstant,
                    LilyCheckedDeclConstant,
                    String *name,
+                   String *global_name,
                    LilyCheckedDataType *data_type,
                    LilyCheckedExpr *expr,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclConstant){ .name = name,
+                                      .global_name = global_name,
                                       .data_type = data_type,
                                       .expr = expr,
                                       .visibility = visibility };

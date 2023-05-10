@@ -35,8 +35,10 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedDeclModule,
                const LilyCheckedDeclModule *self)
 {
-    String *res =
-      format__String("LilyCheckedDeclModule{{ name = {S}, decls =", self->name);
+    String *res = format__String(
+      "LilyCheckedDeclModule{{ name = {S}, global_name = {S}, decls =",
+      self->name,
+      self->global_name);
 
     DEBUG_VEC_STRING(self->decls, res, LilyCheckedDecl);
 
@@ -54,6 +56,8 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDeclModule, const LilyCheckedDeclModule *self)
 {
+    FREE(String, self->global_name);
+
     FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, LilyCheckedDecl);
     FREE(Vec, self->decls);
 

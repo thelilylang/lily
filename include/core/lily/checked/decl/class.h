@@ -38,7 +38,8 @@
 
 typedef struct LilyCheckedDeclClass
 {
-    String *name;        // String* (&)
+    String *name; // String* (&)
+    String *global_name;
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     Vec *inherit_params; // Vec<LilyCheckedInheritParam*>*?
     Vec *impl_params;    // Vec<LilyCheckedImplParam*>*?
@@ -54,6 +55,7 @@ typedef struct LilyCheckedDeclClass
 inline CONSTRUCTOR(LilyCheckedDeclClass,
                    LilyCheckedDeclClass,
                    String *name,
+                   String *global_name,
                    Vec *generic_params,
                    Vec *inherit_params,
                    Vec *impl_params,
@@ -62,6 +64,7 @@ inline CONSTRUCTOR(LilyCheckedDeclClass,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclClass){ .name = name,
+                                   .global_name = global_name,
                                    .generic_params = generic_params,
                                    .inherit_params = inherit_params,
                                    .impl_params = impl_params,

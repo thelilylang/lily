@@ -34,7 +34,8 @@
 
 typedef struct LilyCheckedDeclEnum
 {
-    String *name;        // String* (&)
+    String *name; // String* (&)
+    String *global_name;
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*
     Vec *variants;       // Vec<LilyCheckedVariant*>*
     LilyCheckedScope *scope;
@@ -44,12 +45,14 @@ typedef struct LilyCheckedDeclEnum
 inline CONSTRUCTOR(LilyCheckedDeclEnum,
                    LilyCheckedDeclEnum,
                    String *name,
+                   String *global_name,
                    Vec *generic_params,
                    Vec *variants,
                    LilyCheckedScope *scope,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclEnum){ .name = name,
+                                  .global_name = global_name,
                                   .generic_params = generic_params,
                                   .variants = variants,
                                   .scope = scope,

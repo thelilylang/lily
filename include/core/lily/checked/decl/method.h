@@ -129,7 +129,8 @@ DESTRUCTOR(LilyCheckedDeclMethodParam, LilyCheckedDeclMethodParam *self);
 
 typedef struct LilyCheckedDeclMethod
 {
-    String *name;                          // String* (&)
+    String *name; // String* (&)
+    String *global_name;
     String *object_impl;                   // String*? (&)
     Vec *generic_params;                   // Vec<LilyCheckedGenericParam*>*?
     Vec *params;                           // Vec<LilyCheckedDeclMethodParam*>*?
@@ -153,6 +154,7 @@ typedef struct LilyCheckedDeclMethod
 inline CONSTRUCTOR(LilyCheckedDeclMethod,
                    LilyCheckedDeclMethod,
                    String *name,
+                   String *global_name,
                    String *object_impl,
                    Vec *generic_params,
                    Vec *params,
@@ -165,6 +167,7 @@ inline CONSTRUCTOR(LilyCheckedDeclMethod,
                    bool is_operator)
 {
     return (LilyCheckedDeclMethod){ .name = name,
+                                    .global_name = global_name,
                                     .object_impl = object_impl,
                                     .params = params,
                                     .return_data_type = return_data_type,

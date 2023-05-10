@@ -34,7 +34,8 @@
 
 typedef struct LilyCheckedDeclAlias
 {
-    String *name;        // String* (&)
+    String *name; // String* (&)
+    String *global_name;
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     LilyCheckedDataType *data_type;
     enum LilyVisibility visibility;
@@ -47,11 +48,13 @@ typedef struct LilyCheckedDeclAlias
 inline CONSTRUCTOR(LilyCheckedDeclAlias,
                    LilyCheckedDeclAlias,
                    String *name,
+                   String *global_name,
                    Vec *generic_params,
                    LilyCheckedDataType *data_type,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclAlias){ .name = name,
+                                   .global_name = global_name,
                                    .generic_params = generic_params,
                                    .data_type = data_type,
                                    .visibility = visibility };

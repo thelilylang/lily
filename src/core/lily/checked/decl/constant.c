@@ -31,9 +31,11 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedDeclConstant *self)
 {
     return format__String(
-      "LilyCheckedDeclConstant{{ name = {S}, data_type = {Sr}, "
+      "LilyCheckedDeclConstant{{ name = {S}, global_name = {S}, data_type = "
+      "{Sr}, "
       "expr = {Sr}, visibility = {s} }",
       self->name,
+      self->global_name,
       to_string__Debug__LilyCheckedDataType(self->data_type),
       to_string__Debug__LilyCheckedExpr(self->expr),
       to_string__Debug__LilyVisibility(self->visibility));
@@ -42,6 +44,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDeclConstant, const LilyCheckedDeclConstant *self)
 {
+    FREE(String, self->global_name);
     FREE(LilyCheckedDataType, self->data_type);
     FREE(LilyCheckedExpr, self->expr);
 }

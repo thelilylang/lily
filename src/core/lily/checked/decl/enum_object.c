@@ -32,8 +32,10 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedDeclEnumObject,
                const LilyCheckedDeclEnumObject *self)
 {
-    String *res = format__String(
-      "LilyCheckedDeclEnumObject{{ name = {S}, generic_params =", self->name);
+    String *res = format__String("LilyCheckedDeclEnumObject{{ name = {S}, "
+                                 "global_name = {S}, generic_params =",
+                                 self->name,
+                                 self->global_name);
 
     if (self->generic_params) {
         DEBUG_VEC_STRING(self->generic_params, res, LilyCheckedGenericParam);
@@ -50,7 +52,7 @@ IMPL_FOR_DEBUG(to_string,
     }
 
     push_str__String(res, ", body =");
-    // DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyEnumObjectItem);
+    DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyEnumObjectItem);
 
     {
         char *s = format(", scope = {Sr}, visibility = {s} }",
@@ -66,6 +68,8 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDeclEnumObject, const LilyCheckedDeclEnumObject *self)
 {
+    FREE(String, self->global_name);
+
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
                           self->generic_params->len,

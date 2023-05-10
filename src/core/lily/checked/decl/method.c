@@ -232,7 +232,9 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedDeclMethod *self)
 {
     String *res = format__String(
-      "LilyCheckedDeclMethod{{ name = {S}, object_impl = ", self->name);
+      "LilyCheckedDeclMethod{{ name = {S}, global_name = {S}, object_impl = ",
+      self->name,
+      self->global_name);
 
     if (self->object_impl) {
         append__String(res, self->object_impl);
@@ -293,6 +295,8 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDeclMethod, const LilyCheckedDeclMethod *self)
 {
+    FREE(String, self->global_name);
+
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
                           self->generic_params->len,
