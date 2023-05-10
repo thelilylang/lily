@@ -675,14 +675,18 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
             res = format__String(
-              "LilyCheckedExprCall{{ kind = {s}, scope = undef",
-              to_string__Debug__LilyCheckedExprCallKind(self->kind));
+              "LilyCheckedExprCall{{ kind = {s}, scope = undef, global_name = "
+              "{S}",
+              to_string__Debug__LilyCheckedExprCallKind(self->kind),
+              self->global_name);
 
             break;
         default:
             res = format__String(
-              "LilyCheckedExprCall{{ kind = {s}, scope = {sa}",
+              "LilyCheckedExprCall{{ kind = {s}, global_name = {S}, scope = "
+              "{sa}",
               to_string__Debug__LilyCheckedExprCallKind(self->kind),
+              self->global_name,
               to_string__Debug__LilyCheckedAccessScope(&self->scope));
     }
 

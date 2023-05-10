@@ -411,6 +411,7 @@ typedef struct LilyCheckedExprCall
     LilyCheckedAccessScope scope; // NOTE: undef when kind is equal to
                                   // LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN or
                                   // LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS
+    String *global_name;          // String* (&)
     union
     {
         LilyCheckedExprCallError error;
@@ -432,10 +433,12 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                            LilyCheckedExprCall,
                            error,
                            LilyCheckedAccessScope scope,
+                           String *global_name,
                            LilyCheckedExprCallError error)
 {
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_ERROR,
                                   .scope = scope,
+                                  .global_name = global_name,
                                   .error = error };
 }
 
@@ -448,10 +451,12 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                            LilyCheckedExprCall,
                            fun,
                            LilyCheckedAccessScope scope,
+                           String *global_name,
                            LilyCheckedExprCallFun fun)
 {
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_FUN,
                                   .scope = scope,
+                                  .global_name = global_name,
                                   .fun = fun };
 }
 
@@ -463,10 +468,12 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
 inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                            LilyCheckedExprCall,
                            fun_builtin,
+                           String *global_name,
                            const LilyBuiltinFun *fun_builtin)
 {
     return (LilyCheckedExprCall){ .kind =
                                     LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN,
+                                  .global_name = global_name,
                                   .fun_builtin = fun_builtin };
 }
 
@@ -478,9 +485,11 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
 inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                            LilyCheckedExprCall,
                            fun_sys,
+                           String *global_name,
                            const LilySysFun *fun_sys)
 {
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS,
+                                  .global_name = global_name,
                                   .fun_sys = fun_sys };
 }
 
@@ -493,10 +502,12 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                            LilyCheckedExprCall,
                            method,
                            LilyCheckedAccessScope scope,
+                           String *global_name,
                            LilyCheckedExprCallMethod method)
 {
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_METHOD,
                                   .scope = scope,
+                                  .global_name = global_name,
                                   .method = method };
 }
 
@@ -509,10 +520,12 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                            LilyCheckedExprCall,
                            record,
                            LilyCheckedAccessScope scope,
+                           String *global_name,
                            LilyCheckedExprCallRecord record)
 {
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_RECORD,
                                   .scope = scope,
+                                  .global_name = global_name,
                                   .record = record };
 }
 
@@ -525,10 +538,12 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                            LilyCheckedExprCall,
                            variant,
                            LilyCheckedAccessScope scope,
+                           String *global_name,
                            LilyCheckedExprCallVariant variant)
 {
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_VARIANT,
                                   .scope = scope,
+                                  .global_name = global_name,
                                   .variant = variant };
 }
 
@@ -539,9 +554,12 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
 inline CONSTRUCTOR(LilyCheckedExprCall,
                    LilyCheckedExprCall,
                    enum LilyCheckedExprCallKind kind,
+                   String *global_name,
                    LilyCheckedAccessScope scope)
 {
-    return (LilyCheckedExprCall){ .kind = kind, .scope = scope };
+    return (LilyCheckedExprCall){ .kind = kind,
+                                  .scope = scope,
+                                  .global_name = global_name };
 }
 
 /**
