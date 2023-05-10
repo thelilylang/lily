@@ -426,6 +426,23 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self);
 
 /**
  *
+ * @brief Return true if is a literal data type.
+ */
+inline bool
+is_literal_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    return self->kind != LILY_CHECKED_DATA_TYPE_KIND_CUSTOM;
+}
+
+/**
+ *
+ * @brief Get the integer size of the data type.
+ */
+Usize
+get_integer_size__LilyCheckedDataType(LilyCheckedDataType *self);
+
+/**
+ *
  * @brief Free LilyCheckedDataType.
  */
 DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self);

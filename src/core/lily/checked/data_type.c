@@ -858,6 +858,29 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
     }
 }
 
+Usize
+get_integer_size__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+            return 1;
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+            return 2;
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+            return 4;
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+            return 8;
+        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+            return sizeof(Usize);
+        default:
+            UNREACHABLE("cannot get the integer size");
+    }
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedDataType, array, LilyCheckedDataType *self)
 {
     FREE(LilyCheckedDataTypeArray, &self->array);
