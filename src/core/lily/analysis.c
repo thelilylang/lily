@@ -1258,8 +1258,17 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                expr,
                                NEW(LilyCheckedExprCast, kind, left, dest));
         }
-        case LILY_AST_EXPR_KIND_GROUPING:
-            TODO("grouping expression");
+        case LILY_AST_EXPR_KIND_GROUPING: {
+            LilyCheckedExpr *grouping = check_expr__LilyAnalysis(
+              self, expr->grouping, scope, safety_mode, is_moved_expr);
+
+            return NEW_VARIANT(LilyCheckedExpr,
+                               grouping,
+                               &expr->location,
+                               clone__LilyCheckedDataType(grouping->data_type),
+                               expr,
+                               grouping);
+        }
         case LILY_AST_EXPR_KIND_IDENTIFIER: {
             LilyCheckedScopeResponse response =
               search_variable__LilyCheckedScope(scope, expr->identifier.name);
