@@ -225,6 +225,34 @@ search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *
+ * @brief Search a constant in the scope.
+ */
+LilyCheckedScopeResponse
+search_constant__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
+ * @brief Search an error in the scope.
+ */
+LilyCheckedScopeResponse
+search_error__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
+ * @brief Search an alias in the scope.
+ */
+LilyCheckedScopeResponse
+search_alias__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
+ * @brief Search a record in the scope.
+ */
+LilyCheckedScopeResponse
+search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
  * @brief Search an identifier in the scope.
  */
 LilyCheckedScopeResponse

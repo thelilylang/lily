@@ -86,6 +86,8 @@ int
 add_module__LilyCheckedScope(LilyCheckedScope *self,
                              LilyCheckedScopeContainerModule *module)
 {
+    CHECK_IF_EXISTS(self->constants, module, LilyCheckedScopeContainerConstant);
+    CHECK_IF_EXISTS(self->funs, module, LilyCheckedScopeContainerFun);
     ADD_TO_SCOPE(self->modules, module, LilyCheckedScopeContainerModule);
 }
 
@@ -93,6 +95,8 @@ int
 add_constant__LilyCheckedScope(LilyCheckedScope *self,
                                LilyCheckedScopeContainerConstant *constant)
 {
+    CHECK_IF_EXISTS(self->funs, constant, LilyCheckedScopeContainerFun);
+    CHECK_IF_EXISTS(self->modules, constant, LilyCheckedScopeContainerModule);
     ADD_TO_SCOPE(self->constants, constant, LilyCheckedScopeContainerConstant);
 }
 
@@ -284,8 +288,7 @@ search_module__LilyCheckedScope(LilyCheckedScope *self, const String *name)
             return NEW(LilyCheckedScopeResponse);
     }
 
-    if (self->parent && (self->parent->scope->decls.kind ==
-                         LILY_CHECKED_SCOPE_DECLS_KIND_MODULE)) {
+    if (self->parent) {
         return search_module__LilyCheckedScope(self->parent->scope, name);
     }
 
@@ -396,6 +399,147 @@ search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 }
 
 LilyCheckedScopeResponse
+search_constant__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->constants->len; ++i) {
+                LilyCheckedScopeContainerConstant *constant =
+                  get__Vec(self->constants, i);
+
+                if (!strcmp(constant->name->buffer, name->buffer)) {
+                    LilyCheckedDecl *c =
+                      get__Vec(self->decls.module->decls, constant->id);
+
+                    return NEW_VARIANT(LilyCheckedScopeResponse,
+                                       constant,
+                                       c->location,
+                                       NEW_VARIANT(LilyCheckedScopeContainer,
+                                                   constant,
+                                                   self->id,
+                                                   constant),
+                                       &c->constant);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_constant__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
+search_error__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->constants->len; ++i) {
+                LilyCheckedScopeContainerError *error =
+                  get__Vec(self->errors, i);
+
+                if (!strcmp(error->name->buffer, name->buffer)) {
+                    LilyCheckedDecl *e =
+                      get__Vec(self->decls.module->decls, error->id);
+
+                    return NEW_VARIANT(
+                      LilyCheckedScopeResponse,
+                      error,
+                      e->location,
+                      NEW_VARIANT(
+                        LilyCheckedScopeContainer, error, self->id, error),
+                      &e->error);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_error__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
+search_alias__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->aliases->len; ++i) {
+                LilyCheckedScopeContainerAlias *alias =
+                  get__Vec(self->aliases, i);
+
+                if (!strcmp(alias->name->buffer, name->buffer)) {
+                    LilyCheckedDecl *a =
+                      get__Vec(self->decls.module->decls, alias->id);
+
+                    return NEW_VARIANT(
+                      LilyCheckedScopeResponse,
+                      alias,
+                      a->location,
+                      NEW_VARIANT(
+                        LilyCheckedScopeContainer, alias, self->id, alias),
+                      &a->type.alias);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_alias__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
+search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->records->len; ++i) {
+                LilyCheckedScopeContainerRecord *record =
+                  get__Vec(self->records, i);
+
+                if (!strcmp(record->name->buffer, name->buffer)) {
+                    LilyCheckedDecl *r =
+                      get__Vec(self->decls.module->decls, record->id);
+
+                    return NEW_VARIANT(
+                      LilyCheckedScopeResponse,
+                      record,
+                      r->location,
+                      NEW_VARIANT(
+                        LilyCheckedScopeContainer, record, self->id, record),
+                      &r->type.record);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_record__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
 search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
     LilyCheckedScopeResponse variable =
@@ -403,14 +547,17 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
     LilyCheckedScopeResponse fun = search_fun__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse module =
       search_module__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse constant =
+      search_constant__LilyCheckedScope(self, name);
 
-    // [variable, fun, module]
-    // [0, 1, 2]
-    Vec *responses = init__Vec(3, &variable, &fun, &module);
+    // [variable, fun, module, constant]
+    // [0, 1, 2, 3]
+    Vec *responses = init__Vec(4, &variable, &fun, &module, &constant);
 
     bool variable_is_found = true;
     bool fun_is_found = true;
     bool module_is_found = true;
+    bool constant_is_found = true;
 
     for (Usize i = 0; i < responses->len; ++i) {
         LilyCheckedScopeResponse *response = get__Vec(responses, i);
@@ -423,19 +570,22 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                     fun_is_found = false;
                 } else if (i == 2) {
                     module_is_found = false;
+                } else if (i == 3) {
+                    constant_is_found = false;
                 }
 
                 break;
             default:
-				break;
+                break;
         }
     }
 
-	FREE(Vec, responses);
+    FREE(Vec, responses);
 
-    switch (variable_is_found + fun_is_found + module_is_found) {
-        case 3:
-        found_3 : {
+    switch (variable_is_found + fun_is_found + module_is_found +
+            constant_is_found) {
+        case 4:
+        found_4 : {
             // The scope of the variable or function is in all situations higher
             // than that of the module.
             if (fun.scope_container.scope_id >
@@ -447,28 +597,80 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 return variable;
             }
         }
+        case 3:
+            if ((variable_is_found && fun_is_found && constant_is_found) ||
+                (variable_is_found && fun_is_found && module_is_found) ||
+                (module_is_found && constant_is_found && variable_is_found)) {
+                goto found_4;
+            } else if (fun_is_found && constant_is_found && module_is_found) {
+                if (fun.scope_container.scope_id >
+                      constant.scope_container.scope_id &&
+                    fun.scope_container.scope_id >
+                      module.scope_container.scope_id) {
+                    return fun;
+                } else if (constant.scope_container.scope_id >
+                             fun.scope_container.scope_id &&
+                           constant.scope_container.scope_id >
+                             module.scope_container.scope_id) {
+                    FREE(LilyCheckedScopeResponse, &fun);
 
-        break;
+                    return constant;
+                } else if (module.scope_container.scope_id >
+                             fun.scope_container.scope_id &&
+                           module.scope_container.scope_id >
+                             constant.scope_container.scope_id) {
+                    FREE(LilyCheckedScopeResponse, &fun);
+
+                    return module;
+                } else {
+                    UNREACHABLE("the scope have a bug!!");
+                }
+            } else {
+                UNREACHABLE("the scope have a bug!!");
+            }
+
+            break;
         case 2:
-            if (fun_is_found && variable_is_found) {
-                goto found_3;
-            } else if (variable_is_found && module_is_found) {
+            if (variable_is_found && fun_is_found) {
+                goto found_4;
+            } else if ((variable_is_found && constant_is_found) ||
+                       (variable_is_found && module_is_found)) {
                 return variable;
+            } else if (fun_is_found && constant_is_found) {
+                if (fun.scope_container.scope_id >
+                    constant.scope_container.scope_id) {
+                    return fun;
+                } else if (fun.scope_container.scope_id <
+                           constant.scope_container.scope_id) {
+                    FREE(LilyCheckedScopeResponse, &fun);
+
+                    return constant;
+                } else {
+                    UNREACHABLE("the scope have a bug!!");
+                }
             } else if (fun_is_found && module_is_found) {
                 if (fun.scope_container.scope_id >
                     module.scope_container.scope_id) {
                     return fun;
                 } else if (fun.scope_container.scope_id <
                            module.scope_container.scope_id) {
-                    FREE(LilyCheckedScopeResponse, &fun);
-
                     return module;
                 } else {
-                    UNREACHABLE("this situation is impossible");
+                    UNREACHABLE("the scope have a bug!!");
+                }
+            } else if (constant_is_found && module_is_found) {
+                if (constant.scope_container.scope_id >
+                    module.scope_container.scope_id) {
+                    return constant;
+                } else if (constant.scope_container.scope_id <
+                           module.scope_container.scope_id) {
+                    return module;
+                } else {
+                    UNREACHABLE("the scope have a bug!!");
                 }
             } else {
-				UNREACHABLE("this situation is impossible");
-			}
+                UNREACHABLE("the scope have a bug!!");
+            }
 
             break;
         case 1:
@@ -476,6 +678,8 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 return variable;
             } else if (fun_is_found) {
                 return fun;
+            } else if (constant_is_found) {
+                return constant;
             } else {
                 return module;
             }
