@@ -220,6 +220,8 @@ int
 add_fun__LilyCheckedScope(LilyCheckedScope *self,
                           LilyCheckedScopeContainerFun *fun)
 {
+    CHECK_IF_EXISTS(self->variables, fun, LilyCheckedScopeContainerVariable);
+    CHECK_IF_EXISTS(self->modules, fun, LilyCheckedScopeContainerModule);
     ADD_TO_SCOPE(self->funs, fun, LilyCheckedScopeContainerFun);
 }
 
@@ -354,30 +356,136 @@ search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 }
 
 LilyCheckedScopeResponse
+search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->funs->len; ++i) {
+                LilyCheckedScopeContainerFun *fun = get__Vec(self->funs, i);
+
+                if (!strcmp(fun->name->buffer, name->buffer)) {
+                    Vec *f = NEW(Vec);
+
+                    for (Usize j = 0; j < fun->ids->len; ++j) {
+                        push__Vec(f,
+                                  get__Vec(self->decls.module->decls,
+                                           (Usize)(Uptr)(Usize *)get__Vec(
+                                             fun->ids, j)));
+                    }
+
+                    return NEW_VARIANT(
+                      LilyCheckedScopeResponse,
+                      fun,
+                      NULL,
+                      NEW_VARIANT(
+                        LilyCheckedScopeContainer, fun, self->id, fun),
+                      f);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_fun__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
 search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
-    LilyCheckedScopeResponse module =
-      search_module__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse variable =
       search_variable__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse fun = search_fun__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse module =
+      search_module__LilyCheckedScope(self, name);
 
-    if (module.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND &&
-        variable.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
-        return NEW(LilyCheckedScopeResponse);
+    // [variable, fun, module]
+    // [0, 1, 2]
+    Vec *responses = init__Vec(3, &variable, &fun, &module);
+
+    bool variable_is_found = true;
+    bool fun_is_found = true;
+    bool module_is_found = true;
+
+    for (Usize i = 0; i < responses->len; ++i) {
+        LilyCheckedScopeResponse *response = get__Vec(responses, i);
+
+        switch (response->kind) {
+            case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                if (i == 0) {
+                    variable_is_found = false;
+                } else if (i == 1) {
+                    fun_is_found = false;
+                } else if (i == 2) {
+                    module_is_found = false;
+                }
+
+                break;
+            default:
+				break;
+        }
     }
 
-    if (module.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
-        return variable;
-    } else if (variable.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
-        return module;
-    }
+	FREE(Vec, responses);
 
-    if (module.scope_container.module->id >
-        variable.scope_container.variable->id) {
-        return module;
-    }
+    switch (variable_is_found + fun_is_found + module_is_found) {
+        case 3:
+        found_3 : {
+            // The scope of the variable or function is in all situations higher
+            // than that of the module.
+            if (fun.scope_container.scope_id >
+                variable.scope_container.scope_id) {
+                return fun;
+            } else {
+                FREE(LilyCheckedScopeResponse, &fun);
 
-    return variable;
+                return variable;
+            }
+        }
+
+        break;
+        case 2:
+            if (fun_is_found && variable_is_found) {
+                goto found_3;
+            } else if (variable_is_found && module_is_found) {
+                return variable;
+            } else if (fun_is_found && module_is_found) {
+                if (fun.scope_container.scope_id >
+                    module.scope_container.scope_id) {
+                    return fun;
+                } else if (fun.scope_container.scope_id <
+                           module.scope_container.scope_id) {
+                    FREE(LilyCheckedScopeResponse, &fun);
+
+                    return module;
+                } else {
+                    UNREACHABLE("this situation is impossible");
+                }
+            } else {
+				UNREACHABLE("this situation is impossible");
+			}
+
+            break;
+        case 1:
+            if (variable_is_found) {
+                return variable;
+            } else if (fun_is_found) {
+                return fun;
+            } else {
+                return module;
+            }
+
+            break;
+        case 0:
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            UNREACHABLE("this situation is impossible");
+    }
 }
 
 #ifdef ENV_DEBUG

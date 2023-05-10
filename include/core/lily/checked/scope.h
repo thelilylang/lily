@@ -218,6 +218,13 @@ search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *
+ * @brief Search a fun in the scope.
+ */
+LilyCheckedScopeResponse
+search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
  * @brief Search an identifier in the scope.
  */
 LilyCheckedScopeResponse
