@@ -158,9 +158,9 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                             return LLVMBuildSExt(
                               self->builder, expr_llvm, dest_llvm, name);
                         } else {
-							return LLVMBuildBitCast(
+                            return LLVMBuildBitCast(
                               self->builder, expr_llvm, dest_llvm, name);
-						}
+                        }
                     } else {
                         TODO("do other literal casts");
                     }
