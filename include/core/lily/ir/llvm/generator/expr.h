@@ -32,10 +32,13 @@
 /**
  *
  * @brief Generate expression in LLVM IR.
+ *
+ * @param name const char*?
  */
 LLVMValueRef
 generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                           const LilyCheckedExpr *expr,
-                          LilyLlvmScope *scope);
+                          LilyLlvmScope *scope,
+                          const char *name);
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_EXPR_H

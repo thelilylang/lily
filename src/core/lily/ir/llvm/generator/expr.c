@@ -113,7 +113,8 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
 LLVMValueRef
 generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                           const LilyCheckedExpr *expr,
-                          LilyLlvmScope *scope)
+                          LilyLlvmScope *scope,
+                          const char *name)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_LITERAL:
@@ -134,6 +135,39 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 }
                 default:
                     TODO("generatte call expression in LLVM IR");
+            }
+
+            break;
+        }
+        case LILY_CHECKED_EXPR_KIND_CAST: {
+            switch (expr->cast.kind) {
+                case LILY_CHECKED_EXPR_CAST_KIND_DYNAMIC:
+                    TODO("generate dynamic cast");
+                case LILY_CHECKED_EXPR_CAST_KIND_LITERAL:
+                    if (is_llvm_bitcast__LilyCheckedExprCast(&expr->cast)) {
+                        LLVMValueRef expr_llvm = generate_expr__LilyIrLlvm(
+                          self, expr->cast.expr, scope, NULL);
+                        LLVMTypeRef dest_llvm = generate_data_type__LilyIrLlvm(
+                          self, expr->cast.dest_data_type);
+
+                        if (is_llvm_trunc__LilyCheckedExprCast(&expr->cast)) {
+                            return LLVMBuildTrunc(
+                              self->builder, expr_llvm, dest_llvm, name);
+                        } else if (is_llvm_sext__LilyCheckedExprCast(
+                                     &expr->cast)) {
+                            return LLVMBuildSExt(
+                              self->builder, expr_llvm, dest_llvm, name);
+                        } else {
+							return LLVMBuildBitCast(
+                              self->builder, expr_llvm, dest_llvm, name);
+						}
+                    } else {
+                        TODO("do other literal casts");
+                    }
+
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
             }
 
             break;
