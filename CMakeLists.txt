@@ -277,6 +277,7 @@ set(CORE_SRC
 	src/core/lily/ir/llvm/generator/stmt.c
 	src/core/lily/ir/llvm/generator.c
 	src/core/lily/ir/llvm/linker.c
+	src/core/lily/ir/llvm/scope.c
 	src/core/lily/ir/cc.c
 	src/core/lily/ir/cpp.c
 	src/core/lily/ir/js.c
