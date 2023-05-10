@@ -27,6 +27,7 @@
 #include <core/lily/ir/llvm/generator/expr.h>
 #include <core/lily/ir/llvm/generator/function.h>
 #include <core/lily/ir/llvm/generator/stmt.h>
+#include <core/lily/ir/llvm/scope.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +60,10 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
     LLVMPositionBuilderAtEnd(self->builder, entry_block);
 
-    GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL);
+    LilyLlvmScope *llvm_scope = NEW(LilyLlvmScope, NULL);
 
+    GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, llvm_scope);
+
+    FREE(LilyLlvmScope, llvm_scope);
     FREE(Vec, params);
 }

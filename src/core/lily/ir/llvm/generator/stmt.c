@@ -36,7 +36,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                           const LilyCheckedStmt *stmt,
                           LLVMValueRef fun,
                           LLVMBasicBlockRef exit_block,
-                          LLVMBasicBlockRef cond_block)
+                          LLVMBasicBlockRef cond_block,
+                          LilyLlvmScope *scope)
 {
     switch (stmt->kind) {
         case LILY_CHECKED_STMT_KIND_ASM:
@@ -46,11 +47,13 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_STMT_KIND_BLOCK:
             if (stmt->block.body->len > 0) {
                 LLVMBasicBlockRef block = LLVMAppendBasicBlock(fun, "block");
+                LilyLlvmScope *block_scope = NEW(LilyLlvmScope, scope);
 
                 LLVMBuildBr(self->builder, block);
                 LLVMPositionBuilderAtEnd(self->builder, block);
 
-                GENERATE_FUNCTION_BODY(stmt->block.body, fun, NULL, NULL);
+                GENERATE_FUNCTION_BODY(
+                  stmt->block.body, fun, NULL, NULL, block_scope);
 
                 LLVMBasicBlockRef block_exit =
                   LLVMAppendBasicBlock(fun, "exit_block");
@@ -58,6 +61,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                 LLVMBuildBr(self->builder, block_exit);
 
                 LLVMPositionBuilderAtEnd(self->builder, block_exit);
+
+                FREE(LilyLlvmScope, block_scope);
             }
 
             return NULL;
@@ -71,6 +76,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_STMT_KIND_FOR:
             TODO("generate for stmt");
         case LILY_CHECKED_STMT_KIND_IF: {
+            LilyLlvmScope *if_scope = NEW(LilyLlvmScope, scope);
+
             LLVMBasicBlockRef if_block_exit =
               LLVMAppendBasicBlock(fun, "if_exit");
             LLVMBasicBlockRef if_block_cond =
@@ -82,7 +89,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             LLVMPositionBuilderAtEnd(self->builder, if_block_cond);
 
             LLVMValueRef if_cond =
-              generate_expr__LilyIrLlvm(self, stmt->if_.if_->cond);
+              generate_expr__LilyIrLlvm(self, stmt->if_.if_->cond, scope);
 
             if (stmt->if_.elifs) {
                 if (stmt->if_.elifs->len > 1) {
@@ -103,10 +110,12 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                     LLVMPositionBuilderAtEnd(self->builder, if_block);
 
                     GENERATE_FUNCTION_BODY(
-                      stmt->if_.if_->body, fun, NULL, NULL);
+                      stmt->if_.if_->body, fun, NULL, NULL, if_scope);
                     LLVMBuildBr(self->builder, if_block_exit);
 
                     for (Usize i = 0; i < stmt->if_.elifs->len - 1; ++i) {
+                        LilyLlvmScope *elif_scope = NEW(LilyLlvmScope, scope);
+
                         LilyCheckedStmtIfBranch *elif =
                           get__Vec(stmt->if_.elifs, i);
 
@@ -114,7 +123,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                                                  current_elif_block_cond);
 
                         LLVMValueRef elif_cond =
-                          generate_expr__LilyIrLlvm(self, elif->cond);
+                          generate_expr__LilyIrLlvm(self, elif->cond, scope);
 
                         LLVMBuildCondBr(self->builder,
                                         elif_cond,
@@ -124,7 +133,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                         LLVMPositionBuilderAtEnd(self->builder,
                                                  current_elif_block);
 
-                        GENERATE_FUNCTION_BODY(elif->body, fun, NULL, NULL);
+                        GENERATE_FUNCTION_BODY(
+                          elif->body, fun, NULL, NULL, elif_scope);
                         LLVMBuildBr(self->builder, if_block_exit);
 
                         current_elif_block_cond = next_elif_block_cond;
@@ -136,7 +146,11 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                             next_elif_block =
                               LLVMAppendBasicBlock(fun, "elif_block");
                         }
+
+                        FREE(LilyLlvmScope, elif_scope);
                     }
+
+                    LilyLlvmScope *last_elif_scope = NEW(LilyLlvmScope, scope);
 
                     LilyCheckedStmtIfBranch *last_elif =
                       last__Vec(stmt->if_.elifs);
@@ -145,7 +159,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                                              current_elif_block_cond);
 
                     LLVMValueRef last_elif_cond =
-                      generate_expr__LilyIrLlvm(self, last_elif->cond);
+                      generate_expr__LilyIrLlvm(self, last_elif->cond, scope);
 
                     LLVMBasicBlockRef else_block = NULL;
 
@@ -165,15 +179,22 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                     LLVMPositionBuilderAtEnd(self->builder, current_elif_block);
 
-                    GENERATE_FUNCTION_BODY(last_elif->body, fun, NULL, NULL);
+                    GENERATE_FUNCTION_BODY(
+                      last_elif->body, fun, NULL, NULL, last_elif_scope);
                     LLVMBuildBr(self->builder, if_block_exit);
 
+                    FREE(LilyLlvmScope, last_elif_scope);
+
                     if (else_block) {
+                        LilyLlvmScope *else_scope = NEW(LilyLlvmScope, scope);
+
                         LLVMPositionBuilderAtEnd(self->builder, else_block);
 
                         GENERATE_FUNCTION_BODY(
-                          stmt->if_.else_->body, fun, NULL, NULL);
+                          stmt->if_.else_->body, fun, NULL, NULL, else_scope);
                         LLVMBuildBr(self->builder, if_block_exit);
+
+                        FREE(LilyLlvmScope, else_scope);
                     }
                 } else if (stmt->if_.elifs->len == 1) {
                     LilyCheckedStmtIfBranch *elif =
@@ -210,7 +231,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                     LLVMPositionBuilderAtEnd(self->builder, if_block);
 
                     GENERATE_FUNCTION_BODY(
-                      stmt->if_.if_->body, fun, NULL, NULL);
+                      stmt->if_.if_->body, fun, NULL, NULL, if_scope);
                     LLVMBuildBr(self->builder, if_block_exit);
 
                     if (elif_block_cond) {
@@ -220,9 +241,12 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                                                  elif_block_cond);
 
                         LLVMValueRef elif_cond =
-                          generate_expr__LilyIrLlvm(self, elif->cond);
+                          generate_expr__LilyIrLlvm(self, elif->cond, scope);
 
                         if (elif->body->len > 0) {
+                            LilyLlvmScope *elif_scope =
+                              NEW(LilyLlvmScope, scope);
+
                             elif_block =
                               LLVMAppendBasicBlock(fun, "elif_block");
 
@@ -240,8 +264,11 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                             LLVMPositionBuilderAtEnd(self->builder, elif_block);
 
-                            GENERATE_FUNCTION_BODY(elif->body, fun, NULL, NULL);
+                            GENERATE_FUNCTION_BODY(
+                              elif->body, fun, NULL, NULL, elif_scope);
                             LLVMBuildBr(self->builder, if_block_exit);
+
+                            FREE(LilyLlvmScope, elif_scope);
                         } else {
                             if (else_block) {
                                 LLVMBuildCondBr(self->builder,
@@ -257,18 +284,30 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                         }
 
                         if (else_block) {
+                            LilyLlvmScope *else_scope =
+                              NEW(LilyLlvmScope, scope);
+
                             LLVMPositionBuilderAtEnd(self->builder, else_block);
 
-                            GENERATE_FUNCTION_BODY(
-                              stmt->if_.else_->body, fun, NULL, NULL);
+                            GENERATE_FUNCTION_BODY(stmt->if_.else_->body,
+                                                   fun,
+                                                   NULL,
+                                                   NULL,
+                                                   else_scope);
                             LLVMBuildBr(self->builder, if_block_exit);
+
+                            FREE(LilyLlvmScope, else_scope);
                         }
                     } else if (else_block) {
+                        LilyLlvmScope *else_scope = NEW(LilyLlvmScope, scope);
+
                         LLVMPositionBuilderAtEnd(self->builder, else_block);
 
                         GENERATE_FUNCTION_BODY(
-                          stmt->if_.else_->body, fun, NULL, NULL);
+                          stmt->if_.else_->body, fun, NULL, NULL, else_scope);
                         LLVMBuildBr(self->builder, if_block_exit);
+
+                        FREE(LilyLlvmScope, else_scope);
                     }
                 } else {
                     UNREACHABLE("this situation is impossible");
@@ -293,197 +332,26 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                 LLVMPositionBuilderAtEnd(self->builder, if_block);
 
-                GENERATE_FUNCTION_BODY(stmt->if_.if_->body, fun, NULL, NULL);
+                GENERATE_FUNCTION_BODY(
+                  stmt->if_.if_->body, fun, NULL, NULL, if_scope);
                 LLVMBuildBr(self->builder, if_block_exit);
 
                 if (else_block) {
+                    LilyLlvmScope *else_scope = NEW(LilyLlvmScope, scope);
+
                     LLVMPositionBuilderAtEnd(self->builder, else_block);
 
                     GENERATE_FUNCTION_BODY(
-                      stmt->if_.else_->body, fun, NULL, NULL);
+                      stmt->if_.else_->body, fun, NULL, NULL, else_scope);
                     LLVMBuildBr(self->builder, if_block_exit);
+
+                    FREE(LilyLlvmScope, else_scope);
                 }
             }
 
-            //            if (stmt->if_.elifs) {
-            //                if (stmt->if_.elifs->len > 1) {
-            //                    LLVMBasicBlockRef current_elif_block_cond =
-            //                      LLVMAppendBasicBlock(fun, "eibc");
-            //                    LLVMBasicBlockRef current_elif_block =
-            //                      LLVMAppendBasicBlock(fun, "eib");
-            //                    LLVMBasicBlockRef next_elif_block_cond =
-            //                      LLVMAppendBasicBlock(fun, "eibc");
-            //                    LLVMBasicBlockRef next_elif_block =
-            //                      LLVMAppendBasicBlock(fun, "eib");
-            //
-            //                    LLVMBuildCondBr(self->builder,
-            //                                    if_cond,
-            //                                    if_block,
-            //                                    current_elif_block_cond);
-            //
-            //                    LLVMPositionBuilderAtEnd(self->builder,
-            //                    if_block);
-            //
-            //                    GENERATE_FUNCTION_BODY(stmt->if_.if_->body,
-            //                    fun, NULL, NULL); LLVMBuildBr(self->builder,
-            //                    if_block_exit);
-            //
-            //                    for (Usize i = 0; i < stmt->if_.elifs->len -
-            //                    1; ++i) {
-            //                        LilyCheckedStmtIfBranch *elif =
-            //                          get__Vec(stmt->if_.elifs, i);
-            //
-            //                        LLVMPositionBuilderAtEnd(self->builder,
-            //                                                 current_elif_block_cond);
-            //
-            //                        LLVMValueRef elif_cond =
-            //                          generate_expr__LilyIrLlvm(self,
-            //                          elif->cond);
-            //
-            //                        LLVMBuildCondBr(self->builder,
-            //                                        elif_cond,
-            //                                        current_elif_block,
-            //                                        next_elif_block_cond);
-            //
-            //                        LLVMPositionBuilderAtEnd(self->builder,
-            //                                                 current_elif_block);
-            //
-            //                        GENERATE_FUNCTION_BODY(elif->body, fun,
-            //                        NULL, NULL); LLVMBuildBr(self->builder,
-            //                        if_block_exit);
-            //
-            //                        current_elif_block_cond =
-            //                        next_elif_block_cond; current_elif_block =
-            //                        next_elif_block;
-            //
-            //                        if (i < stmt->if_.elifs->len - 2) {
-            //                            next_elif_block_cond =
-            //                              LLVMAppendBasicBlock(fun, "eibc");
-            //                            next_elif_block =
-            //                            LLVMAppendBasicBlock(fun, "eib");
-            //                        }
-            //                    }
-            //
-            //                    LilyCheckedStmtIfBranch *last_elif =
-            //                      last__Vec(stmt->if_.elifs);
-            //
-            //                    LLVMPositionBuilderAtEnd(self->builder,
-            //                                             current_elif_block_cond);
-            //
-            //                    LLVMValueRef last_elif_cond =
-            //                      generate_expr__LilyIrLlvm(self,
-            //                      last_elif->cond);
-            //
-            //                    LLVMBasicBlockRef else_block = NULL;
-            //
-            //                    if (stmt->if_.else_) {
-            //                        else_block = LLVMAppendBasicBlock(fun,
-            //                        "eb");
-            //
-            //                        LLVMBuildCondBr(self->builder,
-            //                                        last_elif_cond,
-            //                                        current_elif_block,
-            //                                        else_block);
-            //                    } else {
-            //                        LLVMBuildCondBr(self->builder,
-            //                        last_elif_cond, current_elif_block,
-            //                        if_block_exit);
-            //                    }
-            //
-            //                    LLVMPositionBuilderAtEnd(self->builder,
-            //                    current_elif_block);
-            //
-            //                    GENERATE_FUNCTION_BODY(last_elif->body, fun,
-            //                    NULL, NULL); LLVMBuildBr(self->builder,
-            //                    if_block_exit);
-            //
-            //                    if (else_block) {
-            //                        LLVMPositionBuilderAtEnd(self->builder,
-            //                        else_block);
-            //
-            //                        GENERATE_FUNCTION_BODY(
-            //                          stmt->if_.else_->body, fun, NULL, NULL);
-            //                        LLVMBuildBr(self->builder, if_block_exit);
-            //                    }
-            //                } else if (stmt->if_.elifs->len == 1) {
-            //                    LilyCheckedStmtIfBranch *elif =
-            //                      get__Vec(stmt->if_.elifs, 0);
-            //
-            //                    LLVMBasicBlockRef elif_block_cond =
-            //                      LLVMAppendBasicBlock(fun, "eibc");
-            //                    LLVMBasicBlockRef elif_block =
-            //                      LLVMAppendBasicBlock(fun, "eib");
-            //
-            //                    LLVMPositionBuilderAtEnd(self->builder,
-            //                    elif_block_cond);
-            //
-            //                    LLVMValueRef elif_cond =
-            //                      generate_expr__LilyIrLlvm(self, elif->cond);
-            //
-            //                    LLVMBasicBlockRef else_block = NULL;
-            //
-            //                    if (stmt->if_.else_) {
-            //                        else_block = LLVMAppendBasicBlock(fun,
-            //                        "eb");
-            //
-            //                        LLVMBuildCondBr(
-            //                          self->builder, elif_cond, elif_block,
-            //                          else_block);
-            //                    } else {
-            //                        LLVMBuildCondBr(
-            //                          self->builder, elif_cond, elif_block,
-            //                          if_block_exit);
-            //                    }
-            //
-            //                    LLVMPositionBuilderAtEnd(self->builder,
-            //                    elif_block);
-            //
-            //                    GENERATE_FUNCTION_BODY(elif->body, fun, NULL,
-            //                    NULL); LLVMBuildBr(self->builder,
-            //                    if_block_exit);
-            //
-            //                    LLVMPositionBuilderAtEnd(self->builder,
-            //                    else_block);
-            //
-            //                    if (else_block) {
-            //                        GENERATE_FUNCTION_BODY(
-            //                          stmt->if_.else_->body, fun, NULL, NULL);
-            //                        LLVMBuildBr(self->builder, if_block_exit);
-            //                    }
-            //                } else {
-            //                    UNREACHABLE("this situation is impossible");
-            //                }
-            //            } else {
-            //                LLVMBasicBlockRef else_block = NULL;
-            //
-            //                if (stmt->if_.else_) {
-            //                    else_block = LLVMAppendBasicBlock(fun, "eb");
-            //
-            //                    LLVMBuildCondBr(
-            //                      self->builder, if_cond, if_block,
-            //                      else_block);
-            //                } else {
-            //                    LLVMBuildCondBr(self->builder, if_cond,
-            //                    if_block, if_block_exit);
-            //                }
-            //
-            //                LLVMPositionBuilderAtEnd(self->builder, if_block);
-            //
-            //                GENERATE_FUNCTION_BODY(stmt->if_.if_->body, fun,
-            //                NULL, NULL); LLVMBuildBr(self->builder,
-            //                if_block_exit);
-            //
-            //                LLVMPositionBuilderAtEnd(self->builder,
-            //                else_block);
-            //
-            //                if (stmt->if_.else_) {
-            //                    GENERATE_FUNCTION_BODY(
-            //                      stmt->if_.else_->body, fun, NULL, NULL);
-            //                    LLVMBuildBr(self->builder, if_block_exit);
-            //                }
-            //            }
-
             LLVMPositionBuilderAtEnd(self->builder, if_block_exit);
+
+            FREE(LilyLlvmScope, if_scope);
 
             return NULL;
         }
@@ -499,18 +367,20 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_STMT_KIND_RETURN:
             return LLVMBuildRet(
               self->builder,
-              generate_expr__LilyIrLlvm(self, stmt->return_.expr));
+              generate_expr__LilyIrLlvm(self, stmt->return_.expr, scope));
         case LILY_CHECKED_STMT_KIND_TRY:
             TODO("generate try stmt");
         case LILY_CHECKED_STMT_KIND_UNSAFE:
             if (stmt->unsafe.body->len > 0) {
+                LilyLlvmScope *unsafe_scope = NEW(LilyLlvmScope, scope);
                 LLVMBasicBlockRef unsafe_block =
                   LLVMAppendBasicBlock(fun, "ublock");
 
                 LLVMBuildBr(self->builder, unsafe_block);
                 LLVMPositionBuilderAtEnd(self->builder, unsafe_block);
 
-                GENERATE_FUNCTION_BODY(stmt->unsafe.body, fun, NULL, NULL);
+                GENERATE_FUNCTION_BODY(
+                  stmt->unsafe.body, fun, NULL, NULL, unsafe_scope);
 
                 LLVMBasicBlockRef unsafe_block_exit =
                   LLVMAppendBasicBlock(fun, "exit_ublock");
@@ -518,6 +388,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                 LLVMBuildBr(self->builder, unsafe_block_exit);
 
                 LLVMPositionBuilderAtEnd(self->builder, unsafe_block_exit);
+
+                FREE(LilyLlvmScope, unsafe_scope);
             }
 
             return NULL;
@@ -525,15 +397,20 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             LLVMTypeRef variable_data_type =
               generate_data_type__LilyIrLlvm(self, stmt->variable.data_type);
             LLVMValueRef variable_expr =
-              generate_expr__LilyIrLlvm(self, stmt->variable.expr);
+              generate_expr__LilyIrLlvm(self, stmt->variable.expr, scope);
             LLVMValueRef variable = LLVMBuildAlloca(
               self->builder, variable_data_type, stmt->variable.name->buffer);
+
+            push__Vec(scope->values,
+                      NEW(LilyLlvmValue, stmt->variable.name, variable));
 
             LLVMBuildStore(self->builder, variable_expr, variable);
 
             return variable;
         }
         case LILY_CHECKED_STMT_KIND_WHILE: {
+            LilyLlvmScope *while_scope = NEW(LilyLlvmScope, scope);
+
             LLVMBasicBlockRef loop_while_block_cond =
               LLVMAppendBasicBlock(fun, "loop_w_cond");
 
@@ -542,7 +419,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             LLVMPositionBuilderAtEnd(self->builder, loop_while_block_cond);
 
             LLVMValueRef loop_while_cond =
-              generate_expr__LilyIrLlvm(self, stmt->while_.expr);
+              generate_expr__LilyIrLlvm(self, stmt->while_.expr, scope);
 
             LLVMBasicBlockRef loop_while_block =
               LLVMAppendBasicBlock(fun, "loop_w");
@@ -556,11 +433,16 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
             LLVMPositionBuilderAtEnd(self->builder, loop_while_block);
 
-            GENERATE_FUNCTION_BODY(
-              stmt->while_.body, fun, loop_while_exit, loop_while_block_cond);
+            GENERATE_FUNCTION_BODY(stmt->while_.body,
+                                   fun,
+                                   loop_while_exit,
+                                   loop_while_block_cond,
+                                   while_scope);
             LLVMBuildBr(self->builder, loop_while_block_cond);
 
             LLVMPositionBuilderAtEnd(self->builder, loop_while_exit);
+
+            FREE(LilyLlvmScope, while_scope);
 
             return NULL;
         }

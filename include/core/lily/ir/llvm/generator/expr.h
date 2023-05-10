@@ -27,12 +27,15 @@
 
 #include <core/lily/checked.h>
 #include <core/lily/ir/llvm.h>
+#include <core/lily/ir/llvm/scope.h>
 
 /**
  *
  * @brief Generate expression in LLVM IR.
  */
 LLVMValueRef
-generate_expr__LilyIrLlvm(const LilyIrLlvm *self, const LilyCheckedExpr *expr);
+generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
+                          const LilyCheckedExpr *expr,
+                          LilyLlvmScope *scope);
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_EXPR_H

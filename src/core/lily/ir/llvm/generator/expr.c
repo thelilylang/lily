@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/expr.h>
 #include <core/lily/ir/llvm/primary.h>
 
@@ -110,11 +111,33 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
 }
 
 LLVMValueRef
-generate_expr__LilyIrLlvm(const LilyIrLlvm *self, const LilyCheckedExpr *expr)
+generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
+                          const LilyCheckedExpr *expr,
+                          LilyLlvmScope *scope)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_LITERAL:
             return generate_literal_expr__LilyIrLlvm(self, &expr->literal);
+        case LILY_CHECKED_EXPR_KIND_CALL: {
+            switch (expr->call.kind) {
+                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
+                    LLVMTypeRef type =
+                      generate_data_type__LilyIrLlvm(self, expr->data_type);
+
+                    return LLVMBuildLoad2(
+                      self->builder,
+                      type,
+                      search__LilyLlvmScope(scope,
+                                            expr->ast_expr->identifier.name)
+                        ->value,
+                      expr->ast_expr->identifier.name->buffer);
+                }
+                default:
+                    TODO("generatte call expression in LLVM IR");
+            }
+
+            break;
+        }
         default:
             TODO("generate expression in LLVM IR");
     }

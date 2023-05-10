@@ -27,6 +27,7 @@
 
 #include <core/lily/checked.h>
 #include <core/lily/ir/llvm.h>
+#include <core/lily/ir/llvm/scope.h>
 
 /**
  *
@@ -37,6 +38,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                           const LilyCheckedStmt *stmt,
                           LLVMValueRef fun,
                           LLVMBasicBlockRef exit_block,
-                          LLVMBasicBlockRef cond_block);
+                          LLVMBasicBlockRef cond_block,
+                          LilyLlvmScope *scope);
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_STMT_H
