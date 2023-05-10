@@ -40,7 +40,7 @@ load_builtins__LilyBuiltin()
 String *
 IMPL_FOR_DEBUG(to_string, LilyBuiltinFun, const LilyBuiltinFun *self)
 {
-	String *res = format__String(
+    String *res = format__String(
       "LilyBuiltinFun{{ name = {s}, return_data_type = {Sr}, params =",
       self->name,
       to_string__Debug__LilyCheckedDataType(self->return_data_type));
