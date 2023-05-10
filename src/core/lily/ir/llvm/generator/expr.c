@@ -129,7 +129,7 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                     return LLVMBuildLoad2(
                       self->builder,
                       type,
-                      search__LilyLlvmScope(scope, expr->call.global_name)
+                      search_value__LilyLlvmScope(scope, expr->call.global_name)
                         ->value,
                       expr->call.global_name->buffer);
                 default:
