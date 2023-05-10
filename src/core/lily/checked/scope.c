@@ -255,6 +255,42 @@ search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
 }
 
 LilyCheckedScopeResponse
+search_module__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->modules->len; ++i) {
+                LilyCheckedScopeContainerModule *module =
+                  get__Vec(self->modules, i);
+
+                if (!strcmp(module->name->buffer, name->buffer)) {
+                    LilyCheckedDecl *m =
+                      get__Vec(self->decls.module->decls, module->id);
+
+                    return NEW_VARIANT(
+                      LilyCheckedScopeResponse,
+                      module,
+                      m->location,
+                      NEW_VARIANT(
+                        LilyCheckedScopeContainer, module, self->id, module),
+                      &m->module);
+                }
+            }
+
+            break;
+        default:
+            return NEW(LilyCheckedScopeResponse);
+    }
+
+    if (self->parent && (self->parent->scope->decls.kind ==
+                         LILY_CHECKED_SCOPE_DECLS_KIND_MODULE)) {
+        return search_module__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
 search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
     switch (self->decls.kind) {
@@ -265,12 +301,15 @@ search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 
                 if (!strcmp(variable->name->buffer, name->buffer)) {
                     LilyCheckedBodyFunItem *item =
-                      CAST(LilyCheckedBodyFunItem *,
-                           get__Vec(self->decls.decl->fun.body, variable->id));
+                      get__Vec(self->decls.scope, variable->id);
 
                     return NEW_VARIANT(LilyCheckedScopeResponse,
                                        variable,
                                        item->stmt.location,
+                                       NEW_VARIANT(LilyCheckedScopeContainer,
+                                                   variable,
+                                                   self->id,
+                                                   variable),
                                        &item->stmt.variable);
                 }
             }
@@ -286,10 +325,15 @@ search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                         LilyCheckedDeclFunParam *param =
                           get__Vec(self->decls.decl->fun.params, variable->id);
 
-                        return NEW_VARIANT(LilyCheckedScopeResponse,
-                                           fun_param,
-                                           &param->location,
-                                           param);
+                        return NEW_VARIANT(
+                          LilyCheckedScopeResponse,
+                          fun_param,
+                          &param->location,
+                          NEW_VARIANT(LilyCheckedScopeContainer,
+                                      variable,
+                                      self->id,
+                                      variable),
+                          param);
                     }
                 }
             }
@@ -307,6 +351,33 @@ search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
     }
 
     return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
+search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse module =
+      search_module__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse variable =
+      search_variable__LilyCheckedScope(self, name);
+
+    if (module.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND &&
+        variable.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
+        return NEW(LilyCheckedScopeResponse);
+    }
+
+    if (module.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
+        return variable;
+    } else if (variable.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
+        return module;
+    }
+
+    if (module.scope_container.module->id >
+        variable.scope_container.variable->id) {
+        return module;
+    }
+
+    return variable;
 }
 
 #ifdef ENV_DEBUG
