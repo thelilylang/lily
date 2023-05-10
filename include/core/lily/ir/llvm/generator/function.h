@@ -27,6 +27,7 @@
 
 #include <core/lily/checked.h>
 #include <core/lily/ir/llvm.h>
+#include <core/lily/ir/llvm/scope.h>
 
 /**
  *
@@ -34,6 +35,7 @@
  */
 void
 generate_function__LilyIrLlvm(const LilyIrLlvm *self,
-                              const LilyCheckedDeclFun *fun);
+                              const LilyCheckedDeclFun *fun,
+                              LilyLlvmScope *scope);
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_FUNCTION_H

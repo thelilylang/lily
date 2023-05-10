@@ -120,19 +120,18 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_EXPR_KIND_LITERAL:
             return generate_literal_expr__LilyIrLlvm(self, &expr->literal);
         case LILY_CHECKED_EXPR_KIND_CALL: {
-            switch (expr->call.kind) {
-                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
-                    LLVMTypeRef type =
-                      generate_data_type__LilyIrLlvm(self, expr->data_type);
+            LLVMTypeRef type =
+              generate_data_type__LilyIrLlvm(self, expr->data_type);
 
+            switch (expr->call.kind) {
+                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
+                case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
                     return LLVMBuildLoad2(
                       self->builder,
                       type,
-                      search__LilyLlvmScope(scope,
-                                            expr->ast_expr->identifier.name)
+                      search__LilyLlvmScope(scope, expr->call.global_name)
                         ->value,
-                      expr->ast_expr->identifier.name->buffer);
-                }
+                      expr->call.global_name->buffer);
                 default:
                     TODO("generatte call expression in LLVM IR");
             }

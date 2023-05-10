@@ -61,6 +61,10 @@ search__LilyLlvmScope(LilyLlvmScope *self, String *name)
         }
     }
 
+	if (self->parent) {
+		return search__LilyLlvmScope(self->parent, name);
+	}
+
     UNREACHABLE("the analysis or the codegen have a bug!!");
 }
 

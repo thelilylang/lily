@@ -34,7 +34,8 @@
 
 void
 generate_function__LilyIrLlvm(const LilyIrLlvm *self,
-                              const LilyCheckedDeclFun *fun)
+                              const LilyCheckedDeclFun *fun,
+                              LilyLlvmScope *scope)
 {
     LLVMTypeRef return_data_type =
       generate_data_type__LilyIrLlvm(self, fun->return_data_type);
@@ -55,15 +56,17 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     LLVMTypeRef fun_data_type = LLVMFunctionType(
       return_data_type, (LLVMTypeRef *)params->buffer, params->len, false);
     LLVMValueRef fun_llvm = LLVMAddFunction(
-      self->module, (const char *)fun->name->buffer, fun_data_type);
+      self->module, (const char *)fun->global_name->buffer, fun_data_type);
+
+    push__Vec(scope->values, NEW(LilyLlvmValue, fun->global_name, fun_llvm));
 
     LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
     LLVMPositionBuilderAtEnd(self->builder, entry_block);
 
-    LilyLlvmScope *llvm_scope = NEW(LilyLlvmScope, NULL);
+    LilyLlvmScope *fun_scope = NEW(LilyLlvmScope, scope);
 
-    GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, llvm_scope);
+    GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
 
-    FREE(LilyLlvmScope, llvm_scope);
+    FREE(LilyLlvmScope, fun_scope);
     FREE(Vec, params);
 }
