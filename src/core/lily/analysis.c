@@ -1271,9 +1271,10 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_EXPR_KIND_IDENTIFIER: {
             LilyCheckedScopeResponse response =
-              search_variable__LilyCheckedScope(scope, expr->identifier.name);
+              search_identifier__LilyCheckedScope(scope, expr->identifier.name);
 
-            if (response.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
+            if (response.kind ==
+                LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
                 emit__Diagnostic(
                   NEW_VARIANT(
                     Diagnostic,
@@ -1320,10 +1321,14 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                           &expr->location,
                           data_type,
                           expr,
-                          NEW(LilyCheckedExprCall,
-                              LILY_CHECKED_EXPR_CALL_KIND_VARIABLE,
-                              (LilyCheckedAccessScope){
-                                .id = response.scope_container.scope_id }));
+                          NEW(
+                            LilyCheckedExprCall,
+                            LILY_CHECKED_EXPR_CALL_KIND_VARIABLE,
+                            (LilyCheckedAccessScope){
+                              .id =
+                                response.scope_container.scope_id }));
+					case LILY_CHECKED_SCOPE_CONTAINER_KIND_FUN:
+						TODO("found fun!!");
                     default:
                         // TODO: emit a diagnostic
                         FAILED("this kind of response is not expected in this "
