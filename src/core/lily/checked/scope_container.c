@@ -30,6 +30,9 @@
 #include <base/format.h>
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+
 CONSTRUCTOR(LilyCheckedScopeContainerModule *,
             LilyCheckedScopeContainerModule,
             String *name,
@@ -469,3 +472,169 @@ DESTRUCTOR(LilyCheckedScopeContainerMethod,
     FREE(Vec, self->ids);
     lily_free(self);
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerKind,
+               enum LilyCheckedScopeContainerKind self)
+{
+    switch (self) {
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_CONSTANT:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_CONSTANT";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_RECORD:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_RECORD";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_ALIAS:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_ALIAS";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_ERROR:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_ERROR";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM_OBJECT:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM_OBJECT";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_RECORD_OBJECT:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_RECORD_OBJECT";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_CLASS:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_CLASS";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_TRAIT:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_TRAIT";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_FUN:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_FUN";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_LABEL:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_LABEL";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_VARIABLE:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_VARIABLE";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_GENERIC:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_GENERIC";
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_METHOD:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_METHOD";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainer,
+               const LilyCheckedScopeContainer *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, module "
+              "= {Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerModule(self->module));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_CONSTANT:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, "
+              "constant = {Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerConstant(
+                self->constant));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, enum = "
+              "{Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerEnum(self->enum_));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_RECORD:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, record "
+              "= {Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerRecord(self->record));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_ALIAS:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, alias = "
+              "{Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerAlias(self->alias));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_ERROR:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, error = "
+              "{Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerError(self->error));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM_OBJECT:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, "
+              "enum_object = {Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerEnumObject(
+                self->enum_object));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_RECORD_OBJECT:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, "
+              "record_object = {Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerRecordObject(
+                self->record_object));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_CLASS:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, class = "
+              "{Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerClass(self->class));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_TRAIT:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, trait = "
+              "{Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerTrait(self->trait));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_FUN:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, fun = "
+              "{Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerFun(self->fun));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_LABEL:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, label = "
+              "{Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerLabel(self->label));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_VARIABLE:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, "
+              "variable = {Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerVariable(
+                self->variable));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_GENERIC:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, generic "
+              "= {Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerGeneric(
+                self->generic));
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_METHOD:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, method "
+              "= {Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerMethod(self->method));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif

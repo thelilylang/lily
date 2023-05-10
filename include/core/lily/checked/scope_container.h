@@ -579,4 +579,171 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyCheckedScopeContainerMethod,
            LilyCheckedScopeContainerMethod *self);
 
+enum LilyCheckedScopeContainerKind
+{
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_CONSTANT,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_RECORD,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_ALIAS,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_ERROR,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM_OBJECT,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_RECORD_OBJECT,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_CLASS,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_TRAIT,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_FUN,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_LABEL,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_VARIABLE,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_GENERIC,
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_METHOD,
+};
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerKind,
+               enum LilyCheckedScopeContainerKind self);
+#endif
+
+typedef struct LilyCheckedScopeContainer
+{
+    enum LilyCheckedScopeContainerKind kind;
+    Usize scope_id;
+    union
+    {
+        const LilyCheckedScopeContainerModule
+          *module; // const LilyCheckedScopeContainerModule* (&)
+        const LilyCheckedScopeContainerConstant
+          *constant; // const LilyCheckedScopeContainerConstant* (&)
+        const LilyCheckedScopeContainerEnum
+          *enum_; // const LilyCheckedScopeContainerEnum* (&)
+        const LilyCheckedScopeContainerRecord
+          *record; // const LilyCheckedScopeContainerRecord* (&)
+        const LilyCheckedScopeContainerAlias
+          *alias; // const LilyCheckedScopeContainerAlias* (&)
+        const LilyCheckedScopeContainerError
+          *error; // const LilyCheckedScopeContainerError* (&)
+        const LilyCheckedScopeContainerEnumObject
+          *enum_object; // const LilyCheckedScopeContainerEnumObject* (&)
+        const LilyCheckedScopeContainerRecordObject
+          *record_object; // const LilyCheckedScopeContainerRecordObject* (&)
+        const LilyCheckedScopeContainerClass
+          *class; // const LilyCheckedScopeContainerClass* (&)
+        const LilyCheckedScopeContainerTrait
+          *trait; // const LilyCheckedScopeContainerTrait* (&)
+        const LilyCheckedScopeContainerFun
+          *fun; // const LilyCheckedScopeContainerFun* (&)
+        const LilyCheckedScopeContainerLabel
+          *label; // const LilyCheckedScopeContainerLabel* (&)
+        const LilyCheckedScopeContainerVariable
+          *variable; // const LilyCheckedScopeContainerVariable* (&)
+        const LilyCheckedScopeContainerGeneric
+          *generic; // const LilyCheckedScopeContainerGeneric* (&)
+        const LilyCheckedScopeContainerMethod
+          *method; // const LilyCheckedScopeContainerMethod* (&)
+    };
+} LilyCheckedScopeContainer;
+
+#define LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(k, container, n) \
+    inline VARIANT_CONSTRUCTOR(LilyCheckedScopeContainer,         \
+                               LilyCheckedScopeContainer,         \
+                               n,                                 \
+                               Usize scope_id,                    \
+                               const container *n)                \
+    {                                                             \
+        return (LilyCheckedScopeContainer){ .kind = k,            \
+                                            .scope_id = scope_id, \
+                                            .n = n };             \
+    }
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE,
+  LilyCheckedScopeContainerModule,
+  module);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_CONSTANT,
+  LilyCheckedScopeContainerConstant,
+  constant);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM,
+                                         LilyCheckedScopeContainerEnum,
+                                         enum_);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_RECORD,
+  LilyCheckedScopeContainerRecord,
+  record);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_ALIAS,
+  LilyCheckedScopeContainerAlias,
+  alias);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_ERROR,
+  LilyCheckedScopeContainerError,
+  error);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM_OBJECT,
+  LilyCheckedScopeContainerEnumObject,
+  enum_object);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_RECORD_OBJECT,
+  LilyCheckedScopeContainerRecordObject,
+  record_object);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_CLASS,
+  LilyCheckedScopeContainerClass,
+  class);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_TRAIT,
+  LilyCheckedScopeContainerTrait,
+  trait);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(LILY_CHECKED_SCOPE_CONTAINER_KIND_FUN,
+                                         LilyCheckedScopeContainerFun,
+                                         fun);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_LABEL,
+  LilyCheckedScopeContainerLabel,
+  label);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_VARIABLE,
+  LilyCheckedScopeContainerVariable,
+  variable);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_GENERIC,
+  LilyCheckedScopeContainerGeneric,
+  generic);
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_METHOD,
+  LilyCheckedScopeContainerMethod,
+  method);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainer in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainer,
+               const LilyCheckedScopeContainer *self);
+#endif
+
 #endif // LILY_CORE_LILY_CHECKED_SCOPE_CONTAINER_H
