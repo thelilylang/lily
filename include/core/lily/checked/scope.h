@@ -204,10 +204,24 @@ search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
+ * @brief Search a module in the scope.
+ */
+LilyCheckedScopeResponse
+search_module__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
  * @brief Search a variable in the scope.
  */
 LilyCheckedScopeResponse
 search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
+ * @brief Search an identifier in the scope.
+ */
+LilyCheckedScopeResponse
+search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *
