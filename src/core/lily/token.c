@@ -56,6 +56,9 @@ static inline VARIANT_DESTRUCTOR(LilyToken,
 // Free LilyToken type (LILY_TOKEN_KIND_IDENTIFIER_STRING).
 static inline VARIANT_DESTRUCTOR(LilyToken, identifier_string, LilyToken *self);
 
+// Free LilyToken type (LILY_TOKEN_KIND_LITERAL_BYTES).
+static inline VARIANT_DESTRUCTOR(LilyToken, literal_bytes, LilyToken *self);
+
 // Free LilyToken type (LILY_TOKEN_KIND_LITERAL_FLOAT).
 static inline VARIANT_DESTRUCTOR(LilyToken, literal_float, LilyToken *self);
 
@@ -1653,6 +1656,12 @@ VARIANT_DESTRUCTOR(LilyToken, identifier_string, LilyToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyToken, literal_bytes, LilyToken *self)
+{
+    lily_free(self->literal_bytes);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyToken, literal_float, LilyToken *self)
 {
     FREE(String, self->literal_float);
@@ -1714,6 +1723,10 @@ DESTRUCTOR(LilyToken, LilyToken *self)
             break;
         case LILY_TOKEN_KIND_IDENTIFIER_STRING:
             FREE_VARIANT(LilyToken, identifier_string, self);
+            break;
+        case LILY_TOKEN_KIND_LITERAL_BYTES:
+            FREE_VARIANT(LilyToken, literal_bytes, self);
+
             break;
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
             FREE_VARIANT(LilyToken, literal_float, self);
