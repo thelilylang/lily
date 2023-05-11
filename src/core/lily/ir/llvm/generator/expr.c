@@ -137,7 +137,11 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                         case LILY_CHECKED_EXPR_KIND_CALL:
                             switch (expr->binary.left->call.kind) {
                                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
-									LLVMValueRef variable_ptr = search_value__LilyLlvmScope(scope, expr->binary.left->call.global_name)->value;
+                                    LLVMValueRef variable_ptr =
+                                      search_value__LilyLlvmScope(
+                                        scope,
+                                        expr->binary.left->call.global_name)
+                                        ->value;
                                     LLVMTypeRef variable_type =
                                       generate_data_type__LilyIrLlvm(
                                         self, expr->binary.left->data_type);
@@ -166,8 +170,9 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                                            assigned,
                                                            "");
 
-                                            return LLVMBuildStore(
-                                              self->builder, bit_and, variable_ptr);
+                                            return LLVMBuildStore(self->builder,
+                                                                  bit_and,
+                                                                  variable_ptr);
                                         }
                                         case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT: {
                                             LLVMValueRef bit_l_shift =
@@ -187,8 +192,9 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                                           assigned,
                                                           "");
 
-                                            return LLVMBuildStore(
-                                              self->builder, bit_or, variable_ptr);
+                                            return LLVMBuildStore(self->builder,
+                                                                  bit_or,
+                                                                  variable_ptr);
                                         }
                                         case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT: {
                                             LLVMValueRef bit_r_shift =
