@@ -118,6 +118,17 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_BINARY: {
             switch (expr->binary.kind) {
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_ADD:
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT:
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT:
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_DIV:
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_EXP:
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MOD:
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MUL:
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_SUB:
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_XOR:
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN: {
                     LLVMValueRef assigned = generate_expr__LilyIrLlvm(
                       self, expr->binary.right, scope);
@@ -126,14 +137,251 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                         case LILY_CHECKED_EXPR_KIND_CALL:
                             switch (expr->binary.left->call.kind) {
                                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
-                                    LLVMValueRef variable =
-                                      search_value__LilyLlvmScope(
+									LLVMValueRef variable_ptr = search_value__LilyLlvmScope(scope, expr->binary.left->call.global_name)->value;
+                                    LLVMTypeRef variable_type =
+                                      generate_data_type__LilyIrLlvm(
+                                        self, expr->binary.left->data_type);
+                                    LLVMValueRef variable_load =
+                                      load_value__LilyLlvmScope(
                                         scope,
-                                        expr->binary.left->call.global_name)
-                                        ->value;
+                                        self,
+                                        variable_type,
+                                        expr->binary.left->call.global_name);
 
-                                    return LLVMBuildStore(
-                                      self->builder, assigned, variable);
+                                    switch (expr->binary.kind) {
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_ADD: {
+                                            LLVMValueRef add =
+                                              LLVMBuildAdd(self->builder,
+                                                           variable_load,
+                                                           assigned,
+                                                           "");
+
+                                            return LLVMBuildStore(
+                                              self->builder, add, variable_ptr);
+                                        }
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_AND: {
+                                            LLVMValueRef bit_and =
+                                              LLVMBuildAnd(self->builder,
+                                                           variable_load,
+                                                           assigned,
+                                                           "");
+
+                                            return LLVMBuildStore(
+                                              self->builder, bit_and, variable_ptr);
+                                        }
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT: {
+                                            LLVMValueRef bit_l_shift =
+                                              LLVMBuildShl(self->builder,
+                                                           variable_load,
+                                                           assigned,
+                                                           "");
+
+                                            return LLVMBuildStore(self->builder,
+                                                                  bit_l_shift,
+                                                                  variable_ptr);
+                                        }
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_OR: {
+                                            LLVMValueRef bit_or =
+                                              LLVMBuildOr(self->builder,
+                                                          variable_load,
+                                                          assigned,
+                                                          "");
+
+                                            return LLVMBuildStore(
+                                              self->builder, bit_or, variable_ptr);
+                                        }
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT: {
+                                            LLVMValueRef bit_r_shift =
+                                              LLVMBuildLShr(self->builder,
+                                                            variable_load,
+                                                            assigned,
+                                                            "");
+
+                                            return LLVMBuildStore(self->builder,
+                                                                  bit_r_shift,
+                                                                  variable_ptr);
+                                        }
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_DIV: {
+                                            LLVMValueRef div = NULL;
+
+                                            switch (expr->binary.left->data_type
+                                                      ->kind) {
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+                                                    div = LLVMBuildSDiv(
+                                                      self->builder,
+                                                      variable_load,
+                                                      assigned,
+                                                      "");
+
+                                                    break;
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+                                                    div = LLVMBuildUDiv(
+                                                      self->builder,
+                                                      variable_load,
+                                                      assigned,
+                                                      "");
+
+                                                    break;
+                                                case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+                                                    div = LLVMBuildFDiv(
+                                                      self->builder,
+                                                      variable_load,
+                                                      assigned,
+                                                      "");
+
+                                                    break;
+                                                default:
+                                                    UNREACHABLE("the analysis "
+                                                                "have a bug!!");
+                                            }
+
+                                            return LLVMBuildStore(
+                                              self->builder, div, variable_ptr);
+                                        }
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_EXP:
+                                            TODO("generate exponent operator");
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MOD: {
+                                            LLVMValueRef mod = NULL;
+
+                                            switch (expr->binary.left->data_type
+                                                      ->kind) {
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+                                                    mod = LLVMBuildSRem(
+                                                      self->builder,
+                                                      variable_load,
+                                                      assigned,
+                                                      "");
+
+                                                    break;
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+                                                    mod = LLVMBuildURem(
+                                                      self->builder,
+                                                      variable_load,
+                                                      assigned,
+                                                      "");
+
+                                                    break;
+                                                case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+                                                    mod = LLVMBuildFRem(
+                                                      self->builder,
+                                                      variable_load,
+                                                      assigned,
+                                                      "");
+
+                                                    break;
+                                                default:
+                                                    UNREACHABLE("the analysis "
+                                                                "have a bug");
+                                            }
+
+                                            return LLVMBuildStore(
+                                              self->builder, mod, variable_ptr);
+                                        }
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MUL: {
+                                            LLVMValueRef mul = NULL;
+
+                                            switch (expr->binary.left->data_type
+                                                      ->kind) {
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+                                                    mul = LLVMBuildMul(
+                                                      self->builder,
+                                                      variable_load,
+                                                      assigned,
+                                                      "");
+
+                                                    break;
+                                                case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+                                                    mul = LLVMBuildFMul(
+                                                      self->builder,
+                                                      variable_load,
+                                                      assigned,
+                                                      "");
+
+                                                    break;
+                                                default:
+                                                    UNREACHABLE("the analysis "
+                                                                "have a bug");
+                                            }
+
+                                            return LLVMBuildStore(
+                                              self->builder, mul, variable_ptr);
+                                        }
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_SUB: {
+                                            LLVMValueRef sub = NULL;
+
+                                            switch (expr->binary.left->data_type
+                                                      ->kind) {
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+                                                    sub = LLVMBuildSub(
+                                                      self->builder,
+                                                      variable_load,
+                                                      assigned,
+                                                      "");
+
+                                                    break;
+                                                case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+                                                case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+                                                    sub = LLVMBuildFSub(
+                                                      self->builder,
+                                                      variable_load,
+                                                      assigned,
+                                                      "");
+
+                                                    break;
+                                                default:
+                                                    UNREACHABLE("the analysis "
+                                                                "have a bug");
+                                            }
+
+                                            return LLVMBuildStore(
+                                              self->builder, sub, variable_ptr);
+                                        }
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_XOR: {
+                                            LLVMValueRef xor
+                                              = LLVMBuildXor(self->builder,
+                                                             variable_load,
+                                                             assigned,
+                                                             "");
+
+                                            return LLVMBuildStore(
+                                              self->builder, xor, variable_ptr);
+                                        }
+                                        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN:
+                                            return LLVMBuildStore(self->builder,
+                                                                  assigned,
+                                                                  variable_ptr);
+                                        default:
+                                            UNREACHABLE("unknown variant");
+                                    }
                                 }
                                 default:
                                     UNREACHABLE("the analysis have a bug!!");
