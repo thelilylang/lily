@@ -237,6 +237,8 @@ to_msg__LilyError(const LilyError *self)
             return "unknown cast";
         case LILY_ERROR_KIND_EXPECTED_MAIN_FUNCTION:
             return "expected main function";
+        case LILY_ERROR_KIND_EXPECTED_MUTABLE_VARIABLE:
+            return "expected mutable variable";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -448,6 +450,8 @@ to_code__LilyError(const LilyError *self)
             return "0100";
         case LILY_ERROR_KIND_EXPECTED_MAIN_FUNCTION:
             return "0101";
+        case LILY_ERROR_KIND_EXPECTED_MUTABLE_VARIABLE:
+            return "0102";
         default:
             UNREACHABLE("unknown variant");
     }
