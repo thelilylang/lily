@@ -121,6 +121,121 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_BINARY: {
             switch (expr->binary.kind) {
+                case LILY_CHECKED_EXPR_BINARY_KIND_ADD:
+                case LILY_CHECKED_EXPR_BINARY_KIND_BIT_AND:
+                case LILY_CHECKED_EXPR_BINARY_KIND_BIT_L_SHIFT:
+                case LILY_CHECKED_EXPR_BINARY_KIND_BIT_OR:
+                case LILY_CHECKED_EXPR_BINARY_KIND_BIT_R_SHIFT:
+                case LILY_CHECKED_EXPR_BINARY_KIND_DIV:
+                case LILY_CHECKED_EXPR_BINARY_KIND_MOD:
+                case LILY_CHECKED_EXPR_BINARY_KIND_MUL:
+                case LILY_CHECKED_EXPR_BINARY_KIND_GREATER:
+                case LILY_CHECKED_EXPR_BINARY_KIND_GREATER_EQ:
+                case LILY_CHECKED_EXPR_BINARY_KIND_LESS:
+                case LILY_CHECKED_EXPR_BINARY_KIND_LESS_EQ:
+                case LILY_CHECKED_EXPR_BINARY_KIND_EXP:
+                case LILY_CHECKED_EXPR_BINARY_KIND_SUB: {
+                    LLVMValueRef left =
+                      generate_expr__LilyIrLlvm(self, expr->binary.left, scope);
+                    LLVMValueRef right = generate_expr__LilyIrLlvm(
+                      self, expr->binary.right, scope);
+
+                    if (is_integer_data_type__LilyCheckedDataType(
+                          expr->binary.left->data_type) &&
+                        is_integer_data_type__LilyCheckedDataType(
+                          expr->binary.right->data_type) &&
+                        eq__LilyCheckedDataType(
+                          expr->binary.left->data_type,
+                          expr->binary.right->data_type)) {
+                        switch (expr->binary.kind) {
+                            case LILY_CHECKED_EXPR_BINARY_KIND_ADD:
+                                return LLVMBuildAdd(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_BIT_AND:
+                                return LLVMBuildAnd(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_BIT_L_SHIFT:
+                                return LLVMBuildShl(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_BIT_OR:
+                                return LLVMBuildOr(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_BIT_R_SHIFT:
+                                return LLVMBuildLShr(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_DIV:
+                                return LLVMBuildSDiv(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_MOD:
+                                return LLVMBuildSRem(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_MUL:
+                                return LLVMBuildMul(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_GREATER:
+                                return LLVMBuildICmp(
+                                  self->builder, LLVMIntSGT, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_GREATER_EQ:
+                                return LLVMBuildICmp(
+                                  self->builder, LLVMIntSGE, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_LESS:
+                                return LLVMBuildICmp(
+                                  self->builder, LLVMIntSLT, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_LESS_EQ:
+                                return LLVMBuildICmp(
+                                  self->builder, LLVMIntSLE, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_EXP:
+                                TODO("generate exp operator");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_SUB:
+                                return LLVMBuildSub(
+                                  self->builder, left, right, "");
+                            default:
+                                UNREACHABLE("unknown variant");
+                        }
+                    } else if (is_float_data_type__LilyCheckedDataType(
+                                 expr->binary.left->data_type) &&
+                               is_float_data_type__LilyCheckedDataType(
+                                 expr->binary.right->data_type) &&
+                               eq__LilyCheckedDataType(
+                                 expr->binary.left->data_type,
+                                 expr->binary.right->data_type)) {
+                        switch (expr->binary.kind) {
+                            case LILY_CHECKED_EXPR_BINARY_KIND_ADD:
+                                return LLVMBuildFAdd(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_DIV:
+                                return LLVMBuildFDiv(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_MOD:
+                                return LLVMBuildFRem(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_MUL:
+                                return LLVMBuildFMul(
+                                  self->builder, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_GREATER:
+                                return LLVMBuildFCmp(
+                                  self->builder, LLVMRealOGT, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_GREATER_EQ:
+                                return LLVMBuildFCmp(
+                                  self->builder, LLVMRealOGE, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_LESS:
+                                return LLVMBuildFCmp(
+                                  self->builder, LLVMRealOLT, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_LESS_EQ:
+                                return LLVMBuildFCmp(
+                                  self->builder, LLVMRealOLT, left, right, "");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_EXP:
+                                TODO("generate exp operator");
+                            case LILY_CHECKED_EXPR_BINARY_KIND_SUB:
+                                return LLVMBuildFSub(
+                                  self->builder, left, right, "");
+                            default:
+                                UNREACHABLE("the analysis have a bug!!");
+                        }
+                    } else {
+                        TODO("generate operator defined by the user");
+                    }
+                }
                 case LILY_CHECKED_EXPR_BINARY_KIND_AND:
                 case LILY_CHECKED_EXPR_BINARY_KIND_OR:
                 case LILY_CHECKED_EXPR_BINARY_KIND_XOR: {
@@ -438,6 +553,32 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
                     return load_value__LilyLlvmScope(
                       scope, self, type, expr->call.global_name);
+                case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
+                    LilyLlvmFun *fun =
+                      search_fun__LilyLlvmScope(scope, expr->call.global_name);
+                    LLVMValueRef *params = NULL;
+                    Usize params_len = 0;
+
+                    if (expr->call.fun.params) {
+                        params_len = expr->call.fun.params->len;
+                        params = lily_malloc(sizeof(LLVMValueRef) * params_len);
+
+                        for (Usize i = 0; i < expr->call.fun.params->len; ++i) {
+                            LilyCheckedExprCallFunParam *param =
+                              get__Vec(expr->call.fun.params, i);
+
+                            params[i] = generate_expr__LilyIrLlvm(
+                              self, param->value, scope);
+                        }
+                    }
+
+                    return LLVMBuildCall2(self->builder,
+                                          fun->fun_type,
+                                          fun->fun,
+                                          params,
+                                          params_len,
+                                          "");
+                }
                 default:
                     TODO("generatte call expression in LLVM IR");
             }

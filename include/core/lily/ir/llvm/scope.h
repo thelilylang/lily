@@ -75,11 +75,38 @@ inline DESTRUCTOR(LilyLlvmType, LilyLlvmType *self)
     lily_free(self);
 }
 
+typedef struct LilyLlvmFun
+{
+    String *name; // String* (&)
+    LLVMValueRef fun;
+    LLVMTypeRef fun_type;
+} LilyLlvmFun;
+
+/**
+ *
+ * @brief Construct LilyLlvmFun type.
+ */
+CONSTRUCTOR(LilyLlvmFun *,
+            LilyLlvmFun,
+            String *name,
+            LLVMValueRef fun,
+            LLVMTypeRef fun_type);
+
+/**
+ *
+ * @brief Free LilyLlvmType type.
+ */
+inline DESTRUCTOR(LilyLlvmFun, LilyLlvmFun *self)
+{
+    lily_free(self);
+}
+
 typedef struct LilyLlvmScope
 {
     Vec *values;                  // Vec<LilyLlvmValue*>*
     Vec *types;                   // Vec<LilyLlvmType*>*
     Vec *loads;                   // Vec<LilyLlvmValue*>*
+    Vec *funs;                    // Vec<LilyLlvmFun*>*
     struct LilyLlvmScope *parent; // LilyLlvmScope*? (&)
 } LilyLlvmScope;
 
@@ -120,6 +147,13 @@ load_value__LilyLlvmScope(LilyLlvmScope *self,
                           const LilyIrLlvm *llvm,
                           LLVMTypeRef type,
                           String *name);
+
+/**
+ *
+ * @brief Search for a fun in the scope.
+ */
+LilyLlvmFun *
+search_fun__LilyLlvmScope(LilyLlvmScope *self, String *name);
 
 /**
  *

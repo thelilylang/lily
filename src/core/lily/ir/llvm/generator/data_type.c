@@ -77,7 +77,7 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_LIST:
             TODO("generate list data type");
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
-            TODO("generate mut data type");
+            return generate_data_type__LilyIrLlvm(self, data_type->mut);
         case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
         case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
             return void__LilyIrLlvm(self);

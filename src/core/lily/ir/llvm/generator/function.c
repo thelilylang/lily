@@ -39,22 +39,25 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
 {
     LLVMTypeRef return_data_type =
       generate_data_type__LilyIrLlvm(self, fun->return_data_type);
-    Vec *params = NEW(Vec); // Vec<LLVMTypeRef>*
+    LLVMTypeRef *params = NULL;
+    Usize params_len = 0;
+    // Vec *params = NEW(Vec); // Vec<LLVMTypeRef>*
 
     if (fun->params) {
+        params_len = fun->params->len;
+        params = lily_malloc(sizeof(LLVMTypeRef) * params_len);
+
         for (Usize i = 0; i < fun->params->len; ++i) {
-            push__Vec(
-              params,
-              generate_data_type__LilyIrLlvm(
-                self,
-                CAST(LilyCheckedDeclFunParam *, get__Vec(fun->params, i))
-                  ->data_type));
+            params[i] = generate_data_type__LilyIrLlvm(
+              self,
+              CAST(LilyCheckedDeclFunParam *, get__Vec(fun->params, i))
+                ->data_type);
         }
     }
 
     // TODO: check va_arg param
-    LLVMTypeRef fun_data_type = LLVMFunctionType(
-      return_data_type, (LLVMTypeRef *)params->buffer, params->len, false);
+    LLVMTypeRef fun_data_type =
+      LLVMFunctionType(return_data_type, params, params_len, false);
 
     char *name = NULL;
 
@@ -66,7 +69,9 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
 
     LLVMValueRef fun_llvm = LLVMAddFunction(self->module, name, fun_data_type);
 
-    push__Vec(scope->values, NEW(LilyLlvmValue, fun->global_name, fun_llvm));
+    push__Vec(scope->funs,
+              NEW(LilyLlvmFun, fun->global_name, fun_llvm, fun_data_type));
+	push__Vec(scope->values, NEW(LilyLlvmValue, fun->global_name, fun_llvm));
 
     LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
     LLVMPositionBuilderAtEnd(self->builder, entry_block);
@@ -76,5 +81,4 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
 
     FREE(LilyLlvmScope, fun_scope);
-    FREE(Vec, params);
 }

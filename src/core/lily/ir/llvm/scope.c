@@ -51,6 +51,21 @@ CONSTRUCTOR(LilyLlvmType *, LilyLlvmType, String *name, LLVMTypeRef type)
     return self;
 }
 
+CONSTRUCTOR(LilyLlvmFun *,
+            LilyLlvmFun,
+            String *name,
+            LLVMValueRef fun,
+            LLVMTypeRef fun_type)
+{
+    LilyLlvmFun *self = lily_malloc(sizeof(LilyLlvmFun));
+
+    self->name = name;
+    self->fun = fun;
+    self->fun_type = fun_type;
+
+    return self;
+}
+
 CONSTRUCTOR(LilyLlvmScope *, LilyLlvmScope, LilyLlvmScope *parent)
 {
     LilyLlvmScope *self = lily_malloc(sizeof(LilyLlvmScope));
@@ -58,6 +73,7 @@ CONSTRUCTOR(LilyLlvmScope *, LilyLlvmScope, LilyLlvmScope *parent)
     self->values = NEW(Vec);
     self->types = NEW(Vec);
     self->loads = NEW(Vec);
+    self->funs = NEW(Vec);
     self->parent = parent;
 
     return self;
@@ -137,6 +153,24 @@ load_value__LilyLlvmScope(LilyLlvmScope *self,
     return new_load;
 }
 
+LilyLlvmFun *
+search_fun__LilyLlvmScope(LilyLlvmScope *self, String *name)
+{
+    for (Usize i = 0; i < self->funs->len; ++i) {
+        LilyLlvmFun *fun = get__Vec(self->funs, i);
+
+        if (!strcmp(fun->name->buffer, name->buffer)) {
+            return fun;
+        }
+    }
+
+    if (self->parent) {
+        return search_fun__LilyLlvmScope(self->parent, name);
+    }
+
+    UNREACHABLE("(search fun) the analysis or the codegen have a bug!!");
+}
+
 DESTRUCTOR(LilyLlvmScope, LilyLlvmScope *self)
 {
     FREE_BUFFER_ITEMS(self->values->buffer, self->values->len, LilyLlvmValue);
@@ -147,6 +181,9 @@ DESTRUCTOR(LilyLlvmScope, LilyLlvmScope *self)
 
     FREE_BUFFER_ITEMS(self->loads->buffer, self->loads->len, LilyLlvmValue);
     FREE(Vec, self->loads);
+
+    FREE_BUFFER_ITEMS(self->funs->buffer, self->funs->len, LilyLlvmFun);
+    FREE(Vec, self->funs);
 
     lily_free(self);
 }
