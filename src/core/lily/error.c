@@ -235,6 +235,8 @@ to_msg__LilyError(const LilyError *self)
             return "bad literal cast";
         case LILY_ERROR_KIND_UNKNOWN_CAST:
             return "unknown cast";
+        case LILY_ERROR_KIND_EXPECTED_MAIN_FUNCTION:
+            return "expected main function";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -444,6 +446,8 @@ to_code__LilyError(const LilyError *self)
             return "0099";
         case LILY_ERROR_KIND_UNKNOWN_CAST:
             return "0100";
+        case LILY_ERROR_KIND_EXPECTED_MAIN_FUNCTION:
+            return "0101";
         default:
             UNREACHABLE("unknown variant");
     }
