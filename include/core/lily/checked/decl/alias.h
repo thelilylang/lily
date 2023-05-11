@@ -30,12 +30,14 @@
 
 #include <core/lily/checked/data_type.h>
 #include <core/lily/checked/generic_param.h>
+#include <core/lily/checked/scope.h>
 #include <core/lily/visibility.h>
 
 typedef struct LilyCheckedDeclAlias
 {
     String *name; // String* (&)
     String *global_name;
+    LilyCheckedScope *scope;
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     LilyCheckedDataType *data_type;
     enum LilyVisibility visibility;
@@ -49,12 +51,14 @@ inline CONSTRUCTOR(LilyCheckedDeclAlias,
                    LilyCheckedDeclAlias,
                    String *name,
                    String *global_name,
+                   LilyCheckedScope *scope,
                    Vec *generic_params,
                    LilyCheckedDataType *data_type,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclAlias){ .name = name,
                                    .global_name = global_name,
+                                   .scope = scope,
                                    .generic_params = generic_params,
                                    .data_type = data_type,
                                    .visibility = visibility };
