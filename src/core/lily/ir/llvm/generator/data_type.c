@@ -42,7 +42,11 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
             return i8__LilyIrLlvm(self);
         case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
-            TODO("generate bytes data type");
+            if (data_type->bytes == -1) {
+                return ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self));
+            }
+
+            return LLVMArrayType(i8__LilyIrLlvm(self), data_type->bytes);
         case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
             return i8__LilyIrLlvm(self);
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:

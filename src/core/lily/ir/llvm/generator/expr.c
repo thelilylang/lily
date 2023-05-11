@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static LLVMValueRef
 generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
@@ -43,7 +44,9 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_EXPR_LITERAL_KIND_BYTE:
             return LLVMConstInt(i8__LilyIrLlvm(self), literal->byte, false);
         case LILY_CHECKED_EXPR_LITERAL_KIND_BYTES:
-            TODO("generate bytes expression");
+            return LLVMConstString((const char *)literal->bytes,
+                                   strlen((char *)literal->bytes),
+                                   false);
         case LILY_CHECKED_EXPR_LITERAL_KIND_CHAR:
             return LLVMConstInt(i8__LilyIrLlvm(self), literal->char_, false);
         case LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT32:
