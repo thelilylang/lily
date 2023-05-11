@@ -59,8 +59,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclKind, enum LilyCheckedDeclKind self);
 typedef struct LilyCheckedDecl
 {
     enum LilyCheckedDeclKind kind;
-    const Location *location; // const Location* (&)
-    bool is_checked;
+    const Location *location;    // const Location* (&)
     const LilyAstDecl *ast_decl; // const LilyAstDecl* (&)
     union
     {

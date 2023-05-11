@@ -90,7 +90,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_CONSTANT;
     self->location = location;
-    self->is_checked = false;
     self->ast_decl = ast_decl;
     self->constant = constant;
 
@@ -108,7 +107,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_ERROR;
     self->location = location;
-    self->is_checked = false;
     self->ast_decl = ast_decl;
     self->error = error;
 
@@ -126,7 +124,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_FUN;
     self->location = location;
-    self->is_checked = false;
     self->ast_decl = ast_decl;
     self->fun = fun;
 
@@ -144,7 +141,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_METHOD;
     self->location = location;
-    self->is_checked = false;
     self->ast_decl = ast_decl;
     self->method = method;
 
@@ -162,7 +158,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_MODULE;
     self->location = location;
-    self->is_checked = false;
     self->ast_decl = ast_decl;
     self->module = module;
 
@@ -180,7 +175,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_OBJECT;
     self->location = location;
-    self->is_checked = false;
     self->ast_decl = ast_decl;
     self->object = object;
 
@@ -198,7 +192,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
     self->kind = LILY_CHECKED_DECL_KIND_TYPE;
     self->location = location;
-    self->is_checked = false;
     self->ast_decl = ast_decl;
     self->type = type;
 
@@ -212,65 +205,58 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDecl, const LilyCheckedDecl *self)
     switch (self->kind) {
         case LILY_CHECKED_DECL_KIND_CONSTANT:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, ast_decl = {Sr}, constant = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, ast_decl = {Sr}, "
+              "constant = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(self->location),
-              self->is_checked,
               to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclConstant(&self->constant));
         case LILY_CHECKED_DECL_KIND_ERROR:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, ast_decl = {Sr}, error = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, ast_decl = {Sr}, "
+              "error = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(self->location),
-              self->is_checked,
               to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclError(&self->error));
         case LILY_CHECKED_DECL_KIND_FUN:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, ast_decl = {Sr}, fun = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, ast_decl = {Sr}, "
+              "fun = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(self->location),
-              self->is_checked,
               to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclFun(&self->fun));
         case LILY_CHECKED_DECL_KIND_MODULE:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, ast_decl = {Sr}, module = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, ast_decl = {Sr}, "
+              "module = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(self->location),
-              self->is_checked,
               to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclModule(&self->module));
         case LILY_CHECKED_DECL_KIND_METHOD:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, ast_decl = {Sr}, method = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, ast_decl = {Sr}, "
+              "method = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(self->location),
-              self->is_checked,
               to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclMethod(&self->method));
         case LILY_CHECKED_DECL_KIND_OBJECT:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, ast_decl = {Sr}, object = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, ast_decl = {Sr}, "
+              "object = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(self->location),
-              self->is_checked,
               to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclObject(&self->object));
         case LILY_CHECKED_DECL_KIND_TYPE:
             return format__String(
-              "LilyCheckedDecl{{ kind = {s}, location = {sa}, is_checked = "
-              "{b}, ast_decl = {Sr}, type = {Sr} }",
+              "LilyCheckedDecl{{ kind = {s}, location = {sa}, ast_decl = {Sr}, "
+              "type = {Sr} }",
               to_string__Debug__LilyCheckedDeclKind(self->kind),
               to_string__Debug__Location(self->location),
-              self->is_checked,
               to_string__Debug__LilyAstDecl(self->ast_decl),
               to_string__Debug__LilyCheckedDeclType(&self->type));
         default:
