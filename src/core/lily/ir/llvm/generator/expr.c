@@ -117,8 +117,41 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                           const char *name)
 {
     switch (expr->kind) {
-        case LILY_CHECKED_EXPR_KIND_LITERAL:
-            return generate_literal_expr__LilyIrLlvm(self, &expr->literal);
+        case LILY_CHECKED_EXPR_KIND_BINARY: {
+            switch (expr->binary.kind) {
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN: {
+                    LLVMValueRef assigned = generate_expr__LilyIrLlvm(
+                      self, expr->binary.right, scope, NULL);
+
+                    switch (expr->binary.left->kind) {
+                        case LILY_CHECKED_EXPR_KIND_CALL:
+                            switch (expr->binary.left->call.kind) {
+                                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
+                                    LLVMValueRef variable =
+                                      search_value__LilyLlvmScope(
+                                        scope,
+                                        expr->binary.left->call.global_name)
+                                        ->value;
+
+                                    return LLVMBuildStore(
+                                      self->builder, assigned, variable);
+                                }
+                                default:
+                                    UNREACHABLE("the analysis have a bug!!");
+                            }
+
+                            break;
+                        default:
+                            UNREACHABLE("the analysis have a bug!!");
+                    }
+                    break;
+                }
+                default:
+                    TODO("generate binary expression");
+            }
+
+            break;
+        }
         case LILY_CHECKED_EXPR_KIND_CALL: {
             LLVMTypeRef type =
               generate_data_type__LilyIrLlvm(self, expr->data_type);
@@ -171,6 +204,8 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
 
             break;
         }
+        case LILY_CHECKED_EXPR_KIND_LITERAL:
+            return generate_literal_expr__LilyIrLlvm(self, &expr->literal);
         default:
             TODO("generate expression in LLVM IR");
     }
