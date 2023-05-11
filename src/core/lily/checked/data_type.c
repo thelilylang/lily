@@ -390,6 +390,21 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
+                    str,
+                    const Location *location,
+                    Isize str)
+{
+    LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
+
+    self->kind = LILY_CHECKED_DATA_TYPE_KIND_STR;
+    self->location = location;
+    self->str = str;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
                     trace,
                     const Location *location,
                     LilyCheckedDataType *trace)
@@ -566,6 +581,11 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
         case LILY_CHECKED_DATA_TYPE_KIND_REF: {
             char *s = format(", ref = {Sr} }",
                              to_string__Debug__LilyCheckedDataType(self->ref));
+
+            PUSH_STR_AND_FREE(res, s);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_STR: {
+            char *s = format(", str = {d} }", self->str);
 
             PUSH_STR_AND_FREE(res, s);
         }

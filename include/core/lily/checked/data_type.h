@@ -246,6 +246,7 @@ struct LilyCheckedDataType
         LilyCheckedDataType *optional;
         LilyCheckedDataType *ptr;
         LilyCheckedDataType *ref;
+        Isize str; // size of Str
         LilyCheckedDataType *trace;
         Vec *tuple; // Vec<LilyCheckedDataType*>*
     };
@@ -354,6 +355,16 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     ref,
                     const Location *location,
                     LilyCheckedDataType *ref);
+
+/**
+ *
+ * @brief Construct LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_STR).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    str,
+                    const Location *location,
+                    Isize str);
 
 /**
  *
