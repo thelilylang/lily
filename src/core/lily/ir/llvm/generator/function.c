@@ -55,8 +55,16 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     // TODO: check va_arg param
     LLVMTypeRef fun_data_type = LLVMFunctionType(
       return_data_type, (LLVMTypeRef *)params->buffer, params->len, false);
-    LLVMValueRef fun_llvm = LLVMAddFunction(
-      self->module, (const char *)fun->global_name->buffer, fun_data_type);
+
+    char *name = NULL;
+
+    if (fun->is_main) {
+        name = fun->name->buffer;
+    } else {
+        name = fun->global_name->buffer;
+    }
+
+    LLVMValueRef fun_llvm = LLVMAddFunction(self->module, name, fun_data_type);
 
     push__Vec(scope->values, NEW(LilyLlvmValue, fun->global_name, fun_llvm));
 
