@@ -238,6 +238,7 @@ struct LilyCheckedDataType
     union
     {
         LilyCheckedDataTypeArray array;
+        Isize bytes; // size of Bytes
         LilyCheckedDataTypeCustom custom;
         LilyCheckedDataType *exception;
         LilyCheckedDataTypeLambda lambda;
@@ -271,6 +272,17 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     array,
                     const Location *location,
                     LilyCheckedDataTypeArray array);
+
+/**
+ *
+ * @brief Construct LilyCheckedDataType type
+ * (LILY_CHECKED_DATA_TYPE_KIND_BYTES).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    bytes,
+                    const Location *location,
+                    Isize bytes);
 
 /**
  *
