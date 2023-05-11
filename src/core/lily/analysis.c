@@ -1199,7 +1199,7 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
             switch (expr->binary.left->kind) {
                 case LILY_AST_EXPR_KIND_IDENTIFIER: {
                     left = check_identifier_expr__LilyAnalysis(
-                      self, expr->binary.left, scope, is_moved_expr, true);
+                      self, expr->binary.left, scope, false, true);
 
                     break;
                 }
