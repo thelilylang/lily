@@ -126,10 +126,6 @@ search_load__LilyLlvmScope(LilyLlvmScope *self, String *name)
         }
     }
 
-    if (self->parent) {
-        return search_load__LilyLlvmScope(self->parent, name);
-    }
-
     return NULL;
 }
 
