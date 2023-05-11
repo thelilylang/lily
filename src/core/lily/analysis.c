@@ -930,9 +930,8 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                        LILY_CHECKED_DATA_TYPE_KIND_BYTE,
                        &data_type->location);
         case LILY_AST_DATA_TYPE_KIND_BYTES:
-            return NEW(LilyCheckedDataType,
-                       LILY_CHECKED_DATA_TYPE_KIND_BYTES,
-                       &data_type->location);
+            return NEW_VARIANT(
+              LilyCheckedDataType, bytes, &data_type->location, -1);
         case LILY_AST_DATA_TYPE_KIND_CHAR:
             return NEW(LilyCheckedDataType,
                        LILY_CHECKED_DATA_TYPE_KIND_CHAR,
@@ -1572,16 +1571,17 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                    byte,
                                                    expr->literal.byte));
                 case LILY_AST_EXPR_LITERAL_KIND_BYTES:
-                    return NEW_VARIANT(LilyCheckedExpr,
-                                       literal,
-                                       &expr->location,
-                                       NEW(LilyCheckedDataType,
-                                           LILY_CHECKED_DATA_TYPE_KIND_BYTES,
-                                           &expr->location),
-                                       expr,
-                                       NEW_VARIANT(LilyCheckedExprLiteral,
-                                                   bytes,
-                                                   expr->literal.bytes));
+                    return NEW_VARIANT(
+                      LilyCheckedExpr,
+                      literal,
+                      &expr->location,
+                      NEW_VARIANT(LilyCheckedDataType,
+                                  bytes,
+                                  &expr->location,
+                                  strlen((char *)expr->literal.bytes)),
+                      expr,
+                      NEW_VARIANT(
+                        LilyCheckedExprLiteral, bytes, expr->literal.bytes));
                 case LILY_AST_EXPR_LITERAL_KIND_CHAR:
                     return NEW_VARIANT(LilyCheckedExpr,
                                        literal,
