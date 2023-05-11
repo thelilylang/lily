@@ -1016,9 +1016,8 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_DATA_TYPE_KIND_SELF:
             TODO("Check Self data type");
         case LILY_AST_DATA_TYPE_KIND_STR:
-            return NEW(LilyCheckedDataType,
-                       LILY_CHECKED_DATA_TYPE_KIND_STR,
-                       &data_type->location);
+            return NEW_VARIANT(
+              LilyCheckedDataType, str, &data_type->location, -1);
         case LILY_AST_DATA_TYPE_KIND_TRACE:
             return NEW_VARIANT(LilyCheckedDataType,
                                trace,
@@ -1181,7 +1180,31 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_BINARY_KIND_ADD:
             TODO("analyze +");
         case LILY_AST_EXPR_BINARY_KIND_AND:
-            TODO("analyze and");
+        case LILY_AST_EXPR_BINARY_KIND_OR:
+        case LILY_AST_EXPR_BINARY_KIND_XOR: {
+            LilyCheckedExpr *left = check_expr__LilyAnalysis(
+              self, expr->binary.left, scope, safety_mode, false);
+            LilyCheckedExpr *right = check_expr__LilyAnalysis(
+              self, expr->binary.left, scope, safety_mode, false);
+
+            if (!(left->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL &&
+                  right->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL)) {
+                TODO("check operator defined");
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedExpr,
+              binary,
+              &expr->location,
+              NEW(LilyCheckedDataType,
+                  LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                  &expr->location),
+              expr,
+              NEW(LilyCheckedExprBinary,
+                  (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
+                  left,
+                  right));
+        }
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_ADD:
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT:
@@ -1273,14 +1296,10 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
             TODO("analyze *");
         case LILY_AST_EXPR_BINARY_KIND_NOT_EQ:
             TODO("analyze not=");
-        case LILY_AST_EXPR_BINARY_KIND_OR:
-            TODO("analyze or");
         case LILY_AST_EXPR_BINARY_KIND_RANGE:
             TODO("analyze ..");
         case LILY_AST_EXPR_BINARY_KIND_SUB:
             TODO("analyze -");
-        case LILY_AST_EXPR_BINARY_KIND_XOR:
-            TODO("analyze xor");
         default:
             UNREACHABLE("unknown variant");
     }
@@ -1650,9 +1669,10 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                     return NEW_VARIANT(LilyCheckedExpr,
                                        literal,
                                        &expr->location,
-                                       NEW(LilyCheckedDataType,
-                                           LILY_CHECKED_DATA_TYPE_KIND_STR,
-                                           &expr->location),
+                                       NEW_VARIANT(LilyCheckedDataType,
+                                                   str,
+                                                   &expr->location,
+                                                   expr->literal.str->len),
                                        expr,
                                        NEW_VARIANT(LilyCheckedExprLiteral,
                                                    str,
@@ -2279,17 +2299,23 @@ check_constant__LilyAnalysis(LilyAnalysis *self,
                              LilyCheckedDecl *constant,
                              LilyCheckedScope *scope)
 {
-    constant->constant.data_type =
-      check_data_type__LilyAnalysis(self,
-                                    constant->ast_decl->constant.data_type,
-                                    scope,
-                                    LILY_CHECKED_SAFETY_MODE_SAFE);
     constant->constant.expr =
       check_expr__LilyAnalysis(self,
                                constant->ast_decl->constant.expr,
                                scope,
                                LILY_CHECKED_SAFETY_MODE_SAFE,
                                true);
+
+    constant->constant.data_type =
+      check_data_type__LilyAnalysis(self,
+                                    constant->ast_decl->constant.data_type,
+                                    scope,
+                                    LILY_CHECKED_SAFETY_MODE_SAFE);
+
+    if (!eq__LilyCheckedDataType(constant->constant.expr->data_type,
+                                 constant->constant.data_type)) {
+        FAILED("data type don't match");
+    }
 
     constant->is_checked = true;
 }
