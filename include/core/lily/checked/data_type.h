@@ -466,6 +466,20 @@ get_integer_size__LilyCheckedDataType(LilyCheckedDataType *self);
 
 /**
  *
+ * @brief Check if the data type is an integer.
+ */
+bool
+is_integer_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
+
+/**
+ *
+ * @brief Check if the data type is a float.
+ */
+bool
+is_float_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
+
+/**
+ *
  * @brief Free LilyCheckedDataType.
  */
 DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self);

@@ -921,6 +921,36 @@ get_integer_size__LilyCheckedDataType(LilyCheckedDataType *self)
     }
 }
 
+bool
+is_integer_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+is_float_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+            return true;
+        default:
+            return false;
+    }
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedDataType, array, LilyCheckedDataType *self)
 {
     FREE(LilyCheckedDataTypeArray, &self->array);
