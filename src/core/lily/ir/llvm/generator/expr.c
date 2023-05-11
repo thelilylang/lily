@@ -113,15 +113,14 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
 LLVMValueRef
 generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                           const LilyCheckedExpr *expr,
-                          LilyLlvmScope *scope,
-                          const char *name)
+                          LilyLlvmScope *scope)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_BINARY: {
             switch (expr->binary.kind) {
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN: {
                     LLVMValueRef assigned = generate_expr__LilyIrLlvm(
-                      self, expr->binary.right, scope, NULL);
+                      self, expr->binary.right, scope);
 
                     switch (expr->binary.left->kind) {
                         case LILY_CHECKED_EXPR_KIND_CALL:
@@ -164,7 +163,7 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                       type,
                       search_value__LilyLlvmScope(scope, expr->call.global_name)
                         ->value,
-                      expr->call.global_name->buffer);
+                      "");
                 default:
                     TODO("generatte call expression in LLVM IR");
             }
@@ -178,20 +177,20 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_CAST_KIND_LITERAL:
                     if (is_llvm_bitcast__LilyCheckedExprCast(&expr->cast)) {
                         LLVMValueRef expr_llvm = generate_expr__LilyIrLlvm(
-                          self, expr->cast.expr, scope, NULL);
+                          self, expr->cast.expr, scope);
                         LLVMTypeRef dest_llvm = generate_data_type__LilyIrLlvm(
                           self, expr->cast.dest_data_type);
 
                         if (is_llvm_trunc__LilyCheckedExprCast(&expr->cast)) {
                             return LLVMBuildTrunc(
-                              self->builder, expr_llvm, dest_llvm, name);
+                              self->builder, expr_llvm, dest_llvm, "");
                         } else if (is_llvm_sext__LilyCheckedExprCast(
                                      &expr->cast)) {
                             return LLVMBuildSExt(
-                              self->builder, expr_llvm, dest_llvm, name);
+                              self->builder, expr_llvm, dest_llvm, "");
                         } else {
                             return LLVMBuildBitCast(
-                              self->builder, expr_llvm, dest_llvm, name);
+                              self->builder, expr_llvm, dest_llvm, "");
                         }
                     } else {
                         TODO("do other literal casts");

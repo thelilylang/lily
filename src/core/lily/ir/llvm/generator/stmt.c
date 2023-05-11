@@ -89,7 +89,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             LLVMPositionBuilderAtEnd(self->builder, if_block_cond);
 
             LLVMValueRef if_cond =
-              generate_expr__LilyIrLlvm(self, stmt->if_.if_->cond, scope, NULL);
+              generate_expr__LilyIrLlvm(self, stmt->if_.if_->cond, scope);
 
             if (stmt->if_.elifs) {
                 if (stmt->if_.elifs->len > 1) {
@@ -123,7 +123,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                                                  current_elif_block_cond);
 
                         LLVMValueRef elif_cond = generate_expr__LilyIrLlvm(
-                          self, elif->cond, scope, NULL);
+                          self, elif->cond, scope);
 
                         LLVMBuildCondBr(self->builder,
                                         elif_cond,
@@ -159,7 +159,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                                              current_elif_block_cond);
 
                     LLVMValueRef last_elif_cond = generate_expr__LilyIrLlvm(
-                      self, last_elif->cond, scope, NULL);
+                      self, last_elif->cond, scope);
 
                     LLVMBasicBlockRef else_block = NULL;
 
@@ -241,7 +241,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                                                  elif_block_cond);
 
                         LLVMValueRef elif_cond = generate_expr__LilyIrLlvm(
-                          self, elif->cond, scope, NULL);
+                          self, elif->cond, scope);
 
                         if (elif->body->len > 0) {
                             LilyLlvmScope *elif_scope =
@@ -367,7 +367,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_STMT_KIND_RETURN:
             return LLVMBuildRet(
               self->builder,
-              generate_expr__LilyIrLlvm(self, stmt->return_.expr, scope, NULL));
+              generate_expr__LilyIrLlvm(self, stmt->return_.expr, scope));
         case LILY_CHECKED_STMT_KIND_TRY:
             TODO("generate try stmt");
         case LILY_CHECKED_STMT_KIND_UNSAFE:
@@ -397,7 +397,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             LLVMTypeRef variable_data_type =
               generate_data_type__LilyIrLlvm(self, stmt->variable.data_type);
             LLVMValueRef variable_expr = generate_expr__LilyIrLlvm(
-              self, stmt->variable.expr, scope, stmt->variable.name->buffer);
+              self, stmt->variable.expr, scope);
             LLVMValueRef variable = LLVMBuildAlloca(
               self->builder, variable_data_type, stmt->variable.name->buffer);
 
@@ -419,7 +419,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             LLVMPositionBuilderAtEnd(self->builder, loop_while_block_cond);
 
             LLVMValueRef loop_while_cond =
-              generate_expr__LilyIrLlvm(self, stmt->while_.expr, scope, NULL);
+              generate_expr__LilyIrLlvm(self, stmt->while_.expr, scope);
 
             LLVMBasicBlockRef loop_while_block =
               LLVMAppendBasicBlock(fun, "loop_w");
