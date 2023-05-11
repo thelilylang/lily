@@ -82,6 +82,8 @@ typedef struct LilyPackage
     bool std_is_loaded;
     bool core_is_loaded;
     bool builtin_is_loaded;
+
+    bool main_is_found;
 } LilyPackage;
 
 /**
