@@ -40,6 +40,7 @@ typedef struct LilyCheckedDeclAttribute
     bool is_set;
     bool is_get;
     enum LilyVisibility visibility;
+    bool is_checked;
 } LilyCheckedDeclAttribute;
 
 /**
@@ -62,7 +63,8 @@ inline CONSTRUCTOR(LilyCheckedDeclAttribute,
                                        .optional_expr = optional_expr,
                                        .is_set = is_set,
                                        .is_get = is_get,
-                                       .visibility = visibility };
+                                       .visibility = visibility,
+                                       .is_checked = false };
 }
 
 /**

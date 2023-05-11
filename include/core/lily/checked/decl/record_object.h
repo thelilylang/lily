@@ -43,6 +43,7 @@ typedef struct LilyCheckedDeclRecordObject
     Vec *body;           // Vec<LilyCheckedBodyRecordObjectItem*>*
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
+    bool is_checked;
 } LilyCheckedDeclRecordObject;
 
 /**
@@ -65,7 +66,8 @@ inline CONSTRUCTOR(LilyCheckedDeclRecordObject,
                                           .impl_params = impl_params,
                                           .body = body,
                                           .scope = scope,
-                                          .visibility = visibility };
+                                          .visibility = visibility,
+                                          .is_checked = false };
 }
 
 /**

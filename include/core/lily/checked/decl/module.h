@@ -40,6 +40,7 @@ typedef struct LilyCheckedDeclModule
     Vec *decls; // Vec<LilyCheckedDecl*>*
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
+    bool is_checked;
 } LilyCheckedDeclModule;
 
 /**

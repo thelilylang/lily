@@ -53,10 +53,12 @@ IMPL_FOR_DEBUG(to_string,
     }
 
     {
-        char *s = format(", is_set = {b}, is_get = {b}, visibility = {s}",
-                         self->is_set,
-                         self->is_get,
-                         to_string__Debug__LilyVisibility(self->visibility));
+        char *s = format(
+          ", is_set = {b}, is_get = {b}, visibility = {s}, is_checked = {b} }",
+          self->is_set,
+          self->is_get,
+          to_string__Debug__LilyVisibility(self->visibility),
+          self->is_checked);
 
         PUSH_STR_AND_FREE(res, s);
     }

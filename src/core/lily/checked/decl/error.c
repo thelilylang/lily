@@ -45,14 +45,18 @@ IMPL_FOR_DEBUG(to_string,
     }
 
     if (self->data_type) {
-        char *s = format(", data_type = {Sr}, visibility = {s} }",
-                         to_string__Debug__LilyCheckedDataType(self->data_type),
-                         to_string__Debug__LilyVisibility(self->visibility));
+        char *s =
+          format(", data_type = {Sr}, visibility = {s}, is_checked = {b} }",
+                 to_string__Debug__LilyCheckedDataType(self->data_type),
+                 to_string__Debug__LilyVisibility(self->visibility),
+                 self->is_checked);
 
         PUSH_STR_AND_FREE(res, s);
     } else {
-        char *s = format(", data_type = NULL, visibility = {s} }",
-                         to_string__Debug__LilyVisibility(self->visibility));
+        char *s =
+          format(", data_type = NULL, visibility = {s}, is_checked = {b} }",
+                 to_string__Debug__LilyVisibility(self->visibility),
+                 self->is_checked);
 
         PUSH_STR_AND_FREE(res, s);
     }

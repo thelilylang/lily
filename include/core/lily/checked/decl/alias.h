@@ -41,6 +41,7 @@ typedef struct LilyCheckedDeclAlias
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     LilyCheckedDataType *data_type;
     enum LilyVisibility visibility;
+    bool is_checked;
 } LilyCheckedDeclAlias;
 
 /**
@@ -61,7 +62,8 @@ inline CONSTRUCTOR(LilyCheckedDeclAlias,
                                    .scope = scope,
                                    .generic_params = generic_params,
                                    .data_type = data_type,
-                                   .visibility = visibility };
+                                   .visibility = visibility,
+                                   .is_checked = false };
 }
 
 /**

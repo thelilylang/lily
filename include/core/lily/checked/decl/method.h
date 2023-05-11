@@ -145,6 +145,7 @@ typedef struct LilyCheckedDeclMethod
     bool is_override;
     bool can_raise;
     bool can_inline;
+    bool is_checked;
 } LilyCheckedDeclMethod;
 
 /**
@@ -164,7 +165,8 @@ inline CONSTRUCTOR(LilyCheckedDeclMethod,
                    LilyCheckedAccessFun *access,
                    enum LilyVisibility visibility,
                    bool is_async,
-                   bool is_operator)
+                   bool is_operator,
+                   bool is_checked)
 {
     return (LilyCheckedDeclMethod){ .name = name,
                                     .global_name = global_name,
@@ -180,7 +182,8 @@ inline CONSTRUCTOR(LilyCheckedDeclMethod,
                                     .is_virtual = false,
                                     .is_override = false,
                                     .can_raise = false,
-                                    .can_inline = false };
+                                    .can_inline = false,
+                                    .is_checked = false };
 }
 
 /**

@@ -25,6 +25,8 @@
 #include <core/lily/checked/decl/prototype.h>
 
 #ifdef ENV_DEBUG
+#include <base/format.h>
+
 String *
 IMPL_FOR_DEBUG(to_string,
                LilyCheckedDeclPrototype,
@@ -58,6 +60,12 @@ IMPL_FOR_DEBUG(to_string,
         APPEND_AND_FREE(res, s);
     } else {
         push_str__String(res, "NULL");
+    }
+
+    {
+        char *s = format(", is_checked = {b} }", self->is_checked);
+
+        PUSH_STR_AND_FREE(res, s);
     }
 
     return res;

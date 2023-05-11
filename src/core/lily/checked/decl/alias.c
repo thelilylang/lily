@@ -49,9 +49,11 @@ IMPL_FOR_DEBUG(to_string,
     }
 
     {
-        char *s = format(", data_type = {Sr}, visibility = {s} }",
-                         to_string__Debug__LilyCheckedDataType(self->data_type),
-                         to_string__Debug__LilyVisibility(self->visibility));
+        char *s =
+          format(", data_type = {Sr}, visibility = {s}, is_checked = {b} }",
+                 to_string__Debug__LilyCheckedDataType(self->data_type),
+                 to_string__Debug__LilyVisibility(self->visibility),
+                 self->is_checked);
 
         PUSH_STR_AND_FREE(res, s);
     }

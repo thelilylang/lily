@@ -127,6 +127,7 @@ typedef struct LilyCheckedDeclFun
     bool can_raise;
     bool can_inline;
     bool is_main;
+    bool is_checked;
 } LilyCheckedDeclFun;
 
 /**
@@ -159,7 +160,8 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
                                  .is_operator = is_operator,
                                  .can_raise = false,
                                  .can_inline = false,
-                                 .is_main = false };
+                                 .is_main = false,
+                                 .is_checked = false };
 }
 
 /**

@@ -40,6 +40,7 @@ typedef struct LilyCheckedDeclRecord
     Vec *fields;         // Vec<LilyCheckedField*>*
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
+    bool is_checked;
 } LilyCheckedDeclRecord;
 
 inline CONSTRUCTOR(LilyCheckedDeclRecord,
@@ -56,7 +57,8 @@ inline CONSTRUCTOR(LilyCheckedDeclRecord,
                                     .generic_params = generic_params,
                                     .fields = fields,
                                     .scope = scope,
-                                    .visibility = visibility };
+                                    .visibility = visibility,
+                                    .is_checked = false };
 }
 
 /**

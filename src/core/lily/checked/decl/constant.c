@@ -33,12 +33,13 @@ IMPL_FOR_DEBUG(to_string,
     return format__String(
       "LilyCheckedDeclConstant{{ name = {S}, global_name = {S}, data_type = "
       "{Sr}, "
-      "expr = {Sr}, visibility = {s} }",
+      "expr = {Sr}, visibility = {s}, is_checked = {b} }",
       self->name,
       self->global_name,
       to_string__Debug__LilyCheckedDataType(self->data_type),
       to_string__Debug__LilyCheckedExpr(self->expr),
-      to_string__Debug__LilyVisibility(self->visibility));
+      to_string__Debug__LilyVisibility(self->visibility),
+      self->is_checked);
 }
 #endif
 

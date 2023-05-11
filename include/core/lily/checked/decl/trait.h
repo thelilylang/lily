@@ -44,6 +44,7 @@ typedef struct LilyCheckedDeclTrait
     Vec *body;           // Vec<LilyCheckedBodyTraitItem*>*
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
+    bool is_checked;
 } LilyCheckedDeclTrait;
 
 /**
@@ -66,7 +67,8 @@ inline CONSTRUCTOR(LilyCheckedDeclTrait,
                                    .inherit_params = inherit_params,
                                    .body = body,
                                    .scope = scope,
-                                   .visibility = visibility };
+                                   .visibility = visibility,
+                                   .is_checked = false };
 }
 
 /**

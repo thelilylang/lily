@@ -40,6 +40,7 @@ typedef struct LilyCheckedDeclError
     Vec *generic_params;            // Vec<LilyCheckedGenericParam*>*?
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
     enum LilyVisibility visibility;
+    bool is_checked;
 } LilyCheckedDeclError;
 
 /**
@@ -58,7 +59,8 @@ inline CONSTRUCTOR(LilyCheckedDeclError,
                                    .global_name = global_name,
                                    .generic_params = generic_params,
                                    .data_type = data_type,
-                                   .visibility = visibility };
+                                   .visibility = visibility,
+                                   .is_checked = false };
 }
 
 /**

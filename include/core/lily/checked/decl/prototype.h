@@ -38,6 +38,7 @@ typedef struct LilyCheckedDeclPrototype
     Vec *generic_params;                   // Vec<LilyCheckedGenericParam*>*?
     Vec *params;                           // Vec<LilyCheckedDataType*>*?
     LilyCheckedDataType *return_data_type; // LilyCheckedDataType*?
+    bool is_checked;
 } LilyCheckedDeclPrototype;
 
 /**
@@ -56,7 +57,8 @@ inline CONSTRUCTOR(LilyCheckedDeclPrototype,
                                        .global_name = global_name,
                                        .generic_params = generic_params,
                                        .params = params,
-                                       .return_data_type = return_data_type };
+                                       .return_data_type = return_data_type,
+                                       .is_checked = false };
 }
 
 /**

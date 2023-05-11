@@ -277,14 +277,15 @@ IMPL_FOR_DEBUG(to_string,
     {
         char *s = format(", visibility = {s}, is_async = {b}, is_operator = "
                          "{b}, is_virtual = {b}, is_override = {b}, can_raise "
-                         "= {b}, can_inline = {b} }",
+                         "= {b}, can_inline = {b}, is_checked = {b} }",
                          to_string__Debug__LilyVisibility(self->visibility),
                          self->is_async,
                          self->is_operator,
                          self->is_virtual,
                          self->is_override,
                          self->can_raise,
-                         self->can_inline);
+                         self->can_inline,
+                         self->is_checked);
 
         PUSH_STR_AND_FREE(res, s);
     }

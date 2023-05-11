@@ -39,6 +39,7 @@ typedef struct LilyCheckedDeclConstant
     LilyCheckedDataType *data_type;
     LilyCheckedExpr *expr;
     enum LilyVisibility visibility;
+    bool is_checked;
 } LilyCheckedDeclConstant;
 
 /**
@@ -57,7 +58,8 @@ inline CONSTRUCTOR(LilyCheckedDeclConstant,
                                       .global_name = global_name,
                                       .data_type = data_type,
                                       .expr = expr,
-                                      .visibility = visibility };
+                                      .visibility = visibility,
+                                      .is_checked = false };
 }
 
 /**

@@ -40,6 +40,7 @@ typedef struct LilyCheckedDeclEnum
     Vec *variants;       // Vec<LilyCheckedVariant*>*
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
+    bool is_checked;
 } LilyCheckedDeclEnum;
 
 inline CONSTRUCTOR(LilyCheckedDeclEnum,
@@ -56,7 +57,8 @@ inline CONSTRUCTOR(LilyCheckedDeclEnum,
                                   .generic_params = generic_params,
                                   .variants = variants,
                                   .scope = scope,
-                                  .visibility = visibility };
+                                  .visibility = visibility,
+                                  .is_checked = false };
 }
 
 /**
