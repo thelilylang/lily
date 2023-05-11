@@ -31,6 +31,8 @@
 
 #include <llvm-c/Core.h>
 
+typedef struct LilyIrLlvm LilyIrLlvm;
+
 typedef struct LilyLlvmValue
 {
     String *name;       // String* (&)
@@ -77,6 +79,7 @@ typedef struct LilyLlvmScope
 {
     Vec *values;                  // Vec<LilyLlvmValue*>*
     Vec *types;                   // Vec<LilyLlvmType*>*
+    Vec *loads;                   // Vec<LilyLlvmValue*>*
     struct LilyLlvmScope *parent; // LilyLlvmScope*? (&)
 } LilyLlvmScope;
 
@@ -88,17 +91,35 @@ CONSTRUCTOR(LilyLlvmScope *, LilyLlvmScope, LilyLlvmScope *parent);
 
 /**
  *
- * @brief Search a value in the scope.
+ * @brief Search for a value in the scope.
  */
 LilyLlvmValue *
 search_value__LilyLlvmScope(LilyLlvmScope *self, String *name);
 
 /**
  *
- * @brief Search a type in the scope.
+ * @brief Search for a type in the scope.
  */
 LilyLlvmType *
 search_type__LilyLlvmScope(LilyLlvmScope *self, String *name);
+
+/**
+ *
+ * @brief Search for a loaded value in the scope.
+ */
+LilyLlvmValue *
+search_load__LilyLlvmScope(LilyLlvmScope *self, String *name);
+
+/**
+ *
+ * @brief Search for a loaded value in the scope. If no load value is found
+ * below the specified value.
+ */
+LLVMValueRef
+load_value__LilyLlvmScope(LilyLlvmScope *self,
+                          const LilyIrLlvm *llvm,
+                          LLVMTypeRef type,
+                          String *name);
 
 /**
  *

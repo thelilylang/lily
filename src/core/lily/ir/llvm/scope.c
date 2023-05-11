@@ -24,6 +24,7 @@
 
 #include <base/new.h>
 
+#include <core/lily/ir/llvm.h>
 #include <core/lily/ir/llvm/scope.h>
 
 #include <stdio.h>
@@ -56,6 +57,7 @@ CONSTRUCTOR(LilyLlvmScope *, LilyLlvmScope, LilyLlvmScope *parent)
 
     self->values = NEW(Vec);
     self->types = NEW(Vec);
+    self->loads = NEW(Vec);
     self->parent = parent;
 
     return self;
@@ -97,11 +99,54 @@ search_type__LilyLlvmScope(LilyLlvmScope *self, String *name)
     UNREACHABLE("(search type) the analysis or the codegen have a bug!!");
 }
 
+LilyLlvmValue *
+search_load__LilyLlvmScope(LilyLlvmScope *self, String *name)
+{
+    for (Usize i = 0; i < self->loads->len; ++i) {
+        LilyLlvmValue *load = get__Vec(self->loads, i);
+
+        if (!strcmp(load->name->buffer, name->buffer)) {
+            return load;
+        }
+    }
+
+    if (self->parent) {
+        return search_load__LilyLlvmScope(self->parent, name);
+    }
+
+    return NULL;
+}
+
+LLVMValueRef
+load_value__LilyLlvmScope(LilyLlvmScope *self,
+                          const LilyIrLlvm *llvm,
+                          LLVMTypeRef type,
+                          String *name)
+{
+    LilyLlvmValue *load = search_load__LilyLlvmScope(self, name);
+
+    if (load) {
+        return load->value;
+    }
+
+    LLVMValueRef new_load = LLVMBuildLoad2(
+      llvm->builder, type, search_value__LilyLlvmScope(self, name)->value, "");
+
+    push__Vec(self->loads, NEW(LilyLlvmValue, name, new_load));
+
+    return new_load;
+}
+
 DESTRUCTOR(LilyLlvmScope, LilyLlvmScope *self)
 {
     FREE_BUFFER_ITEMS(self->values->buffer, self->values->len, LilyLlvmValue);
     FREE(Vec, self->values);
+
     FREE_BUFFER_ITEMS(self->types->buffer, self->types->len, LilyLlvmType);
     FREE(Vec, self->types);
+
+    FREE_BUFFER_ITEMS(self->loads->buffer, self->loads->len, LilyLlvmValue);
+    FREE(Vec, self->loads);
+
     lily_free(self);
 }
