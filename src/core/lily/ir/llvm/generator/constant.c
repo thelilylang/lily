@@ -32,7 +32,7 @@ generate_constant__LilyIrLlvm(const LilyIrLlvm *self,
                               LilyLlvmScope *scope)
 {
     LLVMTypeRef data_type =
-      generate_data_type__LilyIrLlvm(self, constant->data_type);
+      generate_data_type__LilyIrLlvm(self, constant->expr->data_type);
     LLVMValueRef expr = generate_expr__LilyIrLlvm(self, constant->expr, scope);
     LLVMValueRef constant_llvm =
       LLVMAddGlobal(self->module, data_type, constant->global_name->buffer);

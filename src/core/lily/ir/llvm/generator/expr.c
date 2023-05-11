@@ -118,6 +118,27 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_BINARY: {
             switch (expr->binary.kind) {
+                case LILY_CHECKED_EXPR_BINARY_KIND_AND:
+                case LILY_CHECKED_EXPR_BINARY_KIND_OR:
+                case LILY_CHECKED_EXPR_BINARY_KIND_XOR: {
+                    LLVMValueRef left =
+                      generate_expr__LilyIrLlvm(self, expr->binary.left, scope);
+                    LLVMValueRef right = generate_expr__LilyIrLlvm(
+                      self, expr->binary.right, scope);
+
+                    switch (expr->binary.kind) {
+                        case LILY_CHECKED_EXPR_BINARY_KIND_AND:
+                            return LLVMBuildAnd(self->builder, left, right, "");
+                        case LILY_CHECKED_EXPR_BINARY_KIND_OR:
+                            return LLVMBuildOr(self->builder, left, right, "");
+                        case LILY_CHECKED_EXPR_BINARY_KIND_XOR:
+                            return LLVMBuildXor(self->builder, left, right, "");
+                        default:
+                            UNREACHABLE("unknown variant");
+                    }
+
+                    break;
+                }
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_ADD:
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT:

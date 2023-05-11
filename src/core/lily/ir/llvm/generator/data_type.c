@@ -85,7 +85,11 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             TODO("generate ref data type");
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
-            TODO("generate str data type");
+            if (data_type->str == -1) {
+                return ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self));
+            }
+
+            return LLVMArrayType(i8__LilyIrLlvm(self), data_type->str);
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return generate_data_type__LilyIrLlvm(self, data_type->trace);
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
