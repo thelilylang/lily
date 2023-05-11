@@ -239,6 +239,10 @@ to_msg__LilyError(const LilyError *self)
             return "expected main function";
         case LILY_ERROR_KIND_EXPECTED_MUTABLE_VARIABLE:
             return "expected mutable variable";
+        case LILY_ERROR_KIND_EXPECTED_BOOLEAN_EXPRESSION:
+            return "expected boolean expression";
+        case LILY_ERROR_KIND_FUNCTION_IS_NOT_FOUND:
+            return "this function is not found";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -452,6 +456,10 @@ to_code__LilyError(const LilyError *self)
             return "0101";
         case LILY_ERROR_KIND_EXPECTED_MUTABLE_VARIABLE:
             return "0102";
+        case LILY_ERROR_KIND_EXPECTED_BOOLEAN_EXPRESSION:
+            return "0103";
+        case LILY_ERROR_KIND_FUNCTION_IS_NOT_FOUND:
+            return "0104";
         default:
             UNREACHABLE("unknown variant");
     }
