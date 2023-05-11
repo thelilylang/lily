@@ -412,7 +412,7 @@ typedef struct LilyCheckedExprCall
     LilyCheckedAccessScope scope; // NOTE: undef when kind is equal to
                                   // LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN or
                                   // LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS
-    String *global_name;          // String* (&)
+    String *global_name;          // String*? (&)
     union
     {
         LilyCheckedExprCallError error;
