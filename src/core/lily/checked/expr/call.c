@@ -155,6 +155,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_EXPR_CALL_KIND_VARIABLE";
         case LILY_CHECKED_EXPR_CALL_KIND_VARIANT:
             return "LILY_CHECKED_EXPR_CALL_KIND_VARIANT";
+        case LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN:
+            return "LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN";
         default:
             UNREACHABLE("unknown variant");
     }
