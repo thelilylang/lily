@@ -9081,6 +9081,7 @@ must_preparse_exprs(LilyPreparser *self)
             case LILY_TOKEN_KIND_KEYWORD_WHILE:
             case LILY_TOKEN_KIND_KEYWORD_MUT:
             case LILY_TOKEN_KIND_KEYWORD_VAL:
+			case LILY_TOKEN_KIND_KEYWORD_RETURN:
             case LILY_TOKEN_KIND_EOF:
             case LILY_TOKEN_KIND_KEYWORD_END:
             case LILY_TOKEN_KIND_R_BRACE:
@@ -9106,6 +9107,7 @@ must_preparse_exprs(LilyPreparser *self)
             case LILY_TOKEN_KIND_KEYWORD_WHILE:
             case LILY_TOKEN_KIND_KEYWORD_MUT:
             case LILY_TOKEN_KIND_KEYWORD_VAL:
+			case LILY_TOKEN_KIND_KEYWORD_RETURN:
             case LILY_TOKEN_KIND_EOF:
             case LILY_TOKEN_KIND_KEYWORD_END:
             case LILY_TOKEN_KIND_R_BRACE:
