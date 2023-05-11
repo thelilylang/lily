@@ -260,6 +260,20 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *
+ * @brief Get scope from an id.
+ */
+LilyCheckedScope *
+get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id);
+
+/**
+ *
+ * @brief Get decl from id and position
+ */
+LilyCheckedDecl *
+get_decl_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id, Usize pos);
+
+/**
+ *
  * @brief Convert LilyCheckedScope in String.
  * @note This function is only used to debug.
  */

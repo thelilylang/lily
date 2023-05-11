@@ -692,6 +692,31 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
     }
 }
 
+LilyCheckedScope *
+get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id)
+{
+    if (id > self->id) {
+        UNREACHABLE("the analysis have a bug!!");
+    } else if (id == self->id) {
+        return self;
+    } else {
+        return get_scope_from_id__LilyCheckedScope(self->parent->scope, id);
+    }
+}
+
+LilyCheckedDecl *
+get_decl_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id, Usize pos)
+{
+    LilyCheckedScope *scope = get_scope_from_id__LilyCheckedScope(self, id);
+
+    switch (scope->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            return get__Vec(scope->decls.module->decls, pos);
+        default:
+            return NULL;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
