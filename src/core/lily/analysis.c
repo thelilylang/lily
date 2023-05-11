@@ -78,7 +78,7 @@ push_trait__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *trait,
                          LilyCheckedDeclModule *module);
 
-static inline void
+static void
 push_alias__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *alias,
                          LilyCheckedDeclModule *module);
@@ -142,6 +142,12 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                          enum LilyCheckedSafetyMode safety_mode,
                          Vec *current_body);
 
+/// @return Vec<LilyCheckedGenericParam*>*
+static Vec *
+check_generic_params(LilyAnalysis *self,
+                     Vec *ast_generic_params,
+                     LilyCheckedScope *scope);
+
 /// @return Vec<LilyCheckedFunParam*>*
 static Vec *
 check_fun_params__LilyAnalysis(LilyAnalysis *self,
@@ -155,6 +161,9 @@ static void
 check_constant__LilyAnalysis(LilyAnalysis *self,
                              LilyCheckedDecl *constant,
                              LilyCheckedScope *scope);
+
+static void
+check_alias__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *alias);
 
 static void
 check_decls__LilyAnalysis(LilyAnalysis *self,
@@ -429,22 +438,28 @@ push_alias__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *alias,
                          LilyCheckedDeclModule *module)
 {
-    push__Vec(
-      module->decls,
-      NEW_VARIANT(LilyCheckedDecl,
-                  type,
-                  &alias->location,
+    LilyCheckedDecl *checked_alias = NEW_VARIANT(
+      LilyCheckedDecl,
+      type,
+      &alias->location,
+      alias,
+      NEW_VARIANT(LilyCheckedDeclType,
                   alias,
-                  NEW_VARIANT(LilyCheckedDeclType,
-                              alias,
-                              NEW(LilyCheckedDeclAlias,
-                                  alias->type.alias.name,
-                                  format__String("{S}.{S}",
-                                                 module->global_name,
-                                                 alias->type.alias.name),
-                                  NULL,
-                                  NULL,
-                                  alias->type.alias.visibility))));
+                  NEW(LilyCheckedDeclAlias,
+                      alias->type.alias.name,
+                      format__String(
+                        "{S}.{S}", module->global_name, alias->type.alias.name),
+                      NULL,
+                      NULL,
+                      NULL,
+                      alias->type.alias.visibility)));
+
+    checked_alias->type.alias.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+          NEW_VARIANT(LilyCheckedScopeDecls, decl, checked_alias));
+
+    push__Vec(module->decls, checked_alias);
 }
 
 void
@@ -2062,6 +2077,14 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
 }
 
 Vec *
+check_generic_params(LilyAnalysis *self,
+                     Vec *ast_generic_params,
+                     LilyCheckedScope *scope)
+{
+    TODO("check generic params");
+}
+
+Vec *
 check_fun_params__LilyAnalysis(LilyAnalysis *self,
                                const Vec *params,
                                LilyCheckedScope *scope)
@@ -2151,13 +2174,26 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
 void
 check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 {
-    // 1. Check params.
+    if (!strcmp(fun->fun.name->buffer, "main") &&
+        !fun->fun.scope->parent->scope->parent &&
+        self->package->status == LILY_PACKAGE_STATUS_MAIN) {
+        fun->fun.is_main = true;
+        self->package->main_is_found = true;
+    }
+
+    // 1. Check generic params
+    if (fun->ast_decl->fun.generic_params) {
+        fun->fun.generic_params = check_generic_params(
+          self, fun->ast_decl->fun.generic_params, fun->fun.scope);
+    }
+
+    // 2. Check params.
     if (fun->ast_decl->fun.params) {
         fun->fun.params = check_fun_params__LilyAnalysis(
           self, fun->ast_decl->fun.params, fun->fun.scope);
     }
 
-    // 2. Check return data type.
+    // 3. Check return data type.
     if (fun->ast_decl->fun.return_data_type) {
         // TODO: check the safety mode of the function
         fun->fun.return_data_type =
@@ -2170,13 +2206,13 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, NULL);
     }
 
-    // 3. Init scope of body.
+    // 4. Init scope of body.
     fun->fun.scope =
       NEW(LilyCheckedScope,
           NEW_VARIANT(LilyCheckedParent, decl, fun->fun.scope, fun),
           NEW_VARIANT(LilyCheckedScopeDecls, scope, fun->fun.body));
 
-    // 4. Check body.
+    // 5. Check body.
     CHECK_FUN_BODY(fun->ast_decl->fun.body,
                    fun->fun.scope,
                    fun->fun.body,
@@ -2202,6 +2238,27 @@ check_constant__LilyAnalysis(LilyAnalysis *self,
                                scope,
                                LILY_CHECKED_SAFETY_MODE_SAFE,
                                true);
+
+    constant->is_checked = true;
+}
+
+void
+check_alias__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *alias)
+{
+    if (alias->ast_decl->type.alias.generic_params) {
+        alias->type.alias.generic_params =
+          check_generic_params(self,
+                               alias->ast_decl->type.alias.generic_params,
+                               alias->type.alias.scope);
+    }
+
+    alias->type.alias.data_type =
+      check_data_type__LilyAnalysis(self,
+                                    alias->ast_decl->type.alias.data_type,
+                                    alias->type.alias.scope,
+                                    LILY_CHECKED_SAFETY_MODE_SAFE);
+
+    alias->is_checked = true;
 }
 
 void
@@ -2220,6 +2277,17 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
                     break;
                 case LILY_CHECKED_DECL_KIND_CONSTANT:
                     check_constant__LilyAnalysis(self, decl, scope);
+
+                    break;
+                case LILY_CHECKED_DECL_KIND_TYPE:
+                    switch (decl->type.kind) {
+                        case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
+                            check_alias__LilyAnalysis(self, decl);
+
+                            break;
+                        default:
+                            TODO("check type");
+                    }
 
                     break;
                 default:
@@ -2261,6 +2329,24 @@ run__LilyAnalysis(LilyAnalysis *self)
     run_step1__LilyAnalysis(self);
     run_step2__LilyAnalysis(self);
 
+    // TODO: add a support to only build a library.
+    if (!self->package->main_is_found &&
+        self->package->status == LILY_PACKAGE_STATUS_MAIN) {
+        Location location_error =
+          NEW(Location, self->package->file.name, 1, 1, 1, 1, 0, 0);
+
+        emit__Diagnostic(
+          NEW_VARIANT(Diagnostic,
+                      simple_lily_error,
+                      &self->package->file,
+                      &location_error,
+                      NEW(LilyError, LILY_ERROR_KIND_EXPECTED_MAIN_FUNCTION),
+                      NULL,
+                      NULL,
+                      NULL),
+          &self->package->count_error);
+    }
+
     if (self->package->count_error > 0) {
         exit(1);
     }
@@ -2275,5 +2361,6 @@ run__LilyAnalysis(LilyAnalysis *self)
 DESTRUCTOR(LilyAnalysis, const LilyAnalysis *self)
 {
     FREE(String, self->module.name);
+    FREE(String, self->module.global_name);
     // FREE(LilyCheckedDeclModule, &self->module);
 }
