@@ -105,10 +105,18 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                               enum LilyCheckedSafetyMode safety_mode);
 
 static LilyCheckedExpr *
+check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
+                                    LilyAstExpr *expr,
+                                    LilyCheckedScope *scope,
+                                    bool is_moved_expr,
+                                    bool must_mut);
+
+static LilyCheckedExpr *
 check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                 LilyAstExpr *expr,
                                 LilyCheckedScope *scope,
-                                enum LilyCheckedSafetyMode safety_mode);
+                                enum LilyCheckedSafetyMode safety_mode,
+                                bool is_moved_expr);
 
 static void
 valid_cast__LilyAnalysis(LilyAnalysis *self,
@@ -1048,20 +1056,159 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
     }
 }
 
+static LilyCheckedExpr *
+check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
+                                    LilyAstExpr *expr,
+                                    LilyCheckedScope *scope,
+                                    bool is_moved_expr,
+                                    bool must_mut)
+{
+    LilyCheckedScopeResponse response =
+      search_identifier__LilyCheckedScope(scope, expr->identifier.name);
+
+    if (response.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
+        emit__Diagnostic(
+          NEW_VARIANT(Diagnostic,
+                      simple_lily_error,
+                      &self->package->file,
+                      &expr->location,
+                      NEW(LilyError, LILY_ERROR_KIND_IDENTIFIER_NOT_FOUND),
+                      NULL,
+                      NULL,
+                      NULL),
+          &self->package->count_error);
+
+        return NEW_VARIANT(LilyCheckedExpr,
+                           call,
+                           &expr->location,
+                           NEW(LilyCheckedDataType,
+                               LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                               &expr->location),
+                           expr,
+                           NEW(LilyCheckedExprCall,
+                               LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                               NULL,
+                               (LilyCheckedAccessScope){ .id = 0 }));
+    } else {
+        LilyCheckedDataType *data_type = NULL;
+
+        switch (response.kind) {
+            case LILY_CHECKED_SCOPE_RESPONSE_KIND_VARIABLE:
+                if (response.variable->is_moved) {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        &self->package->file,
+                        &expr->location,
+                        NEW(LilyError, LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED),
+                        NULL,
+                        NULL,
+                        NULL),
+                      &self->package->count_error);
+                }
+
+                // Check if the variable is mutable.
+                if (must_mut) {
+                    if (!response.variable->is_mut) {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            &self->package->file,
+                            &expr->location,
+                            NEW(LilyError,
+                                LILY_ERROR_KIND_EXPECTED_MUTABLE_VARIABLE),
+                            NULL,
+                            NULL,
+                            NULL),
+                          &self->package->count_error);
+                    }
+                }
+
+                if (is_moved_expr) {
+                    response.variable->is_moved = true;
+                }
+
+                data_type =
+                  clone__LilyCheckedDataType(response.variable->data_type);
+
+                return NEW_VARIANT(
+                  LilyCheckedExpr,
+                  call,
+                  &expr->location,
+                  data_type,
+                  expr,
+                  NEW(LilyCheckedExprCall,
+                      LILY_CHECKED_EXPR_CALL_KIND_VARIABLE,
+                      response.variable->name,
+                      (LilyCheckedAccessScope){
+                        .id = response.scope_container.scope_id }));
+            case LILY_CHECKED_SCOPE_CONTAINER_KIND_FUN:
+                // for fun passed as parameter
+                TODO("found fun!!");
+            case LILY_CHECKED_SCOPE_CONTAINER_KIND_CONSTANT:
+                data_type =
+                  clone__LilyCheckedDataType(response.constant->data_type);
+
+                return NEW_VARIANT(
+                  LilyCheckedExpr,
+                  call,
+                  &expr->location,
+                  data_type,
+                  expr,
+                  NEW(LilyCheckedExprCall,
+                      LILY_CHECKED_EXPR_CALL_KIND_CONSTANT,
+                      response.constant->global_name,
+                      (LilyCheckedAccessScope){
+                        .id = response.scope_container.scope_id }));
+            default:
+                // TODO: emit a diagnostic
+                FAILED("this kind of response is not expected in this "
+                       "context");
+        }
+    }
+}
+
 LilyCheckedExpr *
 check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                 LilyAstExpr *expr,
                                 LilyCheckedScope *scope,
-                                enum LilyCheckedSafetyMode safety_mode)
+                                enum LilyCheckedSafetyMode safety_mode,
+                                bool is_moved_expr)
 {
     switch (expr->binary.kind) {
         case LILY_AST_EXPR_BINARY_KIND_ADD:
             TODO("analyze +");
         case LILY_AST_EXPR_BINARY_KIND_AND:
             TODO("analyze and");
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_ADD:
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT:
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT:
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_DIV:
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_EXP:
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_MOD:
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_MUL:
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_SUB:
+        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_XOR:
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN: {
-            LilyCheckedExpr *left = check_expr__LilyAnalysis(
-              self, expr->binary.left, scope, safety_mode, true);
+            LilyCheckedExpr *left = NULL;
+
+            switch (expr->binary.left->kind) {
+                case LILY_AST_EXPR_KIND_IDENTIFIER: {
+                    left = check_identifier_expr__LilyAnalysis(
+                      self, expr->binary.left, scope, is_moved_expr, true);
+
+                    break;
+                }
+                case LILY_AST_EXPR_KIND_ACCESS:
+                    TODO("resolve access in assign expression");
+                default:
+                    FAILED("expected identifier or path");
+            }
+
             LilyCheckedExpr *right = check_expr__LilyAnalysis(
               self, expr->binary.right, scope, safety_mode, true);
 
@@ -1083,35 +1230,15 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
               LilyCheckedExpr,
               binary,
               &expr->location,
-              NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNIT, NULL),
+              NEW(LilyCheckedDataType,
+                  LILY_CHECKED_DATA_TYPE_KIND_UNIT,
+                  &expr->location),
               expr,
               NEW(LilyCheckedExprBinary,
                   (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
                   left,
                   right));
         }
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_ADD:
-            TODO("analyze +=");
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
-            TODO("analyze &=");
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT:
-            TODO("analyze <<=");
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
-            TODO("analyze |=");
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT:
-            TODO("analyze >>=");
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_DIV:
-            TODO("analyze /=");
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_EXP:
-            TODO("analyze **=");
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_MOD:
-            TODO("analyze %=");
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_MUL:
-            TODO("analyze *=");
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_SUB:
-            TODO("analyze -=");
-        case LILY_AST_EXPR_BINARY_KIND_ASSIGN_XOR:
-            TODO("analyze xor=");
         case LILY_AST_EXPR_BINARY_KIND_BIT_AND:
             TODO("analyze &");
         case LILY_AST_EXPR_BINARY_KIND_BIT_L_SHIFT:
@@ -1304,13 +1431,16 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_CONSTANT:
                     return search_constant__LilyCheckedScope(
                       scope, id->identifier.name);
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_VARIABLE:
+                    return search_variable__LilyCheckedScope(
+                      scope, id->identifier.name);
                 default:
                     UNREACHABLE("this situation is impossible");
             }
 
             break;
         case LILY_AST_EXPR_KIND_ACCESS:
-            break;
+            TODO("resolve access");
         default:
             UNREACHABLE("this expression is not an id");
     }
@@ -1330,7 +1460,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
             TODO("array expression");
         case LILY_AST_EXPR_KIND_BINARY:
             return check_binary_expr__LilyAnalysis(
-              self, expr, scope, safety_mode);
+              self, expr, scope, safety_mode, is_moved_expr);
         case LILY_AST_EXPR_KIND_CALL:
             switch (expr->call.kind) {
                 case LILY_AST_EXPR_CALL_KIND_FUN: {
@@ -1376,87 +1506,9 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                expr,
                                grouping);
         }
-        case LILY_AST_EXPR_KIND_IDENTIFIER: {
-            LilyCheckedScopeResponse response =
-              search_identifier__LilyCheckedScope(scope, expr->identifier.name);
-
-            if (response.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
-                emit__Diagnostic(
-                  NEW_VARIANT(
-                    Diagnostic,
-                    simple_lily_error,
-                    &self->package->file,
-                    &expr->location,
-                    NEW(LilyError, LILY_ERROR_KIND_IDENTIFIER_NOT_FOUND),
-                    NULL,
-                    NULL,
-                    NULL),
-                  &self->package->count_error);
-
-                return NULL;
-            } else {
-                LilyCheckedDataType *data_type = NULL;
-
-                switch (response.kind) {
-                    case LILY_CHECKED_SCOPE_RESPONSE_KIND_VARIABLE:
-                        if (response.variable->is_moved) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &expr->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED),
-                                NULL,
-                                NULL,
-                                NULL),
-                              &self->package->count_error);
-                        }
-
-                        if (is_moved_expr) {
-                            response.variable->is_moved = true;
-                        }
-
-                        data_type = clone__LilyCheckedDataType(
-                          response.variable->data_type);
-
-                        return NEW_VARIANT(
-                          LilyCheckedExpr,
-                          call,
-                          &expr->location,
-                          data_type,
-                          expr,
-                          NEW(LilyCheckedExprCall,
-                              LILY_CHECKED_EXPR_CALL_KIND_VARIABLE,
-                              response.variable->name,
-                              (LilyCheckedAccessScope){
-                                .id = response.scope_container.scope_id }));
-                    case LILY_CHECKED_SCOPE_CONTAINER_KIND_FUN:
-                        // for fun passed as parameter
-                        TODO("found fun!!");
-                    case LILY_CHECKED_SCOPE_CONTAINER_KIND_CONSTANT:
-                        data_type = clone__LilyCheckedDataType(
-                          response.constant->data_type);
-
-                        return NEW_VARIANT(
-                          LilyCheckedExpr,
-                          call,
-                          &expr->location,
-                          data_type,
-                          expr,
-                          NEW(LilyCheckedExprCall,
-                              LILY_CHECKED_EXPR_CALL_KIND_CONSTANT,
-                              response.constant->global_name,
-                              (LilyCheckedAccessScope){
-                                .id = response.scope_container.scope_id }));
-                    default:
-                        // TODO: emit a diagnostic
-                        FAILED("this kind of response is not expected in this "
-                               "context");
-                }
-            }
-        }
+        case LILY_AST_EXPR_KIND_IDENTIFIER:
+            return check_identifier_expr__LilyAnalysis(
+              self, expr, scope, is_moved_expr, false);
         case LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR:
             TODO("identifier dollar expression");
         case LILY_AST_EXPR_KIND_LAMBDA:
