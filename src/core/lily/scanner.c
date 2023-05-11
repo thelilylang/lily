@@ -2269,10 +2269,15 @@ get_token__LilyScanner(LilyScanner *self)
                 String *res = scan_string__LilyScanner(self);
 
                 if (res) {
-                    return NEW_VARIANT(LilyToken,
-                                       literal_bytes,
-                                       clone__Location(&self->location),
-                                       (Uint8 *)res);
+                    LilyToken *literal_bytes =
+                      NEW_VARIANT(LilyToken,
+                                  literal_bytes,
+                                  clone__Location(&self->location),
+                                  (Uint8 *)res->buffer);
+
+                    lily_free(res);
+
+                    return literal_bytes;
                 }
 
                 return NULL;
