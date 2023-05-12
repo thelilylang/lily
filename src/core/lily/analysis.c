@@ -287,28 +287,29 @@ push_fun__LilyAnalysis(LilyAnalysis *self,
                        LilyAstDecl *fun,
                        LilyCheckedDeclModule *module)
 {
-    Vec *body = NEW(Vec);
+    LilyCheckedDecl *checked_fun = NEW_VARIANT(
+      LilyCheckedDecl,
+      fun,
+      &fun->location,
+      fun,
+      NEW(LilyCheckedDeclFun,
+          fun->fun.name,
+          format__String("{S}.{S}", module->global_name, fun->fun.name),
+          NULL,
+          NULL,
+          NULL,
+          NEW(Vec),
+          NULL,
+          fun->fun.visibility,
+          fun->fun.is_async,
+          fun->fun.is_operator));
 
-    push__Vec(
-      module->decls,
-      NEW_VARIANT(
-        LilyCheckedDecl,
-        fun,
-        &fun->location,
-        fun,
-        NEW(LilyCheckedDeclFun,
-            fun->fun.name,
-            format__String("{S}.{S}", module->global_name, fun->fun.name),
-            NULL,
-            NULL,
-            NULL,
-            body,
-            NEW(LilyCheckedScope,
-                NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
-                NEW_VARIANT(LilyCheckedScopeDecls, scope, body)),
-            fun->fun.visibility,
-            fun->fun.is_async,
-            fun->fun.is_operator)));
+    checked_fun->fun.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+          NEW_VARIANT(LilyCheckedScopeDecls, decl, checked_fun));
+
+    push__Vec(module->decls, checked_fun);
 }
 
 void
@@ -1168,10 +1169,10 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                       response.variable->name,
                       (LilyCheckedAccessScope){
                         .id = response.scope_container.scope_id }));
-            case LILY_CHECKED_SCOPE_CONTAINER_KIND_FUN:
+            case LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN:
                 // for fun passed as parameter
                 TODO("found fun!!");
-            case LILY_CHECKED_SCOPE_CONTAINER_KIND_CONSTANT:
+            case LILY_CHECKED_SCOPE_RESPONSE_KIND_CONSTANT:
                 if (!response.constant->is_checked) {
                     check_constant__LilyAnalysis(
                       self,
@@ -1197,6 +1198,59 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                       response.constant->global_name,
                       (LilyCheckedAccessScope){
                         .id = response.scope_container.scope_id }));
+            case LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN_PARAM:
+                if (response.fun_param->is_moved) {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        &self->package->file,
+                        &expr->location,
+                        NEW(LilyError, LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED),
+                        NULL,
+                        NULL,
+                        NULL),
+                      &self->package->count_error);
+                }
+
+                // Check if the variable is mutable.
+                if (must_mut) {
+                    // TODO: check if the param can be mutable.
+                    // if (!response.fun_param->is_mut) {
+                    //     emit__Diagnostic(
+                    //       NEW_VARIANT(
+                    //         Diagnostic,
+                    //         simple_lily_error,
+                    //         &self->package->file,
+                    //         &expr->location,
+                    //         NEW(LilyError,
+                    //             LILY_ERROR_KIND_EXPECTED_MUTABLE_VARIABLE),
+                    //         NULL,
+                    //         NULL,
+                    //         NULL),
+                    //       &self->package->count_error);
+                    // }
+                }
+
+                if (is_moved_expr) {
+                    response.fun_param->is_moved = true;
+                }
+
+                data_type =
+                  clone__LilyCheckedDataType(response.fun_param->data_type);
+
+                return NEW_VARIANT(
+                  LilyCheckedExpr,
+                  call,
+                  &expr->location,
+                  data_type,
+                  expr,
+                  NEW_VARIANT(LilyCheckedExprCall,
+                      fun_param,
+                      (LilyCheckedAccessScope){
+                        .id = response.scope_container.scope_id },
+                      response.fun_param->name,
+						response.scope_container.variable->id));
             default:
                 // TODO: emit a diagnostic
                 FAILED("this kind of response is not expected in this "
@@ -1600,6 +1654,10 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                                        Vec *params_call)
 {
     if (params) {
+        if (params_call->len > params->len) {
+            FAILED("error: too many params");
+        }
+
         for (Usize i = 0; i < params->len; ++i) {
             LilyCheckedDeclFunParam *param = get__Vec(params, i);
 
@@ -1625,6 +1683,8 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                 }
             }
         }
+    } else if (!params && params_call) {
+        FAILED("too many params");
     }
 
     return true;
@@ -1648,6 +1708,15 @@ check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
                 break;
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
+                // TODO: pass &param->location
+                push__Vec(checked_params,
+                          NEW_VARIANT(LilyCheckedExprCallFunParam,
+                                      normal,
+                                      value,
+                                      param->location));
+
+                break;
+            default:
                 break;
         }
     }
@@ -2525,7 +2594,7 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
         LilyCheckedScopeContainerVariable *sc_variable =
           NEW(LilyCheckedScopeContainerVariable, param->name, i);
 
-        int is_failed = add_variable__LilyCheckedScope(scope, sc_variable);
+        int is_failed = add_param__LilyCheckedScope(scope, sc_variable);
 
         if (is_failed) {
             emit__Diagnostic(
@@ -2553,6 +2622,7 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
         return;
     }
 
+    // Verify if it's the main function
     if (!strcmp(fun->fun.name->buffer, "main") &&
         !fun->fun.scope->parent->scope->parent &&
         self->package->status == LILY_PACKAGE_STATUS_MAIN) {
