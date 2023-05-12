@@ -172,3 +172,27 @@ read_file__File(const char *path)
     return content;
 }
 #endif
+
+#ifdef LILY_WINDOWS_OS
+void
+write_file__File(const char *path, const char *content)
+{
+    // TODO: create a function to write on a file on Windows.
+    return;
+}
+#else
+void
+write_file__File(const char *path, const char *content)
+{
+    FILE *file = fopen(path, "w");
+
+    if (!file) {
+        printf("\x1b[31merror\x1b[0m: could not open file: `%s`\n", path);
+        exit(1);
+    }
+
+    fprintf(file, "%s", content);
+
+    fclose(file);
+}
+#endif

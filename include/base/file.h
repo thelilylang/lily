@@ -57,4 +57,11 @@ get_size__File(const char *path);
 char *
 read_file__File(const char *path);
 
+/**
+ *
+ * @brief Write content on a file.
+ */
+void
+write_file__File(const char *path, const char *content);
+
 #endif // LILY_BASE_FILE_H
