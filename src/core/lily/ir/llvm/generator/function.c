@@ -41,7 +41,6 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
       generate_data_type__LilyIrLlvm(self, fun->return_data_type);
     LLVMTypeRef *params = NULL;
     Usize params_len = 0;
-    // Vec *params = NEW(Vec); // Vec<LLVMTypeRef>*
 
     if (fun->params) {
         params_len = fun->params->len;
@@ -71,7 +70,7 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
 
     push__Vec(scope->funs,
               NEW(LilyLlvmFun, fun->global_name, fun_llvm, fun_data_type));
-	push__Vec(scope->values, NEW(LilyLlvmValue, fun->global_name, fun_llvm));
+    push__Vec(scope->values, NEW(LilyLlvmValue, fun->global_name, fun_llvm));
 
     LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
     LLVMPositionBuilderAtEnd(self->builder, entry_block);

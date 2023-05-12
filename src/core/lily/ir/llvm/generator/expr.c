@@ -116,7 +116,8 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
 LLVMValueRef
 generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                           const LilyCheckedExpr *expr,
-                          LilyLlvmScope *scope)
+                          LilyLlvmScope *scope,
+						  LLVMValueRef fun)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_BINARY: {
@@ -136,9 +137,9 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_BINARY_KIND_EXP:
                 case LILY_CHECKED_EXPR_BINARY_KIND_SUB: {
                     LLVMValueRef left =
-                      generate_expr__LilyIrLlvm(self, expr->binary.left, scope);
+                      generate_expr__LilyIrLlvm(self, expr->binary.left, scope, fun);
                     LLVMValueRef right = generate_expr__LilyIrLlvm(
-                      self, expr->binary.right, scope);
+                      self, expr->binary.right, scope, fun);
 
                     if (is_integer_data_type__LilyCheckedDataType(
                           expr->binary.left->data_type) &&
@@ -240,9 +241,9 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_BINARY_KIND_OR:
                 case LILY_CHECKED_EXPR_BINARY_KIND_XOR: {
                     LLVMValueRef left =
-                      generate_expr__LilyIrLlvm(self, expr->binary.left, scope);
+                      generate_expr__LilyIrLlvm(self, expr->binary.left, scope, fun);
                     LLVMValueRef right = generate_expr__LilyIrLlvm(
-                      self, expr->binary.right, scope);
+                      self, expr->binary.right, scope, fun);
 
                     switch (expr->binary.kind) {
                         case LILY_CHECKED_EXPR_BINARY_KIND_AND:
@@ -270,7 +271,7 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_XOR:
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN: {
                     LLVMValueRef assigned = generate_expr__LilyIrLlvm(
-                      self, expr->binary.right, scope);
+                      self, expr->binary.right, scope, fun);
 
                     switch (expr->binary.left->kind) {
                         case LILY_CHECKED_EXPR_KIND_CALL:
@@ -553,8 +554,11 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
                     return load_value__LilyLlvmScope(
                       scope, self, type, expr->call.global_name);
+				case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM: {
+					return LLVMGetParam(fun, expr->call.fun_param);
+				}
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
-                    LilyLlvmFun *fun =
+                    LilyLlvmFun *called_fun =
                       search_fun__LilyLlvmScope(scope, expr->call.global_name);
                     LLVMValueRef *params = NULL;
                     Usize params_len = 0;
@@ -568,13 +572,13 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                               get__Vec(expr->call.fun.params, i);
 
                             params[i] = generate_expr__LilyIrLlvm(
-                              self, param->value, scope);
+                              self, param->value, scope, fun);
                         }
                     }
 
                     return LLVMBuildCall2(self->builder,
-                                          fun->fun_type,
-                                          fun->fun,
+                                          called_fun->fun_type,
+                                          called_fun->fun,
                                           params,
                                           params_len,
                                           "");
@@ -592,7 +596,7 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_CAST_KIND_LITERAL:
                     if (is_llvm_bitcast__LilyCheckedExprCast(&expr->cast)) {
                         LLVMValueRef expr_llvm = generate_expr__LilyIrLlvm(
-                          self, expr->cast.expr, scope);
+                          self, expr->cast.expr, scope, fun);
                         LLVMTypeRef dest_llvm = generate_data_type__LilyIrLlvm(
                           self, expr->cast.dest_data_type);
 
