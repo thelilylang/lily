@@ -28,6 +28,7 @@
 #include <core/lily/ir/llvm/generator.h>
 #include <core/lily/ir/llvm/generator/constant.h>
 #include <core/lily/ir/llvm/generator/function.h>
+#include <core/lily/ir/llvm/generator/record.h>
 #include <core/lily/package.h>
 
 #include <stdio.h>
@@ -60,7 +61,16 @@ run__LilyIrLlvmGenerator(LilyPackage *self)
             case LILY_CHECKED_DECL_KIND_OBJECT:
                 TODO("generate object");
             case LILY_CHECKED_DECL_KIND_TYPE:
-                TODO("generate type");
+				switch (decl->type.kind) {
+					case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+						generate_record__LilyIrLlvm(&self->ir.llvm, &decl->type.record, scope);
+
+						break;
+					default:
+						TODO("generate type");
+				}
+
+				break;
             default:
                 UNREACHABLE("unknown variant");
         }

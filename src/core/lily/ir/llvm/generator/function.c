@@ -39,12 +39,11 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
 {
     LLVMTypeRef return_data_type =
       generate_data_type__LilyIrLlvm(self, fun->return_data_type);
-    LLVMTypeRef *params = NULL;
+    LLVMTypeRef params[252] = {};
     Usize params_len = 0;
 
     if (fun->params) {
         params_len = fun->params->len;
-        params = lily_malloc(sizeof(LLVMTypeRef) * params_len);
 
         for (Usize i = 0; i < fun->params->len; ++i) {
             params[i] = generate_data_type__LilyIrLlvm(

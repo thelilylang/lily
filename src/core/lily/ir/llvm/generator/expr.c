@@ -622,12 +622,11 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
                     LilyLlvmFun *called_fun =
                       search_fun__LilyLlvmScope(scope, expr->call.global_name);
-                    LLVMValueRef *params = NULL;
+                    LLVMValueRef params[252] = { 0 };
                     Usize params_len = 0;
 
                     if (expr->call.fun.params) {
                         params_len = expr->call.fun.params->len;
-                        params = lily_malloc(sizeof(LLVMValueRef) * params_len);
 
                         for (Usize i = 0; i < expr->call.fun.params->len; ++i) {
                             LilyCheckedExprCallFunParam *param =
