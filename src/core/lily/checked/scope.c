@@ -575,6 +575,47 @@ search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 }
 
 LilyCheckedScopeResponse
+search_field__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            if (self->decls.decl->kind == LILY_CHECKED_DECL_KIND_TYPE) {
+                switch (self->decls.decl->type.kind) {
+                    case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+                        for (Usize i = 0; i < self->variables->len; ++i) {
+                            LilyCheckedScopeContainerVariable *variable =
+                              get__Vec(self->variables, i);
+
+                            if (!strcmp(variable->name->buffer, name->buffer)) {
+                                LilyCheckedField *field =
+                                  get__Vec(self->decls.decl->type.record.fields,
+                                           variable->id);
+
+                                return NEW_VARIANT(
+                                  LilyCheckedScopeResponse,
+                                  record_field,
+                                  field->location,
+                                  NEW_VARIANT(LilyCheckedScopeContainer,
+                                              variable,
+                                              self->id,
+                                              variable),
+                                  field);
+                            }
+                        }
+
+                        break;
+                    default:
+                        break;
+                }
+            }
+        default:
+            break;
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
 search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
     LilyCheckedScopeResponse variable =
