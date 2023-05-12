@@ -187,7 +187,10 @@ build__LilyPackage(const CompileConfig *config,
     run__LilyParser(&self->parser, false);
     run__LilyAnalysis(&self->analysis);
     run__LilyIr(self);
-    run__LilyLinker(self);
+
+    if (self->status == LILY_PACKAGE_STATUS_MAIN) {
+        run__LilyLinker(self);
+    }
 
     return self;
 }
@@ -306,6 +309,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(LilyParser, &self->parser);
     FREE(LilyAnalysis, &self->analysis);
     FREE(LilyIr, &self->ir);
+    FREE(LilyLinker, &self->linker);
 
     if (self->builtins) {
         for (Usize i = 0; i < BUILTINS_COUNT; ++i) {
