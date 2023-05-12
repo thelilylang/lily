@@ -1875,8 +1875,133 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                         }
                     }
                 }
-                case LILY_AST_EXPR_CALL_KIND_RECORD:
+                case LILY_AST_EXPR_CALL_KIND_RECORD: {
+                    LilyCheckedScopeResponse response =
+                      resolve_id__LilyAnalysis(
+                        self,
+                        expr->call.record.id,
+                        scope,
+                        LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD);
+
+                    switch (response.kind) {
+                        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &expr->location,
+                                NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_TYPE),
+                                NULL,
+                                NULL,
+                                from__String("unknown record in this scope")),
+                              &self->package->count_error);
+
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              call,
+                              &expr->location,
+                              NEW(LilyCheckedDataType,
+                                  LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                                  &expr->location),
+                              expr,
+                              NEW(LilyCheckedExprCall,
+                                  LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                                  NULL,
+                                  (LilyCheckedAccessScope){ .id = 0 }));
+                            break;
+                        default: {
+                            if (!response.record->is_checked) {
+                                check_record__LilyAnalysis(
+                                  self, response.record->scope->decls.decl);
+                            }
+
+                            Vec *checked_record_params = NEW(Vec);
+
+                            for (Usize i = 0; i < expr->call.record.params->len;
+                                 ++i) {
+                                LilyAstExprRecordParamCall *param =
+                                  get__Vec(expr->call.record.params, i);
+
+                                LilyCheckedScopeResponse field_response =
+                                  search_field__LilyCheckedScope(
+                                    response.record->scope, param->name);
+
+                                Usize field_index = 0;
+
+                                switch (field_response.kind) {
+                                    case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                                        emit__Diagnostic(
+                                          NEW_VARIANT(
+                                            Diagnostic,
+                                            simple_lily_error,
+                                            &self->package->file,
+                                            &expr->location,
+                                            NEW(
+                                              LilyError,
+                                              LILY_ERROR_KIND_FIELD_IS_NOT_FOUND),
+                                            NULL,
+                                            NULL,
+                                            from__String(
+                                              "unknown record in this scope")),
+                                          &self->package->count_error);
+
+                                        break;
+                                    default:
+                                        field_index =
+                                          field_response.scope_container
+                                            .variable->id;
+
+                                        break;
+                                }
+
+                                LilyCheckedExpr *checked_value =
+                                  check_expr__LilyAnalysis(self,
+                                                           param->value,
+                                                           scope,
+                                                           safety_mode,
+                                                           false);
+
+                                if (!eq__LilyCheckedDataType(
+                                      checked_value->data_type,
+                                      field_response.record_field->data_type)) {
+                                    FAILED("data type do not match");
+                                }
+
+                                push__Vec(checked_record_params,
+                                          NEW(LilyCheckedExprCallRecordParam,
+                                              param->name,
+                                              checked_value,
+                                              field_index));
+                            }
+
+                            // TODO: add support for call generic record.
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              call,
+                              &expr->location,
+                              NEW_VARIANT(
+                                LilyCheckedDataType,
+                                custom,
+                                &expr->location,
+                                NEW(LilyCheckedDataTypeCustom,
+                                    response.record->global_name,
+                                    NULL,
+                                    LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD)),
+                              expr,
+                              NEW_VARIANT(
+                                LilyCheckedExprCall,
+                                record,
+                                (LilyCheckedAccessScope){
+                                  .id = response.scope_container.scope_id },
+                                response.record->global_name,
+                                NEW(LilyCheckedExprCallRecord,
+                                    checked_record_params)));
+                        }
+                    }
+
                     TODO("check record call");
+                }
                 case LILY_AST_EXPR_CALL_KIND_VARIANT:
                     TODO("check variant call");
                 default:
