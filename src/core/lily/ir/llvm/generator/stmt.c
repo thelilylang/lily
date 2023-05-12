@@ -122,8 +122,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                         LLVMPositionBuilderAtEnd(self->builder,
                                                  current_elif_block_cond);
 
-                        LLVMValueRef elif_cond =
-                          generate_expr__LilyIrLlvm(self, elif->cond, scope, fun);
+                        LLVMValueRef elif_cond = generate_expr__LilyIrLlvm(
+                          self, elif->cond, scope, fun);
 
                         LLVMBuildCondBr(self->builder,
                                         elif_cond,
@@ -158,8 +158,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                     LLVMPositionBuilderAtEnd(self->builder,
                                              current_elif_block_cond);
 
-                    LLVMValueRef last_elif_cond =
-                      generate_expr__LilyIrLlvm(self, last_elif->cond, scope, fun);
+                    LLVMValueRef last_elif_cond = generate_expr__LilyIrLlvm(
+                      self, last_elif->cond, scope, fun);
 
                     LLVMBasicBlockRef else_block = NULL;
 
@@ -240,8 +240,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                         LLVMPositionBuilderAtEnd(self->builder,
                                                  elif_block_cond);
 
-                        LLVMValueRef elif_cond =
-                          generate_expr__LilyIrLlvm(self, elif->cond, scope, fun);
+                        LLVMValueRef elif_cond = generate_expr__LilyIrLlvm(
+                          self, elif->cond, scope, fun);
 
                         if (elif->body->len > 0) {
                             LilyLlvmScope *elif_scope =

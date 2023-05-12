@@ -420,7 +420,7 @@ typedef struct LilyCheckedExprCall
         LilyCheckedExprCallFun fun;
         const LilyBuiltinFun *fun_builtin; // const LilyBuiltinFun* (&)
         const LilySysFun *fun_sys;         // const LilySysFun* (&)
-		Usize fun_param; // index of fun param
+        Usize fun_param;                   // index of fun param
         LilyCheckedExprCallMethod method;
         LilyCheckedExprCallRecord record;
         LilyCheckedExprCallVariant variant;
@@ -504,12 +504,12 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
 inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                            LilyCheckedExprCall,
                            fun_param,
-						   LilyCheckedAccessScope scope,
+                           LilyCheckedAccessScope scope,
                            String *global_name,
                            Usize fun_param)
 {
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM,
-								  .scope = scope,
+                                  .scope = scope,
                                   .global_name = global_name,
                                   .fun_param = fun_param };
 }
