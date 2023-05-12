@@ -245,6 +245,10 @@ to_msg__LilyError(const LilyError *self)
             return "this function is not found";
         case LILY_ERROR_KIND_DUPLICATE_FIELD:
             return "duplicate field";
+        case LILY_ERROR_KIND_UNKNOWN_TYPE:
+            return "unknown type";
+        case LILY_ERROR_KIND_FIELD_IS_NOT_FOUND:
+            return "the field is not found";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -464,6 +468,10 @@ to_code__LilyError(const LilyError *self)
             return "0104";
         case LILY_ERROR_KIND_DUPLICATE_FIELD:
             return "0105";
+        case LILY_ERROR_KIND_UNKNOWN_TYPE:
+            return "0106";
+        case LILY_ERROR_KIND_FIELD_IS_NOT_FOUND:
+            return "0107";
         default:
             UNREACHABLE("unknown variant");
     }
