@@ -321,6 +321,7 @@ typedef struct LilyCheckedExprCallRecordParam
 {
     String *name; // String* (&)
     LilyCheckedExpr *value;
+    Usize field_index;
 } LilyCheckedExprCallRecordParam;
 
 /**
@@ -330,7 +331,8 @@ typedef struct LilyCheckedExprCallRecordParam
 CONSTRUCTOR(LilyCheckedExprCallRecordParam *,
             LilyCheckedExprCallRecordParam,
             String *name,
-            LilyCheckedExpr *value);
+            LilyCheckedExpr *value,
+            Usize field_index);
 
 /**
  *

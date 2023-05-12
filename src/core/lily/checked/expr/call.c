@@ -580,13 +580,15 @@ DESTRUCTOR(LilyCheckedExprCallMethod, const LilyCheckedExprCallMethod *self)
 CONSTRUCTOR(LilyCheckedExprCallRecordParam *,
             LilyCheckedExprCallRecordParam,
             String *name,
-            LilyCheckedExpr *value)
+            LilyCheckedExpr *value,
+            Usize field_index)
 {
     LilyCheckedExprCallRecordParam *self =
       lily_malloc(sizeof(LilyCheckedExprCallRecordParam));
 
     self->name = name;
     self->value = value;
+    self->field_index = field_index;
 
     return self;
 }
@@ -597,10 +599,11 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedExprCallRecordParam,
                const LilyCheckedExprCallRecordParam *self)
 {
-    return format__String(
-      "LilyCheckedExprCallRecordParam{{ name = {S}, value = {Sr} }",
-      self->name,
-      to_string__Debug__LilyCheckedExpr(self->value));
+    return format__String("LilyCheckedExprCallRecordParam{{ name = {S}, value "
+                          "= {Sr}, field_index = {d} }",
+                          self->name,
+                          to_string__Debug__LilyCheckedExpr(self->value),
+                          self->field_index);
 }
 #endif
 
