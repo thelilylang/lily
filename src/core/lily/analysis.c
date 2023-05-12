@@ -1246,11 +1246,11 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                   data_type,
                   expr,
                   NEW_VARIANT(LilyCheckedExprCall,
-                      fun_param,
-                      (LilyCheckedAccessScope){
-                        .id = response.scope_container.scope_id },
-                      response.fun_param->name,
-						response.scope_container.variable->id));
+                              fun_param,
+                              (LilyCheckedAccessScope){
+                                .id = response.scope_container.scope_id },
+                              response.fun_param->name,
+                              response.scope_container.variable->id));
             default:
                 // TODO: emit a diagnostic
                 FAILED("this kind of response is not expected in this "
@@ -1473,8 +1473,28 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_EXPR_BINARY_KIND_CHAIN:
             TODO("analyze |>");
-        case LILY_AST_EXPR_BINARY_KIND_EQ:
-            TODO("analyze ==");
+        case LILY_AST_EXPR_BINARY_KIND_EQ: {
+            LilyCheckedExpr *left = check_expr__LilyAnalysis(
+              self, expr->binary.left, scope, safety_mode, false);
+            LilyCheckedExpr *right = check_expr__LilyAnalysis(
+              self, expr->binary.right, scope, safety_mode, false);
+
+            if (!eq__LilyCheckedDataType(left->data_type, right->data_type)) {
+                FAILED("expected same data type on left and right expression");
+            }
+
+            return NEW_VARIANT(LilyCheckedExpr,
+                               binary,
+                               &expr->location,
+                               NEW(LilyCheckedDataType,
+                                   LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                                   &expr->location),
+                               expr,
+                               NEW(LilyCheckedExprBinary,
+                                   LILY_CHECKED_EXPR_BINARY_KIND_EQ,
+                                   left,
+                                   right));
+        }
         case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD:
             TODO("analyze ->");
         case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
