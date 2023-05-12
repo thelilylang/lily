@@ -38,7 +38,7 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               LilyLlvmScope *scope)
 {
     LLVMTypeRef return_data_type =
-      generate_data_type__LilyIrLlvm(self, fun->return_data_type);
+      generate_data_type__LilyIrLlvm(self, fun->return_data_type, scope);
     LLVMTypeRef params[252] = {};
     Usize params_len = 0;
 
@@ -49,7 +49,8 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
             params[i] = generate_data_type__LilyIrLlvm(
               self,
               CAST(LilyCheckedDeclFunParam *, get__Vec(fun->params, i))
-                ->data_type);
+                ->data_type,
+              scope);
         }
     }
 

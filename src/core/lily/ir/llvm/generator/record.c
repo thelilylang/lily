@@ -35,7 +35,8 @@ generate_record__LilyIrLlvm(const LilyIrLlvm *self,
     for (Usize i = 0; i < record->fields->len; ++i) {
         LilyCheckedField *field = get__Vec(record->fields, i);
 
-        fields[i] = generate_data_type__LilyIrLlvm(self, field->data_type);
+        fields[i] =
+          generate_data_type__LilyIrLlvm(self, field->data_type, scope);
     }
 
     LLVMTypeRef record_llvm = LLVMStructTypeInContext(
@@ -43,6 +44,8 @@ generate_record__LilyIrLlvm(const LilyIrLlvm *self,
     LLVMValueRef record_llvm_value =
       LLVMAddGlobal(self->module, record_llvm, record->global_name->buffer);
 
-	push__Vec(scope->types, NEW(LilyLlvmType, record->name, record_llvm));
-	push__Vec(scope->values, NEW(LilyLlvmValue, record->name, record_llvm_value));
+    push__Vec(scope->types,
+              NEW(LilyLlvmType, record->global_name, record_llvm));
+    push__Vec(scope->values,
+              NEW(LilyLlvmValue, record->global_name, record_llvm_value));
 }

@@ -31,7 +31,8 @@
                                                                                \
         switch (item->kind) {                                                  \
             case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:                         \
-                generate_expr__LilyIrLlvm(self, item->expr, llvm_scope, fun);  \
+                generate_expr__LilyIrLlvm(                                     \
+                  self, item->expr, llvm_scope, fun, NULL);                    \
                                                                                \
                 break;                                                         \
             case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:                         \

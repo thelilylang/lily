@@ -30,7 +30,8 @@
 
 LLVMTypeRef
 generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
-                               LilyCheckedDataType *data_type)
+                               LilyCheckedDataType *data_type,
+                               LilyLlvmScope *scope)
 {
     switch (data_type->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_ANY:
@@ -50,7 +51,8 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
             return i8__LilyIrLlvm(self);
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-            TODO("generate custom data type");
+            return search_type__LilyLlvmScope(scope, data_type->custom.name)
+              ->type;
         case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
             TODO("generate exception data type");
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
@@ -77,7 +79,7 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_LIST:
             TODO("generate list data type");
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
-            return generate_data_type__LilyIrLlvm(self, data_type->mut);
+            return generate_data_type__LilyIrLlvm(self, data_type->mut, scope);
         case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
         case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
             return void__LilyIrLlvm(self);
@@ -85,7 +87,8 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
             TODO("generate optional data type");
         case LILY_CHECKED_DATA_TYPE_KIND_PTR:
             return ptr__LilyIrLlvm(
-              self, generate_data_type__LilyIrLlvm(self, data_type->ptr));
+              self,
+              generate_data_type__LilyIrLlvm(self, data_type->ptr, scope));
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             TODO("generate ref data type");
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
@@ -95,7 +98,8 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
 
             return LLVMArrayType(i8__LilyIrLlvm(self), data_type->str);
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
-            return generate_data_type__LilyIrLlvm(self, data_type->trace);
+            return generate_data_type__LilyIrLlvm(
+              self, data_type->trace, scope);
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
             TODO("generate tuple data type");
         case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:

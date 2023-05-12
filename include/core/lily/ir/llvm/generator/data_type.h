@@ -27,6 +27,7 @@
 
 #include <core/lily/checked.h>
 #include <core/lily/ir/llvm.h>
+#include <core/lily/ir/llvm/scope.h>
 
 /**
  *
@@ -34,6 +35,7 @@
  */
 LLVMTypeRef
 generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
-                               LilyCheckedDataType *data_type);
+                               LilyCheckedDataType *data_type,
+                               LilyLlvmScope *scope);
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_DATA_TYPE_H

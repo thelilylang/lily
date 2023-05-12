@@ -61,16 +61,17 @@ run__LilyIrLlvmGenerator(LilyPackage *self)
             case LILY_CHECKED_DECL_KIND_OBJECT:
                 TODO("generate object");
             case LILY_CHECKED_DECL_KIND_TYPE:
-				switch (decl->type.kind) {
-					case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
-						generate_record__LilyIrLlvm(&self->ir.llvm, &decl->type.record, scope);
+                switch (decl->type.kind) {
+                    case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+                        generate_record__LilyIrLlvm(
+                          &self->ir.llvm, &decl->type.record, scope);
 
-						break;
-					default:
-						TODO("generate type");
-				}
+                        break;
+                    default:
+                        TODO("generate type");
+                }
 
-				break;
+                break;
             default:
                 UNREACHABLE("unknown variant");
         }

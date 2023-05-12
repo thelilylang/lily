@@ -39,6 +39,7 @@ LLVMValueRef
 generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                           const LilyCheckedExpr *expr,
                           LilyLlvmScope *scope,
-                          LLVMValueRef fun);
+                          LLVMValueRef fun,
+                          LLVMValueRef ptr);
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_EXPR_H
