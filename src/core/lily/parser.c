@@ -1957,6 +1957,29 @@ parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
             return NULL;
         }
 
+        switch (self->current->kind) {
+            case LILY_TOKEN_KIND_R_BRACE:
+                break;
+            default:
+                if (self->current->kind != LILY_TOKEN_KIND_COMMA) {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected `,`")),
+                      self->count_error);
+                } else {
+                    next_token__LilyParseBlock(self);
+                }
+
+                break;
+        }
+
         push__Vec(params, NEW(LilyAstExprRecordParamCall, name, value));
     }
 
