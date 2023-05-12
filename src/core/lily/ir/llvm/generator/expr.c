@@ -117,7 +117,7 @@ LLVMValueRef
 generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                           const LilyCheckedExpr *expr,
                           LilyLlvmScope *scope,
-						  LLVMValueRef fun)
+                          LLVMValueRef fun)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_BINARY: {
@@ -136,8 +136,8 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_BINARY_KIND_LESS_EQ:
                 case LILY_CHECKED_EXPR_BINARY_KIND_EXP:
                 case LILY_CHECKED_EXPR_BINARY_KIND_SUB: {
-                    LLVMValueRef left =
-                      generate_expr__LilyIrLlvm(self, expr->binary.left, scope, fun);
+                    LLVMValueRef left = generate_expr__LilyIrLlvm(
+                      self, expr->binary.left, scope, fun);
                     LLVMValueRef right = generate_expr__LilyIrLlvm(
                       self, expr->binary.right, scope, fun);
 
@@ -240,8 +240,8 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_BINARY_KIND_AND:
                 case LILY_CHECKED_EXPR_BINARY_KIND_OR:
                 case LILY_CHECKED_EXPR_BINARY_KIND_XOR: {
-                    LLVMValueRef left =
-                      generate_expr__LilyIrLlvm(self, expr->binary.left, scope, fun);
+                    LLVMValueRef left = generate_expr__LilyIrLlvm(
+                      self, expr->binary.left, scope, fun);
                     LLVMValueRef right = generate_expr__LilyIrLlvm(
                       self, expr->binary.right, scope, fun);
 
@@ -539,6 +539,68 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                     }
                     break;
                 }
+                case LILY_CHECKED_EXPR_BINARY_KIND_EQ: {
+                    LLVMValueRef left = generate_expr__LilyIrLlvm(
+                      self, expr->binary.left, scope, fun);
+                    LLVMValueRef right = generate_expr__LilyIrLlvm(
+                      self, expr->binary.right, scope, fun);
+
+                    switch (expr->binary.left->data_type->kind) {
+                        case LILY_CHECKED_DATA_TYPE_KIND_ANY:
+                            TODO("implements equal for any");
+                        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+                            TODO("implements equal for array");
+                        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+                        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
+                        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+                        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+                        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+                        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+                        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+                        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+                        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+                        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+                        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+                        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+                        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+                            return LLVMBuildICmp(
+                              self->builder, LLVMIntEQ, left, right, "");
+                        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
+                            TODO("implements equal for bytes");
+                        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                            TODO("implements equal for custom");
+                        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+                            TODO("implements equal for exception");
+                        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+                        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+                            return LLVMBuildFCmp(
+                              self->builder, LLVMRealOEQ, left, right, "");
+                        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
+                            TODO("implements equal for lambda");
+                        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+                            TODO("implements equal for list");
+                        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+                            TODO("implements equal for mut");
+                        case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
+                        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+                        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+                            TODO("analysis have a bug!!");
+                        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+                            TODO("implements equal for optional");
+                        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+                            TODO("implements equal for ptr");
+                        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+                            TODO("implements equal for ref");
+                        case LILY_CHECKED_DATA_TYPE_KIND_STR:
+                            TODO("implements equal for str");
+                        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+                            TODO("implements equal for trace");
+                        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
+                            TODO("implements equal for tuple");
+                        default:
+                            UNREACHABLE("unknown variant");
+                    }
+                }
                 default:
                     TODO("generate binary expression");
             }
@@ -554,9 +616,9 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                 case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
                     return load_value__LilyLlvmScope(
                       scope, self, type, expr->call.global_name);
-				case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM: {
-					return LLVMGetParam(fun, expr->call.fun_param);
-				}
+                case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM: {
+                    return LLVMGetParam(fun, expr->call.fun_param);
+                }
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
                     LilyLlvmFun *called_fun =
                       search_fun__LilyLlvmScope(scope, expr->call.global_name);
