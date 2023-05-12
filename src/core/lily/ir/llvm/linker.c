@@ -29,8 +29,6 @@
 #include <core/lily/ir/llvm/linker.h>
 #include <core/lily/package.h>
 
-#include <llvm-c/BitWriter.h>
-
 void
 run__LilyIrLlvmLinker(LilyPackage *self)
 {
