@@ -47,6 +47,7 @@ typedef struct LilyCheckedDeclFun LilyCheckedDeclFun;
 typedef struct LilyCheckedStmtVariable LilyCheckedStmtVariable;
 typedef struct LilyCheckedDeclFunParam LilyCheckedDeclFunParam;
 typedef struct LilyCheckedDeclMethodParam LilyCheckedDeclMethodParam;
+typedef struct LilyCheckedField LilyCheckedField;
 typedef struct LilyCheckedGenericParam LilyCheckedGenericParam;
 
 // TODO: add debug for LilyCheckedScopeResponse
@@ -57,6 +58,7 @@ enum LilyCheckedScopeResponseKind
     LILY_CHECKED_SCOPE_RESPONSE_KIND_CONSTANT,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD,
+    LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ALIAS,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_OBJECT,
@@ -87,6 +89,7 @@ typedef struct LilyCheckedScopeResponse
         LilyCheckedDeclConstant *constant;
         LilyCheckedDeclEnum *enum_;
         LilyCheckedDeclRecord *record;
+        LilyCheckedField *record_field;
         LilyCheckedDeclAlias *alias;
         LilyCheckedDeclError *error;
         LilyCheckedDeclEnumObject *enum_object;
@@ -188,6 +191,26 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .location = location,
         .scope_container = scope_container,
         .record = record
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeResponse type
+ * (LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
+                           LilyCheckedScopeResponse,
+                           record_field,
+                           const Location *location,
+                           LilyCheckedScopeContainer scope_container,
+                           LilyCheckedField *record_field)
+{
+    return (LilyCheckedScopeResponse){
+        .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD,
+        .location = location,
+        .scope_container = scope_container,
+        .record_field = record_field
     };
 }
 
