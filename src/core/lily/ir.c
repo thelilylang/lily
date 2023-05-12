@@ -25,6 +25,30 @@
 #include <base/new.h>
 
 #include <core/lily/ir.h>
+#include <core/lily/ir/llvm/generator.h>
+#include <core/lily/package.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+
+void
+run__LilyIr(LilyPackage *self)
+{
+    switch (self->ir.kind) {
+        case LILY_IR_KIND_CC:
+            break;
+        case LILY_IR_KIND_CPP:
+            break;
+        case LILY_IR_KIND_JS:
+            break;
+        case LILY_IR_KIND_LLVM:
+            run__LilyIrLlvmGenerator(self);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
 
 DESTRUCTOR(LilyIr, const LilyIr *self)
 {

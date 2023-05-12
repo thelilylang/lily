@@ -32,6 +32,8 @@
 #include <core/lily/ir/js.h>
 #include <core/lily/ir/llvm.h>
 
+typedef struct LilyPackage LilyPackage;
+
 enum LilyIrKind
 {
     LILY_IR_KIND_CC,
@@ -87,6 +89,13 @@ inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, llvm, LilyIrLlvm llvm)
 {
     return (LilyIr){ .kind = LILY_IR_KIND_LLVM, .llvm = llvm };
 }
+
+/**
+ *
+ * @brief Run the IR.
+ */
+void
+run__LilyIr(LilyPackage *self);
 
 /**
  *
