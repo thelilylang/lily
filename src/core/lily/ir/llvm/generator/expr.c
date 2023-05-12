@@ -670,8 +670,12 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                             LilyCheckedExprCallRecordParam *param =
                               get__Vec(expr->call.record.params, i);
 
-                            LLVMValueRef ptr = LLVMBuildStructGEP2(
-                              self->builder, type, record_value, i, "");
+                            LLVMValueRef ptr =
+                              LLVMBuildStructGEP2(self->builder,
+                                                  type,
+                                                  record_value,
+                                                  param->field_index,
+                                                  "");
                             LLVMValueRef value = generate_expr__LilyIrLlvm(
                               self, param->value, scope, fun, ptr);
 
