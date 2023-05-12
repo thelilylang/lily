@@ -40,6 +40,7 @@ typedef struct LilyCheckedField
     LilyCheckedExpr *optional_expr; // LilyCheckedExpr*?
     enum LilyVisibility visibility;
     bool is_mut;
+    const Location *location;
 } LilyCheckedField;
 
 /**
@@ -51,7 +52,8 @@ CONSTRUCTOR(LilyCheckedField *,
             String *name,
             LilyCheckedDataType *data_type,
             LilyCheckedExpr *optional_expr,
-            bool is_mut);
+            bool is_mut,
+            const Location *location);
 
 /**
  *

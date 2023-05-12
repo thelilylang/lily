@@ -38,6 +38,7 @@ typedef struct LilyAstField
     LilyAstDataType *data_type;
     LilyAstExpr *optional_expr; // LilyAstExpr*?
     bool is_mut;
+    Location location;
 } LilyAstField;
 
 /**
@@ -49,7 +50,8 @@ CONSTRUCTOR(LilyAstField *,
             String *name,
             LilyAstDataType *data_type,
             LilyAstExpr *optional_expr,
-            bool is_mut);
+            bool is_mut,
+            Location location);
 
 /**
  *

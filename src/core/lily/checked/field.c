@@ -29,7 +29,8 @@ CONSTRUCTOR(LilyCheckedField *,
             String *name,
             LilyCheckedDataType *data_type,
             LilyCheckedExpr *optional_expr,
-            bool is_mut)
+            bool is_mut,
+            const Location *location)
 {
     LilyCheckedField *self = lily_malloc(sizeof(LilyCheckedField));
 
@@ -38,6 +39,7 @@ CONSTRUCTOR(LilyCheckedField *,
     self->optional_expr = optional_expr;
     self->visibility = LILY_VISIBILITY_PUBLIC;
     self->is_mut = is_mut;
+    self->location = location;
 
     return self;
 }
@@ -62,9 +64,10 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedField, const LilyCheckedField *self)
     }
 
     {
-        char *s =
-          format(", visibility = LILY_VISIBILITY_PUBLIC, is_mut = {b} }",
-                 self->is_mut);
+        char *s = format(", visibility = LILY_VISIBILITY_PUBLIC, is_mut = {b}, "
+                         "location = {sa} }",
+                         self->is_mut,
+                         to_string__Debug__Location(self->location));
 
         PUSH_STR_AND_FREE(res, s);
     }

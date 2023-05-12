@@ -32,7 +32,8 @@ CONSTRUCTOR(LilyAstField *,
             String *name,
             LilyAstDataType *data_type,
             LilyAstExpr *optional_expr,
-            bool is_mut)
+            bool is_mut,
+            Location location)
 {
     LilyAstField *self = lily_malloc(sizeof(LilyAstField));
 
@@ -40,6 +41,7 @@ CONSTRUCTOR(LilyAstField *,
     self->data_type = data_type;
     self->optional_expr = optional_expr;
     self->is_mut = is_mut;
+    self->location = location;
 
     return self;
 }
@@ -62,7 +64,9 @@ IMPL_FOR_DEBUG(to_string, LilyAstField, const LilyAstField *self)
     }
 
     {
-        char *s = format(", is_mut = {b} }", self->is_mut);
+        char *s = format(", is_mut = {b}, location = {sa} }",
+                         self->is_mut,
+                         to_string__Debug__Location(&self->location));
 
         PUSH_STR_AND_FREE(res, s);
     }
