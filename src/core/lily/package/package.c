@@ -163,14 +163,18 @@ build__LilyPackage(const CompileConfig *config,
     }
 
     if (config->cc_ir) {
+        // TODO: add a linker for CC
         self->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));
     } else if (config->cpp_ir) {
+        // TODO: add a linker for CPP
         self->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));
     } else if (config->js_ir) {
         self->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));
     } else {
         self->ir =
           NEW_VARIANT(LilyIr, llvm, NEW(LilyIrLlvm, self->global_name->buffer));
+        self->linker =
+          NEW_VARIANT(LilyLinker, llvm, NEW(LilyIrLlvmLinker, &self->ir.llvm));
     }
 
     run__LilyPrecompile(&self->precompile, self, false);
@@ -182,7 +186,8 @@ build__LilyPackage(const CompileConfig *config,
 
     run__LilyParser(&self->parser, false);
     run__LilyAnalysis(&self->analysis);
-    run__LilyIrLlvmGenerator(self);
+    run__LilyIr(self);
+    run__LilyLinker(self);
 
     return self;
 }

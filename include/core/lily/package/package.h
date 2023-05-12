@@ -34,6 +34,7 @@
 #include <core/lily/analysis.h>
 #include <core/lily/builtin.h>
 #include <core/lily/ir.h>
+#include <core/lily/linker.h>
 #include <core/lily/package/config.h>
 #include <core/lily/package/library.h>
 #include <core/lily/parser.h>
@@ -70,6 +71,7 @@ typedef struct LilyPackage
     LilyParser parser;
     LilyAnalysis analysis;
     LilyIr ir;
+    LilyLinker linker;
     LilyBuiltinFun *builtins;
     LilySysFun *syss;
     Usize count_error;
