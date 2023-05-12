@@ -40,7 +40,8 @@ typedef struct LilyIrLlvmLinker
 
 inline CONSTRUCTOR(LilyIrLlvmLinker, LilyIrLlvmLinker, const LilyIrLlvm *llvm)
 {
-    return (LilyIrLlvmLinker){ .llvm = llvm, .command = NEW(String) };
+    return (LilyIrLlvmLinker){ .llvm = llvm,
+                               .command = from__String("clang ") };
 }
 
 /**

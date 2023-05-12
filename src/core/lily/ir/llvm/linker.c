@@ -22,10 +22,37 @@
  * SOFTWARE.
  */
 
+#include <base/file.h>
+#include <base/macros.h>
+
+#include <core/lily/ir/llvm/dump.h>
 #include <core/lily/ir/llvm/linker.h>
 #include <core/lily/package.h>
+
+#include <llvm-c/BitWriter.h>
 
 void
 run__LilyIrLlvmLinker(LilyPackage *self)
 {
+#ifdef LILY_WINDOWS_OS
+    TODO("add a support for windows");
+#else
+    // Remove `.lily` from the path of the original filename.
+    char *path_base =
+      get_slice__Str(self->file.name, 0, strlen(self->file.name) - 5);
+
+    String *path = format__String("{sa}.ll", path_base);
+
+    append__String(self->linker.llvm.command, path);
+
+    char *content = LLVMPrintModuleToString(self->ir.llvm.module);
+
+    write_file__File(path->buffer, content);
+
+    system(self->linker.llvm.command->buffer);
+    remove(path->buffer);
+
+    lily_free(content);
+    FREE(String, path);
+#endif
 }
