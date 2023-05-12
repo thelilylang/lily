@@ -145,6 +145,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN";
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
             return "LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS";
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
+            return "LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM";
         case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
             return "LILY_CHECKED_EXPR_CALL_KIND_METHOD";
         case LILY_CHECKED_EXPR_CALL_KIND_MODULE:
@@ -728,6 +730,14 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
 
             break;
         }
+		case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM: {
+            char *s = format(", fun_param = {Sr} }",
+                             self->fun_param);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_CHECKED_EXPR_CALL_KIND_METHOD: {
             char *s = format(
               ", method = {Sr} }",
@@ -808,6 +818,7 @@ DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self)
             break;
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
+		case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
             break;
         case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
             FREE_VARIANT(LilyCheckedExprCall, method, self);

@@ -45,6 +45,7 @@ enum LilyCheckedExprCallKind
     LILY_CHECKED_EXPR_CALL_KIND_FUN,
     LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS,
     LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN,
+    LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM,
     LILY_CHECKED_EXPR_CALL_KIND_METHOD,
     LILY_CHECKED_EXPR_CALL_KIND_MODULE,
     LILY_CHECKED_EXPR_CALL_KIND_RECORD,
@@ -419,6 +420,7 @@ typedef struct LilyCheckedExprCall
         LilyCheckedExprCallFun fun;
         const LilyBuiltinFun *fun_builtin; // const LilyBuiltinFun* (&)
         const LilySysFun *fun_sys;         // const LilySysFun* (&)
+		Usize fun_param; // index of fun param
         LilyCheckedExprCallMethod method;
         LilyCheckedExprCallRecord record;
         LilyCheckedExprCallVariant variant;
@@ -492,6 +494,24 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS,
                                   .global_name = global_name,
                                   .fun_sys = fun_sys };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           fun_param,
+						   LilyCheckedAccessScope scope,
+                           String *global_name,
+                           Usize fun_param)
+{
+    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM,
+								  .scope = scope,
+                                  .global_name = global_name,
+                                  .fun_param = fun_param };
 }
 
 /**
