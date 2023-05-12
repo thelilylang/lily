@@ -5723,8 +5723,12 @@ parse_record_field__LilyParser(LilyParser *self,
         FREE(LilyParseBlock, &expr_block);
     }
 
-    return NEW(
-      LilyAstField, item->field.name, data_type, expr, item->field.is_mut);
+    return NEW(LilyAstField,
+               item->field.name,
+               data_type,
+               expr,
+               item->field.is_mut,
+               item->location);
 }
 
 LilyAstDecl *
