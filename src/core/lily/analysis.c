@@ -184,6 +184,14 @@ check_constant__LilyAnalysis(LilyAnalysis *self,
 static void
 check_alias__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *alias);
 
+static Vec *
+check_fields__LilyAnalysis(LilyAnalysis *self,
+                           Vec *ast_fields,
+                           LilyCheckedScope *scope);
+
+static void
+check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record);
+
 static void
 check_decls__LilyAnalysis(LilyAnalysis *self,
                           Vec *decls,
@@ -2744,6 +2752,81 @@ check_alias__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *alias)
     alias->type.alias.is_checked = true;
 }
 
+Vec *
+check_fields__LilyAnalysis(LilyAnalysis *self,
+                           Vec *ast_fields,
+                           LilyCheckedScope *scope)
+{
+    Vec *check_fields = NEW(Vec);
+
+    for (Usize i = 0; i < ast_fields->len; ++i) {
+        LilyAstField *ast_field = get__Vec(ast_fields, i);
+
+        // TODO: in the future add a support for unsafe record
+        LilyCheckedDataType *data_type = check_data_type__LilyAnalysis(
+          self, ast_field->data_type, scope, LILY_CHECKED_SAFETY_MODE_SAFE);
+        LilyCheckedExpr *optional_expr = NULL;
+
+        if (ast_field->optional_expr) {
+            optional_expr =
+              check_expr__LilyAnalysis(self,
+                                       ast_field->optional_expr,
+                                       scope,
+                                       LILY_CHECKED_SAFETY_MODE_SAFE,
+                                       false);
+        }
+
+        LilyCheckedScopeContainerVariable *sc_variable =
+          NEW(LilyCheckedScopeContainerVariable, ast_field->name, i);
+        int is_failed = add_variable__LilyCheckedScope(scope, sc_variable);
+
+        if (is_failed) {
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          &self->package->file,
+                          &ast_field->location,
+                          NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_FIELD),
+                          NULL,
+                          NULL,
+                          NULL),
+              &self->package->count_error);
+
+            FREE(LilyCheckedScopeContainerVariable, sc_variable);
+        }
+
+        push__Vec(check_fields,
+                  NEW(LilyCheckedField,
+                      ast_field->name,
+                      data_type,
+                      optional_expr,
+                      ast_field->is_mut,
+                      &ast_field->location));
+    }
+
+    return check_fields;
+}
+
+void
+check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record)
+{
+    if (record->type.record.is_checked) {
+        return;
+    }
+
+    if (record->ast_decl->type.record.generic_params) {
+        record->type.record.generic_params =
+          check_generic_params(self,
+                               record->ast_decl->type.record.generic_params,
+                               record->type.record.scope);
+    }
+
+    record->type.record.fields = check_fields__LilyAnalysis(
+      self, record->ast_decl->type.record.fields, record->type.record.scope);
+
+    record->type.record.is_checked = true;
+}
+
 void
 check_decls__LilyAnalysis(LilyAnalysis *self,
                           Vec *decls,
@@ -2765,6 +2848,10 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
                 switch (decl->type.kind) {
                     case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
                         check_alias__LilyAnalysis(self, decl);
+
+                        break;
+                    case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+                        check_record__LilyAnalysis(self, decl);
 
                         break;
                     default:
