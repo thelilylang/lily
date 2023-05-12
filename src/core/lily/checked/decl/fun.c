@@ -76,6 +76,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDeclFunParam *,
     self->kind = LILY_CHECKED_DECL_FUN_PARAM_KIND_DEFAULT;
     self->location = location;
     self->default_ = default_;
+    self->is_moved = false;
 
     return self;
 }
@@ -94,6 +95,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDeclFunParam *,
     self->data_type = data_type;
     self->kind = LILY_CHECKED_DECL_FUN_PARAM_KIND_NORMAL;
     self->location = location;
+    self->is_moved = false;
 
     return self;
 }
@@ -106,10 +108,11 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res = format__String(
       "LilyCheckedDeclFunParam{{ name = {S}, kind = {s}, location = "
-      "{sa}, data_type =",
+      "{sa}, is_moved = {b}, data_type =",
       self->name,
       to_string__Debug__LilyCheckedDeclFunParamKind(self->kind),
-      to_string__Debug__Location(&self->location));
+      to_string__Debug__Location(&self->location),
+      self->is_moved);
 
     if (self->data_type) {
         String *s = to_string__Debug__LilyCheckedDataType(self->data_type);

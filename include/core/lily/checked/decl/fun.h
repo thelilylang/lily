@@ -62,6 +62,7 @@ typedef struct LilyCheckedDeclFunParam
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
     enum LilyCheckedDeclFunParamKind kind;
     Location location;
+    bool is_moved;
     union
     {
         LilyCheckedExpr *default_;
