@@ -71,6 +71,8 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     char *cpu = get_cpu();
     char *cpu_features = get_cpu_features();
 
+    LLVMSetTarget(module, triple);
+
     LLVMTargetMachineRef machine =
       LLVMCreateTargetMachine(target,
                               triple,
