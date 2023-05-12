@@ -245,6 +245,13 @@ add_variable__LilyCheckedScope(LilyCheckedScope *self,
     ADD_TO_SCOPE(self->variables, variable, LilyCheckedScopeContainerVariable);
 }
 
+int
+add_param__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerVariable *param)
+{
+    ADD_TO_SCOPE(self->params, param, LilyCheckedScopeContainerVariable);
+}
+
 LilyCheckedScopeContainerFun *
 search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                               const String *name)

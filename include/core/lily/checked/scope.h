@@ -196,6 +196,15 @@ add_variable__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
+ * @brief Add a param to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_param__LilyCheckedScope(LilyCheckedScope *self,
+                            LilyCheckedScopeContainerVariable *param);
+
+/**
+ *
  * @brief Search a fun in the scope.
  */
 LilyCheckedScopeContainerFun *
