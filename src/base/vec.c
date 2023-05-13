@@ -251,8 +251,10 @@ slice__Vec(Vec *self, Usize start, Usize end)
 void
 ungrow__Vec(Vec *self)
 {
-    if (self->len <= self->capacity / 2) {
-        self->capacity /= 2;
+    Usize new_capacity = (self->capacity / 2) + 1;
+
+    if (self->len <= new_capacity) {
+        self->capacity = new_capacity;
         self->buffer = lily_realloc(self->buffer, PTR_SIZE * self->capacity);
     }
 }
