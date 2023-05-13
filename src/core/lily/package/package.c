@@ -97,6 +97,8 @@ CONSTRUCTOR(LilyPackage *,
 #ifndef RUN_UNTIL_PREPARSER
     self->precompile = NEW(
       LilyPrecompile, &self->preparser_info, &self->file, self, default_path);
+    self->builtin_usage = NEW(Vec);
+    self->sys_usage = NEW(Vec);
 
     if (root) {
         self->parser = NEW(LilyParser, self, root, NULL);
@@ -263,6 +265,19 @@ search_package_from_name__LilyPackage(LilyPackage *self, String *name)
     return NULL;
 }
 
+void
+add_sys_fun_to_sys_usage__LilyPackage(LilyPackage *self, LilySysFun *fun_sys)
+{
+    for (Usize i = 0; i < self->sys_usage->len; ++i) {
+        if (!strcmp(CAST(LilySysFun *, get__Vec(self->sys_usage, i))->name,
+                    fun_sys->name)) {
+            return;
+        }
+    }
+
+    push__Vec(self->sys_usage, fun_sys);
+}
+
 DESTRUCTOR(LilyPackage, LilyPackage *self)
 {
     FREE(String, self->name);
@@ -326,6 +341,9 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
 
         lily_free(self->syss);
     }
+
+    FREE(Vec, self->builtin_usage);
+    FREE(Vec, self->sys_usage);
 
     lily_free(self);
 }

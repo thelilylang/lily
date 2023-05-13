@@ -86,6 +86,9 @@ typedef struct LilyPackage
     bool builtin_is_loaded;
 
     bool main_is_found;
+
+    Vec *builtin_usage; // Vec<LilyBuiltinFun* (&)>*
+    Vec *sys_usage;     // Vec<LilySysFun* (&)>*
 } LilyPackage;
 
 /**
@@ -153,6 +156,16 @@ search_package_from_filename__LilyPackage(LilyPackage *self,
  */
 LilyPackage *
 search_package_from_name__LilyPackage(LilyPackage *self, String *name);
+
+/**
+ *
+ * @brief Try to add a used sys function to the register of uses of system
+ * functions.
+ * @note There is no duplication of system functions in the function register of
+ * the system used.
+ */
+void
+add_sys_fun_to_sys_usage__LilyPackage(LilyPackage *self, LilySysFun *fun_sys);
 
 /**
  *
