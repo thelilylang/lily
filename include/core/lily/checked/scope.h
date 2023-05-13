@@ -276,6 +276,14 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *
+ * @brief Search a custom type in the scope.
+ */
+LilyCheckedScopeResponse
+search_custom_type__LilyCheckedScope(LilyCheckedScope *self,
+                                     const String *name);
+
+/**
+ *
  * @brief Get scope from an id.
  */
 LilyCheckedScope *

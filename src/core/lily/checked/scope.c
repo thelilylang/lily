@@ -768,6 +768,13 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
     }
 }
 
+LilyCheckedScopeResponse
+search_custom_type__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    // TODO: search other custom data type
+    return search_record__LilyCheckedScope(self, name);
+}
+
 LilyCheckedScope *
 get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id)
 {
