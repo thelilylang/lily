@@ -22,12 +22,70 @@
  * SOFTWARE.
  */
 
+#include <base/platform.h>
+
+#ifdef LILY_WINDOWS_OS
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
+
+#include <fcntl.h>
 
 #include <sys/sys.h>
 
-inline Usize
+#ifdef LILY_WINDOWS_OS
+Usize
+__sys__$read(Int32 fd, void *buf, Usize n)
+{
+    return (Usize)_read(fd, buf, n);
+}
+#else
+Usize
+__sys__$read(Int32 fd, void *buf, Usize n)
+{
+    return read(fd, buf, n);
+}
+#endif
+
+#ifdef LILY_WINDOWS_OS
+Usize
 __sys__$write(Int32 fd, const char *buf, Usize n)
 {
-	return write(fd, buf, n);
+    return (Usize)_write(fd, buf, n);
 }
+#else
+Usize
+__sys__$write(Int32 fd, const char *buf, Usize n)
+{
+    return write(fd, buf, n);
+}
+#endif
+
+#ifdef LILY_WINDOWS_OS
+Int32
+__sys__$open(const char *pathname, Int32 flags, Int32 mode)
+{
+    return _open(pathname, flags, mode);
+}
+#else
+Int32
+__sys__$open(const char *pathname, Int32 flags, Int32 mode)
+{
+    return open(pathname, flags, mode);
+}
+#endif
+
+#ifdef LILY_WINDOWS_OS
+Int32
+__sys__$close(Int32 fd)
+{
+    return _close(fd);
+}
+#else
+Int32
+__sys__$close(Int32 fd)
+{
+    return close(fd);
+}
+#endif
