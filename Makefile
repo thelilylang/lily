@@ -55,6 +55,9 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/preprocess/*.h
 	${CLANG_FORMAT} ./include/core/shared/*.h
 	${CLANG_FORMAT} ./include/core/shared/target/*.h
+	${CLANG_FORMAT} ./lib/*.h
+	${CLANG_FORMAT} ./lib/sys/*.h
+	${CLANG_FORMAT} ./lib/sys/*.c
 	${CLANG_FORMAT} ./src/base/*.c
 	${CLANG_FORMAT} ./src/bin/*.c
 	${CLANG_FORMAT} ./src/cli/*.c
