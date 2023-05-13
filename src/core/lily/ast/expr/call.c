@@ -252,7 +252,7 @@ IMPL_FOR_DEBUG(to_string,
                LilyAstExprCallRecord,
                const LilyAstExprCallRecord *self)
 {
-    String *res = format__String("LilyAstExprCallRecord{{ id = {S}, params =",
+    String *res = format__String("LilyAstExprCallRecord{{ id = {Sr}, params =",
                                  to_string__Debug__LilyAstExpr(self->id));
 
     DEBUG_VEC_STRING(self->params, res, LilyAstExprRecordParamCall);
