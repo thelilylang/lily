@@ -197,6 +197,44 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedExprCallFun *self);
 #endif
 
+typedef struct LilyCheckedExprCallFunSys
+{
+    Vec *params;                         // Vec<LilyCheckedExprCallFunParam*>*
+    const LilySysFun *sys_fun_signature; // const LilySysFun* (&)
+} LilyCheckedExprCallFunSys;
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCallFunSys type.
+ */
+inline CONSTRUCTOR(LilyCheckedExprCallFunSys,
+                   LilyCheckedExprCallFunSys,
+                   Vec *params,
+                   const LilySysFun *sys_fun_signature)
+{
+    return (LilyCheckedExprCallFunSys){ .params = params,
+                                        .sys_fun_signature =
+                                          sys_fun_signature };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCallFunSys in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallFunSys,
+               const LilyCheckedExprCallFunSys *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedExprCallFunSys type.
+ */
+DESTRUCTOR(LilyCheckedExprCallFunSys, const LilyCheckedExprCallFunSys *self);
+
 enum LilyCheckedExprCallMethodParamKind
 {
     LILY_CHECKED_EXPR_CALL_METHOD_PARAM_KIND_DEFAULT,
@@ -494,8 +532,8 @@ typedef struct LilyCheckedExprCall
         LilyCheckedExprCallError error;
         LilyCheckedExprCallFun fun;
         const LilyBuiltinFun *fun_builtin; // const LilyBuiltinFun* (&)
-        const LilySysFun *fun_sys;         // const LilySysFun* (&)
-        Usize fun_param;                   // index of fun param
+        LilyCheckedExprCallFunSys fun_sys;
+        Usize fun_param; // index of fun param
         LilyCheckedExprCallMethod method;
         LilyCheckedExprCallRecord record;
         LilyCheckedExprCallRecordFieldSingle record_field_single;
@@ -565,11 +603,10 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
 inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                            LilyCheckedExprCall,
                            fun_sys,
-                           String *global_name,
-                           const LilySysFun *fun_sys)
+                           LilyCheckedExprCallFunSys fun_sys)
 {
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS,
-                                  .global_name = global_name,
+                                  .global_name = NULL,
                                   .fun_sys = fun_sys };
 }
 

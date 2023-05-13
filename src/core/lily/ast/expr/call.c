@@ -51,6 +51,16 @@ static inline VARIANT_DESTRUCTOR(LilyAstExprCall,
                                  fun,
                                  const LilyAstExprCall *self);
 
+// @brief Free LilyAstExprCall type (LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN).
+static inline VARIANT_DESTRUCTOR(LilyAstExprCall,
+                                 fun_builtin,
+                                 const LilyAstExprCall *self);
+
+// @brief Free LilyAstExprCall type (LILY_AST_EXPR_CALL_KIND_FUN_SYS).
+static inline VARIANT_DESTRUCTOR(LilyAstExprCall,
+                                 fun_sys,
+                                 const LilyAstExprCall *self);
+
 // @brief Free LilyAstExprCall type (LILY_AST_EXPR_CALL_KIND_RECORD).
 static inline VARIANT_DESTRUCTOR(LilyAstExprCall,
                                  record,
@@ -68,6 +78,10 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprCallKind, enum LilyAstExprCallKind self)
     switch (self) {
         case LILY_AST_EXPR_CALL_KIND_FUN:
             return "LILY_AST_EXPR_CALL_KIND_FUN";
+        case LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN:
+            return "LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN";
+        case LILY_AST_EXPR_CALL_KIND_FUN_SYS:
+            return "LILY_AST_EXPR_CALL_KIND_FUN_SYS";
         case LILY_AST_EXPR_CALL_KIND_RECORD:
             return "LILY_AST_EXPR_CALL_KIND_RECORD";
         case LILY_AST_EXPR_CALL_KIND_VARIANT:
@@ -212,6 +226,56 @@ DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self)
     FREE(Vec, self->params);
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprCallFunSys,
+               const LilyAstExprCallFunSys *self)
+{
+    String *res = format__String("LilyAstExprCallFunSys{{ name = {S}, params =",
+                                 self->name);
+
+    DEBUG_VEC_STRING(self->params, res, LilyAstExprFunParamCall);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyAstExprCallFunSys, const LilyAstExprCallFunSys *self)
+{
+    FREE_MOVE(self->name, FREE(String, self->name));
+    FREE_BUFFER_ITEMS(
+      self->params->buffer, self->params->len, LilyAstExprFunParamCall);
+    FREE(Vec, self->params);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprCallFunBuiltin,
+               const LilyAstExprCallFunBuiltin *self)
+{
+    String *res = format__String(
+      "LilyAstExprCallFunBuiltin{{ name = {S}, params =", self->name);
+
+    DEBUG_VEC_STRING(self->params, res, LilyAstExprFunParamCall);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyAstExprCallFunBuiltin, const LilyAstExprCallFunBuiltin *self)
+{
+    FREE_MOVE(self->name, FREE(String, self->name));
+    FREE_BUFFER_ITEMS(
+      self->params->buffer, self->params->len, LilyAstExprFunParamCall);
+    FREE(Vec, self->params);
+}
+
 CONSTRUCTOR(LilyAstExprRecordParamCall *,
             LilyAstExprRecordParamCall,
             String *name,
@@ -306,6 +370,24 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprCall, const LilyAstExprCall *self)
 
             break;
         }
+        case LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN: {
+            char *s = format(
+              ", fun_builtin = {Sr} }",
+              to_string__Debug__LilyAstExprCallFunBuiltin(&self->fun_builtin));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_EXPR_CALL_KIND_FUN_SYS: {
+            char *s =
+              format(", fun_sys = {Sr} }",
+                     to_string__Debug__LilyAstExprCallFunSys(&self->fun_sys));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_AST_EXPR_CALL_KIND_RECORD: {
             char *s =
               format(", record = {Sr} }",
@@ -337,6 +419,16 @@ VARIANT_DESTRUCTOR(LilyAstExprCall, fun, const LilyAstExprCall *self)
     FREE(LilyAstExprCallFun, &self->fun);
 }
 
+VARIANT_DESTRUCTOR(LilyAstExprCall, fun_builtin, const LilyAstExprCall *self)
+{
+    FREE(LilyAstExprCallFunBuiltin, &self->fun_builtin);
+}
+
+VARIANT_DESTRUCTOR(LilyAstExprCall, fun_sys, const LilyAstExprCall *self)
+{
+    FREE(LilyAstExprCallFunSys, &self->fun_sys);
+}
+
 VARIANT_DESTRUCTOR(LilyAstExprCall, record, const LilyAstExprCall *self)
 {
     FREE(LilyAstExprCallRecord, &self->record);
@@ -352,6 +444,12 @@ DESTRUCTOR(LilyAstExprCall, const LilyAstExprCall *self)
     switch (self->kind) {
         case LILY_AST_EXPR_CALL_KIND_FUN:
             FREE_VARIANT(LilyAstExprCall, fun, self);
+            break;
+        case LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN:
+            FREE_VARIANT(LilyAstExprCall, fun_builtin, self);
+            break;
+        case LILY_AST_EXPR_CALL_KIND_FUN_SYS:
+            FREE_VARIANT(LilyAstExprCall, fun_sys, self);
             break;
         case LILY_AST_EXPR_CALL_KIND_RECORD:
             FREE_VARIANT(LilyAstExprCall, record, self);

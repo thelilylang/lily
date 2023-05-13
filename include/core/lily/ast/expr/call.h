@@ -35,6 +35,8 @@ typedef struct LilyAstExpr LilyAstExpr;
 enum LilyAstExprCallKind
 {
     LILY_AST_EXPR_CALL_KIND_FUN,
+    LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN,
+    LILY_AST_EXPR_CALL_KIND_FUN_SYS,
     LILY_AST_EXPR_CALL_KIND_RECORD,
     LILY_AST_EXPR_CALL_KIND_VARIANT,
 };
@@ -153,6 +155,78 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprCallFun, const LilyAstExprCallFun *self);
  */
 DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self);
 
+typedef struct LilyAstExprCallFunSys
+{
+    String *name;
+    Vec *params; // Vec<LilyAstExprFunParamCall*>*
+} LilyAstExprCallFunSys;
+
+/**
+ *
+ * @brief Construct LilyAstExprCallFunSys type.
+ */
+inline CONSTRUCTOR(LilyAstExprCallFunSys,
+                   LilyAstExprCallFunSys,
+                   String *name,
+                   Vec *params)
+{
+    return (LilyAstExprCallFunSys){ .name = name, .params = params };
+}
+
+/**
+ *
+ * @brief Convert LilyAstExprCallFunSys in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprCallFunSys,
+               const LilyAstExprCallFunSys *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstExprCallFunSys type.
+ */
+DESTRUCTOR(LilyAstExprCallFunSys, const LilyAstExprCallFunSys *self);
+
+typedef struct LilyAstExprCallFunBuiltin
+{
+    String *name;
+    Vec *params; // Vec<LilyAstExprFunParamCall*>*
+} LilyAstExprCallFunBuiltin;
+
+/**
+ *
+ * @brief Construct LilyAstExprCallFunSys type.
+ */
+inline CONSTRUCTOR(LilyAstExprCallFunBuiltin,
+                   LilyAstExprCallFunBuiltin,
+                   String *name,
+                   Vec *params)
+{
+    return (LilyAstExprCallFunBuiltin){ .name = name, .params = params };
+}
+
+/**
+ *
+ * @brief Convert LilyAstExprCallFunBuiltin in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprCallFunBuiltin,
+               const LilyAstExprCallFunBuiltin *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstExprCallFunBuiltin type.
+ */
+DESTRUCTOR(LilyAstExprCallFunBuiltin, const LilyAstExprCallFunBuiltin *self);
+
 typedef struct LilyAstExprRecordParamCall
 {
     String *name;
@@ -264,6 +338,8 @@ typedef struct LilyAstExprCall
     union
     {
         LilyAstExprCallFun fun;
+        LilyAstExprCallFunBuiltin fun_builtin;
+        LilyAstExprCallFunSys fun_sys;
         LilyAstExprCallRecord record;
         LilyAstExprCallVariant variant;
     };
@@ -280,6 +356,34 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprCall,
                            LilyAstExprCallFun fun)
 {
     return (LilyAstExprCall){ .kind = LILY_AST_EXPR_CALL_KIND_FUN, .fun = fun };
+}
+
+/**
+ *
+ * @brief Construct LilyAstExprCall type
+ * (LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprCall,
+                           LilyAstExprCall,
+                           fun_builtin,
+                           LilyAstExprCallFunBuiltin fun_builtin)
+{
+    return (LilyAstExprCall){ .kind = LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN,
+                              .fun_builtin = fun_builtin };
+}
+
+/**
+ *
+ * @brief Construct LilyAstExprCall type
+ * (LILY_AST_EXPR_CALL_KIND_FUN_SYS).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprCall,
+                           LilyAstExprCall,
+                           fun_sys,
+                           LilyAstExprCallFunSys fun_sys)
+{
+    return (LilyAstExprCall){ .kind = LILY_AST_EXPR_CALL_KIND_FUN_SYS,
+                              .fun_sys = fun_sys };
 }
 
 /**

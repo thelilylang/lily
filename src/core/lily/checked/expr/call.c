@@ -107,6 +107,11 @@ static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                                  fun,
                                  const LilyCheckedExprCall *self);
 
+/// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS).
+static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
+                                 fun_sys,
+                                 const LilyCheckedExprCall *self);
+
 /// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_METHOD).
 static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                                  method,
@@ -371,6 +376,34 @@ DESTRUCTOR(LilyCheckedExprCallFun, const LilyCheckedExprCallFun *self)
           self->params->buffer, self->params->len, LilyCheckedExprCallFunParam);
         FREE(Vec, self->params);
     }
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallFunSys,
+               const LilyCheckedExprCallFunSys *self)
+{
+    String *res = from__String("LilyCheckedExprCallFunSys{ params =");
+
+    DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallFunParam);
+
+    {
+        char *s = format(", sys_fun_signature = {Sr} }",
+                         to_string__Debug__LilySysFun(self->sys_fun_signature));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyCheckedExprCallFunSys, const LilyCheckedExprCallFunSys *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->params->buffer, self->params->len, LilyCheckedExprCallFunParam);
+    FREE(Vec, self->params);
 }
 
 #ifdef ENV_DEBUG
@@ -732,9 +765,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
             res = format__String(
               "LilyCheckedExprCall{{ kind = {s}, scope = undef, global_name = "
-              "{S}",
-              to_string__Debug__LilyCheckedExprCallKind(self->kind),
-              self->global_name);
+              "NULL",
+              to_string__Debug__LilyCheckedExprCallKind(self->kind));
 
             break;
         default:
@@ -775,8 +807,9 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
             break;
         }
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS: {
-            char *s = format(", fun_sys = {Sr} }",
-                             to_string__Debug__LilySysFun(self->fun_sys));
+            char *s = format(
+              ", fun_sys = {Sr} }",
+              to_string__Debug__LilyCheckedExprCallFunSys(&self->fun_sys));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -860,6 +893,13 @@ VARIANT_DESTRUCTOR(LilyCheckedExprCall, fun, const LilyCheckedExprCall *self)
     FREE(LilyCheckedExprCallFun, &self->fun);
 }
 
+VARIANT_DESTRUCTOR(LilyCheckedExprCall,
+                   fun_sys,
+                   const LilyCheckedExprCall *self)
+{
+    FREE(LilyCheckedExprCallFunSys, &self->fun_sys);
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedExprCall, method, const LilyCheckedExprCall *self)
 {
     FREE(LilyCheckedExprCallMethod, &self->method);
@@ -893,8 +933,10 @@ DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self)
         case LILY_CHECKED_EXPR_CALL_KIND_FUN:
             FREE_VARIANT(LilyCheckedExprCall, fun, self);
             break;
-        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
+            FREE_VARIANT(LilyCheckedExprCall, fun_sys, self);
+            break;
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
         case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
             break;
