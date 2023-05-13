@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+#include <core/lily/ir/llvm/attr.h>
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/sys.h>
-#include <core/lily/ir/llvm/attr.h>
 
 void
 declare_sys_function__LilyIrLlvm(LilyIrLlvm *self,
@@ -52,11 +52,11 @@ declare_sys_function__LilyIrLlvm(LilyIrLlvm *self,
           LLVMFunctionType(return_data_type, params, params_len, false);
         LLVMValueRef sys_fun_llvm = LLVMAddFunction(
           self->module, sys_fun->real_name->buffer, sys_fun_type);
-		LLVMSetFunctionCallConv(sys_fun_llvm, LLVMFastCallConv);
+        LLVMSetFunctionCallConv(sys_fun_llvm, LLVMFastCallConv);
 
-		LLVM_ADD_FN_ATTR(sys_fun_llvm, hot_attr__LilyIrLlvm(self));
-		LLVM_ADD_FN_ATTR(sys_fun_llvm, nounwind_attr__LilyIrLlvm(self));
-		LLVM_ADD_FN_ATTR(sys_fun_llvm, norecurse_attr__LilyIrLlvm(self));
+        LLVM_ADD_FN_ATTR(sys_fun_llvm, hot_attr__LilyIrLlvm(self));
+        LLVM_ADD_FN_ATTR(sys_fun_llvm, nounwind_attr__LilyIrLlvm(self));
+        LLVM_ADD_FN_ATTR(sys_fun_llvm, norecurse_attr__LilyIrLlvm(self));
 
         push__Vec(scope->values,
                   NEW(LilyLlvmValue, sys_fun->real_name, sys_fun_llvm));

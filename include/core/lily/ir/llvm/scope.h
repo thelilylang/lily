@@ -103,7 +103,7 @@ inline DESTRUCTOR(LilyLlvmFun, LilyLlvmFun *self)
 
 typedef struct LilyLlvmScope
 {
-	LLVMMetadataRef scope;
+    LLVMMetadataRef scope;
     Vec *values;                  // Vec<LilyLlvmValue*>*
     Vec *types;                   // Vec<LilyLlvmType*>*
     Vec *loads;                   // Vec<LilyLlvmValue*>*

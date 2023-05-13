@@ -115,7 +115,7 @@ DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self)
 {
     LLVMDisposeModule(self->module);
     LLVMDisposeBuilder(self->builder);
-	LLVMDisposeDIBuilder(self->di_builder);
+    LLVMDisposeDIBuilder(self->di_builder);
     LLVMDisposeTargetData(self->target_data);
     LLVMDisposeTargetMachine(self->machine);
     LLVMContextDispose(self->context);
