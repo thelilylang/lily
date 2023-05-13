@@ -31,6 +31,9 @@ Work in progress...
 - Code generator (LLVM): 20% finished
 - Code generator (C): 0% finished
 - Code generator (C++): 0% finished
+- Linker (LLVM) 5% finished
+- Linker (C) 0% finished
+- Linker (C++) 0% finished
 
 ## Examples
 
