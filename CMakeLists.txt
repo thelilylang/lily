@@ -274,6 +274,7 @@ set(CORE_SRC
 	src/core/lily/ir/llvm/generator/function.c
 	src/core/lily/ir/llvm/generator/record_object.c
 	src/core/lily/ir/llvm/generator/record.c
+	src/core/lily/ir/llvm/generator/sys.c
 	src/core/lily/ir/llvm/generator/stmt.c
 	src/core/lily/ir/llvm/generator.c
 	src/core/lily/ir/llvm/linker.c
@@ -322,6 +323,9 @@ set(CORE_SRC
 	src/core/shared/target/os.c
 	src/core/shared/source.c)
 
+set(SYS_SRC
+	lib/sys/sys.c)
+
 add_library(lily_base STATIC ${BASE_SRC})
 target_include_directories(lily_base PUBLIC include)
 
@@ -334,6 +338,9 @@ target_link_libraries(lily_command lily_base lily_cli lily_core)
 add_library(lily_core STATIC ${CORE_SRC})
 target_link_libraries(lily_core lily_base LLVM)
 target_include_directories(lily_core PUBLIC lib/local)
+
+add_library(lily_sys SHARED ${SYS_SRC})
+target_include_directories(lily_sys PUBLIC lib include)
 
 add_executable(lily src/bin/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)
