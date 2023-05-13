@@ -249,6 +249,10 @@ to_msg__LilyError(const LilyError *self)
             return "unknown type";
         case LILY_ERROR_KIND_FIELD_IS_NOT_FOUND:
             return "the field is not found";
+        case LILY_ERROR_KIND_BAD_SYS_FUNCTION:
+            return "bad sys function";
+        case LILY_ERROR_KIND_IMPORT_SYS_REQUIRED:
+            return "the import of `@sys` is required";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -472,6 +476,10 @@ to_code__LilyError(const LilyError *self)
             return "0106";
         case LILY_ERROR_KIND_FIELD_IS_NOT_FOUND:
             return "0107";
+        case LILY_ERROR_KIND_BAD_SYS_FUNCTION:
+            return "0108";
+        case LILY_ERROR_KIND_IMPORT_SYS_REQUIRED:
+            return "0109";
         default:
             UNREACHABLE("unknown variant");
     }
