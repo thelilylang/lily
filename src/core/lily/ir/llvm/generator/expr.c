@@ -65,13 +65,13 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
             TODO("generate none expression");
         case LILY_CHECKED_EXPR_LITERAL_KIND_STR: {
             LLVMTypeRef str_type =
-              LLVMArrayType(i8__LilyIrLlvm(self), literal->str->len);
+              LLVMArrayType(i8__LilyIrLlvm(self), literal->str->len + 1);
             LLVMValueRef global_str =
               LLVMAddGlobal(self->module, str_type, "str");
 
             LLVMSetInitializer(
               global_str,
-              LLVMConstString(literal->str->buffer, literal->str->len, true));
+              LLVMConstString(literal->str->buffer, literal->str->len, false));
             LLVMSetUnnamedAddr(global_str, true);
 
             return global_str;
