@@ -41,7 +41,6 @@ enum LilyCheckedExprCallKind
     LILY_CHECKED_EXPR_CALL_KIND_CLASS,
     LILY_CHECKED_EXPR_CALL_KIND_CONSTANT,
     LILY_CHECKED_EXPR_CALL_KIND_ERROR,
-    LILY_CHECKED_EXPR_CALL_KIND_FIELD,
     LILY_CHECKED_EXPR_CALL_KIND_FUN,
     LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS,
     LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN,
@@ -49,6 +48,8 @@ enum LilyCheckedExprCallKind
     LILY_CHECKED_EXPR_CALL_KIND_METHOD,
     LILY_CHECKED_EXPR_CALL_KIND_MODULE,
     LILY_CHECKED_EXPR_CALL_KIND_RECORD,
+    LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE,
+    LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS,
     LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
     LILY_CHECKED_EXPR_CALL_KIND_VARIABLE,
     LILY_CHECKED_EXPR_CALL_KIND_VARIANT,
@@ -381,6 +382,78 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedExprCallRecord *self);
 #endif
 
+typedef struct LilyCheckedExprCallRecordFieldSingle
+{
+    LilyCheckedAccessScope record_access;
+    String *record_global_name; // String* (&)
+    Usize index;                // index of field in record
+} LilyCheckedExprCallRecordFieldSingle;
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCallRecordFieldSingle type.
+ */
+inline CONSTRUCTOR(LilyCheckedExprCallRecordFieldSingle,
+                   LilyCheckedExprCallRecordFieldSingle,
+                   LilyCheckedAccessScope record_access,
+                   String *record_global_name,
+                   Usize index)
+{
+    return (LilyCheckedExprCallRecordFieldSingle){ .record_access =
+                                                     record_access,
+                                                   .record_global_name =
+                                                     record_global_name,
+                                                   .index = index };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCallRecordFieldSingle in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallRecordFieldSingle,
+               const LilyCheckedExprCallRecordFieldSingle *self);
+#endif
+
+typedef struct LilyCheckedExprCallRecordFieldAccess
+{
+    // NOTE: the accesses Vector is only composed of variant call expression.
+    Vec *accesses; // Vec<LilyCheckedExpr*>*
+} LilyCheckedExprCallRecordFieldAccess;
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCallRecordFieldAccess type.
+ */
+inline CONSTRUCTOR(LilyCheckedExprCallRecordFieldAccess,
+                   LilyCheckedExprCallRecordFieldAccess,
+                   Vec *accesses)
+{
+    return (LilyCheckedExprCallRecordFieldAccess){ .accesses = accesses };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCallRecordFieldAccess in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallRecordFieldAccess,
+               const LilyCheckedExprCallRecordFieldAccess *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedExprCallRecordFieldAccess type.
+ */
+DESTRUCTOR(LilyCheckedExprCallRecordFieldAccess,
+           const LilyCheckedExprCallRecordFieldAccess *self);
+
 typedef struct LilyCheckedExprCallVariant
 {
     Vec *params; // Vec<LilyCheckedExpr*>*?
@@ -425,6 +498,8 @@ typedef struct LilyCheckedExprCall
         Usize fun_param;                   // index of fun param
         LilyCheckedExprCallMethod method;
         LilyCheckedExprCallRecord record;
+        LilyCheckedExprCallRecordFieldSingle record_field_single;
+        LilyCheckedExprCallRecordFieldAccess record_field_access;
         LilyCheckedExprCallVariant variant;
     };
 } LilyCheckedExprCall;
@@ -550,6 +625,48 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                                   .scope = scope,
                                   .global_name = global_name,
                                   .record = record };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE).
+ */
+inline VARIANT_CONSTRUCTOR(
+  LilyCheckedExprCall,
+  LilyCheckedExprCall,
+  record_field_single,
+  LilyCheckedAccessScope scope,
+  String *global_name,
+  LilyCheckedExprCallRecordFieldSingle record_field_single)
+{
+    return (LilyCheckedExprCall){
+        .kind = LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE,
+        .scope = scope,
+        .global_name = global_name,
+        .record_field_single = record_field_single
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS).
+ */
+inline VARIANT_CONSTRUCTOR(
+  LilyCheckedExprCall,
+  LilyCheckedExprCall,
+  record_field_access,
+  LilyCheckedAccessScope scope,
+  String *global_name,
+  LilyCheckedExprCallRecordFieldAccess record_field_access)
+{
+    return (LilyCheckedExprCall){
+        .kind = LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS,
+        .scope = scope,
+        .global_name = global_name,
+        .record_field_access = record_field_access
+    };
 }
 
 /**
