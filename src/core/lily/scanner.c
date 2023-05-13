@@ -1698,6 +1698,35 @@ get_token__LilyScanner(LilyScanner *self)
                 }
 
                 return NULL;
+            } else if ((c1 >= (char *)'a' && c1 <= (char *)'z')) {
+                String *at_keyword = NEW(String);
+                Usize i = 1;
+                char *peeked = peek_char__LilyScanner(self, 1);
+
+                while (peeked >= (char *)'a' && peeked <= (char *)'z') {
+                    push__String(at_keyword, (char)(Uptr)peeked);
+                    peeked = peek_char__LilyScanner(self, ++i);
+                }
+
+                if (!strcmp(at_keyword->buffer, "builtin")) {
+                    FREE(String, at_keyword);
+
+                    jump__LilyScanner(self, 7);
+
+                    return NEW(LilyToken,
+                               LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN,
+                               clone__Location(&self->location));
+                } else if (!strcmp(at_keyword->buffer, "sys")) {
+                    FREE(String, at_keyword);
+
+                    jump__LilyScanner(self, 3);
+
+                    return NEW(LilyToken,
+                               LILY_TOKEN_KIND_KEYWORD_AT_SYS,
+                               clone__Location(&self->location));
+                } else {
+                    FREE(String, at_keyword);
+                }
             }
 
             return NEW(
