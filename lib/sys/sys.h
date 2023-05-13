@@ -40,7 +40,7 @@ extern "C"
      * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/read?view=msvc-170
      */
     LILY_API Usize __sys__$read(Int32 fd, void *buf, Usize n)
-      __attribute__((always_inline));
+      __attribute__((always_inline)) __attribute__((hot));
 
     /**
      *
@@ -58,7 +58,7 @@ extern "C"
      * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/open-wopen?view=msvc-170
      */
     LILY_API Int32 __sys__$open(const char *pathname, Int32 flags, Int32 mode)
-      __attribute__((always_inline));
+      __attribute__((always_inline)) __attribute__((hot));
 
     /**
      *
@@ -66,7 +66,8 @@ extern "C"
      * @link
      * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/close?view=msvc-170
      */
-    LILY_API Int32 __sys__$close(Int32 fd) __attribute__((always_inline));
+    LILY_API Int32 __sys__$close(Int32 fd) __attribute__((always_inline))
+    __attribute__((hot));
 
 #if defined(__cplusplus)
 }
