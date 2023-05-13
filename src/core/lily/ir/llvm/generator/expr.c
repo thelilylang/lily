@@ -661,7 +661,7 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                             LLVMBuildStore(
                               self->builder,
                               generate_expr__LilyIrLlvm(
-                                self, param->value, scope, fun, ptr),
+                                self, param->value, scope, fun, record_value),
                               record_value);
                         }
 
@@ -679,7 +679,7 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                             LLVMValueRef value = generate_expr__LilyIrLlvm(
                               self, param->value, scope, fun, ptr);
 
-                            LLVMBuildStore(self->builder, value, ptr);
+                            LLVMBuildStore(self->builder, value, record_value);
                         }
                     }
 
