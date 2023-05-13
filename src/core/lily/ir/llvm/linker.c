@@ -39,9 +39,10 @@ run__LilyIrLlvmLinker(LilyPackage *self)
     char *path_base =
       get_slice__Str(self->file.name, 0, strlen(self->file.name) - 5);
 
-    String *path = format__String("{sa}.ll -llily_sys", path_base);
+    String *path = format__String("{sa}.ll", path_base);
 
     append__String(self->linker.llvm.command, path);
+    push_str__String(self->linker.llvm.command, " -llily_sys");
 
     char *content = LLVMPrintModuleToString(self->ir.llvm.module);
 
