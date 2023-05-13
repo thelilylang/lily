@@ -1279,10 +1279,10 @@ scan_hex__LilyScanner(LilyScanner *self)
     }
 
     while (is_hex__LilyScanner(self)) {
-        if (self->source.cursor.current == '_')
-            continue;
+        if (self->source.cursor.current != '_') {
+            push__String(res, self->source.cursor.current);
+        }
 
-        push__String(res, self->source.cursor.current);
         next_char__Source(&self->source);
     }
 
@@ -1339,7 +1339,10 @@ scan_oct__LilyScanner(LilyScanner *self)
     }
 
     while (is_oct__LilyScanner(self)) {
-        push__String(res, self->source.cursor.current);
+        if (self->source.cursor.current != '_') {
+            push__String(res, self->source.cursor.current);
+        }
+
         next_char__Source(&self->source);
     }
 
@@ -1395,7 +1398,10 @@ scan_bin__LilyScanner(LilyScanner *self)
     }
 
     while (is_bin__LilyScanner(self)) {
-        push__String(res, self->source.cursor.current);
+        if (self->source.cursor.current != '_') {
+            push__String(res, self->source.cursor.current);
+        }
+
         next_char__Source(&self->source);
     }
 
@@ -1517,7 +1523,10 @@ scan_num__LilyScanner(LilyScanner *self)
             return NULL;
         }
 
-        push__String(res, self->source.cursor.current);
+        if (self->source.cursor.current != '_') {
+            push__String(res, self->source.cursor.current);
+        }
+
         next_char__Source(&self->source);
     }
 
