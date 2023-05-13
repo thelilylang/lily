@@ -32,11 +32,13 @@
 
 static LLVMValueRef
 generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
-                                  const LilyCheckedExprLiteral *literal);
+                                  const LilyCheckedExprLiteral *literal,
+                                  LilyLlvmScope *scope);
 
 LLVMValueRef
 generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
-                                  const LilyCheckedExprLiteral *literal)
+                                  const LilyCheckedExprLiteral *literal,
+                                  LilyLlvmScope *scope)
 {
     switch (literal->kind) {
         case LILY_CHECKED_EXPR_LITERAL_KIND_BOOL:
@@ -61,9 +63,18 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
             return LLVMConstNull(ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self)));
         case LILY_CHECKED_EXPR_LITERAL_KIND_NONE:
             TODO("generate none expression");
-        case LILY_CHECKED_EXPR_LITERAL_KIND_STR:
-            return LLVMConstString(
-              literal->str->buffer, literal->str->len, true);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_STR: {
+            LLVMTypeRef str_type =
+              LLVMArrayType(i8__LilyIrLlvm(self), literal->str->len);
+            LLVMValueRef global_str =
+              LLVMAddGlobal(self->module, str_type, "str");
+
+            LLVMSetInitializer(
+              global_str,
+              LLVMConstString(literal->str->buffer, literal->str->len, true));
+
+            return global_str;
+        }
         case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT32:
             return LLVMConstReal(float__LilyIrLlvm(self),
                                  literal->suffix_float32);
@@ -647,13 +658,39 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                           params_len,
                                           "");
                 }
+                case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS: {
+                    LilyLlvmFun *called_fun = search_fun__LilyLlvmScope(
+                      scope, expr->call.fun_sys.sys_fun_signature->real_name);
+                    LLVMValueRef params[252] = {};
+                    Usize params_len = 0;
+
+                    if (expr->call.fun_sys.params) {
+                        params_len = expr->call.fun_sys.params->len;
+
+                        for (Usize i = 0; i < expr->call.fun_sys.params->len;
+                             ++i) {
+                            LilyCheckedExprCallFunParam *param =
+                              get__Vec(expr->call.fun_sys.params, i);
+
+                            params[i] = generate_expr__LilyIrLlvm(
+                              self, param->value, scope, fun, ptr);
+                        }
+                    }
+
+                    return LLVMBuildCall2(self->builder,
+                                          called_fun->fun_type,
+                                          called_fun->fun,
+                                          params,
+                                          params_len,
+                                          "");
+                }
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD: {
                     LLVMTypeRef type = generate_data_type__LilyIrLlvm(
                       self, expr->data_type, scope);
                     LLVMValueRef record_value =
                       ptr ? ptr : LLVMBuildAlloca(self->builder, type, "");
 
-                    if (expr->call.record.params->len > 0) { 
+                    if (expr->call.record.params->len > 0) {
                         for (Usize i = 0; i < expr->call.record.params->len;
                              ++i) {
                             LilyCheckedExprCallRecordParam *param =
@@ -753,7 +790,8 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
             break;
         }
         case LILY_CHECKED_EXPR_KIND_LITERAL:
-            return generate_literal_expr__LilyIrLlvm(self, &expr->literal);
+            return generate_literal_expr__LilyIrLlvm(
+              self, &expr->literal, scope);
         default:
             TODO("generate expression in LLVM IR");
     }

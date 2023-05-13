@@ -29,6 +29,7 @@
 #include <core/lily/ir/llvm/generator/constant.h>
 #include <core/lily/ir/llvm/generator/function.h>
 #include <core/lily/ir/llvm/generator/record.h>
+#include <core/lily/ir/llvm/generator/sys.h>
 #include <core/lily/package.h>
 
 #include <stdio.h>
@@ -37,6 +38,8 @@ void
 run__LilyIrLlvmGenerator(LilyPackage *self)
 {
     LilyLlvmScope *scope = NEW(LilyLlvmScope, NULL);
+
+    declare_sys_function__LilyIrLlvm(&self->ir.llvm, scope, self);
 
     for (Usize i = 0; i < self->analysis.module.decls->len; ++i) {
         LilyCheckedDecl *decl = get__Vec(self->analysis.module.decls, i);
