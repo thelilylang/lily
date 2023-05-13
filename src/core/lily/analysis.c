@@ -2183,6 +2183,90 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                         }
                     }
                 }
+                case LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN:
+                    TODO("analysis builtin function");
+                case LILY_AST_EXPR_CALL_KIND_FUN_SYS: {
+                    if (!self->package->sys_is_loaded) {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            &self->package->file,
+                            &expr->location,
+                            NEW(LilyError, LILY_ERROR_KIND_IMPORT_SYS_REQUIRED),
+                            NULL,
+                            NULL,
+                            from__String("please import `@sys`")),
+                          &self->package->count_error);
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr,
+                          call,
+                          &expr->location,
+                          NEW(LilyCheckedDataType,
+                              LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                              &expr->location),
+                          expr,
+                          NEW(LilyCheckedExprCall,
+                              LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                              NULL,
+                              (LilyCheckedAccessScope){ .id = 0 }));
+                    }
+
+                    if (!is_sys_function__LilySys(
+                          expr->call.fun_sys.name->buffer)) {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            &self->package->file,
+                            &expr->location,
+                            NEW(LilyError, LILY_ERROR_KIND_BAD_SYS_FUNCTION),
+                            NULL,
+                            NULL,
+                            from__String("unknown sys function")),
+                          &self->package->count_error);
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr,
+                          call,
+                          &expr->location,
+                          NEW(LilyCheckedDataType,
+                              LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                              &expr->location),
+                          expr,
+                          NEW(LilyCheckedExprCall,
+                              LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                              NULL,
+                              (LilyCheckedAccessScope){ .id = 0 }));
+                    }
+
+                    Vec *check_params_call =
+                      check_fun_params_call__LilyAnalysis(
+                        self, expr->call.fun_sys.params, scope, safety_mode);
+
+                    const LilySysFun *sys_signature =
+                      get_sys__LilySys(self->root_package->syss,
+                                       expr->call.fun_sys.name->buffer);
+
+                    // Add sys to sys_signature to know which prototype to
+                    // define for IR.
+                    add_sys_fun_to_sys_usage__LilyPackage(
+                      self->package, (LilySysFun *)sys_signature);
+
+                    return NEW_VARIANT(
+                      LilyCheckedExpr,
+                      call,
+                      &expr->location,
+                      clone__LilyCheckedDataType(
+                        sys_signature->return_data_type),
+                      expr,
+                      NEW_VARIANT(LilyCheckedExprCall,
+                                  fun_sys,
+                                  NEW(LilyCheckedExprCallFunSys,
+                                      check_params_call,
+                                      sys_signature)));
+                }
                 case LILY_AST_EXPR_CALL_KIND_RECORD: {
                     LilyCheckedScopeResponse response =
                       resolve_id__LilyAnalysis(
