@@ -36,6 +36,22 @@ load_syss__LilySys()
     LilySysFun *syss = lily_malloc(sizeof(LilySysFun) * SYSS_COUNT);
 
     syss[0] = (LilySysFun){
+        .name = "read",
+        .real_name = from__String("__sys__$read"),
+        .return_data_type =
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
+        .params = init__Vec(
+          3,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            ptr,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL)),
+    };
+
+    syss[1] = (LilySysFun){
         .name = "write",
         .real_name = from__String("__sys__$write"),
         .return_data_type =
@@ -47,13 +63,35 @@ load_syss__LilySys()
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL))
     };
 
+    syss[2] = (LilySysFun){
+        .name = "open",
+        .real_name = from__String("__sys__$open"),
+        .return_data_type =
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
+        .params = init__Vec(
+          3,
+          NEW_VARIANT(LilyCheckedDataType, str, NULL, -1),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL))
+    };
+
+    syss[3] = (LilySysFun){
+        .name = "close",
+        .real_name = from__String("__sys__$close"),
+        .return_data_type =
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL))
+    };
+
     return syss;
 }
 
 bool
 is_sys_function__LilySys(const char *name)
 {
-    if (!strcmp(name, "write")) {
+    if (!strcmp(name, "read") || !strcmp(name, "write") ||
+        !strcmp(name, "open") || !strcmp(name, "close")) {
         return true;
     }
 
@@ -64,7 +102,7 @@ const LilySysFun *
 get_sys__LilySys(LilySysFun *syss, const char *name)
 {
     for (Usize i = 0; i < SYSS_COUNT; ++i) {
-        if (!strcmp(syss->name, name)) {
+        if (!strcmp(syss[i].name, name)) {
             return &syss[i];
         }
     }
