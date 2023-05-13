@@ -26,6 +26,8 @@
 
 #include <core/lily/ir/llvm.h>
 
+#include <llvm-c/DebugInfo.h>
+
 // Get default target triple.
 static inline char *
 get_triple();
@@ -92,15 +94,28 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     return (LilyIrLlvm){ .context = LLVMContextCreate(),
                          .module = module,
                          .builder = LLVMCreateBuilder(),
+                         .di_builder = LLVMCreateDIBuilder(module),
                          .target = target,
                          .target_data = target_data,
                          .machine = machine };
+}
+
+LLVMMetadataRef
+get_current_scope__LilyIrLlvm(LLVMValueRef inst)
+{
+    LLVMMetadataRef debug_loc = LLVMInstructionGetDebugLoc(inst);
+
+    if (!debug_loc)
+        return NULL;
+
+    return LLVMDILocationGetScope(debug_loc);
 }
 
 DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self)
 {
     LLVMDisposeModule(self->module);
     LLVMDisposeBuilder(self->builder);
+	LLVMDisposeDIBuilder(self->di_builder);
     LLVMDisposeTargetData(self->target_data);
     LLVMDisposeTargetMachine(self->machine);
     LLVMContextDispose(self->context);

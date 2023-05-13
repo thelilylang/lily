@@ -26,6 +26,7 @@
 #define LILY_CORE_LILY_IR_LLVM_H
 
 #include <base/macros.h>
+#include <base/types.h>
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Target.h>
@@ -36,9 +37,11 @@ typedef struct LilyIrLlvm
     LLVMContextRef context;
     LLVMModuleRef module;
     LLVMBuilderRef builder;
+    LLVMDIBuilderRef di_builder;
     LLVMTargetRef target;
     LLVMTargetDataRef target_data;
     LLVMTargetMachineRef machine;
+    LLVMMetadataRef file;
 } LilyIrLlvm;
 
 /**
@@ -46,6 +49,13 @@ typedef struct LilyIrLlvm
  * @brief Construct LilyIrLlvm type.
  */
 CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name);
+
+/**
+ *
+ * @brief Get the current scope of the instruction.
+ */
+LLVMMetadataRef
+get_current_scope__LilyIrLlvm(LLVMValueRef inst);
 
 /**
  *

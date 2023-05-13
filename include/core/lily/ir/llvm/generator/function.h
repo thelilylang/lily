@@ -36,6 +36,7 @@
 void
 generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               const LilyCheckedDeclFun *fun,
-                              LilyLlvmScope *scope);
+                              LilyLlvmScope *scope,
+                              const Location *location);
 
 #endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_FUNCTION_H

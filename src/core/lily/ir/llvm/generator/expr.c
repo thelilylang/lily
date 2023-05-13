@@ -72,6 +72,7 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
             LLVMSetInitializer(
               global_str,
               LLVMConstString(literal->str->buffer, literal->str->len, true));
+            LLVMSetUnnamedAddr(global_str, true);
 
             return global_str;
         }

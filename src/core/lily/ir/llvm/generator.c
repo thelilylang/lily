@@ -32,11 +32,19 @@
 #include <core/lily/ir/llvm/generator/sys.h>
 #include <core/lily/package.h>
 
+#include <llvm-c/DebugInfo.h>
+
 #include <stdio.h>
 
 void
 run__LilyIrLlvmGenerator(LilyPackage *self)
 {
+    self->ir.llvm.file = LLVMDIBuilderCreateFile(self->ir.llvm.di_builder,
+                                                 self->file.name,
+                                                 strlen(self->file.name),
+                                                 "",
+                                                 0);
+
     LilyLlvmScope *scope = NEW(LilyLlvmScope, NULL);
 
     declare_sys_function__LilyIrLlvm(&self->ir.llvm, scope, self);
@@ -54,7 +62,7 @@ run__LilyIrLlvmGenerator(LilyPackage *self)
                 TODO("generate error");
             case LILY_CHECKED_DECL_KIND_FUN:
                 generate_function__LilyIrLlvm(
-                  &self->ir.llvm, &decl->fun, scope);
+                  &self->ir.llvm, &decl->fun, scope, decl->location);
 
                 break;
             case LILY_CHECKED_DECL_KIND_METHOD:

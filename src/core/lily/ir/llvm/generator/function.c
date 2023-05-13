@@ -35,7 +35,8 @@
 void
 generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               const LilyCheckedDeclFun *fun,
-                              LilyLlvmScope *scope)
+                              LilyLlvmScope *scope,
+                              const Location *location)
 {
     LLVMTypeRef return_data_type =
       generate_data_type__LilyIrLlvm(self, fun->return_data_type, scope);
