@@ -382,14 +382,14 @@ end
 ## Import
 
 ```lily
-import "std";
-import "std.io.*" as io;
+import "@std";
+import "@std.io.*" as io;
 ```
 
 ## Use
 
 ```lily
-import "std.io.*" as io;
+import "@std.io.*" as io;
 
 module X =
     use io.x.y.z; // like using namespace
@@ -776,7 +776,7 @@ fun main =
     ref: val y Int32 := add(ref x); // Int32 -> ref Int32 = Int32* in C
     // the value (x) is available in this scope, so the value (y) is available
     // or
-    // val y ref Int32 := add(&x)
+    // val y ref Int32 := add(ref x)
 end
 ```
 
