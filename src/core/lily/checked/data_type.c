@@ -187,8 +187,13 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedDataTypeCustom,
                const LilyCheckedDataTypeCustom *self)
 {
-    String *res = format__String(
-      "LilyCheckedDataTypeCustom{{ name = {S}, generics =", self->name);
+    String *res =
+      format__String("LilyCheckedDataTypeCustom{{ scope_id = {d}, scope = "
+                     "{sa}, name = {S}, global_name = {S}, generics =",
+                     self->scope_id,
+                     to_string__Debug__LilyCheckedAccessScope(&self->scope),
+                     self->name,
+                     self->global_name);
 
     if (self->generics) {
         DEBUG_VEC_STRING(self->generics, res, LilyCheckedDataType);
@@ -532,6 +537,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
     if (self->location) {
         res =
           format__String("LilyCheckedDataType{{ kind = {s}, location = {sa}",
+                         to_string__Debug__LilyCheckedDataTypeKind(self->kind),
                          to_string__Debug__Location(self->location));
     } else {
         res =
@@ -546,11 +552,15 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
                      to_string__Debug__LilyCheckedDataTypeArray(&self->array));
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_BYTES: {
             char *s = format(", bytes = {d} }", self->bytes);
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
             char *s = format(
@@ -558,32 +568,42 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
               to_string__Debug__LilyCheckedDataTypeCustom(&self->custom));
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION: {
             char *s =
-              format(", exception = {Sr}",
+              format(", exception = {Sr} }",
                      to_string__Debug__LilyCheckedDataType(self->exception));
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
             char *s = format(
-              ", lambda = {Sr}",
+              ", lambda = {Sr} }",
               to_string__Debug__LilyCheckedDataTypeLambda(&self->lambda));
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_LIST: {
             char *s = format(", list = {Sr} }",
                              to_string__Debug__LilyCheckedDataType(self->list));
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_MUT: {
             char *s = format(", mut = {Sr} }",
                              to_string__Debug__LilyCheckedDataType(self->mut));
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL: {
             char *s =
@@ -591,23 +611,31 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
                      to_string__Debug__LilyCheckedDataType(self->optional));
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_PTR: {
             char *s = format(", ptr = {Sr} }",
                              to_string__Debug__LilyCheckedDataType(self->ptr));
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_REF: {
             char *s = format(", ref = {Sr} }",
                              to_string__Debug__LilyCheckedDataType(self->ref));
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_STR: {
             char *s = format(", str = {d} }", self->str);
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE: {
             char *s =
@@ -615,6 +643,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
                      to_string__Debug__LilyCheckedDataType(self->trace));
 
             PUSH_STR_AND_FREE(res, s);
+
+            break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
             push_str__String(res, ", tuple = { ");
@@ -775,7 +805,6 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
         case LILY_CHECKED_DATA_TYPE_KIND_ANY:
         case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
         case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
-        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
         case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
@@ -785,7 +814,6 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
         case LILY_CHECKED_DATA_TYPE_KIND_INT8:
         case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
         case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
-        case LILY_CHECKED_DATA_TYPE_KIND_STR:
         case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
         case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
         case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
@@ -814,10 +842,15 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                           self->array.kind,
                           clone__LilyCheckedDataType(self->array.data_type)));
             }
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
+            return NEW_VARIANT(
+              LilyCheckedDataType, bytes, self->location, self->bytes);
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
             Vec *generics = NULL;
 
             if (self->custom.generics) {
+                generics = NEW(Vec);
+
                 for (Usize i = 0; i < self->custom.generics->len; ++i) {
                     push__Vec(generics,
                               clone__LilyCheckedDataType(
@@ -829,7 +862,10 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                                custom,
                                self->location,
                                NEW(LilyCheckedDataTypeCustom,
+                                   self->custom.scope_id,
+                                   self->custom.scope,
                                    self->custom.name,
+                                   self->custom.global_name,
                                    generics,
                                    self->custom.kind));
         }
@@ -877,6 +913,9 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                                ref,
                                self->location,
                                clone__LilyCheckedDataType(self->ref));
+        case LILY_CHECKED_DATA_TYPE_KIND_STR:
+            return NEW_VARIANT(
+              LilyCheckedDataType, str, self->location, self->str);
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return NEW_VARIANT(LilyCheckedDataType,
                                trace,

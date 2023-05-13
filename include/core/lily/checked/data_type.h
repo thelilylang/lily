@@ -32,6 +32,8 @@
 
 #include <core/shared/location.h>
 
+#include <core/lily/checked/access.h>
+
 typedef struct LilyCheckedScope LilyCheckedScope;
 
 enum LilyCheckedDataTypeKind
@@ -199,8 +201,11 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedDataTypeCustom
 {
-    String *name;  // String* (&)
-    Vec *generics; // Vec<LilyCheckedDataType*>*?
+    Usize scope_id;
+    LilyCheckedAccessScope scope;
+    String *name;        // String* (&)
+    String *global_name; // String* (&)
+    Vec *generics;       // Vec<LilyCheckedDataType*>*?
     enum LilyCheckedDataTypeCustomKind kind;
 } LilyCheckedDataTypeCustom;
 
@@ -210,11 +215,17 @@ typedef struct LilyCheckedDataTypeCustom
  */
 inline CONSTRUCTOR(LilyCheckedDataTypeCustom,
                    LilyCheckedDataTypeCustom,
+                   Usize scope_id,
+                   LilyCheckedAccessScope scope,
                    String *name,
+                   String *global_name,
                    Vec *generics,
                    enum LilyCheckedDataTypeCustomKind kind)
 {
-    return (LilyCheckedDataTypeCustom){ .name = name,
+    return (LilyCheckedDataTypeCustom){ .scope_id = scope_id,
+                                        .scope = scope,
+                                        .name = name,
+                                        .global_name = global_name,
                                         .generics = generics,
                                         .kind = kind };
 }
