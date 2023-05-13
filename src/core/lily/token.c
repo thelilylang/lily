@@ -666,6 +666,10 @@ to_string__LilyToken(LilyToken *self)
             return from__String("asm");
         case LILY_TOKEN_KIND_KEYWORD_ASYNC:
             return from__String("async");
+        case LILY_TOKEN_KIND_KEYWORD_AT_SYS:
+            return from__String("@sys");
+        case LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN:
+            return from__String("@builtin");
         case LILY_TOKEN_KIND_KEYWORD_AWAIT:
             return from__String("await");
         case LILY_TOKEN_KIND_KEYWORD_BEGIN:
@@ -1000,6 +1004,10 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_KEYWORD_ASM";
         case LILY_TOKEN_KIND_KEYWORD_ASYNC:
             return "LILY_TOKEN_KIND_KEYWORD_ASYNC";
+        case LILY_TOKEN_KIND_KEYWORD_AT_SYS:
+            return "LILY_TOKEN_KIND_KEYWORD_AT_SYS";
+        case LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN:
+            return "LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN";
         case LILY_TOKEN_KIND_KEYWORD_AWAIT:
             return "LILY_TOKEN_KIND_KEYWORD_AWAIT";
         case LILY_TOKEN_KIND_KEYWORD_BEGIN:
