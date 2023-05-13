@@ -26,6 +26,8 @@
 
 #include <core/lily/sys.h>
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 LilySysFun *
@@ -35,12 +37,13 @@ load_syss__LilySys()
 
     syss[0] = (LilySysFun){
         .name = "write",
+        .real_name = from__String("__sys__$write"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
         .params = init__Vec(
           3,
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
-          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_STR, NULL),
+          NEW_VARIANT(LilyCheckedDataType, str, NULL, -1),
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL))
     };
 
@@ -55,6 +58,18 @@ is_sys_function__LilySys(const char *name)
     }
 
     return false;
+}
+
+const LilySysFun *
+get_sys__LilySys(LilySysFun *syss, const char *name)
+{
+    for (Usize i = 0; i < SYSS_COUNT; ++i) {
+        if (!strcmp(syss->name, name)) {
+            return &syss[i];
+        }
+    }
+
+    UNREACHABLE("the sys function you are looking for does not exist");
 }
 
 #ifdef ENV_DEBUG
@@ -76,6 +91,7 @@ IMPL_FOR_DEBUG(to_string, LilySysFun, const LilySysFun *self)
 
 DESTRUCTOR(LilySysFun, const LilySysFun *self)
 {
+    FREE(String, self->real_name);
     FREE(LilyCheckedDataType, self->return_data_type);
     FREE_BUFFER_ITEMS(
       self->params->buffer, self->params->len, LilyCheckedDataType);

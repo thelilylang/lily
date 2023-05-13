@@ -34,6 +34,9 @@
 typedef struct LilySysFun
 {
     const char *name;
+    // The `real_name` is the name that was given in the C include file at the
+    // path: `lib/sys.h`
+    String *real_name;
     LilyCheckedDataType *return_data_type;
     Vec *params; // Vec<LilyCheckedDataType*>*
 } LilySysFun;
@@ -51,6 +54,13 @@ load_syss__LilySys();
  */
 bool
 is_sys_function__LilySys(const char *name);
+
+/**
+ *
+ * @brief Get the signature of a sys function according the name.
+ */
+const LilySysFun *
+get_sys__LilySys(LilySysFun *syss, const char *name);
 
 /**
  *
