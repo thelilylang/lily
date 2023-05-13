@@ -51,7 +51,8 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
             return i8__LilyIrLlvm(self);
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-            return search_type__LilyLlvmScope(scope, data_type->custom.name)
+            return search_type__LilyLlvmScope(scope,
+                                              data_type->custom.global_name)
               ->type;
         case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
             TODO("generate exception data type");

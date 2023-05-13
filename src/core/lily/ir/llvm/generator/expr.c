@@ -685,6 +685,45 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
 
                     return record_value;
                 }
+                case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS: {
+                    LLVMValueRef variable =
+                      search_value__LilyLlvmScope(
+                        scope,
+                        CAST(
+                          LilyCheckedExpr *,
+                          get__Vec(expr->call.record_field_access.accesses, 0))
+                          ->call.global_name)
+                        ->value;
+                    LLVMValueRef indices[252] = { 0 };
+
+                    for (Usize i = 1;
+                         i < expr->call.record_field_access.accesses->len;
+                         ++i) {
+                        LilyCheckedExpr *field =
+                          get__Vec(expr->call.record_field_access.accesses, i);
+
+                        indices[i - 1] =
+                          LLVMConstInt(i32__LilyIrLlvm(self),
+                                       field->call.record_field_single.index,
+                                       false);
+                    }
+
+                    LLVMValueRef field_access = LLVMBuildGEP2(
+                      self->builder,
+                      generate_data_type__LilyIrLlvm(
+                        self, expr->data_type, scope),
+                      variable,
+                      indices,
+                      expr->call.record_field_access.accesses->len - 1,
+                      "");
+
+                    if (expr->data_type->kind ==
+                        LILY_CHECKED_DATA_TYPE_KIND_CUSTOM) {
+                        return LLVMBuildStore(self->builder, field_access, ptr);
+                    }
+
+                    return field_access;
+                }
                 default:
                     TODO("generatte call expression in LLVM IR");
             }
