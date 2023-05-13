@@ -653,33 +653,22 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                     LLVMValueRef record_value =
                       ptr ? ptr : LLVMBuildAlloca(self->builder, type, "");
 
-                    if (expr->call.record.params->len > 0) {
-                        {
-                            LilyCheckedExprCallRecordParam *param =
-                              get__Vec(expr->call.record.params, 0);
-
-                            LLVMBuildStore(
-                              self->builder,
-                              generate_expr__LilyIrLlvm(
-                                self, param->value, scope, fun, record_value),
-                              record_value);
-                        }
-
-                        for (Usize i = 1; i < expr->call.record.params->len;
+                    if (expr->call.record.params->len > 0) { 
+                        for (Usize i = 0; i < expr->call.record.params->len;
                              ++i) {
                             LilyCheckedExprCallRecordParam *param =
                               get__Vec(expr->call.record.params, i);
 
-                            LLVMValueRef ptr =
+                            LLVMValueRef ptr_field =
                               LLVMBuildStructGEP2(self->builder,
                                                   type,
                                                   record_value,
                                                   param->field_index,
                                                   "");
                             LLVMValueRef value = generate_expr__LilyIrLlvm(
-                              self, param->value, scope, fun, ptr);
+                              self, param->value, scope, fun, NULL);
 
-                            LLVMBuildStore(self->builder, value, record_value);
+                            LLVMBuildStore(self->builder, value, ptr_field);
                         }
                     }
 
