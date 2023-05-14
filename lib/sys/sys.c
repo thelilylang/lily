@@ -31,8 +31,15 @@
 #endif
 
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #include <sys/sys.h>
+
+#ifdef LILY_WINDOWS_OS
+struct _stat st;
+#else
+struct stat st;
+#endif
 
 #ifdef LILY_WINDOWS_OS
 Usize
@@ -87,5 +94,147 @@ Int32
 __sys__$close(Int32 fd)
 {
     return close(fd);
+}
+#endif
+
+#ifdef LILY_WINDOWS_OS
+Int32
+__sys__$stat_mode(const char *pathname)
+{
+    _stat(pathname, &st);
+    return st.st_mode;
+}
+
+Uint32
+__sys__$stat_ino(const char *pathname)
+{
+    _stat(pathname, &st);
+    return st.st_ino;
+}
+
+Uint32
+__sys__$stat_dev(const char *pathname)
+{
+    _stat(pathname, &st);
+    return st.st_dev;
+}
+
+Uint32
+__sys__$stat_nlink(const char *pathname)
+{
+    _stat(pathname, &st);
+    return st.st_nlink;
+}
+
+Uint64
+__sys__$stat_uid(const char *pathname)
+{
+    _stat(pathname, &st);
+    return st.st_uid;
+}
+
+Uint64
+__sys__$stat_gid(const char *pathname)
+{
+    _stat(pathname, &st);
+    return st.st_gid;
+}
+
+Int32
+__sys__$stat_size(const char *pathname)
+{
+    _stat(pathname, &st);
+    return st.st_size;
+}
+
+Int32
+__sys__$stat_atime(const char *pathname)
+{
+    _stat(pathname, &st);
+    return st.st_atime;
+}
+
+Int32
+__sys__$stat_mtime(const char *pathname)
+{
+    _stat(pathname, &st);
+    return st.st_mtime;
+}
+
+Int32
+__sys__$stat_ctime(const char *pathname)
+{
+    _stat(pathname, &st);
+    return st.st_ctime;
+}
+#else
+Int32
+__sys__$stat_mode(const char *pathname)
+{
+    stat(pathname, &st);
+    return (Int32)st.st_mode;
+}
+
+Uint32
+__sys__$stat_ino(const char *pathname)
+{
+    stat(pathname, &st);
+    return st.st_ino;
+}
+
+Uint32
+__sys__$stat_dev(const char *pathname)
+{
+    stat(pathname, &st);
+    return st.st_dev;
+}
+
+Uint32
+__sys__$stat_nlink(const char *pathname)
+{
+    stat(pathname, &st);
+    return st.st_nlink;
+}
+
+Uint64
+__sys__$stat_uid(const char *pathname)
+{
+    stat(pathname, &st);
+    return st.st_uid;
+}
+
+Uint64
+__sys__$stat_gid(const char *pathname)
+{
+    stat(pathname, &st);
+    return st.st_gid;
+}
+
+Int32
+__sys__$stat_size(const char *pathname)
+{
+    stat(pathname, &st);
+    return st.st_size;
+}
+
+Int32
+__sys__$stat_atime(const char *pathname)
+{
+    stat(pathname, &st);
+    return st.st_atime;
+}
+
+Int32
+__sys__$stat_mtime(const char *pathname)
+{
+    stat(pathname, &st);
+    return st.st_mtime;
+}
+
+Int32
+__sys__$stat_ctime(const char *pathname)
+{
+    stat(pathname, &st);
+    return st.st_ctime;
 }
 #endif

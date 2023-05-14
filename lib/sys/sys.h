@@ -25,8 +25,10 @@
 #ifndef LILY_SYS_H
 #define LILY_SYS_H
 
-#include <api.h>
+#include <base/platform.h>
 #include <base/types.h>
+
+#include <api.h>
 
 #if defined(__cplusplus)
 extern "C"
@@ -39,7 +41,7 @@ extern "C"
      * @link
      * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/read?view=msvc-170
      */
-    LILY_API Usize __sys__$read(Int32 fd, void *buf, Usize n)
+    LILY_API inline Usize __sys__$read(Int32 fd, void *buf, Usize n)
       __attribute__((always_inline)) __attribute__((hot));
 
     /**
@@ -57,7 +59,9 @@ extern "C"
      * @link
      * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/open-wopen?view=msvc-170
      */
-    LILY_API Int32 __sys__$open(const char *pathname, Int32 flags, Int32 mode)
+    LILY_API inline Int32 __sys__$open(const char *pathname,
+                                       Int32 flags,
+                                       Int32 mode)
       __attribute__((always_inline)) __attribute__((hot));
 
     /**
@@ -66,8 +70,34 @@ extern "C"
      * @link
      * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/close?view=msvc-170
      */
-    LILY_API Int32 __sys__$close(Int32 fd) __attribute__((always_inline))
+    LILY_API inline Int32 __sys__$close(Int32 fd) __attribute__((always_inline))
     __attribute__((hot));
+
+    /**
+     *
+     * @link https://man7.org/linux/man-pages/man2/stat.2.html
+     * @link
+     * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/stat-functions?view=msvc-170
+     */
+    LILY_API inline Int32 __sys__$stat_mode(const char *pathname);
+
+    LILY_API inline Uint32 __sys__$stat_ino(const char *pathname);
+
+    LILY_API inline Uint32 __sys__$stat_dev(const char *pathname);
+
+    LILY_API inline Uint32 __sys__$stat_nlink(const char *pathname);
+
+    LILY_API inline Uint64 __sys__$stat_uid(const char *pathname);
+
+    LILY_API inline Uint64 __sys__$stat_gid(const char *pathname);
+
+    LILY_API inline Int32 __sys__$stat_size(const char *pathname);
+
+    LILY_API inline Int32 __sys__$stat_atime(const char *pathname);
+
+    LILY_API inline Int32 __sys__$stat_mtime(const char *pathname);
+
+    LILY_API inline Int32 __sys__$stat_ctime(const char *pathname);
 
 #if defined(__cplusplus)
 }
