@@ -29,7 +29,7 @@
 
 #include <stdbool.h>
 
-#define SYSS_COUNT 4
+#define SYSS_COUNT 14
 
 typedef struct LilySysFun
 {
