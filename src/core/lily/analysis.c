@@ -2792,8 +2792,82 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
             TODO("try expression");
         case LILY_AST_EXPR_KIND_TUPLE:
             TODO("tuple expression");
-        case LILY_AST_EXPR_KIND_UNARY:
-            TODO("unary expression");
+        case LILY_AST_EXPR_KIND_UNARY: {
+            LilyCheckedExpr *right = check_expr__LilyAnalysis(self,
+                                                              expr->unary.right,
+                                                              scope,
+                                                              safety_mode,
+                                                              is_moved_expr,
+                                                              false);
+
+            switch (expr->unary.kind) {
+                case LILY_AST_EXPR_UNARY_KIND_DEREFERENCE: {
+                    switch (right->data_type->kind) {
+                        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              unary,
+                              &expr->location,
+                              clone__LilyCheckedDataType(right->data_type->ptr),
+                              expr,
+                              NEW(LilyCheckedExprUnary,
+                                  LILY_CHECKED_EXPR_UNARY_KIND_DEREFERENCE,
+                                  right));
+                        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              unary,
+                              &expr->location,
+                              clone__LilyCheckedDataType(right->data_type->ref),
+                              expr,
+                              NEW(LilyCheckedExprUnary,
+                                  LILY_CHECKED_EXPR_UNARY_KIND_DEREFERENCE,
+                                  right));
+                        default:
+                            TODO("check if dereference is implemented for this "
+                                 "type");
+                    }
+                }
+                case LILY_AST_EXPR_UNARY_KIND_NEG: {
+                    if (is_integer_data_type__LilyCheckedDataType(
+                          right->data_type) ||
+                        is_float_data_type__LilyCheckedDataType(
+                          right->data_type)) {
+                        return NEW_VARIANT(
+                          LilyCheckedExpr,
+                          unary,
+                          &expr->location,
+                          clone__LilyCheckedDataType(right->data_type),
+                          expr,
+                          NEW(LilyCheckedExprUnary,
+                              LILY_CHECKED_EXPR_UNARY_KIND_NEG,
+                              right));
+                    } else {
+                        TODO(
+                          "check if `-` operator is implemented for this type");
+                    }
+                }
+                case LILY_CHECKED_EXPR_UNARY_KIND_NOT: {
+                    switch (right->data_type->kind) {
+                        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              unary,
+                              &expr->location,
+                              clone__LilyCheckedDataType(right->data_type),
+                              expr,
+                              NEW(LilyCheckedExprUnary,
+                                  LILY_CHECKED_EXPR_UNARY_KIND_NOT,
+                                  right));
+                        default:
+                            TODO("check if `not` operator is implemented for "
+                                 "this type");
+                    }
+                }
+                default:
+                    TODO("unary expression");
+            }
+        }
         case LILY_AST_EXPR_KIND_WILDCARD:
             TODO("wildcard expression");
         default:
