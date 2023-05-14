@@ -33,11 +33,13 @@
 static LLVMValueRef
 generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                   const LilyCheckedExprLiteral *literal,
+                                  const LilyCheckedDataType *data_type,
                                   LilyLlvmScope *scope);
 
 LLVMValueRef
 generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                   const LilyCheckedExprLiteral *literal,
+                                  const LilyCheckedDataType *data_type,
                                   LilyLlvmScope *scope)
 {
     switch (literal->kind) {
@@ -56,9 +58,75 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT64:
             return LLVMConstReal(double__LilyIrLlvm(self), literal->float64);
         case LILY_CHECKED_EXPR_LITERAL_KIND_INT32:
-            return LLVMConstInt(i32__LilyIrLlvm(self), literal->int32, true);
+            switch (data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+                    return LLVMConstInt(
+                      i16__LilyIrLlvm(self), literal->int32, true);
+                case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+                    return LLVMConstInt(
+                      i16__LilyIrLlvm(self), literal->int32, false);
+                case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+                    return LLVMConstInt(
+                      i32__LilyIrLlvm(self), literal->int32, true);
+                case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+                    return LLVMConstInt(
+                      i32__LilyIrLlvm(self), literal->int32, false);
+                case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+                    return LLVMConstInt(
+                      i32__LilyIrLlvm(self), literal->int32, true);
+                case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+                    return LLVMConstInt(
+                      i64__LilyIrLlvm(self), literal->int32, false);
+                case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+                    return LLVMConstInt(
+                      i8__LilyIrLlvm(self), literal->int32, true);
+                case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+                    return LLVMConstInt(
+                      i8__LilyIrLlvm(self), literal->int32, false);
+                case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+                    return LLVMConstInt(
+                      intptr__LilyIrLlvm(self), literal->int32, true);
+                case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+                    return LLVMConstInt(
+                      intptr__LilyIrLlvm(self), literal->int32, false);
+                default:
+                    UNREACHABLE("the analysis have a bug!!");
+            }
         case LILY_CHECKED_EXPR_LITERAL_KIND_INT64:
-            return LLVMConstInt(i64__LilyIrLlvm(self), literal->int64, true);
+            switch (data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+                    return LLVMConstInt(
+                      i16__LilyIrLlvm(self), literal->int64, true);
+                case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+                    return LLVMConstInt(
+                      i16__LilyIrLlvm(self), literal->int64, false);
+                case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+                    return LLVMConstInt(
+                      i32__LilyIrLlvm(self), literal->int64, true);
+                case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+                    return LLVMConstInt(
+                      i32__LilyIrLlvm(self), literal->int64, false);
+                case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+                    return LLVMConstInt(
+                      i32__LilyIrLlvm(self), literal->int64, true);
+                case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+                    return LLVMConstInt(
+                      i64__LilyIrLlvm(self), literal->int64, false);
+                case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+                    return LLVMConstInt(
+                      i8__LilyIrLlvm(self), literal->int64, true);
+                case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+                    return LLVMConstInt(
+                      i8__LilyIrLlvm(self), literal->int64, false);
+                case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+                    return LLVMConstInt(
+                      intptr__LilyIrLlvm(self), literal->int64, true);
+                case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+                    return LLVMConstInt(
+                      intptr__LilyIrLlvm(self), literal->int64, false);
+                default:
+                    UNREACHABLE("the analysis have a bug!!");
+            }
         case LILY_CHECKED_EXPR_LITERAL_KIND_NIL:
             return LLVMConstNull(ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self)));
         case LILY_CHECKED_EXPR_LITERAL_KIND_NONE:
@@ -792,7 +860,7 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
         }
         case LILY_CHECKED_EXPR_KIND_LITERAL:
             return generate_literal_expr__LilyIrLlvm(
-              self, &expr->literal, scope);
+              self, &expr->literal, expr->data_type, scope);
         default:
             TODO("generate expression in LLVM IR");
     }
