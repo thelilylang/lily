@@ -472,6 +472,30 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_DATA_TYPE_KIND_BYTES";
         case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
             return "LILY_CHECKED_DATA_TYPE_KIND_CHAR";
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CSHORT";
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CUSHORT";
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CINT";
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CUINT";
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CLONG";
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CULONG";
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG";
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG";
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CFLOAT";
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE";
+        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CSTR";
+        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CVOID";
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             return "LILY_CHECKED_DATA_TYPE_KIND_CUSTOM";
         case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
@@ -686,6 +710,18 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
         case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
         case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
         case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
         case LILY_CHECKED_DATA_TYPE_KIND_INT16:
@@ -806,6 +842,18 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
         case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
         case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
         case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
         case LILY_CHECKED_DATA_TYPE_KIND_INT16:
@@ -964,6 +1012,14 @@ bool
 is_integer_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
 {
     switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
         case LILY_CHECKED_DATA_TYPE_KIND_INT16:
         case LILY_CHECKED_DATA_TYPE_KIND_INT32:
         case LILY_CHECKED_DATA_TYPE_KIND_INT64:
@@ -982,8 +1038,78 @@ bool
 is_float_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
 {
     switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+contains_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+            return true;
+        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+            return contains_direct_custom_data_type__LilyCheckedDataType(
+              self->exception);
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            return contains_direct_custom_data_type__LilyCheckedDataType(
+              self->mut);
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+            return contains_direct_custom_data_type__LilyCheckedDataType(
+              self->optional);
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+            return contains_direct_custom_data_type__LilyCheckedDataType(
+              self->ptr);
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            return contains_direct_custom_data_type__LilyCheckedDataType(
+              self->ref);
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+            return contains_direct_custom_data_type__LilyCheckedDataType(
+              self->trace);
+        default:
+            return false;
+    }
+}
+
+LilyCheckedDataType *
+get_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+            return self;
+        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+            return get_direct_custom_data_type__LilyCheckedDataType(
+              self->exception);
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            return get_direct_custom_data_type__LilyCheckedDataType(self->mut);
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+            return get_direct_custom_data_type__LilyCheckedDataType(
+              self->optional);
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+            return get_direct_custom_data_type__LilyCheckedDataType(self->ptr);
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            return get_direct_custom_data_type__LilyCheckedDataType(self->ref);
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+            return get_direct_custom_data_type__LilyCheckedDataType(
+              self->trace);
+        default:
+            return NULL;
+    }
+}
+
+bool
+is_string_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
+        case LILY_CHECKED_DATA_TYPE_KIND_STR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
             return true;
         default:
             return false;

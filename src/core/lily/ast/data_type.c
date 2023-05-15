@@ -408,6 +408,30 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataTypeKind, enum LilyAstDataTypeKind self)
             return "LILY_AST_DATA_TYPE_KIND_BIT_STR";
         case LILY_AST_DATA_TYPE_KIND_CHAR:
             return "LILY_AST_DATA_TYPE_KIND_CHAR";
+        case LILY_AST_DATA_TYPE_KIND_CSHORT:
+            return "LILY_AST_DATA_TYPE_KIND_CSHORT";
+        case LILY_AST_DATA_TYPE_KIND_CUSHORT:
+            return "LILY_AST_DATA_TYPE_KIND_CUSHORT";
+        case LILY_AST_DATA_TYPE_KIND_CINT:
+            return "LILY_AST_DATA_TYPE_KIND_CINT";
+        case LILY_AST_DATA_TYPE_KIND_CUINT:
+            return "LILY_AST_DATA_TYPE_KIND_CUINT";
+        case LILY_AST_DATA_TYPE_KIND_CLONG:
+            return "LILY_AST_DATA_TYPE_KIND_CLONG";
+        case LILY_AST_DATA_TYPE_KIND_CULONG:
+            return "LILY_AST_DATA_TYPE_KIND_CULONG";
+        case LILY_AST_DATA_TYPE_KIND_CLONGLONG:
+            return "LILY_AST_DATA_TYPE_KIND_CLONGLONG";
+        case LILY_AST_DATA_TYPE_KIND_CULONGLONG:
+            return "LILY_AST_DATA_TYPE_KIND_CULONGLONG";
+        case LILY_AST_DATA_TYPE_KIND_CFLOAT:
+            return "LILY_AST_DATA_TYPE_KIND_CFLOAT";
+        case LILY_AST_DATA_TYPE_KIND_CDOUBLE:
+            return "LILY_AST_DATA_TYPE_KIND_CDOUBLE";
+        case LILY_AST_DATA_TYPE_KIND_CSTR:
+            return "LILY_AST_DATA_TYPE_KIND_CSTR";
+        case LILY_AST_DATA_TYPE_KIND_CVOID:
+            return "LILY_AST_DATA_TYPE_KIND_CVOID";
         case LILY_AST_DATA_TYPE_KIND_CUSTOM:
             return "LILY_AST_DATA_TYPE_KIND_CUSTOM";
         case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
@@ -616,6 +640,28 @@ to_string__LilyAstDataType(const LilyAstDataType *self)
             return from__String("Bytes");
         case LILY_AST_DATA_TYPE_KIND_CHAR:
             return from__String("Char");
+        case LILY_AST_DATA_TYPE_KIND_CSHORT:
+            return from__String("CShort");
+        case LILY_AST_DATA_TYPE_KIND_CUSHORT:
+            return from__String("CUshort");
+        case LILY_AST_DATA_TYPE_KIND_CINT:
+            return from__String("CInt");
+        case LILY_AST_DATA_TYPE_KIND_CUINT:
+            return from__String("CUint");
+        case LILY_AST_DATA_TYPE_KIND_CLONG:
+            return from__String("CLong");
+        case LILY_AST_DATA_TYPE_KIND_CLONGLONG:
+            return from__String("CLonglong");
+        case LILY_AST_DATA_TYPE_KIND_CULONGLONG:
+            return from__String("CULonglong");
+        case LILY_AST_DATA_TYPE_KIND_CFLOAT:
+            return from__String("CFloat");
+        case LILY_AST_DATA_TYPE_KIND_CDOUBLE:
+            return from__String("CDouble");
+        case LILY_AST_DATA_TYPE_KIND_CSTR:
+            return from__String("CStr");
+        case LILY_AST_DATA_TYPE_KIND_CVOID:
+            return from__String("CVoid");
         case LILY_AST_DATA_TYPE_KIND_CUSTOM: {
             String *res = format__String("{S}", self->custom.name);
 
