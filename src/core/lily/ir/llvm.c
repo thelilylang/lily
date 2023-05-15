@@ -65,6 +65,7 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     LLVMInitializeNativeTarget();
     LLVMInitializeNativeAsmPrinter();
     LLVMInitializeNativeAsmParser();
+    LLVMInitializeCore(LLVMGetGlobalPassRegistry());
 
     LLVMModuleRef module = LLVMModuleCreateWithName(module_name);
     LLVMTargetRef target = LLVMGetFirstTarget();
