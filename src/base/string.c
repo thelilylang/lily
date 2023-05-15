@@ -188,6 +188,22 @@ repeat__String(char *s, Usize n)
     return res;
 }
 
+void
+reverse__String(String *self)
+{
+    Usize i = 0;
+    Usize j = self->len - 1;
+
+    while (i < j) {
+        char tmp = self->buffer[i];
+        self->buffer[i] = self->buffer[j];
+        self->buffer[j] = tmp;
+
+        i++;
+        j--;
+    }
+}
+
 Vec *
 split__String(String *self, char separator)
 {
