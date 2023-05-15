@@ -33,6 +33,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <llvm-c/DebugInfo.h>
+
 void
 generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               const LilyCheckedDeclFun *fun,
@@ -91,6 +93,17 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     }
 
     GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
+
+    LLVMMetadataRef debug_location = LLVMDIBuilderCreateDebugLocation(
+      self->context,
+      location->start_line,
+      location->start_column,
+      LLVMDIBuilderCreateLexicalBlockFile(
+        self->di_builder, self->file, self->file, 0),
+      NULL);
+
+    // Attach the debug location to the function
+    LLVMSetSubprogram(fun_llvm, debug_location);
 
     FREE(LilyLlvmScope, fun_scope);
 }
