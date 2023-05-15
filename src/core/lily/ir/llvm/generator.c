@@ -39,11 +39,12 @@
 void
 run__LilyIrLlvmGenerator(LilyPackage *self)
 {
-    self->ir.llvm.file = LLVMDIBuilderCreateFile(self->ir.llvm.di_builder,
-                                                 self->file.name,
-                                                 strlen(self->file.name),
-                                                 "",
-                                                 0);
+    String *filename = get_filename_from_path(self->file.name);
+    Usize dir_len = strlen(self->file.name) - filename->len;
+    char *dir = get_slice__Str(self->file.name, 0, dir_len);
+
+    self->ir.llvm.file = LLVMDIBuilderCreateFile(
+      self->ir.llvm.di_builder, filename->buffer, filename->len, dir, dir_len);
 
     LilyLlvmScope *scope = NEW(LilyLlvmScope, NULL);
 
@@ -94,5 +95,7 @@ run__LilyIrLlvmGenerator(LilyPackage *self)
     dump__LilyIrLlvm(&self->ir.llvm);
 #endif
 
+    FREE(String, filename);
+    lily_free(dir);
     FREE(LilyLlvmScope, scope);
 }
