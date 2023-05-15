@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <core/lily/ir/llvm/attr.h>
 #include <core/lily/ir/llvm/generator/body/function.h>
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/expr.h>
@@ -77,6 +78,17 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     LLVMPositionBuilderAtEnd(self->builder, entry_block);
 
     LilyLlvmScope *fun_scope = NEW(LilyLlvmScope, scope);
+
+    if (fun->params) {
+        for (Usize i = 0; i < fun->params->len; ++i) {
+            LilyCheckedDeclFunParam *param = get__Vec(fun->params, i);
+
+            if (param->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_REF) {
+                LLVMAddAttributeAtIndex(
+                  fun_llvm, i, nonnull_attr__LilyIrLlvm(self));
+            }
+        }
+    }
 
     GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
 

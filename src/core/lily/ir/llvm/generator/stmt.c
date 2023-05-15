@@ -26,6 +26,7 @@
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/expr.h>
 #include <core/lily/ir/llvm/generator/stmt.h>
+#include <core/lily/ir/llvm/generator/stmt/variable.h>
 #include <core/lily/ir/llvm/primary.h>
 
 #include <stdio.h>
@@ -393,25 +394,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             }
 
             return NULL;
-        case LILY_CHECKED_STMT_KIND_VARIABLE: {
-            LLVMTypeRef variable_data_type = generate_data_type__LilyIrLlvm(
-              self, stmt->variable.data_type, scope);
-            LLVMValueRef variable = LLVMBuildAlloca(
-              self->builder, variable_data_type, stmt->variable.name->buffer);
-            LLVMValueRef variable_expr = generate_expr__LilyIrLlvm(
-              self, stmt->variable.expr, scope, fun, variable);
-
-            push__Vec(scope->values,
-                      NEW(LilyLlvmValue, stmt->variable.name, variable));
-
-            // TODO: add some data types to disable automatic store.
-            if (stmt->variable.data_type->kind !=
-                LILY_CHECKED_DATA_TYPE_KIND_CUSTOM) {
-                LLVMBuildStore(self->builder, variable_expr, variable);
-            }
-
-            return variable;
-        }
+        case LILY_CHECKED_STMT_KIND_VARIABLE:
+            return generate_variable_stmt__LilyIrLlvm(self, stmt, fun, scope);
         case LILY_CHECKED_STMT_KIND_WHILE: {
             LilyLlvmScope *while_scope = NEW(LilyLlvmScope, scope);
 

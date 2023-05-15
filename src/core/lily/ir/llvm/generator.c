@@ -28,8 +28,8 @@
 #include <core/lily/ir/llvm/generator.h>
 #include <core/lily/ir/llvm/generator/constant.h>
 #include <core/lily/ir/llvm/generator/function.h>
-#include <core/lily/ir/llvm/generator/record.h>
 #include <core/lily/ir/llvm/generator/sys.h>
+#include <core/lily/ir/llvm/generator/type/record.h>
 #include <core/lily/package.h>
 
 #include <llvm-c/DebugInfo.h>

@@ -50,25 +50,39 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
             return LLVMArrayType(i8__LilyIrLlvm(self), data_type->bytes);
         case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
             return i8__LilyIrLlvm(self);
-        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-            return search_type__LilyLlvmScope(scope,
-                                              data_type->custom.global_name)
-              ->type;
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
+            return LLVMGetTypeByName2(self->context,
+                                      data_type->custom.global_name->buffer);
+            // return search_type__LilyLlvmScope(scope,
+            //                                   data_type->custom.global_name)->type;
+        }
         case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
             TODO("generate exception data type");
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
             return float__LilyIrLlvm(self);
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
             return double__LilyIrLlvm(self);
         case LILY_CHECKED_DATA_TYPE_KIND_INT16:
         case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
             return i16__LilyIrLlvm(self);
         case LILY_CHECKED_DATA_TYPE_KIND_INT32:
         case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
             return i32__LilyIrLlvm(self);
         case LILY_CHECKED_DATA_TYPE_KIND_INT64:
         case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
             return i64__LilyIrLlvm(self);
+        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+            return ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self));
         case LILY_CHECKED_DATA_TYPE_KIND_INT8:
         case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
             return i8__LilyIrLlvm(self);
@@ -83,6 +97,7 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
             return generate_data_type__LilyIrLlvm(self, data_type->mut, scope);
         case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
         case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
             return void__LilyIrLlvm(self);
         case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
             TODO("generate optional data type");
@@ -93,11 +108,11 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             TODO("generate ref data type");
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
-            if (data_type->str == -1) {
-                return ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self));
-            }
-
-            return LLVMArrayType(i8__LilyIrLlvm(self), data_type->str);
+            return LLVMStructType(
+              (LLVMTypeRef[]){ ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self)),
+                               intptr__LilyIrLlvm(self) },
+              2,
+              0);
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return generate_data_type__LilyIrLlvm(
               self, data_type->trace, scope);
