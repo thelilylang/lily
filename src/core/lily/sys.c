@@ -59,7 +59,7 @@ load_syss__LilySys()
         .params = init__Vec(
           3,
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
-          NEW_VARIANT(LilyCheckedDataType, str, NULL, -1),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL),
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL))
     };
 
@@ -70,7 +70,7 @@ load_syss__LilySys()
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
         .params = init__Vec(
           3,
-          NEW_VARIANT(LilyCheckedDataType, str, NULL, -1),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL),
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL))
     };
@@ -89,7 +89,8 @@ load_syss__LilySys()
         .real_name = from__String("__sys__$stat_mode"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
-        .params = init__Vec(1, NEW_VARIANT(LilyCheckedDataType, str, NULL, -1))
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
     syss[5] = (LilySysFun){
@@ -97,7 +98,8 @@ load_syss__LilySys()
         .real_name = from__String("__sys__$stat_ino"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT32, NULL),
-        .params = init__Vec(1, NEW_VARIANT(LilyCheckedDataType, str, NULL, -1))
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
     syss[6] = (LilySysFun){
@@ -105,7 +107,8 @@ load_syss__LilySys()
         .real_name = from__String("__sys__$stat_dev"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT32, NULL),
-        .params = init__Vec(1, NEW_VARIANT(LilyCheckedDataType, str, NULL, -1))
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
     syss[7] = (LilySysFun){
@@ -113,7 +116,8 @@ load_syss__LilySys()
         .real_name = from__String("__sys__$stat_nlink"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT32, NULL),
-        .params = init__Vec(1, NEW_VARIANT(LilyCheckedDataType, str, NULL, -1))
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
     syss[8] = (LilySysFun){
@@ -121,7 +125,8 @@ load_syss__LilySys()
         .real_name = from__String("__sys__$stat_uid"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT64, NULL),
-        .params = init__Vec(1, NEW_VARIANT(LilyCheckedDataType, str, NULL, -1))
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
     syss[9] = (LilySysFun){
@@ -129,7 +134,8 @@ load_syss__LilySys()
         .real_name = from__String("__sys__$stat_gid"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT64, NULL),
-        .params = init__Vec(1, NEW_VARIANT(LilyCheckedDataType, str, NULL, -1))
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
     syss[10] = (LilySysFun){
@@ -137,7 +143,8 @@ load_syss__LilySys()
         .real_name = from__String("__sys__$stat_size"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
-        .params = init__Vec(1, NEW_VARIANT(LilyCheckedDataType, str, NULL, -1))
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
     syss[11] = (LilySysFun){
@@ -145,7 +152,8 @@ load_syss__LilySys()
         .real_name = from__String("__sys__$stat_atime"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
-        .params = init__Vec(1, NEW_VARIANT(LilyCheckedDataType, str, NULL, -1))
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
     syss[12] = (LilySysFun){
@@ -153,7 +161,8 @@ load_syss__LilySys()
         .real_name = from__String("__sys__$stat_mtime"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
-        .params = init__Vec(1, NEW_VARIANT(LilyCheckedDataType, str, NULL, -1))
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
     syss[13] = (LilySysFun){
@@ -161,7 +170,8 @@ load_syss__LilySys()
         .real_name = from__String("__sys__$stat_ctime"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
-        .params = init__Vec(1, NEW_VARIANT(LilyCheckedDataType, str, NULL, -1))
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
     return syss;
