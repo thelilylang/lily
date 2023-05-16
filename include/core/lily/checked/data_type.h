@@ -219,6 +219,7 @@ typedef struct LilyCheckedDataTypeCustom
     String *global_name; // String* (&)
     Vec *generics;       // Vec<LilyCheckedDataType*>*?
     enum LilyCheckedDataTypeCustomKind kind;
+    bool is_recursive;
 } LilyCheckedDataTypeCustom;
 
 /**
@@ -232,14 +233,16 @@ inline CONSTRUCTOR(LilyCheckedDataTypeCustom,
                    String *name,
                    String *global_name,
                    Vec *generics,
-                   enum LilyCheckedDataTypeCustomKind kind)
+                   enum LilyCheckedDataTypeCustomKind kind,
+                   bool is_recursive)
 {
     return (LilyCheckedDataTypeCustom){ .scope_id = scope_id,
                                         .scope = scope,
                                         .name = name,
                                         .global_name = global_name,
                                         .generics = generics,
-                                        .kind = kind };
+                                        .kind = kind,
+                                        .is_recursive = is_recursive };
 }
 
 /**

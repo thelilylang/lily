@@ -203,8 +203,9 @@ IMPL_FOR_DEBUG(to_string,
 
     {
         char *s =
-          format(", kind = {s} }",
-                 to_string__Debug__LilyCheckedDataTypeCustomKind(self->kind));
+          format(", kind = {s}, is_recursive = {b} }",
+                 to_string__Debug__LilyCheckedDataTypeCustomKind(self->kind),
+                 self->is_recursive);
 
         PUSH_STR_AND_FREE(res, s);
     }
@@ -915,7 +916,8 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                                    self->custom.name,
                                    self->custom.global_name,
                                    generics,
-                                   self->custom.kind));
+                                   self->custom.kind,
+                                   self->custom.is_recursive));
         }
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
             Vec *params = NULL;
