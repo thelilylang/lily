@@ -293,7 +293,7 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprLiteral,
                            Int32 suffix_int32)
 {
     return (LilyAstExprLiteral){ .kind =
-                                   LILY_AST_EXPR_LITERAL_KIND_SUFFIX_INT16,
+                                   LILY_AST_EXPR_LITERAL_KIND_SUFFIX_INT32,
                                  .suffix_int32 = suffix_int32 };
 }
 
