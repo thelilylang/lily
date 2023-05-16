@@ -3841,6 +3841,8 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
         if (!fun->fun.return_data_type) {
             fun->fun.return_data_type = NEW(
               LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, NULL);
+        } else {
+            fun->fun.is_recursive = true;
         }
     }
 }
