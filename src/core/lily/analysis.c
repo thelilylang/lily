@@ -2052,66 +2052,70 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
                                 last->data_type->custom.global_name,
                                 field_response.scope_container.variable->id)));
 
-                        switch (field->data_type->kind) {
-                            case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-                                switch (field->data_type->custom.kind) {
-                                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD:
-                                        current_scope =
-                                          get_decl_from_id__LilyCheckedScope(
-                                            current_scope,
-                                            field->data_type->custom.scope_id,
-                                            field->data_type->custom.scope.id)
-                                            ->type.record.scope;
+                        LilyCheckedDataType *field_custom_dt =
+                          get_direct_custom_data_type__LilyCheckedDataType(
+                            field->data_type);
 
-                                        break;
-                                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD_OBJECT:
-                                        current_scope =
-                                          get_decl_from_id__LilyCheckedScope(
-                                            current_scope,
-                                            field->data_type->custom.scope_id,
-                                            field->data_type->custom.scope.id)
-                                            ->object.record.scope;
+                        if (field_custom_dt) {
+                            switch (field_custom_dt->custom.kind) {
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD:
+                                    current_scope =
+                                      get_decl_from_id__LilyCheckedScope(
+                                        current_scope,
+                                        field_custom_dt->custom.scope_id,
+                                        field_custom_dt->custom.scope.id)
+                                        ->type.record.scope;
 
-                                        break;
-                                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_CLASS:
-                                        current_scope =
-                                          get_decl_from_id__LilyCheckedScope(
-                                            current_scope,
-                                            field->data_type->custom.scope_id,
-                                            field->data_type->custom.scope.id)
-                                            ->object.class.scope;
+                                    break;
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD_OBJECT:
+                                    current_scope =
+                                      get_decl_from_id__LilyCheckedScope(
+                                        current_scope,
+                                        field_custom_dt->custom.scope_id,
+                                        field_custom_dt->custom.scope.id)
+                                        ->object.record.scope;
 
-                                        break;
-                                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ENUM:
-                                        current_scope =
-                                          get_decl_from_id__LilyCheckedScope(
-                                            current_scope,
-                                            field->data_type->custom.scope_id,
-                                            field->data_type->custom.scope.id)
-                                            ->type.enum_.scope;
+                                    break;
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_CLASS:
+                                    current_scope =
+                                      get_decl_from_id__LilyCheckedScope(
+                                        current_scope,
+                                        field_custom_dt->custom.scope_id,
+                                        field_custom_dt->custom.scope.id)
+                                        ->object.class.scope;
 
-                                        break;
-                                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ENUM_OBJECT:
-                                        current_scope =
-                                          get_decl_from_id__LilyCheckedScope(
-                                            current_scope,
-                                            field->data_type->custom.scope_id,
-                                            field->data_type->custom.scope.id)
-                                            ->object.enum_.scope;
+                                    break;
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ENUM:
+                                    current_scope =
+                                      get_decl_from_id__LilyCheckedScope(
+                                        current_scope,
+                                        field_custom_dt->custom.scope_id,
+                                        field_custom_dt->custom.scope.id)
+                                        ->type.enum_.scope;
 
-                                        break;
-                                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_TRAIT:
-                                        FAILED("cannot access to trait in "
-                                               "field access");
-                                    default:
-                                        UNREACHABLE("unknown variant");
-                                }
+                                    break;
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ENUM_OBJECT:
+                                    current_scope =
+                                      get_decl_from_id__LilyCheckedScope(
+                                        current_scope,
+                                        field_custom_dt->custom.scope_id,
+                                        field_custom_dt->custom.scope.id)
+                                        ->object.enum_.scope;
 
-                                break;
-                            default:
-                                if (i + 1 != path->access.path->len) {
-                                    FAILED("expected custom data type");
-                                }
+                                    break;
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_TRAIT:
+                                    FAILED("cannot access to trait in "
+                                           "field access");
+                                default:
+                                    UNREACHABLE(
+                                      "expected a custom data type. "
+                                      "get_direct_custom_data_type__"
+                                      "LilyCheckedDataType have a bug!!");
+                            }
+                        } else {
+                            if (i + 1 != path->access.path->len) {
+                                FAILED("expected custom data type");
+                            }
                         }
 
                         last = field;
@@ -3004,19 +3008,41 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                    expr->literal.int64));
                 }
                 case LILY_AST_EXPR_LITERAL_KIND_NIL:
-                    return NEW_VARIANT(
-                      LilyCheckedExpr,
-                      literal,
-                      &expr->location,
-                      NEW_VARIANT(LilyCheckedDataType,
-                                  ptr,
+                    if (defined_data_type) {
+                        switch (defined_data_type->kind) {
+                            case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+                                return NEW_VARIANT(
+                                  LilyCheckedExpr,
+                                  literal,
                                   &expr->location,
-                                  NEW(LilyCheckedDataType,
-                                      LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
-                                      &expr->location)),
-                      expr,
-                      NEW(LilyCheckedExprLiteral,
-                          LILY_CHECKED_EXPR_LITERAL_KIND_NIL));
+                                  NEW_VARIANT(LilyCheckedDataType,
+                                              ptr,
+                                              &expr->location,
+                                              clone__LilyCheckedDataType(
+                                                defined_data_type->ptr)),
+                                  expr,
+                                  NEW(LilyCheckedExprLiteral,
+                                      LILY_CHECKED_EXPR_LITERAL_KIND_NIL));
+                            default:
+                                goto get_nil_unknown_dt;
+                        }
+                    } else {
+                    get_nil_unknown_dt : {
+                        return NEW_VARIANT(
+                          LilyCheckedExpr,
+                          literal,
+                          &expr->location,
+                          NEW_VARIANT(LilyCheckedDataType,
+                                      ptr,
+                                      &expr->location,
+                                      NEW(LilyCheckedDataType,
+                                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                                          NULL)),
+                          expr,
+                          NEW(LilyCheckedExprLiteral,
+                              LILY_CHECKED_EXPR_LITERAL_KIND_NIL));
+                    }
+                    }
                 case LILY_AST_EXPR_LITERAL_KIND_NONE:
                     return NEW_VARIANT(
                       LilyCheckedExpr,
@@ -3948,6 +3974,53 @@ check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record)
 
     record->type.record.fields = check_fields__LilyAnalysis(
       self, record->ast_decl->type.record.fields, record->type.record.scope);
+
+    // Check if the record is recursive
+    for (Usize i = 0; i < record->type.record.fields->len; ++i) {
+        LilyCheckedField *field = get__Vec(record->type.record.fields, i);
+        LilyCheckedDataType *field_custom_dt =
+          get_direct_custom_data_type__LilyCheckedDataType(field->data_type);
+
+        if (field_custom_dt) {
+            if (!strcmp(field_custom_dt->custom.global_name->buffer,
+                        record->type.record.global_name->buffer)) {
+                switch (field->data_type->kind) {
+                    case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+                    case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+                    case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+                    case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+                    case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+                        field_custom_dt->custom.is_recursive = true;
+                        record->type.record.is_recursive = true;
+
+                        break;
+                    case LILY_CHECKED_DATA_TYPE_KIND_TRACE: {
+                        LilyCheckedDataType *field_custom_dt_trace =
+                          get_direct_custom_data_type__LilyCheckedDataType(
+                            field->data_type->trace);
+
+                        switch (field_custom_dt_trace->kind) {
+                            case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+                            case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+                            case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+                            case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+                            case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+                                field_custom_dt->custom.is_recursive = true;
+                                record->type.record.is_recursive = true;
+
+                                break;
+                            default:
+                                FAILED("infinite data type");
+                        }
+
+                        break;
+                    }
+                    default:
+                        FAILED("infinite data type");
+                }
+            }
+        }
+    }
 
     record->type.record.is_checked = true;
 }
