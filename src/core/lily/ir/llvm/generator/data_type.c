@@ -102,11 +102,10 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
             TODO("generate optional data type");
         case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
             return ptr__LilyIrLlvm(
               self,
               generate_data_type__LilyIrLlvm(self, data_type->ptr, scope));
-        case LILY_CHECKED_DATA_TYPE_KIND_REF:
-            TODO("generate ref data type");
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
             return LLVMStructType(
               (LLVMTypeRef[]){ ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self)),

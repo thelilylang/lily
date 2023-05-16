@@ -145,7 +145,7 @@ generate_record_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
             LLVMValueRef value = generate_expr__LilyIrLlvm(
               self, param->value, scope, fun, record_value);
 
-            if (can_store_in_record_call__LilyIrLlvm(param->value)) {
+            if (value) {
                 LLVMValueRef ptr_param = LLVMBuildStructGEP2(self->builder,
                                                              record_type,
                                                              record_value,
@@ -157,7 +157,7 @@ generate_record_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
         }
     }
 
-    return record_value;
+    return ptr ? NULL : record_value;
 }
 
 LLVMValueRef

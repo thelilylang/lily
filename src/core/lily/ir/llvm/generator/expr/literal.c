@@ -176,7 +176,7 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
 
             LLVMBuildStore(self->builder, str_len, len_ptr);
 
-            return str_ptr;
+            return ptr ? NULL : str_ptr;
         }
         case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT32:
             return LLVMConstReal(float__LilyIrLlvm(self),

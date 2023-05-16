@@ -25,6 +25,10 @@
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/type/record.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 void
 generate_record__LilyIrLlvm(const LilyIrLlvm *self,
                             const LilyCheckedDeclRecord *record,
@@ -34,6 +38,18 @@ generate_record__LilyIrLlvm(const LilyIrLlvm *self,
 
     for (Usize i = 0; i < record->fields->len; ++i) {
         LilyCheckedField *field = get__Vec(record->fields, i);
+
+        // Check for recursive data type
+        switch (field->data_type->kind) {
+            case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                if (field->data_type->custom.is_recursive) {
+                    TODO("generate recurisve type");
+                }
+
+                break;
+            default:
+                break;
+        }
 
         fields[i] =
           generate_data_type__LilyIrLlvm(self, field->data_type, scope);

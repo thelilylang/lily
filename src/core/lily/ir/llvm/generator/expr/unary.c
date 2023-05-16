@@ -113,8 +113,27 @@ generate_ref__LilyIrLlvm(const LilyIrLlvm *self,
                          LLVMValueRef ptr)
 {
     switch (expr->data_type->kind) {
-        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            switch (expr->unary.right->data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                    LLVMSetAlignment(
+                      LLVMBuildIntToPtr(
+                        self->builder, right, LLVMTypeOf(right), ""),
+                      LLVMABISizeOfType(self->target_data, LLVMTypeOf(right)));
+                    return right;
+                default: {
+                    LLVMValueRef load =
+                      LLVMBuildLoad2(self->builder,
+                                     ptr__LilyIrLlvm(self, LLVMTypeOf(right)),
+                                     right,
+                                     "");
+                    LLVMSetAlignment(
+                      load,
+                      LLVMABISizeOfType(self->target_data, LLVMTypeOf(load)));
+                    return load;
+                }
+            }
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
             switch (expr->unary.right->data_type->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
                     return right;

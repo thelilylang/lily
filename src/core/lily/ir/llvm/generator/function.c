@@ -41,9 +41,12 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               LilyLlvmScope *scope,
                               const Location *location)
 {
+	// Generate return data type of the function
     LLVMTypeRef return_data_type =
-      generate_data_type__LilyIrLlvm(self, fun->return_data_type, scope);
-    LLVMTypeRef params[252] = {};
+      generate_data_type__LilyIrLlvm(self, fun->return_data_type, scope); 
+
+	// Generate function parameters
+	LLVMTypeRef params[252] = {};
     Usize params_len = 0;
 
     if (fun->params) {
@@ -79,21 +82,11 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
     LLVMPositionBuilderAtEnd(self->builder, entry_block);
 
-    LilyLlvmScope *fun_scope = NEW(LilyLlvmScope, scope);
-
-    if (fun->params) {
-        for (Usize i = 0; i < fun->params->len; ++i) {
-            LilyCheckedDeclFunParam *param = get__Vec(fun->params, i);
-
-            if (param->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_REF) {
-                LLVMAddAttributeAtIndex(
-                  fun_llvm, i, nonnull_attr__LilyIrLlvm(self));
-            }
-        }
-    }
+    LilyLlvmScope *fun_scope = NEW(LilyLlvmScope, scope);	
 
     GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
 
+	// Add debug location to the function
     LLVMMetadataRef debug_location = LLVMDIBuilderCreateDebugLocation(
       self->context,
       location->start_line,
@@ -102,7 +95,6 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
         self->di_builder, self->file, self->file, 0),
       NULL);
 
-    // Attach the debug location to the function
     LLVMSetSubprogram(fun_llvm, debug_location);
 
     FREE(LilyLlvmScope, fun_scope);

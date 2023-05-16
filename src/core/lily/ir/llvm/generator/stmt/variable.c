@@ -43,7 +43,7 @@ generate_variable_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
     push__Vec(scope->values, NEW(LilyLlvmValue, stmt->variable.name, variable));
 
-    if (can_store_in_variable_alloc__LilyIrLlvm(stmt->variable.expr)) {
+    if (variable_value) {
         LLVMBuildStore(self->builder, variable_value, variable);
     }
 
