@@ -75,6 +75,25 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
 
     LLVMValueRef fun_llvm = LLVMAddFunction(self->module, name, fun_data_type);
 
+    // Set alignment on param (if applicable)
+    if (fun->params) {
+        for (Usize i = 0; i < fun->params->len; ++i) {
+            switch (CAST(LilyCheckedDeclFunParam *, get__Vec(fun->params, i))
+                      ->data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_REF: {
+                    LLVMValueRef param = LLVMGetParam(fun_llvm, i);
+
+                    LLVMSetParamAlignment(
+                      param,
+                      LLVMABIAlignmentOfType(self->target_data,
+                                             LLVMTypeOf(param)));
+                }
+                default:
+                    break;
+            }
+        }
+    }
+
     push__Vec(scope->funs,
               NEW(LilyLlvmFun, fun->global_name, fun_llvm, fun_data_type));
     push__Vec(scope->values, NEW(LilyLlvmValue, fun->global_name, fun_llvm));
