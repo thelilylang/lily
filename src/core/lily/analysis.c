@@ -3834,6 +3834,8 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
                                             fun->ast_decl->fun.return_data_type,
                                             fun->fun.scope,
                                             LILY_CHECKED_SAFETY_MODE_SAFE);
+        } else {
+            fun->fun.is_recursive = true;
         }
     } else {
         if (!fun->fun.return_data_type) {
