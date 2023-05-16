@@ -58,6 +58,7 @@ declare_sys_function__LilyIrLlvm(LilyIrLlvm *self,
         LLVM_ADD_FN_ATTR(sys_fun_llvm, hot_attr__LilyIrLlvm(self));
         LLVM_ADD_FN_ATTR(sys_fun_llvm, nounwind_attr__LilyIrLlvm(self));
         LLVM_ADD_FN_ATTR(sys_fun_llvm, norecurse_attr__LilyIrLlvm(self));
+        ADD_CUSTOM_HOST_ATTR(sys_fun_llvm);
 
         push__Vec(scope->values,
                   NEW(LilyLlvmValue, sys_fun->real_name, sys_fun_llvm));

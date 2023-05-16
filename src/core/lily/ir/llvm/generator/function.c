@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <llvm-c/DebugInfo.h>
 
@@ -104,6 +105,25 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     LilyLlvmScope *fun_scope = NEW(LilyLlvmScope, scope);
 
     GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
+
+    // Generate some function attributes
+    if (!fun->is_recursive) {
+        LLVM_ADD_FN_ATTR(fun_llvm, norecurse_attr__LilyIrLlvm(self));
+    }
+
+    if (!fun->can_inline) {
+        LLVM_ADD_FN_ATTR(fun_llvm, noinline_attr__LilyIrLlvm(self));
+        LLVM_ADD_FN_ATTR(fun_llvm, optnone_attr__LilyIrLlvm(self));
+    } else {
+        LLVM_ADD_FN_ATTR(fun_llvm, alwaysinline_attr__LilyIrLlvm(self));
+    }
+
+    if (!fun->can_raise) {
+        LLVM_ADD_FN_ATTR(fun_llvm, nounwind_attr__LilyIrLlvm(self));
+    }
+
+    LLVM_ADD_FN_ATTR(fun_llvm, uwtable_attr__LilyIrLlvm(self));
+    ADD_CUSTOM_HOST_ATTR(fun_llvm);
 
     // Add debug location to the function
     LLVMMetadataRef debug_location = LLVMDIBuilderCreateDebugLocation(

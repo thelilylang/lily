@@ -43,6 +43,10 @@ typedef struct LilyIrLlvm
     LLVMTargetDataRef target_data;
     LLVMTargetMachineRef machine;
     LLVMMetadataRef file;
+    char *cpu;
+    char *features;
+    Usize cpu_len;
+    Usize features_len;
 } LilyIrLlvm;
 
 /**

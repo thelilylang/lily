@@ -120,8 +120,6 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
       LLVMCreateTargetData(LLVMGetDataLayoutStr(module));
 
     lily_free(triple);
-    lily_free(cpu);
-    lily_free(cpu_features);
 
     return (LilyIrLlvm){ .context = LLVMContextCreate(),
                          .module = module,
@@ -129,7 +127,11 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
                          .di_builder = LLVMCreateDIBuilder(module),
                          .target = target,
                          .target_data = target_data,
-                         .machine = machine };
+                         .machine = machine,
+                         .cpu = cpu,
+                         .features = cpu_features,
+                         .cpu_len = strlen(cpu),
+                         .features_len = strlen(cpu_features) };
 }
 
 LLVMMetadataRef
@@ -151,4 +153,6 @@ DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self)
     LLVMDisposeTargetData(self->target_data);
     LLVMDisposeTargetMachine(self->machine);
     LLVMContextDispose(self->context);
+    lily_free(self->cpu);
+    lily_free(self->features);
 }
