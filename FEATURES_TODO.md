@@ -1,6 +1,6 @@
 # The list of features to do
 
-Examples of task definition
+Example of a task definition:
 
 ```
 Compilation stage option:
@@ -64,6 +64,8 @@ linker (if applicable)
 - [ ] Check the visibility of the field data type (linkage) -> analysis
 - [ ] Support of recursive data type -> analysis
 - [ ] Support of generic record -> analysis
+- [x] Support of record call
+- [ ] Make a register of all operators on this record -> analysis
 
 #### Codegen (LLVM)
 
@@ -71,6 +73,7 @@ linker (if applicable)
 - [ ] Support of recursive data type -> codegen
 - [ ] Support of generic record -> codegen
 - [ ] Add type linkage -> codegen
+- [x] Support of record call
 
 ### Enum
 
@@ -80,6 +83,8 @@ linker (if applicable)
 - [ ] Check the visibility of the variant data type (linkage) -> analysis
 - [ ] Support of recursive data type -> analysis
 - [ ] Support of generic enum -> analysis
+- [ ] Support of enum call -> analysis
+- [ ] Make a register of all operators on this enum -> analysis
 
 #### Codegen (LLVM)
 
@@ -87,6 +92,7 @@ linker (if applicable)
 - [ ] Support of recursive data type -> codegen
 - [ ] Support of generic enum -> codegen
 - [ ] Add type linkage -> codegen
+- [ ] Support of enum call -> codegen
 
 ### Class
 
@@ -100,6 +106,8 @@ linker (if applicable)
 - [ ] Check implementation data type -> analysis
 - [ ] Check inheritance data type -> analysis
 - [ ] Check attribute initialization class -> analysis
+- [ ] Support of class call -> analysis
+- [ ] Make a register of all operators on this class -> analysis
 
 #### Codegen (LLVM)
 
@@ -107,6 +115,7 @@ linker (if applicable)
 - [ ] Support of recursive data type -> codegen
 - [ ] Add type linkage -> codegen
 - [ ] Support of generic class -> codegen
+- [ ] Support of class call -> codegen
 
 ### Trait
 
@@ -126,6 +135,8 @@ linker (if applicable)
 - [ ] Support of generic record -> analysis
 - [ ] Check method
 - [ ] Check implementation data type -> analysis
+- [ ] Support of record call -> analysis
+- [ ] Make a register of all operators on this class -> analysis
 
 #### Codegen (LLVM)
 
@@ -133,6 +144,7 @@ linker (if applicable)
 - [ ] Support of recursive data type -> codegen
 - [ ] Support of generic record object -> codegen
 - [ ] Add type linkage -> codegen
+- [ ] Support of record call -> codegen
 
 ### Enum object
 
@@ -144,6 +156,8 @@ linker (if applicable)
 - [ ] Support of generic enum -> analysis
 - [ ] Check method
 - [ ] Check implementation data type -> analysis
+- [ ] Support of enum call -> analysis
+- [ ] Make a register of all operators on this class -> analysis
 
 #### Codegen (LLVM)
 
@@ -151,6 +165,7 @@ linker (if applicable)
 - [ ] Support of recursive data type -> codegen
 - [ ] Support of generic enum object -> codegen
 - [ ] Add type linkage -> codegen
+- [ ] Support of enum call -> codegen
 
 ### Constant
 
@@ -158,13 +173,47 @@ linker (if applicable)
 
 - [x] Check expression data type -> analysis
 - [x] Check expression value -> analysis
+- [x] Support of constant call -> analysis
 
 #### Codegen (LLVM)
 
 - [x] Support of basic constant -> codegen
 - [x] Support of constant expression -> codegen
+- [x] Support of constant call -> codegen
 
 ### Function
 
 #### Analysis
 
+- [x] Check parameter
+- [x] Check return type
+- [ ] Support of generic function -> analysis
+- [ ] Check the visibility of the parameter data type (linkage) -> analysis
+- [ ] Check the visibility of the return type data type (linkage) -> analysis
+- [ ] Check the body -> analysis
+
+#### Codegen (LLVM)
+
+- [x] Support of basic function
+- [ ] Support of generic function -> codegen
+- [x] Support of function call
+- [x] Support of function call with parameter
+
+### Function System
+
+- [x] Make a register of all functions system
+
+#### Analysis
+
+- [x] Check parameter
+- [x] Check return type
+- [x] Check if function system exists
+
+#### Codegen (LLVM)
+
+- [x] Generate definition(s) of function system
+- [x] Support of function system
+
+### Linkage
+
+- [x] Link the library (liblily_sys.so)
