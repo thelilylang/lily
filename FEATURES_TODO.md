@@ -62,7 +62,7 @@ linker (if applicable)
 
 - [x] Check field
 - [ ] Check the visibility of the field data type (linkage) -> analysis
-- [ ] Support of recursive data type -> analysis
+- [x] Support of recursive data type -> analysis
 - [ ] Support of generic record -> analysis
 - [x] Support of record call
 - [ ] Make a register of all operators on this record -> analysis
@@ -70,7 +70,7 @@ linker (if applicable)
 #### Codegen (LLVM)
 
 - [x] Support of basic record
-- [ ] Support of recursive data type -> codegen
+- [x] Support of recursive data type -> codegen
 - [ ] Support of generic record -> codegen
 - [ ] Add type linkage -> codegen
 - [x] Support of record call
