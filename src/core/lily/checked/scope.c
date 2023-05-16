@@ -76,6 +76,7 @@ CONSTRUCTOR(LilyCheckedScope *,
     self->variables = NEW(Vec);
     self->params = NEW(Vec);
     self->generics = NEW(Vec);
+	self->methods = NEW(Vec);
     self->parent = parent;
     self->decls = decls;
 
@@ -954,4 +955,6 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
     if (self->parent) {
         FREE(LilyCheckedParent, self->parent);
     }
+
+	lily_free(self);
 }
