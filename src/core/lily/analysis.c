@@ -205,6 +205,9 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
                                LilyCheckedScope *scope);
 
 static void
+check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun);
+
+static void
 check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun);
 
 static void
@@ -2302,7 +2305,12 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   get__Vec(response.fun, 0);
 
                                 if (!fun->fun.is_checked) {
-                                    check_fun__LilyAnalysis(self, fun);
+                                    check_fun_signature__LilyAnalysis(self,
+                                                                      fun);
+                                }
+
+                                if (fun->fun.is_main) {
+                                    FAILED("you cannot call the main function");
                                 }
 
                                 Vec *checked_params =
@@ -3791,13 +3799,9 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
 }
 
 void
-check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
+check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 {
-    if (fun->fun.is_checked) {
-        return;
-    }
-
-    // Verify if it's the main function
+    // 1. Verify if it's the main function
     if (!strcmp(fun->fun.name->buffer, "main") &&
         !fun->fun.scope->parent->scope->parent &&
         self->package->status == LILY_PACKAGE_STATUS_MAIN) {
@@ -3805,38 +3809,57 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
         self->package->main_is_found = true;
     }
 
-    // 1. Check generic params
+    // 2. Check generic params
     if (fun->ast_decl->fun.generic_params) {
-        fun->fun.generic_params = check_generic_params(
-          self, fun->ast_decl->fun.generic_params, fun->fun.scope);
+        if (!fun->fun.generic_params) {
+            fun->fun.generic_params = check_generic_params(
+              self, fun->ast_decl->fun.generic_params, fun->fun.scope);
+        }
     }
 
-    // 2. Check params.
+    // 3. Check params.
     if (fun->ast_decl->fun.params) {
-        fun->fun.params = check_fun_params__LilyAnalysis(
-          self, fun->ast_decl->fun.params, fun->fun.scope);
+        if (!fun->fun.params) {
+            fun->fun.params = check_fun_params__LilyAnalysis(
+              self, fun->ast_decl->fun.params, fun->fun.scope);
+        }
     }
 
-    // 3. Check return data type.
+    // 4. Check return data type.
     if (fun->ast_decl->fun.return_data_type) {
         // TODO: check the safety mode of the function
-        fun->fun.return_data_type =
-          check_data_type__LilyAnalysis(self,
-                                        fun->ast_decl->fun.return_data_type,
-                                        fun->fun.scope,
-                                        LILY_CHECKED_SAFETY_MODE_SAFE);
+        if (!fun->fun.return_data_type) {
+            fun->fun.return_data_type =
+              check_data_type__LilyAnalysis(self,
+                                            fun->ast_decl->fun.return_data_type,
+                                            fun->fun.scope,
+                                            LILY_CHECKED_SAFETY_MODE_SAFE);
+        }
     } else {
-        fun->fun.return_data_type =
-          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, NULL);
+        if (!fun->fun.return_data_type) {
+            fun->fun.return_data_type = NEW(
+              LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, NULL);
+        }
+    }
+}
+
+void
+check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
+{
+    if (fun->fun.is_checked) {
+        return;
     }
 
-    // 4. Init scope of body.
+    // 1. Check fun signature
+    check_fun_signature__LilyAnalysis(self, fun);
+
+    // 2. Init scope of body.
     fun->fun.scope =
       NEW(LilyCheckedScope,
           NEW_VARIANT(LilyCheckedParent, decl, fun->fun.scope, fun),
           NEW_VARIANT(LilyCheckedScopeDecls, scope, fun->fun.body));
 
-    // 5. Check body.
+    // 3. Check body.
     CHECK_FUN_BODY(fun->ast_decl->fun.body,
                    fun->fun.scope,
                    fun->fun.body,
