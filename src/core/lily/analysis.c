@@ -2257,8 +2257,73 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                 default:
                     UNREACHABLE("unknown variant");
             }
-        case LILY_AST_EXPR_KIND_ARRAY:
-            TODO("array expression");
+        case LILY_AST_EXPR_KIND_ARRAY: {
+            Vec *items = NEW(Vec);
+
+            for (Usize i = 0; i < expr->array.items->len; ++i) {
+                push__Vec(
+                  items,
+                  check_expr__LilyAnalysis(self,
+                                           get__Vec(expr->array.items, i),
+                                           scope,
+                                           safety_mode,
+                                           false,
+                                           false,
+                                           NULL));
+            }
+
+            LilyCheckedDataType *data_type_item =
+              CAST(LilyCheckedExpr *, get__Vec(items, 0))->data_type;
+
+            for (Usize i = 1; i < expr->array.items->len; ++i) {
+                if (!eq__LilyCheckedDataType(
+                      data_type_item,
+                      CAST(LilyCheckedExpr *, get__Vec(items, i))->data_type)) {
+                    FAILED("data type does not match to the first item");
+                }
+            }
+
+            if (defined_data_type) {
+                switch (defined_data_type->kind) {
+                    case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+                        if (!eq__LilyCheckedDataType(
+                              data_type_item,
+                              defined_data_type->array.data_type)) {
+                            FAILED("array item data type does not match");
+                        }
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr,
+                          array,
+                          &expr->location,
+                          NEW_VARIANT(
+                            LilyCheckedDataType,
+                            array,
+                            &expr->location,
+                            NEW(LilyCheckedDataTypeArray,
+                                defined_data_type->array.kind,
+                                clone__LilyCheckedDataType(
+                                  defined_data_type->array.data_type))),
+                          expr,
+                          NEW(LilyCheckedExprArray, items));
+                    default:
+                        FAILED("expected array data type");
+                }
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedExpr,
+              array,
+              &expr->location,
+              NEW_VARIANT(LilyCheckedDataType,
+                          array,
+                          &expr->location,
+                          NEW(LilyCheckedDataTypeArray,
+                              LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED,
+                              clone__LilyCheckedDataType(data_type_item))),
+              expr,
+              NEW(LilyCheckedExprArray, items));
+        }
         case LILY_AST_EXPR_KIND_BINARY:
             return check_binary_expr__LilyAnalysis(
               self, expr, scope, safety_mode, is_moved_expr, defined_data_type);
