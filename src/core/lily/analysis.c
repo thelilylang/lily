@@ -1058,7 +1058,6 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
             LilyCheckedScopeResponse custom_dt_response =
               search_custom_type__LilyCheckedScope(scope,
                                                    data_type->custom.name);
-
             // TODO: add a support for generic custom data type
 
             switch (custom_dt_response.kind) {
@@ -1077,7 +1076,8 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                         data_type->custom.name,
                         custom_dt_response.record->global_name,
                         NULL,
-                        LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD));
+                        LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD,
+                        custom_dt_response.record->is_recursive));
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_OBJECT:
                     TODO("check record object data type");
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM:
@@ -2572,7 +2572,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   response.record->name,
                                   response.record->global_name,
                                   NULL,
-                                  LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD)),
+                                  LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD,
+                                  response.record->is_recursive)),
                               expr,
                               NEW_VARIANT(
                                 LilyCheckedExprCall,
