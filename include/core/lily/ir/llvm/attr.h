@@ -36,6 +36,19 @@
 #define LLVM_ADD_FN_ATTR(fn, attr) \
     LLVMAddAttributeAtIndex(fn, LLVMAttributeFunctionIndex, attr);
 
+#define ADD_CUSTOM_HOST_ATTR(fun)                                 \
+    LLVMAttributeRef target_cpu = LLVMCreateStringAttribute(      \
+      self->context, "target-cpu", 10, self->cpu, self->cpu_len); \
+    LLVMAttributeRef target_features =                            \
+      LLVMCreateStringAttribute(self->context,                    \
+                                "target-features",                \
+                                15,                               \
+                                self->features,                   \
+                                self->features_len);              \
+                                                                  \
+    LLVM_ADD_FN_ATTR(fun, target_cpu);                            \
+    LLVM_ADD_FN_ATTR(fun, target_features);
+
 /**
  *
  * @brief This indicates that the pointer value or vector of pointers has the
@@ -272,6 +285,25 @@ nounwind_attr__LilyIrLlvm(const LilyIrLlvm *self)
 
 /**
  *
+ * @brief This function attribute indicates that most optimization passes will
+ * skip this function, with the exception of interprocedural optimization
+ * passes. Code generation defaults to the “fast” instruction selector. This
+ * attribute cannot be used together with the alwaysinline attribute; this
+ * attribute is also incompatible with the minsize attribute and the optsize
+ * attribute. This attribute requires the noinline attribute to be specified on
+ * the function as well, so the function is never inlined into any caller. Only
+ * functions with the alwaysinline attribute are valid candidates for inlining
+ * into the body of this function.
+ * @url https://llvm.org/docs/LangRef.html#function-attributes
+ */
+inline LLVMAttributeRef
+optnone_attr__LilyIrLlvm(const LilyIrLlvm *self)
+{
+    LLVM_ATTR("optnone", 7, 0);
+}
+
+/**
+ *
  * @brief This attribute indicates that the function does not write through this
  * pointer argument, even though it may write to the memory that the pointer
  * points to. If a function writes to a readonly pointer argument, the behavior
@@ -314,6 +346,23 @@ inline LLVMAttributeRef
 speculatable_attr__LilyIrLlvm(const LilyIrLlvm *self)
 {
     LLVM_ATTR("speculatable", 12, 0);
+}
+
+/**
+ *
+ * @brief This attribute indicates that the ABI being targeted requires that an
+ * unwind table entry be produced for this function even if we can show that no
+ * exceptions passes by it. This is normally the case for the ELF x86-64 abi,
+ * but it can be disabled for some compilation units. The optional parameter
+ * describes what kind of unwind tables to generate: sync for normal unwind
+ * tables, async for asynchronous (instruction precise) unwind tables. Without
+ * the parameter, the attribute uwtable is equivalent to uwtable(async).
+ * @url https://llvm.org/docs/LangRef.html#function-attributes
+ */
+inline LLVMAttributeRef
+uwtable_attr__LilyIrLlvm(const LilyIrLlvm *self)
+{
+    LLVM_ATTR("uwtable", 7, 0);
 }
 
 /**
