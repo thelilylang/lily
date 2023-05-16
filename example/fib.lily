@@ -1,0 +1,21 @@
+import "@sys";
+
+fun fib(n Int32) Int32 =
+	if n < 0 do
+		return -1;
+	elif n == 0 do
+		return 0;
+	elif n == 1 or n == 2 do
+		return 1;
+	else
+		return fib(n - 1) + fib(n - 2);
+	end
+end
+
+fun main Int32 =
+	val res := fib(40);
+
+	@sys.write(1, "Sucess!!\n" cast CStr, 9)
+
+	return 0;
+end

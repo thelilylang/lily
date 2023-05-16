@@ -1,0 +1,7 @@
+import "@sys";
+
+fun main Int32 =
+	@sys.write(1, "Hello\n" cast CStr, 6)
+
+	return 0;
+end
