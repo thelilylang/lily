@@ -217,15 +217,17 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyFunItem);
 
     {
-        char *s =
-          format(", visibility = {s}, is_async = {b}, is_operator = "
-                 "{b}, can_raise = {b}, can_inline = {b}, is_checked = {b} }",
-                 to_string__Debug__LilyVisibility(self->visibility),
-                 self->is_async,
-                 self->is_operator,
-                 self->can_raise,
-                 self->can_inline,
-                 self->is_checked);
+        char *s = format(", visibility = {s}, is_async = {b}, is_operator = "
+                         "{b}, can_raise = {b}, can_inline = {b}, is_main = "
+                         "{b}, is_recursive = {b}, is_checked = {b} }",
+                         to_string__Debug__LilyVisibility(self->visibility),
+                         self->is_async,
+                         self->is_operator,
+                         self->can_raise,
+                         self->can_inline,
+                         self->is_main,
+                         self->is_recursive,
+                         self->is_checked);
 
         PUSH_STR_AND_FREE(res, s);
     }
