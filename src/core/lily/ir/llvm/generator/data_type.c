@@ -50,12 +50,11 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
             return LLVMArrayType(i8__LilyIrLlvm(self), data_type->bytes);
         case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
             return i8__LilyIrLlvm(self);
-        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             return LLVMGetTypeByName2(self->context,
                                       data_type->custom.global_name->buffer);
             // return search_type__LilyLlvmScope(scope,
             //                                   data_type->custom.global_name)->type;
-        }
         case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
             TODO("generate exception data type");
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:

@@ -34,31 +34,20 @@ generate_record__LilyIrLlvm(const LilyIrLlvm *self,
                             const LilyCheckedDeclRecord *record,
                             LilyLlvmScope *scope)
 {
+    LLVMTypeRef record_llvm =
+      LLVMStructCreateNamed(self->context, record->global_name->buffer);
+
+    push__Vec(scope->types,
+              NEW(LilyLlvmType, record->global_name, record_llvm));
+
     LLVMTypeRef fields[252] = { 0 };
 
     for (Usize i = 0; i < record->fields->len; ++i) {
         LilyCheckedField *field = get__Vec(record->fields, i);
 
-        // Check for recursive data type
-        switch (field->data_type->kind) {
-            case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-                if (field->data_type->custom.is_recursive) {
-                    TODO("generate recurisve type");
-                }
-
-                break;
-            default:
-                break;
-        }
-
         fields[i] =
           generate_data_type__LilyIrLlvm(self, field->data_type, scope);
     }
 
-    LLVMTypeRef record_llvm =
-      LLVMStructCreateNamed(self->context, record->global_name->buffer);
     LLVMStructSetBody(record_llvm, fields, record->fields->len, false);
-
-    push__Vec(scope->types,
-              NEW(LilyLlvmType, record->global_name, record_llvm));
 }
