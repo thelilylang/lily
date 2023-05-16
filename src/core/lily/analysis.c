@@ -1566,7 +1566,7 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                                              defined_data_type);
             LilyCheckedExpr *right =
               check_expr__LilyAnalysis(self,
-                                       expr->binary.left,
+                                       expr->binary.right,
                                        scope,
                                        safety_mode,
                                        false,
@@ -3045,7 +3045,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                       &expr->location,
                                       NEW(LilyCheckedDataType,
                                           LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
-                                          NULL)),
+                                          &expr->location)),
                           expr,
                           NEW(LilyCheckedExprLiteral,
                               LILY_CHECKED_EXPR_LITERAL_KIND_NIL));
@@ -4144,12 +4144,16 @@ run__LilyAnalysis(LilyAnalysis *self)
     printf("====Analysis(%s)====\n", self->package->file.name);
 
     PRINTLN("{Sr}", to_string__Debug__LilyCheckedScope(self->module.scope));
+
+    // for (Usize i = 0; i < self->module.decls->len; ++i) {
+    // 	PRINTLN("{Sr}",
+    // to_string__Debug__LilyCheckedDecl(get__Vec(self->module.decls, i)));
+    // }
 #endif
 }
 
 DESTRUCTOR(LilyAnalysis, const LilyAnalysis *self)
 {
     FREE(String, self->module.name);
-    FREE(String, self->module.global_name);
     // FREE(LilyCheckedDeclModule, &self->module);
 }
