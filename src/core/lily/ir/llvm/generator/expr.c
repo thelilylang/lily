@@ -24,174 +24,15 @@
 
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/expr.h>
+#include <core/lily/ir/llvm/generator/expr/call.h>
+#include <core/lily/ir/llvm/generator/expr/literal.h>
+#include <core/lily/ir/llvm/generator/expr/unary.h>
 #include <core/lily/ir/llvm/primary.h>
+#include <core/lily/ir/llvm/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static LLVMValueRef
-generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
-                                  const LilyCheckedExprLiteral *literal,
-                                  const LilyCheckedDataType *data_type,
-                                  LilyLlvmScope *scope);
-
-LLVMValueRef
-generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
-                                  const LilyCheckedExprLiteral *literal,
-                                  const LilyCheckedDataType *data_type,
-                                  LilyLlvmScope *scope)
-{
-    switch (literal->kind) {
-        case LILY_CHECKED_EXPR_LITERAL_KIND_BOOL:
-            return LLVMConstInt(i1__LilyIrLlvm(self), literal->bool_, false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_BYTE:
-            return LLVMConstInt(i8__LilyIrLlvm(self), literal->byte, false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_BYTES:
-            return LLVMConstString((const char *)literal->bytes,
-                                   strlen((char *)literal->bytes),
-                                   false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_CHAR:
-            return LLVMConstInt(i8__LilyIrLlvm(self), literal->char_, false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT32:
-            return LLVMConstReal(float__LilyIrLlvm(self), literal->float32);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT64:
-            return LLVMConstReal(double__LilyIrLlvm(self), literal->float64);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_INT32:
-            switch (data_type->kind) {
-                case LILY_CHECKED_DATA_TYPE_KIND_INT16:
-                    return LLVMConstInt(
-                      i16__LilyIrLlvm(self), literal->int32, true);
-                case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
-                    return LLVMConstInt(
-                      i16__LilyIrLlvm(self), literal->int32, false);
-                case LILY_CHECKED_DATA_TYPE_KIND_INT32:
-                    return LLVMConstInt(
-                      i32__LilyIrLlvm(self), literal->int32, true);
-                case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
-                    return LLVMConstInt(
-                      i32__LilyIrLlvm(self), literal->int32, false);
-                case LILY_CHECKED_DATA_TYPE_KIND_INT64:
-                    return LLVMConstInt(
-                      i32__LilyIrLlvm(self), literal->int32, true);
-                case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
-                    return LLVMConstInt(
-                      i64__LilyIrLlvm(self), literal->int32, false);
-                case LILY_CHECKED_DATA_TYPE_KIND_INT8:
-                    return LLVMConstInt(
-                      i8__LilyIrLlvm(self), literal->int32, true);
-                case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
-                    return LLVMConstInt(
-                      i8__LilyIrLlvm(self), literal->int32, false);
-                case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
-                    return LLVMConstInt(
-                      intptr__LilyIrLlvm(self), literal->int32, true);
-                case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
-                    return LLVMConstInt(
-                      intptr__LilyIrLlvm(self), literal->int32, false);
-                default:
-                    UNREACHABLE("the analysis have a bug!!");
-            }
-        case LILY_CHECKED_EXPR_LITERAL_KIND_INT64:
-            switch (data_type->kind) {
-                case LILY_CHECKED_DATA_TYPE_KIND_INT16:
-                    return LLVMConstInt(
-                      i16__LilyIrLlvm(self), literal->int64, true);
-                case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
-                    return LLVMConstInt(
-                      i16__LilyIrLlvm(self), literal->int64, false);
-                case LILY_CHECKED_DATA_TYPE_KIND_INT32:
-                    return LLVMConstInt(
-                      i32__LilyIrLlvm(self), literal->int64, true);
-                case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
-                    return LLVMConstInt(
-                      i32__LilyIrLlvm(self), literal->int64, false);
-                case LILY_CHECKED_DATA_TYPE_KIND_INT64:
-                    return LLVMConstInt(
-                      i32__LilyIrLlvm(self), literal->int64, true);
-                case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
-                    return LLVMConstInt(
-                      i64__LilyIrLlvm(self), literal->int64, false);
-                case LILY_CHECKED_DATA_TYPE_KIND_INT8:
-                    return LLVMConstInt(
-                      i8__LilyIrLlvm(self), literal->int64, true);
-                case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
-                    return LLVMConstInt(
-                      i8__LilyIrLlvm(self), literal->int64, false);
-                case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
-                    return LLVMConstInt(
-                      intptr__LilyIrLlvm(self), literal->int64, true);
-                case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
-                    return LLVMConstInt(
-                      intptr__LilyIrLlvm(self), literal->int64, false);
-                default:
-                    UNREACHABLE("the analysis have a bug!!");
-            }
-        case LILY_CHECKED_EXPR_LITERAL_KIND_NIL:
-            return LLVMConstNull(ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self)));
-        case LILY_CHECKED_EXPR_LITERAL_KIND_NONE:
-            TODO("generate none expression");
-        case LILY_CHECKED_EXPR_LITERAL_KIND_STR: {
-            LLVMTypeRef str_type =
-              LLVMArrayType(i8__LilyIrLlvm(self), literal->str->len + 1);
-            LLVMValueRef global_str =
-              LLVMAddGlobal(self->module, str_type, "str");
-
-            LLVMSetInitializer(
-              global_str,
-              LLVMConstString(literal->str->buffer, literal->str->len, false));
-            LLVMSetUnnamedAddr(global_str, true);
-
-            return global_str;
-        }
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT32:
-            return LLVMConstReal(float__LilyIrLlvm(self),
-                                 literal->suffix_float32);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT64:
-            return LLVMConstReal(double__LilyIrLlvm(self),
-                                 literal->suffix_float64);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT16:
-            return LLVMConstInt(
-              i16__LilyIrLlvm(self), literal->suffix_int16, true);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT32:
-            return LLVMConstInt(
-              i32__LilyIrLlvm(self), literal->suffix_int32, true);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT64:
-            return LLVMConstInt(
-              i64__LilyIrLlvm(self), literal->suffix_int64, true);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT8:
-            return LLVMConstInt(
-              i8__LilyIrLlvm(self), literal->suffix_int8, true);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_ISIZE:
-            return LLVMConstInt(
-              intptr__LilyIrLlvm(self), literal->suffix_isize, true);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT16:
-            return LLVMConstInt(
-              i16__LilyIrLlvm(self), literal->suffix_uint16, false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT32:
-            return LLVMConstInt(
-              i32__LilyIrLlvm(self), literal->suffix_uint32, false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT64:
-            return LLVMConstInt(
-              i64__LilyIrLlvm(self), literal->suffix_uint64, false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT8:
-            return LLVMConstInt(
-              i8__LilyIrLlvm(self), literal->suffix_uint8, false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_USIZE:
-            return LLVMConstInt(
-              intptr__LilyIrLlvm(self), literal->suffix_usize, false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_UINT32:
-            return LLVMConstInt(i32__LilyIrLlvm(self), literal->uint32, false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_UINT64:
-            return LLVMConstInt(i64__LilyIrLlvm(self), literal->uint64, false);
-        case LILY_CHECKED_EXPR_LITERAL_KIND_UNDEF:
-            return LLVMGetUndef(ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self)));
-        case LILY_CHECKED_EXPR_LITERAL_KIND_UNIT:
-            UNREACHABLE("cannot return unit value");
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
 
 LLVMValueRef
 generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
@@ -690,145 +531,38 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
 
             break;
         }
-        case LILY_CHECKED_EXPR_KIND_CALL: {
-            LLVMTypeRef type =
-              generate_data_type__LilyIrLlvm(self, expr->data_type, scope);
-
-            switch (expr->call.kind) {
-                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
-                case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
-                    return load_value__LilyLlvmScope(
-                      scope, self, type, expr->call.global_name);
-                case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM: {
-                    return LLVMGetParam(fun, expr->call.fun_param);
-                }
-                case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
-                    LilyLlvmFun *called_fun =
-                      search_fun__LilyLlvmScope(scope, expr->call.global_name);
-                    LLVMValueRef params[252] = { 0 };
-                    Usize params_len = 0;
-
-                    if (expr->call.fun.params) {
-                        params_len = expr->call.fun.params->len;
-
-                        for (Usize i = 0; i < expr->call.fun.params->len; ++i) {
-                            LilyCheckedExprCallFunParam *param =
-                              get__Vec(expr->call.fun.params, i);
-
-                            params[i] = generate_expr__LilyIrLlvm(
-                              self, param->value, scope, fun, ptr);
-                        }
-                    }
-
-                    return LLVMBuildCall2(self->builder,
-                                          called_fun->fun_type,
-                                          called_fun->fun,
-                                          params,
-                                          params_len,
-                                          "");
-                }
-                case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS: {
-                    LilyLlvmFun *called_fun = search_fun__LilyLlvmScope(
-                      scope, expr->call.fun_sys.sys_fun_signature->real_name);
-                    LLVMValueRef params[252] = {};
-                    Usize params_len = 0;
-
-                    if (expr->call.fun_sys.params) {
-                        params_len = expr->call.fun_sys.params->len;
-
-                        for (Usize i = 0; i < expr->call.fun_sys.params->len;
-                             ++i) {
-                            LilyCheckedExprCallFunParam *param =
-                              get__Vec(expr->call.fun_sys.params, i);
-
-                            params[i] = generate_expr__LilyIrLlvm(
-                              self, param->value, scope, fun, ptr);
-                        }
-                    }
-
-                    return LLVMBuildCall2(self->builder,
-                                          called_fun->fun_type,
-                                          called_fun->fun,
-                                          params,
-                                          params_len,
-                                          "");
-                }
-                case LILY_CHECKED_EXPR_CALL_KIND_RECORD: {
-                    LLVMTypeRef type = generate_data_type__LilyIrLlvm(
-                      self, expr->data_type, scope);
-                    LLVMValueRef record_value =
-                      ptr ? ptr : LLVMBuildAlloca(self->builder, type, "");
-
-                    if (expr->call.record.params->len > 0) {
-                        for (Usize i = 0; i < expr->call.record.params->len;
-                             ++i) {
-                            LilyCheckedExprCallRecordParam *param =
-                              get__Vec(expr->call.record.params, i);
-
-                            LLVMValueRef ptr_param =
-                              LLVMBuildStructGEP2(self->builder,
-                                                  type,
-                                                  record_value,
-                                                  param->field_index,
-                                                  "");
-                            LLVMValueRef value = generate_expr__LilyIrLlvm(
-                              self, param->value, scope, fun, NULL);
-
-                            LLVMBuildStore(self->builder, value, ptr_param);
-                        }
-                    }
-
-                    return record_value;
-                }
-                case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS: {
-                    LLVMValueRef variable =
-                      search_value__LilyLlvmScope(
-                        scope,
-                        CAST(
-                          LilyCheckedExpr *,
-                          get__Vec(expr->call.record_field_access.accesses, 0))
-                          ->call.global_name)
-                        ->value;
-                    LLVMValueRef indices[252] = { 0 };
-
-                    for (Usize i = 1;
-                         i < expr->call.record_field_access.accesses->len;
-                         ++i) {
-                        LilyCheckedExpr *field =
-                          get__Vec(expr->call.record_field_access.accesses, i);
-
-                        indices[i - 1] =
-                          LLVMConstInt(i32__LilyIrLlvm(self),
-                                       field->call.record_field_single.index,
-                                       false);
-                    }
-
-                    LLVMValueRef field_access = LLVMBuildGEP2(
-                      self->builder,
-                      generate_data_type__LilyIrLlvm(
-                        self, expr->data_type, scope),
-                      variable,
-                      indices,
-                      expr->call.record_field_access.accesses->len - 1,
-                      "");
-
-                    if (expr->data_type->kind ==
-                        LILY_CHECKED_DATA_TYPE_KIND_CUSTOM) {
-                        return LLVMBuildStore(self->builder, field_access, ptr);
-                    }
-
-                    return field_access;
-                }
-                default:
-                    TODO("generatte call expression in LLVM IR");
-            }
-
-            break;
-        }
+        case LILY_CHECKED_EXPR_KIND_CALL:
+            return generate_call_expr__LilyIrLlvm(self, expr, scope, fun, ptr);
         case LILY_CHECKED_EXPR_KIND_CAST: {
             switch (expr->cast.kind) {
                 case LILY_CHECKED_EXPR_CAST_KIND_DYNAMIC:
                     TODO("generate dynamic cast");
+                case LILY_CHECKED_EXPR_CAST_KIND_STRING: {
+                    switch (expr->cast.expr->data_type->kind) {
+                        case LILY_CHECKED_DATA_TYPE_KIND_STR: {
+                            LLVMValueRef str_value = generate_expr__LilyIrLlvm(
+                              self, expr->cast.expr, scope, fun, NULL);
+
+                            switch (expr->cast.expr->kind) {
+                                case LILY_CHECKED_EXPR_KIND_LITERAL: {
+                                    LLVMValueRef loaded_value =
+                                      LLVMBuildLoad2(self->builder,
+                                                     str__LilyIrLlvm(self),
+                                                     str_value,
+                                                     "");
+
+                                    return LLVMBuildExtractValue(
+                                      self->builder, loaded_value, 0, "");
+                                }
+                                default:
+                                    return LLVMBuildExtractValue(
+                                      self->builder, str_value, 0, "");
+                            }
+                        }
+                        default:
+                            TODO("make cast for Bytes");
+                    }
+                }
                 case LILY_CHECKED_EXPR_CAST_KIND_LITERAL:
                     if (is_llvm_bitcast__LilyCheckedExprCast(&expr->cast)) {
                         LLVMValueRef expr_llvm = generate_expr__LilyIrLlvm(
@@ -859,8 +593,9 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
             break;
         }
         case LILY_CHECKED_EXPR_KIND_LITERAL:
-            return generate_literal_expr__LilyIrLlvm(
-              self, &expr->literal, expr->data_type, scope);
+            return generate_literal_expr__LilyIrLlvm(self, expr, ptr, scope);
+        case LILY_CHECKED_EXPR_KIND_UNARY:
+            return generate_unary_expr__LilyIrLlvm(self, expr, scope, fun, ptr);
         default:
             TODO("generate expression in LLVM IR");
     }

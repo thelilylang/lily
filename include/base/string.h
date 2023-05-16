@@ -162,6 +162,13 @@ repeat__String(char *s, Usize n);
 
 /**
  *
+ * @brief Reverse String.
+ */
+void
+reverse__String(String *self);
+
+/**
+ *
  * @brief Split string.
  * @return Vec<String*>*.
  * @note The result and its items can be free.

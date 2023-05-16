@@ -39,6 +39,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_EXPR_CAST_KIND_DYNAMIC";
         case LILY_CHECKED_EXPR_CAST_KIND_LITERAL:
             return "LILY_CHECKED_EXPR_CAST_KIND_LITERAL";
+        case LILY_CHECKED_EXPR_CAST_KIND_STRING:
+            return "LILY_CHECKED_EXPR_CAST_KIND_STRING";
         default:
             UNREACHABLE("unknown variant");
     }

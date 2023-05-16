@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <core/lily/ir/llvm/attr.h>
 #include <core/lily/ir/llvm/generator/body/function.h>
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/expr.h>
@@ -32,14 +33,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <llvm-c/DebugInfo.h>
+
 void
 generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               const LilyCheckedDeclFun *fun,
                               LilyLlvmScope *scope,
                               const Location *location)
 {
+    // Generate return data type of the function
     LLVMTypeRef return_data_type =
       generate_data_type__LilyIrLlvm(self, fun->return_data_type, scope);
+
+    // Generate function parameters
     LLVMTypeRef params[252] = {};
     Usize params_len = 0;
 
@@ -69,6 +75,25 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
 
     LLVMValueRef fun_llvm = LLVMAddFunction(self->module, name, fun_data_type);
 
+    // Set alignment on param (if applicable)
+    if (fun->params) {
+        for (Usize i = 0; i < fun->params->len; ++i) {
+            switch (CAST(LilyCheckedDeclFunParam *, get__Vec(fun->params, i))
+                      ->data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_REF: {
+                    LLVMValueRef param = LLVMGetParam(fun_llvm, i);
+
+                    LLVMSetParamAlignment(
+                      param,
+                      LLVMABIAlignmentOfType(self->target_data,
+                                             LLVMTypeOf(param)));
+                }
+                default:
+                    break;
+            }
+        }
+    }
+
     push__Vec(scope->funs,
               NEW(LilyLlvmFun, fun->global_name, fun_llvm, fun_data_type));
     push__Vec(scope->values, NEW(LilyLlvmValue, fun->global_name, fun_llvm));
@@ -79,6 +104,17 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     LilyLlvmScope *fun_scope = NEW(LilyLlvmScope, scope);
 
     GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
+
+    // Add debug location to the function
+    LLVMMetadataRef debug_location = LLVMDIBuilderCreateDebugLocation(
+      self->context,
+      location->start_line,
+      location->start_column,
+      LLVMDIBuilderCreateLexicalBlockFile(
+        self->di_builder, self->file, self->file, 0),
+      NULL);
+
+    LLVMSetSubprogram(fun_llvm, debug_location);
 
     FREE(LilyLlvmScope, fun_scope);
 }

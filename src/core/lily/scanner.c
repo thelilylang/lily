@@ -930,16 +930,16 @@ get_character__LilyScanner(LilyScanner *self, char previous)
         case '\\':
             switch (self->source.cursor.current) {
                 case 'n':
-                    res = from__String("\\n");
+                    res = from__String("\n");
                     break;
                 case 't':
-                    res = from__String("\\t");
+                    res = from__String("\t");
                     break;
                 case 'r':
-                    res = from__String("\\r");
+                    res = from__String("\r");
                     break;
                 case 'b':
-                    res = from__String("\\b");
+                    res = from__String("\b");
                     break;
                 case '\\':
                     res = from__String("\\");

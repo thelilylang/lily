@@ -41,6 +41,7 @@ typedef struct LilyCheckedDeclRecord
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
     bool is_checked;
+    bool is_recursive;
 } LilyCheckedDeclRecord;
 
 inline CONSTRUCTOR(LilyCheckedDeclRecord,
@@ -58,7 +59,8 @@ inline CONSTRUCTOR(LilyCheckedDeclRecord,
                                     .fields = fields,
                                     .scope = scope,
                                     .visibility = visibility,
-                                    .is_checked = false };
+                                    .is_checked = false,
+                                    .is_recursive = false };
 }
 
 /**

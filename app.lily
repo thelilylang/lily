@@ -1,7 +1,43 @@
-fun hello =
-	print("Hello")
+import "@sys";
+
+type Person record =
+	name Str;
+	age Uint8;
 end
 
-fun main =
-	hello()
+// type Node record =
+// 	value Int32;
+// 	node *Node;
+// end
+
+fun get_name(person ref Person) Str = return person.name; end
+fun get_age(person ref Person) Uint8 = return person.age; end
+
+fun main Int32 =	
+	val p := Person { name := "John", age := 30 };
+	val name := get_name(ref p);
+	val age := get_age(ref p);
+
+	@sys.write(1, name cast CStr, 5)
+	@sys.write(1, "\n" cast CStr, 1)
+
+	if age == 30 do
+		val msg := "Hello\n";
+		@sys.write(1, msg cast CStr, 5)
+	end
+
+	val p2 := p;
+
+	@sys.write(1, "\n" cast CStr, 1)
+	@sys.write(1, p2.name cast CStr, 5);
+	@sys.write(1, "\n" cast CStr, 1)
+
+	mut i := 0;
+
+	while i < 100 do
+		@sys.write(1, "Hello\n" cast CStr, 7)
+		i += 1
+	end
+
+	return 0;
 end

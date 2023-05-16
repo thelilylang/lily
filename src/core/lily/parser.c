@@ -758,6 +758,18 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
     // Byte
     // Bytes
     // Char
+    // CShort
+    // CUshort
+    // CInt
+    // CUint
+    // CLong
+    // CUlong
+    // CLonglong
+    // CULonglong
+    // CFloat
+    // CDouble
+    // CStr
+    // CVoid
     // !<dt>
     // Float32
     // Float64
@@ -812,6 +824,50 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                                "Char")) {
                 return NEW(
                   LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CHAR, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CShort")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CSHORT, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CUshort")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CUSHORT, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CInt")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CINT, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CUint")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CUINT, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CLong")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CLONG, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CUlong")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CULONG, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CLonglong")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CLONGLONG, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CFloat")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CFLOAT, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CDouble")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CDOUBLE, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CStr")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CSTR, location);
+            } else if (!strcmp(self->previous->identifier_normal->buffer,
+                               "CVoid")) {
+                return NEW(
+                  LilyAstDataType, LILY_AST_DATA_TYPE_KIND_CVOID, location);
             } else if (!strcmp(self->previous->identifier_normal->buffer,
                                "Float32")) {
                 return NEW(
@@ -1932,7 +1988,7 @@ parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
         }
 
         switch (self->current->kind) {
-            case LILY_TOKEN_KIND_EQ:
+            case LILY_TOKEN_KIND_COLON_EQ:
                 next_token__LilyParseBlock(self);
                 break;
             default:
@@ -2731,6 +2787,15 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
             if (self->current->kind == LILY_TOKEN_KIND_DOT &&
                 !not_parse_access) {
                 return parse_path_access__LilyParseBlock(
+                  self,
+                  NEW_VARIANT(
+                    LilyAstExpr,
+                    identifier,
+                    clone__Location(&self->previous->location),
+                    NEW(LilyAstExprIdentifier,
+                        clone__String(self->previous->identifier_normal))));
+            } else if (self->current->kind == LILY_TOKEN_KIND_L_PAREN) {
+                return parse_fun_call__LilyParseBlock(
                   self,
                   NEW_VARIANT(
                     LilyAstExpr,

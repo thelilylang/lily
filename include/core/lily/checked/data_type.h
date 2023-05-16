@@ -44,6 +44,18 @@ enum LilyCheckedDataTypeKind
     LILY_CHECKED_DATA_TYPE_KIND_BYTE,
     LILY_CHECKED_DATA_TYPE_KIND_BYTES,
     LILY_CHECKED_DATA_TYPE_KIND_CHAR,
+    LILY_CHECKED_DATA_TYPE_KIND_CSHORT,
+    LILY_CHECKED_DATA_TYPE_KIND_CUSHORT,
+    LILY_CHECKED_DATA_TYPE_KIND_CINT,
+    LILY_CHECKED_DATA_TYPE_KIND_CUINT,
+    LILY_CHECKED_DATA_TYPE_KIND_CLONG,
+    LILY_CHECKED_DATA_TYPE_KIND_CULONG,
+    LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG,
+    LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG,
+    LILY_CHECKED_DATA_TYPE_KIND_CFLOAT,
+    LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE,
+    LILY_CHECKED_DATA_TYPE_KIND_CSTR,
+    LILY_CHECKED_DATA_TYPE_KIND_CVOID,
     LILY_CHECKED_DATA_TYPE_KIND_CUSTOM,
     LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION,
     LILY_CHECKED_DATA_TYPE_KIND_FLOAT32,
@@ -68,8 +80,8 @@ enum LilyCheckedDataTypeKind
     LILY_CHECKED_DATA_TYPE_KIND_UINT64,
     LILY_CHECKED_DATA_TYPE_KIND_UINT8,
     LILY_CHECKED_DATA_TYPE_KIND_UNIT,
-    LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
     LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+    LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
 };
 
 typedef struct LilyCheckedDataType LilyCheckedDataType;
@@ -207,6 +219,7 @@ typedef struct LilyCheckedDataTypeCustom
     String *global_name; // String* (&)
     Vec *generics;       // Vec<LilyCheckedDataType*>*?
     enum LilyCheckedDataTypeCustomKind kind;
+    bool is_recursive;
 } LilyCheckedDataTypeCustom;
 
 /**
@@ -220,14 +233,16 @@ inline CONSTRUCTOR(LilyCheckedDataTypeCustom,
                    String *name,
                    String *global_name,
                    Vec *generics,
-                   enum LilyCheckedDataTypeCustomKind kind)
+                   enum LilyCheckedDataTypeCustomKind kind,
+                   bool is_recursive)
 {
     return (LilyCheckedDataTypeCustom){ .scope_id = scope_id,
                                         .scope = scope,
                                         .name = name,
                                         .global_name = global_name,
                                         .generics = generics,
-                                        .kind = kind };
+                                        .kind = kind,
+                                        .is_recursive = is_recursive };
 }
 
 /**
@@ -488,6 +503,30 @@ is_integer_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
  */
 bool
 is_float_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
+
+/**
+ *
+ * @brief Check if there is a custom data type in the node.
+ * @note A direct data type does not include arrays, lists, tuples.
+ */
+bool
+contains_direct_custom_data_type__LilyCheckedDataType(
+  LilyCheckedDataType *self);
+
+/**
+ *
+ * @brief Check if there is a custom data type.
+ * @note A direct data type does not include arrays, lists, tuples.
+ */
+LilyCheckedDataType *
+get_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
+
+/**
+ *
+ * @brief Return true if a string kind (Bytes, Str, CStr).
+ */
+bool
+is_string_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
 
 /**
  *

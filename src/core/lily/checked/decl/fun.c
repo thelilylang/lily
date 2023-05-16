@@ -25,6 +25,7 @@
 #include <base/alloc.h>
 
 #include <core/lily/checked/decl/fun.h>
+#include <core/lily/checked/parent.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -258,6 +259,7 @@ DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
       self->body->buffer, self->body->len, LilyCheckedBodyFunItem);
     FREE(Vec, self->body);
 
+    FREE(LilyCheckedScope, self->scope->parent->scope);
     FREE(LilyCheckedScope, self->scope);
     FREE(LilyCheckedAccessFun, self->access);
 }

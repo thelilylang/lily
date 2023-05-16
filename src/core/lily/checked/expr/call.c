@@ -816,7 +816,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
             break;
         }
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM: {
-            char *s = format(", fun_param = {Sr} }", self->fun_param);
+            char *s = format(", fun_param = {d} }", self->fun_param);
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -939,6 +939,7 @@ DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self)
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
         case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
+        case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
             break;
         case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
             FREE_VARIANT(LilyCheckedExprCall, method, self);

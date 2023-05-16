@@ -26,10 +26,27 @@
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/expr.h>
 #include <core/lily/ir/llvm/generator/stmt.h>
+#include <core/lily/ir/llvm/generator/stmt/variable.h>
 #include <core/lily/ir/llvm/primary.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#define BUILD_BR(block, dest, keep_exit_block)                             \
+    {                                                                      \
+        LLVMValueRef last_inst = LLVMGetLastInstruction(block);            \
+        if (last_inst) {                                                   \
+            if (LLVMGetValueKind(last_inst) == LLVMInstructionValueKind) { \
+                if (LLVMGetInstructionOpcode(last_inst) != LLVMRet) {      \
+                    LLVMBuildBr(self->builder, dest);                      \
+                    keep_exit_block = true;                                \
+                }                                                          \
+            }                                                              \
+        } else {                                                           \
+            LLVMBuildBr(self->builder, dest);                              \
+            keep_exit_block = true;                                        \
+        }                                                                  \
+    }
 
 LLVMValueRef
 generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
@@ -77,6 +94,7 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             TODO("generate for stmt");
         case LILY_CHECKED_STMT_KIND_IF: {
             LilyLlvmScope *if_scope = NEW(LilyLlvmScope, scope);
+            bool keep_exit_block = false;
 
             LLVMBasicBlockRef if_block_exit =
               LLVMAppendBasicBlock(fun, "if_exit");
@@ -111,7 +129,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                     GENERATE_FUNCTION_BODY(
                       stmt->if_.if_->body, fun, NULL, NULL, if_scope);
-                    LLVMBuildBr(self->builder, if_block_exit);
+                    BUILD_BR(if_block, if_block_exit, keep_exit_block);
+                    // LLVMBuildBr(self->builder, if_block_exit);
 
                     for (Usize i = 0; i < stmt->if_.elifs->len - 1; ++i) {
                         LilyLlvmScope *elif_scope = NEW(LilyLlvmScope, scope);
@@ -135,7 +154,9 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                         GENERATE_FUNCTION_BODY(
                           elif->body, fun, NULL, NULL, elif_scope);
-                        LLVMBuildBr(self->builder, if_block_exit);
+                        // LLVMBuildBr(self->builder, if_block_exit);
+                        BUILD_BR(
+                          current_elif_block, if_block_exit, keep_exit_block);
 
                         current_elif_block_cond = next_elif_block_cond;
                         current_elif_block = next_elif_block;
@@ -181,7 +202,9 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                     GENERATE_FUNCTION_BODY(
                       last_elif->body, fun, NULL, NULL, last_elif_scope);
-                    LLVMBuildBr(self->builder, if_block_exit);
+                    BUILD_BR(
+                      current_elif_block, if_block_exit, keep_exit_block);
+                    // LLVMBuildBr(self->builder, if_block_exit);
 
                     FREE(LilyLlvmScope, last_elif_scope);
 
@@ -192,7 +215,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                         GENERATE_FUNCTION_BODY(
                           stmt->if_.else_->body, fun, NULL, NULL, else_scope);
-                        LLVMBuildBr(self->builder, if_block_exit);
+                        // LLVMBuildBr(self->builder, if_block_exit);
+                        BUILD_BR(else_block, if_block_exit, keep_exit_block);
 
                         FREE(LilyLlvmScope, else_scope);
                     }
@@ -232,7 +256,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                     GENERATE_FUNCTION_BODY(
                       stmt->if_.if_->body, fun, NULL, NULL, if_scope);
-                    LLVMBuildBr(self->builder, if_block_exit);
+                    // LLVMBuildBr(self->builder, if_block_exit);
+                    BUILD_BR(if_block, if_block_exit, keep_exit_block);
 
                     if (elif_block_cond) {
                         LLVMBasicBlockRef elif_block = NULL;
@@ -266,7 +291,9 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                             GENERATE_FUNCTION_BODY(
                               elif->body, fun, NULL, NULL, elif_scope);
-                            LLVMBuildBr(self->builder, if_block_exit);
+                            // LLVMBuildBr(self->builder, if_block_exit);
+                            BUILD_BR(
+                              elif_block, if_block_exit, keep_exit_block);
 
                             FREE(LilyLlvmScope, elif_scope);
                         } else {
@@ -294,7 +321,9 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
                                                    NULL,
                                                    NULL,
                                                    else_scope);
-                            LLVMBuildBr(self->builder, if_block_exit);
+                            // LLVMBuildBr(self->builder, if_block_exit);
+                            BUILD_BR(
+                              elif_block, if_block_exit, keep_exit_block);
 
                             FREE(LilyLlvmScope, else_scope);
                         }
@@ -305,7 +334,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                         GENERATE_FUNCTION_BODY(
                           stmt->if_.else_->body, fun, NULL, NULL, else_scope);
-                        LLVMBuildBr(self->builder, if_block_exit);
+                        // LLVMBuildBr(self->builder, if_block_exit);
+                        BUILD_BR(else_block, if_block_exit, keep_exit_block);
 
                         FREE(LilyLlvmScope, else_scope);
                     }
@@ -334,7 +364,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                 GENERATE_FUNCTION_BODY(
                   stmt->if_.if_->body, fun, NULL, NULL, if_scope);
-                LLVMBuildBr(self->builder, if_block_exit);
+                // LLVMBuildBr(self->builder, if_block_exit);
+                BUILD_BR(if_block, if_block_exit, keep_exit_block);
 
                 if (else_block) {
                     LilyLlvmScope *else_scope = NEW(LilyLlvmScope, scope);
@@ -343,13 +374,18 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
 
                     GENERATE_FUNCTION_BODY(
                       stmt->if_.else_->body, fun, NULL, NULL, else_scope);
-                    LLVMBuildBr(self->builder, if_block_exit);
+                    // LLVMBuildBr(self->builder, if_block_exit);
+                    BUILD_BR(else_block, if_block_exit, keep_exit_block);
 
                     FREE(LilyLlvmScope, else_scope);
                 }
             }
 
             LLVMPositionBuilderAtEnd(self->builder, if_block_exit);
+
+            if (!keep_exit_block) {
+                LLVMDeleteBasicBlock(if_block_exit);
+            }
 
             FREE(LilyLlvmScope, if_scope);
 
@@ -393,25 +429,8 @@ generate_stmt__LilyIrLlvm(const LilyIrLlvm *self,
             }
 
             return NULL;
-        case LILY_CHECKED_STMT_KIND_VARIABLE: {
-            LLVMTypeRef variable_data_type = generate_data_type__LilyIrLlvm(
-              self, stmt->variable.data_type, scope);
-            LLVMValueRef variable = LLVMBuildAlloca(
-              self->builder, variable_data_type, stmt->variable.name->buffer);
-            LLVMValueRef variable_expr = generate_expr__LilyIrLlvm(
-              self, stmt->variable.expr, scope, fun, variable);
-
-            push__Vec(scope->values,
-                      NEW(LilyLlvmValue, stmt->variable.name, variable));
-
-            // TODO: add some data types to disable automatic store.
-            if (stmt->variable.data_type->kind !=
-                LILY_CHECKED_DATA_TYPE_KIND_CUSTOM) {
-                LLVMBuildStore(self->builder, variable_expr, variable);
-            }
-
-            return variable;
-        }
+        case LILY_CHECKED_STMT_KIND_VARIABLE:
+            return generate_variable_stmt__LilyIrLlvm(self, stmt, fun, scope);
         case LILY_CHECKED_STMT_KIND_WHILE: {
             LilyLlvmScope *while_scope = NEW(LilyLlvmScope, scope);
 

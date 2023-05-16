@@ -50,6 +50,10 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/ir/cpp/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/ir/llvm/*.h
 	${CLANG_FORMAT} ./include/core/lily/ir/llvm/generator/body/*.h
+	${CLANG_FORMAT} ./include/core/lily/ir/llvm/generator/expr/*.h
+	${CLANG_FORMAT} ./include/core/lily/ir/llvm/generator/object/*.h
+	${CLANG_FORMAT} ./include/core/lily/ir/llvm/generator/stmt/*.h
+	${CLANG_FORMAT} ./include/core/lily/ir/llvm/generator/type/*.h
 	${CLANG_FORMAT} ./include/core/lily/ir/llvm/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/package/*.h	
 	${CLANG_FORMAT} ./include/core/lily/preprocess/*.h
@@ -95,6 +99,10 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/ir/cpp/generator/*.c
 	${CLANG_FORMAT} ./src/core/lily/ir/llvm/*.c
 	${CLANG_FORMAT} ./src/core/lily/ir/llvm/generator/*.c
+	${CLANG_FORMAT} ./src/core/lily/ir/llvm/generator/expr/*.c
+	${CLANG_FORMAT} ./src/core/lily/ir/llvm/generator/object/*.c
+	${CLANG_FORMAT} ./src/core/lily/ir/llvm/generator/stmt/*.c
+	${CLANG_FORMAT} ./src/core/lily/ir/llvm/generator/type/*.c
 	${CLANG_FORMAT} ./src/core/lily/ir/*.c
 	${CLANG_FORMAT} ./src/core/lily/package/*.c
 	${CLANG_FORMAT} ./src/core/lily/preprocess/*.c

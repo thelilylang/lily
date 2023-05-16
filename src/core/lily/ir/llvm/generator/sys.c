@@ -25,6 +25,7 @@
 #include <core/lily/ir/llvm/attr.h>
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/sys.h>
+#include <core/lily/ir/llvm/linkage.h>
 
 void
 declare_sys_function__LilyIrLlvm(LilyIrLlvm *self,

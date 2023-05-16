@@ -26,6 +26,7 @@
 #define LILY_CORE_LILY_IR_LLVM_H
 
 #include <base/macros.h>
+#include <base/string.h>
 #include <base/types.h>
 
 #include <llvm-c/Core.h>
@@ -56,6 +57,13 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name);
  */
 LLVMMetadataRef
 get_current_scope__LilyIrLlvm(LLVMValueRef inst);
+
+/**
+ *
+ * @brief Get filename from the path
+ */
+String *
+get_filename_from_path(const char *path);
 
 /**
  *

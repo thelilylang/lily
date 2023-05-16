@@ -23,29 +23,29 @@
  */
 
 #include <core/lily/ir/llvm/generator/data_type.h>
-#include <core/lily/ir/llvm/generator/record.h>
+#include <core/lily/ir/llvm/generator/expr.h>
+#include <core/lily/ir/llvm/generator/stmt/variable.h>
+#include <core/lily/ir/llvm/primary.h>
+#include <core/lily/ir/llvm/store.h>
 
-void
-generate_record__LilyIrLlvm(const LilyIrLlvm *self,
-                            const LilyCheckedDeclRecord *record,
-                            LilyLlvmScope *scope)
+LLVMValueRef
+generate_variable_stmt__LilyIrLlvm(const LilyIrLlvm *self,
+                                   const LilyCheckedStmt *stmt,
+                                   LLVMValueRef fun,
+                                   LilyLlvmScope *scope)
 {
-    LLVMTypeRef fields[252] = { 0 };
+    LLVMTypeRef variable_type =
+      generate_data_type__LilyIrLlvm(self, stmt->variable.data_type, scope);
+    LLVMValueRef variable = LLVMBuildAlloca(
+      self->builder, variable_type, stmt->variable.name->buffer);
+    LLVMValueRef variable_value = generate_expr__LilyIrLlvm(
+      self, stmt->variable.expr, scope, fun, variable);
 
-    for (Usize i = 0; i < record->fields->len; ++i) {
-        LilyCheckedField *field = get__Vec(record->fields, i);
+    push__Vec(scope->values, NEW(LilyLlvmValue, stmt->variable.name, variable));
 
-        fields[i] =
-          generate_data_type__LilyIrLlvm(self, field->data_type, scope);
+    if (variable_value) {
+        LLVMBuildStore(self->builder, variable_value, variable);
     }
 
-    LLVMTypeRef record_llvm = LLVMStructTypeInContext(
-      self->context, fields, record->fields->len, false);
-    LLVMValueRef record_llvm_value =
-      LLVMAddGlobal(self->module, record_llvm, record->global_name->buffer);
-
-    push__Vec(scope->types,
-              NEW(LilyLlvmType, record->global_name, record_llvm));
-    push__Vec(scope->values,
-              NEW(LilyLlvmValue, record->global_name, record_llvm_value));
+    return variable;
 }
