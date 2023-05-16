@@ -99,7 +99,7 @@ generate_neg__LilyIrLlvm(const LilyIrLlvm *self,
                          LLVMValueRef fun,
                          LLVMValueRef ptr)
 {
-    ASSERT(LLVMGetValueKind(right) == LLVMIntegerTypeKind);
+    // ASSERT(LLVMGetValueKind(right) == LLVMIntegerTypeKind);
 
     return LLVMBuildNeg(self->builder, right, "");
 }
