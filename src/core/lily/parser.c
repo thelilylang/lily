@@ -1988,7 +1988,7 @@ parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
         }
 
         switch (self->current->kind) {
-            case LILY_TOKEN_KIND_EQ:
+            case LILY_TOKEN_KIND_COLON_EQ:
                 next_token__LilyParseBlock(self);
                 break;
             default:
