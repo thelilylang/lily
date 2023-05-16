@@ -56,7 +56,7 @@ type Person record =
 end
 
 fun main =
-    val person := Person { name = "John", age = 25 };
+    val person := Person { name := "John", age := 25 };
 end
 ```
 
