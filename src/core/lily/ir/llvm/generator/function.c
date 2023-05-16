@@ -41,12 +41,12 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               LilyLlvmScope *scope,
                               const Location *location)
 {
-	// Generate return data type of the function
+    // Generate return data type of the function
     LLVMTypeRef return_data_type =
-      generate_data_type__LilyIrLlvm(self, fun->return_data_type, scope); 
+      generate_data_type__LilyIrLlvm(self, fun->return_data_type, scope);
 
-	// Generate function parameters
-	LLVMTypeRef params[252] = {};
+    // Generate function parameters
+    LLVMTypeRef params[252] = {};
     Usize params_len = 0;
 
     if (fun->params) {
@@ -82,11 +82,11 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
     LLVMPositionBuilderAtEnd(self->builder, entry_block);
 
-    LilyLlvmScope *fun_scope = NEW(LilyLlvmScope, scope);	
+    LilyLlvmScope *fun_scope = NEW(LilyLlvmScope, scope);
 
     GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
 
-	// Add debug location to the function
+    // Add debug location to the function
     LLVMMetadataRef debug_location = LLVMDIBuilderCreateDebugLocation(
       self->context,
       location->start_line,
