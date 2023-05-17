@@ -48,6 +48,7 @@ typedef struct LilyCheckedStmtVariable LilyCheckedStmtVariable;
 typedef struct LilyCheckedDeclFunParam LilyCheckedDeclFunParam;
 typedef struct LilyCheckedDeclMethodParam LilyCheckedDeclMethodParam;
 typedef struct LilyCheckedField LilyCheckedField;
+typedef struct LilyCheckedVariant LilyCheckedVariant;
 typedef struct LilyCheckedGenericParam LilyCheckedGenericParam;
 
 // TODO: add debug for LilyCheckedScopeResponse
@@ -57,6 +58,7 @@ enum LilyCheckedScopeResponseKind
     LILY_CHECKED_SCOPE_RESPONSE_KIND_MODULE,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_CONSTANT,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM,
+	LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ALIAS,
@@ -88,6 +90,7 @@ typedef struct LilyCheckedScopeResponse
         LilyCheckedDeclModule *module;
         LilyCheckedDeclConstant *constant;
         LilyCheckedDeclEnum *enum_;
+		LilyCheckedVariant *enum_variant;
         LilyCheckedDeclRecord *record;
         LilyCheckedField *record_field;
         LilyCheckedDeclAlias *alias;
@@ -172,6 +175,25 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                                        .location = location,
                                        .scope_container = scope_container,
                                        .enum_ = enum_ };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeResponse type
+ * (LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
+                           LilyCheckedScopeResponse,
+                           enum_variant,
+                           const Location *location,
+                           LilyCheckedScopeContainer scope_container,
+                           LilyCheckedVariant *enum_variant)
+{
+    return (LilyCheckedScopeResponse){ .kind =
+                                         LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT,
+                                       .location = location,
+                                       .scope_container = scope_container,
+                                       .enum_variant = enum_variant };
 }
 
 /**
