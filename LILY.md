@@ -880,6 +880,16 @@ fun main =
 end
 ```
 
+## Dereference
+
+```lily
+fun main =
+    val a := 340;
+    val b *Int32 := ref a;
+    val c := b.*;
+end
+```
+
 ## Lib
 
 ```lily
