@@ -2133,79 +2133,7 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
                             }
                         } else {
                             if (i + 1 != path->access.path->len) {
-                                switch (field->data_type->kind) {
-                                    case LILY_CHECKED_DATA_TYPE_KIND_STR:
-                                    case LILY_CHECKED_DATA_TYPE_KIND_BYTES: {
-                                        LilyAstExpr *len_call =
-                                          get__Vec(path->access.path, i + 1);
-
-                                        switch (len_call->kind) {
-                                            case LILY_AST_EXPR_KIND_CALL:
-                                                switch (len_call->call.kind) {
-                                                    case LILY_AST_EXPR_CALL_KIND_FUN:
-                                                        if (!strcmp(
-                                                              len_call->call.fun
-                                                                .id->identifier
-                                                                .name->buffer,
-                                                              "len")) {
-                                                            push__Vec(accesses,
-                                                                      field);
-
-                                                            LilyCheckedExpr *
-                                                              checked_len_call =
-                                                                NEW_VARIANT(
-                                                                  LilyCheckedExpr,
-                                                                  call,
-                                                                  &len_call
-                                                                     ->location,
-                                                                  NEW(
-                                                                    LilyCheckedDataType,
-                                                                    LILY_CHECKED_DATA_TYPE_KIND_USIZE,
-                                                                    &len_call
-                                                                       ->location),
-                                                                  len_call,
-                                                                  NEW_VARIANT(
-                                                                    LilyCheckedExprCall,
-                                                                    str_len,
-                                                                    NULL));
-
-                                                            push__Vec(
-                                                              accesses,
-                                                              checked_len_call);
-
-                                                            last =
-                                                              checked_len_call;
-
-                                                            if (i + 2 !=
-                                                                path->access
-                                                                  .path->len) {
-                                                                FAILED(
-                                                                  "expected "
-                                                                  "end of "
-                                                                  "path");
-                                                            } else {
-                                                                i += 2;
-                                                                continue;
-                                                            }
-                                                        } else {
-                                                            FAILED("expected "
-                                                                   "len call");
-                                                        }
-                                                    default:
-                                                        FAILED(
-                                                          "expected len call");
-                                                }
-                                            default:
-                                                FAILED("expected len call");
-                                        }
-
-                                        TODO("len()");
-                                    }
-                                    default:
-                                        FAILED("expected custom, bytes or str "
-                                               "data type");
-                                }
-                                FAILED("expected custom data type");
+                                FAILED("expected a custom data type");
                             }
                         }
 
@@ -2231,7 +2159,6 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (last->call.kind) {
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
-                case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN:
                     return NEW_VARIANT(
                       LilyCheckedExpr,
                       call,
@@ -2289,103 +2216,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                     LilyAstExpr *first_ast_expr =
                       get__Vec(expr->access.path, 0);
 
-                    // Check for len str call
-                    switch (first_ast_expr->kind) {
-                        case LILY_AST_EXPR_KIND_LITERAL:
-                            switch (first_ast_expr->literal.kind) {
-                                case LILY_AST_EXPR_LITERAL_KIND_STR: {
-                                    LilyAstExpr *second_ast_expr =
-                                      get__Vec(expr->access.path, 1);
-
-                                    switch (second_ast_expr->kind) {
-                                        case LILY_AST_EXPR_KIND_CALL:
-                                            switch (
-                                              second_ast_expr->call.kind) {
-                                                case LILY_AST_EXPR_CALL_KIND_FUN:
-                                                    switch (
-                                                      second_ast_expr->call.fun
-                                                        .id->kind) {
-                                                        case LILY_AST_EXPR_KIND_IDENTIFIER:
-                                                            if (
-                                                              !strcmp(
-                                                                second_ast_expr
-                                                                  ->call.fun.id
-                                                                  ->identifier
-                                                                  .name->buffer,
-                                                                "len")) {
-                                                                return NEW_VARIANT(
-                                                                  LilyCheckedExpr,
-                                                                  call,
-                                                                  &expr
-                                                                     ->location,
-                                                                  NEW(
-                                                                    LilyCheckedDataType,
-                                                                    LILY_CHECKED_DATA_TYPE_KIND_USIZE,
-                                                                    &expr
-                                                                       ->location),
-                                                                  expr,
-                                                                  NEW_VARIANT(
-                                                                    LilyCheckedExprCall,
-                                                                    str_len,
-                                                                    NEW_VARIANT(
-                                                                      LilyCheckedExpr,
-                                                                      literal,
-                                                                      &second_ast_expr
-                                                                         ->location,
-                                                                      NEW_VARIANT(
-                                                                        LilyCheckedDataType,
-                                                                        str,
-                                                                        &first_ast_expr
-                                                                           ->location,
-                                                                        first_ast_expr
-                                                                          ->literal
-                                                                          .str
-                                                                          ->len),
-                                                                      first_ast_expr,
-                                                                      NEW_VARIANT(
-                                                                        LilyCheckedExprLiteral,
-                                                                        str,
-                                                                        first_ast_expr
-                                                                          ->literal
-                                                                          .str))));
-                                                            } else {
-                                                                FAILED(
-                                                                  "expected "
-                                                                  "`len()` "
-                                                                  "call");
-                                                            }
-                                                        default:
-                                                            FAILED(
-                                                              "expected "
-                                                              "`len()` call");
-                                                    }
-
-                                                    break;
-                                                default:
-                                                    FAILED(
-                                                      "expected `len()` call");
-                                            }
-
-                                            break;
-                                        default:
-                                            FAILED("expected `len()` call");
-                                    }
-
-                                    if (expr->access.path->len != 2) {
-                                        FAILED("expected end of path");
-                                    }
-
-                                    TODO("\"Hello\".len()");
-                                }
-                                case LILY_AST_EXPR_LITERAL_KIND_BYTES:
-                                    TODO("b\"Hello\".len()");
-                                default:
-                                    break;
-                            }
-                        default:
-                            break;
-                    }
-
                     // Analysis the first expression of the path
                     LilyCheckedExpr *first = get_call_from_expr__LilyAnalysis(
                       self, first_ast_expr, scope, safety_mode, false, false);
@@ -2393,57 +2223,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                     switch (first->call.kind) {
                         case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
                         case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
-                            switch (first->data_type->kind) {
-                                case LILY_CHECKED_DATA_TYPE_KIND_STR: {
-                                    LilyAstExpr *second_ast_expr =
-                                      get__Vec(expr->access.path, 1);
-
-                                    switch (second_ast_expr->kind) {
-                                        case LILY_AST_EXPR_KIND_CALL:
-                                            switch (
-                                              second_ast_expr->call.kind) {
-                                                case LILY_AST_EXPR_CALL_KIND_FUN:
-                                                    if (!strcmp(
-                                                          second_ast_expr->call
-                                                            .fun.id->identifier
-                                                            .name->buffer,
-                                                          "len")) {
-                                                        if (expr->access.path
-                                                              ->len != 2) {
-                                                            FAILED(
-                                                              "expected end of "
-                                                              "the path");
-                                                        } else {
-                                                            return NEW_VARIANT(
-                                                              LilyCheckedExpr,
-                                                              call,
-                                                              &expr->location,
-                                                              NEW(
-                                                                LilyCheckedDataType,
-                                                                LILY_CHECKED_DATA_TYPE_KIND_USIZE,
-                                                                &expr
-                                                                   ->location),
-                                                              expr,
-                                                              NEW_VARIANT(
-                                                                LilyCheckedExprCall,
-                                                                str_len,
-                                                                first));
-                                                        }
-                                                    }
-                                                default:
-                                                    FAILED("expected fun call");
-                                            }
-                                        default:
-                                            FAILED("expected `len()` call");
-                                    }
-
-                                    TODO("str.len()");
-                                }
-                                    TODO("bytes.len()");
-                                default:
-                                    break;
-                            }
-
                             LilyCheckedDataType *custom =
                               get_direct_custom_data_type__LilyCheckedDataType(
                                 first->data_type);
@@ -2763,6 +2542,33 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   NEW(LilyCheckedExprCallFunSys,
                                       check_params_call,
                                       sys_signature)));
+                }
+                case LILY_AST_EXPR_CALL_KIND_LEN: {
+                    LilyCheckedExpr *len_expr =
+                      check_expr__LilyAnalysis(self,
+                                               expr->call.len,
+                                               scope,
+                                               safety_mode,
+                                               false,
+                                               false,
+                                               NULL);
+
+                    switch (len_expr->data_type->kind) {
+                        case LILY_CHECKED_DATA_TYPE_KIND_STR:
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              call,
+                              &expr->location,
+                              NEW(LilyCheckedDataType,
+                                  LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                  &expr->location),
+                              expr,
+                              NEW_VARIANT(
+                                LilyCheckedExprCall, str_len, len_expr));
+                        default:
+                            FAILED("expected Str, CStr, Bytes, array or list "
+                                   "data type");
+                    }
                 }
                 case LILY_AST_EXPR_CALL_KIND_RECORD: {
                     LilyCheckedScopeResponse response =
