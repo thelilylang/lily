@@ -283,6 +283,14 @@ static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            Location location);
 
 // Construct LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_MACRO_EXPAND).
+static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                           LilyPreparserFunBodyItem,
+                           macro_expand,
+                           LilyPreparserMacroExpand macro_expand,
+                           Location location);
+
+// Construct LilyPreparserFunBodyItem type
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM).
 static VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                            LilyPreparserFunBodyItem,
@@ -419,6 +427,12 @@ static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 // (LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA).
 static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                           lambda,
+                          LilyPreparserFunBodyItem *self);
+
+// Free LilyPreparserFunBodyItem type
+// (LILY_PREPARSER_FUN_BODY_ITEM_KIND_MACRO_EXPAND).
+static VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                          macro_expand,
                           LilyPreparserFunBodyItem *self);
 
 // Free LilyPreparserFunBodyItem type
@@ -1354,6 +1368,9 @@ static inline bool
 must_close_fun_block__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserFunBodyItem *
+preparse_macro_expand_for_fun__LilyPreparser(LilyPreparser *self);
+
+static LilyPreparserFunBodyItem *
 preparse_asm_block__LilyPreparser(LilyPreparser *self);
 
 static LilyPreparserFunBodyItem *
@@ -1408,15 +1425,11 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
 static bool
 must_preparse_exprs(LilyPreparser *self);
 
-static LilyPreparserFunBodyItem *
-preparse_block__LilyPreparser(LilyPreparser *self,
-                              bool (*must_close)(LilyPreparser *));
-
 /// @brief Preparse body for function and method.
 /// @param must_close Param to add different way to stop the preparser of the
 /// body.
 /// @return Vec<LilyPreparserFunBodyItem*>*?
-static Vec *
+Vec *
 preparse_body__LilyPreparser(LilyPreparser *self,
                              bool (*must_close)(LilyPreparser *));
 
@@ -2825,6 +2838,22 @@ VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
 
 VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
                     LilyPreparserFunBodyItem,
+                    macro_expand,
+                    LilyPreparserMacroExpand macro_expand,
+                    Location location)
+{
+    LilyPreparserFunBodyItem *self =
+      lily_malloc(sizeof(LilyPreparserFunBodyItem));
+
+    self->kind = LILY_PREPARSER_FUN_BODY_ITEM_KIND_MACRO_EXPAND;
+    self->macro_expand = macro_expand;
+    self->location = location;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyPreparserFunBodyItem *,
+                    LilyPreparserFunBodyItem,
                     stmt_await,
                     LilyPreparserFunBodyItemStmtAwait stmt_await,
                     Location location)
@@ -3093,6 +3122,15 @@ IMPL_FOR_DEBUG(to_string,
 
             break;
         }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_MACRO_EXPAND: {
+            String *s =
+              to_string__Debug__LilyPreparserMacroExpand(&self->macro_expand);
+
+            push_str__String(res, ", macro_expand =");
+            APPEND_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM: {
             String *s = to_string__Debug__LilyPreparserFunBodyItemStmtAsm(
               &self->stmt_asm);
@@ -3264,6 +3302,14 @@ VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
 }
 
 VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
+                   macro_expand,
+                   LilyPreparserFunBodyItem *self)
+{
+    FREE(LilyPreparserMacroExpand, &self->macro_expand);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyPreparserFunBodyItem,
                    stmt_asm,
                    LilyPreparserFunBodyItem *self)
 {
@@ -3399,6 +3445,9 @@ DESTRUCTOR(LilyPreparserFunBodyItem, LilyPreparserFunBodyItem *self)
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA:
             FREE_VARIANT(LilyPreparserFunBodyItem, lambda, self);
+            break;
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_MACRO_EXPAND:
+            FREE_VARIANT(LilyPreparserFunBodyItem, macro_expand, self);
             break;
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM:
             FREE_VARIANT(LilyPreparserFunBodyItem, stmt_asm, self);
@@ -7231,7 +7280,8 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
             return preparse_fun__LilyPreparser(self);
         case LILY_TOKEN_KIND_KEYWORD_object:
             return preparse_object__LilyPreparser(self);
-        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING: {
             LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
             if (peeked) {
@@ -7520,6 +7570,26 @@ must_close_fun_block__LilyPreparser(LilyPreparser *self)
         default:
             return false;
     }
+}
+
+LilyPreparserFunBodyItem *
+preparse_macro_expand_for_fun__LilyPreparser(LilyPreparser *self)
+{
+    LilyPreparserDecl *decl = preparse_macro_expand__LilyPreparser(self);
+
+    if (decl) {
+        LilyPreparserFunBodyItem *macro_expand =
+          NEW_VARIANT(LilyPreparserFunBodyItem,
+                      macro_expand,
+                      decl->macro_expand,
+                      decl->location);
+
+        lily_free(decl);
+
+        return macro_expand;
+    }
+
+    return NULL;
 }
 
 LilyPreparserFunBodyItem *
@@ -9087,6 +9157,9 @@ must_preparse_exprs(LilyPreparser *self)
             case LILY_TOKEN_KIND_R_BRACE:
             case LILY_TOKEN_KIND_SEMICOLON:
                 return false;
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+                return peeked->kind != LILY_TOKEN_KIND_BANG;
             case LILY_TOKEN_KIND_KEYWORD_TRY:
                 return peeked->kind != LILY_TOKEN_KIND_KEYWORD_DO;
             case LILY_TOKEN_KIND_KEYWORD_REF:
@@ -9470,6 +9543,24 @@ preparse_block__LilyPreparser(LilyPreparser *self,
 
             return NULL;
 
+        /*
+            <name>!(<args>);
+        */
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING: {
+            LilyToken *peeked = peek_token__LilyPreparser(self, 1);
+
+            if (peeked) {
+                if (peeked->kind == LILY_TOKEN_KIND_BANG) {
+                    return preparse_macro_expand_for_fun__LilyPreparser(self);
+                } else {
+                    goto preparse_exprs;
+                }
+            } else {
+                goto preparse_exprs;
+            }
+        }
+
         default:
         preparse_exprs : {
             Location location = clone__Location(&self->current->location);
@@ -9487,7 +9578,13 @@ preparse_block__LilyPreparser(LilyPreparser *self,
                     break;
             }
 
-            LilyToken *previous = self->tokens->buffer[self->position - 1];
+            LilyToken *previous = NULL;
+
+            if (self->current->kind == LILY_TOKEN_KIND_EOF) {
+                previous = self->tokens->buffer[self->position];
+            } else {
+                previous = self->tokens->buffer[self->position - 1];
+            }
 
             END_LOCATION(&location, previous->location);
 
@@ -10700,7 +10797,8 @@ preparse_class__LilyPreparser(LilyPreparser *self,
 
                 break;
             }
-            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
                 if (peeked) {
@@ -11406,7 +11504,8 @@ preparse_record_object_body__LilyPreparser(LilyPreparser *self)
                 break;
             }
 
-            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
                 if (peeked) {
@@ -11763,7 +11862,8 @@ preparse_enum_object_body__LilyPreparser(LilyPreparser *self)
                 break;
             }
 
-            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
                 if (peeked) {
@@ -12533,7 +12633,8 @@ preparse_record_body__LilyPreparser(LilyPreparser *self)
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
         switch (self->current->kind) {
-            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
                 if (peeked) {
@@ -12853,7 +12954,8 @@ preparse_enum_body__LilyPreparser(LilyPreparser *self)
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
         switch (self->current->kind) {
-            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
                 if (peeked) {
@@ -13147,12 +13249,26 @@ preparse_error__LilyPreparser(LilyPreparser *self)
 LilyPreparserDecl *
 preparse_macro_expand__LilyPreparser(LilyPreparser *self)
 {
-    ASSERT(self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL);
+    ASSERT(self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL ||
+           self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_STRING);
 
     Location location = clone__Location(&self->current->location);
 
     // 1. Get name of the macro expand.
-    String *name = clone__String(self->current->identifier_normal);
+    String *name = NULL;
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            name = clone__String(self->current->identifier_normal);
+
+            break;
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            name = clone__String(self->current->identifier_string);
+
+            break;
+        default:
+            UNREACHABLE("this situation is impossible");
+    }
 
     next_token__LilyPreparser(self);
     next_token__LilyPreparser(self); // skip `!`
@@ -13946,7 +14062,8 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
             /*
                 <name>!(<args>);
             */
-            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: {
+            case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            case LILY_TOKEN_KIND_IDENTIFIER_STRING: {
                 LilyToken *peeked = peek_token__LilyPreparser(self, 1);
 
                 if (peeked) {

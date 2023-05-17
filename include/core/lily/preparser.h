@@ -189,6 +189,24 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserModule, const LilyPreparserModule *self);
 #endif
 
+typedef struct LilyPreparserMacroExpand
+{
+    String *name;
+    Vec *params; // Vec<Vec<LilyToken* (&)>*>*?
+} LilyPreparserMacroExpand;
+
+/**
+ *
+ * @brief Convert LilyPreparserMacroExpand in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyPreparserMacroExpand,
+               const LilyPreparserMacroExpand *self);
+#endif
+
 typedef struct LilyPreparserTest
 {
     String *name;
@@ -531,6 +549,7 @@ enum LilyPreparserFunBodyItemKind
 {
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA,
+    LILY_PREPARSER_FUN_BODY_ITEM_KIND_MACRO_EXPAND,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_ASM,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_AWAIT,
     LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK,
@@ -570,6 +589,7 @@ struct LilyPreparserFunBodyItem
     {
         LilyPreparserFunBodyItemExprs exprs;
         LilyPreparserFunBodyItemLambda lambda;
+        LilyPreparserMacroExpand macro_expand;
         LilyPreparserFunBodyItemStmtAsm stmt_asm;
         LilyPreparserFunBodyItemStmtAwait stmt_await;
         LilyPreparserFunBodyItemStmtBlock stmt_block;
@@ -692,24 +712,6 @@ String *
 IMPL_FOR_DEBUG(to_string,
                LilyPreparserConstant,
                const LilyPreparserConstant *self);
-#endif
-
-typedef struct LilyPreparserMacroExpand
-{
-    String *name;
-    Vec *params; // Vec<Vec<LilyToken* (&)>*>*?
-} LilyPreparserMacroExpand;
-
-/**
- *
- * @brief Convert LilyPreparserMacroExpand in String.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string,
-               LilyPreparserMacroExpand,
-               const LilyPreparserMacroExpand *self);
 #endif
 
 enum LilyPreparserClassBodyItemKind
@@ -1602,6 +1604,10 @@ preparse_enum_object_body__LilyPreparser(LilyPreparser *self);
  */
 Vec *
 preparse_trait_body__LilyPreparser(LilyPreparser *self);
+
+LilyPreparserFunBodyItem *
+preparse_block__LilyPreparser(LilyPreparser *self,
+                              bool (*must_close)(LilyPreparser *));
 
 /**
  *
