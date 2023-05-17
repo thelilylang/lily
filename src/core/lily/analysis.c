@@ -2168,6 +2168,7 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
                                                                   "end of "
                                                                   "path");
                                                             } else {
+																i += 2;
                                                                 continue;
                                                             }
                                                         } else {
@@ -2214,6 +2215,7 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (last->call.kind) {
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
+				case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN:
                     return NEW_VARIANT(
                       LilyCheckedExpr,
                       call,
