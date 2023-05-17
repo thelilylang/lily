@@ -50,6 +50,7 @@ enum LilyCheckedExprCallKind
     LILY_CHECKED_EXPR_CALL_KIND_RECORD,
     LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE,
     LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS,
+    LILY_CHECKED_EXPR_CALL_KIND_STR_LEN,
     LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
     LILY_CHECKED_EXPR_CALL_KIND_VARIABLE,
     LILY_CHECKED_EXPR_CALL_KIND_VARIANT,
@@ -525,7 +526,8 @@ typedef struct LilyCheckedExprCall
     enum LilyCheckedExprCallKind kind;
     LilyCheckedAccessScope scope; // NOTE: undef when kind is equal to
                                   // LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN or
-                                  // LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS
+                                  // LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS or
+                                  // LILY_CHECKED_EXPR_CALL_KIND_STR_LEN
     String *global_name;          // String*? (&)
     union
     {
@@ -538,6 +540,7 @@ typedef struct LilyCheckedExprCall
         LilyCheckedExprCallRecord record;
         LilyCheckedExprCallRecordFieldSingle record_field_single;
         LilyCheckedExprCallRecordFieldAccess record_field_access;
+        LilyCheckedExpr *str_len; // LilyCheckedExpr*?
         LilyCheckedExprCallVariant variant;
     };
 } LilyCheckedExprCall;
@@ -704,6 +707,21 @@ inline VARIANT_CONSTRUCTOR(
         .global_name = global_name,
         .record_field_access = record_field_access
     };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           str_len,
+                           LilyCheckedExpr *str_len)
+{
+    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_STR_LEN,
+                                  .global_name = NULL,
+                                  .str_len = str_len };
 }
 
 /**
