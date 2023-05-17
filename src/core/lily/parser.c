@@ -2418,7 +2418,8 @@ parse_list_expr__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_LITERAL_BYTE:                                    \
             return VARIANT_LITERAL(name, byte, self->previous->literal_byte); \
         case LILY_TOKEN_KIND_LITERAL_BYTES: {                                 \
-            Usize size = strlen((const char *)self->previous->literal_bytes); \
+            Usize size =                                                      \
+              strlen((const char *)self->previous->literal_bytes) + 1;        \
             Uint8 *bytes_copy = lily_malloc(size);                            \
                                                                               \
             memcpy(bytes_copy, self->previous->literal_bytes, size);          \
@@ -2427,6 +2428,14 @@ parse_list_expr__LilyParseBlock(LilyParseBlock *self)
         }                                                                     \
         case LILY_TOKEN_KIND_LITERAL_CHAR:                                    \
             return VARIANT_LITERAL(name, char, self->previous->literal_char); \
+        case LILY_TOKEN_KIND_LITERAL_CSTR: {                                  \
+            Usize size = strlen(self->previous->literal_cstr) + 1;            \
+            char *cstr_copy = lily_malloc(size);                              \
+                                                                              \
+            memcpy(cstr_copy, self->previous->literal_cstr, size);            \
+                                                                              \
+            return VARIANT_LITERAL(name, cstr, cstr_copy);                    \
+        }                                                                     \
         case LILY_TOKEN_KIND_LITERAL_FLOAT:                                   \
             return VARIANT_LITERAL(                                           \
               name,                                                           \
@@ -2499,9 +2508,9 @@ parse_list_expr__LilyParseBlock(LilyParseBlock *self)
                 }                                                             \
             }                                                                 \
         }                                                                     \
-        case LILY_TOKEN_KIND_LITERAL_STRING:                                  \
+        case LILY_TOKEN_KIND_LITERAL_STR:                                     \
             return VARIANT_LITERAL(                                           \
-              name, str, clone__String(self->previous->literal_string));      \
+              name, str, clone__String(self->previous->literal_str));         \
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:                          \
             return VARIANT_LITERAL(                                           \
               name, suffix_float32, self->previous->literal_suffix_float32);  \
@@ -2564,12 +2573,13 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
         case LILY_TOKEN_KIND_LITERAL_BYTE:
         case LILY_TOKEN_KIND_LITERAL_BYTES:
         case LILY_TOKEN_KIND_LITERAL_CHAR:
+        case LILY_TOKEN_KIND_LITERAL_CSTR:
         case LILY_TOKEN_KIND_LITERAL_FLOAT:
         case LILY_TOKEN_KIND_LITERAL_INT_2:
         case LILY_TOKEN_KIND_LITERAL_INT_8:
         case LILY_TOKEN_KIND_LITERAL_INT_10:
         case LILY_TOKEN_KIND_LITERAL_INT_16:
-        case LILY_TOKEN_KIND_LITERAL_STRING:
+        case LILY_TOKEN_KIND_LITERAL_STR:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
@@ -4523,7 +4533,7 @@ parse_pattern__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_LITERAL_INT_8:
         case LILY_TOKEN_KIND_LITERAL_INT_10:
         case LILY_TOKEN_KIND_LITERAL_INT_16:
-        case LILY_TOKEN_KIND_LITERAL_STRING:
+        case LILY_TOKEN_KIND_LITERAL_STR:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
         case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
@@ -6465,12 +6475,13 @@ is_expr__LilyParser(const Vec *tokens)
             case LILY_TOKEN_KIND_LITERAL_BYTE:
             case LILY_TOKEN_KIND_LITERAL_BYTES:
             case LILY_TOKEN_KIND_LITERAL_CHAR:
+            case LILY_TOKEN_KIND_LITERAL_CSTR:
             case LILY_TOKEN_KIND_LITERAL_FLOAT:
             case LILY_TOKEN_KIND_LITERAL_INT_2:
             case LILY_TOKEN_KIND_LITERAL_INT_8:
             case LILY_TOKEN_KIND_LITERAL_INT_10:
             case LILY_TOKEN_KIND_LITERAL_INT_16:
-            case LILY_TOKEN_KIND_LITERAL_STRING:
+            case LILY_TOKEN_KIND_LITERAL_STR:
             case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
             case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
             case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
@@ -6545,12 +6556,13 @@ is_patt__LilyParser(const Vec *tokens)
             case LILY_TOKEN_KIND_LITERAL_BYTE:
             case LILY_TOKEN_KIND_LITERAL_BYTES:
             case LILY_TOKEN_KIND_LITERAL_CHAR:
+            case LILY_TOKEN_KIND_LITERAL_CSTR:
             case LILY_TOKEN_KIND_LITERAL_FLOAT:
             case LILY_TOKEN_KIND_LITERAL_INT_2:
             case LILY_TOKEN_KIND_LITERAL_INT_8:
             case LILY_TOKEN_KIND_LITERAL_INT_10:
             case LILY_TOKEN_KIND_LITERAL_INT_16:
-            case LILY_TOKEN_KIND_LITERAL_STRING:
+            case LILY_TOKEN_KIND_LITERAL_STR:
             case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT32:
             case LILY_TOKEN_KIND_LITERAL_SUFFIX_FLOAT64:
             case LILY_TOKEN_KIND_LITERAL_SUFFIX_INT16:
