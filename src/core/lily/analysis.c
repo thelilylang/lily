@@ -2565,6 +2565,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                               expr,
                               NEW_VARIANT(
                                 LilyCheckedExprCall, str_len, len_expr));
+						case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+							TODO("@len(cstr)");
                         default:
                             FAILED("expected Str, CStr, Bytes, array or list "
                                    "data type");
@@ -2868,6 +2870,17 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                        NEW_VARIANT(LilyCheckedExprLiteral,
                                                    char,
                                                    expr->literal.char_));
+                case LILY_AST_EXPR_LITERAL_KIND_CSTR:
+                    return NEW_VARIANT(LilyCheckedExpr,
+                                       literal,
+                                       &expr->location,
+                                       NEW(LilyCheckedDataType,
+                                           LILY_CHECKED_DATA_TYPE_KIND_CSTR,
+                                           &expr->location),
+                                       expr,
+                                       NEW_VARIANT(LilyCheckedExprLiteral,
+                                                   cstr,
+                                                   expr->literal.cstr));
                 case LILY_AST_EXPR_LITERAL_KIND_FLOAT32:
                     return NEW_VARIANT(LilyCheckedExpr,
                                        literal,
