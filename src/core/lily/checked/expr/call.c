@@ -128,6 +128,12 @@ static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                                  record_field_access,
                                  const LilyCheckedExprCall *self);
 
+/// @brief Free LilyCheckedExprCall type
+/// (LILY_CHECKED_EXPR_CALL_KIND_STR_LEN).
+static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
+                                 str_len,
+                                 const LilyCheckedExprCall *self);
+
 /// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_VARIANT).
 static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                                  variant,
@@ -166,6 +172,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE";
         case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
             return "LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS";
+        case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN:
+            return "LILY_CHECKED_EXPR_CALL_KIND_STR_LEN";
         case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
             return "LILY_CHECKED_EXPR_CALL_KIND_VARIABLE";
         case LILY_CHECKED_EXPR_CALL_KIND_VARIANT:
@@ -763,6 +771,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
     switch (self->kind) {
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
+        case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN:
             res = format__String(
               "LilyCheckedExprCall{{ kind = {s}, scope = undef, global_name = "
               "NULL",
@@ -860,6 +869,16 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
 
             break;
         }
+        case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN: {
+            char *s = format(
+              ", str_len = {Sr} }",
+              self->str_len ? to_string__Debug__LilyCheckedExpr(self->str_len)
+                            : from__String("NULL"));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_CHECKED_EXPR_CALL_KIND_VARIANT: {
             char *s = format(
               ", variant = {Sr} }",
@@ -918,6 +937,15 @@ VARIANT_DESTRUCTOR(LilyCheckedExprCall,
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedExprCall,
+                   str_len,
+                   const LilyCheckedExprCall *self)
+{
+    if (self->str_len) {
+        FREE(LilyCheckedExpr, self->str_len);
+    }
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                    variant,
                    const LilyCheckedExprCall *self)
 {
@@ -949,6 +977,9 @@ DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self)
             break;
         case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
             FREE_VARIANT(LilyCheckedExprCall, record_field_access, self);
+            break;
+        case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN:
+            FREE_VARIANT(LilyCheckedExprCall, str_len, self);
             break;
         case LILY_CHECKED_EXPR_CALL_KIND_VARIANT:
             FREE_VARIANT(LilyCheckedExprCall, variant, self);
