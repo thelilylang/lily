@@ -957,6 +957,23 @@ xor
 [..n]
 ```
 
+## @sys
+
+```lily
+@sys.write(1, "Hello\n", 6)
+```
+
+## @builtin
+
+## @len
+
+```lily
+@len("Hello")
+@len(b"Hello")
+@len([1, 2, 3]
+@len({1, 2, 3})
+```
+
 ## Garbage collector (interpreter)
 
 - Concurrent
