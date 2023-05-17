@@ -218,6 +218,12 @@ check_constant__LilyAnalysis(LilyAnalysis *self,
 static void
 check_alias__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *alias);
 
+/// @return Return true if is a recursive data type
+static bool
+check_for_recursive_data_type__LilyAnalysis(LilyAnalysis *self,
+                                            LilyCheckedDataType *data_type,
+                                            String *global_name);
+
 static Vec *
 check_fields__LilyAnalysis(LilyAnalysis *self,
                            Vec *ast_fields,
@@ -225,6 +231,14 @@ check_fields__LilyAnalysis(LilyAnalysis *self,
 
 static void
 check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record);
+
+static Vec *
+check_variants__LilyAnalysis(LilyAnalysis *self,
+                             Vec *ast_variants,
+                             LilyCheckedScope *scope);
+
+static void
+check_enum__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *enum_);
 
 static void
 check_decls__LilyAnalysis(LilyAnalysis *self,
@@ -1661,7 +1675,8 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_EXPR_BINARY_KIND_CHAIN:
             TODO("analyze |>");
-        case LILY_AST_EXPR_BINARY_KIND_EQ: {
+        case LILY_AST_EXPR_BINARY_KIND_EQ:
+        case LILY_AST_EXPR_BINARY_KIND_NOT_EQ: {
             LilyCheckedExpr *left = check_expr__LilyAnalysis(
               self, expr->binary.left, scope, safety_mode, false, false, NULL);
             LilyCheckedExpr *right =
@@ -1677,24 +1692,25 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                 FAILED("expected same data type on left and right expression");
             }
 
-            return NEW_VARIANT(LilyCheckedExpr,
-                               binary,
-                               &expr->location,
-                               NEW(LilyCheckedDataType,
-                                   LILY_CHECKED_DATA_TYPE_KIND_BOOL,
-                                   &expr->location),
-                               expr,
-                               NEW(LilyCheckedExprBinary,
-                                   LILY_CHECKED_EXPR_BINARY_KIND_EQ,
-                                   left,
-                                   right));
+            return NEW_VARIANT(
+              LilyCheckedExpr,
+              binary,
+              &expr->location,
+              NEW(LilyCheckedDataType,
+                  LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                  &expr->location),
+              expr,
+              NEW(LilyCheckedExprBinary,
+                  expr->binary.kind == LILY_AST_EXPR_BINARY_KIND_EQ
+                    ? LILY_CHECKED_EXPR_BINARY_KIND_EQ
+                    : LILY_CHECKED_EXPR_BINARY_KIND_NOT_EQ,
+                  left,
+                  right));
         }
         case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD:
             TODO("analyze ->");
         case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
             TODO("analyze <-");
-        case LILY_AST_EXPR_BINARY_KIND_NOT_EQ:
-            TODO("analyze not=");
         case LILY_AST_EXPR_BINARY_KIND_RANGE:
             TODO("analyze ..");
         default:
@@ -2168,7 +2184,7 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
                                                                   "end of "
                                                                   "path");
                                                             } else {
-																i += 2;
+                                                                i += 2;
                                                                 continue;
                                                             }
                                                         } else {
@@ -2215,7 +2231,7 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (last->call.kind) {
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
-				case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN:
+                case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN:
                     return NEW_VARIANT(
                       LilyCheckedExpr,
                       call,
@@ -2782,7 +2798,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
                                   NULL,
                                   (LilyCheckedAccessScope){ .id = 0 }));
-                            break;
                         default: {
                             if (!response.record->is_checked) {
                                 check_record__LilyAnalysis(
@@ -2881,11 +2896,50 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     checked_record_params)));
                         }
                     }
-
-                    TODO("check record call");
                 }
-                case LILY_AST_EXPR_CALL_KIND_VARIANT:
+                case LILY_AST_EXPR_CALL_KIND_VARIANT: {
+                    LilyCheckedScopeResponse response =
+                      resolve_id__LilyAnalysis(
+                        self,
+                        expr->call.variant.id,
+                        scope,
+                        LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT);
+
+                    switch (response.kind) {
+                        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->package->file,
+                                &expr->location,
+                                NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_TYPE),
+                                NULL,
+                                NULL,
+                                from__String("unknown enum in this scope")),
+                              &self->package->count_error);
+
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              call,
+                              &expr->location,
+                              NEW(LilyCheckedDataType,
+                                  LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                                  &expr->location),
+                              expr,
+                              NEW(LilyCheckedExprCall,
+                                  LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                                  NULL,
+                                  (LilyCheckedAccessScope){ .id = 0 }));
+                        default: {
+                            if (!response.enum_->is_checked) {
+                                TODO("check enum");
+                            }
+                        }
+                    }
+
                     TODO("check variant call");
+                }
                 default:
                     UNREACHABLE("unknown variant");
             }
@@ -4269,6 +4323,49 @@ check_fields__LilyAnalysis(LilyAnalysis *self,
     return check_fields;
 }
 
+bool
+check_for_recursive_data_type__LilyAnalysis(LilyAnalysis *self,
+                                            LilyCheckedDataType *data_type,
+                                            String *global_name)
+{
+    LilyCheckedDataType *field_custom_dt =
+      get_direct_custom_data_type__LilyCheckedDataType(data_type);
+
+    if (field_custom_dt) {
+        if (!strcmp(field_custom_dt->custom.global_name->buffer,
+                    global_name->buffer)) {
+            switch (data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+                case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+                case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+                case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+                case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+                    field_custom_dt->custom.is_recursive = true;
+
+                    return true;
+                case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+                    return check_for_recursive_data_type__LilyAnalysis(
+                      self, data_type->trace, global_name);
+                case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
+                    bool is_recursive = false;
+
+                    for (Usize i = 0; i < data_type->tuple->len; ++i) {
+                        is_recursive =
+                          check_for_recursive_data_type__LilyAnalysis(
+                            self, get__Vec(data_type->tuple, i), global_name);
+                    }
+
+                    return is_recursive;
+                }
+                default:
+                    FAILED("infinite data type");
+            }
+        }
+    }
+
+    return false;
+}
+
 void
 check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record)
 {
@@ -4289,51 +4386,102 @@ check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record)
     // Check if the record is recursive
     for (Usize i = 0; i < record->type.record.fields->len; ++i) {
         LilyCheckedField *field = get__Vec(record->type.record.fields, i);
-        LilyCheckedDataType *field_custom_dt =
-          get_direct_custom_data_type__LilyCheckedDataType(field->data_type);
 
-        if (field_custom_dt) {
-            if (!strcmp(field_custom_dt->custom.global_name->buffer,
-                        record->type.record.global_name->buffer)) {
-                switch (field->data_type->kind) {
-                    case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
-                    case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
-                    case LILY_CHECKED_DATA_TYPE_KIND_LIST:
-                    case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
-                    case LILY_CHECKED_DATA_TYPE_KIND_PTR:
-                        field_custom_dt->custom.is_recursive = true;
-                        record->type.record.is_recursive = true;
+        bool is_recursive = check_for_recursive_data_type__LilyAnalysis(
+          self, field->data_type, record->type.record.global_name);
 
-                        break;
-                    case LILY_CHECKED_DATA_TYPE_KIND_TRACE: {
-                        LilyCheckedDataType *field_custom_dt_trace =
-                          get_direct_custom_data_type__LilyCheckedDataType(
-                            field->data_type->trace);
-
-                        switch (field_custom_dt_trace->kind) {
-                            case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
-                            case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
-                            case LILY_CHECKED_DATA_TYPE_KIND_LIST:
-                            case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
-                            case LILY_CHECKED_DATA_TYPE_KIND_PTR:
-                                field_custom_dt->custom.is_recursive = true;
-                                record->type.record.is_recursive = true;
-
-                                break;
-                            default:
-                                FAILED("infinite data type");
-                        }
-
-                        break;
-                    }
-                    default:
-                        FAILED("infinite data type");
-                }
-            }
+        if (is_recursive && record->type.record.is_recursive) {
+            record->type.record.is_recursive = true;
         }
     }
 
     record->type.record.is_checked = true;
+}
+
+Vec *
+check_variants__LilyAnalysis(LilyAnalysis *self,
+                             Vec *ast_variants,
+                             LilyCheckedScope *scope)
+{
+    Vec *check_variants = NEW(Vec);
+
+    for (Usize i = 0; i < ast_variants->len; ++i) {
+        LilyAstVariant *ast_variant = get__Vec(ast_variants, i);
+
+        LilyCheckedDataType *data_type = NULL;
+
+        if (ast_variant->data_type) {
+            data_type =
+              check_data_type__LilyAnalysis(self,
+                                            ast_variant->data_type,
+                                            scope,
+                                            LILY_CHECKED_SAFETY_MODE_SAFE);
+        }
+
+        LilyCheckedScopeContainerVariable *sc_variable =
+          NEW(LilyCheckedScopeContainerVariable, ast_variant->name, i);
+        int is_failed = add_variable__LilyCheckedScope(scope, sc_variable);
+
+        if (is_failed) {
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          &self->package->file,
+                          &ast_variant->location,
+                          NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_VARIANT),
+                          NULL,
+                          NULL,
+                          NULL),
+              &self->package->count_error);
+
+            FREE(LilyCheckedScopeContainerVariable, sc_variable);
+        }
+
+        push__Vec(check_variants,
+                  NEW(LilyCheckedVariant,
+                      ast_variant->name,
+                      format__String("{S}.{S}",
+                                     scope->decls.decl->type.enum_.global_name,
+                                     ast_variant->name),
+                      data_type,
+                      &ast_variant->location));
+    }
+
+    return check_variants;
+}
+
+void
+check_enum__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *enum_)
+{
+    if (enum_->type.enum_.is_checked) {
+        return;
+    }
+
+    if (enum_->ast_decl->type.enum_.generic_params) {
+        enum_->type.enum_.generic_params =
+          check_generic_params(self,
+                               enum_->ast_decl->type.enum_.generic_params,
+                               enum_->type.enum_.scope);
+    }
+
+    enum_->type.enum_.variants = check_variants__LilyAnalysis(
+      self, enum_->ast_decl->type.enum_.variants, enum_->type.enum_.scope);
+
+    // Check if the enum is recursive
+    for (Usize i = 0; i < enum_->type.enum_.variants->len; ++i) {
+        LilyCheckedField *variant = get__Vec(enum_->type.enum_.variants, i);
+
+        if (variant->data_type) {
+            bool is_recursive = check_for_recursive_data_type__LilyAnalysis(
+              self, variant->data_type, enum_->type.enum_.global_name);
+
+            if (is_recursive && enum_->type.enum_.is_recursive) {
+                enum_->type.enum_.is_recursive = true;
+            }
+        }
+    }
+
+    enum_->type.enum_.is_checked = true;
 }
 
 void
@@ -4361,6 +4509,10 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
                         break;
                     case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
                         check_record__LilyAnalysis(self, decl);
+
+                        break;
+                    case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                        check_enum__LilyAnalysis(self, decl);
 
                         break;
                     default:
