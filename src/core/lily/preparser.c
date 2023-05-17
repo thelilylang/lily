@@ -6669,8 +6669,8 @@ preparse_import__LilyPreparser(LilyPreparser *self)
     next_token__LilyPreparser(self);
 
     switch (self->current->kind) {
-        case LILY_TOKEN_KIND_LITERAL_STRING:
-            import_value = clone__String(self->current->literal_string);
+        case LILY_TOKEN_KIND_LITERAL_STR:
+            import_value = clone__String(self->current->literal_str);
             next_token__LilyPreparser(self);
             break;
         default:
@@ -13517,11 +13517,11 @@ preparse_lib__LilyPreparser(LilyPreparser *self)
             next_token__LilyPreparser(self);
 
             switch (self->current->kind) {
-                case LILY_TOKEN_KIND_LITERAL_STRING:
-                    if (!strcmp(self->current->literal_string->buffer, "C") ||
-                        !strcmp(self->current->literal_string->buffer, "CC")) {
+                case LILY_TOKEN_KIND_LITERAL_STR:
+                    if (!strcmp(self->current->literal_str->buffer, "C") ||
+                        !strcmp(self->current->literal_str->buffer, "CC")) {
                         from = LILY_PREPARSER_LIB_FROM_CC;
-                    } else if (!strcmp(self->current->literal_string->buffer,
+                    } else if (!strcmp(self->current->literal_str->buffer,
                                        "CPP")) {
                         from = LILY_PREPARSER_LIB_FROM_CPP;
                     } else {
