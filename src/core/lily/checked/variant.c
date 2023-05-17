@@ -29,12 +29,14 @@
 CONSTRUCTOR(LilyCheckedVariant *,
             LilyCheckedVariant,
             String *name,
+            String *global_name,
             LilyCheckedDataType *data_type,
-            Location location)
+            const Location *location)
 {
     LilyCheckedVariant *self = lily_malloc(sizeof(LilyCheckedVariant));
 
     self->name = name;
+    self->global_name = global_name;
     self->data_type = data_type;
     self->location = location;
 
@@ -47,23 +49,27 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedVariant, const LilyCheckedVariant *self)
 {
     if (self->data_type) {
         return format__String(
-          "LilyCheckedVariant{{ name = {S}, data_type = {Sr}, location = {sa} "
+          "LilyCheckedVariant{{ name = {S}, global_name = {S}, data_type = "
+          "{Sr}, location = {sa} "
           "}",
           self->name,
+          self->global_name,
           to_string__Debug__LilyCheckedDataType(self->data_type),
-          to_string__Debug__Location(&self->location));
+          to_string__Debug__Location(self->location));
     }
 
-    return format__String(
-      "LilyCheckedVariant{{ name = {S}, data_type = NULL, location = {sa} }",
-      self->name,
-      to_string__Debug__Location(&self->location));
+    return format__String("LilyCheckedVariant{{ name = {S}, global_name = {S}, "
+                          "data_type = NULL, location = {sa} }",
+                          self->name,
+                          self->global_name,
+                          to_string__Debug__Location(self->location));
 }
 #endif
 
 DESTRUCTOR(LilyCheckedVariant, LilyCheckedVariant *self)
 {
     FREE_MOVE(self->name, FREE(String, self->name));
+    FREE(String, self->global_name);
 
     if (self->data_type) {
         FREE(LilyCheckedDataType, self->data_type);

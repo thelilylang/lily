@@ -33,8 +33,9 @@
 typedef struct LilyCheckedVariant
 {
     String *name;
+    String *global_name;
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
-    Location location;
+    const Location *location;
 } LilyCheckedVariant;
 
 /**
@@ -44,8 +45,9 @@ typedef struct LilyCheckedVariant
 CONSTRUCTOR(LilyCheckedVariant *,
             LilyCheckedVariant,
             String *name,
+            String *global_name,
             LilyCheckedDataType *data_type,
-            Location location);
+            const Location *location);
 
 /**
  *
