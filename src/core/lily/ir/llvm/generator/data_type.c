@@ -91,7 +91,11 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
             TODO("generate lambda data type");
         case LILY_CHECKED_DATA_TYPE_KIND_LIST:
-            TODO("generate list data type");
+            return LLVMStructType(
+              (LLVMTypeRef[]){ ptr__LilyIrLlvm(self, i8__LilyIrLlvm(self)),
+                               intptr__LilyIrLlvm(self) },
+              2,
+              0);
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
             return generate_data_type__LilyIrLlvm(self, data_type->mut, scope);
         case LILY_CHECKED_DATA_TYPE_KIND_NEVER:

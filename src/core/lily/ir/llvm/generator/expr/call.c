@@ -29,6 +29,7 @@
 #include <core/lily/ir/llvm/generator/expr/call.h>
 #include <core/lily/ir/llvm/primary.h>
 #include <core/lily/ir/llvm/store.h>
+#include <core/lily/ir/llvm/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -178,6 +179,13 @@ generate_field_access_expr__LilyIrLlvm(const LilyIrLlvm *self,
     LLVMValueRef indices[252] = { 0 };
     bool first_is_ptr = false;
 
+    LilyCheckedDataType *custom =
+      get_direct_custom_data_type__LilyCheckedDataType(first->data_type);
+
+    ASSERT(custom);
+
+    LLVMTypeRef ptr_type = generate_data_type__LilyIrLlvm(self, custom, scope);
+
     if (first->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_PTR ||
         first->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_REF) {
         indices[0] = LLVMConstInt(i32__LilyIrLlvm(self), 0, false);
@@ -185,19 +193,36 @@ generate_field_access_expr__LilyIrLlvm(const LilyIrLlvm *self,
     }
 
     for (Usize i = 1; i < expr->call.record_field_access.accesses->len; ++i) {
+        // possible value: Record Field single call, StrLenCall
         LilyCheckedExpr *field =
           get__Vec(expr->call.record_field_access.accesses, i);
 
-        indices[first_is_ptr ? i : i - 1] = LLVMConstInt(
-          i32__LilyIrLlvm(self), field->call.record_field_single.index, false);
+        switch (field->call.kind) {
+            case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN: {
+                indices[first_is_ptr ? i : i - 1] =
+                  LLVMConstInt(i32__LilyIrLlvm(self), 1, false);
+
+                LLVMValueRef field_access = LLVMBuildGEP2(
+                  self->builder,
+                  ptr_type,
+                  value_ptr,
+                  indices,
+                  first_is_ptr
+                    ? expr->call.record_field_access.accesses->len
+                    : expr->call.record_field_access.accesses->len - 1,
+                  "");
+
+                LLVMSetIsInBounds(field_access, true);
+
+                return field_access;
+            }
+            default:
+                indices[first_is_ptr ? i : i - 1] =
+                  LLVMConstInt(i32__LilyIrLlvm(self),
+                               field->call.record_field_single.index,
+                               false);
+        }
     }
-
-    LilyCheckedDataType *custom =
-      get_direct_custom_data_type__LilyCheckedDataType(first->data_type);
-
-    ASSERT(custom);
-
-    LLVMTypeRef ptr_type = generate_data_type__LilyIrLlvm(self, custom, scope);
 
     LLVMValueRef field_access = LLVMBuildGEP2(
       self->builder,
@@ -217,7 +242,6 @@ generate_field_access_expr__LilyIrLlvm(const LilyIrLlvm *self,
     switch (expr->data_type->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
         case LILY_CHECKED_DATA_TYPE_KIND_PTR:
-        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
             return field_access;
         default:
             return LLVMBuildLoad2(
@@ -287,6 +311,12 @@ generate_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
             return generate_field_access_expr__LilyIrLlvm(
               self, expr, scope, fun, ptr);
+        case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN: {
+            LLVMValueRef len_expr = generate_expr__LilyIrLlvm(
+              self, expr->call.str_len, scope, fun, ptr);
+
+            return LLVMBuildExtractValue(self->builder, len_expr, 1, "");
+        }
         default:
             TODO("generate_call_expr__LilyIrLlvm");
     }
