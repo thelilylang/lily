@@ -2657,6 +2657,65 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
             }
 
             return parse_access_expr__LilyParseBlock(self);
+        case LILY_TOKEN_KIND_KEYWORD_AT_LEN: {
+            Location location = clone__Location(&self->previous->location);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_L_PAREN:
+                    next_token__LilyParseBlock(self);
+
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected `(`")),
+                      self->count_error);
+
+                    return NULL;
+            }
+
+            LilyAstExpr *expr = parse_expr__LilyParseBlock(self);
+
+            if (!expr) {
+                return NULL;
+            }
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_R_PAREN:
+                    END_LOCATION(&location, self->current->location);
+                    next_token__LilyParseBlock(self);
+
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected `)`")),
+                      self->count_error);
+
+                    FREE(LilyAstExpr, expr);
+
+                    return NULL;
+            }
+
+            return NEW_VARIANT(LilyAstExpr,
+                               call,
+                               location,
+                               NEW_VARIANT(LilyAstExprCall, len, expr));
+        }
         case LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN:
         case LILY_TOKEN_KIND_KEYWORD_AT_SYS: {
             enum LilyTokenKind special_fun_call_kind = self->previous->kind;
@@ -3124,19 +3183,6 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
                 if (!expr) {
                     return NULL;
                 }
-            }
-
-            break;
-        default:
-            break;
-    }
-
-    switch (self->current->kind) {
-        case LILY_TOKEN_KIND_DOT:
-            expr = parse_path_access__LilyParseBlock(self, expr);
-
-            if (!expr) {
-                return NULL;
             }
 
             break;
