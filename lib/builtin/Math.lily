@@ -1,0 +1,96 @@
+#[link: "lily_math"]
+
+lib("C") =
+	#[builtin]
+	fun abs(Int8) Int8 := "abs$Int8";
+
+	#[builtin]
+	fun abs(Int16) Int16 := "abs$Int16";
+
+	#[builtin]
+	fun abs(Int32) Int32 := "abs$Int32";
+
+	#[builtin]
+	fun abs(Int64) Int64 := "abs$Int64";
+
+	#[builtin]
+	fun abs(Isize) Isize := "abs$Isize";
+
+	#[builtin]
+	fun abs(Float32) Float32 := "abs$Float32";
+
+	#[builtin]
+	fun abs(Float64) Float64 := "abs$Float64";
+
+	#[builtin]
+	fun exp(Float32) Float32 := "exp$Float32";
+
+	#[builtin]
+	fun exp(Float64) Float64 := "exp$Float64";
+
+	#[builtin]
+	fun exp2(Float32) Float32 := "exp2$Float32";
+
+	#[builtin]
+	fun exp2(Float64) Float64 := "exp2$Float64";
+
+	#[builtin]
+	fun expm1(Float32) Float32 := "expm1$Float32";
+
+	#[builtin]
+	fun expm1(Float64) Float64 := "exm1$Float64";
+
+	#[builtin]
+	fun log(Float32) Float32 := "log$Float32";
+
+	#[builtin]
+	fun log(Float64) Float64 := "log$Float64";
+
+	#[builtin]
+	fun log2(Float32) Float32 := "log2$Float32";
+
+	#[builtin]
+	fun log2(Float64) Float64 := "log2$Float64";
+
+	#[builtin]
+	fun log10(Float32) Float32 := "log10$Float32";
+
+	#[builtin]
+	fun log10(Float64) Float64 := "log10$Float64";
+
+	#[builtin]
+	fun log1p(Float32) Float32 := "log1p$Float32";
+
+	#[builtin]
+	fun log1p(Float64) Float64 := "log1p$Float64";
+
+	#[builtin]
+	fun ilogb(Float32) Float32 := "ilogb$Float32";
+
+	#[builtin]
+	fun ilogb(Float64) Float64 := "ilogb$Float64";
+
+	#[builtin]
+	fun logb(Float32) Float32 := "logb$Float32";
+
+	#[builtin]
+	fun logb(Float64) Float64 := "logb$Float64";
+
+	#[builtin]
+	fun sqrt(Float32) Float32 := "sqrt$Float32";
+
+	#[builtin]
+	fun sqrt(Float64) Float64 := "sqrt$Float64";
+
+	#[builtin]
+	fun cbrt(Float32) Float32 := "cbrt$Float32";
+
+	#[builtin]
+	fun cbrt(Float64) Float64 := "cbrt$Float64";
+	
+	#[builtin]
+	fun hypot(Float32) Float32 := "hypot$Float32";
+
+	#[builtin]
+	fun hypot(Float64) Float64 := "hypot$Float64";
+end
