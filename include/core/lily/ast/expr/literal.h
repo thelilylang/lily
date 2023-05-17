@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_AST_EXPR_LITERAL_H
 #define LILY_CORE_LILY_AST_EXPR_LITERAL_H
 
+#include <base/alloc.h>
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/string.h>
@@ -36,6 +37,7 @@ enum LilyAstExprLiteralKind
     LILY_AST_EXPR_LITERAL_KIND_BYTE,
     LILY_AST_EXPR_LITERAL_KIND_BYTES,
     LILY_AST_EXPR_LITERAL_KIND_CHAR,
+    LILY_AST_EXPR_LITERAL_KIND_CSTR,
     LILY_AST_EXPR_LITERAL_KIND_FLOAT32,
     LILY_AST_EXPR_LITERAL_KIND_FLOAT64,
     LILY_AST_EXPR_LITERAL_KIND_INT32,
@@ -82,6 +84,7 @@ typedef struct LilyAstExprLiteral
         Uint8 byte;
         Uint8 *bytes;
         char char_;
+        char *cstr;
         Float32 float32;
         Float64 float64;
         Int32 int32;
@@ -154,6 +157,19 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprLiteral,
 {
     return (LilyAstExprLiteral){ .kind = LILY_AST_EXPR_LITERAL_KIND_CHAR,
                                  .char_ = char_ };
+}
+
+/**
+ *
+ * @brief Construct LilyAstExprLiteral type (LILY_AST_EXPR_LITERAL_KIND_CSTR).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprLiteral,
+                           LilyAstExprLiteral,
+                           cstr,
+                           char *cstr)
+{
+    return (LilyAstExprLiteral){ .kind = LILY_AST_EXPR_LITERAL_KIND_CSTR,
+                                 .cstr = cstr };
 }
 
 /**
@@ -469,6 +485,12 @@ inline VARIANT_DESTRUCTOR(LilyAstExprLiteral,
 inline DESTRUCTOR(LilyAstExprLiteral, const LilyAstExprLiteral *self)
 {
     switch (self->kind) {
+        case LILY_AST_EXPR_LITERAL_KIND_BYTES:
+            lily_free(self->bytes);
+            break;
+        case LILY_AST_EXPR_LITERAL_KIND_CSTR:
+            lily_free(self->cstr);
+            break;
         case LILY_AST_EXPR_LITERAL_KIND_STR:
             FREE_VARIANT(LilyAstExprLiteral, str, self);
             break;

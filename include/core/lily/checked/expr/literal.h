@@ -36,6 +36,7 @@ enum LilyCheckedExprLiteralKind
     LILY_CHECKED_EXPR_LITERAL_KIND_BYTE,
     LILY_CHECKED_EXPR_LITERAL_KIND_BYTES,
     LILY_CHECKED_EXPR_LITERAL_KIND_CHAR,
+    LILY_CHECKED_EXPR_LITERAL_KIND_CSTR,
     LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT32,
     LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT64,
     LILY_CHECKED_EXPR_LITERAL_KIND_INT32,
@@ -82,6 +83,7 @@ typedef struct LilyCheckedExprLiteral
         Uint8 byte;
         Uint8 *bytes; // Uint8* (&)
         char char_;
+        char *cstr; // char* (&)
         Float32 float32;
         Float64 float64;
         Int32 int32;
@@ -147,6 +149,21 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprLiteral,
     return (LilyCheckedExprLiteral){ .kind =
                                        LILY_CHECKED_EXPR_LITERAL_KIND_BYTES,
                                      .bytes = bytes };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprLiteral type
+ * (LILY_CHECKED_EXPR_LITERAL_KIND_CSTR).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprLiteral,
+                           LilyCheckedExprLiteral,
+                           cstr,
+                           char *cstr)
+{
+    return (LilyCheckedExprLiteral){ .kind =
+                                       LILY_CHECKED_EXPR_LITERAL_KIND_CSTR,
+                                     .cstr = cstr };
 }
 
 /**

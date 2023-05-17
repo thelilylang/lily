@@ -48,6 +48,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_AST_PATTERN_LITERAL_KIND_BYTES";
         case LILY_AST_PATTERN_LITERAL_KIND_CHAR:
             return "LILY_AST_PATTERN_LITERAL_KIND_CHAR";
+        case LILY_AST_PATTERN_LITERAL_KIND_CSTR:
+            return "LILY_AST_PATTERN_LITERAL_KIND_CSTR";
         case LILY_AST_PATTERN_LITERAL_KIND_FLOAT32:
             return "LILY_AST_PATTERN_LITERAL_KIND_FLOAT32";
         case LILY_AST_PATTERN_LITERAL_KIND_FLOAT64:
@@ -132,6 +134,13 @@ IMPL_FOR_DEBUG(to_string,
         }
         case LILY_AST_PATTERN_LITERAL_KIND_CHAR: {
             char *s = format("char = '{c}' }", self->char_);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_AST_PATTERN_LITERAL_KIND_CSTR: {
+            char *s = format("cstr = c\"{s}\" }", self->cstr);
 
             PUSH_STR_AND_FREE(res, s);
 
