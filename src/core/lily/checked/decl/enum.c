@@ -47,10 +47,12 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclEnum, const LilyCheckedDeclEnum *self)
     DEBUG_VEC_STRING(self->variants, res, LilyCheckedVariant);
 
     {
-        char *s = format(", scope = {Sr}, visibility = {s}, is_checked = {b} }",
+        char *s = format(", scope = {Sr}, visibility = {s}, is_checked = {b}, "
+                         "is_recursive = {b} }",
                          to_string__Debug__LilyCheckedScope(self->scope),
                          to_string__Debug__LilyVisibility(self->visibility),
-                         self->is_checked);
+                         self->is_checked,
+                         self->is_recursive);
 
         PUSH_STR_AND_FREE(res, s);
     }

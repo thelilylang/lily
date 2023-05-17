@@ -41,6 +41,7 @@ typedef struct LilyCheckedDeclEnum
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
     bool is_checked;
+    bool is_recursive;
 } LilyCheckedDeclEnum;
 
 inline CONSTRUCTOR(LilyCheckedDeclEnum,
@@ -58,7 +59,8 @@ inline CONSTRUCTOR(LilyCheckedDeclEnum,
                                   .variants = variants,
                                   .scope = scope,
                                   .visibility = visibility,
-                                  .is_checked = false };
+                                  .is_checked = false,
+                                  .is_recursive = false };
 }
 
 /**
