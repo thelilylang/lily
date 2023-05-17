@@ -351,6 +351,10 @@ set(CORE_SRC
 	src/core/shared/target/os.c
 	src/core/shared/source.c)
 
+set(BUILTIN_SRC
+	lib/builtin/math.c
+	lib/builtin/pointer.c)
+
 set(SYS_SRC
 	lib/sys/sys.c)
 
@@ -366,6 +370,9 @@ target_link_libraries(lily_command lily_base lily_cli lily_core)
 add_library(lily_core STATIC ${CORE_SRC})
 target_link_libraries(lily_core lily_base LLVM)
 target_include_directories(lily_core PUBLIC lib/local)
+
+add_library(lily_builtin SHARED ${BUILTIN_SRC})
+target_include_directories(lily_builtin PUBLIC lib include)
 
 add_library(lily_sys SHARED ${SYS_SRC})
 target_include_directories(lily_sys PUBLIC lib include)
