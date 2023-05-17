@@ -29,6 +29,7 @@
 #include <core/lily/ir/llvm/generator/constant.h>
 #include <core/lily/ir/llvm/generator/function.h>
 #include <core/lily/ir/llvm/generator/sys.h>
+#include <core/lily/ir/llvm/generator/type/enum.h>
 #include <core/lily/ir/llvm/generator/type/record.h>
 #include <core/lily/package.h>
 
@@ -77,6 +78,11 @@ run__LilyIrLlvmGenerator(LilyPackage *self)
                     case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
                         generate_record__LilyIrLlvm(
                           &self->ir.llvm, &decl->type.record, scope);
+
+                        break;
+                    case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                        generate_enum__LilyIrLlvm(
+                          &self->ir.llvm, &decl->type.enum_, scope);
 
                         break;
                     default:

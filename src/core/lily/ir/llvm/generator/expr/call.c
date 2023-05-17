@@ -312,20 +312,21 @@ generate_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
             return generate_field_access_expr__LilyIrLlvm(
               self, expr, scope, fun, ptr);
         case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN: {
-			LLVMValueRef str_ptr = generate_expr__LilyIrLlvm(
+            LLVMValueRef str_ptr = generate_expr__LilyIrLlvm(
               self, expr->call.str_len, scope, fun, NULL);
 
-			switch (expr->call.str_len->kind) {
-				// e.g. "Hello".len()
-				case LILY_CHECKED_EXPR_KIND_LITERAL: {
-					LLVMValueRef str_value =
-					  LLVMBuildLoad2(self->builder, str__LilyIrLlvm(self), str_ptr, "");
-					return LLVMBuildExtractValue(self->builder, str_value, 1, "");
-				}
-				// e.g. a.len()
-				default:
-					return LLVMBuildExtractValue(self->builder, str_ptr, 1, "");
-			}
+            switch (expr->call.str_len->kind) {
+                // e.g. "Hello".len()
+                case LILY_CHECKED_EXPR_KIND_LITERAL: {
+                    LLVMValueRef str_value = LLVMBuildLoad2(
+                      self->builder, str__LilyIrLlvm(self), str_ptr, "");
+                    return LLVMBuildExtractValue(
+                      self->builder, str_value, 1, "");
+                }
+                // e.g. a.len()
+                default:
+                    return LLVMBuildExtractValue(self->builder, str_ptr, 1, "");
+            }
         }
         default:
             TODO("generate_call_expr__LilyIrLlvm");

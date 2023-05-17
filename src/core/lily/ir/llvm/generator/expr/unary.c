@@ -72,8 +72,6 @@ generate_not__LilyIrLlvm(const LilyIrLlvm *self,
                          LLVMValueRef fun,
                          LLVMValueRef ptr)
 {
-    ASSERT(LLVMGetValueKind(right) == LLVMIntegerTypeKind);
-
     return LLVMBuildNot(self->builder, right, "");
 }
 
@@ -85,8 +83,6 @@ generate_dereference__LilyIrLlvm(const LilyIrLlvm *self,
                                  LLVMValueRef fun,
                                  LLVMValueRef ptr)
 {
-    ASSERT(LLVMGetValueKind(right) == LLVMPointerTypeKind);
-
     return LLVMBuildLoad2(
       self->builder, LLVMGetElementType(LLVMTypeOf(right)), right, "");
 }
@@ -99,8 +95,6 @@ generate_neg__LilyIrLlvm(const LilyIrLlvm *self,
                          LLVMValueRef fun,
                          LLVMValueRef ptr)
 {
-    // ASSERT(LLVMGetValueKind(right) == LLVMIntegerTypeKind);
-
     return LLVMBuildNeg(self->builder, right, "");
 }
 

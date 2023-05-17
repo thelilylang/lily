@@ -463,7 +463,8 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                     }
                     break;
                 }
-                case LILY_CHECKED_EXPR_BINARY_KIND_EQ: {
+                case LILY_CHECKED_EXPR_BINARY_KIND_EQ:
+                case LILY_CHECKED_EXPR_BINARY_KIND_NOT_EQ: {
                     LLVMValueRef left = generate_expr__LilyIrLlvm(
                       self, expr->binary.left, scope, fun, ptr);
                     LLVMValueRef right = generate_expr__LilyIrLlvm(
@@ -488,7 +489,14 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                         case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
                         case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
                             return LLVMBuildICmp(
-                              self->builder, LLVMIntEQ, left, right, "");
+                              self->builder,
+                              expr->binary.kind ==
+                                  LILY_CHECKED_EXPR_BINARY_KIND_EQ
+                                ? LLVMIntEQ
+                                : LLVMIntNE,
+                              left,
+                              right,
+                              "");
                         case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
                             TODO("implements equal for bytes");
                         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
@@ -498,7 +506,14 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
                         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
                             return LLVMBuildFCmp(
-                              self->builder, LLVMRealOEQ, left, right, "");
+                              self->builder,
+                              expr->binary.kind ==
+                                  LILY_CHECKED_EXPR_BINARY_KIND_EQ
+                                ? LLVMRealOEQ
+                                : LLVMRealONE,
+                              left,
+                              right,
+                              "");
                         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
                             TODO("implements equal for lambda");
                         case LILY_CHECKED_DATA_TYPE_KIND_LIST:

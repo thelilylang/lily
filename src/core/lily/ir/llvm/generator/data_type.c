@@ -118,8 +118,16 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return generate_data_type__LilyIrLlvm(
               self, data_type->trace, scope);
-        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
-            TODO("generate tuple data type");
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
+            LLVMTypeRef types[252] = { 0 };
+
+            for (Usize i = 0; i < data_type->tuple->len; ++i) {
+                types[i] = generate_data_type__LilyIrLlvm(
+                  self, get__Vec(data_type->tuple, i), scope);
+            }
+
+            return LLVMStructType(types, data_type->tuple->len, false);
+        }
         case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
             // TODO: Replace todo with unreachable after performing a type
             // inference system.
