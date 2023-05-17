@@ -44,22 +44,36 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
             return LLVMConstInt(
               i8__LilyIrLlvm(self), expr->literal.byte, false);
         case LILY_CHECKED_EXPR_LITERAL_KIND_BYTES: {
-            Usize bytes_len = strlen((char *)expr->literal.bytes) + 1;
+            Usize bytes_len = strlen((char *)expr->literal.bytes);
             LLVMTypeRef bytes_type =
-              LLVMArrayType(i8__LilyIrLlvm(self), bytes_len);
-            LLVMValueRef global_str =
+              LLVMArrayType(i8__LilyIrLlvm(self), bytes_len + 1);
+            LLVMValueRef global_bytes =
               LLVMAddGlobal(self->module, bytes_type, "bytes");
 
             LLVMSetInitializer(
-              global_str,
+              global_bytes,
               LLVMConstString((char *)expr->literal.bytes, bytes_len, false));
-            LLVMSetUnnamedAddr(global_str, true);
+            LLVMSetUnnamedAddr(global_bytes, true);
 
-            return global_str;
+            return global_bytes;
         }
         case LILY_CHECKED_EXPR_LITERAL_KIND_CHAR:
             return LLVMConstInt(
               i8__LilyIrLlvm(self), expr->literal.char_, false);
+        case LILY_CHECKED_EXPR_LITERAL_KIND_CSTR: {
+            Usize cstr_len = strlen(expr->literal.cstr);
+            LLVMTypeRef cstr_type =
+              LLVMArrayType(i8__LilyIrLlvm(self), cstr_len + 1);
+            LLVMValueRef global_cstr =
+              LLVMAddGlobal(self->module, cstr_type, "cstr");
+
+            LLVMSetInitializer(
+              global_cstr,
+              LLVMConstString((char *)expr->literal.cstr, cstr_len, false));
+            LLVMSetUnnamedAddr(global_cstr, true);
+
+            return global_cstr;
+        }
         case LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT32:
             return LLVMConstReal(float__LilyIrLlvm(self),
                                  expr->literal.float32);
