@@ -2194,7 +2194,7 @@ get_token__LilyScanner(LilyScanner *self)
 
             if (res) {
                 return NEW_VARIANT(LilyToken,
-                                   literal_string,
+                                   literal_str,
                                    clone__Location(&self->location),
                                    res);
             }
@@ -2209,7 +2209,7 @@ get_token__LilyScanner(LilyScanner *self)
 
                 if (res) {
                     return NEW_VARIANT(LilyToken,
-                                       literal_string,
+                                       literal_str,
                                        clone__Location(&self->location),
                                        res);
                 }
@@ -2293,7 +2293,7 @@ get_token__LilyScanner(LilyScanner *self)
         case IS_DIGIT_WITHOUT_ZERO:
             return get_num__LilyScanner(self);
 
-        // byte literal, bytes literal <id> xor= not= <keyword>
+        // byte literal, bytes literal, cstr literal, <id> xor= not= <keyword>
         case IS_ID:
             if (self->source.cursor.current == 'b' && c1 == (char *)'\'') {
                 next_char__Source(&self->source);
@@ -2324,6 +2324,25 @@ get_token__LilyScanner(LilyScanner *self)
                     lily_free(res);
 
                     return literal_bytes;
+                }
+
+                return NULL;
+            } else if (self->source.cursor.current == 'c' &&
+                       c1 == (char *)'\"') {
+                next_char__Source(&self->source);
+
+                String *res = scan_string__LilyScanner(self);
+
+                if (res) {
+                    LilyToken *literal_cstr =
+                      NEW_VARIANT(LilyToken,
+                                  literal_cstr,
+                                  clone__Location(&self->location),
+                                  res->buffer);
+
+                    lily_free(res);
+
+                    return literal_cstr;
                 }
 
                 return NULL;
