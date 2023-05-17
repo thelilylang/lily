@@ -193,35 +193,12 @@ generate_field_access_expr__LilyIrLlvm(const LilyIrLlvm *self,
     }
 
     for (Usize i = 1; i < expr->call.record_field_access.accesses->len; ++i) {
-        // possible value: Record Field single call, StrLenCall
+        // possible value: Record Field single
         LilyCheckedExpr *field =
           get__Vec(expr->call.record_field_access.accesses, i);
 
-        switch (field->call.kind) {
-            case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN: {
-                indices[first_is_ptr ? i : i - 1] =
-                  LLVMConstInt(i32__LilyIrLlvm(self), 1, false);
-
-                LLVMValueRef field_access = LLVMBuildGEP2(
-                  self->builder,
-                  ptr_type,
-                  value_ptr,
-                  indices,
-                  first_is_ptr
-                    ? expr->call.record_field_access.accesses->len
-                    : expr->call.record_field_access.accesses->len - 1,
-                  "");
-
-                LLVMSetIsInBounds(field_access, true);
-
-                return field_access;
-            }
-            default:
-                indices[first_is_ptr ? i : i - 1] =
-                  LLVMConstInt(i32__LilyIrLlvm(self),
-                               field->call.record_field_single.index,
-                               false);
-        }
+        indices[first_is_ptr ? i : i - 1] = LLVMConstInt(
+          i32__LilyIrLlvm(self), field->call.record_field_single.index, false);
     }
 
     LLVMValueRef field_access = LLVMBuildGEP2(
