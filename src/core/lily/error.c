@@ -255,6 +255,8 @@ to_msg__LilyError(const LilyError *self)
             return "the import of `@sys` is required";
         case LILY_ERROR_KIND_TOO_MANY_ITEMS_IN_MACRO_EXPAND:
             return "too many items in macro expand";
+        case LILY_ERROR_KIND_DUPLICATE_VARIANT:
+            return "duplicate variant";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -484,6 +486,8 @@ to_code__LilyError(const LilyError *self)
             return "0109";
         case LILY_ERROR_KIND_TOO_MANY_ITEMS_IN_MACRO_EXPAND:
             return "0110";
+        case LILY_ERROR_KIND_DUPLICATE_VARIANT:
+            return "0111";
         default:
             UNREACHABLE("unknown variant");
     }
