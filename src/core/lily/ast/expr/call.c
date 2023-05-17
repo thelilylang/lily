@@ -61,6 +61,11 @@ static inline VARIANT_DESTRUCTOR(LilyAstExprCall,
                                  fun_sys,
                                  const LilyAstExprCall *self);
 
+// @brief Free LilyAstExprCall type (LILY_AST_EXPR_CALL_KIND_LEN).
+static inline VARIANT_DESTRUCTOR(LilyAstExprCall,
+                                 len,
+                                 const LilyAstExprCall *self);
+
 // @brief Free LilyAstExprCall type (LILY_AST_EXPR_CALL_KIND_RECORD).
 static inline VARIANT_DESTRUCTOR(LilyAstExprCall,
                                  record,
@@ -82,6 +87,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprCallKind, enum LilyAstExprCallKind self)
             return "LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN";
         case LILY_AST_EXPR_CALL_KIND_FUN_SYS:
             return "LILY_AST_EXPR_CALL_KIND_FUN_SYS";
+        case LILY_AST_EXPR_CALL_KIND_LEN:
+            return "LILY_AST_EXPR_CALL_KIND_LEN";
         case LILY_AST_EXPR_CALL_KIND_RECORD:
             return "LILY_AST_EXPR_CALL_KIND_RECORD";
         case LILY_AST_EXPR_CALL_KIND_VARIANT:
@@ -388,6 +395,14 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprCall, const LilyAstExprCall *self)
 
             break;
         }
+        case LILY_AST_EXPR_CALL_KIND_LEN: {
+            char *s = format(", len = {Sr} }",
+                             to_string__Debug__LilyAstExpr(self->len));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_AST_EXPR_CALL_KIND_RECORD: {
             char *s =
               format(", record = {Sr} }",
@@ -429,6 +444,11 @@ VARIANT_DESTRUCTOR(LilyAstExprCall, fun_sys, const LilyAstExprCall *self)
     FREE(LilyAstExprCallFunSys, &self->fun_sys);
 }
 
+VARIANT_DESTRUCTOR(LilyAstExprCall, len, const LilyAstExprCall *self)
+{
+    FREE(LilyAstExpr, self->len);
+}
+
 VARIANT_DESTRUCTOR(LilyAstExprCall, record, const LilyAstExprCall *self)
 {
     FREE(LilyAstExprCallRecord, &self->record);
@@ -450,6 +470,9 @@ DESTRUCTOR(LilyAstExprCall, const LilyAstExprCall *self)
             break;
         case LILY_AST_EXPR_CALL_KIND_FUN_SYS:
             FREE_VARIANT(LilyAstExprCall, fun_sys, self);
+            break;
+        case LILY_AST_EXPR_CALL_KIND_LEN:
+            FREE_VARIANT(LilyAstExprCall, len, self);
             break;
         case LILY_AST_EXPR_CALL_KIND_RECORD:
             FREE_VARIANT(LilyAstExprCall, record, self);

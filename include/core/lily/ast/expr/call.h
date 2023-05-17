@@ -37,6 +37,7 @@ enum LilyAstExprCallKind
     LILY_AST_EXPR_CALL_KIND_FUN,
     LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN,
     LILY_AST_EXPR_CALL_KIND_FUN_SYS,
+    LILY_AST_EXPR_CALL_KIND_LEN,
     LILY_AST_EXPR_CALL_KIND_RECORD,
     LILY_AST_EXPR_CALL_KIND_VARIANT,
 };
@@ -340,6 +341,7 @@ typedef struct LilyAstExprCall
         LilyAstExprCallFun fun;
         LilyAstExprCallFunBuiltin fun_builtin;
         LilyAstExprCallFunSys fun_sys;
+        LilyAstExpr *len;
         LilyAstExprCallRecord record;
         LilyAstExprCallVariant variant;
     };
@@ -384,6 +386,19 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprCall,
 {
     return (LilyAstExprCall){ .kind = LILY_AST_EXPR_CALL_KIND_FUN_SYS,
                               .fun_sys = fun_sys };
+}
+
+/**
+ *
+ * @brief Construct LilyAstExprCall type
+ * (LILY_AST_EXPR_CALL_KIND_LEN).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprCall,
+                           LilyAstExprCall,
+                           len,
+                           LilyAstExpr *len)
+{
+    return (LilyAstExprCall){ .kind = LILY_AST_EXPR_CALL_KIND_LEN, .len = len };
 }
 
 /**
