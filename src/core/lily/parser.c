@@ -554,6 +554,15 @@ apply_macro_expansion_in_trait__LilyParser(LilyParser *self,
                                            LilyPreparserTraitBodyItem *item,
                                            Vec *body);
 
+static inline bool
+must_close_macro_expand__LilyPreparser(LilyPreparser *self);
+
+/// @param body Body of fun
+static void
+apply_macro_expansion_in_fun__LilyParser(LilyParser *self,
+                                         LilyPreparserFunBodyItem *item,
+                                         Vec *body);
+
 static void
 apply_macro_expansion__LilyParser(LilyParser *self,
                                   LilyPreparserDecl *decl,
@@ -2891,7 +2900,13 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
 
                     FREE(LilyParseBlock, &expr_block);
 
-                    return expr;
+                    switch (self->current->kind) {
+                        case LILY_TOKEN_KIND_DOT:
+                            return parse_path_access__LilyParseBlock(self,
+                                                                     expr);
+                        default:
+                            return expr;
+                    }
                 }
                 case LILY_TOKEN_EXPAND_KIND_PATH: {
                     LilyParseBlock expr_block =
@@ -3880,6 +3895,46 @@ parse_fun_body_item_for_stmt__LilyParser(LilyParser *self,
 
             return NEW_VARIANT(LilyAstBodyFunItem, expr, expr);
         }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_MACRO_EXPAND: {
+            Vec *body = NEW(Vec);
+
+            apply_macro_expansion_in_fun__LilyParser(
+              self, (LilyPreparserFunBodyItem *)item, body);
+
+            switch (body->len) {
+                case 0:
+                    FREE(Vec, body);
+
+                    return NULL;
+                case 1: {
+                    LilyAstBodyFunItem *item = get__Vec(body, 0);
+
+                    FREE(Vec, body);
+
+                    return item;
+                }
+                default: {
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        &self->package->file,
+                        &item->location,
+                        NEW(LilyError,
+                            LILY_ERROR_KIND_TOO_MANY_ITEMS_IN_MACRO_EXPAND),
+                        NULL,
+                        NULL,
+                        NULL),
+                      &self->package->count_error);
+
+                    FREE_BUFFER_ITEMS(
+                      body->buffer, body->len, LilyAstBodyFunItem);
+                    FREE(Vec, body);
+
+                    return NULL;
+                }
+            }
+        }
         case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_VARIABLE:
             emit__Diagnostic(
               NEW_VARIANT(
@@ -3929,6 +3984,12 @@ parse_fun_body_item__LilyParser(LilyParser *self,
             if (expr) {
                 push__Vec(body, NEW_VARIANT(LilyAstBodyFunItem, expr, expr));
             }
+
+            break;
+        }
+        case LILY_PREPARSER_FUN_BODY_ITEM_KIND_MACRO_EXPAND: {
+            apply_macro_expansion_in_fun__LilyParser(
+              self, (LilyPreparserFunBodyItem *)item, body);
 
             break;
         }
@@ -7239,6 +7300,69 @@ apply_macro_expansion_in_trait__LilyParser(LilyParser *self,
         append__Vec(body, expand_body);
 
         CLEAN_UP_CHECK_MACRO(pre_trait_body_items, LilyPreparserTraitBodyItem);
+        FREE(Vec, expand_body);
+    }
+}
+
+bool
+must_close_macro_expand__LilyPreparser(LilyPreparser *self)
+{
+    return self->current->kind == LILY_TOKEN_KIND_EOF;
+}
+
+#include <base/print.h>
+#include <stdio.h>
+
+void
+apply_macro_expansion_in_fun__LilyParser(LilyParser *self,
+                                         LilyPreparserFunBodyItem *item,
+                                         Vec *body)
+{
+    CHECK_MACRO(item);
+
+    // 3. Prepare and parse the content of the macro, then expand
+    // it.
+    {
+        const File *file = get_file_from_filename__LilyPackage(
+          self->root_package, macro->location.filename);
+        LilyPreparser preparse_macro_expand =
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+
+        preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
+
+        Vec *pre_fun_body_items = NEW(Vec);
+
+        while (
+          !must_close_macro_expand__LilyPreparser(&preparse_macro_expand)) {
+            LilyPreparserFunBodyItem *pre_item = preparse_block__LilyPreparser(
+              &preparse_macro_expand, &must_close_macro_expand__LilyPreparser);
+
+            if (pre_item) {
+                push__Vec(pre_fun_body_items, pre_item);
+            }
+        }
+
+        LilyPackage *package = search_package_from_filename__LilyPackage(
+          self->root_package, file->name);
+        LilyParser parser = (LilyParser){ .decls = NULL,
+                                          .package = package,
+                                          .root_package = self->root_package,
+                                          .current = NULL,
+                                          .preparser_info = NULL,
+                                          .position = 0 };
+
+        for (Usize i = 0; i < pre_fun_body_items->len; ++i) {
+            PRINTLN("{Sr}",
+                    to_string__Debug__LilyPreparserFunBodyItem(
+                      get__Vec(pre_fun_body_items, i)));
+        }
+
+        Vec *expand_body =
+          parse_fun_body__LilyParser(&parser, pre_fun_body_items);
+
+        append__Vec(body, expand_body);
+
+        CLEAN_UP_CHECK_MACRO(pre_fun_body_items, LilyPreparserFunBodyItem);
         FREE(Vec, expand_body);
     }
 }
