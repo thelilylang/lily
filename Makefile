@@ -60,6 +60,8 @@ format:
 	${CLANG_FORMAT} ./include/core/shared/*.h
 	${CLANG_FORMAT} ./include/core/shared/target/*.h
 	${CLANG_FORMAT} ./lib/*.h
+	${CLANG_FORMAT} ./lib/builtin/*.h
+	${CLANG_FORMAT} ./lib/builtin/*.c
 	${CLANG_FORMAT} ./lib/sys/*.h
 	${CLANG_FORMAT} ./lib/sys/*.c
 	${CLANG_FORMAT} ./src/base/*.c
