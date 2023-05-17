@@ -1716,6 +1716,14 @@ get_token__LilyScanner(LilyScanner *self)
                     return NEW(LilyToken,
                                LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN,
                                clone__Location(&self->location));
+                } else if (!strcmp(at_keyword->buffer, "len")) {
+                    FREE(String, at_keyword);
+
+                    jump__LilyScanner(self, 3);
+
+                    return NEW(LilyToken,
+                               LILY_TOKEN_KIND_KEYWORD_AT_LEN,
+                               clone__Location(&self->location));
                 } else if (!strcmp(at_keyword->buffer, "sys")) {
                     FREE(String, at_keyword);
 
