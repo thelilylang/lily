@@ -23,12 +23,12 @@ Work in progress...
 
 ## Progression
 
-- Scanner: 95% finished
-- Preparser: 95% finished
+- Scanner: 99% finished
+- Preparser: 97% finished
 - Precompiler: 80% finished
 - Parser: 90% finished
-- Analysis: 40% finished
-- Code generator (LLVM): 20% finished
+- Analysis: 45% finished
+- Code generator (LLVM): 25% finished
 - Code generator (C): 0% finished
 - Code generator (C++): 0% finished
 - Linker (LLVM) 5% finished
