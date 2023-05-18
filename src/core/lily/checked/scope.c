@@ -814,7 +814,7 @@ get_current_fun__LilyCheckedScope(LilyCheckedScope *self)
                     break;
             }
 
-			break;
+            break;
         default:
             break;
     }
