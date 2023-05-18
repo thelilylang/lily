@@ -2760,7 +2760,13 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                               expr,
                               NEW_VARIANT(
                                 LilyCheckedExprCall, str_len, len_expr));
-                        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+                        case LILY_CHECKED_DATA_TYPE_KIND_CSTR: {
+                            LilyBuiltinFun *len_cstr_fun =
+                              &self->root_package->builtins[__len__$CStr];
+
+                            add_builtin_fun_to_builtin_usage__LilyPackage(
+                              self->package, len_cstr_fun);
+
                             return NEW_VARIANT(
                               LilyCheckedExpr,
                               call,
@@ -2771,6 +2777,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                               expr,
                               NEW_VARIANT(
                                 LilyCheckedExprCall, cstr_len, len_expr));
+                        }
                         default:
                             FAILED("expected Str, CStr, Bytes, array or list "
                                    "data type");
@@ -3949,7 +3956,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                               "must obtain a function or a lambda function");
                     }
 
-					break;
+                    break;
                 default:
                     UNREACHABLE("must obtain a declaration");
             }
