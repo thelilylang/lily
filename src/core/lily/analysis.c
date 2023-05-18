@@ -3002,7 +3002,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_EXPR_KIND_IDENTIFIER:
             return check_identifier_expr__LilyAnalysis(
-              self, expr, scope, is_moved_expr, false);
+              self, expr, scope, is_moved_expr, must_mut);
         case LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR:
             TODO("identifier dollar expression");
         case LILY_AST_EXPR_KIND_LAMBDA:
