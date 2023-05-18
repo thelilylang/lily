@@ -257,6 +257,10 @@ to_msg__LilyError(const LilyError *self)
             return "too many items in macro expand";
         case LILY_ERROR_KIND_DUPLICATE_VARIANT:
             return "duplicate variant";
+        case LILY_ERROR_KIND_IMPORT_BUILTIN_REQUIRED:
+            return "the import of `@builtin` is required";
+        case LILY_ERROR_KIND_BAD_BUILTIN_FUNCTION:
+            return "bad builtin function";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -488,6 +492,10 @@ to_code__LilyError(const LilyError *self)
             return "0110";
         case LILY_ERROR_KIND_DUPLICATE_VARIANT:
             return "0111";
+        case LILY_ERROR_KIND_IMPORT_BUILTIN_REQUIRED:
+            return "0112";
+        case LILY_ERROR_KIND_BAD_BUILTIN_FUNCTION:
+            return "0113";
         default:
             UNREACHABLE("unknown variant");
     }
