@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
 #include <base/new.h>
 #include <base/print.h>
 
@@ -3928,7 +3929,30 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_STMT_KIND_RAISE:
             TODO("analysis raise stmt");
         case LILY_AST_STMT_KIND_RETURN: {
+            LilyCheckedScopeDecls *current_fun =
+              get_current_fun__LilyCheckedScope(scope);
             LilyCheckedExpr *expr = NULL;
+            LilyCheckedDataType *fun_return_data_type = NULL;
+
+            ASSERT(current_fun);
+
+            // TODO: add a support for the lambda statement
+            switch (current_fun->kind) {
+                case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+                    switch (current_fun->decl->kind) {
+                        case LILY_CHECKED_DECL_KIND_FUN:
+                            fun_return_data_type =
+                              current_fun->decl->fun.return_data_type;
+                            break;
+                        default:
+                            UNREACHABLE(
+                              "must obtain a function or a lambda function");
+                    }
+
+					break;
+                default:
+                    UNREACHABLE("must obtain a declaration");
+            }
 
             if (stmt->return_.expr) {
                 expr = check_expr__LilyAnalysis(self,
@@ -3938,6 +3962,37 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                                                 true,
                                                 false,
                                                 NULL);
+
+                // Check the data type of the return expression
+                if (fun_return_data_type) {
+                    if (!eq__LilyCheckedDataType(fun_return_data_type,
+                                                 expr->data_type)) {
+                        FAILED("the data type doesn't match with the inferred "
+                               "type or the specified return data type passed "
+                               "to the function");
+                    }
+                } else {
+                    fun_return_data_type =
+                      clone__LilyCheckedDataType(expr->data_type);
+                }
+            } else {
+                if (fun_return_data_type) {
+                    switch (fun_return_data_type->kind) {
+                        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+                        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+                            break;
+                        default:
+                            FAILED(
+                              "expected Unit or CVoid as return data type");
+                    }
+                } else {
+                    // TODO:Add the possibility for the compiler to have a list
+                    // of potential return types (this data type will not be
+                    // definable by the user).
+                    fun_return_data_type = NEW(LilyCheckedDataType,
+                                               LILY_CHECKED_DATA_TYPE_KIND_UNIT,
+                                               &stmt->location);
+                }
             }
 
             return NEW_VARIANT(LilyCheckedBodyFunItem,
