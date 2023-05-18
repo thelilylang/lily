@@ -299,6 +299,15 @@ load_builtins__LilyBuiltin()
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_FLOAT64, NULL))
     };
 
+    builtins[24] = (LilyBuiltinFun){
+        .name = "len",
+        .real_name = from__String("__len__$CStr"),
+        .return_data_type =
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
+        .params = init__Vec(
+          1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
+    };
+
     return builtins;
 }
 

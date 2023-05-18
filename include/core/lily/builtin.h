@@ -30,7 +30,33 @@
 
 #include <core/lily/checked/data_type.h>
 
-#define BUILTINS_COUNT 24
+#define BUILTINS_COUNT 25
+
+#define __max__$Int8 0
+#define __max__$Int16 1
+#define __max__$Int32 2
+#define __max__$Int64 3
+#define __max__$Isize 4
+#define __max__$Uint8 5
+#define __max__$Uint16 6
+#define __max__$Uint32 7
+#define __max__$Uint64 8
+#define __max__$Usize 9
+#define __max__$Float32 10
+#define __max__$Float64 11
+#define __min__$Int8 12
+#define __min__$Int16 13
+#define __min__$Int32 14
+#define __min__$Int64 15
+#define __min__$Isize 16
+#define __min__$Uint8 17
+#define __min__$Uint16 18
+#define __min__$Uint32 19
+#define __min__$Uint64 20
+#define __min__$Usize 21
+#define __min__$Float32 22
+#define __min__$Float64 23
+#define __len__$CStr 24
 
 typedef struct LilyBuiltinFun
 {
