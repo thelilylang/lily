@@ -154,7 +154,7 @@ load_value__LilyLlvmScope(LilyLlvmScope *self,
  * @brief Search for a fun in the scope.
  */
 LilyLlvmFun *
-search_fun__LilyLlvmScope(LilyLlvmScope *self, String *name);
+search_fun__LilyLlvmScope(LilyLlvmScope *self, char *name);
 
 /**
  *

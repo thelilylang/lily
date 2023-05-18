@@ -77,7 +77,7 @@ generate_fun_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                    LLVMValueRef ptr)
 {
     LilyLlvmFun *called_fun =
-      search_fun__LilyLlvmScope(scope, expr->call.global_name);
+      search_fun__LilyLlvmScope(scope, expr->call.global_name->buffer);
     LLVMValueRef params[252] = { 0 };
     Usize params_len = 0;
 
@@ -109,7 +109,7 @@ generate_sys_fun_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                        LLVMValueRef ptr)
 {
     LilyLlvmFun *called_fun = search_fun__LilyLlvmScope(
-      scope, expr->call.fun_sys.sys_fun_signature->real_name);
+      scope, expr->call.fun_sys.sys_fun_signature->real_name->buffer);
     LLVMValueRef params[252] = {};
     Usize params_len = 0;
 
@@ -141,7 +141,7 @@ generate_builtin_fun_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                            LLVMValueRef ptr)
 {
     LilyLlvmFun *called_fun = search_fun__LilyLlvmScope(
-      scope, expr->call.fun_builtin.builtin_fun_signature->real_name);
+      scope, expr->call.fun_builtin.builtin_fun_signature->real_name->buffer);
     LLVMValueRef params[252] = {};
     Usize params_len = 0;
 
@@ -277,17 +277,25 @@ generate_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
             return search_value__LilyLlvmScope(scope, expr->call.global_name)
               ->value;
         case LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN: {
-            LLVMValueRef cstr_ptr = generate_expr__LilyIrLlvm(
-              self, expr->call.cstr_len, scope, fun, NULL);
+            LilyLlvmFun *called_fun =
+              search_fun__LilyLlvmScope(scope, "__len__$CStr");
 
-            TODO("...");
-            // return LLVMBuildCall2(self->builder,
+            return LLVMBuildCall2(
+              self->builder,
+              called_fun->fun_type,
+              called_fun->fun,
+              (LLVMValueRef[]){ generate_expr__LilyIrLlvm(
+                self, expr->call.cstr_len, scope, fun, NULL) },
+              1,
+              "");
         }
         case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
             LLVMTypeRef type =
               generate_data_type__LilyIrLlvm(self, expr->data_type, scope);
 
-            if (LLVMGetTypeKind(type) == LLVMPointerTypeKind) {
+            if (LLVMGetTypeKind(type) == LLVMPointerTypeKind &&
+                expr->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_PTR &&
+                expr->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_REF) {
                 return search_value__LilyLlvmScope(scope,
                                                    expr->call.global_name)
                   ->value;
