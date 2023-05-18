@@ -63,8 +63,8 @@ is_builtin_function__LilyBuiltin(const char *name);
  */
 const LilyBuiltinFun *
 get_builtin__LilyBuiltin(LilyBuiltinFun *builtins,
-                         Vec *params,
-                         LilyCheckedDataType *return_data_type);
+                         const char *name,
+                         Vec *params);
 
 /**
  *

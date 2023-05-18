@@ -311,32 +311,36 @@ is_builtin_function__LilyBuiltin(const char *name)
 
     return false;
 }
-
 const LilyBuiltinFun *
 get_builtin__LilyBuiltin(LilyBuiltinFun *builtins,
-                         Vec *params,
-                         LilyCheckedDataType *return_data_type)
+                         const char *name,
+                         Vec *params)
 {
-    for (Usize i = 0; i < BUILTINS_COUNT; ++i) {
-    next_builtin : {
+    Usize i = 0;
+
+    for (; i < BUILTINS_COUNT; ++i) {
         const LilyBuiltinFun *builtin = &builtins[i];
 
-        if (eq__LilyCheckedDataType(builtin->return_data_type,
-                                    return_data_type)) {
+        if (!strcmp(builtin->name, name)) {
             if (params->len != builtin->params->len) {
                 continue;
             }
 
+            bool is_match = true;
+
             for (Usize i = 0; i < builtin->params->len; ++i) {
                 if (!eq__LilyCheckedDataType(get__Vec(builtin->params, i),
                                              get__Vec(params, i))) {
-                    goto next_builtin;
+                    is_match = false;
+
+                    break;
                 }
             }
 
-            return builtin;
+            if (is_match) {
+                return builtin;
+            }
         }
-    }
     }
 
     return NULL;
