@@ -2553,6 +2553,53 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                false,
                                                NULL);
 
+                    // Check if the length is computable at compile-time
+                    switch (len_expr->kind) {
+                        case LILY_CHECKED_EXPR_KIND_LITERAL:
+                            switch (len_expr->literal.kind) {
+                                case LILY_CHECKED_EXPR_LITERAL_KIND_STR: {
+                                    LilyCheckedExpr *res = NEW_VARIANT(
+                                      LilyCheckedExpr,
+                                      literal,
+                                      &expr->location,
+                                      NEW(LilyCheckedDataType,
+                                          LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                          &expr->location),
+                                      expr,
+                                      NEW_VARIANT(LilyCheckedExprLiteral,
+                                                  int64,
+                                                  len_expr->literal.str->len));
+
+                                    FREE(LilyCheckedExpr, len_expr);
+
+                                    return res;
+                                }
+                                case LILY_CHECKED_EXPR_LITERAL_KIND_CSTR: {
+                                    LilyCheckedExpr *res = NEW_VARIANT(
+                                      LilyCheckedExpr,
+                                      literal,
+                                      &expr->location,
+                                      NEW(LilyCheckedDataType,
+                                          LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                          &expr->location),
+                                      expr,
+                                      NEW_VARIANT(
+                                        LilyCheckedExprLiteral,
+                                        int64,
+                                        strlen(len_expr->literal.cstr)));
+
+                                    FREE(LilyCheckedExpr, len_expr);
+
+                                    return res;
+                                }
+                                default:
+                                    TODO(
+                                      "do for the rest of compatible literal");
+                            }
+                        default:
+                            break;
+                    }
+
                     switch (len_expr->data_type->kind) {
                         case LILY_CHECKED_DATA_TYPE_KIND_STR:
                             return NEW_VARIANT(
@@ -2565,8 +2612,17 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                               expr,
                               NEW_VARIANT(
                                 LilyCheckedExprCall, str_len, len_expr));
-						case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
-							TODO("@len(cstr)");
+                        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              call,
+                              &expr->location,
+                              NEW(LilyCheckedDataType,
+                                  LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                  &expr->location),
+                              expr,
+                              NEW_VARIANT(
+                                LilyCheckedExprCall, cstr_len, len_expr));
                         default:
                             FAILED("expected Str, CStr, Bytes, array or list "
                                    "data type");
