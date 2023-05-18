@@ -42,7 +42,7 @@ run__LilyIrLlvmLinker(LilyPackage *self)
     String *path = format__String("{sa}.ll", path_base);
 
     append__String(self->linker.llvm.command, path);
-    push_str__String(self->linker.llvm.command, " -llily_sys");
+    push_str__String(self->linker.llvm.command, " -llily_sys -llily_builtin");
 
     char *content = LLVMPrintModuleToString(self->ir.llvm.module);
 
