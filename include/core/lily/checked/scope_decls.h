@@ -30,6 +30,7 @@
 typedef struct LilyCheckedDecl LilyCheckedDecl;
 typedef struct LilyCheckedDeclModule LilyCheckedDeclModule;
 
+// TODO: add an other kind of decls for the lambda statement
 enum LilyCheckedScopeDeclsKind
 {
     LILY_CHECKED_SCOPE_DECLS_KIND_DECL,
