@@ -30,11 +30,14 @@
 
 #include <core/lily/checked/data_type.h>
 
-#define BUILTINS_COUNT 0
+#define BUILTINS_COUNT 24
 
 typedef struct LilyBuiltinFun
 {
     const char *name;
+    // The `real_name` is the name that was given in the C include file at the
+    // path: `lib/builtin/*.h`
+    String *real_name;
     LilyCheckedDataType *return_data_type;
     Vec *params; // Vec<LilyCheckedDataType*>*
 } LilyBuiltinFun;
@@ -45,6 +48,23 @@ typedef struct LilyBuiltinFun
  */
 LilyBuiltinFun *
 load_builtins__LilyBuiltin();
+
+/**
+ *
+ * @brief Return true if is a builtin function.
+ */
+bool
+is_builtin_function__LilyBuiltin(const char *name);
+
+/**
+ *
+ * @brief Get builtin function depending on the parameters of the function and
+ * the type of return.
+ */
+const LilyBuiltinFun *
+get_builtin__LilyBuiltin(LilyBuiltinFun *builtins,
+                         Vec *params,
+                         LilyCheckedDataType *return_data_type);
 
 /**
  *
