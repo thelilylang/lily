@@ -40,6 +40,7 @@ enum LilyCheckedExprCallKind
     LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE,
     LILY_CHECKED_EXPR_CALL_KIND_CLASS,
     LILY_CHECKED_EXPR_CALL_KIND_CONSTANT,
+    LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN,
     LILY_CHECKED_EXPR_CALL_KIND_ERROR,
     LILY_CHECKED_EXPR_CALL_KIND_FUN,
     LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS,
@@ -527,10 +528,12 @@ typedef struct LilyCheckedExprCall
     LilyCheckedAccessScope scope; // NOTE: undef when kind is equal to
                                   // LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN or
                                   // LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS or
-                                  // LILY_CHECKED_EXPR_CALL_KIND_STR_LEN
+                                  // LILY_CHECKED_EXPR_CALL_KIND_STR_LEN or
+                                  // LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN
     String *global_name;          // String*? (&)
     union
     {
+        LilyCheckedExpr *cstr_len;
         LilyCheckedExprCallError error;
         LilyCheckedExprCallFun fun;
         const LilyBuiltinFun *fun_builtin; // const LilyBuiltinFun* (&)
@@ -540,10 +543,25 @@ typedef struct LilyCheckedExprCall
         LilyCheckedExprCallRecord record;
         LilyCheckedExprCallRecordFieldSingle record_field_single;
         LilyCheckedExprCallRecordFieldAccess record_field_access;
-        LilyCheckedExpr *str_len; // LilyCheckedExpr*?
+        LilyCheckedExpr *str_len;
         LilyCheckedExprCallVariant variant;
     };
 } LilyCheckedExprCall;
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           cstr_len,
+                           LilyCheckedExpr *cstr_len)
+{
+    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN,
+                                  .global_name = NULL,
+                                  .cstr_len = cstr_len };
+}
 
 /**
  *
