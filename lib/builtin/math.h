@@ -50,6 +50,9 @@ extern "C"
     LILY_API inline Int64 __max__$Int64(Int64 x, Int64 y)
       __attribute__((always_inline));
 
+    LILY_API inline Isize __max__$Isize(Isize x, Isize y)
+      __attribute__((always_inline));
+
     LILY_API inline Uint8 __max__$Uint8(Uint8 x, Uint8 y)
       __attribute__((always_inline));
 
@@ -60,6 +63,9 @@ extern "C"
       __attribute__((always_inline));
 
     LILY_API inline Uint64 __max__$Uint64(Uint64 x, Uint64 y)
+      __attribute__((always_inline));
+
+    LILY_API inline Usize __max__$Usize(Usize x, Usize y)
       __attribute__((always_inline));
 
     LILY_API inline Float32 __max__$Float32(Float32 x, Float32 y)
