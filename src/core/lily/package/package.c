@@ -278,6 +278,21 @@ add_sys_fun_to_sys_usage__LilyPackage(LilyPackage *self, LilySysFun *fun_sys)
     push__Vec(self->sys_usage, fun_sys);
 }
 
+void
+add_builtin_fun_to_builtin_usage__LilyPackage(LilyPackage *self,
+                                              LilyBuiltinFun *fun_builtin)
+{
+    for (Usize i = 0; i < self->builtin_usage->len; ++i) {
+        if (!strcmp(CAST(LilySysFun *, get__Vec(self->builtin_usage, i))
+                      ->real_name->buffer,
+                    fun_builtin->real_name->buffer)) {
+            return;
+        }
+    }
+
+    push__Vec(self->builtin_usage, fun_builtin);
+}
+
 DESTRUCTOR(LilyPackage, LilyPackage *self)
 {
     FREE(String, self->name);

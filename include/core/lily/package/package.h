@@ -159,6 +159,17 @@ search_package_from_name__LilyPackage(LilyPackage *self, String *name);
 
 /**
  *
+ * @brief Try to add a used builtin function to the register of uses of builtin
+ * functions.
+ * @note There is no duplication of builtin functions in the function register
+ * of the system used.
+ */
+void
+add_builtin_fun_to_builtin_usage__LilyPackage(LilyPackage *self,
+                                              LilyBuiltinFun *fun_builtin);
+
+/**
+ *
  * @brief Try to add a used sys function to the register of uses of system
  * functions.
  * @note There is no duplication of system functions in the function register of
