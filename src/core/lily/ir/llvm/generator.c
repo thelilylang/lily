@@ -26,6 +26,7 @@
 
 #include <core/lily/ir/llvm/dump.h>
 #include <core/lily/ir/llvm/generator.h>
+#include <core/lily/ir/llvm/generator/builtin.h>
 #include <core/lily/ir/llvm/generator/constant.h>
 #include <core/lily/ir/llvm/generator/function.h>
 #include <core/lily/ir/llvm/generator/sys.h>
@@ -49,6 +50,7 @@ run__LilyIrLlvmGenerator(LilyPackage *self)
 
     LilyLlvmScope *scope = NEW(LilyLlvmScope, NULL);
 
+    declare_builtin_function__LilyIrLlvm(&self->ir.llvm, scope, self);
     declare_sys_function__LilyIrLlvm(&self->ir.llvm, scope, self);
 
     for (Usize i = 0; i < self->analysis.module.decls->len; ++i) {

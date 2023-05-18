@@ -49,6 +49,13 @@ generate_sys_fun_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                        LLVMValueRef ptr);
 
 static LLVMValueRef
+generate_builtin_fun_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
+                                           const LilyCheckedExpr *expr,
+                                           LilyLlvmScope *scope,
+                                           LLVMValueRef fun,
+                                           LLVMValueRef ptr);
+
+static LLVMValueRef
 generate_record_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                       const LilyCheckedExpr *expr,
                                       LilyLlvmScope *scope,
@@ -112,6 +119,38 @@ generate_sys_fun_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
         for (Usize i = 0; i < expr->call.fun_sys.params->len; ++i) {
             LilyCheckedExprCallFunParam *param =
               get__Vec(expr->call.fun_sys.params, i);
+
+            params[i] =
+              generate_expr__LilyIrLlvm(self, param->value, scope, fun, ptr);
+        }
+    }
+
+    return LLVMBuildCall2(self->builder,
+                          called_fun->fun_type,
+                          called_fun->fun,
+                          params,
+                          params_len,
+                          "");
+}
+
+LLVMValueRef
+generate_builtin_fun_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
+                                           const LilyCheckedExpr *expr,
+                                           LilyLlvmScope *scope,
+                                           LLVMValueRef fun,
+                                           LLVMValueRef ptr)
+{
+    LilyLlvmFun *called_fun = search_fun__LilyLlvmScope(
+      scope, expr->call.fun_builtin.builtin_fun_signature->real_name);
+    LLVMValueRef params[252] = {};
+    Usize params_len = 0;
+
+    if (expr->call.fun_builtin.params) {
+        params_len = expr->call.fun_builtin.params->len;
+
+        for (Usize i = 0; i < expr->call.fun_builtin.params->len; ++i) {
+            LilyCheckedExprCallFunParam *param =
+              get__Vec(expr->call.fun_builtin.params, i);
 
             params[i] =
               generate_expr__LilyIrLlvm(self, param->value, scope, fun, ptr);
@@ -262,6 +301,9 @@ generate_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
               self, expr, scope, fun, ptr);
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
             return LLVMGetParam(fun, expr->call.fun_param);
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
+            return generate_builtin_fun_call_expr__LilyIrLlvm(
+              self, expr, scope, fun, ptr);
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
             return generate_sys_fun_call_expr__LilyIrLlvm(
               self, expr, scope, fun, ptr);
