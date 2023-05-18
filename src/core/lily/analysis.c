@@ -143,6 +143,13 @@ check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
                                     LilyCheckedScope *scope,
                                     enum LilyCheckedSafetyMode safety_mode);
 
+static Vec *
+check_builtin_fun_params_call__LilyAnalysis(
+  LilyAnalysis *self,
+  Vec *ast_params,
+  LilyCheckedScope *scope,
+  enum LilyCheckedSafetyMode safety_mode);
+
 /// @param sys_params Vec<LilyCheckedDataType*>*
 static Vec *
 check_sys_fun_params_call__LilyAnalysis(LilyAnalysis *self,
@@ -1963,6 +1970,41 @@ check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
 }
 
 Vec *
+check_builtin_fun_params_call__LilyAnalysis(
+  LilyAnalysis *self,
+  Vec *ast_params,
+  LilyCheckedScope *scope,
+  enum LilyCheckedSafetyMode safety_mode)
+{
+    Vec *checked_params = ast_params->len > 0 ? NEW(Vec) : NULL;
+
+    for (Usize i = 0; i < ast_params->len; ++i) {
+        LilyAstExprFunParamCall *call_param = get__Vec(ast_params, i);
+
+        LilyCheckedExpr *value = check_expr__LilyAnalysis(
+          self, call_param->value, scope, safety_mode, false, false, NULL);
+
+        switch (call_param->kind) {
+            case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
+                FAILED("default param is not expected in sys function");
+            case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
+                // TODO: pass &param->location
+                push__Vec(checked_params,
+                          NEW_VARIANT(LilyCheckedExprCallFunParam,
+                                      normal,
+                                      value,
+                                      call_param->location));
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    return checked_params;
+}
+
+Vec *
 check_sys_fun_params_call__LilyAnalysis(LilyAnalysis *self,
                                         Vec *ast_params,
                                         Vec *sys_params,
@@ -2455,8 +2497,113 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                         }
                     }
                 }
-                case LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN:
-                    TODO("analysis builtin function");
+                case LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN: {
+                    if (!self->package->builtin_is_loaded) {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            &self->package->file,
+                            &expr->location,
+                            NEW(LilyError,
+                                LILY_ERROR_KIND_IMPORT_BUILTIN_REQUIRED),
+                            NULL,
+                            NULL,
+                            from__String("please import `@builtin`")),
+                          &self->package->count_error);
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr,
+                          call,
+                          &expr->location,
+                          NEW(LilyCheckedDataType,
+                              LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                              &expr->location),
+                          expr,
+                          NEW(LilyCheckedExprCall,
+                              LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                              NULL,
+                              (LilyCheckedAccessScope){ .id = 0 }));
+                    }
+
+                    if (!is_builtin_function__LilyBuiltin(
+                          expr->call.fun_builtin.name->buffer)) {
+                    bad_builtin_function : {
+                        emit__Diagnostic(
+                          NEW_VARIANT(Diagnostic,
+                                      simple_lily_error,
+                                      &self->package->file,
+                                      &expr->location,
+                                      NEW(LilyError,
+                                          LILY_ERROR_KIND_BAD_BUILTIN_FUNCTION),
+                                      NULL,
+                                      NULL,
+                                      from__String("unknown builtin function")),
+                          &self->package->count_error);
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr,
+                          call,
+                          &expr->location,
+                          NEW(LilyCheckedDataType,
+                              LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                              &expr->location),
+                          expr,
+                          NEW(LilyCheckedExprCall,
+                              LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                              NULL,
+                              (LilyCheckedAccessScope){ .id = 0 }));
+                    }
+                    }
+
+                    Vec *check_params_call =
+                      check_builtin_fun_params_call__LilyAnalysis(
+                        self,
+                        expr->call.fun_builtin.params,
+                        scope,
+                        safety_mode); // Vec<LilyCheckedExprCallFunParam*>*?
+                    Vec *check_params_call_dt =
+                      NEW(Vec); // Vec<LilyCheckedDataType*>*
+
+                    if (check_params_call) {
+                        for (Usize i = 0; i < check_params_call->len; ++i) {
+                            push__Vec(check_params_call_dt,
+                                      CAST(LilyCheckedExprCallFunParam *,
+                                           get__Vec(check_params_call, i))
+                                        ->value->data_type);
+                        }
+                    }
+
+                    const LilyBuiltinFun *builtin_signature =
+                      get_builtin__LilyBuiltin(
+                        self->root_package->builtins,
+                        expr->call.fun_builtin.name->buffer,
+                        check_params_call_dt);
+
+                    if (!builtin_signature) {
+                        goto bad_builtin_function;
+                    }
+
+                    // Add builtin to builtin_signature to know which prototype
+                    // to define for IR.
+                    add_builtin_fun_to_builtin_usage__LilyPackage(
+                      self->package, (LilyBuiltinFun *)builtin_signature);
+
+                    FREE(Vec, check_params_call_dt);
+
+                    return NEW_VARIANT(
+                      LilyCheckedExpr,
+                      call,
+                      &expr->location,
+                      clone__LilyCheckedDataType(
+                        builtin_signature->return_data_type),
+                      expr,
+                      NEW_VARIANT(LilyCheckedExprCall,
+                                  fun_builtin,
+                                  NEW(LilyCheckedExprCallFunBuiltin,
+                                      check_params_call,
+                                      builtin_signature)));
+                }
                 case LILY_AST_EXPR_CALL_KIND_FUN_SYS: {
                     if (!self->package->sys_is_loaded) {
                         emit__Diagnostic(
@@ -2523,7 +2670,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                         expr->call.fun_sys.params,
                         sys_signature->params,
                         scope,
-                        safety_mode);
+                        safety_mode); // Vec<LilyCheckedExprCallFunParam*>*?
 
                     // Add sys to sys_signature to know which prototype to
                     // define for IR.
