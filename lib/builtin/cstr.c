@@ -29,8 +29,8 @@ __len__$CStr(const char *s)
 {
     Usize len = 0;
 
-    while (s[len++])
-        ;
+    while (s[len])
+        ++len;
 
     return len;
 }
