@@ -199,9 +199,48 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedExprCallFun *self);
 #endif
 
+typedef struct LilyCheckedExprCallFunBuiltin
+{
+    Vec *params; // Vec<LilyCheckedExprCallFunParam*>*?
+    const LilyBuiltinFun *builtin_fun_signature; // const LilyBuiltinFun* (&)
+} LilyCheckedExprCallFunBuiltin;
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCallFunBuiltin type.
+ */
+inline CONSTRUCTOR(LilyCheckedExprCallFunBuiltin,
+                   LilyCheckedExprCallFunBuiltin,
+                   Vec *params,
+                   const LilyBuiltinFun *builtin_fun_signature)
+{
+    return (LilyCheckedExprCallFunBuiltin){ .params = params,
+                                            .builtin_fun_signature =
+                                              builtin_fun_signature };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCallFunBuiltin in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallFunBuiltin,
+               const LilyCheckedExprCallFunBuiltin *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedExprCallFunBuiltin type.
+ */
+DESTRUCTOR(LilyCheckedExprCallFunBuiltin,
+           const LilyCheckedExprCallFunBuiltin *self);
+
 typedef struct LilyCheckedExprCallFunSys
 {
-    Vec *params;                         // Vec<LilyCheckedExprCallFunParam*>*
+    Vec *params;                         // Vec<LilyCheckedExprCallFunParam*>*?
     const LilySysFun *sys_fun_signature; // const LilySysFun* (&)
 } LilyCheckedExprCallFunSys;
 
@@ -536,7 +575,7 @@ typedef struct LilyCheckedExprCall
         LilyCheckedExpr *cstr_len;
         LilyCheckedExprCallError error;
         LilyCheckedExprCallFun fun;
-        const LilyBuiltinFun *fun_builtin; // const LilyBuiltinFun* (&)
+        LilyCheckedExprCallFunBuiltin fun_builtin;
         LilyCheckedExprCallFunSys fun_sys;
         Usize fun_param; // index of fun param
         LilyCheckedExprCallMethod method;
@@ -607,12 +646,11 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
 inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
                            LilyCheckedExprCall,
                            fun_builtin,
-                           String *global_name,
-                           const LilyBuiltinFun *fun_builtin)
+                           LilyCheckedExprCallFunBuiltin fun_builtin)
 {
     return (LilyCheckedExprCall){ .kind =
                                     LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN,
-                                  .global_name = global_name,
+                                  .global_name = NULL,
                                   .fun_builtin = fun_builtin };
 }
 

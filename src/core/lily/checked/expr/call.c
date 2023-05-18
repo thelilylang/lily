@@ -112,6 +112,12 @@ static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                                  fun,
                                  const LilyCheckedExprCall *self);
 
+/// @brief Free LilyCheckedExprCall type
+/// (LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN).
+static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
+                                 fun_builtin,
+                                 const LilyCheckedExprCall *self);
+
 /// @brief Free LilyCheckedExprCall type (LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS).
 static inline VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                                  fun_sys,
@@ -396,6 +402,38 @@ DESTRUCTOR(LilyCheckedExprCallFun, const LilyCheckedExprCallFun *self)
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCallFunBuiltin,
+               const LilyCheckedExprCallFunBuiltin *self)
+{
+    String *res = from__String("LilyCheckedExprCallFunBuiltin{ params =");
+
+    DEBUG_VEC_STRING(self->params, res, LilyCheckedExprCallFunParam);
+
+    {
+        char *s =
+          format(", builtin_fun_signature = {Sr} }",
+                 to_string__Debug__LilyBuiltinFun(self->builtin_fun_signature));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyCheckedExprCallFunBuiltin,
+           const LilyCheckedExprCallFunBuiltin *self)
+{
+    if (self->params) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyCheckedExprCallFunParam);
+        FREE(Vec, self->params);
+    }
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
                LilyCheckedExprCallFunSys,
                const LilyCheckedExprCallFunSys *self)
 {
@@ -416,9 +454,11 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedExprCallFunSys, const LilyCheckedExprCallFunSys *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, LilyCheckedExprCallFunParam);
-    FREE(Vec, self->params);
+    if (self->params) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyCheckedExprCallFunParam);
+        FREE(Vec, self->params);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -823,9 +863,9 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
             break;
         }
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN: {
-            char *s =
-              format(", fun_builtin = {Sr} }",
-                     to_string__Debug__LilyBuiltinFun(self->fun_builtin));
+            char *s = format(", fun_builtin = {Sr} }",
+                             to_string__Debug__LilyCheckedExprCallFunBuiltin(
+                               &self->fun_builtin));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -934,6 +974,13 @@ VARIANT_DESTRUCTOR(LilyCheckedExprCall, fun, const LilyCheckedExprCall *self)
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedExprCall,
+                   fun_builtin,
+                   const LilyCheckedExprCall *self)
+{
+    FREE(LilyCheckedExprCallFunBuiltin, &self->fun_builtin);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedExprCall,
                    fun_sys,
                    const LilyCheckedExprCall *self)
 {
@@ -983,10 +1030,12 @@ DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self)
         case LILY_CHECKED_EXPR_CALL_KIND_FUN:
             FREE_VARIANT(LilyCheckedExprCall, fun, self);
             break;
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
+            FREE_VARIANT(LilyCheckedExprCall, fun_builtin, self);
+            break;
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
             FREE_VARIANT(LilyCheckedExprCall, fun_sys, self);
             break;
-        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
         case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
         case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
