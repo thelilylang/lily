@@ -1590,9 +1590,7 @@ parse_object_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
 
     Vec *object = NEW(Vec); // Vec<LilyAstDataType*>*
 
-    while (self->current->kind == LILY_TOKEN_KIND_AT) {
-        next_token__LilyParseBlock(self);
-
+    while (self->previous->kind == LILY_TOKEN_KIND_AT) {
         LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
 
         if (!dt) {
@@ -1604,6 +1602,7 @@ parse_object_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
         }
 
         push__Vec(object, dt);
+        next_token__LilyParseBlock(self);
     }
 
     {
@@ -2666,7 +2665,11 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
                 return parse_object_access__LilyParseBlock(self, NULL);
             }
 
-            return parse_access_expr__LilyParseBlock(self);
+            if (self->current->kind == LILY_TOKEN_KIND_DOT) {
+                return parse_access_expr__LilyParseBlock(self);
+            } else {
+                goto unexpected_token;
+            }
         case LILY_TOKEN_KIND_KEYWORD_AT_LEN: {
             Location location = clone__Location(&self->previous->location);
 
@@ -3037,6 +3040,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
         case LILY_TOKEN_KIND_SEMICOLON:
             return NULL;
         default: {
+        unexpected_token : {
             String *previous_s = to_string__LilyToken(self->previous);
 
             emit__Diagnostic(
@@ -3054,6 +3058,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
             FREE(String, previous_s);
 
             return NULL;
+        }
         }
     }
 }
