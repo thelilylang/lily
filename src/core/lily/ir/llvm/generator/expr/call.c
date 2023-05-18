@@ -293,15 +293,15 @@ generate_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
             LLVMTypeRef type =
               generate_data_type__LilyIrLlvm(self, expr->data_type, scope);
 
-            if (LLVMGetTypeKind(type) == LLVMPointerTypeKind &&
-                expr->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_PTR &&
-                expr->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_REF) {
-                return search_value__LilyLlvmScope(scope,
-                                                   expr->call.global_name)
-                  ->value;
-            } else {
-                return load_value__LilyLlvmScope(
-                  scope, self, type, expr->call.global_name);
+            switch (expr->data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+                case LILY_CHECKED_DATA_TYPE_KIND_REF:
+                    return search_value__LilyLlvmScope(scope,
+                                                       expr->call.global_name)
+                      ->value;
+                default:
+                    return load_value__LilyLlvmScope(
+                      scope, self, type, expr->call.global_name);
             }
         }
         case LILY_CHECKED_EXPR_CALL_KIND_FUN:
