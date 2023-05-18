@@ -151,12 +151,12 @@ load_value__LilyLlvmScope(LilyLlvmScope *self,
 }
 
 LilyLlvmFun *
-search_fun__LilyLlvmScope(LilyLlvmScope *self, String *name)
+search_fun__LilyLlvmScope(LilyLlvmScope *self, char *name)
 {
     for (Usize i = 0; i < self->funs->len; ++i) {
         LilyLlvmFun *fun = get__Vec(self->funs, i);
 
-        if (!strcmp(fun->name->buffer, name->buffer)) {
+        if (!strcmp(fun->name->buffer, name)) {
             return fun;
         }
     }
