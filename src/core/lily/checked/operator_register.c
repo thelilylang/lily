@@ -85,7 +85,10 @@ search_operator__LilyCheckedOperatorRegister(
 
 DESTRUCTOR(LilyCheckedOperatorRegister, const LilyCheckedOperatorRegister *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->operators->buffer, self->operators->len, LilyCheckedOperator);
+    if (self->is_global) {
+        FREE_BUFFER_ITEMS(
+          self->operators->buffer, self->operators->len, LilyCheckedOperator);
+    }
+
     FREE(Vec, self->operators);
 }

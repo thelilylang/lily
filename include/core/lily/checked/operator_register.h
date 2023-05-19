@@ -29,16 +29,23 @@
 
 typedef struct LilyCheckedOperatorRegister
 {
-    Vec *operators; // Vec<LilyCheckedOperator*>*
+    // NOTE:
+    // is_global == true: Vec<LilyCheckedOperator*>*
+    // is_global == false: Vec<LilyCheckedOperator* (&)>*
+    Vec *operators;
+    bool is_global;
 } LilyCheckedOperatorRegister;
 
 /**
  *
  * @brief Construct LilyCheckedOperatorRegister type.
  */
-inline CONSTRUCTOR(LilyCheckedOperatorRegister, LilyCheckedOperatorRegister)
+inline CONSTRUCTOR(LilyCheckedOperatorRegister,
+                   LilyCheckedOperatorRegister,
+                   bool is_global)
 {
-    return (LilyCheckedOperatorRegister){ .operators = NEW(Vec) };
+    return (LilyCheckedOperatorRegister){ .operators = NEW(Vec),
+                                          .is_global = is_global };
 }
 
 /**
