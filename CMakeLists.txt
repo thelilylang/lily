@@ -279,6 +279,7 @@ set(CORE_SRC
 	src/core/lily/ir/llvm/generator/expr/unary.c
 	src/core/lily/ir/llvm/generator/expr.c
 	src/core/lily/ir/llvm/generator/function.c
+	src/core/lily/ir/llvm/generator/main.c
 	src/core/lily/ir/llvm/generator/object/class.c
 	src/core/lily/ir/llvm/generator/object/enum_object.c
 	src/core/lily/ir/llvm/generator/object/record_object.c
