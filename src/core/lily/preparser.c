@@ -8833,7 +8833,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
                 UNREACHABLE("this way is impossible");
         }
 
-        // 3. Preparse block	
+        // 3. Preparse block
         LilyPreparserFunBodyItem *block = preparse_block__LilyPreparser(
           self, &must_close_match_case__LilyPreparser, true);
 

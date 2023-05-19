@@ -7407,7 +7407,9 @@ apply_macro_expansion_in_fun__LilyParser(LilyParser *self,
         while (
           !must_close_macro_expand__LilyPreparser(&preparse_macro_expand)) {
             LilyPreparserFunBodyItem *pre_item = preparse_block__LilyPreparser(
-              &preparse_macro_expand, &must_close_macro_expand__LilyPreparser, true);
+              &preparse_macro_expand,
+              &must_close_macro_expand__LilyPreparser,
+              true);
 
             if (pre_item) {
                 push__Vec(pre_fun_body_items, pre_item);
