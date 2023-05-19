@@ -823,6 +823,50 @@ get_current_fun__LilyCheckedScope(LilyCheckedScope *self)
                         : NULL;
 }
 
+LilyCheckedDecl *
+get_current_method__LilyCheckedScope(LilyCheckedScope *self)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            switch (self->decls.decl->kind) {
+                case LILY_CHECKED_DECL_KIND_METHOD:
+                    return self->decls.decl;
+                default:
+                    break;
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    return self->parent
+             ? get_current_method__LilyCheckedScope(self->parent->scope)
+             : NULL;
+}
+
+LilyCheckedDecl *
+get_current_object__LilyCheckedScope(LilyCheckedScope *self)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            switch (self->decls.decl->kind) {
+                case LILY_CHECKED_DECL_KIND_OBJECT:
+                    return self->decls.decl;
+                default:
+                    break;
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    return self->parent
+             ? get_current_object__LilyCheckedScope(self->parent->scope)
+             : NULL;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)

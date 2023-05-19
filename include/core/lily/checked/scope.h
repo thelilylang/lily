@@ -298,6 +298,20 @@ get_current_fun__LilyCheckedScope(LilyCheckedScope *self);
 
 /**
  *
+ * @brief Try to get the current method declaration in the scope.
+ */
+LilyCheckedDecl *
+get_current_method__LilyCheckedScope(LilyCheckedScope *self);
+
+/**
+ *
+ * @brief Try to get the current object declaration in the scope.
+ */
+LilyCheckedDecl *
+get_current_object__LilyCheckedScope(LilyCheckedScope *self);
+
+/**
+ *
  * @brief Get decl from id and position
  */
 LilyCheckedDecl *
