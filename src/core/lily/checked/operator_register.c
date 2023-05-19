@@ -26,6 +26,27 @@
 
 #include <string.h>
 
+int
+add_operator__LilyCheckedOperatorRegister(LilyCheckedOperatorRegister *self,
+                                          String *name,
+                                          LilyCheckedDataType *return_data_type,
+                                          Vec *params)
+{
+    // Look for duplicate operator
+    LilyCheckedOperator *duplicate_op =
+      search_operator__LilyCheckedOperatorRegister(
+        self, name, return_data_type, params);
+
+    if (duplicate_op) {
+        return 1;
+    }
+
+    push__Vec(self->operators,
+              NEW(LilyCheckedOperator, name, return_data_type, params));
+
+    return 0;
+}
+
 LilyCheckedOperator *
 search_operator__LilyCheckedOperatorRegister(
   const LilyCheckedOperatorRegister *self,
@@ -36,26 +57,25 @@ search_operator__LilyCheckedOperatorRegister(
     for (Usize i = 0; i < self->operators->len; ++i) {
         LilyCheckedOperator *operator= get__Vec(self->operators, i);
 
-        if (!strcmp(name->buffer, operator->name->buffer)) {
-            if (eq__LilyCheckedDataType(
-                  return_data_type, operator->return_data_type)) {
-                if (params->len != operator->params->len) {
-                    continue;
-                }
+        if (!strcmp(name->buffer, operator->name->buffer) &&
+            eq__LilyCheckedDataType(
+              return_data_type, operator->return_data_type)) {
+            if (params->len != operator->params->len) {
+                continue;
+            }
 
-                bool is_match = true;
+            bool is_match = true;
 
-                for (Usize j = 0; j < operator->params->len; ++j) {
-                    if (!eq__LilyCheckedDataType(get__Vec(operator->params, j),
-                                                 get__Vec(params, j))) {
-                        is_match = false;
-                        break;
-                    }
+            for (Usize j = 0; j < operator->params->len; ++j) {
+                if (!eq__LilyCheckedDataType(get__Vec(operator->params, j),
+                                             get__Vec(params, j))) {
+                    is_match = false;
+                    break;
                 }
+            }
 
-                if (is_match) {
-                    return operator;
-                }
+            if (is_match) {
+                return operator;
             }
         }
     }

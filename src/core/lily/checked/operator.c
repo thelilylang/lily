@@ -24,6 +24,8 @@
 
 #include <core/lily/checked/operator.h>
 
+#include <string.h>
+
 CONSTRUCTOR(LilyCheckedOperator *,
             LilyCheckedOperator,
             String *name,
@@ -37,6 +39,35 @@ CONSTRUCTOR(LilyCheckedOperator *,
     self->params = params;
 
     return self;
+}
+
+bool
+valid_operator__LilyCheckedOperator(String *name)
+{
+    if (!strcmp(name->buffer, "+") || !strcmp(name->buffer, "and") ||
+        !strcmp(name->buffer, "+=") || !strcmp(name->buffer, "&=") ||
+        !strcmp(name->buffer, "<<=") || !strcmp(name->buffer, "|=") ||
+        !strcmp(name->buffer, ">>=") || !strcmp(name->buffer, "/=") ||
+        !strcmp(name->buffer, "**=") || !strcmp(name->buffer, "**=") ||
+        !strcmp(name->buffer, "%=") || !strcmp(name->buffer, "*=") ||
+        !strcmp(name->buffer, "-=") || !strcmp(name->buffer, "xor=") ||
+        !strcmp(name->buffer, "=") || !strcmp(name->buffer, "&") ||
+        !strcmp(name->buffer, "|") || !strcmp(name->buffer, "/") ||
+        !strcmp(name->buffer, "==") || !strcmp(name->buffer, "**") ||
+        !strcmp(name->buffer, ">=") || !strcmp(name->buffer, ">") ||
+        !strcmp(name->buffer, "<<") || !strcmp(name->buffer, "<=") ||
+        !strcmp(name->buffer, "<") || !strcmp(name->buffer, "%") ||
+        !strcmp(name->buffer, "*") || !strcmp(name->buffer, "not=") ||
+        !strcmp(name->buffer, "or") || !strcmp(name->buffer, ">>") ||
+        !strcmp(name->buffer, ">>") || !strcmp(name->buffer, "..") ||
+        !strcmp(name->buffer, "-") || !strcmp(name->buffer, "xor") ||
+        !strcmp(name->buffer, "->") || !strcmp(name->buffer, "<-") ||
+        !strcmp(name->buffer, "[n]") || !strcmp(name->buffer, "[n..n]") ||
+        !strcmp(name->buffer, "[n..]") || !strcmp(name->buffer, "[..n]")) {
+        return true;
+    }
+
+    return false;
 }
 
 DESTRUCTOR(LilyCheckedOperator, LilyCheckedOperator *self)

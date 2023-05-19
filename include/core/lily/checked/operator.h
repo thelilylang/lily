@@ -50,6 +50,13 @@ CONSTRUCTOR(LilyCheckedOperator *,
 
 /**
  *
+ * @brief Valid operator name.
+ */
+bool
+valid_operator__LilyCheckedOperator(String *name);
+
+/**
+ *
  * @brief Free LilyCheckedOperator type.
  */
 DESTRUCTOR(LilyCheckedOperator, LilyCheckedOperator *self);

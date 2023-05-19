@@ -43,6 +43,17 @@ inline CONSTRUCTOR(LilyCheckedOperatorRegister, LilyCheckedOperatorRegister)
 
 /**
  *
+ * @brief Add operator to the register.
+ * @return Return 1 if is failing otherwise return 0.
+ */
+int
+add_operator__LilyCheckedOperatorRegister(LilyCheckedOperatorRegister *self,
+                                          String *name,
+                                          LilyCheckedDataType *return_data_type,
+                                          Vec *params);
+
+/**
+ *
  * @brief Search operator in the register.
  */
 LilyCheckedOperator *
