@@ -4231,8 +4231,16 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
         self->package->main_is_found = true;
     }
 
+    if (fun->fun.is_main && fun->fun.is_recursive) {
+        FAILED("the main function cannot be recursive");
+    }
+
     // 2. Check generic params
     if (fun->ast_decl->fun.generic_params) {
+        if (fun->fun.is_main) {
+            FAILED("generic params is not expected in main function");
+        }
+
         if (!fun->fun.generic_params) {
             fun->fun.generic_params = check_generic_params(
               self, fun->ast_decl->fun.generic_params, fun->fun.scope);
@@ -4241,6 +4249,11 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
     // 3. Check params.
     if (fun->ast_decl->fun.params) {
+        if (fun->fun.is_main) {
+            FAILED(
+              "no (explicit) parameters are expected in the main function");
+        }
+
         if (!fun->fun.params) {
             fun->fun.params = check_fun_params__LilyAnalysis(
               self, fun->ast_decl->fun.params, fun->fun.scope);
@@ -4256,7 +4269,22 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
                                             fun->ast_decl->fun.return_data_type,
                                             fun->fun.scope,
                                             LILY_CHECKED_SAFETY_MODE_SAFE);
+
+            // Check the return data type of the main function.
+            if (fun->fun.is_main) {
+                switch (fun->fun.return_data_type->kind) {
+                    case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+                    case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+                    case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+                        break;
+                    default:
+                        FAILED("this return data type is not expected for a "
+                               "main function");
+                }
+            }
         } else {
+            // If the return type (checked) is already configured, it means that
+            // the function is recursive.
             fun->fun.is_recursive = true;
         }
     } else {
@@ -4264,6 +4292,8 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
             fun->fun.return_data_type = NEW(
               LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, NULL);
         } else {
+            // If the return type (checked) is already configured, it means that
+            // the function is recursive.
             fun->fun.is_recursive = true;
         }
     }
