@@ -7768,7 +7768,7 @@ preparse_defer_block__LilyPreparser(LilyPreparser *self)
     next_token__LilyPreparser(self); // skip `defer` keyword
 
     LilyPreparserFunBodyItem *item = preparse_block__LilyPreparser(
-      self, &must_close_defer_block__LilyPreparser);
+      self, &must_close_defer_block__LilyPreparser, false);
 
     if (!item) {
         return NULL;
@@ -8309,7 +8309,7 @@ preparse_lambda__LilyPreparser(LilyPreparser *self)
 
     // 4. Preparse fun body item.
     LilyPreparserFunBodyItem *item = preparse_block__LilyPreparser(
-      self, &must_close_lambda_block__LilyPreparser);
+      self, &must_close_lambda_block__LilyPreparser, false);
 
     if (!item) {
         if (params) {
@@ -8833,9 +8833,9 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
                 UNREACHABLE("this way is impossible");
         }
 
-        // 3. Preparse block
+        // 3. Preparse block	
         LilyPreparserFunBodyItem *block = preparse_block__LilyPreparser(
-          self, &must_close_match_case__LilyPreparser);
+          self, &must_close_match_case__LilyPreparser, true);
 
         if (block) {
             if (block->kind == LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS) {
@@ -8987,7 +8987,7 @@ preparse_basic_brace_block__LilyPreparser(LilyPreparser *self)
 
     while (!must_close_basic_brace_block__LilyPreparser(self)) {
         LilyPreparserFunBodyItem *item = preparse_block__LilyPreparser(
-          self, &must_close_basic_brace_block__LilyPreparser);
+          self, &must_close_basic_brace_block__LilyPreparser, true);
 
         if (item) {
             push__Vec(body, item);
@@ -9011,7 +9011,7 @@ preparse_unsafe_block__LilyPreparser(LilyPreparser *self)
 
     while (!must_close_unsafe_block__LilyPreparser(self)) {
         LilyPreparserFunBodyItem *item = preparse_block__LilyPreparser(
-          self, &must_close_unsafe_block__LilyPreparser);
+          self, &must_close_unsafe_block__LilyPreparser, true);
 
         if (item) {
             push__Vec(body, item);
@@ -9196,7 +9196,8 @@ must_preparse_exprs(LilyPreparser *self)
 
 LilyPreparserFunBodyItem *
 preparse_block__LilyPreparser(LilyPreparser *self,
-                              bool (*must_close)(LilyPreparser *))
+                              bool (*must_close)(LilyPreparser *),
+                              bool parse_semicolon)
 {
     location_fun_body_item = clone__Location(&self->current->location);
 
@@ -9571,13 +9572,15 @@ preparse_block__LilyPreparser(LilyPreparser *self,
             PREPARSE_UNTIL(exprs,
                            must_preparse_exprs(self) && !must_close(self));
 
-            switch (self->current->kind) {
-                case LILY_TOKEN_KIND_SEMICOLON:
-                    next_token__LilyPreparser(self);
+            if (parse_semicolon) {
+                switch (self->current->kind) {
+                    case LILY_TOKEN_KIND_SEMICOLON:
+                        next_token__LilyPreparser(self);
 
-                    break;
-                default:
-                    break;
+                        break;
+                    default:
+                        break;
+                }
             }
 
             LilyToken *previous = NULL;
@@ -9606,7 +9609,7 @@ preparse_body__LilyPreparser(LilyPreparser *self,
 
     while (!must_close(self)) {
         LilyPreparserFunBodyItem *item =
-          preparse_block__LilyPreparser(self, must_close);
+          preparse_block__LilyPreparser(self, must_close, true);
 
         if (item) {
             push__Vec(body, item);

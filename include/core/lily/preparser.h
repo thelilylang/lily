@@ -1605,9 +1605,14 @@ preparse_enum_object_body__LilyPreparser(LilyPreparser *self);
 Vec *
 preparse_trait_body__LilyPreparser(LilyPreparser *self);
 
+/**
+ *
+ * @brief Preparse a block (stmt, expr, ...).
+ */
 LilyPreparserFunBodyItem *
 preparse_block__LilyPreparser(LilyPreparser *self,
-                              bool (*must_close)(LilyPreparser *));
+                              bool (*must_close)(LilyPreparser *),
+                              bool parse_semicolon);
 
 /**
  *
