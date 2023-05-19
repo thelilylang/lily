@@ -93,7 +93,6 @@ search_value__LilyLlvmScope(LilyLlvmScope *self, String *name)
     if (self->parent) {
         return search_value__LilyLlvmScope(self->parent, name);
     }
-    printf("%s\n", name->buffer);
 
     UNREACHABLE("(search value) the analysis or the codegen have a bug!!");
 }
