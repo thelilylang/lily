@@ -191,6 +191,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                          bool must_mut,
                          LilyCheckedDataType *defined_data_type);
 
+/// @param end_body Vec<LilyCheckedBodyFunItem*>*
 static LilyCheckedBodyFunItem *
 check_stmt__LilyAnalysis(LilyAnalysis *self,
                          const LilyAstStmt *stmt,
@@ -198,7 +199,18 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                          Usize i,
                          bool in_loop,
                          enum LilyCheckedSafetyMode safety_mode,
+                         Vec *end_body,
                          Vec *current_body);
+
+static LilyCheckedBodyFunItem *
+check_fun_item__LilyAnalysis(LilyAnalysis *self,
+                             const LilyAstBodyFunItem *ast_item,
+                             LilyCheckedScope *scope,
+                             Usize i,
+                             bool in_loop,
+                             enum LilyCheckedSafetyMode safety_mode,
+                             Vec *end_body,
+                             Vec *current_body);
 
 /// @return Vec<LilyCheckedGenericParam*>*
 static Vec *
@@ -265,34 +277,26 @@ run_step1__LilyAnalysis(LilyAnalysis *self);
 static inline void
 run_step2__LilyAnalysis(LilyAnalysis *self);
 
-#define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop)            \
-    for (Usize j = 0; j < ast_body->len; ++j) {                                \
-        LilyAstBodyFunItem *item = get__Vec(ast_body, j);                      \
-                                                                               \
-        switch (item->kind) {                                                  \
-            case LILY_AST_BODY_FUN_ITEM_KIND_EXPR:                             \
-                push__Vec(body,                                                \
-                          NEW_VARIANT(LilyCheckedBodyFunItem,                  \
-                                      expr,                                    \
-                                      check_expr__LilyAnalysis(self,           \
-                                                               item->expr,     \
-                                                               scope,          \
-                                                               safety_mode,    \
-                                                               true,           \
-                                                               false,          \
-                                                               NULL)));        \
-                                                                               \
-                break;                                                         \
-            case LILY_AST_BODY_FUN_ITEM_KIND_STMT:                             \
-                push__Vec(                                                     \
-                  body,                                                        \
-                  check_stmt__LilyAnalysis(                                    \
-                    self, &item->stmt, scope, j, in_loop, safety_mode, body)); \
-                                                                               \
-                break;                                                         \
-            default:                                                           \
-                UNREACHABLE("unknown variant");                                \
-        }                                                                      \
+#define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop) \
+    {                                                               \
+        Vec *end_body = NEW(Vec);                                   \
+                                                                    \
+        for (Usize j = 0; j < ast_body->len; ++j) {                 \
+            LilyCheckedBodyFunItem *item =                          \
+              check_fun_item__LilyAnalysis(self,                    \
+                                           get__Vec(ast_body, j),   \
+                                           scope,                   \
+                                           j,                       \
+                                           in_loop,                 \
+                                           safety_mode,             \
+                                           end_body,                \
+                                           body);                   \
+                                                                    \
+            if (item) {                                             \
+                push__Vec(body, item);                              \
+            }                                                       \
+        }                                                           \
+        FREE(Vec, end_body);                                        \
     }
 
 #define EXPECTED_BOOL_EXPR(expr)                                         \
@@ -1875,13 +1879,24 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_VARIABLE:
                     return search_variable__LilyCheckedScope(
                       scope, id->identifier.name);
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_MODULE:
+                    return search_module__LilyCheckedScope(scope,
+                                                           id->identifier.name);
                 default:
                     UNREACHABLE("this situation is impossible");
             }
 
             break;
-        case LILY_AST_EXPR_KIND_ACCESS:
+        case LILY_AST_EXPR_KIND_ACCESS: {
+            switch (id->access.kind) {
+                case LILY_AST_EXPR_ACCESS_KIND_GLOBAL:
+                    UNREACHABLE("global is not expected in this context");
+                default:
+                    TODO("...");
+            }
+
             TODO("resolve access");
+        }
         default:
             UNREACHABLE("this expression is not an id");
     }
@@ -2245,16 +2260,48 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                     is_moved_expr,
                                                     must_mut,
                                                     NULL);
-                case LILY_AST_EXPR_ACCESS_KIND_SELF:
+                case LILY_AST_EXPR_ACCESS_KIND_SELF: {
+                    LilyCheckedDecl *object =
+                      get_current_object__LilyCheckedScope(scope);
+
+                    if (!object) {
+                        FAILED("expected object declaration");
+                    }
+
                     TODO("resolve Self access");
-                case LILY_AST_EXPR_ACCESS_KIND_self:
+                }
+                case LILY_AST_EXPR_ACCESS_KIND_self: {
+                    LilyCheckedDecl *method =
+                      get_current_method__LilyCheckedScope(scope);
+
+                    if (!method) {
+                        FAILED("self is not expected in function");
+                    }
+
                     TODO("resolve self access");
+                }
                 case LILY_AST_EXPR_ACCESS_KIND_HOOK:
                     TODO("resolve hook access");
-                case LILY_AST_EXPR_ACCESS_KIND_OBJECT:
-                    TODO("resolve property object");
-                case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT:
+                case LILY_AST_EXPR_ACCESS_KIND_OBJECT: {
+                    LilyCheckedDecl *object =
+                      get_current_object__LilyCheckedScope(scope);
+
+                    if (!object) {
+                        FAILED("expected object declaration");
+                    }
+
+                    UNREACHABLE("Object is not expected in this context");
+                }
+                case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT: {
+                    LilyCheckedDecl *method =
+                      get_current_method__LilyCheckedScope(scope);
+
+                    if (!method) {
+                        FAILED("property init is not expected in function");
+                    }
+
                     TODO("resolve property init access");
+                }
                 case LILY_AST_EXPR_ACCESS_KIND_PATH: {
                     LilyAstExpr *first_ast_expr =
                       get__Vec(expr->access.path, 0);
@@ -2301,6 +2348,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                         }
                         case LILY_CHECKED_EXPR_CALL_KIND_FUN:
                             TODO("fun call!! (path access)");
+                        case LILY_CHECKED_EXPR_CALL_KIND_MODULE:
+                            TODO("module call!! (path access)");
                         case LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN:
                             FAILED("unknown call");
                         default:
@@ -3769,6 +3818,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                          Usize i,
                          bool in_loop,
                          enum LilyCheckedSafetyMode safety_mode,
+                         Vec *end_body,
                          Vec *current_body)
 {
     switch (stmt->kind) {
@@ -3819,8 +3869,23 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                           &stmt->location,
                           stmt,
                           NEW(LilyCheckedStmtBreak, stmt->break_.name)));
-        case LILY_AST_STMT_KIND_DEFER:
-            TODO("analysis defer stmt");
+        case LILY_AST_STMT_KIND_DEFER: {
+            LilyCheckedBodyFunItem *checked_item =
+              check_fun_item__LilyAnalysis(self,
+                                           stmt->defer.item,
+                                           scope,
+                                           i,
+                                           in_loop,
+                                           safety_mode,
+                                           end_body,
+                                           current_body);
+
+            if (checked_item) {
+                push__Vec(end_body, checked_item);
+            }
+
+            return NULL;
+        }
         case LILY_AST_STMT_KIND_DROP:
             TODO("analysis drop stmt");
         case LILY_AST_STMT_KIND_FOR:
@@ -4002,6 +4067,10 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                 }
             }
 
+            // TODO: add the `end_body` implicit return.
+            // Add the `end_body` before the return statement
+            append__Vec(current_body, end_body);
+
             return NEW_VARIANT(LilyCheckedBodyFunItem,
                                stmt,
                                NEW_VARIANT(LilyCheckedStmt,
@@ -4036,7 +4105,9 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_STMT_KIND_VARIABLE: {
             LilyCheckedScopeContainerVariable *sc_variable =
-              NEW(LilyCheckedScopeContainerVariable, stmt->variable.name, i);
+              NEW(LilyCheckedScopeContainerVariable,
+                  stmt->variable.name,
+                  i - end_body->len);
             int status = add_variable__LilyCheckedScope(scope, sc_variable);
 
             if (status) {
@@ -4118,6 +4189,37 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                                                body,
                                                scope_while)));
         }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+LilyCheckedBodyFunItem *
+check_fun_item__LilyAnalysis(LilyAnalysis *self,
+                             const LilyAstBodyFunItem *ast_item,
+                             LilyCheckedScope *scope,
+                             Usize i,
+                             bool in_loop,
+                             enum LilyCheckedSafetyMode safety_mode,
+                             Vec *end_body,
+                             Vec *current_body)
+{
+    switch (ast_item->kind) {
+        case LILY_AST_BODY_FUN_ITEM_KIND_EXPR:
+            return NEW_VARIANT(
+              LilyCheckedBodyFunItem,
+              expr,
+              check_expr__LilyAnalysis(
+                self, ast_item->expr, scope, safety_mode, true, false, NULL));
+        case LILY_AST_BODY_FUN_ITEM_KIND_STMT:
+            return check_stmt__LilyAnalysis(self,
+                                            &ast_item->stmt,
+                                            scope,
+                                            i,
+                                            in_loop,
+                                            safety_mode,
+                                            end_body,
+                                            current_body);
         default:
             UNREACHABLE("unknown variant");
     }
