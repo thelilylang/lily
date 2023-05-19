@@ -33,6 +33,7 @@
 
 #include <core/lily/analysis.h>
 #include <core/lily/builtin.h>
+#include <core/lily/checked/operator_register.h>
 #include <core/lily/ir.h>
 #include <core/lily/linker.h>
 #include <core/lily/package/config.h>
@@ -89,6 +90,10 @@ typedef struct LilyPackage
 
     Vec *builtin_usage; // Vec<LilyBuiltinFun* (&)>*
     Vec *sys_usage;     // Vec<LilySysFun* (&)>*
+
+    // NOTE: this field is not defined in all packages except in the main one
+    LilyCheckedOperatorRegister global_operator_register;
+    LilyCheckedOperatorRegister local_operator_register;
 } LilyPackage;
 
 /**
