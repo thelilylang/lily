@@ -27,6 +27,7 @@
 #include <core/lily/ir/llvm/generator/data_type.h>
 #include <core/lily/ir/llvm/generator/expr.h>
 #include <core/lily/ir/llvm/generator/function.h>
+#include <core/lily/ir/llvm/generator/main.h>
 #include <core/lily/ir/llvm/generator/stmt.h>
 #include <core/lily/ir/llvm/scope.h>
 
@@ -36,12 +37,54 @@
 
 #include <llvm-c/DebugInfo.h>
 
+#define GENERATE_FUNCTION_DEBUG()                                      \
+    /* Add debug location to the function */                           \
+    LLVMMetadataRef debug_location = LLVMDIBuilderCreateDebugLocation( \
+      self->context,                                                   \
+      location->start_line,                                            \
+      location->start_column,                                          \
+      LLVMDIBuilderCreateLexicalBlockFile(                             \
+        self->di_builder, self->file, self->file, 0),                  \
+      NULL);                                                           \
+                                                                       \
+    LLVMSetSubprogram(fun_llvm, debug_location);
+
+#define GENERATE_FUNCTION_ATTRS()                                        \
+    /* Generate some function attributes */                              \
+    if (!fun->is_recursive) {                                            \
+        LLVM_ADD_FN_ATTR(fun_llvm, norecurse_attr__LilyIrLlvm(self));    \
+    }                                                                    \
+                                                                         \
+    if (!fun->can_inline) {                                              \
+        LLVM_ADD_FN_ATTR(fun_llvm, noinline_attr__LilyIrLlvm(self));     \
+        LLVM_ADD_FN_ATTR(fun_llvm, optnone_attr__LilyIrLlvm(self));      \
+    } else {                                                             \
+        LLVM_ADD_FN_ATTR(fun_llvm, alwaysinline_attr__LilyIrLlvm(self)); \
+    }                                                                    \
+                                                                         \
+    if (!fun->can_raise) {                                               \
+        LLVM_ADD_FN_ATTR(fun_llvm, nounwind_attr__LilyIrLlvm(self));     \
+    }                                                                    \
+                                                                         \
+    LLVM_ADD_FN_ATTR(fun_llvm, uwtable_attr__LilyIrLlvm(self));          \
+    ADD_CUSTOM_HOST_ATTR(fun_llvm);
+
 void
 generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               const LilyCheckedDeclFun *fun,
                               LilyLlvmScope *scope,
                               const Location *location)
 {
+    if (fun->is_main) {
+        LLVMValueRef fun_llvm =
+          generate_main_function__LilyIrLlvm(self, fun, scope, location);
+
+        GENERATE_FUNCTION_DEBUG();
+        GENERATE_FUNCTION_ATTRS();
+
+        return;
+    }
+
     // Generate return data type of the function
     LLVMTypeRef return_data_type =
       generate_data_type__LilyIrLlvm(self, fun->return_data_type, scope);
@@ -66,15 +109,8 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     LLVMTypeRef fun_data_type =
       LLVMFunctionType(return_data_type, params, params_len, false);
 
-    char *name = NULL;
-
-    if (fun->is_main) {
-        name = fun->name->buffer;
-    } else {
-        name = fun->global_name->buffer;
-    }
-
-    LLVMValueRef fun_llvm = LLVMAddFunction(self->module, name, fun_data_type);
+    LLVMValueRef fun_llvm =
+      LLVMAddFunction(self->module, fun->global_name->buffer, fun_data_type);
 
     // Set alignment on param (if applicable)
     if (fun->params) {
@@ -106,35 +142,8 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
 
     GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
 
-    // Generate some function attributes
-    if (!fun->is_recursive) {
-        LLVM_ADD_FN_ATTR(fun_llvm, norecurse_attr__LilyIrLlvm(self));
-    }
-
-    if (!fun->can_inline) {
-        LLVM_ADD_FN_ATTR(fun_llvm, noinline_attr__LilyIrLlvm(self));
-        LLVM_ADD_FN_ATTR(fun_llvm, optnone_attr__LilyIrLlvm(self));
-    } else {
-        LLVM_ADD_FN_ATTR(fun_llvm, alwaysinline_attr__LilyIrLlvm(self));
-    }
-
-    if (!fun->can_raise) {
-        LLVM_ADD_FN_ATTR(fun_llvm, nounwind_attr__LilyIrLlvm(self));
-    }
-
-    LLVM_ADD_FN_ATTR(fun_llvm, uwtable_attr__LilyIrLlvm(self));
-    ADD_CUSTOM_HOST_ATTR(fun_llvm);
-
-    // Add debug location to the function
-    LLVMMetadataRef debug_location = LLVMDIBuilderCreateDebugLocation(
-      self->context,
-      location->start_line,
-      location->start_column,
-      LLVMDIBuilderCreateLexicalBlockFile(
-        self->di_builder, self->file, self->file, 0),
-      NULL);
-
-    LLVMSetSubprogram(fun_llvm, debug_location);
+    GENERATE_FUNCTION_DEBUG();
+    GENERATE_FUNCTION_ATTRS();
 
     FREE(LilyLlvmScope, fun_scope);
 }
