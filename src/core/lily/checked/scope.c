@@ -801,6 +801,30 @@ get_decl_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id, Usize pos)
     }
 }
 
+LilyCheckedBodyFunItem *
+get_variable_from_id__LilyCheckedScope(LilyCheckedScope *self,
+                                       Usize id,
+                                       String *name)
+{
+    LilyCheckedScope *scope = get_scope_from_id__LilyCheckedScope(self, id);
+
+    switch (scope->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE:
+            for (Usize i = 0; i < scope->variables->len; ++i) {
+                LilyCheckedScopeContainerVariable *variable =
+                  get__Vec(scope->variables, i);
+
+                if (!strcmp(variable->name->buffer, name->buffer)) {
+                    return get__Vec(scope->decls.scope, variable->id);
+                }
+            }
+
+            UNREACHABLE("the scope have a bug!!");
+        default:
+            return NULL;
+    }
+}
+
 LilyCheckedScopeDecls *
 get_current_fun__LilyCheckedScope(LilyCheckedScope *self)
 {

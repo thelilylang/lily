@@ -39,6 +39,7 @@
 
 typedef struct LilyCheckedParent LilyCheckedParent;
 typedef struct LilyCheckedStmtVariable LilyCheckedStmtVariable;
+typedef struct LilyCheckedBodyFunItem LilyCheckedBodyFunItem;
 
 typedef struct LilyCheckedScope
 {
@@ -316,6 +317,15 @@ get_current_object__LilyCheckedScope(LilyCheckedScope *self);
  */
 LilyCheckedDecl *
 get_decl_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id, Usize pos);
+
+/**
+ *
+ * @brief Get fun item from id and position.
+ */
+LilyCheckedBodyFunItem *
+get_variable_from_id__LilyCheckedScope(LilyCheckedScope *self,
+                                       Usize id,
+                                       String *name);
 
 /**
  *
