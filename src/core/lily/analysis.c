@@ -126,6 +126,11 @@ valid_cast__LilyAnalysis(LilyAnalysis *self,
                          LilyCheckedDataType *dest,
                          enum LilyCheckedSafetyMode safety_mode);
 
+static bool
+is_drop__LilyAnalysis(LilyAnalysis *self,
+                      LilyCheckedScope *scope,
+                      LilyCheckedExpr *call);
+
 static LilyCheckedScopeResponse
 resolve_id__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *id,
@@ -1641,6 +1646,12 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                                     true,
                                                     NULL);
 
+                    if (is_drop__LilyAnalysis(self, scope, left) &&
+                        expr->binary.kind !=
+                          LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN) {
+                        FAILED("the variable has been dropped");
+                    }
+
                     break;
                 }
                 case LILY_AST_EXPR_KIND_ACCESS:
@@ -1849,6 +1860,26 @@ valid_cast__LilyAnalysis(LilyAnalysis *self,
               &self->package->count_error);
 
             return;
+    }
+}
+
+bool
+is_drop__LilyAnalysis(LilyAnalysis *self,
+                      LilyCheckedScope *scope,
+                      LilyCheckedExpr *expr)
+{
+    ASSERT(expr->kind == LILY_CHECKED_EXPR_KIND_CALL);
+
+    switch (expr->call.kind) {
+        case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
+            LilyCheckedBodyFunItem *variable =
+              get_variable_from_id__LilyCheckedScope(
+                scope, expr->call.scope.id, expr->call.global_name);
+
+            return variable->stmt.variable.is_dropped;
+        }
+        default:
+            TODO("is_drop__LilyAnalysis");
     }
 }
 
@@ -3886,8 +3917,73 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
 
             return NULL;
         }
-        case LILY_AST_STMT_KIND_DROP:
-            TODO("analysis drop stmt");
+        case LILY_AST_STMT_KIND_DROP: {
+            LilyCheckedExpr *drop_expr = check_expr__LilyAnalysis(
+              self, stmt->drop.expr, scope, safety_mode, false, false, NULL);
+
+            switch (drop_expr->kind) {
+                case LILY_CHECKED_EXPR_KIND_CALL:
+                    switch (drop_expr->call.kind) {
+                        case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
+                            LilyCheckedBodyFunItem *variable =
+                              get_variable_from_id__LilyCheckedScope(
+                                scope,
+                                drop_expr->call.scope.id,
+                                drop_expr->call.global_name);
+
+                            // Check if the data type of variable is droppable.
+                            switch (variable->stmt.variable.data_type->kind) {
+                                case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                                    TODO("check if the custom data type is "
+                                         "droppable");
+                                case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+                                    TODO("check if the pointer of the data "
+                                         "type is droppable");
+                                default:
+                                    FAILED("this variable cannot be dropped "
+                                           "caused by the data type");
+                            }
+
+                            // Check if the variable has been dropped
+                            if (variable->stmt.variable.is_dropped) {
+                                FAILED("the variable has been dropped");
+                            } else {
+                                variable->stmt.variable.is_dropped = true;
+                            }
+
+                            break;
+                        }
+                        case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
+                            TODO("check if the fun param is droppable");
+                        case LILY_CHECKED_EXPR_CALL_KIND_FUN:
+                            TODO("check if the data type of the function is "
+                                 "droppable");
+                        case LILY_CHECKED_EXPR_CALL_KIND_RECORD:
+                            TODO("check if the data type of the record is "
+                                 "droppable");
+                        case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
+                            TODO("check if the data type of the method is "
+                                 "droppable");
+                        case LILY_CHECKED_EXPR_CALL_KIND_VARIANT:
+                            TODO("check if the data type of the variant is "
+                                 "droppable");
+                        default:
+                            FAILED("this kind of call is not allowed to drop");
+                    }
+                default:
+                    FAILED("this kind of expression is not expected for drop "
+                           "statement");
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedBodyFunItem,
+              stmt,
+              NEW_VARIANT(LilyCheckedStmt,
+                          drop,
+                          &stmt->location,
+                          stmt,
+                          NEW(LilyCheckedStmtDrop, drop_expr)));
+        }
         case LILY_AST_STMT_KIND_FOR:
             TODO("analysis for stmt");
         case LILY_AST_STMT_KIND_IF: {
