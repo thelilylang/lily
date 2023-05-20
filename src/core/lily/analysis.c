@@ -4094,8 +4094,57 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                           &stmt->location,
                           stmt,
                           NEW(LilyCheckedStmtNext, stmt->next.name)));
-        case LILY_AST_STMT_KIND_RAISE:
-            TODO("analysis raise stmt");
+        case LILY_AST_STMT_KIND_RAISE: {
+            LilyCheckedScopeResponse raise_response_expr =
+              resolve_id__LilyAnalysis(self,
+                                       stmt->raise.expr,
+                                       scope,
+                                       LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR);
+
+            switch (raise_response_expr.kind) {
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                    FAILED("error declaration not found");
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR: {
+                    // TODO: add a support for generics
+                    LilyCheckedExpr *raise_expr = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      call,
+                      &stmt->raise.expr->location,
+                      NEW_VARIANT(
+                        LilyCheckedDataType,
+                        custom,
+                        &stmt->raise.expr->location,
+                        NEW(LilyCheckedDataTypeCustom,
+                            raise_response_expr.scope_container.scope_id,
+                            (LilyCheckedAccessScope){
+                              .id =
+                                raise_response_expr.scope_container.error->id },
+                            raise_response_expr.error->name,
+                            raise_response_expr.error->global_name,
+                            NULL,
+                            LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ERROR,
+                            false)),
+                      stmt->raise.expr,
+                      NEW(LilyCheckedExprCall,
+                          LILY_CHECKED_EXPR_CALL_KIND_ERROR,
+                          raise_response_expr.error->global_name,
+                          (LilyCheckedAccessScope){
+                            .id =
+                              raise_response_expr.scope_container.scope_id }));
+
+                    return NEW_VARIANT(
+                      LilyCheckedBodyFunItem,
+                      stmt,
+                      NEW_VARIANT(LilyCheckedStmt,
+                                  raise,
+                                  &stmt->location,
+                                  stmt,
+                                  NEW(LilyCheckedStmtRaise, raise_expr)));
+                }
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        }
         case LILY_AST_STMT_KIND_RETURN: {
             LilyCheckedScopeDecls *current_fun =
               get_current_fun__LilyCheckedScope(scope);
