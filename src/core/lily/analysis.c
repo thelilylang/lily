@@ -1647,8 +1647,7 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                                     NULL);
 
                     if (is_drop__LilyAnalysis(self, scope, left) &&
-                        expr->binary.kind !=
-                          LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN) {
+                        expr->binary.kind != LILY_AST_EXPR_BINARY_KIND_ASSIGN) {
                         FAILED("the variable has been dropped");
                     }
 
