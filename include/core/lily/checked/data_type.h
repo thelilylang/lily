@@ -82,6 +82,11 @@ enum LilyCheckedDataTypeKind
     LILY_CHECKED_DATA_TYPE_KIND_UNIT,
     LILY_CHECKED_DATA_TYPE_KIND_USIZE,
     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+
+    // These data types cannot be defined by the user
+    // NOTE: this data type is only used for the return of data type
+    LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE,
+    LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE
 };
 
 typedef struct LilyCheckedDataType LilyCheckedDataType;
@@ -258,6 +263,44 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedDataTypeCustom *self);
 #endif
 
+typedef struct LilyCheckedDataTypeConditionalCompilerChoice
+{
+    Vec *choices; // Vec<LilyCheckedDataType* (&)>*
+    Vec *conds;   // Vec<Vec<LilyCheckedDataType* (&)>*>* => params
+} LilyCheckedDataTypeConditionalCompilerChoice;
+
+/**
+ *
+ * @brief Construct LilyCheckedDataTypeConditionalCompilerChoice type.
+ */
+inline CONSTRUCTOR(LilyCheckedDataTypeConditionalCompilerChoice,
+                   LilyCheckedDataTypeConditionalCompilerChoice,
+                   Vec *choices,
+                   Vec *conds)
+{
+    return (LilyCheckedDataTypeConditionalCompilerChoice){ .choices = choices,
+                                                           .conds = conds };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedDataTypeConditionalCompilerChoice in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeConditionalCompilerChoice,
+               const LilyCheckedDataTypeConditionalCompilerChoice *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedDataTypeCondtionalCompilerChoice type.
+ */
+DESTRUCTOR(LilyCheckedDataTypeConditionalCompilerChoice,
+           const LilyCheckedDataTypeConditionalCompilerChoice *self);
+
 struct LilyCheckedDataType
 {
     enum LilyCheckedDataTypeKind kind;
@@ -277,6 +320,9 @@ struct LilyCheckedDataType
         Isize str; // size of Str
         LilyCheckedDataType *trace;
         Vec *tuple; // Vec<LilyCheckedDataType*>*
+        LilyCheckedDataTypeConditionalCompilerChoice
+          conditional_compiler_choice;
+        Vec *compiler_choice; // Vec<LilyCheckedDataType* (&)>*
     };
 };
 
@@ -429,6 +475,27 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 
 /**
  *
+ * @brief Construct LilyCheckedDataType type
+ * (LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE).
+ */
+VARIANT_CONSTRUCTOR(
+  LilyCheckedDataType *,
+  LilyCheckedDataType,
+  conditional_compiler_choice,
+  LilyCheckedDataTypeConditionalCompilerChoice conditional_compiler_choice);
+
+/**
+ *
+ * @brief Construct LilyCheckedDataType type
+ * (LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    compiler_choice,
+                    Vec *compiler_choice);
+
+/**
+ *
  * @brief Convert LilyCheckedDataTypeKind in string.
  * @note This function is only used to debug.
  */
@@ -461,11 +528,30 @@ IMPL_FOR_DEBUG(debug, LilyCheckedDataType, const LilyCheckedDataType *self);
 
 /**
  *
- * @brief Returns true if the both data types are equal otherwise returns false.
+ * @brief Return true if the both data types are equal otherwise return false.
  */
 bool
 eq__LilyCheckedDataType(const LilyCheckedDataType *self,
                         const LilyCheckedDataType *other);
+
+/**
+ *
+ * @brief Return true if the both data types are equal otherwise return false.
+ */
+bool
+eq_return_data_type__LilyCheckedDataType(const LilyCheckedDataType *self,
+                                         const LilyCheckedDataType *other);
+
+/**
+ *
+ * @brief Get the return data type according with the given condition.
+ * @param cond Vec<LilyCheckedDataType* (&)>*
+ * @return LilyCheckedDataType* (&)?
+ */
+LilyCheckedDataType *
+get_return_data_type_of_conditional_compiler_choice(
+  const LilyCheckedDataType *self,
+  const Vec *cond);
 
 /**
  *
