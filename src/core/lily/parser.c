@@ -7425,12 +7425,6 @@ apply_macro_expansion_in_fun__LilyParser(LilyParser *self,
                                           .preparser_info = NULL,
                                           .position = 0 };
 
-        for (Usize i = 0; i < pre_fun_body_items->len; ++i) {
-            PRINTLN("{Sr}",
-                    to_string__Debug__LilyPreparserFunBodyItem(
-                      get__Vec(pre_fun_body_items, i)));
-        }
-
         Vec *expand_body =
           parse_fun_body__LilyParser(&parser, pre_fun_body_items);
 
