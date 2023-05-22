@@ -199,6 +199,7 @@ set(CORE_SRC
 	src/core/lily/checked/stmt/variable.c
 	src/core/lily/checked/stmt/while.c
 	src/core/lily/checked/access.c
+	src/core/lily/checked/compiler_generic.c
 	src/core/lily/checked/data_type.c
 	src/core/lily/checked/decl.c
 	src/core/lily/checked/expr.c
