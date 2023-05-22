@@ -122,6 +122,7 @@ typedef struct LilyCheckedDeclFun
     Vec *body;                             // Vec<LilyCheckedBodyFunItem*>*
     LilyCheckedScope *scope;
     LilyCheckedAccessFun *access;
+    Vec *used_compiler_generic; // Vec<String*>*
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
@@ -157,6 +158,7 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
                                  .body = body,
                                  .scope = scope,
                                  .access = NULL,
+                                 .used_compiler_generic = NEW(Vec),
                                  .visibility = visibility,
                                  .is_async = is_async,
                                  .is_operator = is_operator,

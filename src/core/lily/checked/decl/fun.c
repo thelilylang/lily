@@ -217,6 +217,26 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyFunItem);
 
     {
+        char *s = format(", scope = {Sr}, access = {sa}",
+                         to_string__Debug__LilyCheckedScope(self->scope),
+                         to_string__Debug__LilyCheckedAccessFun(self->access));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    push_str__String(res, ", used_compiler_generic = { ");
+
+    for (Usize i = 0; i < self->used_compiler_generic->len; ++i) {
+        append__String(res, get__Vec(self->used_compiler_generic, i));
+
+        if (i + 1 != self->used_compiler_generic->len) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, " }");
+
+    {
         char *s = format(", visibility = {s}, is_async = {b}, is_operator = "
                          "{b}, can_raise = {b}, can_inline = {b}, is_main = "
                          "{b}, is_recursive = {b}, is_checked = {b} }",
@@ -264,4 +284,9 @@ DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
     FREE(LilyCheckedScope, self->scope->parent->scope);
     FREE(LilyCheckedScope, self->scope);
     FREE(LilyCheckedAccessFun, self->access);
+
+    FREE_BUFFER_ITEMS(self->used_compiler_generic->buffer,
+                      self->used_compiler_generic->len,
+                      String);
+    FREE(Vec, self->used_compiler_generic);
 }
