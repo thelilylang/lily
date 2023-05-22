@@ -86,7 +86,8 @@ enum LilyCheckedDataTypeKind
     // These data types cannot be defined by the user
     // NOTE: this data type is only used for the return of data type
     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE,
-    LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE
+    LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE,
+    LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC
 };
 
 typedef struct LilyCheckedDataType LilyCheckedDataType;
@@ -284,7 +285,7 @@ inline CONSTRUCTOR(LilyCheckedDataTypeConditionalCompilerChoice,
 
 /**
  *
- * @brief Convert LilyCheckedDataTypeConditionalCompilerChoice in string.
+ * @brief Convert LilyCheckedDataTypeConditionalCompilerChoice in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
@@ -300,6 +301,34 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedDataTypeConditionalCompilerChoice,
            const LilyCheckedDataTypeConditionalCompilerChoice *self);
+
+typedef struct LilyCheckedDataTypeCompilerGeneric
+{
+    String *name; // String* (&)
+} LilyCheckedDataTypeCompilerGeneric;
+
+/**
+ *
+ * @brief Construct LilyCheckedDataTypeCompilerGeneric type.
+ */
+inline CONSTRUCTOR(LilyCheckedDataTypeCompilerGeneric,
+                   LilyCheckedDataTypeCompilerGeneric,
+                   String *name)
+{
+    return (LilyCheckedDataTypeCompilerGeneric){ .name = name };
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedDataTypeCompilerGeneric in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeCompilerGeneric,
+               const LilyCheckedDataTypeCompilerGeneric *self);
+#endif
 
 struct LilyCheckedDataType
 {
@@ -323,6 +352,7 @@ struct LilyCheckedDataType
         LilyCheckedDataTypeConditionalCompilerChoice
           conditional_compiler_choice;
         Vec *compiler_choice; // Vec<LilyCheckedDataType* (&)>*
+        LilyCheckedDataTypeCompilerGeneric compiler_generic;
     };
 };
 
@@ -493,6 +523,16 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     compiler_choice,
                     Vec *compiler_choice);
+
+/**
+ *
+ * @brief Construct LilyCheckedDataType type
+ * (LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    compiler_generic,
+                    LilyCheckedDataTypeCompilerGeneric compiler_generic);
 
 /**
  *

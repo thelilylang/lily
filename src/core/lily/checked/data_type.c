@@ -287,6 +287,17 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeCompilerGeneric,
+               const LilyCheckedDataTypeCompilerGeneric *self)
+{
+    return format__String("LilyCheckedDataTypeCompilerGeneric{{ name = {S} }",
+                          self->name);
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedDataType *,
             LilyCheckedDataType,
             enum LilyCheckedDataTypeKind kind,
@@ -524,6 +535,20 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    compiler_generic,
+                    LilyCheckedDataTypeCompilerGeneric compiler_generic)
+{
+    LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
+
+    self->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC;
+    self->location = NULL;
+    self->compiler_generic = compiler_generic;
+
+    return self;
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -623,6 +648,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE";
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
             return "LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE";
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+            return "LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -775,6 +802,16 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
             push_str__String(res, ", compiler_choice =");
             DEBUG_VEC_STRING(self->compiler_choice, res, LilyCheckedDataType);
             push_str__String(res, " }");
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC: {
+            char *s =
+              format(", compiler_generic = {Sr} }",
+                     to_string__Debug__LilyCheckedDataTypeCompilerGeneric(
+                       &self->compiler_generic));
+
+            PUSH_STR_AND_FREE(res, s);
 
             break;
         }
@@ -956,6 +993,14 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
             UNREACHABLE(
               "this data type is not expected to compare in this context");
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+            switch (other->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+                    return !strcmp(self->compiler_generic.name->buffer,
+                                   other->compiler_generic.name->buffer);
+                default:
+                    return false;
+            }
         default:
             UNREACHABLE("unknown variant");
     }
@@ -1213,6 +1258,11 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
 
             return NEW_VARIANT(LilyCheckedDataType, compiler_choice, choices);
         }
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+            return NEW_VARIANT(LilyCheckedDataType,
+                               compiler_generic,
+                               NEW(LilyCheckedDataTypeCompilerGeneric,
+                                   self->compiler_generic.name));
         default:
             UNREACHABLE("unknown variant");
     }
@@ -1476,6 +1526,8 @@ DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self)
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
             FREE_VARIANT(LilyCheckedDataType, compiler_choice, self);
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
             break;
         default:
             lily_free(self);
