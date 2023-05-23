@@ -123,6 +123,8 @@ typedef struct LilyCheckedDeclFun
     LilyCheckedScope *scope;
     LilyCheckedAccessFun *access;
     Vec *used_compiler_generic; // Vec<String*>*
+    // [params, return_data_type]
+    Vec *signatures; // Vec<Vec<LilyCheckedDataType* (&)>*>*
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
@@ -159,6 +161,7 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
                                  .scope = scope,
                                  .access = NULL,
                                  .used_compiler_generic = NEW(Vec),
+                                 .signatures = NEW(Vec),
                                  .visibility = visibility,
                                  .is_async = is_async,
                                  .is_operator = is_operator,
@@ -178,6 +181,22 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self);
 #endif
+
+/**
+ *
+ * @brief Check if contains compiler defined data type(s).
+ */
+bool
+contains_compiler_defined_dt__LilyCheckedDeclFun(
+  const LilyCheckedDeclFun *self);
+
+/**
+ *
+ * @brief Add a signature and check if is not duplicate.
+ * @return Return 1 if is failing otherwise return 0.
+ */
+int
+add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature);
 
 /**
  *

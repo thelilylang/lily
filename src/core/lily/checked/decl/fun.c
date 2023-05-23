@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 
 #include <core/lily/checked/decl/fun.h>
 #include <core/lily/checked/parent.h>
@@ -236,6 +237,9 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 
     push_str__String(res, " }");
 
+    push_str__String(res, ", signatures =");
+    DEBUG_VEC_STRING_2(self->signatures, res, LilyCheckedDataType);
+
     {
         char *s = format(", visibility = {s}, is_async = {b}, is_operator = "
                          "{b}, can_raise = {b}, can_inline = {b}, is_main = "
@@ -255,6 +259,46 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
     return res;
 }
 #endif
+
+bool
+contains_compiler_defined_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
+{
+    if (self->used_compiler_generic->len > 0) {
+        return true;
+    }
+
+    for (Usize i = 0; i < self->params->len; ++i) {
+        if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
+              CAST(LilyCheckedDeclFunParam *, get__Vec(self->params, i))
+                ->data_type)) {
+            return true;
+        }
+    }
+
+    return is_compiler_defined_and_known_dt__LilyCheckedDataType(
+      self->return_data_type);
+}
+
+int
+add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
+{
+    for (Usize i = 0; i < self->signatures->len; ++i) {
+        Vec *pushed_signature = get__Vec(self->signatures, i);
+
+        ASSERT(pushed_signature->len == signature->len);
+
+        for (Usize j = 0; j < pushed_signature->len; ++j) {
+            if (eq__LilyCheckedDataType(get__Vec(pushed_signature, j),
+                                        get__Vec(signature, j))) {
+                return 1;
+            }
+        }
+    }
+
+    push__Vec(self->signatures, signature);
+
+    return 0;
+}
 
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 {
@@ -289,4 +333,7 @@ DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
                       self->used_compiler_generic->len,
                       String);
     FREE(Vec, self->used_compiler_generic);
+
+    FREE_BUFFER_ITEMS(self->signatures->buffer, self->signatures->len, Vec);
+    FREE(Vec, self->signatures);
 }
