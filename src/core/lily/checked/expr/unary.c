@@ -70,6 +70,29 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+char *
+to_string__LilyCheckedExprUnaryKind(enum LilyCheckedExprUnaryKind kind)
+{
+    switch (kind) {
+        case LILY_CHECKED_EXPR_UNARY_KIND_DEREFERENCE:
+            return ".*";
+        case LILY_CHECKED_EXPR_UNARY_KIND_NEG:
+            return "-";
+        case LILY_CHECKED_EXPR_UNARY_KIND_NOT:
+            return "not";
+        case LILY_CHECKED_EXPR_UNARY_KIND_REF:
+            return "ref";
+        case LILY_CHECKED_EXPR_UNARY_KIND_REF_MUT:
+            return "ref mut";
+        case LILY_CHECKED_EXPR_UNARY_KIND_TRACE:
+            return "trace";
+        case LILY_CHECKED_EXPR_UNARY_KIND_TRACE_MUT:
+            return "trace mut";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 DESTRUCTOR(LilyCheckedExprUnary, const LilyCheckedExprUnary *self)
 {
     FREE(LilyCheckedExpr, self->right);

@@ -88,6 +88,13 @@ IMPL_FOR_DEBUG(to_string,
 
 /**
  *
+ * @brief Convert LilyCheckedExprUnaryKind in string.
+ */
+char *
+to_string__LilyCheckedExprUnaryKind(enum LilyCheckedExprUnaryKind kind);
+
+/**
+ *
  * @brief Free LilyCheckedExprUnary type.
  */
 DESTRUCTOR(LilyCheckedExprUnary, const LilyCheckedExprUnary *self);
