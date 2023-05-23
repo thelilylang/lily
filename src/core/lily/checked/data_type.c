@@ -1393,11 +1393,13 @@ get_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
 }
 
 void
-update_unknown_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
-                                              LilyCheckedDataType *other)
+update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
+                                      LilyCheckedDataType *other)
 {
-    ASSERT(self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
-           other->kind != LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN);
+    ASSERT((self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+            other->kind != LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) ||
+           (self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+            other->kind != LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC));
 
     switch (other->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_ANY:
@@ -1430,6 +1432,7 @@ update_unknown_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
         case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
         case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
         case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
             self->bytes = other->bytes;

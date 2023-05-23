@@ -653,12 +653,12 @@ get_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
 
 /**
  *
- * @brief Update unknown data type to a known data type.
+ * @brief Update data type to a known data type.
  * @param other LilyCheckedDataType* (&)
  */
 void
-update_unknown_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
-                                              LilyCheckedDataType *other);
+update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
+                                      LilyCheckedDataType *other);
 
 /**
  *
