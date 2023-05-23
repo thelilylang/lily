@@ -121,6 +121,79 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+char *
+to_string__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind)
+{
+    switch (kind) {
+        case LILY_CHECKED_EXPR_BINARY_KIND_ADD:
+            return "+";
+        case LILY_CHECKED_EXPR_BINARY_KIND_AND:
+            return "and";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_ADD:
+            return "+=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+            return "&=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT:
+            return "<<=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+            return "|=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT:
+            return ">>=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_DIV:
+            return "/=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_EXP:
+            return "**=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MOD:
+            return "%=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MUL:
+            return "*=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_SUB:
+            return "-=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN:
+            return "=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_BIT_AND:
+            return "&";
+        case LILY_CHECKED_EXPR_BINARY_KIND_BIT_OR:
+            return "|";
+        case LILY_CHECKED_EXPR_BINARY_KIND_CHAIN:
+            return "|>";
+        case LILY_CHECKED_EXPR_BINARY_KIND_DIV:
+            return "/";
+        case LILY_CHECKED_EXPR_BINARY_KIND_EXP:
+            return "**";
+        case LILY_CHECKED_EXPR_BINARY_KIND_EQ:
+            return "==";
+        case LILY_CHECKED_EXPR_BINARY_KIND_GREATER_EQ:
+            return ">=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_GREATER:
+            return ">";
+        case LILY_CHECKED_EXPR_BINARY_KIND_BIT_L_SHIFT:
+            return "|";
+        case LILY_CHECKED_EXPR_BINARY_KIND_LESS_EQ:
+            return "<=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_LESS:
+            return "<";
+        case LILY_CHECKED_EXPR_BINARY_KIND_MOD:
+            return "%";
+        case LILY_CHECKED_EXPR_BINARY_KIND_MUL:
+            return "*";
+        case LILY_CHECKED_EXPR_BINARY_KIND_NOT_EQ:
+            return "not=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_OR:
+            return "or";
+        case LILY_CHECKED_EXPR_BINARY_KIND_BIT_R_SHIFT:
+            return ">>";
+        case LILY_CHECKED_EXPR_BINARY_KIND_RANGE:
+            return "..";
+        case LILY_CHECKED_EXPR_BINARY_KIND_SUB:
+            return "-";
+        case LILY_CHECKED_EXPR_BINARY_KIND_XOR:
+            return "xor";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 DESTRUCTOR(LilyCheckedExprBinary, const LilyCheckedExprBinary *self)
 {
     FREE(LilyCheckedExpr, self->left);

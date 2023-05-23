@@ -118,6 +118,13 @@ IMPL_FOR_DEBUG(to_string,
 
 /**
  *
+ * @brief Convert LilyCheckedExprBinaryKind in string.
+ */
+char *
+to_string__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind);
+
+/**
+ *
  * @brief Free LilyCheckedExprBinary type.
  */
 DESTRUCTOR(LilyCheckedExprBinary, const LilyCheckedExprBinary *self);
