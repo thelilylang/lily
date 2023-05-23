@@ -307,19 +307,23 @@ run_step2__LilyAnalysis(LilyAnalysis *self);
         FREE(Vec, end_body);                                        \
     }
 
-#define EXPECTED_BOOL_EXPR(expr)                                         \
-    if (expr->data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) {     \
-        emit__Diagnostic(                                                \
-          NEW_VARIANT(                                                   \
-            Diagnostic,                                                  \
-            simple_lily_error,                                           \
-            &self->package->file,                                        \
-            expr->location,                                              \
-            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_BOOLEAN_EXPRESSION), \
-            NULL,                                                        \
-            NULL,                                                        \
-            NULL),                                                       \
-          &self->package->count_error);                                  \
+#define EXPECTED_BOOL_EXPR(expr)                                            \
+    if (expr->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||     \
+        expr->data_type->kind ==                                            \
+          LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {                   \
+        expr->data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_BOOL;           \
+    } else if (expr->data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) { \
+        emit__Diagnostic(                                                   \
+          NEW_VARIANT(                                                      \
+            Diagnostic,                                                     \
+            simple_lily_error,                                              \
+            &self->package->file,                                           \
+            expr->location,                                                 \
+            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_BOOLEAN_EXPRESSION),    \
+            NULL,                                                           \
+            NULL,                                                           \
+            NULL),                                                          \
+          &self->package->count_error);                                     \
     }
 
 void
@@ -1366,19 +1370,19 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                       (LilyCheckedAccessScope){
                         .id = response.scope_container.scope_id }));
             case LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN_PARAM:
-                if (response.fun_param->is_moved) {
-                    emit__Diagnostic(
-                      NEW_VARIANT(
-                        Diagnostic,
-                        simple_lily_error,
-                        &self->package->file,
-                        &expr->location,
-                        NEW(LilyError, LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED),
-                        NULL,
-                        NULL,
-                        NULL),
-                      &self->package->count_error);
-                }
+                //if (response.fun_param->is_moved) {
+                //    emit__Diagnostic(
+                //      NEW_VARIANT(
+                //        Diagnostic,
+                //        simple_lily_error,
+                //        &self->package->file,
+                //        &expr->location,
+                //        NEW(LilyError, LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED),
+                //        NULL,
+                //        NULL,
+                //        NULL),
+                //      &self->package->count_error);
+                //}
 
                 // Check if the variable is mutable.
                 if (must_mut) {
@@ -1406,7 +1410,7 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                 switch (response.fun_param->data_type->kind) {
                     case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
                         if (defined_data_type) {
-                            update_unknown_data_type__LilyCheckedDataType(
+                            update_data_type__LilyCheckedDataType(
                               response.fun_param->data_type, defined_data_type);
                             data_type = clone__LilyCheckedDataType(
                               response.fun_param->data_type);
@@ -1425,7 +1429,7 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                                   last__Vec(current_fun->decl->fun
                                               .used_compiler_generic)));
 
-                            update_unknown_data_type__LilyCheckedDataType(
+                            update_data_type__LilyCheckedDataType(
                               response.fun_param->data_type, data_type);
                         }
 
@@ -4402,7 +4406,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                 if (fun_return_data_type) {
                     if (fun_return_data_type->kind ==
                         LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
-                        update_unknown_data_type__LilyCheckedDataType(
+                        update_data_type__LilyCheckedDataType(
                           fun_return_data_type, expr->data_type);
                     } else if (!eq__LilyCheckedDataType(fun_return_data_type,
                                                         expr->data_type)) {
