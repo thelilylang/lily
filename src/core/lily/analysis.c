@@ -2592,56 +2592,65 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     // the return data type.
                                     Vec *signature = NEW(Vec);
 
-                                    if (checked_params->len ==
-                                        fun->fun.params->len) {
-                                        for (Usize i = 0;
-                                             i < checked_params->len;
-                                             ++i) {
-                                            push__Vec(
-                                              signature,
-                                              CAST(
-                                                LilyCheckedExprCallFunParam *,
-                                                get__Vec(checked_params, i))
-                                                ->value->data_type);
-                                        }
-                                    } else {
-                                        for (Usize i = 0;
-                                             i < fun->fun.params->len;
-                                             ++i) {
-                                            LilyCheckedDeclFunParam *param =
-                                              get__Vec(fun->fun.params, i);
+                                    if (checked_params && fun->fun.params) {
+                                        if (checked_params->len ==
+                                            fun->fun.params->len) {
+                                            for (Usize i = 0;
+                                                 i < checked_params->len;
+                                                 ++i) {
+                                                push__Vec(
+                                                  signature,
+                                                  CAST(
+                                                    LilyCheckedExprCallFunParam
+                                                      *,
+                                                    get__Vec(checked_params, i))
+                                                    ->value->data_type);
+                                            }
+                                        } else {
+                                        params_signature : {
+                                            for (Usize i = 0;
+                                                 i < fun->fun.params->len;
+                                                 ++i) {
+                                                LilyCheckedDeclFunParam *param =
+                                                  get__Vec(fun->fun.params, i);
 
-                                            switch (param->kind) {
-                                                case LILY_CHECKED_DECL_FUN_PARAM_KIND_NORMAL:
-                                                    if (
-                                                      is_compiler_defined_and_known_dt__LilyCheckedDataType(
-                                                        param->data_type)) {
-                                                        push__Vec(
-                                                          signature,
-                                                          CAST(
-                                                            LilyCheckedExprCallFunParam
-                                                              *,
-                                                            get__Vec(
-                                                              checked_params,
-                                                              i))
-                                                            ->value->data_type);
-                                                    } else {
+                                                switch (param->kind) {
+                                                    case LILY_CHECKED_DECL_FUN_PARAM_KIND_NORMAL:
+                                                        if (
+                                                          is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                                                            param->data_type)) {
+                                                            push__Vec(
+                                                              signature,
+                                                              CAST(
+                                                                LilyCheckedExprCallFunParam
+                                                                  *,
+                                                                get__Vec(
+                                                                  checked_params,
+                                                                  i))
+                                                                ->value
+                                                                ->data_type);
+                                                        } else {
+                                                            push__Vec(
+                                                              signature,
+                                                              param->data_type);
+                                                        }
+
+                                                        break;
+                                                    case LILY_CHECKED_DECL_FUN_PARAM_KIND_DEFAULT:
                                                         push__Vec(
                                                           signature,
                                                           param->data_type);
-                                                    }
 
-                                                    break;
-                                                case LILY_CHECKED_DECL_FUN_PARAM_KIND_DEFAULT:
-                                                    push__Vec(signature,
-                                                              param->data_type);
-
-                                                    break;
-                                                default:
-                                                    UNREACHABLE(
-                                                      "unknown variant");
+                                                        break;
+                                                    default:
+                                                        UNREACHABLE(
+                                                          "unknown variant");
+                                                }
                                             }
                                         }
+                                        }
+                                    } else if (fun->fun.params) {
+                                        goto params_signature;
                                     }
 
                                     // Get the return data type of the function
@@ -2671,6 +2680,16 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                                             break;
                                         }
+                                        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+                                            return_data_type =
+                                              clone__LilyCheckedDataType(get__Vec(
+                                                signature,
+                                                get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
+                                                  &fun->fun,
+                                                  fun->fun.return_data_type
+                                                    ->compiler_generic.name)));
+
+                                            break;
                                         default:
                                             return_data_type =
                                               clone__LilyCheckedDataType(
