@@ -75,6 +75,11 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               LilyLlvmScope *scope,
                               const Location *location)
 {
+    if (fun->signatures->len == 1 &&
+        contains_compiler_defined_dt__LilyCheckedDeclFun(fun)) {
+        return;
+    }
+
     if (fun->is_main) {
         LLVMValueRef fun_llvm =
           generate_main_function__LilyIrLlvm(self, fun, scope, location);
