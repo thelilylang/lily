@@ -78,7 +78,9 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     if (fun->signatures->len == 1 &&
         contains_compiler_defined_dt__LilyCheckedDeclFun(fun)) {
         return;
-    }
+    } else if (fun->signatures->len > 1) {
+		TODO("make different signature of the function");
+	}
 
     if (fun->is_main) {
         LLVMValueRef fun_llvm =
