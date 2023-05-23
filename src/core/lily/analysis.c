@@ -1978,9 +1978,8 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                                        Vec *params_call)
 {
     if (params) {
-        if (params_call->len > params->len) {
-            FAILED("error: too many params");
-        }
+        Vec *compiler_generic_values =
+          NEW(Vec); // Vec<LilyCheckedCompilerGenericValue*>*
 
         for (Usize i = 0; i < params->len; ++i) {
             LilyCheckedDeclFunParam *param = get__Vec(params, i);
@@ -1989,11 +1988,48 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                 LilyCheckedExprCallFunParam *param_call =
                   get__Vec(params_call, i);
 
-                if (!eq__LilyCheckedDataType(param->data_type,
-                                             param_call->value->data_type)) {
-                    FAILED("data type of param don't match");
+                switch (param->data_type->kind) {
+                    case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC: {
+                        LilyCheckedCompilerGenericValue *value =
+                          NEW(LilyCheckedCompilerGenericValue,
+                              param->data_type->compiler_generic.name,
+                              param_call->value->data_type);
 
-                    return false;
+                        // Valid param with compiler generic data type.
+                        if (add_value__LilyCheckedCompilerGenericValue(
+                              value, compiler_generic_values)) {
+                            FREE(LilyCheckedCompilerGenericValue, value);
+
+                            LilyCheckedCompilerGenericValue *pushed_value =
+                              get_value__LilyCheckedCompilerGenericValue(
+                                compiler_generic_values,
+                                param->data_type->compiler_generic.name);
+
+                            if (pushed_value) {
+                                if (!eq__LilyCheckedDataType(
+                                      pushed_value->data_type,
+                                      param_call->value->data_type)) {
+                                    FAILED("data type of param doesn't match. "
+                                           "NOTE: the compiler generic param "
+                                           "is previously defined with an "
+                                           "other data type");
+
+                                    return false;
+                                }
+                            } else {
+                                UNREACHABLE("this situation is impossible");
+                            }
+                        }
+
+                        break;
+                    }
+                    default:
+                        if (!eq__LilyCheckedDataType(
+                              param->data_type, param_call->value->data_type)) {
+                            FAILED("data type of param doesn't match");
+
+                            return false;
+                        }
                 }
             } else {
                 switch (param->kind) {
@@ -2007,6 +2043,11 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                 }
             }
         }
+
+        FREE_BUFFER_ITEMS(compiler_generic_values->buffer,
+                          compiler_generic_values->len,
+                          LilyCheckedCompilerGenericValue);
+        FREE(Vec, compiler_generic_values);
     } else if (!params && params_call) {
         FAILED("too many params");
     }
@@ -2021,6 +2062,14 @@ check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
                                     LilyCheckedScope *scope,
                                     enum LilyCheckedSafetyMode safety_mode)
 {
+    if (!ast_params && called_fun->params) {
+        FAILED("error: too many params");
+    } else if (ast_params && called_fun->params) {
+        if (ast_params->len > called_fun->params->len) {
+            FAILED("error: too many params");
+        }
+    }
+
     Vec *checked_params = ast_params->len > 0 ? NEW(Vec) : NULL;
 
     for (Usize i = 0; i < ast_params->len; ++i) {
