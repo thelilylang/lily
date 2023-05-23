@@ -1420,6 +1420,7 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                             data_type = NEW_VARIANT(
                               LilyCheckedDataType,
                               compiler_generic,
+                              &expr->location,
                               NEW(LilyCheckedDataTypeCompilerGeneric,
                                   last__Vec(current_fun->decl->fun
                                               .used_compiler_generic)));
@@ -1614,6 +1615,13 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                       left,
                       right));
             } else {
+                if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                      left->data_type) ||
+                    is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                      right->data_type)) {
+                    TODO("check operator defined (compiler generic).");
+                }
+
                 TODO("check operator defined");
             }
         }
