@@ -1393,11 +1393,7 @@ update_unknown_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
     ASSERT(self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
            other->kind != LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN);
 
-    enum LilyCheckedDataTypeKind other_kind = other->kind;
-
-    self->kind = other->kind;
-
-    switch (other_kind) {
+    switch (other->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_ANY:
         case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
         case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
@@ -1562,6 +1558,8 @@ update_unknown_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
         default:
             UNREACHABLE("unknown variant");
     }
+
+    self->kind = other->kind;
 }
 
 bool
