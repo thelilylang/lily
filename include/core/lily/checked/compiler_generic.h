@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_CHECKED_COMPILER_GENERIC_H
 #define LILY_CORE_LILY_CHECKED_COMPILER_GENERIC_H
 
+#include <base/alloc.h>
 #include <base/string.h>
 #include <base/vec.h>
 
