@@ -510,12 +510,13 @@ VARIANT_CONSTRUCTOR(
   LilyCheckedDataType *,
   LilyCheckedDataType,
   conditional_compiler_choice,
+  const Location *location,
   LilyCheckedDataTypeConditionalCompilerChoice conditional_compiler_choice)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
 
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE;
-    self->location = NULL;
+    self->location = location;
     self->conditional_compiler_choice = conditional_compiler_choice;
 
     return self;
@@ -524,12 +525,13 @@ VARIANT_CONSTRUCTOR(
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     compiler_choice,
+                    const Location *location,
                     Vec *compiler_choice)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
 
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;
-    self->location = NULL;
+    self->location = location;
     self->compiler_choice = compiler_choice;
 
     return self;
@@ -538,12 +540,13 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     compiler_generic,
+                    const Location *location,
                     LilyCheckedDataTypeCompilerGeneric compiler_generic)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
 
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC;
-    self->location = NULL;
+    self->location = location;
     self->compiler_generic = compiler_generic;
 
     return self;
@@ -1245,6 +1248,7 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
 
             return NEW_VARIANT(LilyCheckedDataType,
                                conditional_compiler_choice,
+                               self->location,
                                NEW(LilyCheckedDataTypeConditionalCompilerChoice,
                                    choices,
                                    conds));
@@ -1256,11 +1260,13 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                 push__Vec(choices, get__Vec(self->compiler_choice, i));
             }
 
-            return NEW_VARIANT(LilyCheckedDataType, compiler_choice, choices);
+            return NEW_VARIANT(
+              LilyCheckedDataType, compiler_choice, self->location, choices);
         }
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
             return NEW_VARIANT(LilyCheckedDataType,
                                compiler_generic,
+                               self->location,
                                NEW(LilyCheckedDataTypeCompilerGeneric,
                                    self->compiler_generic.name));
         default:

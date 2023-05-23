@@ -83,8 +83,8 @@ enum LilyCheckedDataTypeKind
     LILY_CHECKED_DATA_TYPE_KIND_USIZE,
 
     // These data types cannot be defined by the user
-    // NOTE: this data type is only used for the return of data type
     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+    // NOTE: this data type is only used for the return of data type
     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE,
     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE,
     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC
@@ -512,6 +512,7 @@ VARIANT_CONSTRUCTOR(
   LilyCheckedDataType *,
   LilyCheckedDataType,
   conditional_compiler_choice,
+  const Location *location,
   LilyCheckedDataTypeConditionalCompilerChoice conditional_compiler_choice);
 
 /**
@@ -522,6 +523,7 @@ VARIANT_CONSTRUCTOR(
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     compiler_choice,
+                    const Location *location,
                     Vec *compiler_choice);
 
 /**
@@ -532,6 +534,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     compiler_generic,
+                    const Location *location,
                     LilyCheckedDataTypeCompilerGeneric compiler_generic);
 
 /**
@@ -663,6 +666,31 @@ update_unknown_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
  */
 bool
 is_string_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
+
+/**
+ *
+ * @brief Return true if a known data type otherwise return false.
+ */
+inline bool
+is_known_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    return self->kind != LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN;
+}
+
+/**
+ *
+ * @brief Return true if a known data type and a compiler defined data type
+ * otherwise return false.
+ */
+inline bool
+is_compiler_defined_and_known_dt__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    return is_known_data_type__LilyCheckedDataType(self) &&
+           (self->kind ==
+              LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE ||
+            self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE ||
+            self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC);
+}
 
 /**
  *
