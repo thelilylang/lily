@@ -28,6 +28,52 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+typedef struct LilyCheckedDataType LilyCheckedDataType;
+
+typedef struct LilyCheckedCompilerGenericValue
+{
+    const String *name;                   // String* (&)
+    const LilyCheckedDataType *data_type; // LilyCheckedDataType* (&)
+} LilyCheckedCompilerGenericValue;
+
+/**
+ *
+ * @brief Construct LilyCheckedCompilerGenericValue type.
+ */
+CONSTRUCTOR(LilyCheckedCompilerGenericValue *,
+            LilyCheckedCompilerGenericValue,
+            const String *name,
+            const LilyCheckedDataType *data_type);
+
+/**
+ *
+ * @brief Add value and check if the name is not already pushed.
+ * @param buffer Vec<LilyCheckedCompilerGenericValue*>*
+ */
+int
+add_value__LilyCheckedCompilerGenericValue(
+  LilyCheckedCompilerGenericValue *self,
+  Vec *buffer);
+
+/**
+ *
+ * @brief Get value from compiler generic name.
+ * @param buffer Vec<LilyCheckedCompilerGenericValue*>*
+ * @return LilyCheckedCompilerGenericValue* (&)?
+ */
+LilyCheckedCompilerGenericValue *
+get_value__LilyCheckedCompilerGenericValue(Vec *buffer, const String *name);
+
+/**
+ *
+ * @brief Free LilyCheckedCompilerGenericValue type.
+ */
+inline DESTRUCTOR(LilyCheckedCompilerGenericValue,
+                  LilyCheckedCompilerGenericValue *self)
+{
+    lily_free(self);
+}
+
 /**
  *
  * @brief Generate a name a not used compiler generic name.

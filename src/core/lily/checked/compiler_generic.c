@@ -23,8 +23,57 @@
  */
 
 #include <core/lily/checked/compiler_generic.h>
+#include <core/lily/checked/data_type.h>
+
+#include <string.h>
 
 #define a 0x61
+
+CONSTRUCTOR(LilyCheckedCompilerGenericValue *,
+            LilyCheckedCompilerGenericValue,
+            const String *name,
+            const LilyCheckedDataType *data_type)
+{
+    LilyCheckedCompilerGenericValue *self =
+      lily_malloc(sizeof(LilyCheckedCompilerGenericValue));
+
+    self->name = name;
+    self->data_type = data_type;
+
+    return self;
+}
+
+int
+add_value__LilyCheckedCompilerGenericValue(
+  LilyCheckedCompilerGenericValue *self,
+  Vec *buffer)
+{
+    for (Usize i = 0; i < buffer->len; ++i) {
+        if (!strcmp(CAST(LilyCheckedCompilerGenericValue *, get__Vec(buffer, i))
+                      ->name->buffer,
+                    self->name->buffer)) {
+            return 1;
+        }
+    }
+
+    push__Vec(buffer, self);
+
+    return 0;
+}
+
+LilyCheckedCompilerGenericValue *
+get_value__LilyCheckedCompilerGenericValue(Vec *buffer, const String *name)
+{
+    for (Usize i = 0; i < buffer->len; ++i) {
+        LilyCheckedCompilerGenericValue *value = get__Vec(buffer, i);
+
+        if (!strcmp(value->name->buffer, name->buffer)) {
+            return value;
+        }
+    }
+
+    return NULL;
+}
 
 String *
 generate_compiler_generic__LilyCheckedCompilerGeneric(
