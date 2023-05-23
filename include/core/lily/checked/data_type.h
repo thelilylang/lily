@@ -81,10 +81,10 @@ enum LilyCheckedDataTypeKind
     LILY_CHECKED_DATA_TYPE_KIND_UINT8,
     LILY_CHECKED_DATA_TYPE_KIND_UNIT,
     LILY_CHECKED_DATA_TYPE_KIND_USIZE,
-    LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
 
     // These data types cannot be defined by the user
     // NOTE: this data type is only used for the return of data type
+    LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE,
     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE,
     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC
@@ -647,6 +647,15 @@ contains_direct_custom_data_type__LilyCheckedDataType(
  */
 LilyCheckedDataType *
 get_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
+
+/**
+ *
+ * @brief Update unknown data type to a known data type.
+ * @param other LilyCheckedDataType* (&)
+ */
+void
+update_unknown_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
+                                              LilyCheckedDataType *other);
 
 /**
  *

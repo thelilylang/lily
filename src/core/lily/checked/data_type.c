@@ -1386,6 +1386,184 @@ get_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
     }
 }
 
+void
+update_unknown_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
+                                              LilyCheckedDataType *other)
+{
+    ASSERT(self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+           other->kind != LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN);
+
+    enum LilyCheckedDataTypeKind other_kind = other->kind;
+
+    self->kind = other->kind;
+
+    switch (other_kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ANY:
+        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+        case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
+            self->bytes = other->bytes;
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
+            Vec *generics = other->custom.generics ? NEW(Vec) : NULL;
+
+            if (generics) {
+                for (Usize i = 0; i < other->custom.generics->len; ++i) {
+                    push__Vec(generics,
+                              clone__LilyCheckedDataType(
+                                get__Vec(other->custom.generics, i)));
+                }
+            }
+
+            self->custom = NEW(LilyCheckedDataTypeCustom,
+                               other->custom.scope_id,
+                               other->custom.scope,
+                               other->custom.name,
+                               other->custom.global_name,
+                               generics,
+                               other->custom.kind,
+                               other->custom.is_recursive);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
+            Vec *params = other->lambda.params ? NEW(Vec) : NULL;
+
+            if (params) {
+                for (Usize i = 0; i < other->lambda.params->len; ++i) {
+                    push__Vec(params,
+                              clone__LilyCheckedDataType(
+                                get__Vec(other->lambda.params, i)));
+                }
+            }
+
+            self->lambda =
+              NEW(LilyCheckedDataTypeLambda,
+                  params,
+                  clone__LilyCheckedDataType(other->lambda.return_type));
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+            self->list = clone__LilyCheckedDataType(other->list);
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            self->mut = clone__LilyCheckedDataType(other->mut);
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+            self->optional = clone__LilyCheckedDataType(other->optional);
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+            self->ptr = clone__LilyCheckedDataType(other->ptr);
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            self->ref = clone__LilyCheckedDataType(other->ref);
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_STR:
+            self->str = other->str;
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+            self->trace = clone__LilyCheckedDataType(other->trace);
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
+            Vec *tuple = NEW(Vec);
+
+            for (Usize i = 0; i < other->tuple->len; ++i) {
+                push__Vec(
+                  tuple, clone__LilyCheckedDataType(get__Vec(other->tuple, i)));
+            }
+
+            self->tuple = tuple;
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {
+            Vec *choices = NEW(Vec);
+            Vec *conds = NEW(Vec);
+
+            for (Usize i = 0;
+                 i < other->conditional_compiler_choice.choices->len;
+                 ++i) {
+                push__Vec(
+                  choices,
+                  get__Vec(other->conditional_compiler_choice.choices, i));
+            }
+
+            for (Usize i = 0; i < other->conditional_compiler_choice.conds->len;
+                 ++i) {
+                Vec *cond =
+                  get__Vec(other->conditional_compiler_choice.conds, i);
+                Vec *item = NEW(Vec);
+
+                for (Usize j = 0; j < cond->len; ++j) {
+                    push__Vec(item, get__Vec(cond, j));
+                }
+
+                push__Vec(conds, item);
+            }
+
+            self->conditional_compiler_choice =
+              NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE: {
+            Vec *compiler_choice = NEW(Vec);
+
+            for (Usize i = 0; i < other->compiler_choice->len; ++i) {
+                push__Vec(compiler_choice, get__Vec(other->compiler_choice, i));
+            }
+
+            self->compiler_choice = compiler_choice;
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+            self->compiler_generic = NEW(LilyCheckedDataTypeCompilerGeneric,
+                                         other->compiler_generic.name);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 bool
 is_string_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
 {
