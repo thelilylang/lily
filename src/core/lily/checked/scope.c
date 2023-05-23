@@ -30,11 +30,8 @@
 #include <core/lily/checked/parent.h>
 #include <core/lily/checked/scope.h>
 
-#ifdef ENV_DEBUG
 #include <stdio.h>
 #include <stdlib.h>
-#endif
-
 #include <string.h>
 
 #define CHECK_IF_EXISTS(container, item, container_name)                    \
