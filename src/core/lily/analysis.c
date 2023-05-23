@@ -4198,6 +4198,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                         case LILY_CHECKED_DECL_KIND_FUN:
                             fun_return_data_type =
                               current_fun->decl->fun.return_data_type;
+
                             break;
                         default:
                             UNREACHABLE(
@@ -4220,15 +4221,20 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
 
                 // Check the data type of the return expression
                 if (fun_return_data_type) {
-                    if (!eq__LilyCheckedDataType(fun_return_data_type,
-                                                 expr->data_type)) {
+                    if (fun_return_data_type->kind ==
+                        LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+                        update_unknown_data_type__LilyCheckedDataType(
+                          fun_return_data_type, expr->data_type);
+                    } else if (!eq__LilyCheckedDataType(fun_return_data_type,
+                                                        expr->data_type)) {
                         FAILED("the data type doesn't match with the inferred "
                                "type or the specified return data type passed "
                                "to the function");
                     }
                 } else {
-                    fun_return_data_type =
-                      clone__LilyCheckedDataType(expr->data_type);
+                    UNREACHABLE(
+                      "this case is not possible. By default the return data "
+                      "type is set with unknown data type");
                 }
             } else {
                 if (fun_return_data_type) {
