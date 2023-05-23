@@ -28,6 +28,7 @@
 
 #include <core/lily/analysis.h>
 #include <core/lily/ast.h>
+#include <core/lily/checked/compiler_generic.h>
 #include <core/lily/checked/parent.h>
 #include <core/lily/checked/safety_mode.h>
 #include <core/lily/lily.h>
@@ -109,6 +110,7 @@ static LilyCheckedExpr *
 check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                                     LilyAstExpr *expr,
                                     LilyCheckedScope *scope,
+                                    LilyCheckedDataType *defined_data_type,
                                     bool is_moved_expr,
                                     bool must_mut);
 
@@ -168,6 +170,7 @@ static LilyCheckedExpr *
 get_call_from_expr__LilyAnalysis(LilyAnalysis *self,
                                  LilyAstExpr *expr,
                                  LilyCheckedScope *scope,
+                                 LilyCheckedDataType *defined_data_type,
                                  enum LilyCheckedSafetyMode safety_mode,
                                  bool is_moved_expr,
                                  bool must_mut);
@@ -1248,6 +1251,7 @@ static LilyCheckedExpr *
 check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                                     LilyAstExpr *expr,
                                     LilyCheckedScope *scope,
+                                    LilyCheckedDataType *defined_data_type,
                                     bool is_moved_expr,
                                     bool must_mut)
 {
@@ -1399,8 +1403,36 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                     response.fun_param->is_moved = true;
                 }
 
-                data_type =
-                  clone__LilyCheckedDataType(response.fun_param->data_type);
+                switch (response.fun_param->data_type->kind) {
+                    case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+                        if (defined_data_type) {
+                            update_unknown_data_type__LilyCheckedDataType(
+                              response.fun_param->data_type, defined_data_type);
+                            data_type = clone__LilyCheckedDataType(
+                              response.fun_param->data_type);
+                        } else {
+                            LilyCheckedScopeDecls *current_fun =
+                              get_current_fun__LilyCheckedScope(scope);
+
+                            add_compiler_generic__LilyCheckedCompilerGeneric(
+                              current_fun->decl->fun.used_compiler_generic);
+
+                            data_type = NEW_VARIANT(
+                              LilyCheckedDataType,
+                              compiler_generic,
+                              NEW(LilyCheckedDataTypeCompilerGeneric,
+                                  last__Vec(current_fun->decl->fun
+                                              .used_compiler_generic)));
+
+                            update_unknown_data_type__LilyCheckedDataType(
+                              response.fun_param->data_type, data_type);
+                        }
+
+                        break;
+                    default:
+                        data_type = clone__LilyCheckedDataType(
+                          response.fun_param->data_type);
+                }
 
                 return NEW_VARIANT(
                   LilyCheckedExpr,
@@ -2099,6 +2131,7 @@ LilyCheckedExpr *
 get_call_from_expr__LilyAnalysis(LilyAnalysis *self,
                                  LilyAstExpr *expr,
                                  LilyCheckedScope *scope,
+                                 LilyCheckedDataType *defined_data_type,
                                  enum LilyCheckedSafetyMode safety_mode,
                                  bool is_moved_expr,
                                  bool must_mut)
@@ -2108,7 +2141,7 @@ get_call_from_expr__LilyAnalysis(LilyAnalysis *self,
             TODO("resolve access");
         case LILY_AST_EXPR_KIND_IDENTIFIER:
             return check_identifier_expr__LilyAnalysis(
-              self, expr, scope, is_moved_expr, must_mut);
+              self, expr, scope, defined_data_type, is_moved_expr, must_mut);
         default:
             UNREACHABLE("this situation is impossible");
     }
@@ -2337,8 +2370,14 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                       get__Vec(expr->access.path, 0);
 
                     // Analysis the first expression of the path
-                    LilyCheckedExpr *first = get_call_from_expr__LilyAnalysis(
-                      self, first_ast_expr, scope, safety_mode, false, false);
+                    LilyCheckedExpr *first =
+                      get_call_from_expr__LilyAnalysis(self,
+                                                       first_ast_expr,
+                                                       scope,
+                                                       defined_data_type,
+                                                       safety_mode,
+                                                       false,
+                                                       false);
 
                     switch (first->call.kind) {
                         case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
@@ -3089,7 +3128,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_EXPR_KIND_IDENTIFIER:
             return check_identifier_expr__LilyAnalysis(
-              self, expr, scope, is_moved_expr, must_mut);
+              self, expr, scope, defined_data_type, is_moved_expr, must_mut);
         case LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR:
             TODO("identifier dollar expression");
         case LILY_AST_EXPR_KIND_LAMBDA:
@@ -4477,10 +4516,6 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
         self->package->main_is_found = true;
     }
 
-    if (fun->fun.is_main && fun->fun.is_recursive) {
-        FAILED("the main function cannot be recursive");
-    }
-
     // 2. Check generic params
     if (fun->ast_decl->fun.generic_params) {
         if (fun->fun.is_main) {
@@ -4542,6 +4577,11 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
             // the function is recursive.
             fun->fun.is_recursive = true;
         }
+    }
+
+    // Check if the main function is not recursive.
+    if (fun->fun.is_main && fun->fun.is_recursive) {
+        FAILED("the main function cannot be recursive");
     }
 }
 
