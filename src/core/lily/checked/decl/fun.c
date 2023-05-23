@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef ENV_DEBUG
 #include <base/format.h>
@@ -267,16 +268,20 @@ contains_compiler_defined_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
         return true;
     }
 
-    for (Usize i = 0; i < self->params->len; ++i) {
-        if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
-              CAST(LilyCheckedDeclFunParam *, get__Vec(self->params, i))
-                ->data_type)) {
-            return true;
+    if (self->params) {
+        for (Usize i = 0; i < self->params->len; ++i) {
+            if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                  CAST(LilyCheckedDeclFunParam *, get__Vec(self->params, i))
+                    ->data_type)) {
+                return true;
+            }
         }
     }
 
-    return is_compiler_defined_and_known_dt__LilyCheckedDataType(
-      self->return_data_type);
+    return self->return_data_type
+             ? is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                 self->return_data_type)
+             : false;
 }
 
 int
@@ -293,11 +298,41 @@ add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
                 return 1;
             }
         }
+
+        if (pushed_signature->len == 0 && signature->len == 0) {
+            return 1;
+        }
     }
 
     push__Vec(self->signatures, signature);
 
     return 0;
+}
+
+Usize
+get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
+  const LilyCheckedDeclFun *self,
+  const String *compiler_generic_name)
+{
+    for (Usize i = 0; i < self->params->len; ++i) {
+        LilyCheckedDataType *data_type =
+          CAST(LilyCheckedDeclFunParam *, get__Vec(self->params, i))->data_type;
+
+        switch (data_type->kind) {
+            case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+                if (!strcmp(data_type->compiler_generic.name->buffer,
+                            compiler_generic_name->buffer)) {
+                    return i;
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    UNREACHABLE("this function have a bug: "
+                "`get_id_of_param_from_compiler_generic__LilyCheckedDeclFun`");
 }
 
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)

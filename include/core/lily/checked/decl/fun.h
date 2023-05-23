@@ -200,6 +200,15 @@ add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature);
 
 /**
  *
+ * @brief Get if of the parametter from the compiler generic name.
+ */
+Usize
+get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
+  const LilyCheckedDeclFun *self,
+  const String *compiler_generic_name);
+
+/**
+ *
  * @brief Free LilyCheckedDeclFun type.
  */
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self);
