@@ -694,6 +694,20 @@ is_compiler_defined_and_known_dt__LilyCheckedDataType(LilyCheckedDataType *self)
 
 /**
  *
+ * @brief Check if is a compiler defined data type.
+ */
+inline bool
+is_compiler_defined__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    return self->kind ==
+             LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE ||
+           self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE ||
+           self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC ||
+           self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN;
+}
+
+/**
+ *
  * @brief Free LilyCheckedDataType.
  */
 DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self);

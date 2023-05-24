@@ -106,6 +106,10 @@ static VARIANT_DESTRUCTOR(LilyCheckedDataType,
                           compiler_choice,
                           LilyCheckedDataType *self);
 
+#define FREE_REC_DT(dt)                                \
+    if (!is_compiler_defined__LilyCheckedDataType(dt)) \
+        FREE(LilyCheckedDataType, dt);
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -168,7 +172,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDataTypeArray, const LilyCheckedDataTypeArray *self)
 {
-    FREE(LilyCheckedDataType, self->data_type);
+    FREE_REC_DT(self->data_type);
 }
 
 #ifdef ENV_DEBUG
@@ -1598,7 +1602,7 @@ VARIANT_DESTRUCTOR(LilyCheckedDataType, custom, LilyCheckedDataType *self)
 
 VARIANT_DESTRUCTOR(LilyCheckedDataType, exception, LilyCheckedDataType *self)
 {
-    FREE(LilyCheckedDataType, self->exception);
+    FREE_REC_DT(self->exception);
     lily_free(self);
 }
 
@@ -1610,44 +1614,48 @@ VARIANT_DESTRUCTOR(LilyCheckedDataType, lambda, LilyCheckedDataType *self)
 
 VARIANT_DESTRUCTOR(LilyCheckedDataType, list, LilyCheckedDataType *self)
 {
-    FREE(LilyCheckedDataType, self->list);
+    FREE_REC_DT(self->list);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedDataType, mut, LilyCheckedDataType *self)
 {
-    FREE(LilyCheckedDataType, self->mut);
+    FREE_REC_DT(self->mut);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedDataType, optional, LilyCheckedDataType *self)
 {
-    FREE(LilyCheckedDataType, self->optional);
+    FREE_REC_DT(self->optional);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedDataType, ptr, LilyCheckedDataType *self)
 {
-    FREE(LilyCheckedDataType, self->ptr);
+    FREE_REC_DT(self->ptr);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedDataType, ref, LilyCheckedDataType *self)
 {
-    FREE(LilyCheckedDataType, self->ref);
+    FREE_REC_DT(self->ref);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedDataType, trace, LilyCheckedDataType *self)
 {
-    FREE(LilyCheckedDataType, self->trace);
+    FREE_REC_DT(self->trace);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedDataType, tuple, LilyCheckedDataType *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->tuple->buffer, self->tuple->len, LilyCheckedDataType);
+    for (Usize i = 0; i < self->tuple->len; ++i) {
+        LilyCheckedDataType *data_type = get__Vec(self->tuple, i);
+
+        FREE_REC_DT(data_type);
+    }
+
     FREE(Vec, self->tuple);
     lily_free(self);
 }
@@ -1713,6 +1721,7 @@ DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self)
             FREE_VARIANT(LilyCheckedDataType, compiler_choice, self);
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+            lily_free(self);
             break;
         default:
             lily_free(self);
