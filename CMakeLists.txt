@@ -217,6 +217,7 @@ set(CORE_SRC
 	src/core/lily/checked/scope_container.c
 	src/core/lily/checked/scope_decls.c
 	src/core/lily/checked/scope_response.c
+	src/core/lily/checked/signature.c
 	src/core/lily/checked/stmt.c
 	src/core/lily/checked/variant.c
 	src/core/lily/ir/cc/builder/constant.c
