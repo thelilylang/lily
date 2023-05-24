@@ -1326,14 +1326,13 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                     response.variable->is_moved = true;
                 }
 
-                data_type =
-                  clone__LilyCheckedDataType(response.variable->data_type);
+                data_type = response.variable->data_type;
 
                 return NEW_VARIANT(
                   LilyCheckedExpr,
                   call,
                   &expr->location,
-                  data_type,
+                  response.variable->data_type,
                   expr,
                   NEW(LilyCheckedExprCall,
                       LILY_CHECKED_EXPR_CALL_KIND_VARIABLE,
@@ -1355,8 +1354,7 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                         scope, response.scope_container.scope_id));
                 }
 
-                data_type =
-                  clone__LilyCheckedDataType(response.constant->data_type);
+                data_type = response.constant->data_type;
 
                 return NEW_VARIANT(
                   LilyCheckedExpr,
@@ -1370,19 +1368,19 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                       (LilyCheckedAccessScope){
                         .id = response.scope_container.scope_id }));
             case LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN_PARAM:
-                //if (response.fun_param->is_moved) {
-                //    emit__Diagnostic(
-                //      NEW_VARIANT(
-                //        Diagnostic,
-                //        simple_lily_error,
-                //        &self->package->file,
-                //        &expr->location,
-                //        NEW(LilyError, LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED),
-                //        NULL,
-                //        NULL,
-                //        NULL),
-                //      &self->package->count_error);
-                //}
+                // if (response.fun_param->is_moved) {
+                //     emit__Diagnostic(
+                //       NEW_VARIANT(
+                //         Diagnostic,
+                //         simple_lily_error,
+                //         &self->package->file,
+                //         &expr->location,
+                //         NEW(LilyError, LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED),
+                //         NULL,
+                //         NULL,
+                //         NULL),
+                //       &self->package->count_error);
+                // }
 
                 // Check if the variable is mutable.
                 if (must_mut) {
@@ -1412,8 +1410,7 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                         if (defined_data_type) {
                             update_data_type__LilyCheckedDataType(
                               response.fun_param->data_type, defined_data_type);
-                            data_type = clone__LilyCheckedDataType(
-                              response.fun_param->data_type);
+                            data_type = response.fun_param->data_type;
                         } else {
                             LilyCheckedScopeDecls *current_fun =
                               get_current_fun__LilyCheckedScope(scope);
@@ -1435,8 +1432,7 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
 
                         break;
                     default:
-                        data_type = clone__LilyCheckedDataType(
-                          response.fun_param->data_type);
+                        data_type = response.fun_param->data_type;
                 }
 
                 return NEW_VARIANT(
@@ -2239,8 +2235,7 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
                           LilyCheckedExpr,
                           call,
                           &path_item->location,
-                          clone__LilyCheckedDataType(
-                            field_response.record_field->data_type),
+                          field_response.record_field->data_type,
                           path_item,
                           NEW_VARIANT(
                             LilyCheckedExprCall,
@@ -2345,7 +2340,7 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
                       LilyCheckedExpr,
                       call,
                       &path->location,
-                      clone__LilyCheckedDataType(last->data_type),
+                      last->data_type,
                       path,
                       NEW_VARIANT(
                         LilyCheckedExprCall,
@@ -2713,17 +2708,12 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                                     switch (fun->fun.return_data_type->kind) {
                                         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {
-                                            LilyCheckedDataType
-                                              *inferred_return_data_type =
-                                                get_return_data_type_of_conditional_compiler_choice(
-                                                  fun->fun.return_data_type,
-                                                  signature);
+                                            return_data_type =
+                                              get_return_data_type_of_conditional_compiler_choice(
+                                                fun->fun.return_data_type,
+                                                signature);
 
-                                            if (inferred_return_data_type) {
-                                                return_data_type =
-                                                  clone__LilyCheckedDataType(
-                                                    inferred_return_data_type);
-                                            } else {
+                                            if (!return_data_type) {
                                                 FAILED(
                                                   "impossible to get a return "
                                                   "data type. NOTE: the "
@@ -2734,19 +2724,17 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                             break;
                                         }
                                         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
-                                            return_data_type =
-                                              clone__LilyCheckedDataType(get__Vec(
-                                                signature,
-                                                get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
-                                                  &fun->fun,
-                                                  fun->fun.return_data_type
-                                                    ->compiler_generic.name)));
+                                            return_data_type = get__Vec(
+                                              signature,
+                                              get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
+                                                &fun->fun,
+                                                fun->fun.return_data_type
+                                                  ->compiler_generic.name));
 
                                             break;
                                         default:
                                             return_data_type =
-                                              clone__LilyCheckedDataType(
-                                                fun->fun.return_data_type);
+                                              fun->fun.return_data_type;
                                     }
 
                                     LilyCheckedExpr *fun_call = NEW_VARIANT(
@@ -2897,8 +2885,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                       LilyCheckedExpr,
                       call,
                       &expr->location,
-                      clone__LilyCheckedDataType(
-                        builtin_signature->return_data_type),
+                      builtin_signature->return_data_type,
                       expr,
                       NEW_VARIANT(LilyCheckedExprCall,
                                   fun_builtin,
@@ -2983,8 +2970,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                       LilyCheckedExpr,
                       call,
                       &expr->location,
-                      clone__LilyCheckedDataType(
-                        sys_signature->return_data_type),
+                      sys_signature->return_data_type,
                       expr,
                       NEW_VARIANT(LilyCheckedExprCall,
                                   fun_sys,
@@ -4404,10 +4390,23 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
 
                 // Check the data type of the return expression
                 if (fun_return_data_type) {
-                    if (fun_return_data_type->kind ==
-                        LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+                    if ((fun_return_data_type->kind ==
+                           LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||
+                         fun_return_data_type->kind ==
+                           LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) &&
+                        expr->data_type->kind !=
+                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
                         update_data_type__LilyCheckedDataType(
                           fun_return_data_type, expr->data_type);
+                    } else if (
+                      expr->data_type->kind ==
+                        LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                      (fun_return_data_type->kind !=
+                         LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                       fun_return_data_type->kind !=
+                         LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN)) {
+                        update_data_type__LilyCheckedDataType(
+                          expr->data_type, fun_return_data_type);
                     } else if (!eq__LilyCheckedDataType(fun_return_data_type,
                                                         expr->data_type)) {
                         FAILED("the data type doesn't match with the inferred "
