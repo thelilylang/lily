@@ -334,6 +334,7 @@ struct LilyCheckedDataType
 {
     enum LilyCheckedDataTypeKind kind;
     const Location *location; // const Location*? (&)
+    Usize ref_count;
     union
     {
         LilyCheckedDataTypeArray array;
@@ -704,6 +705,18 @@ is_compiler_defined__LilyCheckedDataType(LilyCheckedDataType *self)
            self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE ||
            self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC ||
            self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN;
+}
+
+/**
+ *
+ * @brief Pass to ref a data type and increment the `ref_count`.
+ * @return LilyCheckedDataType* (&)
+ */
+inline LilyCheckedDataType *
+ref__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    ++self->ref_count;
+    return self;
 }
 
 /**
