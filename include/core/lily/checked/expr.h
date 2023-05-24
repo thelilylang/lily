@@ -61,8 +61,12 @@ typedef struct LilyCheckedExpr
 {
     enum LilyCheckedExprKind kind;
     const Location *location; // const Location* (&)
-    LilyCheckedDataType
-      *data_type; // This is the result data type of the expression.
+                              // This is the result data type of the expression.
+    LilyCheckedDataType *
+      data_type; // LilyCheckedDataType* (&)
+                 // when is equal to LILY_CHECKED_EXPR_KIND_CALL or
+                 // LILY_CHECKED_EXPR_KIND_GROUPING or
+                 // LILY_CHECKED_EXPR_KIND_LAMBDA otherwise LilyCheckedDataType*
     const LilyAstExpr *ast_expr; // const LilyAstExpr* (&)
     union
     {

@@ -436,7 +436,12 @@ VARIANT_DESTRUCTOR(LilyCheckedExpr, binary, LilyCheckedExpr *self)
 VARIANT_DESTRUCTOR(LilyCheckedExpr, call, LilyCheckedExpr *self)
 {
     FREE(LilyCheckedExprCall, &self->call);
-    FREE(LilyCheckedDataType, self->data_type);
+
+    if (self->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+        self->call.kind == LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN) {
+        lily_free(self->data_type);
+    }
+
     lily_free(self);
 }
 
@@ -450,14 +455,12 @@ VARIANT_DESTRUCTOR(LilyCheckedExpr, cast, LilyCheckedExpr *self)
 VARIANT_DESTRUCTOR(LilyCheckedExpr, grouping, LilyCheckedExpr *self)
 {
     FREE(LilyCheckedExpr, self->grouping);
-    FREE(LilyCheckedDataType, self->data_type);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedExpr, lambda, LilyCheckedExpr *self)
 {
     FREE(LilyCheckedExprLambda, &self->lambda);
-    FREE(LilyCheckedDataType, self->data_type);
     lily_free(self);
 }
 
