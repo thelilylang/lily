@@ -6,7 +6,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 add_subdirectory(src/core/cc/comptime_gen)
-add_subdirectory(src/core/lily/lsp)
+add_subdirectory(src/core/lilyls)
 
 if (NOT WIN32)
 	add_compile_options(-Wall -O3 -fdiagnostics-color=always)
