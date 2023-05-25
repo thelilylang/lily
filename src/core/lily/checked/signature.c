@@ -25,6 +25,7 @@
 #include <base/alloc.h>
 #include <base/new.h>
 
+#include <core/lily/checked/global_name.h>
 #include <core/lily/checked/signature.h>
 
 CONSTRUCTOR(LilyCheckedSignatureFun *,
@@ -35,7 +36,11 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
     LilyCheckedSignatureFun *self =
       lily_malloc(sizeof(LilyCheckedSignatureFun));
 
-    self->global_name = global_name;
+    String *global_name_ser = clone__String(global_name);
+
+    generate_global_fun_name__LilyCheckedGlobalName(global_name_ser, fun);
+
+    self->global_name = global_name_ser;
     self->fun = fun;
 
     return self;

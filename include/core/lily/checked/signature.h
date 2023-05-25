@@ -39,6 +39,7 @@ typedef struct LilyCheckedSignatureFun
 /**
  *
  * @brief Construct LilyCheckedSignatureFun type.
+ * @param global_name String* (&)
  */
 CONSTRUCTOR(LilyCheckedSignatureFun *,
             LilyCheckedSignatureFun,
