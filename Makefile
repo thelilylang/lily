@@ -116,6 +116,9 @@ format:
 	${CLANG_FORMAT} ./tests/core/lily/precompile/*.c
 	${CLANG_FORMAT} ./tests/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/scanner/*.c
+	@rustfmt ./src/core/lilyls/src/*.rs
+	@rustfmt ./src/core/cc/comptime_gen/src/*.rs
+	
 
 # TODO: try to port -pg on CMake config
 profile:
