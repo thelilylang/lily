@@ -7,4 +7,5 @@
 /out
 /src/core/cc/comptime_gen/target
 /src/core/lilyls/target
+/src/core/bindings/target
 /target
