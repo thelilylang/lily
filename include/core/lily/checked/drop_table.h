@@ -25,7 +25,8 @@
 #ifndef LILY_CORE_LILY_CHECKED_DROP_TABLE_H
 #define LILY_CORE_LILY_CHECKED_DROP_TABLE_H
 
-typedef struct LilyCheckedDropTable {
+typedef struct LilyCheckedDropTable
+{
 } LilyCheckedDropTable;
 
 #endif // LILY_CORE_LILY_CHECKED_DROP_TABLE_H
