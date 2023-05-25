@@ -31,6 +31,7 @@
 #include <core/lily/checked/compiler_generic.h>
 #include <core/lily/checked/parent.h>
 #include <core/lily/checked/safety_mode.h>
+#include <core/lily/checked/signature.h>
 #include <core/lily/lily.h>
 #include <core/lily/package.h>
 
@@ -2745,34 +2746,71 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                 fun->fun.return_data_type);
                                     }
 
-                                    LilyCheckedExpr *fun_call = NEW_VARIANT(
-                                      LilyCheckedExpr,
-                                      call,
-                                      &expr->location,
-                                      return_data_type,
-                                      expr,
-                                      NEW_VARIANT(
-                                        LilyCheckedExprCall,
-                                        fun,
-                                        (LilyCheckedAccessScope){
-                                          .id =
-                                            response.scope_container.scope_id },
-                                        fun->fun.global_name,
-                                        NEW(LilyCheckedExprCallFun,
-                                            checked_params)));
+                                    LilyCheckedExpr *fun_call = NULL;
 
                                     // Push a new signature
                                     if (
                                       contains_compiler_defined_dt__LilyCheckedDeclFun(
                                         &fun->fun)) {
-                                        push__Vec(signature,
-                                                  fun_call->data_type);
+                                        push__Vec(signature, return_data_type);
 
                                         if (add_signature__LilyCheckedDeclFun(
                                               &fun->fun, signature)) {
+                                            fun_call = NEW_VARIANT(
+                                              LilyCheckedExpr,
+                                              call,
+                                              &expr->location,
+                                              return_data_type,
+                                              expr,
+                                              NEW_VARIANT(
+                                                LilyCheckedExprCall,
+                                                fun,
+                                                (LilyCheckedAccessScope){
+                                                  .id = response.scope_container
+                                                          .scope_id },
+                                                get_global_name_of_signature__LilyCheckedDeclFun(
+                                                  &fun->fun, signature),
+                                                NEW(LilyCheckedExprCallFun,
+                                                    checked_params)));
+
                                             FREE(Vec, signature);
+                                        } else {
+                                            fun_call = NEW_VARIANT(
+                                              LilyCheckedExpr,
+                                              call,
+                                              &expr->location,
+                                              return_data_type,
+                                              expr,
+                                              NEW_VARIANT(
+                                                LilyCheckedExprCall,
+                                                fun,
+                                                (LilyCheckedAccessScope){
+                                                  .id = response.scope_container
+                                                          .scope_id },
+                                                CAST(LilyCheckedSignatureFun *,
+                                                     last__Vec(
+                                                       fun->fun.signatures))
+                                                  ->global_name,
+                                                NEW(LilyCheckedExprCallFun,
+                                                    checked_params)));
                                         }
                                     } else {
+                                        fun_call = NEW_VARIANT(
+                                          LilyCheckedExpr,
+                                          call,
+                                          &expr->location,
+                                          return_data_type,
+                                          expr,
+                                          NEW_VARIANT(
+                                            LilyCheckedExprCall,
+                                            fun,
+                                            (LilyCheckedAccessScope){
+                                              .id = response.scope_container
+                                                      .scope_id },
+                                            fun->fun.global_name,
+                                            NEW(LilyCheckedExprCallFun,
+                                                checked_params)));
+
                                         FREE(Vec, signature);
                                     }
 
