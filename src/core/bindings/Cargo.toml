@@ -1,0 +1,11 @@
+[package]
+name = "lily-bindings"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cc = "1.0.79"
+
+[lib]
+name = "lily_bindings"
+path = "src/lib.rs"
