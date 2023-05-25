@@ -1,7 +1,0 @@
-[package]
-name = "lilyls"
-version = "0.0.0"
-edition = "2021"
-
-[dependencies]
-lsp-server = "0.7.0"
