@@ -6,6 +6,8 @@
 /.vc
 /out
 /src/core/cc/comptime_gen/target
-/src/core/lilyls/target
-/src/core/bindings/target
+/src/core/lilyls/zig-cache
+/src/core/lilyls/zig-out
+/src/core/lsp/zig-cache
+/src/core/lsp/zig-out
 /target
