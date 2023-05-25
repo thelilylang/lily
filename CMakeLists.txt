@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 add_subdirectory(src/core/cc/comptime_gen)
+add_subdirectory(src/core/lily/lsp)
 
 if (NOT WIN32)
 	add_compile_options(-Wall -O3 -fdiagnostics-color=always)
@@ -202,6 +203,7 @@ set(CORE_SRC
 	src/core/lily/checked/compiler_generic.c
 	src/core/lily/checked/data_type.c
 	src/core/lily/checked/decl.c
+	src/core/lily/checked/drop_table.c
 	src/core/lily/checked/expr.c
 	src/core/lily/checked/field.c
 	src/core/lily/checked/field_object.c
