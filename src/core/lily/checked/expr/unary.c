@@ -27,10 +27,8 @@
 #include <core/lily/checked/expr.h>
 #include <core/lily/checked/expr/unary.h>
 
-#ifdef ENV_DEBUG
 #include <stdio.h>
 #include <stdlib.h>
-#endif
 
 #ifdef ENV_DEBUG
 char *

@@ -206,6 +206,7 @@ set(CORE_SRC
 	src/core/lily/checked/field.c
 	src/core/lily/checked/field_object.c
 	src/core/lily/checked/generic_param.c
+	src/core/lily/checked/global_name.c
 	src/core/lily/checked/impl_param.c
 	src/core/lily/checked/inherit_param.c
 	src/core/lily/checked/operator.c
@@ -217,6 +218,7 @@ set(CORE_SRC
 	src/core/lily/checked/scope_container.c
 	src/core/lily/checked/scope_decls.c
 	src/core/lily/checked/scope_response.c
+	src/core/lily/checked/signature.c
 	src/core/lily/checked/stmt.c
 	src/core/lily/checked/variant.c
 	src/core/lily/ir/cc/builder/constant.c

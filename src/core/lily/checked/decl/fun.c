@@ -27,6 +27,7 @@
 
 #include <core/lily/checked/decl/fun.h>
 #include <core/lily/checked/parent.h>
+#include <core/lily/checked/signature.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -264,10 +265,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 bool
 contains_compiler_defined_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
 {
-    if (self->used_compiler_generic->len > 0) {
-        return true;
-    }
-
     if (self->params) {
         for (Usize i = 0; i < self->params->len; ++i) {
             if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
@@ -288,7 +285,8 @@ int
 add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
 {
     for (Usize i = 0; i < self->signatures->len; ++i) {
-        Vec *pushed_signature = get__Vec(self->signatures, i);
+        Vec *pushed_signature =
+          CAST(LilyCheckedSignatureFun *, get__Vec(self->signatures, i))->fun;
 
         ASSERT(pushed_signature->len == signature->len);
 
@@ -304,9 +302,39 @@ add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
         }
     }
 
-    push__Vec(self->signatures, signature);
+    push__Vec(self->signatures,
+              NEW(LilyCheckedSignatureFun, self->global_name, signature));
 
     return 0;
+}
+
+String *
+get_global_name_of_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
+                                                 Vec *signature)
+{
+    for (Usize i = 0; i < self->signatures->len; ++i) {
+        Vec *pushed_signature =
+          CAST(LilyCheckedSignatureFun *, get__Vec(self->signatures, i))->fun;
+        bool is_match = true;
+
+        ASSERT(pushed_signature->len == signature->len);
+
+        for (Usize j = 0; j < pushed_signature->len; ++j) {
+            if (!eq__LilyCheckedDataType(get__Vec(pushed_signature, j),
+                                         get__Vec(signature, j))) {
+                is_match = false;
+                break;
+            }
+        }
+
+        if (is_match) {
+            return CAST(LilyCheckedSignatureFun *,
+                        get__Vec(self->signatures, i))
+              ->global_name;
+        }
+    }
+
+    return NULL;
 }
 
 Usize
@@ -369,6 +397,7 @@ DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
                       String);
     FREE(Vec, self->used_compiler_generic);
 
-    FREE_BUFFER_ITEMS(self->signatures->buffer, self->signatures->len, Vec);
+    FREE_BUFFER_ITEMS(
+      self->signatures->buffer, self->signatures->len, LilyCheckedSignatureFun);
     FREE(Vec, self->signatures);
 }

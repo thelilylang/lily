@@ -670,6 +670,13 @@ is_string_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
 
 /**
  *
+ * @brief Serialize a data type.
+ */
+void
+serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser);
+
+/**
+ *
  * @brief Return true if a known data type otherwise return false.
  */
 inline bool

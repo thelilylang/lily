@@ -55,7 +55,7 @@ append__String(String *self, const String *other)
 String *
 clone__String(String *self)
 {
-    char *buffer = lily_malloc(self->capacity);
+    char *buffer = lily_malloc(self->capacity + 1);
     memcpy(buffer, self->buffer, self->len + 1);
 
     String *clone = lily_malloc(sizeof(String));

@@ -124,7 +124,7 @@ typedef struct LilyCheckedDeclFun
     LilyCheckedAccessFun *access;
     Vec *used_compiler_generic; // Vec<String*>*
     // [params, return_data_type]
-    Vec *signatures; // Vec<Vec<LilyCheckedDataType* (&)>*>*
+    Vec *signatures; // Vec<LilyCheckedSignatureFun*>*
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
@@ -194,9 +194,18 @@ contains_compiler_defined_dt__LilyCheckedDeclFun(
  *
  * @brief Add a signature and check if is not duplicate.
  * @return Return 1 if is failing otherwise return 0.
+ * @param signature Vec<LilyCheckedDataType* (&)>*
  */
 int
 add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature);
+
+/**
+ *
+ * @brief Get global name of pushed signature.
+ */
+String *
+get_global_name_of_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
+                                                 Vec *signature);
 
 /**
  *
