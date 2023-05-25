@@ -20,8 +20,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: goto-bus-stop/setup-zig@v2.0.2
-    with:
-    version: 0.10.1+b57081f
+      with:
+        version: 0.10.1+b57081f
 
     - name: Download & Install LLVM
       # Install LLVM with `apt` package manager
