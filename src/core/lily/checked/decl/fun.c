@@ -265,10 +265,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 bool
 contains_compiler_defined_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
 {
-    if (self->used_compiler_generic->len > 0) {
-        return true;
-    }
-
     if (self->params) {
         for (Usize i = 0; i < self->params->len; ++i) {
             if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
@@ -332,7 +328,8 @@ get_global_name_of_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
         }
 
         if (is_match) {
-            return CAST(LilyCheckedSignatureFun *, get__Vec(signature, i))
+            return CAST(LilyCheckedSignatureFun *,
+                        get__Vec(self->signatures, i))
               ->global_name;
         }
     }
