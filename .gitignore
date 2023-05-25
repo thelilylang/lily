@@ -6,3 +6,5 @@
 /.vc
 /out
 /src/core/cc/comptime_gen/target
+/src/core/lily/lsp/target
+/target
