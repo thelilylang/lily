@@ -5,7 +5,6 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-add_subdirectory(src/core/bindings)
 add_subdirectory(src/core/cc/comptime_gen)
 add_subdirectory(src/core/lilyls)
 

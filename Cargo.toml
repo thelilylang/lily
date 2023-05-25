@@ -1,6 +1,5 @@
 [workspace]
 members = [
-	"src/core/bindings",
 	"src/core/cc/comptime_gen",
 	"src/core/lilyls",
 ]
