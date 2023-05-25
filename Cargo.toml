@@ -1,0 +1,5 @@
+[workspace]
+members = [
+	"src/core/cc/comptime_gen",
+	"src/core/lily/lsp",
+]
