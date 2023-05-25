@@ -1601,6 +1601,167 @@ is_string_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
     }
 }
 
+void
+serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
+{
+    ASSERT(ser != NULL);
+
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ANY:
+        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
+        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+        case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
+        case LILY_CHECKED_DATA_TYPE_KIND_STR:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+        case LILY_CHECKED_DATA_TYPE_KIND_USIZE: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY: {
+            char *s = format("{d}{d}", self->kind, self->array.kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            serialize__LilyCheckedDataType(self->array.data_type, ser);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
+            char *s = format("{d}{S}{d}",
+                             self->kind,
+                             self->custom.global_name,
+                             self->custom.scope_id);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            if (self->custom.generics) {
+                for (Usize i = 0; i < self->custom.generics->len; ++i) {
+                    serialize__LilyCheckedDataType(
+                      get__Vec(self->custom.generics, i), ser);
+                }
+            }
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            if (self->lambda.params) {
+                for (Usize i = 0; i < self->lambda.params->len; ++i) {
+                    serialize__LilyCheckedDataType(
+                      get__Vec(self->lambda.params, i), ser);
+                }
+            }
+
+            serialize__LilyCheckedDataType(self->lambda.return_type, ser);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            serialize__LilyCheckedDataType(self->list, ser);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            serialize__LilyCheckedDataType(self->mut, ser);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            serialize__LilyCheckedDataType(self->optional, ser);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            serialize__LilyCheckedDataType(self->ptr, ser);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_REF: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            serialize__LilyCheckedDataType(self->ptr, ser);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            serialize__LilyCheckedDataType(self->ptr, ser);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            for (Usize i = 0; i < self->tuple->len; ++i) {
+                serialize__LilyCheckedDataType(get__Vec(self->tuple, i), ser);
+            }
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+            UNREACHABLE("not expected for serialization");
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedDataType, array, LilyCheckedDataType *self)
 {
     FREE(LilyCheckedDataTypeArray, &self->array);
