@@ -1645,6 +1645,8 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
 
             break;
         }
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+            break;
         case LILY_CHECKED_DATA_TYPE_KIND_ARRAY: {
             char *s = format("{d}{d}", self->kind, self->array.kind);
 
@@ -1755,7 +1757,6 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
-        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
             UNREACHABLE("not expected for serialization");
         default:
             UNREACHABLE("unknown variant");
