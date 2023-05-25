@@ -48,6 +48,13 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
 
 /**
  *
+ * @brief Reload global name.
+ */
+void
+reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self);
+
+/**
+ *
  * @brief Free LilyCheckedSignatureFun type.
  */
 DESTRUCTOR(LilyCheckedSignatureFun, LilyCheckedSignatureFun *self);

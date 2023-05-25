@@ -36,14 +36,20 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
     LilyCheckedSignatureFun *self =
       lily_malloc(sizeof(LilyCheckedSignatureFun));
 
-    String *global_name_ser = clone__String(global_name);
-
-    generate_global_fun_name__LilyCheckedGlobalName(global_name_ser, fun);
-
-    self->global_name = global_name_ser;
+    self->global_name = clone__String(global_name);
     self->fun = fun;
 
+    generate_global_fun_name__LilyCheckedGlobalName(self->global_name,
+                                                    self->fun);
+
     return self;
+}
+
+void
+reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self)
+{
+    generate_global_fun_name__LilyCheckedGlobalName(self->global_name,
+                                                    self->fun);
 }
 
 DESTRUCTOR(LilyCheckedSignatureFun, LilyCheckedSignatureFun *self)
