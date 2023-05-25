@@ -428,7 +428,7 @@ pub enum Preprocessor {
     Warning,
     Ifdef,
     Ifndef,
-    Pragma
+    Pragma,
 }
 
 #[derive(Debug, Clone, PartialEq)]
