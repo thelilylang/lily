@@ -2807,7 +2807,10 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                             (LilyCheckedAccessScope){
                                               .id = response.scope_container
                                                       .scope_id },
-                                            fun->fun.global_name,
+                                            CAST(
+                                              LilyCheckedSignatureFun *,
+                                              get__Vec(fun->fun.signatures, 0))
+                                              ->global_name,
                                             NEW(LilyCheckedExprCallFun,
                                                 checked_params)));
 
@@ -4836,14 +4839,7 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
           NEW_VARIANT(LilyCheckedParent, decl, fun->fun.scope, fun),
           NEW_VARIANT(LilyCheckedScopeDecls, scope, fun->fun.body));
 
-    // 3. Check body.
-    CHECK_FUN_BODY(fun->ast_decl->fun.body,
-                   fun->fun.scope,
-                   fun->fun.body,
-                   LILY_CHECKED_SAFETY_MODE_SAFE,
-                   false);
-
-    // 4. Push a new signature.
+    // 3. Push a new signature.
     {
         Vec *signature = NEW(Vec);
 
@@ -4858,7 +4854,22 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
         push__Vec(signature, fun->fun.return_data_type);
 
-        push__Vec(fun->fun.signatures, signature);
+        push__Vec(
+          fun->fun.signatures,
+          NEW(LilyCheckedSignatureFun, fun->fun.global_name, signature));
+    }
+
+    // 4. Check body.
+    CHECK_FUN_BODY(fun->ast_decl->fun.body,
+                   fun->fun.scope,
+                   fun->fun.body,
+                   LILY_CHECKED_SAFETY_MODE_SAFE,
+                   false);
+
+    // 5. Reload global name on the first signature
+    if (fun->fun.used_compiler_generic->len > 0) {
+        reload_global_name__LilyCheckedSignatureFun(
+          get__Vec(fun->fun.signatures, 0));
     }
 
     fun->fun.is_checked = true;
