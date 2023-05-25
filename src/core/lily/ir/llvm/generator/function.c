@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
+
+#include <core/lily/checked/signature.h>
 #include <core/lily/ir/llvm/attr.h>
 #include <core/lily/ir/llvm/generator/body/function.h>
 #include <core/lily/ir/llvm/generator/data_type.h>
@@ -75,13 +78,6 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                               LilyLlvmScope *scope,
                               const Location *location)
 {
-    if (fun->signatures->len == 1 &&
-        contains_compiler_defined_dt__LilyCheckedDeclFun(fun)) {
-        return;
-    } else if (fun->signatures->len > 1) {
-        TODO("make different signature of the function");
-    }
-
     if (fun->is_main) {
         LLVMValueRef fun_llvm =
           generate_main_function__LilyIrLlvm(self, fun, scope, location);
@@ -92,38 +88,48 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
         return;
     }
 
-    // Generate return data type of the function
-    LLVMTypeRef return_data_type =
-      generate_data_type__LilyIrLlvm(self, fun->return_data_type, scope);
-
-    // Generate function parameters
-    LLVMTypeRef params[252] = {};
-    Usize params_len = 0;
-
-    if (fun->params) {
-        params_len = fun->params->len;
-
-        for (Usize i = 0; i < fun->params->len; ++i) {
-            params[i] = generate_data_type__LilyIrLlvm(
-              self,
-              CAST(LilyCheckedDeclFunParam *, get__Vec(fun->params, i))
-                ->data_type,
-              scope);
-        }
+    if (fun->signatures->len == 1 &&
+        contains_compiler_defined_dt__LilyCheckedDeclFun(fun)) {
+        return;
     }
 
-    // TODO: check va_arg param
-    LLVMTypeRef fun_data_type =
-      LLVMFunctionType(return_data_type, params, params_len, false);
+    Usize i = 0;
 
-    LLVMValueRef fun_llvm =
-      LLVMAddFunction(self->module, fun->global_name->buffer, fun_data_type);
+    // To skip the first signature of the function with compiler defined data
+    // type.
+    if (contains_compiler_defined_dt__LilyCheckedDeclFun(fun)) {
+        i = 1;
+    }
 
-    // Set alignment on param (if applicable)
-    if (fun->params) {
-        for (Usize i = 0; i < fun->params->len; ++i) {
-            switch (CAST(LilyCheckedDeclFunParam *, get__Vec(fun->params, i))
-                      ->data_type->kind) {
+    for (; i < fun->signatures->len; ++i) {
+        LilyCheckedSignatureFun *signature = get__Vec(fun->signatures, i);
+
+        ASSERT(signature->fun->len >= 1);
+
+        // Generate return data type of the function
+        LLVMTypeRef return_data_type = generate_data_type__LilyIrLlvm(
+          self, last__Vec(signature->fun), scope);
+
+        // Generate function parameters
+        LLVMTypeRef params[252] = {};
+        Usize params_len = signature->fun->len - 1;
+
+        for (Usize i = 0; i < signature->fun->len - 1; ++i) {
+            params[i] = generate_data_type__LilyIrLlvm(
+              self, get__Vec(signature->fun, i), scope);
+        }
+
+        // TODO: check va_arg param
+        LLVMTypeRef fun_data_type =
+          LLVMFunctionType(return_data_type, params, params_len, false);
+
+        LLVMValueRef fun_llvm = LLVMAddFunction(
+          self->module, signature->global_name->buffer, fun_data_type);
+
+        // Set alignment on param (if applicable)
+        for (Usize i = 0; i < signature->fun->len - 1; ++i) {
+            switch (
+              CAST(LilyCheckedDataType *, get__Vec(signature->fun, i))->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_REF: {
                     LLVMValueRef param = LLVMGetParam(fun_llvm, i);
 
@@ -136,21 +142,23 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
                     break;
             }
         }
+
+        push__Vec(
+          scope->funs,
+          NEW(LilyLlvmFun, signature->global_name, fun_llvm, fun_data_type));
+        push__Vec(scope->values,
+                  NEW(LilyLlvmValue, signature->global_name, fun_llvm));
+
+        LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
+        LLVMPositionBuilderAtEnd(self->builder, entry_block);
+
+        LilyLlvmScope *fun_scope = NEW(LilyLlvmScope, scope);
+
+        GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
+
+        GENERATE_FUNCTION_DEBUG();
+        GENERATE_FUNCTION_ATTRS();
+
+        FREE(LilyLlvmScope, fun_scope);
     }
-
-    push__Vec(scope->funs,
-              NEW(LilyLlvmFun, fun->global_name, fun_llvm, fun_data_type));
-    push__Vec(scope->values, NEW(LilyLlvmValue, fun->global_name, fun_llvm));
-
-    LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(fun_llvm, "entry");
-    LLVMPositionBuilderAtEnd(self->builder, entry_block);
-
-    LilyLlvmScope *fun_scope = NEW(LilyLlvmScope, scope);
-
-    GENERATE_FUNCTION_BODY(fun->body, fun_llvm, NULL, NULL, fun_scope);
-
-    GENERATE_FUNCTION_DEBUG();
-    GENERATE_FUNCTION_ATTRS();
-
-    FREE(LilyLlvmScope, fun_scope);
 }
