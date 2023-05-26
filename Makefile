@@ -57,6 +57,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/ir/llvm/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/package/*.h	
 	${CLANG_FORMAT} ./include/core/lily/preprocess/*.h
+	${CLANG_FORMAT} ./include/core/lsp/*.h
 	${CLANG_FORMAT} ./include/core/shared/*.h
 	${CLANG_FORMAT} ./include/core/shared/target/*.h
 	${CLANG_FORMAT} ./lib/*.h
@@ -116,7 +117,6 @@ format:
 	${CLANG_FORMAT} ./tests/core/lily/precompile/*.c
 	${CLANG_FORMAT} ./tests/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/scanner/*.c
-	@rustfmt ./src/core/lilyls/src/*.rs
 	@rustfmt ./src/core/cc/comptime_gen/src/*.rs
 	
 
