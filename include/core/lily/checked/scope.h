@@ -31,6 +31,7 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/lily/checked/drop_table.h>
 #include <core/lily/checked/scope_container.h>
 #include <core/lily/checked/scope_decls.h>
 #include <core/lily/checked/scope_response.h>
@@ -62,6 +63,7 @@ typedef struct LilyCheckedScope
     Vec *methods;              // Vec<LilyCheckedScopeContainerMethod*>*
     LilyCheckedParent *parent; // LilyCheckedParent*?
     LilyCheckedScopeDecls decls;
+    LilyCheckedDropTable drop_table;
 } LilyCheckedScope;
 
 /**

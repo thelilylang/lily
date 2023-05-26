@@ -76,6 +76,7 @@ CONSTRUCTOR(LilyCheckedScope *,
     self->methods = NEW(Vec);
     self->parent = parent;
     self->decls = decls;
+    self->drop_table = NEW(LilyCheckedDropTable);
 
     return self;
 }
@@ -1042,6 +1043,8 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
     if (self->parent) {
         FREE(LilyCheckedParent, self->parent);
     }
+
+    FREE(LilyCheckedDropTable, &self->drop_table);
 
     lily_free(self);
 }
