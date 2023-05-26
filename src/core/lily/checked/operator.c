@@ -29,14 +29,14 @@
 CONSTRUCTOR(LilyCheckedOperator *,
             LilyCheckedOperator,
             String *name,
-            LilyCheckedDataType *return_data_type,
-            Vec *params)
+            Vec *params,
+            LilyCheckedDataType *return_data_type)
 {
     LilyCheckedOperator *self = lily_malloc(sizeof(LilyCheckedOperator));
 
     self->name = name;
-    self->return_data_type = return_data_type;
     self->params = params;
+    self->return_data_type = return_data_type;
 
     return self;
 }

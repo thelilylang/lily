@@ -34,8 +34,8 @@
 typedef struct LilyCheckedOperator
 {
     String *name;                          // String* (&)
-    LilyCheckedDataType *return_data_type; // LilyCheckedDataType* (&)
     Vec *params;                           // Vec<LilyCheckedDataType* (&)>*
+    LilyCheckedDataType *return_data_type; // LilyCheckedDataType* (&)
 } LilyCheckedOperator;
 
 /**
@@ -45,8 +45,8 @@ typedef struct LilyCheckedOperator
 CONSTRUCTOR(LilyCheckedOperator *,
             LilyCheckedOperator,
             String *name,
-            LilyCheckedDataType *return_data_type,
-            Vec *params);
+            Vec *params,
+            LilyCheckedDataType *return_data_type);
 
 /**
  *
