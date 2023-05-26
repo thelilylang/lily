@@ -866,4 +866,257 @@ const string Markdown__MarkupKind = "markdown";
 
 typedef string MarkupKind;
 
+/**
+ * A `MarkupContent` literal represents a string value which content is
+ * interpreted base on its kind flag. Currently the protocol supports
+ * `plaintext` and `markdown` as markup kinds.
+ *
+ * If the kind is `markdown` then the value can contain fenced code blocks like
+ * in GitHub issues.
+ *
+ * Here is an example how such a string can be constructed using
+ * JavaScript / TypeScript:
+ * ```typescript
+ * let markdown: MarkdownContent = {
+ * 	kind: MarkupKind.Markdown,
+ * 	value: [
+ * 		'# Header',
+ * 		'Some text',
+ * 		'```typescript',
+ * 		'someCode();',
+ * 		'```'
+ * 	].join('\n')
+ * };
+ * ```
+ *
+ * *Please Note* that clients might sanitize the return markdown. A client could
+ * decide to remove HTML from the markdown to avoid script execution.
+ */
+typedef struct MarkupContent
+{
+    /**
+     * The type of the Markup
+     */
+    MarkupKind kind;
+
+    /**
+     * The content itself
+     */
+    string value;
+} MarkupContent;
+
+/**
+ * Client capabilities specific to the used markdown parser.
+ *
+ * @since 3.16.0
+ */
+typedef struct MarkdownClientCapabilities
+{
+    /**
+     * The name of the parser.
+     */
+    string parser;
+
+    /**
+     * The version of the parser.
+     */
+    OPTIONAL(string) version;
+
+    /**
+     * A list of HTML tags that the client allows / supports in
+     * Markdown.
+     *
+     * @since 3.17.0
+     */
+    OPTIONAL(ARRAY(string)) allowedTags;
+} MarkdownClientCapabilities;
+
+/**
+ * Options to create a file.
+ */
+typedef struct CreateFileOptions
+{
+    /**
+     * Overwrite existing file. Overwrite wins over `ignoreIfExists`
+     */
+    OPTIONAL(bool) overwrite;
+
+    /**
+     * Ignore if exists.
+     */
+    OPTIONAL(bool) ignoreIfExists;
+} CreateFileOptions;
+
+/**
+ * Create file operation
+ */
+typedef struct CreateFile
+{
+    /**
+     * A create
+     */
+    // kind: 'create';
+
+    /**
+     * The resource to create.
+     */
+    DocumentUri uri;
+
+    /**
+     * Additional options
+     */
+    OPTIONAL(CreateFileOptions) options;
+
+    /**
+     * An optional annotation identifier describing the operation.
+     *
+     * @since 3.16.0
+     */
+    OPTIONAL(ChangeAnnotationIdentifier) annotationId;
+} CreateFile;
+
+/**
+ * Rename file options
+ */
+typedef struct RenameFileOptions
+{
+    /**
+     * Overwrite target if existing. Overwrite wins over `ignoreIfExists`
+     */
+    OPTIONAL(bool) overwrite;
+
+    /**
+     * Ignores if target exists.
+     */
+    OPTIONAL(bool) ignoreIfExists;
+} RenameFileOptions;
+
+/**
+ * Rename file operation
+ */
+typedef struct RenameFile
+{
+    /**
+     * A rename
+     */
+    // kind: 'rename';
+
+    /**
+     * The old (existing) location.
+     */
+    DocumentUri oldUri;
+
+    /**
+     * The new location.
+     */
+    DocumentUri newUri;
+
+    /**
+     * Rename options.
+     */
+    OPTIONAL(RenameFileOptions) options;
+
+    /**
+     * An optional annotation identifier describing the operation.
+     *
+     * @since 3.16.0
+     */
+    OPTIONAL(ChangeAnnotationIdentifier) annotationId;
+} RenameFile;
+
+/**
+ * Delete file options
+ */
+typedef struct DeleteFileOptions {
+	/**
+	 * Delete the content recursively if a folder is denoted.
+	 */
+	OPTIONAL(bool) recursive;
+
+	/**
+	 * Ignore the operation if the file doesn't exist.
+	 */
+	OPTIONAL(bool) ignoreIfExists;
+} DeleteFileOptions;
+
+/**
+ * Delete file operation
+ */
+typedef struct DeleteFile {
+	/**
+	 * A delete
+	 */
+	// kind: 'delete';
+
+	/**
+	 * The file to delete.
+	 */
+	DocumentUri uri;
+
+	/**
+	 * Delete options.
+	 */
+	OPTIONAL(DeleteFileOptions) options;
+
+	/**
+	 * An optional annotation identifier describing the operation.
+	 *
+	 * @since 3.16.0
+	 */
+	ChangeAnnotationIdentifier annotationId;
+} DeleteFile;
+
+enum DocumentChangeKind {
+	DOCUMENT_CHANGE_KIND_TEXT_DOCUMENT_EDIT,
+	DOCUMENT_CHANGE_KIND_CREATE_FILE,
+	DOCUMENT_CHANGE_KIND_RENAME_FILE,
+	DOCUMENT_CHANGE_KIND_DELETE_FILE
+};
+
+typedef struct DocumentChange {
+	enum DocumentChangeKind kind;
+	union {
+		TextDocumentEdit textDocumentEdit;
+		CreateFile createFile;
+		RenameFile renameFile;
+		DeleteFile deleteFile;
+	};
+} DocumentChange;
+
+typedef struct WorkspaceEdit {
+	/**
+	 * Holds changes to existing resources.
+	 */
+	OPTIONAL(ARRAY(MAP(DocumentUri, ARRAY(TextEdit)))) changes;
+
+	/**
+	 * Depending on the client capability
+	 * `workspace.workspaceEdit.resourceOperations` document changes are either
+	 * an array of `TextDocumentEdit`s to express changes to n different text
+	 * documents where each text document edit addresses a specific version of
+	 * a text document. Or it can contain above `TextDocumentEdit`s mixed with
+	 * create, rename and delete file / folder operations.
+	 *
+	 * Whether a client supports versioned document edits is expressed via
+	 * `workspace.workspaceEdit.documentChanges` client capability.
+	 *
+	 * If a client neither supports `documentChanges` nor
+	 * `workspace.workspaceEdit.resourceOperations` then only plain `TextEdit`s
+	 * using the `changes` property are supported.
+	 */
+	OPTIONAL(ARRAY(DocumentChange)) documentChanges;
+
+	/**
+	 * A map of change annotations that can be referenced in
+	 * `AnnotatedTextEdit`s or create, rename and delete file / folder
+	 * operations.
+	 *
+	 * Whether clients honor this property depends on the client capability
+	 * `workspace.changeAnnotationSupport`.
+	 *
+	 * @since 3.16.0
+	 */
+	OPTIONAL(ARRAY(MAP(string, ChangeAnnotation))) changeAnnotations;
+} WorkspaceEdit;
+
 #endif // LILY_CORE_LSP_TYPES_H
