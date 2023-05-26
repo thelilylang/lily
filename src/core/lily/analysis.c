@@ -4768,14 +4768,29 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
     // 3. Check params.
     if (fun->ast_decl->fun.params) {
+        // Check if the main function have no params.
         if (fun->fun.is_main) {
             FAILED(
               "no (explicit) parameters are expected in the main function");
         }
 
+        // Configure the params of the function (if not already configured)
         if (!fun->fun.params) {
             fun->fun.params = check_fun_params__LilyAnalysis(
               self, fun->ast_decl->fun.params, fun->fun.scope);
+        }
+
+        // Check if the param is known by the compiler (if is an operator)
+        if (fun->fun.is_operator) {
+            for (Usize i = 0; i < fun->fun.params->len; ++i) {
+                LilyCheckedDeclFunParam *param = get__Vec(fun->fun.params, i);
+
+                if (is_compiler_defined__LilyCheckedDataType(
+                      param->data_type)) {
+                    FAILED("operator function cannot have a compiler defined "
+                           "type as parameter");
+                }
+            }
         }
     }
 
@@ -4791,6 +4806,8 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
             // Check the return data type of the main function.
             if (fun->fun.is_main) {
+                // This is a special case, because the main function can only
+                // return a Unit or Int32 or CVoid data type.
                 switch (fun->fun.return_data_type->kind) {
                     case LILY_CHECKED_DATA_TYPE_KIND_INT32:
                     case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
@@ -4808,6 +4825,10 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
         }
     } else {
         if (!fun->fun.return_data_type) {
+            if (fun->fun.is_operator) {
+                FAILED("operator function must have a return type");
+            }
+
             fun->fun.return_data_type = NEW(
               LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, NULL);
         } else {
@@ -4830,16 +4851,23 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
         return;
     }
 
-    // 1. Check fun signature
+    // 1. Check if is an operator.
+    if (fun->fun.is_operator) {
+        if (!valid_operator__LilyCheckedOperator(fun->fun.name)) {
+            FAILED("is not a valid operator");
+        }
+    }
+
+    // 2. Check fun signature
     check_fun_signature__LilyAnalysis(self, fun);
 
-    // 2. Init scope of body.
+    // 3. Init scope of body.
     fun->fun.scope =
       NEW(LilyCheckedScope,
           NEW_VARIANT(LilyCheckedParent, decl, fun->fun.scope, fun),
           NEW_VARIANT(LilyCheckedScopeDecls, scope, fun->fun.body));
 
-    // 3. Push a new signature.
+    // 4. Push a new signature.
     {
         Vec *signature = NEW(Vec);
 
@@ -4859,17 +4887,54 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
           NEW(LilyCheckedSignatureFun, fun->fun.global_name, signature));
     }
 
-    // 4. Check body.
+    // 5. Check body.
     CHECK_FUN_BODY(fun->ast_decl->fun.body,
                    fun->fun.scope,
                    fun->fun.body,
                    LILY_CHECKED_SAFETY_MODE_SAFE,
                    false);
 
-    // 5. Reload global name on the first signature
+    // 6. Reload global name on the first signature
     if (fun->fun.used_compiler_generic->len > 0) {
         reload_global_name__LilyCheckedSignatureFun(
           get__Vec(fun->fun.signatures, 0));
+    }
+
+    // 7. Add operator to the operator register.
+    if (fun->fun.is_operator) {
+        Vec *op_params = NEW(Vec); // Vec<LilyCheckedDataType* (&)>*
+
+        for (Usize i = 0; i < fun->fun.params->len; ++i) {
+            LilyCheckedDeclFunParam *param = get__Vec(fun->fun.params, i);
+            push__Vec(op_params, param->data_type);
+        }
+
+        LilyCheckedOperator *operator= NEW(LilyCheckedOperator,
+                                           fun->fun.name,
+                                           op_params,
+                                           fun->fun.return_data_type);
+
+        if (add_operator__LilyCheckedOperatorRegister(
+              &self->root_package->global_operator_register, operator)) {
+            FAILED("duplicate operator");
+
+            FREE(LilyCheckedOperator, operator);
+        } else {
+            switch (fun->fun.visibility) {
+                case LILY_VISIBILITY_PUBLIC:
+                    break;
+                case LILY_VISIBILITY_PRIVATE:
+                    if (add_operator__LilyCheckedOperatorRegister(
+                          &self->package->local_operator_register, operator)) {
+                        FAILED("duplicate operator");
+                    }
+
+                    break;
+                default:
+                    UNREACHABLE(
+                      "other visibility is not expected for an operator");
+            }
+        }
     }
 
     fun->fun.is_checked = true;
