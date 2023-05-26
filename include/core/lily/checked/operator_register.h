@@ -30,8 +30,8 @@
 typedef struct LilyCheckedOperatorRegister
 {
     // NOTE:
-    // is_global == true: Vec<LilyCheckedOperator*>*
-    // is_global == false: Vec<LilyCheckedOperator* (&)>*
+    // is_global == true: Vec<LilyCheckedOperator* (&)>*
+    // is_global == false: Vec<LilyCheckedOperator*>*
     Vec *operators;
     bool is_global;
 } LilyCheckedOperatorRegister;
@@ -65,9 +65,8 @@ add_operator__LilyCheckedOperatorRegister(LilyCheckedOperatorRegister *self,
 LilyCheckedOperator *
 search_operator__LilyCheckedOperatorRegister(
   const LilyCheckedOperatorRegister *self,
-  String *name,
-  Vec *params,
-  LilyCheckedDataType *return_data_type);
+  char *name,
+  Vec *signature);
 
 /**
  *

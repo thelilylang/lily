@@ -34,7 +34,7 @@ add_operator__LilyCheckedOperatorRegister(LilyCheckedOperatorRegister *self,
     // Look for duplicate operator
     LilyCheckedOperator *duplicate_op =
       search_operator__LilyCheckedOperatorRegister(
-        self, operator->name, operator->params, operator->return_data_type);
+        self, operator->name->buffer, operator->signature);
 
     if (duplicate_op) {
         return 1;
@@ -48,25 +48,22 @@ add_operator__LilyCheckedOperatorRegister(LilyCheckedOperatorRegister *self,
 LilyCheckedOperator *
 search_operator__LilyCheckedOperatorRegister(
   const LilyCheckedOperatorRegister *self,
-  String *name,
-  Vec *params,
-  LilyCheckedDataType *return_data_type)
+  char *name,
+  Vec *signature)
 {
     for (Usize i = 0; i < self->operators->len; ++i) {
         LilyCheckedOperator *operator= get__Vec(self->operators, i);
 
-        if (!strcmp(name->buffer, operator->name->buffer) &&
-            eq__LilyCheckedDataType(
-              return_data_type, operator->return_data_type)) {
-            if (params->len != operator->params->len) {
+        if (!strcmp(name, operator->name->buffer)) {
+            if (signature->len != operator->signature->len) {
                 continue;
             }
 
             bool is_match = true;
 
-            for (Usize j = 0; j < operator->params->len; ++j) {
-                if (!eq__LilyCheckedDataType(get__Vec(operator->params, j),
-                                             get__Vec(params, j))) {
+            for (Usize j = 0; j < operator->signature->len; ++j) {
+                if (!eq__LilyCheckedDataType(get__Vec(operator->signature, j),
+                                             get__Vec(signature, j))) {
                     is_match = false;
                     break;
                 }
@@ -83,7 +80,7 @@ search_operator__LilyCheckedOperatorRegister(
 
 DESTRUCTOR(LilyCheckedOperatorRegister, const LilyCheckedOperatorRegister *self)
 {
-    if (self->is_global) {
+    if (!self->is_global) {
         FREE_BUFFER_ITEMS(
           self->operators->buffer, self->operators->len, LilyCheckedOperator);
     }
