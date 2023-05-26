@@ -29,14 +29,12 @@
 CONSTRUCTOR(LilyCheckedOperator *,
             LilyCheckedOperator,
             String *name,
-            Vec *params,
-            LilyCheckedDataType *return_data_type)
+            Vec *signature)
 {
     LilyCheckedOperator *self = lily_malloc(sizeof(LilyCheckedOperator));
 
     self->name = name;
-    self->params = params;
-    self->return_data_type = return_data_type;
+    self->signature = signature;
 
     return self;
 }
@@ -68,10 +66,4 @@ valid_operator__LilyCheckedOperator(String *name)
     }
 
     return false;
-}
-
-DESTRUCTOR(LilyCheckedOperator, LilyCheckedOperator *self)
-{
-    FREE(Vec, self->params);
-    lily_free(self);
 }

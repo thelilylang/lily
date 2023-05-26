@@ -33,9 +33,9 @@
 
 typedef struct LilyCheckedOperator
 {
-    String *name;                          // String* (&)
-    Vec *params;                           // Vec<LilyCheckedDataType* (&)>*
-    LilyCheckedDataType *return_data_type; // LilyCheckedDataType* (&)
+    String *name;   // String* (&)
+                    // [params, return_data_type]
+    Vec *signature; // Vec<LilyCheckedDataType* (&)>* (&)
 } LilyCheckedOperator;
 
 /**
@@ -45,8 +45,7 @@ typedef struct LilyCheckedOperator
 CONSTRUCTOR(LilyCheckedOperator *,
             LilyCheckedOperator,
             String *name,
-            Vec *params,
-            LilyCheckedDataType *return_data_type);
+            Vec *signature);
 
 /**
  *
@@ -59,6 +58,9 @@ valid_operator__LilyCheckedOperator(String *name);
  *
  * @brief Free LilyCheckedOperator type.
  */
-DESTRUCTOR(LilyCheckedOperator, LilyCheckedOperator *self);
+inline DESTRUCTOR(LilyCheckedOperator, LilyCheckedOperator *self)
+{
+    lily_free(self);
+}
 
 #endif // LILY_CORE_LILY_CHECKED_OPERATOR_H
