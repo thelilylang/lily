@@ -55,9 +55,8 @@ inline CONSTRUCTOR(LilyCheckedOperatorRegister,
  */
 int
 add_operator__LilyCheckedOperatorRegister(LilyCheckedOperatorRegister *self,
-                                          String *name,
-                                          LilyCheckedDataType *return_data_type,
-                                          Vec *params);
+                                          LilyCheckedOperator *
+                                          operator);
 
 /**
  *
@@ -67,8 +66,8 @@ LilyCheckedOperator *
 search_operator__LilyCheckedOperatorRegister(
   const LilyCheckedOperatorRegister *self,
   String *name,
-  LilyCheckedDataType *return_data_type,
-  Vec *params);
+  Vec *params,
+  LilyCheckedDataType *return_data_type);
 
 /**
  *

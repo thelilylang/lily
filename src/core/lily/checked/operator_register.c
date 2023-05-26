@@ -28,21 +28,19 @@
 
 int
 add_operator__LilyCheckedOperatorRegister(LilyCheckedOperatorRegister *self,
-                                          String *name,
-                                          LilyCheckedDataType *return_data_type,
-                                          Vec *params)
+                                          LilyCheckedOperator *
+                                          operator)
 {
     // Look for duplicate operator
     LilyCheckedOperator *duplicate_op =
       search_operator__LilyCheckedOperatorRegister(
-        self, name, return_data_type, params);
+        self, operator->name, operator->params, operator->return_data_type);
 
     if (duplicate_op) {
         return 1;
     }
 
-    push__Vec(self->operators,
-              NEW(LilyCheckedOperator, name, return_data_type, params));
+    push__Vec(self->operators, operator);
 
     return 0;
 }
@@ -51,8 +49,8 @@ LilyCheckedOperator *
 search_operator__LilyCheckedOperatorRegister(
   const LilyCheckedOperatorRegister *self,
   String *name,
-  LilyCheckedDataType *return_data_type,
-  Vec *params)
+  Vec *params,
+  LilyCheckedDataType *return_data_type)
 {
     for (Usize i = 0; i < self->operators->len; ++i) {
         LilyCheckedOperator *operator= get__Vec(self->operators, i);
