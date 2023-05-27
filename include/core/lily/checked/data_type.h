@@ -716,6 +716,16 @@ is_compiler_defined__LilyCheckedDataType(LilyCheckedDataType *self)
 
 /**
  *
+ * @brief Check if is a unknown data type.
+ */
+inline bool
+is_unknown_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    return self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN;
+}
+
+/**
+ *
  * @brief Pass to ref a data type and increment the `ref_count`.
  * @return LilyCheckedDataType* (&)
  */
