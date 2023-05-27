@@ -1807,7 +1807,26 @@ check_custom_binary_operator__LilyAnalysis(
   bool is_moved_expr,
   LilyCheckedDataType *defined_data_type)
 {
-    // TODO: implement operator for compiler generic and compiler choice
+    if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
+          left->data_type) &&
+        is_compiler_defined_and_known_dt__LilyCheckedDataType(
+          right->data_type)) {
+        TODO("implement operator for compiler generic and compiler choice");
+    } else if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                 left->data_type)) {
+        TODO("try to infer on compiler defined data type.");
+    } else if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                 right->data_type)) {
+        TODO("try to infer on compiler defined data type.");
+    } else if (is_unknown_data_type__LilyCheckedDataType(left->data_type) &&
+               is_unknown_data_type__LilyCheckedDataType(right->data_type)) {
+        TODO("try to infer on unknown data type.");
+    } else if (is_unknown_data_type__LilyCheckedDataType(left->data_type)) {
+        TODO("try to infer on unknown data type.");
+    } else if (is_unknown_data_type__LilyCheckedDataType(right->data_type)) {
+        TODO("try to infer on unknown data type.");
+    }
+
     Vec *signature =
       init__Vec(3, left->data_type, right->data_type, defined_data_type);
 
