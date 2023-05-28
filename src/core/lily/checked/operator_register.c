@@ -83,7 +83,7 @@ search_operator__LilyCheckedOperatorRegister(
 }
 
 Vec *
-collect_all_operator_with_name__LilyCheckedOperatorRegister(
+collect_all_operators__LilyCheckedOperatorRegister(
   const LilyCheckedOperatorRegister *self,
   char *name,
   Usize signature_len)
@@ -102,7 +102,7 @@ collect_all_operator_with_name__LilyCheckedOperatorRegister(
     return operators;
 }
 
-LilyCheckedDataType *
+Vec *
 generate_compiler_choice_according_operator_collection__LilyCheckedOperatorRegister(
   Vec *operators,
   const Location *location,
@@ -124,11 +124,38 @@ generate_compiler_choice_according_operator_collection__LilyCheckedOperatorRegis
                 signature_index));
         }
 
-        return NEW_VARIANT(
-          LilyCheckedDataType, compiler_choice, location, compiler_choice);
+        return compiler_choice;
     }
 
     return NULL;
+}
+
+LilyCheckedDataType *
+generate_conditional_compiler_choice_according_operator_collection__LilyCheckedOperatorRegister(
+  Vec *operators,
+  const Location *location)
+{
+    Vec *choices = NEW(Vec); // Vec<LilyCheckedDataType* (&)>*
+    Vec *conds = NEW(Vec);   // Vec<Vec<LilyCheckedDataType* (&)>*>*
+
+    for (Usize i = 0; i < operators->len; ++i) {
+        LilyCheckedOperator *operator= get__Vec(operators, i);
+        Vec *cond = NEW(Vec);
+
+        push__Vec(choices, last__Vec(operator->signature));
+
+        for (Usize j = 0; j < operator->signature->len - 1; ++j) {
+            push__Vec(cond, get__Vec(operator->signature, j));
+        }
+
+        push__Vec(conds, cond);
+    }
+
+    return NEW_VARIANT(
+      LilyCheckedDataType,
+      conditional_compiler_choice,
+      location,
+      NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds));
 }
 
 DESTRUCTOR(LilyCheckedOperatorRegister, const LilyCheckedOperatorRegister *self)

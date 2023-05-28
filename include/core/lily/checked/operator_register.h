@@ -67,22 +67,33 @@ search_operator__LilyCheckedOperatorRegister(
  * @return Vec<LilyCheckedOperator* (&)>*
  */
 Vec *
-collect_all_operator_with_name__LilyCheckedOperatorRegister(
+collect_all_operators__LilyCheckedOperatorRegister(
   const LilyCheckedOperatorRegister *self,
   char *name,
   Usize signature_len);
 
 /**
  *
- * @brief Generate data type according to the operator collection.
+ * @brief Generate compiler choice according to the operator collection.
  * @param location Location of the expression.
- * @return LilyCheckedDataType*?
+ * @return Vec<LilyCheckedDataType* (&)>*?
  */
-LilyCheckedDataType *
+Vec *
 generate_compiler_choice_according_operator_collection__LilyCheckedOperatorRegister(
   Vec *operators,
   const Location *location,
   Usize signature_index);
+
+/**
+ *
+ * @brief Generate conditional compiler choice according to the operator
+ * collection.
+ * @param location Location of the expression.
+ */
+LilyCheckedDataType *
+generate_conditional_compiler_choice_according_operator_collection__LilyCheckedOperatorRegister(
+  Vec *operators,
+  const Location *location);
 
 /**
  *
