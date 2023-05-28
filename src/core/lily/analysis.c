@@ -1807,6 +1807,8 @@ check_custom_binary_operator__LilyAnalysis(
   bool is_moved_expr,
   LilyCheckedDataType *defined_data_type)
 {
+    char *binary_kind_string = to_string__LilyCheckedExprBinaryKind(kind);
+
     if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
           left->data_type) &&
         is_compiler_defined_and_known_dt__LilyCheckedDataType(
@@ -1852,23 +1854,12 @@ check_custom_binary_operator__LilyAnalysis(
     Vec *signature =
       init__Vec(3, left->data_type, right->data_type, defined_data_type);
 
-    LilyCheckedOperator *custom_operator = NULL;
-    char *binary_kind_string = to_string__LilyCheckedExprBinaryKind(kind);
-
-    // Search operator in local
-    custom_operator = search_operator__LilyCheckedOperatorRegister(
-      &self->package->local_operator_register, binary_kind_string, signature);
+    LilyCheckedOperator *custom_operator = custom_operator =
+      search_operator__LilyCheckedOperatorRegister(
+        &self->package->operator_register, binary_kind_string, signature);
 
     if (custom_operator == NULL) {
-        // Search operator in global
-        custom_operator = search_operator__LilyCheckedOperatorRegister(
-          &self->package->global_operator_register,
-          binary_kind_string,
-          signature);
-
-        if (custom_operator == NULL) {
-            FAILED("operator not found with this signature");
-        }
+        FAILED("operator not found with this signature");
     }
 
     FREE(Vec, signature);
@@ -4999,29 +4990,10 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
           /* Get signature [params, return_data_type] from fun signatures */
           CAST(LilyCheckedSignatureFun *, last__Vec(fun->fun.signatures))->fun);
 
-        switch (fun->fun.visibility) {
-            case LILY_VISIBILITY_PUBLIC:
-                if (add_operator__LilyCheckedOperatorRegister(
-                      &self->root_package->global_operator_register,
-                      operator)) {
-                    FAILED("duplicate operator in global");
-                }
-
-                if (add_operator__LilyCheckedOperatorRegister(
-                      &self->package->local_operator_register, operator)) {
-                    FAILED("duplicate operator in local");
-                }
-
-                break;
-            case LILY_VISIBILITY_PRIVATE:
-                if (add_operator__LilyCheckedOperatorRegister(
-                      &self->package->local_operator_register, operator)) {
-                    FAILED("duplicate operator in local");
-                }
-
-                break;
-            default:
-                UNREACHABLE("other visibility is not expected for an operator");
+        if (add_operator__LilyCheckedOperatorRegister(
+              &self->package->operator_register, operator)) {
+            FAILED("duplicate operator in local");
+            FREE(LilyCheckedOperator, operator);
         }
     }
 
