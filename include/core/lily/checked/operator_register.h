@@ -29,10 +29,7 @@
 
 typedef struct LilyCheckedOperatorRegister
 {
-    // NOTE:
-    // is_global == true: Vec<LilyCheckedOperator* (&)>*
-    // is_global == false: Vec<LilyCheckedOperator*>*
-    Vec *operators;
+    Vec *operators; // Vec<LilyCheckedOperator* (&) | LilyCheckedOperator*>*
 } LilyCheckedOperatorRegister;
 
 /**
