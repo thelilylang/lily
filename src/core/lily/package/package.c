@@ -99,7 +99,7 @@ CONSTRUCTOR(LilyPackage *,
       LilyPrecompile, &self->preparser_info, &self->file, self, default_path);
     self->builtin_usage = NEW(Vec);
     self->sys_usage = NEW(Vec);
-    self->local_operator_register = NEW(LilyCheckedOperatorRegister, false);
+    self->operator_register = NEW(LilyCheckedOperatorRegister);
 
     if (root) {
         self->parser = NEW(LilyParser, self, root, NULL);
@@ -111,7 +111,6 @@ CONSTRUCTOR(LilyPackage *,
         self->analysis = NEW(LilyAnalysis, self, self, &self->parser);
         self->builtins = load_builtins__LilyBuiltin();
         self->syss = load_syss__LilySys();
-        self->global_operator_register = NEW(LilyCheckedOperatorRegister, true);
     }
 #endif
 
@@ -362,11 +361,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(Vec, self->builtin_usage);
     FREE(Vec, self->sys_usage);
 
-    if (self->status == LILY_PACKAGE_STATUS_MAIN) {
-        FREE(LilyCheckedOperatorRegister, &self->global_operator_register);
-    }
-
-    FREE(LilyCheckedOperatorRegister, &self->local_operator_register);
+    FREE(LilyCheckedOperatorRegister, &self->operator_register);
 
     lily_free(self);
 }

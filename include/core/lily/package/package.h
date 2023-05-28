@@ -91,9 +91,7 @@ typedef struct LilyPackage
     Vec *builtin_usage; // Vec<LilyBuiltinFun* (&)>*
     Vec *sys_usage;     // Vec<LilySysFun* (&)>*
 
-    // NOTE: this field is not defined in all packages except in the main one
-    LilyCheckedOperatorRegister global_operator_register;
-    LilyCheckedOperatorRegister local_operator_register;
+    LilyCheckedOperatorRegister operator_register;
 } LilyPackage;
 
 /**
