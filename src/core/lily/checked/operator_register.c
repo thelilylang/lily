@@ -22,8 +22,12 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
+
 #include <core/lily/checked/operator_register.h>
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 int
@@ -73,6 +77,55 @@ search_operator__LilyCheckedOperatorRegister(
                 return operator;
             }
         }
+    }
+
+    return NULL;
+}
+
+Vec *
+collect_all_operator_with_name__LilyCheckedOperatorRegister(
+  const LilyCheckedOperatorRegister *self,
+  char *name,
+  Usize signature_len)
+{
+    Vec *operators = NEW(Vec); // Vec<LilyCheckedOperator* (&)>*
+
+    for (Usize i = 0; i < self->operators->len; ++i) {
+        LilyCheckedOperator *operator= get__Vec(self->operators, i);
+
+        if (!strcmp(name, operator->name->buffer) &&
+            signature_len == operator->signature->len) {
+            push__Vec(operators, operator);
+        }
+    }
+
+    return operators;
+}
+
+LilyCheckedDataType *
+generate_compiler_choice_according_operator_collection__LilyCheckedOperatorRegister(
+  Vec *operators,
+  const Location *location,
+  Usize signature_index)
+{
+    if (operators->len > 0) {
+        ASSERT(
+          signature_index <
+          CAST(LilyCheckedOperator *, last__Vec(operators))->signature->len -
+            1);
+
+        Vec *compiler_choice = NEW(Vec); // Vec<LilyCheckedDataType* (&)>*
+
+        for (Usize i = 0; i < operators->len; ++i) {
+            push__Vec(
+              compiler_choice,
+              get__Vec(
+                CAST(LilyCheckedOperator *, get__Vec(operators, i))->signature,
+                signature_index));
+        }
+
+        return NEW_VARIANT(
+          LilyCheckedDataType, compiler_choice, location, compiler_choice);
     }
 
     return NULL;

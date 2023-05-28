@@ -70,6 +70,29 @@ search_operator__LilyCheckedOperatorRegister(
 
 /**
  *
+ * @brief Collect all operators with the given name.
+ * @return Vec<LilyCheckedOperator* (&)>*
+ */
+Vec *
+collect_all_operator_with_name__LilyCheckedOperatorRegister(
+  const LilyCheckedOperatorRegister *self,
+  char *name,
+  Usize signature_len);
+
+/**
+ *
+ * @brief Generate data type according to the operator collection.
+ * @param location Location of the expression.
+ * @return LilyCheckedDataType*?
+ */
+LilyCheckedDataType *
+generate_compiler_choice_according_operator_collection__LilyCheckedOperatorRegister(
+  Vec *operators,
+  const Location *location,
+  Usize signature_index);
+
+/**
+ *
  * @brief Free LilyCheckedOperatorRegister type.
  */
 DESTRUCTOR(LilyCheckedOperatorRegister,
