@@ -126,6 +126,7 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
 static LilyCheckedExpr *
 check_custom_binary_operator__LilyAnalysis(
   LilyAnalysis *self,
+  LilyAstExpr *expr,
   LilyCheckedScope *scope,
   LilyCheckedExpr *left,
   LilyCheckedExpr *right,
@@ -1799,6 +1800,7 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
 LilyCheckedExpr *
 check_custom_binary_operator__LilyAnalysis(
   LilyAnalysis *self,
+  LilyAstExpr *expr,
   LilyCheckedScope *scope,
   LilyCheckedExpr *left,
   LilyCheckedExpr *right,
@@ -1822,7 +1824,42 @@ check_custom_binary_operator__LilyAnalysis(
                      LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
                    right->data_type->kind ==
                      LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
-            TODO("implement operator for compiler generic and compiler choice");
+            Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(
+              &self->package->operator_register, binary_kind_string, 3);
+
+            Vec *left_compiler_choice =
+              generate_compiler_choice_according_operator_collection__LilyCheckedOperatorRegister(
+                operators, left->location, 0);
+            Vec *right_compiler_choice =
+              generate_compiler_choice_according_operator_collection__LilyCheckedOperatorRegister(
+                operators, right->location, 1);
+
+            if (left_compiler_choice || right_compiler_choice) {
+                FREE(Vec, operators);
+                FAILED("cannot determine a compiler choice in this context (no "
+                       "operator with this name found)");
+            } else {
+                left->data_type->kind =
+                  LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;
+                left->data_type->compiler_choice = left_compiler_choice;
+
+                right->data_type->kind =
+                  LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;
+                right->data_type->compiler_choice = right_compiler_choice;
+            }
+
+            LilyCheckedDataType *data_type_binary =
+              generate_conditional_compiler_choice_according_operator_collection__LilyCheckedOperatorRegister(
+                operators, &expr->location);
+
+            FREE(Vec, operators);
+
+            return NEW_VARIANT(LilyCheckedExpr,
+                               binary,
+                               &expr->location,
+                               data_type_binary,
+                               expr,
+                               NEW(LilyCheckedExprBinary, kind, left, right));
         } else if (left->data_type->kind ==
                      LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
                    right->data_type->kind ==
@@ -1833,8 +1870,24 @@ check_custom_binary_operator__LilyAnalysis(
                    right->data_type->kind ==
                      LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
             TODO("implement operator for compiler generic and compiler choice");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("implement operator for compiler generic and compiler choice");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("implement operator for compiler generic and compiler choice");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("implement operator for compiler generic and compiler choice");
         } else {
-            UNREACHABLE("this situation is impossible");
+            UNREACHABLE(
+              "this situation is impossible or the analysis have a bug");
         }
     } else if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
                  left->data_type)) {
