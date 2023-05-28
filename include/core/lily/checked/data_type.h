@@ -84,7 +84,6 @@ enum LilyCheckedDataTypeKind
 
     // These data types cannot be defined by the user
     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
-    // NOTE: this data type is only used for the return of data type
     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE,
     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE,
     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC
