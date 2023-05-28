@@ -35,6 +35,7 @@ CONSTRUCTOR(LilyCheckedOperator *,
 
     self->name = name;
     self->signature = signature;
+    self->ref_count = 0;
 
     return self;
 }
