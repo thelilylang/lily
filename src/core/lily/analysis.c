@@ -1834,7 +1834,7 @@ check_custom_binary_operator__LilyAnalysis(
               generate_compiler_choice_according_operator_collection__LilyCheckedOperatorRegister(
                 operators, right->location, 1);
 
-            if (left_compiler_choice || right_compiler_choice) {
+            if (!left_compiler_choice || !right_compiler_choice) {
                 FREE(Vec, operators);
                 FAILED("cannot determine a compiler choice in this context (no "
                        "operator with this name found)");
