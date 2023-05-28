@@ -133,10 +133,7 @@ generate_compiler_choice_according_operator_collection__LilyCheckedOperatorRegis
 
 DESTRUCTOR(LilyCheckedOperatorRegister, const LilyCheckedOperatorRegister *self)
 {
-    if (!self->is_global) {
-        FREE_BUFFER_ITEMS(
-          self->operators->buffer, self->operators->len, LilyCheckedOperator);
-    }
-
+    FREE_BUFFER_ITEMS(
+      self->operators->buffer, self->operators->len, LilyCheckedOperator);
     FREE(Vec, self->operators);
 }
