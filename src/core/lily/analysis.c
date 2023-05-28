@@ -1811,7 +1811,29 @@ check_custom_binary_operator__LilyAnalysis(
           left->data_type) &&
         is_compiler_defined_and_known_dt__LilyCheckedDataType(
           right->data_type)) {
-        TODO("implement operator for compiler generic and compiler choice");
+        if (left->data_type->kind ==
+              LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+            right->data_type->kind ==
+              LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("implement operator for compiler generic and compiler choice");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("implement operator for compiler generic and compiler choice");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("implement operator for compiler generic and compiler choice");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("implement operator for compiler generic and compiler choice");
+        } else {
+            UNREACHABLE("this situation is impossible");
+        }
     } else if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
                  left->data_type)) {
         TODO("try to infer on compiler defined data type.");
