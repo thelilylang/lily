@@ -1996,6 +1996,8 @@ check_custom_binary_operator__LilyAnalysis(
         TODO("try to infer on compiler defined data type.");
     } else if (is_unknown_data_type__LilyCheckedDataType(left->data_type) &&
                is_unknown_data_type__LilyCheckedDataType(right->data_type)) {
+        Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(
+          &self->package->operator_register, binary_kind_string, 3);
         TODO("try to infer on unknown data type.");
     } else if (is_unknown_data_type__LilyCheckedDataType(left->data_type)) {
         TODO("try to infer on unknown data type.");
