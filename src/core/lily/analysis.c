@@ -1901,6 +1901,7 @@ check_custom_binary_operator__LilyAnalysis(
                      LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
                    right->data_type->kind ==
                      LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+        custom_binary_both_cg : {
             Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(
               &self->package->operator_register, binary_kind_string, 3);
 
@@ -1937,6 +1938,7 @@ check_custom_binary_operator__LilyAnalysis(
                                data_type_binary,
                                expr,
                                NEW(LilyCheckedExprBinary, kind, left, right));
+        }
         } else if (left->data_type->kind ==
                      LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
                    right->data_type->kind ==
@@ -1990,19 +1992,86 @@ check_custom_binary_operator__LilyAnalysis(
         }
     } else if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
                  left->data_type)) {
+        switch (left->data_type->kind) {
+            case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+                break;
+            case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
+                break;
+            case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+                goto custom_binary_left_unknown;
+            default:
+                UNREACHABLE("cannot get other variants");
+        }
+
         TODO("try to infer on compiler defined data type.");
     } else if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
                  right->data_type)) {
         TODO("try to infer on compiler defined data type.");
     } else if (is_unknown_data_type__LilyCheckedDataType(left->data_type) &&
                is_unknown_data_type__LilyCheckedDataType(right->data_type)) {
-        Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(
-          &self->package->operator_register, binary_kind_string, 3);
-        TODO("try to infer on unknown data type.");
+        goto custom_binary_both_cg;
     } else if (is_unknown_data_type__LilyCheckedDataType(left->data_type)) {
-        TODO("try to infer on unknown data type.");
+#define CHECK_BINARY_WITH_UNKNOWN_DT(unknown_dt, known_dt, left_is_known)   \
+    Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(    \
+      &self->package->operator_register, binary_kind_string, 3);            \
+                                                                            \
+    Vec *compiler_choice = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */   \
+                                                                            \
+    /* These variables are using to generate a conditional compiler choice  \
+     * data type. */                                                        \
+    Vec *choices = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */           \
+    Vec *conds = NEW(Vec);   /* Vec<Vec<LilyCheckedDataType* (&)>*>* */     \
+                                                                            \
+    for (Usize i = 0; i < operators->len; ++i) {                            \
+        LilyCheckedOperator *operator= get__Vec(operators, i);              \
+        LilyCheckedDataType *left_op_data_type =                            \
+          get__Vec(operator->signature, 0);                                 \
+        LilyCheckedDataType *right_op_data_type =                           \
+          get__Vec(operator->signature, 1);                                 \
+                                                                            \
+        if (eq__LilyCheckedDataType(left_is_known ? left_op_data_type       \
+                                                  : right_op_data_type,     \
+                                    known_dt)) {                            \
+            push__Vec(compiler_choice, left_op_data_type);                  \
+                                                                            \
+            /* Push return data type of the operator in choices */          \
+            push__Vec(choices, get__Vec(operator->signature, 2));           \
+                                                                            \
+            /* Push the params of the operator in conds */                  \
+            push__Vec(conds,                                                \
+                      init__Vec(2, left_op_data_type, right_op_data_type)); \
+        }                                                                   \
+    }                                                                       \
+                                                                            \
+    if (compiler_choice->len == 0) {                                        \
+        FAILED("compiler choice have been failed, because you have no "     \
+               "choice according to the right data type");                  \
+    }                                                                       \
+                                                                            \
+    unknown_dt->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;         \
+    unknown_dt->compiler_choice = compiler_choice;                          \
+                                                                            \
+    FREE(Vec, operators);                                                   \
+                                                                            \
+    return NEW_VARIANT(                                                     \
+      LilyCheckedExpr,                                                      \
+      binary,                                                               \
+      &expr->location,                                                      \
+      NEW_VARIANT(                                                          \
+        LilyCheckedDataType,                                                \
+        conditional_compiler_choice,                                        \
+        &expr->location,                                                    \
+        NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds)), \
+      expr,                                                                 \
+      NEW(LilyCheckedExprBinary, kind, left, right));
+
+    custom_binary_left_unknown : {
+        CHECK_BINARY_WITH_UNKNOWN_DT(left->data_type, right->data_type, false);
+    }
     } else if (is_unknown_data_type__LilyCheckedDataType(right->data_type)) {
-        TODO("try to infer on unknown data type.");
+    custom_binary_right_unknown : {
+        CHECK_BINARY_WITH_UNKNOWN_DT(right->data_type, left->data_type, true);
+    }
     }
 
     Vec *signature =
