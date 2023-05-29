@@ -1,5 +1,7 @@
-import "@package(b)" as b;
+import "@package(b)";
 
 pub macro a = {
-	pub fun add(x, y) = x+y;
+	pub fun add(x Int32, y Int32) Int32 = return x+y; end
 };
+
+app!();

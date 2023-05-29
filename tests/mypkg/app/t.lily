@@ -1,1 +1,1 @@
-fun add(x, y) = x + y end
+fun add(x Int32, y Int32) Int32 = return x + y; end
