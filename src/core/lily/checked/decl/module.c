@@ -63,8 +63,8 @@ DESTRUCTOR(LilyCheckedDeclModule, const LilyCheckedDeclModule *self)
     if (self->global_name) {
         FREE(String, self->global_name);
     } else {
-		UNREACHABLE("Bug on thread!!");
-	}
+        UNREACHABLE("Bug on thread!!");
+    }
 
     FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, LilyCheckedDecl);
     FREE(Vec, self->decls);
@@ -72,6 +72,6 @@ DESTRUCTOR(LilyCheckedDeclModule, const LilyCheckedDeclModule *self)
     if (self->scope) {
         FREE(LilyCheckedScope, self->scope);
     } else {
-		UNREACHABLE("Bug on thread!!");
-	}
+        UNREACHABLE("Bug on thread!!");
+    }
 }
