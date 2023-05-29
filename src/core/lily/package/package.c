@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// TODO: add support for Windows.
 static pthread_t *package_threads;
 static pthread_mutex_t package_thread_lock;
 
