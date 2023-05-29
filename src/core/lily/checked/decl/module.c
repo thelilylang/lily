@@ -27,6 +27,9 @@
 #include <core/lily/checked/decl.h>
 #include <core/lily/checked/decl/module.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #ifdef ENV_DEBUG
 #include <base/format.h>
 
@@ -57,10 +60,18 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedDeclModule, const LilyCheckedDeclModule *self)
 {
-    FREE(String, self->global_name);
+    if (self->global_name) {
+        FREE(String, self->global_name);
+    } else {
+		UNREACHABLE("Bug on thread!!");
+	}
 
     FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, LilyCheckedDecl);
     FREE(Vec, self->decls);
 
-    FREE(LilyCheckedScope, self->scope);
+    if (self->scope) {
+        FREE(LilyCheckedScope, self->scope);
+    } else {
+		UNREACHABLE("Bug on thread!!");
+	}
 }
