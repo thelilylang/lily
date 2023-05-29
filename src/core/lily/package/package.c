@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/file.h>
 #include <base/new.h>
 
@@ -33,9 +34,21 @@
 #include <core/lily/lily.h>
 #include <core/lily/package/package.h>
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static pthread_t *package_threads;
+static pthread_mutex_t package_thread_lock;
+
+/**
+ *
+ * @brief Run all packages.
+ * @param self LilyPackageDependencyTree*
+ */
+static void *
+run__LilyPackage(void *self);
 
 CONSTRUCTOR(LilyPackage *,
             LilyPackage,
@@ -187,15 +200,83 @@ build__LilyPackage(const CompileConfig *config,
     exit(0);
 #endif
 
-    run__LilyParser(&self->parser, false);
-    run__LilyAnalysis(&self->analysis);
-    run__LilyIr(self);
+    package_threads =
+      lily_malloc(sizeof(pthread_t) * self->precompile.dependency_trees->len);
 
-    if (self->status == LILY_PACKAGE_STATUS_MAIN) {
-        run__LilyLinker(self);
+    ASSERT(!pthread_mutex_init(&package_thread_lock, NULL));
+
+    for (Usize i = 0; i < self->precompile.dependency_trees->len; ++i) {
+        ASSERT(!pthread_create(&package_threads[i],
+                               NULL,
+                               &run__LilyPackage,
+                               get__Vec(self->precompile.dependency_trees, i)));
     }
 
+    for (Usize i = 0; i < self->precompile.dependency_trees->len; ++i) {
+        pthread_join(package_threads[i], NULL);
+    }
+
+    lily_free(package_threads);
+    pthread_mutex_destroy(&package_thread_lock);
+
     return self;
+}
+
+static void *
+run__LilyPackage(void *self)
+{
+    pthread_mutex_lock(&package_thread_lock);
+
+    LilyPackageDependencyTree *tree = self;
+
+    if (tree->dependencies) {
+        for (Usize i = 0; i < tree->dependencies->len; ++i) {
+            LilyPackageDependencyTree *dep = get__Vec(tree->dependencies, i);
+
+            while (!dep->is_done)
+                ;
+        }
+    }
+
+    run__LilyParser(&tree->package->parser, false);
+    run__LilyAnalysis(&tree->package->analysis);
+    run__LilyIr(tree->package);
+
+    if (tree->package->status == LILY_PACKAGE_STATUS_MAIN) {
+        run__LilyLinker(tree->package);
+    }
+
+    tree->is_done = true;
+
+    pthread_mutex_unlock(&package_thread_lock);
+
+    // Run children of the tree
+    if (tree->children->len > 0) {
+        pthread_t *children_threads =
+          lily_malloc(sizeof(pthread_t) * tree->children->len);
+        pthread_mutex_t children_thread_lock;
+
+        ASSERT(!pthread_mutex_init(&children_thread_lock, NULL));
+        pthread_mutex_lock(&children_thread_lock);
+
+        for (Usize i = 0; i < tree->children->len; ++i) {
+            ASSERT(!pthread_create(&children_threads[i],
+                                   NULL,
+                                   &run__LilyPackage,
+                                   get__Vec(tree->children, i)));
+        }
+
+        for (Usize i = 0; i < tree->children->len; ++i) {
+            pthread_join(children_threads[i], NULL);
+        }
+
+        pthread_mutex_unlock(&children_thread_lock);
+
+        lily_free(children_threads);
+        pthread_mutex_destroy(&children_thread_lock);
+    }
+
+    return NULL;
 }
 
 LilyPackage *
