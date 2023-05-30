@@ -1875,6 +1875,60 @@ check_custom_binary_operator__LilyAnalysis(
       expr,                                                                    \
       NEW(LilyCheckedExprBinary, kind, left, right));
 
+#define VALID_BINARY_ONE_HAND_CHOICE(                                          \
+  choice_dt, known_dt, left_is_compiler_defined)                               \
+    Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(       \
+      &self->package->operator_register, binary_kind_string, 3);               \
+                                                                               \
+    Vec *choices = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */              \
+    Vec *conds = NEW(Vec);   /* Vec<Vec<LilyCheckedDataType* (&)>*>* */        \
+                                                                               \
+    for (Usize i = 0; i < choice_dt->len; ++i) {                               \
+        LilyCheckedDataType *choice = get__Vec(choice_dt, i);                  \
+                                                                               \
+        for (Usize j = 0; j < operators->len; ++j) {                           \
+            LilyCheckedOperator *operator= get__Vec(operators, j);             \
+            LilyCheckedDataType *left_op_data_type =                           \
+              get__Vec(operator->signature, 0);                                \
+            LilyCheckedDataType *right_op_data_type =                          \
+              get__Vec(operator->signature, 1);                                \
+                                                                               \
+            if (eq__LilyCheckedDataType(known_dt, right_op_data_type) &&       \
+                eq__LilyCheckedDataType(choice, left_op_data_type)) {          \
+                /* Push return data type of the operator in choices */         \
+                push__Vec(choices, get__Vec(operator->signature, 0));          \
+                                                                               \
+                /* Push the params of the operator in conds */                 \
+                push__Vec(                                                     \
+                  conds, init__Vec(2, left_op_data_type, right_op_data_type)); \
+            }                                                                  \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    if (choices->len == 0) {                                                   \
+        if (left_is_compiler_defined) {                                        \
+            FAILED("compiler choice have been failed, because you have "       \
+                   "no choice according to the right data type");              \
+        } else {                                                               \
+            FAILED("compiler choice have been failed, because you have "       \
+                   "no choice according to the left data type");               \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    FREE(Vec, operators);                                                      \
+                                                                               \
+    return NEW_VARIANT(                                                        \
+      LilyCheckedExpr,                                                         \
+      binary,                                                                  \
+      &expr->location,                                                         \
+      NEW_VARIANT(                                                             \
+        LilyCheckedDataType,                                                   \
+        conditional_compiler_choice,                                           \
+        &expr->location,                                                       \
+        NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds)),    \
+      expr,                                                                    \
+      NEW(LilyCheckedExprBinary, kind, left, right));
+
     char *binary_kind_string = to_string__LilyCheckedExprBinaryKind(kind);
 
     if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
@@ -1992,21 +2046,33 @@ check_custom_binary_operator__LilyAnalysis(
         }
     } else if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
                  left->data_type)) {
-        switch (left->data_type->kind) {
-            case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
-                break;
-            case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
-                break;
-            case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
-                goto custom_binary_left_unknown;
-            default:
-                UNREACHABLE("cannot get other variants");
-        }
+#define VALID_BINARY_ONE_HAND_COMPILER_DEFINED(left_is_compiler_defined)   \
+    switch (left->data_type->kind) {                                       \
+        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {    \
+            VALID_BINARY_ONE_HAND_CHOICE(                                  \
+              left->data_type->conditional_compiler_choice.choices,        \
+              right->data_type,                                            \
+              left_is_compiler_defined);                                   \
+        }                                                                  \
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE: {                \
+            VALID_BINARY_ONE_HAND_CHOICE(left->data_type->compiler_choice, \
+                                         right->data_type,                 \
+                                         left_is_compiler_defined);        \
+        }                                                                  \
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:                 \
+            if (left_is_compiler_defined) {                                \
+                goto custom_binary_left_unknown;                           \
+            } else {                                                       \
+                goto custom_binary_right_unknown;                          \
+            }                                                              \
+        default:                                                           \
+            UNREACHABLE("cannot get other variants");                      \
+    }
 
-        TODO("try to infer on compiler defined data type.");
+        VALID_BINARY_ONE_HAND_COMPILER_DEFINED(true);
     } else if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
                  right->data_type)) {
-        TODO("try to infer on compiler defined data type.");
+        VALID_BINARY_ONE_HAND_COMPILER_DEFINED(false);
     } else if (is_unknown_data_type__LilyCheckedDataType(left->data_type) &&
                is_unknown_data_type__LilyCheckedDataType(right->data_type)) {
         goto custom_binary_both_cg;
@@ -2044,8 +2110,13 @@ check_custom_binary_operator__LilyAnalysis(
     }                                                                       \
                                                                             \
     if (compiler_choice->len == 0) {                                        \
-        FAILED("compiler choice have been failed, because you have no "     \
-               "choice according to the right data type");                  \
+        if (left_is_known) {                                                \
+            FAILED("compiler choice have been failed, because you have no " \
+                   "choice according to the right data type");              \
+        } else {                                                            \
+            FAILED("compiler choice have been failed, because you have no " \
+                   "choice according to the left data type");               \
+        }                                                                   \
     }                                                                       \
                                                                             \
     unknown_dt->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;         \
@@ -2087,7 +2158,12 @@ check_custom_binary_operator__LilyAnalysis(
 
     FREE(Vec, signature);
 
-    TODO("check custom binary operator");
+    return NEW_VARIANT(LilyCheckedExpr,
+                       binary,
+                       &expr->location,
+                       clone__LilyCheckedDataType(defined_data_type),
+                       expr,
+                       NEW(LilyCheckedExprBinary, kind, left, right));
 }
 
 void
