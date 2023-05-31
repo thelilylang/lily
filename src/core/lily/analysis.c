@@ -1211,28 +1211,61 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
               check_data_type__LilyAnalysis(
                 self, data_type->optional, scope, safety_mode));
         case LILY_AST_DATA_TYPE_KIND_PTR:
-            return NEW_VARIANT(LilyCheckedDataType,
-                               ptr,
-                               &data_type->location,
-                               check_data_type__LilyAnalysis(
-                                 self, data_type->ptr, scope, safety_mode));
+            switch (data_type->ptr->kind) {
+                case LILY_AST_DATA_TYPE_KIND_MUT:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      ptr_mut,
+                      &data_type->location,
+                      check_data_type__LilyAnalysis(
+                        self, data_type->ptr->mut, scope, safety_mode));
+                default:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      ptr,
+                      &data_type->location,
+                      check_data_type__LilyAnalysis(
+                        self, data_type->ptr, scope, safety_mode));
+            }
         case LILY_AST_DATA_TYPE_KIND_REF:
-            return NEW_VARIANT(LilyCheckedDataType,
-                               ref,
-                               &data_type->location,
-                               check_data_type__LilyAnalysis(
-                                 self, data_type->ref, scope, safety_mode));
+            switch (data_type->ref->kind) {
+                case LILY_AST_DATA_TYPE_KIND_MUT:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      ref_mut,
+                      &data_type->location,
+                      check_data_type__LilyAnalysis(
+                        self, data_type->ref->mut, scope, safety_mode));
+                default:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      ref,
+                      &data_type->location,
+                      check_data_type__LilyAnalysis(
+                        self, data_type->ref, scope, safety_mode));
+            }
         case LILY_AST_DATA_TYPE_KIND_SELF:
             TODO("Check Self data type");
         case LILY_AST_DATA_TYPE_KIND_STR:
             return NEW_VARIANT(
               LilyCheckedDataType, str, &data_type->location, -1);
         case LILY_AST_DATA_TYPE_KIND_TRACE:
-            return NEW_VARIANT(LilyCheckedDataType,
-                               trace,
-                               &data_type->location,
-                               check_data_type__LilyAnalysis(
-                                 self, data_type->ref, scope, safety_mode));
+            switch (data_type->trace->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      trace_mut,
+                      &data_type->location,
+                      check_data_type__LilyAnalysis(
+                        self, data_type->trace->mut, scope, safety_mode));
+                default:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      trace,
+                      &data_type->location,
+                      check_data_type__LilyAnalysis(
+                        self, data_type->trace, scope, safety_mode));
+            }
         case LILY_AST_DATA_TYPE_KIND_TUPLE:
             TODO("check tuple");
         case LILY_AST_DATA_TYPE_KIND_UINT16:
@@ -2148,7 +2181,7 @@ check_custom_binary_operator__LilyAnalysis(
     Vec *signature =
       init__Vec(3, left->data_type, right->data_type, defined_data_type);
 
-    LilyCheckedOperator *custom_operator = custom_operator =
+    LilyCheckedOperator *custom_operator =
       search_operator__LilyCheckedOperatorRegister(
         &self->package->operator_register, binary_kind_string, signature);
 
