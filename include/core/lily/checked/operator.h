@@ -31,6 +31,8 @@
 
 #include <core/lily/checked/data_type.h>
 
+#define DEFAULT_OPERATORS_COUNT 647
+
 typedef struct LilyCheckedOperator
 {
     String *name;   // String* (&)
@@ -65,6 +67,13 @@ ref__LilyCheckedOperator(LilyCheckedOperator *self)
  */
 bool
 valid_operator__LilyCheckedOperator(String *name);
+
+/**
+ *
+ * @brief Load default operators.
+ */
+LilyCheckedOperator *
+load_default_operators__LilyCheckedOperator();
 
 /**
  *
