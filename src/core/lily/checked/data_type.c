@@ -856,6 +856,9 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
     if (self->kind != other->kind &&
         other->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
         return eq__LilyCheckedDataType(other, self);
+    } else if (other->kind == LILY_CHECKED_DATA_TYPE_KIND_MUT &&
+               self->kind != LILY_CHECKED_DATA_TYPE_KIND_MUT) {
+        return eq__LilyCheckedDataType(other, self);
     }
 
     switch (self->kind) {
@@ -945,9 +948,13 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
                      ? eq__LilyCheckedDataType(self->list, other->list)
                      : false;
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            // Mut isn't really a data type, it's just an alias to tell the
+            // compiler that the data type is mutable. To take a concrete
+            // example, it would be strange for the compiler to differentiate
+            // between `mut Int8` and `Int8` types.
             return self->kind == other->kind
                      ? eq__LilyCheckedDataType(self->mut, other->mut)
-                     : false;
+                     : eq__LilyCheckedDataType(self->mut, other);
         case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
             return self->kind == other->kind
                      ? eq__LilyCheckedDataType(self->optional, other->optional)
