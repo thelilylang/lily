@@ -123,8 +123,6 @@ CONSTRUCTOR(LilyPackage *,
     } else {
         self->parser = NEW(LilyParser, self, self, NULL);
         self->analysis = NEW(LilyAnalysis, self, self, &self->parser);
-        self->builtins = load_builtins__LilyBuiltin();
-        self->syss = load_syss__LilySys();
     }
 #endif
 
@@ -143,7 +141,8 @@ LilyPackage *
 build__LilyPackage(const CompileConfig *config,
                    enum LilyVisibility visibility,
                    enum LilyPackageStatus status,
-                   const char *default_path)
+                   const char *default_path,
+                   const LilyProgramRessources *program_ressources)
 {
     LilyPackage *self = NEW(LilyPackage,
                             NULL,
@@ -158,6 +157,21 @@ build__LilyPackage(const CompileConfig *config,
       from_CompileConfig__LilyPackageConfig(config);
 
     self->config = &pkg_config;
+
+    // Load builtins and syss
+    self->builtins = program_ressources->builtins;
+    self->syss = program_ressources->syss;
+
+    // Load default operators in operator register
+    // In a normal case where we wanted to add an operator to the register, we'd
+    // use `add_operator__LilyCheckedOperatorRegister`, but in this case it's
+    // guaranteed that no operator repeats itself, so to increase loading speed
+    // we'll add it directly to the vector without checking.
+    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
+        push__Vec(
+          self->operator_register.operators,
+          ref__LilyCheckedOperator(&program_ressources->default_operators[i]));
+    }
 
     run__LilyScanner(&self->scanner, pkg_config.dump_scanner);
     run__LilyPreparser(&self->preparser, &self->preparser_info);
@@ -284,9 +298,11 @@ LilyPackage *
 compile__LilyPackage(const CompileConfig *config,
                      enum LilyVisibility visibility,
                      enum LilyPackageStatus status,
-                     const char *default_path)
+                     const char *default_path,
+                     const LilyProgramRessources *program_ressources)
 {
-    return build__LilyPackage(config, visibility, status, default_path);
+    return build__LilyPackage(
+      config, visibility, status, default_path, program_ressources);
 }
 
 const File *
@@ -423,22 +439,6 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(LilyAnalysis, &self->analysis);
     FREE(LilyIr, &self->ir);
     FREE(LilyLinker, &self->linker);
-
-    if (self->builtins) {
-        for (Usize i = 0; i < BUILTINS_COUNT; ++i) {
-            FREE(LilyBuiltinFun, &self->builtins[i]);
-        }
-
-        lily_free(self->builtins);
-    }
-
-    if (self->syss) {
-        for (Usize i = 0; i < SYSS_COUNT; ++i) {
-            FREE(LilySysFun, &self->syss[i]);
-        }
-
-        lily_free(self->syss);
-    }
 
     FREE(Vec, self->builtin_usage);
     FREE(Vec, self->sys_usage);

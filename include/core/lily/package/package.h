@@ -33,6 +33,7 @@
 
 #include <core/lily/analysis.h>
 #include <core/lily/builtin.h>
+#include <core/lily/checked/operator.h>
 #include <core/lily/checked/operator_register.h>
 #include <core/lily/ir.h>
 #include <core/lily/linker.h>
@@ -41,6 +42,7 @@
 #include <core/lily/parser.h>
 #include <core/lily/precompile.h>
 #include <core/lily/preparser.h>
+#include <core/lily/program.h>
 #include <core/lily/scanner.h>
 #include <core/lily/sys.h>
 #include <core/lily/visibility.h>
@@ -73,8 +75,10 @@ typedef struct LilyPackage
     LilyAnalysis analysis;
     LilyIr ir;
     LilyLinker linker;
-    LilyBuiltinFun *builtins;
-    LilySysFun *syss;
+    // NOTE: builtins and syss fields are NULL when the status of the package is
+    // not equal to LILY_PACKAGE_STATUS_MAIN
+    LilyBuiltinFun *builtins; // LilyBuiltinFun*? (&)
+    LilySysFun *syss;         // LilySysFun*? (&)
     Usize count_error;
     Usize count_warning;
     // count all errors and warnings after the precompiler step
@@ -119,7 +123,8 @@ LilyPackage *
 build__LilyPackage(const CompileConfig *config,
                    enum LilyVisibility visibility,
                    enum LilyPackageStatus status,
-                   const char *default_path);
+                   const char *default_path,
+                   const LilyProgramRessources *program_ressources);
 
 /**
  *
@@ -131,7 +136,8 @@ LilyPackage *
 compile__LilyPackage(const CompileConfig *config,
                      enum LilyVisibility visibility,
                      enum LilyPackageStatus status,
-                     const char *default_path);
+                     const char *default_path,
+                     const LilyProgramRessources *program_ressources);
 
 /**
  *
