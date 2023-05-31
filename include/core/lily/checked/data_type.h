@@ -71,9 +71,12 @@ enum LilyCheckedDataTypeKind
     LILY_CHECKED_DATA_TYPE_KIND_NEVER,
     LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL,
     LILY_CHECKED_DATA_TYPE_KIND_PTR,
+    LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT,
     LILY_CHECKED_DATA_TYPE_KIND_REF,
+    LILY_CHECKED_DATA_TYPE_KIND_REF_MUT,
     LILY_CHECKED_DATA_TYPE_KIND_STR,
     LILY_CHECKED_DATA_TYPE_KIND_TRACE,
+    LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT,
     LILY_CHECKED_DATA_TYPE_KIND_TUPLE,
     LILY_CHECKED_DATA_TYPE_KIND_UINT16,
     LILY_CHECKED_DATA_TYPE_KIND_UINT32,
@@ -345,9 +348,12 @@ struct LilyCheckedDataType
         LilyCheckedDataType *mut;
         LilyCheckedDataType *optional;
         LilyCheckedDataType *ptr;
+        LilyCheckedDataType *ptr_mut;
         LilyCheckedDataType *ref;
+        LilyCheckedDataType *ref_mut;
         Isize str; // size of Str
         LilyCheckedDataType *trace;
+        LilyCheckedDataType *trace_mut;
         Vec *tuple; // Vec<LilyCheckedDataType*>*
         LilyCheckedDataTypeConditionalCompilerChoice
           conditional_compiler_choice;
@@ -463,6 +469,17 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 
 /**
  *
+ * @brief Construct LilyCheckedDataType type
+ * (LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    ptr_mut,
+                    const Location *location,
+                    LilyCheckedDataType *ptr_mut);
+
+/**
+ *
  * @brief Construct LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_REF).
  */
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
@@ -470,6 +487,17 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     ref,
                     const Location *location,
                     LilyCheckedDataType *ref);
+
+/**
+ *
+ * @brief Construct LilyCheckedDataType type
+ * (LILY_CHECKED_DATA_TYPE_KIND_REF_MUT).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    ref_mut,
+                    const Location *location,
+                    LilyCheckedDataType *ref_mut);
 
 /**
  *
@@ -491,6 +519,17 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     trace,
                     const Location *location,
                     LilyCheckedDataType *trace);
+
+/**
+ *
+ * @brief Construct LilyCheckedDataType type
+ * (LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    trace_mut,
+                    const Location *location,
+                    LilyCheckedDataType *trace_mut);
 
 /**
  *

@@ -82,12 +82,27 @@ static VARIANT_DESTRUCTOR(LilyCheckedDataType,
 // Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_PTR).
 static VARIANT_DESTRUCTOR(LilyCheckedDataType, ptr, LilyCheckedDataType *self);
 
+// Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT).
+static VARIANT_DESTRUCTOR(LilyCheckedDataType,
+                          ptr_mut,
+                          LilyCheckedDataType *self);
+
 // Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_REF).
 static VARIANT_DESTRUCTOR(LilyCheckedDataType, ref, LilyCheckedDataType *self);
+
+// Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_REF_MUT).
+static VARIANT_DESTRUCTOR(LilyCheckedDataType,
+                          ref_mut,
+                          LilyCheckedDataType *self);
 
 // Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_TRACE).
 static VARIANT_DESTRUCTOR(LilyCheckedDataType,
                           trace,
+                          LilyCheckedDataType *self);
+
+// Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT).
+static VARIANT_DESTRUCTOR(LilyCheckedDataType,
+                          trace_mut,
                           LilyCheckedDataType *self);
 
 // Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_TUPLE).
@@ -458,6 +473,22 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 
 VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
+                    ptr_mut,
+                    const Location *location,
+                    LilyCheckedDataType *ptr_mut)
+{
+    LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
+
+    self->kind = LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT;
+    self->location = location;
+    self->ref_count = 0;
+    self->ptr_mut = ptr_mut;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
                     ref,
                     const Location *location,
                     LilyCheckedDataType *ref)
@@ -468,6 +499,22 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->location = location;
     self->ref_count = 0;
     self->ref = ref;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    ref_mut,
+                    const Location *location,
+                    LilyCheckedDataType *ref_mut)
+{
+    LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
+
+    self->kind = LILY_CHECKED_DATA_TYPE_KIND_REF_MUT;
+    self->location = location;
+    self->ref_count = 0;
+    self->ref_mut = ref_mut;
 
     return self;
 }
@@ -500,6 +547,22 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->location = location;
     self->ref_count = 0;
     self->trace = trace;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    trace_mut,
+                    const Location *location,
+                    LilyCheckedDataType *trace_mut)
+{
+    LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
+
+    self->kind = LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT;
+    self->location = location;
+    self->ref_count = 0;
+    self->trace_mut = trace_mut;
 
     return self;
 }
@@ -642,12 +705,18 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL";
         case LILY_CHECKED_DATA_TYPE_KIND_PTR:
             return "LILY_CHECKED_DATA_TYPE_KIND_PTR";
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT";
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             return "LILY_CHECKED_DATA_TYPE_KIND_REF";
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_REF_MUT";
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
             return "LILY_CHECKED_DATA_TYPE_KIND_STR";
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return "LILY_CHECKED_DATA_TYPE_KIND_TRACE";
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT";
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
             return "LILY_CHECKED_DATA_TYPE_KIND_TUPLE";
         case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
@@ -768,9 +837,27 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
 
             break;
         }
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT: {
+            char *s =
+              format(", ptr_mut = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->ptr_mut));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_CHECKED_DATA_TYPE_KIND_REF: {
             char *s = format(", ref = {Sr} }",
                              to_string__Debug__LilyCheckedDataType(self->ref));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT: {
+            char *s =
+              format(", ref_mut = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->ref_mut));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -787,6 +874,15 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
             char *s =
               format(", trace = {Sr} }",
                      to_string__Debug__LilyCheckedDataType(self->trace));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT: {
+            char *s =
+              format(", trace_mut = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->trace_mut));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -963,13 +1059,26 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
             return self->kind == other->kind
                      ? eq__LilyCheckedDataType(self->ptr, other->ptr)
                      : false;
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            return self->kind == other->kind
+                     ? eq__LilyCheckedDataType(self->ptr_mut, other->ptr_mut)
+                     : false;
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             return self->kind == other->kind
                      ? eq__LilyCheckedDataType(self->ref, other->ref)
                      : false;
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            return self->kind == other->kind
+                     ? eq__LilyCheckedDataType(self->ref_mut, other->ref_mut)
+                     : false;
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return self->kind == other->kind
                      ? eq__LilyCheckedDataType(self->trace, other->trace)
+                     : false;
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            return self->kind == other->kind
+                     ? eq__LilyCheckedDataType(self->trace_mut,
+                                               other->trace_mut)
                      : false;
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
             switch (other->kind) {
@@ -1221,11 +1330,21 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                                ptr,
                                self->location,
                                clone__LilyCheckedDataType(self->ptr));
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            return NEW_VARIANT(LilyCheckedDataType,
+                               ptr_mut,
+                               self->location,
+                               clone__LilyCheckedDataType(self->ptr_mut));
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             return NEW_VARIANT(LilyCheckedDataType,
                                ref,
                                self->location,
                                clone__LilyCheckedDataType(self->ref));
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            return NEW_VARIANT(LilyCheckedDataType,
+                               ref_mut,
+                               self->location,
+                               clone__LilyCheckedDataType(self->ref_mut));
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
             return NEW_VARIANT(
               LilyCheckedDataType, str, self->location, self->str);
@@ -1234,6 +1353,11 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                                trace,
                                self->location,
                                clone__LilyCheckedDataType(self->trace));
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            return NEW_VARIANT(LilyCheckedDataType,
+                               trace_mut,
+                               self->location,
+                               clone__LilyCheckedDataType(self->trace_mut));
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
             Vec *tuple = NEW(Vec);
 
@@ -1379,12 +1503,21 @@ contains_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
         case LILY_CHECKED_DATA_TYPE_KIND_PTR:
             return contains_direct_custom_data_type__LilyCheckedDataType(
               self->ptr);
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            return contains_direct_custom_data_type__LilyCheckedDataType(
+              self->ptr_mut);
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             return contains_direct_custom_data_type__LilyCheckedDataType(
               self->ref);
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            return contains_direct_custom_data_type__LilyCheckedDataType(
+              self->ref_mut);
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return contains_direct_custom_data_type__LilyCheckedDataType(
               self->trace);
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            return contains_direct_custom_data_type__LilyCheckedDataType(
+              self->trace_mut);
         default:
             return false;
     }
@@ -1406,11 +1539,20 @@ get_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
               self->optional);
         case LILY_CHECKED_DATA_TYPE_KIND_PTR:
             return get_direct_custom_data_type__LilyCheckedDataType(self->ptr);
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            return get_direct_custom_data_type__LilyCheckedDataType(
+              self->ptr_mut);
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             return get_direct_custom_data_type__LilyCheckedDataType(self->ref);
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            return get_direct_custom_data_type__LilyCheckedDataType(
+              self->ref_mut);
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return get_direct_custom_data_type__LilyCheckedDataType(
               self->trace);
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            return get_direct_custom_data_type__LilyCheckedDataType(
+              self->trace_mut);
         default:
             return NULL;
     }
@@ -1518,8 +1660,16 @@ update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
             self->ptr = clone__LilyCheckedDataType(other->ptr);
 
             break;
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            self->ptr_mut = clone__LilyCheckedDataType(other->ptr_mut);
+
+            break;
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             self->ref = clone__LilyCheckedDataType(other->ref);
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            self->ref_mut = clone__LilyCheckedDataType(other->ref_mut);
 
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
@@ -1528,6 +1678,10 @@ update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             self->trace = clone__LilyCheckedDataType(other->trace);
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            self->trace_mut = clone__LilyCheckedDataType(other->trace_mut);
 
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
@@ -1732,12 +1886,30 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
 
             break;
         }
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            serialize__LilyCheckedDataType(self->ptr_mut, ser);
+
+            break;
+        }
         case LILY_CHECKED_DATA_TYPE_KIND_REF: {
             char *s = format("{d}", self->kind);
 
             PUSH_STR_AND_FREE(ser, s);
 
-            serialize__LilyCheckedDataType(self->ptr, ser);
+            serialize__LilyCheckedDataType(self->ref, ser);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            serialize__LilyCheckedDataType(self->ref_mut, ser);
 
             break;
         }
@@ -1746,7 +1918,16 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
 
             PUSH_STR_AND_FREE(ser, s);
 
-            serialize__LilyCheckedDataType(self->ptr, ser);
+            serialize__LilyCheckedDataType(self->trace, ser);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            serialize__LilyCheckedDataType(self->trace_mut, ser);
 
             break;
         }
@@ -1818,15 +1999,33 @@ VARIANT_DESTRUCTOR(LilyCheckedDataType, ptr, LilyCheckedDataType *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyCheckedDataType, ptr_mut, LilyCheckedDataType *self)
+{
+    FREE(LilyCheckedDataType, self->ptr_mut);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedDataType, ref, LilyCheckedDataType *self)
 {
     FREE(LilyCheckedDataType, self->ref);
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyCheckedDataType, ref_mut, LilyCheckedDataType *self)
+{
+    FREE(LilyCheckedDataType, self->ref_mut);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedDataType, trace, LilyCheckedDataType *self)
 {
     FREE(LilyCheckedDataType, self->trace);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedDataType, trace_mut, LilyCheckedDataType *self)
+{
+    FREE(LilyCheckedDataType, self->trace_mut);
     lily_free(self);
 }
 
@@ -1888,11 +2087,20 @@ DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self)
         case LILY_CHECKED_DATA_TYPE_KIND_PTR:
             FREE_VARIANT(LilyCheckedDataType, ptr, self);
             break;
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            FREE_VARIANT(LilyCheckedDataType, ptr_mut, self);
+            break;
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             FREE_VARIANT(LilyCheckedDataType, ref, self);
             break;
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            FREE_VARIANT(LilyCheckedDataType, ref_mut, self);
+            break;
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             FREE_VARIANT(LilyCheckedDataType, trace, self);
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            FREE_VARIANT(LilyCheckedDataType, trace_mut, self);
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
             FREE_VARIANT(LilyCheckedDataType, tuple, self);
