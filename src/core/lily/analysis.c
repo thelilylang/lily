@@ -2152,7 +2152,7 @@ check_custom_binary_operator__LilyAnalysis(
       search_operator__LilyCheckedOperatorRegister(
         &self->package->operator_register, binary_kind_string, signature);
 
-    if (custom_operator == NULL) {
+    if (!custom_operator) {
         FAILED("operator not found with this signature");
     }
 
