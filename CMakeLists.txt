@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
-project(lily LANGUAGES C CXX)
+project(lily
+	VERSION 0.0.0
+	HOMEPAGE_URL "https://github.com/ArthurPV/lily"
+	LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -270,6 +273,8 @@ set(CORE_SRC
 	src/core/lily/ir/cpp/generator/record.c
 	src/core/lily/ir/cpp/generator/record_object.c
 	src/core/lily/ir/cpp/generator.c
+	src/core/lily/ir/lily/instruction.c
+	src/core/lily/ir/lily/translator.c
 	src/core/lily/ir/llvm/generator/builtin.c
 	src/core/lily/ir/llvm/generator/constant.c
 	src/core/lily/ir/llvm/generator/data_type.c
@@ -345,6 +350,7 @@ set(CORE_SRC
 	src/core/lily/precompile.c
 	src/core/lily/preparser.c
 	src/core/lily/preprocess.c
+	src/core/lily/program.c
 	src/core/lily/scanner.c
 	src/core/lily/sys.c
 	src/core/lily/token.c
