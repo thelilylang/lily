@@ -28,6 +28,7 @@
 
 #include <core/lily/lily.h>
 #include <core/lily/package.h>
+#include <core/lily/program.h>
 
 #include <stdlib.h>
 
@@ -37,12 +38,22 @@ run__Compile(const CompileConfig *config)
     // Get the default path
     char *default_path = generate_default_path((char *)config->filename);
 
-    LilyPackage *pkg = compile__LilyPackage(
-      config, LILY_VISIBILITY_PUBLIC, LILY_PACKAGE_STATUS_MAIN, default_path);
+    LilyProgramRessources program_ressources = NEW(LilyProgramRessources);
+
+    LilyPackage *pkg = compile__LilyPackage(config,
+                                            LILY_VISIBILITY_PUBLIC,
+                                            LILY_PACKAGE_STATUS_MAIN,
+                                            default_path,
+                                            &program_ressources);
 
     lily_free(default_path);
 
 #if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILE)
     FREE(LilyPackage, pkg);
 #endif
+
+    // NOTE: Do not move this `free` otherwise it could cause double free. In
+    // short, always free the program_ressources pointer after the package
+    // pointer.
+    FREE(LilyProgramRessources, &program_ressources);
 }
