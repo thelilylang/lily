@@ -18,7 +18,7 @@ Typing:
 - Memory safe
 - Safe type
 
-Phylosophy:
+Philosophy:
 - Simplicity
 - Two ways to program (Object v Functional) (e.g. you cannot use `.` (reserved to object programming) to chain function in Functional Lily, you must only use `|>`)
 - Performance
@@ -82,10 +82,10 @@ Phylosophy:
 ## Function
 
 ```lily
-fun add(x, y) = x + y;
-fun sub(x, y) = x - y;
-fun mul(x, y) = x * y;
-fun div(x, y) = x / y;
+fun add(x, y) = x + y end
+fun sub(x, y) = x - y end
+fun mul(x, y) = x * y end
+fun div(x, y) = x / y end
 ```
 
 ## Module
