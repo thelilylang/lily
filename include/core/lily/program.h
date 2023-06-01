@@ -32,6 +32,8 @@
 #include <core/lily/checked/operator.h>
 #include <core/lily/sys.h>
 
+typedef struct LilyPackage LilyPackage;
+
 // This types is used to load the basic ressources of the program
 typedef struct LilyProgramRessources
 {
@@ -58,5 +60,37 @@ inline CONSTRUCTOR(LilyProgramRessources, LilyProgramRessources)
  * @brief Free LilyProgram type.
  */
 DESTRUCTOR(LilyProgramRessources, const LilyProgramRessources *self);
+
+enum LilyProgramKind
+{
+    LILY_PROGRAM_KIND_EXE,
+    LILY_PROGRAM_KIND_STATIC_LIB,
+    LILY_PROGRAM_KIND_DYNAMIC_LIB
+};
+
+typedef struct LilyProgram
+{
+    enum LilyProgramKind kind;
+    LilyProgramRessources ressources;
+} LilyProgram;
+
+/**
+ *
+ * @brief Construct LilyProgram type.
+ */
+inline CONSTRUCTOR(LilyProgram, LilyProgram, enum LilyProgramKind kind)
+{
+    return (LilyProgram){ .kind = kind,
+                          .ressources = NEW(LilyProgramRessources) };
+}
+
+/**
+ *
+ * @brief Free LilyProgram type.
+ */
+inline DESTRUCTOR(LilyProgram, const LilyProgram *self)
+{
+    FREE(LilyProgramRessources, &self->ressources);
+}
 
 #endif // LILY_CORE_LILY_PROGRAM_H
