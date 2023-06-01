@@ -31,7 +31,7 @@
 
 #include <core/lily/checked/data_type.h>
 
-#define DEFAULT_OPERATORS_COUNT 647
+#define DEFAULT_OPERATORS_COUNT 663
 
 typedef struct LilyCheckedOperator
 {

@@ -62,7 +62,10 @@ valid_operator__LilyCheckedOperator(String *name)
         !strcmp(name->buffer, "-") || !strcmp(name->buffer, "xor") ||
         !strcmp(name->buffer, "->") || !strcmp(name->buffer, "<-") ||
         !strcmp(name->buffer, "[n]") || !strcmp(name->buffer, "[n..n]") ||
-        !strcmp(name->buffer, "[n..]") || !strcmp(name->buffer, "[..n]")) {
+        !strcmp(name->buffer, "[n..]") || !strcmp(name->buffer, "[..n]") ||
+        !strcmp(name->buffer, ".*") || !strcmp(name->buffer, "not") ||
+        !strcmp(name->buffer, "ref") || !strcmp(name->buffer, "ref mut") ||
+        !strcmp(name->buffer, "trace") || !strcmp(name->buffer, "trace mut")) {
         return true;
     }
 
@@ -1291,6 +1294,182 @@ load_default_operators__LilyCheckedOperator()
     BASIC_BITWISE_BINARY_OPERATOR(">>");
     BASIC_ARITHMETIC_BINARY_OPERATOR("-");
     BASIC_BITWISE_BINARY_OPERATOR("xor");
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String(".*"),
+        .signature = init__Vec(
+          2,
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            ptr,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String(".*"),
+        .signature = init__Vec(
+          2,
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            ref,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("-"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT16, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT16, NULL)),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("-"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL)),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("-"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT64, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT64, NULL)),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("-"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT8, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT8, NULL)),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("-"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ISIZE, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ISIZE, NULL)),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("-"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_FLOAT32, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_FLOAT32, NULL)),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("-"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_FLOAT64, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_FLOAT64, NULL)),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("not"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_BOOL, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_BOOL, NULL)),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("ref"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL),
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            ptr,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL))),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("ref"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL),
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            ref,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL))),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("ref mut"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL),
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            ptr_mut,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL))),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("ref mut"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL),
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            ref_mut,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL))),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("trace"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL),
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            trace,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL))),
+        .ref_count = 0
+    };
+
+    default_operators[idx++] = (LilyCheckedOperator){
+        .name = from__String("trace mut"),
+        .signature = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL),
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            trace_mut,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL))),
+        .ref_count = 0
+    };
 
     return default_operators;
 }
