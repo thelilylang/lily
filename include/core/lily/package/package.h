@@ -92,10 +92,18 @@ typedef struct LilyPackage
 
     bool main_is_found;
 
+    // NOTE: The real value are only defined in the main package. In the other
+    // package the value is false by default.
+    bool is_lib;
+    bool is_exe;
+
     Vec *builtin_usage; // Vec<LilyBuiltinFun* (&)>*
     Vec *sys_usage;     // Vec<LilySysFun* (&)>*
 
     LilyCheckedOperatorRegister operator_register;
+
+    // NOTE: only defined in the main package
+    enum LilyProgramKind program_kind; // LilyProgramKind | undef
 } LilyPackage;
 
 /**
@@ -124,7 +132,7 @@ build__LilyPackage(const CompileConfig *config,
                    enum LilyVisibility visibility,
                    enum LilyPackageStatus status,
                    const char *default_path,
-                   const LilyProgramRessources *program_ressources);
+                   const LilyProgram *program);
 
 /**
  *
@@ -137,7 +145,7 @@ compile__LilyPackage(const CompileConfig *config,
                      enum LilyVisibility visibility,
                      enum LilyPackageStatus status,
                      const char *default_path,
-                     const LilyProgramRessources *program_ressources);
+                     const LilyProgram *program);
 
 /**
  *

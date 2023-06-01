@@ -131,6 +131,8 @@ CONSTRUCTOR(LilyPackage *,
     self->core_is_loaded = false;
     self->builtin_is_loaded = false;
     self->main_is_found = false;
+    self->is_exe = false;
+    self->is_lib = false;
 
     lily_free(file_ext);
 
@@ -142,7 +144,7 @@ build__LilyPackage(const CompileConfig *config,
                    enum LilyVisibility visibility,
                    enum LilyPackageStatus status,
                    const char *default_path,
-                   const LilyProgramRessources *program_ressources)
+                   const LilyProgram *program)
 {
     LilyPackage *self = NEW(LilyPackage,
                             NULL,
@@ -156,22 +158,7 @@ build__LilyPackage(const CompileConfig *config,
     LilyPackageConfig pkg_config =
       from_CompileConfig__LilyPackageConfig(config);
 
-    self->config = &pkg_config;
-
-    // Load builtins and syss
-    self->builtins = program_ressources->builtins;
-    self->syss = program_ressources->syss;
-
-    // Load default operators in operator register
-    // In a normal case where we wanted to add an operator to the register, we'd
-    // use `add_operator__LilyCheckedOperatorRegister`, but in this case it's
-    // guaranteed that no operator repeats itself, so to increase loading speed
-    // we'll add it directly to the vector without checking.
-    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
-        push__Vec(
-          self->operator_register.operators,
-          ref__LilyCheckedOperator(&program_ressources->default_operators[i]));
-    }
+    self->config = &pkg_config; 
 
     run__LilyScanner(&self->scanner, pkg_config.dump_scanner);
     run__LilyPreparser(&self->preparser, &self->preparser_info);
@@ -184,6 +171,31 @@ build__LilyPackage(const CompileConfig *config,
 
     return NULL;
 #endif
+
+	// Load builtins and syss
+    self->builtins = program->ressources.builtins;
+    self->syss = program->ressources.syss;
+
+    // Load default operators in operator register
+    // In a normal case where we wanted to add an operator to the register, we'd
+    // use `add_operator__LilyCheckedOperatorRegister`, but in this case it's
+    // guaranteed that no operator repeats itself, so to increase loading speed
+    // we'll add it directly to the vector without checking.
+    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
+        push__Vec(
+          self->operator_register.operators,
+          ref__LilyCheckedOperator(&program->ressources.default_operators[i]));
+    }
+
+    self->program_kind = program->kind;
+
+    switch (self->program_kind) {
+        case LILY_PROGRAM_KIND_EXE:
+            self->is_exe = true;
+            break;
+        default:
+            self->is_lib = true;
+    }
 
     if (self->preparser_info.package->name) {
         self->name = self->preparser_info.package->name;
@@ -299,10 +311,10 @@ compile__LilyPackage(const CompileConfig *config,
                      enum LilyVisibility visibility,
                      enum LilyPackageStatus status,
                      const char *default_path,
-                     const LilyProgramRessources *program_ressources)
+                     const LilyProgram *program)
 {
     return build__LilyPackage(
-      config, visibility, status, default_path, program_ressources);
+      config, visibility, status, default_path, program);
 }
 
 const File *
