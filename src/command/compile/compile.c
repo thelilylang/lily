@@ -38,13 +38,13 @@ run__Compile(const CompileConfig *config)
     // Get the default path
     char *default_path = generate_default_path((char *)config->filename);
 
-    LilyProgramRessources program_ressources = NEW(LilyProgramRessources);
+    LilyProgram program = NEW(LilyProgram, LILY_PROGRAM_KIND_EXE);
 
     LilyPackage *pkg = compile__LilyPackage(config,
                                             LILY_VISIBILITY_PUBLIC,
                                             LILY_PACKAGE_STATUS_MAIN,
                                             default_path,
-                                            &program_ressources);
+                                            &program);
 
     lily_free(default_path);
 
@@ -53,7 +53,7 @@ run__Compile(const CompileConfig *config)
 #endif
 
     // NOTE: Do not move this `free` otherwise it could cause double free. In
-    // short, always free the program_ressources pointer after the package
+    // short, always free the program pointer after the package
     // pointer.
-    FREE(LilyProgramRessources, &program_ressources);
+    FREE(LilyProgram, &program);
 }
