@@ -124,16 +124,15 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                 LilyCheckedDataType *defined_data_type);
 
 static LilyCheckedExpr *
-check_custom_binary_operator__LilyAnalysis(
-  LilyAnalysis *self,
-  LilyAstExpr *expr,
-  LilyCheckedScope *scope,
-  LilyCheckedExpr *left,
-  LilyCheckedExpr *right,
-  enum LilyCheckedExprBinaryKind kind,
-  enum LilyCheckedSafetyMode safety_mode,
-  bool is_moved_expr,
-  LilyCheckedDataType *defined_data_type);
+typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
+                                    LilyAstExpr *expr,
+                                    LilyCheckedScope *scope,
+                                    LilyCheckedExpr *left,
+                                    LilyCheckedExpr *right,
+                                    enum LilyCheckedExprBinaryKind kind,
+                                    enum LilyCheckedSafetyMode safety_mode,
+                                    bool is_moved_expr,
+                                    LilyCheckedDataType *defined_data_type);
 
 static void
 valid_cast__LilyAnalysis(LilyAnalysis *self,
@@ -1517,200 +1516,51 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_BINARY_KIND_BIT_AND:
         case LILY_AST_EXPR_BINARY_KIND_BIT_L_SHIFT:
         case LILY_AST_EXPR_BINARY_KIND_BIT_OR:
-        case LILY_AST_EXPR_BINARY_KIND_BIT_R_SHIFT: {
-            LilyCheckedExpr *left = check_expr__LilyAnalysis(self,
-                                                             expr->binary.left,
-                                                             scope,
-                                                             safety_mode,
-                                                             false,
-                                                             false,
-                                                             defined_data_type);
-            LilyCheckedExpr *right =
-              check_expr__LilyAnalysis(self,
-                                       expr->binary.right,
-                                       scope,
-                                       safety_mode,
-                                       false,
-                                       false,
-                                       defined_data_type);
-
-            if (is_integer_data_type__LilyCheckedDataType(left->data_type) &&
-                is_integer_data_type__LilyCheckedDataType(right->data_type) &&
-                eq__LilyCheckedDataType(left->data_type, right->data_type)) {
-                return NEW_VARIANT(
-                  LilyCheckedExpr,
-                  binary,
-                  &expr->location,
-                  clone__LilyCheckedDataType(left->data_type),
-                  expr,
-                  NEW(LilyCheckedExprBinary,
-                      (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
-                      left,
-                      right));
-            } else if (is_float_data_type__LilyCheckedDataType(
-                         left->data_type) ||
-                       is_float_data_type__LilyCheckedDataType(
-                         right->data_type)) {
-                FAILED("float data type is not expected");
-            } else {
-                TODO("check operator defined");
-            }
-        }
+        case LILY_AST_EXPR_BINARY_KIND_BIT_R_SHIFT:
         case LILY_AST_EXPR_BINARY_KIND_GREATER:
         case LILY_AST_EXPR_BINARY_KIND_GREATER_EQ:
         case LILY_AST_EXPR_BINARY_KIND_LESS:
-        case LILY_AST_EXPR_BINARY_KIND_LESS_EQ: {
-            LilyCheckedExpr *left = check_expr__LilyAnalysis(self,
-                                                             expr->binary.left,
-                                                             scope,
-                                                             safety_mode,
-                                                             false,
-                                                             false,
-                                                             defined_data_type);
-            LilyCheckedExpr *right =
-              check_expr__LilyAnalysis(self,
-                                       expr->binary.right,
-                                       scope,
-                                       safety_mode,
-                                       false,
-                                       false,
-                                       defined_data_type);
-
-            if (is_integer_data_type__LilyCheckedDataType(left->data_type) &&
-                is_integer_data_type__LilyCheckedDataType(right->data_type) &&
-                eq__LilyCheckedDataType(left->data_type, right->data_type)) {
-                return NEW_VARIANT(
-                  LilyCheckedExpr,
-                  binary,
-                  &expr->location,
-                  NEW(LilyCheckedDataType,
-                      LILY_CHECKED_DATA_TYPE_KIND_BOOL,
-                      &expr->location),
-                  expr,
-                  NEW(LilyCheckedExprBinary,
-                      (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
-                      left,
-                      right));
-            } else if (is_float_data_type__LilyCheckedDataType(
-                         left->data_type) &&
-                       is_float_data_type__LilyCheckedDataType(
-                         right->data_type) &&
-                       eq__LilyCheckedDataType(left->data_type,
-                                               right->data_type)) {
-                return NEW_VARIANT(
-                  LilyCheckedExpr,
-                  binary,
-                  &expr->location,
-                  NEW(LilyCheckedDataType,
-                      LILY_CHECKED_DATA_TYPE_KIND_BOOL,
-                      &expr->location),
-                  expr,
-                  NEW(LilyCheckedExprBinary,
-                      (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
-                      left,
-                      right));
-            } else {
-                TODO("check operator defined");
-            }
-        }
+        case LILY_AST_EXPR_BINARY_KIND_LESS_EQ:
         case LILY_AST_EXPR_BINARY_KIND_ADD:
         case LILY_AST_EXPR_BINARY_KIND_DIV:
         case LILY_AST_EXPR_BINARY_KIND_MOD:
         case LILY_AST_EXPR_BINARY_KIND_MUL:
         case LILY_AST_EXPR_BINARY_KIND_EXP:
-        case LILY_AST_EXPR_BINARY_KIND_SUB: {
-            LilyCheckedExpr *left = check_expr__LilyAnalysis(self,
-                                                             expr->binary.left,
-                                                             scope,
-                                                             safety_mode,
-                                                             false,
-                                                             false,
-                                                             defined_data_type);
-            LilyCheckedExpr *right =
-              check_expr__LilyAnalysis(self,
-                                       expr->binary.right,
-                                       scope,
-                                       safety_mode,
-                                       false,
-                                       false,
-                                       defined_data_type);
-
-            if (is_integer_data_type__LilyCheckedDataType(left->data_type) &&
-                is_integer_data_type__LilyCheckedDataType(right->data_type) &&
-                eq__LilyCheckedDataType(left->data_type, right->data_type)) {
-                return NEW_VARIANT(
-                  LilyCheckedExpr,
-                  binary,
-                  &expr->location,
-                  clone__LilyCheckedDataType(left->data_type),
-                  expr,
-                  NEW(LilyCheckedExprBinary,
-                      (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
-                      left,
-                      right));
-            } else if (is_float_data_type__LilyCheckedDataType(
-                         left->data_type) &&
-                       is_float_data_type__LilyCheckedDataType(
-                         right->data_type) &&
-                       eq__LilyCheckedDataType(left->data_type,
-                                               right->data_type)) {
-                return NEW_VARIANT(
-                  LilyCheckedExpr,
-                  binary,
-                  &expr->location,
-                  clone__LilyCheckedDataType(left->data_type),
-                  expr,
-                  NEW(LilyCheckedExprBinary,
-                      (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
-                      left,
-                      right));
-            } else {
-                if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
-                      left->data_type) ||
-                    is_compiler_defined_and_known_dt__LilyCheckedDataType(
-                      right->data_type)) {
-                    TODO("check operator defined (compiler generic).");
-                }
-
-                TODO("check operator defined");
-            }
-        }
+        case LILY_AST_EXPR_BINARY_KIND_SUB:
         case LILY_AST_EXPR_BINARY_KIND_AND:
         case LILY_AST_EXPR_BINARY_KIND_OR:
-        case LILY_AST_EXPR_BINARY_KIND_XOR: {
+        case LILY_AST_EXPR_BINARY_KIND_XOR:
+        case LILY_AST_EXPR_BINARY_KIND_EQ:
+        case LILY_AST_EXPR_BINARY_KIND_NOT_EQ:
+        case LILY_AST_EXPR_BINARY_KIND_RANGE:
+        case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
+        case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD: {
             LilyCheckedExpr *left = check_expr__LilyAnalysis(self,
                                                              expr->binary.left,
                                                              scope,
                                                              safety_mode,
+                                                             is_moved_expr,
                                                              false,
-                                                             false,
-                                                             defined_data_type);
+                                                             NULL);
             LilyCheckedExpr *right =
               check_expr__LilyAnalysis(self,
                                        expr->binary.right,
                                        scope,
                                        safety_mode,
+                                       is_moved_expr,
                                        false,
-                                       false,
-                                       defined_data_type);
+                                       NULL);
 
-            if (left->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL &&
-                right->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL) {
-                return NEW_VARIANT(
-                  LilyCheckedExpr,
-                  binary,
-                  &expr->location,
-                  NEW(LilyCheckedDataType,
-                      LILY_CHECKED_DATA_TYPE_KIND_BOOL,
-                      &expr->location),
-                  expr,
-                  NEW(LilyCheckedExprBinary,
-                      (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
-                      left,
-                      right));
-            } else {
-                TODO("check operator defined");
-            }
+            return typecheck_binary_expr__LilyAnalysis(
+              self,
+              expr,
+              scope,
+              left,
+              right,
+              (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
+              safety_mode,
+              is_moved_expr,
+              defined_data_type);
         }
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_ADD:
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
@@ -1724,124 +1574,52 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_SUB:
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_XOR:
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN: {
-            LilyCheckedExpr *left = NULL;
-
-            switch (expr->binary.left->kind) {
-                case LILY_AST_EXPR_KIND_IDENTIFIER: {
-                    left = check_expr__LilyAnalysis(self,
-                                                    expr->binary.left,
-                                                    scope,
-                                                    safety_mode,
-                                                    false,
-                                                    true,
-                                                    NULL);
-
-                    if (is_drop__LilyAnalysis(self, scope, left) &&
-                        expr->binary.kind != LILY_AST_EXPR_BINARY_KIND_ASSIGN) {
-                        FAILED("the variable has been dropped");
-                    }
-
-                    break;
-                }
-                case LILY_AST_EXPR_KIND_ACCESS:
-                    TODO("resolve access in assign expression");
-                default:
-                    FAILED("expected identifier or path");
-            }
-
+            LilyCheckedExpr *left = check_expr__LilyAnalysis(self,
+                                                             expr->binary.left,
+                                                             scope,
+                                                             safety_mode,
+                                                             is_moved_expr,
+                                                             true,
+                                                             NULL);
             LilyCheckedExpr *right =
               check_expr__LilyAnalysis(self,
                                        expr->binary.right,
                                        scope,
                                        safety_mode,
-                                       true,
+                                       is_moved_expr,
                                        false,
-                                       left->data_type);
+                                       NULL);
 
-            if (!eq__LilyCheckedDataType(left->data_type, right->data_type)) {
-                emit__Diagnostic(
-                  NEW_VARIANT(
-                    Diagnostic,
-                    simple_lily_error,
-                    &self->package->file,
-                    left->location,
-                    NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
-                    NULL,
-                    NULL,
-                    NULL),
-                  &self->package->count_error);
-            }
-
-            return NEW_VARIANT(
-              LilyCheckedExpr,
-              binary,
-              &expr->location,
-              NEW(LilyCheckedDataType,
-                  LILY_CHECKED_DATA_TYPE_KIND_UNIT,
-                  &expr->location),
+            return typecheck_binary_expr__LilyAnalysis(
+              self,
               expr,
-              NEW(LilyCheckedExprBinary,
-                  (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
-                  left,
-                  right));
-        }
+              scope,
+              left,
+              right,
+              (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
+              safety_mode,
+              is_moved_expr,
+              defined_data_type);
+        };
         case LILY_AST_EXPR_BINARY_KIND_CHAIN:
             TODO("analyze |>");
-        case LILY_AST_EXPR_BINARY_KIND_EQ:
-        case LILY_AST_EXPR_BINARY_KIND_NOT_EQ: {
-            LilyCheckedExpr *left = check_expr__LilyAnalysis(
-              self, expr->binary.left, scope, safety_mode, false, false, NULL);
-            LilyCheckedExpr *right =
-              check_expr__LilyAnalysis(self,
-                                       expr->binary.right,
-                                       scope,
-                                       safety_mode,
-                                       false,
-                                       false,
-                                       left->data_type);
-
-            if (!eq__LilyCheckedDataType(left->data_type, right->data_type)) {
-                FAILED("expected same data type on left and right expression");
-            }
-
-            return NEW_VARIANT(
-              LilyCheckedExpr,
-              binary,
-              &expr->location,
-              NEW(LilyCheckedDataType,
-                  LILY_CHECKED_DATA_TYPE_KIND_BOOL,
-                  &expr->location),
-              expr,
-              NEW(LilyCheckedExprBinary,
-                  expr->binary.kind == LILY_AST_EXPR_BINARY_KIND_EQ
-                    ? LILY_CHECKED_EXPR_BINARY_KIND_EQ
-                    : LILY_CHECKED_EXPR_BINARY_KIND_NOT_EQ,
-                  left,
-                  right));
-        }
-        case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD:
-            TODO("analyze ->");
-        case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
-            TODO("analyze <-");
-        case LILY_AST_EXPR_BINARY_KIND_RANGE:
-            TODO("analyze ..");
         default:
             UNREACHABLE("unknown variant");
     }
 }
 
 LilyCheckedExpr *
-check_custom_binary_operator__LilyAnalysis(
-  LilyAnalysis *self,
-  LilyAstExpr *expr,
-  LilyCheckedScope *scope,
-  LilyCheckedExpr *left,
-  LilyCheckedExpr *right,
-  enum LilyCheckedExprBinaryKind kind,
-  enum LilyCheckedSafetyMode safety_mode,
-  bool is_moved_expr,
-  LilyCheckedDataType *defined_data_type)
+typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
+                                    LilyAstExpr *expr,
+                                    LilyCheckedScope *scope,
+                                    LilyCheckedExpr *left,
+                                    LilyCheckedExpr *right,
+                                    enum LilyCheckedExprBinaryKind kind,
+                                    enum LilyCheckedSafetyMode safety_mode,
+                                    bool is_moved_expr,
+                                    LilyCheckedDataType *defined_data_type)
 {
+    // TODO: add support for unknown data type in certain places
 #define VALID_BINARY_CHOICE(left_choice, right_choice)                         \
     Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(       \
       &self->package->operator_register, binary_kind_string, 3);               \
@@ -1964,10 +1742,506 @@ check_custom_binary_operator__LilyAnalysis(
 
     char *binary_kind_string = to_string__LilyCheckedExprBinaryKind(kind);
 
-    if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
-          left->data_type) &&
-        is_compiler_defined_and_known_dt__LilyCheckedDataType(
-          right->data_type)) {
+    if (is_compiler_defined__LilyCheckedDataType(left->data_type) &&
+        is_compiler_defined__LilyCheckedDataType(right->data_type) &&
+        is_compiler_defined__LilyCheckedDataType(defined_data_type)) {
+        if (left->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+            right->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+            defined_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(
+              &self->package->operator_register, binary_kind_string, 3);
+
+            Vec *left_choice = NEW(Vec);  // Vec<LilyCheckedDataType* (&)>*
+            Vec *right_choice = NEW(Vec); // Vec<LilyCheckedDataType* (&)>*
+
+            Vec *choices = NEW(Vec); // Vec<LilyCheckedDataType* (&)>*
+            Vec *conds = NEW(Vec);   // Vec<Vec<LilyCheckedDataType* (&)>*>*
+
+            for (Usize i = 0; i < operators->len; ++i) {
+                LilyCheckedOperator *operator= get__Vec(operators, i);
+                LilyCheckedDataType *left_op_data_type =
+                  get__Vec(operator->signature, 0);
+                LilyCheckedDataType *right_op_data_type =
+                  get__Vec(operator->signature, 1);
+
+                push__Vec(left_choice, left_op_data_type);
+                push__Vec(right_choice, right_op_data_type);
+
+                push__Vec(choices, get__Vec(operator->signature, 2));
+                push__Vec(conds,
+                          init__Vec(2, left_op_data_type, right_op_data_type));
+            }
+
+            left->data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;
+            left->data_type->compiler_choice = left_choice;
+
+            right->data_type->kind =
+              LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;
+            right->data_type->compiler_choice = right_choice;
+
+            defined_data_type->kind =
+              LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE;
+            defined_data_type->conditional_compiler_choice =
+              NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds);
+
+            FREE(Vec, operators);
+
+            return NEW_VARIANT(LilyCheckedExpr,
+                               binary,
+                               &expr->location,
+                               ref__LilyCheckedDataType(defined_data_type),
+                               expr,
+                               NEW(LilyCheckedExprBinary, kind, left, right));
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("U-U-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("U-U-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("U-U-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("U-CC-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("U-C-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("U-G-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("U-CC-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("U-CC-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("U-C-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("U-C-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("U-G-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("U-G-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("U-G-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("U-CC-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("U-C-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("CC-CC-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("CC-CC-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("CC-CC-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("CC-CC-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("CC-U-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("CC-C-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("CC-G-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("CC-U-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("CC-U-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("CC-C-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("CC-C-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("CC-G-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("CC-G-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("CC-G-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("CC-U-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("CC-C-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("C-C-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("C-C-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("C-C-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("C-C-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("C-U-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("C-CC-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("C-G-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("C-U-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("C-U-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("C-CC-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("C-CC-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("C-G-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("C-G-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("C-U-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("C-G-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("C-CC-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("G-G-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("G-G-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("G-G-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("G-G-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("G-U-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("G-CC-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+            TODO("G-C-G");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("G-U-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("G-U-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("G-CC-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("G-CC-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("G-C-CC");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("G-C-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            TODO("G-U-U");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
+            TODO("G-C-C");
+        } else if (left->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                   right->data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE &&
+                   defined_data_type->kind ==
+                     LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {
+            TODO("G-CC-CC");
+        } else {
+            UNREACHABLE("the analysis have a bug!!");
+        }
+    } else if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                 left->data_type) &&
+               is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                 right->data_type) &&
+               !is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                 defined_data_type)) {
         if (left->data_type->kind ==
               LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
             right->data_type->kind ==
@@ -2077,8 +2351,16 @@ check_custom_binary_operator__LilyAnalysis(
             UNREACHABLE(
               "this situation is impossible or the analysis have a bug");
         }
+    } else if (is_compiler_defined__LilyCheckedDataType(left->data_type) &&
+               !is_compiler_defined__LilyCheckedDataType(right->data_type) &&
+               is_compiler_defined__LilyCheckedDataType(defined_data_type)) {
+        TODO("C-K-C");
     } else if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
-                 left->data_type)) {
+                 left->data_type) &&
+               !is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                 right->data_type) &&
+               !is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                 defined_data_type)) {
 #define VALID_BINARY_ONE_HAND_COMPILER_DEFINED(left_is_compiler_defined)   \
     switch (left->data_type->kind) {                                       \
         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {    \
@@ -2176,6 +2458,18 @@ check_custom_binary_operator__LilyAnalysis(
     custom_binary_right_unknown : {
         CHECK_BINARY_WITH_UNKNOWN_DT(right->data_type, left->data_type, true);
     }
+    } else if (!is_compiler_defined__LilyCheckedDataType(left->data_type) &&
+               !is_compiler_defined__LilyCheckedDataType(right->data_type) &&
+               is_compiler_defined__LilyCheckedDataType(defined_data_type)) {
+        TODO("K-K-C");
+    } else if (!is_compiler_defined__LilyCheckedDataType(left->data_type) &&
+               is_compiler_defined__LilyCheckedDataType(right->data_type) &&
+               !is_compiler_defined__LilyCheckedDataType(defined_data_type)) {
+        TODO("K-C-K");
+    } else if (!is_compiler_defined__LilyCheckedDataType(left->data_type) &&
+               is_compiler_defined__LilyCheckedDataType(right->data_type) &&
+               is_compiler_defined__LilyCheckedDataType(defined_data_type)) {
+        TODO("K-C-C");
     }
 
     Vec *signature =
@@ -4844,15 +5138,15 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             }
 
             if (stmt->return_.expr) {
+                // Check the data type of the return expression
                 expr = check_expr__LilyAnalysis(self,
                                                 stmt->return_.expr,
                                                 scope,
                                                 safety_mode,
                                                 true,
                                                 false,
-                                                NULL);
+                                                fun_return_data_type);
 
-                // Check the data type of the return expression
                 if (fun_return_data_type) {
                     if ((fun_return_data_type->kind ==
                            LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||
