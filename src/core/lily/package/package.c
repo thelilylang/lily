@@ -120,6 +120,14 @@ CONSTRUCTOR(LilyPackage *,
         self->analysis = NEW(LilyAnalysis, self, root, &self->parser);
         self->builtins = NULL;
         self->syss = NULL;
+
+        // Push default operators pushed in the operator register of root
+        // package.
+        for (Usize i = 0; i < root->operator_register.operators->len; ++i) {
+            push__Vec(self->operator_register.operators,
+                      ref__LilyCheckedOperator(
+                        get__Vec(root->operator_register.operators, i)));
+        }
     } else {
         self->parser = NEW(LilyParser, self, self, NULL);
         self->analysis = NEW(LilyAnalysis, self, self, &self->parser);
@@ -158,7 +166,7 @@ build__LilyPackage(const CompileConfig *config,
     LilyPackageConfig pkg_config =
       from_CompileConfig__LilyPackageConfig(config);
 
-    self->config = &pkg_config; 
+    self->config = &pkg_config;
 
     run__LilyScanner(&self->scanner, pkg_config.dump_scanner);
     run__LilyPreparser(&self->preparser, &self->preparser_info);
@@ -172,7 +180,7 @@ build__LilyPackage(const CompileConfig *config,
     return NULL;
 #endif
 
-	// Load builtins and syss
+    // Load builtins and syss
     self->builtins = program->ressources.builtins;
     self->syss = program->ressources.syss;
 
