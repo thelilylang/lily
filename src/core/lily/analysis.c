@@ -1668,6 +1668,10 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
     Vec *left_choice = NEW(Vec);  /* Vec<LilyCheckedDataType* (&)>* */         \
     Vec *right_choice = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */         \
                                                                                \
+    /* These values are defined for conditional compiler choice */             \
+    Vec *choices = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */              \
+    Vec *conds = NEW(Vec);   /* Vec<Vec<LilyCheckedDataType* (&)>*>* */        \
+                                                                               \
     /* Build left and right data type */                                       \
     for (Usize i = 0;                                                          \
          i < defined_data_type->conditional_compiler_choice.choices->len;      \
@@ -1677,11 +1681,18 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                                                                \
         for (Usize j = 0; j < operators->len; ++j) {                           \
             LilyCheckedOperator *operator= get__Vec(operators, j);             \
+            LilyCheckedDataType *left_op_data_type =                           \
+              get__Vec(operator->signature, 0);                                \
+            LilyCheckedDataType *right_op_data_type =                          \
+              get__Vec(operator->signature, 1);                                \
                                                                                \
             if (eq__LilyCheckedDataType(choice,                                \
                                         last__Vec(operator->signature))) {     \
-                push__Vec(left_choice, get__Vec(operator->signature, 0));      \
-                push__Vec(right_choice, get__Vec(operator->signature, 1));     \
+                push__Vec(left_choice, left_op_data_type);                     \
+                push__Vec(right_choice, right_op_data_type);                   \
+                push__Vec(choices, last__Vec(operator->signature));            \
+                push__Vec(                                                     \
+                  conds, init__Vec(2, left_op_data_type, right_op_data_type)); \
             }                                                                  \
         }                                                                      \
     }                                                                          \
@@ -1697,12 +1708,23 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
     right->data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;      \
     right->data_type->compiler_choice = right_choice;                          \
                                                                                \
+    LilyCheckedDataType *update_defined_data_type = NEW_VARIANT(               \
+      LilyCheckedDataType,                                                     \
+      conditional_compiler_choice,                                             \
+      defined_data_type->location,                                             \
+      NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds));      \
+                                                                               \
+    if (!eq__LilyCheckedDataType(defined_data_type,                            \
+                                 update_defined_data_type)) {                  \
+        FAILED("the return data type doesn't matched");                        \
+    }                                                                          \
+                                                                               \
     FREE(Vec, operators);                                                      \
                                                                                \
     return NEW_VARIANT(LilyCheckedExpr,                                        \
                        binary,                                                 \
                        &expr->location,                                        \
-                       ref__LilyCheckedDataType(defined_data_type),            \
+                       update_defined_data_type,                               \
                        expr,                                                   \
                        NEW(LilyCheckedExprBinary, kind, left, right));
 
@@ -1925,66 +1947,86 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
 
 #define BINARY_RESOLVE_U_CC_G() BINARY_RESOLVE_U_CC_U();
 
-#define BINARY_RESOLVE_U_C_CC()                                               \
-    Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(      \
-      &self->package->operator_register, binary_kind_string, 3);              \
-                                                                              \
-    Vec *left_choice = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */         \
-                                                                              \
-    for (Usize i = 0; i < operators->len; ++i) {                              \
-        LilyCheckedOperator *operator= get__Vec(operators, i);                \
-        LilyCheckedDataType *right_op_data_type =                             \
-          get__Vec(operator->signature, 1);                                   \
-        LilyCheckedDataType *return_op_data_type =                            \
-          get__Vec(operator->signature, 2);                                   \
-        bool right_is_match = false;                                          \
-        bool defined_is_match = false;                                        \
-                                                                              \
-        for (Usize j = 0; j < right->data_type->compiler_choice->len; ++j) {  \
-            if (eq__LilyCheckedDataType(                                      \
-                  right_op_data_type,                                         \
-                  get__Vec(right->data_type->compiler_choice, j))) {          \
-                right_is_match = true;                                        \
-                break;                                                        \
-            }                                                                 \
-        }                                                                     \
-                                                                              \
-        if (right_is_match) {                                                 \
-            for (Usize j = 0;                                                 \
-                 j <                                                          \
-                 defined_data_type->conditional_compiler_choice.choices->len; \
-                 ++j) {                                                       \
-                if (eq__LilyCheckedDataType(                                  \
-                      return_op_data_type,                                    \
-                      get__Vec(defined_data_type->conditional_compiler_choice \
-                                 .choices,                                    \
-                               j))) {                                         \
-                    defined_is_match = true;                                  \
-                    break;                                                    \
-                }                                                             \
-            }                                                                 \
-                                                                              \
-            if (defined_is_match) {                                           \
-                push__Vec(left_choice, get__Vec(operator->signature, 0));     \
-            }                                                                 \
-        }                                                                     \
-    }                                                                         \
-                                                                              \
-    if (left_choice->len == 0) {                                              \
-        FAILED("the compiler was unable to determine the types with the "     \
-               "indications provided.");                                      \
-    }                                                                         \
-                                                                              \
-    FREE(Vec, operators);                                                     \
-                                                                              \
-    left->data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;      \
-    left->data_type->compiler_choice = left_choice;                           \
-                                                                              \
-    return NEW_VARIANT(LilyCheckedExpr,                                       \
-                       binary,                                                \
-                       &expr->location,                                       \
-                       ref__LilyCheckedDataType(defined_data_type),           \
-                       expr,                                                  \
+#define BINARY_RESOLVE_U_C_CC()                                                \
+    Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(       \
+      &self->package->operator_register, binary_kind_string, 3);               \
+                                                                               \
+    Vec *left_choice = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */          \
+                                                                               \
+    /* These values are defined for conditional compiler choice */             \
+    Vec *choices = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */              \
+    Vec *conds = NEW(Vec);   /* Vec<Vec<LilyCheckedDataType* (&)>*>* */        \
+                                                                               \
+    for (Usize i = 0; i < operators->len; ++i) {                               \
+        LilyCheckedOperator *operator= get__Vec(operators, i);                 \
+        LilyCheckedDataType *left_op_data_type =                               \
+          get__Vec(operator->signature, 0);                                    \
+        LilyCheckedDataType *right_op_data_type =                              \
+          get__Vec(operator->signature, 1);                                    \
+        LilyCheckedDataType *return_op_data_type =                             \
+          get__Vec(operator->signature, 2);                                    \
+        bool right_is_match = false;                                           \
+        bool defined_is_match = false;                                         \
+                                                                               \
+        for (Usize j = 0; j < right->data_type->compiler_choice->len; ++j) {   \
+            if (eq__LilyCheckedDataType(                                       \
+                  right_op_data_type,                                          \
+                  get__Vec(right->data_type->compiler_choice, j))) {           \
+                right_is_match = true;                                         \
+                break;                                                         \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        if (right_is_match) {                                                  \
+            for (Usize j = 0;                                                  \
+                 j <                                                           \
+                 defined_data_type->conditional_compiler_choice.choices->len;  \
+                 ++j) {                                                        \
+                if (eq__LilyCheckedDataType(                                   \
+                      return_op_data_type,                                     \
+                      get__Vec(defined_data_type->conditional_compiler_choice  \
+                                 .choices,                                     \
+                               j))) {                                          \
+                    defined_is_match = true;                                   \
+                    break;                                                     \
+                }                                                              \
+            }                                                                  \
+                                                                               \
+            if (defined_is_match) {                                            \
+                push__Vec(left_choice, left_op_data_type);                     \
+                push__Vec(choices, return_op_data_type);                       \
+                push__Vec(                                                     \
+                  conds, init__Vec(2, left_op_data_type, right_op_data_type)); \
+            }                                                                  \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    if (left_choice->len == 0) {                                               \
+        FAILED("the compiler was unable to determine the types with the "      \
+               "indications provided.");                                       \
+    }                                                                          \
+                                                                               \
+    left->data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;       \
+    left->data_type->compiler_choice = left_choice;                            \
+                                                                               \
+    LilyCheckedDataType *update_defined_data_type = NEW_VARIANT(               \
+      LilyCheckedDataType,                                                     \
+      conditional_compiler_choice,                                             \
+      defined_data_type->location,                                             \
+      NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds));      \
+                                                                               \
+    if (!eq__LilyCheckedDataType(defined_data_type,                            \
+                                 update_defined_data_type)) {                  \
+        FAILED("the return data type doesn't matched");                        \
+    }                                                                          \
+                                                                               \
+    FREE(Vec, operators);                                                      \
+                                                                               \
+    return NEW_VARIANT(LilyCheckedExpr,                                        \
+                       binary,                                                 \
+                       &expr->location,                                        \
+                       update_defined_data_type,                               \
+                       expr,                                                   \
                        NEW(LilyCheckedExprBinary, kind, left, right));
 
 #define BINARY_RESOLVE_U_C_G() BINARY_RESOLVE_U_C_U();
@@ -1995,70 +2037,90 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
 
 #define BINARY_RESOLVE_U_G_G() BINARY_RESOLVE_U_U_U();
 
-#define BINARY_RESOLVE_U_CC_CC()                                              \
-    Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(      \
-      &self->package->operator_register, binary_kind_string, 3);              \
-                                                                              \
-    Vec *left_choice = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */         \
-                                                                              \
-    for (Usize i = 0; i < operators->len; ++i) {                              \
-        LilyCheckedOperator *operator= get__Vec(operators, i);                \
-        LilyCheckedDataType *right_op_data_type =                             \
-          get__Vec(operator->signature, 1);                                   \
-        LilyCheckedDataType *return_op_data_type =                            \
-          get__Vec(operator->signature, 2);                                   \
-        bool right_is_match = false;                                          \
-        bool defined_is_match = false;                                        \
-                                                                              \
-        for (Usize j = 0;                                                     \
-             j < right->data_type->conditional_compiler_choice.choices->len;  \
-             ++j) {                                                           \
-            if (eq__LilyCheckedDataType(                                      \
-                  right_op_data_type,                                         \
-                  get__Vec(                                                   \
-                    right->data_type->conditional_compiler_choice.choices,    \
-                    j))) {                                                    \
-                right_is_match = true;                                        \
-                break;                                                        \
-            }                                                                 \
-        }                                                                     \
-                                                                              \
-        if (right_is_match) {                                                 \
-            for (Usize j = 0;                                                 \
-                 j <                                                          \
-                 defined_data_type->conditional_compiler_choice.choices->len; \
-                 ++j) {                                                       \
-                if (eq__LilyCheckedDataType(                                  \
-                      return_op_data_type,                                    \
-                      get__Vec(defined_data_type->conditional_compiler_choice \
-                                 .choices,                                    \
-                               j))) {                                         \
-                    defined_is_match = true;                                  \
-                    break;                                                    \
-                }                                                             \
-            }                                                                 \
-                                                                              \
-            if (defined_is_match) {                                           \
-                push__Vec(left_choice, get__Vec(operator->signature, 0));     \
-            }                                                                 \
-        }                                                                     \
-    }                                                                         \
-                                                                              \
-    if (left_choice->len == 0) {                                              \
-        FAILED("the compiler was unable to determine the types with the "     \
-               "indications provided.");                                      \
-    }                                                                         \
-                                                                              \
-    left->data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;      \
-    left->data_type->compiler_choice = left_choice;                           \
-                                                                              \
-    FREE(Vec, operators);                                                     \
-                                                                              \
-    return NEW_VARIANT(LilyCheckedExpr,                                       \
-                       binary,                                                \
-                       &expr->location,                                       \
-                       ref__LilyCheckedDataType(defined_data_type),           \
-                       expr,                                                  \
+#define BINARY_RESOLVE_U_CC_CC()                                               \
+    Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(       \
+      &self->package->operator_register, binary_kind_string, 3);               \
+                                                                               \
+    Vec *left_choice = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */          \
+                                                                               \
+    /* These values are defined for conditional compiler choice */             \
+    Vec *choices = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */              \
+    Vec *conds = NEW(Vec);   /* Vec<Vec<LilyCheckedDataType* (&)>*>* */        \
+                                                                               \
+    for (Usize i = 0; i < operators->len; ++i) {                               \
+        LilyCheckedOperator *operator= get__Vec(operators, i);                 \
+        LilyCheckedDataType *left_op_data_type =                               \
+          get__Vec(operator->signature, 0);                                    \
+        LilyCheckedDataType *right_op_data_type =                              \
+          get__Vec(operator->signature, 1);                                    \
+        LilyCheckedDataType *return_op_data_type =                             \
+          get__Vec(operator->signature, 2);                                    \
+        bool right_is_match = false;                                           \
+        bool defined_is_match = false;                                         \
+                                                                               \
+        for (Usize j = 0;                                                      \
+             j < right->data_type->conditional_compiler_choice.choices->len;   \
+             ++j) {                                                            \
+            if (eq__LilyCheckedDataType(                                       \
+                  right_op_data_type,                                          \
+                  get__Vec(                                                    \
+                    right->data_type->conditional_compiler_choice.choices,     \
+                    j))) {                                                     \
+                right_is_match = true;                                         \
+                break;                                                         \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        if (right_is_match) {                                                  \
+            for (Usize j = 0;                                                  \
+                 j <                                                           \
+                 defined_data_type->conditional_compiler_choice.choices->len;  \
+                 ++j) {                                                        \
+                if (eq__LilyCheckedDataType(                                   \
+                      return_op_data_type,                                     \
+                      get__Vec(defined_data_type->conditional_compiler_choice  \
+                                 .choices,                                     \
+                               j))) {                                          \
+                    defined_is_match = true;                                   \
+                    break;                                                     \
+                }                                                              \
+            }                                                                  \
+                                                                               \
+            if (defined_is_match) {                                            \
+                push__Vec(left_choice, get__Vec(operator->signature, 0));      \
+                push__Vec(choices, return_op_data_type);                       \
+                push__Vec(                                                     \
+                  conds, init__Vec(2, left_op_data_type, right_op_data_type)); \
+            }                                                                  \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    if (left_choice->len == 0) {                                               \
+        FAILED("the compiler was unable to determine the types with the "      \
+               "indications provided.");                                       \
+    }                                                                          \
+                                                                               \
+    left->data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;       \
+    left->data_type->compiler_choice = left_choice;                            \
+                                                                               \
+    LilyCheckedDataType *update_defined_data_type = NEW_VARIANT(               \
+      LilyCheckedDataType,                                                     \
+      conditional_compiler_choice,                                             \
+      defined_data_type->location,                                             \
+      NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds));      \
+                                                                               \
+    if (!eq__LilyCheckedDataType(defined_data_type,                            \
+                                 update_defined_data_type)) {                  \
+        FAILED("the return data type doesn't matched");                        \
+    }                                                                          \
+                                                                               \
+    FREE(Vec, operators);                                                      \
+                                                                               \
+    return NEW_VARIANT(LilyCheckedExpr,                                        \
+                       binary,                                                 \
+                       &expr->location,                                        \
+                       update_defined_data_type,                               \
+                       expr,                                                   \
                        NEW(LilyCheckedExprBinary, kind, left, right));
 
 #define BINARY_RESOLVE_U_C_C()                                               \
@@ -2123,12 +2185,18 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
     Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(       \
       &self->package->operator_register, binary_kind_string, 3);               \
                                                                                \
+    /* These values are defined for conditional compiler choice */             \
+    Vec *choices = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */              \
+    Vec *conds = NEW(Vec);   /* Vec<Vec<LilyCheckedDataType* (&)>*>* */        \
+                                                                               \
     for (Usize i = 0; i < operators->len; ++i) {                               \
         LilyCheckedOperator *operator= get__Vec(operators, i);                 \
         LilyCheckedDataType *left_op_data_type =                               \
           get__Vec(operator->signature, 0);                                    \
         LilyCheckedDataType *right_op_data_type =                              \
           get__Vec(operator->signature, 1);                                    \
+        LilyCheckedDataType *return_op_data_type =                             \
+          last__Vec(operator->signature);                                      \
         bool left_is_match = false;                                            \
         bool right_is_match = false;                                           \
                                                                                \
@@ -2161,18 +2229,22 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
             }                                                                  \
                                                                                \
             if (right_is_match) {                                              \
-                Vec *cond =                                                    \
-                  init__Vec(2, left_op_data_type, right_op_data_type);         \
-                                                                               \
-                if (!get_return_data_type_of_conditional_compiler_choice(      \
-                      defined_data_type, cond)) {                              \
-                    FAILED("no choice was found for this combination "         \
-                           "of data types.");                                  \
-                }                                                              \
-                                                                               \
-                FREE(Vec, cond);                                               \
+                push__Vec(choices, return_op_data_type);                       \
+                push__Vec(                                                     \
+                  conds, init__Vec(2, left_op_data_type, right_op_data_type)); \
             }                                                                  \
         }                                                                      \
+    }                                                                          \
+                                                                               \
+    LilyCheckedDataType *update_defined_data_type = NEW_VARIANT(               \
+      LilyCheckedDataType,                                                     \
+      conditional_compiler_choice,                                             \
+      defined_data_type->location,                                             \
+      NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds));      \
+                                                                               \
+    if (eq__LilyCheckedDataType(defined_data_type,                             \
+                                update_defined_data_type)) {                   \
+        FAILED("the return data type doesn't matched");                        \
     }                                                                          \
                                                                                \
     FREE(Vec, operators);                                                      \
@@ -2180,7 +2252,7 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
     return NEW_VARIANT(LilyCheckedExpr,                                        \
                        binary,                                                 \
                        &expr->location,                                        \
-                       ref__LilyCheckedDataType(defined_data_type),            \
+                       update_defined_data_type,                               \
                        expr,                                                   \
                        NEW(LilyCheckedExprBinary, kind, left, right));
 
