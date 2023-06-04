@@ -1116,19 +1116,109 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
                     }
 
                     return true;
-                default:
+                case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+                    if (self->compiler_choice->len !=
+                        other->conditional_compiler_choice.choices->len) {
+                        return false;
+                    }
+
                     for (Usize i = 0; i < self->compiler_choice->len; ++i) {
-                        if (eq__LilyCheckedDataType(
-                              get__Vec(self->compiler_choice, i), other)) {
-                            return true;
+                        LilyCheckedDataType *choice =
+                          get__Vec(self->compiler_choice, i);
+                        bool is_match = false;
+
+                        for (Usize j = 0;
+                             j <
+                             other->conditional_compiler_choice.choices->len;
+                             ++j) {
+                            if (eq__LilyCheckedDataType(
+                                  choice,
+                                  get__Vec(
+                                    other->conditional_compiler_choice.choices,
+                                    j))) {
+                                is_match = true;
+                                break;
+                            }
+                        }
+
+                        if (!is_match) {
+                            return false;
                         }
                     }
 
+                    return true;
+                default:
                     return false;
             }
         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
-            UNREACHABLE(
-              "this data type is not expected to compare in this context");
+            switch (other->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+                    if (self->conditional_compiler_choice.choices->len !=
+                        other->conditional_compiler_choice.choices->len) {
+                        return false;
+                    }
+
+                    for (Usize i = 0;
+                         i < self->conditional_compiler_choice.choices->len;
+                         ++i) {
+                        LilyCheckedDataType *choice = get__Vec(
+                          self->conditional_compiler_choice.choices, i);
+                        bool is_match = false;
+
+                        for (Usize j = 0;
+                             j <
+                             other->conditional_compiler_choice.choices->len;
+                             ++j) {
+                            if (eq__LilyCheckedDataType(
+                                  choice,
+                                  get__Vec(
+                                    other->conditional_compiler_choice.choices,
+                                    j))) {
+                                is_match = true;
+                                break;
+                            }
+                        }
+
+                        if (!is_match) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
+                    if (self->conditional_compiler_choice.choices->len !=
+                        other->compiler_choice->len) {
+                        return false;
+                    }
+
+                    for (Usize i = 0;
+                         i < self->conditional_compiler_choice.choices->len;
+                         ++i) {
+                        LilyCheckedDataType *choice = get__Vec(
+                          self->conditional_compiler_choice.choices, i);
+                        bool is_match = false;
+
+                        for (Usize j = 0; j < other->compiler_choice->len;
+                             ++j) {
+                            if (eq__LilyCheckedDataType(
+                                  choice,
+                                  get__Vec(
+                                    other->conditional_compiler_choice.choices,
+                                    j))) {
+                                is_match = true;
+                                break;
+                            }
+                        }
+
+                        if (!is_match) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                default:
+                    return false;
+            }
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
             switch (other->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
