@@ -77,6 +77,16 @@ load_default_operators__LilyCheckedOperator();
 
 /**
  *
+ * @brief Convert LilyCheckedOperator in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedOperator, const LilyCheckedOperator *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedOperator type.
  */
 inline DESTRUCTOR(LilyCheckedOperator, LilyCheckedOperator *self)
