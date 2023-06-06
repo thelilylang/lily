@@ -989,9 +989,10 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
         case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
         case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
         case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
-        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
         case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
             return other->kind == self->kind;
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+            return true;
         case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
             switch (other->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
@@ -1225,7 +1226,7 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
                     return !strcmp(self->compiler_generic.name->buffer,
                                    other->compiler_generic.name->buffer);
                 default:
-                    return false;
+                    return true;
             }
         default:
             UNREACHABLE("unknown variant");
@@ -2033,9 +2034,39 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
             break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+            for (Usize i = 0;
+                 i < self->conditional_compiler_choice.choices->len;
+                 ++i) {
+                for (Usize j = 0;
+                     j < self->conditional_compiler_choice.conds->len;
+                     ++j) {
+                    Vec *cond =
+                      get__Vec(self->conditional_compiler_choice.conds, j);
+
+                    for (Usize k = 0; k < cond->len; ++k) {
+                        serialize__LilyCheckedDataType(get__Vec(cond, k), ser);
+                    }
+                }
+
+                serialize__LilyCheckedDataType(
+                  get__Vec(self->conditional_compiler_choice.choices, i), ser);
+            }
+
+            break;
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
-        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
-            UNREACHABLE("not expected for serialization");
+            for (Usize i = 0; i < self->compiler_choice->len; ++i) {
+                serialize__LilyCheckedDataType(
+                  get__Vec(self->compiler_choice, i), ser);
+            }
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC: {
+            char *s = format("{d}{S}", self->kind, self->compiler_generic.name);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            break;
+        }
         default:
             UNREACHABLE("unknown variant");
     }
