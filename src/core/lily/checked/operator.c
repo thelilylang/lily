@@ -1473,3 +1473,17 @@ load_default_operators__LilyCheckedOperator()
 
     return default_operators;
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedOperator, const LilyCheckedOperator *self)
+{
+    String *res =
+      format__String("LilyCheckedOperator{{ name = {S}", self->name);
+
+    DEBUG_VEC_STRING(self->signature, res, LilyCheckedDataType);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
