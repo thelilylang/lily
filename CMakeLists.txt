@@ -273,8 +273,6 @@ set(CORE_SRC
 	src/core/lily/ir/cpp/generator/record.c
 	src/core/lily/ir/cpp/generator/record_object.c
 	src/core/lily/ir/cpp/generator.c
-	src/core/lily/ir/lily/instruction.c
-	src/core/lily/ir/lily/translator.c
 	src/core/lily/ir/llvm/generator/builtin.c
 	src/core/lily/ir/llvm/generator/constant.c
 	src/core/lily/ir/llvm/generator/data_type.c
@@ -323,6 +321,10 @@ set(CORE_SRC
 	src/core/lily/ir/cpp.c
 	src/core/lily/ir/js.c
 	src/core/lily/ir/llvm.c
+	src/core/lily/mir/dt.c
+	src/core/lily/mir/instruction.c
+	src/core/lily/mir/linkage.c
+	src/core/lily/mir/translator.c
 	src/core/lily/package/config.c
 	src/core/lily/package/default_path.c
 	src/core/lily/package/dependency_tree.c
