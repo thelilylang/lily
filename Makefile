@@ -149,7 +149,9 @@ profile:
 		src/core/lily/checked/*.c \
 		src/core/lily/checked/body/*.c \
 		src/core/lily/checked/decl/*.c \
+		src/core/lily/checked/expr/*.c \
 		src/core/lily/checked/stmt/*.c \
+		src/core/lily/checked/pattern/*.c \
 		src/core/lily/ir/cc/builder/function/*.c \
 		src/core/lily/ir/cc/builder/*.c \
 		src/core/lily/ir/cc/generator/*.c \
@@ -161,6 +163,9 @@ profile:
 		src/core/lily/ir/cpp/*.c \
 		src/core/lily/ir/llvm/*.c \
 		src/core/lily/ir/llvm/generator/*.c \
+		src/core/lily/ir/llvm/generator/expr/*.c \
+		src/core/lily/ir/llvm/generator/object/*.c \
+		src/core/lily/ir/llvm/generator/type/*.c
 		src/core/lily/ir/*.c \
 		src/core/lily/package/*.c \
 		src/core/lily/preprocess/*.c \
