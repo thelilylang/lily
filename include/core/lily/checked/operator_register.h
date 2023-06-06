@@ -97,6 +97,19 @@ generate_conditional_compiler_choice_according_operator_collection__LilyCheckedO
 
 /**
  *
+ * @brief Typecheck binary operator.
+ * @param defined_data_type LilyCheckedDataType* (&)?
+ */
+void
+typecheck_binary__LilyCheckedOperatorRegister(
+  Vec *operators,
+  const Location *expr_location,
+  LilyCheckedDataType *left,
+  LilyCheckedDataType *right,
+  LilyCheckedDataType **defined_data_type);
+
+/**
+ *
  * @brief Free LilyCheckedOperatorRegister type.
  */
 DESTRUCTOR(LilyCheckedOperatorRegister,
