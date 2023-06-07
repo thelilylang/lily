@@ -76,6 +76,7 @@ enum LilyMirInstructionKind
     LILY_MIR_INSTRUCTION_KIND_IMUL,
     LILY_MIR_INSTRUCTION_KIND_INCTRACE,
     LILY_MIR_INSTRUCTION_KIND_INEG,
+    LILY_MIR_INSTRUCTION_KIND_IREM,
     LILY_MIR_INSTRUCTION_KIND_ISOK,
     LILY_MIR_INSTRUCTION_KIND_ISERR,
     LILY_MIR_INSTRUCTION_KIND_ISUB,
@@ -86,17 +87,11 @@ enum LilyMirInstructionKind
     LILY_MIR_INSTRUCTION_KIND_LOOP,
     LILY_MIR_INSTRUCTION_KIND_MAKEREF,
     LILY_MIR_INSTRUCTION_KIND_MAKEOPT,
-    LILY_MIR_INSTRUCTION_KIND_NEW,
-    LILY_MIR_INSTRUCTION_KIND_NEWARRAY,
-    LILY_MIR_INSTRUCTION_KIND_NEWLIST,
-    LILY_MIR_INSTRUCTION_KIND_NEWSLICE,
-    LILY_MIR_INSTRUCTION_KIND_NEWTRACE,
-    LILY_MIR_INSTRUCTION_KIND_NIL,
     LILY_MIR_INSTRUCTION_KIND_NON_NIL,
     LILY_MIR_INSTRUCTION_KIND_NOT,
     LILY_MIR_INSTRUCTION_KIND_OR,
-    LILY_MIR_INSTRUCTION_KIND_REM,
     LILY_MIR_INSTRUCTION_KIND_REF_PTR,
+    LILY_MIR_INSTRUCTION_KIND_REG,
     LILY_MIR_INSTRUCTION_KIND_RET,
     LILY_MIR_INSTRUCTION_KIND_SHL,
     LILY_MIR_INSTRUCTION_KIND_SHR,
@@ -112,16 +107,22 @@ enum LilyMirInstructionKind
 
 typedef struct LilyMirInstruction LilyMirInstruction;
 
+DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self);
+
 enum LilyMirInstructionValKind
 {
     LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY,
     LILY_MIR_INSTRUCTION_VAL_KIND_BYTES,
     LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION,
-    LILY_MIR_INSTRUCTION_VAL_KIND_INT,
     LILY_MIR_INSTRUCTION_VAL_KIND_FLOAT,
+    LILY_MIR_INSTRUCTION_VAL_KIND_INT,
+    LILY_MIR_INSTRUCTION_VAL_KIND_LIST,
+    LILY_MIR_INSTRUCTION_VAL_KIND_NIL,
     LILY_MIR_INSTRUCTION_VAL_KIND_REG,
+    LILY_MIR_INSTRUCTION_VAL_KIND_SLICE,
     LILY_MIR_INSTRUCTION_VAL_KIND_STR,
     LILY_MIR_INSTRUCTION_VAL_KIND_STRUCT,
+    LILY_MIR_INSTRUCTION_VAL_KIND_TRACE,
     LILY_MIR_INSTRUCTION_VAL_KIND_TUPLE,
     LILY_MIR_INSTRUCTION_VAL_KIND_UINT,
     LILY_MIR_INSTRUCTION_VAL_KIND_UNDEF,
@@ -137,13 +138,16 @@ typedef struct LilyMirInstructionVal
     {
         Vec *array;         // Vec<LilyMirInstructionVal*>*
         const Uint8 *bytes; // const Uint8* (&)
+        Float64 float_;
         struct LilyMirInstructionVal *exception[2]; // [ok, err]
         Int64 int_;
-        Float64 float_;
+        Vec *list;       // Vec<LilyMirInstructionVal*>*
         const char *reg; // const char* (&)
+        Vec *slice;      // Vec<LilyMirInstructionVal*>*
         const char *str; // const char* (&)
         Vec *struct_;    // Vec<LilyMirInstructionVal*>*
-        Vec *tuple;      // Vec<LilyMirInstructionVal*>*
+        struct LilyMirInstructionVal *trace;
+        Vec *tuple; // Vec<LilyMirInstructionVal*>*
         Uint64 uint;
     };
 } LilyMirInstructionVal;
@@ -194,17 +198,6 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 /**
  *
  * @brief Construct LilyMirInstructionVal type
- * (LILY_MIR_INSTRUCTION_VAL_KIND_INT).
- */
-VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
-                    LilyMirInstructionVal,
-                    int,
-                    LilyMirDt *dt,
-                    Int64 int_);
-
-/**
- *
- * @brief Construct LilyMirInstructionVal type
  * (LILY_MIR_INSTRUCTION_VAL_KIND_FLOAT).
  */
 VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
@@ -216,6 +209,28 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 /**
  *
  * @brief Construct LilyMirInstructionVal type
+ * (LILY_MIR_INSTRUCTION_VAL_KIND_INT).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
+                    int,
+                    LilyMirDt *dt,
+                    Int64 int_);
+
+/**
+ *
+ * @brief Construct LilyMirInstructionVal type
+ * (LILY_MIR_INSTRUCTION_VAL_KIND_LIST).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
+                    list,
+                    LilyMirDt *dt,
+                    Vec *list);
+
+/**
+ *
+ * @brief Construct LilyMirInstructionVal type
  * (LILY_MIR_INSTRUCTION_VAL_KIND_REG).
  */
 VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
@@ -223,6 +238,17 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     reg,
                     LilyMirDt *dt,
                     const char *reg);
+
+/**
+ *
+ * @brief Construct LilyMirInstructionVal type
+ * (LILY_MIR_INSTRUCTION_VAL_KIND_SLICE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
+                    slice,
+                    LilyMirDt *dt,
+                    Vec *slice);
 
 /**
  *
@@ -245,6 +271,17 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     struct,
                     LilyMirDt *dt,
                     Vec *struct_);
+
+/**
+ *
+ * @brief Construct LilyMirInstructionVal type
+ * (LILY_MIR_INSTRUCTION_VAL_KIND_TRACE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
+                    trace,
+                    LilyMirDt *dt,
+                    LilyMirInstructionVal *trace);
 
 /**
  *
@@ -600,6 +637,34 @@ inline DESTRUCTOR(LilyMirInstructionJmpCond,
     FREE(LilyMirInstructionVal, self->cond);
 }
 
+typedef struct LilyMirInstructionReg
+{
+    char *name;
+    LilyMirInstruction *inst;
+} LilyMirInstructionReg;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionReg type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionReg,
+                   LilyMirInstructionReg,
+                   char *name,
+                   LilyMirInstruction *inst)
+{
+    return (LilyMirInstructionReg){ .name = name, .inst = inst };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionReg type.
+ */
+inline DESTRUCTOR(LilyMirInstructionReg, const LilyMirInstructionReg *self)
+{
+    lily_free(self->name);
+    FREE(LilyMirInstruction, self->inst);
+}
+
 typedef struct LilyMirInstructionSwitchCase
 {
     LilyMirInstructionVal *val;
@@ -691,7 +756,7 @@ typedef struct LilyMirInstruction
         LilyMirInstructionAsm asm;
         LilyMirInstructionValDt bitcast;
         LilyMirInstructionSrcDest bitand;
-        LilyMirInstructionSrcDest bitnot;
+        LilyMirInstructionSrc bitnot;
         LilyMirInstructionSrcDest bitor ;
         LilyMirInstructionBlock block;
         LilyMirInstructionCall builtin_call;
@@ -711,12 +776,12 @@ typedef struct LilyMirInstruction
         LilyMirInstructionSrc fneg;
         LilyMirInstructionSrcDest frem;
         LilyMirInstructionFun fun;
-        LilyMirInstructionSrc getarg;
         LilyMirInstructionSrc getarray;
-        LilyMirInstructionSrc getlist;
-        LilyMirInstructionSrc getslice;
+        LilyMirInstructionSrc getarg;
         LilyMirInstructionSrc getfield;
+        LilyMirInstructionSrc getlist;
         LilyMirInstructionSrc getptr;
+        LilyMirInstructionSrc getslice;
         LilyMirInstructionSrcDest iadd;
         LilyMirInstructionSrcDest icmp_eq;
         LilyMirInstructionSrcDest icmp_ne;
@@ -728,26 +793,23 @@ typedef struct LilyMirInstruction
         LilyMirInstructionSrcDest imul;
         LilyMirInstructionSrc inctrace;
         LilyMirInstructionSrc ineg;
+        LilyMirInstructionSrcDest irem;
         LilyMirInstructionSrc isok;
         LilyMirInstructionSrc iserr;
         LilyMirInstructionSrcDest isub;
-        LilyMirInstructionBlock *jmp;
+        LilyMirInstructionBlock *jmp; // LilyMirInstructionBlock* (&)
         LilyMirInstructionJmpCond jmpcond;
         LilyMirInstructionSrc len;
         LilyMirInstructionSrc load;
         LilyMirInstructionBlock loop;
         LilyMirInstructionSrc makeref;
         LilyMirInstructionSrc makeopt;
-        Vec *new;      // Vec<LilyMirInstructionVal*>*
-        Vec *newarray; // Vec<LilyMirInstructionVal*>*
-        Vec *newlist;  // Vec<LilyMirInstructionVal*>*
-        LilyMirInstructionSrc newtrace;
         LilyMirInstruction *non_nil;
         LilyMirInstructionSrc not ;
         LilyMirInstructionSrcDest or ;
-        LilyMirInstructionSrcDest rem;
+        LilyMirInstructionReg reg;
         LilyMirInstructionSrc ref_ptr;
-        LilyMirInstructionSrc ret;
+        LilyMirInstruction *ret;
         LilyMirInstructionSrcDest shl;
         LilyMirInstructionSrcDest shr;
         LilyMirInstructionSrcDest store;
@@ -756,10 +818,686 @@ typedef struct LilyMirInstruction
         LilyMirInstructionValDt trunc;
         LilyMirInstructionTry try;
         LilyMirInstructionTry try_ptr;
-        LilyMirInstructionVal val;
+        LilyMirInstructionVal *val;
         LilyMirInstructionSrcDest xor ;
     };
 } LilyMirInstruction;
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_ALLOC).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    alloc,
+                    LilyMirInstructionAlloc alloc);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_AND).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    and,
+                    LilyMirInstructionSrcDest and);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_ARG).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    arg,
+                    LilyMirInstructionArg arg);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_ASM).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    asm,
+                    LilyMirInstructionAsm asm);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_BITCAST).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    bitcast,
+                    LilyMirInstructionValDt bitcast);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_BITAND).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                      bitand,
+                    LilyMirInstructionSrcDest bitand);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_BITNOT).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    bitnot,
+                    LilyMirInstructionSrc bitnot);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_BITOR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    bitor
+                    ,
+                    LilyMirInstructionSrcDest bitor);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_BLOCK).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    block,
+                    LilyMirInstructionBlock block);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_BUILTIN_CALL).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    builtin_call,
+                    LilyMirInstructionCall builtin_call);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_CALL).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    call,
+                    LilyMirInstructionCall call);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_CONST).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    const,
+                    LilyMirInstructionConst const_);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_DROP).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    drop,
+                    LilyMirInstructionSrc drop);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_EXP).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    exp,
+                    LilyMirInstructionSrcDest exp);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FADD).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fadd,
+                    LilyMirInstructionSrcDest fadd);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FCMP_EQ).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fcmp_eq,
+                    LilyMirInstructionSrcDest fcmp_eq);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FCMP_NE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fcmp_ne,
+                    LilyMirInstructionSrcDest fcmp_ne);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FCMP_LE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fcmp_le,
+                    LilyMirInstructionSrcDest fcmp_le);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FCMP_LT).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fcmp_lt,
+                    LilyMirInstructionSrcDest fcmp_lt);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FCMP_GE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fcmp_ge,
+                    LilyMirInstructionSrcDest fcmp_ge);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FCMP_GT).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fcmp_gt,
+                    LilyMirInstructionSrcDest fcmp_gt);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FDIV).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fdiv,
+                    LilyMirInstructionSrcDest fdiv);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FMUL).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fmul,
+                    LilyMirInstructionSrcDest fmul);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FNEG).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fneg,
+                    LilyMirInstructionSrc fneg);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FREM).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    frem,
+                    LilyMirInstructionSrcDest frem);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FUN).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fun,
+                    LilyMirInstructionFun fun);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_GETARRAY).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    getarray,
+                    LilyMirInstructionSrc getarray);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_GETARG).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    getarg,
+                    LilyMirInstructionSrc getarg);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_GETFIELD).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    getfield,
+                    LilyMirInstructionSrc getfield);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_GETLIST).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    getlist,
+                    LilyMirInstructionSrc getlist);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_GETPTR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    getptr,
+                    LilyMirInstructionSrc getptr);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_GETSLICE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    getslice,
+                    LilyMirInstructionSrc getslice);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_IADD).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    iadd,
+                    LilyMirInstructionSrcDest iadd);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_ICMP_EQ).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    icmp_eq,
+                    LilyMirInstructionSrcDest icmp_eq);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_ICMP_NE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    icmp_ne,
+                    LilyMirInstructionSrcDest icmp_ne);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_ICMP_LE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    icmp_le,
+                    LilyMirInstructionSrcDest icmp_le);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_ICMP_LT).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    icmp_lt,
+                    LilyMirInstructionSrcDest icmp_lt);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_ICMP_GE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    icmp_ge,
+                    LilyMirInstructionSrcDest icmp_ge);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_ICMP_GT).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    icmp_gt,
+                    LilyMirInstructionSrcDest icmp_gt);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_IDIV).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    idiv,
+                    LilyMirInstructionSrcDest idiv);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_IMUL).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    imul,
+                    LilyMirInstructionSrcDest imul);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_INCTRACE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    inctrace,
+                    LilyMirInstructionSrcDest inctrace);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_INEG).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    ineg,
+                    LilyMirInstructionSrc ineg);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_IREM).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    irem,
+                    LilyMirInstructionSrcDest irem);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_ISOK).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    isok,
+                    LilyMirInstructionSrc isok);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_ISERR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    iserr,
+                    LilyMirInstructionSrc iserr);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_ISUB).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    isub,
+                    LilyMirInstructionSrcDest isub);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_JMP).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    jmp,
+                    LilyMirInstructionBlock *jmp);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_JMPCOND).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    jmpcond,
+                    LilyMirInstructionJmpCond jmpcond);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_LEN).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    len,
+                    LilyMirInstructionSrc len);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_LOAD).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    load,
+                    LilyMirInstructionSrc load);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_LOOP).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    loop,
+                    LilyMirInstructionBlock loop);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_MAKEREF).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    makeref,
+                    LilyMirInstructionSrc makeref);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_MAKEOPT).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    makeopt,
+                    LilyMirInstructionSrc makeopt);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_NON_NIL).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    non_nil,
+                    LilyMirInstruction *non_nil);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_NOT).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    not,
+                    LilyMirInstructionSrc not );
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_OR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    or
+                    ,
+                    LilyMirInstructionSrcDest or);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_REG).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    reg,
+                    LilyMirInstructionReg reg);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_REF_PTR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    ref_ptr,
+                    LilyMirInstructionSrc ref_ptr);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_RET).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    ret,
+                    LilyMirInstruction *ret);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_SHL).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    shl,
+                    LilyMirInstructionSrcDest shl);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_SHR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    shr,
+                    LilyMirInstructionSrcDest shr);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_STORE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    store,
+                    LilyMirInstructionSrcDest store);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_SWITCH).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    switch,
+                    LilyMirInstructionSwitch switch_);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_SYS_CALL).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    sys_call,
+                    LilyMirInstructionCall sys_call);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_TRUNC).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    trunc,
+                    LilyMirInstructionValDt trunc);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_TRY).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    try,
+                    LilyMirInstructionTry try);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_TRY_PTR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    try_ptr,
+                    LilyMirInstructionTry try_ptr);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_VAL).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    val,
+                    LilyMirInstructionVal *val);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_XOR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    xor,
+                    LilyMirInstructionSrcDest xor);
 
 /**
  *
