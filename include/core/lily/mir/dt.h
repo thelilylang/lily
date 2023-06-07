@@ -25,9 +25,9 @@
 #ifndef LILY_CORE_LILY_MIR_DT_H
 #define LILY_CORE_LILY_MIR_DT_H
 
+#include <base/new.h>
 #include <base/types.h>
 #include <base/vec.h>
-#include <base/new.h>
 
 #ifdef ENV_DEBUG
 #include <base/string.h>
@@ -77,10 +77,7 @@ DESTRUCTOR(LilyMirDt, LilyMirDt *self);
  */
 inline CONSTRUCTOR(LilyMirDtArray, LilyMirDtArray, Usize len, LilyMirDt *dt)
 {
-	return (LilyMirDtArray){
-		.len = len,
-		.dt = dt
-	};
+    return (LilyMirDtArray){ .len = len, .dt = dt };
 }
 
 /**
@@ -89,7 +86,7 @@ inline CONSTRUCTOR(LilyMirDtArray, LilyMirDtArray, Usize len, LilyMirDt *dt)
  */
 inline DESTRUCTOR(LilyMirDtArray, const LilyMirDtArray *self)
 {
-	FREE(LilyMirDt, self->dt);
+    FREE(LilyMirDt, self->dt);
 }
 
 typedef struct LilyMirDtException
@@ -102,12 +99,12 @@ typedef struct LilyMirDtException
  *
  * @brief Construct LilyMirDtException type.
  */
-inline CONSTRUCTOR(LilyMirDtException, LilyMirDtException, LilyMirDt *ok, LilyMirDt *err)
+inline CONSTRUCTOR(LilyMirDtException,
+                   LilyMirDtException,
+                   LilyMirDt *ok,
+                   LilyMirDt *err)
 {
-	return (LilyMirDtException){
-		.ok = ok,
-		.err = err 
-	};
+    return (LilyMirDtException){ .ok = ok, .err = err };
 }
 
 /**
@@ -116,8 +113,8 @@ inline CONSTRUCTOR(LilyMirDtException, LilyMirDtException, LilyMirDt *ok, LilyMi
  */
 inline DESTRUCTOR(LilyMirDtException, const LilyMirDtException *self)
 {
-	FREE(LilyMirDt, self->ok);
-	FREE(LilyMirDt, self->err);
+    FREE(LilyMirDt, self->ok);
+    FREE(LilyMirDt, self->err);
 }
 
 typedef struct LilyMirDt

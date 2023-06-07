@@ -268,97 +268,97 @@ IMPL_FOR_DEBUG(to_string, LilyMirDt, const LilyMirDt *self)
 
 VARIANT_DESTRUCTOR(LilyMirDt, array, LilyMirDt *self)
 {
-	FREE(LilyMirDtArray, &self->array);
-	lily_free(self);
+    FREE(LilyMirDtArray, &self->array);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirDt, bytes, LilyMirDt *self)
 {
-	lily_free(self);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirDt, exception, LilyMirDt *self)
 {
-	FREE(LilyMirDtException, &self->exception);
-	lily_free(self);
+    FREE(LilyMirDtException, &self->exception);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirDt, ptr, LilyMirDt *self)
 {
-	FREE(LilyMirDt, self->ptr);
-	lily_free(self);
+    FREE(LilyMirDt, self->ptr);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirDt, ref, LilyMirDt *self)
 {
-	FREE(LilyMirDt, self->ref);
-	lily_free(self);
+    FREE(LilyMirDt, self->ref);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirDt, str, LilyMirDt *self)
 {
-	lily_free(self);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirDt, struct, LilyMirDt *self)
 {
-	FREE_BUFFER_ITEMS(self->struct_->buffer, self->struct_->len, LilyMirDt);
-	FREE(Vec, self->struct_);
-	lily_free(self);
+    FREE_BUFFER_ITEMS(self->struct_->buffer, self->struct_->len, LilyMirDt);
+    FREE(Vec, self->struct_);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirDt, struct_name, LilyMirDt *self)
 {
-	lily_free(self);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirDt, trace, LilyMirDt *self)
 {
-	FREE(LilyMirDt, self->trace);
-	lily_free(self);
+    FREE(LilyMirDt, self->trace);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirDt, tuple, LilyMirDt *self)
 {
-	FREE_BUFFER_ITEMS(self->tuple->buffer, self->tuple->len, LilyMirDt);
-	FREE(Vec, self->tuple);
-	lily_free(self);
+    FREE_BUFFER_ITEMS(self->tuple->buffer, self->tuple->len, LilyMirDt);
+    FREE(Vec, self->tuple);
+    lily_free(self);
 }
 
 DESTRUCTOR(LilyMirDt, LilyMirDt *self)
 {
-	switch (self->kind) {
-		case LILY_MIR_DT_KIND_ARRAY:
-			FREE_VARIANT(LilyMirDt, array, self);
-			break;
-		case LILY_MIR_DT_KIND_BYTES:
-			FREE_VARIANT(LilyMirDt, bytes, self);
-			break;
-		case LILY_MIR_DT_KIND_EXCEPTION:
-			FREE_VARIANT(LilyMirDt, exception, self);
-			break;
-		case LILY_MIR_DT_KIND_PTR:
-			FREE_VARIANT(LilyMirDt, ptr, self);
-			break;
-		case LILY_MIR_DT_KIND_REF:
-			FREE_VARIANT(LilyMirDt, ref, self);
-			break;
-		case LILY_MIR_DT_KIND_STR:
-			FREE_VARIANT(LilyMirDt, str, self);
-			break;
-		case LILY_MIR_DT_KIND_STRUCT:
-			FREE_VARIANT(LilyMirDt, struct, self);
-			break;
-		case LILY_MIR_DT_KIND_STRUCT_NAME:
-			FREE_VARIANT(LilyMirDt, struct_name, self);
-			break;
-		case LILY_MIR_DT_KIND_TRACE:
-			FREE_VARIANT(LilyMirDt, trace, self);
-			break;
-		case LILY_MIR_DT_KIND_TUPLE:
-			FREE_VARIANT(LilyMirDt, tuple, self);
-			break;
-		default:
-			lily_free(self);
-	}
+    switch (self->kind) {
+        case LILY_MIR_DT_KIND_ARRAY:
+            FREE_VARIANT(LilyMirDt, array, self);
+            break;
+        case LILY_MIR_DT_KIND_BYTES:
+            FREE_VARIANT(LilyMirDt, bytes, self);
+            break;
+        case LILY_MIR_DT_KIND_EXCEPTION:
+            FREE_VARIANT(LilyMirDt, exception, self);
+            break;
+        case LILY_MIR_DT_KIND_PTR:
+            FREE_VARIANT(LilyMirDt, ptr, self);
+            break;
+        case LILY_MIR_DT_KIND_REF:
+            FREE_VARIANT(LilyMirDt, ref, self);
+            break;
+        case LILY_MIR_DT_KIND_STR:
+            FREE_VARIANT(LilyMirDt, str, self);
+            break;
+        case LILY_MIR_DT_KIND_STRUCT:
+            FREE_VARIANT(LilyMirDt, struct, self);
+            break;
+        case LILY_MIR_DT_KIND_STRUCT_NAME:
+            FREE_VARIANT(LilyMirDt, struct_name, self);
+            break;
+        case LILY_MIR_DT_KIND_TRACE:
+            FREE_VARIANT(LilyMirDt, trace, self);
+            break;
+        case LILY_MIR_DT_KIND_TUPLE:
+            FREE_VARIANT(LilyMirDt, tuple, self);
+            break;
+        default:
+            lily_free(self);
+    }
 }
