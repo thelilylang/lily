@@ -22,8 +22,6 @@
  * SOFTWARE.
  */
 
-#include <base/alloc.h>
-
 #include <core/lily/mir/instruction.h>
 
 static VARIANT_DESTRUCTOR(LilyMirInstructionVal,
@@ -262,3 +260,57 @@ DESTRUCTOR(LilyMirInstructionVal, LilyMirInstructionVal *self)
             lily_free(self);
     }
 }
+
+DESTRUCTOR(LilyMirInstructionBlock, const LilyMirInstructionBlock *self)
+{
+    lily_free(self->name);
+    FREE_BUFFER_ITEMS(
+      self->insts->buffer, self->insts->len, LilyMirInstruction);
+    FREE(Vec, self->insts);
+}
+
+DESTRUCTOR(LilyMirInstructionCall, const LilyMirInstructionCall *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->params->buffer, self->params->len, LilyMirInstruction);
+    FREE(Vec, self->params);
+}
+
+DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
+{
+    FREE_BUFFER_ITEMS(self->args->buffer, self->args->len, LilyMirInstruction);
+    FREE(Vec, self->args);
+    FREE_BUFFER_ITEMS(
+      self->insts->buffer, self->insts->len, LilyMirInstruction);
+    FREE(Vec, self->insts);
+}
+
+CONSTRUCTOR(LilyMirInstructionSwitchCase *,
+            LilyMirInstructionSwitchCase,
+            LilyMirInstructionVal *val,
+            LilyMirInstructionBlock *block_dest)
+{
+    LilyMirInstructionSwitchCase *self =
+      lily_malloc(sizeof(LilyMirInstructionSwitchCase));
+
+    self->val = val;
+    self->block_dest = block_dest;
+
+    return self;
+}
+
+DESTRUCTOR(LilyMirInstructionSwitchCase, LilyMirInstructionSwitchCase *self)
+{
+    FREE(LilyMirInstructionVal, self->val);
+    lily_free(self);
+}
+
+DESTRUCTOR(LilyMirInstructionSwitch, const LilyMirInstructionSwitch *self)
+{
+    FREE(LilyMirInstructionVal, self->val);
+    FREE_BUFFER_ITEMS(
+      self->cases->buffer, self->cases->len, LilyMirInstructionSwitch);
+    FREE(Vec, self->cases);
+}
+
+DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self) {}

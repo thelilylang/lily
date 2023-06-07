@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_MIR_INSTRUCTION_H
 #define LILY_CORE_LILY_MIR_INSTRUCTION_H
 
+#include <base/alloc.h>
 #include <base/vec.h>
 
 #include <core/lily/mir/dt.h>
@@ -303,6 +304,29 @@ typedef struct LilyMirInstructionSrcDest
     LilyMirInstructionVal *src;
 } LilyMirInstructionSrcDest;
 
+/**
+ *
+ * @brief Construct LilyMirInstructionSrcDest type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionSrcDest,
+                   LilyMirInstructionSrcDest,
+                   LilyMirInstructionVal *dest,
+                   LilyMirInstructionVal *src)
+{
+    return (LilyMirInstructionSrcDest){ .dest = dest, .src = src };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionSrcDest type.
+ */
+inline DESTRUCTOR(LilyMirInstructionSrcDest,
+                  const LilyMirInstructionSrcDest *self)
+{
+    FREE(LilyMirInstructionVal, self->dest);
+    FREE(LilyMirInstructionVal, self->src);
+}
+
 // drop <val>
 // fneg <val>
 // getarg <val>
@@ -318,18 +342,79 @@ typedef struct LilyMirInstructionSrc
     LilyMirInstructionVal *src;
 } LilyMirInstructionSrc;
 
+/**
+ *
+ * @brief Construct LilyMirInstructionSrc type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionSrc,
+                   LilyMirInstructionSrc,
+                   LilyMirInstructionVal *src)
+{
+    return (LilyMirInstructionSrc){ .src = src };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionSrc type.
+ */
+inline DESTRUCTOR(LilyMirInstructionSrc, const LilyMirInstructionSrc *self)
+{
+    FREE(LilyMirInstructionVal, self->src);
+}
+
 // alloc <dt>
 typedef struct LilyMirInstructionAlloc
 {
-    LilyMirDt dt;
+    LilyMirDt *dt;
 } LilyMirInstructionAlloc;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionAlloc type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionAlloc,
+                   LilyMirInstructionAlloc,
+                   LilyMirDt *dt)
+{
+    return (LilyMirInstructionAlloc){ .dt = dt };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionAlloc type.
+ */
+inline DESTRUCTOR(LilyMirInstructionAlloc, const LilyMirInstructionAlloc *self)
+{
+    FREE(LilyMirDt, self->dt);
+}
 
 // arg(<dt>) <name>
 typedef struct LilyMirInstructionArg
 {
-    LilyMirDt dt;
+    LilyMirDt *dt;
     const char *name; // const char* (&)
 } LilyMirInstructionArg;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionArg type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionArg,
+                   LilyMirInstructionArg,
+                   LilyMirDt *dt,
+                   const char *name)
+{
+    return (LilyMirInstructionArg){ .dt = dt, .name = name };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionArg type.
+ */
+inline DESTRUCTOR(LilyMirInstructionArg, const LilyMirInstructionArg *self)
+{
+    FREE(LilyMirDt, self->dt);
+}
 
 // asm("xor eax, eax")
 typedef struct LilyMirInstructionAsm
@@ -337,13 +422,46 @@ typedef struct LilyMirInstructionAsm
     const char *content; // const char* (&)
 } LilyMirInstructionAsm;
 
+/**
+ *
+ * @brief Construct LilyMirInstructionAsm type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionAsm,
+                   LilyMirInstructionAsm,
+                   const char *content)
+{
+    return (LilyMirInstructionAsm){ .content = content };
+}
+
 // bitcast <val> -> <dt>
 // <inst> <val> -> <dt>
 typedef struct LilyMirInstructionValDt
 {
     LilyMirInstructionVal *val;
-    LilyMirDt dt;
+    LilyMirDt *dt;
 } LilyMirInstructionValDt;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionValDt type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionValDt,
+                   LilyMirInstructionValDt,
+                   LilyMirInstructionVal *val,
+                   LilyMirDt *dt)
+{
+    return (LilyMirInstructionValDt){ .val = val, .dt = dt };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionValDt type.
+ */
+inline DESTRUCTOR(LilyMirInstructionValDt, const LilyMirInstructionValDt *self)
+{
+    FREE(LilyMirInstructionVal, self->val);
+    FREE(LilyMirDt, self->dt);
+}
 
 typedef struct LilyMirInstructionBlock
 {
@@ -351,11 +469,47 @@ typedef struct LilyMirInstructionBlock
     Vec *insts; // Vec<LilyMirInstruction*>*
 } LilyMirInstructionBlock;
 
+/**
+ *
+ * @brief Construct LilyMirInstructionBlock type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionBlock,
+                   LilyMirInstructionBlock,
+                   char *name,
+                   Vec *insts)
+{
+    return (LilyMirInstructionBlock){ .name = name, .insts = insts };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionBlock type.
+ */
+DESTRUCTOR(LilyMirInstructionBlock, const LilyMirInstructionBlock *self);
+
 typedef struct LilyMirInstructionCall
 {
     const char *name; // const char* (&)
     Vec *params;      // Vec<LilyMirInstruction*>*
 } LilyMirInstructionCall;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionCall type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionCall,
+                   LilyMirInstructionCall,
+                   const char *name,
+                   Vec *params)
+{
+    return (LilyMirInstructionCall){ .name = name, .params = params };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionCall type.
+ */
+DESTRUCTOR(LilyMirInstructionCall, const LilyMirInstructionCall *self);
 
 // <priv|pub> const <name> = <val>
 typedef struct LilyMirInstructionConst
@@ -365,6 +519,29 @@ typedef struct LilyMirInstructionConst
     LilyMirInstructionVal *val;
 } LilyMirInstructionConst;
 
+/**
+ *
+ * @brief Construct LilyMirInstructionConst type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionConst,
+                   LilyMirInstructionConst,
+                   enum LilyMirLinkage linkage,
+                   const char *name,
+                   LilyMirInstructionVal *val)
+{
+    return (
+      LilyMirInstructionConst){ .linkage = linkage, .name = name, .val = val };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionConst type.
+ */
+inline DESTRUCTOR(LilyMirInstructionConst, const LilyMirInstructionConst *self)
+{
+    FREE(LilyMirInstructionVal, self->val);
+}
+
 typedef struct LilyMirInstructionFun
 {
     enum LilyMirLinkage linkage;
@@ -373,31 +550,135 @@ typedef struct LilyMirInstructionFun
     Vec *insts;       // Vec<LilyMirInstruction*>*
 } LilyMirInstructionFun;
 
+/**
+ *
+ * @brief Construct LilyMirInstructionFun type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionFun,
+                   LilyMirInstructionFun,
+                   enum LilyMirLinkage linkage,
+                   const char *name,
+                   Vec *args,
+                   Vec *insts)
+{
+    return (LilyMirInstructionFun){
+        .linkage = linkage, .name = name, .args = args, .insts = insts
+    };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionFun type.
+ */
+DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self);
+
 typedef struct LilyMirInstructionJmpCond
 {
     LilyMirInstructionVal *cond;
-    LilyMirInstructionBlock *block;
+    LilyMirInstructionBlock *block; // LilyMirInstructionBlock* (&)
 } LilyMirInstructionJmpCond;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionJmpCond type.
+ */
+CONSTRUCTOR(LilyMirInstructionJmpCond,
+            LilyMirInstructionJmpCond,
+            LilyMirInstructionVal *cond,
+            LilyMirInstructionBlock *block)
+{
+    return (LilyMirInstructionJmpCond){ .cond = cond, .block = block };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionJmpCond type.
+ */
+inline DESTRUCTOR(LilyMirInstructionJmpCond,
+                  const LilyMirInstructionJmpCond *self)
+{
+    FREE(LilyMirInstructionVal, self->cond);
+}
 
 typedef struct LilyMirInstructionSwitchCase
 {
-    LilyMirInstructionVal val;
-    LilyMirInstructionBlock block_dest;
+    LilyMirInstructionVal *val;
+    LilyMirInstructionBlock *block_dest; // LilyMirInstructionBlock* (&)
 } LilyMirInstructionSwitchCase;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionSwitchCase type.
+ */
+CONSTRUCTOR(LilyMirInstructionSwitchCase *,
+            LilyMirInstructionSwitchCase,
+            LilyMirInstructionVal *val,
+            LilyMirInstructionBlock *block_dest);
+
+/**
+ *
+ * @brief Free LilyMirInstructionSwitchCase type.
+ */
+DESTRUCTOR(LilyMirInstructionSwitchCase, LilyMirInstructionSwitchCase *self);
 
 typedef struct LilyMirInstructionSwitch
 {
-    LilyMirInstructionVal val;
-    LilyMirInstructionBlock default_block;
+    LilyMirInstructionVal *val;
+    LilyMirInstructionBlock *default_block;
     Vec *cases; // Vec<LilyMirInstructionSwitchCase*>*
 } LilyMirInstructionSwitch;
 
+/**
+ *
+ * @brief Construct LilyMirInstructionSwitch type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionSwitch,
+                   LilyMirInstructionSwitch,
+                   LilyMirInstructionVal *val,
+                   LilyMirInstructionBlock *default_block,
+                   Vec *cases)
+{
+    return (LilyMirInstructionSwitch){ .val = val,
+                                       .default_block = default_block,
+                                       .cases = cases };
+}
+
+/**
+ *
+ * @brief Construct LilyMirInstructionSwitch type.
+ */
+DESTRUCTOR(LilyMirInstructionSwitch, const LilyMirInstructionSwitch *self);
+
 typedef struct LilyMirInstructionTry
 {
-    LilyMirInstructionVal val;
-    LilyMirInstructionBlock try_block;
-    LilyMirInstructionBlock catch_block;
+    LilyMirInstructionVal *val;
+    LilyMirInstructionBlock *try_block;   // LilyMirInstructionBlock* (&)
+    LilyMirInstructionBlock *catch_block; // LilyMirInstructionBlock* (&)
 } LilyMirInstructionTry;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionTry type.
+ */
+CONSTRUCTOR(LilyMirInstructionTry,
+            LilyMirInstructionTry,
+            LilyMirInstructionVal *val,
+            LilyMirInstructionBlock *try_block,
+            LilyMirInstructionBlock *catch_block)
+{
+    return (LilyMirInstructionTry){ .val = val,
+                                    .try_block = try_block,
+                                    .catch_block = catch_block };
+}
+
+/**
+ *
+ * @brief Free LilyMirInstructionTry type.
+ */
+inline DESTRUCTOR(LilyMirInstructionTry, const LilyMirInstructionTry *self)
+{
+    FREE(LilyMirInstructionVal, self->val);
+}
 
 typedef struct LilyMirInstruction
 {
@@ -479,5 +760,11 @@ typedef struct LilyMirInstruction
         LilyMirInstructionSrcDest xor ;
     };
 } LilyMirInstruction;
+
+/**
+ *
+ * @brief Free LilyMirInstruction type.
+ */
+DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self);
 
 #endif // LILY_CORE_LILY_IR_INSTRUCTION_H
