@@ -586,8 +586,8 @@ inline DESTRUCTOR(LilyMirInstructionValDt, const LilyMirInstructionValDt *self)
 
 typedef struct LilyMirInstructionBlock
 {
-    char *name;
-    Vec *insts; // Vec<LilyMirInstruction*>*
+    const char *name; // const char* (&)
+    Vec *insts;       // Vec<LilyMirInstruction*>*
 } LilyMirInstructionBlock;
 
 /**

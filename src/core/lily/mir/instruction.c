@@ -864,7 +864,6 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyMirInstructionBlock, const LilyMirInstructionBlock *self)
 {
-    lily_free(self->name);
     FREE_BUFFER_ITEMS(
       self->insts->buffer, self->insts->len, LilyMirInstruction);
     FREE(Vec, self->insts);
