@@ -22,28 +22,13 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_MIR_LINKAGE_H
-#define LILY_CORE_LILY_MIR_LINKAGE_H
+#ifndef LILY_CORE_LILY_MIR_GENERATOR_DT_H
+#define LILY_CORE_LILY_MIR_GENERATOR_DT_H
 
-#include <core/lily/visibility.h>
+#include <core/lily/checked/data_type.h>
+#include <core/lily/mir.h>
 
-enum LilyMirLinkage
-{
-    LILY_MIR_LINKAGE_PRIVATE,
-    LILY_MIR_LINKAGE_PUBLIC,
-};
+LilyMirDt *
+generate_dt__LilyMir(LilyCheckedDataType *data_type);
 
-enum LilyMirLinkage
-get_linkage_from_visibility(enum LilyVisibility visibility);
-
-/**
- *
- * @brief Convert LilyMirLinkage in string.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string, LilyMirLinkage, enum LilyMirLinkage self);
-#endif
-
-#endif // LILY_CORE_LILY_MIR_LINKAGE_H
+#endif // LILY_CORE_LILY_MIR_GENERATOR_DT_H

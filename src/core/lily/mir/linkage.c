@@ -24,6 +24,23 @@
 
 #include <core/lily/mir/linkage.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
+enum LilyMirLinkage
+get_linkage_from_visibility(enum LilyVisibility visibility)
+{
+    switch (visibility) {
+        case LILY_VISIBILITY_PRIVATE:
+        case LILY_VISIBILITY_STATIC:
+            return LILY_MIR_LINKAGE_PRIVATE;
+        case LILY_VISIBILITY_PUBLIC:
+            return LILY_MIR_LINKAGE_PUBLIC;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, LilyMirLinkage, enum LilyMirLinkage self)

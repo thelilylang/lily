@@ -22,28 +22,30 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_MIR_LINKAGE_H
-#define LILY_CORE_LILY_MIR_LINKAGE_H
+#include <core/lily/mir/generator.h>
+#include <core/lily/package.h>
 
-#include <core/lily/visibility.h>
-
-enum LilyMirLinkage
+void
+run__LilyMir(LilyPackage *self)
 {
-    LILY_MIR_LINKAGE_PRIVATE,
-    LILY_MIR_LINKAGE_PUBLIC,
-};
+    for (Usize i = 0; i < self->analysis.module.decls->len; ++i) {
+        LilyCheckedDecl *decl = get__Vec(self->analysis.module.decls, i);
 
-enum LilyMirLinkage
-get_linkage_from_visibility(enum LilyVisibility visibility);
-
-/**
- *
- * @brief Convert LilyMirLinkage in string.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string, LilyMirLinkage, enum LilyMirLinkage self);
-#endif
-
-#endif // LILY_CORE_LILY_MIR_LINKAGE_H
+        switch (decl->kind) {
+            case LILY_CHECKED_DECL_KIND_CONSTANT:
+                break;
+            case LILY_CHECKED_DECL_KIND_ERROR:
+                break;
+            case LILY_CHECKED_DECL_KIND_FUN:
+                break;
+            case LILY_CHECKED_DECL_KIND_METHOD:
+                break;
+            case LILY_CHECKED_DECL_KIND_MODULE:
+                break;
+            case LILY_CHECKED_DECL_KIND_OBJECT:
+                break;
+            case LILY_CHECKED_DECL_KIND_TYPE:
+                break;
+        }
+    }
+}

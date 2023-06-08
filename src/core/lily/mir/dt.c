@@ -37,6 +37,8 @@ static inline VARIANT_DESTRUCTOR(LilyMirDt, bytes, LilyMirDt *self);
 
 static VARIANT_DESTRUCTOR(LilyMirDt, exception, LilyMirDt *self);
 
+static VARIANT_DESTRUCTOR(LilyMirDt, list, LilyMirDt *self);
+
 static VARIANT_DESTRUCTOR(LilyMirDt, ptr, LilyMirDt *self);
 
 static VARIANT_DESTRUCTOR(LilyMirDt, ref, LilyMirDt *self);
@@ -89,6 +91,16 @@ VARIANT_CONSTRUCTOR(LilyMirDt *,
 
     self->kind = LILY_MIR_DT_KIND_EXCEPTION;
     self->exception = exception;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, list, LilyMirDt *list)
+{
+    LilyMirDt *self = lily_malloc(sizeof(LilyMirDt));
+
+    self->kind = LILY_MIR_DT_KIND_LIST;
+    self->list = list;
 
     return self;
 }
@@ -171,6 +183,8 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyMirDt, const LilyMirDt *self)
 {
     switch (self->kind) {
+        case LILY_MIR_DT_KIND_ANY:
+            return format__String("\x1b[35many\x1b[0m");
         case LILY_MIR_DT_KIND_ARRAY:
             return format__String("\x1b[35m[{d} x {Sr}]\x1b[0m",
                                   self->array.len,
@@ -198,6 +212,9 @@ IMPL_FOR_DEBUG(to_string, LilyMirDt, const LilyMirDt *self)
             return format__String("\x1b[35mf32\x1b[0m");
         case LILY_MIR_DT_KIND_F64:
             return format__String("\x1b[35mf64\x1b[0m");
+        case LILY_MIR_DT_KIND_LIST:
+            return format__String("\x1b[35m{{{Sr}}\x1b[0m",
+                                  to_string__Debug__LilyMirDt(self->list));
         case LILY_MIR_DT_KIND_PTR:
             return format__String("\x1b[35m*{Sr}\x1b[0m",
                                   to_string__Debug__LilyMirDt(self->ptr));
@@ -283,6 +300,12 @@ VARIANT_DESTRUCTOR(LilyMirDt, exception, LilyMirDt *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyMirDt, list, LilyMirDt *self)
+{
+    FREE(LilyMirDt, self->list);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyMirDt, ptr, LilyMirDt *self)
 {
     FREE(LilyMirDt, self->ptr);
@@ -336,6 +359,9 @@ DESTRUCTOR(LilyMirDt, LilyMirDt *self)
             break;
         case LILY_MIR_DT_KIND_EXCEPTION:
             FREE_VARIANT(LilyMirDt, exception, self);
+            break;
+        case LILY_MIR_DT_KIND_LIST:
+            FREE_VARIANT(LilyMirDt, list, self);
             break;
         case LILY_MIR_DT_KIND_PTR:
             FREE_VARIANT(LilyMirDt, ptr, self);

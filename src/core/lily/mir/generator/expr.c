@@ -22,28 +22,10 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_MIR_LINKAGE_H
-#define LILY_CORE_LILY_MIR_LINKAGE_H
+#include <core/lily/mir/generator/expr.h>
 
-#include <core/lily/visibility.h>
-
-enum LilyMirLinkage
+LilyMirInstruction *
+generate_expr__LilyMir(LilyCheckedExpr *expr)
 {
-    LILY_MIR_LINKAGE_PRIVATE,
-    LILY_MIR_LINKAGE_PUBLIC,
-};
-
-enum LilyMirLinkage
-get_linkage_from_visibility(enum LilyVisibility visibility);
-
-/**
- *
- * @brief Convert LilyMirLinkage in string.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string, LilyMirLinkage, enum LilyMirLinkage self);
-#endif
-
-#endif // LILY_CORE_LILY_MIR_LINKAGE_H
+    return NULL;
+}

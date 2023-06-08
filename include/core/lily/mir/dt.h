@@ -33,10 +33,13 @@
 #include <base/string.h>
 #endif
 
+// TODO: add lambda data type
+
 typedef struct LilyMirDt LilyMirDt;
 
 enum LilyMirDtKind
 {
+    LILY_MIR_DT_KIND_ANY,
     LILY_MIR_DT_KIND_ARRAY,
     LILY_MIR_DT_KIND_BYTES,
     LILY_MIR_DT_KIND_EXCEPTION,
@@ -48,6 +51,7 @@ enum LilyMirDtKind
     LILY_MIR_DT_KIND_ISIZE,
     LILY_MIR_DT_KIND_F32,
     LILY_MIR_DT_KIND_F64,
+    LILY_MIR_DT_KIND_LIST,
     LILY_MIR_DT_KIND_PTR,
     LILY_MIR_DT_KIND_REF,
     LILY_MIR_DT_KIND_STR,
@@ -61,6 +65,7 @@ enum LilyMirDtKind
     LILY_MIR_DT_KIND_U64,
     LILY_MIR_DT_KIND_UNIT,
     LILY_MIR_DT_KIND_USIZE,
+    LILY_MIR_DT_KIND_C_VA_ARG
 };
 
 typedef struct LilyMirDtArray
@@ -125,6 +130,7 @@ typedef struct LilyMirDt
         LilyMirDtArray array;
         Usize bytes;
         LilyMirDtException exception;
+        LilyMirDt *list;
         LilyMirDt *ptr;
         LilyMirDt *ref;
         Usize str;
@@ -161,6 +167,12 @@ VARIANT_CONSTRUCTOR(LilyMirDt *,
                     LilyMirDt,
                     exception,
                     LilyMirDtException exception);
+
+/**
+ *
+ * @brief Construct LilyMirDt type (LILY_MIR_DT_KIND_LIST).
+ */
+VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, list, LilyMirDt *list);
 
 /**
  *

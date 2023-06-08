@@ -22,28 +22,24 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_MIR_LINKAGE_H
-#define LILY_CORE_LILY_MIR_LINKAGE_H
+#include <core/lily/mir/generator/constant.h>
+#include <core/lily/mir/generator/expr.h>
 
-#include <core/lily/visibility.h>
-
-enum LilyMirLinkage
+LilyMirInstruction *
+generate_constant__LilyMir(LilyCheckedDecl *constant)
 {
-    LILY_MIR_LINKAGE_PRIVATE,
-    LILY_MIR_LINKAGE_PUBLIC,
-};
+    LilyMirInstruction *inst = generate_expr__LilyMir(constant->constant.expr);
+    LilyMirInstructionVal *val = LilyMirGetValFromInst(inst);
 
-enum LilyMirLinkage
-get_linkage_from_visibility(enum LilyVisibility visibility);
+    LilyMirInstruction *const_ = NEW_VARIANT(
+      LilyMirInstruction,
+      const,
+      NEW(LilyMirInstructionConst,
+          get_linkage_from_visibility(constant->constant.visibility),
+          constant->constant.global_name->buffer,
+          val));
 
-/**
- *
- * @brief Convert LilyMirLinkage in string.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string, LilyMirLinkage, enum LilyMirLinkage self);
-#endif
+    lily_free(inst);
 
-#endif // LILY_CORE_LILY_MIR_LINKAGE_H
+    return const_;
+}

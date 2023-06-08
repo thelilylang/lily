@@ -705,6 +705,7 @@ typedef struct LilyMirInstructionFun
     const char *name; // const char* (&)
     Vec *args;        // Vec<LilyMirInstruction*>*
     Vec *insts;       // Vec<LilyMirInstruction*>*
+    LilyMirInstructionBlock *current_block;
 } LilyMirInstructionFun;
 
 /**
@@ -718,9 +719,11 @@ inline CONSTRUCTOR(LilyMirInstructionFun,
                    Vec *args,
                    Vec *insts)
 {
-    return (LilyMirInstructionFun){
-        .linkage = linkage, .name = name, .args = args, .insts = insts
-    };
+    return (LilyMirInstructionFun){ .linkage = linkage,
+                                    .name = name,
+                                    .args = args,
+                                    .insts = insts,
+                                    .current_block = NULL };
 }
 
 /**
@@ -1760,4 +1763,4 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self);
  */
 DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self);
 
-#endif // LILY_CORE_LILY_IR_INSTRUCTION_H
+#endif // LILY_CORE_LILY_MIR_INSTRUCTION_H
