@@ -27,8 +27,18 @@
 
 enum LilyMirLinkage
 {
-    LILY_MIR_INSTRUCTION_LINKAGE_PRIVATE,
-    LILY_MIR_INSTRUCTION_LINKAGE_PUBLIC,
+    LILY_MIR_LINKAGE_PRIVATE,
+    LILY_MIR_LINKAGE_PUBLIC,
 };
+
+/**
+ *
+ * @brief Convert LilyMirLinkage in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyMirLinkage, enum LilyMirLinkage self);
+#endif
 
 #endif // LILY_CORE_LILY_MIR_LINKAGE_H
