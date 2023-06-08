@@ -298,6 +298,10 @@ static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
                                  LilyMirInstruction *self);
 
 static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
+                                 struct,
+                                 LilyMirInstruction *self);
+
+static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
                                  switch,
                                  LilyMirInstruction *self);
 
@@ -1077,6 +1081,39 @@ IMPL_FOR_DEBUG(to_string,
       self->catch_block->name);
 }
 #endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionStruct,
+               const LilyMirInstructionStruct *self)
+{
+    String *res =
+      format__String("{s} struct {s} {{",
+                     to_string__Debug__LilyMirLinkage(self->linkage),
+                     self->name);
+
+    for (Usize i = 0; i < self->fields->len; ++i) {
+        String *field = to_string__Debug__LilyMirDt(get__Vec(self->fields, i));
+
+        APPEND_AND_FREE(res, field);
+
+        if (i + 1 != self->fields->len) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, "}");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyMirInstructionStruct, const LilyMirInstructionStruct *self)
+{
+    FREE_BUFFER_ITEMS(self->fields->buffer, self->fields->len, LilyMirDt);
+    FREE(Vec, self->fields);
+}
 
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
@@ -1888,6 +1925,19 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
+                    struct,
+                    LilyMirInstructionStruct struct_)
+{
+    LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
+
+    self->kind = LILY_MIR_INSTRUCTION_KIND_STRUCT;
+    self->struct_ = struct_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
                     switch,
                     LilyMirInstructionSwitch switch_)
 {
@@ -2282,6 +2332,9 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
             res = format__String(
               "store {Sr}",
               to_string__Debug__LilyMirInstructionSrcDest(&self->store));
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_STRUCT:
+            res = to_string__Debug__LilyMirInstructionStruct(&self->struct_);
             break;
         case LILY_MIR_INSTRUCTION_KIND_SWITCH:
             res = format__String(
@@ -2693,6 +2746,12 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, store, LilyMirInstruction *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyMirInstruction, struct, LilyMirInstruction *self)
+{
+    FREE(LilyMirInstructionStruct, &self->struct_);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyMirInstruction, switch, LilyMirInstruction *self)
 {
     FREE(LilyMirInstructionSwitch, &self->switch_);
@@ -2923,6 +2982,9 @@ DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self)
             break;
         case LILY_MIR_INSTRUCTION_KIND_STORE:
             FREE_VARIANT(LilyMirInstruction, store, self);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_STRUCT:
+            FREE_VARIANT(LilyMirInstruction, struct, self);
             break;
         case LILY_MIR_INSTRUCTION_KIND_SWITCH:
             FREE_VARIANT(LilyMirInstruction, switch, self);

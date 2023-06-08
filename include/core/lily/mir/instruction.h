@@ -95,6 +95,7 @@ enum LilyMirInstructionKind
     LILY_MIR_INSTRUCTION_KIND_SHL,
     LILY_MIR_INSTRUCTION_KIND_SHR,
     LILY_MIR_INSTRUCTION_KIND_STORE,
+    LILY_MIR_INSTRUCTION_KIND_STRUCT,
     LILY_MIR_INSTRUCTION_KIND_SWITCH,
     LILY_MIR_INSTRUCTION_KIND_SYS_CALL,
     LILY_MIR_INSTRUCTION_KIND_TRUNC,
@@ -939,6 +940,46 @@ inline DESTRUCTOR(LilyMirInstructionTry, const LilyMirInstructionTry *self)
     FREE(LilyMirInstructionVal, self->val);
 }
 
+typedef struct LilyMirInstructionStruct
+{
+    enum LilyMirLinkage linkage;
+    const char *name;
+    Vec *fields; // Vec<LilyMirDt*>*
+} LilyMirInstructionStruct;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionStruct type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionStruct,
+                   LilyMirInstructionStruct,
+                   enum LilyMirLinkage linkage,
+                   const char *name,
+                   Vec *fields)
+{
+    return (LilyMirInstructionStruct){ .linkage = linkage,
+                                       .name = name,
+                                       .fields = fields };
+}
+
+/**
+ *
+ * @brief Convert LilyMirInstructionStruct in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionStruct,
+               const LilyMirInstructionStruct *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyMirInstructionStruct type.
+ */
+DESTRUCTOR(LilyMirInstructionStruct, const LilyMirInstructionStruct *self);
+
 typedef struct LilyMirInstruction
 {
     enum LilyMirInstructionKind kind;
@@ -1006,6 +1047,7 @@ typedef struct LilyMirInstruction
         LilyMirInstructionSrcDest shl;
         LilyMirInstructionSrcDest shr;
         LilyMirInstructionSrcDest store;
+        LilyMirInstructionStruct struct_;
         LilyMirInstructionSwitch switch_;
         LilyMirInstructionCall sys_call;
         LilyMirInstructionValDt trunc;
@@ -1621,6 +1663,16 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     store,
                     LilyMirInstructionSrcDest store);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_STRUCT).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    struct,
+                    LilyMirInstructionStruct struct_);
 
 /**
  *
