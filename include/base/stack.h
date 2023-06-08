@@ -35,8 +35,8 @@
 */
 typedef struct Stack
 {
-    void *top;
-    void **buffer;
+    void *top;     // void*?
+    void **buffer; // void**?
     Usize len;
     Usize max_size;
 } Stack;

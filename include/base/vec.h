@@ -102,7 +102,7 @@ typedef struct String String;
 
 typedef struct Vec
 {
-    void **buffer;
+    void **buffer; // void**?
     Usize len;
     Usize capacity;
     Usize default_capacity;
