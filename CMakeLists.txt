@@ -321,10 +321,16 @@ set(CORE_SRC
 	src/core/lily/ir/cpp.c
 	src/core/lily/ir/js.c
 	src/core/lily/ir/llvm.c
+	src/core/lily/mir/generator/constant.c
+	src/core/lily/mir/generator/dt.c
+	src/core/lily/mir/generator/expr.c
+	src/core/lily/mir/generator/fun.c
+	src/core/lily/mir/generator/val.c
+	src/core/lily/mir/generator/stmt/variable.c
 	src/core/lily/mir/dt.c
 	src/core/lily/mir/instruction.c
 	src/core/lily/mir/linkage.c
-	src/core/lily/mir/translator.c
+	src/core/lily/mir/generator.c
 	src/core/lily/package/config.c
 	src/core/lily/package/default_path.c
 	src/core/lily/package/dependency_tree.c
