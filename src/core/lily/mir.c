@@ -32,3 +32,14 @@ DESTRUCTOR(LilyMirNameManager, const LilyMirNameManager *self)
 
     FREE(Vec, self->names);
 }
+
+LilyMirInstructionVal *
+LilyMirGetValFromInst(LilyMirInstruction *inst)
+{
+    switch (inst->kind) {
+        case LILY_MIR_INSTRUCTION_KIND_VAL:
+            return inst->val;
+        default:
+            return NULL;
+    }
+}

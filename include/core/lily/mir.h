@@ -155,6 +155,10 @@ typedef struct LilyMirModule
     LilyMirCurrent current;
 } LilyMirModule;
 
+/**
+ *
+ * @brief Create MIR module.
+ */
 inline LilyMirModule
 LilyMirCreateModule()
 {
@@ -183,5 +187,8 @@ LilyMirBuildRet(LilyMirModule *Module);
 
 LilyMirInstruction *
 LilyMirBuildJmp(LilyMirModule *Module);
+
+LilyMirInstructionVal *
+LilyMirGetValFromInst(LilyMirInstruction *inst);
 
 #endif // LILY_CORE_LILY_MIR_H
