@@ -347,6 +347,7 @@ set(CORE_SRC
 	src/core/lily/file.c
 	src/core/lily/ir.c
 	src/core/lily/linker.c
+	src/core/lily/mir.c
 	src/core/lily/package.c
 	src/core/lily/parser.c
 	src/core/lily/precompile.c
