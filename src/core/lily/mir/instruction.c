@@ -22,10 +22,14 @@
  * SOFTWARE.
  */
 
+#include <base/format.h>
+
 #include <core/lily/mir/instruction.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+
+static Usize tab_count = 0;
 
 static VARIANT_DESTRUCTOR(LilyMirInstructionVal,
                           array,
@@ -246,10 +250,6 @@ static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
 
 static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
                                  load,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 loop,
                                  LilyMirInstruction *self);
 
 static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
@@ -535,6 +535,177 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionVal,
+               const LilyMirInstructionVal *self)
+{
+    String *res = format__String("\x1b[31mval\x1b[0m({Sr}) ",
+                                 to_string__Debug__LilyMirDt(self->dt));
+
+    switch (self->kind) {
+        case LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY:
+            push_str__String(res, "[");
+
+            for (Usize i = 0; i < self->array->len; ++i) {
+                String *item = to_string__Debug__LilyMirInstructionVal(
+                  get__Vec(self->array, i));
+
+                APPEND_AND_FREE(res, item);
+            }
+
+            push_str__String(res, "]");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_BYTES:
+            push_str__String(res, "b\"");
+            push_str__String(res, (char *)self->bytes);
+            push_str__String(res, "\"");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION:
+            if (self->exception[0]) {
+                push_str__String(res, "\x1b[33m@Ok\x1b[0m(");
+
+                String *ok_string =
+                  to_string__Debug__LilyMirInstructionVal(self->exception[0]);
+                APPEND_AND_FREE(res, ok_string);
+
+                push_str__String(res, ")");
+            } else {
+                push_str__String(res, "\x1b[33m@Err\x1b[0m(");
+
+                String *err_string =
+                  to_string__Debug__LilyMirInstructionVal(self->exception[1]);
+                APPEND_AND_FREE(res, err_string);
+
+                push_str__String(res, ")");
+            }
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_FLOAT: {
+            char *s = format("\x1b[33m{f}\x1b[0m", self->float_);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            return res;
+        }
+        case LILY_MIR_INSTRUCTION_VAL_KIND_INT: {
+            char *s = format("\x1b[33m{d}\x1b[0m", self->int_);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            return res;
+        }
+        case LILY_MIR_INSTRUCTION_VAL_KIND_LIST:
+            push_str__String(res, "{");
+
+            for (Usize i = 0; i < self->list->len; ++i) {
+                String *item = to_string__Debug__LilyMirInstructionVal(
+                  get__Vec(self->list, i));
+
+                APPEND_AND_FREE(res, item);
+            }
+
+            push_str__String(res, "}");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_NIL:
+            push_str__String(res, "\x1b[33mnil\x1b[0m");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_REG:
+            push_str__String(res, "\x1b[33m%");
+            push_str__String(res, (char *)self->reg);
+            push_str__String(res, "\x1b[0m");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_SLICE:
+            push_str__String(res, "&[");
+
+            for (Usize i = 0; i < self->slice->len; ++i) {
+                String *item = to_string__Debug__LilyMirInstructionVal(
+                  get__Vec(self->slice, i));
+
+                APPEND_AND_FREE(res, item);
+            }
+
+            push_str__String(res, "]");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_STR:
+            push_str__String(res, "\x1b[32m\"");
+            push_str__String(res, (char *)self->bytes);
+            push_str__String(res, "\"\x1b[0m");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_STRUCT:
+            push_str__String(res, "\x1b[33mstruct\x1b[0m {");
+
+            for (Usize i = 0; i < self->struct_->len; ++i) {
+                char *item = format("{d} = {Sr}",
+                                    to_string__Debug__LilyMirInstructionVal(
+                                      get__Vec(self->struct_, i)));
+
+                PUSH_STR_AND_FREE(res, item);
+
+                if (i + 1 != self->struct_->len) {
+                    push_str__String(res, ", ");
+                }
+            }
+
+            push_str__String(res, "}");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_TRACE: {
+            char *s =
+              format("\x1b[33mtrace\x1b[0m {Sr}",
+                     to_string__Debug__LilyMirInstructionVal(self->trace));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            return res;
+        }
+        case LILY_MIR_INSTRUCTION_VAL_KIND_TUPLE:
+            push_str__String(res, "(");
+
+            for (Usize i = 0; i < self->tuple->len; ++i) {
+                char *item = format("{Sr}",
+                                    to_string__Debug__LilyMirInstructionVal(
+                                      get__Vec(self->tuple, i)));
+
+                PUSH_STR_AND_FREE(res, item);
+
+                if (i + 1 != self->tuple->len) {
+                    push_str__String(res, ", ");
+                }
+            }
+
+            push_str__String(res, ")");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_UINT: {
+            char *s = format("\x1b[33m{d}\x1b[0m", self->uint);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            return res;
+        }
+        case LILY_MIR_INSTRUCTION_VAL_KIND_UNDEF:
+            push_str__String(res, "\x1b[33mundef\x1b[0m");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_UNIT:
+            push_str__String(res, "\x1b[33m()\x1b[0m");
+
+            return res;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
 VARIANT_DESTRUCTOR(LilyMirInstructionVal, array, LilyMirInstructionVal *self)
 {
     FREE(LilyMirDt, self->dt);
@@ -591,6 +762,102 @@ DESTRUCTOR(LilyMirInstructionVal, LilyMirInstructionVal *self)
     }
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionSrcDest,
+               const LilyMirInstructionSrcDest *self)
+{
+    return format__String("{Sr}, {Sr}",
+                          to_string__Debug__LilyMirInstructionVal(self->dest),
+                          to_string__Debug__LilyMirInstructionVal(self->src));
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionSrc,
+               const LilyMirInstructionSrc *self)
+{
+    return format__String("{Sr}",
+                          to_string__Debug__LilyMirInstructionVal(self->src));
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionAlloc,
+               const LilyMirInstructionAlloc *self)
+{
+    return format__String("alloc {Sr}", to_string__Debug__LilyMirDt(self->dt));
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionArg,
+               const LilyMirInstructionArg *self)
+{
+    return format__String(
+      "{Sr} {s}", to_string__Debug__LilyMirDt(self->dt), self->name);
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionAsm,
+               const LilyMirInstructionAsm *self)
+{
+    return format__String("asm({s})", self->content);
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionValDt,
+               const LilyMirInstructionValDt *self)
+{
+    return format__String("{Sr} -> {Sr}",
+                          to_string__Debug__LilyMirInstructionVal(self->val),
+                          to_string__Debug__LilyMirDt(self->dt));
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionBlock,
+               const LilyMirInstructionBlock *self)
+{
+    String *res =
+      format__String("{Sr}{s}:", repeat__String("\t", tab_count), self->name);
+
+    ++tab_count;
+
+    String *tab = repeat__String("\t", tab_count);
+
+    for (Usize i = 0; i < self->insts->len; ++i) {
+        String *item = format__String(
+          "{S}{Sr}",
+          tab,
+          to_string__Debug__LilyMirInstruction(get__Vec(self->insts, i)));
+
+        APPEND_AND_FREE(res, item);
+    }
+
+    FREE(String, tab);
+
+    --tab_count;
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyMirInstructionBlock, const LilyMirInstructionBlock *self)
 {
     lily_free(self->name);
@@ -599,12 +866,93 @@ DESTRUCTOR(LilyMirInstructionBlock, const LilyMirInstructionBlock *self)
     FREE(Vec, self->insts);
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionCall,
+               const LilyMirInstructionCall *self)
+{
+    String *res = format__String("call {s}(", self->name);
+
+    for (Usize i = 0; i < self->params->len; ++i) {
+        String *param =
+          to_string__Debug__LilyMirInstructionVal(get__Vec(self->params, i));
+
+        APPEND_AND_FREE(res, param);
+
+        if (i + 1 != self->params->len) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, ")");
+
+    return res;
+}
+#endif
+
 DESTRUCTOR(LilyMirInstructionCall, const LilyMirInstructionCall *self)
 {
     FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, LilyMirInstruction);
+      self->params->buffer, self->params->len, LilyMirInstructionVal);
     FREE(Vec, self->params);
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionConst,
+               const LilyMirInstructionConst *self)
+{
+    return format__String("{s} \x1b[34mconst\x1b[0m {s} = {Sr}",
+                          to_string__Debug__LilyMirLinkage(self->linkage),
+                          self->name,
+                          to_string__Debug__LilyMirInstructionVal(self->val));
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionFun,
+               const LilyMirInstructionFun *self)
+{
+    String *res = format__String("{s} \x1b[36mfun\x1b[0m {s}(");
+
+    for (Usize i = 0; i < self->args->len; ++i) {
+        String *item =
+          to_string__Debug__LilyMirInstruction(get__Vec(self->args, i));
+
+        APPEND_AND_FREE(res, item);
+
+        if (i + 1 != self->args->len) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, ") {\n");
+
+    ++tab_count;
+
+    String *tab = repeat__String("\t", tab_count);
+
+    for (Usize i = 0; i < self->insts->len; ++i) {
+        String *item = format__String(
+          "{Sr}\n",
+          to_string__Debug__LilyMirInstruction(get__Vec(self->insts, i)));
+
+        APPEND_AND_FREE(res, item);
+    }
+
+    FREE(String, tab);
+
+    --tab_count;
+
+    push_str__String(res, "}");
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
 {
@@ -614,6 +962,31 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
       self->insts->buffer, self->insts->len, LilyMirInstruction);
     FREE(Vec, self->insts);
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionJmpCond,
+               const LilyMirInstructionJmpCond *self)
+{
+    return format__String(
+      "\x1b[34mjmpcond\x1b[0m {Sr}, \x1b[33mblock\x1b[0m {s}",
+      to_string__Debug__LilyMirInstructionVal(self->cond),
+      self->block->name);
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionReg,
+               const LilyMirInstructionReg *self)
+{
+    return format__String("%{s} = {Sr}",
+                          self->name,
+                          to_string__Debug__LilyMirInstruction(self->inst));
+}
+#endif
 
 CONSTRUCTOR(LilyMirInstructionSwitchCase *,
             LilyMirInstructionSwitchCase,
@@ -629,11 +1002,58 @@ CONSTRUCTOR(LilyMirInstructionSwitchCase *,
     return self;
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionSwitchCase,
+               const LilyMirInstructionSwitchCase *self)
+{
+    return format__String("case {Sr}, block {s}",
+                          to_string__Debug__LilyMirInstructionVal(self->val),
+                          self->block_dest->name);
+}
+#endif
+
 DESTRUCTOR(LilyMirInstructionSwitchCase, LilyMirInstructionSwitchCase *self)
 {
     FREE(LilyMirInstructionVal, self->val);
     lily_free(self);
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionSwitch,
+               const LilyMirInstructionSwitch *self)
+{
+    String *res =
+      format__String("switch {Sr}, block {s} {{",
+                     to_string__Debug__LilyMirInstructionVal(self->val),
+                     self->default_block->name);
+
+    ++tab_count;
+
+    String *tab = repeat__String("\t", tab_count);
+
+    for (Usize i = 0; i < self->cases->len; ++i) {
+        String *case_ =
+          format__String("{S}{Sr}\n",
+                         to_string__Debug__LilyMirInstructionSwitchCase(
+                           get__Vec(self->cases, i)));
+
+        APPEND_AND_FREE(res, case_);
+    }
+
+    --tab_count;
+
+    append__String(res, tab);
+    push_str__String(res, "}");
+
+    FREE(String, tab);
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyMirInstructionSwitch, const LilyMirInstructionSwitch *self)
 {
@@ -642,6 +1062,21 @@ DESTRUCTOR(LilyMirInstructionSwitch, const LilyMirInstructionSwitch *self)
       self->cases->buffer, self->cases->len, LilyMirInstructionSwitch);
     FREE(Vec, self->cases);
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionTry,
+               const LilyMirInstructionTry *self)
+{
+    return format__String(
+      "try {Sr}, block {s}\ncatch -> {Sr}, block {s}",
+      to_string__Debug__LilyMirInstructionVal(self->val),
+      self->try_block->name,
+      to_string__Debug__LilyMirInstructionVal(self->catch_val),
+      self->catch_block->name);
+}
+#endif
 
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
@@ -1309,19 +1744,6 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
-                    loop,
-                    LilyMirInstructionBlock loop)
-{
-    LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
-
-    self->kind = LILY_MIR_INSTRUCTION_KIND_LOOP;
-    self->loop = loop;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyMirInstruction *,
-                    LilyMirInstruction,
                     makeref,
                     LilyMirInstructionSrc makeref)
 {
@@ -1554,6 +1976,228 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
+{
+	String *res = NULL;
+
+	switch (self->kind) {
+		case LILY_MIR_INSTRUCTION_KIND_ALLOC:
+			res = format__String("alloc {Sr}", to_string__Debug__LilyMirInstructionAlloc(&self->alloc));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_AND:
+			res = format__String("and {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->and));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ARG:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionArg(&self->arg));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ASM:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionAsm(&self->asm));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_BITCAST:
+			res = format__String("bitcast {Sr}", to_string__Debug__LilyMirInstructionValDt(&self->bitcast));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_BITAND:
+			res = format__String("bitand {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->bitand));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_BITNOT:
+			res = format__String("bitnot {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->bitnot));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_BITOR:
+			res = format__String("bitor {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->bitor));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_BLOCK:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionBlock(&self->block));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_BUILTIN_CALL:
+			res = format__String("call @builtin.{Sr}", to_string__Debug__LilyMirInstructionCall(&self->builtin_call));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_CALL:
+			res = format__String("call {Sr}", to_string__Debug__LilyMirInstructionCall(&self->call));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_CONST:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionConst(&self->const_));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_DROP:
+			res = format__String("drop {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->drop));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_EXP:
+			res = format__String("exp {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->exp));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FADD:
+			res = format__String("fadd {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->fadd));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FCMP_EQ:
+			res = format__String("fcmp eq {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_eq));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FCMP_NE:
+			res = format__String("fcmp ne {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_ne));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FCMP_LE:
+			res = format__String("fcmp le {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_le));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FCMP_LT:
+			res = format__String("fcmp lt {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_lt));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FCMP_GE:
+			res = format__String("fcmp ge {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_ge));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FCMP_GT:
+			res = format__String("fcmp gt {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_gt));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FDIV:
+			res = format__String("fdiv {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->fdiv));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FMUL:
+			res = format__String("fmul {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->fmul));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FNEG:
+			res = format__String("fneg {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->fneg));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FREM:
+			res = format__String("frem {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->frem));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_FUN:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionFun(&self->fun));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_GETARG:
+			res = format__String("getarg {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->getarg));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_GETARRAY:
+			res = format__String("getarray {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->getarray));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_GETLIST:
+			res = format__String("getlist {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->getlist));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_GETSLICE:
+			res = format__String("getslice {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->getslice));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_GETFIELD:
+			res = format__String("getfield {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->getfield));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_GETPTR:
+			res = format__String("getptr {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->getptr));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_IADD:
+			res = format__String("iadd {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->iadd));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ICMP_EQ:
+			res = format__String("icmp eq {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_eq));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ICMP_NE:
+			res = format__String("icmp ne {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_ne));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ICMP_LE:
+			res = format__String("icmp le {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_le));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ICMP_LT:
+			res = format__String("icmp lt {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_lt));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ICMP_GE:
+			res = format__String("icmp ge {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_ge));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ICMP_GT:
+			res = format__String("icmp gt {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_gt));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_IDIV:
+			res = format__String("idiv {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->idiv));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_IMUL:
+			res = format__String("imul {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->imul));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_INCTRACE:
+			res = format__String("inctrace {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->inctrace));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_INEG:
+			res = format__String("ineg {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->ineg));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_IREM:
+			res = format__String("irem {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->irem));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ISOK:
+			res = format__String("isok {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->isok));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ISERR:
+			res = format__String("iserr {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->iserr));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_ISUB:
+			res = format__String("isub {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->isub));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_JMP:
+			res = format__String("jmp block {s}", self->jmp->name);
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_JMPCOND:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionJmpCond(&self->jmpcond));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_LEN:
+			res = format__String("len {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->len));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_LOAD:
+			res = format__String("load {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->load));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_MAKEREF:
+			res = format__String("makeref {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->makeref));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_MAKEOPT:
+			res = format__String("makeopt {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->makeopt));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_NON_NIL:
+			res = format__String("non_nil {Sr}", to_string__Debug__LilyMirInstruction(self->non_nil));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_NOT:
+			res = format__String("not {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->not));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_OR:
+			res = format__String("or {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->or));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_REF_PTR:
+			res = format__String("ref_ptr {Sr}", to_string__Debug__LilyMirInstructionSrc(&self->ref_ptr));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_REG:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionReg(&self->reg));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_RET:
+			res = format__String("ret {Sr}", to_string__Debug__LilyMirInstruction(self->ret));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_SHL:
+			res = format__String("shl {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->shl));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_SHR:
+			res = format__String("shr {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->shr));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_STORE:
+			res = format__String("store {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->store));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_SWITCH:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionSwitch(&self->switch_));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_SYS_CALL:
+			res = format__String("call @sys.{Sr}", to_string__Debug__LilyMirInstructionCall(&self->sys_call));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_TRUNC:	
+			res = format__String("trunc {Sr}", to_string__Debug__LilyMirInstructionValDt(&self->trunc));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_TRY:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionTry(&self->try));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_TRY_PTR:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionTry(&self->try_ptr));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_VAL:
+			res = format__String("{Sr}", to_string__Debug__LilyMirInstructionVal(self->val));
+			break;
+		case LILY_MIR_INSTRUCTION_KIND_XOR:
+			res = format__String("xor {Sr}", to_string__Debug__LilyMirInstructionSrcDest(&self->xor));
+			break;
+		default:
+			UNREACHABLE("unknown variant");
+	}
+
+	return res;
+}
+#endif
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, alloc, LilyMirInstruction *self)
 {
@@ -1859,12 +2503,6 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, load, LilyMirInstruction *self)
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyMirInstruction, loop, LilyMirInstruction *self)
-{
-    FREE(LilyMirInstructionBlock, &self->block);
-    lily_free(self);
-}
-
 VARIANT_DESTRUCTOR(LilyMirInstruction, makeref, LilyMirInstruction *self)
 {
     FREE(LilyMirInstructionSrc, &self->makeref);
@@ -2128,9 +2766,6 @@ DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self)
             break;
         case LILY_MIR_INSTRUCTION_KIND_LOAD:
             FREE_VARIANT(LilyMirInstruction, load, self);
-            break;
-        case LILY_MIR_INSTRUCTION_KIND_LOOP:
-            FREE_VARIANT(LilyMirInstruction, loop, self);
             break;
         case LILY_MIR_INSTRUCTION_KIND_MAKEREF:
             FREE_VARIANT(LilyMirInstruction, makeref, self);

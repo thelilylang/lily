@@ -84,7 +84,6 @@ enum LilyMirInstructionKind
     LILY_MIR_INSTRUCTION_KIND_JMPCOND,
     LILY_MIR_INSTRUCTION_KIND_LEN,
     LILY_MIR_INSTRUCTION_KIND_LOAD,
-    LILY_MIR_INSTRUCTION_KIND_LOOP,
     LILY_MIR_INSTRUCTION_KIND_MAKEREF,
     LILY_MIR_INSTRUCTION_KIND_MAKEOPT,
     LILY_MIR_INSTRUCTION_KIND_NON_NIL,
@@ -138,8 +137,8 @@ typedef struct LilyMirInstructionVal
     {
         Vec *array;         // Vec<LilyMirInstructionVal*>*
         const Uint8 *bytes; // const Uint8* (&)
+        struct LilyMirInstructionVal *exception[2]; // [ok?, err?]
         Float64 float_;
-        struct LilyMirInstructionVal *exception[2]; // [ok, err]
         Int64 int_;
         Vec *list;       // Vec<LilyMirInstructionVal*>*
         const char *reg; // const char* (&)
@@ -307,6 +306,18 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
 /**
  *
+ * @brief Convert LilyMirInstructionVal in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionVal,
+               const LilyMirInstructionVal *self);
+#endif
+
+/**
+ *
  * @brief Free LilyMirInstructionVal type.
  */
 DESTRUCTOR(LilyMirInstructionVal, LilyMirInstructionVal *self);
@@ -355,6 +366,18 @@ inline CONSTRUCTOR(LilyMirInstructionSrcDest,
 
 /**
  *
+ * @brief Convert LilyMirInstructionSrcDest in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionSrcDest,
+               const LilyMirInstructionSrcDest *self);
+#endif
+
+/**
+ *
  * @brief Free LilyMirInstructionSrcDest type.
  */
 inline DESTRUCTOR(LilyMirInstructionSrcDest,
@@ -392,6 +415,18 @@ inline CONSTRUCTOR(LilyMirInstructionSrc,
 
 /**
  *
+ * @brief Convert LilyMirInstructionSrc in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionSrc,
+               const LilyMirInstructionSrc *self);
+#endif
+
+/**
+ *
  * @brief Free LilyMirInstructionSrc type.
  */
 inline DESTRUCTOR(LilyMirInstructionSrc, const LilyMirInstructionSrc *self)
@@ -415,6 +450,18 @@ inline CONSTRUCTOR(LilyMirInstructionAlloc,
 {
     return (LilyMirInstructionAlloc){ .dt = dt };
 }
+
+/**
+ *
+ * @brief Convert LilyMirInstructionAlloc in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionAlloc,
+               const LilyMirInstructionAlloc *self);
+#endif
 
 /**
  *
@@ -446,6 +493,18 @@ inline CONSTRUCTOR(LilyMirInstructionArg,
 
 /**
  *
+ * @brief Convert LilyMirInstructionArg in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionArg,
+               const LilyMirInstructionArg *self);
+#endif
+
+/**
+ *
  * @brief Free LilyMirInstructionArg type.
  */
 inline DESTRUCTOR(LilyMirInstructionArg, const LilyMirInstructionArg *self)
@@ -470,6 +529,18 @@ inline CONSTRUCTOR(LilyMirInstructionAsm,
     return (LilyMirInstructionAsm){ .content = content };
 }
 
+/**
+ *
+ * @brief Convert LilyMirInstructionAsm in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionAsm,
+               const LilyMirInstructionAsm *self);
+#endif
+
 // bitcast <val> -> <dt>
 // <inst> <val> -> <dt>
 typedef struct LilyMirInstructionValDt
@@ -489,6 +560,18 @@ inline CONSTRUCTOR(LilyMirInstructionValDt,
 {
     return (LilyMirInstructionValDt){ .val = val, .dt = dt };
 }
+
+/**
+ *
+ * @brief Convert LilyMirInstructionValDt in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionValDt,
+               const LilyMirInstructionValDt *self);
+#endif
 
 /**
  *
@@ -520,6 +603,18 @@ inline CONSTRUCTOR(LilyMirInstructionBlock,
 
 /**
  *
+ * @brief Convert LilyMirInstructionBlock in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionBlock,
+               const LilyMirInstructionBlock *self);
+#endif
+
+/**
+ *
  * @brief Free LilyMirInstructionBlock type.
  */
 DESTRUCTOR(LilyMirInstructionBlock, const LilyMirInstructionBlock *self);
@@ -527,7 +622,7 @@ DESTRUCTOR(LilyMirInstructionBlock, const LilyMirInstructionBlock *self);
 typedef struct LilyMirInstructionCall
 {
     const char *name; // const char* (&)
-    Vec *params;      // Vec<LilyMirInstruction*>*
+    Vec *params;      // Vec<LilyMirInstructionVal*>*
 } LilyMirInstructionCall;
 
 /**
@@ -541,6 +636,18 @@ inline CONSTRUCTOR(LilyMirInstructionCall,
 {
     return (LilyMirInstructionCall){ .name = name, .params = params };
 }
+
+/**
+ *
+ * @brief Convert LilyMirInstructionCall in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionCall,
+               const LilyMirInstructionCall *self);
+#endif
 
 /**
  *
@@ -569,6 +676,18 @@ inline CONSTRUCTOR(LilyMirInstructionConst,
     return (
       LilyMirInstructionConst){ .linkage = linkage, .name = name, .val = val };
 }
+
+/**
+ *
+ * @brief Convert LilyMirInstructionConst in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionConst,
+               const LilyMirInstructionConst *self);
+#endif
 
 /**
  *
@@ -605,6 +724,18 @@ inline CONSTRUCTOR(LilyMirInstructionFun,
 
 /**
  *
+ * @brief Convert LilyMirInstructionFun in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionFun,
+               const LilyMirInstructionFun *self);
+#endif
+
+/**
+ *
  * @brief Free LilyMirInstructionFun type.
  */
 DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self);
@@ -619,13 +750,25 @@ typedef struct LilyMirInstructionJmpCond
  *
  * @brief Construct LilyMirInstructionJmpCond type.
  */
-CONSTRUCTOR(LilyMirInstructionJmpCond,
-            LilyMirInstructionJmpCond,
-            LilyMirInstructionVal *cond,
-            LilyMirInstructionBlock *block)
+inline CONSTRUCTOR(LilyMirInstructionJmpCond,
+                   LilyMirInstructionJmpCond,
+                   LilyMirInstructionVal *cond,
+                   LilyMirInstructionBlock *block)
 {
     return (LilyMirInstructionJmpCond){ .cond = cond, .block = block };
 }
+
+/**
+ *
+ * @brief Convert LilyMirInstructionJmpCond in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionJmpCond,
+               const LilyMirInstructionJmpCond *self);
+#endif
 
 /**
  *
@@ -657,6 +800,18 @@ inline CONSTRUCTOR(LilyMirInstructionReg,
 
 /**
  *
+ * @brief Convert LilyMirInstructionReg in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionReg,
+               const LilyMirInstructionReg *self);
+#endif
+
+/**
+ *
  * @brief Free LilyMirInstructionReg type.
  */
 inline DESTRUCTOR(LilyMirInstructionReg, const LilyMirInstructionReg *self)
@@ -679,6 +834,18 @@ CONSTRUCTOR(LilyMirInstructionSwitchCase *,
             LilyMirInstructionSwitchCase,
             LilyMirInstructionVal *val,
             LilyMirInstructionBlock *block_dest);
+
+/**
+ *
+ * @brief Convert LilyMirInstructionSwitchCase in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionSwitchCase,
+               const LilyMirInstructionSwitchCase *self);
+#endif
 
 /**
  *
@@ -710,6 +877,18 @@ inline CONSTRUCTOR(LilyMirInstructionSwitch,
 
 /**
  *
+ * @brief Convert LilyMirInstructionSwitch in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionSwitch,
+               const LilyMirInstructionSwitch *self);
+#endif
+
+/**
+ *
  * @brief Construct LilyMirInstructionSwitch type.
  */
 DESTRUCTOR(LilyMirInstructionSwitch, const LilyMirInstructionSwitch *self);
@@ -717,7 +896,8 @@ DESTRUCTOR(LilyMirInstructionSwitch, const LilyMirInstructionSwitch *self);
 typedef struct LilyMirInstructionTry
 {
     LilyMirInstructionVal *val;
-    LilyMirInstructionBlock *try_block;   // LilyMirInstructionBlock* (&)
+    LilyMirInstructionBlock *try_block; // LilyMirInstructionBlock* (&)
+    LilyMirInstructionVal *catch_val;
     LilyMirInstructionBlock *catch_block; // LilyMirInstructionBlock* (&)
 } LilyMirInstructionTry;
 
@@ -729,12 +909,26 @@ CONSTRUCTOR(LilyMirInstructionTry,
             LilyMirInstructionTry,
             LilyMirInstructionVal *val,
             LilyMirInstructionBlock *try_block,
+            LilyMirInstructionVal *catch_val,
             LilyMirInstructionBlock *catch_block)
 {
     return (LilyMirInstructionTry){ .val = val,
                                     .try_block = try_block,
+                                    .catch_val = catch_val,
                                     .catch_block = catch_block };
 }
+
+/**
+ *
+ * @brief Convert LilyMirInstructionTry in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionTry,
+               const LilyMirInstructionTry *self);
+#endif
 
 /**
  *
@@ -801,7 +995,6 @@ typedef struct LilyMirInstruction
         LilyMirInstructionJmpCond jmpcond;
         LilyMirInstructionSrc len;
         LilyMirInstructionSrc load;
-        LilyMirInstructionBlock loop;
         LilyMirInstructionSrc makeref;
         LilyMirInstructionSrc makeopt;
         LilyMirInstruction *non_nil;
@@ -1498,6 +1691,16 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     xor,
                     LilyMirInstructionSrcDest xor);
+
+/**
+ *
+ * @brief Convert LilyMirInstruction in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self);
+#endif
 
 /**
  *
