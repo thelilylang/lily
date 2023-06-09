@@ -174,7 +174,7 @@ __resize__$Alloc(volatile Block *block, Usize new_size, Usize align)
         perror("Lily(Fail): fail to free a pointer, because the value is NULL");
         exit(1);
     } else if (block->is_free) {
-        perror("Lily(Fail): this block is already free");
+        perror("Lily(Fail): this block is free");
         exit(1);
     }
 
@@ -229,7 +229,8 @@ __free__$Alloc(volatile Block *block)
     block->is_free = 1;
 }
 
-void *__get_ptr__$Alloc(volatile Block *block)
+void *
+__get_ptr__$Alloc(volatile Block *block)
 {
-	return block->ptr;
+    return block->ptr;
 }
