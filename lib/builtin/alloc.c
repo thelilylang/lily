@@ -193,7 +193,7 @@ __resize__$Alloc(volatile Block *block, Usize new_size, Usize align)
         exit(1);
     }
 
-    if (heap.total_size < heap.capacity) {
+    if (heap.total_size > heap.capacity) {
         perror("Lily(Fail): too much memory allocation allocated");
         exit(1);
     }
