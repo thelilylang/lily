@@ -34,7 +34,7 @@ extern "C"
 {
 #endif
 
-    LILY_API void *__align__$Alloc(void *ptr, Usize align);
+    LILY_API void *__align__$Alloc(void *mem, Usize align);
 
     LILY_API void *__alloc__$Alloc(Usize size, Usize align);
 
