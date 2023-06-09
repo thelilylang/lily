@@ -373,6 +373,7 @@ set(CORE_SRC
 	src/core/shared/source.c)
 
 set(BUILTIN_SRC
+	lib/builtin/alloc.c
 	lib/builtin/cstr.c
 	lib/builtin/math.c
 	lib/builtin/pointer.c)
