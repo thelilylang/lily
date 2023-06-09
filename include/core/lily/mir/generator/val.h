@@ -29,6 +29,6 @@
 #include <core/lily/mir.h>
 
 LilyMirInstructionVal *
-generate_val__LilyMir(LilyCheckedExpr *expr);
+generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_VAL_H
