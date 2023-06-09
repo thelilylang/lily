@@ -34,44 +34,13 @@ extern "C"
 {
 #endif
 
-    typedef struct Block
-    {
-        Usize size;
-        int is_free;
-        int is_used;
-        void *ptr;
-    } Block;
+    LILY_API void *__align__$Alloc(void *ptr, Usize align);
 
-    typedef struct HeapChild
-    {
-        Block block;
-        volatile struct HeapChild *next;
-        volatile struct HeapChild *prev;
-    } HeapChild;
+    LILY_API void *__alloc__$Alloc(Usize size, Usize align);
 
-    typedef struct Heap
-    {
-        HeapChild head;
-        HeapChild *tail;
-        Usize capacity;
-        Usize total_size;
-        Usize total_block;
-        Usize total_free;
-    } Heap;
+    LILY_API void *__resize__$Alloc(void *mem, Usize new_size, Usize align);
 
-    LILY_API void __init__$Alloc();
-
-    LILY_API Block *__align__$Alloc(void *ptr, Usize align);
-
-    LILY_API volatile Block *__alloc__$Alloc(Usize size, Usize align);
-
-    LILY_API volatile Block *__resize__$Alloc(volatile Block *block,
-                                              Usize new_size,
-                                              Usize align);
-
-    LILY_API void __free__$Alloc(volatile Block *block);
-
-    LILY_API void *__get_ptr__$Alloc(volatile Block *block);
+    LILY_API void __free__$Alloc(void *mem, Usize size, Usize align);
 
 #if defined(__cplusplus)
 }
