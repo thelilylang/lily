@@ -36,11 +36,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define PUSH_STR(s)                                       \
-    res = lily_realloc(res, buffer_size + strlen(s) + 1); \
-    for (Usize j = 0; s[j++];) {                          \
-        res[buffer_size] = s[j - 1];                      \
-        res[++buffer_size] = '\0';                        \
+#define PUSH_STR(s)                                              \
+    {                                                            \
+        Usize str_size = strlen(s);                              \
+        if (str_size > 0) {                                      \
+            res = lily_realloc(res, buffer_size + str_size + 1); \
+            for (Usize j = 0; s[j++];) {                         \
+                res[buffer_size] = s[j - 1];                     \
+                res[++buffer_size] = '\0';                       \
+            }                                                    \
+        }                                                        \
     }
 
 #define PUSH_INT(d, base)             \
