@@ -33,6 +33,14 @@ DESTRUCTOR(LilyMirNameManager, const LilyMirNameManager *self)
     FREE(Vec, self->names);
 }
 
+void
+LilyMirDisposeModule(const LilyMirModule *Module)
+{
+    FREE_BUFFER_ITEMS(
+      Module->insts->buffer, Module->insts->len, LilyMirInstruction);
+    FREE(Vec, Module->insts);
+}
+
 LilyMirInstructionVal *
 LilyMirGetValFromInst(LilyMirInstruction *inst)
 {

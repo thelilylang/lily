@@ -167,6 +167,9 @@ LilyMirCreateModule()
 }
 
 void
+LilyMirDisposeModule(const LilyMirModule *Module);
+
+void
 LilyMirPositionBuilderAtEnd(LilyMirModule *Module,
                             LilyMirInstructionBlock *Block);
 
