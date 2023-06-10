@@ -66,6 +66,53 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                     }
 
                     break;
+                case LILY_CHECKED_EXPR_BINARY_KIND_AND:
+                    op_inst = NEW_VARIANT(LilyMirInstruction,
+                                          and,
+                                          NEW(LilyMirInstructionSrcDest,
+                                              left_inst->val,
+                                              right_inst->val));
+
+                    break;
+                case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_ADD:
+                    if (is_integer_data_type__LilyCheckedDataType(
+                          expr->binary.left->data_type) ||
+                        expr->binary.left->data_type->kind ==
+                          LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
+                        LilyMirAddInst(
+                          module,
+                          LilyMirBuildReg(
+                            module,
+                            NEW_VARIANT(LilyMirInstruction,
+                                        iadd,
+                                        NEW(LilyMirInstructionSrcDest,
+                                            left_inst->val,
+                                            right_inst->val))));
+
+                        return LilyMirBuildStore(
+                          left_inst->val,
+                          LilyMirBuildRegVal(
+                            module,
+                            generate_dt__LilyMir(expr->binary.right->data_type),
+                            from__String(LilyMirGetLastRegName(module))));
+                    } else {
+                        LilyMirAddInst(
+                          module,
+                          LilyMirBuildReg(
+                            module,
+                            NEW_VARIANT(LilyMirInstruction,
+                                        fadd,
+                                        NEW(LilyMirInstructionSrcDest,
+                                            left_inst->val,
+                                            right_inst->val))));
+
+                        return LilyMirBuildStore(
+                          left_inst->val,
+                          LilyMirBuildRegVal(
+                            module,
+                            generate_dt__LilyMir(expr->binary.right->data_type),
+                            from__String(LilyMirGetLastRegName(module))));
+                    }
                 default:
                     UNREACHABLE("unknown variant");
             }
@@ -73,15 +120,7 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
             lily_free(left_inst);
             lily_free(right_inst);
 
-            char *reg_name =
-              LilyMirGenerateName(&module->current.fun.reg_manager);
-
-            LilyMirAddInst(
-              module,
-              NEW_VARIANT(
-                LilyMirInstruction,
-                reg,
-                NEW(LilyMirInstructionReg, from__String(reg_name), op_inst)));
+            LilyMirAddInst(module, LilyMirBuildReg(module, op_inst));
 
             return NEW_VARIANT(
               LilyMirInstruction,
@@ -89,7 +128,7 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
               NEW_VARIANT(LilyMirInstructionVal,
                           reg,
                           generate_dt__LilyMir(expr->data_type),
-                          from__String(reg_name)));
+                          from__String(LilyMirGetLastRegName(module))));
         }
         case LILY_CHECKED_EXPR_KIND_CALL:
             break;

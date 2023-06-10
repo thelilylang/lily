@@ -55,8 +55,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
                   NEW(LilyMirInstructionFun,
                       get_linkage_from_visibility(fun->fun.visibility),
                       fun->fun.global_name->buffer,
-                      args,
-                      NEW(Vec)));
+                      args));
 
     LilyMirAddInst(module, inst);
 

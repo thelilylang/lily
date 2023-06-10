@@ -26,6 +26,7 @@
 #define LILY_CORE_LILY_MIR_INSTRUCTION_H
 
 #include <base/alloc.h>
+#include <base/stack.h>
 #include <base/vec.h>
 
 #include <core/lily/mir/dt.h>
@@ -610,10 +611,9 @@ typedef struct LilyMirInstructionBlock
  */
 inline CONSTRUCTOR(LilyMirInstructionBlock,
                    LilyMirInstructionBlock,
-                   String *name,
-                   Vec *insts)
+                   String *name)
 {
-    return (LilyMirInstructionBlock){ .name = name, .insts = insts };
+    return (LilyMirInstructionBlock){ .name = name, .insts = NEW(Vec) };
 }
 
 /**
@@ -716,29 +716,21 @@ inline DESTRUCTOR(LilyMirInstructionConst, const LilyMirInstructionConst *self)
 typedef struct LilyMirInstructionFun
 {
     enum LilyMirLinkage linkage;
-    const char *name; // const char* (&)
-    Vec *args;        // Vec<LilyMirInstruction*>*
-    Vec *insts;       // Vec<LilyMirInstruction*>*
-    LilyMirInstructionBlock *current_block;
+    const char *name;   // const char* (&)
+    Vec *args;          // Vec<LilyMirInstruction*>*
+    Vec *insts;         // Vec<LilyMirInstruction*>*
+    Stack *block_stack; // Stack<LilyMirInstructionBlock*>*
 } LilyMirInstructionFun;
 
 /**
  *
  * @brief Construct LilyMirInstructionFun type.
  */
-inline CONSTRUCTOR(LilyMirInstructionFun,
-                   LilyMirInstructionFun,
-                   enum LilyMirLinkage linkage,
-                   const char *name,
-                   Vec *args,
-                   Vec *insts)
-{
-    return (LilyMirInstructionFun){ .linkage = linkage,
-                                    .name = name,
-                                    .args = args,
-                                    .insts = insts,
-                                    .current_block = NULL };
-}
+CONSTRUCTOR(LilyMirInstructionFun,
+            LilyMirInstructionFun,
+            enum LilyMirLinkage linkage,
+            const char *name,
+            Vec *args);
 
 /**
  *

@@ -880,15 +880,15 @@ IMPL_FOR_DEBUG(to_string,
                const LilyMirInstructionBlock *self)
 {
     String *res =
-      format__String("{Sr}{S}:", repeat__String("\t", tab_count), self->name);
+      format__String("{S}:\n", self->name);
 
     ++tab_count;
 
-    String *tab = repeat__String("\t", tab_count);
+    String *tab = repeat__String(" ", tab_count);
 
     for (Usize i = 0; i < self->insts->len; ++i) {
         String *item = format__String(
-          "{S}{Sr}",
+          "{S}{Sr}\n",
           tab,
           to_string__Debug__LilyMirInstruction(get__Vec(self->insts, i)));
 
@@ -956,6 +956,30 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+CONSTRUCTOR(LilyMirInstructionFun,
+            LilyMirInstructionFun,
+            enum LilyMirLinkage linkage,
+            const char *name,
+            Vec *args)
+{
+    Stack *block_stack = NEW(Stack, 1024);
+    Vec *insts = NEW(Vec);
+
+    LilyMirInstruction *block =
+      NEW_VARIANT(LilyMirInstruction,
+                  block,
+                  NEW(LilyMirInstructionBlock, from__String("entry")));
+
+    push__Vec(insts, block);
+    push__Stack(block_stack, &block->block);
+
+    return (LilyMirInstructionFun){ .linkage = linkage,
+                                    .name = name,
+                                    .args = args,
+                                    .insts = insts,
+                                    .block_stack = block_stack };
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -980,9 +1004,9 @@ IMPL_FOR_DEBUG(to_string,
 
     push_str__String(res, ") {\n");
 
-    ++tab_count;
+    String *tab = repeat__String(" ", tab_count);
 
-    String *tab = repeat__String("\t", tab_count);
+    ++tab_count;
 
     for (Usize i = 0; i < self->insts->len; ++i) {
         String *item = format__String(
@@ -991,6 +1015,8 @@ IMPL_FOR_DEBUG(to_string,
 
         APPEND_AND_FREE(res, item);
     }
+
+	pop__String(res);
 
     FREE(String, tab);
 
@@ -1104,7 +1130,7 @@ IMPL_FOR_DEBUG(to_string,
 
     ++tab_count;
 
-    String *tab = repeat__String("\t", tab_count);
+    String *tab = repeat__String(" ", tab_count);
 
     for (Usize i = 0; i < self->cases->len; ++i) {
         String *case_ =
@@ -2237,7 +2263,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
             break;
         case LILY_MIR_INSTRUCTION_KIND_FUN:
             res = format__String(
-              "{Sr}", to_string__Debug__LilyMirInstructionFun(&self->fun));
+              "\n{Sr}", to_string__Debug__LilyMirInstructionFun(&self->fun));
             break;
         case LILY_MIR_INSTRUCTION_KIND_GETARG:
             res = format__String(
