@@ -34,6 +34,10 @@
 
 typedef struct LilyCheckedExpr LilyCheckedExpr;
 
+// The binary representation is only used when the operator is considered
+// default. See `src/core/lily/checked/operator.c` for more information on
+// default operators. NOTE: User-defined operators are represented by a function
+// call.
 enum LilyCheckedExprBinaryKind
 {
     LILY_CHECKED_EXPR_BINARY_KIND_ADD,                // +
@@ -69,6 +73,9 @@ enum LilyCheckedExprBinaryKind
     LILY_CHECKED_EXPR_BINARY_KIND_RANGE,              // ..
     LILY_CHECKED_EXPR_BINARY_KIND_SUB,                // -
     LILY_CHECKED_EXPR_BINARY_KIND_XOR,                // xor
+    LILY_CHECKED_EXPR_BINARY_KIND_LIST_HEAD,          // ->
+    LILY_CHECKED_EXPR_BINARY_KIND_LIST_TAIL,          // <-
+
 };
 
 typedef struct LilyCheckedExprBinary
