@@ -153,6 +153,10 @@ static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
                                  LilyMirInstruction *self);
 
 static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
+                                 fsub,
+                                 LilyMirInstruction *self);
+
+static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
                                  fun,
                                  LilyMirInstruction *self);
 
@@ -1535,6 +1539,19 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
+                    fsub,
+                    LilyMirInstructionSrcDest fsub)
+{
+    LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
+
+    self->kind = LILY_MIR_INSTRUCTION_KIND_FSUB;
+    self->fsub = fsub;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
                     fun,
                     LilyMirInstructionFun fun)
 {
@@ -2260,6 +2277,11 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
               "\x1b[34mfrem\x1b[0m {Sr}",
               to_string__Debug__LilyMirInstructionSrcDest(&self->frem));
             break;
+        case LILY_MIR_INSTRUCTION_KIND_FSUB:
+            res = format__String(
+              "\x1b[34mfsub\x1b[0m {Sr}",
+              to_string__Debug__LilyMirInstructionSrcDest(&self->fsub));
+            break;
         case LILY_MIR_INSTRUCTION_KIND_FUN:
             res = format__String(
               "\n{Sr}", to_string__Debug__LilyMirInstructionFun(&self->fun));
@@ -2638,6 +2660,12 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, frem, LilyMirInstruction *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyMirInstruction, fsub, LilyMirInstruction *self)
+{
+    FREE(LilyMirInstructionSrcDest, &self->fsub);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyMirInstruction, fun, LilyMirInstruction *self)
 {
     FREE(LilyMirInstructionFun, &self->fun);
@@ -2990,6 +3018,9 @@ DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self)
             break;
         case LILY_MIR_INSTRUCTION_KIND_FREM:
             FREE_VARIANT(LilyMirInstruction, frem, self);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_FSUB:
+            FREE_VARIANT(LilyMirInstruction, fsub, self);
             break;
         case LILY_MIR_INSTRUCTION_KIND_FUN:
             FREE_VARIANT(LilyMirInstruction, fun, self);

@@ -59,6 +59,7 @@ enum LilyMirInstructionKind
     LILY_MIR_INSTRUCTION_KIND_FMUL,
     LILY_MIR_INSTRUCTION_KIND_FNEG,
     LILY_MIR_INSTRUCTION_KIND_FREM,
+    LILY_MIR_INSTRUCTION_KIND_FSUB,
     LILY_MIR_INSTRUCTION_KIND_FUN,
     LILY_MIR_INSTRUCTION_KIND_GETARG,
     LILY_MIR_INSTRUCTION_KIND_GETARRAY,
@@ -1051,6 +1052,7 @@ typedef struct LilyMirInstruction
         LilyMirInstructionSrcDest fmul;
         LilyMirInstructionSrc fneg;
         LilyMirInstructionSrcDest frem;
+        LilyMirInstructionSrcDest fsub;
         LilyMirInstructionFun fun;
         LilyMirInstructionSrc getarray;
         LilyMirInstructionSrc getarg;
@@ -1326,6 +1328,15 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     frem,
                     LilyMirInstructionSrcDest frem);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_FSUB).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fsub,
+                    LilyMirInstructionSrcDest fsub);
 
 /**
  *
