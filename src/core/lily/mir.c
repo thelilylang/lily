@@ -67,14 +67,15 @@ LilyMirAddInst(LilyMirModule *Module, LilyMirInstruction *Inst)
 
             break;
         case LILY_MIR_CURRENT_KIND_FUN: {
-			LilyMirInstructionBlock *block = Module->current.fun.fun->block_stack->top;
+            LilyMirInstructionBlock *block =
+              Module->current.fun.fun->block_stack->top;
 
-			ASSERT(block);
+            ASSERT(block);
 
             push__Vec(block->insts, Inst);
 
             break;
-		}
+        }
         default:
             push__Vec(Module->insts, Inst);
 
@@ -122,10 +123,10 @@ LilyMirDisposeModule(const LilyMirModule *Module)
 void
 LilyMirAddBlock(LilyMirModule *Module, LilyMirInstruction *Block)
 {
-	ASSERT(Module->current.kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(Module->current.kind == LILY_MIR_CURRENT_KIND_FUN);
 
-	push__Vec(Module->current.fun.fun->insts, Block);
-	push__Stack(Module->current.fun.fun->block_stack, &Block->block);
+    push__Vec(Module->current.fun.fun->insts, Block);
+    push__Stack(Module->current.fun.fun->block_stack, &Block->block);
 }
 
 LilyMirInstructionVal *

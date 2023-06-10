@@ -192,8 +192,8 @@ LilyMirDisposeModule(const LilyMirModule *Module);
 inline void
 LilyMirNextBlock(LilyMirModule *Module)
 {
-	ASSERT(Module->current.kind == LILY_MIR_CURRENT_KIND_FUN);
-	pop__Stack(Module->current.fun.fun->block_stack);
+    ASSERT(Module->current.kind == LILY_MIR_CURRENT_KIND_FUN);
+    pop__Stack(Module->current.fun.fun->block_stack);
 }
 
 void
