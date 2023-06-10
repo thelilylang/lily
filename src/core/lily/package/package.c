@@ -32,6 +32,7 @@
 
 #include <core/lily/ir/llvm/generator.h>
 #include <core/lily/lily.h>
+#include <core/lily/mir/generator.h>
 #include <core/lily/package/package.h>
 
 #include <pthread.h>
@@ -118,6 +119,7 @@ CONSTRUCTOR(LilyPackage *,
     if (root) {
         self->parser = NEW(LilyParser, self, root, NULL);
         self->analysis = NEW(LilyAnalysis, self, root, &self->parser);
+        self->mir_module = LilyMirCreateModule();
         self->builtins = NULL;
         self->syss = NULL;
 
@@ -213,6 +215,8 @@ build__LilyPackage(const CompileConfig *config,
         self->global_name = from__String("main");
     }
 
+    self->mir_module = LilyMirCreateModule();
+
     if (config->cc_ir) {
         // TODO: add a linker for CC
         self->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));
@@ -275,6 +279,7 @@ run__LilyPackage(void *self)
 
     run__LilyParser(&tree->package->parser, false);
     run__LilyAnalysis(&tree->package->analysis);
+    run__LilyMir(tree->package);
     run__LilyIr(tree->package);
 
     if (tree->package->status == LILY_PACKAGE_STATUS_MAIN) {
@@ -457,6 +462,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(LilyPrecompile, &self->precompile);
     FREE(LilyParser, &self->parser);
     FREE(LilyAnalysis, &self->analysis);
+    LilyMirDisposeModule(&self->mir_module);
     FREE(LilyIr, &self->ir);
     FREE(LilyLinker, &self->linker);
 

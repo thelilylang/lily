@@ -37,6 +37,7 @@
 #include <core/lily/checked/operator_register.h>
 #include <core/lily/ir.h>
 #include <core/lily/linker.h>
+#include <core/lily/mir.h>
 #include <core/lily/package/config.h>
 #include <core/lily/package/library.h>
 #include <core/lily/parser.h>
@@ -73,6 +74,7 @@ typedef struct LilyPackage
     LilyPrecompile precompile; // LilyPrecompile
     LilyParser parser;
     LilyAnalysis analysis;
+    LilyMirModule mir_module;
     LilyIr ir;
     LilyLinker linker;
     // NOTE: builtins and syss fields are NULL when the status of the package is
