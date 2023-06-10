@@ -25,10 +25,13 @@
 #ifndef LILY_CORE_LILY_MIR_H
 #define LILY_CORE_LILY_MIR_H
 
+#include <base/assert.h>
 #include <base/stack.h>
 #include <base/vec.h>
 
 #include <core/lily/mir/instruction.h>
+
+#include <stdio.h>
 
 typedef struct LilyMirNameManager
 {
@@ -186,9 +189,15 @@ LilyMirResetCurrent(LilyMirModule *Module);
 void
 LilyMirDisposeModule(const LilyMirModule *Module);
 
+inline void
+LilyMirNextBlock(LilyMirModule *Module)
+{
+	ASSERT(Module->current.kind == LILY_MIR_CURRENT_KIND_FUN);
+	pop__Stack(Module->current.fun.fun->block_stack);
+}
+
 void
-LilyMirPositionBuilderAtEnd(LilyMirModule *Module,
-                            LilyMirInstructionBlock *Block);
+LilyMirAddBlock(LilyMirModule *Module, LilyMirInstruction *Block);
 
 LilyMirInstructionBlock *
 LilyMirGetInsertBlock(LilyMirModule *Module);
@@ -202,6 +211,21 @@ LilyMirDisposeBuilder(LilyMirModule *Module);
 char *
 LilyMirGenerateName(LilyMirNameManager *NameManager);
 
+inline char *
+LilyMirGetLastRegName(LilyMirModule *Module)
+{
+    return last__Vec(Module->current.fun.reg_manager.names);
+}
+
+LilyMirInstruction *
+LilyMirBuildReg(LilyMirModule *Module, LilyMirInstruction *Inst);
+
+inline LilyMirInstructionVal *
+LilyMirBuildRegVal(LilyMirModule *Module, LilyMirDt *dt, String *name)
+{
+    return NEW_VARIANT(LilyMirInstructionVal, reg, dt, name);
+}
+
 LilyMirInstruction *
 LilyMirBuildRetUnit(LilyMirModule *Module);
 
@@ -210,6 +234,13 @@ LilyMirBuildRet(LilyMirModule *Module);
 
 LilyMirInstruction *
 LilyMirBuildJmp(LilyMirModule *Module);
+
+inline LilyMirInstruction *
+LilyMirBuildStore(LilyMirInstructionVal *dest, LilyMirInstructionVal *src)
+{
+    return NEW_VARIANT(
+      LilyMirInstruction, store, NEW(LilyMirInstructionSrcDest, dest, src));
+}
 
 LilyMirInstructionVal *
 LilyMirGetValFromInst(LilyMirInstruction *inst);
