@@ -62,6 +62,13 @@
 #undef DEBUG_ANALYSIS
 #endif
 
+// This is a macro used to display the MIR in debug mode.
+#define DEBUG_MIR
+
+#ifndef ENV_DEBUG
+#undef DEBUG_MIR
+#endif
+
 // This is a macro used to display the IR in debug mode.
 #define DEBUG_IR
 
