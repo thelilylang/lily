@@ -326,6 +326,10 @@ static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
                                  LilyMirInstruction *self);
 
 static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
+                                 var,
+                                 LilyMirInstruction *self);
+
+static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
                                  xor,
                                  LilyMirInstruction *self);
 
@@ -539,6 +543,21 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
+                    var,
+                    LilyMirDt *dt,
+                    const char *var)
+{
+    LilyMirInstructionVal *self = lily_malloc(sizeof(LilyMirInstructionVal));
+
+    self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_VAR;
+    self->dt = dt;
+    self->var = var;
+
+    return self;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -702,6 +721,12 @@ IMPL_FOR_DEBUG(to_string,
             return res;
         case LILY_MIR_INSTRUCTION_VAL_KIND_UNIT:
             push_str__String(res, "\x1b[33m()\x1b[0m");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
+            push_str__String(res, "\x1b[33mvar ");
+            push_str__String(res, (char *)self->var);
+            push_str__String(res, "\x1b[0m");
 
             return res;
         default:
@@ -990,6 +1015,30 @@ IMPL_FOR_DEBUG(to_string,
                           to_string__Debug__LilyMirInstruction(self->inst));
 }
 #endif
+
+DESTRUCTOR(LilyMirInstructionReg, const LilyMirInstructionReg *self)
+{
+    lily_free(self->name);
+    FREE(LilyMirInstruction, self->inst);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionVar,
+               const LilyMirInstructionVar *self)
+{
+    return format__String("var {s} = {Sr}",
+                          self->name,
+                          to_string__Debug__LilyMirInstruction(self->inst));
+}
+#endif
+
+DESTRUCTOR(LilyMirInstructionVar, const LilyMirInstructionVar *self)
+{
+    lily_free(self->name);
+    FREE(LilyMirInstruction, self->inst);
+}
 
 CONSTRUCTOR(LilyMirInstructionSwitchCase *,
             LilyMirInstructionSwitchCase,
@@ -2015,6 +2064,19 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
+                    var,
+                    LilyMirInstructionVar var)
+{
+    LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
+
+    self->kind = LILY_MIR_INSTRUCTION_KIND_VAR;
+    self->var = var;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
                     xor,
                     LilyMirInstructionSrcDest xor)
 {
@@ -2361,6 +2423,10 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_VAL:
             res = format__String(
               "{Sr}", to_string__Debug__LilyMirInstructionVal(self->val));
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_VAR:
+            res = format__String(
+              "{Sr}", to_string__Debug__LilyMirInstructionVar(&self->var));
             break;
         case LILY_MIR_INSTRUCTION_KIND_XOR:
             res = format__String(
@@ -2787,6 +2853,12 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, val, LilyMirInstruction *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyMirInstruction, var, LilyMirInstruction *self)
+{
+    FREE(LilyMirInstructionVar, &self->var);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyMirInstruction, xor, LilyMirInstruction *self)
 {
     FREE(LilyMirInstructionSrcDest, &self->xor);
@@ -3002,6 +3074,9 @@ DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self)
             break;
         case LILY_MIR_INSTRUCTION_KIND_VAL:
             FREE_VARIANT(LilyMirInstruction, val, self);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_VAR:
+            FREE_VARIANT(LilyMirInstruction, var, self);
             break;
         case LILY_MIR_INSTRUCTION_KIND_XOR:
             FREE_VARIANT(LilyMirInstruction, xor, self);

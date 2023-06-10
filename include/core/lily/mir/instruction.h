@@ -102,6 +102,7 @@ enum LilyMirInstructionKind
     LILY_MIR_INSTRUCTION_KIND_TRY,
     LILY_MIR_INSTRUCTION_KIND_TRY_PTR,
     LILY_MIR_INSTRUCTION_KIND_VAL,
+    LILY_MIR_INSTRUCTION_KIND_VAR,
     LILY_MIR_INSTRUCTION_KIND_XOR
 };
 
@@ -126,7 +127,8 @@ enum LilyMirInstructionValKind
     LILY_MIR_INSTRUCTION_VAL_KIND_TUPLE,
     LILY_MIR_INSTRUCTION_VAL_KIND_UINT,
     LILY_MIR_INSTRUCTION_VAL_KIND_UNDEF,
-    LILY_MIR_INSTRUCTION_VAL_KIND_UNIT
+    LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,
+    LILY_MIR_INSTRUCTION_VAL_KIND_VAR,
 };
 
 // val(<dt>) <value>
@@ -149,6 +151,7 @@ typedef struct LilyMirInstructionVal
         struct LilyMirInstructionVal *trace;
         Vec *tuple; // Vec<LilyMirInstructionVal*>*
         Uint64 uint;
+        const char *var; // const char* (&)
     };
 } LilyMirInstructionVal;
 
@@ -304,6 +307,17 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     uint,
                     LilyMirDt *dt,
                     Uint64 uint);
+
+/**
+ *
+ * @brief Construct LilyMirInstructionVal type
+ * (LILY_MIR_INSTRUCTION_VAL_KIND_VAR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
+                    var,
+                    LilyMirDt *dt,
+                    const char *var);
 
 /**
  *
@@ -818,11 +832,43 @@ IMPL_FOR_DEBUG(to_string,
  *
  * @brief Free LilyMirInstructionReg type.
  */
-inline DESTRUCTOR(LilyMirInstructionReg, const LilyMirInstructionReg *self)
+DESTRUCTOR(LilyMirInstructionReg, const LilyMirInstructionReg *self);
+
+typedef struct LilyMirInstructionVar
 {
-    lily_free(self->name);
-    FREE(LilyMirInstruction, self->inst);
+    char *name;
+    LilyMirInstruction *inst;
+} LilyMirInstructionVar;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionVar type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionVar,
+                   LilyMirInstructionVar,
+                   char *name,
+                   LilyMirInstruction *inst)
+{
+    return (LilyMirInstructionVar){ .name = name, .inst = inst };
 }
+
+/**
+ *
+ * @brief Convert LilyMirInstructionVar in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionVar,
+               const LilyMirInstructionVar *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyMirInstructionVar type.
+ */
+DESTRUCTOR(LilyMirInstructionVar, const LilyMirInstructionVar *self);
 
 typedef struct LilyMirInstructionSwitchCase
 {
@@ -909,12 +955,12 @@ typedef struct LilyMirInstructionTry
  *
  * @brief Construct LilyMirInstructionTry type.
  */
-CONSTRUCTOR(LilyMirInstructionTry,
-            LilyMirInstructionTry,
-            LilyMirInstructionVal *val,
-            LilyMirInstructionBlock *try_block,
-            LilyMirInstructionVal *catch_val,
-            LilyMirInstructionBlock *catch_block)
+inline CONSTRUCTOR(LilyMirInstructionTry,
+                   LilyMirInstructionTry,
+                   LilyMirInstructionVal *val,
+                   LilyMirInstructionBlock *try_block,
+                   LilyMirInstructionVal *catch_val,
+                   LilyMirInstructionBlock *catch_block)
 {
     return (LilyMirInstructionTry){ .val = val,
                                     .try_block = try_block,
@@ -1057,6 +1103,7 @@ typedef struct LilyMirInstruction
         LilyMirInstructionTry try;
         LilyMirInstructionTry try_ptr;
         LilyMirInstructionVal *val;
+        LilyMirInstructionVar var;
         LilyMirInstructionSrcDest xor ;
     };
 } LilyMirInstruction;
@@ -1736,6 +1783,16 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     val,
                     LilyMirInstructionVal *val);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_VAR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    var,
+                    LilyMirInstructionVar var);
 
 /**
  *
