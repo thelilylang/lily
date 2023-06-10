@@ -25,7 +25,8 @@
 #include <core/lily/mir/generator/expr.h>
 
 LilyMirInstruction *
-generate_expr__LilyMir(LilyCheckedExpr *expr)
+generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
 {
-    return NULL;
+    switch (expr->kind) {
+    }
 }

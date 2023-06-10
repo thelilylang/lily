@@ -22,7 +22,11 @@
  * SOFTWARE.
  */
 
+#include <base/print.h>
+
+#include <core/lily/lily.h>
 #include <core/lily/mir/generator.h>
+#include <core/lily/mir/generator/constant.h>
 #include <core/lily/package.h>
 
 void
@@ -33,6 +37,8 @@ run__LilyMir(LilyPackage *self)
 
         switch (decl->kind) {
             case LILY_CHECKED_DECL_KIND_CONSTANT:
+                push__Vec(self->mir_module.insts,
+                          generate_constant__LilyMir(&self->mir_module, decl));
                 break;
             case LILY_CHECKED_DECL_KIND_ERROR:
                 break;
@@ -48,4 +54,14 @@ run__LilyMir(LilyPackage *self)
                 break;
         }
     }
+
+#ifdef DEBUG_MIR
+    printf("====MIR Generator(%s)====\n", self->global_name->buffer);
+
+    for (Usize i = 0; i < self->mir_module.insts->len; ++i) {
+        PRINTLN("{Sr}",
+                to_string__Debug__LilyMirInstruction(
+                  get__Vec(self->mir_module.insts, i)));
+    }
+#endif
 }

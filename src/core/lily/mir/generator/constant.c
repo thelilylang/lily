@@ -23,23 +23,19 @@
  */
 
 #include <core/lily/mir/generator/constant.h>
-#include <core/lily/mir/generator/expr.h>
+#include <core/lily/mir/generator/val.h>
 
 LilyMirInstruction *
-generate_constant__LilyMir(LilyCheckedDecl *constant)
+generate_constant__LilyMir(LilyMirModule *module, LilyCheckedDecl *constant)
 {
-    LilyMirInstruction *inst = generate_expr__LilyMir(constant->constant.expr);
-    LilyMirInstructionVal *val = LilyMirGetValFromInst(inst);
+    LilyMirInstructionVal *val =
+      generate_val__LilyMir(module, constant->constant.expr);
 
-    LilyMirInstruction *const_ = NEW_VARIANT(
+    return NEW_VARIANT(
       LilyMirInstruction,
       const,
       NEW(LilyMirInstructionConst,
           get_linkage_from_visibility(constant->constant.visibility),
           constant->constant.global_name->buffer,
           val));
-
-    lily_free(inst);
-
-    return const_;
 }

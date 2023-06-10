@@ -175,46 +175,46 @@ generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                                        int,
                                        generate_dt__LilyMir(expr->data_type),
                                        expr->literal.suffix_uint8);
-				case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT16:
-					return NEW_VARIANT(LilyMirInstructionVal,
+                case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT16:
+                    return NEW_VARIANT(LilyMirInstructionVal,
                                        int,
                                        generate_dt__LilyMir(expr->data_type),
                                        expr->literal.suffix_uint16);
-				case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT32:
-					return NEW_VARIANT(LilyMirInstructionVal,
+                case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT32:
+                    return NEW_VARIANT(LilyMirInstructionVal,
                                        int,
                                        generate_dt__LilyMir(expr->data_type),
                                        expr->literal.suffix_uint32);
-				case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT64:
-					return NEW_VARIANT(LilyMirInstructionVal,
+                case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT64:
+                    return NEW_VARIANT(LilyMirInstructionVal,
                                        int,
                                        generate_dt__LilyMir(expr->data_type),
                                        expr->literal.suffix_uint64);
-				case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_USIZE:
-					return NEW_VARIANT(LilyMirInstructionVal,
+                case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_USIZE:
+                    return NEW_VARIANT(LilyMirInstructionVal,
                                        int,
                                        generate_dt__LilyMir(expr->data_type),
                                        expr->literal.suffix_usize);
-				case LILY_CHECKED_EXPR_LITERAL_KIND_UINT32:
-					return NEW_VARIANT(LilyMirInstructionVal,
+                case LILY_CHECKED_EXPR_LITERAL_KIND_UINT32:
+                    return NEW_VARIANT(LilyMirInstructionVal,
                                        int,
                                        generate_dt__LilyMir(expr->data_type),
                                        expr->literal.uint32);
-				case LILY_CHECKED_EXPR_LITERAL_KIND_UINT64:
-					return NEW_VARIANT(LilyMirInstructionVal,
+                case LILY_CHECKED_EXPR_LITERAL_KIND_UINT64:
+                    return NEW_VARIANT(LilyMirInstructionVal,
                                        int,
                                        generate_dt__LilyMir(expr->data_type),
                                        expr->literal.uint64);
-				case LILY_CHECKED_EXPR_LITERAL_KIND_UNDEF:
-					return NEW(LilyMirInstructionVal,
+                case LILY_CHECKED_EXPR_LITERAL_KIND_UNDEF:
+                    return NEW(LilyMirInstructionVal,
                                LILY_MIR_INSTRUCTION_VAL_KIND_UNDEF,
                                generate_dt__LilyMir(expr->data_type));
-				case LILY_CHECKED_EXPR_LITERAL_KIND_UNIT:
-					return NEW(LilyMirInstructionVal,
+                case LILY_CHECKED_EXPR_LITERAL_KIND_UNIT:
+                    return NEW(LilyMirInstructionVal,
                                LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,
                                generate_dt__LilyMir(expr->data_type));
-				default:
-					UNREACHABLE("unknown variant");
+                default:
+                    UNREACHABLE("unknown variant");
             }
         case LILY_CHECKED_EXPR_KIND_TUPLE: {
             Vec *tuple = NEW(Vec); // Vec<LilyMirInstructionVal*>*
