@@ -22,11 +22,87 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
+
+#include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
+#include <core/lily/mir/generator/val.h>
+
+#include <stdio.h>
+#include <string.h>
 
 LilyMirInstruction *
 generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
 {
     switch (expr->kind) {
+        case LILY_CHECKED_EXPR_KIND_BINARY: {
+            LilyMirInstruction *left_inst =
+              generate_expr__LilyMir(module, expr->binary.left);
+            LilyMirInstruction *right_inst =
+              generate_expr__LilyMir(module, expr->binary.right);
+
+            ASSERT(left_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL &&
+                   right_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+
+            LilyMirInstruction *op_inst = NULL;
+
+            switch (expr->binary.kind) {
+                case LILY_CHECKED_EXPR_BINARY_KIND_ADD:
+                    if (is_integer_data_type__LilyCheckedDataType(
+                          expr->data_type) ||
+                        expr->data_type->kind ==
+                          LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
+                        op_inst = NEW_VARIANT(LilyMirInstruction,
+                                              iadd,
+                                              NEW(LilyMirInstructionSrcDest,
+                                                  left_inst->val,
+                                                  right_inst->val));
+                    } else {
+                        op_inst = NEW_VARIANT(LilyMirInstruction,
+                                              fadd,
+                                              NEW(LilyMirInstructionSrcDest,
+                                                  left_inst->val,
+                                                  right_inst->val));
+                    }
+
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+
+            lily_free(left_inst);
+            lily_free(right_inst);
+
+            char *reg_name =
+              LilyMirGenerateName(&module->current.fun.reg_manager);
+
+            LilyMirAddInst(
+              module,
+              NEW_VARIANT(
+                LilyMirInstruction,
+                reg,
+                NEW(LilyMirInstructionReg, from__String(reg_name), op_inst)));
+
+            return NEW_VARIANT(
+              LilyMirInstruction,
+              val,
+              NEW_VARIANT(LilyMirInstructionVal,
+                          reg,
+                          generate_dt__LilyMir(expr->data_type),
+                          from__String(reg_name)));
+        }
+        case LILY_CHECKED_EXPR_KIND_CALL:
+            break;
+        case LILY_CHECKED_EXPR_KIND_CAST:
+            break;
+        case LILY_CHECKED_EXPR_KIND_GROUPING:
+            return generate_expr__LilyMir(module, expr->grouping);
+        case LILY_CHECKED_EXPR_KIND_LAMBDA:
+            break;
+        case LILY_CHECKED_EXPR_KIND_UNARY:
+            break;
+        default:
+            return NEW_VARIANT(
+              LilyMirInstruction, val, generate_val__LilyMir(module, expr));
     }
 }

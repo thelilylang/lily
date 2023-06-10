@@ -27,6 +27,7 @@
 #include <core/lily/lily.h>
 #include <core/lily/mir/generator.h>
 #include <core/lily/mir/generator/constant.h>
+#include <core/lily/mir/generator/fun.h>
 #include <core/lily/package.h>
 
 void
@@ -37,12 +38,16 @@ run__LilyMir(LilyPackage *self)
 
         switch (decl->kind) {
             case LILY_CHECKED_DECL_KIND_CONSTANT:
-                push__Vec(self->mir_module.insts,
-                          generate_constant__LilyMir(&self->mir_module, decl));
+                LilyMirAddInst(
+                  &self->mir_module,
+                  generate_constant__LilyMir(&self->mir_module, decl));
+
                 break;
             case LILY_CHECKED_DECL_KIND_ERROR:
                 break;
             case LILY_CHECKED_DECL_KIND_FUN:
+                generate_fun__LilyMir(&self->mir_module, decl);
+
                 break;
             case LILY_CHECKED_DECL_KIND_METHOD:
                 break;
@@ -53,6 +58,8 @@ run__LilyMir(LilyPackage *self)
             case LILY_CHECKED_DECL_KIND_TYPE:
                 break;
         }
+
+        LilyMirResetCurrent(&self->mir_module);
     }
 
 #ifdef DEBUG_MIR

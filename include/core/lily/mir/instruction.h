@@ -143,11 +143,11 @@ typedef struct LilyMirInstructionVal
         struct LilyMirInstructionVal *exception[2]; // [ok?, err?]
         Float64 float_;
         Int64 int_;
-        Vec *list;       // Vec<LilyMirInstructionVal*>*
-        const char *reg; // const char* (&)
-        Vec *slice;      // Vec<LilyMirInstructionVal*>*
-        const char *str; // const char* (&)
-        Vec *struct_;    // Vec<LilyMirInstructionVal*>*
+        Vec *list; // Vec<LilyMirInstructionVal*>*
+        String *reg;
+        Vec *slice;   // Vec<LilyMirInstructionVal*>*
+        char *str;    // char* (&)
+        Vec *struct_; // Vec<LilyMirInstructionVal*>*
         struct LilyMirInstructionVal *trace;
         Vec *tuple; // Vec<LilyMirInstructionVal*>*
         Uint64 uint;
@@ -240,7 +240,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
                     reg,
                     LilyMirDt *dt,
-                    const char *reg);
+                    String *reg);
 
 /**
  *
@@ -262,7 +262,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
                     str,
                     LilyMirDt *dt,
-                    const char *str);
+                    char *str);
 
 /**
  *
@@ -317,7 +317,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
                     var,
                     LilyMirDt *dt,
-                    const char *var);
+                    char *var);
 
 /**
  *
@@ -600,8 +600,8 @@ inline DESTRUCTOR(LilyMirInstructionValDt, const LilyMirInstructionValDt *self)
 
 typedef struct LilyMirInstructionBlock
 {
-    const char *name; // const char* (&)
-    Vec *insts;       // Vec<LilyMirInstruction*>*
+    String *name;
+    Vec *insts; // Vec<LilyMirInstruction*>*
 } LilyMirInstructionBlock;
 
 /**
@@ -610,7 +610,7 @@ typedef struct LilyMirInstructionBlock
  */
 inline CONSTRUCTOR(LilyMirInstructionBlock,
                    LilyMirInstructionBlock,
-                   char *name,
+                   String *name,
                    Vec *insts)
 {
     return (LilyMirInstructionBlock){ .name = name, .insts = insts };
@@ -800,7 +800,7 @@ inline DESTRUCTOR(LilyMirInstructionJmpCond,
 
 typedef struct LilyMirInstructionReg
 {
-    char *name;
+    String *name;
     LilyMirInstruction *inst;
 } LilyMirInstructionReg;
 
@@ -810,7 +810,7 @@ typedef struct LilyMirInstructionReg
  */
 inline CONSTRUCTOR(LilyMirInstructionReg,
                    LilyMirInstructionReg,
-                   char *name,
+                   String *name,
                    LilyMirInstruction *inst)
 {
     return (LilyMirInstructionReg){ .name = name, .inst = inst };
