@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <base/format.h>
+
 #include <core/lily/mir.h>
 
 DESTRUCTOR(LilyMirNameManager, const LilyMirNameManager *self)
@@ -33,12 +35,73 @@ DESTRUCTOR(LilyMirNameManager, const LilyMirNameManager *self)
     FREE(Vec, self->names);
 }
 
+DESTRUCTOR(LilyMirCurrentFun, const LilyMirCurrentFun *self)
+{
+    FREE(LilyMirNameManager, &self->block_manager);
+    FREE(LilyMirNameManager, &self->reg_manager);
+}
+
+void
+LilyMirAddInst(LilyMirModule *Module, LilyMirInstruction *Inst)
+{
+    switch (Module->current.kind) {
+        case LILY_MIR_CURRENT_KIND_NULL:
+            switch (Inst->kind) {
+                case LILY_MIR_INSTRUCTION_KIND_CONST:
+                    Module->current =
+                      NEW_VARIANT(LilyMirCurrent, const, &Inst->const_);
+                    break;
+                case LILY_MIR_INSTRUCTION_KIND_FUN:
+                    Module->current = NEW_VARIANT(
+                      LilyMirCurrent, fun, NEW(LilyMirCurrentFun, &Inst->fun));
+                    break;
+                case LILY_MIR_INSTRUCTION_KIND_STRUCT:
+                    Module->current =
+                      NEW_VARIANT(LilyMirCurrent, struct, &Inst->struct_);
+                    break;
+                default:
+                    break;
+            }
+
+            push__Vec(Module->insts, Inst);
+
+            break;
+        case LILY_MIR_CURRENT_KIND_FUN:
+            push__Vec(Module->current.fun.fun->insts, Inst);
+
+            break;
+        default:
+            push__Vec(Module->insts, Inst);
+
+            break;
+    }
+}
+
+void
+LilyMirResetCurrent(LilyMirModule *Module)
+{
+    FREE(LilyMirCurrent, &Module->current);
+    Module->current = NEW_VARIANT(LilyMirCurrent, null);
+}
+
+DESTRUCTOR(LilyMirCurrent, const LilyMirCurrent *self)
+{
+    switch (self->kind) {
+        case LILY_MIR_CURRENT_KIND_FUN:
+            FREE(LilyMirCurrentFun, &self->fun);
+            break;
+        default:
+            break;
+    }
+}
+
 void
 LilyMirDisposeModule(const LilyMirModule *Module)
 {
     FREE_BUFFER_ITEMS(
       Module->insts->buffer, Module->insts->len, LilyMirInstruction);
     FREE(Vec, Module->insts);
+    FREE(LilyMirCurrent, &Module->current);
 }
 
 LilyMirInstructionVal *
@@ -50,4 +113,16 @@ LilyMirGetValFromInst(LilyMirInstruction *inst)
         default:
             return NULL;
     }
+}
+
+char *
+LilyMirGenerateName(LilyMirNameManager *NameManager)
+{
+    char *name = format("{s}{d}", NameManager->base_name, NameManager->count);
+
+    push__Vec(NameManager->names, name);
+
+    ++NameManager->count;
+
+    return name;
 }

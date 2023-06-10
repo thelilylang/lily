@@ -30,28 +30,22 @@
 
 #include <core/lily/mir/instruction.h>
 
-enum LilyMirNameManagerKind
-{
-    LILY_MIR_NAME_MANAGER_KIND_BLOCK,
-    LILY_MIR_NAME_MANAGER_KIND_REG,
-};
-
 typedef struct LilyMirNameManager
 {
-    enum LilyMirNameManagerKind kind;
     Vec *names; // Vec<char*>*
     Usize count;
+    char *base_name;
 } LilyMirNameManager;
 
 /**
  *
  * @brief Construct LilyMirNameManager type.
  */
-inline CONSTRUCTOR(LilyMirNameManager,
-                   LilyMirNameManager,
-                   enum LilyMirNameManagerKind kind)
+inline CONSTRUCTOR(LilyMirNameManager, LilyMirNameManager, char *base_name)
 {
-    return (LilyMirNameManager){ .kind = kind, .names = NEW(Vec), .count = 0 };
+    return (LilyMirNameManager){ .names = NEW(Vec),
+                                 .count = 0,
+                                 .base_name = base_name };
 }
 
 /**
@@ -83,13 +77,16 @@ inline CONSTRUCTOR(LilyMirCurrentFun,
                    LilyMirCurrentFun,
                    LilyMirInstructionFun *fun)
 {
-    return (LilyMirCurrentFun){
-        .fun = fun,
-        .block_manager =
-          NEW(LilyMirNameManager, LILY_MIR_NAME_MANAGER_KIND_BLOCK),
-        .reg_manager = NEW(LilyMirNameManager, LILY_MIR_NAME_MANAGER_KIND_REG)
-    };
+    return (LilyMirCurrentFun){ .fun = fun,
+                                .block_manager = NEW(LilyMirNameManager, "bb"),
+                                .reg_manager = NEW(LilyMirNameManager, "") };
 }
+
+/**
+ *
+ * @brief Free LilyMirCurrentFun type.
+ */
+DESTRUCTOR(LilyMirCurrentFun, const LilyMirCurrentFun *self);
 
 typedef struct LilyMirCurrent
 {
@@ -149,6 +146,12 @@ inline VARIANT_CONSTRUCTOR(LilyMirCurrent, LilyMirCurrent, null)
     return (LilyMirCurrent){ .kind = LILY_MIR_CURRENT_KIND_NULL };
 }
 
+/**
+ *
+ * @brief Free LilyMirCurrent type.
+ */
+DESTRUCTOR(LilyMirCurrent, const LilyMirCurrent *self);
+
 typedef struct LilyMirModule
 {
     Vec *insts; // Vec<LilyMirInstruction*>*
@@ -166,6 +169,20 @@ LilyMirCreateModule()
                             .current = NEW_VARIANT(LilyMirCurrent, null) };
 }
 
+/**
+ *
+ * @brief Add instruction to the module.
+ */
+void
+LilyMirAddInst(LilyMirModule *Module, LilyMirInstruction *Inst);
+
+/**
+ *
+ * @brief Reset the current field.
+ */
+void
+LilyMirResetCurrent(LilyMirModule *Module);
+
 void
 LilyMirDisposeModule(const LilyMirModule *Module);
 
@@ -181,6 +198,9 @@ LilyMirDeleteBasicBlock(LilyMirInstructionBlock *Block);
 
 void
 LilyMirDisposeBuilder(LilyMirModule *Module);
+
+char *
+LilyMirGenerateName(LilyMirNameManager *NameManager);
 
 LilyMirInstruction *
 LilyMirBuildRetUnit(LilyMirModule *Module);
