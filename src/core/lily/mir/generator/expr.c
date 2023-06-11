@@ -84,13 +84,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               iadd,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               fadd,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -99,7 +99,7 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                 case LILY_CHECKED_EXPR_BINARY_KIND_AND:
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                           and,
-                                          NEW(LilyMirInstructionSrcDest,
+                                          NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
 
@@ -110,33 +110,33 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                         expr->binary.left->data_type->kind ==
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         GENERATE_ASSIGN_BINARY(iadd,
-                                               NEW(LilyMirInstructionSrcDest,
+                                               NEW(LilyMirInstructionDestSrc,
                                                    left_inst->val,
                                                    right_inst->val));
                     } else {
                         GENERATE_ASSIGN_BINARY(fadd,
-                                               NEW(LilyMirInstructionSrcDest,
+                                               NEW(LilyMirInstructionDestSrc,
                                                    left_inst->val,
                                                    right_inst->val));
                     }
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
                     GENERATE_ASSIGN_BINARY(bitand,
-                                           NEW(LilyMirInstructionSrcDest,
+                                           NEW(LilyMirInstructionDestSrc,
                                                left_inst->val,
                                                right_inst->val));
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT:
                     GENERATE_ASSIGN_BINARY(shl,
-                                           NEW(LilyMirInstructionSrcDest,
+                                           NEW(LilyMirInstructionDestSrc,
                                                left_inst->val,
                                                right_inst->val));
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
                     GENERATE_ASSIGN_BINARY(bitor,
-                                           NEW(LilyMirInstructionSrcDest,
+                                           NEW(LilyMirInstructionDestSrc,
                                                left_inst->val,
                                                right_inst->val));
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT:
                     GENERATE_ASSIGN_BINARY(shr,
-                                           NEW(LilyMirInstructionSrcDest,
+                                           NEW(LilyMirInstructionDestSrc,
                                                left_inst->val,
                                                right_inst->val));
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_DIV:
@@ -145,18 +145,18 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                         expr->binary.left->data_type->kind ==
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         GENERATE_ASSIGN_BINARY(idiv,
-                                               NEW(LilyMirInstructionSrcDest,
+                                               NEW(LilyMirInstructionDestSrc,
                                                    left_inst->val,
                                                    right_inst->val));
                     } else {
                         GENERATE_ASSIGN_BINARY(fdiv,
-                                               NEW(LilyMirInstructionSrcDest,
+                                               NEW(LilyMirInstructionDestSrc,
                                                    left_inst->val,
                                                    right_inst->val));
                     }
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_EXP:
                     GENERATE_ASSIGN_BINARY(exp,
-                                           NEW(LilyMirInstructionSrcDest,
+                                           NEW(LilyMirInstructionDestSrc,
                                                left_inst->val,
                                                right_inst->val));
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MOD:
@@ -165,12 +165,12 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                         expr->binary.left->data_type->kind ==
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         GENERATE_ASSIGN_BINARY(irem,
-                                               NEW(LilyMirInstructionSrcDest,
+                                               NEW(LilyMirInstructionDestSrc,
                                                    left_inst->val,
                                                    right_inst->val));
                     } else {
                         GENERATE_ASSIGN_BINARY(frem,
-                                               NEW(LilyMirInstructionSrcDest,
+                                               NEW(LilyMirInstructionDestSrc,
                                                    left_inst->val,
                                                    right_inst->val));
                     }
@@ -180,12 +180,12 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                         expr->binary.left->data_type->kind ==
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         GENERATE_ASSIGN_BINARY(imul,
-                                               NEW(LilyMirInstructionSrcDest,
+                                               NEW(LilyMirInstructionDestSrc,
                                                    left_inst->val,
                                                    right_inst->val));
                     } else {
                         GENERATE_ASSIGN_BINARY(fmul,
-                                               NEW(LilyMirInstructionSrcDest,
+                                               NEW(LilyMirInstructionDestSrc,
                                                    left_inst->val,
                                                    right_inst->val));
                     }
@@ -195,18 +195,18 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                         expr->binary.left->data_type->kind ==
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         GENERATE_ASSIGN_BINARY(isub,
-                                               NEW(LilyMirInstructionSrcDest,
+                                               NEW(LilyMirInstructionDestSrc,
                                                    left_inst->val,
                                                    right_inst->val));
                     } else {
                         GENERATE_ASSIGN_BINARY(fsub,
-                                               NEW(LilyMirInstructionSrcDest,
+                                               NEW(LilyMirInstructionDestSrc,
                                                    left_inst->val,
                                                    right_inst->val));
                     }
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_XOR:
                     GENERATE_ASSIGN_BINARY(xor,
-                                           NEW(LilyMirInstructionSrcDest,
+                                           NEW(LilyMirInstructionDestSrc,
                                                left_inst->val,
                                                right_inst->val));
                 case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN:
@@ -214,7 +214,7 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                 case LILY_CHECKED_EXPR_BINARY_KIND_BIT_AND:
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                             bitand,
-                                          NEW(LilyMirInstructionSrcDest,
+                                          NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
 
@@ -223,7 +223,7 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                           bitor
                                           ,
-                                          NEW(LilyMirInstructionSrcDest,
+                                          NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
 
@@ -235,13 +235,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               idiv,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               fdiv,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -254,13 +254,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               icmp_eq,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               fcmp_eq,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -269,7 +269,7 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                 case LILY_CHECKED_EXPR_BINARY_KIND_EXP:
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                           exp,
-                                          NEW(LilyMirInstructionSrcDest,
+                                          NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
 
@@ -281,13 +281,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               icmp_ge,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               fcmp_ge,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -300,13 +300,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               icmp_gt,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               fcmp_gt,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -315,7 +315,7 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                 case LILY_CHECKED_EXPR_BINARY_KIND_BIT_L_SHIFT:
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                           shl,
-                                          NEW(LilyMirInstructionSrcDest,
+                                          NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
 
@@ -327,13 +327,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               icmp_le,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               fcmp_le,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -346,13 +346,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               icmp_lt,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               fcmp_lt,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -365,13 +365,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               irem,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               frem,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -384,13 +384,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               imul,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               fmul,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -403,13 +403,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               icmp_ne,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               fcmp_ne,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -419,13 +419,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                           or
                                           ,
-                                          NEW(LilyMirInstructionSrcDest,
+                                          NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
                 case LILY_CHECKED_EXPR_BINARY_KIND_BIT_R_SHIFT:
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                           shr,
-                                          NEW(LilyMirInstructionSrcDest,
+                                          NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
                 case LILY_CHECKED_EXPR_BINARY_KIND_RANGE:
@@ -437,13 +437,13 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               isub,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     } else {
                         op_inst = NEW_VARIANT(LilyMirInstruction,
                                               fsub,
-                                              NEW(LilyMirInstructionSrcDest,
+                                              NEW(LilyMirInstructionDestSrc,
                                                   left_inst->val,
                                                   right_inst->val));
                     }
@@ -452,7 +452,7 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                 case LILY_CHECKED_EXPR_BINARY_KIND_XOR:
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                           xor,
-                                          NEW(LilyMirInstructionSrcDest,
+                                          NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
                 case LILY_CHECKED_EXPR_BINARY_KIND_LIST_HEAD:

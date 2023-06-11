@@ -274,7 +274,7 @@ inline LilyMirInstruction *
 LilyMirBuildStore(LilyMirInstructionVal *dest, LilyMirInstructionVal *src)
 {
     return NEW_VARIANT(
-      LilyMirInstruction, store, NEW(LilyMirInstructionSrcDest, dest, src));
+      LilyMirInstruction, store, NEW(LilyMirInstructionDestSrc, dest, src));
 }
 
 LilyMirInstructionVal *

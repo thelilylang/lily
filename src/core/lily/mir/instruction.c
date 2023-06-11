@@ -814,8 +814,8 @@ DESTRUCTOR(LilyMirInstructionVal, LilyMirInstructionVal *self)
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
-               LilyMirInstructionSrcDest,
-               const LilyMirInstructionSrcDest *self)
+               LilyMirInstructionDestSrc,
+               const LilyMirInstructionDestSrc *self)
 {
     return format__String("{Sr}, {Sr}",
                           to_string__Debug__LilyMirInstructionVal(self->dest),
@@ -1267,7 +1267,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     and,
-                    LilyMirInstructionSrcDest and)
+                    LilyMirInstructionDestSrc and)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1319,7 +1319,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                       bitand,
-                    LilyMirInstructionSrcDest bitand)
+                    LilyMirInstructionDestSrc bitand)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1346,7 +1346,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     bitor
                     ,
-                    LilyMirInstructionSrcDest bitor)
+                    LilyMirInstructionDestSrc bitor)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1424,7 +1424,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     exp,
-                    LilyMirInstructionSrcDest exp)
+                    LilyMirInstructionDestSrc exp)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1437,7 +1437,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fadd,
-                    LilyMirInstructionSrcDest fadd)
+                    LilyMirInstructionDestSrc fadd)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1450,7 +1450,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fcmp_eq,
-                    LilyMirInstructionSrcDest fcmp_eq)
+                    LilyMirInstructionDestSrc fcmp_eq)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1463,7 +1463,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fcmp_ne,
-                    LilyMirInstructionSrcDest fcmp_ne)
+                    LilyMirInstructionDestSrc fcmp_ne)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1476,7 +1476,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fcmp_le,
-                    LilyMirInstructionSrcDest fcmp_le)
+                    LilyMirInstructionDestSrc fcmp_le)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1489,7 +1489,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fcmp_lt,
-                    LilyMirInstructionSrcDest fcmp_lt)
+                    LilyMirInstructionDestSrc fcmp_lt)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1502,7 +1502,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fcmp_ge,
-                    LilyMirInstructionSrcDest fcmp_ge)
+                    LilyMirInstructionDestSrc fcmp_ge)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1515,7 +1515,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fcmp_gt,
-                    LilyMirInstructionSrcDest fcmp_gt)
+                    LilyMirInstructionDestSrc fcmp_gt)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1528,7 +1528,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fdiv,
-                    LilyMirInstructionSrcDest fdiv)
+                    LilyMirInstructionDestSrc fdiv)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1541,7 +1541,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fmul,
-                    LilyMirInstructionSrcDest fmul)
+                    LilyMirInstructionDestSrc fmul)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1567,7 +1567,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     frem,
-                    LilyMirInstructionSrcDest frem)
+                    LilyMirInstructionDestSrc frem)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1580,7 +1580,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fsub,
-                    LilyMirInstructionSrcDest fsub)
+                    LilyMirInstructionDestSrc fsub)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1684,7 +1684,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     iadd,
-                    LilyMirInstructionSrcDest iadd)
+                    LilyMirInstructionDestSrc iadd)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1697,7 +1697,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     icmp_eq,
-                    LilyMirInstructionSrcDest icmp_eq)
+                    LilyMirInstructionDestSrc icmp_eq)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1710,7 +1710,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     icmp_ne,
-                    LilyMirInstructionSrcDest icmp_ne)
+                    LilyMirInstructionDestSrc icmp_ne)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1723,7 +1723,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     icmp_le,
-                    LilyMirInstructionSrcDest icmp_le)
+                    LilyMirInstructionDestSrc icmp_le)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1736,7 +1736,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     icmp_lt,
-                    LilyMirInstructionSrcDest icmp_lt)
+                    LilyMirInstructionDestSrc icmp_lt)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1749,7 +1749,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     icmp_ge,
-                    LilyMirInstructionSrcDest icmp_ge)
+                    LilyMirInstructionDestSrc icmp_ge)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1762,7 +1762,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     icmp_gt,
-                    LilyMirInstructionSrcDest icmp_gt)
+                    LilyMirInstructionDestSrc icmp_gt)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1775,7 +1775,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     idiv,
-                    LilyMirInstructionSrcDest idiv)
+                    LilyMirInstructionDestSrc idiv)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1788,7 +1788,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     imul,
-                    LilyMirInstructionSrcDest imul)
+                    LilyMirInstructionDestSrc imul)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1801,7 +1801,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     inctrace,
-                    LilyMirInstructionSrcDest inctrace)
+                    LilyMirInstructionDestSrc inctrace)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1827,7 +1827,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     irem,
-                    LilyMirInstructionSrcDest irem)
+                    LilyMirInstructionDestSrc irem)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1866,7 +1866,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     isub,
-                    LilyMirInstructionSrcDest isub)
+                    LilyMirInstructionDestSrc isub)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -1984,7 +1984,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     or
                     ,
-                    LilyMirInstructionSrcDest or)
+                    LilyMirInstructionDestSrc or)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -2036,7 +2036,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     shl,
-                    LilyMirInstructionSrcDest shl)
+                    LilyMirInstructionDestSrc shl)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -2049,7 +2049,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     shr,
-                    LilyMirInstructionSrcDest shr)
+                    LilyMirInstructionDestSrc shr)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -2062,7 +2062,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     store,
-                    LilyMirInstructionSrcDest store)
+                    LilyMirInstructionDestSrc store)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -2179,7 +2179,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     xor,
-                    LilyMirInstructionSrcDest xor)
+                    LilyMirInstructionDestSrc xor)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -2203,7 +2203,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_AND:
             res = format__String(
               "\x1b[34mand\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->and));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->and));
             break;
         case LILY_MIR_INSTRUCTION_KIND_ARG:
             res = format__String(
@@ -2221,7 +2221,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_BITAND:
             res = format__String(
               "\x1b[34mbitand\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->bitand));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->bitand));
             break;
         case LILY_MIR_INSTRUCTION_KIND_BITNOT:
             res = format__String(
@@ -2231,7 +2231,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_BITOR:
             res = format__String(
               "\x1b[34mbitor\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->bitor));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->bitor));
             break;
         case LILY_MIR_INSTRUCTION_KIND_BLOCK:
             res = format__String(
@@ -2259,52 +2259,52 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_EXP:
             res = format__String(
               "\x1b[34mexp\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->exp));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->exp));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FADD:
             res = format__String(
               "\x1b[34mfadd\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->fadd));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->fadd));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FCMP_EQ:
             res = format__String(
               "\x1b[34mfcmp eq\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_eq));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->fcmp_eq));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FCMP_NE:
             res = format__String(
               "\x1b[34mfcmp ne\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_ne));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->fcmp_ne));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FCMP_LE:
             res = format__String(
               "\x1b[34mfcmp le\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_le));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->fcmp_le));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FCMP_LT:
             res = format__String(
               "\x1b[34mfcmp lt\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_lt));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->fcmp_lt));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FCMP_GE:
             res = format__String(
               "\x1b[34mfcmp ge\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_ge));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->fcmp_ge));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FCMP_GT:
             res = format__String(
               "\x1b[34mfcmp gt\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->fcmp_gt));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->fcmp_gt));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FDIV:
             res = format__String(
               "\x1b[34mfdiv\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->fdiv));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->fdiv));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FMUL:
             res = format__String(
               "\x1b[34mfmul\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->fmul));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->fmul));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FNEG:
             res = format__String(
@@ -2314,12 +2314,12 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_FREM:
             res = format__String(
               "\x1b[34mfrem\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->frem));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->frem));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FSUB:
             res = format__String(
               "\x1b[34mfsub\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->fsub));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->fsub));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FUN:
             res = format__String(
@@ -2358,47 +2358,47 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_IADD:
             res = format__String(
               "\x1b[34miadd\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->iadd));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->iadd));
             break;
         case LILY_MIR_INSTRUCTION_KIND_ICMP_EQ:
             res = format__String(
               "\x1b[34micmp eq\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_eq));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->icmp_eq));
             break;
         case LILY_MIR_INSTRUCTION_KIND_ICMP_NE:
             res = format__String(
               "\x1b[34micmp ne\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_ne));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->icmp_ne));
             break;
         case LILY_MIR_INSTRUCTION_KIND_ICMP_LE:
             res = format__String(
               "\x1b[34micmp le\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_le));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->icmp_le));
             break;
         case LILY_MIR_INSTRUCTION_KIND_ICMP_LT:
             res = format__String(
               "\x1b[34micmp lt\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_lt));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->icmp_lt));
             break;
         case LILY_MIR_INSTRUCTION_KIND_ICMP_GE:
             res = format__String(
               "\x1b[34micmp ge\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_ge));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->icmp_ge));
             break;
         case LILY_MIR_INSTRUCTION_KIND_ICMP_GT:
             res = format__String(
               "\x1b[34micmp gt\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->icmp_gt));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->icmp_gt));
             break;
         case LILY_MIR_INSTRUCTION_KIND_IDIV:
             res = format__String(
               "\x1b[34midiv\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->idiv));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->idiv));
             break;
         case LILY_MIR_INSTRUCTION_KIND_IMUL:
             res = format__String(
               "\x1b[34mimul\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->imul));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->imul));
             break;
         case LILY_MIR_INSTRUCTION_KIND_INCTRACE:
             res = format__String(
@@ -2413,7 +2413,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_IREM:
             res = format__String(
               "\x1b[34mirem\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->irem));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->irem));
             break;
         case LILY_MIR_INSTRUCTION_KIND_ISOK:
             res = format__String(
@@ -2428,7 +2428,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_ISUB:
             res = format__String(
               "\x1b[34misub\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->isub));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->isub));
             break;
         case LILY_MIR_INSTRUCTION_KIND_JMP:
             res = format__String("\x1b[34mjmp\x1b[34m \x1b[33mblock\x1b[0m {s}",
@@ -2470,7 +2470,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_OR:
             res = format__String(
               "\x1b[34mor\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->or));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->or));
             break;
         case LILY_MIR_INSTRUCTION_KIND_REF_PTR:
             res = format__String(
@@ -2489,17 +2489,17 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_SHL:
             res = format__String(
               "\x1b[34mshl\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->shl));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->shl));
             break;
         case LILY_MIR_INSTRUCTION_KIND_SHR:
             res = format__String(
               "\x1b[34mshr\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->shr));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->shr));
             break;
         case LILY_MIR_INSTRUCTION_KIND_STORE:
             res = format__String(
               "\x1b[34mstore\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->store));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->store));
             break;
         case LILY_MIR_INSTRUCTION_KIND_STRUCT:
             res = to_string__Debug__LilyMirInstructionStruct(&self->struct_);
@@ -2538,7 +2538,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_XOR:
             res = format__String(
               "\x1b[34mxor\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrcDest(&self->xor));
+              to_string__Debug__LilyMirInstructionDestSrc(&self->xor));
             break;
         default:
             UNREACHABLE("unknown variant");
@@ -2556,7 +2556,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, alloc, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, and, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->and);
+    FREE(LilyMirInstructionDestSrc, &self->and);
     lily_free(self);
 }
 
@@ -2579,7 +2579,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, bitcast, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, bitand, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->bitand);
+    FREE(LilyMirInstructionDestSrc, &self->bitand);
     lily_free(self);
 }
 
@@ -2591,7 +2591,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, bitnot, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, bitor, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->bitor);
+    FREE(LilyMirInstructionDestSrc, &self->bitor);
     lily_free(self);
 }
 
@@ -2627,61 +2627,61 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, drop, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, exp, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->exp);
+    FREE(LilyMirInstructionDestSrc, &self->exp);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fadd, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->fadd);
+    FREE(LilyMirInstructionDestSrc, &self->fadd);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_eq, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->fcmp_eq);
+    FREE(LilyMirInstructionDestSrc, &self->fcmp_eq);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_ne, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->fcmp_ne);
+    FREE(LilyMirInstructionDestSrc, &self->fcmp_ne);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_le, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->fcmp_le);
+    FREE(LilyMirInstructionDestSrc, &self->fcmp_le);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_lt, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->fcmp_lt);
+    FREE(LilyMirInstructionDestSrc, &self->fcmp_lt);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_ge, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->fcmp_ge);
+    FREE(LilyMirInstructionDestSrc, &self->fcmp_ge);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_gt, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->fcmp_gt);
+    FREE(LilyMirInstructionDestSrc, &self->fcmp_gt);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fdiv, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->fdiv);
+    FREE(LilyMirInstructionDestSrc, &self->fdiv);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fmul, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->fmul);
+    FREE(LilyMirInstructionDestSrc, &self->fmul);
     lily_free(self);
 }
 
@@ -2693,13 +2693,13 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, fneg, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, frem, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->frem);
+    FREE(LilyMirInstructionDestSrc, &self->frem);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fsub, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->fsub);
+    FREE(LilyMirInstructionDestSrc, &self->fsub);
     lily_free(self);
 }
 
@@ -2747,55 +2747,55 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, getslice, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, iadd, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->iadd);
+    FREE(LilyMirInstructionDestSrc, &self->iadd);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_eq, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->icmp_eq);
+    FREE(LilyMirInstructionDestSrc, &self->icmp_eq);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_ne, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->icmp_ne);
+    FREE(LilyMirInstructionDestSrc, &self->icmp_ne);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_le, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->icmp_le);
+    FREE(LilyMirInstructionDestSrc, &self->icmp_le);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_lt, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->icmp_lt);
+    FREE(LilyMirInstructionDestSrc, &self->icmp_lt);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_ge, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->icmp_ge);
+    FREE(LilyMirInstructionDestSrc, &self->icmp_ge);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_gt, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->icmp_gt);
+    FREE(LilyMirInstructionDestSrc, &self->icmp_gt);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, idiv, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->idiv);
+    FREE(LilyMirInstructionDestSrc, &self->idiv);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, imul, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->imul);
+    FREE(LilyMirInstructionDestSrc, &self->imul);
     lily_free(self);
 }
 
@@ -2813,7 +2813,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, ineg, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, irem, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->irem);
+    FREE(LilyMirInstructionDestSrc, &self->irem);
     lily_free(self);
 }
 
@@ -2831,7 +2831,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, iserr, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, isub, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->isub);
+    FREE(LilyMirInstructionDestSrc, &self->isub);
     lily_free(self);
 }
 
@@ -2884,7 +2884,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, not, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, or, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->or);
+    FREE(LilyMirInstructionDestSrc, &self->or);
     lily_free(self);
 }
 
@@ -2908,19 +2908,19 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, ret, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, shl, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->shl);
+    FREE(LilyMirInstructionDestSrc, &self->shl);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, shr, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->shr);
+    FREE(LilyMirInstructionDestSrc, &self->shr);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, store, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->store);
+    FREE(LilyMirInstructionDestSrc, &self->store);
     lily_free(self);
 }
 
@@ -2974,7 +2974,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, var, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, xor, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrcDest, &self->xor);
+    FREE(LilyMirInstructionDestSrc, &self->xor);
     lily_free(self);
 }
 
