@@ -26,6 +26,8 @@
 
 #include <core/lily/mir.h>
 
+#include <string.h>
+
 DESTRUCTOR(LilyMirNameManager, const LilyMirNameManager *self)
 {
     for (Usize i = 0; i < self->names->len; ++i) {
@@ -83,6 +85,17 @@ LilyMirAddInst(LilyMirModule *Module, LilyMirInstruction *Inst)
     }
 }
 
+DESTRUCTOR(LilyMirCurrent, const LilyMirCurrent *self)
+{
+    switch (self->kind) {
+        case LILY_MIR_CURRENT_KIND_FUN:
+            FREE(LilyMirCurrentFun, &self->fun);
+            break;
+        default:
+            break;
+    }
+}
+
 void
 LilyMirResetCurrent(LilyMirModule *Module)
 {
@@ -100,15 +113,77 @@ LilyMirBuildReg(LilyMirModule *Module, LilyMirInstruction *Inst)
                        NEW(LilyMirInstructionReg, from__String(name), Inst));
 }
 
-DESTRUCTOR(LilyMirCurrent, const LilyMirCurrent *self)
+LilyMirInstruction *
+LilyMirBuildLoad(LilyMirModule *Module,
+                 LilyMirInstructionVal *src,
+                 LilyMirDt *dt,
+                 String *value_name)
 {
-    switch (self->kind) {
-        case LILY_MIR_CURRENT_KIND_FUN:
-            FREE(LilyMirCurrentFun, &self->fun);
-            break;
-        default:
-            break;
+    ASSERT(Module->current.kind == LILY_MIR_CURRENT_KIND_FUN);
+
+    for (Usize i = 0; i < Module->current.fun.fun->loads->len; ++i) {
+        LilyMirInstructionFunLoad *load =
+          get__Vec(Module->current.fun.fun->loads, i);
+
+        if (!strcmp(load->value_name->buffer, value_name->buffer)) {
+            // assume: %<name> = <val_inst>
+            return NEW_VARIANT(
+              LilyMirInstruction,
+              val,
+              NEW_VARIANT(LilyMirInstructionVal,
+                          reg,
+                          clone__LilyMirDt(load->inst->reg.inst->load.dt),
+                          clone__String(load->inst->reg.name)));
+        }
     }
+
+    char *name = LilyMirGenerateName(&Module->current.fun.reg_manager);
+
+    LilyMirInstruction *load_inst =
+      NEW_VARIANT(LilyMirInstruction,
+                  reg,
+                  NEW(LilyMirInstructionReg,
+                      from__String(name),
+                      NEW_VARIANT(LilyMirInstruction,
+                                  load,
+                                  NEW(LilyMirInstructionLoad,
+                                      NEW(LilyMirInstructionSrc, src),
+                                      clone__LilyMirDt(dt)))));
+
+    push__Vec(Module->current.fun.fun->loads,
+              NEW(LilyMirInstructionFunLoad,
+                  value_name,
+                  load_inst,
+                  LilyMirGetBlockId(Module)));
+
+    LilyMirAddInst(Module, load_inst);
+
+    return NEW_VARIANT(
+      LilyMirInstruction,
+      val,
+      NEW_VARIANT(LilyMirInstructionVal, reg, dt, from__String(name)));
+}
+
+LilyMirInstruction *
+LilyMirBuildVar(LilyMirModule *Module,
+                char *name,
+                LilyMirDt *dt,
+                LilyMirInstruction *inst)
+{
+    LilyMirAddInst(
+      Module,
+      NEW_VARIANT(
+        LilyMirInstruction,
+        var,
+        NEW(LilyMirInstructionVar, name, LilyMirBuildAlloc(Module, dt))));
+
+    LilyMirInstruction *var = LilyMirBuildStore(
+      NEW_VARIANT(LilyMirInstructionVal, var, clone__LilyMirDt(dt), name),
+      inst->val);
+
+    lily_free(inst);
+
+    return var;
 }
 
 void
@@ -118,6 +193,40 @@ LilyMirDisposeModule(const LilyMirModule *Module)
       Module->insts->buffer, Module->insts->len, LilyMirInstruction);
     FREE(Vec, Module->insts);
     FREE(LilyMirCurrent, &Module->current);
+}
+
+void
+LilyMirNextBlockAndClearLoads(LilyMirModule *Module)
+{
+    ASSERT(Module->current.kind == LILY_MIR_CURRENT_KIND_FUN);
+
+    LilyMirInstructionBlock *block =
+      pop__Stack(Module->current.fun.fun->block_stack);
+
+    // Clear loaded value in the block
+    for (Usize i = Module->current.fun.fun->loads->len; --i;) {
+        LilyMirInstructionFunLoad *load =
+          get__Vec(Module->current.fun.fun->loads, i);
+
+        if (load->block_id == block->id) {
+            FREE(LilyMirInstructionFunLoad,
+                 remove__Vec(Module->current.fun.fun->loads, i));
+        }
+    }
+}
+
+LilyMirInstruction *
+LilyMirBuildBlock(LilyMirModule *Module)
+{
+    ASSERT(Module->current.kind == LILY_MIR_CURRENT_KIND_FUN);
+
+    char *name = LilyMirGenerateName(&Module->current.fun.block_manager);
+
+    return NEW_VARIANT(LilyMirInstruction,
+                       block,
+                       NEW(LilyMirInstructionBlock,
+                           from__String(name),
+                           Module->current.fun.fun->block_count++));
 }
 
 void

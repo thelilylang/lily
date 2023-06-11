@@ -197,6 +197,12 @@ LilyMirNextBlock(LilyMirModule *Module)
 }
 
 void
+LilyMirNextBlockAndClearLoads(LilyMirModule *Module);
+
+LilyMirInstruction *
+LilyMirBuildBlock(LilyMirModule *Module);
+
+void
 LilyMirAddBlock(LilyMirModule *Module, LilyMirInstruction *Block);
 
 LilyMirInstructionBlock *
@@ -226,6 +232,19 @@ LilyMirBuildRegVal(LilyMirModule *Module, LilyMirDt *dt, String *name)
     return NEW_VARIANT(LilyMirInstructionVal, reg, dt, name);
 }
 
+inline LilyMirInstruction *
+LilyMirBuildAlloc(LilyMirModule *Module, LilyMirDt *dt)
+{
+    return NEW_VARIANT(
+      LilyMirInstruction, alloc, NEW(LilyMirInstructionAlloc, dt));
+}
+
+inline Usize
+LilyMirGetBlockId(LilyMirModule *Module)
+{
+    return Module->current.fun.fun->block_count;
+}
+
 LilyMirInstruction *
 LilyMirBuildRetUnit(LilyMirModule *Module);
 
@@ -234,6 +253,22 @@ LilyMirBuildRet(LilyMirModule *Module);
 
 LilyMirInstruction *
 LilyMirBuildJmp(LilyMirModule *Module);
+
+/**
+ *
+ * @param value_nam e.g. name of the variable.
+ */
+LilyMirInstruction *
+LilyMirBuildLoad(LilyMirModule *Module,
+                 LilyMirInstructionVal *src,
+                 LilyMirDt *dt,
+                 String *value_name);
+
+LilyMirInstruction *
+LilyMirBuildVar(LilyMirModule *Module,
+                char *name,
+                LilyMirDt *dt,
+                LilyMirInstruction *inst);
 
 inline LilyMirInstruction *
 LilyMirBuildStore(LilyMirInstructionVal *dest, LilyMirInstructionVal *src)
