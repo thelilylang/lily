@@ -59,11 +59,15 @@ generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
-                case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
                     return NEW_VARIANT(LilyMirInstructionVal,
                                        var,
                                        generate_dt__LilyMir(expr->data_type),
                                        expr->call.global_name->buffer);
+                case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
+                    return NEW_VARIANT(LilyMirInstructionVal,
+                                       param,
+                                       generate_dt__LilyMir(expr->data_type),
+                                       expr->call.fun_param);
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
                     TODO("record field access");
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
