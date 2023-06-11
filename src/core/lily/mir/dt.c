@@ -276,7 +276,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirDt, const LilyMirDt *self)
             return format__String("\x1b[35m&{Sr}\x1b[0m",
                                   to_string__Debug__LilyMirDt(self->ptr));
         case LILY_MIR_DT_KIND_STR:
-            return format__String("\x1b[35mstruct {{u32, usize}\x1b[0m");
+            return format__String("\x1b[35mStr[{d}]\x1b[0m", self->str);
         case LILY_MIR_DT_KIND_STRUCT: {
             String *res = format__String("\x1b[35mstruct {{");
 
