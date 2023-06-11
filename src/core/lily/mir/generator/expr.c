@@ -39,22 +39,8 @@
           LilyMirBuildReg(module,                                              \
                           NEW_VARIANT(LilyMirInstruction, inst_name, value))); \
                                                                                \
-        LilyMirInstructionVal *store_val = NULL;                               \
-        switch (expr->binary.left->call.kind) {                                \
-            case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:                         \
-            case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:                        \
-                store_val = NEW_VARIANT(                                       \
-                  LilyMirInstructionVal,                                       \
-                  var,                                                         \
-                  generate_dt__LilyMir(expr->binary.left->data_type),          \
-                  expr->binary.left->call.global_name->buffer);                \
-                break;                                                         \
-            default:                                                           \
-                UNREACHABLE("the analysis has a bug!!");                       \
-        }                                                                      \
-                                                                               \
         return LilyMirBuildStore(                                              \
-          store_val,                                                           \
+          generate_val__LilyMir(module, expr->binary.left),                    \
           LilyMirBuildRegVal(                                                  \
             module,                                                            \
             generate_dt__LilyMir(expr->binary.right->data_type),               \
@@ -479,14 +465,12 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
-                    return LilyMirBuildLoad(
-                      module,
-                      NEW_VARIANT(LilyMirInstructionVal,
-                                  var,
-                                  generate_dt__LilyMir(expr->data_type),
-                                  expr->call.global_name->buffer),
-                      generate_dt__LilyMir(expr->data_type),
-                      expr->call.global_name);
+                case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
+                case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
+                case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
+                    return NEW_VARIANT(LilyMirInstruction,
+                                       val,
+                                       generate_val__LilyMir(module, expr));
                 default:
                     return generate_call_expr__LilyMir(module, expr);
             }
@@ -497,6 +481,19 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
         case LILY_CHECKED_EXPR_KIND_LAMBDA:
             break;
         case LILY_CHECKED_EXPR_KIND_UNARY:
+            switch (expr->unary.kind) {
+                case LILY_CHECKED_EXPR_UNARY_KIND_DEREFERENCE: {
+                    LilyMirInstruction *right_inst =
+                      generate_expr__LilyMir(module, expr->unary.right);
+
+                    ASSERT(right_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+
+                    // LilyMirBuildLoad(module, right_inst->val,
+                    // generate_dt__LilyMir(expr->data_type), );
+                }
+                default:
+                    UNREACHABLE("unknown variant");
+            }
             break;
         default:
             return NEW_VARIANT(

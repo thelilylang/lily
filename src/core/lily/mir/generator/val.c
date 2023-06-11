@@ -58,17 +58,16 @@ generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
         }
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
-                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       var,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->call.global_name->buffer);
-                }
+                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
                     return NEW_VARIANT(LilyMirInstructionVal,
                                        var,
                                        generate_dt__LilyMir(expr->data_type),
                                        expr->call.global_name->buffer);
+                case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
+                    TODO("record field access");
+                case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
+                    TODO("record field single");
                 default:
                     UNREACHABLE("not expected to generate a val");
             }
@@ -150,7 +149,7 @@ generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                     return NEW_VARIANT(LilyMirInstructionVal,
                                        str,
                                        generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.str->buffer);
+                                       expr->literal.str);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT32:
                     return NEW_VARIANT(LilyMirInstructionVal,
                                        float,

@@ -137,7 +137,7 @@ generate_dt__LilyMir(LilyCheckedDataType *data_type)
               LilyMirDt, ref, generate_dt__LilyMir(data_type->ref_mut));
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
             return NEW_VARIANT(
-              LilyMirDt, ptr, NEW(LilyMirDt, LILY_MIR_DT_KIND_U32));
+              LilyMirDt, str, data_type->str == -1 ? 0 : data_type->str);
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return NEW_VARIANT(
               LilyMirDt, trace, generate_dt__LilyMir(data_type->trace));
