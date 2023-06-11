@@ -270,11 +270,28 @@ LilyMirBuildVar(LilyMirModule *Module,
                 LilyMirDt *dt,
                 LilyMirInstruction *inst);
 
+inline LilyMirInstructionVal *
+LilyMirBuildStruct(LilyMirModule *Module, LilyMirDt *dt, Vec *struct_)
+{
+    return NEW_VARIANT(LilyMirInstructionVal, struct, dt, struct_);
+}
+
 inline LilyMirInstruction *
 LilyMirBuildStore(LilyMirInstructionVal *dest, LilyMirInstructionVal *src)
 {
     return NEW_VARIANT(
       LilyMirInstruction, store, NEW(LilyMirInstructionDestSrc, dest, src));
+}
+
+inline LilyMirInstruction *
+LilyMirBuildGetField(LilyMirModule *Module,
+                     LilyMirDt *dt,
+                     LilyMirInstructionVal *val,
+                     Vec *indexes)
+{
+    return NEW_VARIANT(LilyMirInstruction,
+                       getfield,
+                       NEW(LilyMirInstructionGetField, dt, val, indexes));
 }
 
 LilyMirInstructionVal *
