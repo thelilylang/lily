@@ -56,6 +56,22 @@ generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                     TODO("do [?]");
             }
         }
+        case LILY_CHECKED_EXPR_KIND_CALL:
+            switch (expr->call.kind) {
+                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
+                    return NEW_VARIANT(LilyMirInstructionVal,
+                                       var,
+                                       generate_dt__LilyMir(expr->data_type),
+                                       expr->call.global_name->buffer);
+                }
+                case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
+                    return NEW_VARIANT(LilyMirInstructionVal,
+                                       var,
+                                       generate_dt__LilyMir(expr->data_type),
+                                       expr->call.global_name->buffer);
+                default:
+                    UNREACHABLE("not expected to generate a val");
+            }
         case LILY_CHECKED_EXPR_KIND_LITERAL:
             switch (expr->literal.kind) {
                 case LILY_CHECKED_EXPR_LITERAL_KIND_BOOL:

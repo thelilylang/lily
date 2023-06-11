@@ -25,6 +25,7 @@
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
 #include <core/lily/mir/generator/fun.h>
+#include <core/lily/mir/generator/stmt.h>
 #include <core/lily/mir/generator/val.h>
 #include <core/lily/mir/linkage.h>
 
@@ -69,7 +70,12 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
 
                 break;
             case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
-                TODO("generate stmt");
+                LilyMirAddInst(module,
+                               generate_stmt__LilyMir(module, &item->stmt));
+
+                break;
+            default:
+                UNREACHABLE("unknown variant");
         }
     }
 }

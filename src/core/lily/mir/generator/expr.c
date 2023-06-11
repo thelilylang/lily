@@ -26,22 +26,40 @@
 
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
+#include <core/lily/mir/generator/expr/call.h>
 #include <core/lily/mir/generator/val.h>
 
 #include <stdio.h>
 #include <string.h>
 
-#define GENERATE_ASSIGN_BINARY(inst_name, value)                              \
-    LilyMirAddInst(                                                           \
-      module,                                                                 \
-      LilyMirBuildReg(module,                                                 \
-                      NEW_VARIANT(LilyMirInstruction, inst_name, value)));    \
-                                                                              \
-    return LilyMirBuildStore(                                                 \
-      left_inst->val,                                                         \
-      LilyMirBuildRegVal(module,                                              \
-                         generate_dt__LilyMir(expr->binary.right->data_type), \
-                         from__String(LilyMirGetLastRegName(module))));
+#define GENERATE_ASSIGN_BINARY(inst_name, value)                               \
+    {                                                                          \
+        LilyMirAddInst(                                                        \
+          module,                                                              \
+          LilyMirBuildReg(module,                                              \
+                          NEW_VARIANT(LilyMirInstruction, inst_name, value))); \
+                                                                               \
+        LilyMirInstructionVal *store_val = NULL;                               \
+        switch (expr->binary.left->call.kind) {                                \
+            case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:                         \
+            case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:                        \
+                store_val = NEW_VARIANT(                                       \
+                  LilyMirInstructionVal,                                       \
+                  var,                                                         \
+                  generate_dt__LilyMir(expr->binary.left->data_type),          \
+                  expr->binary.left->call.global_name->buffer);                \
+                break;                                                         \
+            default:                                                           \
+                UNREACHABLE("the analysis has a bug!!");                       \
+        }                                                                      \
+                                                                               \
+        return LilyMirBuildStore(                                              \
+          store_val,                                                           \
+          LilyMirBuildRegVal(                                                  \
+            module,                                                            \
+            generate_dt__LilyMir(expr->binary.right->data_type),               \
+            from__String(LilyMirGetLastRegName(module))));                     \
+    }
 
 LilyMirInstruction *
 generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
@@ -459,7 +477,19 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                           from__String(LilyMirGetLastRegName(module))));
         }
         case LILY_CHECKED_EXPR_KIND_CALL:
-            break;
+            switch (expr->call.kind) {
+                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
+                    return LilyMirBuildLoad(
+                      module,
+                      NEW_VARIANT(LilyMirInstructionVal,
+                                  var,
+                                  generate_dt__LilyMir(expr->data_type),
+                                  expr->call.global_name->buffer),
+                      generate_dt__LilyMir(expr->data_type),
+                      expr->call.global_name);
+                default:
+                    return generate_call_expr__LilyMir(module, expr);
+            }
         case LILY_CHECKED_EXPR_KIND_CAST:
             break;
         case LILY_CHECKED_EXPR_KIND_GROUPING:

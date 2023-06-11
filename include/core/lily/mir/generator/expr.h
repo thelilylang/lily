@@ -28,6 +28,10 @@
 #include <core/lily/checked/expr.h>
 #include <core/lily/mir.h>
 
+/**
+ *
+ * @brief Generate expression in Lily MIR.
+ */
 LilyMirInstruction *
 generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr);
 
