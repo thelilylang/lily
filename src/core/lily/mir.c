@@ -23,6 +23,7 @@
  */
 
 #include <base/format.h>
+#include <base/string.h>
 
 #include <core/lily/mir.h>
 
