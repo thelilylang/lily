@@ -481,7 +481,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
                     str,
                     LilyMirDt *dt,
-                    char *str)
+                    String *str)
 {
     LilyMirInstructionVal *self = lily_malloc(sizeof(LilyMirInstructionVal));
 
@@ -667,12 +667,14 @@ IMPL_FOR_DEBUG(to_string,
             push_str__String(res, "]");
 
             return res;
-        case LILY_MIR_INSTRUCTION_VAL_KIND_STR:
-            push_str__String(res, "\x1b[32m\"");
-            push_str__String(res, (char *)self->bytes);
-            push_str__String(res, "\"\x1b[0m");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_STR: {
+            char *s = format(
+              "\x1b[33mStr(\"{S}\", {d})\x1b[0m", self->str, self->str->len);
+
+            PUSH_STR_AND_FREE(res, s);
 
             return res;
+        }
         case LILY_MIR_INSTRUCTION_VAL_KIND_STRUCT:
             push_str__String(res, "\x1b[33mstruct\x1b[0m {");
 
@@ -1061,6 +1063,39 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
     FREE_BUFFER_ITEMS(
       self->loads->buffer, self->loads->len, LilyMirInstructionFunLoad);
     FREE(Vec, self->loads);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionGetField,
+               const LilyMirInstructionGetField *self)
+{
+    String *res =
+      format__String("\x1b[34mgetfield({Sr})\x1b[0m {Sr}, [",
+                     to_string__Debug__LilyMirDt(self->dt),
+                     to_string__Debug__LilyMirInstructionVal(self->val));
+
+    for (Usize i = 0; i < self->indexes->len; ++i) {
+        String *index =
+          to_string__Debug__LilyMirInstructionVal(get__Vec(self->indexes, i));
+
+        APPEND_AND_FREE(res, index);
+    }
+
+    push_str__String(res, "]");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyMirInstructionGetField, const LilyMirInstructionGetField *self)
+{
+    FREE(LilyMirDt, self->dt);
+    FREE(LilyMirInstructionVal, self->val);
+    FREE_BUFFER_ITEMS(
+      self->indexes->buffer, self->indexes->len, LilyMirInstructionVal);
+    FREE(Vec, self->indexes);
 }
 
 #ifdef ENV_DEBUG
@@ -1633,7 +1668,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     getfield,
-                    LilyMirInstructionSrc getfield)
+                    LilyMirInstructionGetField getfield)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -2347,9 +2382,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
               to_string__Debug__LilyMirInstructionSrc(&self->getslice));
             break;
         case LILY_MIR_INSTRUCTION_KIND_GETFIELD:
-            res = format__String(
-              "\x1b[34mgetfield\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrc(&self->getfield));
+            res = to_string__Debug__LilyMirInstructionGetField(&self->getfield);
             break;
         case LILY_MIR_INSTRUCTION_KIND_GETPTR:
             res = format__String(
@@ -2724,7 +2757,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, getarg, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, getfield, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrc, &self->getfield);
+    FREE(LilyMirInstructionGetField, &self->getfield);
     lily_free(self);
 }
 

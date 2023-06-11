@@ -148,7 +148,7 @@ typedef struct LilyMirInstructionVal
         Vec *list; // Vec<LilyMirInstructionVal*>*
         String *reg;
         Vec *slice;   // Vec<LilyMirInstructionVal*>*
-        char *str;    // char* (&)
+        String *str;  // String* (&)
         Vec *struct_; // Vec<LilyMirInstructionVal*>*
         struct LilyMirInstructionVal *trace;
         Vec *tuple; // Vec<LilyMirInstructionVal*>*
@@ -264,7 +264,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
                     str,
                     LilyMirDt *dt,
-                    char *str);
+                    String *str);
 
 /**
  *
@@ -783,6 +783,45 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self);
 
+typedef struct LilyMirInstructionGetField
+{
+    LilyMirDt *dt;              // data type of the final field
+    LilyMirInstructionVal *val; // variable, param, ...
+    Vec *indexes;               // Vec<LilyMirInstructionVal*>*
+} LilyMirInstructionGetField;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionGetField type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionGetField,
+                   LilyMirInstructionGetField,
+                   LilyMirDt *dt,
+                   LilyMirInstructionVal *val,
+                   Vec *indexes)
+{
+    return (
+      LilyMirInstructionGetField){ .dt = dt, .val = val, .indexes = indexes };
+}
+
+/**
+ *
+ * @brief Convert LilyMirInstructionGetField in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionGetField,
+               const LilyMirInstructionGetField *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyMirInstructionGetField type.
+ */
+DESTRUCTOR(LilyMirInstructionGetField, const LilyMirInstructionGetField *self);
+
 typedef struct LilyMirInstructionLoad
 {
     LilyMirInstructionSrc src;
@@ -1124,7 +1163,7 @@ typedef struct LilyMirInstruction
         LilyMirInstructionFun fun;
         LilyMirInstructionSrc getarray;
         LilyMirInstructionSrc getarg;
-        LilyMirInstructionSrc getfield;
+        LilyMirInstructionGetField getfield;
         LilyMirInstructionSrc getlist;
         LilyMirInstructionSrc getptr;
         LilyMirInstructionSrc getslice;
@@ -1442,7 +1481,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     getfield,
-                    LilyMirInstructionSrc getfield);
+                    LilyMirInstructionGetField getfield);
 
 /**
  *
