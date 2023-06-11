@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <core/lily/checked/signature.h>
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
 #include <core/lily/mir/generator/fun.h>
@@ -34,48 +35,54 @@
 void
 generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
 {
-    Vec *args = NEW(Vec);
+    for (Usize i = 0; i < fun->fun.signatures->len; ++i) {
+        LilyCheckedSignatureFun *signature = get__Vec(fun->fun.signatures, i);
 
-    // TODO: add support of signature variants
-    if (fun->fun.params) {
-        for (Usize i = 0; i < fun->fun.params->len; ++i) {
-            LilyCheckedDeclFunParam *param = get__Vec(fun->fun.params, i);
+        Vec *args = NEW(Vec);
 
-            push__Vec(args,
-                      NEW_VARIANT(LilyMirInstruction,
-                                  arg,
-                                  NEW(LilyMirInstructionArg,
-                                      generate_dt__LilyMir(param->data_type),
-                                      param->name->buffer)));
+        if (signature->fun->len > 0) {
+            for (Usize i = 0; i < signature->fun->len - 1; ++i) {
+                push__Vec(args,
+                          NEW_VARIANT(LilyMirInstruction,
+                                      arg,
+                                      NEW(LilyMirInstructionArg,
+                                          generate_dt__LilyMir(
+                                            get__Vec(signature->fun, i)),
+                                          i)));
+            }
         }
-    }
 
-    LilyMirInstruction *inst =
-      NEW_VARIANT(LilyMirInstruction,
-                  fun,
-                  NEW(LilyMirInstructionFun,
-                      get_linkage_from_visibility(fun->fun.visibility),
-                      fun->fun.global_name->buffer,
-                      args));
+        LilyMirInstruction *inst = NEW_VARIANT(
+          LilyMirInstruction,
+          fun,
+          NEW(LilyMirInstructionFun,
+              get_linkage_from_visibility(fun->fun.visibility),
+              fun->fun.is_main ? "main" : signature->global_name->buffer,
+              args));
 
-    LilyMirAddInst(module, inst);
+        LilyMirAddInst(module, inst);
 
-    for (Usize i = 0; i < fun->fun.body->len; ++i) {
-        LilyCheckedBodyFunItem *item = get__Vec(fun->fun.body, i);
+        for (Usize i = 0; i < fun->fun.body->len; ++i) {
+            LilyCheckedBodyFunItem *item = get__Vec(fun->fun.body, i);
 
-        switch (item->kind) {
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
-                LilyMirAddInst(module,
-                               generate_expr__LilyMir(module, item->expr));
+            switch (item->kind) {
+                case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
+                    LilyMirAddInst(module,
+                                   generate_expr__LilyMir(module, item->expr));
 
-                break;
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
-                LilyMirAddInst(module,
-                               generate_stmt__LilyMir(module, &item->stmt));
+                    break;
+                case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
+                    LilyMirAddInst(module,
+                                   generate_stmt__LilyMir(module, &item->stmt));
 
-                break;
-            default:
-                UNREACHABLE("unknown variant");
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        }
+
+        if (i != fun->fun.signatures->len - 1) {
+            LilyMirResetCurrent(module);
         }
     }
 }

@@ -123,8 +123,7 @@ typedef struct LilyCheckedDeclFun
     LilyCheckedScope *scope;
     LilyCheckedAccessFun *access;
     Vec *used_compiler_generic; // Vec<String*>*
-    // [params, return_data_type]
-    Vec *signatures; // Vec<LilyCheckedSignatureFun*>*
+    Vec *signatures;            // Vec<LilyCheckedSignatureFun*>*
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
