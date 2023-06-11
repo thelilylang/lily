@@ -604,6 +604,7 @@ typedef struct LilyMirInstructionBlock
 {
     String *name;
     Vec *insts; // Vec<LilyMirInstruction*>*
+    Usize id;
 } LilyMirInstructionBlock;
 
 /**
@@ -612,9 +613,11 @@ typedef struct LilyMirInstructionBlock
  */
 inline CONSTRUCTOR(LilyMirInstructionBlock,
                    LilyMirInstructionBlock,
-                   String *name)
+                   String *name,
+                   Usize id)
 {
-    return (LilyMirInstructionBlock){ .name = name, .insts = NEW(Vec) };
+    return (
+      LilyMirInstructionBlock){ .name = name, .insts = NEW(Vec), .id = id };
 }
 
 /**
@@ -714,6 +717,33 @@ inline DESTRUCTOR(LilyMirInstructionConst, const LilyMirInstructionConst *self)
     FREE(LilyMirInstructionVal, self->val);
 }
 
+typedef struct LilyMirInstructionFunLoad
+{
+    // %<reg> = load ... <value_name> ...
+    String *value_name;       // String* (&)
+    LilyMirInstruction *inst; // LilyMirInstruction* (&)
+    Usize block_id;
+} LilyMirInstructionFunLoad;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionFunLoad type.
+ */
+CONSTRUCTOR(LilyMirInstructionFunLoad *,
+            LilyMirInstructionFunLoad,
+            String *value_name,
+            LilyMirInstruction *inst,
+            Usize block_id);
+
+/**
+ *
+ * @brief Free LilyMirInstructionFunLoad type.
+ */
+inline DESTRUCTOR(LilyMirInstructionFunLoad, LilyMirInstructionFunLoad *self)
+{
+    lily_free(self);
+}
+
 typedef struct LilyMirInstructionFun
 {
     enum LilyMirLinkage linkage;
@@ -721,6 +751,8 @@ typedef struct LilyMirInstructionFun
     Vec *args;          // Vec<LilyMirInstruction*>*
     Vec *insts;         // Vec<LilyMirInstruction*>*
     Stack *block_stack; // Stack<LilyMirInstructionBlock*>*
+    Vec *loads;         // Vec<LilyMirInstructionFunLoad*>*
+    Usize block_count;
 } LilyMirInstructionFun;
 
 /**
@@ -750,6 +782,42 @@ IMPL_FOR_DEBUG(to_string,
  * @brief Free LilyMirInstructionFun type.
  */
 DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self);
+
+typedef struct LilyMirInstructionLoad
+{
+    LilyMirInstructionSrc src;
+    LilyMirDt *dt;
+} LilyMirInstructionLoad;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionLoad type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionLoad,
+                   LilyMirInstructionLoad,
+                   LilyMirInstructionSrc src,
+                   LilyMirDt *dt)
+{
+    return (LilyMirInstructionLoad){ .src = src, .dt = dt };
+}
+
+/**
+ *
+ * @brief Convert LilyMirInstructionLoad in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionLoad,
+               const LilyMirInstructionLoad *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyMirInstructionLoad type.
+ */
+DESTRUCTOR(LilyMirInstructionLoad, const LilyMirInstructionLoad *self);
 
 typedef struct LilyMirInstructionJmpCond
 {
@@ -1078,7 +1146,7 @@ typedef struct LilyMirInstruction
         LilyMirInstructionBlock *jmp; // LilyMirInstructionBlock* (&)
         LilyMirInstructionJmpCond jmpcond;
         LilyMirInstructionSrc len;
-        LilyMirInstructionSrc load;
+        LilyMirInstructionLoad load;
         LilyMirInstructionSrc makeref;
         LilyMirInstructionSrc makeopt;
         LilyMirInstruction *non_nil;
@@ -1594,7 +1662,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     load,
-                    LilyMirInstructionSrc load);
+                    LilyMirInstructionLoad load);
 
 /**
  *

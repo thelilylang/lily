@@ -840,7 +840,8 @@ IMPL_FOR_DEBUG(to_string,
                LilyMirInstructionAlloc,
                const LilyMirInstructionAlloc *self)
 {
-    return format__String("alloc {Sr}", to_string__Debug__LilyMirDt(self->dt));
+    return format__String("\x1b[34malloc\x1b[0m {Sr}",
+                          to_string__Debug__LilyMirDt(self->dt));
 }
 #endif
 
@@ -959,6 +960,22 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+CONSTRUCTOR(LilyMirInstructionFunLoad *,
+            LilyMirInstructionFunLoad,
+            String *value_name,
+            LilyMirInstruction *inst,
+            Usize block_id)
+{
+    LilyMirInstructionFunLoad *self =
+      lily_malloc(sizeof(LilyMirInstructionFunLoad));
+
+    self->value_name = value_name;
+    self->inst = inst;
+    self->block_id = block_id;
+
+    return self;
+}
+
 CONSTRUCTOR(LilyMirInstructionFun,
             LilyMirInstructionFun,
             enum LilyMirLinkage linkage,
@@ -971,7 +988,7 @@ CONSTRUCTOR(LilyMirInstructionFun,
     LilyMirInstruction *block =
       NEW_VARIANT(LilyMirInstruction,
                   block,
-                  NEW(LilyMirInstructionBlock, from__String("entry")));
+                  NEW(LilyMirInstructionBlock, from__String("entry"), 0));
 
     push__Vec(insts, block);
     push__Stack(block_stack, &block->block);
@@ -980,7 +997,9 @@ CONSTRUCTOR(LilyMirInstructionFun,
                                     .name = name,
                                     .args = args,
                                     .insts = insts,
-                                    .block_stack = block_stack };
+                                    .block_stack = block_stack,
+                                    .loads = NEW(Vec),
+                                    .block_count = 1 };
 }
 
 #ifdef ENV_DEBUG
@@ -1038,6 +1057,27 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
     FREE_BUFFER_ITEMS(
       self->insts->buffer, self->insts->len, LilyMirInstruction);
     FREE(Vec, self->insts);
+    FREE_BUFFER_ITEMS(
+      self->loads->buffer, self->loads->len, LilyMirInstructionFunLoad);
+    FREE(Vec, self->loads);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionLoad,
+               const LilyMirInstructionLoad *self)
+{
+    return format__String("\x1b[34mload\x1b[0m({Sr}) {Sr}",
+                          to_string__Debug__LilyMirDt(self->dt),
+                          to_string__Debug__LilyMirInstructionSrc(&self->src));
+}
+#endif
+
+DESTRUCTOR(LilyMirInstructionLoad, const LilyMirInstructionLoad *self)
+{
+    FREE(LilyMirInstructionSrc, &self->src);
+    FREE(LilyMirDt, self->dt);
 }
 
 #ifdef ENV_DEBUG
@@ -1077,7 +1117,7 @@ IMPL_FOR_DEBUG(to_string,
                LilyMirInstructionVar,
                const LilyMirInstructionVar *self)
 {
-    return format__String("var {s} = {Sr}",
+    return format__String("\x1b[35mvar\x1b[0m {s} = {Sr}",
                           self->name,
                           to_string__Debug__LilyMirInstruction(self->inst));
 }
@@ -1878,7 +1918,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     load,
-                    LilyMirInstructionSrc load)
+                    LilyMirInstructionLoad load)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -2158,8 +2198,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
     switch (self->kind) {
         case LILY_MIR_INSTRUCTION_KIND_ALLOC:
             res = format__String(
-              "\x1b[34malloc\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionAlloc(&self->alloc));
+              "{Sr}", to_string__Debug__LilyMirInstructionAlloc(&self->alloc));
             break;
         case LILY_MIR_INSTRUCTION_KIND_AND:
             res = format__String(
@@ -2406,9 +2445,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
               to_string__Debug__LilyMirInstructionSrc(&self->len));
             break;
         case LILY_MIR_INSTRUCTION_KIND_LOAD:
-            res = format__String(
-              "\x1b[34mload\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrc(&self->load));
+            res = to_string__Debug__LilyMirInstructionLoad(&self->load);
             break;
         case LILY_MIR_INSTRUCTION_KIND_MAKEREF:
             res = format__String(
@@ -2817,7 +2854,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, len, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, load, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrc, &self->load);
+    FREE(LilyMirInstructionLoad, &self->load);
     lily_free(self);
 }
 
