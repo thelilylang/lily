@@ -193,6 +193,34 @@ LilyMirBuildVar(LilyMirModule *Module,
     return var;
 }
 
+LilyMirInstruction *
+LilyMirBuildCall(LilyMirModule *Module,
+                 LilyMirDt *ReturnDt,
+                 const char *Name,
+                 Vec *Params)
+{
+    char *name = LilyMirGenerateName(&Module->current.fun.reg_manager);
+
+    LilyMirInstruction *load_inst =
+      NEW_VARIANT(LilyMirInstruction,
+                  reg,
+                  NEW(LilyMirInstructionReg,
+                      from__String(name),
+                      NEW_VARIANT(LilyMirInstruction,
+                                  call,
+                                  NEW(LilyMirInstructionCall,
+                                      clone__LilyMirDt(ReturnDt),
+                                      Name,
+                                      Params))));
+
+    LilyMirAddInst(Module, load_inst);
+
+    return NEW_VARIANT(
+      LilyMirInstruction,
+      val,
+      NEW_VARIANT(LilyMirInstructionVal, reg, ReturnDt, from__String(name)));
+}
+
 void
 LilyMirDisposeModule(const LilyMirModule *Module)
 {

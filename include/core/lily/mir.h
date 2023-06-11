@@ -283,6 +283,12 @@ LilyMirBuildStore(LilyMirInstructionVal *dest, LilyMirInstructionVal *src)
       LilyMirInstruction, store, NEW(LilyMirInstructionDestSrc, dest, src));
 }
 
+LilyMirInstruction *
+LilyMirBuildCall(LilyMirModule *Module,
+                 LilyMirDt *ReturnDt,
+                 const char *Name,
+                 Vec *Params);
+
 inline LilyMirInstruction *
 LilyMirBuildGetField(LilyMirModule *Module,
                      LilyMirDt *dt,
