@@ -122,20 +122,26 @@ LilyMirBuildLoad(LilyMirModule *Module,
 {
     ASSERT(Module->current.kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    for (Usize i = Module->current.fun.fun->loads->len; --i;) {
+    LilyMirInstructionFunLoad *matched_load = NULL;
+
+    for (Usize i = 0; i < Module->current.fun.fun->loads->len; ++i) {
         LilyMirInstructionFunLoad *load =
           get__Vec(Module->current.fun.fun->loads, i);
 
         if (!strcmp(load->value_name->buffer, value_name->buffer)) {
-            // assume: %<name> = <val_inst>
-            return NEW_VARIANT(
-              LilyMirInstruction,
-              val,
-              NEW_VARIANT(LilyMirInstructionVal,
-                          reg,
-                          clone__LilyMirDt(load->inst->reg.inst->load.dt),
-                          clone__String(load->inst->reg.name)));
+            matched_load = load;
         }
+    }
+
+    if (matched_load) {
+        // assume: %<name> = <val_inst>
+        return NEW_VARIANT(
+          LilyMirInstruction,
+          val,
+          NEW_VARIANT(LilyMirInstructionVal,
+                      reg,
+                      clone__LilyMirDt(matched_load->inst->reg.inst->load.dt),
+                      clone__String(matched_load->inst->reg.name)));
     }
 
     char *name = LilyMirGenerateName(&Module->current.fun.reg_manager);
@@ -205,7 +211,7 @@ LilyMirNextBlockAndClearLoads(LilyMirModule *Module)
       pop__Stack(Module->current.fun.fun->block_stack);
 
     // Clear loaded value in the block
-    for (Usize i = Module->current.fun.fun->loads->len; --i;) {
+    for (Usize i = 0; i < Module->current.fun.fun->loads->len; ++i) {
         LilyMirInstructionFunLoad *load =
           get__Vec(Module->current.fun.fun->loads, i);
 
