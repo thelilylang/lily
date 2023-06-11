@@ -121,7 +121,7 @@ LilyMirBuildLoad(LilyMirModule *Module,
 {
     ASSERT(Module->current.kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    for (Usize i = 0; i < Module->current.fun.fun->loads->len; ++i) {
+    for (Usize i = Module->current.fun.fun->loads->len; --i;) {
         LilyMirInstructionFunLoad *load =
           get__Vec(Module->current.fun.fun->loads, i);
 
