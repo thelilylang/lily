@@ -1357,19 +1357,19 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
 
         switch (response.kind) {
             case LILY_CHECKED_SCOPE_RESPONSE_KIND_VARIABLE:
-                if (response.variable->is_moved) {
-                    emit__Diagnostic(
-                      NEW_VARIANT(
-                        Diagnostic,
-                        simple_lily_error,
-                        &self->package->file,
-                        &expr->location,
-                        NEW(LilyError, LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED),
-                        NULL,
-                        NULL,
-                        NULL),
-                      &self->package->count_error);
-                }
+                // if (response.variable->is_moved) {
+                //     emit__Diagnostic(
+                //       NEW_VARIANT(
+                //         Diagnostic,
+                //         simple_lily_error,
+                //         &self->package->file,
+                //         &expr->location,
+                //         NEW(LilyError, LILY_ERROR_KIND_VALUE_HAS_BEEN_MOVED),
+                //         NULL,
+                //         NULL,
+                //         NULL),
+                //       &self->package->count_error);
+                // }
 
                 // Check if the variable is mutable.
                 if (must_mut) {
