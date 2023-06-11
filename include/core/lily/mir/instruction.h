@@ -121,6 +121,7 @@ enum LilyMirInstructionValKind
     LILY_MIR_INSTRUCTION_VAL_KIND_INT,
     LILY_MIR_INSTRUCTION_VAL_KIND_LIST,
     LILY_MIR_INSTRUCTION_VAL_KIND_NIL,
+    LILY_MIR_INSTRUCTION_VAL_KIND_PARAM,
     LILY_MIR_INSTRUCTION_VAL_KIND_REG,
     LILY_MIR_INSTRUCTION_VAL_KIND_SLICE,
     LILY_MIR_INSTRUCTION_VAL_KIND_STR,
@@ -145,7 +146,8 @@ typedef struct LilyMirInstructionVal
         struct LilyMirInstructionVal *exception[2]; // [ok?, err?]
         Float64 float_;
         Int64 int_;
-        Vec *list; // Vec<LilyMirInstructionVal*>*
+        Vec *list;   // Vec<LilyMirInstructionVal*>*
+        Usize param; // id of the param
         String *reg;
         Vec *slice;   // Vec<LilyMirInstructionVal*>*
         String *str;  // String* (&)
@@ -232,6 +234,17 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     list,
                     LilyMirDt *dt,
                     Vec *list);
+
+/**
+ *
+ * @brief Construct LilyMirInstructionVal type
+ * (LILY_MIR_INSTRUCTION_VAL_KIND_PARAM).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
+                    param,
+                    LilyMirDt *dt,
+                    Usize param);
 
 /**
  *
@@ -493,7 +506,7 @@ inline DESTRUCTOR(LilyMirInstructionAlloc, const LilyMirInstructionAlloc *self)
 typedef struct LilyMirInstructionArg
 {
     LilyMirDt *dt;
-    const char *name; // const char* (&)
+    Usize id;
 } LilyMirInstructionArg;
 
 /**
@@ -503,9 +516,9 @@ typedef struct LilyMirInstructionArg
 inline CONSTRUCTOR(LilyMirInstructionArg,
                    LilyMirInstructionArg,
                    LilyMirDt *dt,
-                   const char *name)
+                   Usize id)
 {
-    return (LilyMirInstructionArg){ .dt = dt, .name = name };
+    return (LilyMirInstructionArg){ .dt = dt, .id = id };
 }
 
 /**
@@ -640,6 +653,7 @@ DESTRUCTOR(LilyMirInstructionBlock, const LilyMirInstructionBlock *self);
 
 typedef struct LilyMirInstructionCall
 {
+    LilyMirDt *return_dt;
     const char *name; // const char* (&)
     Vec *params;      // Vec<LilyMirInstructionVal*>*
 } LilyMirInstructionCall;
@@ -650,10 +664,13 @@ typedef struct LilyMirInstructionCall
  */
 inline CONSTRUCTOR(LilyMirInstructionCall,
                    LilyMirInstructionCall,
+                   LilyMirDt *return_dt,
                    const char *name,
                    Vec *params)
 {
-    return (LilyMirInstructionCall){ .name = name, .params = params };
+    return (LilyMirInstructionCall){ .return_dt = return_dt,
+                                     .name = name,
+                                     .params = params };
 }
 
 /**

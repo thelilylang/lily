@@ -449,6 +449,21 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
 VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
+                    param,
+                    LilyMirDt *dt,
+                    Usize param)
+{
+    LilyMirInstructionVal *self = lily_malloc(sizeof(LilyMirInstructionVal));
+
+    self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_PARAM;
+    self->dt = dt;
+    self->param = param;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
                     reg,
                     LilyMirDt *dt,
                     String *reg)
@@ -647,6 +662,13 @@ IMPL_FOR_DEBUG(to_string,
             push_str__String(res, "\x1b[33mnil\x1b[0m");
 
             return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_PARAM: {
+            char *s = format("\x1b[33m${d}\x1b[0m", self->param);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            return res;
+        }
         case LILY_MIR_INSTRUCTION_VAL_KIND_REG: {
             char *s = format("\x1b[33m%{S}\x1b[0m", self->reg);
 
@@ -855,7 +877,7 @@ IMPL_FOR_DEBUG(to_string,
                const LilyMirInstructionArg *self)
 {
     return format__String(
-      "{Sr} {s}", to_string__Debug__LilyMirDt(self->dt), self->name);
+      "{Sr} ${d}", to_string__Debug__LilyMirDt(self->dt), self->id);
 }
 #endif
 
@@ -924,7 +946,9 @@ IMPL_FOR_DEBUG(to_string,
                LilyMirInstructionCall,
                const LilyMirInstructionCall *self)
 {
-    String *res = format__String("call {s}(", self->name);
+    String *res = format__String("call({Sr}) {s}(",
+                                 to_string__Debug__LilyMirDt(self->return_dt),
+                                 self->name);
 
     for (Usize i = 0; i < self->params->len; ++i) {
         String *param =
@@ -945,6 +969,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyMirInstructionCall, const LilyMirInstructionCall *self)
 {
+    FREE(LilyMirDt, self->return_dt);
     FREE_BUFFER_ITEMS(
       self->params->buffer, self->params->len, LilyMirInstructionVal);
     FREE(Vec, self->params);
