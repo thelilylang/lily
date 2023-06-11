@@ -194,6 +194,27 @@ to_string__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind)
     }
 }
 
+bool
+is_assign__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind)
+{
+    switch (kind) {
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_ADD:
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_L_SHIFT:
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT:
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_DIV:
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_EXP:
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MOD:
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MUL:
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_SUB:
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN:
+            return true;
+        default:
+            return false;
+    }
+}
+
 DESTRUCTOR(LilyCheckedExprBinary, const LilyCheckedExprBinary *self)
 {
     FREE(LilyCheckedExpr, self->left);

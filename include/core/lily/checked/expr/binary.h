@@ -132,6 +132,13 @@ to_string__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind);
 
 /**
  *
+ * @brief Return true if it's an assign operator.
+ */
+bool
+is_assign__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind);
+
+/**
+ *
  * @brief Free LilyCheckedExprBinary type.
  */
 DESTRUCTOR(LilyCheckedExprBinary, const LilyCheckedExprBinary *self);
