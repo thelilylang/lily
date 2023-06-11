@@ -323,8 +323,10 @@ set(CORE_SRC
 	src/core/lily/ir/llvm.c
 	src/core/lily/mir/generator/constant.c
 	src/core/lily/mir/generator/dt.c
+	src/core/lily/mir/generator/expr/call.c
 	src/core/lily/mir/generator/expr.c
 	src/core/lily/mir/generator/fun.c
+	src/core/lily/mir/generator/stmt.c
 	src/core/lily/mir/generator/val.c
 	src/core/lily/mir/generator/stmt/variable.c
 	src/core/lily/mir/dt.c
