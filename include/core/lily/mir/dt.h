@@ -221,6 +221,13 @@ VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, tuple, Vec *tuple);
 
 /**
  *
+ * @brief Clone LilyMirDt type.
+ */
+LilyMirDt *
+clone__LilyMirDt(LilyMirDt *self);
+
+/**
+ *
  * @brief Convert LilyMirDt in String.
  * @note This function is only used to debug.
  */

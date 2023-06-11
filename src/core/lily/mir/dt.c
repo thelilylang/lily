@@ -178,6 +178,60 @@ VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, tuple, Vec *tuple)
     return self;
 }
 
+LilyMirDt *
+clone__LilyMirDt(LilyMirDt *self)
+{
+    switch (self->kind) {
+        case LILY_MIR_DT_KIND_ARRAY:
+            return NEW_VARIANT(LilyMirDt,
+                               array,
+                               NEW(LilyMirDtArray,
+                                   self->array.len,
+                                   clone__LilyMirDt(self->array.dt)));
+        case LILY_MIR_DT_KIND_BYTES:
+            return NEW_VARIANT(LilyMirDt, bytes, self->bytes);
+        case LILY_MIR_DT_KIND_EXCEPTION:
+            return NEW_VARIANT(LilyMirDt,
+                               exception,
+                               NEW(LilyMirDtException,
+                                   clone__LilyMirDt(self->exception.ok),
+                                   clone__LilyMirDt(self->exception.err)));
+        case LILY_MIR_DT_KIND_LIST:
+            return NEW_VARIANT(LilyMirDt, list, clone__LilyMirDt(self->list));
+        case LILY_MIR_DT_KIND_PTR:
+            return NEW_VARIANT(LilyMirDt, ptr, clone__LilyMirDt(self->list));
+        case LILY_MIR_DT_KIND_REF:
+            return NEW_VARIANT(LilyMirDt, ref, clone__LilyMirDt(self->list));
+        case LILY_MIR_DT_KIND_STR:
+            return NEW_VARIANT(LilyMirDt, str, self->str);
+        case LILY_MIR_DT_KIND_STRUCT: {
+            Vec *struct_ = NEW(Vec);
+
+            for (Usize i = 0; i < self->struct_->len; ++i) {
+                push__Vec(struct_,
+                          clone__LilyMirDt(get__Vec(self->struct_, i)));
+            }
+
+            return NEW_VARIANT(LilyMirDt, struct, struct_);
+        }
+        case LILY_MIR_DT_KIND_STRUCT_NAME:
+            return NEW_VARIANT(LilyMirDt, struct_name, self->struct_name);
+        case LILY_MIR_DT_KIND_TRACE:
+            return NEW_VARIANT(LilyMirDt, trace, clone__LilyMirDt(self->trace));
+        case LILY_MIR_DT_KIND_TUPLE: {
+            Vec *tuple = NEW(Vec);
+
+            for (Usize i = 0; i < self->tuple->len; ++i) {
+                push__Vec(tuple, clone__LilyMirDt(get__Vec(self->tuple, i)));
+            }
+
+            return NEW_VARIANT(LilyMirDt, tuple, tuple);
+        }
+        default:
+            return NEW(LilyMirDt, self->kind);
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyMirDt, const LilyMirDt *self)
