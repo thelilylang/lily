@@ -51,7 +51,21 @@ generate_stmt__LilyMir(LilyMirModule *module, LilyCheckedStmt *stmt)
         case LILY_CHECKED_STMT_KIND_RAISE:
             TODO("generate raise stmt");
         case LILY_CHECKED_STMT_KIND_RETURN:
-            TODO("generate return stmt");
+            if (stmt->return_.expr) {
+                return NEW_VARIANT(
+                  LilyMirInstruction,
+                  ret,
+                  generate_expr__LilyMir(module, stmt->return_.expr));
+            } else {
+                return NEW_VARIANT(
+                  LilyMirInstruction,
+                  ret,
+                  NEW_VARIANT(LilyMirInstruction,
+                              val,
+                              NEW(LilyMirInstructionVal,
+                                  LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,
+                                  NEW(LilyMirDt, LILY_MIR_DT_KIND_UNIT))));
+            }
         case LILY_CHECKED_STMT_KIND_TRY:
             TODO("generate try stmt");
         case LILY_CHECKED_STMT_KIND_UNSAFE:
