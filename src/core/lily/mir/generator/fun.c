@@ -35,6 +35,10 @@
 void
 generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
 {
+    if (fun->fun.signatures->len == 0) {
+        FAILED("warning: function is unused");
+    }
+
     for (Usize i = 0; i < fun->fun.signatures->len; ++i) {
         LilyCheckedSignatureFun *signature = get__Vec(fun->fun.signatures, i);
 
