@@ -4459,7 +4459,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                               stmt->variable.name,
                               checked_data_type
                                 ? checked_data_type
-                                : clone__LilyCheckedDataType(expr->data_type),
+                                : ref__LilyCheckedDataType(expr->data_type),
                               expr,
                               stmt->variable.is_mut)));
         }
