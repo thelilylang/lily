@@ -27,15 +27,13 @@
 #include <base/new.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 
 static void *
 get_bucket__HashMapBucket(const HashMapBucket *self, char *key);
 
 static void
-push_bucket__HashMap(HashMap *self, HashMapBucket *new);
-
-static bool
-visit_bucket__HashMap(HashMap *self, Usize index, HashMapBucket *bucket);
+push_bucket__HashMap(HashMap *self, Usize index, HashMapBucket *new);
 
 CONSTRUCTOR(HashMapBucket *, HashMapBucket, HashMapPair pair)
 {
@@ -53,7 +51,7 @@ DESTRUCTOR(HashMapBucket, HashMapBucket *self)
         FREE(HashMapBucket, self->next);
     }
 
-	lily_free(self);
+    lily_free(self);
 }
 
 CONSTRUCTOR(HashMap *, HashMap)
@@ -87,10 +85,8 @@ get__HashMap(HashMap *self, char *key)
 }
 
 void
-push_bucket__HashMap(HashMap *self, HashMapBucket *new)
+push_bucket__HashMap(HashMap *self, Usize index, HashMapBucket *new)
 {
-    Usize index = index__HashMap(self, new->pair.key);
-
     if (self->buckets[index]) {
         HashMapBucket *current = self->buckets[index];
 
@@ -98,43 +94,12 @@ push_bucket__HashMap(HashMap *self, HashMapBucket *new)
             current = current->next;
         }
 
-        if (new->next) {
-            if (visit_bucket__HashMap(self, index, new->next)) {
-                new->next = NULL;
-            }
-        }
-
         current->next = new;
 
         return;
     }
 
-    if (new->next) {
-        if (visit_bucket__HashMap(self, index, new->next)) {
-            new->next = NULL;
-        }
-    }
-
     self->buckets[index] = new;
-}
-
-bool
-visit_bucket__HashMap(HashMap *self, Usize index, HashMapBucket *bucket)
-{
-    HashMapBucket *current = bucket;
-
-    while (current->next) {
-        Usize new_index = index__HashMap(self, current->pair.key);
-
-        if (index != new_index) {
-            push_bucket__HashMap(self, current);
-            return true;
-        }
-
-        current = current->next;
-    }
-
-    return false;
 }
 
 void
@@ -161,19 +126,26 @@ insert__HashMap(HashMap *self, char *key, void *value)
 
         // Re-hash all inserted K-V
         for (Usize i = 0; i < self->len; ++i) {
-            if (old_buckets[i]) {
-                visit_bucket__HashMap(self, i, old_buckets[i]);
-            }
+			HashMapBucket *current = old_buckets[i];
+
+			while (current != NULL) {
+				HashMapBucket *next = current->next;
+				Usize new_index = index__HashMap(self, current->pair.key); 
+
+				current->next = new_buckets[new_index];
+				new_buckets[new_index] = current;
+				current = next;
+			}
         }
 
         lily_free(old_buckets);
 
-        // Realod hash
+        // Realod index
         index = index__HashMap(self, key);
     }
 
-    push_bucket__HashMap(self,
-                         NEW(HashMapBucket, NEW(HashMapPair, key, value)));
+    push_bucket__HashMap(
+      self, index, NEW(HashMapBucket, NEW(HashMapPair, key, value)));
     ++self->len;
 }
 
