@@ -19,15 +19,15 @@ test_new__HashMap()
 void
 test_get__HashMap()
 {
-    HashMap *hm = NEW(HashMap); // HashMap<int, char*>
+    HashMap *hm = NEW(HashMap); // HashMap<char*>
 
-    insert__HashMap(hm, (int *)1, "a");
-    insert__HashMap(hm, (int *)2, "b");
-    insert__HashMap(hm, (int *)3, "c");
+    insert__HashMap(hm, "1", "a");
+    insert__HashMap(hm, "2", "b");
+    insert__HashMap(hm, "3", "c");
 
-    ASSERT(strcmp(get__HashMap(hm, (int *)1), "a") == 0);
-    ASSERT(strcmp(get__HashMap(hm, (int *)2), "b") == 0);
-    ASSERT(strcmp(get__HashMap(hm, (int *)3), "c") == 0);
+    ASSERT(!strcmp(get__HashMap(hm, "1"), "a"));
+    ASSERT(!strcmp(get__HashMap(hm, "2"), "b"));
+    ASSERT(!strcmp(get__HashMap(hm, "3"), "c"));
 
     FREE(HashMap, hm);
 }
@@ -35,15 +35,17 @@ test_get__HashMap()
 void
 test_insert__HashMap()
 {
-    HashMap *hm = NEW(HashMap); // HashMap<int, char*>
+    HashMap *hm = NEW(HashMap); // HashMap<char*>
 
-    ASSERT(insert__HashMap(hm, (int *)1, "a") == NULL);
-    ASSERT(insert__HashMap(hm, (int *)2, "b") == NULL);
-    ASSERT(insert__HashMap(hm, (int *)3, "c") == NULL);
-
-    ASSERT(strcmp(insert__HashMap(hm, (int *)1, "d"), "a") == 0);
-
-    ASSERT(hm->len == 3);
+    insert__HashMap(hm, "1", "a");
+    insert__HashMap(hm, "2", "b");
+    insert__HashMap(hm, "3", "c");
+    insert__HashMap(hm, "4", "d");
+    insert__HashMap(hm, "5", "e");
+    insert__HashMap(hm, "6", "f");
+    insert__HashMap(hm, "7", "g");
+    insert__HashMap(hm, "8", "h");
+    insert__HashMap(hm, "9", "i");
 
     FREE(HashMap, hm);
 }
