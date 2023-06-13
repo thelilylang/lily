@@ -59,7 +59,7 @@ run__LilyMir(LilyPackage *self)
                 break;
         }
 
-        LilyMirResetCurrent(&self->mir_module);
+        LilyMirPopCurrent(&self->mir_module);
     }
 
 #ifdef DEBUG_MIR

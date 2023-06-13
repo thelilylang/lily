@@ -42,16 +42,20 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
     for (Usize i = 0; i < fun->fun.signatures->len; ++i) {
         LilyCheckedSignatureFun *signature = get__Vec(fun->fun.signatures, i);
 
+        if (contains_compiler_defined_dt__LilyCheckedSignatureFun(signature)) {
+            continue;
+        }
+
         Vec *args = NEW(Vec);
 
-        if (signature->fun->len > 0) {
-            for (Usize i = 0; i < signature->fun->len - 1; ++i) {
+        if (signature->types->len > 0) {
+            for (Usize i = 0; i < signature->types->len - 1; ++i) {
                 push__Vec(args,
                           NEW_VARIANT(LilyMirInstruction,
                                       arg,
                                       NEW(LilyMirInstructionArg,
                                           generate_dt__LilyMir(
-                                            get__Vec(signature->fun, i)),
+                                            get__Vec(signature->types, i)),
                                           i)));
             }
         }
@@ -86,7 +90,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
         }
 
         if (i != fun->fun.signatures->len - 1) {
-            LilyMirResetCurrent(module);
+            LilyMirPopCurrent(module);
         }
     }
 }
