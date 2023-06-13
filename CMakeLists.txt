@@ -32,6 +32,10 @@ set(BASE_SRC
 	src/base/color.c
 	src/base/file.c
 	src/base/format.c
+	src/base/hash/custom.c
+	src/base/hash/fnv.c
+	src/base/hash/jenkins.c
+	src/base/hash/sip.c
 	src/base/hash_map.c
 	src/base/hash_set.c
 	src/base/itoa.c
