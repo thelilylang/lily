@@ -30,6 +30,16 @@
 
 #include <stdbool.h>
 
+#define FREE_STACK_ITEMS(stack, type)                \
+    if (stack->top) {                                \
+        FREE(type, stack->top);                      \
+    }                                                \
+    if (stack->buffer) {                             \
+        for (Usize i = 0; i < stack->len - 1; ++i) { \
+            FREE(type, stack->buffer[i]);            \
+        }                                            \
+    }
+
 /*
     Stack<T>
 */
