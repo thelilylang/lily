@@ -124,6 +124,7 @@ typedef struct LilyCheckedDeclFun
     LilyCheckedAccessFun *access;
     Vec *used_compiler_generic; // Vec<String*>*
     Vec *signatures;            // Vec<LilyCheckedSignatureFun*>*
+    Vec *fun_deps;              // Vec<LilyCheckedDecl* (&)>*
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
@@ -161,6 +162,7 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
                                  .access = NULL,
                                  .used_compiler_generic = NEW(Vec),
                                  .signatures = NEW(Vec),
+                                 .fun_deps = NEW(Vec),
                                  .visibility = visibility,
                                  .is_async = is_async,
                                  .is_operator = is_operator,
@@ -214,6 +216,14 @@ Usize
 get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
   const LilyCheckedDeclFun *self,
   const String *compiler_generic_name);
+
+/**
+ *
+ * @brief Add fun dependency to the fun.
+ */
+void
+add_fun_dep__LilyCheckedDeclFun(LilyCheckedDeclFun *fun,
+                                LilyCheckedDecl *fun_dep);
 
 /**
  *
