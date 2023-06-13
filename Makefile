@@ -12,6 +12,7 @@ debug:
 
 format:
 	${CLANG_FORMAT} ./include/base/*.h
+	${CLANG_FORMAT} ./include/base/hash/*.h
 	${CLANG_FORMAT} ./include/cli/*.h
 	${CLANG_FORMAT} ./include/cli/config/*.h
 	${CLANG_FORMAT} ./include/cli/option/*.h
@@ -70,6 +71,7 @@ format:
 	${CLANG_FORMAT} ./lib/sys/*.h
 	${CLANG_FORMAT} ./lib/sys/*.c
 	${CLANG_FORMAT} ./src/base/*.c
+	${CLANG_FORMAT} ./src/base/hash/*.c
 	${CLANG_FORMAT} ./src/bin/*.c
 	${CLANG_FORMAT} ./src/cli/*.c
 	${CLANG_FORMAT} ./src/cli/option/*.c
