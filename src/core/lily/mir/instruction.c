@@ -1088,6 +1088,7 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
     FREE_BUFFER_ITEMS(
       self->loads->buffer, self->loads->len, LilyMirInstructionFunLoad);
     FREE(Vec, self->loads);
+    FREE(Stack, self->block_stack);
 }
 
 #ifdef ENV_DEBUG
