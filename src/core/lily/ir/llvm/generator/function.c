@@ -104,19 +104,19 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     for (; i < fun->signatures->len; ++i) {
         LilyCheckedSignatureFun *signature = get__Vec(fun->signatures, i);
 
-        ASSERT(signature->fun->len >= 1);
+        ASSERT(signature->types->len >= 1);
 
         // Generate return data type of the function
         LLVMTypeRef return_data_type = generate_data_type__LilyIrLlvm(
-          self, last__Vec(signature->fun), scope);
+          self, last__Vec(signature->types), scope);
 
         // Generate function parameters
         LLVMTypeRef params[252] = {};
-        Usize params_len = signature->fun->len - 1;
+        Usize params_len = signature->types->len - 1;
 
-        for (Usize i = 0; i < signature->fun->len - 1; ++i) {
+        for (Usize i = 0; i < signature->types->len - 1; ++i) {
             params[i] = generate_data_type__LilyIrLlvm(
-              self, get__Vec(signature->fun, i), scope);
+              self, get__Vec(signature->types, i), scope);
         }
 
         // TODO: check va_arg param
@@ -127,9 +127,9 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
           self->module, signature->global_name->buffer, fun_data_type);
 
         // Set alignment on param (if applicable)
-        for (Usize i = 0; i < signature->fun->len - 1; ++i) {
-            switch (
-              CAST(LilyCheckedDataType *, get__Vec(signature->fun, i))->kind) {
+        for (Usize i = 0; i < signature->types->len - 1; ++i) {
+            switch (CAST(LilyCheckedDataType *, get__Vec(signature->types, i))
+                      ->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_REF: {
                     LLVMValueRef param = LLVMGetParam(fun_llvm, i);
 
