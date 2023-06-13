@@ -33,7 +33,7 @@ typedef struct LilyCheckedSignatureFun
 {
     String *global_name;
     // [params, return_data_type]
-    Vec *fun; // Vec<LilyCheckedDataType* (&)>*
+    Vec *types; // Vec<LilyCheckedDataType* (&)>*
 } LilyCheckedSignatureFun;
 
 /**
@@ -44,7 +44,7 @@ typedef struct LilyCheckedSignatureFun
 CONSTRUCTOR(LilyCheckedSignatureFun *,
             LilyCheckedSignatureFun,
             String *global_name,
-            Vec *fun);
+            Vec *types);
 
 /**
  *
@@ -52,6 +52,26 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
  */
 void
 reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self);
+
+/**
+ *
+ * @brief Check if the signature contains a compiler defined data type.
+ */
+bool
+contains_compiler_defined_dt__LilyCheckedSignatureFun(
+  const LilyCheckedSignatureFun *self);
+
+/**
+ *
+ * @brief Convert LilyCheckedSignatureFun in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedSignatureFun,
+               const LilyCheckedSignatureFun *self);
+#endif
 
 /**
  *

@@ -25,22 +25,23 @@
 #include <base/alloc.h>
 #include <base/new.h>
 
+#include <core/lily/checked/data_type.h>
 #include <core/lily/checked/global_name.h>
 #include <core/lily/checked/signature.h>
 
 CONSTRUCTOR(LilyCheckedSignatureFun *,
             LilyCheckedSignatureFun,
             String *global_name,
-            Vec *fun)
+            Vec *types)
 {
     LilyCheckedSignatureFun *self =
       lily_malloc(sizeof(LilyCheckedSignatureFun));
 
     self->global_name = clone__String(global_name);
-    self->fun = fun;
+    self->types = types;
 
     generate_global_fun_name__LilyCheckedGlobalName(self->global_name,
-                                                    self->fun);
+                                                    self->types);
 
     return self;
 }
@@ -49,12 +50,43 @@ void
 reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self)
 {
     generate_global_fun_name__LilyCheckedGlobalName(self->global_name,
-                                                    self->fun);
+                                                    self->types);
 }
+
+bool
+contains_compiler_defined_dt__LilyCheckedSignatureFun(
+  const LilyCheckedSignatureFun *self)
+{
+    for (Usize i = 0; i < self->types->len; ++i) {
+        if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
+              get__Vec(self->types, i))) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedSignatureFun,
+               const LilyCheckedSignatureFun *self)
+{
+    String *res = format__String(
+      "LilyCheckedSignatureFun{{ global_name = {S}, fun =", self->global_name);
+
+    DEBUG_VEC_STRING(self->types, res, LilyCheckedDataType);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyCheckedSignatureFun, LilyCheckedSignatureFun *self)
 {
     FREE(String, self->global_name);
-    FREE(Vec, self->fun);
+    FREE(Vec, self->types);
     lily_free(self);
 }
