@@ -25,14 +25,45 @@
 #ifndef LILY_BASE_HASH_MAP_H
 #define LILY_BASE_HASH_MAP_H
 
+#include <base/platform.h>
 #include <base/types.h>
 #include <base/vec.h>
 
+#ifdef PLATFORM_64
+#define HASH_MAP_SIZE INT64_MAX
+#else
+#define HASH_MAP_SIZE INT32_MAX
+#endif
+
+#define DEFAULT_HASH_MAP_CAPACITY 8
+
+// Choice different algorithm to create an hash
+#define HASH_FNV1A
+#undef HASH_FNV1A
+#define HASH_CUSTOM
+#undef HASH_CUSTOM
+#define HASH_JENKINS
+#undef HASH_JENKINS
+#define HASH_SIP
+// #undef HASH_SIP
+
+typedef struct HashMapPair
+{
+    char *key;
+    void *value;
+} HashMapPair;
+
+/**
+ *
+ * @brief Construct HashMapPair type.
+ */
+CONSTRUCTOR(HashMapPair *, HashMapPair, char *key, void *value);
+
 typedef struct HashMap
 {
-    Vec *keys;
-    Vec *values;
+    HashMapPair **pairs;
     Usize len;
+    Usize capacity;
 } HashMap;
 
 /**
@@ -47,7 +78,14 @@ CONSTRUCTOR(HashMap *, HashMap);
  * @return If the key does not exist, return NULL.
  */
 void *
-get__HashMap(HashMap *self, void *key);
+get__HashMap(HashMap *self, char *key);
+
+/**
+ *
+ * @brief Generate an hash.
+ */
+Usize
+hash__HashMap(HashMap *self, char *key);
 
 /**
  *
@@ -55,8 +93,8 @@ get__HashMap(HashMap *self, void *key);
  * @return If the key already exists, return the value of the key, otherwise
  * return NULL.
  */
-void *
-insert__HashMap(HashMap *self, void *key, void *value);
+void
+insert__HashMap(HashMap *self, char *key, void *value);
 
 /**
  *
