@@ -26,36 +26,41 @@
 #include <base/hash_map.h>
 #include <base/new.h>
 
-#ifdef HASH_FNV1A
-#include <base/hash/fnv.h>
-#elif defined(HASH_CUSTOM)
-#include <base/hash/custom.h>
-#elif defined(HASH_JENKINS)
-#include <base/hash/jenkins.h>
-#elif defined(HASH_SIP)
-#include <base/hash/sip.h>
-#else
-#error "cannot generate an hash"
-#endif
-
 #include <stdlib.h>
-#include <string.h>
 
-CONSTRUCTOR(HashMapPair *, HashMapPair, char *key, void *value)
+static void *
+get_bucket__HashMapBucket(const HashMapBucket *self, char *key);
+
+static void
+push_bucket__HashMap(HashMap *self, HashMapBucket *new);
+
+static bool
+visit_bucket__HashMap(HashMap *self, Usize index, HashMapBucket *bucket);
+
+CONSTRUCTOR(HashMapBucket *, HashMapBucket, HashMapPair pair)
 {
-    HashMapPair *self = lily_malloc(sizeof(HashMapPair));
+    HashMapBucket *self = lily_malloc(sizeof(HashMapBucket));
 
-    self->key = key;
-    self->value = value;
+    self->pair = pair;
+    self->next = NULL;
 
     return self;
+}
+
+DESTRUCTOR(HashMapBucket, HashMapBucket *self)
+{
+    if (self->next) {
+        FREE(HashMapBucket, self->next);
+    }
+
+	lily_free(self);
 }
 
 CONSTRUCTOR(HashMap *, HashMap)
 {
     HashMap *self = lily_malloc(sizeof(HashMap));
 
-    self->pairs = NULL;
+    self->buckets = NULL;
     self->len = 0;
     self->capacity = DEFAULT_HASH_MAP_CAPACITY;
 
@@ -63,60 +68,84 @@ CONSTRUCTOR(HashMap *, HashMap)
 }
 
 void *
-get__HashMap(HashMap *self, char *key)
+get_bucket__HashMapBucket(const HashMapBucket *self, char *key)
 {
-    Usize hash = hash__HashMap(self, key);
-
-    while (self->pairs[hash] != NULL) {
-        if (!strcmp(self->pairs[hash]->key, key)) {
-            return self->pairs[hash]->value;
-        }
-
-        hash = (hash + 1) % self->capacity;
+    if (!strcmp(self->pair.key, key)) {
+        return self->pair.value;
     }
 
-    return self->pairs[hash]->value;
+    return self->next ? get_bucket__HashMapBucket(self->next, key) : NULL;
 }
 
-Usize
-hash__HashMap(HashMap *self, char *key)
+void *
+get__HashMap(HashMap *self, char *key)
 {
-#ifdef HASH_FNV1A
-#ifdef PLATFORM_64
-    return hash_fnv1a_64(key) % self->capacity;
-#else
-    return hash_fnv1a_32(key) % self->capacity;
-#endif
-#elif defined(HASH_CUSTOM)
-#ifdef PLATFORM_64
-    return hash_custom64(key) % self->capacity;
-#else
-    return hash_custom32(key) % self->capacity;
-#endif
-#elif defined(HASH_JENKINS)
-    return hash_jenkins(key) % self->capacity;
-#elif defined(HASH_SIP)
-#ifdef PLATFORM_64
-    return hash_sip(
-      key, strlen(key), 0x0123456789abcdefULL, 0xfedcba9876543210ULL) % self->capacity;
-#else
-    return hash_sip(key, strlen(key), 0x01234567, 0x89abcdef) % self->capacity;
-#endif
-#else
-#error "cannot generate an hash"
-#endif
+    Usize index = index__HashMap(self, key);
+    HashMapBucket *bucket = self->buckets[index];
+
+    return bucket ? get_bucket__HashMapBucket(bucket, key) : NULL;
+}
+
+void
+push_bucket__HashMap(HashMap *self, HashMapBucket *new)
+{
+    Usize index = index__HashMap(self, new->pair.key);
+
+    if (self->buckets[index]) {
+        HashMapBucket *current = self->buckets[index];
+
+        while (current->next) {
+            current = current->next;
+        }
+
+        if (new->next) {
+            if (visit_bucket__HashMap(self, index, new->next)) {
+                new->next = NULL;
+            }
+        }
+
+        current->next = new;
+
+        return;
+    }
+
+    if (new->next) {
+        if (visit_bucket__HashMap(self, index, new->next)) {
+            new->next = NULL;
+        }
+    }
+
+    self->buckets[index] = new;
+}
+
+bool
+visit_bucket__HashMap(HashMap *self, Usize index, HashMapBucket *bucket)
+{
+    HashMapBucket *current = bucket;
+
+    while (current->next) {
+        Usize new_index = index__HashMap(self, current->pair.key);
+
+        if (index != new_index) {
+            push_bucket__HashMap(self, current);
+            return true;
+        }
+
+        current = current->next;
+    }
+
+    return false;
 }
 
 void
 insert__HashMap(HashMap *self, char *key, void *value)
 {
-    Usize hash = hash__HashMap(self, key);
+    Usize index = index__HashMap(self, key);
 
-    if (!self->pairs) {
-        self->pairs = lily_calloc(DEFAULT_HASH_MAP_CAPACITY, PTR_SIZE);
+    if (!self->buckets) {
+        self->buckets = lily_calloc(DEFAULT_HASH_MAP_CAPACITY, PTR_SIZE);
 
-        self->pairs[hash] = NEW(HashMapPair, key, value);
-
+        self->buckets[index] = NEW(HashMapBucket, NEW(HashMapPair, key, value));
         ++self->len;
 
         return;
@@ -125,47 +154,39 @@ insert__HashMap(HashMap *self, char *key, void *value)
     if (self->len + 1 > self->capacity) {
         self->capacity *= 2;
 
-        HashMapPair **new_pairs = lily_calloc(self->capacity, PTR_SIZE);
+        HashMapBucket **new_buckets = lily_calloc(self->capacity, PTR_SIZE);
+        HashMapBucket **old_buckets = self->buckets;
+
+        self->buckets = new_buckets;
 
         // Re-hash all inserted K-V
         for (Usize i = 0; i < self->len; ++i) {
-            if (self->pairs[i]) {
-                Usize new_hash = hash__HashMap(self, self->pairs[i]->key);
-
-                while (new_pairs[new_hash] != NULL) {
-                    new_hash = (new_hash + 1) % self->capacity;
-                }
-
-                new_pairs[new_hash] = self->pairs[i];
+            if (old_buckets[i]) {
+                visit_bucket__HashMap(self, i, old_buckets[i]);
             }
         }
 
-        lily_free(self->pairs);
-
-        self->pairs = new_pairs;
+        lily_free(old_buckets);
 
         // Realod hash
-        hash = hash__HashMap(self, key);
+        index = index__HashMap(self, key);
     }
 
-    while (self->pairs[hash] != NULL) {
-        hash = (hash + 1) % self->capacity;
-    }
-
-    self->pairs[hash] = NEW(HashMapPair, key, value);
+    push_bucket__HashMap(self,
+                         NEW(HashMapBucket, NEW(HashMapPair, key, value)));
     ++self->len;
 }
 
 DESTRUCTOR(HashMap, HashMap *self)
 {
-    if (self->pairs) {
+    if (self->buckets) {
         for (Usize i = 0; i < self->capacity; ++i) {
-            if (self->pairs[i]) {
-                lily_free(self->pairs[i]);
+            if (self->buckets[i]) {
+                FREE(HashMapBucket, self->buckets[i]);
             }
         }
 
-        lily_free(self->pairs);
+        lily_free(self->buckets);
     }
 
     lily_free(self);

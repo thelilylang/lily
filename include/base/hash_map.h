@@ -29,6 +29,8 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <string.h>
+
 #ifdef PLATFORM_64
 #define HASH_MAP_SIZE INT64_MAX
 #else
@@ -40,12 +42,27 @@
 // Choice different algorithm to create an hash
 #define HASH_FNV1A
 #undef HASH_FNV1A
+
 #define HASH_CUSTOM
 #undef HASH_CUSTOM
+
 #define HASH_JENKINS
 #undef HASH_JENKINS
+
 #define HASH_SIP
 // #undef HASH_SIP
+
+#ifdef HASH_FNV1A
+#include <base/hash/fnv.h>
+#elif defined(HASH_CUSTOM)
+#include <base/hash/custom.h>
+#elif defined(HASH_JENKINS)
+#include <base/hash/jenkins.h>
+#elif defined(HASH_SIP)
+#include <base/hash/sip.h>
+#else
+#error "cannot generate an hash"
+#endif
 
 typedef struct HashMapPair
 {
@@ -57,11 +74,32 @@ typedef struct HashMapPair
  *
  * @brief Construct HashMapPair type.
  */
-CONSTRUCTOR(HashMapPair *, HashMapPair, char *key, void *value);
+inline CONSTRUCTOR(HashMapPair, HashMapPair, char *key, void *value)
+{
+    return (HashMapPair){ .key = key, .value = value };
+}
+
+typedef struct HashMapBucket
+{
+    HashMapPair pair;
+    struct HashMapBucket *next; // HashMapBucket*?
+} HashMapBucket;
+
+/**
+ *
+ * @brief Construct HashMapBucket type.
+ */
+CONSTRUCTOR(HashMapBucket *, HashMapBucket, HashMapPair pair);
+
+/**
+ *
+ * @brief Free HashMapBucket type.
+ */
+DESTRUCTOR(HashMapBucket, HashMapBucket *self);
 
 typedef struct HashMap
 {
-    HashMapPair **pairs;
+    HashMapBucket **buckets; // HashMapBucket**?
     Usize len;
     Usize capacity;
 } HashMap;
@@ -84,8 +122,44 @@ get__HashMap(HashMap *self, char *key);
  *
  * @brief Generate an hash.
  */
-Usize
-hash__HashMap(HashMap *self, char *key);
+inline Usize
+hash__HashMap(HashMap *self, char *key)
+{
+#ifdef HASH_FNV1A
+#ifdef PLATFORM_64
+    return hash_fnv1a_64(key);
+#else
+    return hash_fnv1a_32(key);
+#endif
+#elif defined(HASH_CUSTOM)
+#ifdef PLATFORM_64
+    return hash_custom64(key);
+#else
+    return hash_custom32(key);
+#endif
+#elif defined(HASH_JENKINS)
+    return hash_jenkins(key);
+#elif defined(HASH_SIP)
+#ifdef PLATFORM_64
+    return hash_sip(
+      key, strlen(key), 0x0123456789abcdefULL, 0xfedcba9876543210ULL);
+#else
+    return hash_sip(key, strlen(key), 0x01234567, 0x89abcdef);
+#endif
+#else
+#error "cannot generate an hash"
+#endif
+}
+
+/**
+ *
+ * @brief Get index from the hash.
+ */
+inline Usize
+index__HashMap(HashMap *self, char *key)
+{
+    return hash__HashMap(self, key) % self->capacity;
+}
 
 /**
  *
