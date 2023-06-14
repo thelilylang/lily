@@ -2525,7 +2525,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                               LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT),
                           NULL,
                           NULL,
-                          NULL);
+                          from__String(
+                            "self access is not expected in function"));
 
                         return NEW_VARIANT(
                           LilyCheckedExpr, unknown, &expr->location, expr);
@@ -2561,7 +2562,19 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                       get_current_method__LilyCheckedScope(scope);
 
                     if (!method) {
-                        FAILED("property init is not expected in function");
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&expr->location),
+                          NEW(LilyError,
+                              LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT),
+                          NULL,
+                          NULL,
+                          from__String(
+                            "property init is not expected in function"));
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr, unknown, &expr->location, expr);
                     }
 
                     TODO("resolve property init access");
@@ -2609,11 +2622,38 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_CLASS:
                                         TODO("attribute access!!");
                                     default:
-                                        FAILED("this kind of data type is "
-                                               "not expected");
+                                        ANALYSIS_EMIT_DIAGNOSTIC(
+                                          self,
+                                          simple_lily_error,
+                                          (&expr->location),
+                                          NEW(
+                                            LilyError,
+                                            LILY_ERROR_KIND_THIS_KIND_OF_DATA_TYPE_IS_NOT_EXPECTED),
+                                          NULL,
+                                          NULL,
+                                          NULL);
+
+                                        return NEW_VARIANT(LilyCheckedExpr,
+                                                           unknown,
+                                                           &expr->location,
+                                                           expr);
                                 }
                             } else {
-                                FAILED("this data type is not expected");
+                                ANALYSIS_EMIT_DIAGNOSTIC(
+                                  self,
+                                  simple_lily_error,
+                                  custom->location,
+                                  NEW(
+                                    LilyError,
+                                    LILY_ERROR_KIND_EXPECTED_CUSTOM_DATA_TYPE),
+                                  NULL,
+                                  NULL,
+                                  NULL);
+
+                                return NEW_VARIANT(LilyCheckedExpr,
+                                                   unknown,
+                                                   &expr->location,
+                                                   expr);
                             }
                         }
                         case LILY_CHECKED_EXPR_CALL_KIND_FUN:
@@ -2655,7 +2695,14 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                 if (!eq__LilyCheckedDataType(
                       data_type_item,
                       CAST(LilyCheckedExpr *, get__Vec(items, i))->data_type)) {
-                    FAILED("data type does not match to the first item");
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      data_type_item->location,
+                      NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                      NULL,
+                      NULL,
+                      NULL);
                 }
             }
 
@@ -2665,7 +2712,15 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                         if (!eq__LilyCheckedDataType(
                               data_type_item,
                               defined_data_type->array.data_type)) {
-                            FAILED("array item data type does not match");
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              data_type_item->location,
+                              NEW(LilyError,
+                                  LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                              NULL,
+                              NULL,
+                              NULL);
                         }
 
                         return NEW_VARIANT(
@@ -2683,7 +2738,14 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                           expr,
                           NEW(LilyCheckedExprArray, items));
                     default:
-                        FAILED("expected array data type");
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          data_type_item->location,
+                          NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                          NULL,
+                          NULL,
+                          from__String("expected array data type"));
                 }
             }
 
@@ -2751,7 +2813,29 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                 }
 
                                 if (fun->fun.is_main) {
-                                    FAILED("you cannot call the main function");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_MAIN_FUNCTION_IS_NOT_CALLABLE),
+                                      NULL,
+                                      NULL,
+                                      NULL);
+
+                                    return NEW_VARIANT(
+                                      LilyCheckedExpr,
+                                      call,
+                                      &expr->location,
+                                      NEW(LilyCheckedDataType,
+                                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                                          &expr->location),
+                                      expr,
+                                      NEW(LilyCheckedExprCall,
+                                          LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                                          NULL,
+                                          (LilyCheckedAccessScope){ .id = 0 }));
                                 }
 
                                 Vec *checked_params =
@@ -2868,11 +2952,21 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                   fun_types));
 
                                             if (!return_data_type) {
-                                                FAILED(
-                                                  "impossible to get a return "
-                                                  "data type. NOTE: the "
-                                                  "signature do you try to "
-                                                  "pass is invalid");
+                                                ANALYSIS_EMIT_DIAGNOSTIC(
+                                                  self,
+                                                  simple_lily_error,
+                                                  fun->location,
+                                                  NEW(
+                                                    LilyError,
+                                                    LILY_ERROR_KIND_IMPOSSIBLE_TO_GET_RETURN_DATA_TYPE),
+                                                  init__Vec(
+                                                    1,
+                                                    from__String(
+                                                      "the signature do you "
+                                                      "try to pass is "
+                                                      "invalid")),
+                                                  NULL,
+                                                  NULL);
                                             }
 
                                             break;
@@ -3276,8 +3370,16 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                 LilyCheckedExprCall, cstr_len, len_expr));
                         }
                         default:
-                            FAILED("expected Str, CStr, Bytes, array or list "
-                                   "data type");
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              len_expr->location,
+                              NEW(LilyError,
+                                  LILY_ERROR_KIND_EXPECTED_DATA_TYPE),
+                              NULL,
+                              NULL,
+                              from__String("expected Str, CStr, Bytes, array "
+                                           "or list data type"));
                     }
                 }
                 case LILY_AST_EXPR_CALL_KIND_RECORD: {
@@ -3372,7 +3474,15 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                 if (!eq__LilyCheckedDataType(
                                       checked_value->data_type,
                                       field_response.record_field->data_type)) {
-                                    FAILED("data type do not match");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      checked_value->location,
+                                      NEW(LilyError,
+                                          LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                                      NULL,
+                                      NULL,
+                                      NULL);
                                 }
 
                                 push__Vec(checked_record_params,
@@ -3653,7 +3763,22 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_INT8:
                                 if (expr->literal.int32 > INT8_MAX ||
                                     expr->literal.int32 < INT8_MIN) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String(
+                                        "Int32 is out of range to cast Int8"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3665,7 +3790,22 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
                                 if (expr->literal.int32 > INT16_MAX ||
                                     expr->literal.int32 < INT16_MIN) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String("Int32 is out of range to "
+                                                   "cast Int16 or CShort"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3689,7 +3829,22 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
                                 if (expr->literal.int32 > UINT8_MAX ||
                                     expr->literal.int32 < 0) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String(
+                                        "Int32 is out of range to cast Uint8"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3701,7 +3856,22 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
                                 if (expr->literal.int32 > UINT16_MAX ||
                                     expr->literal.int32 < 0) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String("Int32 is out of range to "
+                                                   "cast Uint16 or CUshort"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3713,7 +3883,23 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
                             case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
                                 if (expr->literal.int32 < 0) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String(
+                                        "Int32 is out of range to cast Uint32 "
+                                        "or CUint or CUlong"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3725,7 +3911,23 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
                             case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
                                 if (expr->literal.int32 < 0) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String(
+                                        "Int32 is out of range to cast Uint64 "
+                                        "or Usize or CUlonglong"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3765,7 +3967,22 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_INT8:
                                 if (expr->literal.int64 > INT8_MAX ||
                                     expr->literal.int64 < INT8_MIN) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String(
+                                        "Int64 is out of range to cast Int8"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3777,7 +3994,22 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
                                 if (expr->literal.int64 > INT16_MAX ||
                                     expr->literal.int64 < INT16_MIN) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String("Int64 is out of range to "
+                                                   "cast Int16 or CShort"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3793,7 +4025,23 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
                                 if (expr->literal.int64 > INT32_MAX ||
                                     expr->literal.int64 < INT32_MIN) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String("Int64 is out of range to "
+                                                   "cast Int32 or Isize (on "
+                                                   "32-bit) or CInt or CLong"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3812,7 +4060,22 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
                                 if (expr->literal.int64 > UINT8_MAX ||
                                     expr->literal.int64 < 0) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String(
+                                        "Int64 is out of range to cast Uint8"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3824,7 +4087,22 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
                                 if (expr->literal.int64 > UINT16_MAX ||
                                     expr->literal.int64 < 0) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String("Int64 is out of range to "
+                                                   "cast Uint16 or CUshort"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3836,7 +4114,23 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
                             case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
                                 if (expr->literal.int64 < 0) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String(
+                                        "Int64 is out of range to "
+                                        "cast Uint32 or CUint or CUlong"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -3848,7 +4142,23 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
                             case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
                                 if (expr->literal.int64 < 0) {
-                                    FAILED("comptime cast overflow");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      (&expr->location),
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW),
+                                      NULL,
+                                      NULL,
+                                      from__String(
+                                        "Int64 is out of range to "
+                                        "cast Uint64 or Usize or CUlonglong"));
+
+                                    return NEW_VARIANT(LilyCheckedExpr,
+                                                       unknown,
+                                                       &expr->location,
+                                                       expr);
                                 } else {
                                     literal_data_type =
                                       clone__LilyCheckedDataType(
@@ -4241,8 +4551,22 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                       right));
                             }
                             default:
-                                FAILED("expected ref or ptr data type (ref is "
-                                       "not overloadable)");
+                                ANALYSIS_EMIT_DIAGNOSTIC(
+                                  self,
+                                  simple_lily_error,
+                                  defined_data_type->location,
+                                  NEW(LilyError,
+                                      LILY_ERROR_KIND_EXPECTED_DATA_TYPE),
+                                  init__Vec(
+                                    1, from__String("ref is not overloadable")),
+                                  NULL,
+                                  from__String(
+                                    "expected ref or pointer data type"));
+
+                                return NEW_VARIANT(LilyCheckedExpr,
+                                                   unknown,
+                                                   &expr->location,
+                                                   expr);
                         }
                     } else {
                         goto get_ref;
@@ -4357,13 +4681,30 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                                     TODO("check if the pointer of the data "
                                          "type is droppable");
                                 default:
-                                    FAILED("this variable cannot be dropped "
-                                           "caused by the data type");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      variable->stmt.variable.data_type
+                                        ->location,
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_THIS_DATA_TYPE_CANNOT_BE_DROPPED),
+                                      NULL,
+                                      NULL,
+                                      NULL);
                             }
 
                             // Check if the variable has been dropped
                             if (variable->stmt.variable.is_dropped) {
-                                FAILED("the variable has been dropped");
+                                ANALYSIS_EMIT_DIAGNOSTIC(
+                                  self,
+                                  simple_lily_error,
+                                  variable->stmt.location,
+                                  NEW(LilyError,
+                                      LILY_ERROR_KIND_VALUE_HAS_BEEN_DROPPED),
+                                  NULL,
+                                  NULL,
+                                  NULL);
                             } else {
                                 variable->stmt.variable.is_dropped = true;
                             }
@@ -4385,11 +4726,30 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                             TODO("check if the data type of the variant is "
                                  "droppable");
                         default:
-                            FAILED("this kind of call is not allowed to drop");
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              drop_expr->location,
+                              NEW(
+                                LilyError,
+                                LILY_ERROR_KIND_THIS_KIND_OF_VALUE_IS_NOT_ALLOWED_TO_BE_DROP),
+                              NULL,
+                              NULL,
+                              NULL);
                     }
+
+                    break;
                 default:
-                    FAILED("this kind of expression is not expected for drop "
-                           "statement");
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      drop_expr->location,
+                      NEW(
+                        LilyError,
+                        LILY_ERROR_KIND_THIS_KIND_OF_EXPR_IS_NOT_ALLOWED_TO_BE_DROP),
+                      NULL,
+                      NULL,
+                      NULL);
             }
 
             return NEW_VARIANT(
@@ -4520,7 +4880,27 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
 
             switch (raise_response_expr.kind) {
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                    FAILED("error declaration not found");
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      (&stmt->raise.expr->location),
+                      NEW(LilyError, LILY_ERROR_KIND_ERROR_DECL_NOT_FOUND),
+                      NULL,
+                      NULL,
+                      NULL);
+
+                    return NEW_VARIANT(
+                      LilyCheckedBodyFunItem,
+                      stmt,
+                      NEW_VARIANT(LilyCheckedStmt,
+                                  raise,
+                                  &stmt->location,
+                                  stmt,
+                                  NEW(LilyCheckedStmtRaise,
+                                      NEW_VARIANT(LilyCheckedExpr,
+                                                  unknown,
+                                                  &stmt->raise.expr->location,
+                                                  stmt->raise.expr))));
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR: {
                     // TODO: add a support for generics
                     LilyCheckedExpr *raise_expr = NEW_VARIANT(
@@ -4619,9 +4999,17 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                           expr->data_type, fun_return_data_type);
                     } else if (!eq__LilyCheckedDataType(fun_return_data_type,
                                                         expr->data_type)) {
-                        FAILED("the data type doesn't match with the inferred "
-                               "type or the specified return data type passed "
-                               "to the function");
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          fun_return_data_type->location,
+                          NEW(
+                            LilyError,
+                            LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH_WITH_INFER_DATA_TYPE),
+                          NULL,
+                          NULL,
+                          from__String("or the specified return data type "
+                                       "passed to the function"));
                     }
                 } else {
                     UNREACHABLE(
@@ -4635,8 +5023,16 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                         case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
                             break;
                         default:
-                            FAILED(
-                              "expected Unit or CVoid as return data type");
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              fun_return_data_type->location,
+                              NEW(LilyError,
+                                  LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                              NULL,
+                              NULL,
+                              from__String(
+                                "expected Unit or CVoid as return data type"));
                     }
                 } else {
                     // TODO:Add the possibility for the compiler to have a list
@@ -4724,7 +5120,14 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             if (checked_data_type) {
                 if (!eq__LilyCheckedDataType(checked_data_type,
                                              expr->data_type)) {
-                    FAILED("the data type doesn't match");
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      checked_data_type->location,
+                      NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                      NULL,
+                      NULL,
+                      NULL);
                 }
             }
 
@@ -4917,7 +5320,16 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
     // 2. Check generic params
     if (fun->ast_decl->fun.generic_params) {
         if (fun->fun.is_main) {
-            FAILED("generic params is not expected in main function");
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              fun->location,
+              NEW(
+                LilyError,
+                LILY_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_EXPECTED_IN_MAIN_FUNCTION),
+              NULL,
+              NULL,
+              NULL);
         }
 
         if (!fun->fun.generic_params) {
@@ -4930,8 +5342,16 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
     if (fun->ast_decl->fun.params) {
         // Check if the main function have no params.
         if (fun->fun.is_main) {
-            FAILED(
-              "no (explicit) parameters are expected in the main function");
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              fun->location,
+              NEW(
+                LilyError,
+                LILY_ERROR_KIND_NO_EXPLICIT_PARAMS_ARE_EXPECTED_IN_MAIN_FUNCTION),
+              NULL,
+              NULL,
+              NULL);
         }
 
         // Configure the params of the function (if not already configured)
@@ -4947,8 +5367,16 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
                 if (is_compiler_defined__LilyCheckedDataType(
                       param->data_type)) {
-                    FAILED("operator function cannot have a compiler defined "
-                           "type as parameter");
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      param->data_type->location,
+                      NEW(
+                        LilyError,
+                        LILY_ERROR_KIND_OPERATOR_CANNOT_HAVE_COMPILER_DEFINED_DATA_TYPE_AS_PARAMETER),
+                      NULL,
+                      NULL,
+                      NULL);
                 }
             }
         }
@@ -4974,8 +5402,16 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
                     case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
                         break;
                     default:
-                        FAILED("this return data type is not expected for a "
-                               "main function");
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          fun->fun.return_data_type->location,
+                          NEW(
+                            LilyError,
+                            LILY_ERROR_KIND_THIS_RETURN_DATA_TYPE_IS_NOT_EXPECTED_FOR_A_MAIN_FUNCTION),
+                          NULL,
+                          NULL,
+                          from__String("expected Int32, Unit or CVoid"));
                 }
             }
         } else {
@@ -4986,7 +5422,15 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
     } else {
         if (!fun->fun.return_data_type) {
             if (fun->fun.is_operator) {
-                FAILED("operator function must have a return type");
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  fun->location,
+                  NEW(LilyError,
+                      LILY_ERROR_KIND_OPERATOR_MUST_HAVE_RETURN_DATA_TYPE),
+                  NULL,
+                  NULL,
+                  NULL);
             }
 
             fun->fun.return_data_type = NEW(
@@ -5000,7 +5444,14 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
     // Check if the main function is not recursive.
     if (fun->fun.is_main && fun->fun.is_recursive) {
-        FAILED("the main function cannot be recursive");
+        ANALYSIS_EMIT_DIAGNOSTIC(
+          self,
+          simple_lily_error,
+          fun->location,
+          NEW(LilyError, LILY_ERROR_KIND_MAIN_FUNCTION_CANNOT_BE_RECURSIVE),
+          NULL,
+          NULL,
+          NULL);
     }
 }
 
@@ -5014,7 +5465,14 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
     // 1. Check if is an operator.
     if (fun->fun.is_operator) {
         if (!valid_operator__LilyCheckedOperator(fun->fun.name)) {
-            FAILED("is not a valid operator");
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              fun->location,
+              NEW(LilyError, LILY_ERROR_KIND_OPERATOR_IS_NOT_VALID),
+              NULL,
+              NULL,
+              NULL);
         }
     }
 
@@ -5071,7 +5529,15 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
         if (add_operator__LilyCheckedOperatorRegister(
               &self->package->operator_register, operator)) {
-            FAILED("duplicate operator in local");
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              fun->location,
+              NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_OPERATOR),
+              NULL,
+              NULL,
+              NULL);
+
             FREE(LilyCheckedOperator, operator);
         }
     }
@@ -5105,7 +5571,14 @@ check_constant__LilyAnalysis(LilyAnalysis *self,
 
     if (!eq__LilyCheckedDataType(constant->constant.expr->data_type,
                                  constant->constant.data_type)) {
-        FAILED("data type don't match");
+        ANALYSIS_EMIT_DIAGNOSTIC(
+          self,
+          simple_lily_error,
+          constant->location,
+          NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+          NULL,
+          NULL,
+          NULL);
     }
 
     constant->constant.is_checked = true;
@@ -5228,7 +5701,14 @@ check_for_recursive_data_type__LilyAnalysis(LilyAnalysis *self,
                     return is_recursive;
                 }
                 default:
-                    FAILED("infinite data type");
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      data_type->location,
+                      NEW(LilyError, LILY_ERROR_KIND_INFINITE_DATA_TYPE),
+                      NULL,
+                      NULL,
+                      NULL);
             }
         }
     }
