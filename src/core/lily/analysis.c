@@ -733,17 +733,14 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                   add_constant__LilyCheckedScope(module->scope, sc_constant);
 
                 if (status) {
-                    emit__Diagnostic(
-                      NEW_VARIANT(
-                        Diagnostic,
-                        simple_lily_error,
-                        &self->package->file,
-                        &decl->location,
-                        NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_CONSTANT),
-                        NULL,
-                        NULL,
-                        NULL),
-                      &self->package->count_error);
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      (&decl->location),
+                      NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_CONSTANT),
+                      NULL,
+                      NULL,
+                      NULL);
 
                     FREE(LilyCheckedScopeContainerConstant, sc_constant);
                 }
@@ -760,17 +757,14 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                   add_error__LilyCheckedScope(module->scope, sc_error);
 
                 if (status) {
-                    emit__Diagnostic(
-                      NEW_VARIANT(
-                        Diagnostic,
-                        simple_lily_error,
-                        &self->package->file,
-                        &decl->location,
-                        NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_ERROR),
-                        NULL,
-                        NULL,
-                        NULL),
-                      &self->package->count_error);
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      (&decl->location),
+                      NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_ERROR),
+                      NULL,
+                      NULL,
+                      NULL);
 
                     FREE(LilyCheckedScopeContainerError, sc_error);
                 }
@@ -808,17 +802,14 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                   add_module__LilyCheckedScope(module->scope, sc_module);
 
                 if (status) {
-                    emit__Diagnostic(
-                      NEW_VARIANT(
-                        Diagnostic,
-                        simple_lily_error,
-                        &self->package->file,
-                        &decl->location,
-                        NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_MODULE),
-                        NULL,
-                        NULL,
-                        NULL),
-                      &self->package->count_error);
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      (&decl->location),
+                      NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_MODULE),
+                      NULL,
+                      NULL,
+                      NULL);
 
                     FREE(LilyCheckedScopeContainerModule, sc_module);
                 }
@@ -839,17 +830,14 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                           add_class__LilyCheckedScope(module->scope, sc_class);
 
                         if (status) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_CLASS),
-                                NULL,
-                                NULL,
-                                NULL),
-                              &self->package->count_error);
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&decl->location),
+                              NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_CLASS),
+                              NULL,
+                              NULL,
+                              NULL);
 
                             FREE(LilyCheckedScopeContainerClass, sc_class);
                         }
@@ -868,18 +856,15 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                           module->scope, sc_enum_object);
 
                         if (status) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_DUPLICATE_ENUM_OBJECT),
-                                NULL,
-                                NULL,
-                                NULL),
-                              &self->package->count_error);
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&decl->location),
+                              NEW(LilyError,
+                                  LILY_ERROR_KIND_DUPLICATE_ENUM_OBJECT),
+                              NULL,
+                              NULL,
+                              NULL);
 
                             FREE(LilyCheckedScopeContainerEnumObject,
                                  sc_enum_object);
@@ -900,18 +885,15 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                           module->scope, sc_record_object);
 
                         if (status) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_DUPLICATE_RECORD_OBJECT),
-                                NULL,
-                                NULL,
-                                NULL),
-                              &self->package->count_error);
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&decl->location),
+                              NEW(LilyError,
+                                  LILY_ERROR_KIND_DUPLICATE_RECORD_OBJECT),
+                              NULL,
+                              NULL,
+                              NULL);
 
                             FREE(LilyCheckedScopeContainerRecordObject,
                                  sc_record_object);
@@ -931,17 +913,14 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                           add_trait__LilyCheckedScope(module->scope, sc_trait);
 
                         if (status) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_TRAIT),
-                                NULL,
-                                NULL,
-                                NULL),
-                              &self->package->count_error);
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&decl->location),
+                              NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_TRAIT),
+                              NULL,
+                              NULL,
+                              NULL);
 
                             FREE(LilyCheckedScopeContainerTrait, sc_trait);
                         }
@@ -968,17 +947,14 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                           add_alias__LilyCheckedScope(module->scope, sc_alias);
 
                         if (status) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_ALIAS),
-                                NULL,
-                                NULL,
-                                NULL),
-                              &self->package->count_error);
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&decl->location),
+                              NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_ALIAS),
+                              NULL,
+                              NULL,
+                              NULL);
 
                             FREE(LilyCheckedScopeContainerAlias, sc_alias);
                         }
@@ -997,17 +973,14 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                           add_enum__LilyCheckedScope(module->scope, sc_enum);
 
                         if (status) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &decl->location,
-                                NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_ENUM),
-                                NULL,
-                                NULL,
-                                NULL),
-                              &self->package->count_error);
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&decl->location),
+                              NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_ENUM),
+                              NULL,
+                              NULL,
+                              NULL);
 
                             FREE(LilyCheckedScopeContainerEnum, sc_enum);
                         }
@@ -1026,17 +999,14 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                                                                   sc_record);
 
                         if (status) {
-                            emit__Diagnostic(
-                              NEW_VARIANT(Diagnostic,
-                                          simple_lily_error,
-                                          &self->package->file,
-                                          &decl->location,
-                                          NEW(LilyError,
-                                              LILY_ERROR_KIND_DUPLICATE_RECORD),
-                                          NULL,
-                                          NULL,
-                                          NULL),
-                              &self->package->count_error);
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&decl->location),
+                              NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_RECORD),
+                              NULL,
+                              NULL,
+                              NULL);
 
                             FREE(LilyCheckedScopeContainerRecord, sc_record);
                         }
@@ -1064,17 +1034,14 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
     switch (data_type->kind) {
         case LILY_AST_DATA_TYPE_KIND_ANY:
             if (safety_mode == LILY_CHECKED_SAFETY_MODE_SAFE) {
-                emit__Diagnostic(
-                  NEW_VARIANT(
-                    Diagnostic,
-                    simple_lily_error,
-                    &self->package->file,
-                    &data_type->location,
-                    NEW(LilyError, LILY_ERROR_KIND_CANNOT_USE_ANY_IN_SAFE_MODE),
-                    NULL,
-                    NULL,
-                    NULL),
-                  &self->package->count_error);
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  (&data_type->location),
+                  NEW(LilyError, LILY_ERROR_KIND_CANNOT_USE_ANY_IN_SAFE_MODE),
+                  NULL,
+                  NULL,
+                  NULL);
             }
 
             return NEW(LilyCheckedDataType,
@@ -1381,16 +1348,14 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
       search_identifier__LilyCheckedScope(scope, expr->identifier.name);
 
     if (response.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
-        emit__Diagnostic(
-          NEW_VARIANT(Diagnostic,
-                      simple_lily_error,
-                      &self->package->file,
-                      &expr->location,
-                      NEW(LilyError, LILY_ERROR_KIND_IDENTIFIER_NOT_FOUND),
-                      NULL,
-                      NULL,
-                      NULL),
-          &self->package->count_error);
+        ANALYSIS_EMIT_DIAGNOSTIC(
+          self,
+          simple_lily_error,
+          (&expr->location),
+          NEW(LilyError, LILY_ERROR_KIND_IDENTIFIER_NOT_FOUND),
+          NULL,
+          NULL,
+          NULL);
 
         return NEW_VARIANT(LilyCheckedExpr,
                            call,
@@ -1425,18 +1390,15 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                 // Check if the variable is mutable.
                 if (must_mut) {
                     if (!response.variable->is_mut) {
-                        emit__Diagnostic(
-                          NEW_VARIANT(
-                            Diagnostic,
-                            simple_lily_error,
-                            &self->package->file,
-                            &expr->location,
-                            NEW(LilyError,
-                                LILY_ERROR_KIND_EXPECTED_MUTABLE_VARIABLE),
-                            NULL,
-                            NULL,
-                            NULL),
-                          &self->package->count_error);
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&expr->location),
+                          NEW(LilyError,
+                              LILY_ERROR_KIND_EXPECTED_MUTABLE_VARIABLE),
+                          NULL,
+                          NULL,
+                          NULL);
                     }
                 }
 
@@ -1749,17 +1711,14 @@ valid_cast__LilyAnalysis(LilyAnalysis *self,
     if ((src->kind == LILY_CHECKED_DATA_TYPE_KIND_ANY ||
          dest->kind == LILY_CHECKED_DATA_TYPE_KIND_ANY) &&
         safety_mode == LILY_CHECKED_SAFETY_MODE_SAFE) {
-        emit__Diagnostic(
-          NEW_VARIANT(
-            Diagnostic,
-            simple_lily_error,
-            &self->package->file,
-            dest->location,
-            NEW(LilyError, LILY_ERROR_KIND_CANNOT_CAST_TO_ANY_IN_SAFE_MODE),
-            NULL,
-            NULL,
-            NULL),
-          &self->package->count_error);
+        ANALYSIS_EMIT_DIAGNOSTIC(
+          self,
+          simple_lily_error,
+          dest->location,
+          NEW(LilyError, LILY_ERROR_KIND_CANNOT_CAST_TO_ANY_IN_SAFE_MODE),
+          NULL,
+          NULL,
+          NULL);
 
         return;
     }
@@ -1797,18 +1756,15 @@ valid_cast__LilyAnalysis(LilyAnalysis *self,
                 case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
                     if (dest->kind == src->kind) {
                     cannot_cast_to_the_same_data_type : {
-                        emit__Diagnostic(
-                          NEW_VARIANT(
-                            Diagnostic,
-                            simple_lily_error,
-                            &self->package->file,
-                            dest->location,
-                            NEW(LilyError, LILY_ERROR_KIND_BAD_LITERAL_CAST),
-                            NULL,
-                            NULL,
-                            from__String(
-                              "you cannot cast to the same data type")),
-                          &self->package->count_error);
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          dest->location,
+                          NEW(LilyError, LILY_ERROR_KIND_BAD_LITERAL_CAST),
+                          NULL,
+                          NULL,
+                          from__String(
+                            "you cannot cast to the same data type"));
 
                         return;
                     }
@@ -1816,17 +1772,14 @@ valid_cast__LilyAnalysis(LilyAnalysis *self,
 
                     return;
                 default:
-                    emit__Diagnostic(
-                      NEW_VARIANT(
-                        Diagnostic,
-                        simple_lily_error,
-                        &self->package->file,
-                        dest->location,
-                        NEW(LilyError, LILY_ERROR_KIND_BAD_LITERAL_CAST),
-                        NULL,
-                        NULL,
-                        NULL),
-                      &self->package->count_error);
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      dest->location,
+                      NEW(LilyError, LILY_ERROR_KIND_BAD_LITERAL_CAST),
+                      NULL,
+                      NULL,
+                      NULL);
 
                     return;
             }
@@ -1847,16 +1800,14 @@ valid_cast__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             TODO("check dynamic cast");
         default:
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          &self->package->file,
-                          dest->location,
-                          NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_CAST),
-                          NULL,
-                          NULL,
-                          NULL),
-              &self->package->count_error);
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              dest->location,
+              NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_CAST),
+              NULL,
+              NULL,
+              NULL);
 
             return;
     }
@@ -2777,18 +2728,15 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                     switch (response.kind) {
                         case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &expr->location,
-                                NEW(LilyError,
-                                    LILY_ERROR_KIND_FUNCTION_IS_NOT_FOUND),
-                                NULL,
-                                NULL,
-                                from__String("unknown function in this scope")),
-                              &self->package->count_error);
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&expr->location),
+                              NEW(LilyError,
+                                  LILY_ERROR_KIND_FUNCTION_IS_NOT_FOUND),
+                              NULL,
+                              NULL,
+                              from__String("unknown function in this scope"));
 
                             return NEW_VARIANT(
                               LilyCheckedExpr,
@@ -3092,18 +3040,15 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                 }
                 case LILY_AST_EXPR_CALL_KIND_FUN_BUILTIN: {
                     if (!self->package->builtin_is_loaded) {
-                        emit__Diagnostic(
-                          NEW_VARIANT(
-                            Diagnostic,
-                            simple_lily_error,
-                            &self->package->file,
-                            &expr->location,
-                            NEW(LilyError,
-                                LILY_ERROR_KIND_IMPORT_BUILTIN_REQUIRED),
-                            NULL,
-                            NULL,
-                            from__String("please import `@builtin`")),
-                          &self->package->count_error);
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&expr->location),
+                          NEW(LilyError,
+                              LILY_ERROR_KIND_IMPORT_BUILTIN_REQUIRED),
+                          NULL,
+                          NULL,
+                          from__String("please import `@builtin`"));
 
                         return NEW_VARIANT(
                           LilyCheckedExpr,
@@ -3122,17 +3067,14 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                     if (!is_builtin_function__LilyBuiltin(
                           expr->call.fun_builtin.name->buffer)) {
                     bad_builtin_function : {
-                        emit__Diagnostic(
-                          NEW_VARIANT(Diagnostic,
-                                      simple_lily_error,
-                                      &self->package->file,
-                                      &expr->location,
-                                      NEW(LilyError,
-                                          LILY_ERROR_KIND_BAD_BUILTIN_FUNCTION),
-                                      NULL,
-                                      NULL,
-                                      from__String("unknown builtin function")),
-                          &self->package->count_error);
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&expr->location),
+                          NEW(LilyError, LILY_ERROR_KIND_BAD_BUILTIN_FUNCTION),
+                          NULL,
+                          NULL,
+                          from__String("unknown builtin function"));
 
                         return NEW_VARIANT(
                           LilyCheckedExpr,
@@ -3199,17 +3141,14 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                 }
                 case LILY_AST_EXPR_CALL_KIND_FUN_SYS: {
                     if (!self->package->sys_is_loaded) {
-                        emit__Diagnostic(
-                          NEW_VARIANT(
-                            Diagnostic,
-                            simple_lily_error,
-                            &self->package->file,
-                            &expr->location,
-                            NEW(LilyError, LILY_ERROR_KIND_IMPORT_SYS_REQUIRED),
-                            NULL,
-                            NULL,
-                            from__String("please import `@sys`")),
-                          &self->package->count_error);
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&expr->location),
+                          NEW(LilyError, LILY_ERROR_KIND_IMPORT_SYS_REQUIRED),
+                          NULL,
+                          NULL,
+                          from__String("please import `@sys`"));
 
                         return NEW_VARIANT(
                           LilyCheckedExpr,
@@ -3227,17 +3166,14 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                     if (!is_sys_function__LilySys(
                           expr->call.fun_sys.name->buffer)) {
-                        emit__Diagnostic(
-                          NEW_VARIANT(
-                            Diagnostic,
-                            simple_lily_error,
-                            &self->package->file,
-                            &expr->location,
-                            NEW(LilyError, LILY_ERROR_KIND_BAD_SYS_FUNCTION),
-                            NULL,
-                            NULL,
-                            from__String("unknown sys function")),
-                          &self->package->count_error);
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&expr->location),
+                          NEW(LilyError, LILY_ERROR_KIND_BAD_SYS_FUNCTION),
+                          NULL,
+                          NULL,
+                          from__String("unknown sys function"));
 
                         return NEW_VARIANT(
                           LilyCheckedExpr,
@@ -3392,17 +3328,14 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                     switch (response.kind) {
                         case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &expr->location,
-                                NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_TYPE),
-                                NULL,
-                                NULL,
-                                from__String("unknown record in this scope")),
-                              &self->package->count_error);
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&expr->location),
+                              NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_TYPE),
+                              NULL,
+                              NULL,
+                              from__String("unknown record in this scope"));
 
                             return NEW_VARIANT(
                               LilyCheckedExpr,
@@ -3437,20 +3370,17 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                                 switch (field_response.kind) {
                                     case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                                        emit__Diagnostic(
-                                          NEW_VARIANT(
-                                            Diagnostic,
-                                            simple_lily_error,
-                                            &self->package->file,
-                                            &expr->location,
-                                            NEW(
-                                              LilyError,
-                                              LILY_ERROR_KIND_FIELD_IS_NOT_FOUND),
-                                            NULL,
-                                            NULL,
-                                            from__String(
-                                              "unknown record in this scope")),
-                                          &self->package->count_error);
+                                        ANALYSIS_EMIT_DIAGNOSTIC(
+                                          self,
+                                          simple_lily_error,
+                                          (&expr->location),
+                                          NEW(
+                                            LilyError,
+                                            LILY_ERROR_KIND_FIELD_IS_NOT_FOUND),
+                                          NULL,
+                                          NULL,
+                                          from__String(
+                                            "unknown record in this scope"));
 
                                         break;
                                     default:
@@ -3533,17 +3463,14 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                     switch (response.kind) {
                         case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                            emit__Diagnostic(
-                              NEW_VARIANT(
-                                Diagnostic,
-                                simple_lily_error,
-                                &self->package->file,
-                                &expr->location,
-                                NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_TYPE),
-                                NULL,
-                                NULL,
-                                from__String("unknown enum in this scope")),
-                              &self->package->count_error);
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&expr->location),
+                              NEW(LilyError, LILY_ERROR_KIND_UNKNOWN_TYPE),
+                              NULL,
+                              NULL,
+                              from__String("unknown enum in this scope"));
 
                             return NEW_VARIANT(
                               LilyCheckedExpr,
@@ -4619,18 +4546,15 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_STMT_KIND_BREAK:
             if (!in_loop) {
-                emit__Diagnostic(
-                  NEW_VARIANT(
-                    Diagnostic,
-                    simple_lily_error,
-                    &self->package->file,
-                    &stmt->location,
-                    NEW(LilyError,
-                        LILY_ERROR_KIND_BREAK_IS_NOT_EXPECTED_IN_THIS_CONTEXT),
-                    NULL,
-                    NULL,
-                    NULL),
-                  &self->package->count_error);
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  (&stmt->location),
+                  NEW(LilyError,
+                      LILY_ERROR_KIND_BREAK_IS_NOT_EXPECTED_IN_THIS_CONTEXT),
+                  NULL,
+                  NULL,
+                  NULL);
             }
 
             return NEW_VARIANT(
@@ -4849,18 +4773,15 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             TODO("analysis match stmt");
         case LILY_AST_STMT_KIND_NEXT:
             if (!in_loop) {
-                emit__Diagnostic(
-                  NEW_VARIANT(
-                    Diagnostic,
-                    simple_lily_error,
-                    &self->package->file,
-                    &stmt->location,
-                    NEW(LilyError,
-                        LILY_ERROR_KIND_NEXT_IS_NOT_EXPECTED_IN_THIS_CONTEXT),
-                    NULL,
-                    NULL,
-                    NULL),
-                  &self->package->count_error);
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  (&stmt->location),
+                  NEW(LilyError,
+                      LILY_ERROR_KIND_NEXT_IS_NOT_EXPECTED_IN_THIS_CONTEXT),
+                  NULL,
+                  NULL,
+                  NULL);
             }
 
             return NEW_VARIANT(
@@ -5088,17 +5009,14 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             int status = add_variable__LilyCheckedScope(scope, sc_variable);
 
             if (status) {
-                emit__Diagnostic(
-                  NEW_VARIANT(
-                    Diagnostic,
-                    simple_lily_error,
-                    &self->package->file,
-                    &stmt->location,
-                    NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_VARIABLE),
-                    NULL,
-                    NULL,
-                    NULL),
-                  &self->package->count_error);
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  (&stmt->location),
+                  NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_VARIABLE),
+                  NULL,
+                  NULL,
+                  NULL);
 
                 FREE(LilyCheckedScopeContainerVariable, sc_variable);
             }
@@ -5288,16 +5206,14 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
         int is_failed = add_param__LilyCheckedScope(scope, sc_variable);
 
         if (is_failed) {
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          &self->package->file,
-                          &param->location,
-                          NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_PARAM_NAME),
-                          NULL,
-                          NULL,
-                          NULL),
-              &self->package->count_error);
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              (&param->location),
+              NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_PARAM_NAME),
+              NULL,
+              NULL,
+              NULL);
 
             FREE(LilyCheckedScopeContainerVariable, sc_variable);
         }
@@ -5640,16 +5556,14 @@ check_fields__LilyAnalysis(LilyAnalysis *self,
         int is_failed = add_variable__LilyCheckedScope(scope, sc_variable);
 
         if (is_failed) {
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          &self->package->file,
-                          &ast_field->location,
-                          NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_FIELD),
-                          NULL,
-                          NULL,
-                          NULL),
-              &self->package->count_error);
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              (&ast_field->location),
+              NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_FIELD),
+              NULL,
+              NULL,
+              NULL);
 
             FREE(LilyCheckedScopeContainerVariable, sc_variable);
         }
@@ -5773,16 +5687,14 @@ check_variants__LilyAnalysis(LilyAnalysis *self,
         int is_failed = add_variable__LilyCheckedScope(scope, sc_variable);
 
         if (is_failed) {
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          &self->package->file,
-                          &ast_variant->location,
-                          NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_VARIANT),
-                          NULL,
-                          NULL,
-                          NULL),
-              &self->package->count_error);
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              (&ast_variant->location),
+              NEW(LilyError, LILY_ERROR_KIND_DUPLICATE_VARIANT),
+              NULL,
+              NULL,
+              NULL);
 
             FREE(LilyCheckedScopeContainerVariable, sc_variable);
         }
@@ -5914,16 +5826,14 @@ run__LilyAnalysis(LilyAnalysis *self)
         Location location_error =
           NEW(Location, self->package->file.name, 1, 1, 1, 1, 0, 0);
 
-        emit__Diagnostic(
-          NEW_VARIANT(Diagnostic,
-                      simple_lily_error,
-                      &self->package->file,
-                      &location_error,
-                      NEW(LilyError, LILY_ERROR_KIND_EXPECTED_MAIN_FUNCTION),
-                      NULL,
-                      NULL,
-                      NULL),
-          &self->package->count_error);
+        ANALYSIS_EMIT_DIAGNOSTIC(
+          self,
+          simple_lily_error,
+          (&location_error),
+          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_MAIN_FUNCTION),
+          NULL,
+          NULL,
+          NULL);
     }
 
     if (self->package->count_error > 0) {
