@@ -273,6 +273,14 @@ to_msg__LilyError(const LilyError *self)
             return "too many params";
         case LILY_ERROR_KIND_DEFAULT_PARAM_IS_NOT_EXPECTED:
             return "default param is not expected";
+        case LILY_ERROR_KIND_THERE_IS_NO_FIELD_IN_TRAIT:
+            return "there is no field in trait";
+        case LILY_ERROR_KIND_EXPECTED_CUSTOM_DATA_TYPE:
+            return "expected custom data type";
+        case LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT:
+            return "expected object declaration as parent";
+        case LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT:
+            return "expected method as parent";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -518,6 +526,14 @@ to_code__LilyError(const LilyError *self)
             return "0117";
         case LILY_ERROR_KIND_DEFAULT_PARAM_IS_NOT_EXPECTED:
             return "0118";
+        case LILY_ERROR_KIND_THERE_IS_NO_FIELD_IN_TRAIT:
+            return "0119";
+        case LILY_ERROR_KIND_EXPECTED_CUSTOM_DATA_TYPE:
+            return "0120";
+        case LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT:
+            return "0121";
+        case LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT:
+            return "0122";
         default:
             UNREACHABLE("unknown variant");
     }
