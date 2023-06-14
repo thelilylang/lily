@@ -59,10 +59,14 @@ generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       var,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->call.global_name->buffer);
+                    return LilyMirBuildLoad(
+                      module,
+                      NEW_VARIANT(LilyMirInstructionVal,
+                                  var,
+                                  generate_dt__LilyMir(expr->data_type),
+                                  expr->call.global_name->buffer),
+                      generate_dt__LilyMir(expr->data_type),
+                      expr->call.global_name);
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
                     return NEW_VARIANT(LilyMirInstructionVal,
                                        param,

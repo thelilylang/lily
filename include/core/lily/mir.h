@@ -26,6 +26,7 @@
 #define LILY_CORE_LILY_MIR_H
 
 #include <base/assert.h>
+#include <base/hash_map.h>
 #include <base/stack.h>
 #include <base/vec.h>
 
@@ -136,7 +137,8 @@ DESTRUCTOR(LilyMirCurrent, LilyMirCurrent *self);
 
 typedef struct LilyMirModule
 {
-    Vec *insts;     // Vec<LilyMirInstruction*>*
+    HashMap *insts; // HashMap<LilyMirInstruction*>*
+    // Vec *insts;     // Vec<LilyMirInstruction*>*
     Stack *current; // Stack<LilyMirCurrent*>*
 } LilyMirModule;
 
@@ -147,7 +149,8 @@ typedef struct LilyMirModule
 inline LilyMirModule
 LilyMirCreateModule()
 {
-    return (LilyMirModule){ .insts = NEW(Vec), .current = NEW(Stack, 8192) };
+    return (LilyMirModule){ .insts = NEW(HashMap),
+                            .current = NEW(Stack, 8192) };
 }
 
 /**
@@ -240,7 +243,7 @@ LilyMirBuildJmp(LilyMirModule *Module);
  *
  * @param value_nam e.g. name of the variable.
  */
-LilyMirInstruction *
+LilyMirInstructionVal *
 LilyMirBuildLoad(LilyMirModule *Module,
                  LilyMirInstructionVal *src,
                  LilyMirDt *dt,

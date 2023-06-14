@@ -65,8 +65,7 @@ LilyMirAddInst(LilyMirModule *Module, LilyMirInstruction *Inst)
             LilyMirCurrent *current = Module->current->top;
 
             if (!current) {
-                push__Vec(Module->insts, Inst);
-                return;
+                ASSERT("cannot push this instrution in global");
             }
 
             switch (current->kind) {
@@ -81,7 +80,7 @@ LilyMirAddInst(LilyMirModule *Module, LilyMirInstruction *Inst)
                     break;
                 }
                 default:
-                    push__Vec(Module->insts, Inst);
+                    ASSERT("cannot push this instruction in this instruction");
             }
         }
     }
@@ -149,13 +148,19 @@ LilyMirPopCurrent(LilyMirModule *Module)
 
     switch (current->kind) {
         case LILY_MIR_CURRENT_KIND_CONST:
-            push__Vec(Module->insts, current->const_);
+            insert__HashMap(Module->insts,
+                            (char *)current->const_->const_.name,
+                            current->const_);
             break;
         case LILY_MIR_CURRENT_KIND_FUN:
-            push__Vec(Module->insts, current->fun.fun);
+            insert__HashMap(Module->insts,
+                            (char *)current->fun.fun->fun.name,
+                            current->fun.fun);
             break;
         case LILY_MIR_CURRENT_KIND_STRUCT:
-            push__Vec(Module->insts, current->struct_);
+            insert__HashMap(Module->insts,
+                            (char *)current->struct_->struct_.name,
+                            current->struct_);
             break;
         default:
             UNREACHABLE("unknown variant");
@@ -178,7 +183,7 @@ LilyMirBuildReg(LilyMirModule *Module, LilyMirInstruction *Inst)
                        NEW(LilyMirInstructionReg, from__String(name), Inst));
 }
 
-LilyMirInstruction *
+LilyMirInstructionVal *
 LilyMirBuildLoad(LilyMirModule *Module,
                  LilyMirInstructionVal *src,
                  LilyMirDt *dt,
@@ -202,12 +207,10 @@ LilyMirBuildLoad(LilyMirModule *Module,
     if (matched_load) {
         // assume: %<name> = <val_inst>
         return NEW_VARIANT(
-          LilyMirInstruction,
-          val,
-          NEW_VARIANT(LilyMirInstructionVal,
-                      reg,
-                      clone__LilyMirDt(matched_load->inst->reg.inst->load.dt),
-                      clone__String(matched_load->inst->reg.name)));
+          LilyMirInstructionVal,
+          reg,
+          clone__LilyMirDt(matched_load->inst->reg.inst->load.dt),
+          clone__String(matched_load->inst->reg.name));
     }
 
     char *name = LilyMirGenerateName(&current->fun.reg_manager);
@@ -231,10 +234,7 @@ LilyMirBuildLoad(LilyMirModule *Module,
 
     LilyMirAddInst(Module, load_inst);
 
-    return NEW_VARIANT(
-      LilyMirInstruction,
-      val,
-      NEW_VARIANT(LilyMirInstructionVal, reg, dt, from__String(name)));
+    return NEW_VARIANT(LilyMirInstructionVal, reg, dt, from__String(name));
 }
 
 LilyMirInstruction *
@@ -294,9 +294,8 @@ LilyMirBuildCall(LilyMirModule *Module,
 void
 LilyMirDisposeModule(const LilyMirModule *Module)
 {
-    FREE_BUFFER_ITEMS(
-      Module->insts->buffer, Module->insts->len, LilyMirInstruction);
-    FREE(Vec, Module->insts);
+    FREE_HASHMAP_VALUES(Module->insts, LilyMirInstruction);
+    FREE(HashMap, Module->insts);
     FREE_STACK_ITEMS(Module->current, LilyMirCurrent);
     FREE(Stack, Module->current);
 }

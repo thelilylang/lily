@@ -26,6 +26,7 @@
 
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
+#include <core/lily/mir/generator/expr/assignable.h>
 #include <core/lily/mir/generator/expr/call.h>
 #include <core/lily/mir/generator/val.h>
 
@@ -40,7 +41,7 @@
                           NEW_VARIANT(LilyMirInstruction, inst_name, value))); \
                                                                                \
         return LilyMirBuildStore(                                              \
-          generate_val__LilyMir(module, expr->binary.left),                    \
+          generate_assignable_expr__LilyMir(module, expr->binary.left),        \
           LilyMirBuildRegVal(                                                  \
             module,                                                            \
             generate_dt__LilyMir(expr->binary.right->data_type),               \
@@ -408,12 +409,16 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                                           NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
+
+                    break;
                 case LILY_CHECKED_EXPR_BINARY_KIND_BIT_R_SHIFT:
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                           shr,
                                           NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
+
+                    break;
                 case LILY_CHECKED_EXPR_BINARY_KIND_RANGE:
                     TODO("generate .. in MIR");
                 case LILY_CHECKED_EXPR_BINARY_KIND_SUB:
@@ -441,6 +446,8 @@ generate_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                                           NEW(LilyMirInstructionDestSrc,
                                               left_inst->val,
                                               right_inst->val));
+
+                    break;
                 case LILY_CHECKED_EXPR_BINARY_KIND_LIST_HEAD:
                     TODO("generate -> in MIR");
                 case LILY_CHECKED_EXPR_BINARY_KIND_LIST_TAIL:

@@ -456,7 +456,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
     LilyMirInstructionVal *self = lily_malloc(sizeof(LilyMirInstructionVal));
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_PARAM;
-    self->dt = dt;
+    self->dt = NEW_VARIANT(LilyMirDt, ptr, dt);
     self->param = param;
 
     return self;

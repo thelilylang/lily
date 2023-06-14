@@ -22,70 +22,82 @@
  * SOFTWARE.
  */
 
-#include <core/lily/mir/generator/expr/call.h>
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
+#include <core/lily/mir/generator/expr/call.h>
 
 LilyMirInstruction *
 generate_call_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
 {
-	switch (expr->call.kind) {
-		case LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE:
-			TODO("attribute");
-		case LILY_CHECKED_EXPR_CALL_KIND_CLASS:
-			TODO("class");
-		case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
-			TODO("constant");
-		case LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN:
-			TODO("cstr_len");
-		case LILY_CHECKED_EXPR_CALL_KIND_ERROR:
-			TODO("error");
-		case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
-			Vec *params = NEW(Vec);
+    switch (expr->call.kind) {
+        case LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE:
+            TODO("attribute");
+        case LILY_CHECKED_EXPR_CALL_KIND_CLASS:
+            TODO("class");
+        case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
+            TODO("constant");
+        case LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN:
+            TODO("cstr_len");
+        case LILY_CHECKED_EXPR_CALL_KIND_ERROR:
+            TODO("error");
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
+            Vec *params = NEW(Vec);
 
-			if (expr->call.fun.params) {
-				for (Usize i = 0; i < expr->call.fun.params->len; ++i) {
-					LilyMirInstruction *inst = generate_expr__LilyMir(module, CAST(LilyCheckedExprCallFunParam*, get__Vec(expr->call.fun.params, i))->value);
+            if (expr->call.fun.params) {
+                for (Usize i = 0; i < expr->call.fun.params->len; ++i) {
+                    LilyMirInstruction *inst = generate_expr__LilyMir(
+                      module,
+                      CAST(LilyCheckedExprCallFunParam *,
+                           get__Vec(expr->call.fun.params, i))
+                        ->value);
 
-					push__Vec(params, inst->val);
-					lily_free(inst);
-				}
-			}
+                    push__Vec(params, inst->val);
+                    lily_free(inst);
+                }
+            }
 
-			return LilyMirBuildCall(module, generate_dt__LilyMir(expr->data_type), expr->call.global_name->buffer, params);
-		}
-		case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
-			TODO("fun sys");
-		case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
-			TODO("fun builtin");
-		case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
-			TODO("method");
-		case LILY_CHECKED_EXPR_CALL_KIND_MODULE:
-			UNREACHABLE("module call not expected in the MIR");
-		case LILY_CHECKED_EXPR_CALL_KIND_RECORD: {
-			LilyMirDt *dt = generate_dt__LilyMir(expr->data_type);
-			Vec *struct_ = NEW(Vec); // Vec<LilyMirInstructionVal*>*
+            return LilyMirBuildCall(module,
+                                    generate_dt__LilyMir(expr->data_type),
+                                    expr->call.global_name->buffer,
+                                    params);
+        }
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
+            TODO("fun sys");
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
+            TODO("fun builtin");
+        case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
+            TODO("method");
+        case LILY_CHECKED_EXPR_CALL_KIND_MODULE:
+            UNREACHABLE("module call not expected in the MIR");
+        case LILY_CHECKED_EXPR_CALL_KIND_RECORD: {
+            LilyMirDt *dt = generate_dt__LilyMir(expr->data_type);
+            Vec *struct_ = NEW(Vec); // Vec<LilyMirInstructionVal*>*
 
-			if (expr->call.record.params) {
-				for (Usize i = 0; i < expr->call.record.params->len; ++i) {
-					LilyMirInstruction *val = generate_expr__LilyMir(module, CAST(LilyCheckedExprCallRecordParam*, get__Vec(expr->call.record.params, i))->value);
+            if (expr->call.record.params) {
+                for (Usize i = 0; i < expr->call.record.params->len; ++i) {
+                    LilyMirInstruction *val = generate_expr__LilyMir(
+                      module,
+                      CAST(LilyCheckedExprCallRecordParam *,
+                           get__Vec(expr->call.record.params, i))
+                        ->value);
 
-					ASSERT(val->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+                    ASSERT(val->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
 
-					push__Vec(struct_, val->val);
-					lily_free(val);
-				}
-			}
+                    push__Vec(struct_, val->val);
+                    lily_free(val);
+                }
+            }
 
-			return NEW_VARIANT(LilyMirInstruction, val, LilyMirBuildStruct(module, dt, struct_));
-		}
-		case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN:
-			TODO("str len");
-		case LILY_CHECKED_EXPR_CALL_KIND_VARIANT:
-			TODO("variant");
-		case LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN:
-			UNREACHABLE("the analysis has a bug!!");
-		default:
-			UNREACHABLE("not expected to generate in this function");
-	}
+            return NEW_VARIANT(
+              LilyMirInstruction, val, LilyMirBuildStruct(module, dt, struct_));
+        }
+        case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN:
+            TODO("str len");
+        case LILY_CHECKED_EXPR_CALL_KIND_VARIANT:
+            TODO("variant");
+        case LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN:
+            UNREACHABLE("the analysis has a bug!!");
+        default:
+            UNREACHABLE("not expected to generate in this function");
+    }
 }
