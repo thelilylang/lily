@@ -281,6 +281,45 @@ to_msg__LilyError(const LilyError *self)
             return "expected object declaration as parent";
         case LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT:
             return "expected method as parent";
+        case LILY_ERROR_KIND_THIS_KIND_OF_DATA_TYPE_IS_NOT_EXPECTED:
+            return "this kind of data type is not expected in this context";
+        case LILY_ERROR_KIND_MAIN_FUNCTION_IS_NOT_CALLABLE:
+            return "the main function is not callable";
+        case LILY_ERROR_KIND_IMPOSSIBLE_TO_GET_RETURN_DATA_TYPE:
+            return "impossible to get a return data type";
+        case LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW:
+            return "comptime cast overflow";
+        case LILY_ERROR_KIND_THIS_DATA_TYPE_CANNOT_BE_DROPPED:
+            return "this data type cannot be dropped";
+        case LILY_ERROR_KIND_VALUE_HAS_BEEN_DROPPED:
+            return "value has been dropped";
+        case LILY_ERROR_KIND_THIS_KIND_OF_VALUE_IS_NOT_ALLOWED_TO_BE_DROP:
+            return "this kind of value is not allowed to be drop";
+        case LILY_ERROR_KIND_THIS_KIND_OF_EXPR_IS_NOT_ALLOWED_TO_BE_DROP:
+            return "this kind of expression is not allowed to be drop";
+        case LILY_ERROR_KIND_ERROR_DECL_NOT_FOUND:
+            return "the error declaration is not found";
+        case LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH_WITH_INFER_DATA_TYPE:
+            return "the data type doesn't match with the inferred data type";
+        case LILY_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_EXPECTED_IN_MAIN_FUNCTION:
+            return "the generic params are not expected in the main function";
+        case LILY_ERROR_KIND_NO_EXPLICIT_PARAMS_ARE_EXPECTED_IN_MAIN_FUNCTION:
+            return "no explicit params are expected in the main function";
+        case LILY_ERROR_KIND_OPERATOR_CANNOT_HAVE_COMPILER_DEFINED_DATA_TYPE_AS_PARAMETER:
+            return "operator cannot have compiler defined data type as "
+                   "parameter";
+        case LILY_ERROR_KIND_THIS_RETURN_DATA_TYPE_IS_NOT_EXPECTED_FOR_A_MAIN_FUNCTION:
+            return "this return data type is not expected for a main function";
+        case LILY_ERROR_KIND_OPERATOR_MUST_HAVE_RETURN_DATA_TYPE:
+            return "the operator must have a return data type";
+        case LILY_ERROR_KIND_MAIN_FUNCTION_CANNOT_BE_RECURSIVE:
+            return "the main function cannot be recursive";
+        case LILY_ERROR_KIND_OPERATOR_IS_NOT_VALID:
+            return "the operator is not valid";
+        case LILY_ERROR_KIND_DUPLICATE_OPERATOR:
+            return "the operator is duplicate";
+        case LILY_ERROR_KIND_INFINITE_DATA_TYPE:
+            return "the data type is infinite";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -534,6 +573,42 @@ to_code__LilyError(const LilyError *self)
             return "0121";
         case LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT:
             return "0122";
+        case LILY_ERROR_KIND_THIS_KIND_OF_DATA_TYPE_IS_NOT_EXPECTED:
+            return "0123";
+        case LILY_ERROR_KIND_MAIN_FUNCTION_IS_NOT_CALLABLE:
+            return "0124";
+        case LILY_ERROR_KIND_IMPOSSIBLE_TO_GET_RETURN_DATA_TYPE:
+            return "0125";
+        case LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW:
+            return "0126";
+        case LILY_ERROR_KIND_THIS_DATA_TYPE_CANNOT_BE_DROPPED:
+            return "0127";
+        case LILY_ERROR_KIND_VALUE_HAS_BEEN_DROPPED:
+            return "0128";
+        case LILY_ERROR_KIND_THIS_KIND_OF_VALUE_IS_NOT_ALLOWED_TO_BE_DROP:
+            return "0129";
+        case LILY_ERROR_KIND_THIS_KIND_OF_EXPR_IS_NOT_ALLOWED_TO_BE_DROP:
+            return "0130";
+        case LILY_ERROR_KIND_ERROR_DECL_NOT_FOUND:
+            return "0131";
+        case LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH_WITH_INFER_DATA_TYPE:
+            return "0132";
+        case LILY_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_EXPECTED_IN_MAIN_FUNCTION:
+            return "0133";
+        case LILY_ERROR_KIND_NO_EXPLICIT_PARAMS_ARE_EXPECTED_IN_MAIN_FUNCTION:
+            return "0134";
+        case LILY_ERROR_KIND_OPERATOR_CANNOT_HAVE_COMPILER_DEFINED_DATA_TYPE_AS_PARAMETER:
+            return "0135";
+        case LILY_ERROR_KIND_THIS_RETURN_DATA_TYPE_IS_NOT_EXPECTED_FOR_A_MAIN_FUNCTION:
+            return "0136";
+        case LILY_ERROR_KIND_OPERATOR_MUST_HAVE_RETURN_DATA_TYPE:
+            return "0137";
+        case LILY_ERROR_KIND_MAIN_FUNCTION_CANNOT_BE_RECURSIVE:
+            return "0138";
+        case LILY_ERROR_KIND_DUPLICATE_OPERATOR:
+            return "0139";
+        case LILY_ERROR_KIND_INFINITE_DATA_TYPE:
+            return "0140";
         default:
             UNREACHABLE("unknown variant");
     }
