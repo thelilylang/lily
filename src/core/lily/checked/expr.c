@@ -90,8 +90,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self)
             return "LILY_CHECKED_EXPR_KIND_UNARY";
         case LILY_CHECKED_EXPR_KIND_GROUPING:
             return "LILY_CHECKED_EXPR_KIND_GROUPING";
-        case LILY_CHECKED_EXPR_KIND_WILDCARD:
-            return "LILY_CHECKED_EXPR_KIND_WILDCARD";
+        case LILY_CHECKED_EXPR_KIND_UNKNOWN:
+            return "LILY_CHECKED_EXPR_KIND_UNKNOWN";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -288,6 +288,23 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    unknown,
+                    const Location *location,
+                    const LilyAstExpr *ast_expr)
+{
+    LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
+
+    self->kind = LILY_CHECKED_EXPR_KIND_UNKNOWN;
+    self->location = location;
+    self->data_type =
+      NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, location);
+    self->ast_expr = ast_expr;
+
+    return self;
+}
+
 CONSTRUCTOR(LilyCheckedExpr *,
             LilyCheckedExpr,
             const Location *location,
@@ -408,7 +425,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
             break;
         }
         case LILY_CHECKED_EXPR_KIND_SELF:
-        case LILY_CHECKED_EXPR_KIND_WILDCARD:
+        case LILY_CHECKED_EXPR_KIND_UNKNOWN:
             push_str__String(res, " }");
             break;
         default:
@@ -522,7 +539,8 @@ DESTRUCTOR(LilyCheckedExpr, LilyCheckedExpr *self)
             FREE_VARIANT(LilyCheckedExpr, unary, self);
             break;
         case LILY_CHECKED_EXPR_KIND_SELF:
-        case LILY_CHECKED_EXPR_KIND_WILDCARD:
+        case LILY_CHECKED_EXPR_KIND_UNKNOWN:
+            FREE(LilyCheckedDataType, self->data_type);
             lily_free(self);
             break;
         default:
