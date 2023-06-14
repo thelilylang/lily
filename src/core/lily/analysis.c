@@ -37,8 +37,25 @@
 
 #include <core/shared/diagnostic.h>
 
-// FIXME: You should look for the right File structure in the package because of
-// the expansion of a macro.
+#define ANALYSIS_EMIT_DIAGNOSTIC(self, name, location, ...)           \
+    {                                                                 \
+        const File *file = get_file_from_filename__LilyPackage(       \
+          self->package, location->filename);                         \
+        emit__Diagnostic(                                             \
+          NEW_VARIANT(Diagnostic, name, file, location, __VA_ARGS__), \
+          &self->package->count_error);                               \
+    }
+
+// TODO: add disable_codes field to the package.
+#define ANALYSIS_EMIT_WARNING_DIAGNOSTIC(self, name, location, ...)   \
+    {                                                                 \
+        const File *file = get_file_from_filename__LilyPackage(       \
+          self->package, location->filename);                         \
+        emit_warning__Diagnostic(                                     \
+          NEW_VARIANT(Diagnostic, name, file, location, __VA_ARGS__), \
+          &self->package->count_error,                                \
+          NULL);                                                      \
+    }
 
 static inline void
 push_constant__LilyAnalysis(LilyAnalysis *self,
@@ -135,9 +152,10 @@ typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                     LilyCheckedDataType *defined_data_type);
 
 static void
-reanalyze_fun_call_with_known_param__LilyAnalysis(
+reanalyze_fun_call_with_signature__LilyAnalysis(
   LilyAnalysis *self,
-  LilyCheckedSignatureFun *signature);
+  LilyCheckedSignatureFun *signature,
+  LilyCheckedDecl *fun);
 
 static void
 valid_cast__LilyAnalysis(LilyAnalysis *self,
@@ -158,11 +176,14 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
 
 static bool
 valid_function_signature__LilyAnalysis(LilyAnalysis *self,
+                                       const Location *location,
                                        Vec *params,
                                        Vec *params_call);
 
+/// @return Vec<LilyCheckedExprCallFunParam*>*?
 static Vec *
 check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
+                                    const Location *location,
                                     Vec *ast_params,
                                     LilyCheckedDeclFun *called_fun,
                                     LilyCheckedScope *scope,
@@ -324,45 +345,59 @@ run_step2__LilyAnalysis(LilyAnalysis *self);
         FREE(Vec, end_body);                                        \
     }
 
-#define EXPECTED_BOOL_EXPR(expr)                                              \
-    if (expr->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||       \
-        expr->data_type->kind ==                                              \
-          LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {                     \
-        expr->data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_BOOL;             \
-    } else if (expr->data_type->kind ==                                       \
-               LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {     \
-        for (Usize i = 0;                                                     \
-             i < expr->data_type->conditional_compiler_choice.choices->len;   \
-             ++i) {                                                           \
-            if (CAST(                                                         \
-                  LilyCheckedDataType *,                                      \
-                  get__Vec(                                                   \
-                    expr->data_type->conditional_compiler_choice.choices, i)) \
-                  ->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) {               \
-                FAILED("the boolean type is not guaranteed");                 \
-            }                                                                 \
-        }                                                                     \
-    } else if (expr->data_type->kind ==                                       \
-               LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {                 \
-        for (Usize i = 0; i < expr->data_type->compiler_choice->len; ++i) {   \
-            if (CAST(LilyCheckedDataType *,                                   \
-                     get__Vec(expr->data_type->compiler_choice, i))           \
-                  ->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) {               \
-                FAILED("the boolean type is not guaranteed");                 \
-            }                                                                 \
-        }                                                                     \
-    } else if (expr->data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) {   \
-        emit__Diagnostic(                                                     \
-          NEW_VARIANT(                                                        \
-            Diagnostic,                                                       \
-            simple_lily_error,                                                \
-            &self->package->file,                                             \
-            expr->location,                                                   \
-            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_BOOLEAN_EXPRESSION),      \
-            NULL,                                                             \
-            NULL,                                                             \
-            NULL),                                                            \
-          &self->package->count_error);                                       \
+#define EXPECTED_BOOL_EXPR(expr)                                             \
+    if (expr->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||      \
+        expr->data_type->kind ==                                             \
+          LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {                    \
+        expr->data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_BOOL;            \
+    } else if (expr->data_type->kind ==                                      \
+               LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {    \
+        for (Usize i = 0;                                                    \
+             i < expr->data_type->conditional_compiler_choice.choices->len;  \
+             ++i) {                                                          \
+            LilyCheckedDataType *data_type = get__Vec(                       \
+              expr->data_type->conditional_compiler_choice.choices, i);      \
+            if (data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) {       \
+                ANALYSIS_EMIT_DIAGNOSTIC(                                    \
+                  self,                                                      \
+                  simple_lily_error,                                         \
+                  data_type->location,                                       \
+                  NEW(LilyError,                                             \
+                      LILY_ERROR_KIND_EXPECTED_DATA_TYPE_IS_NOT_GUARANTEED), \
+                  NULL,                                                      \
+                  NULL,                                                      \
+                  from__String("the boolean type is not guaranteed"));       \
+            }                                                                \
+        }                                                                    \
+    } else if (expr->data_type->kind ==                                      \
+               LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {                \
+        for (Usize i = 0; i < expr->data_type->compiler_choice->len; ++i) {  \
+            LilyCheckedDataType *data_type =                                 \
+              get__Vec(expr->data_type->compiler_choice, i);                 \
+            if (data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) {       \
+                ANALYSIS_EMIT_DIAGNOSTIC(                                    \
+                  self,                                                      \
+                  simple_lily_error,                                         \
+                  data_type->location,                                       \
+                  NEW(LilyError,                                             \
+                      LILY_ERROR_KIND_EXPECTED_DATA_TYPE_IS_NOT_GUARANTEED), \
+                  NULL,                                                      \
+                  NULL,                                                      \
+                  from__String("the boolean type is not guaranteed"));       \
+            }                                                                \
+        }                                                                    \
+    } else if (expr->data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) {  \
+        emit__Diagnostic(                                                    \
+          NEW_VARIANT(                                                       \
+            Diagnostic,                                                      \
+            simple_lily_error,                                               \
+            &self->package->file,                                            \
+            expr->location,                                                  \
+            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_BOOLEAN_EXPRESSION),     \
+            NULL,                                                            \
+            NULL,                                                            \
+            NULL),                                                           \
+          &self->package->count_error);                                      \
     }
 
 void
@@ -1142,7 +1177,18 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
 
             switch (custom_dt_response.kind) {
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                    FAILED("the custom type is not found");
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      (&data_type->location),
+                      NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_NOT_FOUND),
+                      NULL,
+                      NULL,
+                      NULL);
+
+                    return NEW(LilyCheckedDataType,
+                               LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                               &data_type->location);
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD:
                     return NEW_VARIANT(
                       LilyCheckedDataType,
@@ -1524,9 +1570,25 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                               response.fun_param->name,
                               response.scope_container.variable->id));
             default:
-                // TODO: emit a diagnostic
-                FAILED("this kind of response is not expected in this "
-                       "context");
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  (&expr->location),
+                  NEW(LilyError,
+                      LILY_ERROR_KIND_CALL_NOT_EXPECTED_IN_THIS_CONTEXT),
+                  NULL,
+                  NULL,
+                  NULL);
+
+                return NEW_VARIANT(LilyCheckedExpr,
+                                   call,
+                                   &expr->location,
+                                   data_type,
+                                   expr,
+                                   NEW(LilyCheckedExprCall,
+                                       LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                                       NULL,
+                                       (LilyCheckedAccessScope){ .id = 0 }));
         }
     }
 }
@@ -1646,7 +1708,6 @@ typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                     bool is_moved_expr,
                                     LilyCheckedDataType *defined_data_type)
 {
-    // TODO: add support for unknown data type in certain places
     // TODO: add support to avoid duplication of data type in compiler choice
     // (not in conditional compiler choice)
     char *binary_kind_string = to_string__LilyCheckedExprBinaryKind(kind);
@@ -1668,6 +1729,15 @@ typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
                        clone__LilyCheckedDataType(defined_data_type),
                        expr,
                        NEW(LilyCheckedExprBinary, kind, left, right));
+}
+
+void
+reanalyze_fun_call_with_signature__LilyAnalysis(
+  LilyAnalysis *self,
+  LilyCheckedSignatureFun *signature,
+  LilyCheckedDecl *fun)
+{
+    // for (Usize i = 0; i <
 }
 
 void
@@ -1864,6 +1934,7 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
 
 bool
 valid_function_signature__LilyAnalysis(LilyAnalysis *self,
+                                       const Location *location,
                                        Vec *params,
                                        Vec *params_call)
 {
@@ -1899,10 +1970,19 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                                 if (!eq__LilyCheckedDataType(
                                       pushed_value->data_type,
                                       param_call->value->data_type)) {
-                                    FAILED("data type of param doesn't match. "
-                                           "NOTE: the compiler generic param "
-                                           "is previously defined with an "
-                                           "other data type");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      pushed_value->data_type->location,
+                                      NEW(LilyError,
+                                          LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                                      init__Vec(
+                                        1,
+                                        format__String(
+                                          "the compiler generic is previously "
+                                          "defined with an other data type")),
+                                      NULL,
+                                      NULL);
 
                                     return false;
                                 }
@@ -1916,7 +1996,15 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                     default:
                         if (!eq__LilyCheckedDataType(
                               param->data_type, param_call->value->data_type)) {
-                            FAILED("data type of param doesn't match");
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              param->data_type->location,
+                              NEW(LilyError,
+                                  LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                              NULL,
+                              NULL,
+                              NULL);
 
                             return false;
                         }
@@ -1926,8 +2014,15 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                     case LILY_CHECKED_DECL_FUN_PARAM_KIND_DEFAULT:
                         break;
                     default:
-                        // TODO: emit a diagnostic
-                        FAILED("error mismatched the number of params");
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          param->data_type->location,
+                          NEW(LilyError,
+                              LILY_ERROR_KIND_NUMBER_OF_PARAMS_MISMATCHED),
+                          NULL,
+                          NULL,
+                          NULL);
 
                         return false;
                 }
@@ -1939,7 +2034,16 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                           LilyCheckedCompilerGenericValue);
         FREE(Vec, compiler_generic_values);
     } else if (!params && params_call) {
-        FAILED("too many params");
+        ANALYSIS_EMIT_DIAGNOSTIC(
+          self,
+          simple_lily_error,
+          location,
+          NEW(LilyError, LILY_ERROR_KIND_TOO_MANY_PARAMS),
+          NULL,
+          NULL,
+          NULL);
+
+        return false;
     }
 
     return true;
@@ -1947,22 +2051,42 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
 
 Vec *
 check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
+                                    const Location *location,
                                     Vec *ast_params,
                                     LilyCheckedDeclFun *called_fun,
                                     LilyCheckedScope *scope,
                                     enum LilyCheckedSafetyMode safety_mode)
 {
     if (!ast_params && called_fun->params) {
-        FAILED("error: too many params");
+        ANALYSIS_EMIT_DIAGNOSTIC(
+          self,
+          simple_lily_error,
+          location,
+          NEW(LilyError, LILY_ERROR_KIND_TOO_MANY_PARAMS),
+          NULL,
+          NULL,
+          NULL);
+
+        return NULL;
     } else if (ast_params && called_fun->params) {
         if (ast_params->len > called_fun->params->len) {
-            FAILED("error: too many params");
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              location,
+              NEW(LilyError, LILY_ERROR_KIND_TOO_MANY_PARAMS),
+              NULL,
+              NULL,
+              NULL);
+
+            return NULL;
         }
     }
 
     Vec *checked_params = ast_params->len > 0 ? NEW(Vec) : NULL;
 
     for (Usize i = 0; i < ast_params->len; ++i) {
+        // TODO: check if there are few params
         LilyCheckedDeclFunParam *fun_param = get__Vec(called_fun->params, i);
         LilyAstExprFunParamCall *call_param = get__Vec(ast_params, i);
 
@@ -2011,7 +2135,16 @@ check_builtin_fun_params_call__LilyAnalysis(
 
         switch (call_param->kind) {
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
-                FAILED("default param is not expected in sys function");
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  (&call_param->location),
+                  NEW(LilyError, LILY_ERROR_KIND_DEFAULT_PARAM_IS_NOT_EXPECTED),
+                  NULL,
+                  NULL,
+                  NULL);
+
+                break;
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
                 // TODO: pass &param->location
                 push__Vec(checked_params,
@@ -2051,7 +2184,14 @@ check_sys_fun_params_call__LilyAnalysis(LilyAnalysis *self,
                                                           param_data_type);
 
         if (!eq__LilyCheckedDataType(param_data_type, value->data_type)) {
-            FAILED("data type not expected");
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              param_data_type->location,
+              NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+              NULL,
+              NULL,
+              NULL);
         }
 
         switch (call_param->kind) {
@@ -2503,13 +2643,17 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                 Vec *checked_params =
                                   check_fun_params_call__LilyAnalysis(
                                     self,
+                                    &expr->location,
                                     expr->call.fun.params,
                                     &fun->fun,
                                     scope,
                                     safety_mode);
 
                                 if (!valid_function_signature__LilyAnalysis(
-                                      self, fun->fun.params, checked_params)) {
+                                      self,
+                                      fun->location,
+                                      fun->fun.params,
+                                      checked_params)) {
                                     LilyCheckedExpr *unknown_call = NEW_VARIANT(
                                       LilyCheckedExpr,
                                       call,
