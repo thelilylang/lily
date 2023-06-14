@@ -24,7 +24,9 @@ main()
             insert__HashMap(hm, key, (Usize *)i);
         }
 
-		// We have some memory leaks, because the keys are not free.
+        printf("%zu\n", (Usize)(Uptr)get__HashMap(hm, "6560"));
+
+        // We have some memory leaks, because the keys are not free.
         FREE(HashMap, hm);
 
         printf("Time: %.2fs\n", (double)(clock() - start) / CLOCKS_PER_SEC);
