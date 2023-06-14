@@ -261,6 +261,18 @@ to_msg__LilyError(const LilyError *self)
             return "the import of `@builtin` is required";
         case LILY_ERROR_KIND_BAD_BUILTIN_FUNCTION:
             return "bad builtin function";
+        case LILY_ERROR_KIND_DATA_TYPE_NOT_FOUND:
+            return "data type not found";
+        case LILY_ERROR_KIND_EXPECTED_DATA_TYPE_IS_NOT_GUARANTEED:
+            return "expected data type is not guaranteed";
+        case LILY_ERROR_KIND_CALL_NOT_EXPECTED_IN_THIS_CONTEXT:
+            return "this call is not expected in this context";
+        case LILY_ERROR_KIND_NUMBER_OF_PARAMS_MISMATCHED:
+            return "the number of params mismatched";
+        case LILY_ERROR_KIND_TOO_MANY_PARAMS:
+            return "too many params";
+        case LILY_ERROR_KIND_DEFAULT_PARAM_IS_NOT_EXPECTED:
+            return "default param is not expected";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -496,6 +508,16 @@ to_code__LilyError(const LilyError *self)
             return "0112";
         case LILY_ERROR_KIND_BAD_BUILTIN_FUNCTION:
             return "0113";
+        case LILY_ERROR_KIND_DATA_TYPE_NOT_FOUND:
+            return "0114";
+        case LILY_ERROR_KIND_EXPECTED_DATA_TYPE_IS_NOT_GUARANTEED:
+            return "0115";
+        case LILY_ERROR_KIND_CALL_NOT_EXPECTED_IN_THIS_CONTEXT:
+            return "0116";
+        case LILY_ERROR_KIND_NUMBER_OF_PARAMS_MISMATCHED:
+            return "0117";
+        case LILY_ERROR_KIND_DEFAULT_PARAM_IS_NOT_EXPECTED:
+            return "0118";
         default:
             UNREACHABLE("unknown variant");
     }
