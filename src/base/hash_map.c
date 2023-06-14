@@ -27,12 +27,11 @@
 #include <base/new.h>
 
 #include <stdlib.h>
-#include <stdio.h>
 
 static void *
 get_bucket__HashMapBucket(const HashMapBucket *self, char *key);
 
-static void
+static void *
 push_bucket__HashMap(HashMap *self, Usize index, HashMapBucket *new);
 
 CONSTRUCTOR(HashMapBucket *, HashMapBucket, HashMapPair pair)
@@ -84,9 +83,14 @@ get__HashMap(HashMap *self, char *key)
     return bucket ? get_bucket__HashMapBucket(bucket, key) : NULL;
 }
 
-void
+void *
 push_bucket__HashMap(HashMap *self, Usize index, HashMapBucket *new)
 {
+    void *is_exist = get__HashMap(self, new->pair.key);
+
+    if (is_exist)
+        return is_exist;
+
     if (self->buckets[index]) {
         HashMapBucket *current = self->buckets[index];
 
@@ -96,13 +100,15 @@ push_bucket__HashMap(HashMap *self, Usize index, HashMapBucket *new)
 
         current->next = new;
 
-        return;
+        return NULL;
     }
 
     self->buckets[index] = new;
+
+    return NULL;
 }
 
-void
+void *
 insert__HashMap(HashMap *self, char *key, void *value)
 {
     Usize index = index__HashMap(self, key);
@@ -113,7 +119,7 @@ insert__HashMap(HashMap *self, char *key, void *value)
         self->buckets[index] = NEW(HashMapBucket, NEW(HashMapPair, key, value));
         ++self->len;
 
-        return;
+        return NULL;
     }
 
     if (self->len + 1 > self->capacity) {
@@ -126,16 +132,16 @@ insert__HashMap(HashMap *self, char *key, void *value)
 
         // Re-hash all inserted K-V
         for (Usize i = 0; i < self->len; ++i) {
-			HashMapBucket *current = old_buckets[i];
+            HashMapBucket *current = old_buckets[i];
 
-			while (current != NULL) {
-				HashMapBucket *next = current->next;
-				Usize new_index = index__HashMap(self, current->pair.key); 
+            while (current != NULL) {
+                HashMapBucket *next = current->next;
+                Usize new_index = index__HashMap(self, current->pair.key);
 
-				current->next = new_buckets[new_index];
-				new_buckets[new_index] = current;
-				current = next;
-			}
+                current->next = new_buckets[new_index];
+                new_buckets[new_index] = current;
+                current = next;
+            }
         }
 
         lily_free(old_buckets);
@@ -144,9 +150,16 @@ insert__HashMap(HashMap *self, char *key, void *value)
         index = index__HashMap(self, key);
     }
 
-    push_bucket__HashMap(
+    void *is_exist = push_bucket__HashMap(
       self, index, NEW(HashMapBucket, NEW(HashMapPair, key, value)));
+
+    if (is_exist) {
+        return is_exist;
+    }
+
     ++self->len;
+
+    return NULL;
 }
 
 DESTRUCTOR(HashMap, HashMap *self)
@@ -162,4 +175,17 @@ DESTRUCTOR(HashMap, HashMap *self)
     }
 
     lily_free(self);
+}
+
+void *
+next__HashMapIter(HashMapIter *self)
+{
+    HashMapBucket **current = self->hash_map->buckets;
+
+    for (; !(*current) && self->count < self->hash_map->capacity;
+         ++self->count, ++current) {
+    }
+
+    return self->count < self->hash_map->capacity ? (*current)->pair.value
+                                                  : NULL;
 }

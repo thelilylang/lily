@@ -64,6 +64,30 @@
 #error "cannot generate an hash"
 #endif
 
+#define FREE_HASHMAP_VALUES(self, type)                    \
+    if (self->buckets) {                                   \
+        for (Usize i = 0; i < self->capacity; ++i) {       \
+            if (self->buckets[i]) {                        \
+                HashMapBucket *current = self->buckets[i]; \
+                while (current->next) {                    \
+                    FREE(type, current->pair.value);       \
+                    current = current->next;               \
+                }                                          \
+                FREE(type, current->pair.value);           \
+            }                                              \
+        }                                                  \
+    }
+
+#define DEBUG_STRING_BUCKET(bucket, debug)               \
+    {                                                    \
+        HashMapBucket *current = bucket;                 \
+        while (current->next) {                          \
+            PRINTLN("{Sr}", debug(current->pair.value)); \
+            current = current->next;                     \
+        }                                                \
+        PRINTLN("{Sr}", debug(current->pair.value));     \
+    }
+
 typedef struct HashMapPair
 {
     char *key;
@@ -167,7 +191,7 @@ index__HashMap(HashMap *self, char *key)
  * @return If the key already exists, return the value of the key, otherwise
  * return NULL.
  */
-void
+void *
 insert__HashMap(HashMap *self, char *key, void *value);
 
 /**
@@ -175,5 +199,27 @@ insert__HashMap(HashMap *self, char *key, void *value);
  * @brief Free HashMap type.
  */
 DESTRUCTOR(HashMap, HashMap *self);
+
+typedef struct HashMapIter
+{
+    HashMap *hash_map;
+    Usize count;
+} HashMapIter;
+
+/**
+ *
+ * @brief Construct HashMapIter type.
+ */
+inline CONSTRUCTOR(HashMapIter, HashMapIter, HashMap *hash_map)
+{
+    return (HashMapIter){ .hash_map = hash_map, .count = 0 };
+}
+
+/**
+ *
+ * @brief Get the next value.
+ */
+void *
+next__HashMapIter(HashMapIter *self);
 
 #endif // LILY_BASE_HASH_MAP_H
