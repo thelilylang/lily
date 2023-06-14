@@ -54,7 +54,7 @@ enum LilyCheckedExprKind
     LILY_CHECKED_EXPR_KIND_SELF,
     LILY_CHECKED_EXPR_KIND_TUPLE,
     LILY_CHECKED_EXPR_KIND_UNARY,
-    LILY_CHECKED_EXPR_KIND_WILDCARD
+    LILY_CHECKED_EXPR_KIND_UNKNOWN
 };
 
 typedef struct LilyCheckedExpr
@@ -198,6 +198,16 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprUnary unary);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_UNKNOWN).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    unknown,
+                    const Location *location,
+                    const LilyAstExpr *ast_expr);
 
 /**
  *
