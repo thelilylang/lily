@@ -2142,7 +2142,8 @@ check_builtin_fun_params_call__LilyAnalysis(
                   NEW(LilyError, LILY_ERROR_KIND_DEFAULT_PARAM_IS_NOT_EXPECTED),
                   NULL,
                   NULL,
-                  NULL);
+                  from__String(
+                    "default param is not expected in builtin function"));
 
                 break;
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
@@ -2196,7 +2197,17 @@ check_sys_fun_params_call__LilyAnalysis(LilyAnalysis *self,
 
         switch (call_param->kind) {
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
-                FAILED("default param is not expected in sys function");
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  (&call_param->location),
+                  NEW(LilyError, LILY_ERROR_KIND_DEFAULT_PARAM_IS_NOT_EXPECTED),
+                  NULL,
+                  NULL,
+                  from__String(
+                    "default param is not expected in sys function"));
+
+                break;
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
                 // TODO: pass &param->location
                 push__Vec(checked_params,
@@ -2259,7 +2270,27 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
 
                 switch (field_response.kind) {
                     case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                        FAILED("field is not found");
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&path_item->location),
+                          NEW(LilyError, LILY_ERROR_KIND_FIELD_IS_NOT_FOUND),
+                          NULL,
+                          NULL,
+                          NULL);
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr,
+                          call,
+                          &path_item->location,
+                          NEW(LilyCheckedDataType,
+                              LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                              &path_item->location),
+                          path_item,
+                          NEW(LilyCheckedExprCall,
+                              LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                              NULL,
+                              (LilyCheckedAccessScope){ .id = 0 }));
                     case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD: {
                         LilyCheckedExpr *field = NEW_VARIANT(
                           LilyCheckedExpr,
@@ -2331,8 +2362,29 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
 
                                     break;
                                 case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_TRAIT:
-                                    FAILED("cannot access to trait in "
-                                           "field access");
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      field_custom_dt->location,
+                                      NEW(
+                                        LilyError,
+                                        LILY_ERROR_KIND_THERE_IS_NO_FIELD_IN_TRAIT),
+                                      NULL,
+                                      NULL,
+                                      NULL);
+
+                                    return NEW_VARIANT(
+                                      LilyCheckedExpr,
+                                      call,
+                                      &path_item->location,
+                                      NEW(LilyCheckedDataType,
+                                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                                          &path_item->location),
+                                      path_item,
+                                      NEW(LilyCheckedExprCall,
+                                          LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                                          NULL,
+                                          (LilyCheckedAccessScope){ .id = 0 }));
                                 default:
                                     UNREACHABLE(
                                       "expected a custom data type. "
@@ -2341,7 +2393,16 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
                             }
                         } else {
                             if (i + 1 != path->access.path->len) {
-                                FAILED("expected a custom data type");
+                                ANALYSIS_EMIT_DIAGNOSTIC(
+                                  self,
+                                  simple_lily_error,
+                                  field_custom_dt->location,
+                                  NEW(
+                                    LilyError,
+                                    LILY_ERROR_KIND_EXPECTED_CUSTOM_DATA_TYPE),
+                                  NULL,
+                                  NULL,
+                                  NULL);
                             }
                         }
 
@@ -2359,7 +2420,27 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
             case LILY_AST_EXPR_KIND_CALL:
                 TODO("call is not yet implemented in path");
             default:
-                FAILED("no expected in this context");
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  (&path_item->location),
+                  NEW(LilyError,
+                      LILY_ERROR_KIND_CALL_NOT_EXPECTED_IN_THIS_CONTEXT),
+                  NULL,
+                  NULL,
+                  NULL);
+
+                return NEW_VARIANT(LilyCheckedExpr,
+                                   call,
+                                   &path_item->location,
+                                   NEW(LilyCheckedDataType,
+                                       LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                                       &path_item->location),
+                                   path_item,
+                                   NEW(LilyCheckedExprCall,
+                                       LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                                       NULL,
+                                       (LilyCheckedAccessScope){ .id = 0 }));
         }
     }
 
@@ -2415,7 +2496,18 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                       get_current_object__LilyCheckedScope(scope);
 
                     if (!object) {
-                        FAILED("expected object declaration");
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&expr->location),
+                          NEW(LilyError,
+                              LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT),
+                          NULL,
+                          NULL,
+                          NULL);
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr, unknown, &expr->location, expr);
                     }
 
                     TODO("resolve Self access");
@@ -2425,7 +2517,18 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                       get_current_method__LilyCheckedScope(scope);
 
                     if (!method) {
-                        FAILED("self is not expected in function");
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&expr->location),
+                          NEW(LilyError,
+                              LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT),
+                          NULL,
+                          NULL,
+                          NULL);
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr, unknown, &expr->location, expr);
                     }
 
                     TODO("resolve self access");
@@ -2437,7 +2540,18 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                       get_current_object__LilyCheckedScope(scope);
 
                     if (!object) {
-                        FAILED("expected object declaration");
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&expr->location),
+                          NEW(LilyError,
+                              LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT),
+                          NULL,
+                          NULL,
+                          NULL);
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr, unknown, &expr->location, expr);
                     }
 
                     UNREACHABLE("Object is not expected in this context");
