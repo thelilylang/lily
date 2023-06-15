@@ -32,6 +32,7 @@
 #include <core/lily/checked/parent.h>
 #include <core/lily/checked/safety_mode.h>
 #include <core/lily/checked/signature.h>
+#include <core/lily/checked/virtual_scope.h>
 #include <core/lily/lily.h>
 #include <core/lily/package.h>
 
@@ -156,6 +157,18 @@ reanalyze_fun_call_with_signature__LilyAnalysis(
   LilyAnalysis *self,
   LilyCheckedSignatureFun *signature,
   LilyCheckedDecl *fun);
+
+static void
+reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
+                             const LilyCheckedExpr *expr,
+                             LilyCheckedVirtualScope *virtual_scope,
+                             const LilyCheckedDataType *return_data_type);
+
+static void
+reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
+                             const LilyCheckedStmt *stmt,
+                             LilyCheckedVirtualScope *virtual_scope,
+                             const LilyCheckedDataType *return_data_type);
 
 static void
 valid_cast__LilyAnalysis(LilyAnalysis *self,
@@ -1699,7 +1712,90 @@ reanalyze_fun_call_with_signature__LilyAnalysis(
   LilyCheckedSignatureFun *signature,
   LilyCheckedDecl *fun)
 {
-    // for (Usize i = 0; i <
+    LilyCheckedVirtualScope *root_virtual_scope =
+      NEW(LilyCheckedVirtualScope, NULL);
+    LilyCheckedDataType *return_data_type = last__Vec(signature->types);
+
+    ASSERT(signature->types->len - 1 == fun->fun.params->len);
+
+    // Push params
+    for (Usize i = 0; i < fun->fun.params->len; ++i) {
+        add_fun_param__LilyCheckedVirtualScope(
+          root_virtual_scope,
+          NEW(LilyCheckedVirtualFunParam,
+              get__Vec(fun->fun.params, i),
+              get__Vec(signature->types, i)));
+    }
+
+    // Re-analyze fun body
+    for (Usize i = 0; i < fun->fun.body->len; ++i) {
+        LilyCheckedBodyFunItem *item = get__Vec(fun->fun.body, i);
+
+        switch (item->kind) {
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
+                reanalyze_expr__LilyAnalysis(
+                  self, item->expr, root_virtual_scope, return_data_type);
+                break;
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
+                reanalyze_stmt__LilyAnalysis(
+                  self, &item->stmt, root_virtual_scope, return_data_type);
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    // Push new signature
+
+    FREE(LilyCheckedVirtualScope, root_virtual_scope);
+}
+
+static void
+reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
+                             const LilyCheckedExpr *expr,
+                             LilyCheckedVirtualScope *virtual_scope,
+                             const LilyCheckedDataType *return_data_type)
+{
+    switch (expr->kind) {
+        case LILY_CHECKED_EXPR_KIND_CALL:
+            break;
+        default:
+            break;
+    }
+}
+
+static void
+reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
+                             const LilyCheckedStmt *stmt,
+                             LilyCheckedVirtualScope *virtual_scope,
+                             const LilyCheckedDataType *return_data_type)
+{
+    switch (stmt->kind) {
+        case LILY_CHECKED_STMT_KIND_AWAIT:
+            break;
+        case LILY_CHECKED_STMT_KIND_BLOCK:
+            break;
+        case LILY_CHECKED_STMT_KIND_DROP:
+            break;
+        case LILY_CHECKED_STMT_KIND_FOR:
+            break;
+        case LILY_CHECKED_STMT_KIND_IF:
+            break;
+        case LILY_CHECKED_STMT_KIND_MATCH:
+            break;
+        case LILY_CHECKED_STMT_KIND_RETURN:
+            break;
+        case LILY_CHECKED_STMT_KIND_TRY:
+            break;
+        case LILY_CHECKED_STMT_KIND_UNSAFE:
+            break;
+        case LILY_CHECKED_STMT_KIND_VARIABLE:
+            break;
+        case LILY_CHECKED_STMT_KIND_WHILE:
+            break;
+        default:
+            break;
+    }
 }
 
 void
@@ -2965,6 +3061,18 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                             FREE(LilyCheckedSignatureFun,
                                                  signature);
                                         } else {
+                                            // Re-analyze called function if the
+                                            // param(s) are/is a compiler
+                                            // defined data type or the return
+                                            // data type is a compiler defined
+                                            // data type.
+                                            if (
+                                              contains_compiler_defined_dt__LilyCheckedSignatureFun(
+                                                signature)) {
+                                                reanalyze_fun_call_with_signature__LilyAnalysis(
+                                                  self, signature, fun);
+                                            }
+
                                             fun_call = NEW_VARIANT(
                                               LilyCheckedExpr,
                                               call,
