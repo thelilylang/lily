@@ -31,7 +31,8 @@
 
 typedef struct LilyCheckedSignatureFun
 {
-    String *global_name;
+    String *global_name; // String* (&)
+    String *ser_global_name;
     // [params, return_data_type]
     Vec *types; // Vec<LilyCheckedDataType* (&)>*
 } LilyCheckedSignatureFun;

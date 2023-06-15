@@ -37,10 +37,11 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
     LilyCheckedSignatureFun *self =
       lily_malloc(sizeof(LilyCheckedSignatureFun));
 
-    self->global_name = clone__String(global_name);
+    self->global_name = global_name;
+    self->ser_global_name = clone__String(global_name);
     self->types = types;
 
-    generate_global_fun_name__LilyCheckedGlobalName(self->global_name,
+    generate_global_fun_name__LilyCheckedGlobalName(self->ser_global_name,
                                                     self->types);
 
     return self;
@@ -49,7 +50,7 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
 void
 reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self)
 {
-    generate_global_fun_name__LilyCheckedGlobalName(self->global_name,
+    generate_global_fun_name__LilyCheckedGlobalName(self->ser_global_name,
                                                     self->types);
 }
 
@@ -73,8 +74,10 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedSignatureFun,
                const LilyCheckedSignatureFun *self)
 {
-    String *res = format__String(
-      "LilyCheckedSignatureFun{{ global_name = {S}, fun =", self->global_name);
+    String *res = format__String("LilyCheckedSignatureFun{{ global_name = {S}, "
+                                 "ser_global_name = {S}, fun =",
+                                 self->global_name,
+                                 self->ser_global_name);
 
     DEBUG_VEC_STRING(self->types, res, LilyCheckedDataType);
 
@@ -86,7 +89,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedSignatureFun, LilyCheckedSignatureFun *self)
 {
-    FREE(String, self->global_name);
+    FREE(String, self->ser_global_name);
     FREE(Vec, self->types);
     lily_free(self);
 }
