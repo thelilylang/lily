@@ -24,6 +24,9 @@
 
 #include <core/lily/checked/virtual_scope.h>
 
+#include <stdio.h>
+#include <string.h>
+
 CONSTRUCTOR(LilyCheckedVirtualVariable *,
             LilyCheckedVirtualVariable,
             const LilyCheckedStmtVariable *variable,
@@ -36,13 +39,6 @@ CONSTRUCTOR(LilyCheckedVirtualVariable *,
     self->virtual_data_type = virtual_data_type;
 
     return self;
-}
-
-DESTRUCTOR(LilyCheckedVirtualVariable, LilyCheckedVirtualVariable *self)
-
-{
-    FREE(LilyCheckedDataType, self->virtual_data_type);
-    lily_free(self);
 }
 
 CONSTRUCTOR(LilyCheckedVirtualFunParam *,
@@ -71,6 +67,44 @@ CONSTRUCTOR(LilyCheckedVirtualScope *,
     self->variables = NEW(Vec);
 
     return self;
+}
+
+LilyCheckedVirtualFunParam *
+search_fun_param__LilyCheckedVirtualScope(LilyCheckedVirtualScope *self,
+                                          String *name)
+{
+    for (Usize i = 0; i < self->fun_params->len; ++i) {
+        LilyCheckedVirtualFunParam *param = get__Vec(self->fun_params, i);
+
+        if (!strcmp(param->param->name->buffer, name->buffer)) {
+            return param;
+        }
+    }
+
+    if (self->parent) {
+        return search_fun_param__LilyCheckedVirtualScope(self->parent, name);
+    }
+
+    UNREACHABLE("the analysis has a bug!!");
+}
+
+LilyCheckedVirtualVariable *
+search_variable__LilyCheckedVirtualScope(LilyCheckedVirtualScope *self,
+                                         String *name)
+{
+    for (Usize i = 0; i < self->variables->len; ++i) {
+        LilyCheckedVirtualVariable *variable = get__Vec(self->variables, i);
+
+        if (!strcmp(variable->variable->name->buffer, name->buffer)) {
+            return variable;
+        }
+    }
+
+    if (self->parent) {
+        return search_variable__LilyCheckedVirtualScope(self->parent, name);
+    }
+
+    UNREACHABLE("the analysis has a bug!!");
 }
 
 DESTRUCTOR(LilyCheckedVirtualScope, LilyCheckedVirtualScope *self)

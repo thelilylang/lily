@@ -33,7 +33,7 @@ typedef struct LilyCheckedVirtualVariable
 {
     const LilyCheckedStmtVariable
       *variable; // const LilyCheckedStmtVariable* (&)
-    LilyCheckedDataType *virtual_data_type;
+    LilyCheckedDataType *virtual_data_type; // LilyCheckedDataType* (&)
 } LilyCheckedVirtualVariable;
 
 /**
@@ -49,7 +49,10 @@ CONSTRUCTOR(LilyCheckedVirtualVariable *,
  *
  * @brief Free LilyCheckedVirtualVariable type.
  */
-DESTRUCTOR(LilyCheckedVirtualVariable, LilyCheckedVirtualVariable *self);
+inline DESTRUCTOR(LilyCheckedVirtualVariable, LilyCheckedVirtualVariable *self)
+{
+    lily_free(self);
+}
 
 typedef struct LilyCheckedVirtualFunParam
 {
@@ -111,6 +114,22 @@ add_variable__LilyCheckedVirtualScope(LilyCheckedVirtualScope *self,
 {
     push__Vec(self->variables, variable);
 }
+
+/**
+ *
+ * @brief Search fun param in the scope.
+ */
+LilyCheckedVirtualFunParam *
+search_fun_param__LilyCheckedVirtualScope(LilyCheckedVirtualScope *self,
+                                          String *name);
+
+/**
+ *
+ * @brief Search variable in the scope.
+ */
+LilyCheckedVirtualVariable *
+search_variable__LilyCheckedVirtualScope(LilyCheckedVirtualScope *self,
+                                         String *name);
 
 /**
  *
