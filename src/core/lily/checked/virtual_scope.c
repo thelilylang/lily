@@ -75,10 +75,6 @@ CONSTRUCTOR(LilyCheckedVirtualScope *,
 
 DESTRUCTOR(LilyCheckedVirtualScope, LilyCheckedVirtualScope *self)
 {
-    if (self->parent) {
-        FREE(LilyCheckedVirtualScope, self->parent);
-    }
-
     FREE_BUFFER_ITEMS(self->fun_params->buffer,
                       self->fun_params->len,
                       LilyCheckedVirtualFunParam);
