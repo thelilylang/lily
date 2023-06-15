@@ -107,8 +107,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedParent, const LilyCheckedParent *self)
 
     switch (self->kind) {
         case LILY_CHECKED_PARENT_KIND_DECL: {
-            char *s = format(", decl = {Sr} }",
-                             to_string__Debug__LilyCheckedDecl(self->decl));
+            char *s = format(", decl = {d} }",
+                             self->kind);
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -116,22 +116,15 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedParent, const LilyCheckedParent *self)
         }
         case LILY_CHECKED_PARENT_KIND_MODULE: {
             char *s =
-              format(", module = {Sr} }",
-                     to_string__Debug__LilyCheckedDeclModule(self->module));
+              format(", module = {S} }",
+                     self->module->global_name);
 
             PUSH_STR_AND_FREE(res, s);
 
             break;
         }
-        case LILY_CHECKED_PARENT_KIND_SCOPE: {
-            push_str__String(res, ", scope_body =");
-
-            DEBUG_VEC_STRING(self->scope_body, res, LilyCheckedBodyFunItem);
-
-            push_str__String(res, " }");
-
+        case LILY_CHECKED_PARENT_KIND_SCOPE:
             break;
-        }
         default:
             UNREACHABLE("unknown variant");
     }
