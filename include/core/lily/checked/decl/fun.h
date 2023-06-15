@@ -213,11 +213,11 @@ get_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
 
 /**
  *
- * @brief Get global name of pushed signature.
+ * @brief Get serialized global name of pushed signature.
  */
 String *
-get_global_name_of_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
-                                                 Vec *signature);
+get_ser_global_name_of_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
+                                                     Vec *types);
 
 /**
  *

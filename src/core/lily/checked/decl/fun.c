@@ -220,10 +220,9 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
     push_str__String(res, ", body =");
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyFunItem);
 
-    {
-        char *s = format(", scope = {Sr}, access = {sa}",
-                         to_string__Debug__LilyCheckedScope(self->scope),
-                         to_string__Debug__LilyCheckedAccessFun(self->access));
+	{
+        char *s = format(", scope = {Sr}, access = NULL",
+                         to_string__Debug__LilyCheckedScope(self->scope));
 
         PUSH_STR_AND_FREE(res, s);
     }
@@ -288,20 +287,26 @@ contains_compiler_defined_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
 int
 add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
 {
+	ASSERT(signature->len != 0);
+    ASSERT(signature->len == self->params->len + 1);
+
     for (Usize i = 0; i < self->signatures->len; ++i) {
         Vec *pushed_signature =
           CAST(LilyCheckedSignatureFun *, get__Vec(self->signatures, i))->types;
 
         ASSERT(pushed_signature->len == signature->len);
 
+        bool is_match = true;
+
         for (Usize j = 0; j < pushed_signature->len; ++j) {
-            if (eq__LilyCheckedDataType(get__Vec(pushed_signature, j),
-                                        get__Vec(signature, j))) {
-                return 1;
+            if (!eq__LilyCheckedDataType(get__Vec(pushed_signature, j),
+                                         get__Vec(signature, j))) {
+                is_match = false;
+                break;
             }
         }
 
-        if (pushed_signature->len == 0 && signature->len == 0) {
+        if (is_match) {
             return 1;
         }
     }
@@ -328,8 +333,8 @@ get_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
         bool is_match = true;
 
         for (Usize j = 0; j < fun_types->len; ++j) {
-            if (eq__LilyCheckedDataType(get__Vec(fun_types, j),
-                                        get__Vec(signature->types, j))) {
+            if (!eq__LilyCheckedDataType(get__Vec(fun_types, j),
+                                         get__Vec(signature->types, j))) {
                 is_match = false;
                 break;
             }
@@ -344,32 +349,15 @@ get_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
 }
 
 String *
-get_global_name_of_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
-                                                 Vec *signature)
+get_ser_global_name_of_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
+                                                     Vec *types)
 {
-    for (Usize i = 0; i < self->signatures->len; ++i) {
-        Vec *pushed_signature =
-          CAST(LilyCheckedSignatureFun *, get__Vec(self->signatures, i))->types;
-        bool is_match = true;
+    LilyCheckedSignatureFun *signature =
+      get_signature__LilyCheckedDeclFun(self, self->global_name, types);
 
-        ASSERT(pushed_signature->len == signature->len);
+    ASSERT(signature);
 
-        for (Usize j = 0; j < pushed_signature->len; ++j) {
-            if (!eq__LilyCheckedDataType(get__Vec(pushed_signature, j),
-                                         get__Vec(signature, j))) {
-                is_match = false;
-                break;
-            }
-        }
-
-        if (is_match) {
-            return CAST(LilyCheckedSignatureFun *,
-                        get__Vec(self->signatures, i))
-              ->global_name;
-        }
-    }
-
-    return NULL;
+    return signature->ser_global_name;
 }
 
 Usize
