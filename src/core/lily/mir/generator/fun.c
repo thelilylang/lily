@@ -65,7 +65,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
           fun,
           NEW(LilyMirInstructionFun,
               get_linkage_from_visibility(fun->fun.visibility),
-              fun->fun.is_main ? "main" : signature->global_name->buffer,
+              fun->fun.is_main ? "main" : signature->ser_global_name->buffer,
               args));
 
         LilyMirAddInst(module, inst);
