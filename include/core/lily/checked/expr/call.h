@@ -34,6 +34,7 @@
 #include <core/lily/sys.h>
 
 typedef struct LilyCheckedExpr LilyCheckedExpr;
+typedef struct LilyCheckedDecl LilyCheckedDecl;
 
 enum LilyCheckedExprCallKind
 {
@@ -175,16 +176,20 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedExprCallFun
 {
-    Vec *params; // Vec<LilyCheckedExprCallFunParam*>*?
+    LilyCheckedDecl *fun; // LilyCheckedDecl* (&)
+    Vec *params;          // Vec<LilyCheckedExprCallFunParam*>*?
 } LilyCheckedExprCallFun;
 
 /**
  *
  * @brief Construct LilyCheckedExprCallFun type.
  */
-inline CONSTRUCTOR(LilyCheckedExprCallFun, LilyCheckedExprCallFun, Vec *params)
+inline CONSTRUCTOR(LilyCheckedExprCallFun,
+                   LilyCheckedExprCallFun,
+                   LilyCheckedDecl *fun,
+                   Vec *params)
 {
-    return (LilyCheckedExprCallFun){ .params = params };
+    return (LilyCheckedExprCallFun){ .fun = fun, .params = params };
 }
 
 /**
