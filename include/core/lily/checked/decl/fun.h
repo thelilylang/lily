@@ -34,6 +34,7 @@
 #include <core/lily/checked/expr.h>
 #include <core/lily/checked/generic_param.h>
 #include <core/lily/checked/scope.h>
+#include <core/lily/checked/signature.h>
 #include <core/lily/visibility.h>
 
 #include <core/shared/location.h>
@@ -125,6 +126,7 @@ typedef struct LilyCheckedDeclFun
     Vec *used_compiler_generic; // Vec<String*>*
     Vec *signatures;            // Vec<LilyCheckedSignatureFun*>*
     Vec *fun_deps;              // Vec<LilyCheckedDecl* (&)>*
+    Vec *uncertain_call;        // Vec<LilyCheckedExpr* (&)>*
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
@@ -199,6 +201,15 @@ contains_compiler_defined_dt__LilyCheckedDeclFun(
  */
 int
 add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature);
+
+/**
+ *
+ * @brief Get signature from the global_name and the fun types.
+ */
+LilyCheckedSignatureFun *
+get_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
+                                  String *global_name,
+                                  Vec *fun_types);
 
 /**
  *

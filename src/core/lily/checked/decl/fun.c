@@ -312,6 +312,37 @@ add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
     return 0;
 }
 
+LilyCheckedSignatureFun *
+get_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
+                                  String *global_name,
+                                  Vec *fun_types)
+{
+    for (Usize i = 0; i < self->signatures->len; ++i) {
+        LilyCheckedSignatureFun *signature = get__Vec(self->signatures, i);
+
+        if (strcmp(signature->global_name->buffer, global_name->buffer) &&
+            fun_types->len == signature->types->len) {
+            continue;
+        }
+
+        bool is_match = true;
+
+        for (Usize j = 0; j < fun_types->len; ++j) {
+            if (eq__LilyCheckedDataType(get__Vec(fun_types, j),
+                                        get__Vec(signature->types, j))) {
+                is_match = false;
+                break;
+            }
+        }
+
+        if (is_match) {
+            return signature;
+        }
+    }
+
+    return NULL;
+}
+
 String *
 get_global_name_of_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
                                                  Vec *signature)
