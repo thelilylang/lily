@@ -220,7 +220,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
     push_str__String(res, ", body =");
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyFunItem);
 
-	{
+    {
         char *s = format(", scope = {Sr}, access = NULL",
                          to_string__Debug__LilyCheckedScope(self->scope));
 
@@ -287,7 +287,7 @@ contains_compiler_defined_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
 int
 add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
 {
-	ASSERT(signature->len != 0);
+    ASSERT(signature->len != 0);
     ASSERT(signature->len == self->params->len + 1);
 
     for (Usize i = 0; i < self->signatures->len; ++i) {

@@ -107,17 +107,14 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedParent, const LilyCheckedParent *self)
 
     switch (self->kind) {
         case LILY_CHECKED_PARENT_KIND_DECL: {
-            char *s = format(", decl = {d} }",
-                             self->kind);
+            char *s = format(", decl = {d} }", self->kind);
 
             PUSH_STR_AND_FREE(res, s);
 
             break;
         }
         case LILY_CHECKED_PARENT_KIND_MODULE: {
-            char *s =
-              format(", module = {S} }",
-                     self->module->global_name);
+            char *s = format(", module = {S} }", self->module->global_name);
 
             PUSH_STR_AND_FREE(res, s);
 
