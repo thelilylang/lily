@@ -229,6 +229,7 @@ set(CORE_SRC
 	src/core/lily/checked/signature.c
 	src/core/lily/checked/stmt.c
 	src/core/lily/checked/variant.c
+	src/core/lily/checked/virtual_scope.c
 	src/core/lily/ir/cc/builder/constant.c
 	src/core/lily/ir/cc/builder/enum.c
 	src/core/lily/ir/cc/builder/function/condition.c
