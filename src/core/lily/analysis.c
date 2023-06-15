@@ -3229,6 +3229,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                                         if (add_signature__LilyCheckedDeclFun(
                                               &fun->fun, fun_types)) {
+
                                             fun_call = NEW_VARIANT(
                                               LilyCheckedExpr,
                                               call,
@@ -3241,7 +3242,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                 (LilyCheckedAccessScope){
                                                   .id = response.scope_container
                                                           .scope_id },
-                                                get_global_name_of_signature__LilyCheckedDeclFun(
+                                                get_ser_global_name_of_signature__LilyCheckedDeclFun(
                                                   &fun->fun, fun_types),
                                                 NEW(LilyCheckedExprCallFun,
                                                     fun,
@@ -6146,10 +6147,11 @@ run__LilyAnalysis(LilyAnalysis *self)
 
     PRINTLN("{Sr}", to_string__Debug__LilyCheckedScope(self->module.scope));
 
-    // for (Usize i = 0; i < self->module.decls->len; ++i) {
-    // 	PRINTLN("{Sr}",
-    // to_string__Debug__LilyCheckedDecl(get__Vec(self->module.decls, i)));
-    // }
+    for (Usize i = 0; i < self->module.decls->len; ++i) {
+        PRINTLN(
+          "{Sr}",
+          to_string__Debug__LilyCheckedDecl(get__Vec(self->module.decls, i)));
+    }
 #endif
 }
 
