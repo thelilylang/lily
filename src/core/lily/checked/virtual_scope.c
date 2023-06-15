@@ -65,12 +65,14 @@ DESTRUCTOR(LilyCheckedVirtualFunParam, LilyCheckedVirtualFunParam *self)
     lily_free(self);
 }
 
-CONSTRUCTOR(LilyCheckedVirtualScope *, LilyCheckedVirtualScope)
+CONSTRUCTOR(LilyCheckedVirtualScope *,
+            LilyCheckedVirtualScope,
+            LilyCheckedVirtualScope *parent)
 {
     LilyCheckedVirtualScope *self =
       lily_malloc(sizeof(LilyCheckedVirtualScope));
 
-    self->parent = NULL;
+    self->parent = parent;
     self->fun_params = NEW(Vec);
     self->variables = NEW(Vec);
 
@@ -79,6 +81,10 @@ CONSTRUCTOR(LilyCheckedVirtualScope *, LilyCheckedVirtualScope)
 
 DESTRUCTOR(LilyCheckedVirtualScope, LilyCheckedVirtualScope *self)
 {
+    if (self->parent) {
+        FREE(LilyCheckedVirtualScope, self->parent);
+    }
+
     FREE_BUFFER_ITEMS(self->fun_params->buffer,
                       self->fun_params->len,
                       LilyCheckedVirtualFunParam);

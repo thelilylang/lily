@@ -83,7 +83,31 @@ typedef struct LilyCheckedVirtualScope
  *
  * @brief Construct LilyCheckedVirtualScope type.
  */
-CONSTRUCTOR(LilyCheckedVirtualScope *, LilyCheckedVirtualScope);
+CONSTRUCTOR(LilyCheckedVirtualScope *,
+            LilyCheckedVirtualScope,
+            LilyCheckedVirtualScope *parent);
+
+/**
+ *
+ * @brief Add fun param to the scope.
+ */
+inline void
+add_fun_param__LilyCheckedVirtualScope(LilyCheckedVirtualScope *self,
+                                       LilyCheckedVirtualFunParam *fun_param)
+{
+    push__Vec(self->fun_params, fun_param);
+}
+
+/**
+ *
+ * @brief Add variable to the scope.
+ */
+inline void
+add_variable__LilyCheckedVirtualScope(LilyCheckedVirtualScope *self,
+                                      LilyCheckedVirtualVariable *variable)
+{
+    push__Vec(self->variables, variable);
+}
 
 /**
  *
