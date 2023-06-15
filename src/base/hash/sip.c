@@ -83,7 +83,7 @@ Usize
 hash_sip(const void *key, Usize key_len, const Usize k0, const Usize k1)
 {
     SipHashState state = {
-#ifdef PLATFORM64
+#ifdef PLATFORM_64
         .v0 = k0 ^ 0x736f6d6570736575ULL,
 #else
         .v0 = k0 ^ 0x736f6d65,
