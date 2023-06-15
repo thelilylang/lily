@@ -1799,7 +1799,12 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
 
                     if (add_signature__LilyCheckedDeclFun(
                           &expr->call.fun.fun->fun, fun_types)) {
+                        LilyCheckedDataType *return_data_type =
+                          last__Vec(fun_types);
+
                         FREE(Vec, fun_types);
+
+                        return return_data_type;
                     } else {
                         LilyCheckedSignatureFun *signature =
                           get_signature__LilyCheckedDeclFun(
@@ -1811,9 +1816,9 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
 
                         reanalyze_fun_call_with_signature__LilyAnalysis(
                           self, signature, expr->call.fun.fun);
-                    }
 
-                    return last__Vec(fun_types);
+                        return last__Vec(fun_types);
+                    }
                 }
                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
                     return search_variable__LilyCheckedVirtualScope(
