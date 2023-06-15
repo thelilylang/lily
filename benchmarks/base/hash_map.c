@@ -24,8 +24,6 @@ main()
             insert__HashMap(hm, key, (Usize *)i);
         }
 
-        printf("%zu\n", (Usize)(Uptr)get__HashMap(hm, "6560"));
-
         // We have some memory leaks, because the keys are not free.
         FREE(HashMap, hm);
 
