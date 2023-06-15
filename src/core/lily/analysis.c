@@ -1706,6 +1706,24 @@ typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
                        NEW(LilyCheckedExprBinary, kind, left, right));
 }
 
+#define REANALYZE_BODY(body, virtual_scope)                            \
+    for (Usize i = 0; i < body->len; ++i) {                            \
+        LilyCheckedBodyFunItem *item = get__Vec(body, i);              \
+                                                                       \
+        switch (item->kind) {                                          \
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:                 \
+                reanalyze_expr__LilyAnalysis(                          \
+                  self, item->expr, virtual_scope, return_data_type);  \
+                break;                                                 \
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:                 \
+                reanalyze_stmt__LilyAnalysis(                          \
+                  self, &item->stmt, virtual_scope, return_data_type); \
+                break;                                                 \
+            default:                                                   \
+                UNREACHABLE("unknown variant");                        \
+        }                                                              \
+    }
+
 void
 reanalyze_fun_call_with_signature__LilyAnalysis(
   LilyAnalysis *self,
@@ -1728,24 +1746,7 @@ reanalyze_fun_call_with_signature__LilyAnalysis(
     }
 
     // Re-analyze fun body
-    for (Usize i = 0; i < fun->fun.body->len; ++i) {
-        LilyCheckedBodyFunItem *item = get__Vec(fun->fun.body, i);
-
-        switch (item->kind) {
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
-                reanalyze_expr__LilyAnalysis(
-                  self, item->expr, root_virtual_scope, return_data_type);
-                break;
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
-                reanalyze_stmt__LilyAnalysis(
-                  self, &item->stmt, root_virtual_scope, return_data_type);
-                break;
-            default:
-                UNREACHABLE("unknown variant");
-        }
-    }
-
-    // Push new signature
+    REANALYZE_BODY(fun->fun.body, root_virtual_scope);
 
     FREE(LilyCheckedVirtualScope, root_virtual_scope);
 }
@@ -1758,6 +1759,13 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_CALL:
+            switch (expr->call.kind) {
+                case LILY_CHECKED_EXPR_CALL_KIND_FUN:
+                    break;
+                default:
+                    break;
+            }
+
             break;
         default:
             break;
@@ -1772,27 +1780,131 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
 {
     switch (stmt->kind) {
         case LILY_CHECKED_STMT_KIND_AWAIT:
+            return reanalyze_expr__LilyAnalysis(
+              self, stmt->await.expr, virtual_scope, return_data_type);
+        case LILY_CHECKED_STMT_KIND_BLOCK: {
+            LilyCheckedVirtualScope *block_virtual_scope =
+              NEW(LilyCheckedVirtualScope, virtual_scope);
+
+            REANALYZE_BODY(stmt->block.body, block_virtual_scope);
+
+            FREE(LilyCheckedVirtualScope, block_virtual_scope);
+
             break;
-        case LILY_CHECKED_STMT_KIND_BLOCK:
-            break;
+        }
         case LILY_CHECKED_STMT_KIND_DROP:
+            return reanalyze_expr__LilyAnalysis(
+              self, stmt->drop.expr, virtual_scope, return_data_type);
+        case LILY_CHECKED_STMT_KIND_FOR: {
+            LilyCheckedVirtualScope *for_virtual_scope =
+              NEW(LilyCheckedVirtualScope, virtual_scope);
+
+            REANALYZE_BODY(stmt->for_.body, for_virtual_scope);
+
+            FREE(LilyCheckedVirtualScope, for_virtual_scope);
+
             break;
-        case LILY_CHECKED_STMT_KIND_FOR:
+        }
+        case LILY_CHECKED_STMT_KIND_IF: {
+            LilyCheckedVirtualScope *if_virtual_scope =
+              NEW(LilyCheckedVirtualScope, virtual_scope);
+
+            REANALYZE_BODY(stmt->if_.if_->body, if_virtual_scope);
+
+            if (stmt->if_.elifs) {
+                for (Usize i = 0; i < stmt->if_.elifs->len; ++i) {
+                    LilyCheckedStmtIfBranch *elif =
+                      get__Vec(stmt->if_.elifs, i);
+                    LilyCheckedVirtualScope *elif_virtual_scope =
+                      NEW(LilyCheckedVirtualScope, virtual_scope);
+
+                    REANALYZE_BODY(elif->body, elif_virtual_scope);
+
+                    FREE(LilyCheckedVirtualScope, elif_virtual_scope);
+                }
+            }
+
+            if (stmt->if_.else_) {
+                LilyCheckedVirtualScope *else_virtual_scope =
+                  NEW(LilyCheckedVirtualScope, virtual_scope);
+
+                REANALYZE_BODY(stmt->if_.else_->body, else_virtual_scope);
+
+                FREE(LilyCheckedVirtualScope, else_virtual_scope);
+            }
+
+            FREE(LilyCheckedVirtualScope, if_virtual_scope);
+
             break;
-        case LILY_CHECKED_STMT_KIND_IF:
+        }
+        case LILY_CHECKED_STMT_KIND_MATCH: {
+            for (Usize i = 0; i < stmt->match.cases->len; ++i) {
+                LilyCheckedStmtMatchCase *case_ =
+                  get__Vec(stmt->match.cases, i);
+                LilyCheckedVirtualScope *case_virtual_scope =
+                  NEW(LilyCheckedVirtualScope, virtual_scope);
+
+                switch (case_->body_item->kind) {
+                    case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
+                        reanalyze_expr__LilyAnalysis(self,
+                                                     case_->body_item->expr,
+                                                     case_virtual_scope,
+                                                     return_data_type);
+                        break;
+                    case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
+                        reanalyze_stmt__LilyAnalysis(self,
+                                                     &case_->body_item->stmt,
+                                                     case_virtual_scope,
+                                                     return_data_type);
+                        break;
+                    default:
+                        UNREACHABLE("unknown variant");
+                }
+
+                FREE(LilyCheckedVirtualScope, case_virtual_scope);
+            }
+
             break;
-        case LILY_CHECKED_STMT_KIND_MATCH:
-            break;
+        }
         case LILY_CHECKED_STMT_KIND_RETURN:
+            return reanalyze_expr__LilyAnalysis(
+              self, stmt->return_.expr, virtual_scope, return_data_type);
+        case LILY_CHECKED_STMT_KIND_TRY: {
+            LilyCheckedVirtualScope *try_virtual_scope =
+              NEW(LilyCheckedVirtualScope, virtual_scope);
+            LilyCheckedVirtualScope *catch_virtual_scope =
+              NEW(LilyCheckedVirtualScope, virtual_scope);
+
+            REANALYZE_BODY(stmt->try.try_body, try_virtual_scope);
+            REANALYZE_BODY(stmt->try.catch_body, catch_virtual_scope);
+
+            FREE(LilyCheckedVirtualScope, try_virtual_scope);
+            FREE(LilyCheckedVirtualScope, catch_virtual_scope);
+
             break;
-        case LILY_CHECKED_STMT_KIND_TRY:
+        }
+        case LILY_CHECKED_STMT_KIND_UNSAFE: {
+            LilyCheckedVirtualScope *unsafe_virtual_scope =
+              NEW(LilyCheckedVirtualScope, virtual_scope);
+
+            REANALYZE_BODY(stmt->unsafe.body, unsafe_virtual_scope);
+
+            FREE(LilyCheckedVirtualScope, unsafe_virtual_scope);
+
             break;
-        case LILY_CHECKED_STMT_KIND_UNSAFE:
-            break;
+        }
         case LILY_CHECKED_STMT_KIND_VARIABLE:
             break;
-        case LILY_CHECKED_STMT_KIND_WHILE:
+        case LILY_CHECKED_STMT_KIND_WHILE: {
+            LilyCheckedVirtualScope *while_virtual_scope =
+              NEW(LilyCheckedVirtualScope, virtual_scope);
+
+            REANALYZE_BODY(stmt->while_.body, while_virtual_scope);
+
+            FREE(LilyCheckedVirtualScope, while_virtual_scope);
+
             break;
+        }
         default:
             break;
     }
