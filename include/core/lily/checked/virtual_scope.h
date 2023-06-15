@@ -54,7 +54,7 @@ DESTRUCTOR(LilyCheckedVirtualVariable, LilyCheckedVirtualVariable *self);
 typedef struct LilyCheckedVirtualFunParam
 {
     const LilyCheckedDeclFunParam *param; // const LilyCheckedDeclFunParam* (&)
-    LilyCheckedDataType *virtual_data_type;
+    LilyCheckedDataType *virtual_data_type; // LilyCheckedDataType* (&)
 } LilyCheckedVirtualFunParam;
 
 /**
@@ -70,7 +70,10 @@ CONSTRUCTOR(LilyCheckedVirtualFunParam *,
  *
  * @brief Free LilyCheckedVirtualFunParam type.
  */
-DESTRUCTOR(LilyCheckedVirtualFunParam, LilyCheckedVirtualFunParam *self);
+inline DESTRUCTOR(LilyCheckedVirtualFunParam, LilyCheckedVirtualFunParam *self)
+{
+    lily_free(self);
+}
 
 typedef struct LilyCheckedVirtualScope
 {

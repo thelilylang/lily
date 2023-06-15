@@ -59,12 +59,6 @@ CONSTRUCTOR(LilyCheckedVirtualFunParam *,
     return self;
 }
 
-DESTRUCTOR(LilyCheckedVirtualFunParam, LilyCheckedVirtualFunParam *self)
-{
-    FREE(LilyCheckedDataType, self->virtual_data_type);
-    lily_free(self);
-}
-
 CONSTRUCTOR(LilyCheckedVirtualScope *,
             LilyCheckedVirtualScope,
             LilyCheckedVirtualScope *parent)
