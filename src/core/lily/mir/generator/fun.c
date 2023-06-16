@@ -55,7 +55,8 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
           NEW(LilyMirInstructionFun,
               get_linkage_from_visibility(fun->fun.visibility),
               fun->fun.is_main ? "main" : signature->ser_global_name->buffer,
-              NEW(Vec)));
+              NEW(Vec),
+              generate_dt__LilyMir(last__Vec(signature->types))));
 
         if (signature->types->len > 0) {
             for (Usize i = 0; i < signature->types->len - 1; ++i) {
