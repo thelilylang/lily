@@ -34,6 +34,9 @@
           LilyMirBuildReg(module,                                              \
                           NEW_VARIANT(LilyMirInstruction, inst_name, value))); \
                                                                                \
+        lily_free(left_inst);                                                  \
+        lily_free(right_inst);                                                 \
+                                                                               \
         return LilyMirBuildStore(                                              \
           generate_assignable_expr__LilyMir(                                   \
             module, fun_signature, scope, expr->binary.left),                  \
