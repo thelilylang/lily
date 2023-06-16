@@ -946,7 +946,7 @@ IMPL_FOR_DEBUG(to_string,
                LilyMirInstructionCall,
                const LilyMirInstructionCall *self)
 {
-    String *res = format__String("call({Sr}) {s}(",
+    String *res = format__String("\x1b[34mcall({Sr})\x1b[0m {s}(",
                                  to_string__Debug__LilyMirDt(self->return_dt),
                                  self->name);
 
@@ -2311,9 +2311,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
               to_string__Debug__LilyMirInstructionCall(&self->builtin_call));
             break;
         case LILY_MIR_INSTRUCTION_KIND_CALL:
-            res = format__String(
-              "\x1b[34mcall\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionCall(&self->call));
+            res = to_string__Debug__LilyMirInstructionCall(&self->call);
             break;
         case LILY_MIR_INSTRUCTION_KIND_CONST:
             res = format__String(
