@@ -50,8 +50,12 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
 void
 reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self)
 {
-    generate_global_fun_name__LilyCheckedGlobalName(self->ser_global_name,
+    String *reload_ser_global_name = NEW(String);
+
+    generate_global_fun_name__LilyCheckedGlobalName(reload_ser_global_name,
                                                     self->types);
+    FREE(String, self->ser_global_name);
+    self->ser_global_name = reload_ser_global_name;
 }
 
 bool
@@ -75,7 +79,7 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedSignatureFun *self)
 {
     String *res = format__String("LilyCheckedSignatureFun{{ global_name = {S}, "
-                                 "ser_global_name = {S}, fun =",
+                                 "ser_global_name = {S}, types =",
                                  self->global_name,
                                  self->ser_global_name);
 
