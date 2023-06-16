@@ -24,6 +24,7 @@
 
 #include <base/assert.h>
 
+#include <core/lily/checked/data_type.h>
 #include <core/lily/checked/operator_register.h>
 
 #include <stdio.h>
@@ -312,8 +313,16 @@ binary_update_return_data_type_according_operator_collection__LilyCheckedOperato
         }
     } else {
         if (operators->len == 1) {
-            *return_data_type = clone__LilyCheckedDataType(last__Vec(
-              CAST(LilyCheckedOperator *, last__Vec(operators))->signature));
+            if (*return_data_type) {
+                update_data_type__LilyCheckedDataType(
+                  *return_data_type,
+                  last__Vec(CAST(LilyCheckedOperator *, last__Vec(operators))
+                              ->signature));
+            } else {
+                *return_data_type = ref__LilyCheckedDataType(
+                  last__Vec(CAST(LilyCheckedOperator *, last__Vec(operators))
+                              ->signature));
+            }
         } else {
             TODO("...");
         }
