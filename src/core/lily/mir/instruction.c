@@ -456,7 +456,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
     LilyMirInstructionVal *self = lily_malloc(sizeof(LilyMirInstructionVal));
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_PARAM;
-    self->dt = NEW_VARIANT(LilyMirDt, ptr, dt);
+    self->dt = dt;
     self->param = param;
 
     return self;
@@ -1026,7 +1026,7 @@ CONSTRUCTOR(LilyMirInstructionFun,
                                     .args = args,
                                     .insts = insts,
                                     .block_stack = block_stack,
-                                    .loads = NEW(Vec),
+                                    .scope = NEW(LilyMirScope, NULL),
                                     .block_count = 1 };
 }
 
@@ -1085,9 +1085,7 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
     FREE_BUFFER_ITEMS(
       self->insts->buffer, self->insts->len, LilyMirInstruction);
     FREE(Vec, self->insts);
-    FREE_BUFFER_ITEMS(
-      self->loads->buffer, self->loads->len, LilyMirInstructionFunLoad);
-    FREE(Vec, self->loads);
+    FREE(LilyMirScope, &self->scope);
     FREE(Stack, self->block_stack);
 }
 

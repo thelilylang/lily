@@ -29,7 +29,7 @@ LilyMirInstruction *
 generate_constant__LilyMir(LilyMirModule *module, LilyCheckedDecl *constant)
 {
     LilyMirInstructionVal *val =
-      generate_val__LilyMir(module, constant->constant.expr);
+      generate_val__LilyMir(module, NULL, NULL, constant->constant.expr);
 
     return NEW_VARIANT(
       LilyMirInstruction,

@@ -29,7 +29,10 @@
 #include <string.h>
 
 LilyMirInstructionVal *
-generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
+generate_val__LilyMir(LilyMirModule *module,
+                      LilyCheckedSignatureFun *fun_signature,
+                      LilyMirScope *scope,
+                      LilyCheckedExpr *expr)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_ARRAY: {
@@ -42,7 +45,10 @@ generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                     for (Usize i = 0; i < expr->array.items->len; ++i) {
                         push__Vec(array,
                                   generate_val__LilyMir(
-                                    module, get__Vec(expr->array.items, i)));
+                                    module,
+                                    fun_signature,
+                                    scope,
+                                    get__Vec(expr->array.items, i)));
                     }
 
                     return NEW_VARIANT(LilyMirInstructionVal,
@@ -58,20 +64,30 @@ generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
         }
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
-                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
+                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
+                    ASSERT(scope);
+
                     return LilyMirBuildLoad(
                       module,
-                      NEW_VARIANT(LilyMirInstructionVal,
-                                  var,
-                                  generate_dt__LilyMir(expr->data_type),
-                                  expr->call.global_name->buffer),
+                      NEW_VARIANT(
+                        LilyMirInstructionVal,
+                        var,
+                        generate_dt__LilyMir(
+                          LilyMirGetCheckedDtFromExpr(module, scope, expr)),
+                        expr->call.global_name->buffer),
                       generate_dt__LilyMir(expr->data_type),
                       expr->call.global_name);
+                }
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       param,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->call.fun_param);
+                    ASSERT(fun_signature);
+                    ASSERT(expr->call.fun_param < fun_signature->types->len);
+
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      param,
+                      generate_dt__LilyMir(
+                        get__Vec(fun_signature->types, expr->call.fun_param)),
+                      expr->call.fun_param);
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
                     TODO("record field access");
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
@@ -243,9 +259,12 @@ generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
             Vec *tuple = NEW(Vec); // Vec<LilyMirInstructionVal*>*
 
             for (Usize i = 0; i < expr->tuple.items->len; ++i) {
-                push__Vec(tuple,
-                          generate_val__LilyMir(
-                            module, get__Vec(expr->tuple.items, i)));
+                push__Vec(
+                  tuple,
+                  generate_val__LilyMir(module,
+                                        fun_signature,
+                                        scope,
+                                        get__Vec(expr->tuple.items, i)));
             }
 
             return NEW_VARIANT(LilyMirInstructionVal,
@@ -257,9 +276,11 @@ generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
             Vec *list = NEW(Vec); // Vec<LilyMirInstructionVal*>*
 
             for (Usize i = 0; i < expr->list.items->len; ++i) {
-                push__Vec(
-                  list,
-                  generate_val__LilyMir(module, get__Vec(expr->list.items, i)));
+                push__Vec(list,
+                          generate_val__LilyMir(module,
+                                                fun_signature,
+                                                scope,
+                                                get__Vec(expr->list.items, i)));
             }
 
             return NEW_VARIANT(LilyMirInstructionVal,

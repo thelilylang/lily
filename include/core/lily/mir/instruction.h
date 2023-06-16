@@ -31,6 +31,7 @@
 
 #include <core/lily/mir/dt.h>
 #include <core/lily/mir/linkage.h>
+#include <core/lily/mir/scope.h>
 
 enum LilyMirInstructionKind
 {
@@ -768,7 +769,7 @@ typedef struct LilyMirInstructionFun
     Vec *args;          // Vec<LilyMirInstruction*>*
     Vec *insts;         // Vec<LilyMirInstruction*>*
     Stack *block_stack; // Stack<LilyMirInstructionBlock*>*
-    Vec *loads;         // Vec<LilyMirInstructionFunLoad*>*
+    LilyMirScope scope;
     Usize block_count;
 } LilyMirInstructionFun;
 

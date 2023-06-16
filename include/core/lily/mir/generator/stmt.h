@@ -25,10 +25,18 @@
 #ifndef LILY_CORE_LILY_MIR_GENERATOR_STMT_H
 #define LILY_CORE_LILY_MIR_GENERATOR_STMT_H
 
+#include <core/lily/checked/signature.h>
 #include <core/lily/checked/stmt.h>
 #include <core/lily/mir.h>
 
+/**
+ *
+ * @param fun_signature LilyCheckedSignatureFun*? (&)
+ */
 LilyMirInstruction *
-generate_stmt__LilyMir(LilyMirModule *module, LilyCheckedStmt *stmt);
+generate_stmt__LilyMir(LilyMirModule *module,
+                       LilyCheckedSignatureFun *fun_signature,
+                       LilyMirScope *scope,
+                       LilyCheckedStmt *stmt);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_STMT_H

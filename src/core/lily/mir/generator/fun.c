@@ -23,6 +23,7 @@
  */
 
 #include <core/lily/checked/signature.h>
+#include <core/lily/mir.h>
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
 #include <core/lily/mir/generator/fun.h>
@@ -46,19 +47,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
             continue;
         }
 
-        Vec *args = NEW(Vec);
-
-        if (signature->types->len > 0) {
-            for (Usize i = 0; i < signature->types->len - 1; ++i) {
-                push__Vec(args,
-                          NEW_VARIANT(LilyMirInstruction,
-                                      arg,
-                                      NEW(LilyMirInstructionArg,
-                                          generate_dt__LilyMir(
-                                            get__Vec(signature->types, i)),
-                                          i)));
-            }
-        }
+        ASSERT(signature->types->len != 0);
 
         LilyMirInstruction *inst = NEW_VARIANT(
           LilyMirInstruction,
@@ -66,7 +55,22 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
           NEW(LilyMirInstructionFun,
               get_linkage_from_visibility(fun->fun.visibility),
               fun->fun.is_main ? "main" : signature->ser_global_name->buffer,
-              args));
+              NEW(Vec)));
+
+        if (signature->types->len > 0) {
+            for (Usize i = 0; i < signature->types->len - 1; ++i) {
+                LilyCheckedDataType *type = get__Vec(signature->types, i);
+
+                LilyMirAddParam(&inst->fun.scope, type);
+
+                push__Vec(
+                  inst->fun.args,
+                  NEW_VARIANT(
+                    LilyMirInstruction,
+                    arg,
+                    NEW(LilyMirInstructionArg, generate_dt__LilyMir(type), i)));
+            }
+        }
 
         LilyMirAddInst(module, inst);
 
@@ -75,13 +79,17 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
 
             switch (item->kind) {
                 case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
-                    LilyMirAddInst(module,
-                                   generate_expr__LilyMir(module, item->expr));
+                    LilyMirAddInst(
+                      module,
+                      generate_expr__LilyMir(
+                        module, signature, &inst->fun.scope, item->expr));
 
                     break;
                 case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
-                    LilyMirAddInst(module,
-                                   generate_stmt__LilyMir(module, &item->stmt));
+                    LilyMirAddInst(
+                      module,
+                      generate_stmt__LilyMir(
+                        module, signature, &inst->fun.scope, &item->stmt));
 
                     break;
                 default:

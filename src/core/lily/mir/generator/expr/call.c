@@ -27,7 +27,10 @@
 #include <core/lily/mir/generator/expr/call.h>
 
 LilyMirInstruction *
-generate_call_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
+generate_call_expr__LilyMir(LilyMirModule *module,
+                            LilyCheckedSignatureFun *fun_signature,
+                            LilyMirScope *scope,
+                            LilyCheckedExpr *expr)
 {
     switch (expr->call.kind) {
         case LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE:
@@ -47,6 +50,8 @@ generate_call_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                 for (Usize i = 0; i < expr->call.fun.params->len; ++i) {
                     LilyMirInstruction *inst = generate_expr__LilyMir(
                       module,
+                      fun_signature,
+                      scope,
                       CAST(LilyCheckedExprCallFunParam *,
                            get__Vec(expr->call.fun.params, i))
                         ->value);
@@ -56,8 +61,35 @@ generate_call_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                 }
             }
 
+            LilyCheckedDataType *return_data_type = NULL;
+
+            switch (expr->data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {
+                    Vec *cond = NEW(Vec);
+
+                    for (Usize i = 0; i < expr->call.fun.params->len; ++i) {
+                        push__Vec(
+                          cond,
+                          LilyMirGetCheckedDtFromExpr(
+                            module, scope, get__Vec(expr->call.fun.params, i)));
+                    }
+
+                    return_data_type =
+                      get_return_data_type_of_conditional_compiler_choice(
+                        expr->data_type, cond);
+
+                    FREE(Vec, cond);
+
+                    ASSERT(return_data_type);
+
+                    break;
+                }
+                default:
+                    return_data_type = expr->data_type;
+            }
+
             return LilyMirBuildCall(module,
-                                    generate_dt__LilyMir(expr->data_type),
+                                    generate_dt__LilyMir(return_data_type),
                                     expr->call.global_name->buffer,
                                     params);
         }
@@ -77,6 +109,8 @@ generate_call_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
                 for (Usize i = 0; i < expr->call.record.params->len; ++i) {
                     LilyMirInstruction *val = generate_expr__LilyMir(
                       module,
+                      fun_signature,
+                      scope,
                       CAST(LilyCheckedExprCallRecordParam *,
                            get__Vec(expr->call.record.params, i))
                         ->value);

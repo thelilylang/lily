@@ -26,9 +26,17 @@
 #define LILY_CORE_LILY_MIR_GENERATOR_VAL_H
 
 #include <core/lily/checked/expr.h>
+#include <core/lily/checked/signature.h>
 #include <core/lily/mir.h>
 
+/**
+ *
+ * @param fun_signature LilyCheckedSignatureFun*? (&)
+ */
 LilyMirInstructionVal *
-generate_val__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr);
+generate_val__LilyMir(LilyMirModule *module,
+                      LilyCheckedSignatureFun *fun_signature,
+                      LilyMirScope *scope,
+                      LilyCheckedExpr *expr);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_VAL_H

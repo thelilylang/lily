@@ -169,6 +169,56 @@ LilyMirPopCurrent(LilyMirModule *Module)
     FREE(LilyMirCurrent, current);
 }
 
+LilyMirScopeVar *
+LilyMirScopeGetVar(const LilyMirScope *Scope, String *name)
+{
+    for (Usize i = 0; i < Scope->vars->len; ++i) {
+        LilyMirScopeVar *var = get__Vec(Scope->vars, i);
+
+        if (!strcmp(var->name->buffer, name->buffer)) {
+            return var;
+        }
+    }
+
+    if (Scope->parent) {
+        return LilyMirScopeGetVar(Scope->parent, name);
+    }
+
+    UNREACHABLE("the analysis has a bug!!");
+}
+
+LilyMirScopeParam *
+LilyMirScopeGetParam(const LilyMirModule *Module, Usize id)
+{
+    LilyMirCurrent *current = Module->current->top;
+
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+
+    return get__Vec(current->fun.fun->fun.scope.params, id);
+}
+
+LilyCheckedDataType *
+LilyMirGetCheckedDtFromExpr(const LilyMirModule *Module,
+                            const LilyMirScope *Scope,
+                            const LilyCheckedExpr *Expr)
+{
+    switch (Expr->kind) {
+        case LILY_CHECKED_EXPR_KIND_CALL:
+            switch (Expr->call.kind) {
+                case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
+                    return LilyMirScopeGetParam(Module, Expr->call.fun_param)
+                      ->data_type;
+                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
+                    return LilyMirScopeGetVar(Scope, Expr->call.global_name)
+                      ->data_type;
+                default:
+                    return Expr->data_type;
+            }
+        default:
+            return Expr->data_type;
+    }
+}
+
 LilyMirInstruction *
 LilyMirBuildReg(LilyMirModule *Module, LilyMirInstruction *Inst)
 {
@@ -195,9 +245,9 @@ LilyMirBuildLoad(LilyMirModule *Module,
 
     LilyMirInstructionFunLoad *matched_load = NULL;
 
-    for (Usize i = 0; i < current->fun.fun->fun.loads->len; ++i) {
+    for (Usize i = 0; i < current->fun.fun->fun.scope.loads->len; ++i) {
         LilyMirInstructionFunLoad *load =
-          get__Vec(current->fun.fun->fun.loads, i);
+          get__Vec(current->fun.fun->fun.scope.loads, i);
 
         if (!strcmp(load->value_name->buffer, value_name->buffer)) {
             matched_load = load;
@@ -226,7 +276,7 @@ LilyMirBuildLoad(LilyMirModule *Module,
                                       NEW(LilyMirInstructionSrc, src),
                                       clone__LilyMirDt(dt)))));
 
-    push__Vec(current->fun.fun->fun.loads,
+    push__Vec(current->fun.fun->fun.scope.loads,
               NEW(LilyMirInstructionFunLoad,
                   value_name,
                   load_inst,
@@ -301,7 +351,7 @@ LilyMirDisposeModule(const LilyMirModule *Module)
 }
 
 void
-LilyMirNextBlockAndClearLoads(LilyMirModule *Module)
+LilyMirNextBlockAndClearScope(LilyMirModule *Module, LilyMirScope *Scope)
 {
     ASSERT(Module->current->len > 0);
 
@@ -309,19 +359,9 @@ LilyMirNextBlockAndClearLoads(LilyMirModule *Module)
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    LilyMirInstructionBlock *block =
-      pop__Stack(current->fun.fun->fun.block_stack);
+    pop__Stack(current->fun.fun->fun.block_stack);
 
-    // Clear loaded value in the block
-    for (Usize i = 0; i < current->fun.fun->fun.loads->len; ++i) {
-        LilyMirInstructionFunLoad *load =
-          get__Vec(current->fun.fun->fun.loads, i);
-
-        if (load->block_id == block->id) {
-            FREE(LilyMirInstructionFunLoad,
-                 remove__Vec(current->fun.fun->fun.loads, i));
-        }
-    }
+    FREE(LilyMirScope, Scope);
 }
 
 LilyMirInstruction *

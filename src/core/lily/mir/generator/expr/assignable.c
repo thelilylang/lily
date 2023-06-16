@@ -26,7 +26,10 @@
 #include <core/lily/mir/generator/expr/assignable.h>
 
 LilyMirInstructionVal *
-generate_assignable_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr)
+generate_assignable_expr__LilyMir(LilyMirModule *module,
+                                  LilyCheckedSignatureFun *fun_signature,
+                                  LilyMirScope *scope,
+                                  LilyCheckedExpr *expr)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_CALL:

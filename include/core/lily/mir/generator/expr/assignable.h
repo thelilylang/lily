@@ -26,9 +26,13 @@
 #define LILY_CORE_LILY_MIR_GENERATOR_EXPR_ASSIGNABLE_H
 
 #include <core/lily/checked/expr.h>
+#include <core/lily/checked/signature.h>
 #include <core/lily/mir.h>
 
 LilyMirInstructionVal *
-generate_assignable_expr__LilyMir(LilyMirModule *module, LilyCheckedExpr *expr);
+generate_assignable_expr__LilyMir(LilyMirModule *module,
+                                  LilyCheckedSignatureFun *fun_signature,
+                                  LilyMirScope *scope,
+                                  LilyCheckedExpr *expr);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_EXPR_ASSIGNABLE_H

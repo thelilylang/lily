@@ -30,7 +30,9 @@
 #include <base/stack.h>
 #include <base/vec.h>
 
+#include <core/lily/checked/expr.h>
 #include <core/lily/mir/instruction.h>
+#include <core/lily/mir/scope.h>
 
 #include <stdio.h>
 
@@ -167,6 +169,29 @@ LilyMirAddInst(LilyMirModule *Module, LilyMirInstruction *Inst);
 void
 LilyMirPopCurrent(LilyMirModule *Module);
 
+LilyMirScopeVar *
+LilyMirScopeGetVar(const LilyMirScope *Scope, String *name);
+
+LilyMirScopeParam *
+LilyMirScopeGetParam(const LilyMirModule *Module, Usize id);
+
+LilyCheckedDataType *
+LilyMirGetCheckedDtFromExpr(const LilyMirModule *Module,
+                            const LilyMirScope *Scope,
+                            const LilyCheckedExpr *Expr);
+
+inline void
+LilyMirAddVar(LilyMirScope *Scope, String *name, LilyCheckedDataType *data_type)
+{
+    push__Vec(Scope->vars, NEW(LilyMirScopeVar, name, data_type));
+}
+
+inline void
+LilyMirAddParam(LilyMirScope *Scope, LilyCheckedDataType *data_type)
+{
+    push__Vec(Scope->params, NEW(LilyMirScopeParam, data_type));
+}
+
 void
 LilyMirDisposeModule(const LilyMirModule *Module);
 
@@ -180,7 +205,7 @@ LilyMirNextBlock(LilyMirModule *Module)
 }
 
 void
-LilyMirNextBlockAndClearLoads(LilyMirModule *Module);
+LilyMirNextBlockAndClearScope(LilyMirModule *Module, LilyMirScope *Scope);
 
 LilyMirInstruction *
 LilyMirBuildBlock(LilyMirModule *Module);

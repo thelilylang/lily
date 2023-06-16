@@ -27,7 +27,10 @@
 #include <core/lily/mir/generator/stmt.h>
 
 LilyMirInstruction *
-generate_stmt__LilyMir(LilyMirModule *module, LilyCheckedStmt *stmt)
+generate_stmt__LilyMir(LilyMirModule *module,
+                       LilyCheckedSignatureFun *fun_signature,
+                       LilyMirScope *scope,
+                       LilyCheckedStmt *stmt)
 {
     switch (stmt->kind) {
         case LILY_CHECKED_STMT_KIND_ASM:
@@ -55,7 +58,8 @@ generate_stmt__LilyMir(LilyMirModule *module, LilyCheckedStmt *stmt)
                 return NEW_VARIANT(
                   LilyMirInstruction,
                   ret,
-                  generate_expr__LilyMir(module, stmt->return_.expr));
+                  generate_expr__LilyMir(
+                    module, fun_signature, scope, stmt->return_.expr));
             } else {
                 return NEW_VARIANT(
                   LilyMirInstruction,
@@ -70,12 +74,19 @@ generate_stmt__LilyMir(LilyMirModule *module, LilyCheckedStmt *stmt)
             TODO("generate try stmt");
         case LILY_CHECKED_STMT_KIND_UNSAFE:
             TODO("generate unsafe stmt");
-        case LILY_CHECKED_STMT_KIND_VARIABLE:
-            return LilyMirBuildVar(
-              module,
-              stmt->variable.name->buffer,
-              generate_dt__LilyMir(stmt->variable.data_type),
-              generate_expr__LilyMir(module, stmt->variable.expr));
+        case LILY_CHECKED_STMT_KIND_VARIABLE: {
+            LilyCheckedDataType *var_data_type =
+              LilyMirGetCheckedDtFromExpr(module, scope, stmt->variable.expr);
+            LilyMirInstruction *inst = generate_expr__LilyMir(
+              module, fun_signature, scope, stmt->variable.expr);
+
+            LilyMirAddVar(scope, stmt->variable.name, var_data_type);
+
+            return LilyMirBuildVar(module,
+                                   stmt->variable.name->buffer,
+                                   generate_dt__LilyMir(var_data_type),
+                                   inst);
+        }
         case LILY_CHECKED_STMT_KIND_WHILE:
             TODO("generate while stmt");
     }
