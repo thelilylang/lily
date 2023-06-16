@@ -3276,15 +3276,10 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                 (LilyCheckedAccessScope){
                                                   .id = response.scope_container
                                                           .scope_id },
-                                                CAST(LilyCheckedSignatureFun *,
-                                                     last__Vec(
-                                                       fun->fun.signatures))
-                                                  ->global_name,
+                                                signature->ser_global_name,
                                                 NEW(LilyCheckedExprCallFun,
                                                     fun,
                                                     checked_params)));
-
-                                            FREE(Vec, fun_types);
                                         }
                                     } else {
                                         fun_call = NEW_VARIANT(
@@ -3302,7 +3297,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                             CAST(
                                               LilyCheckedSignatureFun *,
                                               get__Vec(fun->fun.signatures, 0))
-                                              ->global_name,
+                                              ->ser_global_name,
                                             NEW(LilyCheckedExprCallFun,
                                                 fun,
                                                 checked_params)));
@@ -5742,7 +5737,7 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
           NEW(LilyCheckedOperator,
               fun->fun.name,
               /* Get signature [params, return_data_type] from fun signatures */
-              CAST(LilyCheckedSignatureFun *, last__Vec(fun->fun.signatures))
+              CAST(LilyCheckedSignatureFun *, get__Vec(fun->fun.signatures, 0))
                 ->types);
 
         if (add_operator__LilyCheckedOperatorRegister(
