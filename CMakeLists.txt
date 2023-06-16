@@ -328,8 +328,9 @@ set(CORE_SRC
 	src/core/lily/ir/llvm.c
 	src/core/lily/mir/generator/constant.c
 	src/core/lily/mir/generator/dt.c
-	src/core/lily/mir/generator/expr/call.c
 	src/core/lily/mir/generator/expr/assignable.c
+	src/core/lily/mir/generator/expr/binary.c
+	src/core/lily/mir/generator/expr/call.c
 	src/core/lily/mir/generator/expr.c
 	src/core/lily/mir/generator/fun.c
 	src/core/lily/mir/generator/stmt.c
@@ -339,6 +340,7 @@ set(CORE_SRC
 	src/core/lily/mir/instruction.c
 	src/core/lily/mir/linkage.c
 	src/core/lily/mir/generator.c
+	src/core/lily/mir/scope.c
 	src/core/lily/package/config.c
 	src/core/lily/package/default_path.c
 	src/core/lily/package/dependency_tree.c
