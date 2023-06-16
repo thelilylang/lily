@@ -3044,8 +3044,9 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   get__Vec(response.fun, 0);
 
                                 if (!fun->fun.is_checked) {
-                                    check_fun_signature__LilyAnalysis(self,
-                                                                      fun);
+                                    check_fun__LilyAnalysis(self, fun);
+                                    // check_fun_signature__LilyAnalysis(self,
+                                    //                                   fun);
                                 }
 
                                 if (fun->fun.is_main) {
@@ -3229,7 +3230,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                                         if (add_signature__LilyCheckedDeclFun(
                                               &fun->fun, fun_types)) {
-
                                             fun_call = NEW_VARIANT(
                                               LilyCheckedExpr,
                                               call,
