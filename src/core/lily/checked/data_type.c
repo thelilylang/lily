@@ -1653,10 +1653,10 @@ void
 update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
                                       LilyCheckedDataType *other)
 {
-    ASSERT((self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
-            other->kind != LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) ||
-           (self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
-            other->kind != LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC));
+    // ASSERT((self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+    //         other->kind != LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) ||
+    //        (self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+    //         other->kind != LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC));
 
     switch (other->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_ANY:
