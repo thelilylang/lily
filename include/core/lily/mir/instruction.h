@@ -769,6 +769,7 @@ typedef struct LilyMirInstructionFun
     Vec *args;          // Vec<LilyMirInstruction*>*
     Vec *insts;         // Vec<LilyMirInstruction*>*
     Stack *block_stack; // Stack<LilyMirInstructionBlock*>*
+    LilyMirDt *return_data_type;
     LilyMirScope scope;
     Usize block_count;
 } LilyMirInstructionFun;
@@ -781,7 +782,8 @@ CONSTRUCTOR(LilyMirInstructionFun,
             LilyMirInstructionFun,
             enum LilyMirLinkage linkage,
             const char *name,
-            Vec *args);
+            Vec *args,
+            LilyMirDt *return_data_type);
 
 /**
  *

@@ -1008,7 +1008,8 @@ CONSTRUCTOR(LilyMirInstructionFun,
             LilyMirInstructionFun,
             enum LilyMirLinkage linkage,
             const char *name,
-            Vec *args)
+            Vec *args,
+            LilyMirDt *return_data_type)
 {
     Stack *block_stack = NEW(Stack, 1024);
     Vec *insts = NEW(Vec);
@@ -1026,6 +1027,7 @@ CONSTRUCTOR(LilyMirInstructionFun,
                                     .args = args,
                                     .insts = insts,
                                     .block_stack = block_stack,
+                                    .return_data_type = return_data_type,
                                     .scope = NEW(LilyMirScope, NULL),
                                     .block_count = 1 };
 }
@@ -1052,7 +1054,12 @@ IMPL_FOR_DEBUG(to_string,
         }
     }
 
-    push_str__String(res, ") {\n");
+    {
+        char *s = format(") {Sr} {{\n",
+                         to_string__Debug__LilyMirDt(self->return_data_type));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     String *tab = repeat__String(" ", tab_count);
 
@@ -1087,6 +1094,7 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
     FREE(Vec, self->insts);
     FREE(LilyMirScope, &self->scope);
     FREE(Stack, self->block_stack);
+    FREE(LilyMirDt, self->return_data_type);
 }
 
 #ifdef ENV_DEBUG
