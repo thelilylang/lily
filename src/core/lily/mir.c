@@ -256,6 +256,9 @@ LilyMirBuildLoad(LilyMirModule *Module,
 
     if (matched_load) {
         // assume: %<name> = <val_inst>
+        FREE(LilyMirInstructionVal, src);
+        FREE(LilyMirDt, dt);
+
         return NEW_VARIANT(
           LilyMirInstructionVal,
           reg,
