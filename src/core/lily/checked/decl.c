@@ -198,6 +198,47 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
     return self;
 }
 
+String *
+get_global_name__LilyCheckedDecl(const LilyCheckedDecl *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DECL_KIND_CONSTANT:
+            return self->constant.global_name;
+        case LILY_CHECKED_DECL_KIND_ERROR:
+            return self->error.global_name;
+        case LILY_CHECKED_DECL_KIND_FUN:
+            return self->fun.global_name;
+        case LILY_CHECKED_DECL_KIND_METHOD:
+            return self->method.global_name;
+        case LILY_CHECKED_DECL_KIND_OBJECT:
+            switch (self->object.kind) {
+                case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
+                    return self->object.class.global_name;
+                case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+                    return self->object.enum_.global_name;
+                case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+                    return self->object.record.global_name;
+                case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
+                    return self->object.trait.global_name;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case LILY_CHECKED_DECL_KIND_TYPE:
+            switch (self->type.kind) {
+                case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
+                    return self->type.alias.global_name;
+                case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                    return self->type.enum_.global_name;
+                case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+                    return self->type.record.global_name;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedDecl, const LilyCheckedDecl *self)

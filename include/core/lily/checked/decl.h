@@ -152,6 +152,14 @@ VARIANT_CONSTRUCTOR(LilyCheckedDecl *,
 
 /**
  *
+ * @brief Get the global name of the declaration.
+ * @return String* (&)
+ */
+String *
+get_global_name__LilyCheckedDecl(const LilyCheckedDecl *self);
+
+/**
+ *
  * @brief Convert LilyCheckedDecl in String.
  * @note This function is only used to debug.
  */
