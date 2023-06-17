@@ -29,6 +29,7 @@
 #include <core/lily/analysis.h>
 #include <core/lily/ast.h>
 #include <core/lily/checked/compiler_generic.h>
+#include <core/lily/checked/history.h>
 #include <core/lily/checked/parent.h>
 #include <core/lily/checked/safety_mode.h>
 #include <core/lily/checked/signature.h>
@@ -336,6 +337,8 @@ run_step1__LilyAnalysis(LilyAnalysis *self);
 // Check all declarations.
 static inline void
 run_step2__LilyAnalysis(LilyAnalysis *self);
+
+static LilyCheckedHistory history;
 
 #define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop) \
     {                                                               \
@@ -6053,7 +6056,11 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
 
         switch (decl->kind) {
             case LILY_CHECKED_DECL_KIND_FUN:
+                history = NEW(LilyCheckedHistory);
+
                 check_fun__LilyAnalysis(self, decl);
+
+                FREE(LilyCheckedHistory, &history);
 
                 break;
             case LILY_CHECKED_DECL_KIND_CONSTANT:
