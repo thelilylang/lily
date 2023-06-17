@@ -308,13 +308,82 @@ load_builtins__LilyBuiltin()
           1, NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_CSTR, NULL))
     };
 
+    builtins[25] = (LilyBuiltinFun){
+        .name = "align",
+        .real_name = from__String("__align__$Alloc"),
+        .return_data_type = NEW_VARIANT(
+          LilyCheckedDataType,
+          ptr,
+          NULL,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+        .params = init__Vec(
+          2,
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            ptr,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL))
+    };
+
+    builtins[26] = (LilyBuiltinFun){
+        .name = "alloc",
+        .real_name = from__String("__alloc__$Alloc"),
+        .return_data_type = NEW_VARIANT(
+          LilyCheckedDataType,
+          ptr,
+          NULL,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+        .params = init__Vec(
+          2,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL))
+    };
+
+    builtins[27] = (LilyBuiltinFun){
+        .name = "resize",
+        .real_name = from__String("__resize__$Alloc"),
+        .return_data_type = NEW_VARIANT(
+          LilyCheckedDataType,
+          ptr,
+          NULL,
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+        .params = init__Vec(
+          3,
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            ptr,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL))
+    };
+
+    builtins[28] = (LilyBuiltinFun){
+        .name = "free",
+        .real_name = from__String("__free__$Alloc"),
+        .return_data_type =
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNIT, NULL),
+        .params = init__Vec(
+          3,
+          NEW_VARIANT(
+            LilyCheckedDataType,
+            ptr,
+            NULL,
+            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL))
+    };
+
     return builtins;
 }
 
 bool
 is_builtin_function__LilyBuiltin(const char *name)
 {
-    if (!strcmp(name, "max") || !strcmp(name, "min")) {
+    if (!strcmp(name, "max") || !strcmp(name, "min") ||
+        !strcmp(name, "align") || !strcmp(name, "alloc") ||
+        !strcmp(name, "resize") || !strcmp(name, "free")) {
         return true;
     }
 
