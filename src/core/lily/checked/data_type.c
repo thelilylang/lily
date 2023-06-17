@@ -1563,6 +1563,24 @@ is_integer_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
 }
 
 bool
+is_signed_integer_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
 is_float_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
 {
     switch (self->kind) {

@@ -668,6 +668,13 @@ is_integer_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
 
 /**
  *
+ * @brief Check if the data type is a signed integer.
+ */
+bool
+is_signed_integer_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
+
+/**
+ *
  * @brief Check if the data type is a float.
  */
 bool
