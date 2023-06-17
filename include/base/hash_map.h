@@ -55,14 +55,14 @@
         }                                                  \
     }
 
-#define DEBUG_STRING_BUCKET(bucket, debug)               \
-    {                                                    \
-        HashMapBucket *current = bucket;                 \
-        while (current->next) {                          \
-            PRINTLN("{Sr}", debug(current->pair.value)); \
-            current = current->next;                     \
-        }                                                \
-        PRINTLN("{Sr}", debug(current->pair.value));     \
+#define PRINT_STRING_HASH_MAP(self, debug)             \
+    {                                                  \
+        HashMapIter iter = NEW(HashMapIter, self);     \
+        void *current = NULL;                          \
+                                                       \
+        while ((current = next__HashMapIter(&iter))) { \
+            PRINTLN("{Sr}", debug(current));           \
+        }                                              \
     }
 
 typedef struct HashMapPair
