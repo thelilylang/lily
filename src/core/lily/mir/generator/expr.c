@@ -29,6 +29,7 @@
 #include <core/lily/mir/generator/expr/assignable.h>
 #include <core/lily/mir/generator/expr/binary.h>
 #include <core/lily/mir/generator/expr/call.h>
+#include <core/lily/mir/generator/expr/unary.h>
 #include <core/lily/mir/generator/val.h>
 
 #include <stdio.h>
@@ -66,20 +67,8 @@ generate_expr__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_EXPR_KIND_LAMBDA:
             break;
         case LILY_CHECKED_EXPR_KIND_UNARY:
-            switch (expr->unary.kind) {
-                case LILY_CHECKED_EXPR_UNARY_KIND_DEREFERENCE: {
-                    LilyMirInstruction *right_inst = generate_expr__LilyMir(
-                      module, fun_signature, scope, expr->unary.right);
-
-                    ASSERT(right_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
-
-                    // LilyMirBuildLoad(module, right_inst->val,
-                    // generate_dt__LilyMir(expr->data_type), );
-                }
-                default:
-                    UNREACHABLE("unknown variant");
-            }
-            break;
+            return generate_unary_expr__LilyMir(
+              module, fun_signature, scope, expr);
         default:
             return NEW_VARIANT(
               LilyMirInstruction,
