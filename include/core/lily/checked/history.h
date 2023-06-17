@@ -39,10 +39,7 @@ typedef struct LilyCheckedHistory
  *
  * @brief Construct LilyCheckedHistory type.
  */
-inline CONSTRUCTOR(LilyCheckedHistory, LilyCheckedHistory)
-{
-    return (LilyCheckedHistory){ .items = NEW(Vec) };
-}
+CONSTRUCTOR(LilyCheckedHistory *, LilyCheckedHistory);
 
 /**
  *
