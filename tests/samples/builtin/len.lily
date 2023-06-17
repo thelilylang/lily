@@ -1,0 +1,7 @@
+fun main =
+    val str := "Hello";
+    val cstr := c"Hello";
+
+    val str_len := @len(str);
+    val cstr_len := @len(cstr);
+end

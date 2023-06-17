@@ -1,0 +1,5 @@
+import "@sys";
+
+fun main =
+    @sys.write(1, c"Hello\n", 6)
+end
