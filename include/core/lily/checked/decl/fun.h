@@ -246,6 +246,15 @@ get_original_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self);
 
 /**
  *
+ * @brief Get a user defined signature (without compiler defined type(s)) of the
+ * function.
+ * @return LilyCheckedSignatureFun*? (&)
+ */
+LilyCheckedSignatureFun *
+get_user_defined_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self);
+
+/**
+ *
  * @brief Free LilyCheckedDeclFun type.
  */
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self);

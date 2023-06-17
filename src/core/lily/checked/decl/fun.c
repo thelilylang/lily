@@ -411,6 +411,20 @@ get_original_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self)
     return get__Vec(self->signatures, 0);
 }
 
+LilyCheckedSignatureFun *
+get_user_defined_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self)
+{
+    for (Usize i = 0; i < self->signatures->len; ++i) {
+        LilyCheckedSignatureFun *signature = get__Vec(self->signatures, i);
+
+        if (!contains_compiler_defined_dt__LilyCheckedSignatureFun(signature)) {
+            return signature;
+        }
+    }
+
+    return NULL;
+}
+
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 {
     FREE(String, self->global_name);
