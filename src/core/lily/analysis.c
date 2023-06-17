@@ -338,7 +338,7 @@ run_step1__LilyAnalysis(LilyAnalysis *self);
 static inline void
 run_step2__LilyAnalysis(LilyAnalysis *self);
 
-static LilyCheckedHistory history;
+static LilyCheckedHistory *history = NULL;
 
 #define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop) \
     {                                                               \
@@ -3046,10 +3046,37 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                 LilyCheckedDecl *fun =
                                   get__Vec(response.fun, 0);
 
-                                if (!fun->fun.is_checked) {
-                                    check_fun__LilyAnalysis(self, fun);
-                                    // check_fun_signature__LilyAnalysis(self,
-                                    //                                   fun);
+								// Add fun dependency to the current function.
+								// TODO: method
+                                {
+                                    LilyCheckedScopeDecls *current_fun =
+                                      get_current_fun__LilyCheckedScope(scope);
+
+                                    if (current_fun) {
+                                        add_fun_dep__LilyCheckedDeclFun(
+                                          &current_fun->decl->fun, fun);
+                                    }
+
+                                    add__LilyCheckedHistory(history, fun);
+                                }
+
+                                if (
+                                  !fun->fun.is_checked &&
+                                  !contains_for_fun__LilyCheckedHistory(
+                                    history,
+                                    get_original_signature__LilyCheckedDeclFun(
+                                      &fun->fun))) {
+                                    if (history) {
+                                        check_fun__LilyAnalysis(self, fun);
+                                        // check_fun_signature__LilyAnalysis(self,
+                                        //                                   fun);
+
+                                        FREE(LilyCheckedHistory, history);
+                                    } else {
+                                        check_fun__LilyAnalysis(self, fun);
+                                        // check_fun_signature__LilyAnalysis(self,
+                                        //                                   fun);
+                                    }
                                 }
 
                                 if (fun->fun.is_main) {
@@ -6060,7 +6087,7 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
 
                 check_fun__LilyAnalysis(self, decl);
 
-                FREE(LilyCheckedHistory, &history);
+                FREE(LilyCheckedHistory, history);
 
                 break;
             case LILY_CHECKED_DECL_KIND_CONSTANT:
