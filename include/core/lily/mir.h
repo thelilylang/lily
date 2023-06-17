@@ -314,4 +314,14 @@ LilyMirBuildGetField(LilyMirModule *Module,
 LilyMirInstructionVal *
 LilyMirGetValFromInst(LilyMirInstruction *inst);
 
+/**
+ *
+ * @brief Check if the key of the instruction is unique.
+ */
+inline bool
+LilyMirKeyIsUnique(LilyMirModule *Module, String *key)
+{
+    return !get__OrderedHashMap(Module->insts, key->buffer);
+}
+
 #endif // LILY_CORE_LILY_MIR_H
