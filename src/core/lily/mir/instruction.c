@@ -30,8 +30,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static Usize tab_count = 0;
-
 static VARIANT_DESTRUCTOR(LilyMirInstructionVal,
                           array,
                           LilyMirInstructionVal *self);
@@ -341,6 +339,8 @@ static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
 static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
                                  xor,
                                  LilyMirInstruction *self);
+
+static Usize tab_count = 0;
 
 CONSTRUCTOR(LilyMirInstructionVal *,
             LilyMirInstructionVal,
