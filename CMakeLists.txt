@@ -333,6 +333,7 @@ set(CORE_SRC
 	src/core/lily/mir/generator/expr/assignable.c
 	src/core/lily/mir/generator/expr/binary.c
 	src/core/lily/mir/generator/expr/call.c
+	src/core/lily/mir/generator/expr/unary.c
 	src/core/lily/mir/generator/expr.c
 	src/core/lily/mir/generator/fun.c
 	src/core/lily/mir/generator/stmt.c
