@@ -40,6 +40,7 @@ set(BASE_SRC
 	src/base/hash_set.c
 	src/base/itoa.c
 	src/base/optional.c
+	src/base/ordered_hash_map.c
 	src/base/stack.c
 	src/base/str.c
 	src/base/string.c
@@ -215,6 +216,7 @@ set(CORE_SRC
 	src/core/lily/checked/field_object.c
 	src/core/lily/checked/generic_param.c
 	src/core/lily/checked/global_name.c
+	src/core/lily/checked/history.c
 	src/core/lily/checked/impl_param.c
 	src/core/lily/checked/inherit_param.c
 	src/core/lily/checked/operator.c
