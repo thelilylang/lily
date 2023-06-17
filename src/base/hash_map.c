@@ -181,6 +181,10 @@ next__HashMapIter(HashMapIter *self)
 {
     HashMapBucket **current = self->hash_map->buckets;
 
+	if (!current) {
+		return NULL;
+	}
+
     for (; !(*current) && self->count < self->hash_map->capacity;
          ++self->count, ++current)
         ;
