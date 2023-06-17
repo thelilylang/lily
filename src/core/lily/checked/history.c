@@ -26,12 +26,21 @@
 
 #include <string.h>
 
+CONSTRUCTOR(LilyCheckedHistory *, LilyCheckedHistory)
+{
+    LilyCheckedHistory *self = lily_malloc(sizeof(LilyCheckedHistory));
+
+    self->items = NEW(Vec);
+
+    return self;
+}
+
 bool
 contains_for_fun__LilyCheckedHistory(const LilyCheckedHistory *self,
                                      LilyCheckedSignatureFun *signature)
 {
     if (!signature) {
-        return true;
+        return false;
     }
 
     for (Usize i = 0; i < self->items->len; ++i) {
@@ -64,9 +73,9 @@ DESTRUCTOR(LilyCheckedHistory, LilyCheckedHistory *self)
 {
     if (self->items->len > 0) {
         pop__LilyCheckedHistory(self);
-    }
-
-    if (self->items->len == 0) {
+    } else if (self->items->len == 0) {
         FREE(Vec, self->items);
+        lily_free(self);
+        self = NULL;
     }
 }
