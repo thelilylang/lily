@@ -42,7 +42,7 @@
 
 // TODO: add support for Windows.
 static pthread_t *package_threads;
-static pthread_mutex_t package_thread_lock;
+static pthread_mutex_t package_thread_mutex;
 
 /**
  *
@@ -242,7 +242,7 @@ build__LilyPackage(const CompileConfig *config,
     package_threads =
       lily_malloc(sizeof(pthread_t) * self->precompile.dependency_trees->len);
 
-    ASSERT(!pthread_mutex_init(&package_thread_lock, NULL));
+    ASSERT(!pthread_mutex_init(&package_thread_mutex, NULL));
 
     for (Usize i = 0; i < self->precompile.dependency_trees->len; ++i) {
         ASSERT(!pthread_create(&package_threads[i],
@@ -256,7 +256,7 @@ build__LilyPackage(const CompileConfig *config,
     }
 
     lily_free(package_threads);
-    pthread_mutex_destroy(&package_thread_lock);
+    pthread_mutex_destroy(&package_thread_mutex);
 
     return self;
 }
@@ -264,7 +264,7 @@ build__LilyPackage(const CompileConfig *config,
 static void *
 run__LilyPackage(void *self)
 {
-    pthread_mutex_lock(&package_thread_lock);
+    pthread_mutex_lock(&package_thread_mutex);
 
     LilyPackageDependencyTree *tree = self;
 
@@ -288,7 +288,7 @@ run__LilyPackage(void *self)
 
     tree->is_done = true;
 
-    pthread_mutex_unlock(&package_thread_lock);
+    pthread_mutex_unlock(&package_thread_mutex);
 
     // Run children of the tree
     if (tree->children->len > 0) {
