@@ -387,18 +387,28 @@ get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
 }
 
 void
-add_fun_dep__LilyCheckedDeclFun(LilyCheckedDeclFun *fun,
+add_fun_dep__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
                                 LilyCheckedDecl *fun_dep)
 {
-    for (Usize i = 0; i < fun->fun_deps->len; ++i) {
-        if (!strcmp(CAST(LilyCheckedDecl *, get__Vec(fun->fun_deps, i))
+    for (Usize i = 0; i < self->fun_deps->len; ++i) {
+        if (!strcmp(CAST(LilyCheckedDecl *, get__Vec(self->fun_deps, i))
                       ->fun.global_name->buffer,
                     fun_dep->fun.global_name->buffer)) {
             return;
         }
     }
 
-    push__Vec(fun->fun_deps, fun_dep);
+    push__Vec(self->fun_deps, fun_dep);
+}
+
+LilyCheckedSignatureFun *
+get_original_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self)
+{
+    if (self->signatures->len == 0) {
+        return NULL;
+    }
+
+    return get__Vec(self->signatures, 0);
 }
 
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)

@@ -233,8 +233,16 @@ get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
  * @brief Add fun dependency to the fun.
  */
 void
-add_fun_dep__LilyCheckedDeclFun(LilyCheckedDeclFun *fun,
+add_fun_dep__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
                                 LilyCheckedDecl *fun_dep);
+
+/**
+ *
+ * @brief Get the original (first) signature of the function.
+ * @return LilyCheckedSignatureFun*? (&)
+ */
+LilyCheckedSignatureFun *
+get_original_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self);
 
 /**
  *
