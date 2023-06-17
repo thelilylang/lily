@@ -25,9 +25,11 @@
 #ifndef LILY_BASE_HASH_MAP_H
 #define LILY_BASE_HASH_MAP_H
 
+#include <base/hash_choice.h>
+#include <base/macros.h>
+#include <base/new.h>
 #include <base/platform.h>
 #include <base/types.h>
-#include <base/vec.h>
 
 #include <string.h>
 
@@ -38,31 +40,6 @@
 #endif
 
 #define DEFAULT_HASH_MAP_CAPACITY 8
-
-// Choice different algorithm to create an hash
-#define HASH_FNV1A
-#undef HASH_FNV1A
-
-#define HASH_CUSTOM
-#undef HASH_CUSTOM
-
-#define HASH_JENKINS
-#undef HASH_JENKINS
-
-#define HASH_SIP
-// #undef HASH_SIP
-
-#ifdef HASH_FNV1A
-#include <base/hash/fnv.h>
-#elif defined(HASH_CUSTOM)
-#include <base/hash/custom.h>
-#elif defined(HASH_JENKINS)
-#include <base/hash/jenkins.h>
-#elif defined(HASH_SIP)
-#include <base/hash/sip.h>
-#else
-#error "cannot generate an hash"
-#endif
 
 #define FREE_HASHMAP_VALUES(self, type)                    \
     if (self->buckets) {                                   \

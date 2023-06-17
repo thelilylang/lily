@@ -24,7 +24,6 @@
 
 #include <base/alloc.h>
 #include <base/hash_map.h>
-#include <base/new.h>
 
 #include <stdlib.h>
 
