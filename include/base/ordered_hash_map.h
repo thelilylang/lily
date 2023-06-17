@@ -41,6 +41,30 @@
 
 #define DEFAULT_ORDERED_HASH_MAP_CAPACITY 8
 
+#define FREE_ORD_HASHMAP_VALUES(self, type)                       \
+    if (self->buckets) {                                          \
+        for (Usize i = 0; i < self->capacity; ++i) {              \
+            if (self->buckets[i]) {                               \
+                OrderedHashMapBucket *current = self->buckets[i]; \
+                while (current->next) {                           \
+                    FREE(type, current->pair.value);              \
+                    current = current->next;                      \
+                }                                                 \
+                FREE(type, current->pair.value);                  \
+            }                                                     \
+        }                                                         \
+    }
+
+#define PRINT_STRING_ORD_HASH_MAP(self, debug)                   \
+    {                                                            \
+        OrderedHashMapIter iter = NEW(OrderedHashMapIter, self); \
+        void *current = NULL;                                    \
+                                                                 \
+        while ((current = next__OrderedHashMapIter(&iter))) {    \
+            PRINTLN("{Sr}", debug(current));                     \
+        }                                                        \
+    }
+
 typedef struct OrderedHashMapPair
 {
     char *key;

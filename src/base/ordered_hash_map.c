@@ -93,16 +93,18 @@ get_from_id__OrderedHashMap(OrderedHashMap *self, Usize id)
     for (Usize i = 0; i < self->len; ++i) {
         OrderedHashMapBucket *current_bucket = self->buckets[i];
 
-        while (current_bucket->next) {
+        if (current_bucket) {
+            while (current_bucket->next) {
+                if (current_bucket->pair.id == id) {
+                    return current_bucket->pair.value;
+                }
+
+                current_bucket = self->buckets[i]->next;
+            }
+
             if (current_bucket->pair.id == id) {
                 return current_bucket->pair.value;
             }
-
-            current_bucket = self->buckets[i]->next;
-        }
-
-        if (current_bucket->pair.id == id) {
-            return current_bucket->pair.value;
         }
     }
 
