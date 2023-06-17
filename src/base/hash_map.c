@@ -182,8 +182,8 @@ next__HashMapIter(HashMapIter *self)
     HashMapBucket **current = self->hash_map->buckets;
 
     for (; !(*current) && self->count < self->hash_map->capacity;
-         ++self->count, ++current) {
-    }
+         ++self->count, ++current)
+        ;
 
     return self->count < self->hash_map->capacity ? (*current)->pair.value
                                                   : NULL;
