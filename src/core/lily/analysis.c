@@ -3046,8 +3046,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                 LilyCheckedDecl *fun =
                                   get__Vec(response.fun, 0);
 
-								// Add fun dependency to the current function.
-								// TODO: method
+                                // Add fun dependency to the current function.
+                                // TODO: method
                                 {
                                     LilyCheckedScopeDecls *current_fun =
                                       get_current_fun__LilyCheckedScope(scope);
