@@ -62,7 +62,9 @@ contains__LilyCheckedHistory(const LilyCheckedHistory *self,
 
 DESTRUCTOR(LilyCheckedHistory, LilyCheckedHistory *self)
 {
-    pop__LilyCheckedHistory(self);
+    if (self->items->len > 0) {
+        pop__LilyCheckedHistory(self);
+    }
 
     if (self->items->len == 0) {
         FREE(Vec, self->items);
