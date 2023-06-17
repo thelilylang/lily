@@ -540,6 +540,6 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                       generate_dt__LilyMir(return_data_type),
                       from__String(LilyMirGetLastRegName(module))));
     } else {
-        TODO("generate for user defined operator");
+        TODO("generate for user defined binary operator");
     }
 }
