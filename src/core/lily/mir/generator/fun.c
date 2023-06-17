@@ -40,10 +40,26 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
         FAILED("warning: function is unused");
     }
 
+    for (Usize i = 0; i < fun->fun.fun_deps->len; ++i) {
+        LilyCheckedDecl *fun_dep = get__Vec(fun->fun.fun_deps, i);
+        // Get a signature with only user defined data type, because the
+        // compiler defined signatures are not used in the MIR.
+        LilyCheckedSignatureFun *signature =
+          get_user_defined_signature__LilyCheckedDeclFun(&fun_dep->fun);
+
+        if (signature) {
+            if (LilyMirKeyIsUnique(module, signature->global_name)) {
+                generate_fun__LilyMir(module, get__Vec(fun->fun.fun_deps, i));
+                LilyMirPopCurrent(module);
+            }
+        }
+    }
+
     for (Usize i = 0; i < fun->fun.signatures->len; ++i) {
         LilyCheckedSignatureFun *signature = get__Vec(fun->fun.signatures, i);
 
-        if (contains_compiler_defined_dt__LilyCheckedSignatureFun(signature)) {
+        if (contains_compiler_defined_dt__LilyCheckedSignatureFun(signature) ||
+            !LilyMirKeyIsUnique(module, signature->global_name)) {
             continue;
         }
 
