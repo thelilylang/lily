@@ -148,19 +148,19 @@ LilyMirPopCurrent(LilyMirModule *Module)
 
     switch (current->kind) {
         case LILY_MIR_CURRENT_KIND_CONST:
-            insert__HashMap(Module->insts,
-                            (char *)current->const_->const_.name,
-                            current->const_);
+            insert__OrderedHashMap(Module->insts,
+                                   (char *)current->const_->const_.name,
+                                   current->const_);
             break;
         case LILY_MIR_CURRENT_KIND_FUN:
-            insert__HashMap(Module->insts,
-                            (char *)current->fun.fun->fun.name,
-                            current->fun.fun);
+            insert__OrderedHashMap(Module->insts,
+                                   (char *)current->fun.fun->fun.name,
+                                   current->fun.fun);
             break;
         case LILY_MIR_CURRENT_KIND_STRUCT:
-            insert__HashMap(Module->insts,
-                            (char *)current->struct_->struct_.name,
-                            current->struct_);
+            insert__OrderedHashMap(Module->insts,
+                                   (char *)current->struct_->struct_.name,
+                                   current->struct_);
             break;
         default:
             UNREACHABLE("unknown variant");
@@ -347,8 +347,8 @@ LilyMirBuildCall(LilyMirModule *Module,
 void
 LilyMirDisposeModule(const LilyMirModule *Module)
 {
-    FREE_HASHMAP_VALUES(Module->insts, LilyMirInstruction);
-    FREE(HashMap, Module->insts);
+    FREE_ORD_HASHMAP_VALUES(Module->insts, LilyMirInstruction);
+    FREE(OrderedHashMap, Module->insts);
     FREE_STACK_ITEMS(Module->current, LilyMirCurrent);
     FREE(Stack, Module->current);
 }

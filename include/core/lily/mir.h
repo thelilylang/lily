@@ -26,7 +26,7 @@
 #define LILY_CORE_LILY_MIR_H
 
 #include <base/assert.h>
-#include <base/hash_map.h>
+#include <base/ordered_hash_map.h>
 #include <base/stack.h>
 #include <base/vec.h>
 
@@ -35,6 +35,8 @@
 #include <core/lily/mir/scope.h>
 
 #include <stdio.h>
+
+#define MAX_CURRENT_INST 8192
 
 typedef struct LilyMirNameManager
 {
@@ -139,9 +141,8 @@ DESTRUCTOR(LilyMirCurrent, LilyMirCurrent *self);
 
 typedef struct LilyMirModule
 {
-    HashMap *insts; // HashMap<LilyMirInstruction*>*
-    // Vec *insts;     // Vec<LilyMirInstruction*>*
-    Stack *current; // Stack<LilyMirCurrent*>*
+    OrderedHashMap *insts; // OrderedHashMap<LilyMirInstruction*>*
+    Stack *current;        // Stack<LilyMirCurrent*>*
 } LilyMirModule;
 
 /**
@@ -151,8 +152,8 @@ typedef struct LilyMirModule
 inline LilyMirModule
 LilyMirCreateModule()
 {
-    return (LilyMirModule){ .insts = NEW(HashMap),
-                            .current = NEW(Stack, 8192) };
+    return (LilyMirModule){ .insts = NEW(OrderedHashMap),
+                            .current = NEW(Stack, MAX_CURRENT_INST) };
 }
 
 /**

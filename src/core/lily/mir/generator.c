@@ -65,19 +65,7 @@ run__LilyMir(LilyPackage *self)
 #ifdef DEBUG_MIR
     printf("====MIR Generator(%s)====\n", self->global_name->buffer);
 
-    for (Usize i = 0; i < self->mir_module.insts->capacity; ++i) {
-        if (self->mir_module.insts->buckets[i]) {
-            DEBUG_STRING_BUCKET(self->mir_module.insts->buckets[i],
-                                to_string__Debug__LilyMirInstruction);
-        }
-    }
-
-    // HashMapIter iter = NEW(HashMapIter, self->mir_module.insts);
-    // void *current = NULL;
-
-    // while ((current = next__HashMapIter(&iter))) {
-    //     PRINTLN("{Sr}",
-    //             to_string__Debug__LilyMirInstruction(current));
-    // }
+    PRINT_STRING_ORD_HASH_MAP(self->mir_module.insts,
+                              to_string__Debug__LilyMirInstruction);
 #endif
 }
