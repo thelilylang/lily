@@ -120,10 +120,12 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                              const Vec *decls,
                              LilyCheckedDeclModule *module);
 
+/// @param deps Vec<LilyCheckedDecl* (&)>* (&)?
 static LilyCheckedDataType *
 check_data_type__LilyAnalysis(LilyAnalysis *self,
                               LilyAstDataType *data_type,
                               LilyCheckedScope *scope,
+                              Vec *deps,
                               enum LilyCheckedSafetyMode safety_mode);
 
 static LilyCheckedExpr *
@@ -305,10 +307,11 @@ check_for_recursive_data_type__LilyAnalysis(LilyAnalysis *self,
                                             LilyCheckedDataType *data_type,
                                             String *global_name);
 
-static Vec *
-check_fields__LilyAnalysis(LilyAnalysis *self,
-                           Vec *ast_fields,
-                           LilyCheckedScope *scope);
+static void
+check_record_fields__LilyAnalysis(LilyAnalysis *self,
+                                  Vec *ast_fields,
+                                  LilyCheckedScope *scope,
+                                  LilyCheckedDecl *record);
 
 static void
 check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record);
@@ -1046,6 +1049,7 @@ LilyCheckedDataType *
 check_data_type__LilyAnalysis(LilyAnalysis *self,
                               LilyAstDataType *data_type,
                               LilyCheckedScope *scope,
+                              Vec *deps,
                               enum LilyCheckedSafetyMode safety_mode)
 {
     switch (data_type->kind) {
@@ -1071,12 +1075,15 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                       LilyCheckedDataType,
                       array,
                       &data_type->location,
-                      NEW_VARIANT(
-                        LilyCheckedDataTypeArray,
-                        sized,
-                        check_data_type__LilyAnalysis(
-                          self, data_type->array.data_type, scope, safety_mode),
-                        data_type->array.size));
+                      NEW_VARIANT(LilyCheckedDataTypeArray,
+                                  sized,
+                                  check_data_type__LilyAnalysis(
+                                    self,
+                                    data_type->array.data_type,
+                                    scope,
+                                    deps,
+                                    safety_mode),
+                                  data_type->array.size));
                 default:
                     return NEW_VARIANT(LilyCheckedDataType,
                                        array,
@@ -1088,6 +1095,7 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                                              self,
                                              data_type->array.data_type,
                                              scope,
+                                             deps,
                                              safety_mode)));
             }
         case LILY_AST_DATA_TYPE_KIND_BOOL:
@@ -1174,6 +1182,10 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                                LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
                                &data_type->location);
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD:
+                    if (deps) {
+                        push__Vec(deps, custom_dt_response.decl);
+                    }
+
                     return NEW_VARIANT(
                       LilyCheckedDataType,
                       custom,
@@ -1210,7 +1222,7 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
               exception,
               &data_type->location,
               check_data_type__LilyAnalysis(
-                self, data_type->exception, scope, safety_mode));
+                self, data_type->exception, scope, deps, safety_mode));
         case LILY_AST_DATA_TYPE_KIND_FLOAT32:
             return NEW(LilyCheckedDataType,
                        LILY_CHECKED_DATA_TYPE_KIND_FLOAT32,
@@ -1242,17 +1254,19 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_DATA_TYPE_KIND_LAMBDA:
             TODO("check lambda");
         case LILY_AST_DATA_TYPE_KIND_LIST:
-            return NEW_VARIANT(LilyCheckedDataType,
-                               list,
-                               &data_type->location,
-                               check_data_type__LilyAnalysis(
-                                 self, data_type->list, scope, safety_mode));
+            return NEW_VARIANT(
+              LilyCheckedDataType,
+              list,
+              &data_type->location,
+              check_data_type__LilyAnalysis(
+                self, data_type->list, scope, deps, safety_mode));
         case LILY_AST_DATA_TYPE_KIND_MUT:
-            return NEW_VARIANT(LilyCheckedDataType,
-                               mut,
-                               &data_type->location,
-                               check_data_type__LilyAnalysis(
-                                 self, data_type->mut, scope, safety_mode));
+            return NEW_VARIANT(
+              LilyCheckedDataType,
+              mut,
+              &data_type->location,
+              check_data_type__LilyAnalysis(
+                self, data_type->mut, scope, deps, safety_mode));
         case LILY_AST_DATA_TYPE_KIND_NEVER:
             return NEW(LilyCheckedDataType,
                        LILY_CHECKED_DATA_TYPE_KIND_NEVER,
@@ -1265,7 +1279,7 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
               optional,
               &data_type->location,
               check_data_type__LilyAnalysis(
-                self, data_type->optional, scope, safety_mode));
+                self, data_type->optional, scope, deps, safety_mode));
         case LILY_AST_DATA_TYPE_KIND_PTR:
             switch (data_type->ptr->kind) {
                 case LILY_AST_DATA_TYPE_KIND_MUT:
@@ -1274,14 +1288,14 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                       ptr_mut,
                       &data_type->location,
                       check_data_type__LilyAnalysis(
-                        self, data_type->ptr->mut, scope, safety_mode));
+                        self, data_type->ptr->mut, scope, deps, safety_mode));
                 default:
                     return NEW_VARIANT(
                       LilyCheckedDataType,
                       ptr,
                       &data_type->location,
                       check_data_type__LilyAnalysis(
-                        self, data_type->ptr, scope, safety_mode));
+                        self, data_type->ptr, scope, deps, safety_mode));
             }
         case LILY_AST_DATA_TYPE_KIND_REF:
             switch (data_type->ref->kind) {
@@ -1291,14 +1305,14 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                       ref_mut,
                       &data_type->location,
                       check_data_type__LilyAnalysis(
-                        self, data_type->ref->mut, scope, safety_mode));
+                        self, data_type->ref->mut, scope, deps, safety_mode));
                 default:
                     return NEW_VARIANT(
                       LilyCheckedDataType,
                       ref,
                       &data_type->location,
                       check_data_type__LilyAnalysis(
-                        self, data_type->ref, scope, safety_mode));
+                        self, data_type->ref, scope, deps, safety_mode));
             }
         case LILY_AST_DATA_TYPE_KIND_SELF:
             TODO("Check Self data type");
@@ -1313,14 +1327,14 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                       trace_mut,
                       &data_type->location,
                       check_data_type__LilyAnalysis(
-                        self, data_type->trace->mut, scope, safety_mode));
+                        self, data_type->trace->mut, scope, deps, safety_mode));
                 default:
                     return NEW_VARIANT(
                       LilyCheckedDataType,
                       trace,
                       &data_type->location,
                       check_data_type__LilyAnalysis(
-                        self, data_type->trace, scope, safety_mode));
+                        self, data_type->trace, scope, deps, safety_mode));
             }
         case LILY_AST_DATA_TYPE_KIND_TUPLE:
             TODO("check tuple");
@@ -3055,9 +3069,13 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     if (current_fun) {
                                         add_fun_dep__LilyCheckedDeclFun(
                                           &current_fun->decl->fun, fun);
-                                    }
 
-                                    add__LilyCheckedHistory(history, fun);
+                                        // The history is not optional when we
+                                        // are in the scope of the function.
+                                        ASSERT(history);
+
+                                        add__LilyCheckedHistory(history, fun);
+                                    }
                                 }
 
                                 if (
@@ -3066,17 +3084,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     history,
                                     get_original_signature__LilyCheckedDeclFun(
                                       &fun->fun))) {
-                                    if (history) {
-                                        check_fun__LilyAnalysis(self, fun);
-                                        // check_fun_signature__LilyAnalysis(self,
-                                        //                                   fun);
-
-                                        FREE(LilyCheckedHistory, history);
-                                    } else {
-                                        check_fun__LilyAnalysis(self, fun);
-                                        // check_fun_signature__LilyAnalysis(self,
-                                        //                                   fun);
-                                    }
+                                    check_fun__LilyAnalysis(self, fun);
                                 }
 
                                 if (fun->fun.is_main) {
@@ -3347,6 +3355,10 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     }
 
                                     FREE(LilyCheckedScopeResponse, &response);
+
+                                    if (history) {
+                                        FREE(LilyCheckedHistory, history);
+                                    }
 
                                     return fun_call;
                                 }
@@ -3832,7 +3844,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                              must_mut,
                                                              NULL);
             LilyCheckedDataType *dest = check_data_type__LilyAnalysis(
-              self, expr->cast.dest_data_type, scope, safety_mode);
+              self, expr->cast.dest_data_type, scope, NULL, safety_mode);
             enum LilyCheckedExprCastKind kind;
 
             valid_cast__LilyAnalysis(self, left->data_type, dest, safety_mode);
@@ -5351,7 +5363,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             LilyCheckedDataType *checked_data_type =
               stmt->variable.data_type
                 ? check_data_type__LilyAnalysis(
-                    self, stmt->variable.data_type, scope, safety_mode)
+                    self, stmt->variable.data_type, scope, NULL, safety_mode)
                 : NULL;
             LilyCheckedExpr *expr =
               check_expr__LilyAnalysis(self,
@@ -5476,8 +5488,12 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
 
         if (param->data_type) {
             // TODO: check the safety mode of the function
-            checked_param_data_type = check_data_type__LilyAnalysis(
-              self, param->data_type, scope, LILY_CHECKED_SAFETY_MODE_SAFE);
+            checked_param_data_type =
+              check_data_type__LilyAnalysis(self,
+                                            param->data_type,
+                                            scope,
+                                            NULL,
+                                            LILY_CHECKED_SAFETY_MODE_SAFE);
         } else {
             checked_param_data_type = NEW(
               LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, NULL);
@@ -5633,6 +5649,7 @@ check_fun_signature__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
               check_data_type__LilyAnalysis(self,
                                             fun->ast_decl->fun.return_data_type,
                                             fun->fun.scope,
+                                            NULL,
                                             LILY_CHECKED_SAFETY_MODE_SAFE);
 
             // Check the return data type of the main function.
@@ -5801,6 +5818,7 @@ check_constant__LilyAnalysis(LilyAnalysis *self,
       check_data_type__LilyAnalysis(self,
                                     constant->ast_decl->constant.data_type,
                                     scope,
+                                    NULL,
                                     LILY_CHECKED_SAFETY_MODE_SAFE);
 
     constant->constant.expr =
@@ -5847,15 +5865,17 @@ check_alias__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *alias)
       check_data_type__LilyAnalysis(self,
                                     alias->ast_decl->type.alias.data_type,
                                     alias->type.alias.scope,
+                                    NULL,
                                     LILY_CHECKED_SAFETY_MODE_SAFE);
 
     alias->type.alias.is_checked = true;
 }
 
-Vec *
-check_fields__LilyAnalysis(LilyAnalysis *self,
-                           Vec *ast_fields,
-                           LilyCheckedScope *scope)
+void
+check_record_fields__LilyAnalysis(LilyAnalysis *self,
+                                  Vec *ast_fields,
+                                  LilyCheckedScope *scope,
+                                  LilyCheckedDecl *record)
 {
     Vec *check_fields = NEW(Vec);
 
@@ -5863,8 +5883,12 @@ check_fields__LilyAnalysis(LilyAnalysis *self,
         LilyAstField *ast_field = get__Vec(ast_fields, i);
 
         // TODO: in the future add a support for unsafe record
-        LilyCheckedDataType *data_type = check_data_type__LilyAnalysis(
-          self, ast_field->data_type, scope, LILY_CHECKED_SAFETY_MODE_SAFE);
+        LilyCheckedDataType *data_type =
+          check_data_type__LilyAnalysis(self,
+                                        ast_field->data_type,
+                                        scope,
+                                        record->type.deps,
+                                        LILY_CHECKED_SAFETY_MODE_SAFE);
         LilyCheckedExpr *optional_expr = NULL;
 
         if (ast_field->optional_expr) {
@@ -5904,7 +5928,7 @@ check_fields__LilyAnalysis(LilyAnalysis *self,
                       &ast_field->location));
     }
 
-    return check_fields;
+    record->type.record.fields = check_fields;
 }
 
 bool
@@ -5971,8 +5995,10 @@ check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record)
                                record->type.record.scope);
     }
 
-    record->type.record.fields = check_fields__LilyAnalysis(
-      self, record->ast_decl->type.record.fields, record->type.record.scope);
+    check_record_fields__LilyAnalysis(self,
+                                      record->ast_decl->type.record.fields,
+                                      record->type.record.scope,
+                                      record);
 
     // Check if the record is recursive
     for (Usize i = 0; i < record->type.record.fields->len; ++i) {
@@ -6006,6 +6032,7 @@ check_variants__LilyAnalysis(LilyAnalysis *self,
               check_data_type__LilyAnalysis(self,
                                             ast_variant->data_type,
                                             scope,
+                                            NULL,
                                             LILY_CHECKED_SAFETY_MODE_SAFE);
         }
 
