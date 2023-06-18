@@ -319,9 +319,9 @@ LilyMirGetValFromInst(LilyMirInstruction *inst);
  * @brief Check if the key of the instruction is unique.
  */
 inline bool
-LilyMirKeyIsUnique(LilyMirModule *Module, String *key)
+LilyMirKeyIsUnique(LilyMirModule *Module, char *key)
 {
-    return !get__OrderedHashMap(Module->insts, key->buffer);
+    return !get__OrderedHashMap(Module->insts, key);
 }
 
 #endif // LILY_CORE_LILY_MIR_H
