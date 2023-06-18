@@ -487,6 +487,7 @@ search_error__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                       e->location,
                       NEW_VARIANT(
                         LilyCheckedScopeContainer, error, self->id, error),
+                      e,
                       &e->error);
                 }
             }
@@ -522,6 +523,7 @@ search_alias__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                       a->location,
                       NEW_VARIANT(
                         LilyCheckedScopeContainer, alias, self->id, alias),
+                      a,
                       &a->type.alias);
                 }
             }
@@ -557,6 +559,7 @@ search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                       r->location,
                       NEW_VARIANT(
                         LilyCheckedScopeContainer, record, self->id, record),
+                      r,
                       &r->type.record);
                 }
             }
