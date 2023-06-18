@@ -33,6 +33,7 @@
 
 #include <stddef.h>
 
+typedef struct LilyCheckedDecl LilyCheckedDecl;
 typedef struct LilyCheckedDeclModule LilyCheckedDeclModule;
 typedef struct LilyCheckedDeclConstant LilyCheckedDeclConstant;
 typedef struct LilyCheckedDeclEnum LilyCheckedDeclEnum;
@@ -85,6 +86,9 @@ typedef struct LilyCheckedScopeResponse
     LilyCheckedScopeContainer
       scope_container; // NOTE: scope_container is undef when kind is equal to
                        // LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND
+    // NOTE: NULL when it's a function and is not an object or a type or an
+    // error declaration.
+    LilyCheckedDecl *decl; // LilyCheckedDecl*? (&)
     union
     {
         LilyCheckedDeclModule *module;
@@ -134,6 +138,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_MODULE,
         .location = location,
         .scope_container = scope_container,
+        .decl = NULL,
         .module = module
     };
 }
@@ -154,6 +159,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_CONSTANT,
         .location = location,
         .scope_container = scope_container,
+        .decl = NULL,
         .constant = constant
     };
 }
@@ -168,12 +174,14 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                            enum_,
                            const Location *location,
                            LilyCheckedScopeContainer scope_container,
+                           LilyCheckedDecl *decl,
                            LilyCheckedDeclEnum *enum_)
 {
     return (LilyCheckedScopeResponse){ .kind =
                                          LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM,
                                        .location = location,
                                        .scope_container = scope_container,
+                                       .decl = decl,
                                        .enum_ = enum_ };
 }
 
@@ -193,6 +201,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT,
         .location = location,
         .scope_container = scope_container,
+        .decl = NULL,
         .enum_variant = enum_variant
     };
 }
@@ -207,12 +216,14 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                            record,
                            const Location *location,
                            LilyCheckedScopeContainer scope_container,
+                           LilyCheckedDecl *decl,
                            LilyCheckedDeclRecord *record)
 {
     return (LilyCheckedScopeResponse){
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD,
         .location = location,
         .scope_container = scope_container,
+        .decl = decl,
         .record = record
     };
 }
@@ -233,6 +244,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD,
         .location = location,
         .scope_container = scope_container,
+        .decl = NULL,
         .record_field = record_field
     };
 }
@@ -247,12 +259,14 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                            alias,
                            const Location *location,
                            LilyCheckedScopeContainer scope_container,
+                           LilyCheckedDecl *decl,
                            LilyCheckedDeclAlias *alias)
 {
     return (LilyCheckedScopeResponse){ .kind =
                                          LILY_CHECKED_SCOPE_RESPONSE_KIND_ALIAS,
                                        .location = location,
                                        .scope_container = scope_container,
+                                       .decl = decl,
                                        .alias = alias };
 }
 
@@ -266,12 +280,14 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                            error,
                            const Location *location,
                            LilyCheckedScopeContainer scope_container,
+                           LilyCheckedDecl *decl,
                            LilyCheckedDeclError *error)
 {
     return (LilyCheckedScopeResponse){ .kind =
                                          LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR,
                                        .location = location,
                                        .scope_container = scope_container,
+                                       .decl = decl,
                                        .error = error };
 }
 
@@ -285,12 +301,14 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                            enum_object,
                            const Location *location,
                            LilyCheckedScopeContainer scope_container,
+                           LilyCheckedDecl *decl,
                            LilyCheckedDeclEnumObject *enum_object)
 {
     return (LilyCheckedScopeResponse){
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_OBJECT,
         .location = location,
         .scope_container = scope_container,
+        .decl = decl,
         .enum_object = enum_object
     };
 }
@@ -305,12 +323,14 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                            record_object,
                            const Location *location,
                            LilyCheckedScopeContainer scope_container,
+                           LilyCheckedDecl *decl,
                            LilyCheckedDeclRecordObject *record_object)
 {
     return (LilyCheckedScopeResponse){
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_OBJECT,
         .location = location,
         .scope_container = scope_container,
+        .decl = decl,
         .record_object = record_object
     };
 }
@@ -325,12 +345,14 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                            class,
                            const Location *location,
                            LilyCheckedScopeContainer scope_container,
+                           LilyCheckedDecl *decl,
                            LilyCheckedDeclClass *class)
 {
     return (LilyCheckedScopeResponse){ .kind =
                                          LILY_CHECKED_SCOPE_RESPONSE_KIND_CLASS,
                                        .location = location,
                                        .scope_container = scope_container,
+                                       .decl = decl,
                                        .class = class };
 }
 
@@ -344,12 +366,14 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                            trait,
                            const Location *location,
                            LilyCheckedScopeContainer scope_container,
+                           LilyCheckedDecl *decl,
                            LilyCheckedDeclTrait *trait)
 {
     return (LilyCheckedScopeResponse){ .kind =
                                          LILY_CHECKED_SCOPE_RESPONSE_KIND_TRAIT,
                                        .location = location,
                                        .scope_container = scope_container,
+                                       .decl = decl,
                                        .trait = trait };
 }
 
@@ -369,6 +393,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
                                          LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN,
                                        .location = location,
                                        .scope_container = scope_container,
+                                       .decl = NULL,
                                        .fun = fun };
 }
 
@@ -386,6 +411,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
     return (LilyCheckedScopeResponse){
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_LABEL,
         .location = location,
+        .decl = NULL,
         .scope_container = scope_container,
     };
 }
@@ -406,6 +432,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_VARIABLE,
         .location = location,
         .scope_container = scope_container,
+        .decl = NULL,
         .variable = variable
     };
 }
@@ -426,6 +453,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN_PARAM,
         .location = location,
         .scope_container = scope_container,
+        .decl = NULL,
         .fun_param = fun_param
     };
 }
@@ -446,6 +474,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_METHOD_PARAM,
         .location = location,
         .scope_container = scope_container,
+        .decl = NULL,
         .method_param = method_param
     };
 }
@@ -466,6 +495,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_GENERIC,
         .location = location,
         .scope_container = scope_container,
+        .decl = NULL,
         .generic = generic
     };
 }
