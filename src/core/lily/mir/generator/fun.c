@@ -48,9 +48,8 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
           get_user_defined_signature__LilyCheckedDeclFun(&fun_dep->fun);
 
         if (signature) {
-            if (LilyMirKeyIsUnique(module, signature->global_name)) {
+            if (LilyMirKeyIsUnique(module, signature->ser_global_name)) {
                 generate_fun__LilyMir(module, get__Vec(fun->fun.fun_deps, i));
-                LilyMirPopCurrent(module);
             }
         }
     }
@@ -58,8 +57,9 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
     for (Usize i = 0; i < fun->fun.signatures->len; ++i) {
         LilyCheckedSignatureFun *signature = get__Vec(fun->fun.signatures, i);
 
-        if (contains_compiler_defined_dt__LilyCheckedSignatureFun(signature) ||
-            !LilyMirKeyIsUnique(module, signature->global_name)) {
+        if (contains_compiler_defined_dt__LilyCheckedSignatureFun(signature)) {
+            continue;
+        } else if (!LilyMirKeyIsUnique(module, signature->ser_global_name)) {
             continue;
         }
 
@@ -114,8 +114,6 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
             }
         }
 
-        if (i != fun->fun.signatures->len - 1) {
-            LilyMirPopCurrent(module);
-        }
+        LilyMirPopCurrent(module);
     }
 }

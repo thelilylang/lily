@@ -59,7 +59,9 @@ run__LilyMir(LilyPackage *self)
                 break;
         }
 
-        LilyMirPopCurrent(&self->mir_module);
+        if (decl->kind != LILY_CHECKED_DECL_KIND_FUN) {
+            LilyMirPopCurrent(&self->mir_module);
+        }
     }
 
 #ifdef DEBUG_MIR
