@@ -76,6 +76,9 @@ get_bucket__HashMapBucket(const HashMapBucket *self, char *key)
 void *
 get__HashMap(HashMap *self, char *key)
 {
+	if (!self->buckets)
+		return NULL;
+
     Usize index = index__HashMap(self, key);
     HashMapBucket *bucket = self->buckets[index];
 
