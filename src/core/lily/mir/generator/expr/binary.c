@@ -128,7 +128,8 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
             if ((is_integer_data_type__LilyCheckedDataType(left_data_type) ||
                  is_float_data_type__LilyCheckedDataType(left_data_type) ||
                  left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE ||
-                 left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL) &&
+                 left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL ||
+                 left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_CHAR) &&
                 left_data_type->kind == right_data_type->kind) {
                 operator_is_builtin = true;
             }
@@ -305,7 +306,9 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                 break;
             case LILY_CHECKED_EXPR_BINARY_KIND_EQ:
                 if (is_integer_data_type__LilyCheckedDataType(left_data_type) ||
-                    left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
+                    left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE ||
+                    left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL ||
+                    left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_CHAR) {
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                           icmp_eq,
                                           NEW(LilyMirInstructionDestSrc,
@@ -440,7 +443,9 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                 break;
             case LILY_CHECKED_EXPR_BINARY_KIND_NOT_EQ:
                 if (is_integer_data_type__LilyCheckedDataType(left_data_type) ||
-                    left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
+                    left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE ||
+                    left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL ||
+                    left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_CHAR) {
                     op_inst = NEW_VARIANT(LilyMirInstruction,
                                           icmp_ne,
                                           NEW(LilyMirInstructionDestSrc,
