@@ -55,6 +55,8 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyCheckedDeclObject
 {
     enum LilyCheckedDeclObjectKind kind;
+    // Type dependencies
+    Vec *deps; // Vec<LilyCheckedDataType* (&)>*
     union
     {
         LilyCheckedDeclClass class;
@@ -75,6 +77,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
                            LilyCheckedDeclClass class)
 {
     return (LilyCheckedDeclObject){ .kind = LILY_CHECKED_DECL_OBJECT_KIND_CLASS,
+                                    .deps = NEW(Vec),
                                     .class = class };
 }
 
@@ -89,6 +92,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
                            LilyCheckedDeclEnumObject enum_)
 {
     return (LilyCheckedDeclObject){ .kind = LILY_CHECKED_DECL_OBJECT_KIND_ENUM,
+                                    .deps = NEW(Vec),
                                     .enum_ = enum_ };
 }
 
@@ -104,6 +108,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
 {
     return (LilyCheckedDeclObject){ .kind =
                                       LILY_CHECKED_DECL_OBJECT_KIND_RECORD,
+                                    .deps = NEW(Vec),
                                     .record = record };
 }
 
@@ -118,6 +123,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclObject,
                            LilyCheckedDeclTrait trait)
 {
     return (LilyCheckedDeclObject){ .kind = LILY_CHECKED_DECL_OBJECT_KIND_TRAIT,
+                                    .deps = NEW(Vec),
                                     .trait = trait };
 }
 

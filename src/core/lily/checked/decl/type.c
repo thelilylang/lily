@@ -92,11 +92,13 @@ VARIANT_DESTRUCTOR(LilyCheckedDeclType, alias, const LilyCheckedDeclType *self)
 
 VARIANT_DESTRUCTOR(LilyCheckedDeclType, enum, const LilyCheckedDeclType *self)
 {
+    FREE(Vec, self->deps);
     FREE(LilyCheckedDeclEnum, &self->enum_);
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedDeclType, record, const LilyCheckedDeclType *self)
 {
+    FREE(Vec, self->deps);
     FREE(LilyCheckedDeclRecord, &self->record);
 }
 

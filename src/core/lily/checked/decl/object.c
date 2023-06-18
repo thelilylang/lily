@@ -103,6 +103,7 @@ VARIANT_DESTRUCTOR(LilyCheckedDeclObject,
                    class,
                    const LilyCheckedDeclObject *self)
 {
+    FREE(Vec, self->deps);
     FREE(LilyCheckedDeclClass, &self->class);
 }
 
@@ -110,6 +111,7 @@ VARIANT_DESTRUCTOR(LilyCheckedDeclObject,
                    enum,
                    const LilyCheckedDeclObject *self)
 {
+    FREE(Vec, self->deps);
     FREE(LilyCheckedDeclEnumObject, &self->enum_);
 }
 
@@ -117,6 +119,7 @@ VARIANT_DESTRUCTOR(LilyCheckedDeclObject,
                    record,
                    const LilyCheckedDeclObject *self)
 {
+    FREE(Vec, self->deps);
     FREE(LilyCheckedDeclRecordObject, &self->record);
 }
 
@@ -124,6 +127,7 @@ VARIANT_DESTRUCTOR(LilyCheckedDeclObject,
                    trait,
                    const LilyCheckedDeclObject *self)
 {
+    FREE(Vec, self->deps);
     FREE(LilyCheckedDeclTrait, &self->trait);
 }
 
