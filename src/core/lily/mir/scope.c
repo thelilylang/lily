@@ -25,6 +25,20 @@
 #include <core/lily/mir/instruction.h>
 #include <core/lily/mir/scope.h>
 
+#include <stdio.h>
+
+static VARIANT_DESTRUCTOR(LilyMirScopeInstance,
+                          field,
+                          LilyMirScopeInstance *self);
+
+static VARIANT_DESTRUCTOR(LilyMirScopeInstance,
+                          param,
+                          LilyMirScopeInstance *self);
+
+static VARIANT_DESTRUCTOR(LilyMirScopeInstance,
+                          var,
+                          LilyMirScopeInstance *self);
+
 CONSTRUCTOR(LilyMirScopeParam *,
             LilyMirScopeParam,
             LilyCheckedDataType *data_type)
@@ -49,6 +63,114 @@ CONSTRUCTOR(LilyMirScopeVar *,
     return self;
 }
 
+CONSTRUCTOR(LilyMirScopeField *,
+            LilyMirScopeField,
+            String *global_name,
+            LilyCheckedDataType *data_type,
+            struct LilyMirScopeInstance *field_instance)
+{
+    LilyMirScopeField *self = lily_malloc(sizeof(LilyMirScopeField));
+
+    self->global_name = global_name;
+    self->data_type = data_type;
+    self->field_instance = field_instance;
+
+    return self;
+}
+
+DESTRUCTOR(LilyMirScopeField, LilyMirScopeField *self)
+{
+    if (self->field_instance) {
+        FREE(LilyMirScopeInstance, self->field_instance);
+    }
+
+    lily_free(self);
+}
+
+VARIANT_CONSTRUCTOR(LilyMirScopeInstance *,
+                    LilyMirScopeInstance,
+                    field,
+                    Vec *fields,
+                    LilyMirScopeField *field)
+{
+    LilyMirScopeInstance *self = lily_malloc(sizeof(LilyMirScopeInstance));
+
+    self->kind = LILY_MIR_SCOPE_INSTANCE_KIND_FIELD;
+    self->fields = fields;
+    self->field = field;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirScopeInstance *,
+                    LilyMirScopeInstance,
+                    param,
+                    Vec *fields,
+                    const LilyMirScopeParam *param)
+{
+    LilyMirScopeInstance *self = lily_malloc(sizeof(LilyMirScopeInstance));
+
+    self->kind = LILY_MIR_SCOPE_INSTANCE_KIND_PARAM;
+    self->fields = fields;
+    self->param = param;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirScopeInstance *,
+                    LilyMirScopeInstance,
+                    var,
+                    Vec *fields,
+                    const LilyMirScopeVar *var)
+{
+    LilyMirScopeInstance *self = lily_malloc(sizeof(LilyMirScopeInstance));
+
+    self->kind = LILY_MIR_SCOPE_INSTANCE_KIND_VAR;
+    self->fields = fields;
+    self->var = var;
+
+    return self;
+}
+
+VARIANT_DESTRUCTOR(LilyMirScopeInstance, field, LilyMirScopeInstance *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->fields->buffer, self->fields->len, LilyMirScopeField);
+    FREE(Vec, self->fields);
+    FREE(LilyMirScopeField, self->field);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyMirScopeInstance, param, LilyMirScopeInstance *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->fields->buffer, self->fields->len, LilyMirScopeField);
+    FREE(Vec, self->fields);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyMirScopeInstance, var, LilyMirScopeInstance *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->fields->buffer, self->fields->len, LilyMirScopeField);
+    FREE(Vec, self->fields);
+    lily_free(self);
+}
+
+DESTRUCTOR(LilyMirScopeInstance, LilyMirScopeInstance *self)
+{
+    switch (self->kind) {
+        case LILY_MIR_SCOPE_INSTANCE_KIND_FIELD:
+            return FREE_VARIANT(LilyMirScopeInstance, field, self);
+        case LILY_MIR_SCOPE_INSTANCE_KIND_PARAM:
+            return FREE_VARIANT(LilyMirScopeInstance, param, self);
+        case LILY_MIR_SCOPE_INSTANCE_KIND_VAR:
+            return FREE_VARIANT(LilyMirScopeInstance, var, self);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 DESTRUCTOR(LilyMirScope, const LilyMirScope *self)
 {
     FREE_BUFFER_ITEMS(
@@ -59,4 +181,7 @@ DESTRUCTOR(LilyMirScope, const LilyMirScope *self)
     FREE(Vec, self->params);
     FREE_BUFFER_ITEMS(self->vars->buffer, self->vars->len, LilyMirScopeVar);
     FREE(Vec, self->vars);
+    FREE_BUFFER_ITEMS(
+      self->instances->buffer, self->instances->len, LilyMirScopeInstance);
+    FREE(Vec, self->instances);
 }
