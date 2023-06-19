@@ -81,8 +81,8 @@ get_bucket__OrderedHashMapBucket(const OrderedHashMapBucket *self, char *key)
 void *
 get__OrderedHashMap(OrderedHashMap *self, char *key)
 {
-	if (!self->buckets)
-		return NULL;
+    if (!self->buckets)
+        return NULL;
 
     Usize index = index__OrderedHashMap(self, key);
     OrderedHashMapBucket *bucket = self->buckets[index];
