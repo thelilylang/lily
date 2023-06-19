@@ -48,7 +48,8 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
           get_user_defined_signature__LilyCheckedDeclFun(&fun_dep->fun);
 
         if (signature) {
-            if (LilyMirKeyIsUnique(module, signature->ser_global_name->buffer)) {
+            if (LilyMirKeyIsUnique(module,
+                                   signature->ser_global_name->buffer)) {
                 generate_fun__LilyMir(module, get__Vec(fun->fun.fun_deps, i));
             }
         }
@@ -59,7 +60,10 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
 
         if (contains_compiler_defined_dt__LilyCheckedSignatureFun(signature)) {
             continue;
-        } else if (!LilyMirKeyIsUnique(module, fun->fun.is_main ? "main" : signature->ser_global_name->buffer)) {
+        } else if (!LilyMirKeyIsUnique(
+                     module,
+                     fun->fun.is_main ? "main"
+                                      : signature->ser_global_name->buffer)) {
             continue;
         }
 
