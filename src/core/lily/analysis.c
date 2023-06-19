@@ -1336,8 +1336,22 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                       check_data_type__LilyAnalysis(
                         self, data_type->trace, scope, deps, safety_mode));
             }
-        case LILY_AST_DATA_TYPE_KIND_TUPLE:
-            TODO("check tuple");
+        case LILY_AST_DATA_TYPE_KIND_TUPLE: {
+            Vec *tuple = NEW(Vec);
+
+            for (Usize i = 0; i < data_type->tuple->len; ++i) {
+                push__Vec(
+                  tuple,
+                  check_data_type__LilyAnalysis(self,
+                                                get__Vec(data_type->tuple, i),
+                                                scope,
+                                                deps,
+                                                safety_mode));
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedDataType, tuple, &data_type->location, tuple);
+        }
         case LILY_AST_DATA_TYPE_KIND_UINT16:
             return NEW(LilyCheckedDataType,
                        LILY_CHECKED_DATA_TYPE_KIND_UINT16,
@@ -4709,7 +4723,66 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_KIND_TRY:
             TODO("try expression");
         case LILY_AST_EXPR_KIND_TUPLE:
-            TODO("tuple expression");
+            if (defined_data_type) {
+                switch (defined_data_type->kind) {
+                    case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
+                        break;
+                    default:
+                        FAILED("expected tuple data type");
+                }
+
+                if (defined_data_type->tuple->len != expr->tuple.items->len) {
+                    FAILED("not the same size of tuple");
+                }
+
+                Vec *tuple = NEW(Vec); // Vec<LilyCheckedExpr*>*
+
+                for (Usize i = 0; i < expr->tuple.items->len; ++i) {
+                    push__Vec(tuple,
+                              check_expr__LilyAnalysis(
+                                self,
+                                get__Vec(expr->tuple.items, i),
+                                scope,
+                                safety_mode,
+                                is_moved_expr,
+                                must_mut,
+                                get__Vec(defined_data_type->tuple, i)));
+                }
+
+                return NEW_VARIANT(LilyCheckedExpr,
+                                   tuple,
+                                   &expr->location,
+                                   ref__LilyCheckedDataType(defined_data_type),
+                                   expr,
+                                   NEW(LilyCheckedExprTuple, tuple));
+            } else {
+                Vec *tuple_dt = NEW(Vec);   // Vec<LilyCheckedDataType*>*
+                Vec *tuple_expr = NEW(Vec); // Vec<LilyCheckedExpr*>*
+
+                for (Usize i = 0; i < expr->tuple.items->len; ++i) {
+                    LilyCheckedExpr *item = check_expr__LilyAnalysis(
+                      self,
+                      get__Vec(expr->tuple.items, i),
+                      scope,
+                      safety_mode,
+                      is_moved_expr,
+                      must_mut,
+                      get__Vec(defined_data_type->tuple, i));
+
+                    push__Vec(tuple_dt,
+                              ref__LilyCheckedDataType(item->data_type));
+                    push__Vec(tuple_expr, item);
+                }
+
+                return NEW_VARIANT(
+                  LilyCheckedExpr,
+                  tuple,
+                  &expr->location,
+                  NEW_VARIANT(
+                    LilyCheckedDataType, tuple, &expr->location, tuple_dt),
+                  expr,
+                  NEW(LilyCheckedExprTuple, tuple_expr));
+            }
         case LILY_AST_EXPR_KIND_UNARY: {
             LilyCheckedExpr *right = check_expr__LilyAnalysis(self,
                                                               expr->unary.right,
