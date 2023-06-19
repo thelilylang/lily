@@ -5306,6 +5306,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
 
             // TODO: add the `end_body` implicit return.
             // Add the `end_body` before the return statement
+            // FIXME: clone the item of the `end_body`.
             append__Vec(current_body, end_body);
 
             return NEW_VARIANT(LilyCheckedBodyFunItem,
@@ -6136,7 +6137,7 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
 
                         break;
                     default:
-                        TODO("check type");
+                        UNREACHABLE("unknown variant");
                 }
 
                 break;
