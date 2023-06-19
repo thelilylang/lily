@@ -228,7 +228,7 @@ The class can take an inheritance and an other class can take this class in inhe
 I think it's important to implement that in record object, enum object or class, because it's an avandage to implement that in a programming language.
 
 ```lily
-#[derive: Eq]
+#[Derive: Eq]
 object App class =
 end
 ```
@@ -238,77 +238,79 @@ end
 ### Testing
 
 ```
-test
-skip
+Test
+Skip
 ```
 
 ### Diagnostics
 
 ```
-allow
-warn
-deny
-forbid
-deprecated
-must_use
+Allow
+Warn
+Deny
+Forbid
+Deprecated
+MustUse
 ```
 
 ### ABI linking, symbols and FFI
 
 ```
-link
-repr
-main
-no_overload
+Link
+Repr
+Main
+NoOverload
 ```
 
 ### Code generation
 
 ```
-align
-alwaysinline
-builtin
-cold
-hot
-immarg
-noalias
-nobuiltin
-nocallback
-noinline
-nonnull
-norecurse
-noreturn
-nosync
-nounwind
-readonly
-readnone
-speculatable
-writeonly
-willreturn
+Align
+AlwaysInline
+Builtin
+Cold
+Hot
+Immarg
+NoAlias
+NoBuiltin
+NoCallback
+NoInline
+NonNull
+NoRecurse
+NoReturn
+NoSync
+NoUnwind
+ReadOnly
+ReadNone
+Speculatable
+WriteOnly
+WillReturn
 
-inline
-target_feature
-instruction_set
+Inline
+TargetFeature
+InstructionSet
 ```
 
 ### Documentation
 
 ```
-doc
+Doc
 ```
 
 ### Preludes
 
 ```
-no_std
-enable_sys
+NoBuiltin
+NoStd
+NoCore
+NoSys
 ```
 
 # System
 
 ```
-os
-arch
+Os
+Arch
 ```
 
 ## Error
@@ -893,7 +895,7 @@ end
 ## Lib
 
 ```lily
-#[link: "math"]
+#[Link: "math"]
 lib Math =
     val PI Float64;
 end
