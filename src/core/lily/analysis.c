@@ -195,13 +195,16 @@ static bool
 valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                                        const Location *location,
                                        Vec *params,
-                                       Vec *params_call);
+                                       Vec *params_call,
+                                       HashMap *called_generic_params);
 
+/// @param called_generic_params HashMap<LilyCheckedDataType*>*?
 /// @return Vec<LilyCheckedExprCallFunParam*>*?
 static Vec *
 check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
                                     const Location *location,
                                     Vec *ast_params,
+                                    HashMap *called_generic_params,
                                     LilyCheckedDeclFun *called_fun,
                                     LilyCheckedScope *scope,
                                     enum LilyCheckedSafetyMode safety_mode);
@@ -1579,12 +1582,12 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                             data_type = ref__LilyCheckedDataType(
                               response.fun_param->data_type);
                         }
-                        }
 
                         break;
-                    default:
-                        data_type = ref__LilyCheckedDataType(
-                          response.fun_param->data_type);
+                        default:
+                            data_type = ref__LilyCheckedDataType(
+                              response.fun_param->data_type);
+                        }
                 }
 
                 return NEW_VARIANT(
@@ -2331,7 +2334,8 @@ bool
 valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                                        const Location *location,
                                        Vec *params,
-                                       Vec *params_call)
+                                       Vec *params_call,
+                                       HashMap *called_generic_params)
 {
     if (!params_call) {
         bool is_ok = true;
@@ -2403,19 +2407,56 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                         break;
                     }
                     default:
-                        if (!eq__LilyCheckedDataType(
-                              param->data_type, param_call->value->data_type)) {
-                            ANALYSIS_EMIT_DIAGNOSTIC(
-                              self,
-                              simple_lily_error,
-                              param->data_type->location,
-                              NEW(LilyError,
-                                  LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
-                              NULL,
-                              NULL,
-                              NULL);
+                        switch (param->data_type->kind) {
+                            case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                                switch (param->data_type->custom.kind) {
+                                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                                        ASSERT(called_generic_params);
 
-                            return false;
+                                        if (!eq__LilyCheckedDataType(
+                                              get__HashMap(
+                                                called_generic_params,
+                                                param->data_type->custom.name
+                                                  ->buffer),
+                                              param_call->value->data_type)) {
+                                            ANALYSIS_EMIT_DIAGNOSTIC(
+                                              self,
+                                              simple_lily_error,
+                                              param->data_type->location,
+                                              NEW(
+                                                LilyError,
+                                                LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                                              NULL,
+                                              NULL,
+                                              NULL);
+
+                                            return false;
+                                        }
+
+                                        break;
+                                    default:
+                                        goto valid_data_type_of_param;
+                                }
+
+                                break;
+                            default:
+                            valid_data_type_of_param : {
+                                if (!eq__LilyCheckedDataType(
+                                      param->data_type,
+                                      param_call->value->data_type)) {
+                                    ANALYSIS_EMIT_DIAGNOSTIC(
+                                      self,
+                                      simple_lily_error,
+                                      param->data_type->location,
+                                      NEW(LilyError,
+                                          LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                                      NULL,
+                                      NULL,
+                                      NULL);
+
+                                    return false;
+                                }
+                            }
                         }
                 }
             } else {
@@ -2462,6 +2503,7 @@ Vec *
 check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
                                     const Location *location,
                                     Vec *ast_params,
+                                    HashMap *called_generic_params,
                                     LilyCheckedDeclFun *called_fun,
                                     LilyCheckedScope *scope,
                                     enum LilyCheckedSafetyMode safety_mode)
@@ -2499,19 +2541,45 @@ check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
         LilyCheckedDeclFunParam *fun_param = get__Vec(called_fun->params, i);
         LilyAstExprFunParamCall *call_param = get__Vec(ast_params, i);
 
-        LilyCheckedExpr *value = check_expr__LilyAnalysis(self,
-                                                          call_param->value,
-                                                          scope,
-                                                          safety_mode,
-                                                          false,
-                                                          false,
-                                                          fun_param->data_type);
+        LilyCheckedExpr *value = NULL;
+
+        switch (fun_param->data_type->kind) {
+            case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                switch (fun_param->data_type->custom.kind) {
+                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                        value = check_expr__LilyAnalysis(
+                          self,
+                          call_param->value,
+                          scope,
+                          safety_mode,
+                          false,
+                          false,
+                          get__HashMap(
+                            called_generic_params,
+                            fun_param->data_type->custom.name->buffer));
+
+                        break;
+                    default:
+                        goto check_other_param_value;
+                }
+
+                break;
+            default:
+            check_other_param_value : {
+                value = check_expr__LilyAnalysis(self,
+                                                 call_param->value,
+                                                 scope,
+                                                 safety_mode,
+                                                 false,
+                                                 false,
+                                                 fun_param->data_type);
+            }
+        }
 
         switch (call_param->kind) {
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
                 break;
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL:
-                // TODO: pass &param->location
                 push__Vec(checked_params,
                           NEW_VARIANT(LilyCheckedExprCallFunParam,
                                       normal,
@@ -2520,7 +2588,7 @@ check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
 
                 break;
             default:
-                break;
+                UNREACHABLE("unknown variant");
         }
     }
 
@@ -3270,6 +3338,36 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                                 if (fun->fun.generic_params) {
                                     generic_params = NEW(HashMap);
+
+                                    ASSERT(expr->call.fun.generic_params);
+
+                                    if (fun->fun.generic_params->len !=
+                                        expr->call.fun.generic_params->len) {
+                                        FAILED("the size of the generic params "
+                                               "is not the same");
+                                    }
+
+                                    for (Usize i = 0;
+                                         i < expr->call.fun.generic_params->len;
+                                         ++i) {
+                                        LilyCheckedGenericParam *generic_param =
+                                          get__Vec(fun->fun.generic_params, i);
+                                        LilyAstDataType *generic_param_call =
+                                          get__Vec(
+                                            expr->call.fun.generic_params, i);
+
+                                        insert__HashMap(
+                                          generic_params,
+                                          get_name__LilyCheckedGenericParam(
+                                            generic_param)
+                                            ->buffer,
+                                          check_data_type__LilyAnalysis(
+                                            self,
+                                            generic_param_call,
+                                            scope,
+                                            NULL,
+                                            safety_mode));
+                                    }
                                 }
 
                                 Vec *checked_params =
@@ -3277,6 +3375,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     self,
                                     &expr->location,
                                     expr->call.fun.params,
+                                    generic_params,
                                     &fun->fun,
                                     scope,
                                     safety_mode);
@@ -3285,7 +3384,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                       self,
                                       fun->location,
                                       fun->fun.params,
-                                      checked_params)) {
+                                      checked_params,
+                                      generic_params)) {
                                     LilyCheckedExpr *unknown_call = NEW_VARIANT(
                                       LilyCheckedExpr,
                                       call,
@@ -3411,6 +3511,30 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                     ->compiler_generic.name)));
 
                                             break;
+                                        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                                            switch (fun->fun.return_data_type
+                                                      ->custom.kind) {
+                                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                                                    ASSERT(generic_params);
+
+                                                    return_data_type =
+                                                      ref__LilyCheckedDataType(
+                                                        get__HashMap(
+                                                          generic_params,
+                                                          fun->fun
+                                                            .return_data_type
+                                                            ->custom.name
+                                                            ->buffer));
+
+                                                    break;
+                                                default:
+                                                    return_data_type =
+                                                      ref__LilyCheckedDataType(
+                                                        fun->fun
+                                                          .return_data_type);
+                                            }
+
+                                            break;
                                         default:
                                             return_data_type =
                                               ref__LilyCheckedDataType(
@@ -3421,7 +3545,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                                     // Push a new signature
                                     if (
-                                      contains_compiler_defined_dt__LilyCheckedDeclFun(
+                                      contains_uncertain_dt__LilyCheckedDeclFun(
                                         &fun->fun)) {
                                         push__Vec(fun_types, return_data_type);
 
@@ -6052,46 +6176,20 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
                 LilyCheckedGenericParam *generic_param =
                   get__Vec(fun->fun.generic_params, i);
 
-                switch (generic_param->kind) {
-                    case LILY_CHECKED_GENERIC_PARAM_KIND_CONSTRAINT:
-                        insert__HashMap(
-                          generic_params,
-                          generic_param->constraint.name->buffer,
-                          NEW_VARIANT(
-                            LilyCheckedDataType,
-                            custom,
-                            generic_param->location,
-                            NEW(LilyCheckedDataTypeCustom,
-                                fun->fun.scope->id,
-                                (LilyCheckedAccessScope){ .id = i },
-                                generic_param->constraint.name,
-                                generic_param->constraint.name,
-                                NULL,
-                                LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
-                                false)));
-
-                        break;
-                    case LILY_CHECKED_GENERIC_PARAM_KIND_NORMAL:
-                        insert__HashMap(
-                          generic_params,
-                          generic_param->normal->buffer,
-                          NEW_VARIANT(
-                            LilyCheckedDataType,
-                            custom,
-                            generic_param->location,
-                            NEW(LilyCheckedDataTypeCustom,
-                                fun->fun.scope->id,
-                                (LilyCheckedAccessScope){ .id = i },
-                                generic_param->normal,
-                                generic_param->normal,
-                                NULL,
-                                LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
-                                false)));
-
-                        break;
-                    default:
-                        UNREACHABLE("unknown variant");
-                }
+                insert__HashMap(
+                  generic_params,
+                  get_name__LilyCheckedGenericParam(generic_param)->buffer,
+                  NEW_VARIANT(LilyCheckedDataType,
+                              custom,
+                              generic_param->location,
+                              NEW(LilyCheckedDataTypeCustom,
+                                  fun->fun.scope->id,
+                                  (LilyCheckedAccessScope){ .id = i },
+                                  generic_param->constraint.name,
+                                  generic_param->constraint.name,
+                                  NULL,
+                                  LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
+                                  false)));
             }
         }
 
