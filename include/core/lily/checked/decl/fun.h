@@ -206,7 +206,9 @@ contains_compiler_defined_dt__LilyCheckedDeclFun(
  * @param signature Vec<LilyCheckedDataType* (&)>*
  */
 int
-add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature);
+add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
+                                  Vec *signature,
+                                  HashMap *generic_params);
 
 /**
  *

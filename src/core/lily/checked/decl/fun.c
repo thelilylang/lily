@@ -285,7 +285,9 @@ contains_compiler_defined_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
 }
 
 int
-add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
+add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
+                                  Vec *signature,
+                                  HashMap *generic_params)
 {
     ASSERT(signature->len != 0);
     ASSERT(signature->len == self->params->len + 1);
@@ -338,8 +340,10 @@ add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
         }
     }
 
-    push__Vec(self->signatures,
-              NEW(LilyCheckedSignatureFun, self->global_name, signature));
+    push__Vec(
+      self->signatures,
+      NEW(
+        LilyCheckedSignatureFun, self->global_name, signature, generic_params));
 
     return 0;
 }
