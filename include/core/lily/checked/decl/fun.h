@@ -62,7 +62,7 @@ typedef struct LilyCheckedDeclFunParam
     String *name;                   // String* (&)
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
     enum LilyCheckedDeclFunParamKind kind;
-    Location location;
+    const Location *location;
     bool is_moved;
     union
     {
@@ -80,7 +80,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDeclFunParam *,
                     default,
                     String *name,
                     LilyCheckedDataType *data_type,
-                    Location location,
+                    const Location *location,
                     LilyCheckedExpr *default_);
 
 /**
@@ -93,7 +93,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDeclFunParam *,
                     normal,
                     String *name,
                     LilyCheckedDataType *data_type,
-                    Location location);
+                    const Location *location);
 
 /**
  *

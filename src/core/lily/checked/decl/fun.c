@@ -70,7 +70,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDeclFunParam *,
                     default,
                     String *name,
                     LilyCheckedDataType *data_type,
-                    Location location,
+                    const Location *location,
                     LilyCheckedExpr *default_)
 {
     LilyCheckedDeclFunParam *self =
@@ -91,7 +91,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDeclFunParam *,
                     normal,
                     String *name,
                     LilyCheckedDataType *data_type,
-                    Location location)
+                    const Location *location)
 {
     LilyCheckedDeclFunParam *self =
       lily_malloc(sizeof(LilyCheckedDeclFunParam));
@@ -116,7 +116,7 @@ IMPL_FOR_DEBUG(to_string,
       "{sa}, is_moved = {b}, data_type =",
       self->name,
       to_string__Debug__LilyCheckedDeclFunParamKind(self->kind),
-      to_string__Debug__Location(&self->location),
+      to_string__Debug__Location(self->location),
       self->is_moved);
 
     if (self->data_type) {
@@ -290,6 +290,29 @@ add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
     ASSERT(signature->len != 0);
     ASSERT(signature->len == self->params->len + 1);
 
+    // printf("Signature will push:\n");
+
+    // for (Usize i = 0; i < signature->len; ++i) {
+    //     printf("%s\n",
+    //            to_string__Debug__LilyCheckedDataType(get__Vec(signature, i))
+    //              ->buffer);
+    // }
+
+    // for (Usize i = 0; i < self->signatures->len; ++i) {
+    //     Vec *pushed_signature =
+    //       CAST(LilyCheckedSignatureFun *, get__Vec(self->signatures,
+    //       i))->types;
+
+    //     printf("Signature #%zu:\n", i);
+
+    //     for (Usize j = 0; j < pushed_signature->len; ++j) {
+    //         printf("%s\n",
+    //                to_string__Debug__LilyCheckedDataType(
+    //                  get__Vec(pushed_signature, j))
+    //                  ->buffer);
+    //     }
+    // }
+
     for (Usize i = 0; i < self->signatures->len; ++i) {
         Vec *pushed_signature =
           CAST(LilyCheckedSignatureFun *, get__Vec(self->signatures, i))->types;
@@ -299,8 +322,12 @@ add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self, Vec *signature)
         bool is_match = true;
 
         for (Usize j = 0; j < pushed_signature->len; ++j) {
-            if (!eq__LilyCheckedDataType(get__Vec(pushed_signature, j),
-                                         get__Vec(signature, j))) {
+            LilyCheckedDataType *pushed_signature_dt =
+              get__Vec(pushed_signature, j);
+            LilyCheckedDataType *signature_dt = get__Vec(signature, j);
+
+            if (!eq__LilyCheckedDataType(pushed_signature_dt, signature_dt) ||
+                pushed_signature_dt->kind != signature_dt->kind) {
                 is_match = false;
                 break;
             }
@@ -368,6 +395,9 @@ get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
     for (Usize i = 0; i < self->params->len; ++i) {
         LilyCheckedDataType *data_type =
           CAST(LilyCheckedDeclFunParam *, get__Vec(self->params, i))->data_type;
+
+        printf("%s\n",
+               to_string__Debug__LilyCheckedDataType(data_type)->buffer);
 
         switch (data_type->kind) {
             case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
