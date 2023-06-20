@@ -59,13 +59,18 @@ reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self)
 }
 
 bool
-contains_compiler_defined_dt__LilyCheckedSignatureFun(
-  const LilyCheckedSignatureFun *self)
+contains_known_dt__LilyCheckedSignatureFun(const LilyCheckedSignatureFun *self)
 {
     for (Usize i = 0; i < self->types->len; ++i) {
-        if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
-              get__Vec(self->types, i))) {
+        LilyCheckedDataType *type = get__Vec(self->types, i);
+
+        if (is_compiler_defined_and_known_dt__LilyCheckedDataType(type)) {
             return true;
+        } else if (type->kind == LILY_CHECKED_DATA_TYPE_KIND_CUSTOM) {
+            if (type->custom.kind ==
+                LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC) {
+                return true;
+            }
         }
     }
 

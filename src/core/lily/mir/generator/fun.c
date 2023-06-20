@@ -58,7 +58,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
     for (Usize i = 0; i < fun->fun.signatures->len; ++i) {
         LilyCheckedSignatureFun *signature = get__Vec(fun->fun.signatures, i);
 
-        if (contains_compiler_defined_dt__LilyCheckedSignatureFun(signature)) {
+        if (contains_known_dt__LilyCheckedSignatureFun(signature)) {
             continue;
         } else if (!LilyMirKeyIsUnique(
                      module,

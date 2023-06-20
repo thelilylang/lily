@@ -59,8 +59,7 @@ reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self);
  * @brief Check if the signature contains a compiler defined data type.
  */
 bool
-contains_compiler_defined_dt__LilyCheckedSignatureFun(
-  const LilyCheckedSignatureFun *self);
+contains_known_dt__LilyCheckedSignatureFun(const LilyCheckedSignatureFun *self);
 
 /**
  *

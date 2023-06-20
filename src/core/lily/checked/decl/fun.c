@@ -444,7 +444,7 @@ get_user_defined_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self)
     for (Usize i = 0; i < self->signatures->len; ++i) {
         LilyCheckedSignatureFun *signature = get__Vec(self->signatures, i);
 
-        if (!contains_compiler_defined_dt__LilyCheckedSignatureFun(signature)) {
+        if (!contains_known_dt__LilyCheckedSignatureFun(signature)) {
             return signature;
         }
     }
