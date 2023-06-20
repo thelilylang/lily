@@ -6128,7 +6128,7 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
             case LILY_CHECKED_DATA_TYPE_KIND_INT32:
             case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
             case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
-                if (fun->fun.has_return &&
+                if (!fun->fun.has_return &&
                     (fun->fun.return_data_type->kind !=
                        LILY_CHECKED_DATA_TYPE_KIND_UNIT &&
                      fun->fun.return_data_type->kind !=
