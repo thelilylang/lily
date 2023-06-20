@@ -1944,8 +1944,9 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
                                       expr->call.fun.fun->fun.return_data_type);
                     }
 
+                    // TODO: manage generic params
                     if (add_signature__LilyCheckedDeclFun(
-                          &expr->call.fun.fun->fun, fun_types)) {
+                          &expr->call.fun.fun->fun, fun_types, NULL)) {
                         LilyCheckedDataType *return_data_type =
                           last__Vec(fun_types);
 
@@ -3265,6 +3266,12 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                           (LilyCheckedAccessScope){ .id = 0 }));
                                 }
 
+                                HashMap *generic_params = NULL;
+
+                                if (fun->fun.generic_params) {
+                                    generic_params = NEW(HashMap);
+                                }
+
                                 Vec *checked_params =
                                   check_fun_params_call__LilyAnalysis(
                                     self,
@@ -3419,7 +3426,9 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                         push__Vec(fun_types, return_data_type);
 
                                         if (add_signature__LilyCheckedDeclFun(
-                                              &fun->fun, fun_types)) {
+                                              &fun->fun,
+                                              fun_types,
+                                              generic_params)) {
                                             fun_call = NEW_VARIANT(
                                               LilyCheckedExpr,
                                               call,
@@ -6034,22 +6043,76 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
     // 4. Push a new signature.
     {
-        Vec *signature = NEW(Vec);
+        HashMap *generic_params = NULL;
+
+        if (fun->fun.generic_params) {
+            generic_params = NEW(HashMap);
+
+            for (Usize i = 0; i < fun->fun.generic_params->len; ++i) {
+                LilyCheckedGenericParam *generic_param =
+                  get__Vec(fun->fun.generic_params, i);
+
+                switch (generic_param->kind) {
+                    case LILY_CHECKED_GENERIC_PARAM_KIND_CONSTRAINT:
+                        insert__HashMap(
+                          generic_params,
+                          generic_param->constraint.name->buffer,
+                          NEW_VARIANT(
+                            LilyCheckedDataType,
+                            custom,
+                            generic_param->location,
+                            NEW(LilyCheckedDataTypeCustom,
+                                fun->fun.scope->id,
+                                (LilyCheckedAccessScope){ .id = i },
+                                generic_param->constraint.name,
+                                generic_param->constraint.name,
+                                NULL,
+                                LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
+                                false)));
+
+                        break;
+                    case LILY_CHECKED_GENERIC_PARAM_KIND_NORMAL:
+                        insert__HashMap(
+                          generic_params,
+                          generic_param->normal->buffer,
+                          NEW_VARIANT(
+                            LilyCheckedDataType,
+                            custom,
+                            generic_param->location,
+                            NEW(LilyCheckedDataTypeCustom,
+                                fun->fun.scope->id,
+                                (LilyCheckedAccessScope){ .id = i },
+                                generic_param->normal,
+                                generic_param->normal,
+                                NULL,
+                                LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
+                                false)));
+
+                        break;
+                    default:
+                        UNREACHABLE("unknown variant");
+                }
+            }
+        }
+
+        Vec *types = NEW(Vec);
 
         if (fun->fun.params) {
             for (Usize i = 0; i < fun->fun.params->len; ++i) {
                 push__Vec(
-                  signature,
+                  types,
                   CAST(LilyCheckedDeclFunParam *, get__Vec(fun->fun.params, i))
                     ->data_type);
             }
         }
 
-        push__Vec(signature, fun->fun.return_data_type);
+        push__Vec(types, fun->fun.return_data_type);
 
-        push__Vec(
-          fun->fun.signatures,
-          NEW(LilyCheckedSignatureFun, fun->fun.global_name, signature));
+        push__Vec(fun->fun.signatures,
+                  NEW(LilyCheckedSignatureFun,
+                      fun->fun.global_name,
+                      types,
+                      generic_params));
     }
 
     // 5. Check body.
