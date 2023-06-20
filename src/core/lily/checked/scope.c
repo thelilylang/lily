@@ -805,15 +805,19 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 
     // [variable, fun, module, constant]
     // [0, 1, 2, 3]
-    Vec *responses = init__Vec(4, &variable, &fun, &module, &constant);
+#define RESPONSES_IDENTIFIER_LEN 4
+    LilyCheckedScopeResponse *responses[RESPONSES_IDENTIFIER_LEN] =
+      (LilyCheckedScopeResponse *[RESPONSES_IDENTIFIER_LEN]){
+          &variable, &fun, &module, &constant
+      };
 
     bool variable_is_found = true;
     bool fun_is_found = true;
     bool module_is_found = true;
     bool constant_is_found = true;
 
-    for (Usize i = 0; i < responses->len; ++i) {
-        LilyCheckedScopeResponse *response = get__Vec(responses, i);
+    for (Usize i = 0; i < RESPONSES_IDENTIFIER_LEN; ++i) {
+        LilyCheckedScopeResponse *response = responses[i];
 
         switch (response->kind) {
             case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
@@ -832,8 +836,6 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 break;
         }
     }
-
-    FREE(Vec, responses);
 
     switch (variable_is_found + fun_is_found + module_is_found +
             constant_is_found) {
