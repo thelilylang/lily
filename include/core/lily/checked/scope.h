@@ -274,6 +274,13 @@ search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *
+ * @brief Search a generic param in the scope.
+ */
+LilyCheckedScopeResponse
+search_generic__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
  * @brief Search a field in the scope.
  */
 LilyCheckedScopeResponse

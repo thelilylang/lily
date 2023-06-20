@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
 #include <base/format.h>
 #include <base/new.h>
 
@@ -584,6 +585,173 @@ search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 }
 
 LilyCheckedScopeResponse
+search_generic__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            for (Usize i = 0; i < self->generics->len; ++i) {
+                LilyCheckedScopeContainerGeneric *generic =
+                  get__Vec(self->generics, i);
+
+                if (!strcmp(generic->name->buffer, name->buffer)) {
+                    LilyCheckedGenericParam *g = NULL;
+
+                    switch (self->decls.decl->kind) {
+                        case LILY_CHECKED_DECL_KIND_FUN:
+                            ASSERT(self->decls.decl->fun.generic_params);
+                            ASSERT(generic->id <
+                                   self->decls.decl->fun.generic_params->len);
+
+                            g = get__Vec(self->decls.decl->fun.generic_params,
+                                         generic->id);
+
+                            break;
+                        case LILY_CHECKED_DECL_KIND_ERROR:
+                            ASSERT(self->decls.decl->error.generic_params);
+                            ASSERT(generic->id <
+                                   self->decls.decl->error.generic_params->len);
+
+                            g = get__Vec(self->decls.decl->error.generic_params,
+                                         generic->id);
+
+                            break;
+                        case LILY_CHECKED_DECL_KIND_METHOD:
+                            ASSERT(self->decls.decl->method.generic_params);
+                            ASSERT(
+                              generic->id <
+                              self->decls.decl->method.generic_params->len);
+
+                            g =
+                              get__Vec(self->decls.decl->method.generic_params,
+                                       generic->id);
+
+                            break;
+                        case LILY_CHECKED_DECL_KIND_OBJECT:
+                            switch (self->decls.decl->object.kind) {
+                                case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
+                                    ASSERT(self->decls.decl->object
+                                             .class.generic_params);
+                                    ASSERT(generic->id <
+                                           self->decls.decl->object
+                                             .class.generic_params->len);
+
+                                    g = get__Vec(self->decls.decl->object
+                                                   .class.generic_params,
+                                                 generic->id);
+
+                                    break;
+                                case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+                                    ASSERT(self->decls.decl->object.enum_
+                                             .generic_params);
+                                    ASSERT(generic->id <
+                                           self->decls.decl->object.enum_
+                                             .generic_params->len);
+
+                                    g = get__Vec(self->decls.decl->object.enum_
+                                                   .generic_params,
+                                                 generic->id);
+
+                                    break;
+                                case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+                                    ASSERT(self->decls.decl->object.record
+                                             .generic_params);
+                                    ASSERT(generic->id <
+                                           self->decls.decl->object.record
+                                             .generic_params->len);
+
+                                    g = get__Vec(self->decls.decl->object.record
+                                                   .generic_params,
+                                                 generic->id);
+
+                                    break;
+                                case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
+                                    ASSERT(self->decls.decl->object.trait
+                                             .generic_params);
+                                    ASSERT(generic->id <
+                                           self->decls.decl->object.trait
+                                             .generic_params->len);
+
+                                    g = get__Vec(self->decls.decl->object.trait
+                                                   .generic_params,
+                                                 generic->id);
+
+                                    break;
+                                default:
+                                    UNREACHABLE("unknown variant");
+                            }
+
+                            break;
+                        case LILY_CHECKED_DECL_KIND_TYPE:
+                            switch (self->decls.decl->type.kind) {
+                                case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
+                                    ASSERT(self->decls.decl->type.alias
+                                             .generic_params);
+                                    ASSERT(generic->id <
+                                           self->decls.decl->type.alias
+                                             .generic_params->len);
+
+                                    g = get__Vec(self->decls.decl->type.alias
+                                                   .generic_params,
+                                                 generic->id);
+
+                                    break;
+                                case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                                    ASSERT(self->decls.decl->type.enum_
+                                             .generic_params);
+                                    ASSERT(generic->id <
+                                           self->decls.decl->type.enum_
+                                             .generic_params->len);
+
+                                    g = get__Vec(self->decls.decl->type.enum_
+                                                   .generic_params,
+                                                 generic->id);
+
+                                    break;
+                                case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+                                    ASSERT(self->decls.decl->type.record
+                                             .generic_params);
+                                    ASSERT(generic->id <
+                                           self->decls.decl->type.record
+                                             .generic_params->len);
+
+                                    g = get__Vec(self->decls.decl->type.record
+                                                   .generic_params,
+                                                 generic->id);
+
+                                    break;
+                                default:
+                                    UNREACHABLE("unknown variant");
+                            }
+
+                            break;
+                        default:
+                            UNREACHABLE("generic params are not expected in "
+                                        "this context");
+                    }
+
+                    return NEW_VARIANT(
+                      LilyCheckedScopeResponse,
+                      generic,
+                      g->location,
+                      NEW_VARIANT(
+                        LilyCheckedScopeContainer, generic, self->id, generic),
+                      g);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_generic__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
 search_field__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
     switch (self->decls.kind) {
@@ -781,7 +949,60 @@ LilyCheckedScopeResponse
 search_custom_type__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
     // TODO: search other custom data type
-    return search_record__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse record =
+      search_record__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse generic =
+      search_generic__LilyCheckedScope(self, name);
+
+    // [record, generic]
+#define RESPONSES_CUSTOM_TYPE_LEN 2
+    LilyCheckedScopeResponse *responses[RESPONSES_CUSTOM_TYPE_LEN] =
+      (LilyCheckedScopeResponse *[RESPONSES_CUSTOM_TYPE_LEN]){ &record,
+                                                               &generic };
+
+    bool record_is_found = true;
+    bool generic_is_found = true;
+
+    for (Usize i = 0; i < RESPONSES_CUSTOM_TYPE_LEN; ++i) {
+        LilyCheckedScopeResponse *response = responses[i];
+
+        switch (response->kind) {
+            case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                if (i == 0) {
+                    record_is_found = false;
+                } else if (i == 1) {
+                    generic_is_found = false;
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    switch (record_is_found + generic_is_found) {
+        case 2:
+            if (record.scope_container.scope_id >
+                generic.scope_container.scope_id) {
+                return record;
+            } else {
+                return generic;
+            }
+
+            break;
+        case 1:
+            if (record_is_found) {
+                return record;
+            } else {
+                return generic;
+            }
+
+            break;
+        case 0:
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            UNREACHABLE("this situation is impossible");
+    }
 }
 
 LilyCheckedScope *
