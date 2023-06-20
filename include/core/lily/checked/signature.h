@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_CHECKED_SIGNATURE_H
 #define LILY_CORE_LILY_CHECKED_SIGNATURE_H
 
+#include <base/hash_map.h>
 #include <base/macros.h>
 #include <base/string.h>
 #include <base/vec.h>
@@ -34,7 +35,8 @@ typedef struct LilyCheckedSignatureFun
     String *global_name; // String* (&)
     String *ser_global_name;
     // [params, return_data_type]
-    Vec *types; // Vec<LilyCheckedDataType* (&)>*
+    Vec *types;              // Vec<LilyCheckedDataType* (&)>*
+    HashMap *generic_params; // HashMap<LilyCheckedDataType*>*?
 } LilyCheckedSignatureFun;
 
 /**
@@ -45,7 +47,8 @@ typedef struct LilyCheckedSignatureFun
 CONSTRUCTOR(LilyCheckedSignatureFun *,
             LilyCheckedSignatureFun,
             String *global_name,
-            Vec *types);
+            Vec *types,
+            HashMap *generic_params);
 
 /**
  *

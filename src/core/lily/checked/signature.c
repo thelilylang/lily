@@ -32,7 +32,8 @@
 CONSTRUCTOR(LilyCheckedSignatureFun *,
             LilyCheckedSignatureFun,
             String *global_name,
-            Vec *types)
+            Vec *types,
+            HashMap *generic_params)
 {
     LilyCheckedSignatureFun *self =
       lily_malloc(sizeof(LilyCheckedSignatureFun));
@@ -40,6 +41,7 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
     self->global_name = global_name;
     self->ser_global_name = clone__String(global_name);
     self->types = types;
+    self->generic_params = generic_params;
 
     generate_global_fun_name__LilyCheckedGlobalName(self->ser_global_name,
                                                     self->types);
@@ -100,5 +102,7 @@ DESTRUCTOR(LilyCheckedSignatureFun, LilyCheckedSignatureFun *self)
 {
     FREE(String, self->ser_global_name);
     FREE(Vec, self->types);
+    FREE_HASHMAP_VALUES(self->generic_params, LilyCheckedDataType);
+    FREE(HashMap, self->generic_params);
     lily_free(self);
 }
