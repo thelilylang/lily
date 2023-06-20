@@ -396,9 +396,6 @@ get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
         LilyCheckedDataType *data_type =
           CAST(LilyCheckedDeclFunParam *, get__Vec(self->params, i))->data_type;
 
-        printf("%s\n",
-               to_string__Debug__LilyCheckedDataType(data_type)->buffer);
-
         switch (data_type->kind) {
             case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
                 if (!strcmp(data_type->compiler_generic.name->buffer,
