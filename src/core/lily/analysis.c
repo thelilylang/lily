@@ -166,13 +166,13 @@ static LilyCheckedDataType *
 reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
                              const LilyCheckedExpr *expr,
                              LilyCheckedVirtualScope *virtual_scope,
-                             const LilyCheckedDataType *return_data_type);
+                             LilyCheckedDataType *return_data_type);
 
 static void
 reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
                              const LilyCheckedStmt *stmt,
                              LilyCheckedVirtualScope *virtual_scope,
-                             const LilyCheckedDataType *return_data_type);
+                             LilyCheckedDataType *return_data_type);
 
 static void
 valid_cast__LilyAnalysis(LilyAnalysis *self,
@@ -1535,27 +1535,34 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                 switch (response.fun_param->data_type->kind) {
                     case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
                         if (defined_data_type) {
-                            update_data_type__LilyCheckedDataType(
-                              response.fun_param->data_type, defined_data_type);
-                            data_type = ref__LilyCheckedDataType(
-                              response.fun_param->data_type);
+                            if (defined_data_type->kind !=
+                                LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+                                update_data_type__LilyCheckedDataType(
+                                  response.fun_param->data_type,
+                                  defined_data_type);
+                                data_type = ref__LilyCheckedDataType(
+                                  response.fun_param->data_type);
+                            } else {
+                                goto unknown_defined_data_type;
+                            }
                         } else {
+                        unknown_defined_data_type : {
                             LilyCheckedScopeDecls *current_fun =
                               get_current_fun__LilyCheckedScope(scope);
 
                             add_compiler_generic__LilyCheckedCompilerGeneric(
                               current_fun->decl->fun.used_compiler_generic);
 
-                            data_type = NEW_VARIANT(
-                              LilyCheckedDataType,
-                              compiler_generic,
-                              &expr->location,
+                            response.fun_param->data_type->kind =
+                              LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC;
+                            response.fun_param->data_type->compiler_generic =
                               NEW(LilyCheckedDataTypeCompilerGeneric,
                                   last__Vec(current_fun->decl->fun
-                                              .used_compiler_generic)));
+                                              .used_compiler_generic));
 
-                            update_data_type__LilyCheckedDataType(
-                              response.fun_param->data_type, data_type);
+                            data_type = ref__LilyCheckedDataType(
+                              response.fun_param->data_type);
+                        }
                         }
 
                         break;
@@ -1697,8 +1704,101 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
               is_moved_expr,
               defined_data_type);
         };
-        case LILY_AST_EXPR_BINARY_KIND_CHAIN:
-            TODO("analyze |>");
+        case LILY_AST_EXPR_BINARY_KIND_CHAIN: {
+            switch (expr->binary.right->kind) {
+                case LILY_AST_EXPR_KIND_CALL:
+                    switch (expr->binary.right->call.kind) {
+                        case LILY_AST_EXPR_CALL_KIND_FUN:
+                            if (expr->binary.right->call.fun.params->len == 0) {
+                                push__Vec(
+                                  expr->binary.right->call.fun.params,
+                                  NEW_VARIANT(LilyAstExprFunParamCall,
+                                              normal,
+                                              expr->binary.left,
+                                              clone__Location(
+                                                &expr->binary.left->location)));
+                            } else {
+                                for (Usize i =
+                                       expr->binary.right->call.fun.params->len;
+                                     i--;) {
+                                    if (
+                                      CAST(
+                                        LilyAstExprFunParamCall *,
+                                        get__Vec(
+                                          expr->binary.right->call.fun.params,
+                                          i))
+                                        ->kind ==
+                                      LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL) {
+                                        insert__Vec(
+                                          expr->binary.right->call.fun.params,
+                                          NEW_VARIANT(
+                                            LilyAstExprFunParamCall,
+                                            normal,
+                                            expr->binary.left,
+                                            clone__Location(
+                                              &expr->binary.left->location)),
+                                          i);
+
+                                        break;
+                                    }
+                                }
+                            }
+
+                            break;
+                        default:
+                        expected_fun_call : {
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              (&expr->location),
+                              NEW(LilyError, LILY_ERROR_KIND_EXPECTED_FUN_CALL),
+                              NULL,
+                              NULL,
+                              NULL);
+
+                            LilyCheckedExpr *left =
+                              check_expr__LilyAnalysis(self,
+                                                       expr->binary.left,
+                                                       scope,
+                                                       safety_mode,
+                                                       is_moved_expr,
+                                                       false,
+                                                       NULL);
+                            LilyCheckedExpr *right =
+                              check_expr__LilyAnalysis(self,
+                                                       expr->binary.right,
+                                                       scope,
+                                                       safety_mode,
+                                                       is_moved_expr,
+                                                       false,
+                                                       NULL);
+
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              binary,
+                              &expr->location,
+                              ref__LilyCheckedDataType(right->data_type),
+                              expr,
+                              NEW(LilyCheckedExprBinary,
+                                  LILY_CHECKED_EXPR_BINARY_KIND_CHAIN,
+                                  left,
+                                  right));
+                        }
+                    }
+
+                    break;
+                default:
+                    goto expected_fun_call;
+            }
+
+            return check_expr__LilyAnalysis(self,
+                                            expr->binary.right,
+                                            scope,
+                                            safety_mode,
+                                            is_moved_expr,
+                                            false,
+                                            defined_data_type);
+        }
         default:
             UNREACHABLE("unknown variant");
     }
@@ -1787,7 +1887,7 @@ static LilyCheckedDataType *
 reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
                              const LilyCheckedExpr *expr,
                              LilyCheckedVirtualScope *virtual_scope,
-                             const LilyCheckedDataType *return_data_type)
+                             LilyCheckedDataType *return_data_type)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_CALL:
@@ -1873,7 +1973,7 @@ static void
 reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
                              const LilyCheckedStmt *stmt,
                              LilyCheckedVirtualScope *virtual_scope,
-                             const LilyCheckedDataType *return_data_type)
+                             LilyCheckedDataType *return_data_type)
 {
     switch (stmt->kind) {
         case LILY_CHECKED_STMT_KIND_AWAIT:
@@ -1967,11 +2067,19 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
 
             break;
         }
-        case LILY_CHECKED_STMT_KIND_RETURN:
-            reanalyze_expr__LilyAnalysis(
+        case LILY_CHECKED_STMT_KIND_RETURN: {
+            LilyCheckedDataType *expr_data_type = reanalyze_expr__LilyAnalysis(
               self, stmt->return_.expr, virtual_scope, return_data_type);
 
+            if (return_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||
+                return_data_type->kind ==
+                  LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+                update_data_type__LilyCheckedDataType(return_data_type,
+                                                      expr_data_type);
+            }
+
             break;
+        }
         case LILY_CHECKED_STMT_KIND_TRY: {
             LilyCheckedVirtualScope *try_virtual_scope =
               NEW(LilyCheckedVirtualScope, virtual_scope);
@@ -2208,6 +2316,20 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                                        Vec *params,
                                        Vec *params_call)
 {
+    if (!params_call) {
+        bool is_ok = true;
+
+        for (Usize i = 0; i < params->len; ++i) {
+            if (CAST(LilyCheckedDeclFunParam *, get__Vec(params, i))->kind !=
+                LILY_CHECKED_DECL_FUN_PARAM_KIND_DEFAULT) {
+                is_ok = false;
+                FAILED("miss some parametters");
+            }
+        }
+
+        return is_ok;
+    }
+
     if (params) {
         Vec *compiler_generic_values =
           NEW(Vec); // Vec<LilyCheckedCompilerGenericValue*>*
@@ -2377,7 +2499,7 @@ check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
                           NEW_VARIANT(LilyCheckedExprCallFunParam,
                                       normal,
                                       value,
-                                      call_param->location));
+                                      &call_param->location));
 
                 break;
             default:
@@ -2422,7 +2544,7 @@ check_builtin_fun_params_call__LilyAnalysis(
                           NEW_VARIANT(LilyCheckedExprCallFunParam,
                                       normal,
                                       value,
-                                      call_param->location));
+                                      &call_param->location));
 
                 break;
             default:
@@ -2484,7 +2606,7 @@ check_sys_fun_params_call__LilyAnalysis(LilyAnalysis *self,
                           NEW_VARIANT(LilyCheckedExprCallFunParam,
                                       normal,
                                       value,
-                                      call_param->location));
+                                      &call_param->location));
 
                 break;
             default:
@@ -4728,16 +4850,34 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                     case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
                         break;
                     default:
-                        FAILED("expected tuple data type");
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          (&expr->location),
+                          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_DATA_TYPE),
+                          NULL,
+                          NULL,
+                          from__String("expected tuple data type"));
                 }
 
                 if (defined_data_type->tuple->len != expr->tuple.items->len) {
-                    FAILED("not the same size of tuple");
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      (&expr->location),
+                      NEW(LilyError, LILY_ERROR_KIND_TUPLES_HAVE_NOT_SAME_SIZE),
+                      NULL,
+                      NULL,
+                      NULL);
                 }
 
+                const Usize min_tuple_len =
+                  defined_data_type->tuple->len > expr->tuple.items->len
+                    ? defined_data_type->tuple->len
+                    : expr->tuple.items->len;
                 Vec *tuple = NEW(Vec); // Vec<LilyCheckedExpr*>*
 
-                for (Usize i = 0; i < expr->tuple.items->len; ++i) {
+                for (Usize i = 0; i < min_tuple_len; ++i) {
                     push__Vec(tuple,
                               check_expr__LilyAnalysis(
                                 self,
@@ -5313,23 +5453,40 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                                                 fun_return_data_type);
 
                 if (fun_return_data_type) {
-                    if ((fun_return_data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||
-                         fun_return_data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) &&
-                        expr->data_type->kind !=
+                    if (fun_return_data_type->kind ==
+                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                        expr->data_type->kind ==
                           LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
-                        update_data_type__LilyCheckedDataType(
-                          fun_return_data_type, expr->data_type);
-                    } else if (
-                      expr->data_type->kind ==
-                        LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
-                      (fun_return_data_type->kind !=
-                         LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
-                       fun_return_data_type->kind !=
-                         LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN)) {
-                        update_data_type__LilyCheckedDataType(
-                          expr->data_type, fun_return_data_type);
+                        // TODO: add method
+                        LilyCheckedScopeDecls *current_fun =
+                          get_current_fun__LilyCheckedScope(scope);
+
+                        ASSERT(current_fun);
+
+                        add_compiler_generic__LilyCheckedCompilerGeneric(
+                          current_fun->decl->fun.used_compiler_generic);
+
+                        fun_return_data_type->kind =
+                          LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC;
+                        fun_return_data_type->compiler_generic =
+                          NEW(LilyCheckedDataTypeCompilerGeneric,
+                              last__Vec(
+                                current_fun->decl->fun.used_compiler_generic));
+
+                        expr->data_type =
+                          ref__LilyCheckedDataType(fun_return_data_type);
+                    } else if (fun_return_data_type->kind ==
+                                 LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
+                               expr->data_type->kind ==
+                                 LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+                        expr->data_type =
+                          ref__LilyCheckedDataType(fun_return_data_type);
+                    } else if (fun_return_data_type->kind ==
+                                 LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+                               expr->data_type->kind ==
+                                 LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
+                        fun_return_data_type =
+                          ref__LilyCheckedDataType(expr->data_type);
                     } else if (!eq__LilyCheckedDataType(fun_return_data_type,
                                                         expr->data_type)) {
                         ANALYSIS_EMIT_DIAGNOSTIC(
@@ -5343,11 +5500,11 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                           NULL,
                           from__String("or the specified return data type "
                                        "passed to the function"));
+                    } else {
+                        UNREACHABLE("this case is not possible. By default the "
+                                    "return data "
+                                    "type is set with unknown data type");
                     }
-                } else {
-                    UNREACHABLE(
-                      "this case is not possible. By default the return data "
-                      "type is set with unknown data type");
                 }
             } else {
                 if (fun_return_data_type) {
@@ -5569,8 +5726,9 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
                                             NULL,
                                             LILY_CHECKED_SAFETY_MODE_SAFE);
         } else {
-            checked_param_data_type = NEW(
-              LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, NULL);
+            checked_param_data_type = NEW(LilyCheckedDataType,
+                                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                                          &param->location);
         }
 
         switch (param->kind) {
@@ -5590,7 +5748,7 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
                                           default,
                                           param->name,
                                           checked_param_data_type,
-                                          param->location,
+                                          &param->location,
                                           default_value));
                 } else {
                     push__Vec(checked_params,
@@ -5598,7 +5756,7 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
                                           normal,
                                           param->name,
                                           checked_param_data_type,
-                                          param->location));
+                                          &param->location));
                 }
 
                 break;
@@ -5609,7 +5767,7 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
                                       normal,
                                       param->name,
                                       checked_param_data_type,
-                                      param->location));
+                                      &param->location));
 
                 break;
             }
