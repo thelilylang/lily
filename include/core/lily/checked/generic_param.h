@@ -92,7 +92,7 @@ DESTRUCTOR(LilyCheckedGenericParamConstraint,
 typedef struct LilyCheckedGenericParam
 {
     enum LilyCheckedGenericParamKind kind;
-    Location location;
+    const Location *location;
     union
     {
         LilyCheckedGenericParamConstraint constraint;
@@ -108,7 +108,7 @@ typedef struct LilyCheckedGenericParam
 VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
                     LilyCheckedGenericParam,
                     constraint,
-                    Location location,
+                    const Location *location,
                     LilyCheckedGenericParamConstraint constraint);
 
 /**
@@ -119,7 +119,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
 VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
                     LilyCheckedGenericParam,
                     normal,
-                    Location location,
+                    const Location *location,
                     String *normal);
 
 /**

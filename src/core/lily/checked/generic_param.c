@@ -86,7 +86,7 @@ DESTRUCTOR(LilyCheckedGenericParamConstraint,
 VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
                     LilyCheckedGenericParam,
                     normal,
-                    Location location,
+                    const Location *location,
                     String *normal)
 {
     LilyCheckedGenericParam *self =
@@ -102,7 +102,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
 VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
                     LilyCheckedGenericParam,
                     constraint,
-                    Location location,
+                    const Location *location,
                     LilyCheckedGenericParamConstraint constraint)
 {
     LilyCheckedGenericParam *self =
