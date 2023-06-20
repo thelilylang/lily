@@ -89,7 +89,7 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
     }
 
     if (fun->signatures->len == 1 &&
-        contains_compiler_defined_dt__LilyCheckedDeclFun(fun)) {
+        contains_uncertain_dt__LilyCheckedDeclFun(fun)) {
         return;
     }
 
@@ -97,7 +97,7 @@ generate_function__LilyIrLlvm(const LilyIrLlvm *self,
 
     // To skip the first signature of the function with compiler defined data
     // type.
-    if (contains_compiler_defined_dt__LilyCheckedDeclFun(fun)) {
+    if (contains_uncertain_dt__LilyCheckedDeclFun(fun)) {
         i = 1;
     }
 
