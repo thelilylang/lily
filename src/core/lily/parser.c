@@ -1947,7 +1947,71 @@ parse_fun_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
     FREE_BUFFER_ITEMS(params->buffer, params->len, LilyAstExprFunParamCall); \
     FREE(Vec, params);
 
-    next_token__LilyParseBlock(self); // skip `(`
+    next_token__LilyParseBlock(self); // skip `(` or `::`
+
+    Vec *generic_params = NULL; // Vec<LilyAstDataType*>*
+
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_HOOK:
+            next_token__LilyParseBlock(self);
+
+            generic_params = NEW(Vec);
+
+            while (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
+                LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
+
+                if (dt) {
+                    push__Vec(generic_params, dt);
+                }
+
+                if (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
+                    switch (self->current->kind) {
+                        case LILY_TOKEN_KIND_COMMA:
+                            next_token__LilyParseBlock(self);
+
+                            break;
+                        default:
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->file,
+                                &self->current->location,
+                                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                                NULL,
+                                NULL,
+                                from__String("expected `,`")),
+                              self->count_error);
+
+                            break;
+                    }
+                }
+            }
+
+            next_token__LilyParseBlock(self); // skip `]`
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_L_PAREN:
+                    next_token__LilyParseBlock(self);
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_error,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                        NULL,
+                        NULL,
+                        from__String("expected `(`")),
+                      self->count_error);
+            }
+
+            break;
+        default:
+            break;
+    }
 
     Location location = clone__Location(&id->location);
 
@@ -1960,7 +2024,9 @@ parse_fun_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
       LilyAstExpr,
       call,
       location,
-      NEW_VARIANT(LilyAstExprCall, fun, NEW(LilyAstExprCallFun, id, params)));
+      NEW_VARIANT(LilyAstExprCall,
+                  fun,
+                  NEW(LilyAstExprCallFun, id, params, generic_params)));
 }
 
 LilyAstExpr *
@@ -2093,9 +2159,11 @@ parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_L_BRACE:
             return parse_record_call__LilyParseBlock(self, id);
+        case LILY_TOKEN_KIND_COLON_COLON:
         case LILY_TOKEN_KIND_L_PAREN:
             return parse_fun_call__LilyParseBlock(self, id);
         case LILY_TOKEN_KIND_COLON:
+        case LILY_TOKEN_KIND_COLON_DOLLAR:
             return parse_variant_call__LilyParseBlock(self, id);
         default: {
             String *token_s = to_string__LilyToken(self->current);
@@ -2109,7 +2177,7 @@ parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
                 NEW_VARIANT(LilyError, unexpected_token, token_s->buffer),
                 NULL,
                 NULL,
-                from__String("expected `{`, `(` or `:`")),
+                from__String("expected `{`, `(`, `::`, `:` or `:$`")),
               self->count_error);
 
             FREE(String, token_s);
@@ -2875,7 +2943,8 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
                     clone__Location(&self->previous->location),
                     NEW(LilyAstExprIdentifier,
                         clone__String(self->previous->identifier_normal))));
-            } else if (self->current->kind == LILY_TOKEN_KIND_L_PAREN) {
+            } else if (self->current->kind == LILY_TOKEN_KIND_L_PAREN ||
+                       self->current->kind == LILY_TOKEN_KIND_COLON_COLON) {
                 return parse_fun_call__LilyParseBlock(
                   self,
                   NEW_VARIANT(
@@ -3222,7 +3291,9 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
             break;
         case LILY_TOKEN_KIND_L_PAREN:
         case LILY_TOKEN_KIND_L_BRACE:
+        case LILY_TOKEN_KIND_COLON_COLON:
         case LILY_TOKEN_KIND_COLON:
+        case LILY_TOKEN_KIND_COLON_DOLLAR:
             switch (expr->kind) {
                 case LILY_AST_EXPR_KIND_ACCESS:
                 case LILY_AST_EXPR_KIND_IDENTIFIER:
