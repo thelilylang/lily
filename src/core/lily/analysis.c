@@ -5524,10 +5524,6 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                           NULL,
                           from__String("or the specified return data type "
                                        "passed to the function"));
-                    } else {
-                        UNREACHABLE("this case is not possible. By default the "
-                                    "return data "
-                                    "type is set with unknown data type");
                     }
                 }
             } else {
