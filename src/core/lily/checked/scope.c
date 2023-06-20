@@ -251,6 +251,13 @@ add_param__LilyCheckedScope(LilyCheckedScope *self,
     ADD_TO_SCOPE(self->params, param, LilyCheckedScopeContainerVariable);
 }
 
+int
+add_generic__LilyCheckedScope(LilyCheckedScope *self,
+                              LilyCheckedScopeContainerGeneric *generic)
+{
+    ADD_TO_SCOPE(self->generics, generic, LilyCheckedScopeContainerGeneric);
+}
+
 LilyCheckedScopeContainerFun *
 search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                               const String *name)

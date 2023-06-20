@@ -208,6 +208,15 @@ add_param__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
+ * @brief Add a generic param to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_generic__LilyCheckedScope(LilyCheckedScope *self,
+                              LilyCheckedScopeContainerGeneric *generic);
+
+/**
+ *
  * @brief Search a fun in the scope.
  */
 LilyCheckedScopeContainerFun *
