@@ -339,7 +339,7 @@ search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                         return NEW_VARIANT(
                           LilyCheckedScopeResponse,
                           fun_param,
-                          &param->location,
+                          param->location,
                           NEW_VARIANT(LilyCheckedScopeContainer,
                                       variable,
                                       self->id,
