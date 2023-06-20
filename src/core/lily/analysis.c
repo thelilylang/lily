@@ -5713,7 +5713,40 @@ check_generic_params(LilyAnalysis *self,
                      Vec *ast_generic_params,
                      LilyCheckedScope *scope)
 {
-    TODO("check generic params");
+    Vec *generic_params =
+      ast_generic_params ? NEW(Vec) : NULL; // Vec<LilyCheckedGenericParam*>*?
+
+    if (ast_generic_params) {
+        for (Usize i = 0; i < ast_generic_params->len; ++i) {
+            LilyAstGenericParam *generic_param =
+              get__Vec(ast_generic_params, i);
+
+            switch (generic_param->kind) {
+                case LILY_AST_GENERIC_PARAM_KIND_CONSTRAINT:
+                    TODO("constraint generic param is not yet implemented");
+                case LILY_AST_GENERIC_PARAM_KIND_NORMAL:
+                    if (add_generic__LilyCheckedScope(
+                          scope,
+                          NEW(LilyCheckedScopeContainerGeneric,
+                              generic_param->normal,
+                              i))) {
+                        FAILED("duplicate generic param");
+                    }
+
+                    push__Vec(generic_params,
+                              NEW_VARIANT(LilyCheckedGenericParam,
+                                          normal,
+                                          &generic_param->location,
+                                          generic_param->normal));
+
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        }
+    }
+
+    return generic_params;
 }
 
 Vec *
