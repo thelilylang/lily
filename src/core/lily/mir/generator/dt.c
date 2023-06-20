@@ -167,6 +167,7 @@ generate_dt__LilyMir(LilyCheckedDataType *data_type)
         case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
             return NEW(LilyMirDt, LILY_MIR_DT_KIND_USIZE);
         case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+            UNREACHABLE("unknown data type is not expected");
         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
