@@ -119,7 +119,7 @@ typedef struct LilyCheckedExprCallFunParam
     // NOTE: the pointer is a copy when kind is equal to
     // `LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT`
     LilyCheckedExpr *value; // LilyCheckedExpr* | LilyCheckedExpr* (&)
-    Location location;
+    const Location *location;
     union
     {
         String *default_; // String* (&) <default_> := <value>
@@ -136,7 +136,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
                     LilyCheckedExprCallFunParam,
                     default_,
                     LilyCheckedExpr *value,
-                    Location location,
+                    const Location *location,
                     String *default_);
 
 /**
@@ -148,7 +148,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
                     LilyCheckedExprCallFunParam,
                     default_overwrite,
                     LilyCheckedExpr *value,
-                    Location location,
+                    const Location *location,
                     String *default_);
 
 /**
@@ -160,7 +160,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
                     LilyCheckedExprCallFunParam,
                     normal,
                     LilyCheckedExpr *value,
-                    Location location);
+                    const Location *location);
 
 /**
  *

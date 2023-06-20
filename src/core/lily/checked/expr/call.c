@@ -251,7 +251,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
                     LilyCheckedExprCallFunParam,
                     default_,
                     LilyCheckedExpr *value,
-                    Location location,
+                    const Location *location,
                     String *default_)
 {
     LilyCheckedExprCallFunParam *self =
@@ -269,7 +269,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
                     LilyCheckedExprCallFunParam,
                     default_overwrite,
                     LilyCheckedExpr *value,
-                    Location location,
+                    const Location *location,
                     String *default_)
 {
     LilyCheckedExprCallFunParam *self =
@@ -287,7 +287,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
                     LilyCheckedExprCallFunParam,
                     normal,
                     LilyCheckedExpr *value,
-                    Location location)
+                    const Location *location)
 {
     LilyCheckedExprCallFunParam *self =
       lily_malloc(sizeof(LilyCheckedExprCallFunParam));
@@ -314,7 +314,7 @@ IMPL_FOR_DEBUG(to_string,
               "{sa}, default = {S} }",
               to_string__Debug__LilyCheckedExprCallFunParamKind(self->kind),
               to_string__Debug__LilyCheckedExpr(self->value),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               self->default_);
         case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_NORMAL:
             return format__String(
@@ -323,7 +323,7 @@ IMPL_FOR_DEBUG(to_string,
               "{sa} }",
               to_string__Debug__LilyCheckedExprCallFunParamKind(self->kind),
               to_string__Debug__LilyCheckedExpr(self->value),
-              to_string__Debug__Location(&self->location));
+              to_string__Debug__Location(self->location));
         default:
             UNREACHABLE("unknown variant");
     }
