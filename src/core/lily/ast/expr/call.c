@@ -249,6 +249,13 @@ DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self)
     }
 
     FREE(Vec, self->params);
+
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(self->generic_params->buffer,
+                          self->generic_params->len,
+                          LilyAstDataType);
+        FREE(Vec, self->generic_params);
+    }
 }
 
 #ifdef ENV_DEBUG
