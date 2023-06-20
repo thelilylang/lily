@@ -1182,6 +1182,21 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                     return NEW(LilyCheckedDataType,
                                LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
                                &data_type->location);
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_GENERIC:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      custom,
+                      &data_type->location,
+                      NEW(LilyCheckedDataTypeCustom,
+                          custom_dt_response.scope_container.scope_id,
+                          (LilyCheckedAccessScope){
+                            .id =
+                              custom_dt_response.scope_container.generic->id },
+                          data_type->custom.name,
+                          data_type->custom.name,
+                          NULL,
+                          LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
+                          false));
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD:
                     if (deps) {
                         push__Vec(deps, custom_dt_response.decl);
