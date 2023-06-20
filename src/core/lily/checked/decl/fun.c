@@ -266,22 +266,45 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 #endif
 
 bool
-contains_compiler_defined_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
+contains_uncertain_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
 {
     if (self->params) {
         for (Usize i = 0; i < self->params->len; ++i) {
-            if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
-                  CAST(LilyCheckedDeclFunParam *, get__Vec(self->params, i))
-                    ->data_type)) {
-                return true;
+            LilyCheckedDeclFunParam *param = get__Vec(self->params, i);
+
+            switch (param->data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                    switch (param->data_type->custom.kind) {
+                        case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                            return true;
+                        default:
+                            break;
+                    }
+                default:
+                    if (is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                          param->data_type)) {
+                        return true;
+                    }
             }
         }
     }
 
-    return self->return_data_type
-             ? is_compiler_defined_and_known_dt__LilyCheckedDataType(
-                 self->return_data_type)
-             : false;
+    if (self->return_data_type) {
+        switch (self->return_data_type->kind) {
+            case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                switch (self->return_data_type->custom.kind) {
+                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                        return true;
+                    default:
+                        return false;
+                }
+            default:
+                return is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                  self->return_data_type);
+        }
+    }
+
+    return false;
 }
 
 int
@@ -291,29 +314,6 @@ add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
 {
     ASSERT(signature->len != 0);
     ASSERT(signature->len == self->params->len + 1);
-
-    // printf("Signature will push:\n");
-
-    // for (Usize i = 0; i < signature->len; ++i) {
-    //     printf("%s\n",
-    //            to_string__Debug__LilyCheckedDataType(get__Vec(signature, i))
-    //              ->buffer);
-    // }
-
-    // for (Usize i = 0; i < self->signatures->len; ++i) {
-    //     Vec *pushed_signature =
-    //       CAST(LilyCheckedSignatureFun *, get__Vec(self->signatures,
-    //       i))->types;
-
-    //     printf("Signature #%zu:\n", i);
-
-    //     for (Usize j = 0; j < pushed_signature->len; ++j) {
-    //         printf("%s\n",
-    //                to_string__Debug__LilyCheckedDataType(
-    //                  get__Vec(pushed_signature, j))
-    //                  ->buffer);
-    //     }
-    // }
 
     for (Usize i = 0; i < self->signatures->len; ++i) {
         Vec *pushed_signature =

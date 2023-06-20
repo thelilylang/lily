@@ -196,8 +196,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self);
  * @brief Check if contains compiler defined data type(s).
  */
 bool
-contains_compiler_defined_dt__LilyCheckedDeclFun(
-  const LilyCheckedDeclFun *self);
+contains_uncertain_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self);
 
 /**
  *
