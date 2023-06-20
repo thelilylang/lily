@@ -475,6 +475,7 @@ push_fun__LilyAnalysis(LilyAnalysis *self,
           format__String("{S}.{S}", module->global_name, fun->fun.name),
           NULL,
           NULL,
+          fun->fun.return_data_type,
           NULL,
           NEW(Vec),
           NULL,
@@ -5545,6 +5546,8 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             // FIXME: clone the item of the `end_body`.
             append__Vec(current_body, end_body);
 
+            current_fun->decl->fun.has_return = true;
+
             return NEW_VARIANT(LilyCheckedBodyFunItem,
                                stmt,
                                NEW_VARIANT(LilyCheckedStmt,
@@ -6010,13 +6013,49 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
                    LILY_CHECKED_SAFETY_MODE_SAFE,
                    false);
 
-    // 6. Reload global name on the first signature
+    // 6. Check return data type.
+    if (fun->fun.is_main) {
+        switch (fun->fun.return_data_type->kind) {
+            case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+            case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+            case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+                if (fun->fun.has_return &&
+                    (fun->fun.return_data_type->kind !=
+                       LILY_CHECKED_DATA_TYPE_KIND_UNIT &&
+                     fun->fun.return_data_type->kind !=
+                       LILY_CHECKED_DATA_TYPE_KIND_CVOID)) {
+                    FAILED("expected Unit or CVoid for the main function");
+                }
+
+                break;
+            case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+                if (!fun->fun.has_return) {
+                    fun->fun.return_data_type->kind =
+                      LILY_CHECKED_DATA_TYPE_KIND_UNIT;
+                }
+
+                break;
+            default:
+                FAILED("expected Int32, Unit or CVoid for the main function")
+        }
+    } else {
+        if (!fun->fun.has_return && fun->fun.default_return_dt_is_set) {
+            if (fun->fun.return_data_type->kind !=
+                  LILY_CHECKED_DATA_TYPE_KIND_UNIT &&
+                fun->fun.return_data_type->kind !=
+                  LILY_CHECKED_DATA_TYPE_KIND_CVOID) {
+                FAILED("expected a return statement");
+            }
+        }
+    }
+
+    // 7. Reload global name on the first signature
     if (fun->fun.used_compiler_generic->len > 0) {
         reload_global_name__LilyCheckedSignatureFun(
           get__Vec(fun->fun.signatures, 0));
     }
 
-    // 7. Add operator to the operator register.
+    // 8. Add operator to the operator register.
     if (fun->fun.is_operator) {
         LilyCheckedOperator *operator=
           NEW(LilyCheckedOperator,
