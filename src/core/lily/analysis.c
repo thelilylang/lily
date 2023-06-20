@@ -3422,6 +3422,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                 NEW(LilyCheckedExprCallFun,
                                                     fun,
                                                     checked_params)));
+
+                                            FREE(Vec, fun_types);
                                         } else {
                                             // Re-analyze called function if the
                                             // param(s) are/is a compiler
