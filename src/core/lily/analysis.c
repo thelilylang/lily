@@ -5473,20 +5473,26 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                               last__Vec(
                                 current_fun->decl->fun.used_compiler_generic));
 
-                        expr->data_type =
-                          ref__LilyCheckedDataType(fun_return_data_type);
+                        ASSERT(expr->data_type->ref_count == 0);
+
+                        update_data_type__LilyCheckedDataType(
+                          expr->data_type, fun_return_data_type);
                     } else if (fun_return_data_type->kind ==
                                  LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
                                expr->data_type->kind ==
                                  LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
-                        expr->data_type =
-                          ref__LilyCheckedDataType(fun_return_data_type);
+                        ASSERT(expr->data_type->ref_count == 0);
+
+                        update_data_type__LilyCheckedDataType(
+                          expr->data_type, fun_return_data_type);
                     } else if (fun_return_data_type->kind ==
                                  LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
                                expr->data_type->kind ==
                                  LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
-                        fun_return_data_type =
-                          ref__LilyCheckedDataType(expr->data_type);
+                        ASSERT(fun_return_data_type->ref_count == 0);
+
+                        update_data_type__LilyCheckedDataType(
+                          fun_return_data_type, expr->data_type);
                     } else if (!eq__LilyCheckedDataType(fun_return_data_type,
                                                         expr->data_type)) {
                         ANALYSIS_EMIT_DIAGNOSTIC(
