@@ -145,6 +145,7 @@ inline CONSTRUCTOR(LilyAstDeclFun,
 {
     return (LilyAstDeclFun){ .name = name,
                              .object_impl = object_impl,
+                             .generic_params = generic_params,
                              .params = params,
                              .return_data_type = return_data_type,
                              .body = body,
