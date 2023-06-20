@@ -56,6 +56,8 @@ generate_call_expr__LilyMir(LilyMirModule *module,
                            get__Vec(expr->call.fun.params, i))
                         ->value);
 
+                    ASSERT(inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+
                     push__Vec(params, inst->val);
                     lily_free(inst);
                 }
