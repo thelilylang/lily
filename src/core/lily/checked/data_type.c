@@ -1015,7 +1015,16 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             switch (other->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-                    // TODO: compare generics
+                    // TODO: compare the constraint data type for generic custom
+                    // data type
+                    if (self->custom.kind ==
+                          LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC &&
+                        other->custom.kind ==
+                          LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC) {
+                        return true;
+                    }
+
+                    // TODO: compare generics params of data type
                     return !strcmp(self->custom.name->buffer,
                                    other->custom.name->buffer) &&
                            self->custom.kind == other->custom.kind;
