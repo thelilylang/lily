@@ -320,6 +320,10 @@ to_msg__LilyError(const LilyError *self)
             return "the operator is duplicate";
         case LILY_ERROR_KIND_INFINITE_DATA_TYPE:
             return "the data type is infinite";
+        case LILY_ERROR_KIND_TUPLES_HAVE_NOT_SAME_SIZE:
+            return "the tuples have not the same size";
+        case LILY_ERROR_KIND_EXPECTED_FUN_CALL:
+            return "expected fun call";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -609,6 +613,10 @@ to_code__LilyError(const LilyError *self)
             return "0139";
         case LILY_ERROR_KIND_INFINITE_DATA_TYPE:
             return "0140";
+        case LILY_ERROR_KIND_TUPLES_HAVE_NOT_SAME_SIZE:
+            return "0141";
+        case LILY_ERROR_KIND_EXPECTED_FUN_CALL:
+            return "0142";
         default:
             UNREACHABLE("unknown variant");
     }
