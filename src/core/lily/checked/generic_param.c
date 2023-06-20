@@ -124,7 +124,7 @@ IMPL_FOR_DEBUG(to_string,
     String *res =
       format__String("LilyCheckedGenericParam{{ kind = {s}, location = {sa}",
                      to_string__Debug__LilyCheckedGenericParamKind(self->kind),
-                     to_string__Debug__Location(&self->location));
+                     to_string__Debug__Location(self->location));
 
     switch (self->kind) {
         case LILY_CHECKED_GENERIC_PARAM_KIND_CONSTRAINT: {
