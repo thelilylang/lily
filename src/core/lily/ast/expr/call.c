@@ -228,8 +228,26 @@ DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self)
 {
     FREE(LilyAstExpr, self->id);
 
-    FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, LilyAstExprFunParamCall);
+    if (self->ast_params_len == self->params->len) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, LilyAstExprFunParamCall);
+    } else {
+        LilyAstExprFunParamCall *last_normal_param = NULL;
+
+        for (Usize i = self->params->len; i--;) {
+            LilyAstExprFunParamCall *param = get__Vec(self->params, i);
+
+            if (!last_normal_param) {
+                if (param->kind == LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL) {
+                    last_normal_param = param;
+                    continue;
+                }
+            }
+
+            FREE(LilyAstExprFunParamCall, param);
+        }
+    }
+
     FREE(Vec, self->params);
 }
 

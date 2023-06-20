@@ -125,7 +125,8 @@ DESTRUCTOR(LilyAstExprFunParamCall, LilyAstExprFunParamCall *self);
 typedef struct LilyAstExprCallFun
 {
     LilyAstExpr *id;
-    Vec *params; // Vec<LilyAstExprFunParamCall*>*
+    Usize ast_params_len; // Will use in the analysis (with `|>` operator).
+    Vec *params;          // Vec<LilyAstExprFunParamCall*>*
 } LilyAstExprCallFun;
 
 /**
@@ -137,7 +138,9 @@ inline CONSTRUCTOR(LilyAstExprCallFun,
                    LilyAstExpr *id,
                    Vec *params)
 {
-    return (LilyAstExprCallFun){ .id = id, .params = params };
+    return (LilyAstExprCallFun){ .id = id,
+                                 .ast_params_len = params->len,
+                                 .params = params };
 }
 
 /**
