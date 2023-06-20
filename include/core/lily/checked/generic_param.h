@@ -124,6 +124,14 @@ VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
 
 /**
  *
+ * @brief Get the name from generic param.
+ * @return String* (&)
+ */
+String *
+get_name__LilyCheckedGenericParam(const LilyCheckedGenericParam *self);
+
+/**
+ *
  * @brief Convert LilyCheckedGenericParam in String.
  * @note This function is only used to debug.
  */

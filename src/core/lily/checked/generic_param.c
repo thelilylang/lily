@@ -115,6 +115,19 @@ VARIANT_CONSTRUCTOR(LilyCheckedGenericParam *,
     return self;
 }
 
+String *
+get_name__LilyCheckedGenericParam(const LilyCheckedGenericParam *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_GENERIC_PARAM_KIND_CONSTRAINT:
+            return self->constraint.name;
+        case LILY_CHECKED_GENERIC_PARAM_KIND_NORMAL:
+            return self->normal;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
