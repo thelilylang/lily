@@ -135,6 +135,8 @@ typedef struct LilyCheckedDeclFun
     bool is_main;
     bool is_recursive;
     bool is_checked;
+    bool has_return;
+    bool default_return_dt_is_set;
 } LilyCheckedDeclFun;
 
 /**
@@ -147,6 +149,7 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
                    String *global_name,
                    Vec *generic_params,
                    Vec *params,
+                   LilyAstDataType *default_return_data_type,
                    LilyCheckedDataType *return_data_type,
                    Vec *body,
                    LilyCheckedScope *scope,
@@ -172,7 +175,10 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
                                  .can_inline = false,
                                  .is_main = false,
                                  .is_recursive = false,
-                                 .is_checked = false };
+                                 .is_checked = false,
+                                 .has_return = false,
+                                 .default_return_dt_is_set =
+                                   default_return_data_type ? true : false };
 }
 
 /**
