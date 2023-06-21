@@ -92,6 +92,14 @@ IMPL_FOR_DEBUG(to_string,
 
     DEBUG_VEC_STRING(self->types, res, LilyCheckedDataType);
 
+    push_str__String(res, ", generic_params =");
+
+    if (self->generic_params) {
+        DEBUG_STRING_HASH_MAP(self->generic_params, res, LilyCheckedDataType);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     push_str__String(res, " }");
 
     return res;
@@ -119,11 +127,33 @@ CONSTRUCTOR(LilyCheckedSignatureType *,
     self->generic_params = generic_params;
     self->ser_global_name = clone__String(self->global_name);
 
-    generate_global_type_name_with_ordered_hash_map__LilyCheckedGlobalName(
-      self->ser_global_name, self->generic_params);
+    if (self->generic_params) {
+        generate_global_type_name_with_ordered_hash_map__LilyCheckedGlobalName(
+          self->ser_global_name, self->generic_params);
+    }
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedSignatureType,
+               const LilyCheckedSignatureType *self)
+{
+    String *res =
+      format__String("LilyCheckedSignatureType{{ global_name = {S}, "
+                     "ser_global_name = {S}, generic_params =",
+                     self->global_name,
+                     self->ser_global_name);
+
+    DEBUG_STRING_ORD_HASH_MAP(self->generic_params, res, LilyCheckedDataType);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
 
 DESTRUCTOR(LilyCheckedSignatureType, LilyCheckedSignatureType *self)
 {

@@ -101,6 +101,18 @@ CONSTRUCTOR(LilyCheckedSignatureType *,
 
 /**
  *
+ * @brief Convert LilyCheckedSignatureType in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedSignatureType,
+               const LilyCheckedSignatureType *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedSignature type.
  */
 DESTRUCTOR(LilyCheckedSignatureType, LilyCheckedSignatureType *self);
