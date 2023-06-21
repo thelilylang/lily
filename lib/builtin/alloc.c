@@ -164,9 +164,9 @@ __resize__$Alloc(void *mem, Usize new_size, Usize align)
 }
 
 void
-__free__$Alloc(void *mem, Usize size, Usize align)
+__free__$Alloc(void **mem, Usize size, Usize align)
 {
-    if (!mem) {
+    if (!(*mem)) {
         perror("Lily(Fail): fail to free a pointer, because the value is NULL");
         exit(1);
     }
@@ -176,12 +176,12 @@ __free__$Alloc(void *mem, Usize size, Usize align)
     }
 
 #if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
-    if (munmap(mem, size) == -1) {
+    if (munmap(*mem, size) == -1) {
         perror("Lily(Fail): fail to free memory");
         exit(1);
     }
 #elif defined(LILY_WINDOWS_OS)
-    if (!VirtualFree(mem, 0, MEM_RELEASE)) {
+    if (!VirtualFree(*mem, 0, MEM_RELEASE)) {
         perror("Lily(Fail): fail to free memory");
         exit(1);
     }
@@ -189,5 +189,5 @@ __free__$Alloc(void *mem, Usize size, Usize align)
 #error "This OS is not yet supported"
 #endif
 
-    mem = 0;
+    *mem = 0;
 }
