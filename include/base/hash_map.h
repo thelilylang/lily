@@ -65,6 +65,19 @@
         }                                              \
     }
 
+#define DEBUG_STRING_HASH_MAP(self, str, type)             \
+    {                                                      \
+        push_str__String(str, " { ");                      \
+        HashMapIter iter = NEW(HashMapIter, self);         \
+        void *current = NULL;                              \
+                                                           \
+        while ((current = next__HashMapIter(&iter))) {     \
+            String *s = to_string__Debug__##type(current); \
+            APPEND_AND_FREE(str, s);                       \
+        }                                                  \
+        push_str__String(str, " }");                       \
+    }
+
 typedef struct HashMapPair
 {
     char *key;
