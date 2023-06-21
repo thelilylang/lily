@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_CHECKED_EXPR_CALL_H
 #define LILY_CORE_LILY_CHECKED_EXPR_CALL_H
 
+#include <base/hash_map.h>
 #include <base/string.h>
 #include <base/vec.h>
 
@@ -176,8 +177,9 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedExprCallFun
 {
-    LilyCheckedDecl *fun; // LilyCheckedDecl* (&)
-    Vec *params;          // Vec<LilyCheckedExprCallFunParam*>*?
+    LilyCheckedDecl *fun;    // LilyCheckedDecl* (&)
+    Vec *params;             // Vec<LilyCheckedExprCallFunParam*>*?
+    HashMap *generic_params; // HashMap<LilyCheckedDataType*>*? (&)
 } LilyCheckedExprCallFun;
 
 /**
@@ -187,9 +189,12 @@ typedef struct LilyCheckedExprCallFun
 inline CONSTRUCTOR(LilyCheckedExprCallFun,
                    LilyCheckedExprCallFun,
                    LilyCheckedDecl *fun,
-                   Vec *params)
+                   Vec *params,
+                   HashMap *generic_params)
 {
-    return (LilyCheckedExprCallFun){ .fun = fun, .params = params };
+    return (LilyCheckedExprCallFun){ .fun = fun,
+                                     .params = params,
+                                     .generic_params = generic_params };
 }
 
 /**
