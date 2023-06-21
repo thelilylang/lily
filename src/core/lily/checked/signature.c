@@ -53,6 +53,44 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
     return self;
 }
 
+int
+add_signature__LilyCheckedSignatureFun(String *global_name,
+                                       Vec *types,
+                                       HashMap *generic_params,
+                                       Vec *signatures)
+{
+    ASSERT(types->len != 0);
+
+    for (Usize i = 0; i < signatures->len; ++i) {
+        Vec *pushed_types =
+          CAST(LilyCheckedSignatureFun *, get__Vec(signatures, i))->types;
+
+        ASSERT(types->len == pushed_types->len);
+
+        bool is_match = true;
+
+        for (Usize j = 0; j < pushed_types->len; ++j) {
+            LilyCheckedDataType *types_dt = get__Vec(types, j);
+            LilyCheckedDataType *pushed_types_dt = get__Vec(pushed_types, j);
+
+            if (!eq__LilyCheckedDataType(types_dt, pushed_types_dt) ||
+                types_dt->kind != pushed_types_dt->kind) {
+                is_match = false;
+                break;
+            }
+        }
+
+        if (is_match) {
+            return 1;
+        }
+    }
+
+    push__Vec(signatures,
+              NEW(LilyCheckedSignatureFun, global_name, types, generic_params));
+
+    return 0;
+}
+
 void
 reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self)
 {

@@ -53,6 +53,19 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
 
 /**
  *
+ * @brief Try to add a new signature to signatures.
+ * @param types Vec<LilyCheckedDataType* (&)>*
+ * @param generic_params HashMap<LilyCheckedDataType* (&)>*
+ * @param signatures Vec<LilyCheckedSignatureFun*>*
+ */
+int
+add_signature__LilyCheckedSignatureFun(String *global_name,
+                                       Vec *types,
+                                       HashMap *generic_params,
+                                       Vec *signatures);
+
+/**
+ *
  * @brief Reload global name.
  */
 void

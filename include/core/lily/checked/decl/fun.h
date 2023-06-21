@@ -202,12 +202,17 @@ contains_uncertain_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self);
  *
  * @brief Add a signature and check if is not duplicate.
  * @return Return 1 if is failing otherwise return 0.
- * @param signature Vec<LilyCheckedDataType* (&)>*
+ * @param types Vec<LilyCheckedDataType* (&)>*
+ * @param generic_params HashMap<LilyCheckedDataType* (&)>*
  */
-int
+inline int
 add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
-                                  Vec *signature,
-                                  HashMap *generic_params);
+                                  Vec *types,
+                                  HashMap *generic_params)
+{
+    return add_signature__LilyCheckedSignatureFun(
+      self->global_name, types, generic_params, self->signatures);
+}
 
 /**
  *

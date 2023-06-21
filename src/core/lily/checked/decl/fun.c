@@ -307,47 +307,6 @@ contains_uncertain_dt__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
     return false;
 }
 
-int
-add_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
-                                  Vec *signature,
-                                  HashMap *generic_params)
-{
-    ASSERT(signature->len != 0);
-    ASSERT(signature->len == self->params->len + 1);
-
-    for (Usize i = 0; i < self->signatures->len; ++i) {
-        Vec *pushed_signature =
-          CAST(LilyCheckedSignatureFun *, get__Vec(self->signatures, i))->types;
-
-        ASSERT(pushed_signature->len == signature->len);
-
-        bool is_match = true;
-
-        for (Usize j = 0; j < pushed_signature->len; ++j) {
-            LilyCheckedDataType *pushed_signature_dt =
-              get__Vec(pushed_signature, j);
-            LilyCheckedDataType *signature_dt = get__Vec(signature, j);
-
-            if (!eq__LilyCheckedDataType(pushed_signature_dt, signature_dt) ||
-                pushed_signature_dt->kind != signature_dt->kind) {
-                is_match = false;
-                break;
-            }
-        }
-
-        if (is_match) {
-            return 1;
-        }
-    }
-
-    push__Vec(
-      self->signatures,
-      NEW(
-        LilyCheckedSignatureFun, self->global_name, signature, generic_params));
-
-    return 0;
-}
-
 LilyCheckedSignatureFun *
 get_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
                                   String *global_name,
