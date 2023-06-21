@@ -43,8 +43,8 @@ CONSTRUCTOR(LilyCheckedSignatureFun *,
     self->types = types;
     self->generic_params = generic_params;
 
-    generate_global_fun_name__LilyCheckedGlobalName(self->ser_global_name,
-                                                    self->types);
+    generate_global_fun_name_with_vec__LilyCheckedGlobalName(
+      self->ser_global_name, self->types);
 
     return self;
 }
@@ -54,8 +54,8 @@ reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self)
 {
     String *reload_ser_global_name = NEW(String);
 
-    generate_global_fun_name__LilyCheckedGlobalName(reload_ser_global_name,
-                                                    self->types);
+    generate_global_fun_name_with_vec__LilyCheckedGlobalName(
+      reload_ser_global_name, self->types);
     FREE(String, self->ser_global_name);
     self->ser_global_name = reload_ser_global_name;
 }
@@ -104,5 +104,31 @@ DESTRUCTOR(LilyCheckedSignatureFun, LilyCheckedSignatureFun *self)
     FREE(Vec, self->types);
     FREE_HASHMAP_VALUES(self->generic_params, LilyCheckedDataType);
     FREE(HashMap, self->generic_params);
+    lily_free(self);
+}
+
+CONSTRUCTOR(LilyCheckedSignatureType *,
+            LilyCheckedSignatureType,
+            String *global_name,
+            OrderedHashMap *generic_params)
+{
+    LilyCheckedSignatureType *self =
+      lily_malloc(sizeof(LilyCheckedSignatureType));
+
+    self->global_name = global_name;
+    self->generic_params = generic_params;
+    self->ser_global_name = clone__String(self->global_name);
+
+    generate_global_type_name_with_ordered_hash_map__LilyCheckedGlobalName(
+      self->ser_global_name, self->generic_params);
+
+    return self;
+}
+
+DESTRUCTOR(LilyCheckedSignatureType, LilyCheckedSignatureType *self)
+{
+    FREE(String, self->ser_global_name);
+    FREE_ORD_HASHMAP_VALUES(self->generic_params, LilyCheckedDataType);
+    FREE(OrderedHashMap, self->generic_params);
     lily_free(self);
 }

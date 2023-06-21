@@ -27,6 +27,7 @@
 
 #include <base/hash_map.h>
 #include <base/macros.h>
+#include <base/ordered_hash_map.h>
 #include <base/string.h>
 #include <base/vec.h>
 
@@ -81,5 +82,27 @@ IMPL_FOR_DEBUG(to_string,
  * @brief Free LilyCheckedSignatureFun type.
  */
 DESTRUCTOR(LilyCheckedSignatureFun, LilyCheckedSignatureFun *self);
+
+typedef struct LilyCheckedSignatureType
+{
+    String *global_name; // String* (&)
+    String *ser_global_name;
+    OrderedHashMap *generic_params;
+} LilyCheckedSignatureType;
+
+/**
+ *
+ * @brief Construct LilyCheckedSignatureType type.
+ */
+CONSTRUCTOR(LilyCheckedSignatureType *,
+            LilyCheckedSignatureType,
+            String *global_name,
+            OrderedHashMap *generic_params);
+
+/**
+ *
+ * @brief Free LilyCheckedSignature type.
+ */
+DESTRUCTOR(LilyCheckedSignatureType, LilyCheckedSignatureType *self);
 
 #endif // LILY_CORE_LILY_CHECKED_SIGNATURE_H
