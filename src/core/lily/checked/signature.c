@@ -189,7 +189,12 @@ IMPL_FOR_DEBUG(to_string,
                      self->global_name,
                      self->ser_global_name);
 
-    DEBUG_ORD_HASH_MAP_STRING(self->generic_params, res, LilyCheckedDataType);
+    if (self->generic_params) {
+        DEBUG_ORD_HASH_MAP_STRING(
+          self->generic_params, res, LilyCheckedDataType);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, " }");
 
