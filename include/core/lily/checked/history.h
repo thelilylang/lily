@@ -82,6 +82,6 @@ contains__LilyCheckedHistory(const LilyCheckedHistory *self,
  *
  * @brief Free LilyCheckedHistory type.
  */
-DESTRUCTOR(LilyCheckedHistory, LilyCheckedHistory *self);
+DESTRUCTOR(LilyCheckedHistory, LilyCheckedHistory **self);
 
 #endif // LILY_CORE_LILY_CHECKED_HISTORY_H

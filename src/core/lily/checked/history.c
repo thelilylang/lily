@@ -69,13 +69,13 @@ contains__LilyCheckedHistory(const LilyCheckedHistory *self,
     return false;
 }
 
-DESTRUCTOR(LilyCheckedHistory, LilyCheckedHistory *self)
+DESTRUCTOR(LilyCheckedHistory, LilyCheckedHistory **self)
 {
-    if (self->items->len > 0) {
-        pop__LilyCheckedHistory(self);
-    } else if (self->items->len == 0) {
-        FREE(Vec, self->items);
-        lily_free(self);
-        self = NULL;
+    if ((*self)->items->len > 0) {
+        pop__LilyCheckedHistory(*self);
+    } else if ((*self)->items->len == 0) {
+        FREE(Vec, (*self)->items);
+        lily_free(*self);
+        *self = NULL;
     }
 }
