@@ -3280,7 +3280,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                     UNREACHABLE("unknown variant");
             }
         case LILY_AST_EXPR_KIND_ARRAY: {
-            Vec *items = NEW(Vec);
+            // FIXME: add support for compiler defined data type
+            Vec *items = NEW(Vec); // Vec<LilyCheckedExpr*>*
 
             for (Usize i = 0; i < expr->array.items->len; ++i) {
                 push__Vec(
@@ -3297,7 +3298,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
             LilyCheckedDataType *data_type_item =
               CAST(LilyCheckedExpr *, get__Vec(items, 0))->data_type;
 
-            for (Usize i = 1; i < expr->array.items->len; ++i) {
+            for (Usize i = 1; i < items->len; ++i) {
                 if (!eq__LilyCheckedDataType(
                       data_type_item,
                       CAST(LilyCheckedExpr *, get__Vec(items, i))->data_type)) {
@@ -4308,23 +4309,88 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_KIND_LAMBDA:
             TODO("lambda expression");
         case LILY_AST_EXPR_KIND_LIST: {
-            LilyCheckedDataType *defined_list_data_type =
-              defined_data_type ? defined_data_type->list : NULL;
-            Vec *list = NEW(Vec);
+            // FIXME: add support for compiler defined data type
+            Vec *items = NEW(Vec); // Vec<LilyCheckedExpr*>*
 
             for (Usize i = 0; i < expr->list.items->len; ++i) {
                 push__Vec(
-                  list,
+                  items,
                   check_expr__LilyAnalysis(self,
-                                           get__Vec(expr->list.items, i),
+                                           get__Vec(expr->array.items, i),
                                            scope,
                                            safety_mode,
-                                           is_moved_expr,
-                                           must_mut,
-                                           defined_list_data_type));
+                                           false,
+                                           false,
+                                           NULL));
             }
 
-            TODO("list expression");
+            LilyCheckedDataType *data_type_item =
+              CAST(LilyCheckedExpr *, get__Vec(items, 0))->data_type;
+
+            for (Usize i = 1; i < items->len; ++i) {
+                if (!eq__LilyCheckedDataType(
+                      data_type_item,
+                      CAST(LilyCheckedExpr *, get__Vec(items, i))->data_type)) {
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      data_type_item->location,
+                      NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                      NULL,
+                      NULL,
+                      NULL);
+                }
+            }
+
+            if (defined_data_type) {
+                switch (defined_data_type->kind) {
+                    case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+                        if (!eq__LilyCheckedDataType(data_type_item,
+                                                     defined_data_type->list)) {
+                            ANALYSIS_EMIT_DIAGNOSTIC(
+                              self,
+                              simple_lily_error,
+                              data_type_item->location,
+                              NEW(LilyError,
+                                  LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                              NULL,
+                              NULL,
+                              NULL);
+                        }
+
+                        return NEW_VARIANT(
+                          LilyCheckedExpr,
+                          list,
+                          &expr->location,
+                          NEW_VARIANT(LilyCheckedDataType,
+                                      list,
+                                      &expr->location,
+                                      clone__LilyCheckedDataType(
+                                        defined_data_type->list)),
+                          expr,
+                          NEW(LilyCheckedExprList, items));
+                    default:
+                        ANALYSIS_EMIT_DIAGNOSTIC(
+                          self,
+                          simple_lily_error,
+                          data_type_item->location,
+                          NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                          NULL,
+                          NULL,
+                          from__String("expected list data type"));
+                }
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedExpr,
+              list,
+              &expr->location,
+              NEW_VARIANT(LilyCheckedDataType,
+                          list,
+                          &expr->location,
+                          clone__LilyCheckedDataType(data_type_item)),
+              expr,
+              NEW(LilyCheckedExprList, items));
         }
         case LILY_AST_EXPR_KIND_LITERAL:
             switch (expr->literal.kind) {
