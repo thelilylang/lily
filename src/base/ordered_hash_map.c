@@ -23,8 +23,10 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/ordered_hash_map.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 
 static void *
@@ -216,8 +218,27 @@ DESTRUCTOR(OrderedHashMap, OrderedHashMap *self)
     lily_free(self);
 }
 
-void *
-next__OrderedHashMapIter(OrderedHashMapIter *self)
+CONSTRUCTOR(OrderedHashMapIter2,
+            OrderedHashMapIter2,
+            OrderedHashMap *ordered_hash_map,
+            OrderedHashMap *ordered_hash_map2)
 {
-    return get_from_id__OrderedHashMap(self->ordered_hash_map, self->count++);
+    ASSERT(ordered_hash_map->len == ordered_hash_map2->len);
+
+    return (OrderedHashMapIter2){ .ordered_hash_map = ordered_hash_map,
+                                  .ordered_hash_map2 = ordered_hash_map2,
+                                  .current = { 0 },
+                                  .count = 0 };
+}
+
+void **
+next__OrderedHashMapIter2(OrderedHashMapIter2 *self)
+{
+    self->current[0] =
+      get_from_id__OrderedHashMap(self->ordered_hash_map, self->count);
+    self->current[1] =
+      get_from_id__OrderedHashMap(self->ordered_hash_map2, self->count++);
+
+    // Verify only the first value, because the both map have the same length
+    return *self->current ? self->current : NULL;
 }

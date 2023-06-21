@@ -229,7 +229,35 @@ inline CONSTRUCTOR(OrderedHashMapIter,
  *
  * @brief Get the next value.
  */
-void *
-next__OrderedHashMapIter(OrderedHashMapIter *self);
+inline void *
+next__OrderedHashMapIter(OrderedHashMapIter *self)
+{
+    return get_from_id__OrderedHashMap(self->ordered_hash_map, self->count++);
+}
+
+typedef struct OrderedHashMapIter2
+{
+    OrderedHashMap *ordered_hash_map;
+    OrderedHashMap *ordered_hash_map2;
+    void *current[2];
+    Usize count;
+} OrderedHashMapIter2;
+
+/**
+ *
+ * @brief Construct OrderedHashMapIter2 type.
+ */
+CONSTRUCTOR(OrderedHashMapIter2,
+            OrderedHashMapIter2,
+            OrderedHashMap *ordered_hash_map,
+            OrderedHashMap *ordered_hash_map2);
+
+/**
+ *
+ * @brief Get the next value.
+ * @return [value, value2]
+ */
+void **
+next__OrderedHashMapIter2(OrderedHashMapIter2 *self);
 
 #endif // LILY_BASE_ORDERED_HASH_MAP_H
