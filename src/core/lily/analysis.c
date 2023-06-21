@@ -3777,7 +3777,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     FREE(LilyCheckedScopeResponse, &response);
 
                                     if (history) {
-                                        FREE(LilyCheckedHistory, history);
+                                        FREE(LilyCheckedHistory, &history);
                                     }
 
                                     return fun_call;
@@ -6800,7 +6800,7 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
 
                 check_fun__LilyAnalysis(self, decl);
 
-                FREE(LilyCheckedHistory, history);
+                FREE(LilyCheckedHistory, &history);
 
                 break;
             case LILY_CHECKED_DECL_KIND_CONSTANT:
