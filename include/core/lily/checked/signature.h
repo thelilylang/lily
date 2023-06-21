@@ -101,6 +101,19 @@ CONSTRUCTOR(LilyCheckedSignatureType *,
 
 /**
  *
+ * @brief Try to add a signature to signatures.
+ * @return Return 1 if is failing to push a new signature (already presents)
+ * otherwise return 0.
+ * @param generic_params OrderedHashMap<LilyCheckedDataType* (&)>*?
+ * @param signatures Vec<LilyCheckedSignatureType*>*
+ */
+int
+add_signature__LilyCheckedSignatureType(String *global_name,
+                                        OrderedHashMap *generic_params,
+                                        Vec *signatures);
+
+/**
+ *
  * @brief Convert LilyCheckedSignatureType in String.
  * @note This function is only used to debug.
  */

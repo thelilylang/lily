@@ -23,11 +23,15 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/new.h>
 
 #include <core/lily/checked/data_type.h>
 #include <core/lily/checked/global_name.h>
 #include <core/lily/checked/signature.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 CONSTRUCTOR(LilyCheckedSignatureFun *,
             LilyCheckedSignatureFun,
@@ -154,6 +158,43 @@ IMPL_FOR_DEBUG(to_string,
     return res;
 }
 #endif
+
+int
+add_signature__LilyCheckedSignatureType(String *global_name,
+                                        OrderedHashMap *generic_params,
+                                        Vec *signatures)
+{
+    for (Usize i = 0; i < signatures->len; ++i) {
+        LilyCheckedSignatureType *signature = get__Vec(signatures, i);
+
+        if (!strcmp(global_name->buffer, signature->global_name->buffer)) {
+            ASSERT(generic_params && signature->generic_params);
+            ASSERT(generic_params->len == signature->generic_params->len);
+
+            OrderedHashMapIter2 iter = NEW(
+              OrderedHashMapIter2, generic_params, signature->generic_params);
+            LilyCheckedDataType **current = NULL;
+            bool is_match = true;
+
+            while ((current = (LilyCheckedDataType **)next__OrderedHashMapIter2(
+                      &iter))) {
+                if (!eq__LilyCheckedDataType(current[0], current[1])) {
+                    is_match = false;
+                    break;
+                }
+            }
+
+            if (is_match) {
+                return 1;
+            }
+        }
+    }
+
+    push__Vec(signatures,
+              NEW(LilyCheckedSignatureType, global_name, generic_params));
+
+    return 0;
+}
 
 DESTRUCTOR(LilyCheckedSignatureType, LilyCheckedSignatureType *self)
 {
