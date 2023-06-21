@@ -55,6 +55,7 @@
         }                                                  \
     }
 
+#ifdef ENV_DEBUG
 #define PRINT_STRING_HASH_MAP(self, debug)             \
     {                                                  \
         HashMapIter iter = NEW(HashMapIter, self);     \
@@ -77,6 +78,7 @@
         }                                                  \
         push_str__String(str, " }");                       \
     }
+#endif
 
 typedef struct HashMapPair
 {

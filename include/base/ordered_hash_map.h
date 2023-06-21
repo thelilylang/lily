@@ -55,6 +55,7 @@
         }                                                         \
     }
 
+#ifdef ENV_DEBUG
 #define PRINT_STRING_ORD_HASH_MAP(self, debug)                   \
     {                                                            \
         OrderedHashMapIter iter = NEW(OrderedHashMapIter, self); \
@@ -77,6 +78,7 @@
         }                                                        \
         push_str__String(str, " }");                             \
     }
+#endif
 
 typedef struct OrderedHashMapPair
 {
