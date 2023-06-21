@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#include <core/lily/checked/decl.h>
+#include <core/lily/checked/decl/fun.h>
+#include <core/lily/checked/limits.h>
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
 #include <core/lily/mir/generator/expr/call.h>
@@ -45,20 +48,22 @@ generate_call_expr__LilyMir(LilyMirModule *module,
             TODO("error");
         case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
             Vec *params = NEW(Vec);
+            LilyMirDt *types[MAX_FUN_PARAMS + 1] = { 0 };
+            const Usize types_len = expr->call.fun.params->len + 1;
 
             if (expr->call.fun.params) {
                 for (Usize i = 0; i < expr->call.fun.params->len; ++i) {
+                    LilyCheckedExprCallFunParam *param =
+                      get__Vec(expr->call.fun.params, i);
+
                     LilyMirInstruction *inst = generate_expr__LilyMir(
-                      module,
-                      fun_signature,
-                      scope,
-                      CAST(LilyCheckedExprCallFunParam *,
-                           get__Vec(expr->call.fun.params, i))
-                        ->value);
+                      module, fun_signature, scope, param->value);
 
                     ASSERT(inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
 
                     push__Vec(params, inst->val);
+                    types[i] = inst->val->dt;
+
                     lily_free(inst);
                 }
             }
@@ -86,14 +91,36 @@ generate_call_expr__LilyMir(LilyMirModule *module,
 
                     break;
                 }
+                case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                    switch (expr->data_type->custom.kind) {
+                        case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                            return_data_type = get__HashMap(
+                              fun_signature->generic_params,
+                              expr->data_type->custom.name->buffer);
+
+                            break;
+                        default:
+                            return_data_type = expr->data_type;
+                    }
+
+                    break;
                 default:
                     return_data_type = expr->data_type;
             }
 
-            return LilyMirBuildCall(module,
-                                    generate_dt__LilyMir(return_data_type),
-                                    expr->call.global_name->buffer,
-                                    params);
+            LilyMirDt *mir_return_data_type =
+              generate_dt__LilyMir(return_data_type);
+            types[types_len - 1] = mir_return_data_type;
+
+            return LilyMirBuildCall(
+              module,
+              mir_return_data_type,
+              LilyMirGetFunNameFromTypes(
+                module,
+                expr->call.fun.fun->fun.global_name->buffer,
+                types,
+                types_len),
+              params);
         }
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
             TODO("fun sys");
