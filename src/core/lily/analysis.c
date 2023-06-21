@@ -6681,6 +6681,41 @@ check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record)
                                record->type.record.scope);
     }
 
+    // Add a new signature
+    {
+        OrderedHashMap *generic_params = NULL;
+
+        if (record->type.record.generic_params) {
+            generic_params = NEW(OrderedHashMap);
+
+            for (Usize i = 0; i < record->type.record.generic_params->len;
+                 ++i) {
+                LilyCheckedGenericParam *generic_param =
+                  get__Vec(record->type.record.generic_params, i);
+
+                insert__OrderedHashMap(
+                  generic_params,
+                  get_name__LilyCheckedGenericParam(generic_param)->buffer,
+                  NEW_VARIANT(LilyCheckedDataType,
+                              custom,
+                              generic_param->location,
+                              NEW(LilyCheckedDataTypeCustom,
+                                  record->type.record.scope->id,
+                                  (LilyCheckedAccessScope){ .id = i },
+                                  generic_param->constraint.name,
+                                  generic_param->constraint.name,
+                                  NULL,
+                                  LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
+                                  false)));
+            }
+        }
+
+        push__Vec(record->type.record.signatures,
+                  NEW(LilyCheckedSignatureType,
+                      record->type.record.global_name,
+                      generic_params));
+    }
+
     check_record_fields__LilyAnalysis(self,
                                       record->ast_decl->type.record.fields,
                                       record->type.record.scope,
