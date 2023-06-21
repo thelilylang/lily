@@ -765,10 +765,12 @@ inline DESTRUCTOR(LilyMirInstructionFunLoad, LilyMirInstructionFunLoad *self)
 typedef struct LilyMirInstructionFun
 {
     enum LilyMirLinkage linkage;
-    const char *name;   // const char* (&)
-    Vec *args;          // Vec<LilyMirInstruction*>*
-    Vec *insts;         // Vec<LilyMirInstruction*>*
-    Stack *block_stack; // Stack<LilyMirInstructionBlock*>*
+    const char *name; // const char* (&)
+    // without serialization
+    const char *base_name; // const char* (&)
+    Vec *args;             // Vec<LilyMirInstruction*>*
+    Vec *insts;            // Vec<LilyMirInstruction*>*
+    Stack *block_stack;    // Stack<LilyMirInstructionBlock*>*
     LilyMirDt *return_data_type;
     LilyMirScope scope;
     Usize block_count;
@@ -782,6 +784,7 @@ CONSTRUCTOR(LilyMirInstructionFun,
             LilyMirInstructionFun,
             enum LilyMirLinkage linkage,
             const char *name,
+            const char *base_name,
             Vec *args,
             LilyMirDt *return_data_type);
 

@@ -1008,6 +1008,7 @@ CONSTRUCTOR(LilyMirInstructionFun,
             LilyMirInstructionFun,
             enum LilyMirLinkage linkage,
             const char *name,
+            const char *base_name,
             Vec *args,
             LilyMirDt *return_data_type)
 {
@@ -1024,6 +1025,7 @@ CONSTRUCTOR(LilyMirInstructionFun,
 
     return (LilyMirInstructionFun){ .linkage = linkage,
                                     .name = name,
+                                    .base_name = base_name,
                                     .args = args,
                                     .insts = insts,
                                     .block_stack = block_stack,
