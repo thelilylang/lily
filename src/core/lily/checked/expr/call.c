@@ -387,7 +387,7 @@ IMPL_FOR_DEBUG(to_string,
     push_str__String(res, ", generic_params =");
 
     if (self->generic_params) {
-        DEBUG_STRING_HASH_MAP(self->generic_params, res, LilyCheckedDataType);
+        DEBUG_HASH_MAP_STRING(self->generic_params, res, LilyCheckedDataType);
     } else {
         push_str__String(res, " NULL");
     }

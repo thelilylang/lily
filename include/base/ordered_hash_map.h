@@ -65,7 +65,7 @@
         }                                                        \
     }
 
-#define DEBUG_STRING_ORD_HASH_MAP(self, str, type)               \
+#define DEBUG_ORD_HASH_MAP_STRING(self, str, type)               \
     {                                                            \
         push_str__String(str, " { ");                            \
         OrderedHashMapIter iter = NEW(OrderedHashMapIter, self); \

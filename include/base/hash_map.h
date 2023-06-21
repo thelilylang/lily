@@ -65,7 +65,7 @@
         }                                              \
     }
 
-#define DEBUG_STRING_HASH_MAP(self, str, type)             \
+#define DEBUG_HASH_MAP_STRING(self, str, type)             \
     {                                                      \
         push_str__String(str, " { ");                      \
         HashMapIter iter = NEW(HashMapIter, self);         \
