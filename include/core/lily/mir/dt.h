@@ -228,6 +228,13 @@ clone__LilyMirDt(LilyMirDt *self);
 
 /**
  *
+ * @brief Check if the two given LilyMirDt values are equal.
+ */
+bool
+eq__LilyMirDt(LilyMirDt *self, LilyMirDt *other);
+
+/**
+ *
  * @brief Convert LilyMirDt in String.
  * @note This function is only used to debug.
  */

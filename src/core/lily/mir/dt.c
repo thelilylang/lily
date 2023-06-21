@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static VARIANT_DESTRUCTOR(LilyMirDt, array, LilyMirDt *self);
 
@@ -232,6 +233,104 @@ clone__LilyMirDt(LilyMirDt *self)
     }
 }
 
+bool
+eq__LilyMirDt(LilyMirDt *self, LilyMirDt *other)
+{
+    switch (self->kind) {
+        case LILY_MIR_DT_KIND_ARRAY:
+            switch (other->kind) {
+                case LILY_MIR_DT_KIND_ARRAY:
+                    return eq__LilyMirDt(self->array.dt, other->array.dt) &&
+                           self->array.len == other->array.len;
+                default:
+                    return false;
+            }
+        case LILY_MIR_DT_KIND_EXCEPTION:
+            switch (other->kind) {
+                case LILY_MIR_DT_KIND_EXCEPTION:
+                    return eq__LilyMirDt(self->exception.ok,
+                                         other->exception.ok) &&
+                           eq__LilyMirDt(self->exception.err,
+                                         other->exception.err);
+                default:
+                    return false;
+            }
+        case LILY_MIR_DT_KIND_LIST:
+            switch (other->kind) {
+                case LILY_MIR_DT_KIND_LIST:
+                    return eq__LilyMirDt(self->list, other->list);
+                default:
+                    return false;
+            }
+        case LILY_MIR_DT_KIND_PTR:
+            switch (other->kind) {
+                case LILY_MIR_DT_KIND_PTR:
+                    return eq__LilyMirDt(self->ptr, other->ptr);
+                default:
+                    return false;
+            }
+        case LILY_MIR_DT_KIND_REF:
+            switch (other->kind) {
+                case LILY_MIR_DT_KIND_REF:
+                    return eq__LilyMirDt(self->ref, other->ref);
+                default:
+                    return false;
+            }
+        case LILY_MIR_DT_KIND_STRUCT:
+            switch (other->kind) {
+                case LILY_MIR_DT_KIND_STRUCT:
+                    if (self->struct_->len != other->struct_->len) {
+                        return false;
+                    }
+
+                    for (Usize i = 0; i < self->struct_->len; ++i) {
+                        if (!eq__LilyMirDt(get__Vec(self->struct_, i),
+                                           get__Vec(other->struct_, i))) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                default:
+                    return false;
+            }
+        case LILY_MIR_DT_KIND_STRUCT_NAME:
+            switch (other->kind) {
+                case LILY_MIR_DT_KIND_STRUCT_NAME:
+                    return !strcmp(self->struct_name, other->struct_name);
+                default:
+                    return false;
+            }
+        case LILY_MIR_DT_KIND_TRACE:
+            switch (other->kind) {
+                case LILY_MIR_DT_KIND_TRACE:
+                    return eq__LilyMirDt(self->trace, other->trace);
+                default:
+                    return false;
+            }
+        case LILY_MIR_DT_KIND_TUPLE:
+            switch (other->kind) {
+                case LILY_MIR_DT_KIND_TUPLE:
+                    if (self->tuple->len != other->tuple->len) {
+                        return false;
+                    }
+
+                    for (Usize i = 0; i < self->tuple->len; ++i) {
+                        if (!eq__LilyMirDt(get__Vec(self->tuple, i),
+                                           get__Vec(other->tuple, i))) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                default:
+                    return false;
+            }
+        default:
+            return self->kind == other->kind;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyMirDt, const LilyMirDt *self)
@@ -244,7 +343,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirDt, const LilyMirDt *self)
                                   self->array.len,
                                   to_string__Debug__LilyMirDt(self->array.dt));
         case LILY_MIR_DT_KIND_BYTES:
-            return format__String("\x1b[35mstruct {{u8, usize}\x1b[0m");
+            return format__String("\x1b[35mBytes\x1b[0m");
         case LILY_MIR_DT_KIND_EXCEPTION:
             return format__String(
               "\x1b[35mstruct {{{Sr}, {Sr}}\x1b[0m",
