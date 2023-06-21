@@ -65,6 +65,19 @@
         }                                                        \
     }
 
+#define DEBUG_STRING_ORD_HASH_MAP(self, str, type)               \
+    {                                                            \
+        push_str__String(str, " { ");                            \
+        OrderedHashMapIter iter = NEW(OrderedHashMapIter, self); \
+        void *current = NULL;                                    \
+                                                                 \
+        while ((current = next__OrderedHashMapIter(&iter))) {    \
+            String *s = to_string__Debug__##type(current);       \
+            APPEND_AND_FREE(str, s);                             \
+        }                                                        \
+        push_str__String(str, " }");                             \
+    }
+
 typedef struct OrderedHashMapPair
 {
     char *key;
