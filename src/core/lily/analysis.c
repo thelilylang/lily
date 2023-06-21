@@ -30,6 +30,7 @@
 #include <core/lily/ast.h>
 #include <core/lily/checked/compiler_generic.h>
 #include <core/lily/checked/history.h>
+#include <core/lily/checked/limits.h>
 #include <core/lily/checked/parent.h>
 #include <core/lily/checked/safety_mode.h>
 #include <core/lily/checked/signature.h>
@@ -164,12 +165,14 @@ reanalyze_fun_call_with_signature__LilyAnalysis(
 /// @return The data type of the expresion
 static LilyCheckedDataType *
 reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
+                             LilyCheckedSignatureFun *signature,
                              const LilyCheckedExpr *expr,
                              LilyCheckedVirtualScope *virtual_scope,
                              LilyCheckedDataType *return_data_type);
 
 static void
 reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
+                             LilyCheckedSignatureFun *signature,
                              const LilyCheckedStmt *stmt,
                              LilyCheckedVirtualScope *virtual_scope,
                              LilyCheckedDataType *return_data_type);
@@ -1857,22 +1860,28 @@ typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
                        NEW(LilyCheckedExprBinary, kind, left, right));
 }
 
-#define REANALYZE_BODY(body, virtual_scope)                            \
-    for (Usize i = 0; i < body->len; ++i) {                            \
-        LilyCheckedBodyFunItem *item = get__Vec(body, i);              \
-                                                                       \
-        switch (item->kind) {                                          \
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:                 \
-                reanalyze_expr__LilyAnalysis(                          \
-                  self, item->expr, virtual_scope, return_data_type);  \
-                break;                                                 \
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:                 \
-                reanalyze_stmt__LilyAnalysis(                          \
-                  self, &item->stmt, virtual_scope, return_data_type); \
-                break;                                                 \
-            default:                                                   \
-                UNREACHABLE("unknown variant");                        \
-        }                                                              \
+#define REANALYZE_BODY(body, virtual_scope)                     \
+    for (Usize i = 0; i < body->len; ++i) {                     \
+        LilyCheckedBodyFunItem *item = get__Vec(body, i);       \
+                                                                \
+        switch (item->kind) {                                   \
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:          \
+                reanalyze_expr__LilyAnalysis(self,              \
+                                             signature,         \
+                                             item->expr,        \
+                                             virtual_scope,     \
+                                             return_data_type); \
+                break;                                          \
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:          \
+                reanalyze_stmt__LilyAnalysis(self,              \
+                                             signature,         \
+                                             &item->stmt,       \
+                                             virtual_scope,     \
+                                             return_data_type); \
+                break;                                          \
+            default:                                            \
+                UNREACHABLE("unknown variant");                 \
+        }                                                       \
     }
 
 void
@@ -1889,11 +1898,37 @@ reanalyze_fun_call_with_signature__LilyAnalysis(
 
     // Push params
     for (Usize i = 0; i < fun->fun.params->len; ++i) {
-        add_fun_param__LilyCheckedVirtualScope(
-          root_virtual_scope,
-          NEW(LilyCheckedVirtualFunParam,
-              get__Vec(fun->fun.params, i),
-              get__Vec(signature->types, i)));
+        LilyCheckedDataType *param_data_type = get__Vec(signature->types, i);
+
+        switch (param_data_type->kind) {
+            case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                switch (param_data_type->custom.kind) {
+                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                        add_fun_param__LilyCheckedVirtualScope(
+                          root_virtual_scope,
+                          NEW(LilyCheckedVirtualFunParam,
+                              get__Vec(fun->fun.params, i),
+                              get__HashMap(
+                                signature->generic_params,
+                                param_data_type->custom.name->buffer)));
+
+                        break;
+                    default:
+                        add_fun_param__LilyCheckedVirtualScope(
+                          root_virtual_scope,
+                          NEW(LilyCheckedVirtualFunParam,
+                              get__Vec(fun->fun.params, i),
+                              param_data_type));
+                }
+
+                break;
+            default:
+                add_fun_param__LilyCheckedVirtualScope(
+                  root_virtual_scope,
+                  NEW(LilyCheckedVirtualFunParam,
+                      get__Vec(fun->fun.params, i),
+                      param_data_type));
+        }
     }
 
     // Re-analyze fun body
@@ -1904,6 +1939,7 @@ reanalyze_fun_call_with_signature__LilyAnalysis(
 
 static LilyCheckedDataType *
 reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
+                             LilyCheckedSignatureFun *signature,
                              const LilyCheckedExpr *expr,
                              LilyCheckedVirtualScope *virtual_scope,
                              LilyCheckedDataType *return_data_type)
@@ -1912,19 +1948,75 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
+                    HashMap *generic_params =
+                      NULL; // HashMap<LilyCheckedDataType*>*?
+
+                    if (expr->call.fun.generic_params) {
+                        generic_params = NEW(HashMap);
+
+                        HashMapIter iter =
+                          NEW(HashMapIter, expr->call.fun.generic_params);
+                        LilyCheckedDataType *current = NULL;
+                        Usize count = 0;
+
+                        while ((current = next__HashMapIter(&iter))) {
+                            switch (current->kind) {
+                                case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                                    switch (current->custom.kind) {
+                                        case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                                            insert__HashMap(
+                                              generic_params,
+                                              get_name__LilyCheckedGenericParam(
+                                                get__Vec(expr->call.fun.fun->fun
+                                                           .generic_params,
+                                                         count))
+                                                ->buffer,
+                                              get__HashMap(
+                                                signature->generic_params,
+                                                current->custom.name->buffer));
+
+                                            break;
+                                        default:
+                                            insert__HashMap(
+                                              generic_params,
+                                              get_name__LilyCheckedGenericParam(
+                                                get__Vec(expr->call.fun.fun->fun
+                                                           .generic_params,
+                                                         count))
+                                                ->buffer,
+                                              ref__LilyCheckedDataType(
+                                                current));
+                                    }
+
+                                    break;
+                                default:
+                                    insert__HashMap(
+                                      generic_params,
+                                      get_name__LilyCheckedGenericParam(
+                                        get__Vec(expr->call.fun.fun->fun
+                                                   .generic_params,
+                                                 count))
+                                        ->buffer,
+                                      ref__LilyCheckedDataType(current));
+                            }
+
+                            ++count;
+                        }
+                    }
+
                     Vec *fun_types = NEW(Vec); // Vec<LilyCheckedDataType* (&)>*
 
                     if (expr->call.fun.params) {
                         for (Usize i = 0; i < expr->call.fun.params->len; ++i) {
-                            LilyCheckedExprCallFunParam *param =
-                              get__Vec(expr->call.fun.params, i);
-
-                            push__Vec(
-                              fun_types,
-                              reanalyze_expr__LilyAnalysis(self,
-                                                           param->value,
-                                                           virtual_scope,
-                                                           return_data_type));
+                            push__Vec(fun_types,
+                                      reanalyze_expr__LilyAnalysis(
+                                        self,
+                                        signature,
+                                        CAST(LilyCheckedExprCallFunParam *,
+                                             get__Vec(expr->call.fun.params, i))
+                                          ->value,
+                                        virtual_scope,
+                                        return_data_type));
                         }
                     }
 
@@ -1942,14 +2034,36 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
 
                             break;
                         }
+                        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                            switch (expr->call.fun.fun->fun.return_data_type
+                                      ->custom.kind) {
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                                    ASSERT(expr->call.fun.generic_params);
+
+                                    push__Vec(
+                                      fun_types,
+                                      get__HashMap(generic_params,
+                                                   expr->call.fun.fun->fun
+                                                     .return_data_type->custom
+                                                     .name->buffer));
+
+                                    break;
+                                default:
+                                    push__Vec(
+                                      fun_types,
+                                      expr->call.fun.fun->fun.return_data_type);
+                            }
+
+                            break;
                         default:
                             push__Vec(fun_types,
                                       expr->call.fun.fun->fun.return_data_type);
                     }
 
-                    // TODO: manage generic params
                     if (add_signature__LilyCheckedDeclFun(
-                          &expr->call.fun.fun->fun, fun_types, NULL)) {
+                          &expr->call.fun.fun->fun,
+                          fun_types,
+                          generic_params)) {
                         LilyCheckedDataType *return_data_type =
                           last__Vec(fun_types);
 
@@ -1960,7 +2074,7 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
                         LilyCheckedSignatureFun *signature =
                           get_signature__LilyCheckedDeclFun(
                             &expr->call.fun.fun->fun,
-                            expr->call.global_name,
+                            expr->call.fun.fun->fun.global_name,
                             fun_types);
 
                         ASSERT(signature);
@@ -1991,14 +2105,18 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
 
 static void
 reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
+                             LilyCheckedSignatureFun *signature,
                              const LilyCheckedStmt *stmt,
                              LilyCheckedVirtualScope *virtual_scope,
                              LilyCheckedDataType *return_data_type)
 {
     switch (stmt->kind) {
         case LILY_CHECKED_STMT_KIND_AWAIT:
-            reanalyze_expr__LilyAnalysis(
-              self, stmt->await.expr, virtual_scope, return_data_type);
+            reanalyze_expr__LilyAnalysis(self,
+                                         signature,
+                                         stmt->await.expr,
+                                         virtual_scope,
+                                         return_data_type);
 
             break;
         case LILY_CHECKED_STMT_KIND_BLOCK: {
@@ -2012,8 +2130,11 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
             break;
         }
         case LILY_CHECKED_STMT_KIND_DROP:
-            reanalyze_expr__LilyAnalysis(
-              self, stmt->drop.expr, virtual_scope, return_data_type);
+            reanalyze_expr__LilyAnalysis(self,
+                                         signature,
+                                         stmt->drop.expr,
+                                         virtual_scope,
+                                         return_data_type);
 
             break;
         case LILY_CHECKED_STMT_KIND_FOR: {
@@ -2068,12 +2189,14 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
                 switch (case_->body_item->kind) {
                     case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
                         reanalyze_expr__LilyAnalysis(self,
+                                                     signature,
                                                      case_->body_item->expr,
                                                      case_virtual_scope,
                                                      return_data_type);
                         break;
                     case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
                         reanalyze_stmt__LilyAnalysis(self,
+                                                     signature,
                                                      &case_->body_item->stmt,
                                                      case_virtual_scope,
                                                      return_data_type);
@@ -2088,8 +2211,12 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
             break;
         }
         case LILY_CHECKED_STMT_KIND_RETURN: {
-            LilyCheckedDataType *expr_data_type = reanalyze_expr__LilyAnalysis(
-              self, stmt->return_.expr, virtual_scope, return_data_type);
+            LilyCheckedDataType *expr_data_type =
+              reanalyze_expr__LilyAnalysis(self,
+                                           signature,
+                                           stmt->return_.expr,
+                                           virtual_scope,
+                                           return_data_type);
 
             if (return_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||
                 return_data_type->kind ==
@@ -2127,11 +2254,13 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_STMT_KIND_VARIABLE:
             add_variable__LilyCheckedVirtualScope(
               virtual_scope,
-              NEW(
-                LilyCheckedVirtualVariable,
-                &stmt->variable,
-                reanalyze_expr__LilyAnalysis(
-                  self, stmt->variable.expr, virtual_scope, return_data_type)));
+              NEW(LilyCheckedVirtualVariable,
+                  &stmt->variable,
+                  reanalyze_expr__LilyAnalysis(self,
+                                               signature,
+                                               stmt->variable.expr,
+                                               virtual_scope,
+                                               return_data_type)));
 
             break;
         case LILY_CHECKED_STMT_KIND_WHILE: {
@@ -3569,7 +3698,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                   &fun->fun, fun_types),
                                                 NEW(LilyCheckedExprCallFun,
                                                     fun,
-                                                    checked_params)));
+                                                    checked_params,
+                                                    generic_params)));
 
                                             FREE(Vec, fun_types);
                                         } else {
@@ -3604,7 +3734,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                 signature->ser_global_name,
                                                 NEW(LilyCheckedExprCallFun,
                                                     fun,
-                                                    checked_params)));
+                                                    checked_params,
+                                                    generic_params)));
                                         }
                                     } else {
                                         fun_call = NEW_VARIANT(
@@ -3625,7 +3756,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                               ->ser_global_name,
                                             NEW(LilyCheckedExprCallFun,
                                                 fun,
-                                                checked_params)));
+                                                checked_params,
+                                                generic_params)));
 
                                         FREE(Vec, fun_types);
                                     }
@@ -5980,6 +6112,10 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
 
             FREE(LilyCheckedScopeContainerVariable, sc_variable);
         }
+    }
+
+    if (checked_params->len > MAX_FUN_PARAMS) {
+        FAILED("too many params, expected less or equal to 256");
     }
 
     return checked_params;
