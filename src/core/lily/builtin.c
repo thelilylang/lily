@@ -370,7 +370,11 @@ load_builtins__LilyBuiltin()
             LilyCheckedDataType,
             ptr,
             NULL,
-            NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+            NEW_VARIANT(
+              LilyCheckedDataType,
+              ptr,
+              NULL,
+              NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL))),
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL))
     };
