@@ -336,6 +336,7 @@ set(CORE_SRC
 	src/core/lily/mir/generator/expr/unary.c
 	src/core/lily/mir/generator/expr.c
 	src/core/lily/mir/generator/fun.c
+	src/core/lily/mir/generator/record.c
 	src/core/lily/mir/generator/stmt.c
 	src/core/lily/mir/generator/val.c
 	src/core/lily/mir/generator/stmt/variable.c
