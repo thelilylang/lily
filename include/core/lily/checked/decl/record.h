@@ -68,6 +68,18 @@ inline CONSTRUCTOR(LilyCheckedDeclRecord,
 
 /**
  *
+ * @brief Add signature to signatures field.
+ */
+inline int
+add_signature__LilyCheckedDeclRecord(LilyCheckedDeclRecord *self,
+                                     OrderedHashMap *generic_params)
+{
+    return add_signature__LilyCheckedSignatureType(
+      self->global_name, generic_params, self->signatures);
+}
+
+/**
+ *
  * @brief Convert LilyCheckedDeclRecord in String.
  * @note This function is only used to debug.
  */
