@@ -314,6 +314,17 @@ LilyMirBuildGetField(LilyMirModule *Module,
 LilyMirInstructionVal *
 LilyMirGetValFromInst(LilyMirInstruction *inst);
 
+bool
+LilyMirValidTypesOfFun(LilyMirInstructionFun *Fun,
+                       LilyMirDt **Types,
+                       Usize Len);
+
+const char *
+LilyMirGetFunNameFromTypes(LilyMirModule *Module,
+                           const char *BaseName,
+                           LilyMirDt **Types,
+                           Usize Len);
+
 /**
  *
  * @brief Check if the key of the instruction is unique.

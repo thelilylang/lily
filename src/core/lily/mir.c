@@ -405,6 +405,76 @@ LilyMirGetValFromInst(LilyMirInstruction *inst)
     }
 }
 
+bool
+LilyMirValidTypesOfFun(LilyMirInstructionFun *Fun, LilyMirDt **types, Usize len)
+{
+    for (Usize i = 0; i < Fun->args->len; ++i) {
+        LilyMirInstruction *arg = get__Vec(Fun->args, i);
+
+        if (!eq__LilyMirDt(arg->arg.dt, types[i])) {
+            return false;
+        }
+    }
+
+    return eq__LilyMirDt(Fun->return_data_type, types[len - 1]);
+}
+
+const char *
+LilyMirGetFunNameFromTypes(LilyMirModule *Module,
+                           const char *BaseName,
+                           LilyMirDt **Types,
+                           Usize Len)
+{
+    {
+        OrderedHashMapIter insts_iter = NEW(OrderedHashMapIter, Module->insts);
+        LilyMirInstruction *current = NULL;
+
+        while ((current = next__OrderedHashMapIter(&insts_iter))) {
+            switch (current->kind) {
+                case LILY_MIR_INSTRUCTION_KIND_FUN:
+                    if (!strcmp(BaseName, current->fun.base_name) &&
+                        LilyMirValidTypesOfFun(&current->fun, Types, Len)) {
+                        return current->fun.name;
+                    }
+
+                    break;
+                default:
+                    continue;
+            }
+        }
+    }
+
+    // Search in the stack (for unpushed function to the insts field)
+    if (Module->current->len > 0) {
+        LilyMirInstruction *top = Module->current->top;
+
+        if (top) {
+            if (!strcmp(BaseName, top->fun.base_name) &&
+                LilyMirValidTypesOfFun(&top->fun, Types, Len)) {
+                return top->fun.name;
+            }
+        }
+
+        for (Usize i = 0; i < Module->current->len - 1; ++i) {
+            LilyMirInstruction *current = Module->current->buffer[i];
+
+            switch (current->kind) {
+                case LILY_MIR_INSTRUCTION_KIND_FUN:
+                    if (!strcmp(BaseName, current->fun.base_name) &&
+                        LilyMirValidTypesOfFun(&current->fun, Types, Len)) {
+                        return current->fun.name;
+                    }
+
+                    break;
+                default:
+                    continue;
+            }
+        }
+    }
+
+    UNREACHABLE("the analysis has a bug!!");
+}
+
 char *
 LilyMirGenerateName(LilyMirNameManager *NameManager)
 {
