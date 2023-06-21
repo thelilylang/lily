@@ -47,6 +47,9 @@ IMPL_FOR_DEBUG(to_string,
     push_str__String(res, ", fields =");
     DEBUG_VEC_STRING(self->fields, res, LilyCheckedField);
 
+    push_str__String(res, ", signatures =");
+    DEBUG_VEC_STRING(self->signatures, res, LilyCheckedSignatureType);
+
     {
         char *s = format(", scope = {Sr}, visibility = {s}, is_checked = {b}, "
                          "is_recursive = {b} }",
@@ -76,6 +79,11 @@ DESTRUCTOR(LilyCheckedDeclRecord, const LilyCheckedDeclRecord *self)
     FREE_BUFFER_ITEMS(
       self->fields->buffer, self->fields->len, LilyCheckedField);
     FREE(Vec, self->fields);
+
+    FREE_BUFFER_ITEMS(self->signatures->buffer,
+                      self->signatures->len,
+                      LilyCheckedSignatureType);
+    FREE(Vec, self->signatures);
 
     FREE(LilyCheckedScope, self->scope);
 }

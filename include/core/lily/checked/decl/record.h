@@ -30,6 +30,7 @@
 
 #include <core/lily/checked/field.h>
 #include <core/lily/checked/scope.h>
+#include <core/lily/checked/signature.h>
 #include <core/lily/visibility.h>
 
 typedef struct LilyCheckedDeclRecord
@@ -38,6 +39,7 @@ typedef struct LilyCheckedDeclRecord
     String *global_name;
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     Vec *fields;         // Vec<LilyCheckedField*>*
+    Vec *signatures;     // Vec<LilyCheckedSignatureType*>*
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
     bool is_checked;
@@ -57,6 +59,7 @@ inline CONSTRUCTOR(LilyCheckedDeclRecord,
                                     .global_name = global_name,
                                     .generic_params = generic_params,
                                     .fields = fields,
+                                    .signatures = NEW(Vec),
                                     .scope = scope,
                                     .visibility = visibility,
                                     .is_checked = false,
