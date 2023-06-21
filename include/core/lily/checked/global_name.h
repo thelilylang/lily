@@ -44,7 +44,7 @@ generate_global_fun_name_with_vec__LilyCheckedGlobalName(String *global_name,
  *
  * @brief Generate global name according the generic params and the return data
  * type of the type.
- * @param fun OrderedHashMap<LilyCheckedDataType*>*
+ * @param generic_params OrderedHashMap<LilyCheckedDataType*>*
  */
 void
 generate_global_type_name_with_ordered_hash_map__LilyCheckedGlobalName(
