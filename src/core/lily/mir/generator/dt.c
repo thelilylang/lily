@@ -28,7 +28,7 @@
 #include <stdlib.h>
 
 LilyMirDt *
-generate_dt__LilyMir(LilyCheckedDataType *data_type)
+generate_dt__LilyMir(LilyMirModule *module, LilyCheckedDataType *data_type)
 {
     switch (data_type->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_ANY:
@@ -39,19 +39,20 @@ generate_dt__LilyMir(LilyCheckedDataType *data_type)
                     return NEW_VARIANT(
                       LilyMirDt,
                       ptr,
-                      generate_dt__LilyMir(data_type->array.data_type));
+                      generate_dt__LilyMir(module, data_type->array.data_type));
                 case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_MULTI_POINTERS:
                     return NEW_VARIANT(
                       LilyMirDt,
                       ptr,
-                      generate_dt__LilyMir(data_type->array.data_type));
+                      generate_dt__LilyMir(module, data_type->array.data_type));
                 case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED:
                     return NEW_VARIANT(
                       LilyMirDt,
                       array,
                       NEW(LilyMirDtArray,
                           data_type->array.size,
-                          generate_dt__LilyMir(data_type->array.data_type)));
+                          generate_dt__LilyMir(module,
+                                               data_type->array.data_type)));
                 case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNDETERMINED:
                     return NEW(LilyMirDt, LILY_MIR_DT_KIND_C_VA_ARG);
                 default:
@@ -92,14 +93,43 @@ generate_dt__LilyMir(LilyCheckedDataType *data_type)
         case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
             return NEW(LilyMirDt, LILY_MIR_DT_KIND_UNIT);
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-            return NEW_VARIANT(
-              LilyMirDt, struct_name, data_type->custom.global_name->buffer);
+            switch (data_type->custom.kind) {
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC: {
+                    LilyMirCurrent *top = LilyMirGetCurrentOnTop(module);
+
+                    ASSERT(top);
+
+                    switch (top->kind) {
+                        case LILY_MIR_CURRENT_KIND_CONST:
+                            UNREACHABLE(
+                              "const is not expected in this context");
+                        case LILY_MIR_CURRENT_KIND_FUN:
+                            return generate_dt__LilyMir(
+                              module,
+                              get__HashMap(top->fun.fun->fun.generic_params,
+                                           data_type->custom.name->buffer));
+                        case LILY_MIR_CURRENT_KIND_STRUCT:
+                            return generate_dt__LilyMir(
+                              module,
+                              get__OrderedHashMap(
+                                top->struct_->struct_.generic_params,
+                                data_type->custom.name->buffer));
+                        default:
+                            UNREACHABLE("unknown variant");
+                    }
+                }
+                default:
+                    return NEW_VARIANT(LilyMirDt,
+                                       struct_name,
+                                       data_type->custom.global_name->buffer);
+            }
         case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
-            return NEW_VARIANT(LilyMirDt,
-                               exception,
-                               NEW(LilyMirDtException,
-                                   generate_dt__LilyMir(data_type->exception),
-                                   NEW(LilyMirDt, LILY_MIR_DT_KIND_ANY)));
+            return NEW_VARIANT(
+              LilyMirDt,
+              exception,
+              NEW(LilyMirDtException,
+                  generate_dt__LilyMir(module, data_type->exception),
+                  NEW(LilyMirDt, LILY_MIR_DT_KIND_ANY)));
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
             return NEW(LilyMirDt, LILY_MIR_DT_KIND_F32);
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
@@ -116,40 +146,43 @@ generate_dt__LilyMir(LilyCheckedDataType *data_type)
             return NEW(LilyMirDt, LILY_MIR_DT_KIND_ISIZE);
         case LILY_CHECKED_DATA_TYPE_KIND_LIST:
             return NEW_VARIANT(
-              LilyMirDt, list, generate_dt__LilyMir(data_type->list));
+              LilyMirDt, list, generate_dt__LilyMir(module, data_type->list));
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
-            return generate_dt__LilyMir(data_type->mut);
+            return generate_dt__LilyMir(module, data_type->mut);
         case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
             return NEW(LilyMirDt, LILY_MIR_DT_KIND_UNIT);
         case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
-            return generate_dt__LilyMir(data_type->optional);
+            return generate_dt__LilyMir(module, data_type->optional);
         case LILY_CHECKED_DATA_TYPE_KIND_PTR:
             return NEW_VARIANT(
-              LilyMirDt, ptr, generate_dt__LilyMir(data_type->ptr));
+              LilyMirDt, ptr, generate_dt__LilyMir(module, data_type->ptr));
         case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
             return NEW_VARIANT(
-              LilyMirDt, ptr, generate_dt__LilyMir(data_type->ptr_mut));
+              LilyMirDt, ptr, generate_dt__LilyMir(module, data_type->ptr_mut));
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
             return NEW_VARIANT(
-              LilyMirDt, ref, generate_dt__LilyMir(data_type->ref));
+              LilyMirDt, ref, generate_dt__LilyMir(module, data_type->ref));
         case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
             return NEW_VARIANT(
-              LilyMirDt, ref, generate_dt__LilyMir(data_type->ref_mut));
+              LilyMirDt, ref, generate_dt__LilyMir(module, data_type->ref_mut));
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
             return NEW_VARIANT(
               LilyMirDt, str, data_type->str == -1 ? 0 : data_type->str);
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return NEW_VARIANT(
-              LilyMirDt, trace, generate_dt__LilyMir(data_type->trace));
+              LilyMirDt, trace, generate_dt__LilyMir(module, data_type->trace));
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
             return NEW_VARIANT(
-              LilyMirDt, trace, generate_dt__LilyMir(data_type->trace_mut));
+              LilyMirDt,
+              trace,
+              generate_dt__LilyMir(module, data_type->trace_mut));
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
             Vec *tuple = NEW(Vec);
 
             for (Usize i = 0; i < data_type->tuple->len; ++i) {
-                push__Vec(tuple,
-                          generate_dt__LilyMir(get__Vec(data_type->tuple, i)));
+                push__Vec(
+                  tuple,
+                  generate_dt__LilyMir(module, get__Vec(data_type->tuple, i)));
             }
 
             return NEW_VARIANT(LilyMirDt, tuple, tuple);
