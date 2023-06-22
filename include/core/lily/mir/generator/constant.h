@@ -28,7 +28,7 @@
 #include <core/lily/checked/decl.h>
 #include <core/lily/mir.h>
 
-LilyMirInstruction *
+void
 generate_constant__LilyMir(LilyMirModule *module, LilyCheckedDecl *constant);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_CONSTANT_H

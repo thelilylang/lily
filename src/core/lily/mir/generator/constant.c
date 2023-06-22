@@ -25,17 +25,18 @@
 #include <core/lily/mir/generator/constant.h>
 #include <core/lily/mir/generator/val.h>
 
-LilyMirInstruction *
+void
 generate_constant__LilyMir(LilyMirModule *module, LilyCheckedDecl *constant)
 {
     LilyMirInstructionVal *val =
       generate_val__LilyMir(module, NULL, NULL, constant->constant.expr);
 
-    return NEW_VARIANT(
-      LilyMirInstruction,
-      const,
-      NEW(LilyMirInstructionConst,
-          get_linkage_from_visibility(constant->constant.visibility),
-          constant->constant.global_name->buffer,
-          val));
+    LilyMirAddInst(module,
+                   NEW_VARIANT(LilyMirInstruction,
+                               const,
+                               NEW(LilyMirInstructionConst,
+                                   get_linkage_from_visibility__LilyMirLinkage(
+                                     constant->constant.visibility),
+                                   constant->constant.global_name->buffer,
+                                   val)));
 }
