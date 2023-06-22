@@ -95,6 +95,9 @@ get__OrderedHashMap(OrderedHashMap *self, char *key)
 void *
 get_from_id__OrderedHashMap(OrderedHashMap *self, Usize id)
 {
+	if (id > self->capacity)
+		return NULL;
+
     for (Usize i = 0; i < self->capacity; ++i) {
         OrderedHashMapBucket *current_bucket = self->buckets[i];
 
