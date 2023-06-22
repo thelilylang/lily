@@ -36,6 +36,7 @@ typedef struct LilyCheckedVariant
     String *global_name;
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
     const Location *location;
+    Vec *signatures; // Vec<LilyCheckedSignatureVariant*>*
 } LilyCheckedVariant;
 
 /**

@@ -24,6 +24,7 @@
 
 #include <base/alloc.h>
 
+#include <core/lily/checked/signature.h>
 #include <core/lily/checked/variant.h>
 
 CONSTRUCTOR(LilyCheckedVariant *,
@@ -39,6 +40,7 @@ CONSTRUCTOR(LilyCheckedVariant *,
     self->global_name = global_name;
     self->data_type = data_type;
     self->location = location;
+    self->signatures = NEW(Vec);
 
     return self;
 }
@@ -47,22 +49,35 @@ CONSTRUCTOR(LilyCheckedVariant *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedVariant, const LilyCheckedVariant *self)
 {
+    // TODO: improve this debug
     if (self->data_type) {
-        return format__String(
+        String *res = format__String(
           "LilyCheckedVariant{{ name = {S}, global_name = {S}, data_type = "
-          "{Sr}, location = {sa} "
-          "}",
+          "{Sr}, location = {sa}, signatures =",
           self->name,
           self->global_name,
           to_string__Debug__LilyCheckedDataType(self->data_type),
           to_string__Debug__Location(self->location));
+
+        DEBUG_VEC_STRING(self->signatures, res, LilyCheckedSignatureVariant);
+
+        push_str__String(res, " }");
+
+        return res;
     }
 
-    return format__String("LilyCheckedVariant{{ name = {S}, global_name = {S}, "
-                          "data_type = NULL, location = {sa} }",
-                          self->name,
-                          self->global_name,
-                          to_string__Debug__Location(self->location));
+    String *res =
+      format__String("LilyCheckedVariant{{ name = {S}, global_name = {S}, "
+                     "data_type = NULL, location = {sa}, signatures =",
+                     self->name,
+                     self->global_name,
+                     to_string__Debug__Location(self->location));
+
+    DEBUG_VEC_STRING(self->signatures, res, LilyCheckedSignatureVariant);
+
+    push_str__String(res, " }");
+
+    return res;
 }
 #endif
 
@@ -74,6 +89,11 @@ DESTRUCTOR(LilyCheckedVariant, LilyCheckedVariant *self)
     if (self->data_type) {
         FREE(LilyCheckedDataType, self->data_type);
     }
+
+    FREE_BUFFER_ITEMS(self->signatures->buffer,
+                      self->signatures->len,
+                      LilyCheckedSignatureVariant);
+    FREE(Vec, self->signatures);
 
     lily_free(self);
 }
