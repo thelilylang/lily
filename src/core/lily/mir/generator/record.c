@@ -34,7 +34,7 @@ generate_record__LilyMir(LilyMirModule *module, LilyCheckedDecl *record)
     for (Usize i = 0; i < record->type.deps->len; ++i) {
         LilyCheckedDecl *type_dep = get__Vec(record->type.deps, i);
         // Get a signature with only user defined data type, because the
-        // compiler defined signatures are not used in the MIR.
+        // generic signatures are not used in the MIR.
         LilyCheckedSignatureType *signature =
           get_user_defined_signature__LilyCheckedSignatureType(
             record->type.record.signatures);

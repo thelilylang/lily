@@ -41,7 +41,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
     for (Usize i = 0; i < fun->fun.fun_deps->len; ++i) {
         LilyCheckedDecl *fun_dep = get__Vec(fun->fun.fun_deps, i);
         // Get a signature with only user defined data type, because the
-        // compiler defined signatures are not used in the MIR.
+        // compiler defined or generic signatures are not used in the MIR.
         LilyCheckedSignatureFun *signature =
           get_user_defined_signature__LilyCheckedSignatureFun(
             fun_dep->fun.signatures);
