@@ -1295,7 +1295,7 @@ IMPL_FOR_DEBUG(to_string,
                const LilyMirInstructionStruct *self)
 {
     String *res =
-      format__String("{s} struct {s} {{",
+      format__String("{s} \x1b[36mstruct\x1b[0m {s} {{",
                      to_string__Debug__LilyMirLinkage(self->linkage),
                      self->name);
 
