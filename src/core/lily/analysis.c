@@ -6842,9 +6842,19 @@ check_enum__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *enum_)
                                       enum_->type.enum_.scope,
                                       enum_);
 
+    // Push a new signature to variant.
+    for (Usize i = 0; i < enum_->type.enum_.variants->len; ++i) {
+        LilyCheckedVariant *variant = get__Vec(enum_->type.enum_.variants, i);
+
+        add_signature__LilyCheckedSignatureVariant(
+          variant->global_name,
+          clone__LilyCheckedDataType(variant->data_type),
+          variant->signatures);
+    }
+
     // Check if the enum is recursive
     for (Usize i = 0; i < enum_->type.enum_.variants->len; ++i) {
-        LilyCheckedField *variant = get__Vec(enum_->type.enum_.variants, i);
+        LilyCheckedVariant *variant = get__Vec(enum_->type.enum_.variants, i);
 
         if (variant->data_type) {
             bool is_recursive = check_for_recursive_data_type__LilyAnalysis(
