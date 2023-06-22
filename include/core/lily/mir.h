@@ -325,6 +325,12 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
                            LilyMirDt **Types,
                            Usize Len);
 
+inline LilyMirCurrent *
+LilyMirGetCurrentOnTop(LilyMirModule *Module)
+{
+    return Module->current->top;
+}
+
 /**
  *
  * @brief Check if the key of the instruction is unique.
