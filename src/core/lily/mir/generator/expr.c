@@ -60,12 +60,12 @@ generate_expr__LilyMir(LilyMirModule *module,
                       module, fun_signature, scope, expr);
             }
         case LILY_CHECKED_EXPR_KIND_CAST:
-            break;
+			TODO("cast");
         case LILY_CHECKED_EXPR_KIND_GROUPING:
             return generate_expr__LilyMir(
               module, fun_signature, scope, expr->grouping);
         case LILY_CHECKED_EXPR_KIND_LAMBDA:
-            break;
+			TODO("lambda");
         case LILY_CHECKED_EXPR_KIND_UNARY:
             return generate_unary_expr__LilyMir(
               module, fun_signature, scope, expr);
