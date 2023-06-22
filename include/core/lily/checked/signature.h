@@ -73,10 +73,20 @@ reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self);
 
 /**
  *
- * @brief Check if the signature contains a compiler defined data type.
+ * @brief Check if the signature contains only known data type (without generic
+ * and compiler defined data type).
  */
 bool
-contains_known_dt__LilyCheckedSignatureFun(const LilyCheckedSignatureFun *self);
+has_only_known_dt__LilyCheckedSignatureFun(const LilyCheckedSignatureFun *self);
+
+/**
+ *
+ * @brief Get a user defined signature (without compiler defined type(s) or
+ * generic type) of the signatures.
+ * @return LilyCheckedSignatureFun*? (&)
+ */
+LilyCheckedSignatureFun *
+get_user_defined_signature__LilyCheckedSignatureFun(Vec *signatures);
 
 /**
  *
@@ -124,6 +134,24 @@ int
 add_signature__LilyCheckedSignatureType(String *global_name,
                                         OrderedHashMap *generic_params,
                                         Vec *signatures);
+
+/**
+ *
+ * @brief Check if the signature contains only known data type (without
+ * generic).
+ */
+bool
+has_only_known_dt__LilyCheckedSignatureType(
+  const LilyCheckedSignatureType *self);
+
+/**
+ *
+ * @brief Get a user defined signature (without compiler defined type(s) or
+ * generic type) of the signatures.
+ * @return LilyCheckedSignatureType*? (&)
+ */
+LilyCheckedSignatureType *
+get_user_defined_signature__LilyCheckedSignatureType(Vec *signatures);
 
 /**
  *

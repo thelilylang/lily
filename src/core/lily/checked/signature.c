@@ -103,22 +103,36 @@ reload_global_name__LilyCheckedSignatureFun(LilyCheckedSignatureFun *self)
 }
 
 bool
-contains_known_dt__LilyCheckedSignatureFun(const LilyCheckedSignatureFun *self)
+has_only_known_dt__LilyCheckedSignatureFun(const LilyCheckedSignatureFun *self)
 {
     for (Usize i = 0; i < self->types->len; ++i) {
         LilyCheckedDataType *type = get__Vec(self->types, i);
 
         if (is_compiler_defined_and_known_dt__LilyCheckedDataType(type)) {
-            return true;
+            return false;
         } else if (type->kind == LILY_CHECKED_DATA_TYPE_KIND_CUSTOM) {
             if (type->custom.kind ==
                 LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC) {
-                return true;
+                return false;
             }
         }
     }
 
-    return false;
+    return true;
+}
+
+LilyCheckedSignatureFun *
+get_user_defined_signature__LilyCheckedSignatureFun(Vec *signatures)
+{
+    for (Usize i = 0; i < signatures->len; ++i) {
+        LilyCheckedSignatureFun *signature = get__Vec(signatures, i);
+
+        if (has_only_known_dt__LilyCheckedSignatureFun(signature)) {
+            return signature;
+        }
+    }
+
+    return NULL;
 }
 
 #ifdef ENV_DEBUG
@@ -237,6 +251,46 @@ add_signature__LilyCheckedSignatureType(String *global_name,
               NEW(LilyCheckedSignatureType, global_name, generic_params));
 
     return 0;
+}
+
+bool
+has_only_known_dt__LilyCheckedSignatureType(
+  const LilyCheckedSignatureType *self)
+{
+    if (self->generic_params) {
+        OrderedHashMapIter iter = NEW(OrderedHashMapIter, self->generic_params);
+        LilyCheckedDataType *current = NULL;
+
+        while ((current = next__OrderedHashMapIter(&iter))) {
+            switch (current->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                    switch (current->custom.kind) {
+                        case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                            return false;
+                        default:
+                            continue;
+                    }
+                default:
+                    continue;
+            }
+        }
+    }
+
+    return true;
+}
+
+LilyCheckedSignatureType *
+get_user_defined_signature__LilyCheckedSignatureType(Vec *signatures)
+{
+    for (Usize i = 0; i < signatures->len; ++i) {
+        LilyCheckedSignatureType *signature = get__Vec(signatures, i);
+
+        if (has_only_known_dt__LilyCheckedSignatureType(signature)) {
+            return signature;
+        }
+    }
+
+    return NULL;
 }
 
 DESTRUCTOR(LilyCheckedSignatureType, LilyCheckedSignatureType *self)
