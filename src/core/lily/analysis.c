@@ -1189,21 +1189,6 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                     return NEW(LilyCheckedDataType,
                                LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
                                &data_type->location);
-                case LILY_CHECKED_SCOPE_RESPONSE_KIND_GENERIC:
-                    return NEW_VARIANT(
-                      LilyCheckedDataType,
-                      custom,
-                      &data_type->location,
-                      NEW(LilyCheckedDataTypeCustom,
-                          custom_dt_response.scope_container.scope_id,
-                          (LilyCheckedAccessScope){
-                            .id =
-                              custom_dt_response.scope_container.generic->id },
-                          data_type->custom.name,
-                          data_type->custom.name,
-                          NULL,
-                          LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
-                          false));
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD:
                     if (deps) {
                         push__Vec(deps, custom_dt_response.decl);
@@ -1223,10 +1208,42 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                         NULL,
                         LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD,
                         custom_dt_response.record->is_recursive));
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM:
+                    if (deps) {
+                        push__Vec(deps, custom_dt_response.decl);
+                    }
+
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      custom,
+                      &data_type->location,
+                      NEW(
+                        LilyCheckedDataTypeCustom,
+                        custom_dt_response.scope_container.scope_id,
+                        (LilyCheckedAccessScope){
+                          .id = custom_dt_response.scope_container.enum_->id },
+                        data_type->custom.name,
+                        custom_dt_response.enum_->global_name,
+                        NULL,
+                        LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ENUM,
+                        custom_dt_response.enum_->is_recursive));
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_GENERIC:
+                    return NEW_VARIANT(
+                      LilyCheckedDataType,
+                      custom,
+                      &data_type->location,
+                      NEW(LilyCheckedDataTypeCustom,
+                          custom_dt_response.scope_container.scope_id,
+                          (LilyCheckedAccessScope){
+                            .id =
+                              custom_dt_response.scope_container.generic->id },
+                          data_type->custom.name,
+                          data_type->custom.name,
+                          NULL,
+                          LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
+                          false));
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_OBJECT:
                     TODO("check record object data type");
-                case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM:
-                    TODO("check enum data type");
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_OBJECT:
                     TODO("check enum object data type");
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_CLASS:
