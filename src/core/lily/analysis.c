@@ -322,10 +322,11 @@ check_record_fields__LilyAnalysis(LilyAnalysis *self,
 static void
 check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record);
 
-static Vec *
-check_variants__LilyAnalysis(LilyAnalysis *self,
-                             Vec *ast_variants,
-                             LilyCheckedScope *scope);
+static void
+check_enum_variants__LilyAnalysis(LilyAnalysis *self,
+                                  Vec *ast_variants,
+                                  LilyCheckedScope *scope,
+                                  LilyCheckedDecl *enum_);
 
 static void
 check_enum__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *enum_);
@@ -6736,10 +6737,11 @@ check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record)
     record->type.record.is_checked = true;
 }
 
-Vec *
-check_variants__LilyAnalysis(LilyAnalysis *self,
-                             Vec *ast_variants,
-                             LilyCheckedScope *scope)
+void
+check_enum_variants__LilyAnalysis(LilyAnalysis *self,
+                                  Vec *ast_variants,
+                                  LilyCheckedScope *scope,
+                                  LilyCheckedDecl *enum_)
 {
     Vec *check_variants = NEW(Vec);
 
@@ -6784,7 +6786,7 @@ check_variants__LilyAnalysis(LilyAnalysis *self,
                       &ast_variant->location));
     }
 
-    return check_variants;
+    enum_->type.enum_.variants = check_variants;
 }
 
 void
@@ -6801,8 +6803,10 @@ check_enum__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *enum_)
                                enum_->type.enum_.scope);
     }
 
-    enum_->type.enum_.variants = check_variants__LilyAnalysis(
-      self, enum_->ast_decl->type.enum_.variants, enum_->type.enum_.scope);
+    check_enum_variants__LilyAnalysis(self,
+                                      enum_->ast_decl->type.enum_.variants,
+                                      enum_->type.enum_.scope,
+                                      enum_);
 
     // Check if the enum is recursive
     for (Usize i = 0; i < enum_->type.enum_.variants->len; ++i) {
