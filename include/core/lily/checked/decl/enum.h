@@ -70,13 +70,9 @@ inline CONSTRUCTOR(LilyCheckedDeclEnum,
  *
  * @brief Add signature to signatures field.
  */
-inline int
+int
 add_signature__LilyCheckedDeclEnum(LilyCheckedDeclEnum *self,
-                                   OrderedHashMap *generic_params)
-{
-    return add_signature__LilyCheckedSignatureType(
-      self->global_name, generic_params, self->signatures);
-}
+                                   OrderedHashMap *generic_params);
 
 /**
  *

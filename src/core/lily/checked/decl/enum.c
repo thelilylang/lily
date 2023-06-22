@@ -27,6 +27,32 @@
 #include <core/lily/checked/generic_param.h>
 #include <core/lily/checked/signature.h>
 
+int
+add_signature__LilyCheckedDeclEnum(LilyCheckedDeclEnum *self,
+                                   OrderedHashMap *generic_params)
+{
+    int res = add_signature__LilyCheckedSignatureType(
+      self->global_name, generic_params, self->signatures);
+
+    if (!res) {
+        for (Usize i = 0; i < self->variants->len; ++i) {
+            LilyCheckedVariant *variant = get__Vec(self->variants, i);
+
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  variant->data_type)) {
+                LilyCheckedDataType *resolve_dt =
+                  resolve_generic_data_type_with_ordered_hash_map__LilyCheckedDataType(
+                    variant->data_type, generic_params);
+
+                add_signature__LilyCheckedSignatureVariant(
+                  variant->global_name, resolve_dt, variant->signatures);
+            }
+        }
+    }
+
+    return res;
+}
+
 #ifdef ENV_DEBUG
 #include <base/format.h>
 
