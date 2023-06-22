@@ -72,7 +72,26 @@ generate_record__LilyMir(LilyMirModule *module, LilyCheckedDecl *record)
         for (Usize i = 0; i < record->type.record.fields->len; ++i) {
             LilyCheckedField *field = get__Vec(record->type.record.fields, i);
 
-            push__Vec(fields, generate_dt__LilyMir(field->data_type));
+            switch (field->data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                    switch (field->data_type->custom.kind) {
+                        case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                            push__Vec(
+                              fields,
+                              generate_dt__LilyMir(get__OrderedHashMap(
+                                signature->generic_params,
+                                field->data_type->custom.name->buffer)));
+
+                            break;
+                        default:
+                            push__Vec(fields,
+                                      generate_dt__LilyMir(field->data_type));
+                    }
+
+                    break;
+                default:
+                    push__Vec(fields, generate_dt__LilyMir(field->data_type));
+            }
         }
 
         LilyMirAddInst(module, inst);
