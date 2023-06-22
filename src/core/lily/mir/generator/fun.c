@@ -36,16 +36,15 @@
 void
 generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
 {
-    if (fun->fun.signatures->len == 0) {
-        FAILED("warning: function is unused");
-    }
+    ASSERT(fun->fun.signatures->len > 0);
 
     for (Usize i = 0; i < fun->fun.fun_deps->len; ++i) {
         LilyCheckedDecl *fun_dep = get__Vec(fun->fun.fun_deps, i);
         // Get a signature with only user defined data type, because the
         // compiler defined signatures are not used in the MIR.
         LilyCheckedSignatureFun *signature =
-          get_user_defined_signature__LilyCheckedDeclFun(&fun_dep->fun);
+          get_user_defined_signature__LilyCheckedSignatureFun(
+            fun_dep->fun.signatures);
 
         if (signature) {
             if (LilyMirKeyIsUnique(module,
@@ -58,7 +57,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
     for (Usize i = 0; i < fun->fun.signatures->len; ++i) {
         LilyCheckedSignatureFun *signature = get__Vec(fun->fun.signatures, i);
 
-        if (contains_known_dt__LilyCheckedSignatureFun(signature)) {
+        if (!has_only_known_dt__LilyCheckedSignatureFun(signature)) {
             continue;
         } else if (!LilyMirKeyIsUnique(
                      module,
@@ -73,7 +72,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
           LilyMirInstruction,
           fun,
           NEW(LilyMirInstructionFun,
-              get_linkage_from_visibility(fun->fun.visibility),
+              get_linkage_from_visibility__LilyMirLinkage(fun->fun.visibility),
               fun->fun.is_main ? "main" : signature->ser_global_name->buffer,
               signature->global_name->buffer,
               NEW(Vec),
