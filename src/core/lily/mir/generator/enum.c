@@ -42,7 +42,58 @@ generate_enum__LilyMir(LilyMirModule *module, LilyCheckedDecl *enum_)
             continue;
         }
 
+        Vec *fields = init__Vec(1, NEW(LilyMirDt, LILY_MIR_DT_KIND_U8));
+        LilyMirInstruction *inst =
+          NEW_VARIANT(LilyMirInstruction,
+                      struct,
+                      NEW(LilyMirInstructionStruct,
+                          get_linkage_from_visibility__LilyMirLinkage(
+                            enum_->type.enum_.visibility),
+                          signature->ser_global_name->buffer,
+                          fields,
+                          signature->generic_params));
+
+        LilyMirAddInst(module, inst);
+
         for (Usize j = 0; j < enum_->type.enum_.variants->len; ++j) {
+            LilyCheckedVariant *variant =
+              get__Vec(enum_->type.enum_.variants, j);
+            LilyCheckedSignatureVariant *variant_signature = NULL;
+
+            if (variant->signatures->len == 1 && i > 0) {
+                push__Vec(fields,
+                          NEW_VARIANT(LilyMirDt,
+                                      struct_name,
+                                      CAST(LilyCheckedSignatureVariant *,
+                                           get__Vec(variant->signatures, 0))
+                                        ->ser_global_name->buffer));
+
+                continue;
+            } else {
+                variant_signature = get__Vec(variant->signatures, i);
+            }
+
+            LilyMirInstruction *variant_inst = NEW_VARIANT(
+              LilyMirInstruction,
+              struct,
+              NEW(LilyMirInstructionStruct,
+                  get_linkage_from_visibility__LilyMirLinkage(
+                    enum_->type.enum_.visibility),
+                  variant_signature->ser_global_name->buffer,
+                  init__Vec(1,
+                            generate_dt__LilyMir(
+                              module, variant_signature->resolve_dt)),
+                  signature->generic_params));
+
+            LilyMirAddInst(module, variant_inst);
+            LilyMirPopCurrent(module);
+
+            push__Vec(fields,
+                      NEW_VARIANT(LilyMirDt,
+                                  struct_name,
+                                  variant_signature->ser_global_name->buffer));
         }
+
+        LilyMirPopCurrent(module);
     }
 }
