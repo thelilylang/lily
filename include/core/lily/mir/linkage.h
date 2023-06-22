@@ -34,7 +34,7 @@ enum LilyMirLinkage
 };
 
 enum LilyMirLinkage
-get_linkage_from_visibility(enum LilyVisibility visibility);
+get_linkage_from_visibility__LilyMirLinkage(enum LilyVisibility visibility);
 
 /**
  *
