@@ -2074,7 +2074,7 @@ parse_record_call__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
                               NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
                               NULL,
                               NULL,
-                              from__String("expected `=`")),
+                              from__String("expected `:=`")),
                   self->count_error);
 
                 break;
