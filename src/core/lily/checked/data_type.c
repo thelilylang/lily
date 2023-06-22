@@ -634,319 +634,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     return self;
 }
 
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedDataTypeKind,
-               enum LilyCheckedDataTypeKind self)
-{
-    switch (self) {
-        case LILY_CHECKED_DATA_TYPE_KIND_ANY:
-            return "LILY_CHECKED_DATA_TYPE_KIND_ANY";
-        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
-            return "LILY_CHECKED_DATA_TYPE_KIND_ARRAY";
-        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
-            return "LILY_CHECKED_DATA_TYPE_KIND_BOOL";
-        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
-            return "LILY_CHECKED_DATA_TYPE_KIND_BYTE";
-        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
-            return "LILY_CHECKED_DATA_TYPE_KIND_BYTES";
-        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CHAR";
-        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CSHORT";
-        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CUSHORT";
-        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CINT";
-        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CUINT";
-        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CLONG";
-        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CULONG";
-        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG";
-        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG";
-        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CFLOAT";
-        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE";
-        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CSTR";
-        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CVOID";
-        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CUSTOM";
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
-            return "LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION";
-        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
-            return "LILY_CHECKED_DATA_TYPE_KIND_FLOAT32";
-        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
-            return "LILY_CHECKED_DATA_TYPE_KIND_FLOAT64";
-        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
-            return "LILY_CHECKED_DATA_TYPE_KIND_INT16";
-        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
-            return "LILY_CHECKED_DATA_TYPE_KIND_INT32";
-        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
-            return "LILY_CHECKED_DATA_TYPE_KIND_INT64";
-        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
-            return "LILY_CHECKED_DATA_TYPE_KIND_INT8";
-        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
-            return "LILY_CHECKED_DATA_TYPE_KIND_ISIZE";
-        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
-            return "LILY_CHECKED_DATA_TYPE_KIND_LAMBDA";
-        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
-            return "LILY_CHECKED_DATA_TYPE_KIND_LIST";
-        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
-            return "LILY_CHECKED_DATA_TYPE_KIND_MUT";
-        case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
-            return "LILY_CHECKED_DATA_TYPE_KIND_NEVER";
-        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
-            return "LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL";
-        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
-            return "LILY_CHECKED_DATA_TYPE_KIND_PTR";
-        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
-            return "LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT";
-        case LILY_CHECKED_DATA_TYPE_KIND_REF:
-            return "LILY_CHECKED_DATA_TYPE_KIND_REF";
-        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
-            return "LILY_CHECKED_DATA_TYPE_KIND_REF_MUT";
-        case LILY_CHECKED_DATA_TYPE_KIND_STR:
-            return "LILY_CHECKED_DATA_TYPE_KIND_STR";
-        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
-            return "LILY_CHECKED_DATA_TYPE_KIND_TRACE";
-        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
-            return "LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT";
-        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
-            return "LILY_CHECKED_DATA_TYPE_KIND_TUPLE";
-        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
-            return "LILY_CHECKED_DATA_TYPE_KIND_UINT16";
-        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
-            return "LILY_CHECKED_DATA_TYPE_KIND_UINT32";
-        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
-            return "LILY_CHECKED_DATA_TYPE_KIND_UINT64";
-        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
-            return "LILY_CHECKED_DATA_TYPE_KIND_UINT8";
-        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
-            return "LILY_CHECKED_DATA_TYPE_KIND_UNIT";
-        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
-            return "LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN";
-        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
-            return "LILY_CHECKED_DATA_TYPE_KIND_USIZE";
-        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
-            return "LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE";
-        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
-            return "LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE";
-        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
-            return "LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC";
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-
-String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
-{
-    String *res = NULL;
-
-    if (self->location) {
-        res =
-          format__String("LilyCheckedDataType{{ kind = {s}, location = {sa}",
-                         to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-                         to_string__Debug__Location(self->location));
-    } else {
-        res =
-          format__String("LilyCheckedDataType{{ kind = {s}, location = NULL",
-                         to_string__Debug__LilyCheckedDataTypeKind(self->kind));
-    }
-
-    switch (self->kind) {
-        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY: {
-            char *s =
-              format(", array = {Sr} }",
-                     to_string__Debug__LilyCheckedDataTypeArray(&self->array));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_BYTES: {
-            char *s = format(", bytes = {d} }", self->bytes);
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
-            char *s = format(
-              ", custom = {Sr} }",
-              to_string__Debug__LilyCheckedDataTypeCustom(&self->custom));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION: {
-            char *s =
-              format(", exception = {Sr} }",
-                     to_string__Debug__LilyCheckedDataType(self->exception));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
-            char *s = format(
-              ", lambda = {Sr} }",
-              to_string__Debug__LilyCheckedDataTypeLambda(&self->lambda));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_LIST: {
-            char *s = format(", list = {Sr} }",
-                             to_string__Debug__LilyCheckedDataType(self->list));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_MUT: {
-            char *s = format(", mut = {Sr} }",
-                             to_string__Debug__LilyCheckedDataType(self->mut));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL: {
-            char *s =
-              format(", optional = {Sr} }",
-                     to_string__Debug__LilyCheckedDataType(self->optional));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_PTR: {
-            char *s = format(", ptr = {Sr} }",
-                             to_string__Debug__LilyCheckedDataType(self->ptr));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT: {
-            char *s =
-              format(", ptr_mut = {Sr} }",
-                     to_string__Debug__LilyCheckedDataType(self->ptr_mut));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_REF: {
-            char *s = format(", ref = {Sr} }",
-                             to_string__Debug__LilyCheckedDataType(self->ref));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT: {
-            char *s =
-              format(", ref_mut = {Sr} }",
-                     to_string__Debug__LilyCheckedDataType(self->ref_mut));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_STR: {
-            char *s = format(", str = {d} }", self->str);
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_TRACE: {
-            char *s =
-              format(", trace = {Sr} }",
-                     to_string__Debug__LilyCheckedDataType(self->trace));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT: {
-            char *s =
-              format(", trace_mut = {Sr} }",
-                     to_string__Debug__LilyCheckedDataType(self->trace_mut));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
-            push_str__String(res, ", tuple = { ");
-
-            for (Usize i = 0; i < self->tuple->len; i++) {
-                String *s =
-                  format__String("{Sr}, ",
-                                 to_string__Debug__LilyCheckedDataType(
-                                   get__Vec(self->tuple, i)));
-
-                APPEND_AND_FREE(res, s);
-            }
-
-            push_str__String(res, "} }");
-
-            return res;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {
-            char *s = format(
-              ", conditional_compiler_choice = {Sr} }",
-              to_string__Debug__LilyCheckedDataTypeConditionalCompilerChoice(
-                &self->conditional_compiler_choice));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE: {
-            push_str__String(res, ", compiler_choice =");
-            DEBUG_VEC_STRING(self->compiler_choice, res, LilyCheckedDataType);
-            push_str__String(res, " }");
-
-            break;
-        }
-        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC: {
-            char *s =
-              format(", compiler_generic = {Sr} }",
-                     to_string__Debug__LilyCheckedDataTypeCompilerGeneric(
-                       &self->compiler_generic));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        default:
-            push_str__String(res, " }");
-    }
-
-    return res;
-}
-
-void
-IMPL_FOR_DEBUG(debug, LilyCheckedDataType, const LilyCheckedDataType *self)
-{
-    PRINTLN("{Sr}", to_string__Debug__LilyCheckedDataType(self));
-}
-#endif
-
 bool
 eq__LilyCheckedDataType(const LilyCheckedDataType *self,
                         const LilyCheckedDataType *other)
@@ -2100,6 +1787,616 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
             UNREACHABLE("unknown variant");
     }
 }
+
+#define RESOLVE_GENERIC_DATA_TYPE(fname, type, get)                            \
+    LilyCheckedDataType *fname(LilyCheckedDataType *self,                      \
+                               type *generic_params)                           \
+    {                                                                          \
+        ASSERT(self);                                                          \
+                                                                               \
+        switch (self->kind) {                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_ARRAY: {                          \
+                LilyCheckedDataType *array_data_type =                         \
+                  fname(self->array.data_type, generic_params);                \
+                                                                               \
+                if (!array_data_type) {                                        \
+                    return NULL;                                               \
+                }                                                              \
+                                                                               \
+                switch (self->array.kind) {                                    \
+                    case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED:              \
+                        return NEW_VARIANT(                                    \
+                          LilyCheckedDataType,                                 \
+                          array,                                               \
+                          self->location,                                      \
+                          NEW_VARIANT(LilyCheckedDataTypeArray,                \
+                                      sized,                                   \
+                                      array_data_type,                         \
+                                      self->array.size));                      \
+                    default: {                                                 \
+                        return NEW_VARIANT(LilyCheckedDataType,                \
+                                           array,                              \
+                                           self->location,                     \
+                                           NEW(LilyCheckedDataTypeArray,       \
+                                               self->array.kind,               \
+                                               array_data_type));              \
+                    }                                                          \
+                }                                                              \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:                           \
+                switch (self->custom.kind) {                                   \
+                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC: {         \
+                        LilyCheckedDataType *resolve =                         \
+                          get(generic_params, self->custom.name->buffer);      \
+                                                                               \
+                        if (resolve) {                                         \
+                            return resolve;                                    \
+                        }                                                      \
+                                                                               \
+                        return NULL;                                           \
+                    }                                                          \
+                    default:                                                   \
+                        if (self->custom.generics) {                           \
+                            Vec *generics = NEW(Vec);                          \
+                                                                               \
+                            for (Usize i = 0; i < self->custom.generics->len;  \
+                                 ++i) {                                        \
+                                LilyCheckedDataType *generic =                 \
+                                  fname(self, generic_params);                 \
+                                                                               \
+                                if (!generic) {                                \
+                                    return NULL;                               \
+                                }                                              \
+                                                                               \
+                                push__Vec(generics, generic);                  \
+                            }                                                  \
+                                                                               \
+                            return NEW_VARIANT(                                \
+                              LilyCheckedDataType,                             \
+                              custom,                                          \
+                              self->location,                                  \
+                              NEW(LilyCheckedDataTypeCustom,                   \
+                                  self->custom.scope_id,                       \
+                                  (LilyCheckedAccessScope){                    \
+                                    .id = self->custom.scope.id },             \
+                                  self->custom.name,                           \
+                                  self->custom.global_name,                    \
+                                  generics,                                    \
+                                  self->custom.kind,                           \
+                                  self->custom.is_recursive));                 \
+                        }                                                      \
+                                                                               \
+                        return clone__LilyCheckedDataType(self);               \
+                }                                                              \
+            case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION: {                      \
+                LilyCheckedDataType *exception =                               \
+                  fname(self->exception, generic_params);                      \
+                                                                               \
+                return exception ? NEW_VARIANT(LilyCheckedDataType,            \
+                                               exception,                      \
+                                               self->location,                 \
+                                               exception)                      \
+                                 : NULL;                                       \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {                         \
+                Vec *params = NULL;                                            \
+                LilyCheckedDataType *return_data_type =                        \
+                  fname(self->lambda.return_type, generic_params);             \
+                                                                               \
+                if (!return_data_type) {                                       \
+                    return NULL;                                               \
+                }                                                              \
+                                                                               \
+                if (self->lambda.params) {                                     \
+                    params = NEW(Vec);                                         \
+                                                                               \
+                    for (Usize i = 0; i < self->lambda.params->len; ++i) {     \
+                        LilyCheckedDataType *param = fname(                    \
+                          get__Vec(self->lambda.params, i), generic_params);   \
+                                                                               \
+                        if (param) {                                           \
+                            push__Vec(params, param);                          \
+                        } else {                                               \
+                            return NULL;                                       \
+                        }                                                      \
+                    }                                                          \
+                }                                                              \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_LIST: {                           \
+                LilyCheckedDataType *list = fname(self->list, generic_params); \
+                                                                               \
+                return list                                                    \
+                         ? NEW_VARIANT(                                        \
+                             LilyCheckedDataType, list, self->location, list)  \
+                         : NULL;                                               \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_MUT: {                            \
+                LilyCheckedDataType *mut = fname(self->mut, generic_params);   \
+                                                                               \
+                return mut ? NEW_VARIANT(                                      \
+                               LilyCheckedDataType, mut, self->location, mut)  \
+                           : NULL;                                             \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL: {                       \
+                LilyCheckedDataType *optional =                                \
+                  fname(self->optional, generic_params);                       \
+                                                                               \
+                return optional ? NEW_VARIANT(LilyCheckedDataType,             \
+                                              optional,                        \
+                                              self->location,                  \
+                                              optional)                        \
+                                : NULL;                                        \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_PTR: {                            \
+                LilyCheckedDataType *ptr = fname(self->ptr, generic_params);   \
+                                                                               \
+                return ptr ? NEW_VARIANT(                                      \
+                               LilyCheckedDataType, ptr, self->location, ptr)  \
+                           : NULL;                                             \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT: {                        \
+                LilyCheckedDataType *ptr_mut =                                 \
+                  fname(self->ptr_mut, generic_params);                        \
+                                                                               \
+                return ptr_mut ? NEW_VARIANT(LilyCheckedDataType,              \
+                                             ptr_mut,                          \
+                                             self->location,                   \
+                                             ptr_mut)                          \
+                               : NULL;                                         \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_REF: {                            \
+                LilyCheckedDataType *ref = fname(self->ref, generic_params);   \
+                                                                               \
+                return ref ? NEW_VARIANT(                                      \
+                               LilyCheckedDataType, ref, self->location, ref)  \
+                           : NULL;                                             \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT: {                        \
+                LilyCheckedDataType *ref_mut =                                 \
+                  fname(self->ref_mut, generic_params);                        \
+                                                                               \
+                return ref_mut ? NEW_VARIANT(LilyCheckedDataType,              \
+                                             ref_mut,                          \
+                                             self->location,                   \
+                                             ref_mut)                          \
+                               : NULL;                                         \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_TRACE: {                          \
+                LilyCheckedDataType *trace =                                   \
+                  fname(self->trace, generic_params);                          \
+                                                                               \
+                return trace ? NEW_VARIANT(LilyCheckedDataType,                \
+                                           trace,                              \
+                                           self->location,                     \
+                                           trace)                              \
+                             : NULL;                                           \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT: {                      \
+                LilyCheckedDataType *trace_mut =                               \
+                  fname(self->trace_mut, generic_params);                      \
+                                                                               \
+                return trace_mut ? NEW_VARIANT(LilyCheckedDataType,            \
+                                               trace_mut,                      \
+                                               self->location,                 \
+                                               trace_mut)                      \
+                                 : NULL;                                       \
+            }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {                          \
+                Vec *tuple = NEW(Vec);                                         \
+                                                                               \
+                for (Usize i = 0; i < self->tuple->len; ++i) {                 \
+                    LilyCheckedDataType *item =                                \
+                      fname(get__Vec(self->tuple, i), generic_params);         \
+                                                                               \
+                    if (item) {                                                \
+                        push__Vec(tuple, item);                                \
+                    } else {                                                   \
+                        return NULL;                                           \
+                    }                                                          \
+                }                                                              \
+                                                                               \
+                return NEW_VARIANT(                                            \
+                  LilyCheckedDataType, tuple, self->location, tuple);          \
+            }                                                                  \
+            default:                                                           \
+                return clone__LilyCheckedDataType(self);                       \
+        }                                                                      \
+    }
+
+RESOLVE_GENERIC_DATA_TYPE(
+  resolve_generic_data_type_with_ordered_hash_map__LilyCheckedDataType,
+  OrderedHashMap,
+  get__OrderedHashMap);
+
+RESOLVE_GENERIC_DATA_TYPE(
+  resolve_generic_data_type_with_hash_map__LilyCheckedDataType,
+  HashMap,
+  get__HashMap);
+
+bool
+contains_generic_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    ASSERT(self);
+
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+            return contains_generic_data_type__LilyCheckedDataType(
+              self->array.data_type);
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+            switch (self->custom.kind) {
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                    return true;
+                default:
+                    return false;
+            }
+        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+            return contains_generic_data_type__LilyCheckedDataType(
+              self->exception);
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
+            if (self->lambda.params) {
+                for (Usize i = 0; i < self->lambda.params->len; ++i) {
+                    bool res = contains_generic_data_type__LilyCheckedDataType(
+                      get__Vec(self->lambda.params, i));
+
+                    if (res) {
+                        return true;
+                    }
+                }
+            }
+
+            return contains_generic_data_type__LilyCheckedDataType(
+              self->lambda.return_type);
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+            return contains_generic_data_type__LilyCheckedDataType(self->list);
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            return contains_generic_data_type__LilyCheckedDataType(self->mut);
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+            return contains_generic_data_type__LilyCheckedDataType(
+              self->optional);
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+            return contains_generic_data_type__LilyCheckedDataType(self->ptr);
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            return contains_generic_data_type__LilyCheckedDataType(
+              self->ptr_mut);
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            return contains_generic_data_type__LilyCheckedDataType(self->ref);
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            return contains_generic_data_type__LilyCheckedDataType(
+              self->ref_mut);
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+            return contains_generic_data_type__LilyCheckedDataType(self->trace);
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            return contains_generic_data_type__LilyCheckedDataType(
+              self->trace_mut);
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
+            for (Usize i = 0; i < self->tuple->len; ++i) {
+                bool res = contains_generic_data_type__LilyCheckedDataType(
+                  get__Vec(self->tuple, i));
+
+                if (res) {
+                    return res;
+                }
+            }
+
+            return false;
+        default:
+            return clone__LilyCheckedDataType(self);
+    }
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeKind,
+               enum LilyCheckedDataTypeKind self)
+{
+    switch (self) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ANY:
+            return "LILY_CHECKED_DATA_TYPE_KIND_ANY";
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+            return "LILY_CHECKED_DATA_TYPE_KIND_ARRAY";
+        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+            return "LILY_CHECKED_DATA_TYPE_KIND_BOOL";
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
+            return "LILY_CHECKED_DATA_TYPE_KIND_BYTE";
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
+            return "LILY_CHECKED_DATA_TYPE_KIND_BYTES";
+        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CHAR";
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CSHORT";
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CUSHORT";
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CINT";
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CUINT";
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CLONG";
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CULONG";
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG";
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG";
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CFLOAT";
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE";
+        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CSTR";
+        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CVOID";
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CUSTOM";
+        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+            return "LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION";
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+            return "LILY_CHECKED_DATA_TYPE_KIND_FLOAT32";
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+            return "LILY_CHECKED_DATA_TYPE_KIND_FLOAT64";
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+            return "LILY_CHECKED_DATA_TYPE_KIND_INT16";
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+            return "LILY_CHECKED_DATA_TYPE_KIND_INT32";
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+            return "LILY_CHECKED_DATA_TYPE_KIND_INT64";
+        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+            return "LILY_CHECKED_DATA_TYPE_KIND_INT8";
+        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+            return "LILY_CHECKED_DATA_TYPE_KIND_ISIZE";
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
+            return "LILY_CHECKED_DATA_TYPE_KIND_LAMBDA";
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+            return "LILY_CHECKED_DATA_TYPE_KIND_LIST";
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_MUT";
+        case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
+            return "LILY_CHECKED_DATA_TYPE_KIND_NEVER";
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+            return "LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL";
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+            return "LILY_CHECKED_DATA_TYPE_KIND_PTR";
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT";
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            return "LILY_CHECKED_DATA_TYPE_KIND_REF";
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_REF_MUT";
+        case LILY_CHECKED_DATA_TYPE_KIND_STR:
+            return "LILY_CHECKED_DATA_TYPE_KIND_STR";
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+            return "LILY_CHECKED_DATA_TYPE_KIND_TRACE";
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT";
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
+            return "LILY_CHECKED_DATA_TYPE_KIND_TUPLE";
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+            return "LILY_CHECKED_DATA_TYPE_KIND_UINT16";
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+            return "LILY_CHECKED_DATA_TYPE_KIND_UINT32";
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+            return "LILY_CHECKED_DATA_TYPE_KIND_UINT64";
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+            return "LILY_CHECKED_DATA_TYPE_KIND_UINT8";
+        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_UNIT";
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+            return "LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN";
+        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+            return "LILY_CHECKED_DATA_TYPE_KIND_USIZE";
+        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+            return "LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE";
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
+            return "LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE";
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+            return "LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
+{
+    String *res = NULL;
+
+    if (self->location) {
+        res =
+          format__String("LilyCheckedDataType{{ kind = {s}, location = {sa}",
+                         to_string__Debug__LilyCheckedDataTypeKind(self->kind),
+                         to_string__Debug__Location(self->location));
+    } else {
+        res =
+          format__String("LilyCheckedDataType{{ kind = {s}, location = NULL",
+                         to_string__Debug__LilyCheckedDataTypeKind(self->kind));
+    }
+
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY: {
+            char *s =
+              format(", array = {Sr} }",
+                     to_string__Debug__LilyCheckedDataTypeArray(&self->array));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTES: {
+            char *s = format(", bytes = {d} }", self->bytes);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
+            char *s = format(
+              ", custom = {Sr} }",
+              to_string__Debug__LilyCheckedDataTypeCustom(&self->custom));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION: {
+            char *s =
+              format(", exception = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->exception));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
+            char *s = format(
+              ", lambda = {Sr} }",
+              to_string__Debug__LilyCheckedDataTypeLambda(&self->lambda));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST: {
+            char *s = format(", list = {Sr} }",
+                             to_string__Debug__LilyCheckedDataType(self->list));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT: {
+            char *s = format(", mut = {Sr} }",
+                             to_string__Debug__LilyCheckedDataType(self->mut));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL: {
+            char *s =
+              format(", optional = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->optional));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR: {
+            char *s = format(", ptr = {Sr} }",
+                             to_string__Debug__LilyCheckedDataType(self->ptr));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT: {
+            char *s =
+              format(", ptr_mut = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->ptr_mut));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_REF: {
+            char *s = format(", ref = {Sr} }",
+                             to_string__Debug__LilyCheckedDataType(self->ref));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT: {
+            char *s =
+              format(", ref_mut = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->ref_mut));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_STR: {
+            char *s = format(", str = {d} }", self->str);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE: {
+            char *s =
+              format(", trace = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->trace));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT: {
+            char *s =
+              format(", trace_mut = {Sr} }",
+                     to_string__Debug__LilyCheckedDataType(self->trace_mut));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE: {
+            push_str__String(res, ", tuple = { ");
+
+            for (Usize i = 0; i < self->tuple->len; i++) {
+                String *s =
+                  format__String("{Sr}, ",
+                                 to_string__Debug__LilyCheckedDataType(
+                                   get__Vec(self->tuple, i)));
+
+                APPEND_AND_FREE(res, s);
+            }
+
+            push_str__String(res, "} }");
+
+            return res;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {
+            char *s = format(
+              ", conditional_compiler_choice = {Sr} }",
+              to_string__Debug__LilyCheckedDataTypeConditionalCompilerChoice(
+                &self->conditional_compiler_choice));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE: {
+            push_str__String(res, ", compiler_choice =");
+            DEBUG_VEC_STRING(self->compiler_choice, res, LilyCheckedDataType);
+            push_str__String(res, " }");
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC: {
+            char *s =
+              format(", compiler_generic = {Sr} }",
+                     to_string__Debug__LilyCheckedDataTypeCompilerGeneric(
+                       &self->compiler_generic));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        default:
+            push_str__String(res, " }");
+    }
+
+    return res;
+}
+
+void
+IMPL_FOR_DEBUG(debug, LilyCheckedDataType, const LilyCheckedDataType *self)
+{
+    PRINTLN("{Sr}", to_string__Debug__LilyCheckedDataType(self));
+}
+#endif
 
 VARIANT_DESTRUCTOR(LilyCheckedDataType, array, LilyCheckedDataType *self)
 {

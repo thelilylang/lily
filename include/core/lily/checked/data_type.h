@@ -25,8 +25,10 @@
 #ifndef LILY_CORE_LILY_CHECKED_DATA_TYPE_H
 #define LILY_CORE_LILY_CHECKED_DATA_TYPE_H
 
+#include <base/hash_map.h>
 #include <base/macros.h>
 #include <base/new.h>
+#include <base/ordered_hash_map.h>
 #include <base/string.h>
 #include <base/vec.h>
 
@@ -579,38 +581,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
 
 /**
  *
- * @brief Convert LilyCheckedDataTypeKind in string.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedDataTypeKind,
-               enum LilyCheckedDataTypeKind self);
-#endif
-
-/**
- *
- * @brief Convert LilyCheckedDataType in String.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self);
-#endif
-
-/**
- *
- * @brief Print debug LilyCheckedDataType struct.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-void
-IMPL_FOR_DEBUG(debug, LilyCheckedDataType, const LilyCheckedDataType *self);
-#endif
-
-/**
- *
  * @brief Return true if the both data types are equal otherwise return false.
  */
 bool
@@ -781,6 +751,67 @@ ref__LilyCheckedDataType(LilyCheckedDataType *self)
     ++self->ref_count;
     return self;
 }
+
+/**
+ *
+ * @brief Resolve generic data type. If the resolve of the generic data type
+ * failed, return NULL.
+ * @return LilyCheckedDataType*?
+ */
+LilyCheckedDataType *
+resolve_generic_data_type_with_ordered_hash_map__LilyCheckedDataType(
+  LilyCheckedDataType *self,
+  OrderedHashMap *generic_params);
+
+/**
+ *
+ * @brief Resolve generic data type. If the resolve of the generic data type
+ * failed, return NULL.
+ * @return LilyCheckedDataType*?
+ */
+LilyCheckedDataType *
+resolve_generic_data_type_with_hash_map__LilyCheckedDataType(
+  LilyCheckedDataType *self,
+  HashMap *generic_params);
+
+/**
+ *
+ * @brief Check if the contains generic data type.
+ */
+bool
+contains_generic_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
+
+/**
+ *
+ * @brief Convert LilyCheckedDataTypeKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeKind,
+               enum LilyCheckedDataTypeKind self);
+#endif
+
+/**
+ *
+ * @brief Convert LilyCheckedDataType in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self);
+#endif
+
+/**
+ *
+ * @brief Print debug LilyCheckedDataType struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, LilyCheckedDataType, const LilyCheckedDataType *self);
+#endif
 
 /**
  *
