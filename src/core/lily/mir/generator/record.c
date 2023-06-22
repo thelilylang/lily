@@ -22,9 +22,59 @@
  * SOFTWARE.
  */
 
+#include <core/lily/mir/generator.h>
+#include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/record.h>
 
 void
 generate_record__LilyMir(LilyMirModule *module, LilyCheckedDecl *record)
 {
+    ASSERT(record->type.record.signatures->len > 0);
+
+    for (Usize i = 0; i < record->type.deps->len; ++i) {
+        LilyCheckedDecl *type_dep = get__Vec(record->type.deps, i);
+        // Get a signature with only user defined data type, because the
+        // compiler defined signatures are not used in the MIR.
+        LilyCheckedSignatureType *signature =
+          get_user_defined_signature__LilyCheckedSignatureType(
+            record->type.record.signatures);
+
+        if (signature) {
+            if (LilyMirKeyIsUnique(module,
+                                   signature->ser_global_name->buffer)) {
+                generate_type__LilyMir(module, type_dep);
+            }
+        }
+    }
+
+    for (Usize i = 0; i < record->type.record.signatures->len; ++i) {
+        LilyCheckedSignatureType *signature =
+          get__Vec(record->type.record.signatures, i);
+
+        if (!has_only_known_dt__LilyCheckedSignatureType(signature)) {
+            continue;
+        } else if (!LilyMirKeyIsUnique(module,
+                                       signature->ser_global_name->buffer)) {
+            continue;
+        }
+
+        Vec *fields = NEW(Vec);
+
+        LilyMirInstruction *inst =
+          NEW_VARIANT(LilyMirInstruction,
+                      struct,
+                      NEW(LilyMirInstructionStruct,
+                          get_linkage_from_visibility__LilyMirLinkage(
+                            record->type.record.visibility),
+                          signature->ser_global_name->buffer,
+                          fields));
+
+        for (Usize i = 0; i < record->type.record.fields->len; ++i) {
+            LilyCheckedField *field = get__Vec(record->type.record.fields, i);
+
+            push__Vec(fields, generate_dt__LilyMir(field->data_type));
+        }
+
+        LilyMirAddInst(module, inst);
+    }
 }
