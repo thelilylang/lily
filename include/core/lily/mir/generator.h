@@ -25,8 +25,22 @@
 #ifndef LILY_CORE_LILY_MIR_GENERATOR_H
 #define LILY_CORE_LILY_MIR_GENERATOR_H
 
+#include <core/lily/checked/decl.h>
+#include <core/lily/mir.h>
+
 typedef struct LilyPackage LilyPackage;
 
+/**
+ *
+ * @brief Generate a MIR instruction from checked declaration (type).
+ */
+void
+generate_type__LilyMir(LilyMirModule *module, LilyCheckedDecl *type);
+
+/**
+ *
+ * @brief Run MIR phase.
+ */
 void
 run__LilyMir(LilyPackage *self);
 
