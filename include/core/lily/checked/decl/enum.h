@@ -29,6 +29,7 @@
 #include <base/vec.h>
 
 #include <core/lily/checked/scope.h>
+#include <core/lily/checked/signature.h>
 #include <core/lily/checked/variant.h>
 #include <core/lily/visibility.h>
 
@@ -38,6 +39,7 @@ typedef struct LilyCheckedDeclEnum
     String *global_name;
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*
     Vec *variants;       // Vec<LilyCheckedVariant*>*
+    Vec *signatures;     // Vec<LilyCheckedSignatureType*>*
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
     bool is_checked;
@@ -57,10 +59,23 @@ inline CONSTRUCTOR(LilyCheckedDeclEnum,
                                   .global_name = global_name,
                                   .generic_params = generic_params,
                                   .variants = variants,
+                                  .signatures = NEW(Vec),
                                   .scope = scope,
                                   .visibility = visibility,
                                   .is_checked = false,
                                   .is_recursive = false };
+}
+
+/**
+ *
+ * @brief Add signature to signatures field.
+ */
+inline int
+add_signature__LilyCheckedDeclEnum(LilyCheckedDeclEnum *self,
+                                   OrderedHashMap *generic_params)
+{
+    return add_signature__LilyCheckedSignatureType(
+      self->global_name, generic_params, self->signatures);
 }
 
 /**

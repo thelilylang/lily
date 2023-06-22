@@ -25,6 +25,7 @@
 
 #include <core/lily/checked/decl/enum.h>
 #include <core/lily/checked/generic_param.h>
+#include <core/lily/checked/signature.h>
 
 #ifdef ENV_DEBUG
 #include <base/format.h>
@@ -45,6 +46,9 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclEnum, const LilyCheckedDeclEnum *self)
 
     push_str__String(res, ", variants =");
     DEBUG_VEC_STRING(self->variants, res, LilyCheckedVariant);
+
+    push_str__String(res, ", signatures =");
+    DEBUG_VEC_STRING(self->signatures, res, LilyCheckedSignatureType);
 
     {
         char *s = format(", scope = {Sr}, visibility = {s}, is_checked = {b}, "
@@ -75,6 +79,11 @@ DESTRUCTOR(LilyCheckedDeclEnum, const LilyCheckedDeclEnum *self)
     FREE_BUFFER_ITEMS(
       self->variants->buffer, self->variants->len, LilyCheckedVariant);
     FREE(Vec, self->variants);
+
+    FREE_BUFFER_ITEMS(self->signatures->buffer,
+                      self->signatures->len,
+                      LilyCheckedSignatureType);
+    FREE(Vec, self->signatures);
 
     FREE(LilyCheckedScope, self->scope);
 }
