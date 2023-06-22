@@ -73,19 +73,25 @@ generate_enum__LilyMir(LilyMirModule *module, LilyCheckedDecl *enum_)
                 variant_signature = get__Vec(variant->signatures, i);
             }
 
-            LilyMirInstruction *variant_inst = NEW_VARIANT(
-              LilyMirInstruction,
-              struct,
-              NEW(LilyMirInstructionStruct,
-                  get_linkage_from_visibility__LilyMirLinkage(
-                    enum_->type.enum_.visibility),
-                  variant_signature->ser_global_name->buffer,
-                  init__Vec(1,
-                            generate_dt__LilyMir(
-                              module, variant_signature->resolve_dt)),
-                  signature->generic_params));
+            Vec *variant_fields = NEW(Vec);
+            LilyMirInstruction *variant_inst =
+              NEW_VARIANT(LilyMirInstruction,
+                          struct,
+                          NEW(LilyMirInstructionStruct,
+                              get_linkage_from_visibility__LilyMirLinkage(
+                                enum_->type.enum_.visibility),
+                              variant_signature->ser_global_name->buffer,
+                              variant_fields,
+                              signature->generic_params));
 
             LilyMirAddInst(module, variant_inst);
+
+            if (variant_signature->resolve_dt) {
+                push__Vec(
+                  variant_fields,
+                  generate_dt__LilyMir(module, variant_signature->resolve_dt));
+            }
+
             LilyMirPopCurrent(module);
 
             push__Vec(fields,
