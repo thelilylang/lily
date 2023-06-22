@@ -330,6 +330,7 @@ set(CORE_SRC
 	src/core/lily/ir/llvm.c
 	src/core/lily/mir/generator/constant.c
 	src/core/lily/mir/generator/dt.c
+	src/core/lily/mir/generator/enum.c
 	src/core/lily/mir/generator/expr/assignable.c
 	src/core/lily/mir/generator/expr/binary.c
 	src/core/lily/mir/generator/expr/call.c
