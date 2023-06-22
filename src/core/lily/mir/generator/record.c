@@ -31,22 +31,6 @@ generate_record__LilyMir(LilyMirModule *module, LilyCheckedDecl *record)
 {
     ASSERT(record->type.record.signatures->len > 0);
 
-    for (Usize i = 0; i < record->type.deps->len; ++i) {
-        LilyCheckedDecl *type_dep = get__Vec(record->type.deps, i);
-        // Get a signature with only user defined data type, because the
-        // generic signatures are not used in the MIR.
-        LilyCheckedSignatureType *signature =
-          get_user_defined_signature__LilyCheckedSignatureType(
-            record->type.record.signatures);
-
-        if (signature) {
-            if (LilyMirKeyIsUnique(module,
-                                   signature->ser_global_name->buffer)) {
-                generate_type__LilyMir(module, type_dep);
-            }
-        }
-    }
-
     for (Usize i = 0; i < record->type.record.signatures->len; ++i) {
         LilyCheckedSignatureType *signature =
           get__Vec(record->type.record.signatures, i);
