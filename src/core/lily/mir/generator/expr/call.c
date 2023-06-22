@@ -91,25 +91,12 @@ generate_call_expr__LilyMir(LilyMirModule *module,
 
                     break;
                 }
-                case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-                    switch (expr->data_type->custom.kind) {
-                        case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
-                            return_data_type = get__HashMap(
-                              fun_signature->generic_params,
-                              expr->data_type->custom.name->buffer);
-
-                            break;
-                        default:
-                            return_data_type = expr->data_type;
-                    }
-
-                    break;
                 default:
                     return_data_type = expr->data_type;
             }
 
             LilyMirDt *mir_return_data_type =
-              generate_dt__LilyMir(return_data_type);
+              generate_dt__LilyMir(module, return_data_type);
             types[types_len - 1] = mir_return_data_type;
 
             return LilyMirBuildCall(
@@ -131,7 +118,7 @@ generate_call_expr__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_EXPR_CALL_KIND_MODULE:
             UNREACHABLE("module call not expected in the MIR");
         case LILY_CHECKED_EXPR_CALL_KIND_RECORD: {
-            LilyMirDt *dt = generate_dt__LilyMir(expr->data_type);
+            LilyMirDt *dt = generate_dt__LilyMir(module, expr->data_type);
             Vec *struct_ = NEW(Vec); // Vec<LilyMirInstructionVal*>*
 
             if (expr->call.record.params) {

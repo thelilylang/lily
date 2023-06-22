@@ -41,7 +41,7 @@
           generate_assignable_expr__LilyMir(                                   \
             module, fun_signature, scope, expr->binary.left),                  \
           LilyMirBuildRegVal(module,                                           \
-                             generate_dt__LilyMir(right_data_type),            \
+                             generate_dt__LilyMir(module, right_data_type),    \
                              from__String(LilyMirGetLastRegName(module))));    \
     }
 
@@ -542,7 +542,7 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
           val,
           NEW_VARIANT(LilyMirInstructionVal,
                       reg,
-                      generate_dt__LilyMir(return_data_type),
+                      generate_dt__LilyMir(module, return_data_type),
                       from__String(LilyMirGetLastRegName(module))));
     } else {
         TODO("generate for user defined binary operator");

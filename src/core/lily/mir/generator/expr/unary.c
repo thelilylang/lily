@@ -147,7 +147,7 @@ generate_unary_expr__LilyMir(LilyMirModule *module,
           val,
           NEW_VARIANT(LilyMirInstructionVal,
                       reg,
-                      generate_dt__LilyMir(return_data_type),
+                      generate_dt__LilyMir(module, return_data_type),
                       from__String(LilyMirGetLastRegName(module))));
     } else {
         TODO("generate for user defined unary operator");
