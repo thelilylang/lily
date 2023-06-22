@@ -160,6 +160,15 @@ get_global_name__LilyCheckedDecl(const LilyCheckedDecl *self);
 
 /**
  *
+ * @brief Get signatures from declaration.
+ * @return Vec<T*>* (&)
+ * T = LilyCheckedSignatureFun* | LilyCheckedSignatureType*
+ */
+Vec *
+get_signatures__LilyCheckedDecl(const LilyCheckedDecl *self);
+
+/**
+ *
  * @brief Convert LilyCheckedDecl in String.
  * @note This function is only used to debug.
  */

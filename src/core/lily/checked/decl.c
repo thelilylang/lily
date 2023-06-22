@@ -239,6 +239,47 @@ get_global_name__LilyCheckedDecl(const LilyCheckedDecl *self)
     }
 }
 
+Vec *
+get_signatures__LilyCheckedDecl(const LilyCheckedDecl *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DECL_KIND_CONSTANT:
+            UNREACHABLE("not expected in this context.");
+        case LILY_CHECKED_DECL_KIND_ERROR:
+            TODO("get signatures from error declaration");
+        case LILY_CHECKED_DECL_KIND_FUN:
+            return self->fun.signatures;
+        case LILY_CHECKED_DECL_KIND_METHOD:
+            TODO("get signatures from method declaration");
+        case LILY_CHECKED_DECL_KIND_OBJECT:
+            switch (self->object.kind) {
+                case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
+                    TODO("get signatures from class declaration");
+                case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+                    TODO("get signatures from enum object declaration");
+                case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+                    TODO("get signatures from record object declaration");
+                case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
+                    TODO("get signatures from trait declaration");
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case LILY_CHECKED_DECL_KIND_TYPE:
+            switch (self->type.kind) {
+                case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
+                    TODO("get signatures from alias declaration");
+                case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                    return self->type.enum_.signatures;
+                case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+                    return self->type.record.signatures;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedDecl, const LilyCheckedDecl *self)
