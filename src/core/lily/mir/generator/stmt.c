@@ -84,7 +84,7 @@ generate_stmt__LilyMir(LilyMirModule *module,
 
             return LilyMirBuildVar(module,
                                    stmt->variable.name->buffer,
-                                   generate_dt__LilyMir(var_data_type),
+                                   generate_dt__LilyMir(module, var_data_type),
                                    inst);
         }
         case LILY_CHECKED_STMT_KIND_WHILE:

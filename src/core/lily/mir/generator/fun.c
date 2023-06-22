@@ -76,22 +76,23 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
               fun->fun.is_main ? "main" : signature->ser_global_name->buffer,
               signature->global_name->buffer,
               NEW(Vec),
-              generate_dt__LilyMir(last__Vec(signature->types))));
+              signature->generic_params,
+              generate_dt__LilyMir(module, last__Vec(signature->types))));
+
+        LilyMirAddInst(module, inst);
 
         for (Usize i = 0; i < signature->types->len - 1; ++i) {
             LilyCheckedDataType *type = get__Vec(signature->types, i);
 
             LilyMirAddParam(&inst->fun.scope, type);
 
-            push__Vec(
-              inst->fun.args,
-              NEW_VARIANT(
-                LilyMirInstruction,
-                arg,
-                NEW(LilyMirInstructionArg, generate_dt__LilyMir(type), i)));
+            push__Vec(inst->fun.args,
+                      NEW_VARIANT(LilyMirInstruction,
+                                  arg,
+                                  NEW(LilyMirInstructionArg,
+                                      generate_dt__LilyMir(module, type),
+                                      i)));
         }
-
-        LilyMirAddInst(module, inst);
 
         for (Usize i = 0; i < fun->fun.body->len; ++i) {
             LilyCheckedBodyFunItem *item = get__Vec(fun->fun.body, i);

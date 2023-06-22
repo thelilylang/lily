@@ -51,10 +51,11 @@ generate_val__LilyMir(LilyMirModule *module,
                                     get__Vec(expr->array.items, i)));
                     }
 
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       array,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       array);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      array,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      array);
                 }
                 case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_MULTI_POINTERS:
                     TODO("do [*]");
@@ -73,9 +74,10 @@ generate_val__LilyMir(LilyMirModule *module,
                         LilyMirInstructionVal,
                         var,
                         generate_dt__LilyMir(
+                          module,
                           LilyMirGetCheckedDtFromExpr(module, scope, expr)),
                         expr->call.global_name->buffer),
-                      generate_dt__LilyMir(expr->data_type),
+                      generate_dt__LilyMir(module, expr->data_type),
                       expr->call.global_name);
                 }
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
@@ -86,6 +88,7 @@ generate_val__LilyMir(LilyMirModule *module,
                       LilyMirInstructionVal,
                       param,
                       generate_dt__LilyMir(
+                        module,
                         get__Vec(fun_signature->types, expr->call.fun_param)),
                       expr->call.fun_param);
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
@@ -98,25 +101,29 @@ generate_val__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_EXPR_KIND_LITERAL:
             switch (expr->literal.kind) {
                 case LILY_CHECKED_EXPR_LITERAL_KIND_BOOL:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.bool_);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.bool_);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_BYTE:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.byte);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.byte);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_BYTES:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       bytes,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.bytes);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      bytes,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.bytes);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_CHAR:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.char_);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.char_);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_CSTR: {
                     Vec *cstr = NEW(Vec);
 
@@ -142,116 +149,135 @@ generate_val__LilyMir(LilyMirModule *module,
                       cstr);
                 }
                 case LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT32:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       float,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.float32);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      float,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.float32);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_FLOAT64:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       float,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.float64);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      float,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.float64);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_INT32:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.int32);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.int32);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_INT64:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.int64);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.int64);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_NIL:
                     return NEW(LilyMirInstructionVal,
                                LILY_MIR_INSTRUCTION_VAL_KIND_NIL,
-                               generate_dt__LilyMir(expr->data_type));
+                               generate_dt__LilyMir(module, expr->data_type));
                 case LILY_CHECKED_EXPR_LITERAL_KIND_NONE:
                     return NEW(LilyMirInstructionVal,
                                LILY_MIR_INSTRUCTION_VAL_KIND_UNDEF,
-                               generate_dt__LilyMir(expr->data_type));
+                               generate_dt__LilyMir(module, expr->data_type));
                 case LILY_CHECKED_EXPR_LITERAL_KIND_STR:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       str,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.str);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      str,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.str);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT32:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       float,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_float32);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      float,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_float32);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT64:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       float,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_float64);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      float,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_float64);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT8:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_int8);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_int8);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT16:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_int16);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_int16);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT32:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_int32);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_int32);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_INT64:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_int64);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_int64);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_ISIZE:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_isize);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_isize);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT8:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_uint8);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_uint8);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT16:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_uint16);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_uint16);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT32:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_uint32);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_uint32);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_UINT64:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_uint64);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_uint64);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_USIZE:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.suffix_usize);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.suffix_usize);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_UINT32:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.uint32);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.uint32);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_UINT64:
-                    return NEW_VARIANT(LilyMirInstructionVal,
-                                       int,
-                                       generate_dt__LilyMir(expr->data_type),
-                                       expr->literal.uint64);
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      int,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->literal.uint64);
                 case LILY_CHECKED_EXPR_LITERAL_KIND_UNDEF:
                     return NEW(LilyMirInstructionVal,
                                LILY_MIR_INSTRUCTION_VAL_KIND_UNDEF,
-                               generate_dt__LilyMir(expr->data_type));
+                               generate_dt__LilyMir(module, expr->data_type));
                 case LILY_CHECKED_EXPR_LITERAL_KIND_UNIT:
                     return NEW(LilyMirInstructionVal,
                                LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,
-                               generate_dt__LilyMir(expr->data_type));
+                               generate_dt__LilyMir(module, expr->data_type));
                 default:
                     UNREACHABLE("unknown variant");
             }
@@ -269,7 +295,7 @@ generate_val__LilyMir(LilyMirModule *module,
 
             return NEW_VARIANT(LilyMirInstructionVal,
                                tuple,
-                               generate_dt__LilyMir(expr->data_type),
+                               generate_dt__LilyMir(module, expr->data_type),
                                tuple);
         }
         case LILY_CHECKED_EXPR_KIND_LIST: {
@@ -285,7 +311,7 @@ generate_val__LilyMir(LilyMirModule *module,
 
             return NEW_VARIANT(LilyMirInstructionVal,
                                list,
-                               generate_dt__LilyMir(expr->data_type),
+                               generate_dt__LilyMir(module, expr->data_type),
                                list);
         }
         default:
