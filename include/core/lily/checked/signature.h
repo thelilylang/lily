@@ -177,7 +177,7 @@ typedef struct LilyCheckedSignatureVariant
 {
     String *global_name; // String* (&)
     String *ser_global_name;
-    LilyCheckedDataType *resolve_dt;
+    LilyCheckedDataType *resolve_dt; // LilyCheckedDataType*?
 } LilyCheckedSignatureVariant;
 
 /**
