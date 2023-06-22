@@ -31,13 +31,9 @@ void
 generate_global_fun_name_with_vec__LilyCheckedGlobalName(String *global_name,
                                                          const Vec *fun)
 {
-    String *ser = NEW(String);
-
     for (Usize i = 0; i < fun->len; ++i) {
-        serialize__LilyCheckedDataType(get__Vec(fun, i), ser);
+        serialize__LilyCheckedDataType(get__Vec(fun, i), global_name);
     }
-
-    APPEND_AND_FREE(global_name, ser);
 }
 
 void
@@ -45,14 +41,11 @@ generate_global_type_name_with_ordered_hash_map__LilyCheckedGlobalName(
   String *global_name,
   const OrderedHashMap *generic_params)
 {
-    String *ser = NEW(String);
     OrderedHashMapIter iter =
       NEW(OrderedHashMapIter, (OrderedHashMap *)generic_params);
     LilyCheckedDataType *current = NULL;
 
     while ((current = next__OrderedHashMapIter(&iter))) {
-        serialize__LilyCheckedDataType(current, ser);
+        serialize__LilyCheckedDataType(current, global_name);
     }
-
-    APPEND_AND_FREE(global_name, ser);
 }
