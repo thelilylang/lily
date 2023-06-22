@@ -6803,6 +6803,40 @@ check_enum__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *enum_)
                                enum_->type.enum_.scope);
     }
 
+    // Add a new signature
+    {
+        OrderedHashMap *generic_params = NULL;
+
+        if (enum_->type.enum_.generic_params) {
+            generic_params = NEW(OrderedHashMap);
+
+            for (Usize i = 0; i < enum_->type.enum_.generic_params->len; ++i) {
+                LilyCheckedGenericParam *generic_param =
+                  get__Vec(enum_->type.enum_.generic_params, i);
+
+                insert__OrderedHashMap(
+                  generic_params,
+                  get_name__LilyCheckedGenericParam(generic_param)->buffer,
+                  NEW_VARIANT(LilyCheckedDataType,
+                              custom,
+                              generic_param->location,
+                              NEW(LilyCheckedDataTypeCustom,
+                                  enum_->type.enum_.scope->id,
+                                  (LilyCheckedAccessScope){ .id = i },
+                                  generic_param->constraint.name,
+                                  generic_param->constraint.name,
+                                  NULL,
+                                  LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
+                                  false)));
+            }
+        }
+
+        push__Vec(enum_->type.enum_.signatures,
+                  NEW(LilyCheckedSignatureType,
+                      enum_->type.enum_.global_name,
+                      generic_params));
+    }
+
     check_enum_variants__LilyAnalysis(self,
                                       enum_->ast_decl->type.enum_.variants,
                                       enum_->type.enum_.scope,
