@@ -1010,6 +1010,7 @@ CONSTRUCTOR(LilyMirInstructionFun,
             const char *name,
             const char *base_name,
             Vec *args,
+            HashMap *generic_params,
             LilyMirDt *return_data_type)
 {
     Stack *block_stack = NEW(Stack, 1024);
@@ -1027,6 +1028,7 @@ CONSTRUCTOR(LilyMirInstructionFun,
                                     .name = name,
                                     .base_name = base_name,
                                     .args = args,
+                                    .generic_params = generic_params,
                                     .insts = insts,
                                     .block_stack = block_stack,
                                     .return_data_type = return_data_type,

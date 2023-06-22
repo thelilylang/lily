@@ -26,6 +26,8 @@
 #define LILY_CORE_LILY_MIR_INSTRUCTION_H
 
 #include <base/alloc.h>
+#include <base/hash_map.h>
+#include <base/ordered_hash_map.h>
 #include <base/stack.h>
 #include <base/vec.h>
 
@@ -767,10 +769,11 @@ typedef struct LilyMirInstructionFun
     enum LilyMirLinkage linkage;
     const char *name; // const char* (&)
     // without serialization
-    const char *base_name; // const char* (&)
-    Vec *args;             // Vec<LilyMirInstruction*>*
-    Vec *insts;            // Vec<LilyMirInstruction*>*
-    Stack *block_stack;    // Stack<LilyMirInstructionBlock*>*
+    const char *base_name;   // const char* (&)
+    Vec *args;               // Vec<LilyMirInstruction*>*
+    Vec *insts;              // Vec<LilyMirInstruction*>*
+    Stack *block_stack;      // Stack<LilyMirInstructionBlock*>*
+    HashMap *generic_params; // HashMap<LilyCheckedDataType*>* (&)
     LilyMirDt *return_data_type;
     LilyMirScope scope;
     Usize block_count;
@@ -786,6 +789,7 @@ CONSTRUCTOR(LilyMirInstructionFun,
             const char *name,
             const char *base_name,
             Vec *args,
+            HashMap *generic_params,
             LilyMirDt *return_data_type);
 
 /**
@@ -1116,7 +1120,8 @@ typedef struct LilyMirInstructionStruct
 {
     enum LilyMirLinkage linkage;
     const char *name;
-    Vec *fields; // Vec<LilyMirDt*>*
+    Vec *fields;                    // Vec<LilyMirDt*>*
+    OrderedHashMap *generic_params; // OrderedHashMap<LilyCheckedDataType*>* (&)
 } LilyMirInstructionStruct;
 
 /**
@@ -1127,11 +1132,13 @@ inline CONSTRUCTOR(LilyMirInstructionStruct,
                    LilyMirInstructionStruct,
                    enum LilyMirLinkage linkage,
                    const char *name,
-                   Vec *fields)
+                   Vec *fields,
+                   OrderedHashMap *generic_params)
 {
     return (LilyMirInstructionStruct){ .linkage = linkage,
                                        .name = name,
-                                       .fields = fields };
+                                       .fields = fields,
+                                       .generic_params = generic_params };
 }
 
 /**
