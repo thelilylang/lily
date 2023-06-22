@@ -27,9 +27,27 @@
 #include <core/lily/lily.h>
 #include <core/lily/mir/generator.h>
 #include <core/lily/mir/generator/constant.h>
+#include <core/lily/mir/generator/enum.h>
 #include <core/lily/mir/generator/fun.h>
 #include <core/lily/mir/generator/record.h>
 #include <core/lily/package.h>
+
+#define RESOLVE_TYPE_DEPS(decl_kind)                                      \
+    for (Usize i = 0; i < type->decl_kind.deps->len; ++i) {               \
+        LilyCheckedDecl *type_dep = get__Vec(type->decl_kind.deps, i);    \
+        /* Get a signature with only user defined data type, because the  \
+        generic signatures are not used in the MIR. */                    \
+        LilyCheckedSignatureType *signature =                             \
+          get_user_defined_signature__LilyCheckedSignatureType(           \
+            get_signatures__LilyCheckedDecl(type_dep));                   \
+                                                                          \
+        if (signature) {                                                  \
+            if (LilyMirKeyIsUnique(module,                                \
+                                   signature->ser_global_name->buffer)) { \
+                generate_type__LilyMir(module, type_dep);                 \
+            }                                                             \
+        }                                                                 \
+    }
 
 void
 generate_type__LilyMir(LilyMirModule *module, LilyCheckedDecl *type)
@@ -38,12 +56,31 @@ generate_type__LilyMir(LilyMirModule *module, LilyCheckedDecl *type)
         case LILY_CHECKED_DECL_KIND_ERROR:
             break;
         case LILY_CHECKED_DECL_KIND_OBJECT:
+            RESOLVE_TYPE_DEPS(object);
+
+			switch (type->object.kind) {
+				case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
+					break;
+				case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+					break;
+				case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+					break;
+				case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
+					break;
+				default:
+					UNREACHABLE("unknown variant");
+			}
+			
             break;
         case LILY_CHECKED_DECL_KIND_TYPE:
+            RESOLVE_TYPE_DEPS(type);
+
             switch (type->type.kind) {
                 case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
                     break;
                 case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                    generate_enum__LilyMir(module, type);
+
                     break;
                 case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
                     generate_record__LilyMir(module, type);
