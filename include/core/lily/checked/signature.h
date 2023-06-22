@@ -31,6 +31,8 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+#include <core/lily/checked/data_type.h>
+
 typedef struct LilyCheckedSignatureFun
 {
     String *global_name; // String* (&)
@@ -170,5 +172,53 @@ IMPL_FOR_DEBUG(to_string,
  * @brief Free LilyCheckedSignature type.
  */
 DESTRUCTOR(LilyCheckedSignatureType, LilyCheckedSignatureType *self);
+
+typedef struct LilyCheckedSignatureVariant
+{
+    String *global_name; // String* (&)
+    String *ser_global_name;
+    LilyCheckedDataType *resolve_dt;
+} LilyCheckedSignatureVariant;
+
+/**
+ *
+ * @brief Construct LilyCheckedSignatureVariant type.
+ */
+CONSTRUCTOR(LilyCheckedSignatureVariant *,
+            LilyCheckedSignatureVariant,
+            String *global_name,
+            LilyCheckedDataType *resolve_dt);
+
+/**
+ *
+ * @brief Try to add a signature to signatures.
+ * @param signatures Vec<LilyCheckedSignatureVariant*>*
+ */
+inline void
+add_signature__LilyCheckedSignatureVariant(String *global_name,
+                                           LilyCheckedDataType *resolve_dt,
+                                           Vec *signatures)
+{
+    push__Vec(signatures,
+              NEW(LilyCheckedSignatureVariant, global_name, resolve_dt));
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedSignatureVariant in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedSignatureVariant,
+               const LilyCheckedSignatureVariant *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedSignatureVariant type.
+ */
+DESTRUCTOR(LilyCheckedSignatureVariant, LilyCheckedSignatureVariant *self);
 
 #endif // LILY_CORE_LILY_CHECKED_SIGNATURE_H

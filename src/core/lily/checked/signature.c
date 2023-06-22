@@ -300,3 +300,43 @@ DESTRUCTOR(LilyCheckedSignatureType, LilyCheckedSignatureType *self)
     FREE(OrderedHashMap, self->generic_params);
     lily_free(self);
 }
+
+CONSTRUCTOR(LilyCheckedSignatureVariant *,
+            LilyCheckedSignatureVariant,
+            String *global_name,
+            LilyCheckedDataType *resolve_dt)
+{
+    LilyCheckedSignatureVariant *self =
+      lily_malloc(sizeof(LilyCheckedSignatureVariant));
+
+    self->global_name = global_name;
+    self->ser_global_name = clone__String(self->global_name);
+    self->resolve_dt = resolve_dt;
+
+    generate_global_variant_name__LilyCheckedGlobalName(self->ser_global_name,
+                                                        self->resolve_dt);
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedSignatureVariant,
+               const LilyCheckedSignatureVariant *self)
+{
+    return format__String(
+      "LilyCheckedSignatureVariant{{ global_name = {S}, ser_global_name = {S}, "
+      "resolve_dt = {Sr} }",
+      self->global_name,
+      self->ser_global_name,
+      to_string__Debug__LilyCheckedDataType(self->resolve_dt));
+}
+#endif
+
+DESTRUCTOR(LilyCheckedSignatureVariant, LilyCheckedSignatureVariant *self)
+{
+    FREE(String, self->ser_global_name);
+    FREE(LilyCheckedDataType, self->resolve_dt);
+    lily_free(self);
+}
