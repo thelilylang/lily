@@ -585,6 +585,41 @@ search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 }
 
 LilyCheckedScopeResponse
+search_enum__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->enums->len; ++i) {
+                LilyCheckedScopeContainerEnum *enum_ = get__Vec(self->enums, i);
+
+                if (!strcmp(enum_->name->buffer, name->buffer)) {
+                    LilyCheckedDecl *e =
+                      get__Vec(self->decls.module->decls, enum_->id);
+
+                    return NEW_VARIANT(
+                      LilyCheckedScopeResponse,
+                      enum_,
+                      e->location,
+                      NEW_VARIANT(
+                        LilyCheckedScopeContainer, enum_, self->id, enum_),
+                      e,
+                      &e->type.enum_);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_enum__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
 search_generic__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
     switch (self->decls.kind) {
@@ -953,16 +988,19 @@ search_custom_type__LilyCheckedScope(LilyCheckedScope *self, const String *name)
     // TODO: search other custom data type
     LilyCheckedScopeResponse record =
       search_record__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse enum_ = search_enum__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse generic =
       search_generic__LilyCheckedScope(self, name);
 
-    // [record, generic]
-#define RESPONSES_CUSTOM_TYPE_LEN 2
+    // [record, enum, generic]
+#define RESPONSES_CUSTOM_TYPE_LEN 3
     LilyCheckedScopeResponse *responses[RESPONSES_CUSTOM_TYPE_LEN] =
       (LilyCheckedScopeResponse *[RESPONSES_CUSTOM_TYPE_LEN]){ &record,
+                                                               &enum_,
                                                                &generic };
 
     bool record_is_found = true;
+    bool enum_is_found = true;
     bool generic_is_found = true;
 
     for (Usize i = 0; i < RESPONSES_CUSTOM_TYPE_LEN; ++i) {
@@ -973,6 +1011,8 @@ search_custom_type__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 if (i == 0) {
                     record_is_found = false;
                 } else if (i == 1) {
+                    enum_is_found = false;
+                } else if (i == 2) {
                     generic_is_found = false;
                 }
 
@@ -982,19 +1022,49 @@ search_custom_type__LilyCheckedScope(LilyCheckedScope *self, const String *name)
         }
     }
 
-    switch (record_is_found + generic_is_found) {
-        case 2:
+    switch (record_is_found + enum_is_found + generic_is_found) {
+        case 3:
             if (record.scope_container.scope_id >
-                generic.scope_container.scope_id) {
+                  enum_.scope_container.scope_id &&
+                record.scope_container.scope_id >
+                  generic.scope_container.scope_id) {
                 return record;
+            } else if (enum_.scope_container.scope_id >
+                         record.scope_container.scope_id &&
+                       enum_.scope_container.scope_id >
+                         generic.scope_container.scope_id) {
+                return enum_;
             } else {
                 return generic;
+            }
+
+            break;
+        case 2:
+            if (record_is_found && enum_is_found) {
+                return record.scope_container.scope_id >
+                           enum_.scope_container.scope_id
+                         ? record
+                         : enum_;
+            } else if (record_is_found && generic_is_found) {
+                return record.scope_container.scope_id >
+                           generic.scope_container.scope_id
+                         ? record
+                         : generic;
+            } else if (enum_is_found && generic_is_found) {
+                return enum_.scope_container.scope_id >
+                           generic.scope_container.scope_id
+                         ? enum_
+                         : generic;
+            } else {
+                UNREACHABLE("the analysis has a bug!!");
             }
 
             break;
         case 1:
             if (record_is_found) {
                 return record;
+            } else if (enum_is_found) {
+                return enum_;
             } else {
                 return generic;
             }

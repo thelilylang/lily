@@ -274,6 +274,13 @@ search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *
+ * @brief Search an enum in the scope.
+ */
+LilyCheckedScopeResponse
+search_enum__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
  * @brief Search a generic param in the scope.
  */
 LilyCheckedScopeResponse
