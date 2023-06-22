@@ -58,19 +58,19 @@ generate_type__LilyMir(LilyMirModule *module, LilyCheckedDecl *type)
         case LILY_CHECKED_DECL_KIND_OBJECT:
             RESOLVE_TYPE_DEPS(object);
 
-			switch (type->object.kind) {
-				case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
-					break;
-				case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
-					break;
-				case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
-					break;
-				case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
-					break;
-				default:
-					UNREACHABLE("unknown variant");
-			}
-			
+            switch (type->object.kind) {
+                case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
+                    break;
+                case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+                    break;
+                case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+                    break;
+                case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+
             break;
         case LILY_CHECKED_DECL_KIND_TYPE:
             RESOLVE_TYPE_DEPS(type);
@@ -94,8 +94,6 @@ generate_type__LilyMir(LilyMirModule *module, LilyCheckedDecl *type)
         default:
             UNREACHABLE("this variant is not expected in this context.");
     }
-
-    LilyMirPopCurrent(module);
 }
 
 void
