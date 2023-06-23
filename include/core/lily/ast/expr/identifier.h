@@ -27,19 +27,25 @@
 
 #include <base/new.h>
 #include <base/string.h>
+#include <base/vec.h>
 
 typedef struct LilyAstExprIdentifier
 {
     String *name;
+    Vec *generic_params; // Vec<LilyAstDataType*>*?
 } LilyAstExprIdentifier;
 
 /**
  *
  * @brief Construct LilyAstExprIdentifier type.
  */
-inline CONSTRUCTOR(LilyAstExprIdentifier, LilyAstExprIdentifier, String *name)
+inline CONSTRUCTOR(LilyAstExprIdentifier,
+                   LilyAstExprIdentifier,
+                   String *name,
+                   Vec *generic_params)
 {
-    return (LilyAstExprIdentifier){ .name = name };
+    return (LilyAstExprIdentifier){ .name = name,
+                                    .generic_params = generic_params };
 }
 
 /**
@@ -48,23 +54,17 @@ inline CONSTRUCTOR(LilyAstExprIdentifier, LilyAstExprIdentifier, String *name)
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
-inline String *
+String *
 IMPL_FOR_DEBUG(to_string,
                LilyAstExprIdentifier,
-               const LilyAstExprIdentifier *self)
-{
-    return format__String("LilyAstExpridentifier{{ name = {S} }", self->name);
-}
+               const LilyAstExprIdentifier *self);
 #endif
 
 /**
  *
  * @brief Free LilyAstExprIdentifier type.
  */
-inline DESTRUCTOR(LilyAstExprIdentifier, const LilyAstExprIdentifier *self)
-{
-    FREE_MOVE(self->name, FREE(String, self->name));
-}
+DESTRUCTOR(LilyAstExprIdentifier, const LilyAstExprIdentifier *self);
 
 typedef struct LilyAstExprIdentifierDollar
 {
