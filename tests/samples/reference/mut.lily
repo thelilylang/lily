@@ -1,5 +1,5 @@
 fun modify_ref(x ref mut Int32) =
-    *x = 0
+    x.* = 0
 end
 
 fun main =
