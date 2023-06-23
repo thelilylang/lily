@@ -1545,17 +1545,22 @@ parse_hook_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
     }
 
     switch (self->current->kind) {
-        case LILY_TOKEN_KIND_R_HOOK:
+        case LILY_TOKEN_KIND_R_HOOK: {
             END_LOCATION(&location, self->current->location);
             next_token__LilyParseBlock(self);
 
-            return NEW_VARIANT(
+            LilyAstExpr *res = NEW_VARIANT(
               LilyAstExpr,
               access,
               location,
               NEW_VARIANT(LilyAstExprAccess,
                           hook,
                           NEW(LilyAstExprAccessHook, access, expr)));
+
+            return self->current->kind == LILY_TOKEN_KIND_L_HOOK
+                     ? parse_hook_access__LilyParseBlock(self, res)
+                     : res;
+        }
         default: {
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
