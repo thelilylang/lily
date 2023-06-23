@@ -127,7 +127,6 @@ typedef struct LilyAstExprCallFun
     LilyAstExpr *id;
     Usize ast_params_len; // Will use in the analysis (with `|>` operator).
     Vec *params;          // Vec<LilyAstExprFunParamCall*>*
-    Vec *generic_params;  // Vec<LilyAstDataType*>*?
 } LilyAstExprCallFun;
 
 /**
@@ -137,13 +136,11 @@ typedef struct LilyAstExprCallFun
 inline CONSTRUCTOR(LilyAstExprCallFun,
                    LilyAstExprCallFun,
                    LilyAstExpr *id,
-                   Vec *params,
-                   Vec *generic_params)
+                   Vec *params)
 {
     return (LilyAstExprCallFun){ .id = id,
                                  .ast_params_len = params->len,
-                                 .params = params,
-                                 .generic_params = generic_params };
+                                 .params = params };
 }
 
 /**

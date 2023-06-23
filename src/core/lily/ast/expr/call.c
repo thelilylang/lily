@@ -213,8 +213,10 @@ DESTRUCTOR(LilyAstExprFunParamCall, LilyAstExprFunParamCall *self)
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstExprCallFun, const LilyAstExprCallFun *self)
 {
-    String *res = format__String("LilyAstExprCallFun{{ id = {Sr}, params =",
-                                 to_string__Debug__LilyAstExpr(self->id));
+    String *res = format__String(
+      "LilyAstExprCallFun{{ id = {Sr}, ast_params_len = {d}, params =",
+      to_string__Debug__LilyAstExpr(self->id),
+      self->ast_params_len);
 
     DEBUG_VEC_STRING(self->params, res, LilyAstExprFunParamCall);
 
@@ -249,13 +251,6 @@ DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self)
     }
 
     FREE(Vec, self->params);
-
-    if (self->generic_params) {
-        FREE_BUFFER_ITEMS(self->generic_params->buffer,
-                          self->generic_params->len,
-                          LilyAstDataType);
-        FREE(Vec, self->generic_params);
-    }
 }
 
 #ifdef ENV_DEBUG
