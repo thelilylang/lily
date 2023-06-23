@@ -2442,6 +2442,9 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD:
                     return search_record__LilyCheckedScope(scope,
                                                            id->identifier.name);
+                case LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM:
+                    return search_enum__LilyCheckedScope(scope,
+                                                         id->identifier.name);
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_ALIAS:
                     return search_alias__LilyCheckedScope(scope,
                                                           id->identifier.name);
@@ -3487,7 +3490,9 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                 if (fun->fun.generic_params) {
                                     generic_params = NEW(HashMap);
 
-									Vec *ast_generic_params = get_generic_params__LilyAstExpr(expr->call.fun.id);
+                                    Vec *ast_generic_params =
+                                      get_generic_params__LilyAstExpr(
+                                        expr->call.fun.id);
 
                                     ASSERT(ast_generic_params);
 
@@ -3503,8 +3508,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                         LilyCheckedGenericParam *generic_param =
                                           get__Vec(fun->fun.generic_params, i);
                                         LilyAstDataType *generic_param_call =
-                                          get__Vec(
-                                            ast_generic_params, i);
+                                          get__Vec(ast_generic_params, i);
 
                                         insert__HashMap(
                                           generic_params,
