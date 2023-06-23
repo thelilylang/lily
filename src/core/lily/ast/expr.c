@@ -486,6 +486,30 @@ to_string__LilyAstExpr(const LilyAstExpr *self)
     TODO("implements");
 }
 
+Vec *
+get_generic_params__LilyAstExpr(LilyAstExpr *self)
+{
+	switch (self->kind) {
+		case LILY_AST_EXPR_KIND_ACCESS:
+			switch (self->access.kind) {
+				case LILY_AST_EXPR_ACCESS_KIND_GLOBAL:
+					return get_generic_params__LilyAstExpr(self->access.global);
+				case LILY_AST_EXPR_ACCESS_KIND_self:
+					return get_generic_params__LilyAstExpr(self->access.self);
+				case LILY_AST_EXPR_ACCESS_KIND_SELF:
+					return get_generic_params__LilyAstExpr(self->access.Self);
+				case LILY_AST_EXPR_ACCESS_KIND_PATH:
+					return get_generic_params__LilyAstExpr(last__Vec(self->access.path));
+				default:
+					UNREACHABLE("not expected in this context");
+			}
+		case LILY_AST_EXPR_KIND_IDENTIFIER:
+			return self->identifier.generic_params;
+		default:
+			UNREACHABLE("not expected in this context");
+	}
+}
+
 VARIANT_DESTRUCTOR(LilyAstExpr, access, LilyAstExpr *self)
 {
     FREE(LilyAstExprAccess, &self->access);

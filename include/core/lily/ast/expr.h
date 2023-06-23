@@ -264,6 +264,13 @@ to_string__LilyAstExpr(const LilyAstExpr *self);
 
 /**
  *
+ * @brief Get generic params from expression.
+ */
+Vec *
+get_generic_params__LilyAstExpr(LilyAstExpr *self);
+
+/**
+ *
  * @brief Free LilyAstExpr type.
  */
 DESTRUCTOR(LilyAstExpr, LilyAstExpr *self);
