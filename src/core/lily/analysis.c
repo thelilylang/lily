@@ -2407,6 +2407,18 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR:
                     return search_error__LilyCheckedScope(scope,
                                                           id->identifier.name);
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_CLASS:
+                    return search_class__LilyCheckedScope(scope,
+                                                          id->identifier.name);
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_OBJECT:
+                    return search_record_object__LilyCheckedScope(
+                      scope, id->identifier.name);
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_OBJECT:
+                    return search_enum_object__LilyCheckedScope(
+                      scope, id->identifier.name);
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_TRAIT:
+                    return search_trait__LilyCheckedScope(scope,
+                                                          id->identifier.name);
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_CONSTANT:
                     return search_constant__LilyCheckedScope(
                       scope, id->identifier.name);
@@ -2424,7 +2436,8 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_KIND_ACCESS: {
             switch (id->access.kind) {
                 case LILY_AST_EXPR_ACCESS_KIND_GLOBAL:
-                    UNREACHABLE("global is not expected in this context");
+                    return resolve_id__LilyAnalysis(
+                      self, id->access.global, self->module.scope, res_kind);
                 default:
                     TODO("...");
             }
