@@ -65,9 +65,9 @@ static VARIANT_DESTRUCTOR(LilyAstExprAccess,
                           const LilyAstExprAccess *self);
 
 // Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT).
-static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
-                                 property_init,
-                                 const LilyAstExprAccess *self);
+static VARIANT_DESTRUCTOR(LilyAstExprAccess,
+                          property_init,
+                          const LilyAstExprAccess *self);
 
 // Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK).
 static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
@@ -218,11 +218,17 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self)
 
             return res;
         }
-        case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT:
-            return format__String(
-              "LilyAstExprAccess{{ kind = {s}, property_init = {Sr} }",
-              to_string__Debug__LilyAstExprAccessKind(self->kind),
-              to_string__Debug__LilyAstExpr(self->property_init));
+        case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT: {
+            String *res = format__String(
+              "LilyAstExprAccess{{ kind = {s}, property_init =",
+              to_string__Debug__LilyAstExprAccessKind(self->kind));
+
+            DEBUG_VEC_STRING(self->property_init, res, LilyAstExpr);
+
+            push_str__String(res, " }");
+
+            return res;
+        }
         case LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK:
             return format__String(
               "LilyAstExprAccess{{ kind = {s}, Self_hook = {sa} }",
@@ -319,9 +325,22 @@ to_string__LilyAstExprAccess(const LilyAstExprAccess *self)
 
             return res;
         }
-        case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT:
-            return format__String("@.{Sr}",
-                                  to_string__LilyAstExpr(self->property_init));
+        case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT: {
+            String *res = from__String("@.");
+
+            for (Usize i = 0; i < self->property_init->len; i++) {
+                String *s = to_string__LilyAstExprAccess(
+                  get__Vec(self->property_init, i));
+
+                APPEND_AND_FREE(res, s);
+
+                if (i != self->property_init->len - 1) {
+                    push__String(res, '.');
+                }
+            }
+
+            return res;
+        }
         case LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK:
             return format__String(
               "Self.{Sr}[{Sr}]",
@@ -369,6 +388,25 @@ to_string__LilyAstExprAccess(const LilyAstExprAccess *self)
     }
 }
 
+Vec *
+get_path__LilyAstExprAccess(const LilyAstExprAccess *self)
+{
+    switch (self->kind) {
+        case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH:
+            return self->global_path;
+        case LILY_AST_EXPR_ACCESS_KIND_PATH:
+            return self->path;
+        case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH:
+            return self->Self_path;
+        case LILY_AST_EXPR_ACCESS_KIND_self_PATH:
+            return self->self_path;
+        case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT:
+            return self->property_init;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 VARIANT_DESTRUCTOR(LilyAstExprAccess,
                    global_hook,
                    const LilyAstExprAccess *self)
@@ -404,7 +442,9 @@ VARIANT_DESTRUCTOR(LilyAstExprAccess,
                    property_init,
                    const LilyAstExprAccess *self)
 {
-    FREE(LilyAstExpr, self->property_init);
+    FREE_BUFFER_ITEMS(
+      self->property_init->buffer, self->property_init->len, LilyAstExpr);
+    FREE(Vec, self->property_init);
 }
 
 VARIANT_DESTRUCTOR(LilyAstExprAccess, Self_hook, const LilyAstExprAccess *self)

@@ -117,8 +117,8 @@ typedef struct LilyAstExprAccess
         Vec *global_path; // Vec<LilyAstExpr*>*
         LilyAstExprAccessHook hook;
         LilyAstExprAccessObject object;
-        Vec *path; // Vec<LilyAstExpr*>*
-        LilyAstExpr *property_init;
+        Vec *path;          // Vec<LilyAstExpr*>*
+        Vec *property_init; // Vec<LilyAstExpr*>*
         LilyAstExprAccessHook self_hook;
         Vec *self_path; // Vec<LilyAstExpr*>*
         LilyAstExprAccessHook Self_hook;
@@ -201,7 +201,7 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
                            property_init,
-                           LilyAstExpr *property_init)
+                           Vec *property_init)
 {
     return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT,
                                 .property_init = property_init };
@@ -291,6 +291,13 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self);
  */
 String *
 to_string__LilyAstExprAccess(const LilyAstExprAccess *self);
+
+/**
+ *
+ * @brief Get path from access expression.
+ */
+Vec *
+get_path__LilyAstExprAccess(const LilyAstExprAccess *self);
 
 /**
  *
