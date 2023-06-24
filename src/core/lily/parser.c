@@ -1495,14 +1495,14 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 LilyAstExpr *
 parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin)
 {
-    if (self->current->kind != LILY_TOKEN_KIND_DOT) {
-        return begin;
-    }
-
     Location location;
     Vec *access = NULL; // Vec<LilyAstExpr*>*
 
     if (begin) {
+        if (self->current->kind != LILY_TOKEN_KIND_DOT) {
+            return begin;
+        }
+
         location = clone__Location(&begin->location);
         access = init__Vec(1, begin);
     } else {
@@ -1510,6 +1510,10 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin)
 
         LilyAstExpr *first_expr =
           parse_primary_expr__LilyParseBlock(self, true);
+
+        if (self->current->kind != LILY_TOKEN_KIND_DOT) {
+            return first_expr;
+        }
 
         access = init__Vec(1, first_expr);
     }
@@ -1638,7 +1642,7 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
     Location location = clone__Location(&self->previous->location);
     enum LilyTokenKind kind = self->previous->kind;
 
-    next_token__LilyParseBlock(self);
+    next_token__LilyParseBlock(self); // skip `.`
 
     LilyAstExpr *path = parse_path_access__LilyParseBlock(self, NULL);
 
