@@ -35,6 +35,58 @@
 #include <stdlib.h>
 #include <string.h>
 
+static LilyCheckedScopeResponse
+search_module_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                 const String *name);
+
+static LilyCheckedScopeResponse
+search_variable_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                   const String *name);
+
+static LilyCheckedScopeResponse
+search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                              const String *name);
+
+static LilyCheckedScopeResponse
+search_constant_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                   const String *name);
+
+static LilyCheckedScopeResponse
+search_error_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                const String *name);
+
+static LilyCheckedScopeResponse
+search_alias_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                const String *name);
+
+static LilyCheckedScopeResponse
+search_record_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                 const String *name);
+
+static LilyCheckedScopeResponse
+search_enum_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                               const String *name);
+
+static LilyCheckedScopeResponse
+search_generic_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                  const String *name);
+
+static LilyCheckedScopeResponse
+search_class_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                const String *name);
+
+static LilyCheckedScopeResponse
+search_record_object_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                        const String *name);
+
+static LilyCheckedScopeResponse
+search_enum_object_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                      const String *name);
+
+static LilyCheckedScopeResponse
+search_trait_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                const String *name);
+
 #define CHECK_IF_EXISTS(container, item, container_name)                    \
     for (Usize i = 0; i < container->len; ++i) {                            \
         if (!strcmp(                                                        \
@@ -260,8 +312,8 @@ add_generic__LilyCheckedScope(LilyCheckedScope *self,
 }
 
 LilyCheckedScopeContainerFun *
-search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
-                                              const String *name)
+get_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                           const String *name)
 {
     for (Usize i = 0; i < self->funs->len; ++i) {
         LilyCheckedScopeContainerFun *fun = get__Vec(self->funs, i);
@@ -275,7 +327,8 @@ search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
 }
 
 LilyCheckedScopeResponse
-search_module__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_module_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                 const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -297,20 +350,15 @@ search_module__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
             return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_module__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_variable_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                   const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE:
@@ -333,7 +381,7 @@ search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
             if (self->decls.decl->kind == LILY_CHECKED_DECL_KIND_FUN) {
                 for (Usize i = 0; i < self->params->len; ++i) {
@@ -385,23 +433,15 @@ search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
             return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent && (self->parent->scope->decls.kind ==
-                           LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE ||
-                         self->parent->scope->decls.kind ==
-                           LILY_CHECKED_SCOPE_DECLS_KIND_DECL)) {
-        return search_variable__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                              const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -428,20 +468,15 @@ search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_fun__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_constant__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_constant_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                   const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -464,20 +499,15 @@ search_constant__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_constant__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_error__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_error_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -500,20 +530,15 @@ search_error__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_error__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_alias__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_alias_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -536,20 +561,15 @@ search_alias__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_alias__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_record_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                 const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -572,20 +592,15 @@ search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_record__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_enum__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_enum_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                               const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -607,20 +622,15 @@ search_enum__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_enum__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_generic__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_generic_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                  const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
@@ -774,20 +784,15 @@ search_generic__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_generic__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_class__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_class_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -810,21 +815,15 @@ search_class__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_class__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_record_object__LilyCheckedScope(LilyCheckedScope *self,
-                                       const String *name)
+search_record_object_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                        const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -848,21 +847,15 @@ search_record_object__LilyCheckedScope(LilyCheckedScope *self,
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_record_object__LilyCheckedScope(self->parent->scope,
-                                                      name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_enum_object__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_enum_object_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                      const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -886,20 +879,15 @@ search_enum_object__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
-
-    if (self->parent) {
-        return search_enum_object__LilyCheckedScope(self->parent->scope, name);
-    }
-
-    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
-search_trait__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+search_trait_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                const String *name)
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
@@ -922,16 +910,261 @@ search_trait__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                 }
             }
 
-            break;
+            return NEW(LilyCheckedScopeResponse);
         default:
-            break;
+            return NEW(LilyCheckedScopeResponse);
     }
+}
 
-    if (self->parent) {
-        return search_trait__LilyCheckedScope(self->parent->scope, name);
+LilyCheckedScopeResponse
+search_module__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_module_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent) {
+                return search_module__LilyCheckedScope(self->parent->scope,
+                                                       name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
     }
+}
 
-    return NEW(LilyCheckedScopeResponse);
+LilyCheckedScopeResponse
+search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_variable_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent && (self->parent->scope->decls.kind ==
+                                   LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE ||
+                                 self->parent->scope->decls.kind ==
+                                   LILY_CHECKED_SCOPE_DECLS_KIND_DECL)) {
+                return search_variable__LilyCheckedScope(self->parent->scope,
+                                                         name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_fun_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent) {
+                return search_fun__LilyCheckedScope(self->parent->scope, name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_constant__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_constant_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent) {
+                return search_constant__LilyCheckedScope(self->parent->scope,
+                                                         name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_error__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_error_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent) {
+                return search_error__LilyCheckedScope(self->parent->scope,
+                                                      name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_alias__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_alias_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent) {
+                return search_alias__LilyCheckedScope(self->parent->scope,
+                                                      name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_record_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent) {
+                return search_record__LilyCheckedScope(self->parent->scope,
+                                                       name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_enum__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_enum_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent) {
+                return search_enum__LilyCheckedScope(self->parent->scope, name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_generic__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_generic_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent) {
+                return search_generic__LilyCheckedScope(self->parent->scope,
+                                                        name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_class__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_class_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent) {
+                return search_class__LilyCheckedScope(self->parent->scope,
+                                                      name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_record_object__LilyCheckedScope(LilyCheckedScope *self,
+                                       const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_record_object_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+
+            if (self->parent) {
+                return search_record_object__LilyCheckedScope(
+                  self->parent->scope, name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_enum_object__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_enum_object_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+
+            if (self->parent) {
+                return search_enum_object__LilyCheckedScope(self->parent->scope,
+                                                            name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
+}
+
+LilyCheckedScopeResponse
+search_trait__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    LilyCheckedScopeResponse response =
+      search_trait_in_current_scope__LilyCheckedScope(self, name);
+
+    switch (response.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            if (self->parent) {
+                return search_trait__LilyCheckedScope(self->parent->scope,
+                                                      name);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return response;
+    }
 }
 
 LilyCheckedScopeResponse
@@ -979,15 +1212,15 @@ LilyCheckedScopeResponse
 search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
     LilyCheckedScopeResponse variable =
-      search_variable__LilyCheckedScope(self, name);
-    LilyCheckedScopeResponse fun = search_fun__LilyCheckedScope(self, name);
+      search_variable_in_current_scope__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse fun =
+      search_fun_in_current_scope__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse module =
-      search_module__LilyCheckedScope(self, name);
+      search_module_in_current_scope__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse constant =
-      search_constant__LilyCheckedScope(self, name);
+      search_constant_in_current_scope__LilyCheckedScope(self, name);
 
     // [variable, fun, module, constant]
-    // [0, 1, 2, 3]
 #define RESPONSES_IDENTIFIER_LEN 4
     LilyCheckedScopeResponse *responses[RESPONSES_IDENTIFIER_LEN] =
       (LilyCheckedScopeResponse *[RESPONSES_IDENTIFIER_LEN]){
@@ -1014,6 +1247,10 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
         }
     }
 
+    if (self->parent && index_with_largest_id == -1) {
+        return search_identifier__LilyCheckedScope(self->parent->scope, name);
+    }
+
     return index_with_largest_id == -1 ? NEW(LilyCheckedScopeResponse)
                                        : *responses[index_with_largest_id];
 }
@@ -1021,18 +1258,19 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 LilyCheckedScopeResponse
 search_custom_type__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
-    // TODO: search other custom data type
     LilyCheckedScopeResponse record =
-      search_record__LilyCheckedScope(self, name);
-    LilyCheckedScopeResponse enum_ = search_enum__LilyCheckedScope(self, name);
+      search_record_in_current_scope__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse enum_ =
+      search_enum_in_current_scope__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse generic =
-      search_generic__LilyCheckedScope(self, name);
+      search_generic_in_current_scope__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse class = search_class__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse record_object =
-      search_record_object__LilyCheckedScope(self, name);
+      search_record_object_in_current_scope__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse enum_object =
-      search_enum_object__LilyCheckedScope(self, name);
-    LilyCheckedScopeResponse trait = search_trait__LilyCheckedScope(self, name);
+      search_enum_object_in_current_scope__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse trait =
+      search_trait_in_current_scope__LilyCheckedScope(self, name);
 
     // [record, enum, generic, class, record_object, enum_object, trait]
 #define RESPONSES_CUSTOM_TYPE_LEN 7
@@ -1060,6 +1298,10 @@ search_custom_type__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                     }
                 }
         }
+    }
+
+    if (self->parent && index_with_largest_id == -1) {
+        return search_custom_type__LilyCheckedScope(self->parent->scope, name);
     }
 
     return index_with_largest_id == -1 ? NEW(LilyCheckedScopeResponse)

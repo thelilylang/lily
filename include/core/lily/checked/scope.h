@@ -217,11 +217,12 @@ add_generic__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
- * @brief Search a fun in the scope.
+ * @brief Search a pushed fun in the scope (using for the fun overload).
+ * @return LilyCheckedScopeContainerFun*? (&)
  */
 LilyCheckedScopeContainerFun *
-search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
-                                              const String *name);
+get_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                           const String *name);
 
 /**
  *
