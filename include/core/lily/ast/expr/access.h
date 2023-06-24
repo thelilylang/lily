@@ -33,13 +33,16 @@ typedef struct LilyAstExpr LilyAstExpr;
 
 enum LilyAstExprAccessKind
 {
-    LILY_AST_EXPR_ACCESS_KIND_GLOBAL,
+    LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK,
+    LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH,
     LILY_AST_EXPR_ACCESS_KIND_HOOK,
     LILY_AST_EXPR_ACCESS_KIND_OBJECT,
     LILY_AST_EXPR_ACCESS_KIND_PATH,
     LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT,
-    LILY_AST_EXPR_ACCESS_KIND_SELF,
-    LILY_AST_EXPR_ACCESS_KIND_self
+    LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK,
+    LILY_AST_EXPR_ACCESS_KIND_SELF_PATH,
+    LILY_AST_EXPR_ACCESS_KIND_self_HOOK,
+    LILY_AST_EXPR_ACCESS_KIND_self_PATH,
 };
 
 typedef struct LilyAstExprAccessHook
@@ -110,27 +113,45 @@ typedef struct LilyAstExprAccess
     enum LilyAstExprAccessKind kind;
     union
     {
-        LilyAstExpr *global;
+        LilyAstExprAccessHook global_hook;
+        Vec *global_path; // Vec<LilyAstExpr*>*
         LilyAstExprAccessHook hook;
         LilyAstExprAccessObject object;
         Vec *path; // Vec<LilyAstExpr*>*
         LilyAstExpr *property_init;
-        LilyAstExpr *Self;
-        LilyAstExpr *self;
+        LilyAstExprAccessHook self_hook;
+        Vec *self_path; // Vec<LilyAstExpr*>*
+        LilyAstExprAccessHook Self_hook;
+        Vec *Self_path; // Vec<LilyAstExpr*>*
     };
 } LilyAstExprAccess;
 
 /**
  *
- * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_GLOBAL).
+ * @brief Construct LilyAstExprAccess type
+ * (LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
-                           global,
-                           LilyAstExpr *global)
+                           global_hook,
+                           LilyAstExprAccessHook global_hook)
 {
-    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_GLOBAL,
-                                .global = global };
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK,
+                                .global_hook = global_hook };
+}
+
+/**
+ *
+ * @brief Construct LilyAstExprAccess type
+ * (LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
+                           LilyAstExprAccess,
+                           global_path,
+                           Vec *global_path)
+{
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH,
+                                .global_path = global_path };
 }
 
 /**
@@ -188,28 +209,58 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 
 /**
  *
- * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_SELF).
+ * @brief Construct LilyAstExprAccess type
+ * (LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
-                           Self,
-                           LilyAstExpr *Self)
+                           Self_hook,
+                           LilyAstExprAccessHook Self_hook)
 {
-    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_SELF,
-                                .Self = Self };
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK,
+                                .Self_hook = Self_hook };
 }
 
 /**
  *
- * @brief Construct LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_self).
+ * @brief Construct LilyAstExprAccess type
+ * (LILY_AST_EXPR_ACCESS_KIND_SELF_PATH).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
                            LilyAstExprAccess,
-                           self,
-                           LilyAstExpr *self)
+                           Self_path,
+                           Vec *Self_path)
 {
-    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_self,
-                                .self = self };
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_SELF_PATH,
+                                .Self_path = Self_path };
+}
+
+/**
+ *
+ * @brief Construct LilyAstExprAccess type
+ * (LILY_AST_EXPR_ACCESS_KIND_self_HOOK).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
+                           LilyAstExprAccess,
+                           self_hook,
+                           LilyAstExprAccessHook self_hook)
+{
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_self_HOOK,
+                                .self_hook = self_hook };
+}
+
+/**
+ *
+ * @brief Construct LilyAstExprAccess type
+ * (LILY_AST_EXPR_ACCESS_KIND_self_PATH).
+ */
+inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
+                           LilyAstExprAccess,
+                           self_path,
+                           Vec *self_path)
+{
+    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_self_PATH,
+                                .self_path = self_path };
 }
 
 /**
