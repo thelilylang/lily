@@ -380,6 +380,10 @@ void
 add_fun_dep__LilyCheckedDeclFun(LilyCheckedDeclFun *self,
                                 LilyCheckedDecl *fun_dep)
 {
+    if (!strcmp(self->global_name->buffer, fun_dep->fun.global_name->buffer)) {
+        return;
+    }
+
     for (Usize i = 0; i < self->fun_deps->len; ++i) {
         if (!strcmp(CAST(LilyCheckedDecl *, get__Vec(self->fun_deps, i))
                       ->fun.global_name->buffer,
