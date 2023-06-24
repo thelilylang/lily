@@ -1500,7 +1500,6 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
                                   enum LilyAstExprAccessKind kind)
 {
     LilyAstExpr *current_access = NULL;
-    Vec *current_path = NULL; // Vec<LilyAstExpr*>*
     Location *current_location = NULL;
 
     if (begin) {
@@ -1515,7 +1514,6 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
           access,
           clone__Location(&begin->location),
           NEW_VARIANT(LilyAstExprAccess, path, init__Vec(1, begin)));
-        current_path = current_access->access.path;
         current_location = &current_access->location;
     } else {
         ASSERT(kind == LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH ||
@@ -1537,8 +1535,7 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
                   LilyAstExpr,
                   access,
                   expr_location,
-                  NEW_VARIANT(
-                    LilyAstExprAccess, global_path, init__Vec(1, first_expr)));
+                  NEW_VARIANT(LilyAstExprAccess, global_path, NEW(Vec)));
 
                 break;
             case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH:
@@ -1546,8 +1543,7 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
                   LilyAstExpr,
                   access,
                   expr_location,
-                  NEW_VARIANT(
-                    LilyAstExprAccess, Self_path, init__Vec(1, first_expr)));
+                  NEW_VARIANT(LilyAstExprAccess, Self_path, NEW(Vec)));
 
                 break;
             case LILY_AST_EXPR_ACCESS_KIND_self_PATH:
@@ -1555,19 +1551,21 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
                   LilyAstExpr,
                   access,
                   expr_location,
-                  NEW_VARIANT(
-                    LilyAstExprAccess, self_path, init__Vec(1, first_expr)));
+                  NEW_VARIANT(LilyAstExprAccess, self_path, NEW(Vec)));
 
                 break;
             default:
                 UNREACHABLE("this situation is impossible");
         }
 
+        if (add_item_to_path__LilyAstExprAccess(&current_access, &first_expr)) {
+            FAILED("unexpected call");
+        }
+
         if (self->current->kind != LILY_TOKEN_KIND_DOT) {
             return current_access;
         }
 
-        current_path = get_path__LilyAstExprAccess(&current_access->access);
         current_location = &current_access->location;
     }
 
@@ -1580,7 +1578,6 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
               clone__Location(&current_access->location),
               NEW_VARIANT(
                 LilyAstExprAccess, path, init__Vec(1, current_access)));
-            current_path = current_access->access.path;
             current_location = &current_access->location;
         }
         } else {
@@ -1599,59 +1596,8 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
             return NULL;
         }
 
-        switch (expr->kind) {
-            case LILY_AST_EXPR_KIND_ACCESS:
-                switch (expr->access.kind) {
-                    case LILY_AST_EXPR_ACCESS_KIND_HOOK:
-                        END_LOCATION(current_location,
-                                     expr->access.hook.access->location);
-                        push__Vec(current_path, expr->access.hook.access);
-
-                        expr->access.hook.access = current_access;
-                        current_access = expr;
-
-                        break;
-                    default:
-                        FAILED("not expected in this context");
-                }
-
-                break;
-            case LILY_AST_EXPR_KIND_CALL:
-                switch (expr->call.kind) {
-                    case LILY_AST_EXPR_CALL_KIND_FUN:
-                        END_LOCATION(current_location,
-                                     expr->call.fun.id->location);
-                        push__Vec(current_path, expr->call.fun.id);
-
-                        expr->call.fun.id = current_access;
-                        current_access = expr;
-
-                        break;
-                    case LILY_AST_EXPR_CALL_KIND_RECORD:
-                        END_LOCATION(current_location,
-                                     expr->call.fun.id->location);
-                        push__Vec(current_path, expr->call.record.id);
-
-                        expr->call.record.id = current_access;
-                        current_access = expr;
-
-                        break;
-                    case LILY_AST_EXPR_CALL_KIND_VARIANT:
-                        END_LOCATION(current_location,
-                                     expr->call.fun.id->location);
-                        push__Vec(current_path, expr->call.variant.id);
-
-                        expr->call.variant.id = current_access;
-                        current_access = expr;
-
-                        break;
-                    default:
-                        FAILED("this call is not expected in path");
-                }
-
-                break;
-            default:
-                push__Vec(current_path, expr);
+        if (add_item_to_path__LilyAstExprAccess(&current_access, &expr)) {
+            FAILED("unexpected call");
         }
     }
 
