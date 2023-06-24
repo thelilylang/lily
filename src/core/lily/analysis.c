@@ -1916,37 +1916,30 @@ reanalyze_fun_call_with_signature__LilyAnalysis(
 
     // Push params
     for (Usize i = 0; i < fun->fun.params->len; ++i) {
-        LilyCheckedDataType *param_data_type = get__Vec(signature->types, i);
+        LilyCheckedDataType *given_type = get__Vec(signature->types, i);
 
-        switch (param_data_type->kind) {
-            case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-                switch (param_data_type->custom.kind) {
-                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
-                        add_fun_param__LilyCheckedVirtualScope(
-                          root_virtual_scope,
-                          NEW(LilyCheckedVirtualFunParam,
-                              get__Vec(fun->fun.params, i),
-                              get__HashMap(
-                                signature->generic_params,
-                                param_data_type->custom.name->buffer)));
+#ifdef ENV_DEBUG
+        LilyCheckedDataType *original_param_data_type =
+          get__Vec(signature->types, i);
+        LilyCheckedDataType *resolved_data_type =
+          resolve_generic_data_type_with_hash_map__LilyCheckedDataType(
+            original_param_data_type, signature->generic_params);
 
-                        break;
-                    default:
-                        add_fun_param__LilyCheckedVirtualScope(
-                          root_virtual_scope,
-                          NEW(LilyCheckedVirtualFunParam,
-                              get__Vec(fun->fun.params, i),
-                              param_data_type));
-                }
-
-                break;
-            default:
-                add_fun_param__LilyCheckedVirtualScope(
-                  root_virtual_scope,
-                  NEW(LilyCheckedVirtualFunParam,
-                      get__Vec(fun->fun.params, i),
-                      param_data_type));
+        if (!resolved_data_type) {
+            FAILED("generic resolve has been failed");
         }
+
+        if (!eq__LilyCheckedDataType(resolved_data_type, given_type)) {
+            FAILED("resolved data type no match with the given data type");
+        }
+
+        FREE(LilyCheckedDataType, resolved_data_type);
+#endif
+
+        add_fun_param__LilyCheckedVirtualScope(root_virtual_scope,
+                                               NEW(LilyCheckedVirtualFunParam,
+                                                   get__Vec(fun->fun.params, i),
+                                                   given_type));
     }
 
     // Re-analyze fun body
@@ -1978,45 +1971,19 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
                         Usize count = 0;
 
                         while ((current = next__HashMapIter(&iter))) {
-                            switch (current->kind) {
-                                case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-                                    switch (current->custom.kind) {
-                                        case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
-                                            insert__HashMap(
-                                              generic_params,
-                                              get_name__LilyCheckedGenericParam(
-                                                get__Vec(expr->call.fun.fun->fun
-                                                           .generic_params,
-                                                         count))
-                                                ->buffer,
-                                              get__HashMap(
-                                                signature->generic_params,
-                                                current->custom.name->buffer));
+                            LilyCheckedDataType *resolved_data_type =
+                              resolve_generic_data_type_with_hash_map__LilyCheckedDataType(
+                                current, signature->generic_params);
 
-                                            break;
-                                        default:
-                                            insert__HashMap(
-                                              generic_params,
-                                              get_name__LilyCheckedGenericParam(
-                                                get__Vec(expr->call.fun.fun->fun
-                                                           .generic_params,
-                                                         count))
-                                                ->buffer,
-                                              ref__LilyCheckedDataType(
-                                                current));
-                                    }
+                            ASSERT(resolved_data_type);
 
-                                    break;
-                                default:
-                                    insert__HashMap(
-                                      generic_params,
-                                      get_name__LilyCheckedGenericParam(
-                                        get__Vec(expr->call.fun.fun->fun
-                                                   .generic_params,
-                                                 count))
-                                        ->buffer,
-                                      ref__LilyCheckedDataType(current));
-                            }
+                            insert__HashMap(
+                              generic_params,
+                              get_name__LilyCheckedGenericParam(
+                                get__Vec(expr->call.fun.fun->fun.generic_params,
+                                         count))
+                                ->buffer,
+                              resolved_data_type);
 
                             ++count;
                         }
@@ -2048,34 +2015,22 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
 
                             ASSERT(return_data_type);
 
-                            push__Vec(fun_types, return_data_type);
+                            push__Vec(
+                              fun_types,
+                              ref__LilyCheckedDataType(return_data_type));
 
                             break;
                         }
-                        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-                            switch (expr->call.fun.fun->fun.return_data_type
-                                      ->custom.kind) {
-                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
-                                    ASSERT(expr->call.fun.generic_params);
+                        default: {
+                            LilyCheckedDataType *return_data_type =
+                              resolve_generic_data_type_with_hash_map__LilyCheckedDataType(
+                                expr->call.fun.fun->fun.return_data_type,
+                                generic_params);
 
-                                    push__Vec(
-                                      fun_types,
-                                      get__HashMap(generic_params,
-                                                   expr->call.fun.fun->fun
-                                                     .return_data_type->custom
-                                                     .name->buffer));
+                            ASSERT(return_data_type);
 
-                                    break;
-                                default:
-                                    push__Vec(
-                                      fun_types,
-                                      expr->call.fun.fun->fun.return_data_type);
-                            }
-
-                            break;
-                        default:
-                            push__Vec(fun_types,
-                                      expr->call.fun.fun->fun.return_data_type);
+                            push__Vec(fun_types, return_data_type);
+                        }
                     }
 
                     if (add_signature__LilyCheckedDeclFun(
@@ -2085,6 +2040,7 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
                         LilyCheckedDataType *return_data_type =
                           last__Vec(fun_types);
 
+                        FREE(LilyCheckedDataType, return_data_type);
                         FREE(Vec, fun_types);
 
                         return return_data_type;
@@ -3665,34 +3621,11 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                     ->compiler_generic.name)));
 
                                             break;
-                                        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-                                            switch (fun->fun.return_data_type
-                                                      ->custom.kind) {
-                                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
-                                                    ASSERT(generic_params);
-
-                                                    return_data_type =
-                                                      ref__LilyCheckedDataType(
-                                                        get__HashMap(
-                                                          generic_params,
-                                                          fun->fun
-                                                            .return_data_type
-                                                            ->custom.name
-                                                            ->buffer));
-
-                                                    break;
-                                                default:
-                                                    return_data_type =
-                                                      ref__LilyCheckedDataType(
-                                                        fun->fun
-                                                          .return_data_type);
-                                            }
-
-                                            break;
                                         default:
                                             return_data_type =
-                                              ref__LilyCheckedDataType(
-                                                fun->fun.return_data_type);
+                                              resolve_generic_data_type_with_hash_map__LilyCheckedDataType(
+                                                fun->fun.return_data_type,
+                                                generic_params);
                                     }
 
                                     LilyCheckedExpr *fun_call = NULL;
@@ -3701,12 +3634,20 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     if (
                                       contains_uncertain_dt__LilyCheckedDeclFun(
                                         &fun->fun)) {
-                                        push__Vec(fun_types, return_data_type);
+                                        push__Vec(fun_types,
+                                                  ref__LilyCheckedDataType(
+                                                    return_data_type));
 
                                         if (add_signature__LilyCheckedDeclFun(
                                               &fun->fun,
                                               fun_types,
                                               generic_params)) {
+                                            LilyCheckedSignatureFun *signature =
+                                              get_signature__LilyCheckedDeclFun(
+                                                &fun->fun,
+                                                fun->fun.global_name,
+                                                fun_types);
+
                                             fun_call = NEW_VARIANT(
                                               LilyCheckedExpr,
                                               call,
@@ -3720,12 +3661,19 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                   .id = response.scope_container
                                                           .scope_id },
                                                 get_ser_global_name_of_signature__LilyCheckedDeclFun(
-                                                  &fun->fun, fun_types),
-                                                NEW(LilyCheckedExprCallFun,
-                                                    fun,
-                                                    checked_params,
-                                                    generic_params)));
+                                                  &fun->fun, signature->types),
+                                                NEW(
+                                                  LilyCheckedExprCallFun,
+                                                  fun,
+                                                  checked_params,
+                                                  signature->generic_params)));
 
+                                            FREE_HASHMAP_VALUES(
+                                              generic_params,
+                                              LilyCheckedDataType);
+                                            FREE(HashMap, generic_params);
+                                            FREE(LilyCheckedDataType,
+                                                 last__Vec(fun_types));
                                             FREE(Vec, fun_types);
                                         } else {
                                             // Re-analyze called function if the
@@ -5903,9 +5851,18 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                     // TODO:Add the possibility for the compiler to have a list
                     // of potential return types (this data type will not be
                     // definable by the user).
-                    fun_return_data_type = NEW(LilyCheckedDataType,
-                                               LILY_CHECKED_DATA_TYPE_KIND_UNIT,
-                                               &stmt->location);
+                    if (fun_return_data_type->kind !=
+                          LILY_CHECKED_DATA_TYPE_KIND_UNIT &&
+                        fun_return_data_type->kind !=
+                          LILY_CHECKED_DATA_TYPE_KIND_CVOID &&
+                        fun_return_data_type->kind !=
+                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+                        FAILED("error mismatched data type");
+                    } else if (fun_return_data_type->kind ==
+                               LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+                        fun_return_data_type->kind =
+                          LILY_CHECKED_DATA_TYPE_KIND_UNIT;
+                    }
                 }
             }
 
@@ -6430,7 +6387,7 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
             }
         }
 
-        push__Vec(types, fun->fun.return_data_type);
+        push__Vec(types, ref__LilyCheckedDataType(fun->fun.return_data_type));
 
         push__Vec(fun->fun.signatures,
                   NEW(LilyCheckedSignatureFun,
@@ -7011,5 +6968,5 @@ run__LilyAnalysis(LilyAnalysis *self)
 DESTRUCTOR(LilyAnalysis, const LilyAnalysis *self)
 {
     FREE(String, self->module.name);
-    // FREE(LilyCheckedDeclModule, &self->module);
+    FREE(LilyCheckedDeclModule, &self->module);
 }
