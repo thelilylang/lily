@@ -192,7 +192,8 @@ static LilyCheckedScopeResponse
 resolve_id__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *id,
                          LilyCheckedScope *scope,
-                         enum LilyCheckedScopeResponseKind res_kind);
+                         enum LilyCheckedScopeResponseKind res_kind,
+                         enum LilyCheckedSafetyMode safety_mode);
 
 static bool
 valid_function_signature__LilyAnalysis(LilyAnalysis *self,
@@ -2387,7 +2388,8 @@ LilyCheckedScopeResponse
 resolve_id__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *id,
                          LilyCheckedScope *scope,
-                         enum LilyCheckedScopeResponseKind res_kind)
+                         enum LilyCheckedScopeResponseKind res_kind,
+                         enum LilyCheckedSafetyMode safety_mode)
 {
     switch (id->kind) {
         case LILY_AST_EXPR_KIND_IDENTIFIER:
@@ -2435,9 +2437,32 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
             break;
         case LILY_AST_EXPR_KIND_ACCESS: {
             switch (id->access.kind) {
-                case LILY_AST_EXPR_ACCESS_KIND_GLOBAL:
-                    return resolve_id__LilyAnalysis(
-                      self, id->access.global, self->module.scope, res_kind);
+                case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH:
+                case LILY_AST_EXPR_ACCESS_KIND_PATH:
+                case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH:
+                case LILY_AST_EXPR_ACCESS_KIND_self_PATH: {
+                    Vec *path = get_path__LilyAstExprAccess(&id->access);
+                    LilyCheckedScope *current_scope =
+                      id->access.kind == LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH
+                        ? self->module.scope
+                        : scope;
+                    LilyCheckedExpr *expr = NULL;
+                    enum LilyCheckedScopeResponseKind response_kind = -1;
+                    TODO("coming soon...");
+
+                    for (Usize i = 0; i < path->len; ++i) {
+                        if (response_kind == -1) {
+                            expr = check_expr__LilyAnalysis(self,
+                                                            get__Vec(path, i),
+                                                            current_scope,
+                                                            safety_mode,
+                                                            false,
+                                                            false,
+                                                            NULL);
+                        } else {
+                        }
+                    }
+                }
                 default:
                     TODO("...");
             }
@@ -2662,38 +2687,15 @@ check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
 
         LilyCheckedExpr *value = NULL;
 
-        switch (fun_param->data_type->kind) {
-            case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
-                switch (fun_param->data_type->custom.kind) {
-                    case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
-                        value = check_expr__LilyAnalysis(
-                          self,
-                          call_param->value,
-                          scope,
-                          safety_mode,
-                          false,
-                          false,
-                          get__HashMap(
-                            called_generic_params,
-                            fun_param->data_type->custom.name->buffer));
-
-                        break;
-                    default:
-                        goto check_other_param_value;
-                }
-
-                break;
-            default:
-            check_other_param_value : {
-                value = check_expr__LilyAnalysis(self,
-                                                 call_param->value,
-                                                 scope,
-                                                 safety_mode,
-                                                 false,
-                                                 false,
-                                                 fun_param->data_type);
-            }
-        }
+        value = check_expr__LilyAnalysis(
+          self,
+          call_param->value,
+          scope,
+          safety_mode,
+          false,
+          false,
+          resolve_generic_data_type_with_hash_map__LilyCheckedDataType(
+            fun_param->data_type, called_generic_params));
 
         switch (call_param->kind) {
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
@@ -3079,54 +3081,55 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_KIND_ACCESS:
             // TODO: maybe remove variant access.
             switch (expr->access.kind) {
-                case LILY_AST_EXPR_ACCESS_KIND_GLOBAL:
-                    return check_expr__LilyAnalysis(self,
-                                                    expr->access.global,
-                                                    self->module.scope,
-                                                    safety_mode,
-                                                    is_moved_expr,
-                                                    must_mut,
-                                                    NULL);
-                case LILY_AST_EXPR_ACCESS_KIND_SELF: {
-                    LilyCheckedDecl *object =
-                      get_current_object__LilyCheckedScope(scope);
+                case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH:
+                    TODO("global path");
+                    // return check_expr__LilyAnalysis(self,
+                    //                                 expr->access.global_path,
+                    //                                 self->module.scope,
+                    //                                 safety_mode,
+                    //                                 is_moved_expr,
+                    //                                 must_mut,
+                    //                                 NULL);
+                case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH: {
+                    // LilyCheckedDecl *object =
+                    //   get_current_object__LilyCheckedScope(scope);
 
-                    if (!object) {
-                        ANALYSIS_EMIT_DIAGNOSTIC(
-                          self,
-                          simple_lily_error,
-                          (&expr->location),
-                          NEW(LilyError,
-                              LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT),
-                          NULL,
-                          NULL,
-                          NULL);
+                    // if (!object) {
+                    //     ANALYSIS_EMIT_DIAGNOSTIC(
+                    //       self,
+                    //       simple_lily_error,
+                    //       (&expr->location),
+                    //       NEW(LilyError,
+                    //           LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT),
+                    //       NULL,
+                    //       NULL,
+                    //       NULL);
 
-                        return NEW_VARIANT(
-                          LilyCheckedExpr, unknown, &expr->location, expr);
-                    }
+                    //     return NEW_VARIANT(
+                    //       LilyCheckedExpr, unknown, &expr->location, expr);
+                    // }
 
                     TODO("resolve Self access");
                 }
-                case LILY_AST_EXPR_ACCESS_KIND_self: {
-                    LilyCheckedDecl *method =
-                      get_current_method__LilyCheckedScope(scope);
+                case LILY_AST_EXPR_ACCESS_KIND_self_PATH: {
+                    // LilyCheckedDecl *method =
+                    //   get_current_method__LilyCheckedScope(scope);
 
-                    if (!method) {
-                        ANALYSIS_EMIT_DIAGNOSTIC(
-                          self,
-                          simple_lily_error,
-                          (&expr->location),
-                          NEW(LilyError,
-                              LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT),
-                          NULL,
-                          NULL,
-                          from__String(
-                            "self access is not expected in function"));
+                    // if (!method) {
+                    //     ANALYSIS_EMIT_DIAGNOSTIC(
+                    //       self,
+                    //       simple_lily_error,
+                    //       (&expr->location),
+                    //       NEW(LilyError,
+                    //           LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT),
+                    //       NULL,
+                    //       NULL,
+                    //       from__String(
+                    //         "self access is not expected in function"));
 
-                        return NEW_VARIANT(
-                          LilyCheckedExpr, unknown, &expr->location, expr);
-                    }
+                    //     return NEW_VARIANT(
+                    //       LilyCheckedExpr, unknown, &expr->location, expr);
+                    // }
 
                     TODO("resolve self access");
                 }
@@ -3370,7 +3373,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                         self,
                         expr->call.fun.id,
                         scope,
-                        LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN);
+                        LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN,
+                        safety_mode);
 
                     switch (response.kind) {
                         case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
@@ -3401,31 +3405,29 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                 LilyCheckedDecl *fun =
                                   get__Vec(response.fun, 0);
 
-                                // Add fun dependency to the current function.
-                                // TODO: method
-                                {
-                                    LilyCheckedScopeDecls *current_fun =
-                                      get_current_fun__LilyCheckedScope(scope);
-
-                                    if (current_fun) {
-                                        add_fun_dep__LilyCheckedDeclFun(
-                                          &current_fun->decl->fun, fun);
-
-                                        // The history is not optional when we
-                                        // are in the scope of the function.
-                                        ASSERT(history);
-
-                                        add__LilyCheckedHistory(history, fun);
-                                    }
-                                }
-
                                 if (
                                   !fun->fun.is_checked &&
                                   !contains_for_fun__LilyCheckedHistory(
                                     history,
                                     get_original_signature__LilyCheckedDeclFun(
                                       &fun->fun))) {
+                                    // Add fun dependency to the current
+                                    // function.
+                                    // TODO: method
+                                    LilyCheckedScopeDecls *current_fun =
+                                      get_current_fun__LilyCheckedScope(scope);
+
+                                    if (current_fun) {
+                                        add_fun_dep__LilyCheckedDeclFun(
+                                          &current_fun->decl->fun, fun);
+                                    }
+
+                                    ASSERT(history);
+
+                                    add__LilyCheckedHistory(history, fun);
                                     check_fun__LilyAnalysis(self, fun);
+
+                                    FREE(LilyCheckedHistory, &history);
                                 }
 
                                 if (fun->fun.is_main) {
@@ -3761,10 +3763,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                                     FREE(LilyCheckedScopeResponse, &response);
 
-                                    if (history) {
-                                        FREE(LilyCheckedHistory, &history);
-                                    }
-
                                     return fun_call;
                                 }
                             } else {
@@ -4068,7 +4066,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                         self,
                         expr->call.record.id,
                         scope,
-                        LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD);
+                        LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD,
+                        safety_mode);
 
                     switch (response.kind) {
                         case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
@@ -4203,7 +4202,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                         self,
                         expr->call.variant.id,
                         scope,
-                        LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT);
+                        LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT,
+                        safety_mode);
 
                     switch (response.kind) {
                         case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
@@ -5683,7 +5683,8 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
               resolve_id__LilyAnalysis(self,
                                        stmt->raise.expr,
                                        scope,
-                                       LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR);
+                                       LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR,
+                                       safety_mode);
 
             switch (raise_response_expr.kind) {
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
@@ -6874,14 +6875,11 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
 {
     for (Usize i = 0; i < decls->len; ++i) {
         LilyCheckedDecl *decl = get__Vec(decls, i);
+        history = NEW(LilyCheckedHistory);
 
         switch (decl->kind) {
             case LILY_CHECKED_DECL_KIND_FUN:
-                history = NEW(LilyCheckedHistory);
-
                 check_fun__LilyAnalysis(self, decl);
-
-                FREE(LilyCheckedHistory, &history);
 
                 break;
             case LILY_CHECKED_DECL_KIND_CONSTANT:
@@ -6910,6 +6908,8 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
             default:
                 TODO("analysis declaration");
         }
+
+        FREE(LilyCheckedHistory, &history);
     }
 }
 
