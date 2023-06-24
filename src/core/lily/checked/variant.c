@@ -83,7 +83,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedVariant, const LilyCheckedVariant *self)
 
 DESTRUCTOR(LilyCheckedVariant, LilyCheckedVariant *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
     FREE(String, self->global_name);
 
     if (self->data_type) {
