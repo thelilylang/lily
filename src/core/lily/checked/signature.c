@@ -165,9 +165,14 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyCheckedSignatureFun, LilyCheckedSignatureFun *self)
 {
     FREE(String, self->ser_global_name);
+    FREE(LilyCheckedDataType, last__Vec(self->types));
     FREE(Vec, self->types);
-    FREE_HASHMAP_VALUES(self->generic_params, LilyCheckedDataType);
-    FREE(HashMap, self->generic_params);
+
+    if (self->generic_params) {
+        FREE_HASHMAP_VALUES(self->generic_params, LilyCheckedDataType);
+        FREE(HashMap, self->generic_params);
+    }
+
     lily_free(self);
 }
 
@@ -296,8 +301,12 @@ get_user_defined_signature__LilyCheckedSignatureType(Vec *signatures)
 DESTRUCTOR(LilyCheckedSignatureType, LilyCheckedSignatureType *self)
 {
     FREE(String, self->ser_global_name);
-    FREE_ORD_HASHMAP_VALUES(self->generic_params, LilyCheckedDataType);
-    FREE(OrderedHashMap, self->generic_params);
+
+    if (self->generic_params) {
+        FREE_ORD_HASHMAP_VALUES(self->generic_params, LilyCheckedDataType);
+        FREE(OrderedHashMap, self->generic_params);
+    }
+
     lily_free(self);
 }
 

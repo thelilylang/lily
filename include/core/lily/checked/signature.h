@@ -38,7 +38,8 @@ typedef struct LilyCheckedSignatureFun
     String *global_name; // String* (&)
     String *ser_global_name;
     // [params, return_data_type]
-    Vec *types;              // Vec<LilyCheckedDataType* (&)>*
+    // NOTE: the return data type must be drop.
+    Vec *types; // Vec<LilyCheckedDataType* (&)...LilyCheckedDataType*>*
     HashMap *generic_params; // HashMap<LilyCheckedDataType*>*?
 } LilyCheckedSignatureFun;
 
@@ -112,7 +113,7 @@ typedef struct LilyCheckedSignatureType
 {
     String *global_name; // String* (&)
     String *ser_global_name;
-    OrderedHashMap *generic_params;
+    OrderedHashMap *generic_params; // OrderedHashMap<LilyCheckedDataType*>*?
 } LilyCheckedSignatureType;
 
 /**
