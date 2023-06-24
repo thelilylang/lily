@@ -1830,7 +1830,7 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
                           get(generic_params, self->custom.name->buffer);      \
                                                                                \
                         if (resolve) {                                         \
-                            return resolve;                                    \
+                            return clone__LilyCheckedDataType(resolve);        \
                         }                                                      \
                                                                                \
                         return NULL;                                           \
@@ -1901,6 +1901,12 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
                         }                                                      \
                     }                                                          \
                 }                                                              \
+                                                                               \
+                return NEW_VARIANT(                                            \
+                  LilyCheckedDataType,                                         \
+                  lambda,                                                      \
+                  self->location,                                              \
+                  NEW(LilyCheckedDataTypeLambda, params, return_data_type));   \
             }                                                                  \
             case LILY_CHECKED_DATA_TYPE_KIND_LIST: {                           \
                 LilyCheckedDataType *list = fname(self->list, generic_params); \
