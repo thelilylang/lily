@@ -492,12 +492,15 @@ get_generic_params__LilyAstExpr(LilyAstExpr *self)
     switch (self->kind) {
         case LILY_AST_EXPR_KIND_ACCESS:
             switch (self->access.kind) {
-                case LILY_AST_EXPR_ACCESS_KIND_GLOBAL:
-                    return get_generic_params__LilyAstExpr(self->access.global);
-                case LILY_AST_EXPR_ACCESS_KIND_self:
-                    return get_generic_params__LilyAstExpr(self->access.self);
-                case LILY_AST_EXPR_ACCESS_KIND_SELF:
-                    return get_generic_params__LilyAstExpr(self->access.Self);
+                case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH:
+                    return get_generic_params__LilyAstExpr(
+                      last__Vec(self->access.global_path));
+                case LILY_AST_EXPR_ACCESS_KIND_self_PATH:
+                    return get_generic_params__LilyAstExpr(
+                      last__Vec(self->access.self_path));
+                case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH:
+                    return get_generic_params__LilyAstExpr(
+                      last__Vec(self->access.Self_path));
                 case LILY_AST_EXPR_ACCESS_KIND_PATH:
                     return get_generic_params__LilyAstExpr(
                       last__Vec(self->access.path));
