@@ -301,6 +301,14 @@ get_path__LilyAstExprAccess(const LilyAstExprAccess *self);
 
 /**
  *
+ * @brief Add item to path access.
+ * @return Return 1 if is failing to add an item to the path otherwise return 0.
+ */
+int
+add_item_to_path__LilyAstExprAccess(LilyAstExpr **self, LilyAstExpr **item);
+
+/**
+ *
  * @brief Free LilyAstExprAccess type.
  */
 DESTRUCTOR(LilyAstExprAccess, const LilyAstExprAccess *self);

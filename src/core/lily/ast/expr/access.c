@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/format.h>
 #include <base/new.h>
 
@@ -403,8 +404,79 @@ get_path__LilyAstExprAccess(const LilyAstExprAccess *self)
         case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT:
             return self->property_init;
         default:
-            UNREACHABLE("unknown variant");
+            UNREACHABLE("cannot get a path");
     }
+}
+
+int
+add_item_to_path__LilyAstExprAccess(LilyAstExpr **self, LilyAstExpr **item)
+{
+    LilyAstExpr *self_ref = *self;
+    LilyAstExpr *item_ref = *item;
+
+    ASSERT(self_ref->kind == LILY_AST_EXPR_KIND_ACCESS);
+    ASSERT(item_ref);
+
+    Vec *path = get_path__LilyAstExprAccess(&self_ref->access);
+
+    switch (item_ref->kind) {
+        case LILY_AST_EXPR_KIND_ACCESS:
+            switch (item_ref->access.kind) {
+                case LILY_AST_EXPR_ACCESS_KIND_HOOK:
+                    END_LOCATION(&self_ref->location,
+                                 item_ref->access.hook.access->location);
+                    push__Vec(path, item_ref->access.hook.access);
+
+                    item_ref->access.hook.access = self_ref;
+                    self_ref = item_ref;
+
+                    break;
+                default:
+                    UNREACHABLE("the parser has a bug!!");
+            }
+
+            break;
+        case LILY_AST_EXPR_KIND_CALL:
+            switch (item_ref->call.kind) {
+                case LILY_AST_EXPR_CALL_KIND_FUN:
+                    END_LOCATION(&self_ref->location,
+                                 item_ref->call.fun.id->location);
+                    push__Vec(path, item_ref->call.fun.id);
+
+                    item_ref->call.fun.id = self_ref;
+                    self_ref = item_ref;
+
+                    break;
+                case LILY_AST_EXPR_CALL_KIND_RECORD:
+                    END_LOCATION(&self_ref->location,
+                                 item_ref->call.record.id->location);
+                    push__Vec(path, item_ref->call.record.id);
+
+                    item_ref->call.record.id = self_ref;
+                    self_ref = item_ref;
+
+                    break;
+                case LILY_AST_EXPR_CALL_KIND_VARIANT:
+                    END_LOCATION(&self_ref->location,
+                                 item_ref->call.variant.id->location);
+                    push__Vec(path, item_ref->call.variant.id);
+
+                    item_ref->call.variant.id = self_ref;
+                    self_ref = item_ref;
+
+                    break;
+                default:
+                    return 1;
+            }
+
+            break;
+        default:
+            push__Vec(path, item_ref);
+    }
+
+    *self = self_ref;
+
+    return 0;
 }
 
 VARIANT_DESTRUCTOR(LilyAstExprAccess,
