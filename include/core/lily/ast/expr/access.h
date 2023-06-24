@@ -33,15 +33,12 @@ typedef struct LilyAstExpr LilyAstExpr;
 
 enum LilyAstExprAccessKind
 {
-    LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK,
     LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH,
     LILY_AST_EXPR_ACCESS_KIND_HOOK,
     LILY_AST_EXPR_ACCESS_KIND_OBJECT,
     LILY_AST_EXPR_ACCESS_KIND_PATH,
     LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT,
-    LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK,
     LILY_AST_EXPR_ACCESS_KIND_SELF_PATH,
-    LILY_AST_EXPR_ACCESS_KIND_self_HOOK,
     LILY_AST_EXPR_ACCESS_KIND_self_PATH,
 };
 
@@ -129,20 +126,6 @@ typedef struct LilyAstExprAccess
 /**
  *
  * @brief Construct LilyAstExprAccess type
- * (LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK).
- */
-inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
-                           LilyAstExprAccess,
-                           global_hook,
-                           LilyAstExprAccessHook global_hook)
-{
-    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK,
-                                .global_hook = global_hook };
-}
-
-/**
- *
- * @brief Construct LilyAstExprAccess type
  * (LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
@@ -210,20 +193,6 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 /**
  *
  * @brief Construct LilyAstExprAccess type
- * (LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK).
- */
-inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
-                           LilyAstExprAccess,
-                           Self_hook,
-                           LilyAstExprAccessHook Self_hook)
-{
-    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK,
-                                .Self_hook = Self_hook };
-}
-
-/**
- *
- * @brief Construct LilyAstExprAccess type
  * (LILY_AST_EXPR_ACCESS_KIND_SELF_PATH).
  */
 inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
@@ -233,20 +202,6 @@ inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
 {
     return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_SELF_PATH,
                                 .Self_path = Self_path };
-}
-
-/**
- *
- * @brief Construct LilyAstExprAccess type
- * (LILY_AST_EXPR_ACCESS_KIND_self_HOOK).
- */
-inline VARIANT_CONSTRUCTOR(LilyAstExprAccess,
-                           LilyAstExprAccess,
-                           self_hook,
-                           LilyAstExprAccessHook self_hook)
-{
-    return (LilyAstExprAccess){ .kind = LILY_AST_EXPR_ACCESS_KIND_self_HOOK,
-                                .self_hook = self_hook };
 }
 
 /**

@@ -40,11 +40,6 @@ static DESTRUCTOR(LilyAstExprAccessHook, const LilyAstExprAccessHook *self);
 // Free LilyAstExprAccessObject type.
 static DESTRUCTOR(LilyAstExprAccessObject, const LilyAstExprAccessObject *self);
 
-// Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK).
-static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
-                                 global_hook,
-                                 const LilyAstExprAccess *self);
-
 // Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH).
 static VARIANT_DESTRUCTOR(LilyAstExprAccess,
                           global_path,
@@ -70,20 +65,10 @@ static VARIANT_DESTRUCTOR(LilyAstExprAccess,
                           property_init,
                           const LilyAstExprAccess *self);
 
-// Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK).
-static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
-                                 Self_hook,
-                                 const LilyAstExprAccess *self);
-
 // Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_SELF_PATH).
 static VARIANT_DESTRUCTOR(LilyAstExprAccess,
                           Self_path,
                           const LilyAstExprAccess *self);
-
-// Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_self_HOOK).
-static inline VARIANT_DESTRUCTOR(LilyAstExprAccess,
-                                 self_hook,
-                                 const LilyAstExprAccess *self);
 
 // Free LilyAstExprAccess type (LILY_AST_EXPR_ACCESS_KIND_self_PATH).
 static VARIANT_DESTRUCTOR(LilyAstExprAccess,
@@ -147,8 +132,6 @@ IMPL_FOR_DEBUG(to_string,
                enum LilyAstExprAccessKind self)
 {
     switch (self) {
-        case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK:
-            return "LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK";
         case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH:
             return "LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH";
         case LILY_AST_EXPR_ACCESS_KIND_HOOK:
@@ -159,12 +142,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_AST_EXPR_ACCESS_KIND_PATH";
         case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT:
             return "LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT";
-        case LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK:
-            return "LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK";
         case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH:
             return "LILY_AST_EXPR_ACCESS_KIND_SELF_PATH";
-        case LILY_AST_EXPR_ACCESS_KIND_self_HOOK:
-            return "LILY_AST_EXPR_ACCESS_KIND_self_HOOK";
         case LILY_AST_EXPR_ACCESS_KIND_self_PATH:
             return "LILY_AST_EXPR_ACCESS_KIND_self_PATH";
         default:
@@ -176,11 +155,6 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self)
 {
     switch (self->kind) {
-        case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK:
-            return format__String(
-              "LilyAstExprAccess{{ kind = {s}, global_hook = {sa} }",
-              to_string__Debug__LilyAstExprAccessKind(self->kind),
-              to_string__Debug__LilyAstExprAccessHook(&self->global_hook));
         case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH: {
             String *res = format__String(
               "LilyAstExprAccess{{ kind = {s}, global_path =",
@@ -230,11 +204,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self)
 
             return res;
         }
-        case LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK:
-            return format__String(
-              "LilyAstExprAccess{{ kind = {s}, Self_hook = {sa} }",
-              to_string__Debug__LilyAstExprAccessKind(self->kind),
-              to_string__Debug__LilyAstExprAccessHook(&self->Self_hook));
         case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH: {
             String *res = format__String(
               "LilyAstExprAccess{{ kind = {s}, Self_path =",
@@ -246,11 +215,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprAccess, const LilyAstExprAccess *self)
 
             return res;
         }
-        case LILY_AST_EXPR_ACCESS_KIND_self_HOOK:
-            return format__String(
-              "LilyAstExprAccess{{ kind = {s}, self_hook = {sa} }",
-              to_string__Debug__LilyAstExprAccessKind(self->kind),
-              to_string__Debug__LilyAstExprAccessHook(&self->self_hook));
         case LILY_AST_EXPR_ACCESS_KIND_self_PATH: {
             String *res = format__String(
               "LilyAstExprAccess{{ kind = {s}, self_path =",
@@ -272,11 +236,6 @@ String *
 to_string__LilyAstExprAccess(const LilyAstExprAccess *self)
 {
     switch (self->kind) {
-        case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK:
-            return format__String(
-              "global.{Sr}[{Sr}]",
-              to_string__LilyAstExpr(self->global_hook.access),
-              to_string__LilyAstExpr(self->global_hook.expr));
         case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH: {
             String *res = from__String("global.");
 
@@ -342,11 +301,6 @@ to_string__LilyAstExprAccess(const LilyAstExprAccess *self)
 
             return res;
         }
-        case LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK:
-            return format__String(
-              "Self.{Sr}[{Sr}]",
-              to_string__LilyAstExpr(self->Self_hook.access),
-              to_string__LilyAstExpr(self->Self_hook.expr));
         case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH: {
             String *res = from__String("Self.");
 
@@ -363,11 +317,6 @@ to_string__LilyAstExprAccess(const LilyAstExprAccess *self)
 
             return res;
         }
-        case LILY_AST_EXPR_ACCESS_KIND_self_HOOK:
-            return format__String(
-              "self.{Sr}[{Sr}]",
-              to_string__LilyAstExpr(self->self_hook.access),
-              to_string__LilyAstExpr(self->self_hook.expr));
         case LILY_AST_EXPR_ACCESS_KIND_self_PATH: {
             String *res = from__String("self.");
 
@@ -480,13 +429,6 @@ add_item_to_path__LilyAstExprAccess(LilyAstExpr **self, LilyAstExpr **item)
 }
 
 VARIANT_DESTRUCTOR(LilyAstExprAccess,
-                   global_hook,
-                   const LilyAstExprAccess *self)
-{
-    FREE(LilyAstExprAccessHook, &self->hook);
-}
-
-VARIANT_DESTRUCTOR(LilyAstExprAccess,
                    global_path,
                    const LilyAstExprAccess *self)
 {
@@ -519,21 +461,11 @@ VARIANT_DESTRUCTOR(LilyAstExprAccess,
     FREE(Vec, self->property_init);
 }
 
-VARIANT_DESTRUCTOR(LilyAstExprAccess, Self_hook, const LilyAstExprAccess *self)
-{
-    FREE(LilyAstExprAccessHook, &self->Self_hook);
-}
-
 VARIANT_DESTRUCTOR(LilyAstExprAccess, Self_path, const LilyAstExprAccess *self)
 {
     FREE_BUFFER_ITEMS(
       self->Self_path->buffer, self->Self_path->len, LilyAstExpr);
     FREE(Vec, self->Self_path);
-}
-
-VARIANT_DESTRUCTOR(LilyAstExprAccess, self_hook, const LilyAstExprAccess *self)
-{
-    FREE(LilyAstExprAccessHook, &self->self_hook);
 }
 
 VARIANT_DESTRUCTOR(LilyAstExprAccess, self_path, const LilyAstExprAccess *self)
@@ -546,9 +478,6 @@ VARIANT_DESTRUCTOR(LilyAstExprAccess, self_path, const LilyAstExprAccess *self)
 DESTRUCTOR(LilyAstExprAccess, const LilyAstExprAccess *self)
 {
     switch (self->kind) {
-        case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_HOOK:
-            FREE_VARIANT(LilyAstExprAccess, global_hook, self);
-            break;
         case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH:
             FREE_VARIANT(LilyAstExprAccess, global_path, self);
             break;
@@ -564,14 +493,8 @@ DESTRUCTOR(LilyAstExprAccess, const LilyAstExprAccess *self)
         case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT:
             FREE_VARIANT(LilyAstExprAccess, property_init, self);
             break;
-        case LILY_AST_EXPR_ACCESS_KIND_SELF_HOOK:
-            FREE_VARIANT(LilyAstExprAccess, Self_hook, self);
-            break;
         case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH:
             FREE_VARIANT(LilyAstExprAccess, Self_path, self);
-            break;
-        case LILY_AST_EXPR_ACCESS_KIND_self_HOOK:
-            FREE_VARIANT(LilyAstExprAccess, self_hook, self);
             break;
         case LILY_AST_EXPR_ACCESS_KIND_self_PATH:
             FREE_VARIANT(LilyAstExprAccess, self_path, self);
