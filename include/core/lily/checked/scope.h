@@ -288,6 +288,36 @@ search_generic__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *
+ * @brief Search a class in the scope.
+ */
+LilyCheckedScopeResponse
+search_class__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
+ * @brief Search a record object in the scope.
+ */
+LilyCheckedScopeResponse
+search_record_object__LilyCheckedScope(LilyCheckedScope *self,
+                                       const String *name);
+
+/**
+ *
+ * @brief Search an enum object in the scope.
+ */
+LilyCheckedScopeResponse
+search_enum_object__LilyCheckedScope(LilyCheckedScope *self,
+                                     const String *name);
+
+/**
+ *
+ * @brief Search a trait in the scope.
+ */
+LilyCheckedScopeResponse
+search_trait__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
  * @brief Search a field in the scope.
  */
 LilyCheckedScopeResponse

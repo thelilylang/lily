@@ -787,6 +787,154 @@ search_generic__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 }
 
 LilyCheckedScopeResponse
+search_class__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->classes->len; ++i) {
+                LilyCheckedScopeContainerClass *class =
+                  get__Vec(self->classes, i);
+
+                if (!strcmp(class->name->buffer, name->buffer)) {
+                    LilyCheckedDecl *c =
+                      get__Vec(self->decls.module->decls, class->id);
+
+                    return NEW_VARIANT(
+                      LilyCheckedScopeResponse,
+                      class,
+                      c->location,
+                      NEW_VARIANT(
+                        LilyCheckedScopeContainer, class, self->id, class),
+                      c,
+                      &c->object.class);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_class__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
+search_record_object__LilyCheckedScope(LilyCheckedScope *self,
+                                       const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->records_object->len; ++i) {
+                LilyCheckedScopeContainerRecordObject *record_object =
+                  get__Vec(self->records_object, i);
+
+                if (!strcmp(record_object->name->buffer, name->buffer)) {
+                    LilyCheckedDecl *r =
+                      get__Vec(self->decls.module->decls, record_object->id);
+
+                    return NEW_VARIANT(LilyCheckedScopeResponse,
+                                       record_object,
+                                       r->location,
+                                       NEW_VARIANT(LilyCheckedScopeContainer,
+                                                   record_object,
+                                                   self->id,
+                                                   record_object),
+                                       r,
+                                       &r->object.record);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_record_object__LilyCheckedScope(self->parent->scope,
+                                                      name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
+search_enum_object__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->enums_object->len; ++i) {
+                LilyCheckedScopeContainerEnumObject *enum_object =
+                  get__Vec(self->enums_object, i);
+
+                if (!strcmp(enum_object->name->buffer, name->buffer)) {
+                    LilyCheckedDecl *e =
+                      get__Vec(self->decls.module->decls, enum_object->id);
+
+                    return NEW_VARIANT(LilyCheckedScopeResponse,
+                                       enum_object,
+                                       e->location,
+                                       NEW_VARIANT(LilyCheckedScopeContainer,
+                                                   enum_object,
+                                                   self->id,
+                                                   enum_object),
+                                       e,
+                                       &e->object.enum_);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_enum_object__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
+search_trait__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            for (Usize i = 0; i < self->traits->len; ++i) {
+                LilyCheckedScopeContainerTrait *trait =
+                  get__Vec(self->traits, i);
+
+                if (!strcmp(trait->name->buffer, name->buffer)) {
+                    LilyCheckedDecl *t =
+                      get__Vec(self->decls.module->decls, trait->id);
+
+                    return NEW_VARIANT(
+                      LilyCheckedScopeResponse,
+                      trait,
+                      t->location,
+                      NEW_VARIANT(
+                        LilyCheckedScopeContainer, trait, self->id, trait),
+                      t,
+                      &t->object.trait);
+                }
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    if (self->parent) {
+        return search_trait__LilyCheckedScope(self->parent->scope, name);
+    }
+
+    return NEW(LilyCheckedScopeResponse);
+}
+
+LilyCheckedScopeResponse
 search_field__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
     switch (self->decls.kind) {
@@ -845,141 +993,29 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
       (LilyCheckedScopeResponse *[RESPONSES_IDENTIFIER_LEN]){
           &variable, &fun, &module, &constant
       };
-
-    bool variable_is_found = true;
-    bool fun_is_found = true;
-    bool module_is_found = true;
-    bool constant_is_found = true;
+    int index_with_largest_id = -1;
 
     for (Usize i = 0; i < RESPONSES_IDENTIFIER_LEN; ++i) {
         LilyCheckedScopeResponse *response = responses[i];
 
         switch (response->kind) {
             case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                if (i == 0) {
-                    variable_is_found = false;
-                } else if (i == 1) {
-                    fun_is_found = false;
-                } else if (i == 2) {
-                    module_is_found = false;
-                } else if (i == 3) {
-                    constant_is_found = false;
-                }
-
-                break;
+                continue;
             default:
-                break;
+                if (index_with_largest_id == -1) {
+                    index_with_largest_id = i;
+                } else {
+                    if (response->scope_container.scope_id >
+                        responses[index_with_largest_id]
+                          ->scope_container.scope_id) {
+                        index_with_largest_id = i;
+                    }
+                }
         }
     }
 
-    switch (variable_is_found + fun_is_found + module_is_found +
-            constant_is_found) {
-        case 4:
-        found_4 : {
-            // The scope of the variable or function is in all situations higher
-            // than that of the module.
-            if (fun.scope_container.scope_id >
-                variable.scope_container.scope_id) {
-                return fun;
-            } else {
-                FREE(LilyCheckedScopeResponse, &fun);
-
-                return variable;
-            }
-        }
-        case 3:
-            if ((variable_is_found && fun_is_found && constant_is_found) ||
-                (variable_is_found && fun_is_found && module_is_found) ||
-                (module_is_found && constant_is_found && variable_is_found)) {
-                goto found_4;
-            } else if (fun_is_found && constant_is_found && module_is_found) {
-                if (fun.scope_container.scope_id >
-                      constant.scope_container.scope_id &&
-                    fun.scope_container.scope_id >
-                      module.scope_container.scope_id) {
-                    return fun;
-                } else if (constant.scope_container.scope_id >
-                             fun.scope_container.scope_id &&
-                           constant.scope_container.scope_id >
-                             module.scope_container.scope_id) {
-                    FREE(LilyCheckedScopeResponse, &fun);
-
-                    return constant;
-                } else if (module.scope_container.scope_id >
-                             fun.scope_container.scope_id &&
-                           module.scope_container.scope_id >
-                             constant.scope_container.scope_id) {
-                    FREE(LilyCheckedScopeResponse, &fun);
-
-                    return module;
-                } else {
-                    UNREACHABLE("the scope have a bug!!");
-                }
-            } else {
-                UNREACHABLE("the scope have a bug!!");
-            }
-
-            break;
-        case 2:
-            if (variable_is_found && fun_is_found) {
-                goto found_4;
-            } else if ((variable_is_found && constant_is_found) ||
-                       (variable_is_found && module_is_found)) {
-                return variable;
-            } else if (fun_is_found && constant_is_found) {
-                if (fun.scope_container.scope_id >
-                    constant.scope_container.scope_id) {
-                    return fun;
-                } else if (fun.scope_container.scope_id <
-                           constant.scope_container.scope_id) {
-                    FREE(LilyCheckedScopeResponse, &fun);
-
-                    return constant;
-                } else {
-                    UNREACHABLE("the scope have a bug!!");
-                }
-            } else if (fun_is_found && module_is_found) {
-                if (fun.scope_container.scope_id >
-                    module.scope_container.scope_id) {
-                    return fun;
-                } else if (fun.scope_container.scope_id <
-                           module.scope_container.scope_id) {
-                    return module;
-                } else {
-                    UNREACHABLE("the scope have a bug!!");
-                }
-            } else if (constant_is_found && module_is_found) {
-                if (constant.scope_container.scope_id >
-                    module.scope_container.scope_id) {
-                    return constant;
-                } else if (constant.scope_container.scope_id <
-                           module.scope_container.scope_id) {
-                    return module;
-                } else {
-                    UNREACHABLE("the scope have a bug!!");
-                }
-            } else {
-                UNREACHABLE("the scope have a bug!!");
-            }
-
-            break;
-        case 1:
-            if (variable_is_found) {
-                return variable;
-            } else if (fun_is_found) {
-                return fun;
-            } else if (constant_is_found) {
-                return constant;
-            } else {
-                return module;
-            }
-
-            break;
-        case 0:
-            return NEW(LilyCheckedScopeResponse);
-        default:
-            UNREACHABLE("this situation is impossible");
-    }
+    return index_with_largest_id == -1 ? NEW(LilyCheckedScopeResponse)
+                                       : *responses[index_with_largest_id];
 }
 
 LilyCheckedScopeResponse
@@ -991,90 +1027,43 @@ search_custom_type__LilyCheckedScope(LilyCheckedScope *self, const String *name)
     LilyCheckedScopeResponse enum_ = search_enum__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse generic =
       search_generic__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse class = search_class__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse record_object =
+      search_record_object__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse enum_object =
+      search_enum_object__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse trait = search_trait__LilyCheckedScope(self, name);
 
-    // [record, enum, generic]
-#define RESPONSES_CUSTOM_TYPE_LEN 3
+    // [record, enum, generic, class, record_object, enum_object, trait]
+#define RESPONSES_CUSTOM_TYPE_LEN 7
     LilyCheckedScopeResponse *responses[RESPONSES_CUSTOM_TYPE_LEN] =
-      (LilyCheckedScopeResponse *[RESPONSES_CUSTOM_TYPE_LEN]){ &record,
-                                                               &enum_,
-                                                               &generic };
-
-    bool record_is_found = true;
-    bool enum_is_found = true;
-    bool generic_is_found = true;
+      (LilyCheckedScopeResponse *[RESPONSES_CUSTOM_TYPE_LEN]){
+          &record,        &enum_,       &generic, &class,
+          &record_object, &enum_object, &trait
+      };
+    int index_with_largest_id = -1;
 
     for (Usize i = 0; i < RESPONSES_CUSTOM_TYPE_LEN; ++i) {
         LilyCheckedScopeResponse *response = responses[i];
 
         switch (response->kind) {
             case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                if (i == 0) {
-                    record_is_found = false;
-                } else if (i == 1) {
-                    enum_is_found = false;
-                } else if (i == 2) {
-                    generic_is_found = false;
-                }
-
-                break;
+                continue;
             default:
-                break;
+                if (index_with_largest_id == -1) {
+                    index_with_largest_id = i;
+                } else {
+                    if (response->scope_container.scope_id >
+                        responses[index_with_largest_id]
+                          ->scope_container.scope_id) {
+                        index_with_largest_id = i;
+                    }
+                }
         }
     }
 
-    switch (record_is_found + enum_is_found + generic_is_found) {
-        case 3:
-            if (record.scope_container.scope_id >
-                  enum_.scope_container.scope_id &&
-                record.scope_container.scope_id >
-                  generic.scope_container.scope_id) {
-                return record;
-            } else if (enum_.scope_container.scope_id >
-                         record.scope_container.scope_id &&
-                       enum_.scope_container.scope_id >
-                         generic.scope_container.scope_id) {
-                return enum_;
-            } else {
-                return generic;
-            }
-
-            break;
-        case 2:
-            if (record_is_found && enum_is_found) {
-                return record.scope_container.scope_id >
-                           enum_.scope_container.scope_id
-                         ? record
-                         : enum_;
-            } else if (record_is_found && generic_is_found) {
-                return record.scope_container.scope_id >
-                           generic.scope_container.scope_id
-                         ? record
-                         : generic;
-            } else if (enum_is_found && generic_is_found) {
-                return enum_.scope_container.scope_id >
-                           generic.scope_container.scope_id
-                         ? enum_
-                         : generic;
-            } else {
-                UNREACHABLE("the analysis has a bug!!");
-            }
-
-            break;
-        case 1:
-            if (record_is_found) {
-                return record;
-            } else if (enum_is_found) {
-                return enum_;
-            } else {
-                return generic;
-            }
-
-            break;
-        case 0:
-            return NEW(LilyCheckedScopeResponse);
-        default:
-            UNREACHABLE("this situation is impossible");
-    }
+    return index_with_largest_id == -1 ? NEW(LilyCheckedScopeResponse)
+                                       : *responses[index_with_largest_id];
 }
 
 LilyCheckedScope *
