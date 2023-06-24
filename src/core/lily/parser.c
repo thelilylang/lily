@@ -1495,6 +1495,10 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 LilyAstExpr *
 parse_path_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *begin)
 {
+    if (self->current->kind != LILY_TOKEN_KIND_DOT) {
+        return begin;
+    }
+
     Location location;
     Vec *access = NULL; // Vec<LilyAstExpr*>*
 
