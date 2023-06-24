@@ -32,7 +32,7 @@
 
 typedef struct LilyCheckedVariant
 {
-    String *name;
+    String *name; // String* (&)
     String *global_name;
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
     const Location *location;
