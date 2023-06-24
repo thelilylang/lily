@@ -34,7 +34,7 @@
     if (stack->top) {                                \
         FREE(type, stack->top);                      \
     }                                                \
-    if (stack->buffer) {                             \
+    if (stack->buffer && stack->len > 1) {           \
         for (Usize i = 0; i < stack->len - 1; ++i) { \
             FREE(type, stack->buffer[i]);            \
         }                                            \
