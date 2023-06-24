@@ -144,6 +144,8 @@ generate_dt__LilyMir(LilyMirModule *module, LilyCheckedDataType *data_type)
             return NEW(LilyMirDt, LILY_MIR_DT_KIND_I8);
         case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
             return NEW(LilyMirDt, LILY_MIR_DT_KIND_ISIZE);
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
+            TODO("lambda...");
         case LILY_CHECKED_DATA_TYPE_KIND_LIST:
             return NEW_VARIANT(
               LilyMirDt, list, generate_dt__LilyMir(module, data_type->list));
