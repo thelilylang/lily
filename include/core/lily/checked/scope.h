@@ -326,6 +326,13 @@ search_field__LilyCheckedScope(LilyCheckedScope *self, const String *name);
 
 /**
  *
+ * @brief Search a variant in the scope.
+ */
+LilyCheckedScopeResponse
+search_variant__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+
+/**
+ *
  * @brief Search an identifier in the scope.
  */
 LilyCheckedScopeResponse

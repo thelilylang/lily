@@ -1200,12 +1200,119 @@ search_field__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                     default:
                         break;
                 }
-            }
-        default:
-            break;
-    }
+            } else if (self->decls.decl->kind ==
+                       LILY_CHECKED_DECL_KIND_OBJECT) {
+                switch (self->decls.decl->object.kind) {
+                    case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+                        for (Usize i = 0; i < self->variables->len; ++i) {
+                            LilyCheckedScopeContainerVariable *variable =
+                              get__Vec(self->variables, i);
 
-    return NEW(LilyCheckedScopeResponse);
+                            if (!strcmp(variable->name->buffer, name->buffer)) {
+                                LilyCheckedBodyRecordObjectItem *field =
+                                  get__Vec(self->decls.decl->object.record.body,
+                                           variable->id);
+
+                                ASSERT(
+                                  field->kind ==
+                                  LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_FIELD);
+
+                                return NEW_VARIANT(
+                                  LilyCheckedScopeResponse,
+                                  record_field_object,
+                                  field->location,
+                                  NEW_VARIANT(LilyCheckedScopeContainer,
+                                              variable,
+                                              self->id,
+                                              variable),
+                                  &field->field);
+                            }
+                        }
+
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return NEW(LilyCheckedScopeResponse);
+    }
+}
+
+LilyCheckedScopeResponse
+search_variant__LilyCheckedScope(LilyCheckedScope *self, const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            if (self->decls.decl->kind == LILY_CHECKED_DECL_KIND_TYPE) {
+                switch (self->decls.decl->type.kind) {
+                    case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                        for (Usize i = 0; i < self->variables->len; ++i) {
+                            LilyCheckedScopeContainerVariable *variable =
+                              get__Vec(self->variables, i);
+
+                            if (!strcmp(variable->name->buffer, name->buffer)) {
+                                LilyCheckedVariant *enum_variant = get__Vec(
+                                  self->decls.decl->type.enum_.variants,
+                                  variable->id);
+
+                                return NEW_VARIANT(
+                                  LilyCheckedScopeResponse,
+                                  enum_variant,
+                                  enum_variant->location,
+                                  NEW_VARIANT(LilyCheckedScopeContainer,
+                                              variable,
+                                              self->id,
+                                              variable),
+                                  enum_variant);
+                            }
+                        }
+
+                        break;
+                    default:
+                        break;
+                }
+            } else if (self->decls.decl->kind ==
+                       LILY_CHECKED_DECL_KIND_OBJECT) {
+                switch (self->decls.decl->object.kind) {
+                    case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+                        for (Usize i = 0; i < self->variables->len; ++i) {
+                            LilyCheckedScopeContainerVariable *variable =
+                              get__Vec(self->variables, i);
+
+                            if (!strcmp(variable->name->buffer, name->buffer)) {
+                                LilyCheckedBodyEnumObjectItem *variant =
+                                  get__Vec(self->decls.decl->object.enum_.body,
+                                           variable->id);
+
+                                ASSERT(
+                                  variant->kind ==
+                                  LILY_CHECKED_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT);
+
+                                return NEW_VARIANT(
+                                  LilyCheckedScopeResponse,
+                                  enum_variant_object,
+                                  variant->location,
+                                  NEW_VARIANT(LilyCheckedScopeContainer,
+                                              variable,
+                                              self->id,
+                                              variable),
+                                  variant->variant);
+                            }
+                        }
+
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            return NEW(LilyCheckedScopeResponse);
+    }
 }
 
 LilyCheckedScopeResponse
@@ -1219,12 +1326,15 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
       search_module_in_current_scope__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse constant =
       search_constant_in_current_scope__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse field = search_field__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse variant =
+      search_variant__LilyCheckedScope(self, name);
 
-    // [variable, fun, module, constant]
-#define RESPONSES_IDENTIFIER_LEN 4
+    // [variable, fun, module, constant, field, variant]
+#define RESPONSES_IDENTIFIER_LEN 6
     LilyCheckedScopeResponse *responses[RESPONSES_IDENTIFIER_LEN] =
       (LilyCheckedScopeResponse *[RESPONSES_IDENTIFIER_LEN]){
-          &variable, &fun, &module, &constant
+          &variable, &fun, &module, &constant, &field, &variant
       };
     int index_with_largest_id = -1;
 
