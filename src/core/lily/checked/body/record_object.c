@@ -69,7 +69,7 @@ IMPL_FOR_DEBUG(to_string,
 VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
                     LilyCheckedBodyRecordObjectItem,
                     constant,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDeclConstant constant)
 {
     LilyCheckedBodyRecordObjectItem *self =
@@ -85,7 +85,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
 VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
                     LilyCheckedBodyRecordObjectItem,
                     field,
-                    Location location,
+                    const Location *location,
                     LilyCheckedFieldObject field)
 {
     LilyCheckedBodyRecordObjectItem *self =
@@ -101,7 +101,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
 VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
                     LilyCheckedBodyRecordObjectItem,
                     method,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDeclMethod method)
 {
     LilyCheckedBodyRecordObjectItem *self =
@@ -126,21 +126,21 @@ IMPL_FOR_DEBUG(to_string,
               "LilyCheckedBodyRecordObjectItem{{ kind = {s}, location = {sa}, "
               "constant = {Sr} }",
               to_string__Debug__LilyCheckedBodyRecordObjectItemKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDeclConstant(&self->constant));
         case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_FIELD:
             return format__String(
               "LilyCheckedBodyRecordObjectItem{{ kind = {s}, location = {sa}, "
               "field = {Sr} }",
               to_string__Debug__LilyCheckedBodyRecordObjectItemKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedFieldObject(&self->field));
         case LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_METHOD:
             return format__String(
               "LilyCheckedBodyRecordObjectItem{{ kind = {s}, location = {sa}, "
               "method = {Sr} }",
               to_string__Debug__LilyCheckedBodyRecordObjectItemKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDeclMethod(&self->method));
         default:
             UNREACHABLE("unknown variant");

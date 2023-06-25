@@ -52,7 +52,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyCheckedBodyRecordObjectItem
 {
     enum LilyCheckedBodyRecordObjectItemKind kind;
-    Location location;
+    const Location *location; // const Location* (&)
     union
     {
         LilyCheckedDeclConstant constant;
@@ -69,7 +69,7 @@ typedef struct LilyCheckedBodyRecordObjectItem
 VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
                     LilyCheckedBodyRecordObjectItem,
                     constant,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDeclConstant constant);
 
 /**
@@ -80,7 +80,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
 VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
                     LilyCheckedBodyRecordObjectItem,
                     field,
-                    Location location,
+                    const Location *location,
                     LilyCheckedFieldObject field);
 
 /**
@@ -91,7 +91,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
 VARIANT_CONSTRUCTOR(LilyCheckedBodyRecordObjectItem *,
                     LilyCheckedBodyRecordObjectItem,
                     method,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDeclMethod method);
 
 /**
