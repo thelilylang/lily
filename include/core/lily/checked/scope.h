@@ -355,6 +355,14 @@ get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id);
 
 /**
  *
+ * @brief Get scope from an id.
+ * @return LilyCheckedScope*?
+ */
+LilyCheckedScope *
+safe_get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id);
+
+/**
+ *
  * @brief Try to get the current fun declaration (include lambda) in the scope.
  */
 LilyCheckedScopeDecls *

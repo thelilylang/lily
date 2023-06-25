@@ -1430,6 +1430,18 @@ get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id)
     }
 }
 
+LilyCheckedScope *
+safe_get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id)
+{
+    if (id > self->id) {
+        return NULL;
+    } else if (id == self->id) {
+        return self;
+    } else {
+        return get_scope_from_id__LilyCheckedScope(self->parent->scope, id);
+    }
+}
+
 LilyCheckedDecl *
 get_decl_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id, Usize pos)
 {
