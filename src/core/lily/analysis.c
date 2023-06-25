@@ -2441,16 +2441,78 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                 case LILY_AST_EXPR_ACCESS_KIND_PATH:
                 case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH:
                 case LILY_AST_EXPR_ACCESS_KIND_self_PATH: {
-                    Vec *path = get_path__LilyAstExprAccess(&id->access);
                     LilyCheckedScope *current_scope =
                       id->access.kind == LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH
                         ? self->module.scope
                         : scope;
+
+                    switch (id->access.kind) {
+                        case LILY_AST_EXPR_ACCESS_KIND_self_PATH: {
+                            LilyCheckedDecl *method =
+                              get_current_method__LilyCheckedScope(scope);
+
+                            if (!method) {
+                                FAILED("self access is not expected outside of "
+                                       "method declaration");
+                            }
+
+                            LilyCheckedDecl *object =
+                              get_current_object__LilyCheckedScope(
+                                method->method.scope);
+
+                            if (!object) {
+                                FAILED("the scope of the object is not found");
+                            } else {
+                                current_scope =
+                                  get_scope__LilyCheckedDecl(object);
+                            }
+
+                            break;
+                        }
+                        case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH: {
+                            LilyCheckedDecl *object =
+                              get_current_object__LilyCheckedScope(
+                                current_scope);
+
+                            if (!object) {
+                                FAILED("the scope of the object is not found");
+                            } else {
+                                scope = get_scope__LilyCheckedDecl(object);
+                            }
+
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+
+                    Vec *path = get_path__LilyAstExprAccess(&id->access);
                     LilyCheckedScopeResponse current_response;
-                    TODO("coming soon...");
 
                     for (Usize i = 0; i < path->len; ++i) {
+                        if (!current_scope) {
+                            FAILED("at this point this call is unexpected");
+                        }
+
+                        LilyAstExpr *item = get__Vec(path, i);
+
+                        ASSERT(item->kind == LILY_AST_EXPR_KIND_IDENTIFIER);
+
+                        current_response = search_identifier__LilyCheckedScope(
+                          current_scope, item->identifier.name);
+
+                        switch (current_response.kind) {
+                            case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                                FAILED("this identifier is not found.");
+                            default:
+                                current_scope =
+                                  safe_get_scope_from_id__LilyCheckedScope(
+                                    current_scope,
+                                    current_response.scope_container.scope_id);
+                        }
                     }
+
+                    return current_response;
                 }
                 default:
                     TODO("...");
@@ -2675,16 +2737,19 @@ check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
         LilyAstExprFunParamCall *call_param = get__Vec(ast_params, i);
 
         LilyCheckedExpr *value = NULL;
-
-        value = check_expr__LilyAnalysis(
-          self,
-          call_param->value,
-          scope,
-          safety_mode,
-          false,
-          false,
+        LilyCheckedDataType *defined_data_type =
           resolve_generic_data_type_with_hash_map__LilyCheckedDataType(
-            fun_param->data_type, called_generic_params));
+            fun_param->data_type, called_generic_params);
+
+        value = check_expr__LilyAnalysis(self,
+                                         call_param->value,
+                                         scope,
+                                         safety_mode,
+                                         false,
+                                         false,
+                                         defined_data_type);
+
+        FREE(LilyCheckedDataType, defined_data_type);
 
         switch (call_param->kind) {
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
