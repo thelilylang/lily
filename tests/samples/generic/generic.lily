@@ -1,5 +1,5 @@
 type Container[T] record =
-	T value;
+	value T;
 end
 
 fun main =
