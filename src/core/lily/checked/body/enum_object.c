@@ -68,7 +68,7 @@ IMPL_FOR_DEBUG(to_string,
 VARIANT_CONSTRUCTOR(LilyCheckedBodyEnumObjectItem *,
                     LilyCheckedBodyEnumObjectItem,
                     constant,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDeclConstant constant)
 {
     LilyCheckedBodyEnumObjectItem *self =
@@ -84,7 +84,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyEnumObjectItem *,
 VARIANT_CONSTRUCTOR(LilyCheckedBodyEnumObjectItem *,
                     LilyCheckedBodyEnumObjectItem,
                     method,
-                    Location location,
+                    const Location *location,
                     LilyCheckedDeclMethod method)
 {
     LilyCheckedBodyEnumObjectItem *self =
@@ -100,7 +100,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyEnumObjectItem *,
 VARIANT_CONSTRUCTOR(LilyCheckedBodyEnumObjectItem *,
                     LilyCheckedBodyEnumObjectItem,
                     variant,
-                    Location location,
+                    const Location *location,
                     LilyCheckedVariant *variant)
 {
     LilyCheckedBodyEnumObjectItem *self =
@@ -125,21 +125,21 @@ IMPL_FOR_DEBUG(to_string,
               "LilyCheckedBodyEnumObjectItem{{ kind = {s}, location = {sa}, "
               "constant = {Sr} }",
               to_string__Debug__LilyCheckedBodyEnumObjectItemKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDeclConstant(&self->constant));
         case LILY_CHECKED_BODY_ENUM_OBJECT_ITEM_KIND_METHOD:
             return format__String(
               "LilyCheckedBodyEnumObjectItem{{ kind = {s}, location = {sa}, "
               "method = {Sr} }",
               to_string__Debug__LilyCheckedBodyEnumObjectItemKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedDeclMethod(&self->method));
         case LILY_CHECKED_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT:
             return format__String(
               "LilyCheckedBodyEnumObjectItem{{ kind = {s}, location = {sa}, "
               "variant = {Sr} }",
               to_string__Debug__LilyCheckedBodyEnumObjectItemKind(self->kind),
-              to_string__Debug__Location(&self->location),
+              to_string__Debug__Location(self->location),
               to_string__Debug__LilyCheckedVariant(self->variant));
         default:
             UNREACHABLE("unknown variant");
