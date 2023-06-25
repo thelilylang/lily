@@ -133,6 +133,9 @@ static LilyAstExpr *
 parse_literal_expr__LilyParseBlock(LilyParseBlock *self);
 
 static LilyAstExpr *
+parse_only_identifier_expr__LilyParseBlock(LilyParseBlock *self);
+
+static LilyAstExpr *
 parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access);
 
 static LilyAstExpr *
@@ -1746,7 +1749,7 @@ parse_only_access_expr__LilyParseBlock(LilyParseBlock *self)
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
         case LILY_TOKEN_KIND_IDENTIFIER_STRING:
-            return parse_primary_expr__LilyParseBlock(self, false);
+            return parse_only_identifier_expr__LilyParseBlock(self);
         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
         case LILY_TOKEN_KIND_KEYWORD_SELF:
         case LILY_TOKEN_KIND_KEYWORD_self:
@@ -2639,6 +2642,64 @@ LilyAstExpr *
 parse_literal_expr__LilyParseBlock(LilyParseBlock *self)
 {
     PARSE_LITERAL(Expr, EXPR);
+}
+
+LilyAstExpr *
+parse_only_identifier_expr__LilyParseBlock(LilyParseBlock *self)
+{
+#define PARSE_ONLY_IDENTIFIER(token_kind)                             \
+    {                                                                 \
+        Location *prev_location = &self->previous->location;          \
+        String *prev_id = self->previous->token_kind;                 \
+                                                                      \
+        if (!strcmp(prev_id->buffer, "_")) {                          \
+            FAILED("`_` is not expected");                            \
+        }                                                             \
+                                                                      \
+        if (self->current->kind == LILY_TOKEN_KIND_COLON_COLON) {     \
+            Vec *generic_params = NULL; /* Vec<LilyAstDataType*>*? */ \
+                                                                      \
+            next_token__LilyParseBlock(self); /* skip `::` */         \
+                                                                      \
+            switch (self->current->kind) {                            \
+                case LILY_TOKEN_KIND_L_HOOK:                          \
+                    generic_params = NEW(Vec);                        \
+                                                                      \
+                    next_token__LilyParseBlock(self); /* skip `[` */  \
+                                                                      \
+                    DATA_TYPE_PARSE_CLOSING(                          \
+                      generic_params, LILY_TOKEN_KIND_R_HOOK, NULL);  \
+                                                                      \
+                    break;                                            \
+                default:                                              \
+                    FAILED("expected `[`");                           \
+            }                                                         \
+                                                                      \
+            return NEW_VARIANT(LilyAstExpr,                           \
+                               identifier,                            \
+                               clone__Location(prev_location),        \
+                               NEW(LilyAstExprIdentifier,             \
+                                   clone__String(prev_id),            \
+                                   generic_params));                  \
+        }                                                             \
+                                                                      \
+        return NEW_VARIANT(                                           \
+          LilyAstExpr,                                                \
+          identifier,                                                 \
+          clone__Location(prev_location),                             \
+          NEW(LilyAstExprIdentifier, clone__String(prev_id), NULL));  \
+    }
+
+    next_token__LilyParseBlock(self);
+
+    switch (self->previous->kind) {
+        case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+            PARSE_ONLY_IDENTIFIER(identifier_normal);
+        case LILY_TOKEN_KIND_IDENTIFIER_STRING:
+            PARSE_ONLY_IDENTIFIER(identifier_string);
+        default:
+            UNREACHABLE("this situation is impossible");
+    }
 }
 
 LilyAstExpr *
