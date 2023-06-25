@@ -169,6 +169,13 @@ get_signatures__LilyCheckedDecl(const LilyCheckedDecl *self);
 
 /**
  *
+ * @brief Get scope from declaration.
+ */
+LilyCheckedScope *
+get_scope__LilyCheckedDecl(const LilyCheckedDecl *self);
+
+/**
+ *
  * @brief Convert LilyCheckedDecl in String.
  * @note This function is only used to debug.
  */
