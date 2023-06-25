@@ -49,6 +49,7 @@ typedef struct LilyCheckedStmtVariable LilyCheckedStmtVariable;
 typedef struct LilyCheckedDeclFunParam LilyCheckedDeclFunParam;
 typedef struct LilyCheckedDeclMethodParam LilyCheckedDeclMethodParam;
 typedef struct LilyCheckedField LilyCheckedField;
+typedef struct LilyCheckedFieldObject LilyCheckedFieldObject;
 typedef struct LilyCheckedVariant LilyCheckedVariant;
 typedef struct LilyCheckedGenericParam LilyCheckedGenericParam;
 
@@ -60,8 +61,10 @@ enum LilyCheckedScopeResponseKind
     LILY_CHECKED_SCOPE_RESPONSE_KIND_CONSTANT,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT,
+    LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT_OBJECT,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD,
+    LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD_OBJECT,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ALIAS,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_OBJECT,
@@ -91,23 +94,29 @@ typedef struct LilyCheckedScopeResponse
     LilyCheckedDecl *decl; // LilyCheckedDecl*? (&)
     union
     {
-        LilyCheckedDeclModule *module;
-        LilyCheckedDeclConstant *constant;
-        LilyCheckedDeclEnum *enum_;
-        LilyCheckedVariant *enum_variant;
-        LilyCheckedDeclRecord *record;
-        LilyCheckedField *record_field;
-        LilyCheckedDeclAlias *alias;
-        LilyCheckedDeclError *error;
-        LilyCheckedDeclEnumObject *enum_object;
-        LilyCheckedDeclRecordObject *record_object;
-        LilyCheckedDeclClass *class;
-        LilyCheckedDeclTrait *trait;
-        Vec *fun; // Vec<LilyCheckedDecl* (&)>*
-        LilyCheckedStmtVariable *variable;
-        LilyCheckedDeclFunParam *fun_param;
-        LilyCheckedDeclMethodParam *method_param;
-        LilyCheckedGenericParam *generic;
+        LilyCheckedDeclModule *module;           // LilyCheckedDeclModule* (&)
+        LilyCheckedDeclConstant *constant;       // LilyCheckedDeclConstant* (&)
+        LilyCheckedDeclEnum *enum_;              // LilyCheckedDeclEnum* (&)
+        LilyCheckedVariant *enum_variant;        // LilyCheckedVariant* (&)
+        LilyCheckedVariant *enum_variant_object; // LilyCheckedVariant* (&)
+        LilyCheckedDeclRecord *record;           // LilyCheckedDeclRecord* (&)
+        LilyCheckedField *record_field;          // LilyCheckedField* (&)
+        LilyCheckedFieldObject
+          *record_field_object;      // LilyCheckedFieldObject* (&)
+        LilyCheckedDeclAlias *alias; // LilyCheckedDeclAlias* (&)
+        LilyCheckedDeclError *error; // LilyCheckedDeclError* (&)
+        LilyCheckedDeclEnumObject
+          *enum_object; // LilyCheckedDeclEnumObject* (&)
+        LilyCheckedDeclRecordObject
+          *record_object;                   // LilyCheckedDeclRecordObject* (&)
+        LilyCheckedDeclClass *class;        // LilyCheckedDeclClass* (&)
+        LilyCheckedDeclTrait *trait;        // LilyCheckedDeclTrait* (&)
+        Vec *fun;                           // Vec<LilyCheckedDecl* (&)>*
+        LilyCheckedStmtVariable *variable;  // LilyCheckedStmtVariable* (&)
+        LilyCheckedDeclFunParam *fun_param; // LilyCheckedDeclFunParam* (&)
+        LilyCheckedDeclMethodParam
+          *method_param;                  // LilyCheckedDeclMethodParam* (&)
+        LilyCheckedGenericParam *generic; // LilyCheckedGenericParam* (&)
     };
 } LilyCheckedScopeResponse;
 
@@ -209,6 +218,27 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
 /**
  *
  * @brief Construct LilyCheckedScopeResponse type
+ * (LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT_OBJECT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
+                           LilyCheckedScopeResponse,
+                           enum_variant_object,
+                           const Location *location,
+                           LilyCheckedScopeContainer scope_container,
+                           LilyCheckedVariant *enum_variant_object)
+{
+    return (LilyCheckedScopeResponse){
+        .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT_OBJECT,
+        .location = location,
+        .scope_container = scope_container,
+        .decl = NULL,
+        .enum_variant_object = enum_variant_object
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeResponse type
  * (LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD).
  */
 inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
@@ -246,6 +276,27 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .scope_container = scope_container,
         .decl = NULL,
         .record_field = record_field
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeResponse type
+ * (LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD_OBJECT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
+                           LilyCheckedScopeResponse,
+                           record_field_object,
+                           const Location *location,
+                           LilyCheckedScopeContainer scope_container,
+                           LilyCheckedFieldObject *record_field_object)
+{
+    return (LilyCheckedScopeResponse){
+        .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD_OBJECT,
+        .location = location,
+        .scope_container = scope_container,
+        .decl = NULL,
+        .record_field_object = record_field_object
     };
 }
 
