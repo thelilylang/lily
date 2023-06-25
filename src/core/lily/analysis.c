@@ -2446,21 +2446,10 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                       id->access.kind == LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH
                         ? self->module.scope
                         : scope;
-                    LilyCheckedExpr *expr = NULL;
-                    enum LilyCheckedScopeResponseKind response_kind = -1;
+                    LilyCheckedScopeResponse current_response;
                     TODO("coming soon...");
 
                     for (Usize i = 0; i < path->len; ++i) {
-                        if (response_kind == -1) {
-                            expr = check_expr__LilyAnalysis(self,
-                                                            get__Vec(path, i),
-                                                            current_scope,
-                                                            safety_mode,
-                                                            false,
-                                                            false,
-                                                            NULL);
-                        } else {
-                        }
                     }
                 }
                 default:
@@ -2470,7 +2459,7 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
             TODO("resolve access");
         }
         default:
-            UNREACHABLE("this expression is not an id");
+            FAILED("this expression is not an id");
     }
 }
 
