@@ -2610,7 +2610,12 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
 
                         LilyAstExpr *item = get__Vec(path, i);
 
-                        ASSERT(item->kind == LILY_AST_EXPR_KIND_IDENTIFIER);
+                        switch (item->kind) {
+                            case LILY_AST_EXPR_KIND_IDENTIFIER:
+                                break;
+                            default:
+                                FAILED("expected identifier in path");
+                        }
 
                         current_response = search_identifier__LilyCheckedScope(
                           current_scope, item->identifier.name);
@@ -2620,22 +2625,45 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
                                     FAILED("this identifier is not found.");
                                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM:
+                                    if (!current_response.enum_->is_checked) {
+                                        check_enum__LilyAnalysis(
+                                          self, current_response.decl);
+                                    }
+
                                     current_scope =
                                       current_response.enum_->scope;
                                     break;
                                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_OBJECT:
+                                    if (!current_response.enum_object
+                                           ->is_checked) {
+                                        TODO("check enum object");
+                                    }
+
                                     current_scope =
                                       current_response.enum_object->scope;
                                     break;
                                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_MODULE:
+                                    if (!current_response.module->is_checked) {
+                                        TODO("check module");
+                                    }
+
                                     current_scope =
                                       current_response.module->scope;
                                     break;
                                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_CLASS:
+                                    if (!current_response.class->is_checked) {
+                                        TODO("check class");
+                                    }
+
                                     current_scope =
                                       current_response.class->scope;
                                     break;
                                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_OBJECT:
+                                    if (!current_response.record_object
+                                           ->is_checked) {
+                                        TODO("check record object");
+                                    }
+
                                     current_scope =
                                       current_response.record_object->scope;
                                     break;
@@ -2644,6 +2672,10 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                                       "call not expected in the path context");
                             }
                         }
+                    }
+
+                    if (current_response.kind != res_kind) {
+                        FAILED("this repsonse is unexpected");
                     }
 
                     return current_response;
@@ -6996,7 +7028,8 @@ check_enum_variants__LilyAnalysis(LilyAnalysis *self,
                                      scope->decls.decl->type.enum_.global_name,
                                      ast_variant->name),
                       data_type,
-                      &ast_variant->location));
+                      &ast_variant->location,
+                      enum_));
     }
 
     enum_->type.enum_.variants = check_variants;
