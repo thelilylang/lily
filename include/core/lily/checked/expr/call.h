@@ -546,7 +546,7 @@ DESTRUCTOR(LilyCheckedExprCallRecordFieldAccess,
 
 typedef struct LilyCheckedExprCallVariant
 {
-    Vec *params; // Vec<LilyCheckedExpr*>*?
+    LilyCheckedExpr *value; // LilyCheckedExpr*?
 } LilyCheckedExprCallVariant;
 
 /**
@@ -555,9 +555,9 @@ typedef struct LilyCheckedExprCallVariant
  */
 inline CONSTRUCTOR(LilyCheckedExprCallVariant,
                    LilyCheckedExprCallVariant,
-                   Vec *params)
+                   LilyCheckedExpr *value)
 {
-    return (LilyCheckedExprCallVariant){ .params = params };
+    return (LilyCheckedExprCallVariant){ .value = value };
 }
 
 /**

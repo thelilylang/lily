@@ -797,26 +797,19 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedExprCallVariant,
                const LilyCheckedExprCallVariant *self)
 {
-    String *res = from__String("LilyCheckedExprCallVariant{ params =");
-
-    if (self->params) {
-        DEBUG_VEC_STRING(self->params, res, LilyCheckedExpr);
-    } else {
-        push_str__String(res, " NULL");
+    if (self->value) {
+        return format__String("LilyCheckedExprCallVariant{{ value = {Sr} }",
+                              to_string__Debug__LilyCheckedExpr(self->value));
     }
 
-    push_str__String(res, " }");
-
-    return res;
+    return format__String("LilyCheckedExprCallVariant{{ value = NULL }");
 }
 #endif
 
 DESTRUCTOR(LilyCheckedExprCallVariant, const LilyCheckedExprCallVariant *self)
 {
-    if (self->params) {
-        FREE_BUFFER_ITEMS(
-          self->params->buffer, self->params->len, LilyCheckedExpr);
-        FREE(Vec, self->params);
+    if (self->value) {
+        FREE(LilyCheckedExpr, self->value);
     }
 }
 
