@@ -44,6 +44,7 @@ enum LilyCheckedExprCallKind
     LILY_CHECKED_EXPR_CALL_KIND_CONSTANT,
     LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN,
     LILY_CHECKED_EXPR_CALL_KIND_ERROR,
+    LILY_CHECKED_EXPR_CALL_KIND_ENUM,
     LILY_CHECKED_EXPR_CALL_KIND_FUN,
     LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS,
     LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN,
@@ -583,6 +584,7 @@ typedef struct LilyCheckedExprCall
     union
     {
         LilyCheckedExpr *cstr_len;
+        LilyCheckedDecl *enum_; // LilyCheckedDecl* (&)
         LilyCheckedExprCallError error;
         LilyCheckedExprCallFun fun;
         LilyCheckedExprCallFunBuiltin fun_builtin;
@@ -610,6 +612,24 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN,
                                   .global_name = NULL,
                                   .cstr_len = cstr_len };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_ENUM).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           enum,
+                           LilyCheckedAccessScope scope,
+                           String *global_name,
+                           LilyCheckedDecl *enum_)
+{
+    return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_ENUM,
+                                  .scope = scope,
+                                  .global_name = global_name,
+                                  .enum_ = enum_ };
 }
 
 /**

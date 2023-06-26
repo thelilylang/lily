@@ -165,6 +165,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_EXPR_CALL_KIND_CONSTANT";
         case LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN:
             return "LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN";
+        case LILY_CHECKED_EXPR_CALL_KIND_ENUM:
+            return "LILY_CHECKED_EXPR_CALL_KIND_ENUM";
         case LILY_CHECKED_EXPR_CALL_KIND_ERROR:
             return "LILY_CHECKED_EXPR_CALL_KIND_ERROR";
         case LILY_CHECKED_EXPR_CALL_KIND_FUN:
@@ -852,6 +854,14 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self)
 
             break;
         }
+        case LILY_CHECKED_EXPR_CALL_KIND_ENUM: {
+            char *s = format(", enum_ = {Sr} }",
+                             to_string__Debug__LilyCheckedDecl(self->enum_));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_CHECKED_EXPR_CALL_KIND_ERROR: {
             char *s =
               format(", error = {Sr} }",
@@ -1047,6 +1057,8 @@ DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self)
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
         case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
         case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
+        case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
+        case LILY_CHECKED_EXPR_CALL_KIND_ENUM:
             break;
         case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
             FREE_VARIANT(LilyCheckedExprCall, method, self);
