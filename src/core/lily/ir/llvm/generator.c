@@ -35,12 +35,17 @@
 #include <core/lily/package.h>
 
 #include <llvm-c/DebugInfo.h>
+#include <llvm-c/Transforms/Scalar.h>
+#include <llvm-c/Transforms/Utils.h>
+#include <llvm-c/Transforms/Vectorize.h>
 
 #include <stdio.h>
 
 void
 run__LilyIrLlvmGenerator(LilyPackage *self)
 {
+    // 1. Generate LLVM IR code
+
     String *filename = get_filename_from_path(self->file.name);
     Usize dir_len = strlen(self->file.name) - filename->len;
     char *dir = get_slice__Str(self->file.name, 0, dir_len);
@@ -97,6 +102,17 @@ run__LilyIrLlvmGenerator(LilyPackage *self)
         }
     }
 
+    // 2. Create a pass manager
+    LLVMPassManagerRef pass_manager = LLVMCreatePassManager();
+
+    // 2.1 Add passes to the pass manager
+    LLVMAddInstructionCombiningPass(pass_manager);
+    LLVMAddPromoteMemoryToRegisterPass(pass_manager);
+    LLVMAddLoopVectorizePass(pass_manager);
+
+    // 3. Run pass manager
+    LLVMRunPassManager(pass_manager, self->ir.llvm.module);
+
 #ifdef ENV_DEBUG
     printf("====LLVM IR Generator(%s)====\n", self->global_name->buffer);
 
@@ -106,4 +122,5 @@ run__LilyIrLlvmGenerator(LilyPackage *self)
     FREE(String, filename);
     lily_free(dir);
     FREE(LilyLlvmScope, scope);
+    LLVMDisposePassManager(pass_manager);
 }
