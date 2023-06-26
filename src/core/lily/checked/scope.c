@@ -1329,12 +1329,14 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
     LilyCheckedScopeResponse field = search_field__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse variant =
       search_variant__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse enum_ =
+      search_enum_in_current_scope__LilyCheckedScope(self, name);
 
-    // [variable, fun, module, constant, field, variant]
-#define RESPONSES_IDENTIFIER_LEN 6
+    // [variable, fun, module, constant, field, variant, enum]
+#define RESPONSES_IDENTIFIER_LEN 7
     LilyCheckedScopeResponse *responses[RESPONSES_IDENTIFIER_LEN] =
       (LilyCheckedScopeResponse *[RESPONSES_IDENTIFIER_LEN]){
-          &variable, &fun, &module, &constant, &field, &variant
+          &variable, &fun, &module, &constant, &field, &variant, &enum_
       };
     int index_with_largest_id = -1;
 
