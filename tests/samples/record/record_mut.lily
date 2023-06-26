@@ -1,0 +1,8 @@
+type Counter record =
+	mut count Int32;
+end
+
+fun main =
+	val counter := Counter { count := 0 };
+	counter.count += 1;
+end
