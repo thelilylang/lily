@@ -2615,14 +2615,34 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                         current_response = search_identifier__LilyCheckedScope(
                           current_scope, item->identifier.name);
 
-                        switch (current_response.kind) {
-                            case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                                FAILED("this identifier is not found.");
-                            default:
-                                current_scope =
-                                  safe_get_scope_from_id__LilyCheckedScope(
-                                    current_scope,
-                                    current_response.scope_container.scope_id);
+                        if (i + 1 != path->len) {
+                            switch (current_response.kind) {
+                                case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                                    FAILED("this identifier is not found.");
+                                case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM:
+                                    current_scope =
+                                      current_response.enum_->scope;
+                                    break;
+                                case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_OBJECT:
+                                    current_scope =
+                                      current_response.enum_object->scope;
+                                    break;
+                                case LILY_CHECKED_SCOPE_RESPONSE_KIND_MODULE:
+                                    current_scope =
+                                      current_response.module->scope;
+                                    break;
+                                case LILY_CHECKED_SCOPE_RESPONSE_KIND_CLASS:
+                                    current_scope =
+                                      current_response.class->scope;
+                                    break;
+                                case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_OBJECT:
+                                    current_scope =
+                                      current_response.record_object->scope;
+                                    break;
+                                default:
+                                    FAILED(
+                                      "call not expected in the path context");
+                            }
                         }
                     }
 
