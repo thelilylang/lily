@@ -32,7 +32,8 @@ CONSTRUCTOR(LilyCheckedVariant *,
             String *name,
             String *global_name,
             LilyCheckedDataType *data_type,
-            const Location *location)
+            const Location *location,
+            const LilyCheckedDecl *enum_)
 {
     LilyCheckedVariant *self = lily_malloc(sizeof(LilyCheckedVariant));
 
@@ -41,6 +42,7 @@ CONSTRUCTOR(LilyCheckedVariant *,
     self->data_type = data_type;
     self->location = location;
     self->signatures = NEW(Vec);
+    self->enum_ = enum_;
 
     return self;
 }
@@ -61,7 +63,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedVariant, const LilyCheckedVariant *self)
 
         DEBUG_VEC_STRING(self->signatures, res, LilyCheckedSignatureVariant);
 
-        push_str__String(res, " }");
+        push_str__String(res, ", enum_ = {...} }");
 
         return res;
     }
@@ -75,7 +77,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedVariant, const LilyCheckedVariant *self)
 
     DEBUG_VEC_STRING(self->signatures, res, LilyCheckedSignatureVariant);
 
-    push_str__String(res, " }");
+    push_str__String(res, ", enum_ = {...} }");
 
     return res;
 }

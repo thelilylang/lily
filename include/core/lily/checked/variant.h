@@ -30,13 +30,16 @@
 
 #include <core/lily/checked/data_type.h>
 
+typedef struct LilyCheckedDecl LilyCheckedDecl;
+
 typedef struct LilyCheckedVariant
 {
     String *name; // String* (&)
     String *global_name;
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
     const Location *location;
-    Vec *signatures; // Vec<LilyCheckedSignatureVariant*>*
+    Vec *signatures;              // Vec<LilyCheckedSignatureVariant*>*
+    const LilyCheckedDecl *enum_; // const LilyCheckedDecl* (&)
 } LilyCheckedVariant;
 
 /**
@@ -48,7 +51,8 @@ CONSTRUCTOR(LilyCheckedVariant *,
             String *name,
             String *global_name,
             LilyCheckedDataType *data_type,
-            const Location *location);
+            const Location *location,
+            const LilyCheckedDecl *enum_);
 
 /**
  *
