@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 
 #include <core/lily/ast/expr.h>
 
@@ -511,6 +512,42 @@ get_generic_params__LilyAstExpr(LilyAstExpr *self)
             return self->identifier.generic_params;
         default:
             UNREACHABLE("not expected in this context");
+    }
+}
+
+Vec *
+get_generic_params_from_variant_call__LilyAstExpr(LilyAstExpr *self)
+{
+    ASSERT(self->kind == LILY_AST_EXPR_KIND_CALL);
+    ASSERT(self->call.kind == LILY_AST_EXPR_CALL_KIND_VARIANT);
+
+    switch (self->call.variant.id->kind) {
+        case LILY_AST_EXPR_KIND_ACCESS:
+            switch (self->call.variant.id->kind) {
+                case LILY_AST_EXPR_ACCESS_KIND_PATH:
+                    return CAST(LilyAstExpr *,
+                                get__Vec(
+                                  self->call.variant.id->access.path,
+                                  self->call.variant.id->access.path->len - 2))
+                      ->identifier.generic_params;
+                case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH:
+                    if (self->call.variant.id->access.global_path->len > 1) {
+                        return CAST(LilyAstExpr *,
+                                    get__Vec(
+                                      self->call.variant.id->access.global_path,
+                                      self->call.variant.id->access.global_path
+                                          ->len -
+                                        2))
+                          ->identifier.generic_params;
+                    }
+
+                    // example of case: global.A
+                    return NULL;
+                default:
+                    UNREACHABLE("cannot get in this context");
+            }
+        default:
+            return NULL;
     }
 }
 

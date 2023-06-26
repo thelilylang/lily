@@ -271,6 +271,13 @@ get_generic_params__LilyAstExpr(LilyAstExpr *self);
 
 /**
  *
+ * @breif Get generic params from a variant call.
+ */
+Vec *
+get_generic_params_from_variant_call__LilyAstExpr(LilyAstExpr *self);
+
+/**
+ *
  * @brief Free LilyAstExpr type.
  */
 DESTRUCTOR(LilyAstExpr, LilyAstExpr *self);
