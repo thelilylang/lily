@@ -1,0 +1,5 @@
+fun add(x Int32, y Int32) Int32 = return x + y; end
+
+fun main =
+	val a := 30 |> add(34);
+end
