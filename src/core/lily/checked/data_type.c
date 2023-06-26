@@ -712,8 +712,8 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
                     }
 
                     // TODO: compare generics params of data type
-                    return !strcmp(self->custom.name->buffer,
-                                   other->custom.name->buffer) &&
+                    return !strcmp(self->custom.global_name->buffer,
+                                   other->custom.global_name->buffer) &&
                            self->custom.kind == other->custom.kind;
                 default:
                     return false;
