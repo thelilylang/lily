@@ -24,6 +24,7 @@
 
 #include <base/alloc.h>
 
+#include <core/lily/checked/decl.h>
 #include <core/lily/checked/expr.h>
 #include <core/lily/checked/expr/call.h>
 
