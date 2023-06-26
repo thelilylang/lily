@@ -1770,7 +1770,7 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                           i))
                                         ->kind ==
                                       LILY_AST_EXPR_FUN_PARAM_CALL_KIND_NORMAL) {
-                                        insert__Vec(
+                                        insert_after__Vec(
                                           expr->binary.right->call.fun.params,
                                           NEW_VARIANT(
                                             LilyAstExprFunParamCall,
