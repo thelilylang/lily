@@ -248,6 +248,8 @@ DESTRUCTOR(LilyAstExprCallFun, const LilyAstExprCallFun *self)
 
             FREE(LilyAstExprFunParamCall, param);
         }
+
+        lily_free(last_normal_param);
     }
 
     FREE(Vec, self->params);
