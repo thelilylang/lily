@@ -2188,7 +2188,6 @@ parse_call_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
         case LILY_TOKEN_KIND_L_PAREN:
             return parse_fun_call__LilyParseBlock(self, id);
         case LILY_TOKEN_KIND_COLON:
-        case LILY_TOKEN_KIND_COLON_DOLLAR:
             return parse_variant_call__LilyParseBlock(self, id);
         default: {
             String *token_s = to_string__LilyToken(self->current);
@@ -3177,7 +3176,6 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
             case LILY_TOKEN_KIND_L_HOOK:                                       \
                 return parse_hook_access__LilyParseBlock(self, id);            \
             case LILY_TOKEN_KIND_COLON:                                        \
-            case LILY_TOKEN_KIND_COLON_DOLLAR:                                 \
                 return parse_variant_call__LilyParseBlock(self, id);           \
             default:                                                           \
                 return id;                                                     \
@@ -3446,7 +3444,6 @@ parse_postfix_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr)
         case LILY_TOKEN_KIND_L_PAREN:
         case LILY_TOKEN_KIND_L_BRACE:
         case LILY_TOKEN_KIND_COLON:
-        case LILY_TOKEN_KIND_COLON_DOLLAR:
             switch (expr->kind) {
                 case LILY_AST_EXPR_KIND_ACCESS:
                 case LILY_AST_EXPR_KIND_IDENTIFIER:
