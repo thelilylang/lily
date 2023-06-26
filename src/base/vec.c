@@ -139,7 +139,7 @@ insert__Vec(Vec *self, void *item, Usize index)
 void
 insert_after__Vec(Vec *self, void *item, Usize index)
 {
-	ASSERT(index + 1 <= self->len);
+    ASSERT(index + 1 <= self->len);
 
     if (index + 1 == self->len) {
         push__Vec(self, item);
