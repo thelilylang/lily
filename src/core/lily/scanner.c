@@ -98,110 +98,130 @@ Example:
 Output: no errors
  */
 
-// Get keyword from id.
+/// @brief Get keyword from id.
 static enum LilyTokenKind
-get_keyword(char *id);
+get_keyword__LilyScanner(char *id);
 
+/// @brief Skip space (new line, tab, ...).
 static void
 skip_space__LilyScanner(LilyScanner *self);
 
-// Next char n times.
+/// @brief Next char n times.
 static void
 jump__LilyScanner(LilyScanner *self, Usize n);
 
-// Assign to line and column to start_line and start_column Location's field.
+/// @brief Assign to line and column to start_line and start_column Location's
+/// field.
 static void
 start_token__LilyScanner(LilyScanner *self,
                          Usize line,
                          Usize column,
                          Usize position);
 
-// Assign to line and column to end_line and end_column Location's field.
+/// @brief Assign to line and column to end_line and end_column Location's
+/// field.
 static void
 end_token__LilyScanner(LilyScanner *self,
                        Usize line,
                        Usize column,
                        Usize position);
 
-// Get character at position + n.
+/// @brief Get character at position + n.
 static char *
 peek_char__LilyScanner(const LilyScanner *self, Usize n);
 
-// Next char according the token.
+/// @brief Next char according the token.
 static void
 next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token);
 
-// Push token to tokens.
+/// @brief Push token to tokens.
 static inline void
 push_token__LilyScanner(LilyScanner *self, LilyToken *token);
 
-// Check if current is a digit.
+/// @brief Check if current is a digit.
 static inline bool
 is_digit__LilyScanner(const LilyScanner *self);
 
-// Check if current can be an identifier.
+/// @brief Check if current can be an identifier.
 static inline bool
 is_ident__LilyScanner(const LilyScanner *self);
 
-// Check if current can be an hexadecimal.
+/// @brief Check if current can be an hexadecimal.
 static inline bool
 is_hex__LilyScanner(const LilyScanner *self);
 
-// Check if current can be an octal.
+/// @brief Check if current can be an octal.
 static inline bool
 is_oct__LilyScanner(const LilyScanner *self);
 
-// Check if current can be a binary.
+/// @brief Check if current can be a binary.
 static inline bool
 is_bin__LilyScanner(const LilyScanner *self);
 
-// Check if current can be a number.
+/// @brief Check if current can be a number.
 static inline bool
 is_num__LilyScanner(const LilyScanner *self);
 
-// Get escape character and other character.
+/// @brief Get escape character and other character.
 static String *
 get_character__LilyScanner(LilyScanner *self, char previous);
 
+/// @brief Scan comment line.
 static void
 skip_comment_line__LilyScanner(LilyScanner *self);
 
+/// @brief Scan comment block.
 static void
 skip_comment_block__LilyScanner(LilyScanner *self);
 
+/// @brief Scan comment documentation.
 static String *
 scan_comment_doc__LilyScanner(LilyScanner *self);
 
+/// @brief Scan identifier.
 static String *
 scan_identifier__LilyScanner(LilyScanner *self);
 
+/// @brief  Scan char literal.
 static char *
 scan_char__LilyScanner(LilyScanner *self);
 
+/// @brief Scan string literal.
 static String *
 scan_string__LilyScanner(LilyScanner *self);
 
+/// @brief Scan multiline string.
+/// @example
+/// \\\hello
+/// \\\world!
 static String *
 scan_multiline_string__LilyScanner(LilyScanner *self);
 
+/// @brief Scan hexadecimal.
 static LilyToken *
 scan_hex__LilyScanner(LilyScanner *self);
 
+/// @brief Scan octal.
 static LilyToken *
 scan_oct__LilyScanner(LilyScanner *self);
 
+/// @brief Scan binary.
 static LilyToken *
 scan_bin__LilyScanner(LilyScanner *self);
 
+/// @brief Scan number (decimal and float).
 static LilyToken *
 scan_num__LilyScanner(LilyScanner *self);
 
+/// @brief Scan all numbers (hexadecimal, octal, binary, decimal and float).
 static LilyToken *
 get_num__LilyScanner(LilyScanner *self);
 
+/// @brief Skip and verify if the next character is the target.
 static bool
 skip_and_verify__LilyScanner(LilyScanner *self, char target);
 
+/// @brief Scan to the next closing character.
 static LilyToken *
 get_closing__LilyScanner(LilyScanner *self, char target);
 
@@ -292,6 +312,8 @@ get_token__LilyScanner(LilyScanner *self);
     "between 0 and 4_294_967_295"
 #endif
 
+/// @brief Scan literal suffix.
+/// @example 1I8, 1I16, 1I32, 1I64, 1Iz, 1U8, 1U16, 1U32, 1U64, 1Uz, 1F32, 1F64
 #define SCAN_LITERAL_SUFFIX(value, base, is_int)                               \
     {                                                                          \
         LilyToken *token_res = NULL;                                           \
@@ -323,6 +345,7 @@ get_token__LilyScanner(LilyScanner *self);
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 3);                                    \
+                                                                               \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -348,6 +371,7 @@ get_token__LilyScanner(LilyScanner *self);
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
+                                                                               \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -374,6 +398,7 @@ get_token__LilyScanner(LilyScanner *self);
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
+                                                                               \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -401,6 +426,7 @@ get_token__LilyScanner(LilyScanner *self);
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
+                                                                               \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -423,6 +449,7 @@ get_token__LilyScanner(LilyScanner *self);
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 3);                                    \
+                                                                               \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -447,6 +474,7 @@ get_token__LilyScanner(LilyScanner *self);
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 3);                                    \
+                                                                               \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -472,6 +500,7 @@ get_token__LilyScanner(LilyScanner *self);
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
+                                                                               \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -497,6 +526,7 @@ get_token__LilyScanner(LilyScanner *self);
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
+                                                                               \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -523,6 +553,7 @@ get_token__LilyScanner(LilyScanner *self);
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
+                                                                               \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -545,6 +576,7 @@ get_token__LilyScanner(LilyScanner *self);
                   &self->count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 3);                                    \
+                                                                               \
                 return NULL;                                                   \
             }                                                                  \
                                                                                \
@@ -589,17 +621,19 @@ get_token__LilyScanner(LilyScanner *self);
                 NULL),                                                         \
               &self->count_error);                                             \
             FREE(String, res);                                                 \
+                                                                               \
             return NULL;                                                       \
         }                                                                      \
                                                                                \
         if (token_res) {                                                       \
             FREE(String, res);                                                 \
+                                                                               \
             return token_res;                                                  \
         }                                                                      \
     }
 
 enum LilyTokenKind
-get_keyword(char *id)
+get_keyword__LilyScanner(char *id)
 {
     if (!strcmp(id, "alias"))
         return LILY_TOKEN_KIND_KEYWORD_ALIAS;
@@ -772,6 +806,9 @@ end_token__LilyScanner(LilyScanner *self,
                        Usize column,
                        Usize position)
 {
+    ASSERT(self->location.start_line <= line);
+    ASSERT(self->location.start_column <= column);
+
     self->location.end_line = line;
     self->location.end_column = column;
     self->location.end_position = position;
@@ -1019,8 +1056,12 @@ skip_comment_block__LilyScanner(LilyScanner *self)
                     self->source.cursor.column,
                     self->source.cursor.position);
 
+    // Check if the comment block is closed. While the current character is not
+    // a `*` or the next character is not a `/`, we continue to scan the comment
+    // block.
     while (self->source.cursor.current != '*' ||
            peek_char__LilyScanner(self, 1) != (char *)'/') {
+        // Check if the comment block is not closed.
         if (self->source.cursor.position >= self->source.file->len - 2) {
             end__Location(&location_error,
                           self->source.cursor.line,
@@ -1097,6 +1138,7 @@ scan_char__LilyScanner(LilyScanner *self)
                     self->source.cursor.position);
     next_char__Source(&self->source);
 
+    // Check if the char literal is not closed.
     if (self->source.cursor.current != '\'') {
         next_char__Source(&self->source);
 
@@ -1109,6 +1151,7 @@ scan_char__LilyScanner(LilyScanner *self)
                       self->source.cursor.column,
                       self->source.cursor.position);
 
+        // Check if the char literal is not closed.
         if (target != '\'' && self->source.cursor.current != '\'') {
             emit__Diagnostic(
               NEW_VARIANT(
@@ -1173,6 +1216,9 @@ scan_string__LilyScanner(LilyScanner *self)
                     self->source.cursor.position);
     next_char__Source(&self->source);
 
+    // Check if the string literal is not closed. While the current character is
+    // not a `"` or the next character is not a `"`, we continue to scan the
+    // string literal.
     while (self->source.cursor.current != '\"') {
         if (self->source.cursor.position > self->source.file->len - 2) {
             end__Location(&location_error,
@@ -1200,6 +1246,8 @@ scan_string__LilyScanner(LilyScanner *self)
 
         next_char__Source(&self->source);
 
+        // Scan the escape character. If the `get_character__LilyScanner` return
+        // NULL that's mean the escape character is invalid.
         {
             String *c = get_character__LilyScanner(
               self,
@@ -1226,6 +1274,9 @@ scan_multiline_string__LilyScanner(LilyScanner *self)
 scan_line : {
     jump__LilyScanner(self, 2); // skip `\\`
 
+    // Check if the multiline string literal is not closed. While the current
+    // character is not a `\n`, we continue to scan the multiline string
+    // literal.
     while (self->source.cursor.current != '\n') {
         next_char__Source(&self->source);
 
@@ -1244,6 +1295,9 @@ scan_line : {
     skip_space__LilyScanner(self);
 }
 
+    // Check if the multiline string literal is not closed. If the current
+    // character is equal to `\\` and the next character is equal to `\\`, we
+    // continue to scan the multiline string literal.
     if (self->source.cursor.current == '\\' &&
         peek_char__LilyScanner(self, 1) == (char *)'\\') {
         push_str__String(res, "\\n");
@@ -1268,11 +1322,15 @@ scan_hex__LilyScanner(LilyScanner *self)
                     self->source.cursor.column,
                     self->source.cursor.position);
 
+    // If the hexadecimal literal lead by a `0` character we skip all `0`
+    // leading a hexadecimal literal.
     if (self->source.cursor.current == '0') {
         while (self->source.cursor.current == '0') {
             next_char__Source(&self->source);
         }
 
+        // If the hexadecimal literal is not a hexadecimal literal we push a `0`
+        // character to the hexadecimal literal buffer.
         if (!is_hex__LilyScanner(self)) {
             push__String(res, '0');
         }
@@ -1286,6 +1344,8 @@ scan_hex__LilyScanner(LilyScanner *self)
         next_char__Source(&self->source);
     }
 
+    // If the hexadecimal literal is empty we emit an error. Because a valid a
+    // hexadecimal literal must have a digit 0 to 9 or a letter a (A) to f (F).
     if (is_empty__String(res)) {
         end__Location(&location_error,
                       self->source.cursor.line,
@@ -1449,6 +1509,9 @@ scan_num__LilyScanner(LilyScanner *self)
                     self->source.cursor.position);
 
     while (is_num__LilyScanner(self)) {
+        // Check if the float literal is valid. If the current character is `.`
+        // and the number is not a float, we continue to scan the float,
+        // otherwise we emit an error.
         if (self->source.cursor.current == '.' && !is_float) {
             is_float = true;
         } else if (self->source.cursor.current == '.' && is_float) {
@@ -1480,6 +1543,9 @@ scan_num__LilyScanner(LilyScanner *self)
             return NULL;
         }
 
+        // Check if the scientific notation is valid. If the current character
+        // is `e` or `E` and the number is not a scientific notation, we
+        // continue to scan the scientific notation, otherwise we emit an error.
         if ((self->source.cursor.current == 'e' ||
              self->source.cursor.current == 'E') &&
             !is_scientific) {
@@ -1553,6 +1619,7 @@ LilyToken *
 get_num__LilyScanner(LilyScanner *self)
 {
     switch (self->source.cursor.current) {
+        // 0 0x 0o 0b
         case '0': {
             char *c1 = peek_char__LilyScanner(self, 1);
 
@@ -1569,6 +1636,7 @@ get_num__LilyScanner(LilyScanner *self)
                 return scan_num__LilyScanner(self);
             }
         }
+        // 1-9
         default:
             return scan_num__LilyScanner(self);
     }
@@ -1588,6 +1656,7 @@ get_closing__LilyScanner(LilyScanner *self, char target)
 
     skip_space__LilyScanner(self);
 
+    // Check if the closing delimiter is not closed.
     while (skip_and_verify__LilyScanner(self, target)) {
         if (self->source.cursor.position >= self->source.file->len - 1) {
             emit__Diagnostic(
@@ -2348,7 +2417,7 @@ get_token__LilyScanner(LilyScanner *self)
                 return NULL;
             } else {
                 String *id = scan_identifier__LilyScanner(self);
-                enum LilyTokenKind kind = get_keyword(id->buffer);
+                enum LilyTokenKind kind = get_keyword__LilyScanner(id->buffer);
 
                 switch (kind) {
                     case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
