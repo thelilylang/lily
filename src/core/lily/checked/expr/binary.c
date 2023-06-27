@@ -149,6 +149,8 @@ to_string__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind)
             return "*=";
         case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_SUB:
             return "-=";
+        case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_XOR:
+            return "xor=";
         case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN:
             return "=";
         case LILY_CHECKED_EXPR_BINARY_KIND_BIT_AND:
@@ -189,6 +191,10 @@ to_string__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind)
             return "-";
         case LILY_CHECKED_EXPR_BINARY_KIND_XOR:
             return "xor";
+        case LILY_CHECKED_EXPR_BINARY_KIND_LIST_HEAD:
+            return "->";
+        case LILY_CHECKED_EXPR_BINARY_KIND_LIST_TAIL:
+            return "<-";
         default:
             UNREACHABLE("unknown variant");
     }
