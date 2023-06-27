@@ -3713,8 +3713,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 
                                     ASSERT(ast_generic_params);
 
-                                    if (fun->fun.generic_params->len !=
-                                        ast_generic_params->len) {
+                                    if (verify_generic_params__LilyCheckedDecl(
+                                          fun, ast_generic_params)) {
                                         FAILED("the size of the generic params "
                                                "is not the same");
                                     }
