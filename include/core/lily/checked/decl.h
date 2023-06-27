@@ -176,6 +176,25 @@ get_scope__LilyCheckedDecl(const LilyCheckedDecl *self);
 
 /**
  *
+ * @brief Get the generic params from declaration.
+ * @return Vec<LilyCheckedGenericParam*>*? (&)
+ */
+Vec *
+get_generic_params__LilyCheckedDecl(const LilyCheckedDecl *self);
+
+/**
+ *
+ * @brief Check the lenght of the generic params.
+ * @param called_generic_params Vec<LilyAstDataType*>*? (&)
+ * @return If the lenght of the generic params is not the same as the called
+ * one, return 1, otherwise return 0.
+ */
+int
+verify_generic_params__LilyCheckedDecl(const LilyCheckedDecl *self,
+                                       Vec *called_generic_params);
+
+/**
+ *
  * @brief Convert LilyCheckedDecl in String.
  * @note This function is only used to debug.
  */

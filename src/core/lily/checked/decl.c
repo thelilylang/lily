@@ -322,6 +322,68 @@ get_scope__LilyCheckedDecl(const LilyCheckedDecl *self)
     }
 }
 
+Vec *
+get_generic_params__LilyCheckedDecl(const LilyCheckedDecl *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DECL_KIND_CONSTANT:
+        case LILY_CHECKED_DECL_KIND_MODULE:
+            return NULL;
+        case LILY_CHECKED_DECL_KIND_ERROR:
+            return self->error.generic_params;
+        case LILY_CHECKED_DECL_KIND_FUN:
+            return self->fun.generic_params;
+        case LILY_CHECKED_DECL_KIND_METHOD:
+            return self->method.generic_params;
+        case LILY_CHECKED_DECL_KIND_OBJECT:
+            switch (self->object.kind) {
+                case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
+                    return self->object.class.generic_params;
+                case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+                    return self->object.enum_.generic_params;
+                case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+                    return self->object.record.generic_params;
+                case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
+                    return self->object.trait.generic_params;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case LILY_CHECKED_DECL_KIND_TYPE:
+            switch (self->type.kind) {
+                case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
+                    return self->type.alias.generic_params;
+                case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                    return self->type.enum_.generic_params;
+                case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+                    return self->type.record.generic_params;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+int
+verify_generic_params__LilyCheckedDecl(const LilyCheckedDecl *self,
+                                       Vec *called_generic_params)
+{
+    // TODO: maybe in the future we have to check default generic param.
+    Vec *generic_params = get_generic_params__LilyCheckedDecl(self);
+
+    if (called_generic_params && generic_params) {
+        if (called_generic_params->len == generic_params->len) {
+            return 0;
+        } else {
+            return 1;
+        }
+    } else if (called_generic_params || generic_params) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedDecl, const LilyCheckedDecl *self)
