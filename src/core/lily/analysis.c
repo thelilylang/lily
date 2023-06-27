@@ -4610,6 +4610,43 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                             ASSERT(enum_response.kind !=
                                    LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND);
 
+                            Vec *generics =
+                              checked_generic_params_call
+                                ? NEW(Vec)
+                                : NULL; // Vec<LilyCheckedDataType*>*
+
+                            if (add_signature__LilyCheckedSignatureType(
+                                  enum_response.enum_->global_name,
+                                  checked_generic_params_call,
+                                  enum_response.enum_->signatures)) {
+                                if (checked_generic_params_call) {
+                                    OrderedHashMapIter iter =
+                                      NEW(OrderedHashMapIter,
+                                          checked_generic_params_call);
+                                    LilyCheckedDataType *current = NULL;
+
+                                    while ((current = next__OrderedHashMapIter(
+                                              &iter))) {
+                                        push__Vec(generics, current);
+                                    }
+
+                                    FREE(OrderedHashMap,
+                                         checked_generic_params_call);
+                                }
+                            } else if (checked_generic_params_call) {
+                                OrderedHashMapIter iter =
+                                  NEW(OrderedHashMapIter,
+                                      checked_generic_params_call);
+                                LilyCheckedDataType *current = NULL;
+
+                                while (
+                                  (current = next__OrderedHashMapIter(&iter))) {
+                                    push__Vec(
+                                      generics,
+                                      clone__LilyCheckedDataType(current));
+                                }
+                            }
+
                             LilyCheckedDataType *expr_data_type = NEW_VARIANT(
                               LilyCheckedDataType,
                               custom,
@@ -4623,23 +4660,10 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   response.enum_variant->enum_->type.enum_.name,
                                   response.enum_variant->enum_->type.enum_
                                     .global_name,
-                                  NULL,
+                                  generics,
                                   LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ENUM,
                                   response.enum_variant->enum_->type.enum_
                                     .is_recursive));
-
-                            if (add_signature__LilyCheckedSignatureType(
-                                  enum_response.enum_->global_name,
-                                  checked_generic_params_call,
-                                  enum_response.enum_->signatures)) {
-                                if (checked_generic_params_call) {
-                                    FREE_ORD_HASHMAP_VALUES(
-                                      checked_generic_params_call,
-                                      LilyCheckedDataType);
-                                    FREE(OrderedHashMap,
-                                         checked_generic_params_call);
-                                }
-                            }
 
                             return NEW_VARIANT(
                               LilyCheckedExpr,
