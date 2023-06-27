@@ -230,23 +230,30 @@ add_signature__LilyCheckedSignatureType(String *global_name,
         LilyCheckedSignatureType *signature = get__Vec(signatures, i);
 
         if (!strcmp(global_name->buffer, signature->global_name->buffer)) {
-            ASSERT(generic_params && signature->generic_params);
-            ASSERT(generic_params->len == signature->generic_params->len);
+            ASSERT((generic_params && signature->generic_params) ||
+                   (!generic_params && !signature->generic_params));
+            if (generic_params) {
+                ASSERT(generic_params->len == signature->generic_params->len);
 
-            OrderedHashMapIter2 iter = NEW(
-              OrderedHashMapIter2, generic_params, signature->generic_params);
-            LilyCheckedDataType **current = NULL;
-            bool is_match = true;
+                OrderedHashMapIter2 iter = NEW(OrderedHashMapIter2,
+                                               generic_params,
+                                               signature->generic_params);
+                LilyCheckedDataType **current = NULL;
+                bool is_match = true;
 
-            while ((current = (LilyCheckedDataType **)next__OrderedHashMapIter2(
-                      &iter))) {
-                if (!eq__LilyCheckedDataType(current[0], current[1])) {
-                    is_match = false;
-                    break;
+                while ((
+                  current =
+                    (LilyCheckedDataType **)next__OrderedHashMapIter2(&iter))) {
+                    if (!eq__LilyCheckedDataType(current[0], current[1])) {
+                        is_match = false;
+                        break;
+                    }
                 }
-            }
 
-            if (is_match) {
+                if (is_match) {
+                    return 1;
+                }
+            } else {
                 return 1;
             }
         }
