@@ -122,6 +122,8 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                              LilyCheckedDeclModule *module);
 
 /// @param deps Vec<LilyCheckedDecl* (&)>* (&)?
+/// @note The deps parameter is always NULL when is used for check data type
+/// inside a function or method (not a type or object or error).
 static LilyCheckedDataType *
 check_data_type__LilyAnalysis(LilyAnalysis *self,
                               LilyAstDataType *data_type,
@@ -195,6 +197,16 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                          LilyCheckedScope *scope,
                          enum LilyCheckedScopeResponseKind res_kind,
                          enum LilyCheckedSafetyMode safety_mode);
+
+/// @brief Build generic params for type (enum, record, alias, class, record
+/// object, enum object and trait).
+static OrderedHashMap *
+build_called_generic_params_for_type__LilyAnalysis(
+  LilyAnalysis *self,
+  const LilyCheckedDecl *decl,
+  LilyCheckedScope *scope,
+  enum LilyCheckedSafetyMode safety_mode,
+  Vec *ast_called_generic_params);
 
 static bool
 valid_function_signature__LilyAnalysis(LilyAnalysis *self,
@@ -2691,6 +2703,44 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
     }
 }
 
+OrderedHashMap *
+build_called_generic_params_for_type__LilyAnalysis(
+  LilyAnalysis *self,
+  const LilyCheckedDecl *decl,
+  LilyCheckedScope *scope,
+  enum LilyCheckedSafetyMode safety_mode,
+  Vec *ast_called_generic_params)
+{
+    const Vec *generic_params = get_generic_params__LilyCheckedDecl(decl);
+
+    if (generic_params) {
+        // TODO: maybe in the future we have to check default generic param.
+        ASSERT(ast_called_generic_params->len == generic_params->len);
+
+        OrderedHashMap *checked_called_generic_params = NEW(OrderedHashMap);
+
+        for (Usize i = 0; i < generic_params->len; i++) {
+            const LilyCheckedGenericParam *generic_param =
+              get__Vec(generic_params, i);
+            LilyAstDataType *ast_called_generic_param =
+              get__Vec(ast_called_generic_params, i);
+
+            LilyCheckedDataType *checked_data_type =
+              check_data_type__LilyAnalysis(
+                self, ast_called_generic_param, scope, NULL, safety_mode);
+
+            insert__OrderedHashMap(
+              checked_called_generic_params,
+              get_name__LilyCheckedGenericParam(generic_param)->buffer,
+              checked_data_type);
+        }
+
+        return checked_called_generic_params;
+    }
+
+    return NULL;
+}
+
 bool
 valid_function_signature__LilyAnalysis(LilyAnalysis *self,
                                        const Location *location,
@@ -4474,14 +4524,143 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
                                   NULL,
                                   (LilyCheckedAccessScope){ .id = 0 }));
-                        default: {
-                            if (!response.enum_->is_checked) {
-                                TODO("check enum");
+                        case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT: {
+                            if (!response.enum_variant->data_type) {
+                                FAILED("expected data type");
                             }
-                        }
-                    }
 
-                    TODO("check variant call");
+                            // 1. Get the generic params call.
+                            Vec *ast_generic_params_call =
+                              get_generic_params_from_variant_call__LilyAstExpr(
+                                expr);
+
+                            // 2. Check generic params.
+                            OrderedHashMap *checked_generic_params_call = NULL;
+
+                            if (verify_generic_params__LilyCheckedDecl(
+                                  response.enum_variant->enum_,
+                                  ast_generic_params_call)) {
+                                FAILED("the size of the generic params is not "
+                                       "the same");
+                            }
+
+                            checked_generic_params_call =
+                              build_called_generic_params_for_type__LilyAnalysis(
+                                self,
+                                response.enum_variant->enum_,
+                                scope,
+                                safety_mode,
+                                ast_generic_params_call);
+
+                            LilyCheckedDataType *checked_value_data_type = NULL;
+
+                            // 3. Determine if the enum has a generic params
+                            // 3.1 Explicit generic params call
+                            // 3.2 Implicit generic params call
+                            // 3.3 No generic params call
+                            if (ast_generic_params_call &&
+                                response.enum_variant->enum_->type.enum_
+                                  .generic_params) {
+                                checked_value_data_type =
+                                  resolve_generic_data_type_with_ordered_hash_map__LilyCheckedDataType(
+                                    response.enum_variant->data_type,
+                                    checked_generic_params_call);
+                            } else if (response.enum_variant->enum_->type.enum_
+                                         .generic_params) {
+                                TODO("implicit generic params call");
+                            } else {
+                                checked_value_data_type =
+                                  ref__LilyCheckedDataType(
+                                    response.enum_variant->data_type);
+                            }
+
+                            LilyCheckedExpr *checked_value =
+                              expr->call.variant.value
+                                ? check_expr__LilyAnalysis(
+                                    self,
+                                    expr->call.variant.value,
+                                    scope,
+                                    safety_mode,
+                                    is_moved_expr,
+                                    false,
+                                    checked_value_data_type)
+                                : NULL;
+
+                            // Check the data type of enum variant
+                            if (checked_value) {
+                                if (!eq__LilyCheckedDataType(
+                                      checked_value_data_type,
+                                      checked_value->data_type)) {
+                                    FAILED("data doesn't match");
+                                }
+                            }
+
+                            if (!checked_value &&
+                                !checked_generic_params_call &&
+                                !response.enum_variant->enum_->type.enum_
+                                   .generic_params) {
+                                TODO("infer on generic params");
+                            }
+
+                            LilyCheckedScopeResponse enum_response =
+                              search_custom_type__LilyCheckedScope(
+                                scope,
+                                response.enum_variant->enum_->type.enum_.name);
+
+                            ASSERT(enum_response.kind !=
+                                   LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND);
+
+                            LilyCheckedDataType *expr_data_type = NEW_VARIANT(
+                              LilyCheckedDataType,
+                              custom,
+                              &expr->location,
+                              NEW(LilyCheckedDataTypeCustom,
+                                  response.enum_variant->enum_->type.enum_
+                                    .scope->id,
+                                  (LilyCheckedAccessScope){
+                                    .id =
+                                      enum_response.scope_container.enum_->id },
+                                  response.enum_variant->enum_->type.enum_.name,
+                                  response.enum_variant->enum_->type.enum_
+                                    .global_name,
+                                  NULL,
+                                  LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ENUM,
+                                  response.enum_variant->enum_->type.enum_
+                                    .is_recursive));
+
+                            if (add_signature__LilyCheckedSignatureType(
+                                  enum_response.enum_->global_name,
+                                  checked_generic_params_call,
+                                  enum_response.enum_->signatures)) {
+                                if (checked_generic_params_call) {
+                                    FREE_ORD_HASHMAP_VALUES(
+                                      checked_generic_params_call,
+                                      LilyCheckedDataType);
+                                    FREE(OrderedHashMap,
+                                         checked_generic_params_call);
+                                }
+                            }
+
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              call,
+                              &expr->location,
+                              expr_data_type,
+                              expr,
+                              NEW_VARIANT(
+                                LilyCheckedExprCall,
+                                variant,
+                                (LilyCheckedAccessScope){
+                                  .id = response.scope_container.scope_id },
+                                response.enum_variant->global_name,
+                                NEW(LilyCheckedExprCallVariant,
+                                    checked_value)));
+                        }
+                        case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT_OBJECT:
+                            TODO("variant of enum object!!");
+                        default:
+                            FAILED("expected variant");
+                    }
                 }
                 default:
                     UNREACHABLE("unknown variant");
