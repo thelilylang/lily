@@ -322,7 +322,7 @@ get_scope__LilyCheckedDecl(const LilyCheckedDecl *self)
     }
 }
 
-Vec *
+const Vec *
 get_generic_params__LilyCheckedDecl(const LilyCheckedDecl *self)
 {
     switch (self->kind) {
@@ -369,7 +369,7 @@ verify_generic_params__LilyCheckedDecl(const LilyCheckedDecl *self,
                                        Vec *called_generic_params)
 {
     // TODO: maybe in the future we have to check default generic param.
-    Vec *generic_params = get_generic_params__LilyCheckedDecl(self);
+    const Vec *generic_params = get_generic_params__LilyCheckedDecl(self);
 
     if (called_generic_params && generic_params) {
         if (called_generic_params->len == generic_params->len) {

@@ -177,9 +177,9 @@ get_scope__LilyCheckedDecl(const LilyCheckedDecl *self);
 /**
  *
  * @brief Get the generic params from declaration.
- * @return Vec<LilyCheckedGenericParam*>*? (&)
+ * @return const Vec<LilyCheckedGenericParam*>*? (&)
  */
-Vec *
+const Vec *
 get_generic_params__LilyCheckedDecl(const LilyCheckedDecl *self);
 
 /**
