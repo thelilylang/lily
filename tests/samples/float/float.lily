@@ -1,0 +1,4 @@
+fun main =
+	val a := 3F32;
+	val b := 60F64;
+end
