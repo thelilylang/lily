@@ -1,3 +1,21 @@
 #!/bin/sh
 
-exec make format
+# Check build
+cd patches && patch -r ../include/base/macros.h disable_debug.patch > /dev/null
+cd ..
+patch_status=$?
+
+ninja -C build/Debug
+
+# Format all files 
+make format
+
+# Run all samples
+./scripts/test_samples.py
+
+# Revert to patch modification
+if [ patch_status == 0 ]
+then
+	cd patches && patch -r ../include/base/macros.h enable_debug.patch > /dev/null
+	cd ..
+fi
