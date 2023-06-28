@@ -377,8 +377,6 @@ verify_generic_params__LilyCheckedDecl(const LilyCheckedDecl *self,
         } else {
             return 1;
         }
-    } else if (called_generic_params || generic_params) {
-        return 1;
     } else {
         return 0;
     }
