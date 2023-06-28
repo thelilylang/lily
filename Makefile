@@ -1,5 +1,8 @@
 CLANG_FORMAT = @clang-format -i
 
+setup:
+	ln -s scripts/git/pre-commit .git/hooks
+
 build:
 	ninja -C build
 	ninja -C build/Debug
