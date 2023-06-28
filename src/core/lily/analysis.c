@@ -260,6 +260,18 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
                                  bool is_moved_expr,
                                  bool must_mut);
 
+/// @brief Check the fields of a record call.
+/// @param params Vec<LilyAstExprRecordParamCall*>* (&)
+/// @param checked_generic_params_call OrderedHashMap<LilyCheckedDataType*>* (&)
+static Vec *
+check_fields_call__LilyAnalysis(LilyAnalysis *self,
+                                LilyCheckedScope *scope,
+                                LilyCheckedScope *record_scope,
+                                const Vec *params,
+                                const Location *call_location,
+                                OrderedHashMap *checked_generic_params_call,
+                                enum LilyCheckedSafetyMode safety_mode);
+
 /// @param is_moved_expr If `is_moved_expr` is false it is when the expression
 /// that is passed is not surrounded by a reference or a trace. Also this
 /// parameter to know if when the variable is called it should be marked as
@@ -3343,6 +3355,74 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
     }
 }
 
+Vec *
+check_fields_call__LilyAnalysis(LilyAnalysis *self,
+                                LilyCheckedScope *scope,
+                                LilyCheckedScope *record_scope,
+                                const Vec *params,
+                                const Location *call_location,
+                                OrderedHashMap *checked_generic_params_call,
+                                enum LilyCheckedSafetyMode safety_mode)
+{
+    Vec *checked_record_params = NEW(Vec);
+
+    for (Usize i = 0; i < params->len; ++i) {
+        LilyAstExprRecordParamCall *param = get__Vec(params, i);
+
+        LilyCheckedScopeResponse field_response =
+          search_field__LilyCheckedScope(record_scope, param->name);
+
+        Usize field_index = 0;
+
+        switch (field_response.kind) {
+            case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  call_location,
+                  NEW(LilyError, LILY_ERROR_KIND_FIELD_IS_NOT_FOUND),
+                  NULL,
+                  NULL,
+                  from__String("unknown record in this scope"));
+
+                break;
+            default:
+                field_index = field_response.scope_container.variable->id;
+
+                break;
+        }
+
+        LilyCheckedExpr *checked_value =
+          check_expr__LilyAnalysis(self,
+                                   param->value,
+                                   scope,
+                                   safety_mode,
+                                   false,
+                                   false,
+                                   field_response.record_field->data_type);
+
+        if (!eq__LilyCheckedDataType(checked_value->data_type,
+                                     field_response.record_field->data_type)) {
+            ANALYSIS_EMIT_DIAGNOSTIC(
+              self,
+              simple_lily_error,
+              checked_value->location,
+              NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+              NULL,
+              NULL,
+              NULL);
+        }
+
+        push__Vec(checked_record_params,
+                  NEW(LilyCheckedExprCallRecordParam,
+                      param->name,
+                      checked_value,
+                      field_index));
+    }
+
+    return checked_record_params;
+}
+
 LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *expr,
@@ -4389,77 +4469,51 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   NULL,
                                   (LilyCheckedAccessScope){ .id = 0 }));
                         default: {
+                            // 1. Check record if not checked
                             if (!response.record->is_checked) {
                                 check_record__LilyAnalysis(
                                   self, response.record->scope->decls.decl);
                             }
 
-                            Vec *checked_record_params = NEW(Vec);
+                            // 2. Get the generic params call
+                            Vec *ast_generic_params_call =
+                              get_generic_params__LilyAstExpr(
+                                expr->call.record.id);
 
-                            for (Usize i = 0; i < expr->call.record.params->len;
-                                 ++i) {
-                                LilyAstExprRecordParamCall *param =
-                                  get__Vec(expr->call.record.params, i);
+                            // 3. Check generic params
+                            OrderedHashMap *checked_generic_params_call = NULL;
 
-                                LilyCheckedScopeResponse field_response =
-                                  search_field__LilyCheckedScope(
-                                    response.record->scope, param->name);
+                            if (verify_generic_params__LilyCheckedDecl(
+                                  response.decl, ast_generic_params_call)) {
+                                FAILED("the size of the generic params is not "
+                                       "the same");
+                            }
 
-                                Usize field_index = 0;
-
-                                switch (field_response.kind) {
-                                    case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                                        ANALYSIS_EMIT_DIAGNOSTIC(
-                                          self,
-                                          simple_lily_error,
-                                          (&expr->location),
-                                          NEW(
-                                            LilyError,
-                                            LILY_ERROR_KIND_FIELD_IS_NOT_FOUND),
-                                          NULL,
-                                          NULL,
-                                          from__String(
-                                            "unknown record in this scope"));
-
-                                        break;
-                                    default:
-                                        field_index =
-                                          field_response.scope_container
-                                            .variable->id;
-
-                                        break;
-                                }
-
-                                LilyCheckedExpr *checked_value =
-                                  check_expr__LilyAnalysis(
+                            // 4. Determine if the record has a generic params
+                            // 4.1 Explicit generic params call
+                            // 4.2 Implicit generic params call
+                            if (ast_generic_params_call &&
+                                response.record->generic_params) {
+                                checked_generic_params_call =
+                                  build_called_generic_params_for_type__LilyAnalysis(
                                     self,
-                                    param->value,
+                                    response.decl,
                                     scope,
                                     safety_mode,
-                                    false,
-                                    must_mut,
-                                    field_response.record_field->data_type);
-
-                                if (!eq__LilyCheckedDataType(
-                                      checked_value->data_type,
-                                      field_response.record_field->data_type)) {
-                                    ANALYSIS_EMIT_DIAGNOSTIC(
-                                      self,
-                                      simple_lily_error,
-                                      checked_value->location,
-                                      NEW(LilyError,
-                                          LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
-                                      NULL,
-                                      NULL,
-                                      NULL);
-                                }
-
-                                push__Vec(checked_record_params,
-                                          NEW(LilyCheckedExprCallRecordParam,
-                                              param->name,
-                                              checked_value,
-                                              field_index));
+                                    ast_generic_params_call);
+                            } else if (response.record->generic_params) {
+                                TODO("implicit generic params call")
                             }
+
+                            Vec *checked_record_params =
+                              check_fields_call__LilyAnalysis(
+                                self,
+                                scope,
+                                response.record->scope,
+                                expr->call.record.params,
+                                &expr->location,
+                                checked_generic_params_call,
+                                safety_mode); // Vec<LilyCheckedExprCallRecordParam*>*
 
                             // TODO: add support for call generic record.
                             return NEW_VARIANT(
@@ -4525,6 +4579,9 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   NULL,
                                   (LilyCheckedAccessScope){ .id = 0 }));
                         case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT: {
+                            ASSERT(response.enum_variant->enum_->type.enum_
+                                     .is_checked);
+
                             // Verify if the enum variant has a data type (also
                             // a value).
                             if (!response.enum_variant->data_type) {
