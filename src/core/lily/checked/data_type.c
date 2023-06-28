@@ -26,6 +26,7 @@
 #include <base/format.h>
 
 #include <core/lily/checked/data_type.h>
+#include <core/lily/checked/generic_param.h>
 #include <core/lily/checked/scope.h>
 
 #include <stdio.h>
@@ -120,6 +121,12 @@ static VARIANT_DESTRUCTOR(LilyCheckedDataType,
 static VARIANT_DESTRUCTOR(LilyCheckedDataType,
                           compiler_choice,
                           LilyCheckedDataType *self);
+
+static LilyCheckedDataType *
+generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+  LilyCheckedDataType *self,
+  const String *name,
+  LilyCheckedDataType *original);
 
 #ifdef ENV_DEBUG
 String *
@@ -2089,6 +2096,207 @@ contains_generic_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
         default:
             return clone__LilyCheckedDataType(self);
     }
+}
+
+LilyCheckedDataType *
+generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+  LilyCheckedDataType *self,
+  const String *name,
+  LilyCheckedDataType *original)
+{
+    if (self->kind == original->kind ||
+        (self->kind == LILY_CHECKED_DATA_TYPE_KIND_CUSTOM
+           ? self->custom.kind == LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC
+           : 0)) {
+        return NULL;
+    }
+
+    switch (original->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->array.data_type)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->array.data_type, name, original->array.data_type);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+            switch (original->custom.kind) {
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                    if (!strcmp(original->custom.name->buffer, name->buffer)) {
+                        return clone__LilyCheckedDataType(self);
+                    }
+
+                    return NULL;
+                default:
+                    return NULL;
+            }
+        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->exception)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->exception, name, original->exception);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
+            if (original->lambda.params) {
+                ASSERT(self->lambda.params);
+                ASSERT(original->lambda.params->len ==
+                       self->lambda.params->len);
+
+                for (Usize i = 0; i < original->lambda.params->len; ++i) {
+                    LilyCheckedDataType *param =
+                      get__Vec(original->lambda.params, i);
+
+                    if (contains_generic_data_type__LilyCheckedDataType(
+                          param)) {
+                        LilyCheckedDataType *res =
+                          generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                            get__Vec(self->lambda.params, i), name, param);
+
+                        if (res) {
+                            return res;
+                        }
+                    }
+                }
+            }
+
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->lambda.return_type)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->lambda.return_type, name, original->lambda.return_type);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->list)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->list, name, original->list);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->mut)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->mut, name, original->mut);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->optional)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->optional, name, original->optional);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->ptr)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->ptr, name, original->ptr);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->ptr_mut)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->ptr_mut, name, original->ptr_mut);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->ref)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->ref, name, original->ref);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->ref_mut)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->ref_mut, name, original->ref_mut);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->trace)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->trace, name, original->trace);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            if (contains_generic_data_type__LilyCheckedDataType(
+                  original->trace_mut)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self->trace_mut, name, original->trace_mut);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
+            ASSERT(original->tuple->len == self->tuple->len);
+
+            for (Usize i = 0; i < original->tuple->len; ++i) {
+                LilyCheckedDataType *item = get__Vec(original->tuple, i);
+
+                if (contains_generic_data_type__LilyCheckedDataType(item)) {
+                    LilyCheckedDataType *res =
+                      generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                        get__Vec(self->tuple, i), name, item);
+
+                    if (res) {
+                        return res;
+                    }
+                }
+            }
+
+            return NULL;
+        default:
+            return NULL;
+    }
+}
+
+OrderedHashMap *
+generate_generic_params_from_resolved_data_type__LilyCheckedDataType(
+  LilyCheckedDataType *self,
+  Vec *generic_params,
+  LilyCheckedDataType *original)
+{
+    ASSERT(self && original);
+
+    OrderedHashMap *resolved_generic_params = NEW(OrderedHashMap);
+
+    for (Usize i = 0; i < generic_params->len; ++i) {
+        const LilyCheckedGenericParam *generic_param =
+          get__Vec(generic_params, i);
+        const String *generic_param_name =
+          get_name__LilyCheckedGenericParam(generic_param);
+        LilyCheckedDataType *data_type_generic_param =
+          generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+            self, generic_param_name, original);
+
+        if (data_type_generic_param) {
+            insert__OrderedHashMap(resolved_generic_params,
+                                   generic_param_name->buffer,
+                                   data_type_generic_param);
+        } else {
+            insert__OrderedHashMap(resolved_generic_params,
+                                   generic_param_name->buffer,
+                                   NEW(LilyCheckedDataType,
+                                       LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                                       self->location));
+        }
+    }
+
+    return resolved_generic_params;
 }
 
 #ifdef ENV_DEBUG

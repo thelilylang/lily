@@ -783,6 +783,17 @@ contains_generic_data_type__LilyCheckedDataType(LilyCheckedDataType *self);
 
 /**
  *
+ * @brief Generate generic params from resolved generic data type.
+ * @param generic_params Vec<LilyCheckedGenericParam*>* (&)
+ */
+OrderedHashMap *
+generate_generic_params_from_resolved_data_type__LilyCheckedDataType(
+  LilyCheckedDataType *self,
+  Vec *generic_params,
+  LilyCheckedDataType *original);
+
+/**
+ *
  * @brief Convert LilyCheckedDataTypeKind in string.
  * @note This function is only used to debug.
  */
