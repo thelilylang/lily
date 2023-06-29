@@ -2312,9 +2312,7 @@ generate_generic_params_from_resolved_fields__LilyCheckedDataType(
 
     OrderedHashMap *resolved_generic_params = NEW(OrderedHashMap);
 
-    for (Usize i = 0;
-         i < fields->len && generic_params->len != resolved_generic_params->len;
-         ++i) {
+    for (Usize i = 0; i < fields->len; ++i) {
         LilyCheckedDataType *resolved_data_type =
           CAST(LilyCheckedExprCallRecordParam *, get__Vec(params, i))
             ->value->data_type;
@@ -2323,7 +2321,7 @@ generate_generic_params_from_resolved_fields__LilyCheckedDataType(
 
         for (Usize j = 0; j < generic_params->len; ++j) {
             const LilyCheckedGenericParam *generic_param =
-              get__Vec(generic_params, i);
+              get__Vec(generic_params, j);
             const String *generic_param_name =
               get_name__LilyCheckedGenericParam(generic_param);
             OrderedHashMapPair *inserted_pair =
