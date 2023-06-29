@@ -1119,7 +1119,7 @@ inline DESTRUCTOR(LilyMirInstructionTry, const LilyMirInstructionTry *self)
 typedef struct LilyMirInstructionStruct
 {
     enum LilyMirLinkage linkage;
-    const char *name;
+    const char *name;               // const char* (&)
     Vec *fields;                    // Vec<LilyMirDt*>*
     OrderedHashMap *generic_params; // OrderedHashMap<LilyCheckedDataType*>* (&)
 } LilyMirInstructionStruct;
