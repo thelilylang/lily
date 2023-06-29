@@ -798,7 +798,7 @@ VARIANT_DESTRUCTOR(LilyMirInstructionVal, reg, LilyMirInstructionVal *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstructionVal, struct, LilyMirInstructionVal *self)
 {
-    FREE(LilyMirDt,self->dt);
+    FREE(LilyMirDt, self->dt);
     FREE_BUFFER_ITEMS(
       self->struct_->buffer, self->struct_->len, LilyMirInstructionVal);
     FREE(Vec, self->struct_);
