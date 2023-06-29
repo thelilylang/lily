@@ -151,6 +151,13 @@ get_from_id__OrderedHashMap(OrderedHashMap *self, Usize id);
 
 /**
  *
+ * @brief Get pair (key-value) from id.
+ */
+OrderedHashMapPair *
+get_pair_from_id__OrderedHashMap(OrderedHashMap *self, Usize id);
+
+/**
+ *
  * @brief Generate an hash.
  */
 inline Usize

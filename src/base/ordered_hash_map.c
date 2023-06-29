@@ -95,7 +95,19 @@ get__OrderedHashMap(OrderedHashMap *self, char *key)
 void *
 get_from_id__OrderedHashMap(OrderedHashMap *self, Usize id)
 {
-    if (id > self->capacity)
+    OrderedHashMapPair *pair = get_pair_from_id__OrderedHashMap(self, id);
+
+    if (pair) {
+        return pair->value;
+    }
+
+    return NULL;
+}
+
+OrderedHashMapPair *
+get_pair_from_id__OrderedHashMap(OrderedHashMap *self, Usize id)
+{
+    if (id > self->capacity || !self->buckets)
         return NULL;
 
     for (Usize i = 0; i < self->capacity; ++i) {
@@ -104,14 +116,14 @@ get_from_id__OrderedHashMap(OrderedHashMap *self, Usize id)
         if (current_bucket) {
             while (current_bucket->next) {
                 if (current_bucket->pair.id == id) {
-                    return current_bucket->pair.value;
+                    return &current_bucket->pair;
                 }
 
                 current_bucket = current_bucket->next;
             }
 
             if (current_bucket->pair.id == id) {
-                return current_bucket->pair.value;
+                return &current_bucket->pair;
             }
         }
     }
