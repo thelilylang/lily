@@ -3392,6 +3392,27 @@ check_fields_call__LilyAnalysis(LilyAnalysis *self,
                 break;
         }
 
+        LilyCheckedDataType *field_data_type = NULL;
+
+        {
+            bool contains_generic_dt =
+              contains_generic_data_type__LilyCheckedDataType(
+                field_response.record_field->data_type);
+
+            // 1. Resolved field data type
+            // 1.1 Explicit generic params call
+            // 1.2 No generic params call
+            if (contains_generic_dt && checked_generic_params_call) {
+                field_data_type =
+                  resolve_generic_data_type_with_ordered_hash_map__LilyCheckedDataType(
+                    field_response.record_field->data_type,
+                    checked_generic_params_call);
+            } else if (!contains_generic_dt) {
+                field_data_type = ref__LilyCheckedDataType(
+                  field_response.record_field->data_type);
+            }
+        }
+
         LilyCheckedExpr *checked_value =
           check_expr__LilyAnalysis(self,
                                    param->value,
@@ -3399,18 +3420,22 @@ check_fields_call__LilyAnalysis(LilyAnalysis *self,
                                    safety_mode,
                                    false,
                                    false,
-                                   field_response.record_field->data_type);
+                                   field_data_type);
 
-        if (!eq__LilyCheckedDataType(checked_value->data_type,
-                                     field_response.record_field->data_type)) {
-            ANALYSIS_EMIT_DIAGNOSTIC(
-              self,
-              simple_lily_error,
-              checked_value->location,
-              NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
-              NULL,
-              NULL,
-              NULL);
+        if (field_data_type) {
+            if (!eq__LilyCheckedDataType(checked_value->data_type,
+                                         field_data_type)) {
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  checked_value->location,
+                  NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
+                  NULL,
+                  NULL,
+                  NULL);
+            }
+
+            FREE(LilyCheckedDataType, field_data_type);
         }
 
         push__Vec(checked_record_params,
@@ -4489,6 +4514,9 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                        "the same");
                             }
 
+                            Vec *checked_record_params =
+                              NULL; // Vec<LilyCheckedExprCallRecordParam*>*
+
                             // 4. Determine if the record has a generic params
                             // 4.1 Explicit generic params call
                             // 4.2 Implicit generic params call
@@ -4502,38 +4530,105 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     safety_mode,
                                     ast_generic_params_call);
                             } else if (response.record->generic_params) {
-                                TODO("implicit generic params call")
+                                checked_record_params =
+                                  check_fields_call__LilyAnalysis(
+                                    self,
+                                    scope,
+                                    response.record->scope,
+                                    expr->call.record.params,
+                                    &expr->location,
+                                    checked_generic_params_call,
+                                    safety_mode);
+
+                                checked_generic_params_call =
+                                  generate_generic_params_from_resolved_fields__LilyCheckedDataType(
+                                    checked_record_params,
+                                    response.record->generic_params,
+                                    response.record->fields);
                             }
 
-                            Vec *checked_record_params =
-                              check_fields_call__LilyAnalysis(
-                                self,
-                                scope,
-                                response.record->scope,
-                                expr->call.record.params,
-                                &expr->location,
-                                checked_generic_params_call,
-                                safety_mode); // Vec<LilyCheckedExprCallRecordParam*>*
+                            if (!checked_record_params) {
+                                checked_record_params =
+                                  check_fields_call__LilyAnalysis(
+                                    self,
+                                    scope,
+                                    response.record->scope,
+                                    expr->call.record.params,
+                                    &expr->location,
+                                    checked_generic_params_call,
+                                    safety_mode);
+                            }
 
-                            // TODO: add support for call generic record.
-                            return NEW_VARIANT(
-                              LilyCheckedExpr,
-                              call,
+                            Vec *generics =
+                              checked_generic_params_call ? NEW(Vec) : NULL;
+                            String *global_name = response.record->global_name;
+
+                            if (add_signature__LilyCheckedSignatureType(
+                                  response.record->global_name,
+                                  checked_generic_params_call,
+                                  response.record->signatures)) {
+                                if (checked_generic_params_call) {
+                                    OrderedHashMapIter iter =
+                                      NEW(OrderedHashMapIter,
+                                          checked_generic_params_call);
+                                    LilyCheckedDataType *current = NULL;
+
+                                    while ((current = next__OrderedHashMapIter(
+                                              &iter))) {
+                                        push__Vec(generics, current);
+                                    }
+
+                                    LilyCheckedSignatureType *signature =
+                                      get_signature__LilyCheckedSignatureType(
+                                        response.record->signatures,
+                                        checked_generic_params_call);
+
+                                    ASSERT(signature);
+
+                                    global_name = signature->ser_global_name;
+
+                                    FREE(OrderedHashMap,
+                                         checked_generic_params_call);
+                                }
+                            } else if (checked_generic_params_call) {
+                                OrderedHashMapIter iter =
+                                  NEW(OrderedHashMapIter,
+                                      checked_generic_params_call);
+                                LilyCheckedDataType *current = NULL;
+
+                                while (
+                                  (current = next__OrderedHashMapIter(&iter))) {
+                                    push__Vec(
+                                      generics,
+                                      clone__LilyCheckedDataType(current));
+                                }
+
+                                // Get the last pushed signature
+                                LilyCheckedSignatureType *signature =
+                                  last__Vec(response.record->signatures);
+
+                                global_name = signature->ser_global_name;
+                            }
+
+                            LilyCheckedDataType *expr_data_type = NEW_VARIANT(
+                              LilyCheckedDataType,
+                              custom,
                               &expr->location,
-                              NEW_VARIANT(
-                                LilyCheckedDataType,
-                                custom,
-                                &expr->location,
-                                NEW(
-                                  LilyCheckedDataTypeCustom,
+                              NEW(LilyCheckedDataTypeCustom,
                                   response.scope_container.scope_id,
                                   (LilyCheckedAccessScope){
                                     .id = response.scope_container.record->id },
                                   response.record->name,
-                                  response.record->global_name,
-                                  NULL,
+                                  global_name,
+                                  generics,
                                   LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD,
-                                  response.record->is_recursive)),
+                                  response.record->is_recursive));
+
+                            return NEW_VARIANT(
+                              LilyCheckedExpr,
+                              call,
+                              &expr->location,
+                              expr_data_type,
                               expr,
                               NEW_VARIANT(
                                 LilyCheckedExprCall,
@@ -4691,8 +4786,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   enum_response.enum_->global_name,
                                   checked_generic_params_call,
                                   enum_response.enum_->signatures)) {
-                                if (checked_generic_params_call &&
-                                    checked_generic_params_call->len == 0) {
+                                if (checked_generic_params_call) {
                                     OrderedHashMapIter iter =
                                       NEW(OrderedHashMapIter,
                                           checked_generic_params_call);
@@ -4706,8 +4800,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                     FREE(OrderedHashMap,
                                          checked_generic_params_call);
                                 }
-                            } else if (checked_generic_params_call &&
-                                       checked_generic_params_call->len == 0) {
+                            } else if (checked_generic_params_call) {
                                 OrderedHashMapIter iter =
                                   NEW(OrderedHashMapIter,
                                       checked_generic_params_call);
