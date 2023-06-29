@@ -158,6 +158,14 @@ get_user_defined_signature__LilyCheckedSignatureType(Vec *signatures);
 
 /**
  *
+ * @brief Get a signature with generic params.
+ */
+LilyCheckedSignatureType *
+get_signature__LilyCheckedSignatureType(Vec *signatures,
+                                        OrderedHashMap *generic_params);
+
+/**
+ *
  * @brief Convert LilyCheckedSignatureType in String.
  * @note This function is only used to debug.
  */

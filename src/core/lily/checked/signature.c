@@ -305,6 +305,34 @@ get_user_defined_signature__LilyCheckedSignatureType(Vec *signatures)
     return NULL;
 }
 
+LilyCheckedSignatureType *
+get_signature__LilyCheckedSignatureType(Vec *signatures,
+                                        OrderedHashMap *generic_params)
+{
+    ASSERT(signatures);
+    ASSERT(signatures->len > 0);
+
+    if (generic_params) {
+        for (Usize i = 0; i < signatures->len; ++i) {
+            LilyCheckedSignatureType *signature = get__Vec(signatures, i);
+            OrderedHashMapIter2 iter = NEW(
+              OrderedHashMapIter2, generic_params, signature->generic_params);
+            LilyCheckedDataType **current = NULL;
+
+            while ((current = (LilyCheckedDataType **)next__OrderedHashMapIter2(
+                      &iter))) {
+                if (!eq__LilyCheckedDataType(current[0], current[1])) {
+                    return signature;
+                }
+            }
+        }
+
+        return NULL;
+    }
+
+    return last__Vec(signatures);
+}
+
 DESTRUCTOR(LilyCheckedSignatureType, LilyCheckedSignatureType *self)
 {
     FREE(String, self->ser_global_name);
