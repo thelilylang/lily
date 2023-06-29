@@ -26,6 +26,8 @@
 #include <base/format.h>
 
 #include <core/lily/checked/data_type.h>
+#include <core/lily/checked/expr/call.h>
+#include <core/lily/checked/field.h>
 #include <core/lily/checked/generic_param.h>
 #include <core/lily/checked/scope.h>
 
@@ -2293,6 +2295,65 @@ generate_generic_params_from_resolved_data_type__LilyCheckedDataType(
                                    NEW(LilyCheckedDataType,
                                        LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
                                        self->location));
+        }
+    }
+
+    return resolved_generic_params;
+}
+
+OrderedHashMap *
+generate_generic_params_from_resolved_fields__LilyCheckedDataType(
+  Vec *params,
+  Vec *generic_params,
+  Vec *fields)
+{
+    ASSERT(params && fields);
+    ASSERT(params->len == fields->len);
+
+    OrderedHashMap *resolved_generic_params = NEW(OrderedHashMap);
+
+    for (Usize i = 0;
+         i < fields->len && generic_params->len != resolved_generic_params->len;
+         ++i) {
+        LilyCheckedDataType *resolved_data_type =
+          CAST(LilyCheckedExprCallRecordParam *, get__Vec(params, i))
+            ->value->data_type;
+        LilyCheckedDataType *original_data_type =
+          CAST(LilyCheckedField *, get__Vec(fields, i))->data_type;
+
+        for (Usize j = 0; j < generic_params->len; ++j) {
+            const LilyCheckedGenericParam *generic_param =
+              get__Vec(generic_params, i);
+            const String *generic_param_name =
+              get_name__LilyCheckedGenericParam(generic_param);
+            OrderedHashMapPair *inserted_pair =
+              get_pair_from_id__OrderedHashMap(resolved_generic_params, j);
+
+            if (inserted_pair) {
+                if (CAST(LilyCheckedDataType *, inserted_pair->value)->kind !=
+                    LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+                    continue;
+                }
+            }
+
+            LilyCheckedDataType *data_type_generic_param =
+              generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                resolved_data_type, generic_param_name, original_data_type);
+
+            if (inserted_pair && data_type_generic_param) {
+                FREE(LilyCheckedDataType, inserted_pair->value);
+                inserted_pair->value = data_type_generic_param;
+            } else if (data_type_generic_param) {
+                insert__OrderedHashMap(resolved_generic_params,
+                                       generic_param_name->buffer,
+                                       data_type_generic_param);
+            } else {
+                insert__OrderedHashMap(resolved_generic_params,
+                                       generic_param_name->buffer,
+                                       NEW(LilyCheckedDataType,
+                                           LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                                           resolved_data_type->location));
+            }
         }
     }
 

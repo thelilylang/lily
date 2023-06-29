@@ -794,6 +794,20 @@ generate_generic_params_from_resolved_data_type__LilyCheckedDataType(
 
 /**
  *
+ * @brief Generate generic params from resolved fields.
+ * @param params Vec<LilyCheckedExprCallRecordParam*>* (&)
+ * @param generic_params Vec<LilyCheckedGenericParam*>* (&)
+ * @param fields Vec<LilyCheckedField*>* (&)
+ * @return OrderedHashMap<LilyCheckedDataType*>*
+ */
+OrderedHashMap *
+generate_generic_params_from_resolved_fields__LilyCheckedDataType(
+  Vec *params,
+  Vec *generic_params,
+  Vec *fields);
+
+/**
+ *
  * @brief Convert LilyCheckedDataTypeKind in string.
  * @note This function is only used to debug.
  */
