@@ -1,5 +1,7 @@
 #include <stdio.h>
 
-int main(int argc, char **argv) {
-	printf("lilyc coming soon...");
+int
+main(int argc, char **argv)
+{
+    printf("lilyc coming soon...");
 }
