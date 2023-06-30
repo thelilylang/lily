@@ -45,10 +45,6 @@ add_option__Cli(Cli *self, CliOption *option)
 
 DESTRUCTOR(Cli, const Cli *self)
 {
-    if (self->description) {
-        FREE(String, self->description);
-    }
-
     if (self->commands) {
         FREE_ORD_HASHMAP_VALUES(self->commands, CliCommand);
         FREE(OrderedHashMap, self->commands);
@@ -58,4 +54,6 @@ DESTRUCTOR(Cli, const Cli *self)
         FREE_ORD_HASHMAP_VALUES(self->options, CliOption);
         FREE(OrderedHashMap, self->options);
     }
+
+    FREE(Vec, self->sections);
 }
