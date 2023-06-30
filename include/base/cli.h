@@ -37,7 +37,7 @@ typedef struct Cli
     const char *name;
     OrderedHashMap *commands; // OrderedHashMap<CliCommand*>*?
     OrderedHashMap *options;  // OrderedHashMap<CliOption*>*?
-    Vec *sections;            // Vec<CliSection*>*
+    Vec *sections;            // Vec<CliSection*>*?
     bool has_value;
     bool enable_suggestions;
 } Cli;

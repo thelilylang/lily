@@ -55,5 +55,9 @@ DESTRUCTOR(Cli, const Cli *self)
         FREE(OrderedHashMap, self->options);
     }
 
-    FREE(Vec, self->sections);
+    if (self->sections) {
+        FREE_BUFFER_ITEMS(
+          self->sections->buffer, self->sections->len, CliSection);
+        FREE(Vec, self->sections);
+    }
 }
