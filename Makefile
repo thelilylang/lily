@@ -14,7 +14,8 @@ debug:
 	@mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -s Debug/compile_commands.json .
 
 format:
-	${CLANG_FORMAT} ./include/base/*.h
+	${CLANG_FORMAT} ./include/base/*.h	
+	${CLANG_FORMAT} ./include/base/cli/*.h	
 	${CLANG_FORMAT} ./include/base/hash/*.h
 	${CLANG_FORMAT} ./include/cli/*.h
 	${CLANG_FORMAT} ./include/cli/config/*.h
@@ -74,6 +75,7 @@ format:
 	${CLANG_FORMAT} ./lib/sys/*.h
 	${CLANG_FORMAT} ./lib/sys/*.c
 	${CLANG_FORMAT} ./src/base/*.c
+	${CLANG_FORMAT} ./src/base/cli/*.c
 	${CLANG_FORMAT} ./src/base/hash/*.c
 	${CLANG_FORMAT} ./src/bin/lily/*.c
 	${CLANG_FORMAT} ./src/bin/lilyc/*.c
@@ -141,6 +143,9 @@ profile:
 	@clang -Wall -O3 -pg -lLLVM -L build/ -llily_base -llily_cli -llily_command -llily_core -I include -I lib/local -o build/profile/lily \
 		src/bin/main.c \
 		src/base/*.c \
+		src/base/cli/*.c \
+		src/base/cli/result/*.c \
+		src/base/hash/*.c \
 		src/cli/option/*.c \
 		src/cli/*.c \
 		src/command/build/*.c \
