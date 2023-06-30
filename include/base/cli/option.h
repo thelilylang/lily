@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_CLI_OPTION_H
 #define LILY_BASE_CLI_OPTION_H
 
+#include <base/cli/value.h>
 #include <base/macros.h>
 #include <base/string.h>
 
@@ -33,7 +34,7 @@ typedef struct CliOption
     String *usage;
     const char *name;
     const char *help;
-    bool has_value;
+    enum CliValueKind has_value;
 } CliOption;
 
 /**
@@ -45,7 +46,7 @@ CONSTRUCTOR(CliOption *,
             String *command_usage,
             const char *name,
             const char *help,
-            bool has_value);
+            enum CliValueKind has_value);
 
 /**
  *

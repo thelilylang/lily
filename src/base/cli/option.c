@@ -31,12 +31,15 @@ CONSTRUCTOR(CliOption *,
             String *command_usage,
             const char *name,
             const char *help,
-            bool has_value)
+            enum CliValueKind has_value)
 {
     CliOption *self = lily_malloc(sizeof(CliOption));
 
-    self->usage =
-      format__String("{S} {s}", command_usage, has_value ? "[VALUE]" : "");
+    self->usage = format__String("{S} {s}",
+                                 command_usage,
+                                 has_value == CLI_VALUE_KIND_SINGLE ? "[VALUE]"
+                                 : CLI_VALUE_KIND_MULTIPLE ? "[VALUE]..."
+                                                           : "");
     self->name = name;
     self->help = help;
     self->has_value = has_value;
