@@ -22,14 +22,26 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
 #include <base/sized_array.h>
 
-CONSTRUCTOR(SizedArray *, SizedArray, void **items, Usize len)
+#include <stdio.h>
+#include <stdlib.h>
+
+CONSTRUCTOR(SizedArray *, SizedArray, void **buffer, Usize len)
 {
     SizedArray *self = lily_malloc(sizeof(SizedArray));
 
-    self->items = items;
+    self->buffer = buffer;
     self->len = len;
 
     return self;
+}
+
+void *
+get__SizedArray(const SizedArray *self, Usize index)
+{
+    ASSERT(index < self->len);
+
+    return self->buffer[index];
 }

@@ -27,11 +27,13 @@
 
 #include <base/alloc.h>
 #include <base/macros.h>
+#include <base/new.h>
 #include <base/types.h>
+#include <base/vec.h>
 
 typedef struct SizedArray
 {
-    void **items;
+    void **buffer;
     Usize len;
 } SizedArray;
 
@@ -39,7 +41,34 @@ typedef struct SizedArray
  *
  * @brief Construct SizedArray type.
  */
-CONSTRUCTOR(SizedArray *, SizedArray, void **items, Usize len);
+CONSTRUCTOR(SizedArray *, SizedArray, void **buffer, Usize len);
+
+/**
+ *
+ * @brief Convert basic array to SizedArray.
+ */
+inline SizedArray *
+from__SizedArray(void **buffer, Usize len)
+{
+    return NEW(SizedArray, buffer, len);
+}
+
+/**
+ *
+ * @brief Convert Vec to SizedArray.
+ */
+inline SizedArray
+from_vec__SizedArray(Vec *vec)
+{
+    return (SizedArray){ .buffer = vec->buffer, .len = vec->len };
+}
+
+/**
+ *
+ * @brief Get item from SizedArray.
+ */
+void *
+get__SizedArray(const SizedArray *self, Usize index);
 
 /**
  *
