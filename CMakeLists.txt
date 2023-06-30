@@ -31,6 +31,9 @@ set(BASE_SRC
 	src/base/atoi.c
 	src/base/cli/command.c
 	src/base/cli/option.c
+	src/base/cli/parser.c
+	src/base/cli/result/command.c
+	src/base/cli/result/option.c
 	src/base/cli.c
 	src/base/color.c
 	src/base/file.c
