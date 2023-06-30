@@ -29,6 +29,9 @@ set(BASE_SRC
 	src/base/alloc.c
 	src/base/atof.c
 	src/base/atoi.c
+	src/base/cli/command.c
+	src/base/cli/option.c
+	src/base/cli.c
 	src/base/color.c
 	src/base/file.c
 	src/base/format.c
@@ -38,14 +41,20 @@ set(BASE_SRC
 	src/base/hash/sip.c
 	src/base/hash_map.c
 	src/base/hash_set.c
+	src/base/heap.c
 	src/base/itoa.c
+	src/base/io.c
+	src/base/list.c
+	src/base/linked_list.c
 	src/base/optional.c
 	src/base/ordered_hash_map.c
+	src/base/queue.c
 	src/base/sized_array.c
 	src/base/stack.c
 	src/base/str.c
 	src/base/string.c
 	src/base/test.c
+	src/base/tree.c
   	src/base/vec.c)
 
 set(CLI_SRC
