@@ -41,6 +41,7 @@ set(BASE_SRC
 	src/base/itoa.c
 	src/base/optional.c
 	src/base/ordered_hash_map.c
+	src/base/sized_array.c
 	src/base/stack.c
 	src/base/str.c
 	src/base/string.c
@@ -416,8 +417,11 @@ target_include_directories(lily_builtin PUBLIC lib include)
 add_library(lily_sys SHARED ${SYS_SRC})
 target_include_directories(lily_sys PUBLIC lib include)
 
-add_executable(lily src/bin/main.c)
+add_executable(lily src/bin/lily/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)
+
+add_executable(lilyc src/bin/lilyc/main.c)
+target_link_libraries(lilyc lily_base lily_cli lily_command)
 
 function(move_tests_dir)
 	file(COPY tests DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
