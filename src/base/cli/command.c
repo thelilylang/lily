@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/cli/command.h>
 #include <base/new.h>
 
@@ -29,15 +30,21 @@ CONSTRUCTOR(CliCommand *,
             CliCommand,
             const char *cli_name,
             const char *name,
-            bool has_value)
+            bool has_options,
+            bool has_value,
+            bool has_help)
 {
     CliCommand *self = lily_malloc(sizeof(CliCommand));
 
-    self->usage =
-      format__String("{s} {s} {s}", cli_name, name, has_value ? "[VALUE]" : "");
+    self->usage = format__String("{s} {s} {s} {s}",
+                                 cli_name,
+                                 name,
+                                 has_options ? "[OPTIONS]" : "",
+                                 has_value ? "[VALUE]" : "");
     self->name = name;
-    self->options = NEW(OrderedHashMap);
+    self->options = has_options ? NEW(OrderedHashMap) : NULL;
     self->has_value = has_value;
+    self->has_help = has_help;
 
     return self;
 }
@@ -45,7 +52,11 @@ CONSTRUCTOR(CliCommand *,
 DESTRUCTOR(CliCommand, CliCommand *self)
 {
     FREE(String, self->usage);
-    FREE_ORD_HASHMAP_VALUES(self->options, CliOption);
-    FREE(OrderedHashMap, self->options);
+
+    if (self->options) {
+        FREE_ORD_HASHMAP_VALUES(self->options, CliOption);
+        FREE(OrderedHashMap, self->options);
+    }
+
     lily_free(self);
 }

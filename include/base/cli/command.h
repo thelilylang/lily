@@ -32,8 +32,9 @@ typedef struct CliCommand
 {
     String *usage;
     const char *name;
-    OrderedHashMap *options; // OrderedHashMap<CliOption*>*
+    OrderedHashMap *options; // OrderedHashMap<CliOption*>*?
     bool has_value;
+    bool has_help;
 } CliCommand;
 
 /**
@@ -44,7 +45,9 @@ CONSTRUCTOR(CliCommand *,
             CliCommand,
             const char *cli_name,
             const char *name,
-            bool has_value);
+            bool has_options,
+            bool has_value,
+            bool has_help);
 
 /**
  *
