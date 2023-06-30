@@ -28,6 +28,7 @@
 #include <base/cli/command.h>
 #include <base/cli/option.h>
 #include <base/cli/section.h>
+#include <base/cli/value.h>
 #include <base/ordered_hash_map.h>
 #include <base/string.h>
 #include <base/vec.h>
@@ -38,7 +39,7 @@ typedef struct Cli
     OrderedHashMap *commands; // OrderedHashMap<CliCommand*>*?
     OrderedHashMap *options;  // OrderedHashMap<CliOption*>*?
     Vec *sections;            // Vec<CliSection*>*?
-    bool has_value;
+    enum CliValueKind has_value;
     bool enable_suggestions;
 } Cli;
 
@@ -55,7 +56,7 @@ inline CONSTRUCTOR(Cli,
     return (Cli){ .name = name,
                   .commands = has_commands ? NEW(OrderedHashMap) : NULL,
                   .options = has_options ? NEW(OrderedHashMap) : NULL,
-                  .has_value = false };
+                  .has_value = CLI_VALUE_KIND_NONE };
 }
 
 /**
@@ -74,12 +75,13 @@ add_option__Cli(Cli *self, CliOption *option);
 
 /**
  *
- * @brief Set `has_value` to true.
+ * @brief Set `has_value` to `CLI_VALUE_KIND_SINGLE` or
+ * `CLI_VALUE_KIND_MULTIPLE`.
  */
 inline void
-set_value__Cli(Cli *self)
+set_value__Cli(Cli *self, enum CliValueKind has_value)
 {
-    self->has_value = true;
+    self->has_value = has_value;
 }
 
 /**
