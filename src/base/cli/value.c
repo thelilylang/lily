@@ -32,6 +32,7 @@ DESTRUCTOR(CliValue, const CliValue *self)
 {
     switch (self->kind) {
         case CLI_VALUE_KIND_SINGLE:
+        case CLI_VALUE_KIND_NONE:
             break;
         case CLI_VALUE_KIND_MULTIPLE:
             FREE(Vec, self->multiple);

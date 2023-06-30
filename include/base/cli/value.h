@@ -30,7 +30,8 @@
 enum CliValueKind
 {
     CLI_VALUE_KIND_SINGLE,
-    CLI_VALUE_KIND_MULTIPLE
+    CLI_VALUE_KIND_MULTIPLE,
+    CLI_VALUE_KIND_NONE
 };
 
 typedef struct CliValue
@@ -59,6 +60,15 @@ inline VARIANT_CONSTRUCTOR(CliValue, CliValue, single, char *single)
 inline VARIANT_CONSTRUCTOR(CliValue, CliValue, multiple, Vec *multiple)
 {
     return (CliValue){ .kind = CLI_VALUE_KIND_MULTIPLE, .multiple = multiple };
+}
+
+/**
+ *
+ * @brief Construct CliValue type (CLI_VALUE_KIND_NONE).
+ */
+inline VARIANT_CONSTRUCTOR(CliValue, CliValue, none)
+{
+    return (CliValue){ .kind = CLI_VALUE_KIND_NONE };
 }
 
 /**
