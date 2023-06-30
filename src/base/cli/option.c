@@ -22,7 +22,9 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/cli/option.h>
+#include <base/new.h>
 
 CONSTRUCTOR(CliOption *,
             CliOption,
@@ -33,10 +35,17 @@ CONSTRUCTOR(CliOption *,
 {
     CliOption *self = lily_malloc(sizeof(CliOption));
 
-    self->usage = clone__String(command_usage);
+    self->usage =
+      format__String("{S} {s}", command_usage, has_value ? "[VALUE]" : "");
     self->name = name;
     self->help = help;
     self->has_value = has_value;
 
     return self;
+}
+
+DESTRUCTOR(CliOption, CliOption *self)
+{
+    FREE(String, self->usage);
+    lily_free(self);
 }

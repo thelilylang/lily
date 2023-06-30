@@ -25,7 +25,6 @@
 #ifndef LILY_BASE_CLI_OPTION_H
 #define LILY_BASE_CLI_OPTION_H
 
-#include <base/alloc.h>
 #include <base/macros.h>
 #include <base/string.h>
 
@@ -52,9 +51,6 @@ CONSTRUCTOR(CliOption *,
  *
  * @brief Free CliOption type.
  */
-inline DESTRUCTOR(CliOption, CliOption *self)
-{
-    lily_free(self);
-}
+DESTRUCTOR(CliOption, CliOption *self);
 
 #endif // LILY_BASE_CLI_OPTION_H
