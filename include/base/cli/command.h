@@ -26,6 +26,7 @@
 #define LILY_BASE_CLI_COMMAND_H
 
 #include <base/cli/option.h>
+#include <base/cli/value.h>
 #include <base/ordered_hash_map.h>
 
 typedef struct CliCommand
@@ -33,7 +34,7 @@ typedef struct CliCommand
     String *usage;
     const char *name;
     OrderedHashMap *options; // OrderedHashMap<CliOption*>*?
-    bool has_value;
+    enum CliValueKind has_value;
     bool has_help;
 } CliCommand;
 
@@ -46,7 +47,7 @@ CONSTRUCTOR(CliCommand *,
             const char *cli_name,
             const char *name,
             bool has_options,
-            bool has_value,
+            enum CliValueKind has_value,
             bool has_help);
 
 /**

@@ -31,16 +31,19 @@ CONSTRUCTOR(CliCommand *,
             const char *cli_name,
             const char *name,
             bool has_options,
-            bool has_value,
+            enum CliValueKind has_value,
             bool has_help)
 {
     CliCommand *self = lily_malloc(sizeof(CliCommand));
 
-    self->usage = format__String("{s} {s} {s} {s}",
-                                 cli_name,
-                                 name,
-                                 has_options ? "[OPTIONS]" : "",
-                                 has_value ? "[VALUE]" : "");
+    self->usage =
+      format__String("{s} {s} {s} {s}",
+                     cli_name,
+                     name,
+                     has_options ? "[OPTIONS]" : "",
+                     has_value == CLI_VALUE_KIND_SINGLE     ? "[VALUE]"
+                     : has_value == CLI_VALUE_KIND_MULTIPLE ? "[VALUE]..."
+                                                            : "");
     self->name = name;
     self->options = has_options ? NEW(OrderedHashMap) : NULL;
     self->has_value = has_value;
