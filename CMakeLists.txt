@@ -34,6 +34,8 @@ set(BASE_SRC
 	src/base/cli/parser.c
 	src/base/cli/result/command.c
 	src/base/cli/result/option.c
+	src/base/cli/section.c
+	src/base/cli/value.c
 	src/base/cli.c
 	src/base/color.c
 	src/base/file.c
