@@ -75,7 +75,8 @@ format:
 	${CLANG_FORMAT} ./lib/sys/*.c
 	${CLANG_FORMAT} ./src/base/*.c
 	${CLANG_FORMAT} ./src/base/hash/*.c
-	${CLANG_FORMAT} ./src/bin/*.c
+	${CLANG_FORMAT} ./src/bin/lily/*.c
+	${CLANG_FORMAT} ./src/bin/lilyc/*.c
 	${CLANG_FORMAT} ./src/cli/*.c
 	${CLANG_FORMAT} ./src/cli/option/*.c
 	${CLANG_FORMAT} ./src/command/build/*.c
