@@ -56,6 +56,13 @@ append__List(List *self, const List *other);
 
 /**
  *
+ * @brief Get item from List.
+ */
+void *
+get__List(List *self, Usize index);
+
+/**
+ *
  * @brief Free List type.
  */
 DESTRUCTOR(List, List *self);

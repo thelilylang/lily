@@ -23,7 +23,11 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/list.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 CONSTRUCTOR(List *, List)
 {
@@ -54,6 +58,14 @@ append__List(List *self, const List *other)
     for (Usize i = 0; i < other->len; ++i) {
         add__List(self, other->buffer[i]);
     }
+}
+
+void *
+get__List(List *self, Usize index)
+{
+    ASSERT(index < self->len);
+
+    return self->buffer[index];
 }
 
 DESTRUCTOR(List, List *self)
