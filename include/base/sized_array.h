@@ -25,4 +25,29 @@
 #ifndef LILY_BASE_SIZED_ARRAY_H
 #define LILY_BASE_SIZED_ARRAY_H
 
+#include <base/alloc.h>
+#include <base/macros.h>
+#include <base/types.h>
+
+typedef struct SizedArray
+{
+    void **items;
+    Usize len;
+} SizedArray;
+
+/**
+ *
+ * @brief Construct SizedArray type.
+ */
+CONSTRUCTOR(SizedArray *, SizedArray, void **items, Usize len);
+
+/**
+ *
+ * @brief Free SizedArray type.
+ */
+inline DESTRUCTOR(SizedArray, SizedArray *self)
+{
+    lily_free(self);
+}
+
 #endif // LILY_BASE_SIZED_ARRAY_H

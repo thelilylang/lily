@@ -23,3 +23,13 @@
  */
 
 #include <base/sized_array.h>
+
+CONSTRUCTOR(SizedArray *, SizedArray, void **items, Usize len)
+{
+    SizedArray *self = lily_malloc(sizeof(SizedArray));
+
+    self->items = items;
+    self->len = len;
+
+    return self;
+}
