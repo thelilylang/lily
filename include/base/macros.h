@@ -123,6 +123,8 @@
         y = p;       \
     }
 
+#define STR(s) #s
+
 #ifdef ENV_DEBUG
 #define IMPL_FOR_DEBUG(name, struct_name, ...) \
     name##__Debug__##struct_name(__VA_ARGS__)
