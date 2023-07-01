@@ -35,6 +35,7 @@
 
 typedef struct Cli
 {
+    String *usage;
     const char *name;
     OrderedHashMap *commands; // OrderedHashMap<CliCommand*>*?
     OrderedHashMap *options;  // OrderedHashMap<CliOption*>*?
@@ -53,9 +54,14 @@ inline CONSTRUCTOR(Cli,
                    bool has_commands,
                    bool has_options)
 {
-    return (Cli){ .name = name,
+    return (Cli){ .usage = format__String("{s} {s} {s}",
+                                          name,
+                                          has_commands ? "[COMMANDS]" : "",
+                                          has_options ? "[OPTIONS]" : ""),
+                  .name = name,
                   .commands = has_commands ? NEW(OrderedHashMap) : NULL,
                   .options = has_options ? NEW(OrderedHashMap) : NULL,
+                  .sections = NULL,
                   .has_value = CLI_VALUE_KIND_NONE };
 }
 

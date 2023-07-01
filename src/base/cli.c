@@ -40,11 +40,14 @@ void
 add_option__Cli(Cli *self, CliOption *option)
 {
     ASSERT(self->options);
-    ASSERT(insert__OrderedHashMap(self->options, (char *)option->name, option));
+    ASSERT(
+      !insert__OrderedHashMap(self->options, (char *)option->name, option));
 }
 
 DESTRUCTOR(Cli, const Cli *self)
 {
+    FREE(String, self->usage);
+
     if (self->commands) {
         FREE_ORD_HASHMAP_VALUES(self->commands, CliCommand);
         FREE(OrderedHashMap, self->commands);
