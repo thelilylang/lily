@@ -29,16 +29,17 @@
 
 typedef struct CliResultCommand {
 	Usize id;
-	Vec *options; // Vec<CliResultOption*>*
+	Vec *options; // Vec<CliResultOption*>*?
+	Vec *values; // Vec<char*>*?
 } CliResultCommand;
 
 /**
  *
  * @brief Construct CliResultCommand type.
  */
-inline CONSTRUCTOR(CliResultCommand, CliResultCommand, Usize id, Vec *options)
+inline CONSTRUCTOR(CliResultCommand, CliResultCommand, Usize id, Vec *options, Vec *values)
 {
-	return (CliResultCommand){ .id = id, .options = options };
+	return (CliResultCommand){ .id = id, .options = options, .values = values };
 }
 
 /**

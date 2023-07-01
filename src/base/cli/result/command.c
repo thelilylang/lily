@@ -28,6 +28,12 @@
 
 DESTRUCTOR(CliResultCommand, const CliResultCommand *self)
 {
-	FREE_BUFFER_ITEMS(self->options->buffer, self->options->len, CliResultOption);
-	FREE(Vec, self->options);
+	if (self->options) {
+		FREE_BUFFER_ITEMS(self->options->buffer, self->options->len, CliResultOption);
+		FREE(Vec, self->options);
+	}
+
+	if (self->values) {
+		FREE(Vec, self->values);
+	}
 }
