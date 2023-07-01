@@ -230,7 +230,7 @@ void
 reverse__Vec(Vec *self)
 {
     Usize i = 0;
-    Usize j = self->len - 1;
+    Usize j = self->len != 0 ? self->len - 1 : 0;
 
     while (i < j) {
         void *tmp = self->buffer[i];
