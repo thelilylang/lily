@@ -33,28 +33,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-CliResultCommand
-run__CliParser(const Cli *self, Usize command_id, const SizedArray *args)
+CliResult
+run__CliParser(const Cli *self, Usize *command_id, const SizedArray *args)
 {
     CliCommand *command =
-      get_from_id__OrderedHashMap(self->commands, command_id);
+      command_id ? get_from_id__OrderedHashMap(self->commands, *command_id)
+                 : NULL;
     SizedArrayIter iter = NEW(SizedArrayIter, args);
     char *current = NULL;
     CliOption *current_option = NULL;
     Usize *current_id = NULL;
-    Vec *options =
-      command->options ? NEW(Vec) : NULL; // Vec<CliResultOption*>*?
-    Vec *values = command->has_value != CLI_VALUE_KIND_NONE
-                    ? NEW(Vec)
-                    : NULL; // Vec<char*>*?
-    bool parse_value =
-      !command->options && command->has_value != CLI_VALUE_KIND_NONE ? true
-                                                                     : false;
+    Vec *options = command         ? command->options ? NEW(Vec) : NULL
+                   : self->options ? NEW(Vec)
+                                   : NULL; // Vec<CliResultOption*>*?
+    Vec *values =
+      command ? command->has_value != CLI_VALUE_KIND_NONE ? NEW(Vec) : NULL
+      : self->has_value != CLI_VALUE_KIND_NONE ? NEW(Vec)
+                                               : NULL; // Vec<char*>*?
+    bool parse_value = command ? command->has_value != CLI_VALUE_KIND_NONE
+                               : self->has_value != CLI_VALUE_KIND_NONE;
 
-    if (!command->options && command->has_value == CLI_VALUE_KIND_NONE &&
-        args->len > 0) {
-        EMIT_ERROR("no options and values are expected");
-        exit(1);
+    if (command) {
+        if (!command->options && command->has_value == CLI_VALUE_KIND_NONE &&
+            args->len > 0) {
+            EMIT_ERROR("no options and values are expected");
+            exit(1);
+        }
+    } else {
+        if (!self->options && self->has_value == CLI_VALUE_KIND_NONE &&
+            args->len > 0) {
+            EMIT_ERROR("no options and values are expected");
+            exit(1);
+        }
     }
 
     while ((current = next__SizedArrayIter(&iter))) {
@@ -69,11 +79,15 @@ run__CliParser(const Cli *self, Usize command_id, const SizedArray *args)
                 exit(1);
             }
 
-            current_option = get__OrderedHashMap(command->options, current);
+            current_option = command
+                               ? get__OrderedHashMap(command->options, current)
+                               : get__OrderedHashMap(self->options, current);
 
             if (current_option) {
                 current_id =
-                  (Usize *)get_id__OrderedHashMap(command->options, current);
+                  command
+                    ? (Usize *)get_id__OrderedHashMap(command->options, current)
+                    : (Usize *)get_id__OrderedHashMap(self->options, current);
 
                 ASSERT(current_id);
 
@@ -142,5 +156,12 @@ run__CliParser(const Cli *self, Usize command_id, const SizedArray *args)
         }
     }
 
-    return NEW(CliResultCommand, command_id, options, values);
+    if (command_id) {
+        return NEW_VARIANT(CliResult,
+                           command,
+                           values,
+                           NEW(CliResultCommand, *command_id, options));
+    }
+
+    return NEW_VARIANT(CliResult, options, values, options);
 }

@@ -26,7 +26,7 @@
 #define LILY_BASE_CLI_PARSER_H
 
 #include <base/cli.h>
-#include <base/cli/result/command.h>
+#include <base/cli/result.h>
 #include <base/sized_array.h>
 
 /**
@@ -34,7 +34,7 @@
  * @brief Run the parser of the CLI.
  * @param args Arguments after the command.
  */
-CliResultCommand
-run__CliParser(const Cli *self, Usize command_id, const SizedArray *args);
+CliResult
+run__CliParser(const Cli *self, Usize *command_id, const SizedArray *args);
 
 #endif // LILY_BASE_CLI_PARSER_H
