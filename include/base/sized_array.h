@@ -72,11 +72,48 @@ get__SizedArray(const SizedArray *self, Usize index);
 
 /**
  *
+ * @brief Get item from SizedArray (no assert).
+ */
+inline void *
+safe_get__SizedArray(const SizedArray *self, Usize index)
+{
+    return index < self->len ? self->buffer[index] : NULL;
+}
+
+/**
+ *
  * @brief Free SizedArray type.
  */
 inline DESTRUCTOR(SizedArray, SizedArray *self)
 {
     lily_free(self);
+}
+
+typedef struct SizedArrayIter
+{
+    const SizedArray *sized_array;
+    Usize count;
+} SizedArrayIter;
+
+/**
+ *
+ * @brief Construct SizedArrayIter type.
+ */
+inline CONSTRUCTOR(SizedArrayIter,
+                   SizedArrayIter,
+                   const SizedArray *sized_array)
+{
+    return (SizedArrayIter){ .sized_array = sized_array, .count = 0 };
+}
+
+/**
+ *
+ * @brief Get the next value.
+ */
+inline void *
+next__SizedArrayIter(SizedArrayIter *self)
+{
+    return safe_get__SizedArray(self->sized_array, self->count++);
 }
 
 #endif // LILY_BASE_SIZED_ARRAY_H
