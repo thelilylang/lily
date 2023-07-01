@@ -34,6 +34,7 @@ set(BASE_SRC
 	src/base/cli/parser.c
 	src/base/cli/result/command.c
 	src/base/cli/result/option.c
+	src/base/cli/result.c
 	src/base/cli/section.c
 	src/base/cli/value.c
 	src/base/cli.c
@@ -435,7 +436,7 @@ add_executable(lily src/bin/lily/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)
 
 add_executable(lilyc src/bin/lilyc/main.c)
-target_link_libraries(lilyc lily_base lily_cli lily_command)
+target_link_libraries(lilyc lily_base lily_cli)
 
 function(move_tests_dir)
 	file(COPY tests DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
