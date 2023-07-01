@@ -23,8 +23,12 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/cli/option.h>
 #include <base/new.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 CONSTRUCTOR(CliOption *,
             CliOption,
@@ -33,6 +37,8 @@ CONSTRUCTOR(CliOption *,
             const char *help,
             enum CliValueKind has_value)
 {
+    ASSERT(name[0] == '-');
+
     CliOption *self = lily_malloc(sizeof(CliOption));
 
     self->usage = format__String("{S} {s}",
