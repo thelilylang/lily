@@ -32,9 +32,9 @@
 /**
  *
  * @brief Run the parser of the CLI.
- * @param args Arguments after the command.
+ * @param args (argv)
  */
 CliResult
-run__CliParser(const Cli *self, Usize *command_id, const SizedArray *args);
+run__CliParser(const Cli *self, const SizedArray *args);
 
 #endif // LILY_BASE_CLI_PARSER_H

@@ -34,8 +34,23 @@
 #include <stdlib.h>
 
 CliResult
-run__CliParser(const Cli *self, Usize *command_id, const SizedArray *args)
+run__CliParser(const Cli *self, const SizedArray *args)
 {
+    char *first_arg = args->len > 0 ? get__SizedArray(args, 0) : NULL;
+    Usize *command_id = NULL;
+
+    if (first_arg) {
+        if (first_arg[0] != '-') {
+            command_id =
+              (Usize *)get_id__OrderedHashMap(self->commands, first_arg);
+
+            if (!command_id) {
+                EMIT_ERROR("command not found");
+                exit(1);
+            }
+        }
+    }
+
     CliCommand *command =
       command_id ? get_from_id__OrderedHashMap(self->commands, *command_id)
                  : NULL;
