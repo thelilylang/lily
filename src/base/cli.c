@@ -28,12 +28,47 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+CONSTRUCTOR(Cli,
+            Cli,
+            const SizedArray *args,
+            const char *name,
+            bool has_commands,
+            bool has_options)
+{
+    String *full_command = NEW(String);
+
+    {
+        SizedArrayIter iter = NEW(SizedArrayIter, args);
+        char *current = NULL;
+
+        while ((current = next__SizedArrayIter(&iter))) {
+            push_str__String(full_command, current);
+            push__String(full_command, ' ');
+        }
+    }
+
+    if (full_command->len > 0) {
+        pop__String(full_command);
+    }
+
+    return (Cli){ .full_command = full_command,
+                  .usage = format__String("{s} {s} {s}",
+                                          name,
+                                          has_commands ? "[COMMANDS]" : "",
+                                          has_options ? "[OPTIONS]" : ""),
+                  .name = name,
+                  .commands = has_commands ? NEW(OrderedHashMap) : NULL,
+                  .options = has_options ? NEW(OrderedHashMap) : NULL,
+                  .sections = NULL,
+                  .has_value = CLI_VALUE_KIND_NONE };
+}
+
 void
 add_command__Cli(Cli *self, CliCommand *command)
 {
     ASSERT(self->commands);
     ASSERT(
-      insert__OrderedHashMap(self->commands, (char *)command->name, command));
+      !insert__OrderedHashMap(self->commands, (char *)command->name, command));
 }
 
 void
@@ -46,6 +81,7 @@ add_option__Cli(Cli *self, CliOption *option)
 
 DESTRUCTOR(Cli, const Cli *self)
 {
+    FREE(String, self->full_command);
     FREE(String, self->usage);
 
     if (self->commands) {

@@ -30,11 +30,13 @@
 #include <base/cli/section.h>
 #include <base/cli/value.h>
 #include <base/ordered_hash_map.h>
+#include <base/sized_array.h>
 #include <base/string.h>
 #include <base/vec.h>
 
 typedef struct Cli
 {
+    String *full_command;
     String *usage;
     const char *name;
     OrderedHashMap *commands; // OrderedHashMap<CliCommand*>*?
@@ -48,22 +50,12 @@ typedef struct Cli
  *
  * @brief Construct Cli type.
  */
-inline CONSTRUCTOR(Cli,
-                   Cli,
-                   const char *name,
-                   bool has_commands,
-                   bool has_options)
-{
-    return (Cli){ .usage = format__String("{s} {s} {s}",
-                                          name,
-                                          has_commands ? "[COMMANDS]" : "",
-                                          has_options ? "[OPTIONS]" : ""),
-                  .name = name,
-                  .commands = has_commands ? NEW(OrderedHashMap) : NULL,
-                  .options = has_options ? NEW(OrderedHashMap) : NULL,
-                  .sections = NULL,
-                  .has_value = CLI_VALUE_KIND_NONE };
-}
+CONSTRUCTOR(Cli,
+            Cli,
+            const SizedArray *args,
+            const char *name,
+            bool has_commands,
+            bool has_options);
 
 /**
  *
