@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void *
+static const OrderedHashMapBucket *
 get_bucket__OrderedHashMapBucket(const OrderedHashMapBucket *self, char *key);
 
 static void *
@@ -69,11 +69,11 @@ CONSTRUCTOR(OrderedHashMap *, OrderedHashMap)
     return self;
 }
 
-void *
+const OrderedHashMapBucket *
 get_bucket__OrderedHashMapBucket(const OrderedHashMapBucket *self, char *key)
 {
     if (!strcmp(self->pair.key, key)) {
-        return self->pair.value;
+        return self;
     }
 
     return self->next ? get_bucket__OrderedHashMapBucket(self->next, key)
@@ -89,7 +89,33 @@ get__OrderedHashMap(OrderedHashMap *self, char *key)
     Usize index = index__OrderedHashMap(self, key);
     OrderedHashMapBucket *bucket = self->buckets[index];
 
-    return bucket ? get_bucket__OrderedHashMapBucket(bucket, key) : NULL;
+    if (bucket) {
+        const OrderedHashMapBucket *res =
+          get_bucket__OrderedHashMapBucket(bucket, key);
+
+        return res ? res->pair.value : NULL;
+    }
+
+    return NULL;
+}
+
+const Usize *
+get_id__OrderedHashMap(OrderedHashMap *self, char *key)
+{
+    if (!self->buckets)
+        return NULL;
+
+    Usize index = index__OrderedHashMap(self, key);
+    OrderedHashMapBucket *bucket = self->buckets[index];
+
+    if (bucket) {
+        const OrderedHashMapBucket *res =
+          get_bucket__OrderedHashMapBucket(bucket, key);
+
+        return res ? &res->pair.id : NULL;
+    }
+
+    return NULL;
 }
 
 void *

@@ -143,6 +143,13 @@ get__OrderedHashMap(OrderedHashMap *self, char *key);
 
 /**
  *
+ * @brief Get the id from the pair.
+ */
+const Usize *
+get_id__OrderedHashMap(OrderedHashMap *self, char *key);
+
+/**
+ *
  * @brief Get value from id.
  * @return If the key does not exist, return NULL.
  */
