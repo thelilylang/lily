@@ -120,6 +120,8 @@ run__CliParser(const Cli *self, Usize command_id, const SizedArray *args)
                                   NEW(CliResultOption,
                                       *current_id,
                                       NEW_VARIANT(CliValue, none)));
+
+                        break;
                     default:
                         UNREACHABLE("unknown variant");
                 }
