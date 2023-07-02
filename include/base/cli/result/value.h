@@ -34,6 +34,7 @@ enum CliResultValueKind {
 
 typedef struct CliResultValue {
 	enum CliResultValueKind kind;
+	const char *name;
 	union {
 		char *single;
 		Vec *multiple; // Vec<char*>*
@@ -44,13 +45,13 @@ typedef struct CliResultValue {
  *
  * @brief Construct CliResultValue type (CLI_RESULT_VALUE_KIND_SINGLE).
  */
-VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, single, char *single);
+VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, single, const char *name, char *single);
 
 /**
  *
  * @brief Construct CliResultValue type (CLI_RESULT_VALUE_KIND_MULTIPLE).
  */
-VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, multiple, Vec *multiple);
+VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, multiple, const char *name, Vec *multiple);
 
 /**
  *

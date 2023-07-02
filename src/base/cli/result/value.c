@@ -33,21 +33,23 @@ static VARIANT_DESTRUCTOR(CliResultValue, single, CliResultValue *self);
 
 static inline VARIANT_DESTRUCTOR(CliResultValue, multiple, CliResultValue *self);
 
-VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, single, char *single)
+VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, single, const char *name, char *single)
 {
 	CliResultValue *self = lily_malloc(sizeof(CliResultValue));
 
 	self->kind = CLI_RESULT_VALUE_KIND_SINGLE;
+	self->name = name;
 	self->single = single;
 	
 	return self;
 }
 
-VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, multiple, Vec *multiple)
+VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, multiple, const char *name, Vec *multiple)
 {
 	CliResultValue *self = lily_malloc(sizeof(CliResultValue));
 
 	self->kind = CLI_RESULT_VALUE_KIND_MULTIPLE;
+	self->name = name;
 	self->multiple = multiple;
 
 	return self;
