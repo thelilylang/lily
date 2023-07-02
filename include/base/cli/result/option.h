@@ -25,19 +25,23 @@
 #ifndef LILY_BASE_CLI_RESULT_OPTION_H
 #define LILY_BASE_CLI_RESULT_OPTION_H
 
+#include <base/cli/result/value.h>
 #include <base/types.h>
-#include <base/cli/value.h>
 
-typedef struct CliResultOption {
-	Usize id;
-	CliValue value;
+typedef struct CliResultOption
+{
+    Usize id;
+    CliResultValue *value; // CliResultValue*?
 } CliResultOption;
 
 /**
  *
  * @brief Construct CliResultOption type.
  */
-CONSTRUCTOR(CliResultOption *, CliResultOption, Usize id, CliValue value);
+CONSTRUCTOR(CliResultOption *,
+            CliResultOption,
+            Usize id,
+            CliResultValue *value);
 
 /**
  *
