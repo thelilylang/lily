@@ -25,20 +25,37 @@
 #ifndef LILY_BASE_CLI_RESULT_COMMAND_H
 #define LILY_BASE_CLI_RESULT_COMMAND_H
 
+#include <base/cli/result/value.h>
+#include <base/new.h>
 #include <base/vec.h>
 
 typedef struct CliResultCommand
 {
     Usize id;
+    CliResultValue *value; // CliResultValue*?
 } CliResultCommand;
 
 /**
  *
  * @brief Construct CliResultCommand type.
  */
-inline CONSTRUCTOR(CliResultCommand, CliResultCommand, Usize id)
+inline CONSTRUCTOR(CliResultCommand,
+                   CliResultCommand,
+                   Usize id,
+                   CliResultValue *value)
 {
-    return (CliResultCommand){ .id = id };
+    return (CliResultCommand){ .id = id, .value = value };
+}
+
+/**
+ *
+ * @brief Free CliResultCommand type.
+ */
+inline DESTRUCTOR(CliResultCommand, const CliResultCommand *self)
+{
+    if (self->value) {
+        FREE(CliResultValue, self->value);
+    }
 }
 
 #endif // LILY_BASE_CLI_RESULT_COMMAND_H
