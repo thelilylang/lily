@@ -28,6 +28,8 @@
 #include <base/alloc.h>
 #include <base/macros.h>
 
+#include <stdbool.h>
+
 enum CliValueKind
 {
     CLI_VALUE_KIND_SINGLE,
