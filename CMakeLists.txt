@@ -35,6 +35,7 @@ set(BASE_SRC
 	src/base/cli/option.c
 	src/base/cli/result/command.c
 	src/base/cli/result/option.c
+	src/base/cli/result/value.c
 	src/base/cli/result.c
 	src/base/cli.c
 	src/base/color.c
