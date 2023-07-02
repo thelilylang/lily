@@ -70,6 +70,7 @@ VARIANT_CONSTRUCTOR(CliResult *, CliResult, value, CliResultValue *value)
 
 VARIANT_DESTRUCTOR(CliResult, command, CliResult *self)
 {
+    FREE(CliResultCommand, &self->command);
     lily_free(self);
 }
 
