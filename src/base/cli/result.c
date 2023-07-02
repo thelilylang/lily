@@ -39,8 +39,6 @@ VARIANT_DESTRUCTOR(CliResult, command, const CliResult *self)
     if (self->values) {
         FREE(Vec, self->values);
     }
-
-    FREE(CliResultCommand, &self->command);
 }
 
 VARIANT_DESTRUCTOR(CliResult, options, const CliResult *self)
