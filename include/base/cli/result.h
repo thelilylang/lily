@@ -50,39 +50,24 @@ typedef struct CliResult
  *
  * @brief Construct CliResult type (CLI_RESULT_KIND_COMMAND).
  */
-inline VARIANT_CONSTRUCTOR(CliResult,
-                           CliResult,
-                           command,
-                           CliResultCommand command)
-{
-    return (CliResult){ .kind = CLI_RESULT_KIND_COMMAND, .command = command };
-}
+VARIANT_CONSTRUCTOR(CliResult *, CliResult, command, CliResultCommand command);
 
 /**
  *
  * @brief Construct CliResult type (CLI_RESULT_KIND_OPTION).
  */
-inline VARIANT_CONSTRUCTOR(CliResult,
-                           CliResult,
-                           option,
-                           CliResultOption *option)
-{
-    return (CliResult){ .kind = CLI_RESULT_KIND_OPTION, .option = option };
-}
+VARIANT_CONSTRUCTOR(CliResult *, CliResult, option, CliResultOption *option);
 
 /**
  *
  * @brief Construct CliResult type (CLI_RESULT_KIND_VALUE).
  */
-inline VARIANT_CONSTRUCTOR(CliResult, CliResult, value, CliResultValue *value)
-{
-    return (CliResult){ .kind = CLI_RESULT_KIND_VALUE, .value = value };
-}
+VARIANT_CONSTRUCTOR(CliResult *, CliResult, value, CliResultValue *value);
 
 /**
  *
  * @brief Free CliResult type.
  */
-DESTRUCTOR(CliResult, const CliResult *self);
+DESTRUCTOR(CliResult, CliResult *self);
 
 #endif // LILY_BASE_CLI_RESULT_H

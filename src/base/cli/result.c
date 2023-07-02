@@ -22,32 +22,74 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/cli/result.h>
 #include <base/new.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
+/// @brief Free CliResult type (CLI_RESULT_KIND_COMMAND).
+static inline VARIANT_DESTRUCTOR(CliResult, command, CliResult *self);
+
 /// @brief Free CliResult type (CLI_RESULT_KIND_OPTION).
-static VARIANT_DESTRUCTOR(CliResult, option, const CliResult *self);
+static VARIANT_DESTRUCTOR(CliResult, option, CliResult *self);
 
 /// @brief Free CliResult type (CLI_RESULT_KIND_VALUE).
-static VARIANT_DESTRUCTOR(CliResult, value, const CliResult *self);
+static VARIANT_DESTRUCTOR(CliResult, value, CliResult *self);
 
-VARIANT_DESTRUCTOR(CliResult, option, const CliResult *self)
+VARIANT_CONSTRUCTOR(CliResult *, CliResult, command, CliResultCommand command)
+{
+    CliResult *self = lily_malloc(sizeof(CliResult));
+
+    self->kind = CLI_RESULT_KIND_COMMAND;
+    self->command = command;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CliResult *, CliResult, option, CliResultOption *option)
+{
+    CliResult *self = lily_malloc(sizeof(CliResult));
+
+    self->kind = CLI_RESULT_KIND_OPTION;
+    self->option = option;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CliResult *, CliResult, value, CliResultValue *value)
+{
+    CliResult *self = lily_malloc(sizeof(CliResult));
+
+    self->kind = CLI_RESULT_KIND_VALUE;
+    self->value = value;
+
+    return self;
+}
+
+VARIANT_DESTRUCTOR(CliResult, command, CliResult *self)
+{
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CliResult, option, CliResult *self)
 {
     FREE(CliResultOption, self->option);
+    lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(CliResult, value, const CliResult *self)
+VARIANT_DESTRUCTOR(CliResult, value, CliResult *self)
 {
     FREE(CliResultValue, self->value);
+    lily_free(self);
 }
 
-DESTRUCTOR(CliResult, const CliResult *self)
+DESTRUCTOR(CliResult, CliResult *self)
 {
     switch (self->kind) {
         case CLI_RESULT_KIND_COMMAND:
+            FREE_VARIANT(CliResult, command, self);
             break;
         case CLI_RESULT_KIND_OPTION:
             FREE_VARIANT(CliResult, option, self);
