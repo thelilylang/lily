@@ -44,10 +44,9 @@ print_detail__CliDiagnostic(const CliDiagnostic *self)
     {
         Usize count_space = 0;
         StringIter iter = NEW(StringIter, self->full_command);
-        char current = '\0';
 
         while (count_space < self->arg_count) {
-            current = next__StringIter(&iter);
+            char current = next__StringIter(&iter);
 
             if (current) {
                 if (current == ' ') {
