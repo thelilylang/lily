@@ -28,38 +28,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/// @brief Free CliResult type (CLI_RESULT_KIND_COMMAND).
-static VARIANT_DESTRUCTOR(CliResult, command, const CliResult *self);
+/// @brief Free CliResult type (CLI_RESULT_KIND_OPTION).
+static VARIANT_DESTRUCTOR(CliResult, option, const CliResult *self);
 
-/// @brief Free CliResult type (CLI_RESULT_KIND_OPTIONS).
-static VARIANT_DESTRUCTOR(CliResult, options, const CliResult *self);
+/// @brief Free CliResult type (CLI_RESULT_KIND_VALUE).
+static VARIANT_DESTRUCTOR(CliResult, value, const CliResult *self);
 
-VARIANT_DESTRUCTOR(CliResult, command, const CliResult *self)
+VARIANT_DESTRUCTOR(CliResult, option, const CliResult *self)
 {
-    if (self->values) {
-        FREE(Vec, self->values);
-    }
+    FREE(CliResultOption, self->option);
 }
 
-VARIANT_DESTRUCTOR(CliResult, options, const CliResult *self)
+VARIANT_DESTRUCTOR(CliResult, value, const CliResult *self)
 {
-    if (self->values) {
-        FREE(Vec, self->values);
-    }
-
-    FREE_BUFFER_ITEMS(
-      self->options->buffer, self->options->len, CliResultOption);
-    FREE(Vec, self->options);
+    FREE(CliResultValue, self->value);
 }
 
 DESTRUCTOR(CliResult, const CliResult *self)
 {
     switch (self->kind) {
         case CLI_RESULT_KIND_COMMAND:
-            FREE_VARIANT(CliResult, command, self);
             break;
-        case CLI_RESULT_KIND_OPTIONS:
-            FREE_VARIANT(CliResult, options, self);
+        case CLI_RESULT_KIND_OPTION:
+            FREE_VARIANT(CliResult, option, self);
+            break;
+        case CLI_RESULT_KIND_VALUE:
+            FREE_VARIANT(CliResult, value, self);
             break;
         default:
             UNREACHABLE("unknown variant");

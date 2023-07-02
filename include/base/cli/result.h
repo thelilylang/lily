@@ -31,17 +31,18 @@
 enum CliResultKind
 {
     CLI_RESULT_KIND_COMMAND,
-    CLI_RESULT_KIND_OPTIONS,
+    CLI_RESULT_KIND_OPTION,
+    CLI_RESULT_KIND_VALUE
 };
 
 typedef struct CliResult
 {
     enum CliResultKind kind;
-    Vec *values; // Vec<char*>*?
     union
     {
         CliResultCommand command;
-        Vec *options; // Vec<CliResultOption*>*
+        CliResultOption *option;
+        CliResultValue *value;
     };
 } CliResult;
 
@@ -52,27 +53,30 @@ typedef struct CliResult
 inline VARIANT_CONSTRUCTOR(CliResult,
                            CliResult,
                            command,
-                           Vec *values,
                            CliResultCommand command)
 {
-    return (CliResult){ .kind = CLI_RESULT_KIND_COMMAND,
-                        .values = values,
-                        .command = command };
+    return (CliResult){ .kind = CLI_RESULT_KIND_COMMAND, .command = command };
 }
 
 /**
  *
- * @brief Construct CliResult type (CLI_RESULT_KIND_OPTIONS).
+ * @brief Construct CliResult type (CLI_RESULT_KIND_OPTION).
  */
 inline VARIANT_CONSTRUCTOR(CliResult,
                            CliResult,
-                           options,
-                           Vec *values,
-                           Vec *options)
+                           option,
+                           CliResultOption *option)
 {
-    return (CliResult){ .kind = CLI_RESULT_KIND_OPTIONS,
-                        .values = values,
-                        .options = options };
+    return (CliResult){ .kind = CLI_RESULT_KIND_OPTION, .option = option };
+}
+
+/**
+ *
+ * @brief Construct CliResult type (CLI_RESULT_KIND_VALUE).
+ */
+inline VARIANT_CONSTRUCTOR(CliResult, CliResult, value, CliResultValue *value)
+{
+    return (CliResult){ .kind = CLI_RESULT_KIND_VALUE, .value = value };
 }
 
 /**
