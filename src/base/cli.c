@@ -55,6 +55,9 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id);
 static Vec *
 parse_option__Cli(Cli *self);
 
+static CliResultValue *
+parse_value__Cli(Cli *self, const CliValue *value);
+
 CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name)
 {
     String *full_command = NEW(String);
@@ -164,10 +167,9 @@ parse__Cli(Cli *self)
 
     if (current_cmd) {
         return parse_command__Cli(self, current_cmd, cmd_id);
-    } else {
     }
 
-    return NULL;
+    return parse_option__Cli(self);
 }
 
 Vec *
@@ -179,8 +181,27 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
         cmd->deferred(cmd);
     }
 
+    CliResultValue *res_cmd_value = NULL;
+
+    if (cmd->value) {
+        switch (cmd->value->kind) {
+            case CLI_VALUE_KIND_SINGLE:
+                res_cmd_value =
+                  NEW_VARIANT(CliResultValue, single, cmd->value->name, NULL);
+                break;
+            case CLI_VALUE_KIND_MULTIPLE:
+                res_cmd_value = NEW_VARIANT(
+                  CliResultValue, multiple, cmd->value->name, NEW(Vec));
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
     Vec *res = init__Vec(
-      1, NEW_VARIANT(CliResult, command, NEW(CliResultCommand, *cmd_id)));
+      1,
+      NEW_VARIANT(
+        CliResult, command, NEW(CliResultCommand, *cmd_id, res_cmd_value)));
     char *current = NULL;
 
     while ((current = next__VecIter(&self->args_iter))) {
@@ -192,6 +213,14 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
                   get_id__OrderedHashMap(cmd->options, current);
 
                 if (option->value) {
+                    push__Vec(
+                      res,
+                      NEW_VARIANT(CliResult,
+                                  option,
+                                  NEW(CliResultOption,
+                                      *option_id,
+                                      parse_value__Cli(self, option->value))));
+                } else {
                     push__Vec(
                       res,
                       NEW_VARIANT(CliResult,
@@ -211,10 +240,165 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
                 emit__CliDiagnostic(&err);
             }
         } else {
+            if (cmd->value) {
+                switch (res_cmd_value->kind) {
+                    case CLI_RESULT_VALUE_KIND_SINGLE:
+                        if (!res_cmd_value->single) {
+                            res_cmd_value->single = current;
+                        } else {
+                            char *msg = format(
+                              "expected one value for this command: `{s}`",
+                              cmd->name);
+
+                            CliDiagnostic err = NEW(CliDiagnostic,
+                                                    CLI_DIAGNOSTIC_KIND_ERROR,
+                                                    msg,
+                                                    self->args_iter.count,
+                                                    self->full_command);
+
+                            emit__CliDiagnostic(&err);
+                        }
+
+                        break;
+                    case CLI_RESULT_VALUE_KIND_MULTIPLE:
+                        push__Vec(res_cmd_value->multiple, current);
+
+                        break;
+                    default:
+                        UNREACHABLE("unknown variant");
+                }
+            } else {
+                char *msg = format(
+                  "no values are expected for this comand: `{s}`", cmd->name);
+
+                CliDiagnostic err = NEW(CliDiagnostic,
+                                        CLI_DIAGNOSTIC_KIND_ERROR,
+                                        msg,
+                                        self->args_iter.count,
+                                        self->full_command);
+
+                emit__CliDiagnostic(&err);
+            }
+        }
+    }
+
+    if (res_cmd_value) {
+        switch (res_cmd_value->kind) {
+            case CLI_VALUE_KIND_SINGLE:
+                if (!res_cmd_value->single) {
+                    char *msg = format("expected value for this command: `{s}`",
+                                       cmd->name);
+
+                    CliDiagnostic err = NEW(CliDiagnostic,
+                                            CLI_DIAGNOSTIC_KIND_ERROR,
+                                            msg,
+                                            self->args_iter.count,
+                                            self->full_command);
+
+                    emit__CliDiagnostic(&err);
+                }
+
+                break;
+            case CLI_VALUE_KIND_MULTIPLE:
+                if (res_cmd_value->multiple->len == 0) {
+                    char *msg = format("expected value for this command: `{s}`",
+                                       cmd->name);
+
+                    CliDiagnostic err = NEW(CliDiagnostic,
+                                            CLI_DIAGNOSTIC_KIND_ERROR,
+                                            msg,
+                                            self->args_iter.count,
+                                            self->full_command);
+
+                    emit__CliDiagnostic(&err);
+                }
+
+                break;
+            default:
+                UNREACHABLE("unknown variant");
         }
     }
 
     return res;
+}
+
+CliResultValue *
+parse_value__Cli(Cli *self, const CliValue *value)
+{
+    switch (value->kind) {
+        case CLI_VALUE_KIND_SINGLE: {
+            char *current = next__VecIter(&self->args_iter);
+
+            if (current) {
+                if (current[0] == '-') {
+                    if (value->is_required) {
+                        CliDiagnostic err =
+                          NEW(CliDiagnostic,
+                              CLI_DIAGNOSTIC_KIND_ERROR,
+                              "expected value after option or command",
+                              self->args_iter.count,
+                              self->full_command);
+
+                        emit__CliDiagnostic(&err);
+                    } else {
+                        --self->args_iter.count;
+
+                        return NULL;
+                    }
+                } else {
+                    return NEW_VARIANT(
+                      CliResultValue, single, value->name, current);
+                }
+            } else if (value->is_required) {
+                CliDiagnostic err =
+                  NEW(CliDiagnostic,
+                      CLI_DIAGNOSTIC_KIND_ERROR,
+                      "expected value after option or command",
+                      self->args_iter.count,
+                      self->full_command);
+
+                emit__CliDiagnostic(&err);
+            }
+
+            --self->args_iter.count;
+
+            return NULL;
+        }
+        case CLI_VALUE_KIND_MULTIPLE: {
+            Vec *multiple = NEW(Vec); // Vec<char*>*
+
+            while (1) {
+                char *current = next__VecIter(&self->args_iter);
+
+                if (current) {
+                    if (current[0] == '-') {
+                        // Back to the previous element
+                        --self->args_iter.count;
+                        break;
+                    } else {
+                        push__Vec(multiple, current);
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            if (multiple->len == 0) {
+                CliDiagnostic err =
+                  NEW(CliDiagnostic,
+                      CLI_DIAGNOSTIC_KIND_ERROR,
+                      "expected value after option or command",
+                      self->args_iter.count,
+                      self->full_command);
+
+                emit__CliDiagnostic(&err);
+            }
+
+            return NEW_VARIANT(CliResultValue, multiple, value->name, multiple);
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 Vec *
