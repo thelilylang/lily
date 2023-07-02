@@ -24,6 +24,8 @@
 
 #include <base/assert.h>
 #include <base/cli.h>
+#include <base/cli/diagnostic.h>
+#include <base/format.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -117,6 +119,43 @@ option__Cli(Cli *self, CliOption *option)
 Vec *
 parse__Cli(Cli *self)
 {
+    // Skip program name
+    next__VecIter(&self->args_iter);
+
+    Usize *cmd_id = NULL;
+    CliCommand *current_cmd = NULL;
+    char *current_arg = next__VecIter(&self->args_iter);
+
+    if (current_arg) {
+        if (self->subcommands->len > 0 && current_arg[0] != '-') {
+            current_cmd = get__OrderedHashMap(self->subcommands, current_arg);
+
+            if (current_cmd) {
+                cmd_id = (Usize *)get_id__OrderedHashMap(self->subcommands,
+                                                         current_arg);
+            } else {
+                char *msg = format("command not found: `{s}`", current_arg);
+
+                CliDiagnostic err = NEW(CliDiagnostic,
+                                        CLI_DIAGNOSTIC_KIND_ERROR,
+                                        msg,
+                                        self->args_iter.count,
+                                        self->full_command);
+
+                emit__CliDiagnostic(&err);
+            }
+        } else {
+            // Return to the previous arg.
+            --self->args_iter.count;
+        }
+    } else {
+        return NULL;
+    }
+
+    if (current_cmd) {
+    } else {
+    }
+
     return NULL;
 }
 
