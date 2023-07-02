@@ -35,9 +35,10 @@ print_detail__CliDiagnostic(const CliDiagnostic *self);
 void
 print_detail__CliDiagnostic(const CliDiagnostic *self)
 {
-    PRINTLN("\x1b[1m{Sr}\x1b[0m", repeat__String("-", self->full_command->len));
+    PRINTLN("\x1b[1m{Sr}\x1b[0m",
+            repeat__String("-", self->full_command->len + 2));
     PRINTLN("{sa}", BOLD(">"));
-    PRINTLN("{sa}\x1b[1m{S}\x1b[0m", BOLD(">"), self->full_command);
+    PRINTLN("{sa}\x1b[1m{S}\x1b[0m", BOLD("> "), self->full_command);
     PRINT("\x1b[1m> ");
 
     {
@@ -58,13 +59,14 @@ print_detail__CliDiagnostic(const CliDiagnostic *self)
                     PRINT(" ");
                 }
             } else {
-                UNREACHABLE("invalid argument count");
+                break;
             }
         }
     }
 
     PRINTLN("\x1b[0m");
-    PRINTLN("\x1b[1m{Sr}\x1b[0m", repeat__String("-", self->full_command->len));
+    PRINTLN("\x1b[1m{Sr}\x1b[0m",
+            repeat__String("-", self->full_command->len + 2));
 }
 
 void
@@ -74,19 +76,19 @@ emit__CliDiagnostic(const CliDiagnostic *self)
         case CLI_DIAGNOSTIC_KIND_ERROR:
             PRINTLN("{sa}{sa}\x1b[1m{s}\x1b[0m",
                     RED_BOLD("error"),
-                    BOLD(":"),
+                    BOLD(": "),
                     self->msg);
             break;
         case CLI_DIAGNOSTIC_KIND_NOTE:
             PRINTLN("{sa}{sa}\x1b[1m{s}\x1b[0m",
                     CYAN_BOLD("note"),
-                    BOLD(":"),
+                    BOLD(": "),
                     self->msg);
             break;
         case CLI_DIAGNOSTIC_KIND_WARNING:
             PRINTLN("{sa}{sa}\x1b[1m{s}\x1b[0m",
                     YELLOW_BOLD("warning"),
-                    BOLD(":"),
+                    BOLD(": "),
                     self->msg);
             break;
         default:
