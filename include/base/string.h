@@ -228,7 +228,7 @@ inline CONSTRUCTOR(StringIter, StringIter, String *string)
 inline char
 next__StringIter(StringIter *self)
 {
-    return get__String(self->string, self->count++);
+    return safe_get__String(self->string, self->count++);
 }
 
 #endif // LILY_BASE_STRING_H
