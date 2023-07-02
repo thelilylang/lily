@@ -23,42 +23,104 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/cli/command.h>
 #include <base/new.h>
 
-CONSTRUCTOR(CliCommand *,
-            CliCommand,
-            const char *cli_name,
-            const char *name,
-            bool has_options,
-            enum CliValueKind has_value,
-            bool has_help)
+#include <stdio.h>
+#include <stdlib.h>
+
+static CliCommand *
+option__CliCommand(CliCommand *self, CliOption *option);
+
+static CliCommand *
+help__CliCommand(CliCommand *self, char *help);
+
+static CliCommand *
+value__CliCommand(CliCommand *self, CliValue *value);
+
+static CliCommand *
+default_action__CliCommand(CliCommand *self, CliDefaultAction *default_action);
+
+static CliCommand *
+defer__CliCommand(CliCommand *self, CliCommand *(*deferred)(CliCommand *));
+
+CONSTRUCTOR(CliCommand *, CliCommand, const char *name)
 {
     CliCommand *self = lily_malloc(sizeof(CliCommand));
 
-    self->usage =
-      format__String("{s} {s} {s} {s}",
-                     cli_name,
-                     name,
-                     has_options ? "[OPTIONS]" : "",
-                     has_value == CLI_VALUE_KIND_SINGLE     ? "[VALUE]"
-                     : has_value == CLI_VALUE_KIND_MULTIPLE ? "[VALUE]..."
-                                                            : "");
     self->name = name;
-    self->options = has_options ? NEW(OrderedHashMap) : NULL;
-    self->has_value = has_value;
-    self->has_help = has_help;
+    self->options = NEW(OrderedHashMap);
+    self->help = NULL;
+    self->value = NULL;
+    self->default_action = NULL;
+    self->deferred = NULL;
 
+    self->$option = &option__CliCommand;
+    self->$help = &help__CliCommand;
+    self->$value = &value__CliCommand;
+    self->$default_action = &default_action__CliCommand;
+    self->$defer = &defer__CliCommand;
+
+    return self;
+}
+
+CliCommand *
+option__CliCommand(CliCommand *self, CliOption *option)
+{
+    ASSERT(option);
+
+    insert__OrderedHashMap(self->options, (char *)option->name, option);
+    return self;
+}
+
+CliCommand *
+help__CliCommand(CliCommand *self, char *help)
+{
+    ASSERT(!self->help && help);
+
+    self->help = help;
+    return self;
+}
+
+CliCommand *
+value__CliCommand(CliCommand *self, CliValue *value)
+{
+    ASSERT(!self->value && value);
+
+    self->value = value;
+    return self;
+}
+
+CliCommand *
+default_action__CliCommand(CliCommand *self, CliDefaultAction *default_action)
+{
+    ASSERT(!self->default_action && default_action);
+
+    self->default_action = default_action;
+    return self;
+}
+
+CliCommand *
+defer__CliCommand(CliCommand *self, CliCommand *(*deferred)(CliCommand *))
+{
+    ASSERT(!self->deferred && deferred);
+
+    self->deferred = deferred;
     return self;
 }
 
 DESTRUCTOR(CliCommand, CliCommand *self)
 {
-    FREE(String, self->usage);
+    FREE_ORD_HASHMAP_VALUES(self->options, CliOption);
+    FREE(OrderedHashMap, self->options);
 
-    if (self->options) {
-        FREE_ORD_HASHMAP_VALUES(self->options, CliOption);
-        FREE(OrderedHashMap, self->options);
+    if (self->value) {
+        FREE(CliValue, self->value);
+    }
+
+    if (self->default_action) {
+        FREE(CliDefaultAction, self->default_action);
     }
 
     lily_free(self);
