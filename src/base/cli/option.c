@@ -30,31 +30,69 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-CONSTRUCTOR(CliOption *,
-            CliOption,
-            String *command_usage,
-            const char *name,
-            const char *help,
-            enum CliValueKind has_value)
+static CliOption *
+value__CliOption(CliOption *self, CliValue *value);
+
+static CliOption *
+help__CliOption(CliOption *self, char *help);
+
+static CliOption *
+default_action__CliOption(CliOption *self, CliDefaultAction *default_action);
+
+CONSTRUCTOR(CliOption *, CliOption, const char *name)
 {
     ASSERT(name[0] == '-');
 
     CliOption *self = lily_malloc(sizeof(CliOption));
 
-    self->usage = format__String("{S} {s}",
-                                 command_usage,
-                                 has_value == CLI_VALUE_KIND_SINGLE ? "[VALUE]"
-                                 : CLI_VALUE_KIND_MULTIPLE ? "[VALUE]..."
-                                                           : "");
     self->name = name;
-    self->help = help;
-    self->has_value = has_value;
+    self->value = NULL;
+    self->help = NULL;
+    self->default_action = NULL;
 
+    self->$value = &value__CliOption;
+    self->$help = &help__CliOption;
+    self->$default_action = &default_action__CliOption;
+
+    return self;
+}
+
+CliOption *
+value__CliOption(CliOption *self, CliValue *value)
+{
+    ASSERT(!self->value && value);
+
+    self->value = value;
+    return self;
+}
+
+CliOption *
+help__CliOption(CliOption *self, char *help)
+{
+    ASSERT(!self->help && help);
+
+    self->help = help;
+    return self;
+}
+
+CliOption *
+default_action__CliOption(CliOption *self, CliDefaultAction *default_action)
+{
+    ASSERT(!self->default_action && default_action);
+
+    self->default_action = default_action;
     return self;
 }
 
 DESTRUCTOR(CliOption, CliOption *self)
 {
-    FREE(String, self->usage);
+    if (self->value) {
+        FREE(CliValue, self->value);
+    }
+
+    if (self->default_action) {
+        FREE(CliDefaultAction, self->default_action);
+    }
+
     lily_free(self);
 }
