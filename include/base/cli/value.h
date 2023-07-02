@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_CLI_VALUE_H
 #define LILY_BASE_CLI_VALUE_H
 
+#include <base/alloc.h>
 #include <base/macros.h>
 
 enum CliValueKind
@@ -45,20 +46,19 @@ typedef struct CliValue
  *
  * @brief Construct CliValue type.
  */
-inline VARIANT_CONSTRUCTOR(CliValue,
-                           CliValue,
-                           single,
-                           enum CliValueKind kind,
-                           char *name,
-                           bool is_required)
-{
-    return (CliValue){ .kind = kind, .name = name, .is_required = is_required };
-}
+CONSTRUCTOR(CliValue *,
+            CliValue,
+            enum CliValueKind kind,
+            char *name,
+            bool is_required);
 
 /**
  *
  * @brief Free CliValue type.
  */
-DESTRUCTOR(CliValue, const CliValue *self);
+inline DESTRUCTOR(CliValue, CliValue *self)
+{
+    lily_free(self);
+}
 
 #endif // LILY_BASE_CLI_VALUE_H
