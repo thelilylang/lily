@@ -25,7 +25,7 @@
 #ifndef LILY_BASE_CLI_VALUE_H
 #define LILY_BASE_CLI_VALUE_H
 
-#include <base/vec.h>
+#include <base/macros.h>
 
 enum CliValueKind
 {
@@ -37,38 +37,22 @@ enum CliValueKind
 typedef struct CliValue
 {
     enum CliValueKind kind;
-    union
-    {
-        char *single;
-        Vec *multiple; // Vec<char*>*
-    };
+    const char *name;
+    bool is_required;
 } CliValue;
 
 /**
  *
- * @brief Construct CliValue type (CLI_VALUE_KIND_SINGLE).
+ * @brief Construct CliValue type.
  */
-inline VARIANT_CONSTRUCTOR(CliValue, CliValue, single, char *single)
+inline VARIANT_CONSTRUCTOR(CliValue,
+                           CliValue,
+                           single,
+                           enum CliValueKind kind,
+                           char *name,
+                           bool is_required)
 {
-    return (CliValue){ .kind = CLI_VALUE_KIND_SINGLE, .single = single };
-}
-
-/**
- *
- * @brief Construct CliValue type (CLI_VALUE_KIND_MULTIPLE).
- */
-inline VARIANT_CONSTRUCTOR(CliValue, CliValue, multiple, Vec *multiple)
-{
-    return (CliValue){ .kind = CLI_VALUE_KIND_MULTIPLE, .multiple = multiple };
-}
-
-/**
- *
- * @brief Construct CliValue type (CLI_VALUE_KIND_NONE).
- */
-inline VARIANT_CONSTRUCTOR(CliValue, CliValue, none)
-{
-    return (CliValue){ .kind = CLI_VALUE_KIND_NONE };
+    return (CliValue){ .kind = kind, .name = name, .is_required = is_required };
 }
 
 /**
