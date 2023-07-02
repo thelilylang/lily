@@ -34,7 +34,6 @@ enum CliValueKind
 {
     CLI_VALUE_KIND_SINGLE,
     CLI_VALUE_KIND_MULTIPLE,
-    CLI_VALUE_KIND_NONE
 };
 
 typedef struct CliValue
