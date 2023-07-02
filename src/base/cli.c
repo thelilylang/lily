@@ -43,15 +43,21 @@ subcommand__Cli(Cli *self, CliCommand *subcommand);
 static Cli *
 option__Cli(Cli *self, CliOption *option);
 
-/// @return Vec<CliResult*>*?
+static Cli *
+single_value__Cli(Cli *self, char *name, bool is_required);
+
+static Cli *
+multiple_value__Cli(Cli *self, char *name, bool is_required);
+
+/// @return Vec<CliResult*>*
 static Vec *
 parse__Cli(Cli *self);
 
-/// @return Vec<CliResult*>*?
+/// @return Vec<CliResult*>*
 static Vec *
 parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id);
 
-/// @return Vec<CliResult*>*?
+/// @return Vec<CliResult*>*
 static Vec *
 parse_option__Cli(Cli *self);
 
@@ -89,6 +95,8 @@ CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name)
                   .$about = &about__Cli,
                   .$subcommand = &subcommand__Cli,
                   .$option = &option__Cli,
+                  .$single_value = &single_value__Cli,
+                  .$multiple_value = &multiple_value__Cli,
                   .$parse = &parse__Cli };
 }
 
@@ -129,6 +137,24 @@ option__Cli(Cli *self, CliOption *option)
     return self;
 }
 
+Cli *
+single_value__Cli(Cli *self, char *name, bool is_required)
+{
+    ASSERT(!self->value && name);
+
+    self->value = NEW(CliValue, CLI_VALUE_KIND_SINGLE, name, is_required);
+    return self;
+}
+
+Cli *
+multiple_value__Cli(Cli *self, char *name, bool is_required)
+{
+    ASSERT(!self->value && name);
+
+    self->value = NEW(CliValue, CLI_VALUE_KIND_MULTIPLE, name, is_required);
+    return self;
+}
+
 Vec *
 parse__Cli(Cli *self)
 {
@@ -147,22 +173,25 @@ parse__Cli(Cli *self)
                 cmd_id = (Usize *)get_id__OrderedHashMap(self->subcommands,
                                                          current_arg);
             } else {
-                char *msg = format("command not found: `{s}`", current_arg);
+                if (!self->value) {
+                    char *msg = format("command not found: `{s}`", current_arg);
 
-                CliDiagnostic err = NEW(CliDiagnostic,
-                                        CLI_DIAGNOSTIC_KIND_ERROR,
-                                        msg,
-                                        self->args_iter.count,
-                                        self->full_command);
+                    CliDiagnostic err = NEW(CliDiagnostic,
+                                            CLI_DIAGNOSTIC_KIND_ERROR,
+                                            msg,
+                                            self->args_iter.count,
+                                            self->full_command);
 
-                emit__CliDiagnostic(&err);
+                    emit__CliDiagnostic(&err);
+                } else {
+                    // Return to the previous arg.
+                    --self->args_iter.count;
+                }
             }
         } else {
             // Return to the previous arg.
             --self->args_iter.count;
         }
-    } else {
-        return NULL;
     }
 
     if (current_cmd) {
@@ -227,7 +256,6 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
                                   option,
                                   NEW(CliResultOption, *option_id, NULL)));
                 }
-
             } else {
                 char *msg = format("unknown option: `{s}`", current);
 
@@ -404,7 +432,118 @@ parse_value__Cli(Cli *self, const CliValue *value)
 Vec *
 parse_option__Cli(Cli *self)
 {
-    return NULL;
+    Vec *res = NEW(Vec);
+    char *current = NULL;
+
+    while ((current = next__VecIter(&self->args_iter))) {
+        if (current[0] == '-') {
+            CliOption *option = get__OrderedHashMap(self->options, current);
+
+            if (option) {
+                const Usize *option_id =
+                  get_id__OrderedHashMap(self->options, current);
+
+                if (option->value) {
+                    push__Vec(
+                      res,
+                      NEW_VARIANT(CliResult,
+                                  option,
+                                  NEW(CliResultOption,
+                                      *option_id,
+                                      parse_value__Cli(self, option->value))));
+                } else {
+                    push__Vec(
+                      res,
+                      NEW_VARIANT(CliResult,
+                                  option,
+                                  NEW(CliResultOption, *option_id, NULL)));
+                }
+            } else {
+                char *msg = format("unknown option: `{s}`", current);
+
+                CliDiagnostic err = NEW(CliDiagnostic,
+                                        CLI_DIAGNOSTIC_KIND_ERROR,
+                                        msg,
+                                        self->args_iter.count,
+                                        self->full_command);
+
+                emit__CliDiagnostic(&err);
+            }
+        } else {
+            if (self->value) {
+                push__Vec(res,
+                          NEW_VARIANT(CliResult,
+                                      value,
+                                      NEW_VARIANT(CliResultValue,
+                                                  single,
+                                                  self->value->name,
+                                                  current)));
+            } else {
+                CliDiagnostic err = NEW(CliDiagnostic,
+                                        CLI_DIAGNOSTIC_KIND_ERROR,
+                                        "no values are expected",
+                                        self->args_iter.count,
+                                        self->full_command);
+
+                emit__CliDiagnostic(&err);
+            }
+        }
+    }
+
+    if (self->value) {
+        VecIter iter = NEW(VecIter, res);
+        CliResultValue *current = NULL;
+        Usize count_value = 0;
+
+        while ((current = next__VecIter(&iter))) {
+            if (current->kind == CLI_RESULT_KIND_VALUE) {
+                ++count_value;
+            }
+        }
+
+        switch (self->value->kind) {
+            case CLI_VALUE_KIND_SINGLE:
+                if (self->value->is_required) {
+                    if (count_value == 0) {
+                        CliDiagnostic err = NEW(CliDiagnostic,
+                                                CLI_DIAGNOSTIC_KIND_ERROR,
+                                                "expected one value",
+                                                0,
+                                                self->full_command);
+
+                        emit__CliDiagnostic(&err);
+                    } else if (count_value > 1) {
+                        CliDiagnostic err = NEW(CliDiagnostic,
+                                                CLI_DIAGNOSTIC_KIND_ERROR,
+                                                "too many values are given",
+                                                0,
+                                                self->full_command);
+
+                        emit__CliDiagnostic(&err);
+                    }
+                }
+
+                break;
+            case CLI_VALUE_KIND_MULTIPLE:
+                if (self->value->is_required) {
+                    if (count_value == 0) {
+                        CliDiagnostic err = NEW(CliDiagnostic,
+                                                CLI_DIAGNOSTIC_KIND_ERROR,
+                                                "expected one or more values",
+                                                0,
+                                                self->full_command);
+
+                        emit__CliDiagnostic(&err);
+                    }
+                }
+
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    return res;
 }
 
 DESTRUCTOR(Cli, const Cli *self)
