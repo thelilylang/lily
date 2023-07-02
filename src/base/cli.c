@@ -25,6 +25,7 @@
 #include <base/assert.h>
 #include <base/cli.h>
 #include <base/cli/diagnostic.h>
+#include <base/cli/result.h>
 #include <base/format.h>
 
 #include <stdio.h>
@@ -42,8 +43,17 @@ subcommand__Cli(Cli *self, CliCommand *subcommand);
 static Cli *
 option__Cli(Cli *self, CliOption *option);
 
+/// @return Vec<CliResult*>*?
 static Vec *
 parse__Cli(Cli *self);
+
+/// @return Vec<CliResult*>*?
+static Vec *
+parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id);
+
+/// @return Vec<CliResult*>*?
+static Vec *
+parse_option__Cli(Cli *self);
 
 CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name)
 {
@@ -153,9 +163,63 @@ parse__Cli(Cli *self)
     }
 
     if (current_cmd) {
+        return parse_command__Cli(self, current_cmd, cmd_id);
     } else {
     }
 
+    return NULL;
+}
+
+Vec *
+parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
+{
+    ASSERT(cmd && cmd_id);
+
+    if (cmd->deferred) {
+        cmd->deferred(cmd);
+    }
+
+    Vec *res = init__Vec(
+      1, NEW_VARIANT(CliResult, command, NEW(CliResultCommand, *cmd_id)));
+    char *current = NULL;
+
+    while ((current = next__VecIter(&self->args_iter))) {
+        if (current[0] == '-') {
+            CliOption *option = get__OrderedHashMap(cmd->options, current);
+
+            if (option) {
+                const Usize *option_id =
+                  get_id__OrderedHashMap(cmd->options, current);
+
+                if (option->value) {
+                    push__Vec(
+                      res,
+                      NEW_VARIANT(CliResult,
+                                  option,
+                                  NEW(CliResultOption, *option_id, NULL)));
+                }
+
+            } else {
+                char *msg = format("unknown option: `{s}`", current);
+
+                CliDiagnostic err = NEW(CliDiagnostic,
+                                        CLI_DIAGNOSTIC_KIND_ERROR,
+                                        msg,
+                                        self->args_iter.count,
+                                        self->full_command);
+
+                emit__CliDiagnostic(&err);
+            }
+        } else {
+        }
+    }
+
+    return res;
+}
+
+Vec *
+parse_option__Cli(Cli *self)
+{
     return NULL;
 }
 
