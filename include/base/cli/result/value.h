@@ -27,31 +27,42 @@
 
 #include <base/vec.h>
 
-enum CliResultValueKind {
-	CLI_RESULT_VALUE_KIND_SINGLE,
-	CLI_RESULT_VALUE_KIND_MULTIPLE
+enum CliResultValueKind
+{
+    CLI_RESULT_VALUE_KIND_SINGLE,
+    CLI_RESULT_VALUE_KIND_MULTIPLE
 };
 
-typedef struct CliResultValue {
-	enum CliResultValueKind kind;
-	const char *name;
-	union {
-		char *single;
-		Vec *multiple; // Vec<char*>*
-	};
+typedef struct CliResultValue
+{
+    enum CliResultValueKind kind;
+    const char *name;
+    union
+    {
+        char *single;
+        Vec *multiple; // Vec<char*>*
+    };
 } CliResultValue;
 
 /**
  *
  * @brief Construct CliResultValue type (CLI_RESULT_VALUE_KIND_SINGLE).
  */
-VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, single, const char *name, char *single);
+VARIANT_CONSTRUCTOR(CliResultValue *,
+                    CliResultValue,
+                    single,
+                    const char *name,
+                    char *single);
 
 /**
  *
  * @brief Construct CliResultValue type (CLI_RESULT_VALUE_KIND_MULTIPLE).
  */
-VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, multiple, const char *name, Vec *multiple);
+VARIANT_CONSTRUCTOR(CliResultValue *,
+                    CliResultValue,
+                    multiple,
+                    const char *name,
+                    Vec *multiple);
 
 /**
  *

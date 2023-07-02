@@ -23,59 +23,69 @@
  */
 
 #include <base/alloc.h>
-#include <base/new.h>
 #include <base/cli/result/value.h>
+#include <base/new.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 static VARIANT_DESTRUCTOR(CliResultValue, single, CliResultValue *self);
 
-static inline VARIANT_DESTRUCTOR(CliResultValue, multiple, CliResultValue *self);
+static inline VARIANT_DESTRUCTOR(CliResultValue,
+                                 multiple,
+                                 CliResultValue *self);
 
-VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, single, const char *name, char *single)
+VARIANT_CONSTRUCTOR(CliResultValue *,
+                    CliResultValue,
+                    single,
+                    const char *name,
+                    char *single)
 {
-	CliResultValue *self = lily_malloc(sizeof(CliResultValue));
+    CliResultValue *self = lily_malloc(sizeof(CliResultValue));
 
-	self->kind = CLI_RESULT_VALUE_KIND_SINGLE;
-	self->name = name;
-	self->single = single;
-	
-	return self;
+    self->kind = CLI_RESULT_VALUE_KIND_SINGLE;
+    self->name = name;
+    self->single = single;
+
+    return self;
 }
 
-VARIANT_CONSTRUCTOR(CliResultValue *, CliResultValue, multiple, const char *name, Vec *multiple)
+VARIANT_CONSTRUCTOR(CliResultValue *,
+                    CliResultValue,
+                    multiple,
+                    const char *name,
+                    Vec *multiple)
 {
-	CliResultValue *self = lily_malloc(sizeof(CliResultValue));
+    CliResultValue *self = lily_malloc(sizeof(CliResultValue));
 
-	self->kind = CLI_RESULT_VALUE_KIND_MULTIPLE;
-	self->name = name;
-	self->multiple = multiple;
+    self->kind = CLI_RESULT_VALUE_KIND_MULTIPLE;
+    self->name = name;
+    self->multiple = multiple;
 
-	return self;
+    return self;
 }
 
 VARIANT_DESTRUCTOR(CliResultValue, single, CliResultValue *self)
 {
-	lily_free(self);
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(CliResultValue, multiple, CliResultValue *self)
 {
-	FREE(Vec, self->multiple);
-	lily_free(self);
+    FREE(Vec, self->multiple);
+    lily_free(self);
 }
 
 DESTRUCTOR(CliResultValue, CliResultValue *self)
 {
-	switch (self->kind) {
-		case CLI_RESULT_VALUE_KIND_SINGLE:
-			FREE_VARIANT(CliResultValue, single, self);
-			break;
-		case CLI_RESULT_VALUE_KIND_MULTIPLE:
-			FREE_VARIANT(CliResultValue, multiple, self);
-			break;
-		default:
-			UNREACHABLE("unknown variant");
-	}
+    switch (self->kind) {
+        case CLI_RESULT_VALUE_KIND_SINGLE:
+            FREE_VARIANT(CliResultValue, single, self);
+            break;
+        case CLI_RESULT_VALUE_KIND_MULTIPLE:
+            FREE_VARIANT(CliResultValue, multiple, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }

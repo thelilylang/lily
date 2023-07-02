@@ -27,9 +27,10 @@
 
 #include <base/vec.h>
 
-typedef struct CliResultCommand {
-	Usize id;
-	Vec *options; // Vec<CliResultOption*>*?
+typedef struct CliResultCommand
+{
+    Usize id;
+    Vec *options; // Vec<CliResultOption*>*?
 } CliResultCommand;
 
 /**
@@ -38,7 +39,7 @@ typedef struct CliResultCommand {
  */
 inline CONSTRUCTOR(CliResultCommand, CliResultCommand, Usize id, Vec *options)
 {
-	return (CliResultCommand){ .id = id, .options = options };
+    return (CliResultCommand){ .id = id, .options = options };
 }
 
 /**
