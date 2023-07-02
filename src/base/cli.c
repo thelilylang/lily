@@ -28,15 +28,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-CONSTRUCTOR(Cli, Cli, const SizedArray *args, const char *name)
+static Cli *
+author__Cli(Cli *self, char *author);
+
+static Cli *
+about__Cli(Cli *self, char *about);
+
+static Cli *
+subcommand__Cli(Cli *self, CliCommand *subcommand);
+
+static Cli *
+option__Cli(Cli *self, CliOption *option);
+
+static Vec *
+parse__Cli(Cli *self);
+
+CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name)
 {
     String *full_command = NEW(String);
 
     {
-        SizedArrayIter iter = NEW(SizedArrayIter, args);
+        VecIter iter = NEW(VecIter, args);
         char *current = NULL;
 
-        while ((current = next__SizedArrayIter(&iter))) {
+        while ((current = next__VecIter(&iter))) {
             push_str__String(full_command, current);
             push__String(full_command, ' ');
         }
@@ -46,43 +61,76 @@ CONSTRUCTOR(Cli, Cli, const SizedArray *args, const char *name)
         pop__String(full_command);
     }
 
-    return (Cli){ .full_command = full_command,
-                  .usage = NULL,
-                  .name = name,
-                  .commands = NEW(OrderedHashMap),
+    return (Cli){ .name = name,
+                  .subcommands = NEW(OrderedHashMap),
                   .options = NEW(OrderedHashMap),
-                  .sections = NULL,
-                  .has_value = CLI_VALUE_KIND_NONE };
+                  .author = NULL,
+                  .value = NULL,
+                  .about = NULL,
+                  .full_command = full_command,
+                  .args = args,
+                  .args_iter = NEW(VecIter, args),
+                  .$author = &author__Cli,
+                  .$about = &about__Cli,
+                  .$subcommand = &subcommand__Cli,
+                  .$option = &option__Cli,
+                  .$parse = &parse__Cli };
 }
 
-void
-add_command__Cli(Cli *self, CliCommand *command)
+Cli *
+author__Cli(Cli *self, char *author)
 {
-    ASSERT(
-      !insert__OrderedHashMap(self->commands, (char *)command->name, command));
+    ASSERT(!self->author && author);
+
+    self->author = author;
+    return self;
 }
 
-void
-add_option__Cli(Cli *self, CliOption *option)
+Cli *
+about__Cli(Cli *self, char *about)
 {
-    ASSERT(
-      !insert__OrderedHashMap(self->options, (char *)option->name, option));
+    ASSERT(!self->about && about);
+
+    self->about = about;
+    return self;
+}
+
+Cli *
+subcommand__Cli(Cli *self, CliCommand *subcommand)
+{
+    ASSERT(subcommand);
+
+    insert__OrderedHashMap(
+      self->subcommands, (char *)subcommand->name, subcommand);
+    return self;
+}
+
+Cli *
+option__Cli(Cli *self, CliOption *option)
+{
+    ASSERT(option);
+
+    insert__OrderedHashMap(self->options, (char *)option->name, option);
+    return self;
+}
+
+Vec *
+parse__Cli(Cli *self)
+{
+    return NULL;
 }
 
 DESTRUCTOR(Cli, const Cli *self)
 {
     FREE(String, self->full_command);
-    FREE(String, self->usage);
 
-    FREE_ORD_HASHMAP_VALUES(self->commands, CliCommand);
-    FREE(OrderedHashMap, self->commands);
+    FREE_ORD_HASHMAP_VALUES(self->subcommands, CliCommand);
+    FREE(OrderedHashMap, self->subcommands);
 
     FREE_ORD_HASHMAP_VALUES(self->options, CliOption);
     FREE(OrderedHashMap, self->options);
 
-    if (self->sections) {
-        FREE_BUFFER_ITEMS(
-          self->sections->buffer, self->sections->len, CliSection);
-        FREE(Vec, self->sections);
+    if (self->value) {
+        FREE(CliValue, self->value);
     }
 }

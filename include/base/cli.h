@@ -27,55 +27,35 @@
 
 #include <base/cli/command.h>
 #include <base/cli/option.h>
-#include <base/cli/section.h>
 #include <base/cli/value.h>
 #include <base/ordered_hash_map.h>
-#include <base/sized_array.h>
 #include <base/string.h>
 #include <base/vec.h>
 
 typedef struct Cli
 {
-    String *full_command;
-    String *usage;
     const char *name;
-    OrderedHashMap *commands; // OrderedHashMap<CliCommand*>*?
-    OrderedHashMap *options;  // OrderedHashMap<CliOption*>*?
-    Vec *sections;            // Vec<CliSection*>*?
-    enum CliValueKind has_value;
-    bool enable_suggestions;
+    OrderedHashMap *subcommands; // OrderedHashMap<CliCommand*>*
+    OrderedHashMap *options;     // OrderedHashMap<CliOption*>*
+    char *author;                // char*?
+    CliValue *value;             // CliValue*?
+    char *about;                 // char*?
+    String *full_command;
+    const Vec *args; // const Vec<char*>* (&)
+    VecIter args_iter;
+
+    struct Cli *(*$author)(struct Cli *, char *);
+    struct Cli *(*$about)(struct Cli *, char *);
+    struct Cli *(*$subcommand)(struct Cli *, CliCommand *);
+    struct Cli *(*$option)(struct Cli *, CliOption *);
+    struct Vec *(*$parse)(struct Cli *);
 } Cli;
 
 /**
  *
  * @brief Construct Cli type.
  */
-CONSTRUCTOR(Cli, Cli, const SizedArray *args, const char *name);
-
-/**
- *
- * @brief Add command to commands.
- */
-void
-add_command__Cli(Cli *self, CliCommand *command);
-
-/**
- *
- * @brief Add option to options.
- */
-void
-add_option__Cli(Cli *self, CliOption *option);
-
-/**
- *
- * @brief Set `has_value` to `CLI_VALUE_KIND_SINGLE` or
- * `CLI_VALUE_KIND_MULTIPLE`.
- */
-inline void
-set_value__Cli(Cli *self, enum CliValueKind has_value)
-{
-    self->has_value = has_value;
-}
+CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name);
 
 /**
  *
