@@ -30,22 +30,15 @@
 typedef struct CliResultCommand
 {
     Usize id;
-    Vec *options; // Vec<CliResultOption*>*?
 } CliResultCommand;
 
 /**
  *
  * @brief Construct CliResultCommand type.
  */
-inline CONSTRUCTOR(CliResultCommand, CliResultCommand, Usize id, Vec *options)
+inline CONSTRUCTOR(CliResultCommand, CliResultCommand, Usize id)
 {
-    return (CliResultCommand){ .id = id, .options = options };
+    return (CliResultCommand){ .id = id };
 }
-
-/**
- *
- * @brief Free CliResultCommand type.
- */
-DESTRUCTOR(CliResultCommand, const CliResultCommand *self);
 
 #endif // LILY_BASE_CLI_RESULT_COMMAND_H
