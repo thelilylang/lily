@@ -50,12 +50,7 @@ typedef struct Cli
  *
  * @brief Construct Cli type.
  */
-CONSTRUCTOR(Cli,
-            Cli,
-            const SizedArray *args,
-            const char *name,
-            bool has_commands,
-            bool has_options);
+CONSTRUCTOR(Cli, Cli, const SizedArray *args, const char *name);
 
 /**
  *

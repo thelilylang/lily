@@ -28,12 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-CONSTRUCTOR(Cli,
-            Cli,
-            const SizedArray *args,
-            const char *name,
-            bool has_commands,
-            bool has_options)
+CONSTRUCTOR(Cli, Cli, const SizedArray *args, const char *name)
 {
     String *full_command = NEW(String);
 
@@ -52,13 +47,10 @@ CONSTRUCTOR(Cli,
     }
 
     return (Cli){ .full_command = full_command,
-                  .usage = format__String("{s} {s} {s}",
-                                          name,
-                                          has_commands ? "[COMMANDS]" : "",
-                                          has_options ? "[OPTIONS]" : ""),
+                  .usage = NULL,
                   .name = name,
-                  .commands = has_commands ? NEW(OrderedHashMap) : NULL,
-                  .options = has_options ? NEW(OrderedHashMap) : NULL,
+                  .commands = NEW(OrderedHashMap),
+                  .options = NEW(OrderedHashMap),
                   .sections = NULL,
                   .has_value = CLI_VALUE_KIND_NONE };
 }
@@ -66,7 +58,6 @@ CONSTRUCTOR(Cli,
 void
 add_command__Cli(Cli *self, CliCommand *command)
 {
-    ASSERT(self->commands);
     ASSERT(
       !insert__OrderedHashMap(self->commands, (char *)command->name, command));
 }
@@ -74,7 +65,6 @@ add_command__Cli(Cli *self, CliCommand *command)
 void
 add_option__Cli(Cli *self, CliOption *option)
 {
-    ASSERT(self->options);
     ASSERT(
       !insert__OrderedHashMap(self->options, (char *)option->name, option));
 }
@@ -84,15 +74,11 @@ DESTRUCTOR(Cli, const Cli *self)
     FREE(String, self->full_command);
     FREE(String, self->usage);
 
-    if (self->commands) {
-        FREE_ORD_HASHMAP_VALUES(self->commands, CliCommand);
-        FREE(OrderedHashMap, self->commands);
-    }
+    FREE_ORD_HASHMAP_VALUES(self->commands, CliCommand);
+    FREE(OrderedHashMap, self->commands);
 
-    if (self->options) {
-        FREE_ORD_HASHMAP_VALUES(self->options, CliOption);
-        FREE(OrderedHashMap, self->options);
-    }
+    FREE_ORD_HASHMAP_VALUES(self->options, CliOption);
+    FREE(OrderedHashMap, self->options);
 
     if (self->sections) {
         FREE_BUFFER_ITEMS(
