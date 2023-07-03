@@ -40,6 +40,7 @@ typedef struct LilycConfig
     bool dump_scanner;
     bool dump_parser;
     bool dump_typecheck;
+    bool dump_mir;
     bool dump_ir;
     bool cc_ir;
     bool cpp_ir;
@@ -63,6 +64,7 @@ inline CONSTRUCTOR(LilycConfig,
                    bool dump_scanner,
                    bool dump_parser,
                    bool dump_typecheck,
+                   bool dump_mir,
                    bool dump_ir,
                    bool cc_ir,
                    bool cpp_ir,
@@ -79,6 +81,7 @@ inline CONSTRUCTOR(LilycConfig,
                           .dump_scanner = dump_scanner,
                           .dump_parser = dump_parser,
                           .dump_typecheck = dump_typecheck,
+                          .dump_mir = dump_mir,
                           .dump_ir = dump_ir,
                           .cc_ir = cc_ir,
                           .cpp_ir = cpp_ir,
