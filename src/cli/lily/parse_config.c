@@ -79,7 +79,7 @@ parse_build__LilyParseConfig(const Vec *results)
         ASSERT(current->kind == CLI_RESULT_KIND_OPTION);
 
         switch (current->option->id) {
-            case 0:
+            case 2:
                 verbose = true;
                 break;
             default:
@@ -302,13 +302,14 @@ parse_to__LilyParseConfig(const Vec *results)
                 break;
             case CLI_RESULT_KIND_OPTION:
                 switch (current->option->id) {
-                    case 0:
+                    // 0 and 1 id are used by help option
+                    case 2:
                         cc = true;
                         break;
-                    case 1:
+                    case 3:
                         cpp = true;
                         break;
-                    case 2:
+                    case 4:
                         js = true;
                         break;
                     default:

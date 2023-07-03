@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_PARSE_CONFIG_H
-#define LILY_CLI_PARSE_CONFIG_H
+#ifndef LILY_CLI_LILY_PARSE_CONFIG_H
+#define LILY_CLI_LILY_PARSE_CONFIG_H
 
 #include <base/vec.h>
 
@@ -32,4 +32,4 @@
 LilyConfig
 run__LilyParseConfig(const Vec *results);
 
-#endif // LILY_CLI_PARSE_CONFIG_H
+#endif // LILY_CLI_LILY_PARSE_CONFIG_H
