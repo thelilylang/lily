@@ -31,9 +31,8 @@
 #include <base/platform.h>
 #include <base/str.h>
 
-// #include <cli/config/build.h>
-#include <cli/config/compile.h>
 #include <cli/emit.h>
+#include <cli/lilyc/config.h>
 
 #include <core/shared/target/arch.h>
 #include <core/shared/target/os.h>
@@ -84,24 +83,24 @@ CONSTRUCTOR(LilyPackageConfig,
 
 /**
  *
- * @brief Construct LilyPackageConfig type from CompileConfig type.
+ * @brief Construct LilyPackageConfig type from LilycConfig type.
  */
 inline LilyPackageConfig
-from_CompileConfig__LilyPackageConfig(const CompileConfig *compile_config)
+from_CompileConfig__LilyPackageConfig(const LilycConfig *lilyc_config)
 {
     return NEW(LilyPackageConfig,
-               compile_config->target,
-               compile_config->dump_scanner,
-               compile_config->dump_parser,
-               compile_config->dump_typecheck,
-               compile_config->dump_ir,
-               compile_config->run_scanner,
-               compile_config->run_parser,
-               compile_config->run_typecheck,
-               compile_config->run_ir,
-               compile_config->cc_ir,
-               compile_config->cpp_ir,
-               compile_config->js_ir,
+               lilyc_config->target,
+               lilyc_config->dump_scanner,
+               lilyc_config->dump_parser,
+               lilyc_config->dump_typecheck,
+               lilyc_config->dump_ir,
+               lilyc_config->run_scanner,
+               lilyc_config->run_parser,
+               lilyc_config->run_typecheck,
+               lilyc_config->run_ir,
+               lilyc_config->cc_ir,
+               lilyc_config->cpp_ir,
+               lilyc_config->js_ir,
                0,
                0);
 }

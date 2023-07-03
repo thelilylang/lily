@@ -27,8 +27,8 @@
 #include <base/file.h>
 #include <base/new.h>
 
-#include <cli/config/compile.h>
 #include <cli/emit.h>
+#include <cli/lilyc/config.h>
 
 #include <core/lily/ir/llvm/generator.h>
 #include <core/lily/lily.h>
@@ -150,7 +150,7 @@ CONSTRUCTOR(LilyPackage *,
 }
 
 LilyPackage *
-build__LilyPackage(const CompileConfig *config,
+build__LilyPackage(const LilycConfig *config,
                    enum LilyVisibility visibility,
                    enum LilyPackageStatus status,
                    const char *default_path,
@@ -280,10 +280,10 @@ run__LilyPackage(void *self)
     run__LilyParser(&tree->package->parser, false);
     run__LilyAnalysis(&tree->package->analysis);
     run__LilyMir(tree->package);
-    run__LilyIr(tree->package);
+    // run__LilyIr(tree->package);
 
     if (tree->package->status == LILY_PACKAGE_STATUS_MAIN) {
-        run__LilyLinker(tree->package);
+        // run__LilyLinker(tree->package);
     }
 
     tree->is_done = true;
@@ -320,7 +320,7 @@ run__LilyPackage(void *self)
 }
 
 LilyPackage *
-compile__LilyPackage(const CompileConfig *config,
+compile__LilyPackage(const LilycConfig *config,
                      enum LilyVisibility visibility,
                      enum LilyPackageStatus status,
                      const char *default_path,

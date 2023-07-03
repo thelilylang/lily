@@ -29,7 +29,7 @@
 #include <base/types.h>
 #include <base/vec.h>
 
-#include <cli/config/compile.h>
+#include <cli/lilyc/config.h>
 
 #include <core/lily/analysis.h>
 #include <core/lily/builtin.h>
@@ -130,7 +130,7 @@ CONSTRUCTOR(LilyPackage *,
  * @return LilyPackage*?
  */
 LilyPackage *
-build__LilyPackage(const CompileConfig *config,
+build__LilyPackage(const LilycConfig *config,
                    enum LilyVisibility visibility,
                    enum LilyPackageStatus status,
                    const char *default_path,
@@ -143,7 +143,7 @@ build__LilyPackage(const CompileConfig *config,
  * @return LilyPackage*?
  */
 LilyPackage *
-compile__LilyPackage(const CompileConfig *config,
+compile__LilyPackage(const LilycConfig *config,
                      enum LilyVisibility visibility,
                      enum LilyPackageStatus status,
                      const char *default_path,
