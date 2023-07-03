@@ -78,7 +78,7 @@ build_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "build");
 
-    cmd->$defer(cmd, &build_options__CliLily);
+    cmd->$help(cmd, "Build project")->$defer(cmd, &build_options__CliLily);
 
     return cmd;
 }
@@ -88,7 +88,7 @@ cc_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "cc");
 
-    cmd->$defer(cmd, &cc_options__CliLily);
+    cmd->$help(cmd, "C compiler")->$defer(cmd, &cc_options__CliLily);
 
     return cmd;
 }
@@ -98,7 +98,7 @@ cpp_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "c++");
 
-    cmd->$defer(cmd, &cpp_options__CliLily);
+    cmd->$help(cmd, "C++ compiler")->$defer(cmd, &cpp_options__CliLily);
 
     return cmd;
 }
@@ -108,7 +108,8 @@ compile_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "compile");
 
-    cmd->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
+    cmd->$help(cmd, "Compile file")
+      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
       ->$defer(cmd, &compile_options__CliLily);
 
     return cmd;
@@ -119,7 +120,7 @@ init_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "init");
 
-    cmd->$defer(cmd, &init_options__CliLily);
+    cmd->$help(cmd, "Init project")->$defer(cmd, &init_options__CliLily);
 
     return cmd;
 }
@@ -129,7 +130,7 @@ new_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "new");
 
-    cmd->$defer(cmd, &new_options__CliLily);
+    cmd->$help(cmd, "New project")->$defer(cmd, &new_options__CliLily);
 
     return cmd;
 }
@@ -139,7 +140,7 @@ run_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "run");
 
-    cmd->$defer(cmd, &run_options__CliLily);
+    cmd->$help(cmd, "Run file")->$defer(cmd, &run_options__CliLily);
 
     return cmd;
 }
@@ -149,7 +150,7 @@ to_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "to");
 
-    cmd->$defer(cmd, &to_options__CliLily);
+    cmd->$help(cmd, "Transpile to...")->$defer(cmd, &to_options__CliLily);
 
     return cmd;
 }
@@ -202,8 +203,7 @@ compile_options__CliLily(CliCommand *cmd)
               "Specify the target of the compilation (<arch>-<os>-<abi>)")
       ->$value(target, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "TARGET", true));
 
-    return cmd->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
-      ->$option(cmd, dump_scanner)
+    return cmd->$option(cmd, dump_scanner)
       ->$option(cmd, dump_parser)
       ->$option(cmd, dump_tc)
       ->$option(cmd, dump_mir)
