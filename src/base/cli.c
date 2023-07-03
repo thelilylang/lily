@@ -25,6 +25,7 @@
 #include <base/assert.h>
 #include <base/cli.h>
 #include <base/cli/diagnostic.h>
+#include <base/cli/help.h>
 #include <base/cli/result.h>
 #include <base/format.h>
 
@@ -108,7 +109,7 @@ CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name)
         CliOption *help = NEW(CliOption, "--help");
         help->$help(help, "Print the help")
           ->$default_action(
-            help, NEW(CliDefaultAction, CLI_DEFAULT_ACTION_KIND_HELP, "help"))
+            help, NEW_VARIANT(CliDefaultAction, help, &generate_help__CliHelp))
           ->$short_name(help, "-h");
 
         self.$option(&self, help);
@@ -147,8 +148,7 @@ version__Cli(Cli *self, char *version)
         CliOption *version = NEW(CliOption, "--version");
         version->$help(version, "Print the version")
           ->$default_action(
-            version,
-            NEW(CliDefaultAction, CLI_DEFAULT_ACTION_KIND_HELP, self->version))
+            version, NEW_VARIANT(CliDefaultAction, version, self->version))
           ->$short_name(version, "-v");
 
         self->$option(self, version);
@@ -486,7 +486,7 @@ parse_option__Cli(Cli *self)
 
             if (option) {
                 if (option->default_action) {
-                    print__CliDefaultAction(option->default_action, self);
+                    print__CliDefaultAction(option->default_action, self, NULL);
                 }
 
                 const Usize *option_id =
