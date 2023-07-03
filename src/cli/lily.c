@@ -23,6 +23,7 @@
  */
 
 #include <cli/lily.h>
+#include <cli/lilyc.h>
 #include <cli/version.h>
 
 static CliCommand *
@@ -210,44 +211,9 @@ cpp_options__CliLily(CliCommand *cmd)
 CliCommand *
 compile_options__CliLily(CliCommand *cmd)
 {
-    CliOption *dump_scanner = NEW(CliOption, "--dump-scanner");
-    CliOption *dump_parser = NEW(CliOption, "--dump-parser");
-    CliOption *dump_tc = NEW(CliOption, "--dump-tc");
-    CliOption *dump_mir = NEW(CliOption, "--dump-mir");
-    CliOption *dump_ir = NEW(CliOption, "--dump-ir");
-    CliOption *llvm_ir = NEW(CliOption, "--llvm-ir");
-    CliOption *cc_ir = NEW(CliOption, "--cc-ir");
-    CliOption *cpp_ir = NEW(CliOption, "--cpp-ir");
-    CliOption *js_ir = NEW(CliOption, "--js-ir");
-    CliOption *wasm_ir = NEW(CliOption, "--wasm-ir");
-    CliOption *target = NEW(CliOption, "--target");
+    LILYC_OPTIONS(cmd);
 
-    dump_scanner->$help(dump_scanner, "Dump scanner output");
-    dump_parser->$help(dump_parser, "Dump parser output");
-    dump_tc->$help(dump_tc, "Dump typecheck output");
-    dump_mir->$help(dump_mir, "Dump MIR output");
-    dump_ir->$help(dump_ir, "Dump IR output");
-    llvm_ir->$help(llvm_ir, "Run LLVM as IR (by default)");
-    cc_ir->$help(cc_ir, "Use C as IR");
-    cpp_ir->$help(cpp_ir, "Use C++ as IR");
-    js_ir->$help(js_ir, "Use JS as IR");
-    wasm_ir->$help(wasm_ir, "Use WASM as IR");
-    target
-      ->$help(target,
-              "Specify the target of the compilation (<arch>-<os>-<abi>)")
-      ->$value(target, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "TARGET", true));
-
-    return cmd->$option(cmd, dump_scanner)
-      ->$option(cmd, dump_parser)
-      ->$option(cmd, dump_tc)
-      ->$option(cmd, dump_mir)
-      ->$option(cmd, dump_ir)
-      ->$option(cmd, llvm_ir)
-      ->$option(cmd, cc_ir)
-      ->$option(cmd, cpp_ir)
-      ->$option(cmd, js_ir)
-      ->$option(cmd, wasm_ir)
-      ->$option(cmd, target);
+    return cmd;
 }
 
 CliCommand *
