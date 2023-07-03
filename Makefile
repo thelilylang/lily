@@ -16,20 +16,23 @@ debug:
 format:
 	${CLANG_FORMAT} ./include/base/*.h	
 	${CLANG_FORMAT} ./include/base/cli/*.h	
+	${CLANG_FORMAT} ./include/base/cli/result/*.h	
 	${CLANG_FORMAT} ./include/base/hash/*.h
 	${CLANG_FORMAT} ./include/cli/*.h
-	${CLANG_FORMAT} ./include/cli/config/*.h
-	${CLANG_FORMAT} ./include/cli/option/*.h
+	${CLANG_FORMAT} ./include/cli/lily/*.h
+	${CLANG_FORMAT} ./include/cli/lily/config/*.h
+	${CLANG_FORMAT} ./include/cli/lilyc/*.h
 	${CLANG_FORMAT} ./include/command/*.h
-	${CLANG_FORMAT} ./include/command/build/*.h
-	${CLANG_FORMAT} ./include/command/cc/*.h
-	${CLANG_FORMAT} ./include/command/compile/*.h
-	${CLANG_FORMAT} ./include/command/cpp/*.h
-	${CLANG_FORMAT} ./include/command/init/*.h
-	${CLANG_FORMAT} ./include/command/new/*.h
-	${CLANG_FORMAT} ./include/command/run/*.h
-	${CLANG_FORMAT} ./include/command/test/*.h
-	${CLANG_FORMAT} ./include/command/to/*.h
+	${CLANG_FORMAT} ./include/command/lily/*.h
+	${CLANG_FORMAT} ./include/command/lily/build/*.h
+	${CLANG_FORMAT} ./include/command/lily/cc/*.h
+	${CLANG_FORMAT} ./include/command/lily/compile/*.h
+	${CLANG_FORMAT} ./include/command/lily/cpp/*.h
+	${CLANG_FORMAT} ./include/command/lily/init/*.h
+	${CLANG_FORMAT} ./include/command/lily/new/*.h
+	${CLANG_FORMAT} ./include/command/lily/run/*.h
+	${CLANG_FORMAT} ./include/command/lily/test/*.h
+	${CLANG_FORMAT} ./include/command/lily/to/*.h
 	${CLANG_FORMAT} ./include/core/cc/*.h
 	${CLANG_FORMAT} ./include/core/cpp/*.h
 	${CLANG_FORMAT} ./include/core/lily/*.h
@@ -76,20 +79,23 @@ format:
 	${CLANG_FORMAT} ./lib/sys/*.c
 	${CLANG_FORMAT} ./src/base/*.c
 	${CLANG_FORMAT} ./src/base/cli/*.c
+	${CLANG_FORMAT} ./src/base/cli/result/*.c
 	${CLANG_FORMAT} ./src/base/hash/*.c
 	${CLANG_FORMAT} ./src/bin/lily/*.c
 	${CLANG_FORMAT} ./src/bin/lilyc/*.c
 	${CLANG_FORMAT} ./src/cli/*.c
-	${CLANG_FORMAT} ./src/cli/option/*.c
-	${CLANG_FORMAT} ./src/command/build/*.c
-	${CLANG_FORMAT} ./src/command/cc/*.c
-	${CLANG_FORMAT} ./src/command/compile/*.c
-	${CLANG_FORMAT} ./src/command/cpp/*.c
-	${CLANG_FORMAT} ./src/command/init/*.c
-	${CLANG_FORMAT} ./src/command/new/*.c
-	${CLANG_FORMAT} ./src/command/run/*.c
-	${CLANG_FORMAT} ./src/command/test/*.c
-	${CLANG_FORMAT} ./src/command/to/*.c
+	${CLANG_FORMAT} ./src/cli/lily/*.c
+	${CLANG_FORMAT} ./src/cli/lilyc/*.c
+	${CLANG_FORMAT} ./src/command/*.c
+	${CLANG_FORMAT} ./src/command/lily/build/*.c
+	${CLANG_FORMAT} ./src/command/lily/cc/*.c
+	${CLANG_FORMAT} ./src/command/lily/compile/*.c
+	${CLANG_FORMAT} ./src/command/lily/cpp/*.c
+	${CLANG_FORMAT} ./src/command/lily/init/*.c
+	${CLANG_FORMAT} ./src/command/lily/new/*.c
+	${CLANG_FORMAT} ./src/command/lily/run/*.c
+	${CLANG_FORMAT} ./src/command/lily/test/*.c
+	${CLANG_FORMAT} ./src/command/lily/to/*.c
 	${CLANG_FORMAT} ./src/core/cc/*.c
 	${CLANG_FORMAT} ./src/core/cpp/*.c
 	${CLANG_FORMAT} ./src/core/lily/*.c

@@ -22,19 +22,12 @@
  * SOFTWARE.
  */
 
-#include <base/cli/value.h>
+#ifndef LILY_COMMAND_LILYC_H
+#define LILY_COMMAND_LILYC_H
 
-CONSTRUCTOR(CliValue *,
-            CliValue,
-            enum CliValueKind kind,
-            char *name,
-            bool is_required)
-{
-    CliValue *self = lily_malloc(sizeof(CliValue));
+#include <cli/lilyc/config.h>
 
-    self->kind = kind;
-    self->name = name;
-    self->is_required = is_required;
+void
+run__Lilyc(const LilycConfig *config);
 
-    return self;
-}
+#endif // LILY_COMMAND_LILYC_H

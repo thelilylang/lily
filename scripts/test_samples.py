@@ -6,7 +6,7 @@ from glob import glob
 from termcolor import colored
 
 FILES = [y for x in os.walk("./tests/samples") for y in glob(os.path.join(x[0], '*.lily'))]
-COMMAND = "./build/Debug/lily compile"
+COMMAND = "./build/Debug/lilyc"
 
 def print_summary(success: int, failed: int) -> None:
     sys.stdout.write(f"\r\x1b[31mfailed: {failed}\x1b[0m, \x1b[32msuccess: {success}\x1b[0m, \x1b[30mtotal: {len(FILES)}\x1b[0m")

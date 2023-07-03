@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/cli/result.h>
 #include <base/new.h>
 
@@ -29,39 +30,73 @@
 #include <stdlib.h>
 
 /// @brief Free CliResult type (CLI_RESULT_KIND_COMMAND).
-static VARIANT_DESTRUCTOR(CliResult, command, const CliResult *self);
+static inline VARIANT_DESTRUCTOR(CliResult, command, CliResult *self);
 
-/// @brief Free CliResult type (CLI_RESULT_KIND_OPTIONS).
-static VARIANT_DESTRUCTOR(CliResult, options, const CliResult *self);
+/// @brief Free CliResult type (CLI_RESULT_KIND_OPTION).
+static VARIANT_DESTRUCTOR(CliResult, option, CliResult *self);
 
-VARIANT_DESTRUCTOR(CliResult, command, const CliResult *self)
+/// @brief Free CliResult type (CLI_RESULT_KIND_VALUE).
+static VARIANT_DESTRUCTOR(CliResult, value, CliResult *self);
+
+VARIANT_CONSTRUCTOR(CliResult *, CliResult, command, CliResultCommand command)
 {
-    if (self->values) {
-        FREE(Vec, self->values);
-    }
+    CliResult *self = lily_malloc(sizeof(CliResult));
 
+    self->kind = CLI_RESULT_KIND_COMMAND;
+    self->command = command;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CliResult *, CliResult, option, CliResultOption *option)
+{
+    CliResult *self = lily_malloc(sizeof(CliResult));
+
+    self->kind = CLI_RESULT_KIND_OPTION;
+    self->option = option;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CliResult *, CliResult, value, CliResultValue *value)
+{
+    CliResult *self = lily_malloc(sizeof(CliResult));
+
+    self->kind = CLI_RESULT_KIND_VALUE;
+    self->value = value;
+
+    return self;
+}
+
+VARIANT_DESTRUCTOR(CliResult, command, CliResult *self)
+{
     FREE(CliResultCommand, &self->command);
+    lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(CliResult, options, const CliResult *self)
+VARIANT_DESTRUCTOR(CliResult, option, CliResult *self)
 {
-    if (self->values) {
-        FREE(Vec, self->values);
-    }
-
-    FREE_BUFFER_ITEMS(
-      self->options->buffer, self->options->len, CliResultOption);
-    FREE(Vec, self->options);
+    FREE(CliResultOption, self->option);
+    lily_free(self);
 }
 
-DESTRUCTOR(CliResult, const CliResult *self)
+VARIANT_DESTRUCTOR(CliResult, value, CliResult *self)
+{
+    FREE(CliResultValue, self->value);
+    lily_free(self);
+}
+
+DESTRUCTOR(CliResult, CliResult *self)
 {
     switch (self->kind) {
         case CLI_RESULT_KIND_COMMAND:
             FREE_VARIANT(CliResult, command, self);
             break;
-        case CLI_RESULT_KIND_OPTIONS:
-            FREE_VARIANT(CliResult, options, self);
+        case CLI_RESULT_KIND_OPTION:
+            FREE_VARIANT(CliResult, option, self);
+            break;
+        case CLI_RESULT_KIND_VALUE:
+            FREE_VARIANT(CliResult, value, self);
             break;
         default:
             UNREACHABLE("unknown variant");

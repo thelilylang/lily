@@ -22,19 +22,49 @@
  * SOFTWARE.
  */
 
-#include <base/cli/value.h>
+#ifndef LILY_BASE_CLI_DIAGNOSTIC_H
+#define LILY_BASE_CLI_DIAGNOSTIC_H
 
-CONSTRUCTOR(CliValue *,
-            CliValue,
-            enum CliValueKind kind,
-            char *name,
-            bool is_required)
+#include <base/string.h>
+#include <base/types.h>
+
+enum CliDiagnosticKind
 {
-    CliValue *self = lily_malloc(sizeof(CliValue));
+    CLI_DIAGNOSTIC_KIND_ERROR,
+    CLI_DIAGNOSTIC_KIND_NOTE,
+    CLI_DIAGNOSTIC_KIND_WARNING,
+};
 
-    self->kind = kind;
-    self->name = name;
-    self->is_required = is_required;
+typedef struct CliDiagnostic
+{
+    enum CliDiagnosticKind kind;
+    const char *msg;
+    Usize arg_count;
+    String *full_command; // String* (&)
+} CliDiagnostic;
 
-    return self;
+/**
+ *
+ * @brief Construct CliDiagnostic type.
+ */
+inline CONSTRUCTOR(CliDiagnostic,
+                   CliDiagnostic,
+                   enum CliDiagnosticKind kind,
+                   const char *msg,
+                   Usize arg_count,
+                   String *full_command)
+{
+    return (CliDiagnostic){ .kind = kind,
+                            .msg = msg,
+                            .arg_count = arg_count,
+                            .full_command = full_command };
 }
+
+/**
+ *
+ * @brief Emit a diagnostic (can exit(1) when it emits an error).
+ */
+void
+emit__CliDiagnostic(const CliDiagnostic *self);
+
+#endif // LILY_BASE_CLI_DIAGNOSTIC_H

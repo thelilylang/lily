@@ -22,19 +22,19 @@
  * SOFTWARE.
  */
 
-#include <base/cli/value.h>
+#ifndef LILY_BASE_CLI_HELP_H
+#define LILY_BASE_CLI_HELP_H
 
-CONSTRUCTOR(CliValue *,
-            CliValue,
-            enum CliValueKind kind,
-            char *name,
-            bool is_required)
-{
-    CliValue *self = lily_malloc(sizeof(CliValue));
+#include <base/cli.h>
+#include <base/string.h>
 
-    self->kind = kind;
-    self->name = name;
-    self->is_required = is_required;
+/**
+ *
+ * @brief Generate help text.
+ * @param cli const Cli*? (&)
+ * @param cmd const CliCommand*? (&)
+ */
+String *
+generate_help__CliHelp(const Cli *cli, const CliCommand *cmd);
 
-    return self;
-}
+#endif // LILY_BASE_CLI_HELP_H

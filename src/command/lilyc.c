@@ -22,58 +22,40 @@
  * SOFTWARE.
  */
 
-#include <base/cli/result.h>
-#include <base/macros.h>
 #include <base/new.h>
-#include <base/platform.h>
 
-#include <cli/lily.h>
-#include <cli/lily/parse_config.h>
+#include <cli/lilyc/config.h>
 
-#include <command/lily/compile.h>
+#include <command/lilyc.h>
 
-#include <stdio.h>
+#include <core/lily/lily.h>
+#include <core/lily/package.h>
+#include <core/lily/program.h>
 
-int
-main(int argc, char **argv)
+#include <stdlib.h>
+
+void
+run__Lilyc(const LilycConfig *config)
 {
-    Vec *args = NEW(Vec);
+    // Get the default path
+    char *default_path = generate_default_path((char *)config->filename);
 
-    for (Usize i = 0; i < argc; ++i)
-        push__Vec(args, argv[i]);
+    LilyProgram program = NEW(LilyProgram, LILY_PROGRAM_KIND_EXE);
 
-    Cli cli = build__CliLily(args);
+    LilyPackage *pkg = compile__LilyPackage(config,
+                                            LILY_VISIBILITY_PUBLIC,
+                                            LILY_PACKAGE_STATUS_MAIN,
+                                            default_path,
+                                            &program);
 
-    Vec *res = cli.$parse(&cli);
-    LilyConfig config = run__LilyParseConfig(res);
+    lily_free(default_path);
 
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, res);
-    FREE(Cli, &cli);
+#if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILE)
+    FREE(LilyPackage, pkg);
+#endif
 
-    switch (config.kind) {
-        case LILY_CONFIG_KIND_BUILD:
-            break;
-        case LILY_CONFIG_KIND_CC:
-            break;
-        case LILY_CONFIG_KIND_COMPILE:
-            run__LilyCompile(args);
-            break;
-        case LILY_CONFIG_KIND_CPP:
-            break;
-        case LILY_CONFIG_KIND_INIT:
-            break;
-        case LILY_CONFIG_KIND_NEW:
-            break;
-        case LILY_CONFIG_KIND_RUN:
-            break;
-        case LILY_CONFIG_KIND_TEST:
-            break;
-        case LILY_CONFIG_KIND_TO:
-            break;
-    }
-
-    FREE(Vec, args);
-
-    return 0;
+    // NOTE: Do not move this `free` otherwise it could cause double free. In
+    // short, always free the program pointer after the package
+    // pointer.
+    FREE(LilyProgram, &program);
 }

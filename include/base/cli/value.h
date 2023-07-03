@@ -25,56 +25,41 @@
 #ifndef LILY_BASE_CLI_VALUE_H
 #define LILY_BASE_CLI_VALUE_H
 
-#include <base/vec.h>
+#include <base/alloc.h>
+#include <base/macros.h>
+
+#include <stdbool.h>
 
 enum CliValueKind
 {
     CLI_VALUE_KIND_SINGLE,
     CLI_VALUE_KIND_MULTIPLE,
-    CLI_VALUE_KIND_NONE
 };
 
 typedef struct CliValue
 {
     enum CliValueKind kind;
-    union
-    {
-        char *single;
-        Vec *multiple; // Vec<char*>*
-    };
+    const char *name;
+    bool is_required;
 } CliValue;
 
 /**
  *
- * @brief Construct CliValue type (CLI_VALUE_KIND_SINGLE).
+ * @brief Construct CliValue type.
  */
-inline VARIANT_CONSTRUCTOR(CliValue, CliValue, single, char *single)
-{
-    return (CliValue){ .kind = CLI_VALUE_KIND_SINGLE, .single = single };
-}
-
-/**
- *
- * @brief Construct CliValue type (CLI_VALUE_KIND_MULTIPLE).
- */
-inline VARIANT_CONSTRUCTOR(CliValue, CliValue, multiple, Vec *multiple)
-{
-    return (CliValue){ .kind = CLI_VALUE_KIND_MULTIPLE, .multiple = multiple };
-}
-
-/**
- *
- * @brief Construct CliValue type (CLI_VALUE_KIND_NONE).
- */
-inline VARIANT_CONSTRUCTOR(CliValue, CliValue, none)
-{
-    return (CliValue){ .kind = CLI_VALUE_KIND_NONE };
-}
+CONSTRUCTOR(CliValue *,
+            CliValue,
+            enum CliValueKind kind,
+            char *name,
+            bool is_required);
 
 /**
  *
  * @brief Free CliValue type.
  */
-DESTRUCTOR(CliValue, const CliValue *self);
+inline DESTRUCTOR(CliValue, CliValue *self)
+{
+    lily_free(self);
+}
 
 #endif // LILY_BASE_CLI_VALUE_H

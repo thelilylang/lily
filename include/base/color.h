@@ -35,6 +35,13 @@
 #define CYAN(s) cyan__Color(s)
 #define BOLD(s) bold__Style(s)
 
+#define RED_BOLD(s) red_bold__Color(s)
+#define GREEN_BOLD(s) green_bold__Color(s)
+#define YELLOW_BOLD(s) yellow_bold__Color(s)
+#define BLUE_BOLD(s) blue_bold__Color(s)
+#define MAGENTA_BOLD(s) magenta_bold__Color(s)
+#define CYAN_BOLD(s) cyan_bold__Color(s)
+
 /**
  *
  * @return the formatted char* in red color.
@@ -70,15 +77,59 @@ char *
 magenta__Color(char *s);
 
 /**
+ *
  * @return the formatted char* in cyan color.
  */
 char *
 cyan__Color(char *s);
 
 /**
+ *
  * @return the formatted char* in bold style.
  */
 char *
 bold__Style(char *s);
+
+/**
+ *
+ * @return the formatted char* in red color with bold style.
+ */
+char *
+red_bold__Color(char *s);
+
+/**
+ *
+ * @return the formatted char* in green color with bold style.
+ */
+char *
+green_bold__Color(char *s);
+
+/**
+ *
+ * @return the formatted char* in yellow color with bold style.
+ */
+char *
+yellow_bold__Color(char *s);
+
+/**
+ *
+ * @return the formatted char* in blue color with bold style.
+ */
+char *
+blue_bold__Color(char *s);
+
+/**
+ *
+ * @return the formatted char* in magenta color with bold style.
+ */
+char *
+magenta_bold__Color(char *s);
+
+/**
+ *
+ * @return the formatted char* in cyan color with bold style.
+ */
+char *
+cyan_bold__Color(char *s);
 
 #endif // LILY_BASE_COLOR_H

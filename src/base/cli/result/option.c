@@ -23,21 +23,24 @@
  */
 
 #include <base/alloc.h>
-#include <base/new.h>
 #include <base/cli/result/option.h>
+#include <base/new.h>
 
-CONSTRUCTOR(CliResultOption *, CliResultOption, Usize id, CliValue value)
+CONSTRUCTOR(CliResultOption *, CliResultOption, Usize id, CliResultValue *value)
 {
-	CliResultOption *self = lily_malloc(sizeof(CliResultOption));
+    CliResultOption *self = lily_malloc(sizeof(CliResultOption));
 
-	self->id = id;
-	self->value = value;
+    self->id = id;
+    self->value = value;
 
-	return self;
+    return self;
 }
 
 DESTRUCTOR(CliResultOption, CliResultOption *self)
 {
-	FREE(CliValue, &self->value);
-	lily_free(self);
+    if (self->value) {
+        FREE(CliResultValue, self->value);
+    }
+
+    lily_free(self);
 }

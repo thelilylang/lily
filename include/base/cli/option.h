@@ -25,28 +25,44 @@
 #ifndef LILY_BASE_CLI_OPTION_H
 #define LILY_BASE_CLI_OPTION_H
 
+#include <base/cli/default_action.h>
 #include <base/cli/value.h>
 #include <base/macros.h>
 #include <base/string.h>
 
 typedef struct CliOption
 {
-    String *usage;
-    const char *name;
-    const char *help;
-    enum CliValueKind has_value;
+    const char *name;                 // NOTE: this is the long name (--<name>)
+    char *short_name;                 // char*? (-<letter>)
+    CliValue *value;                  // CliValue*?
+    char *help;                       // char*?
+    CliDefaultAction *default_action; // CliDefaultAction*?
+    Usize ref_count;
+
+    struct CliOption *(*$short_name)(struct CliOption *, char *);
+    struct CliOption *(*$value)(struct CliOption *, CliValue *value);
+    struct CliOption *(*$help)(struct CliOption *, char *);
+    struct CliOption *(*$default_action)(struct CliOption *,
+                                         CliDefaultAction *);
 } CliOption;
 
 /**
  *
  * @brief Construct CliOption type.
  */
-CONSTRUCTOR(CliOption *,
-            CliOption,
-            String *command_usage,
-            const char *name,
-            const char *help,
-            enum CliValueKind has_value);
+CONSTRUCTOR(CliOption *, CliOption, const char *name);
+
+/**
+ *
+ * @brief Pass to ref the CliOption and increment the `ref_count`.
+ * @return LilyCheckedDataType* (&)
+ */
+inline CliOption *
+ref__CliOption(CliOption *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *

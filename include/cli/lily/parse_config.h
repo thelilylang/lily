@@ -22,19 +22,14 @@
  * SOFTWARE.
  */
 
-#include <base/cli/value.h>
+#ifndef LILY_CLI_LILY_PARSE_CONFIG_H
+#define LILY_CLI_LILY_PARSE_CONFIG_H
 
-CONSTRUCTOR(CliValue *,
-            CliValue,
-            enum CliValueKind kind,
-            char *name,
-            bool is_required)
-{
-    CliValue *self = lily_malloc(sizeof(CliValue));
+#include <base/vec.h>
 
-    self->kind = kind;
-    self->name = name;
-    self->is_required = is_required;
+#include <cli/lily/config.h>
 
-    return self;
-}
+LilyConfig
+run__LilyParseConfig(const Vec *results);
+
+#endif // LILY_CLI_LILY_PARSE_CONFIG_H

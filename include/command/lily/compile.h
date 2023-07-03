@@ -22,19 +22,9 @@
  * SOFTWARE.
  */
 
-#include <base/cli/value.h>
+#ifndef LILY_COMMAND_LILY_COMPILE_H
+#define LILY_COMMAND_LILY_COMPILE_H
 
-CONSTRUCTOR(CliValue *,
-            CliValue,
-            enum CliValueKind kind,
-            char *name,
-            bool is_required)
-{
-    CliValue *self = lily_malloc(sizeof(CliValue));
+#include <command/lily/compile/compile.h>
 
-    self->kind = kind;
-    self->name = name;
-    self->is_required = is_required;
-
-    return self;
-}
+#endif // LILY_COMMAND_LILY_COMPILE_H

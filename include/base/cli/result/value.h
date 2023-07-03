@@ -22,19 +22,52 @@
  * SOFTWARE.
  */
 
-#include <base/cli/value.h>
+#ifndef LILY_BASE_CLI_RESULT_VALUE_H
+#define LILY_BASE_CLI_RESULT_VALUE_H
 
-CONSTRUCTOR(CliValue *,
-            CliValue,
-            enum CliValueKind kind,
-            char *name,
-            bool is_required)
+#include <base/vec.h>
+
+enum CliResultValueKind
 {
-    CliValue *self = lily_malloc(sizeof(CliValue));
+    CLI_RESULT_VALUE_KIND_SINGLE,
+    CLI_RESULT_VALUE_KIND_MULTIPLE
+};
 
-    self->kind = kind;
-    self->name = name;
-    self->is_required = is_required;
+typedef struct CliResultValue
+{
+    enum CliResultValueKind kind;
+    const char *name;
+    union
+    {
+        char *single;
+        Vec *multiple; // Vec<char*>*
+    };
+} CliResultValue;
 
-    return self;
-}
+/**
+ *
+ * @brief Construct CliResultValue type (CLI_RESULT_VALUE_KIND_SINGLE).
+ */
+VARIANT_CONSTRUCTOR(CliResultValue *,
+                    CliResultValue,
+                    single,
+                    const char *name,
+                    char *single);
+
+/**
+ *
+ * @brief Construct CliResultValue type (CLI_RESULT_VALUE_KIND_MULTIPLE).
+ */
+VARIANT_CONSTRUCTOR(CliResultValue *,
+                    CliResultValue,
+                    multiple,
+                    const char *name,
+                    Vec *multiple);
+
+/**
+ *
+ * @brief Free CliResultValue type.
+ */
+DESTRUCTOR(CliResultValue, CliResultValue *self);
+
+#endif // LILY_BASE_CLI_RESULT_VALUE_H

@@ -22,58 +22,35 @@
  * SOFTWARE.
  */
 
-#include <base/cli/result.h>
-#include <base/macros.h>
 #include <base/new.h>
 #include <base/platform.h>
+#include <base/string.h>
 
-#include <cli/lily.h>
-#include <cli/lily/parse_config.h>
+#include <command/lily/compile/compile.h>
 
-#include <command/lily/compile.h>
+#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
+#include <stdlib.h>
+#elif defined(LILY_WINDOWS_OS)
+#include <process.h>
+#else
+#error "this OS is not yet supported"
+#endif
 
-#include <stdio.h>
-
-int
-main(int argc, char **argv)
+void
+run__LilyCompile(Vec *args)
 {
-    Vec *args = NEW(Vec);
+#ifdef ENV_LOCAL
+    String *command = from__String("./build/Debug/lilyc ");
+#else
+    String *command = from__String("lilyc ");
+#endif
 
-    for (Usize i = 0; i < argc; ++i)
-        push__Vec(args, argv[i]);
-
-    Cli cli = build__CliLily(args);
-
-    Vec *res = cli.$parse(&cli);
-    LilyConfig config = run__LilyParseConfig(res);
-
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, res);
-    FREE(Cli, &cli);
-
-    switch (config.kind) {
-        case LILY_CONFIG_KIND_BUILD:
-            break;
-        case LILY_CONFIG_KIND_CC:
-            break;
-        case LILY_CONFIG_KIND_COMPILE:
-            run__LilyCompile(args);
-            break;
-        case LILY_CONFIG_KIND_CPP:
-            break;
-        case LILY_CONFIG_KIND_INIT:
-            break;
-        case LILY_CONFIG_KIND_NEW:
-            break;
-        case LILY_CONFIG_KIND_RUN:
-            break;
-        case LILY_CONFIG_KIND_TEST:
-            break;
-        case LILY_CONFIG_KIND_TO:
-            break;
+    for (Usize i = 2; i < args->len; ++i) {
+        push_str__String(command, get__Vec(args, i));
+        push__String(command, ' ');
     }
 
-    FREE(Vec, args);
+    system(command->buffer);
 
-    return 0;
+    FREE(String, command);
 }

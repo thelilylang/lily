@@ -30,13 +30,14 @@ set(BASE_SRC
 	src/base/atof.c
 	src/base/atoi.c
 	src/base/cli/command.c
+	src/base/cli/default_action.c
+	src/base/cli/diagnostic.c
+	src/base/cli/help.c
 	src/base/cli/option.c
-	src/base/cli/parser.c
-	src/base/cli/result/command.c
-	src/base/cli/result/option.c
-	src/base/cli/result.c
-	src/base/cli/section.c
 	src/base/cli/value.c
+	src/base/cli/result/option.c
+	src/base/cli/result/value.c
+	src/base/cli/result.c
 	src/base/cli.c
 	src/base/color.c
 	src/base/file.c
@@ -64,29 +65,22 @@ set(BASE_SRC
   	src/base/vec.c)
 
 set(CLI_SRC
-	src/cli/option.c
-	src/cli/parse_command.c
-	src/cli/parse_config.c
-	src/cli/option/build.c
-	src/cli/option/cc.c
-	src/cli/option/compile.c
-	src/cli/option/cpp.c
-	src/cli/option/init.c
-	src/cli/option/new.c
-	src/cli/option/run.c
-	src/cli/option/test.c
-	src/cli/option/to.c)
+	src/cli/lily.c
+	src/cli/lilyc.c
+	src/cli/lily/parse_config.c
+	src/cli/lilyc/parse_config.c)
 
 set(COMMAND_SRC
-	src/command/build/build.c
-	src/command/cc/cc.c
-	src/command/compile/compile.c
-	src/command/cpp/cpp.c
-	src/command/init/init.c
-	src/command/new/new.c
-	src/command/run/run.c
-	src/command/test/test.c
-	src/command/to/to.c)
+	src/command/lily/build/build.c
+	src/command/lily/cc/cc.c
+	src/command/lily/compile/compile.c
+	src/command/lily/cpp/cpp.c
+	src/command/lily/init/init.c
+	src/command/lily/new/new.c
+	src/command/lily/run/run.c
+	src/command/lily/test/test.c
+	src/command/lily/to/to.c
+	src/command/lilyc.c)
 
 set(CORE_SRC
 	src/core/cc/error.c
@@ -436,7 +430,7 @@ add_executable(lily src/bin/lily/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)
 
 add_executable(lilyc src/bin/lilyc/main.c)
-target_link_libraries(lilyc lily_base lily_cli)
+target_link_libraries(lilyc lily_base lily_cli lily_command)
 
 function(move_tests_dir)
 	file(COPY tests DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

@@ -29,6 +29,7 @@
 #include <base/types.h>
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef ENV_DEBUG
 // Vec<T>
@@ -217,6 +218,16 @@ reverse__Vec(Vec *self);
 
 /**
  *
+ * @brief Get item from Vec (no assert).
+ */
+inline void *
+safe_get__Vec(const Vec *self, Usize index)
+{
+    return index < self->len ? self->buffer[index] : NULL;
+}
+
+/**
+ *
  * @brief Take a slice of the vector.
  */
 Vec *
@@ -235,5 +246,26 @@ ungrow__Vec(Vec *self);
  * @brief Free Vec type.
  */
 DESTRUCTOR(Vec, Vec *self);
+
+typedef struct VecIter
+{
+    const Vec *vec;
+    Usize count;
+} VecIter;
+
+inline CONSTRUCTOR(VecIter, VecIter, const Vec *vec)
+{
+    return (VecIter){ .vec = vec, .count = 0 };
+}
+
+/**
+ *
+ * @brief Get the next value.
+ */
+inline void *
+next__VecIter(VecIter *self)
+{
+    return safe_get__Vec(self->vec, self->count++);
+}
 
 #endif // LILY_BASE_VEC_H

@@ -22,19 +22,23 @@
  * SOFTWARE.
  */
 
-#include <base/cli/value.h>
+#ifndef LILY_CLI_LILY_CONFIG_TEST_H
+#define LILY_CLI_LILY_CONFIG_TEST_H
 
-CONSTRUCTOR(CliValue *,
-            CliValue,
-            enum CliValueKind kind,
-            char *name,
-            bool is_required)
+#include <base/macros.h>
+
+typedef struct LilyConfigTest
 {
-    CliValue *self = lily_malloc(sizeof(CliValue));
+    const char *filename;
+} LilyConfigTest;
 
-    self->kind = kind;
-    self->name = name;
-    self->is_required = is_required;
-
-    return self;
+/**
+ *
+ * @brief Construct LilyConfigTest type.
+ */
+inline CONSTRUCTOR(LilyConfigTest, LilyConfigTest, const char *filename)
+{
+    return (LilyConfigTest){ .filename = filename };
 }
+
+#endif // LILY_CLI_LILY_CONFIG_TEST_H

@@ -169,6 +169,16 @@ reverse__String(String *self);
 
 /**
  *
+ * @brief Get item from String (no assert).
+ */
+inline char
+safe_get__String(const String *self, Usize index)
+{
+    return index < self->len ? self->buffer[index] : '\0';
+}
+
+/**
+ *
  * @brief Split string.
  * @return Vec<String*>*.
  * @note The result and its items can be free.
@@ -195,5 +205,30 @@ ungrow__String(String *self);
  * @brief Free String buffer.
  */
 DESTRUCTOR(String, String *self);
+
+typedef struct StringIter
+{
+    String *string;
+    Usize count;
+} StringIter;
+
+/**
+ *
+ * @brief Construct StringIter type.
+ */
+inline CONSTRUCTOR(StringIter, StringIter, String *string)
+{
+    return (StringIter){ .string = string, .count = 0 };
+}
+
+/**
+ *
+ * @brief Get the next character.
+ */
+inline char
+next__StringIter(StringIter *self)
+{
+    return safe_get__String(self->string, self->count++);
+}
 
 #endif // LILY_BASE_STRING_H

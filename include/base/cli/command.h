@@ -31,34 +31,28 @@
 
 typedef struct CliCommand
 {
-    String *usage;
     const char *name;
-    OrderedHashMap *options; // OrderedHashMap<CliOption*>*?
-    enum CliValueKind has_value;
-    bool has_help;
+    OrderedHashMap *options;          // OrderedHashMap<CliOption*>*
+    char *help;                       // char*?
+    CliValue *value;                  // CliValue*?
+    CliDefaultAction *default_action; // CliDefaultAction*?
+    struct CliCommand *(*deferred)(
+      struct CliCommand *); // struct CliCommand*(struct CliCommand*)*?
+
+    struct CliCommand *(*$option)(struct CliCommand *, CliOption *option);
+    struct CliCommand *(*$help)(struct CliCommand *, char *);
+    struct CliCommand *(*$value)(struct CliCommand *, CliValue *);
+    struct CliCommand *(*$default_action)(struct CliCommand *,
+                                          CliDefaultAction *);
+    struct CliCommand *(*$defer)(struct CliCommand *,
+                                 struct CliCommand *(struct CliCommand *));
 } CliCommand;
 
 /**
  *
  * @brief Construct CliCommand type.
  */
-CONSTRUCTOR(CliCommand *,
-            CliCommand,
-            const char *cli_name,
-            const char *name,
-            bool has_options,
-            enum CliValueKind has_value,
-            bool has_help);
-
-/**
- *
- * @brief Add option to command.
- */
-inline void
-add_option__CliCommand(CliCommand *self, CliOption *option)
-{
-    insert__OrderedHashMap(self->options, (char *)option->name, option);
-}
+CONSTRUCTOR(CliCommand *, CliCommand, const char *name);
 
 /**
  *

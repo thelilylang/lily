@@ -1,4 +1,5 @@
 /*
+ *
  * MIT License
  *
  * Copyright (c) 2022-2023 ArthurPV
@@ -22,19 +23,19 @@
  * SOFTWARE.
  */
 
-#include <base/cli/value.h>
+#include <cli/lilyc.h>
+#include <cli/version.h>
 
-CONSTRUCTOR(CliValue *,
-            CliValue,
-            enum CliValueKind kind,
-            char *name,
-            bool is_required)
+Cli
+build__CliLilyc(Vec *args)
 {
-    CliValue *self = lily_malloc(sizeof(CliValue));
+    Cli cli = NEW(Cli, args, "lilyc");
 
-    self->kind = kind;
-    self->name = name;
-    self->is_required = is_required;
+    cli.$version(&cli, VERSION)
+      ->$author(&cli, "ArthurPV")
+      ->$about(&cli, "The Lily compiler tool")
+      ->$single_value(&cli, "FILE", true);
+    LILYC_OPTIONS((&cli));
 
-    return self;
+    return cli;
 }
