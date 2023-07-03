@@ -283,6 +283,10 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
             CliOption *option = get__OrderedHashMap(cmd->options, current);
 
             if (option) {
+                if (option->default_action) {
+                    print__CliDefaultAction(option->default_action, self, cmd);
+                }
+
                 const Usize *option_id =
                   get_id__OrderedHashMap(cmd->options, current);
 
