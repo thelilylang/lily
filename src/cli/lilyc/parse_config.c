@@ -55,37 +55,50 @@ run__LilycParseConfig(const Vec *results)
                 break;
             case CLI_RESULT_KIND_OPTION:
                 switch (current->option->id) {
-                    case 0:
+                    // 0, 1, 2 and 3 id are used by help and version option
+                    case 4:
                         dump_scanner = true;
                         break;
-                    case 1:
+                    case 5:
                         dump_parser = true;
                         break;
-                    case 2:
+                    case 6:
                         dump_typecheck = true;
                         break;
-                    case 3:
+                    case 7:
                         dump_mir = true;
                         break;
-                    case 4:
+                    case 8:
                         dump_ir = true;
                         break;
-                    case 5:
-                        llvm_ir = true;
-                        break;
-                    case 6:
-                        cc_ir = true;
-                        break;
-                    case 7:
-                        cpp_ir = true;
-                        break;
-                    case 8:
-                        js_ir = true;
-                        break;
                     case 9:
-                        wasm_ir = true;
+                        run_scanner = true;
                         break;
                     case 10:
+                        run_parser = true;
+                        break;
+                    case 11:
+                        run_typecheck = true;
+                        break;
+                    case 12:
+                        run_ir = true;
+                        break;
+                    case 13:
+                        llvm_ir = true;
+                        break;
+                    case 14:
+                        cc_ir = true;
+                        break;
+                    case 15:
+                        cpp_ir = true;
+                        break;
+                    case 16:
+                        js_ir = true;
+                        break;
+                    case 17:
+                        wasm_ir = true;
+                        break;
+                    case 18:
                         ASSERT(current->option->value);
                         ASSERT(current->option->value->kind ==
                                CLI_RESULT_VALUE_KIND_SINGLE);
