@@ -28,28 +28,48 @@
 
 #include <stdio.h>
 
-CONSTRUCTOR(CliDefaultAction *,
-            CliDefaultAction,
-            enum CliDefaultActionKind kind,
-            char *value)
+VARIANT_CONSTRUCTOR(CliDefaultAction *,
+                    CliDefaultAction,
+                    help,
+                    String *(*help)(const Cli *, const CliCommand *))
 {
     CliDefaultAction *self = lily_malloc(sizeof(CliDefaultAction));
 
-    self->kind = kind;
-    self->value = value;
+    self->kind = CLI_DEFAULT_ACTION_KIND_HELP;
+    self->help = help;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CliDefaultAction *,
+                    CliDefaultAction,
+                    version,
+                    char *version)
+{
+    CliDefaultAction *self = lily_malloc(sizeof(CliDefaultAction));
+
+    self->kind = CLI_DEFAULT_ACTION_KIND_VERSION;
+    self->version = version;
 
     return self;
 }
 
 void
-print__CliDefaultAction(const CliDefaultAction *self, const Cli *cli)
+print__CliDefaultAction(const CliDefaultAction *self,
+                        const Cli *cli,
+                        const CliCommand *cmd)
 {
     switch (self->kind) {
         case CLI_DEFAULT_ACTION_KIND_HELP:
-            PRINT("{s}", self->value);
+            if (cmd) {
+                PRINTLN("{Sr}", self->help(NULL, cmd));
+            } else {
+                PRINTLN("{Sr}", self->help(cli, NULL));
+            }
+
             break;
         case CLI_DEFAULT_ACTION_KIND_VERSION:
-            PRINT("{s} v{s}", cli->name, self->value);
+            PRINTLN("{s} v{s}", cli->name, self->version);
             break;
         default:
             UNREACHABLE("unknown variant");

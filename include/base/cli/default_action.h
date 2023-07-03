@@ -27,8 +27,10 @@
 
 #include <base/alloc.h>
 #include <base/macros.h>
+#include <base/string.h>
 
 typedef struct Cli Cli;
+typedef struct CliCommand CliCommand;
 
 enum CliDefaultActionKind
 {
@@ -39,25 +41,42 @@ enum CliDefaultActionKind
 typedef struct CliDefaultAction
 {
     enum CliDefaultActionKind kind;
-    char *value;
+    union
+    {
+        String *(*help)(const Cli *, const CliCommand *);
+        char *version;
+    };
 } CliDefaultAction;
 
 /**
  *
- * @brief Construct CliDefaultAction type.
+ * @brief Construct CliDefaultAction type (CLI_DEFAULT_ACTION_KIND_HELP).
  */
-CONSTRUCTOR(CliDefaultAction *,
-            CliDefaultAction,
-            enum CliDefaultActionKind kind,
-            char *value);
+VARIANT_CONSTRUCTOR(CliDefaultAction *,
+                    CliDefaultAction,
+                    help,
+                    String *(*help)(const Cli *, const CliCommand *));
+
+/**
+ *
+ * @brief Construct CliDefaultAction type (CLI_DEFAULT_ACTION_KIND_VERSION).
+ */
+VARIANT_CONSTRUCTOR(CliDefaultAction *,
+                    CliDefaultAction,
+                    version,
+                    char *version);
 
 /**
  *
  * @brief Print something based on the action.
+ * @param cli const Cli*? (&)
+ * @param cmd const CliCommand*? (&)
  * @note Run exit(0)
  */
 void
-print__CliDefaultAction(const CliDefaultAction *self, const Cli *cli);
+print__CliDefaultAction(const CliDefaultAction *self,
+                        const Cli *cli,
+                        const CliCommand *cmd);
 
 /**
  *
