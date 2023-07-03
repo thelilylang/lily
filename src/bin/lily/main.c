@@ -45,7 +45,7 @@ main(int argc, char **argv)
     Cli cli = build__CliLily(args);
 
     Vec *res = cli.$parse(&cli);
-    LilyConfig config = run__ParseConfig(res);
+    LilyConfig config = run__LilyParseConfig(res);
 
     FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
     FREE(Vec, res);
