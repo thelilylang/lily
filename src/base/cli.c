@@ -28,6 +28,7 @@
 #include <base/cli/help.h>
 #include <base/cli/result.h>
 #include <base/format.h>
+#include <base/print.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -203,6 +204,18 @@ multiple_value__Cli(Cli *self, char *name, bool is_required)
 Vec *
 parse__Cli(Cli *self)
 {
+    if (self->args->len == 1 && self->subcommands->len > 0) {
+        PRINTLN("{Sr}", generate_help__CliHelp(self, NULL));
+
+        CliDiagnostic err = NEW(CliDiagnostic,
+                                CLI_DIAGNOSTIC_KIND_ERROR,
+                                "expected command",
+                                self->args_iter.count,
+                                self->full_command);
+
+        emit__CliDiagnostic(&err);
+    }
+
     // Skip program name
     next__VecIter(&self->args_iter);
 
