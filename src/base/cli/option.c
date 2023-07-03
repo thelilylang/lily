@@ -45,7 +45,7 @@ default_action__CliOption(CliOption *self, CliDefaultAction *default_action);
 
 CONSTRUCTOR(CliOption *, CliOption, const char *name)
 {
-    ASSERT(name[0] == '-');
+    ASSERT(name[0] == '-' && strlen(name) > 2);
 
     CliOption *self = lily_malloc(sizeof(CliOption));
 
