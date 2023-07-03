@@ -32,6 +32,7 @@ CONSTRUCTOR(CliValue *,
 {
     CliValue *self = lily_malloc(sizeof(CliValue));
 
+    self->kind = kind;
     self->name = name;
     self->is_required = is_required;
 
