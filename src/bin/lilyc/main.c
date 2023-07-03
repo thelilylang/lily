@@ -25,6 +25,11 @@
 #include <base/cli/result.h>
 
 #include <cli/lilyc.h>
+#include <cli/lilyc/parse_config.h>
+
+#include <command/lilyc.h>
+
+#include <llvm-c/Core.h>
 
 int
 main(int argc, char **argv)
@@ -38,9 +43,15 @@ main(int argc, char **argv)
     Cli cli = build__CliLilyc(args);
     Vec *res = cli.$parse(&cli);
 
+    FREE(Cli, &cli);
+    FREE(Vec, args);
+
+    LilycConfig config = run__LilycParseConfig(res);
+
     FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
     FREE(Vec, res);
-    FREE(Cli, &cli);
 
-    FREE(Vec, args);
+    run__Lilyc(&config);
+
+    LLVMShutdown();
 }
