@@ -369,7 +369,7 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
                     CliDiagnostic err = NEW(CliDiagnostic,
                                             CLI_DIAGNOSTIC_KIND_ERROR,
                                             msg,
-                                            self->args_iter.count,
+                                            self->args_iter.count - 1,
                                             self->full_command);
 
                     emit__CliDiagnostic(&err);
@@ -378,13 +378,14 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
                 break;
             case CLI_VALUE_KIND_MULTIPLE:
                 if (res_cmd_value->multiple->len == 0) {
-                    char *msg = format("expected value for this command: `{s}`",
-                                       cmd->name);
+                    char *msg = format(
+                      "expected one or more values for this command: `{s}`",
+                      cmd->name);
 
                     CliDiagnostic err = NEW(CliDiagnostic,
                                             CLI_DIAGNOSTIC_KIND_ERROR,
                                             msg,
-                                            self->args_iter.count,
+                                            self->args_iter.count - 1,
                                             self->full_command);
 
                     emit__CliDiagnostic(&err);
