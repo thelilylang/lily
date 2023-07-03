@@ -22,90 +22,60 @@
  * SOFTWARE.
  */
 
+#include <base/cli/result.h>
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/platform.h>
 
 #include <cli/emit.h>
 #include <cli/help.h>
-#include <cli/parse_command.h>
-#include <cli/parse_config.h>
+#include <cli/lily.h>
+#include <cli/lily/parse_config.h>
 
-#include <command/compile.h>
-
-#include <llvm-c/Core.h>
+#include <command/lily/compile.h>
 
 #include <stdio.h>
 
 int
 main(int argc, char **argv)
 {
-    if (argc > 1) {
-        const char *command = argv[1];
+    Vec *args = NEW(Vec);
 
-#ifdef MSVC_VERSION
-        Vec *options = NEW(Vec); // Vec<char*>*
+    for (Usize i = 0; i < argc; ++i)
+        push__Vec(args, argv[i]);
 
-        // 1. Get the rest of argv
-        for (int i = 2; i < argc; ++i)
-            push__Vec(options, argv[i]);
+    Cli cli = build__CliLily(args);
 
-        // 2. Parse comand
-        const ParseCommand parse_command =
-          NEW(ParseCommand, command, (const char **)options->buffer, argc - 2);
-#else
-        char *options[argc - 2];
+    Vec *res = cli.$parse(&cli);
+    LilyConfig config = run__ParseConfig(res);
 
-        // 1. Get the rest of argv
-        for (int i = argc; i >= 2; --i)
-            options[argc - i - 1] = argv[i];
+    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
+    FREE(Vec, res);
+    FREE(Cli, &cli);
 
-        // 2. Parse comand
-        const ParseCommand parse_command =
-          NEW(ParseCommand, command, (const char **)options, argc - 2);
-#endif
-
-        const Option option = run__ParseCommand(&parse_command);
-
-        // 3. Parse config
-        const Config config = run__ParseConfig(&option);
-
-        // 4. Run command
-        switch (config.kind) {
-            case CONFIG_KIND_BUILD:
-                break;
-            case CONFIG_KIND_CC:
-                break;
-            case CONFIG_KIND_COMPILE:
-                run__Compile(&config.compile);
-                break;
-            case CONFIG_KIND_CPP:
-                break;
-            case CONFIG_KIND_INIT:
-                break;
-            case CONFIG_KIND_NEW:
-                break;
-            case CONFIG_KIND_RUN:
-                break;
-            case CONFIG_KIND_TEST:
-                break;
-            case CONFIG_KIND_TO:
-                break;
-        }
-
-#ifdef MSVC_VERSION
-        FREE(Vec, options);
-#endif
-
-        FREE(Option, option);
-    } else {
-        EMIT_ERROR("expected command");
-        puts(HELP);
-
-        return 1;
+    switch (config.kind) {
+        case LILY_CONFIG_KIND_BUILD:
+            break;
+        case LILY_CONFIG_KIND_CC:
+            break;
+        case LILY_CONFIG_KIND_COMPILE:
+            run__LilyCompile(args);
+            break;
+        case LILY_CONFIG_KIND_CPP:
+            break;
+        case LILY_CONFIG_KIND_INIT:
+            break;
+        case LILY_CONFIG_KIND_NEW:
+            break;
+        case LILY_CONFIG_KIND_RUN:
+            break;
+        case LILY_CONFIG_KIND_TEST:
+            break;
+        case LILY_CONFIG_KIND_TO:
+            break;
     }
 
-    LLVMShutdown();
+    FREE(Vec, args);
 
     return 0;
 }
