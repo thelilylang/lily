@@ -67,29 +67,20 @@ set(BASE_SRC
 set(CLI_SRC
 	src/cli/lily.c
 	src/cli/lilyc.c
-	src/cli/option.c
-	src/cli/parse_command.c
-	src/cli/parse_config.c
-	src/cli/option/build.c
-	src/cli/option/cc.c
-	src/cli/option/compile.c
-	src/cli/option/cpp.c
-	src/cli/option/init.c
-	src/cli/option/new.c
-	src/cli/option/run.c
-	src/cli/option/test.c
-	src/cli/option/to.c)
+	src/cli/lily/parse_config.c
+	src/cli/lilyc/parse_config.c)
 
 set(COMMAND_SRC
-	src/command/build/build.c
-	src/command/cc/cc.c
-	src/command/compile/compile.c
-	src/command/cpp/cpp.c
-	src/command/init/init.c
-	src/command/new/new.c
-	src/command/run/run.c
-	src/command/test/test.c
-	src/command/to/to.c)
+	src/command/lily/build/build.c
+	src/command/lily/cc/cc.c
+	src/command/lily/compile/compile.c
+	src/command/lily/cpp/cpp.c
+	src/command/lily/init/init.c
+	src/command/lily/new/new.c
+	src/command/lily/run/run.c
+	src/command/lily/test/test.c
+	src/command/lily/to/to.c
+	src/command/lilyc.c)
 
 set(CORE_SRC
 	src/core/cc/error.c
