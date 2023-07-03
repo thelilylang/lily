@@ -26,6 +26,8 @@
 
 #include <cli/lilyc/config.h>
 
+#include <command/lilyc.h>
+
 #include <core/lily/lily.h>
 #include <core/lily/package.h>
 #include <core/lily/program.h>
@@ -33,7 +35,7 @@
 #include <stdlib.h>
 
 void
-run__Compile(const LilycConfig *config)
+run__Lilyc(const LilycConfig *config)
 {
     // Get the default path
     char *default_path = generate_default_path((char *)config->filename);
