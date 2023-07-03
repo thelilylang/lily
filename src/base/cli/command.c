@@ -25,6 +25,7 @@
 #include <base/alloc.h>
 #include <base/assert.h>
 #include <base/cli/command.h>
+#include <base/cli/help.h>
 #include <base/new.h>
 
 #include <stdio.h>
@@ -68,7 +69,7 @@ CONSTRUCTOR(CliCommand *, CliCommand, const char *name)
 
         help->$help(help, "Print the command help")
           ->$default_action(
-            help, NEW(CliDefaultAction, CLI_DEFAULT_ACTION_KIND_HELP, "help"))
+            help, NEW_VARIANT(CliDefaultAction, help, &generate_help__CliHelp))
           ->$short_name(help, "-h");
         self->$option(self, help);
     }
