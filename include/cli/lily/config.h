@@ -27,7 +27,6 @@
 
 #include <cli/lily/config/build.h>
 #include <cli/lily/config/cc.h>
-#include <cli/lily/config/compile.h>
 #include <cli/lily/config/cpp.h>
 #include <cli/lily/config/init.h>
 #include <cli/lily/config/new.h>
