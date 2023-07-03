@@ -32,11 +32,14 @@
 
 typedef struct CliOption
 {
-    const char *name;
+    const char *name;                 // NOTE: this is the long name (--<name>)
+    char *short_name;                 // char*? (-<letter>)
     CliValue *value;                  // CliValue*?
     char *help;                       // char*?
     CliDefaultAction *default_action; // CliDefaultAction*?
+    Usize ref_count;
 
+    struct CliOption *(*$short_name)(struct CliOption *, char *);
     struct CliOption *(*$value)(struct CliOption *, CliValue *value);
     struct CliOption *(*$help)(struct CliOption *, char *);
     struct CliOption *(*$default_action)(struct CliOption *,
@@ -48,6 +51,18 @@ typedef struct CliOption
  * @brief Construct CliOption type.
  */
 CONSTRUCTOR(CliOption *, CliOption, const char *name);
+
+/**
+ *
+ * @brief Pass to ref the CliOption and increment the `ref_count`.
+ * @return LilyCheckedDataType* (&)
+ */
+inline CliOption *
+ref__CliOption(CliOption *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *

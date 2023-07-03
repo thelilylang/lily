@@ -29,6 +29,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+static CliOption *
+short_name__CliOption(CliOption *self, char *name);
 
 static CliOption *
 value__CliOption(CliOption *self, CliValue *value);
@@ -46,14 +50,27 @@ CONSTRUCTOR(CliOption *, CliOption, const char *name)
     CliOption *self = lily_malloc(sizeof(CliOption));
 
     self->name = name;
+    self->short_name = NULL;
     self->value = NULL;
     self->help = NULL;
     self->default_action = NULL;
+    self->ref_count = 0;
 
+    self->$short_name = &short_name__CliOption;
     self->$value = &value__CliOption;
     self->$help = &help__CliOption;
     self->$default_action = &default_action__CliOption;
 
+    return self;
+}
+
+CliOption *
+short_name__CliOption(CliOption *self, char *name)
+{
+    ASSERT(!self->short_name && name);
+    ASSERT(strlen(name) == 2);
+
+    self->short_name = name;
     return self;
 }
 
@@ -86,6 +103,11 @@ default_action__CliOption(CliOption *self, CliDefaultAction *default_action)
 
 DESTRUCTOR(CliOption, CliOption *self)
 {
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
     if (self->value) {
         FREE(CliValue, self->value);
     }
