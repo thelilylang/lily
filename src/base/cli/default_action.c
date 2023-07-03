@@ -62,7 +62,7 @@ print__CliDefaultAction(const CliDefaultAction *self,
     switch (self->kind) {
         case CLI_DEFAULT_ACTION_KIND_HELP:
             if (cmd) {
-                PRINTLN("{Sr}", self->help(NULL, cmd));
+                PRINTLN("{Sr}", self->help(cli, cmd));
             } else {
                 PRINTLN("{Sr}", self->help(cli, NULL));
             }
