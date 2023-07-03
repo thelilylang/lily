@@ -35,38 +35,38 @@
 
 // Parse build config.
 static LilyConfig
-parse_build__ParseConfig(const Vec *results);
+parse_build__LilyParseConfig(const Vec *results);
 
 // Parse cc config.
 static LilyConfig
-parse_cc__ParseConfig(const Vec *results);
+parse_cc__LilyParseConfig(const Vec *results);
 
 // Parse cpp config.
 static LilyConfig
-parse_cpp__ParseConfig(const Vec *results);
+parse_cpp__LilyParseConfig(const Vec *results);
 
 // Parse init config.
 static LilyConfig
-parse_init__ParseConfig(const Vec *results);
+parse_init__LilyParseConfig(const Vec *results);
 
 // Parse new config.
 static LilyConfig
-parse_new__ParseConfig(const Vec *results);
+parse_new__LilyParseConfig(const Vec *results);
 
 // Parse run config.
 static LilyConfig
-parse_run__ParseConfig(const Vec *results);
+parse_run__LilyParseConfig(const Vec *results);
 
 // Parse test config.
 static LilyConfig
-parse_test__ParseConfig(const Vec *results);
+parse_test__LilyParseConfig(const Vec *results);
 
 // Parse to config.
 static LilyConfig
-parse_to__ParseConfig(const Vec *results);
+parse_to__LilyParseConfig(const Vec *results);
 
 LilyConfig
-parse_build__ParseConfig(const Vec *results)
+parse_build__LilyParseConfig(const Vec *results)
 {
     bool verbose = false;
     VecIter iter = NEW(VecIter, results);
@@ -91,7 +91,7 @@ parse_build__ParseConfig(const Vec *results)
 }
 
 LilyConfig
-parse_cc__ParseConfig(const Vec *results)
+parse_cc__LilyParseConfig(const Vec *results)
 {
     char *filename = NULL;
     VecIter iter = NEW(VecIter, results);
@@ -123,7 +123,7 @@ parse_cc__ParseConfig(const Vec *results)
 }
 
 LilyConfig
-parse_cpp__ParseConfig(const Vec *results)
+parse_cpp__LilyParseConfig(const Vec *results)
 {
     char *filename = NULL;
     VecIter iter = NEW(VecIter, results);
@@ -155,7 +155,7 @@ parse_cpp__ParseConfig(const Vec *results)
 }
 
 LilyConfig
-parse_init__ParseConfig(const Vec *results)
+parse_init__LilyParseConfig(const Vec *results)
 {
     char *path = NULL;
     VecIter iter = NEW(VecIter, results);
@@ -187,7 +187,7 @@ parse_init__ParseConfig(const Vec *results)
 }
 
 LilyConfig
-parse_new__ParseConfig(const Vec *results)
+parse_new__LilyParseConfig(const Vec *results)
 {
     char *name = NULL;
     VecIter iter = NEW(VecIter, results);
@@ -219,7 +219,7 @@ parse_new__ParseConfig(const Vec *results)
 }
 
 LilyConfig
-parse_run__ParseConfig(const Vec *results)
+parse_run__LilyParseConfig(const Vec *results)
 {
     char *filename = NULL;
     VecIter iter = NEW(VecIter, results);
@@ -251,7 +251,7 @@ parse_run__ParseConfig(const Vec *results)
 }
 
 LilyConfig
-parse_test__ParseConfig(const Vec *results)
+parse_test__LilyParseConfig(const Vec *results)
 {
     char *filename = NULL;
     VecIter iter = NEW(VecIter, results);
@@ -283,7 +283,7 @@ parse_test__ParseConfig(const Vec *results)
 }
 
 LilyConfig
-parse_to__ParseConfig(const Vec *results)
+parse_to__LilyParseConfig(const Vec *results)
 {
     char *filename = NULL;
     bool cc = false, cpp = false, js = false;
@@ -326,7 +326,7 @@ parse_to__ParseConfig(const Vec *results)
 }
 
 LilyConfig
-run__ParseConfig(const Vec *results)
+run__LilyParseConfig(const Vec *results)
 {
     CliResult *command = get__Vec(results, 0);
 
@@ -334,23 +334,23 @@ run__ParseConfig(const Vec *results)
 
     switch (command->command.id) {
         case 0:
-            return parse_build__ParseConfig(results);
+            return parse_build__LilyParseConfig(results);
         case 1:
-            return parse_cc__ParseConfig(results);
+            return parse_cc__LilyParseConfig(results);
         case 2:
             return NEW_VARIANT(LilyConfig, compile);
         case 3:
-            return parse_cpp__ParseConfig(results);
+            return parse_cpp__LilyParseConfig(results);
         case 4:
-            return parse_init__ParseConfig(results);
+            return parse_init__LilyParseConfig(results);
         case 5:
-            return parse_new__ParseConfig(results);
+            return parse_new__LilyParseConfig(results);
         case 6:
-            return parse_run__ParseConfig(results);
+            return parse_run__LilyParseConfig(results);
         case 7:
-            return parse_test__ParseConfig(results);
+            return parse_test__LilyParseConfig(results);
         case 8:
-            return parse_to__ParseConfig(results);
+            return parse_to__LilyParseConfig(results);
         default:
             UNREACHABLE("unknown command");
     }

@@ -30,6 +30,6 @@
 #include <cli/lily/config.h>
 
 LilyConfig
-run__ParseConfig(const Vec *results);
+run__LilyParseConfig(const Vec *results);
 
 #endif // LILY_CLI_PARSE_CONFIG_H
