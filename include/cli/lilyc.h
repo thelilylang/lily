@@ -34,6 +34,10 @@
     CliOption *dump_tc = NEW(CliOption, "--dump-tc");                         \
     CliOption *dump_mir = NEW(CliOption, "--dump-mir");                       \
     CliOption *dump_ir = NEW(CliOption, "--dump-ir");                         \
+    CliOption *run_scanner = NEW(CliOption, "--run-scanner");                 \
+    CliOption *run_parser = NEW(CliOption, "--run-parser");                   \
+    CliOption *run_tc = NEW(CliOption, "--run-tc");                           \
+    CliOption *run_ir = NEW(CliOption, "--run-ir");                           \
     CliOption *llvm_ir = NEW(CliOption, "--llvm-ir");                         \
     CliOption *cc_ir = NEW(CliOption, "--cc-ir");                             \
     CliOption *cpp_ir = NEW(CliOption, "--cpp-ir");                           \
@@ -46,6 +50,10 @@
     dump_tc->$help(dump_tc, "Dump typecheck output");                         \
     dump_mir->$help(dump_mir, "Dump MIR output");                             \
     dump_ir->$help(dump_ir, "Dump IR output");                                \
+    run_scanner->$help(run_scanner, "Run until the scanner");                 \
+    run_parser->$help(run_parser, "Run until the parser");                    \
+    run_tc->$help(run_tc, "Run until the typecheck");                         \
+    run_ir->$help(run_ir, "Run until the IR");                                \
     llvm_ir->$help(llvm_ir, "Run LLVM as IR (by default)");                   \
     cc_ir->$help(cc_ir, "Use C as IR");                                       \
     cpp_ir->$help(cpp_ir, "Use C++ as IR");                                   \
@@ -61,6 +69,10 @@
       ->$option(self, dump_tc)                                                \
       ->$option(self, dump_mir)                                               \
       ->$option(self, dump_ir)                                                \
+      ->$option(self, run_scanner)                                            \
+      ->$option(self, run_parser)                                             \
+      ->$option(self, run_tc)                                                 \
+      ->$option(self, run_ir)                                                 \
       ->$option(self, llvm_ir)                                                \
       ->$option(self, cc_ir)                                                  \
       ->$option(self, cpp_ir)                                                 \
