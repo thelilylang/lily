@@ -38,6 +38,9 @@ static Cli *
 about__Cli(Cli *self, char *about);
 
 static Cli *
+version__Cli(Cli *self, char *about);
+
+static Cli *
 subcommand__Cli(Cli *self, CliCommand *subcommand);
 
 static Cli *
@@ -82,22 +85,36 @@ CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name)
         pop__String(full_command);
     }
 
-    return (Cli){ .name = name,
-                  .subcommands = NEW(OrderedHashMap),
-                  .options = NEW(OrderedHashMap),
-                  .author = NULL,
-                  .value = NULL,
-                  .about = NULL,
-                  .full_command = full_command,
-                  .args = args,
-                  .args_iter = NEW(VecIter, args),
-                  .$author = &author__Cli,
-                  .$about = &about__Cli,
-                  .$subcommand = &subcommand__Cli,
-                  .$option = &option__Cli,
-                  .$single_value = &single_value__Cli,
-                  .$multiple_value = &multiple_value__Cli,
-                  .$parse = &parse__Cli };
+    Cli self = (Cli){ .name = name,
+                      .subcommands = NEW(OrderedHashMap),
+                      .options = NEW(OrderedHashMap),
+                      .author = NULL,
+                      .value = NULL,
+                      .about = NULL,
+                      .full_command = full_command,
+                      .args = args,
+                      .args_iter = NEW(VecIter, args),
+                      .$author = &author__Cli,
+                      .$about = &about__Cli,
+                      .$version = &version__Cli,
+                      .$subcommand = &subcommand__Cli,
+                      .$option = &option__Cli,
+                      .$single_value = &single_value__Cli,
+                      .$multiple_value = &multiple_value__Cli,
+                      .$parse = &parse__Cli };
+
+    // Add default option
+    {
+        CliOption *help = NEW(CliOption, "--help");
+        help->$help(help, "Print the help")
+          ->$default_action(
+            help, NEW(CliDefaultAction, CLI_DEFAULT_ACTION_KIND_HELP, "help"))
+          ->$short_name(help, "-h");
+
+        self.$option(&self, help);
+    }
+
+    return self;
 }
 
 Cli *
@@ -119,6 +136,28 @@ about__Cli(Cli *self, char *about)
 }
 
 Cli *
+version__Cli(Cli *self, char *version)
+{
+    ASSERT(!self->version && version);
+
+    self->version = version;
+
+    // Add version option
+    {
+        CliOption *version = NEW(CliOption, "--version");
+        version->$help(version, "Print the version")
+          ->$default_action(
+            version,
+            NEW(CliDefaultAction, CLI_DEFAULT_ACTION_KIND_HELP, self->version))
+          ->$short_name(version, "-v");
+
+        self->$option(self, version);
+    }
+
+    return self;
+}
+
+Cli *
 subcommand__Cli(Cli *self, CliCommand *subcommand)
 {
     ASSERT(subcommand);
@@ -133,7 +172,13 @@ option__Cli(Cli *self, CliOption *option)
 {
     ASSERT(option);
 
+    if (option->short_name) {
+        insert__OrderedHashMap(
+          self->options, option->short_name, ref__CliOption(option));
+    }
+
     insert__OrderedHashMap(self->options, (char *)option->name, option);
+
     return self;
 }
 
@@ -440,6 +485,10 @@ parse_option__Cli(Cli *self)
             CliOption *option = get__OrderedHashMap(self->options, current);
 
             if (option) {
+                if (option->default_action) {
+                    print__CliDefaultAction(option->default_action, self);
+                }
+
                 const Usize *option_id =
                   get_id__OrderedHashMap(self->options, current);
 

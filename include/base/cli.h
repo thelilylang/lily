@@ -40,12 +40,14 @@ typedef struct Cli
     char *author;                // char*?
     CliValue *value;             // CliValue*?
     char *about;                 // char*?
+    char *version;               // char*?
     String *full_command;
     const Vec *args; // const Vec<char*>* (&)
     VecIter args_iter;
 
     struct Cli *(*$author)(struct Cli *, char *);
     struct Cli *(*$about)(struct Cli *, char *);
+    struct Cli *(*$version)(struct Cli *, char *);
     struct Cli *(*$subcommand)(struct Cli *, CliCommand *);
     struct Cli *(*$option)(struct Cli *, CliOption *);
     struct Cli *(*$single_value)(struct Cli *, char *, bool);
