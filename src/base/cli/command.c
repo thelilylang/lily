@@ -62,6 +62,17 @@ CONSTRUCTOR(CliCommand *, CliCommand, const char *name)
     self->$default_action = &default_action__CliCommand;
     self->$defer = &defer__CliCommand;
 
+    // Add default option
+    {
+        CliOption *help = NEW(CliOption, "--help");
+
+        help->$help(help, "Print the command help")
+          ->$default_action(
+            help, NEW(CliDefaultAction, CLI_DEFAULT_ACTION_KIND_HELP, "help"))
+          ->$short_name(help, "-h");
+        self->$option(self, help);
+    }
+
     return self;
 }
 
@@ -70,7 +81,13 @@ option__CliCommand(CliCommand *self, CliOption *option)
 {
     ASSERT(option);
 
+    if (option->short_name) {
+        insert__OrderedHashMap(
+          self->options, option->short_name, ref__CliOption(option));
+    }
+
     insert__OrderedHashMap(self->options, (char *)option->name, option);
+
     return self;
 }
 
