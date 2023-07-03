@@ -65,6 +65,8 @@ set(BASE_SRC
   	src/base/vec.c)
 
 set(CLI_SRC
+	src/cli/lily.c
+	src/cli/lilyc.c
 	src/cli/option.c
 	src/cli/parse_command.c
 	src/cli/parse_config.c
