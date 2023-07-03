@@ -22,25 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_CONFIG_BUILD_H
-#define LILY_CLI_CONFIG_BUILD_H
+#ifndef LILY_CLI_LILY_CONFIG_CPP_H
+#define LILY_CLI_LILY_CONFIG_CPP_H
 
 #include <base/macros.h>
 
-#include <stdbool.h>
-
-typedef struct BuildConfig
+typedef struct LilyConfigCpp
 {
-    bool verbose;
-} BuildConfig;
+    const char *filename;
+} LilyConfigCpp;
 
 /**
  *
- * @brief Construct BuildConfig type.
+ * @brief Construct LilyConfigCpp type.
  */
-inline CONSTRUCTOR(BuildConfig, BuildConfig, bool verbose)
+inline CONSTRUCTOR(LilyConfigCpp, LilyConfigCpp, const char *filename)
 {
-    return (BuildConfig){ .verbose = verbose };
+    return (LilyConfigCpp){ .filename = filename };
 }
 
-#endif // LILY_CLI_CONFIG_BUILD_H
+#endif // #ifndef LILY_CLI_LILY_CONFIG_CPP_H

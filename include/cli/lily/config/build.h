@@ -22,59 +22,25 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_OPTION_CC_H
-#define LILY_CLI_OPTION_CC_H
+#ifndef LILY_CLI_LILY_CONFIG_BUILD_H
+#define LILY_CLI_LILY_CONFIG_BUILD_H
 
 #include <base/macros.h>
-#include <base/vec.h>
 
-enum CcOptionKind
+#include <stdbool.h>
+
+typedef struct LilyConfigBuild
 {
-    CC_OPTION_KIND_ERROR,
-    CC_OPTION_KIND_FILENAME,
-    CC_OPTION_KIND_HELP, // -h, --help
-};
+    bool verbose;
+} LilyConfigBuild;
 
-typedef struct CcOption
+/**
+ *
+ * @brief Construct LilyConfigBuild type.
+ */
+inline CONSTRUCTOR(LilyConfigBuild, LilyConfigBuild, bool verbose)
 {
-    enum CcOptionKind kind;
-    union
-    {
-        const char *error;
-        const char *filename;
-    };
-} CcOption;
+    return (LilyConfigBuild){ .verbose = verbose };
+}
 
-/**
- *
- * @brief Construct CcOption type.
- */
-CONSTRUCTOR(CcOption *, CcOption, enum CcOptionKind kind);
-
-/**
- *
- * @brief Construct CcOption type (CC_OPTION_KIND_ERROR).
- */
-VARIANT_CONSTRUCTOR(CcOption *, CcOption, error, const char *error);
-
-/**
- *
- * @brief Construct CcOption type (CC_OPTION_KIND_FILENAME).
- */
-VARIANT_CONSTRUCTOR(CcOption *, CcOption, filename, const char *filename);
-
-/**
- *
- * @brief Convert each option in CcOption struct.
- * @return Return a Vec<CcOption*>*.
- */
-Vec *
-parse__CcOption(const char **options, const Usize options_size);
-
-/**
- *
- * @brief Free CcOption type.
- */
-DESTRUCTOR(CcOption, CcOption *self);
-
-#endif // LILY_CLI_OPTION_CC_H
+#endif // LILY_CLI_LILY_CONFIG_BUILD_H

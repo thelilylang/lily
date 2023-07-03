@@ -22,23 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_CONFIG_NEW_H
-#define LILY_CLI_CONFIG_NEW_H
+#ifndef LILY_CLI_LILY_CONFIG_TEST_H
+#define LILY_CLI_LILY_CONFIG_TEST_H
 
 #include <base/macros.h>
 
-typedef struct NewConfig
+typedef struct LilyConfigTest
 {
-    const char *name;
-} NewConfig;
+    const char *filename;
+} LilyConfigTest;
 
 /**
  *
- * @brief Construct NewConfig type.
+ * @brief Construct LilyConfigTest type.
  */
-inline CONSTRUCTOR(NewConfig, NewConfig, const char *name)
+inline CONSTRUCTOR(LilyConfigTest, LilyConfigTest, const char *filename)
 {
-    return (NewConfig){ .name = name };
+    return (LilyConfigTest){ .filename = filename };
 }
 
-#endif // LILY_CLI_CONFIG_NEW_H
+#endif // LILY_CLI_LILY_CONFIG_TEST_H

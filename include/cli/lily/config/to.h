@@ -22,59 +22,32 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_OPTION_INIT_H
-#define LILY_CLI_OPTION_INIT_H
+#ifndef LILY_CLI_LILY_CONFIG_TO_H
+#define LILY_CLI_LILY_CONFIG_TO_H
 
 #include <base/macros.h>
-#include <base/vec.h>
 
-enum InitOptionKind
+typedef struct LilyConfigTo
 {
-    INIT_OPTION_KIND_ERROR,
-    INIT_OPTION_KIND_PATH,
-    INIT_OPTION_KIND_HELP // -h, --help
-};
+    const char *filename;
+    bool cc;
+    bool cpp;
+    bool js;
+} LilyConfigTo;
 
-typedef struct InitOption
+/**
+ *
+ * @brief Construct LilyConfigTo type.
+ */
+inline CONSTRUCTOR(LilyConfigTo,
+                   LilyConfigTo,
+                   const char *filename,
+                   bool cc,
+                   bool cpp,
+                   bool js)
 {
-    enum InitOptionKind kind;
-    union
-    {
-        const char *error;
-        const char *path;
-    };
-} InitOption;
+    return (
+      LilyConfigTo){ .filename = filename, .cc = cc, .cpp = cpp, .js = js };
+}
 
-/**
- *
- * @brief Construct InitOption type.
- */
-CONSTRUCTOR(InitOption *, InitOption, enum InitOptionKind kind);
-
-/**
- *
- * @brief Construct CompileOption type (INIT_OPTION_KIND_ERROR).
- */
-VARIANT_CONSTRUCTOR(InitOption *, InitOption, error, const char *error);
-
-/**
- *
- * @brief Construct InitOption type (INIT_OPTION_KIND_PATH).
- */
-VARIANT_CONSTRUCTOR(InitOption *, InitOption, path, const char *path);
-
-/**
- *
- * @brief Convert each option in InitOption struct.
- * @return Return a Vec<InitOption*>*.
- */
-Vec *
-parse__InitOption(const char **options, const Usize options_size);
-
-/**
- *
- * @brief Free InitOption type.
- */
-DESTRUCTOR(InitOption, InitOption *self);
-
-#endif // LILY_CLI_OPTION_INIT_H
+#endif // LILY_CLI_LILY_CONFIG_TO_H

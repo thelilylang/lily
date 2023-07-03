@@ -22,59 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_OPTION_RUN_H
-#define LILY_CLI_OPTION_RUN_H
+#ifndef LILY_CLI_LILY_CONFIG_RUN_H
+#define LILY_CLI_LILY_CONFIG_RUN_H
 
 #include <base/macros.h>
-#include <base/vec.h>
 
-enum RunOptionKind
+typedef struct LilyConfigRun
 {
-    RUN_OPTION_KIND_ERROR,
-    RUN_OPTION_KIND_FILENAME,
-    RUN_OPTION_KIND_HELP // -h, --help
-};
+    const char *filename;
+} LilyConfigRun;
 
-typedef struct RunOption
+/**
+ *
+ * @brief Construct LilyConfigRun type.
+ */
+inline CONSTRUCTOR(LilyConfigRun, LilyConfigRun, const char *filename)
 {
-    enum RunOptionKind kind;
-    union
-    {
-        const char *error;
-        const char *filename;
-    };
-} RunOption;
+    return (LilyConfigRun){ .filename = filename };
+}
 
-/**
- *
- * @brief Construct RunOption type.
- */
-CONSTRUCTOR(RunOption *, RunOption, enum RunOptionKind kind);
-
-/**
- *
- * @brief Construct CompileOption type (RUN_OPTION_KIND_ERROR).
- */
-VARIANT_CONSTRUCTOR(RunOption *, RunOption, error, const char *error);
-
-/**
- *
- * @brief Construct RunOption type (RUN_OPTION_KIND_FILENAME).
- */
-VARIANT_CONSTRUCTOR(RunOption *, RunOption, filename, const char *filename);
-
-/**
- *
- * @brief Convert each option in RunOption struct.
- * @return Return a Vec<RunOption*>*.
- */
-Vec *
-parse__RunOption(const char **options, const Usize options_size);
-
-/**
- *
- * @brief Free RunOption type.
- */
-DESTRUCTOR(RunOption, RunOption *self);
-
-#endif // LILY_CLI_OPTION_RUN_H
+#endif // LILY_CLI_LILY_CONFIG_RUN_H

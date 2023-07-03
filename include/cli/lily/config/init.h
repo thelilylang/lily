@@ -22,52 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_OPTION_BUILD_H
-#define LILY_CLI_OPTION_BUILD_H
+#ifndef LILY_CLI_LILY_CONFIG_INIT_H
+#define LILY_CLI_LILY_CONFIG_INIT_H
 
 #include <base/macros.h>
-#include <base/vec.h>
 
-enum BuildOptionKind
+typedef struct LilyConfigInit
 {
-    BUILD_OPTION_KIND_ERROR,
-    BUILD_OPTION_KIND_HELP,   // -h, --help
-    BUILD_OPTION_KIND_VERBOSE // -v
-};
+    const char *path;
+} LilyConfigInit;
 
-typedef struct BuildOption
+/**
+ *
+ * @brief Construct LilyConfigInit type.
+ */
+inline CONSTRUCTOR(LilyConfigInit, LilyConfigInit, const char *path)
 {
-    enum BuildOptionKind kind;
-    union
-    {
-        const char *error;
-    };
-} BuildOption;
+    return (LilyConfigInit){ .path = path };
+}
 
-/**
- *
- * @brief Construct BuildOption type.
- */
-CONSTRUCTOR(BuildOption *, BuildOption, enum BuildOptionKind kind);
-
-/**
- *
- * @brief Construct BuildOption type (BUILD_OPTION_KIND_ERROR).
- */
-VARIANT_CONSTRUCTOR(BuildOption *, BuildOption, error, const char *error);
-
-/**
- *
- * @brief Convert each option in BuildOption struct.
- * @return Return a Vec<BuildOption*>*.
- */
-Vec *
-parse__BuildOption(const char **options, const Usize options_size);
-
-/**
- *
- * @brief Free BuildOption type.
- */
-DESTRUCTOR(BuildOption, BuildOption *self);
-
-#endif // LILY_CLI_OPTION_BUILD_H
+#endif // LILY_CLI_LILY_CONFIG_INIT_H

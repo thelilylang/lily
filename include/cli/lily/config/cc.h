@@ -22,23 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_COMMAND_H
-#define LILY_CLI_COMMAND_H
+#ifndef LILY_CLI_LILY_CONFIG_CC_H
+#define LILY_CLI_LILY_CONFIG_CC_H
 
-enum Command
+#include <base/macros.h>
+
+typedef struct LilyConfigCc
 {
-    COMMAND_BUILD,   // lily build <options>
-    COMMAND_CC,      // lily cc <options>
-    COMMAND_CPP,     // lily cpp <options>
-    COMMAND_COMPILE, // lily compile <options>
-    COMMAND_HELP,    // lily help
-    COMMAND_INIT,    // lily init <options>
-    COMMAND_NEW,     // lily new <options>
-    COMMAND_RUN,     // lily run <options>
-    COMMAND_TEST,    // lily test <options>
-    COMMAND_TO,      // lily to <options>
-    COMMAND_VERSION, // lily version
-    COMMAND_ERROR
-};
+    const char *filename;
+} LilyConfigCc;
 
-#endif // LILY_CLI_COMMAND_H
+/**
+ *
+ * @brief Construct LilyConfigCc type.
+ */
+inline CONSTRUCTOR(LilyConfigCc, LilyConfigCc, const char *filename)
+{
+    return (LilyConfigCc){ .filename = filename };
+}
+
+#endif // LILY_CLI_LILY_CONFIG_CC_H

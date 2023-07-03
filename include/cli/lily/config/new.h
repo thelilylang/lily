@@ -22,38 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_PARSE_COMMAND_H
-#define LILY_CLI_PARSE_COMMAND_H
+#ifndef LILY_CLI_LILY_CONFIG_NEW_H
+#define LILY_CLI_LILY_CONFIG_NEW_H
 
 #include <base/macros.h>
-#include <base/types.h>
 
-#include <cli/command.h>
-#include <cli/option.h>
-
-typedef struct ParseCommand
+typedef struct LilyConfigNew
 {
-    const char *command;
-    const char **options;
-    const Usize options_size;
-    enum Command command_kind;
-} ParseCommand;
+    const char *name;
+} LilyConfigNew;
 
 /**
  *
- * @brief Construct ParseCommand type.
+ * @brief Construct LilyConfigNew type.
  */
-CONSTRUCTOR(ParseCommand,
-            ParseCommand,
-            const char *command,
-            const char **options,
-            const Usize options_size);
+inline CONSTRUCTOR(LilyConfigNew, LilyConfigNew, const char *name)
+{
+    return (LilyConfigNew){ .name = name };
+}
 
-/**
- *
- * @brief Run parse command.
- */
-Option
-run__ParseCommand(const ParseCommand *self);
-
-#endif // LILY_CLI_PARSE_COMMAND_H
+#endif // LILY_CLI_LILY_CONFIG_NEW_H

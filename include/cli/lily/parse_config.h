@@ -22,34 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_CONFIG_TO_H
-#define LILY_CLI_CONFIG_TO_H
+#ifndef LILY_CLI_PARSE_CONFIG_H
+#define LILY_CLI_PARSE_CONFIG_H
 
-#include <base/macros.h>
+#include <base/vec.h>
 
-typedef struct ToConfig
-{
-    const char *filename;
-    bool from_cc;
-    bool from_cpp;
-    bool from_js;
-} ToConfig;
+#include <cli/lily/config.h>
 
-/**
- *
- * @brief Construct ToConfig type.
- */
-inline CONSTRUCTOR(ToConfig,
-                   ToConfig,
-                   const char *filename,
-                   bool from_cc,
-                   bool from_cpp,
-                   bool from_js)
-{
-    return (ToConfig){ .filename = filename,
-                       .from_cc = from_cc,
-                       .from_cpp = from_cpp,
-                       .from_js = from_js };
-}
+LilyConfig
+run__ParseConfig(const Vec *results);
 
-#endif // LILY_CLI_CONFIG_TO_H
+#endif // LILY_CLI_PARSE_CONFIG_H

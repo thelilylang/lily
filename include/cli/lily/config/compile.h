@@ -22,38 +22,21 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_CONFIG_COMPILE_H
-#define LILY_CLI_CONFIG_COMPILE_H
+#ifndef LILY_CLI_LILY_CONFIG_COMPILE_H
+#define LILY_CLI_LILY_CONFIG_COMPILE_H
 
-#include <base/macros.h>
+#include <base/new.h>
 
-#include <stdbool.h>
+#include <cli/lilyc/config.h>
 
-typedef struct CompileConfig
-{
-    const char *filename;
-    const char *target; // const char*?
-    bool run_scanner;
-    bool run_parser;
-    bool run_typecheck;
-    bool run_ir;
-    bool dump_scanner;
-    bool dump_parser;
-    bool dump_typecheck;
-    bool dump_ir;
-    bool cc_ir;
-    bool cpp_ir;
-    bool js_ir;
-    bool llvm_ir;
-    bool wasm_ir;
-} CompileConfig;
+typedef LilycConfig LilyConfigCompile;
 
 /**
  *
- * @brief Construct CompileConfig type.
+ * @brief Construct LilyConfigCompile type.
  */
-inline CONSTRUCTOR(CompileConfig,
-                   CompileConfig,
+inline CONSTRUCTOR(LilyConfigCompile,
+                   LilyConfigCompile,
                    const char *filename,
                    const char *target,
                    bool run_scanner,
@@ -70,21 +53,22 @@ inline CONSTRUCTOR(CompileConfig,
                    bool llvm_ir,
                    bool wasm_ir)
 {
-    return (CompileConfig){ .filename = filename,
-                            .target = target,
-                            .run_scanner = run_scanner,
-                            .run_parser = run_parser,
-                            .run_typecheck = run_typecheck,
-                            .run_ir = run_ir,
-                            .dump_scanner = dump_scanner,
-                            .dump_parser = dump_parser,
-                            .dump_typecheck = dump_typecheck,
-                            .dump_ir = dump_ir,
-                            .cc_ir = cc_ir,
-                            .cpp_ir = cpp_ir,
-                            .js_ir = js_ir,
-                            .llvm_ir = llvm_ir,
-                            .wasm_ir = wasm_ir };
+    return NEW(LilycConfig,
+               filename,
+               target,
+               run_scanner,
+               run_parser,
+               run_typecheck,
+               run_ir,
+               dump_scanner,
+               dump_parser,
+               dump_typecheck,
+               dump_ir,
+               cc_ir,
+               cpp_ir,
+               js_ir,
+               llvm_ir,
+               wasm_ir);
 }
 
-#endif // LILY_CLI_CONFIG_COMPILE_H
+#endif // LILY_CLI_LILY_CONFIG_COMPILE_H

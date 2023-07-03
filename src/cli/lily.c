@@ -47,6 +47,9 @@ static CliCommand *
 run_command__CliLily();
 
 static CliCommand *
+test_command__CliLily();
+
+static CliCommand *
 to_command__CliLily();
 
 static CliCommand *
@@ -71,6 +74,9 @@ static CliCommand *
 run_options__CliLily(CliCommand *cmd);
 
 static CliCommand *
+test_options__CliLily(CliCommand *cmd);
+
+static CliCommand *
 to_options__CliLily(CliCommand *cmd);
 
 CliCommand *
@@ -88,7 +94,9 @@ cc_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "cc");
 
-    cmd->$help(cmd, "C compiler")->$defer(cmd, &cc_options__CliLily);
+    cmd->$help(cmd, "C compiler")
+      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
+      ->$defer(cmd, &cc_options__CliLily);
 
     return cmd;
 }
@@ -98,7 +106,9 @@ cpp_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "c++");
 
-    cmd->$help(cmd, "C++ compiler")->$defer(cmd, &cpp_options__CliLily);
+    cmd->$help(cmd, "C++ compiler")
+      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
+      ->$defer(cmd, &cpp_options__CliLily);
 
     return cmd;
 }
@@ -120,7 +130,9 @@ init_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "init");
 
-    cmd->$help(cmd, "Init project")->$defer(cmd, &init_options__CliLily);
+    cmd->$help(cmd, "Init project")
+      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "PATH", true))
+      ->$defer(cmd, &init_options__CliLily);
 
     return cmd;
 }
@@ -130,7 +142,9 @@ new_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "new");
 
-    cmd->$help(cmd, "New project")->$defer(cmd, &new_options__CliLily);
+    cmd->$help(cmd, "New project")
+      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "NAME", true))
+      ->$defer(cmd, &new_options__CliLily);
 
     return cmd;
 }
@@ -140,7 +154,21 @@ run_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "run");
 
-    cmd->$help(cmd, "Run file")->$defer(cmd, &run_options__CliLily);
+    cmd->$help(cmd, "Run file")
+      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
+      ->$defer(cmd, &run_options__CliLily);
+
+    return cmd;
+}
+
+CliCommand *
+test_command__CliLily()
+{
+    CliCommand *cmd = NEW(CliCommand, "test");
+
+    cmd->$help(cmd, "Test a file")
+      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
+      ->$defer(cmd, &test_options__CliLily);
 
     return cmd;
 }
@@ -150,7 +178,9 @@ to_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "to");
 
-    cmd->$help(cmd, "Transpile to...")->$defer(cmd, &to_options__CliLily);
+    cmd->$help(cmd, "Transpile to...")
+      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
+      ->$defer(cmd, &to_options__CliLily);
 
     return cmd;
 }
@@ -158,7 +188,11 @@ to_command__CliLily()
 CliCommand *
 build_options__CliLily(CliCommand *cmd)
 {
-    return cmd;
+    CliOption *verbose = NEW(CliOption, "--verbose");
+
+    verbose->$short_name(verbose, "-v");
+
+    return cmd->$option(cmd, verbose);
 }
 
 CliCommand *
@@ -235,9 +269,23 @@ run_options__CliLily(CliCommand *cmd)
 }
 
 CliCommand *
-to_options__CliLily(CliCommand *cmd)
+test_options__CliLily(CliCommand *cmd)
 {
     return cmd;
+}
+
+CliCommand *
+to_options__CliLily(CliCommand *cmd)
+{
+    CliOption *cc = NEW(CliOption, "--cc");
+    CliOption *cpp = NEW(CliOption, "--cpp");
+    CliOption *js = NEW(CliOption, "--js");
+
+    cc->$help(cc, "Transpile to C");
+    cpp->$help(cpp, "Transpile to C++");
+    js->$help(js, "Transpile to JS");
+
+    return cmd->$option(cmd, cc)->$option(cmd, cpp)->$option(cmd, js);
 }
 
 Cli
@@ -250,11 +298,12 @@ build__CliLily(Vec *args)
       ->$about(&cli, "The Lily programming language")
       ->$subcommand(&cli, build_command__CliLily())
       ->$subcommand(&cli, cc_command__CliLily())
-      ->$subcommand(&cli, cpp_command__CliLily())
       ->$subcommand(&cli, compile_command__CliLily())
+      ->$subcommand(&cli, cpp_command__CliLily())
       ->$subcommand(&cli, init_command__CliLily())
       ->$subcommand(&cli, new_command__CliLily())
       ->$subcommand(&cli, run_command__CliLily())
+      ->$subcommand(&cli, test_command__CliLily())
       ->$subcommand(&cli, to_command__CliLily());
 
     return cli;
