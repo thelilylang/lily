@@ -22,7 +22,11 @@
  * SOFTWARE.
  */
 
+#include <base/cli.h>
 #include <base/cli/default_action.h>
+#include <base/print.h>
+
+#include <stdio.h>
 
 CONSTRUCTOR(CliDefaultAction *,
             CliDefaultAction,
@@ -35,4 +39,21 @@ CONSTRUCTOR(CliDefaultAction *,
     self->value = value;
 
     return self;
+}
+
+void
+print__CliDefaultAction(const CliDefaultAction *self, const Cli *cli)
+{
+    switch (self->kind) {
+        case CLI_DEFAULT_ACTION_KIND_HELP:
+            PRINT("{s}", self->value);
+            break;
+        case CLI_DEFAULT_ACTION_KIND_VERSION:
+            PRINT("{s} v{s}", cli->name, self->value);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    exit(0);
 }

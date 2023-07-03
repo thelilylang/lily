@@ -28,6 +28,8 @@
 #include <base/alloc.h>
 #include <base/macros.h>
 
+typedef struct Cli Cli;
+
 enum CliDefaultActionKind
 {
     CLI_DEFAULT_ACTION_KIND_HELP,
@@ -48,6 +50,14 @@ CONSTRUCTOR(CliDefaultAction *,
             CliDefaultAction,
             enum CliDefaultActionKind kind,
             char *value);
+
+/**
+ *
+ * @brief Print something based on the action.
+ * @note Run exit(0)
+ */
+void
+print__CliDefaultAction(const CliDefaultAction *self, const Cli *cli);
 
 /**
  *
