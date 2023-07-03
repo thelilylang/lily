@@ -22,8 +22,9 @@
  * SOFTWARE.
  */
 
-#include <base/cli.h>
 #include <base/cli/result.h>
+
+#include <cli/lilyc.h>
 
 #include <stdio.h>
 
@@ -36,20 +37,12 @@ main(int argc, char **argv)
         push__Vec(args, argv[i]);
     }
 
-    Cli cli = NEW(Cli, args, "lilyc");
+    Cli cli = build__CliLilyc(args);
+    Vec *res = cli.$parse(&cli);
 
-    Vec *res = cli.$about(&cli, "The Lily programming language")
-                 ->$author(&cli, "ArthurPV")
-                 ->$subcommand(&cli, NEW(CliCommand, "compile"))
-                 ->$parse(&cli);
-
+    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
+    FREE(Vec, res);
     FREE(Cli, &cli);
+
     FREE(Vec, args);
-
-    if (res) {
-        FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-        FREE(Vec, res);
-    }
-
-    printf("lilyc coming soon...");
 }
