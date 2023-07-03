@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAX_SPACE 30
+
 #define GENERATE_USAGE(options, value)                                       \
     {                                                                        \
         String *usage = format__String(                                      \
@@ -66,15 +68,18 @@
                 }                                                        \
             }                                                            \
                                                                          \
-            String *option = format__String("  {s}", current->name);     \
-                                                                         \
-            if (current->short_name) {                                   \
-                push_str__String(option, ", ");                          \
-                push_str__String(option, current->short_name);           \
-            }                                                            \
+            String *option = format__String(                             \
+              "  {s}{s}{s}{Sr}",                                         \
+              current->name,                                             \
+              current->short_name ? ", " : "",                           \
+              current->short_name ? current->short_name : "",            \
+              repeat__String(" ",                                        \
+                             MAX_SPACE - strlen(current->name) -         \
+                               (current->short_name                      \
+                                  ? strlen(current->short_name) + 2      \
+                                  : 0)));                                \
                                                                          \
             if (current->help) {                                         \
-                push_str__String(option, "\t\t");                        \
                 push_str__String(option, current->help);                 \
                 push__String(option, '\n');                              \
             }                                                            \
@@ -104,14 +109,16 @@ generate_help__CliHelp(const Cli *cli, const CliCommand *cmd)
             CliCommand *current = NULL;
 
             while ((current = next__OrderedHashMapIter(&iter))) {
-                String *subcommand = format__String("  {s}", current->name);
+                String *subcommand = format__String(
+                  "  {s}{Sr}",
+                  current->name,
+                  repeat__String(" ", MAX_SPACE - strlen(current->name)));
 
                 if (current->help) {
-                    push_str__String(subcommand, "\t\t");
                     push_str__String(subcommand, current->help);
-                    push__String(subcommand, '\n');
                 }
 
+                push__String(subcommand, '\n');
                 APPEND_AND_FREE(subcommands, subcommand);
             }
 
