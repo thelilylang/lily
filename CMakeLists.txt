@@ -430,7 +430,7 @@ add_executable(lily src/bin/lily/main.c)
 target_link_libraries(lily lily_base lily_cli lily_command)
 
 add_executable(lilyc src/bin/lilyc/main.c)
-target_link_libraries(lilyc lily_base lily_cli)
+target_link_libraries(lilyc lily_base lily_cli lily_command)
 
 function(move_tests_dir)
 	file(COPY tests DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
