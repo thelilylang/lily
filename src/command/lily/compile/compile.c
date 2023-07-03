@@ -22,12 +22,35 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_COMPILE_COMPILE_H
-#define LILY_COMMAND_COMPILE_COMPILE_H
+#include <base/new.h>
+#include <base/platform.h>
+#include <base/string.h>
 
-#include <cli/config.h>
+#include <command/lily/compile/compile.h>
+
+#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
+#include <stdlib.h>
+#elif defined(LILY_WINDOWS_OS)
+#include <process.h>
+#else
+#error "this OS is not yet supported"
+#endif
 
 void
-run__Compile(const CompileConfig *config);
+run__LilyCompile(Vec *args)
+{
+#ifdef ENV_LOCAL
+    String *command = from__String("./build/Debug/lilyc ");
+#else
+    String *command = from__String("lilyc ");
+#endif
 
-#endif // LILY_COMMAND_COMPILE_COMPILE_H
+    for (Usize i = 2; i < args->len; ++i) {
+        push_str__String(command, get__Vec(args, i));
+        push__String(command, ' ');
+    }
+
+    system(command->buffer);
+
+    FREE(String, command);
+}

@@ -22,9 +22,16 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_COMPILE_H
-#define LILY_COMMAND_COMPILE_H
+#ifndef LILY_COMMAND_LILY_COMPILE_COMPILE_H
+#define LILY_COMMAND_LILY_COMPILE_COMPILE_H
 
-#include <command/compile/compile.h>
+#include <base/vec.h>
 
-#endif // LILY_COMMAND_COMPILE_H
+/**
+ *
+ * @param args Vec<char*>* (&)
+ */
+void
+run__LilyCompile(Vec *args);
+
+#endif // LILY_COMMAND_LILY_COMPILE_COMPILE_H
