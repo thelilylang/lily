@@ -24,6 +24,8 @@ endif()
 find_package(LLVM 15 CONFIG REQUIRED)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 
+set(LILY_INCLUDE include lib/local)
+
 # LilyBase
 set(BASE_SRC
     src/base/alloc.c
@@ -65,21 +67,21 @@ set(BASE_SRC
     src/base/vec.c)
 
 add_library(LilyBase STATIC ${BASE_SRC})
-target_include_directories(LilyBase PRIVATE include)
+target_include_directories(LilyBase PRIVATE ${LILY_INCLUDE})
 
 # LilyCli
 set(CLI_LILY_SRC src/cli/lily/lily.c src/cli/lily/parse_config.c)
 
 add_library(LilyCli STATIC ${CLI_LILY_SRC})
 target_link_libraries(LilyCli LilyBase)
-target_include_directories(LilyCli PRIVATE include)
+target_include_directories(LilyCli PRIVATE ${LILY_INCLUDE})
 
 # LilycCLi
 set(CLI_LILYC_SRC src/cli/lilyc/lilyc.c src/cli/lilyc/parse_config.c)
 
 add_library(LilycCli STATIC ${CLI_LILYC_SRC})
 target_link_libraries(LilycCli LilyBase)
-target_include_directories(LilycCli PRIVATE include)
+target_include_directories(LilycCli PRIVATE ${LILY_INCLUDE})
 
 # LilyCommand
 set(COMMAND_LILY_SRC
@@ -95,14 +97,14 @@ set(COMMAND_LILY_SRC
 
 add_library(LilyCommand STATIC ${COMMAND_LILY_SRC})
 target_link_libraries(LilyCommand LilyBase)
-target_include_directories(LilyCommand PRIVATE include)
+target_include_directories(LilyCommand PRIVATE ${LILY_INCLUDE})
 
 # LilycCommand
 set(COMMAND_LILYC_SRC src/command/lilyc/lilyc.c)
 
 add_library(LilycCommand STATIC ${COMMAND_LILYC_SRC})
 target_link_libraries(LilycCommand LilyBase LilyCoreLilyCompilerPackage)
-target_include_directories(LilycCommand PRIVATE include)
+target_include_directories(LilycCommand PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreCcDiagnostic
 set(LILY_CORE_CC_DIAGNOSTIC_SRC src/core/cc/diagnostic/error.c
@@ -110,7 +112,7 @@ set(LILY_CORE_CC_DIAGNOSTIC_SRC src/core/cc/diagnostic/error.c
 
 add_library(LilyCoreCcDiagnostic STATIC ${LILY_CORE_CC_DIAGNOSTIC_SRC})
 target_link_libraries(LilyCoreCcDiagnostic LilyBase LilyCoreShared)
-target_include_directories(LilyCoreCcDiagnostic PRIVATE include)
+target_include_directories(LilyCoreCcDiagnostic PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreCppDiagnostic
 set(LILY_CORE_CPP_DIAGNOSTIC_SRC src/core/cpp/diagnostic/error.c
@@ -118,7 +120,7 @@ set(LILY_CORE_CPP_DIAGNOSTIC_SRC src/core/cpp/diagnostic/error.c
 
 add_library(LilyCoreCppDiagnostic STATIC ${LILY_CORE_CPP_DIAGNOSTIC_SRC})
 target_link_libraries(LilyCoreCppDiagnostic LilyBase LilyCoreShared)
-target_include_directories(LilyCoreCppDiagnostic PRIVATE include)
+target_include_directories(LilyCoreCppDiagnostic PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyAnalysis
 set(LILY_CORE_LILY_ANALYSIS_SRC
@@ -209,7 +211,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
 
 add_library(LilyCoreLilyAnalysis STATIC ${LILY_CORE_LILY_ANALYSIS_SRC})
 target_link_libraries(LilyCoreLilyAnalysis LilyCoreShared LilyBase)
-target_include_directories(LilyCoreLilyAnalysis PRIVATE include)
+target_include_directories(LilyCoreLilyAnalysis PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyBytecode set(LILY_CORE_LILY_BYTECODE_SRC)
 
@@ -227,7 +229,7 @@ set(LILY_CORE_LILY_COMPILER_IR_SRC
 add_library(LilyCoreLilyCompilerIr STATIC ${LILY_CORE_LILY_COMPILER_IR_SRC})
 target_link_libraries(LilyCoreLilyCompilerIr LilyCoreLilyCompilerIrCc
                       LilyCoreLilyCompilerIrCpp LilyCoreLilyCompilerIrLlvm)
-target_include_directories(LilyCoreLilyCompilerIr PRIVATE include)
+target_include_directories(LilyCoreLilyCompilerIr PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyCompilerIrCc
 set(LILY_CORE_LILY_COMPILER_IR_CC_SRC
@@ -257,7 +259,7 @@ set(LILY_CORE_LILY_COMPILER_IR_CC_SRC
 
 add_library(LilyCoreLilyCompilerIrCc STATIC
             ${LILY_CORE_LILY_COMPILER_IR_CC_SRC})
-target_include_directories(LilyCoreLilyCompilerIrCc PRIVATE include)
+target_include_directories(LilyCoreLilyCompilerIrCc PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyCompilerIrCpp
 set(LILY_CORE_LILY_COMPILER_IR_CPP_SRC
@@ -289,7 +291,7 @@ set(LILY_CORE_LILY_COMPILER_IR_CPP_SRC
 
 add_library(LilyCoreLilyCompilerIrCpp STATIC
             ${LILY_CORE_LILY_COMPILER_IR_CPP_SRC})
-target_include_directories(LilyCoreLilyCompilerIrCpp PRIVATE include)
+target_include_directories(LilyCoreLilyCompilerIrCpp PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyCompilerIrJs
 
@@ -343,7 +345,7 @@ set(LILY_CORE_LILY_COMPILER_IR_LLVM_SRC
 add_library(LilyCoreLilyCompilerIrLlvm STATIC
             ${LILY_CORE_LILY_COMPILER_IR_LLVM_SRC})
 target_link_libraries(LilyCoreLilyCompilerIrLlvm LilyBase LLVM)
-target_include_directories(LilyCoreLilyCompilerIrLlvm PRIVATE include)
+target_include_directories(LilyCoreLilyCompilerIrLlvm PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyCompilerLinker
 set(LILY_CORE_LILY_COMPILER_LINKER_SRC src/core/lily/compiler/linker/linker.c)
@@ -351,7 +353,7 @@ set(LILY_CORE_LILY_COMPILER_LINKER_SRC src/core/lily/compiler/linker/linker.c)
 add_library(LilyCoreLilyCompilerLinker STATIC
             ${LILY_CORE_LILY_COMPILER_LINKER_SRC})
 target_link_libraries(LilyCoreLilyCompilerLinker LilyCoreLilyCompilerPackage)
-target_include_directories(LilyCoreLilyCompilerLinker PRIVATE include)
+target_include_directories(LilyCoreLilyCompilerLinker PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyCompilerPackage
 set(LILY_CORE_LILY_COMPILER_PACKAGE_SRC
@@ -377,7 +379,7 @@ target_link_libraries(
   LilyCoreLilyPrecompiler
   LilyCoreLilyPreparser
   LilyCoreLilyScanner)
-target_include_directories(LilyCoreLilyCompilerPackage PRIVATE include)
+target_include_directories(LilyCoreLilyCompilerPackage PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyDiagnostic
 set(LILY_CORE_LILY_DIAGNOSTIC_SRC src/core/lily/diagnostic/error.c
@@ -385,7 +387,7 @@ set(LILY_CORE_LILY_DIAGNOSTIC_SRC src/core/lily/diagnostic/error.c
 
 add_library(LilyCoreLilyDiagnostic STATIC ${LILY_CORE_LILY_DIAGNOSTIC_SRC})
 target_link_libraries(LilyCoreLilyDiagnostic LilyCoreShared LilyBase)
-target_include_directories(LilyCoreLilyDiagnostic PRIVATE include)
+target_include_directories(LilyCoreLilyDiagnostic PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyFunctions
 set(LILY_CORE_LILY_FUNCTIONS_SRC src/core/lily/functions/builtin.c
@@ -393,7 +395,7 @@ set(LILY_CORE_LILY_FUNCTIONS_SRC src/core/lily/functions/builtin.c
 
 add_library(LilyCoreLilyFunctions STATIC ${LILY_CORE_LILY_FUNCTIONS_SRC})
 target_link_libraries(LilyCoreLilyFunctions LilyBase LilyCoreLilyAnalysis)
-target_include_directories(LilyCoreLilyFunctions PRIVATE include)
+target_include_directories(LilyCoreLilyFunctions PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyJit
 
@@ -422,7 +424,7 @@ set(LILY_CORE_LILY_MIR_SRC
 add_library(LilyCoreLilyMir STATIC ${LILY_CORE_LILY_MIR_SRC})
 target_link_libraries(LilyCoreLilyMir LilyBase LilyCoreLilyAnalysis
                       LilyCoreLilyCompilerPackage)
-target_include_directories(LilyCoreLilyMir PRIVATE include)
+target_include_directories(LilyCoreLilyMir PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyParser
 set(LILY_CORE_LILY_PARSER_SRC
@@ -503,7 +505,7 @@ set(LILY_CORE_LILY_PARSER_SRC
 add_library(LilyCoreLilyParser STATIC ${LILY_CORE_LILY_PARSER_SRC})
 target_link_libraries(LilyCoreLilyParser LilyCoreShared LilyBase
                       LilyCoreLilyPreparser)
-target_include_directories(LilyCoreLilyParser PRIVATE include)
+target_include_directories(LilyCoreLilyParser PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyPrecompiler
 set(LILY_CORE_LILY_PRECOMPILER_SRC src/core/lily/precompiler/precompile.c)
@@ -511,7 +513,7 @@ set(LILY_CORE_LILY_PRECOMPILER_SRC src/core/lily/precompiler/precompile.c)
 add_library(LilyCoreLilyPrecompiler STATIC ${LILY_CORE_LILY_PRECOMPILER_SRC})
 target_link_libraries(LilyCoreLilyPrecompiler LilyCoreShared LilyBase
                       LilyCoreLilyPreparser LilyCoreLilyCompilerPackage)
-target_include_directories(LilyCoreLilyPrecompiler PRIVATE include)
+target_include_directories(LilyCoreLilyPrecompiler PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyPreparser
 set(LILY_CORE_LILY_PREPARSER_SRC
@@ -530,7 +532,7 @@ set(LILY_CORE_LILY_PREPARSER_SRC
 add_library(LilyCoreLilyPreparser STATIC ${LILY_CORE_LILY_PREPARSER_SRC})
 target_link_libraries(LilyCoreLilyPreparser LilyBase LilyCoreShared
                       LilyCoreLilyScanner)
-target_include_directories(LilyCoreLilyPreparser PRIVATE include)
+target_include_directories(LilyCoreLilyPreparser PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyScanner
 set(LILY_CORE_LILY_SCANNER_SRC src/core/lily/scanner/scanner.c
@@ -538,13 +540,13 @@ set(LILY_CORE_LILY_SCANNER_SRC src/core/lily/scanner/scanner.c
 
 add_library(LilyCoreLilyScanner STATIC ${LILY_CORE_LILY_SCANNER_SRC})
 target_link_libraries(LilyCoreLilyScanner LilyBase LilyCoreShared)
-target_include_directories(LilyCoreLilyScanner PRIVATE include)
+target_include_directories(LilyCoreLilyScanner PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreLilyShared
 set(LILY_CORE_LILY_SHARED_SRC src/core/lily/shared/visibility.c)
 
 add_library(LilyCoreLilyShared STATIC ${LILY_CORE_LILY_SHARED_SRC})
-target_include_directories(LilyCoreLilyShared PRIVATE include)
+target_include_directories(LilyCoreLilyShared PRIVATE ${LILY_INCLUDE})
 
 # LilyCoreShared
 set(LILY_CORE_SHARED
@@ -555,15 +557,15 @@ set(LILY_CORE_SHARED
 add_library(LilyCoreShared STATIC ${LILY_CORE_SHARED})
 target_link_libraries(LilyCoreShared LilyBase LilyCoreLilyDiagnostic
                       LilyCoreCcDiagnostic LilyCoreCppDiagnostic)
-target_include_directories(LilyCoreShared PRIVATE include)
+target_include_directories(LilyCoreShared PRIVATE ${LILY_INCLUDE})
 
 add_executable(lily src/bin/lily/main.c)
 target_link_libraries(lily LilyBase LilyCli LilyCommand)
-target_include_directories(lily PRIVATE include)
+target_include_directories(lily PRIVATE ${LILY_INCLUDE})
 
 add_executable(lilyc src/bin/lilyc/main.c)
 target_link_libraries(lilyc LilyBase LilycCli LilycCommand LLVM)
-target_include_directories(lilyc PRIVATE include)
+target_include_directories(lilyc PRIVATE ${LILY_INCLUDE})
 
 # set(CORE_SRC src / core / cc / error.c src / core / cc / token.c src / core /
 # cc / warning.c src / core / cpp / error.c src / core / cpp / warning.c src /
