@@ -73,14 +73,14 @@ target_include_directories(lily_base PRIVATE ${LILY_INCLUDE})
 set(CLI_LILY_SRC src/cli/lily/lily.c src/cli/lily/parse_config.c)
 
 add_library(lily_cli STATIC ${CLI_LILY_SRC})
-target_link_libraries(lily_cli lily_base)
+target_link_libraries(lily_cli PUBLIC lily_base)
 target_include_directories(lily_cli PRIVATE ${LILY_INCLUDE})
 
 # lilyc_cli
 set(CLI_LILYC_SRC src/cli/lilyc/lilyc.c src/cli/lilyc/parse_config.c)
 
 add_library(lilyc_cli STATIC ${CLI_LILYC_SRC})
-target_link_libraries(lilyc_cli lily_base)
+target_link_libraries(lilyc_cli PUBLIC lily_base)
 target_include_directories(lilyc_cli PRIVATE ${LILY_INCLUDE})
 
 # lily_command
@@ -96,14 +96,14 @@ set(COMMAND_LILY_SRC
     src/command/lily/to/to.c)
 
 add_library(lily_command STATIC ${COMMAND_LILY_SRC})
-target_link_libraries(lily_command lily_base)
+target_link_libraries(lily_command PUBLIC lily_base)
 target_include_directories(lily_command PRIVATE ${LILY_INCLUDE})
 
 # lilyc_command
 set(COMMAND_LILYC_SRC src/command/lilyc/lilyc.c)
 
 add_library(lilyc_command STATIC ${COMMAND_LILYC_SRC})
-target_link_libraries(lilyc_command lily_base lily_core_lily_compiler_package)
+target_link_libraries(lilyc_command PUBLIC lily_core_lily_compiler_package)
 target_include_directories(lilyc_command PRIVATE ${LILY_INCLUDE})
 
 # lily_core_cc_diagnostic
@@ -111,7 +111,7 @@ set(LILY_CORE_CC_DIAGNOSTIC_SRC src/core/cc/diagnostic/error.c
                                 src/core/cc/diagnostic/warning.c)
 
 add_library(lily_core_cc_diagnostic STATIC ${LILY_CORE_CC_DIAGNOSTIC_SRC})
-target_link_libraries(lily_core_cc_diagnostic lily_base lily_core_shared)
+target_link_libraries(lily_core_cc_diagnostic PUBLIC lily_core_shared)
 target_include_directories(lily_core_cc_diagnostic PRIVATE ${LILY_INCLUDE})
 
 # lily_core_cpp_diagnostic
@@ -119,7 +119,7 @@ set(LILY_CORE_CPP_DIAGNOSTIC_SRC src/core/cpp/diagnostic/error.c
                                  src/core/cpp/diagnostic/warning.c)
 
 add_library(lily_core_cpp_diagnostic STATIC ${LILY_CORE_CPP_DIAGNOSTIC_SRC})
-target_link_libraries(lily_core_cpp_diagnostic lily_base lily_core_shared)
+target_link_libraries(lily_core_cpp_diagnostic PUBLIC lily_core_shared)
 target_include_directories(lily_core_cpp_diagnostic PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_analysis
@@ -210,8 +210,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     src/core/lily/analysis/analysis.c)
 
 add_library(lily_core_lily_analysis STATIC ${LILY_CORE_LILY_ANALYSIS_SRC})
-target_link_libraries(lily_core_lily_analysis lily_core_shared
-                      lily_core_lily_functions lily_base)
+target_link_libraries(lily_core_lily_analysis PUBLIC lily_core_lily_functions)
 target_include_directories(lily_core_lily_analysis PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_bytecode set(LILY_CORE_LILY_BYTECODE_SRC)
@@ -229,8 +228,9 @@ set(LILY_CORE_LILY_COMPILER_IR_SRC
 
 add_library(lily_core_lily_compiler_ir STATIC ${LILY_CORE_LILY_COMPILER_IR_SRC})
 target_link_libraries(
-  lily_core_lily_compiler_ir lily_core_lily_compiler_ir_cc
-  lily_core_lily_compiler_ir_cpp lily_core_lily_compiler_ir_llvm)
+  lily_core_lily_compiler_ir
+  PUBLIC lily_core_lily_compiler_ir_cc lily_core_lily_compiler_ir_cpp
+         lily_core_lily_compiler_ir_llvm)
 target_include_directories(lily_core_lily_compiler_ir PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_compiler_ir_cc
@@ -358,7 +358,7 @@ set(LILY_CORE_LILY_COMPILER_LINKER_SRC src/core/lily/compiler/linker/linker.c)
 add_library(lily_core_lily_compiler_linker STATIC
             ${LILY_CORE_LILY_COMPILER_LINKER_SRC})
 target_link_libraries(lily_core_lily_compiler_linker
-                      lily_core_lily_compiler_package)
+                      PUBLIC lily_core_lily_compiler_package)
 target_include_directories(lily_core_lily_compiler_linker
                            PRIVATE ${LILY_INCLUDE})
 
@@ -374,18 +374,9 @@ set(LILY_CORE_LILY_COMPILER_PACKAGE_SRC
 add_library(lily_core_lily_compiler_package STATIC
             ${LILY_CORE_LILY_COMPILER_PACKAGE_SRC})
 target_link_libraries(
-  lily_core_lily_compiler_package
-  lily_base
-  lily_core_lily_analysis
-  lily_core_lily_compiler_ir
-  lily_core_lily_compiler_linker
-  lily_core_lily_diagnostic
-  lily_core_lily_functions
-  lily_core_lily_mir
-  lily_core_lily_parser
-  lily_core_lily_precompiler
-  lily_core_lily_preparser
-  lily_core_lily_scanner)
+  lily_core_lily_compiler_package lily_core_lily_compiler_ir
+  lily_core_lily_compiler_linker lily_core_lily_mir lily_core_lily_parser
+  lily_core_lily_precompiler)
 target_include_directories(lily_core_lily_compiler_package
                            PRIVATE ${LILY_INCLUDE})
 
@@ -394,7 +385,8 @@ set(LILY_CORE_LILY_DIAGNOSTIC_SRC src/core/lily/diagnostic/error.c
                                   src/core/lily/diagnostic/warning.c)
 
 add_library(lily_core_lily_diagnostic STATIC ${LILY_CORE_LILY_DIAGNOSTIC_SRC})
-target_link_libraries(lily_core_lily_diagnostic lily_core_shared lily_base)
+target_link_libraries(lily_core_lily_diagnostic PUBLIC lily_core_shared
+                                                       lily_base)
 target_include_directories(lily_core_lily_diagnostic PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_functions
@@ -402,8 +394,7 @@ set(LILY_CORE_LILY_FUNCTIONS_SRC src/core/lily/functions/builtin.c
                                  src/core/lily/functions/sys.c)
 
 add_library(lily_core_lily_functions STATIC ${LILY_CORE_LILY_FUNCTIONS_SRC})
-target_link_libraries(lily_core_lily_functions lily_base
-                      lily_core_lily_analysis)
+target_link_libraries(lily_core_lily_functions PUBLIC lily_core_lily_analysis)
 target_include_directories(lily_core_lily_functions PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_jit
@@ -431,8 +422,8 @@ set(LILY_CORE_LILY_MIR_SRC
     src/core/lily/mir/scope.c)
 
 add_library(lily_core_lily_mir STATIC ${LILY_CORE_LILY_MIR_SRC})
-target_link_libraries(lily_core_lily_mir lily_base lily_core_lily_analysis
-                      lily_core_lily_compiler_package)
+target_link_libraries(lily_core_lily_mir PUBLIC lily_base
+                                                lily_core_lily_analysis)
 target_include_directories(lily_core_lily_mir PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_parser
@@ -512,16 +503,15 @@ set(LILY_CORE_LILY_PARSER_SRC
     src/core/lily/parser/parser.c)
 
 add_library(lily_core_lily_parser STATIC ${LILY_CORE_LILY_PARSER_SRC})
-target_link_libraries(lily_core_lily_parser lily_core_shared lily_base
-                      lily_core_lily_preparser)
+target_link_libraries(lily_core_lily_parser PUBLIC lily_core_lily_preparser)
 target_include_directories(lily_core_lily_parser PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_precompiler
 set(LILY_CORE_LILY_PRECOMPILER_SRC src/core/lily/precompiler/precompile.c)
 
 add_library(lily_core_lily_precompiler STATIC ${LILY_CORE_LILY_PRECOMPILER_SRC})
-target_link_libraries(lily_core_lily_precompiler lily_core_shared lily_base
-                      lily_core_lily_preparser lily_core_lily_compiler_package)
+target_link_libraries(lily_core_lily_precompiler
+                      PUBLIC lily_core_lily_compiler_package)
 target_include_directories(lily_core_lily_precompiler PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_preparser
@@ -539,8 +529,7 @@ set(LILY_CORE_LILY_PREPARSER_SRC
     src/core/lily/preparser/preprocess.c)
 
 add_library(lily_core_lily_preparser STATIC ${LILY_CORE_LILY_PREPARSER_SRC})
-target_link_libraries(lily_core_lily_preparser lily_base lily_core_shared
-                      lily_core_lily_scanner)
+target_link_libraries(lily_core_lily_preparser PUBLIC lily_core_lily_scanner)
 target_include_directories(lily_core_lily_preparser PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_scanner
@@ -548,7 +537,7 @@ set(LILY_CORE_LILY_SCANNER_SRC src/core/lily/scanner/scanner.c
                                src/core/lily/scanner/token.c)
 
 add_library(lily_core_lily_scanner STATIC ${LILY_CORE_LILY_SCANNER_SRC})
-target_link_libraries(lily_core_lily_scanner lily_base lily_core_shared)
+target_link_libraries(lily_core_lily_scanner PUBLIC lily_base lily_core_shared)
 target_include_directories(lily_core_lily_scanner PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_shared
@@ -569,11 +558,11 @@ target_link_libraries(lily_core_shared lily_base lily_core_lily_diagnostic
 target_include_directories(lily_core_shared PRIVATE ${LILY_INCLUDE})
 
 add_executable(lily src/bin/lily/main.c)
-target_link_libraries(lily lily_base lily_cli lily_command)
+target_link_libraries(lily lily_cli lily_command)
 target_include_directories(lily PRIVATE ${LILY_INCLUDE})
 
 add_executable(lilyc src/bin/lilyc/main.c)
-target_link_libraries(lilyc lily_base lilyc_cli lilyc_command LLVM)
+target_link_libraries(lilyc lilyc_cli lilyc_command)
 target_include_directories(lilyc PRIVATE ${LILY_INCLUDE})
 
 # lily_builtin
