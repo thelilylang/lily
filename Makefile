@@ -35,7 +35,8 @@ format:
 	${CLANG_FORMAT} ./include/command/lily/test/*.h
 	${CLANG_FORMAT} ./include/command/lily/to/*.h
 	${CLANG_FORMAT} ./include/core/cc/*.h
-	${CLANG_FORMAT} ./include/core/cpp/*.h
+	${CLANG_FORMAT} ./include/core/cc/diagnostic/*.h
+	${CLANG_FORMAT} ./include/core/cpp/diagnostic/*.h
 	${CLANG_FORMAT} ./include/core/lily/*.h
 	${CLANG_FORMAT} ./include/core/lily/parser/ast/*.h
 	${CLANG_FORMAT} ./include/core/lily/parser/ast/body/*.h
@@ -95,6 +96,7 @@ format:
 	${CLANG_FORMAT} ./src/command/lily/run/*.c
 	${CLANG_FORMAT} ./src/command/lily/test/*.c
 	${CLANG_FORMAT} ./src/command/lily/to/*.c
+	${CLANG_FORMAT} ./src/core/cc/diagnostic/*.c
 	${CLANG_FORMAT} ./src/core/cc/*.c
 	${CLANG_FORMAT} ./src/core/cpp/diagnostic/*.c
 	${CLANG_FORMAT} ./src/core/lily/parser/ast/*.c
