@@ -507,7 +507,7 @@ target_link_libraries(lily_core_lily_parser PUBLIC lily_core_lily_preparser)
 target_include_directories(lily_core_lily_parser PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_precompiler
-set(LILY_CORE_LILY_PRECOMPILER_SRC src/core/lily/precompiler/precompile.c)
+set(LILY_CORE_LILY_PRECOMPILER_SRC src/core/lily/precompiler/precompiler.c)
 
 add_library(lily_core_lily_precompiler STATIC ${LILY_CORE_LILY_PRECOMPILER_SRC})
 target_link_libraries(lily_core_lily_precompiler
