@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_EXPR_IDENTIFIER_H
-#define LILY_CORE_LILY_AST_EXPR_IDENTIFIER_H
+#ifndef LILY_CORE_LILY_PARSER_AST_EXPR_IDENTIFIER_H
+#define LILY_CORE_LILY_PARSER_AST_EXPR_IDENTIFIER_H
 
 #include <base/new.h>
 #include <base/string.h>
@@ -108,4 +108,4 @@ inline DESTRUCTOR(LilyAstExprIdentifierDollar,
     FREE_MOVE(self->name, FREE(String, self->name));
 }
 
-#endif // LILY_CORE_LILY_AST_EXPR_IDENTIFIER_H
+#endif // LILY_CORE_LILY_PARSER_AST_EXPR_IDENTIFIER_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_EXPR_ARRAY_H
-#define LILY_CORE_LILY_AST_EXPR_ARRAY_H
+#ifndef LILY_CORE_LILY_PARSER_AST_EXPR_ARRAY_H
+#define LILY_CORE_LILY_PARSER_AST_EXPR_ARRAY_H
 
 #include <base/macros.h>
 #include <base/new.h>
@@ -67,4 +67,4 @@ to_string__LilyAstExprArray(const LilyAstExprArray *self);
  */
 DESTRUCTOR(LilyAstExprArray, LilyAstExprArray *self);
 
-#endif // LILY_CORE_LILY_AST_EXPR_ARRAY_H
+#endif // LILY_CORE_LILY_PARSER_AST_EXPR_ARRAY_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DECL_TRAIT_H
-#define LILY_CORE_LILY_CHECKED_DECL_TRAIT_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_TRAIT_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_TRAIT_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -89,4 +89,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedDeclTrait, const LilyCheckedDeclTrait *self);
 
-#endif // LILY_CORE_LILY_CHECKED_DECL_TRAIT_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_TRAIT_H

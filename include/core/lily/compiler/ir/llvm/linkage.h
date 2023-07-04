@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_LINKAGE_H
-#define LILY_CORE_LILY_IR_LLVM_LINKAGE_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_LINKAGE_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_LINKAGE_H
 
 #include <llvm-c/Core.h>
 
@@ -41,4 +41,4 @@ set_private_linkage__LilyIrLlvm(LLVMValueRef global);
 void
 set_external_linkage__LilyIrLlvm(LLVMValueRef global);
 
-#endif // LILY_CORE_LILY_IR_LLVM_LINKAGE_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_LINKAGE_H

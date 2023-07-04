@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_GENERATOR_EXPR_UNARY_H
-#define LILY_CORE_LILY_IR_LLVM_GENERATOR_EXPR_UNARY_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_EXPR_UNARY_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_EXPR_UNARY_H
 
 #include <core/lily/analysis/checked.h>
 #include <core/lily/compiler/ir/llvm.h>
@@ -42,4 +42,4 @@ generate_unary_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                 LLVMValueRef fun,
                                 LLVMValueRef ptr);
 
-#endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_EXPR_UNARY_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_EXPR_UNARY_H

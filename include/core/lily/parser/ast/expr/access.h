@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_EXPR_ACCESS_H
-#define LILY_CORE_LILY_AST_EXPR_ACCESS_H
+#ifndef LILY_CORE_LILY_PARSER_AST_EXPR_ACCESS_H
+#define LILY_CORE_LILY_PARSER_AST_EXPR_ACCESS_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -268,4 +268,4 @@ add_item_to_path__LilyAstExprAccess(LilyAstExpr **self, LilyAstExpr **item);
  */
 DESTRUCTOR(LilyAstExprAccess, const LilyAstExprAccess *self);
 
-#endif // LILY_CORE_LILY_AST_EXPR_ACCESS_H
+#endif // LILY_CORE_LILY_PARSER_AST_EXPR_ACCESS_H

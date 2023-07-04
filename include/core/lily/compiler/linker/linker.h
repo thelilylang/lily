@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_LINKER_H
-#define LILY_CORE_LILY_LINKER_H
+#ifndef LILY_CORE_LILY_COMPILER_LINKER_H
+#define LILY_CORE_LILY_COMPILER_LINKER_H
 
 #include <core/lily/compiler/ir/llvm/linker.h>
 
@@ -67,4 +67,4 @@ run__LilyLinker(LilyPackage *self);
  */
 DESTRUCTOR(LilyLinker, const LilyLinker *self);
 
-#endif // LILY_CORE_LILY_LINKER_H
+#endif // LILY_CORE_LILY_COMPILER_LINKER_H

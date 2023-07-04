@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_PARENT_H
-#define LILY_CORE_LILY_CHECKED_PARENT_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_PARENT_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_PARENT_H
 
 typedef struct LilyCheckedDecl LilyCheckedDecl;
 typedef struct LilyCheckedDeclModule LilyCheckedDeclModule;
@@ -109,4 +109,4 @@ inline DESTRUCTOR(LilyCheckedParent, LilyCheckedParent *self)
     lily_free(self);
 }
 
-#endif // LILY_CORE_LILY_CHECKED_PARENT_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_PARENT_H

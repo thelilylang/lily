@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_EXPR_UNARY_H
-#define LILY_CORE_LILY_AST_EXPR_UNARY_H
+#ifndef LILY_CORE_LILY_PARSER_AST_EXPR_UNARY_H
+#define LILY_CORE_LILY_PARSER_AST_EXPR_UNARY_H
 
 #include <base/macros.h>
 
@@ -88,4 +88,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprUnary, const LilyAstExprUnary *self);
  */
 DESTRUCTOR(LilyAstExprUnary, const LilyAstExprUnary *self);
 
-#endif // LILY_CORE_LILY_AST_EXPR_UNARY_H
+#endif // LILY_CORE_LILY_PARSER_AST_EXPR_UNARY_H

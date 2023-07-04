@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_SAFETY_MODE_H
-#define LILY_CORE_LILY_CHECKED_SAFETY_MODE_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_SAFETY_MODE_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_SAFETY_MODE_H
 
 #include <base/macros.h>
 
@@ -45,4 +45,4 @@ IMPL_FOR_DEBUG(to_string,
                enum LilyCheckedSafetyMode self);
 #endif
 
-#endif // LILY_CORE_LILY_CHECKED_SAFETY_MODE_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_SAFETY_MODE_H

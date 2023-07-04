@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_BODY_RECORD_OBJECT_H
-#define LILY_CORE_LILY_CHECKED_BODY_RECORD_OBJECT_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_BODY_RECORD_OBJECT_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_BODY_RECORD_OBJECT_H
 
 #include <core/lily/analysis/checked/decl/constant.h>
 #include <core/lily/analysis/checked/decl/method.h>
@@ -112,4 +112,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedBodyRecordObjectItem, LilyCheckedBodyRecordObjectItem *self);
 
-#endif // LILY_CORE_LILY_CHECKED_BODY_RECORD_OBJECT_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_BODY_RECORD_OBJECT_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_EXPR_CALL_H
-#define LILY_CORE_LILY_CHECKED_EXPR_CALL_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_CALL_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_CALL_H
 
 #include <base/hash_map.h>
 #include <base/string.h>
@@ -859,4 +859,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprCall, const LilyCheckedExprCall *self);
  */
 DESTRUCTOR(LilyCheckedExprCall, const LilyCheckedExprCall *self);
 
-#endif // LILY_CORE_LILY_CHECKED_EXPR_CALL_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_CALL_H

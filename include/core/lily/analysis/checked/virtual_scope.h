@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_VIRTUAL_SCOPE_H
-#define LILY_CORE_LILY_CHECKED_VIRTUAL_SCOPE_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_VIRTUAL_SCOPE_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_VIRTUAL_SCOPE_H
 
 #include <core/lily/analysis/checked/data_type.h>
 #include <core/lily/analysis/checked/decl/fun.h>
@@ -137,4 +137,4 @@ search_variable__LilyCheckedVirtualScope(LilyCheckedVirtualScope *self,
  */
 DESTRUCTOR(LilyCheckedVirtualScope, LilyCheckedVirtualScope *self);
 
-#endif // LILY_CORE_LILY_CHECKED_VIRTUAL_SCOPE_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_VIRTUAL_SCOPE_H

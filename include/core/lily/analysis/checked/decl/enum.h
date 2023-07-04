@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DECL_ENUM_H
-#define LILY_CORE_LILY_CHECKED_DECL_ENUM_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_ENUM_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_ENUM_H
 
 #include <base/string.h>
 #include <base/vec.h>
@@ -90,4 +90,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclEnum, const LilyCheckedDeclEnum *self);
  */
 DESTRUCTOR(LilyCheckedDeclEnum, const LilyCheckedDeclEnum *self);
 
-#endif // LILY_CORE_LILY_CHECKED_DECL_ENUM_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_ENUM_H

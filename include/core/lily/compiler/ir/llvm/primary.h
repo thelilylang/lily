@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_PRIMARY_H
-#define LILY_CORE_LILY_IR_LLVM_PRIMARY_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_PRIMARY_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_PRIMARY_H
 
 #include <core/lily/compiler/ir/llvm.h>
 
@@ -137,4 +137,4 @@ ptr__LilyIrLlvm(const LilyIrLlvm *self, LLVMTypeRef ptr_type)
     return LLVMPointerType(ptr_type, 0);
 }
 
-#endif // LILY_CORE_LILY_IR_LLVM_PRIMARY_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_PRIMARY_H

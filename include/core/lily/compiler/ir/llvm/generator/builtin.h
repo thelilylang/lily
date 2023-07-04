@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_GENERATOR_BUILTIN_H
-#define LILY_CORE_LILY_IR_LLVM_GENERATOR_BUILTIN_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_BUILTIN_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_BUILTIN_H
 
 #include <core/lily/compiler/ir/llvm.h>
 #include <core/lily/compiler/ir/llvm/scope.h>
@@ -38,4 +38,4 @@ declare_builtin_function__LilyIrLlvm(LilyIrLlvm *self,
                                      LilyLlvmScope *scope,
                                      LilyPackage *package);
 
-#endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_BUILTIN_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_BUILTIN_H

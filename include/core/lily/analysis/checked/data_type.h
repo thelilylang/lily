@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DATA_TYPE_H
-#define LILY_CORE_LILY_CHECKED_DATA_TYPE_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DATA_TYPE_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DATA_TYPE_H
 
 #include <base/hash_map.h>
 #include <base/macros.h>
@@ -844,4 +844,4 @@ IMPL_FOR_DEBUG(debug, LilyCheckedDataType, const LilyCheckedDataType *self);
  */
 DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self);
 
-#endif // LILY_CORE_LILY_CHECKED_DATA_TYPE_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DATA_TYPE_H

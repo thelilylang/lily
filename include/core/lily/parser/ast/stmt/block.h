@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_STMT_BLOCK_H
-#define LILY_CORE_LILY_AST_STMT_BLOCK_H
+#ifndef LILY_CORE_LILY_PARSER_AST_STMT_BLOCK_H
+#define LILY_CORE_LILY_PARSER_AST_STMT_BLOCK_H
 
 #include <base/vec.h>
 
@@ -57,4 +57,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtBlock, const LilyAstStmtBlock *self);
  */
 DESTRUCTOR(LilyAstStmtBlock, const LilyAstStmtBlock *self);
 
-#endif // LILY_CORE_LILY_AST_STMT_BLOCK_H
+#endif // LILY_CORE_LILY_PARSER_AST_STMT_BLOCK_H

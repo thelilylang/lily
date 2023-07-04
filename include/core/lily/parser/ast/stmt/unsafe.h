@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_STMT_UNSAFE_H
-#define LILY_CORE_LILY_AST_STMT_UNSAFE_H
+#ifndef LILY_CORE_LILY_PARSER_AST_STMT_UNSAFE_H
+#define LILY_CORE_LILY_PARSER_AST_STMT_UNSAFE_H
 
 #include <base/vec.h>
 
@@ -57,4 +57,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtUnsafe, const LilyAstStmtUnsafe *self);
  */
 DESTRUCTOR(LilyAstStmtUnsafe, const LilyAstStmtUnsafe *self);
 
-#endif // LILY_CORE_LILY_AST_STMT_UNSAFE_H
+#endif // LILY_CORE_LILY_PARSER_AST_STMT_UNSAFE_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_GENERATOR_H
-#define LILY_CORE_LILY_IR_LLVM_GENERATOR_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_H
 
 typedef struct LilyPackage LilyPackage;
 
@@ -34,4 +34,4 @@ typedef struct LilyPackage LilyPackage;
 void
 run__LilyIrLlvmGenerator(LilyPackage *self);
 
-#endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_H

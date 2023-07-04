@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DECL_FUN_H
-#define LILY_CORE_LILY_CHECKED_DECL_FUN_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_FUN_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_FUN_H
 
 #include <base/string.h>
 
@@ -262,4 +262,4 @@ get_original_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self);
  */
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self);
 
-#endif // LILY_CORE_LILY_CHECKED_DECL_FUN_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_FUN_H

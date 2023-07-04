@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_SIGNATURE_H
-#define LILY_CORE_LILY_CHECKED_SIGNATURE_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_SIGNATURE_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_SIGNATURE_H
 
 #include <base/hash_map.h>
 #include <base/macros.h>
@@ -230,4 +230,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedSignatureVariant, LilyCheckedSignatureVariant *self);
 
-#endif // LILY_CORE_LILY_CHECKED_SIGNATURE_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_SIGNATURE_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_ACCESS_H
-#define LILY_CORE_LILY_CHECKED_ACCESS_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_ACCESS_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_ACCESS_H
 
 #include <base/alloc.h>
 #include <base/macros.h>
@@ -434,4 +434,4 @@ inline DESTRUCTOR(LilyCheckedAccessLabel, LilyCheckedAccessLabel *self)
     lily_free(self);
 }
 
-#endif // LILY_CORE_LILY_CHECKED_ACCESS_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_ACCESS_H

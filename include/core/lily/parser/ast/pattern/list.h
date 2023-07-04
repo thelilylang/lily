@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_PATTERN_LIST_H
-#define LILY_CORE_LILY_AST_PATTERN_LIST_H
+#ifndef LILY_CORE_LILY_PARSER_AST_PATTERN_LIST_H
+#define LILY_CORE_LILY_PARSER_AST_PATTERN_LIST_H
 
 #include <base/macros.h>
 #include <base/new.h>
@@ -67,4 +67,4 @@ to_string__LilyAstPatternList(const LilyAstPatternList *self);
  */
 DESTRUCTOR(LilyAstPatternList, LilyAstPatternList *self);
 
-#endif // LILY_CORE_LILY_AST_PATTERN_ARRAY_H
+#endif // LILY_CORE_LILY_PARSER_AST_PATTERN_ARRAY_H

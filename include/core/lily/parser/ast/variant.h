@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_VARIANT_H
-#define LILY_CORE_LILY_AST_VARIANT_H
+#ifndef LILY_CORE_LILY_PARSER_AST_VARIANT_H
+#define LILY_CORE_LILY_PARSER_AST_VARIANT_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -63,4 +63,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstVariant, const LilyAstVariant *self);
  */
 DESTRUCTOR(LilyAstVariant, LilyAstVariant *self);
 
-#endif // LILY_CORE_LILY_AST_VARIANT_H
+#endif // LILY_CORE_LILY_PARSER_AST_VARIANT_H

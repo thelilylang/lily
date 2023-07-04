@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_EXPR_BINARY_H
-#define LILY_CORE_LILY_CHECKED_EXPR_BINARY_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_BINARY_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_BINARY_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -143,4 +143,4 @@ is_assign__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind);
  */
 DESTRUCTOR(LilyCheckedExprBinary, const LilyCheckedExprBinary *self);
 
-#endif // LILY_CORE_LILY_CHECKED_EXPR_BINARY_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_BINARY_H

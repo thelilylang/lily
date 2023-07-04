@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_STMT_MATCH_H
-#define LILY_CORE_LILY_CHECKED_STMT_MATCH_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_MATCH_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_MATCH_H
 
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/pattern.h>
@@ -101,4 +101,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedStmtMatch, const LilyCheckedStmtMatch *self);
 
-#endif // LILY_CORE_LILY_CHECKED_STMT_MATCH_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_MATCH_H

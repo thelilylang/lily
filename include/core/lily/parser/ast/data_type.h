@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_DATA_TYPE_H
-#define LILY_CORE_LILY_AST_DATA_TYPE_H
+#ifndef LILY_CORE_LILY_PARSER_AST_DATA_TYPE_H
+#define LILY_CORE_LILY_PARSER_AST_DATA_TYPE_H
 
 #include <base/macros.h>
 #include <base/new.h>
@@ -395,4 +395,4 @@ to_string__LilyAstDataType(const LilyAstDataType *self);
  */
 DESTRUCTOR(LilyAstDataType, LilyAstDataType *self);
 
-#endif // LILY_CORE_LILY_AST_DATA_TYPE_H
+#endif // LILY_CORE_LILY_PARSER_AST_DATA_TYPE_H

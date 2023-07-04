@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_PATTERN_LITERAL_H
-#define LILY_CORE_LILY_AST_PATTERN_LITERAL_H
+#ifndef LILY_CORE_LILY_PARSER_AST_PATTERN_LITERAL_H
+#define LILY_CORE_LILY_PARSER_AST_PATTERN_LITERAL_H
 
 #include <base/alloc.h>
 #include <base/macros.h>
@@ -525,4 +525,4 @@ inline DESTRUCTOR(LilyAstPatternLiteral, const LilyAstPatternLiteral *self)
     }
 }
 
-#endif // LILY_CORE_LILY_AST_PATTERN_LITERAL_H
+#endif // LILY_CORE_LILY_PARSER_AST_PATTERN_LITERAL_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_FIELD_OBJECT_H
-#define LILY_CORE_LILY_AST_FIELD_OBJECT_H
+#ifndef LILY_CORE_LILY_PARSER_AST_FIELD_OBJECT_H
+#define LILY_CORE_LILY_PARSER_AST_FIELD_OBJECT_H
 
 #include <base/string.h>
 
@@ -72,4 +72,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstFieldObject, const LilyAstFieldObject *self);
  */
 DESTRUCTOR(LilyAstFieldObject, const LilyAstFieldObject *self);
 
-#endif // LILY_CORE_LILY_AST_FIELD_OBJECT_H
+#endif // LILY_CORE_LILY_PARSER_AST_FIELD_OBJECT_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_EXPR_H
-#define LILY_CORE_LILY_CHECKED_EXPR_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_H
 
 #include <base/string.h>
 
@@ -246,4 +246,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self);
  */
 DESTRUCTOR(LilyCheckedExpr, LilyCheckedExpr *self);
 
-#endif // LILY_CORE_LILY_CHECKED_EXPR_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DECL_PROTOTYPE_H
-#define LILY_CORE_LILY_CHECKED_DECL_PROTOTYPE_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_PROTOTYPE_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_PROTOTYPE_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -79,4 +79,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedDeclPrototype, const LilyCheckedDeclPrototype *self);
 
-#endif // LILY_CORE_LILY_CHECKED_DECL_PROTOTYPE_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_PROTOTYPE_H

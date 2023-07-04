@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_DECL_PROTOTYPE_H
-#define LILY_CORE_LILY_AST_DECL_PROTOTYPE_H
+#ifndef LILY_CORE_LILY_PARSER_AST_DECL_PROTOTYPE_H
+#define LILY_CORE_LILY_PARSER_AST_DECL_PROTOTYPE_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -74,4 +74,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyAstDeclPrototype, const LilyAstDeclPrototype *self);
 
-#endif // LILY_CORE_LILY_AST_DECL_PROTOTYPE_H
+#endif // LILY_CORE_LILY_PARSER_AST_DECL_PROTOTYPE_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_STMT_RETURN_H
-#define LILY_CORE_LILY_CHECKED_STMT_RETURN_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_RETURN_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_RETURN_H
 
 #include <core/lily/analysis/checked/expr.h>
 
@@ -62,4 +62,4 @@ inline DESTRUCTOR(LilyCheckedStmtReturn, const LilyCheckedStmtReturn *self)
     }
 }
 
-#endif // LILY_CORE_LILY_CHECKED_STMT_RETURN_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_RETURN_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_EXPR_CALL_H
-#define LILY_CORE_LILY_AST_EXPR_CALL_H
+#ifndef LILY_CORE_LILY_PARSER_AST_EXPR_CALL_H
+#define LILY_CORE_LILY_PARSER_AST_EXPR_CALL_H
 
 #include <base/string.h>
 #include <base/vec.h>
@@ -448,4 +448,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprCall, const LilyAstExprCall *self);
  */
 DESTRUCTOR(LilyAstExprCall, const LilyAstExprCall *self);
 
-#endif // LILY_CORE_LILY_AST_EXPR_CALL_H
+#endif // LILY_CORE_LILY_PARSER_AST_EXPR_CALL_H

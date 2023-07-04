@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_DUMP_H
-#define LILY_CORE_LILY_IR_LLVM_DUMP_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_DUMP_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_DUMP_H
 
 #include <core/lily/compiler/ir/llvm.h>
 
@@ -33,4 +33,4 @@ dump__LilyIrLlvm(const LilyIrLlvm *self)
     LLVMDumpModule(self->module);
 }
 
-#endif // LILY_CORE_LILY_IR_LLVM_DUMP_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_DUMP_H

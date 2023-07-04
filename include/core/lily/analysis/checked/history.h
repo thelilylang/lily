@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_HISTORY_H
-#define LILY_CORE_LILY_CHECKED_HISTORY_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_HISTORY_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_HISTORY_H
 
 #include <base/new.h>
 #include <base/vec.h>
@@ -84,4 +84,4 @@ contains__LilyCheckedHistory(const LilyCheckedHistory *self,
  */
 DESTRUCTOR(LilyCheckedHistory, LilyCheckedHistory **self);
 
-#endif // LILY_CORE_LILY_CHECKED_HISTORY_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_HISTORY_H

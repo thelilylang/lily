@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_STMT_DROP_H
-#define LILY_CORE_LILY_AST_STMT_DROP_H
+#ifndef LILY_CORE_LILY_PARSER_AST_STMT_DROP_H
+#define LILY_CORE_LILY_PARSER_AST_STMT_DROP_H
 
 #include <core/lily/parser/ast/expr.h>
 
@@ -56,4 +56,4 @@ inline DESTRUCTOR(LilyAstStmtDrop, const LilyAstStmtDrop *self)
     FREE(LilyAstExpr, self->expr);
 }
 
-#endif // LILY_CORE_LILY_AST_STMT_DROP_H
+#endif // LILY_CORE_LILY_PARSER_AST_STMT_DROP_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_ATTR_H
-#define LILY_CORE_LILY_IR_LLVM_ATTR_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_ATTR_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_ATTR_H
 
 #include <base/types.h>
 
@@ -395,4 +395,4 @@ willreturn_attr__LilyIrLlvm(const LilyIrLlvm *self)
     LLVM_ATTR("willreturn", 10, 0);
 }
 
-#endif // LILY_CORE_LILY_IR_LLVM_ATTR_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_ATTR_H

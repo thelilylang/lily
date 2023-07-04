@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_VARIANT_H
-#define LILY_CORE_LILY_CHECKED_VARIANT_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_VARIANT_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_VARIANT_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -70,4 +70,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedVariant, const LilyCheckedVariant *self);
  */
 DESTRUCTOR(LilyCheckedVariant, LilyCheckedVariant *self);
 
-#endif // LILY_CORE_LILY_CHECKED_VARIANT_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_VARIANT_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DECL_RECORD_H
-#define LILY_CORE_LILY_CHECKED_DECL_RECORD_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_RECORD_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_RECORD_H
 
 #include <base/string.h>
 #include <base/vec.h>
@@ -96,4 +96,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedDeclRecord, const LilyCheckedDeclRecord *self);
 
-#endif // LILY_CORE_LILY_CHECKED_DECL_RECORD_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_RECORD_H

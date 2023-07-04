@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_GENERATOR_DATA_TYPE_H
-#define LILY_CORE_LILY_IR_LLVM_GENERATOR_DATA_TYPE_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_DATA_TYPE_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_DATA_TYPE_H
 
 #include <core/lily/analysis/checked.h>
 #include <core/lily/compiler/ir/llvm.h>
@@ -38,4 +38,4 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
                                LilyCheckedDataType *data_type,
                                LilyLlvmScope *scope);
 
-#endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_DATA_TYPE_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_DATA_TYPE_H

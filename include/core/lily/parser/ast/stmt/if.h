@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_STMT_IF_H
-#define LILY_CORE_LILY_AST_STMT_IF_H
+#ifndef LILY_CORE_LILY_PARSER_AST_STMT_IF_H
+#define LILY_CORE_LILY_PARSER_AST_STMT_IF_H
 
 #include <core/lily/parser/ast/expr.h>
 
@@ -71,4 +71,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtIf, const LilyAstStmtIf *self);
  */
 DESTRUCTOR(LilyAstStmtIf, const LilyAstStmtIf *self);
 
-#endif // LILY_CORE_LILY_AST_STMT_IF_H
+#endif // LILY_CORE_LILY_PARSER_AST_STMT_IF_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_STMT_NEXT_H
-#define LILY_CORE_LILY_CHECKED_STMT_NEXT_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_NEXT_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_NEXT_H
 
 #include <base/macros.h>
 #include <base/new.h>
@@ -49,4 +49,4 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedStmtNext, const LilyCheckedStmtNext *self);
 #endif
 
-#endif // LILY_CORE_LILY_CHECKED_STMT_NEXT_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_NEXT_H

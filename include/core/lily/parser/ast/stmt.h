@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_STMT_H
-#define LILY_CORE_LILY_AST_STMT_H
+#ifndef LILY_CORE_LILY_PARSER_AST_STMT_H
+#define LILY_CORE_LILY_PARSER_AST_STMT_H
 
 #include <base/macros.h>
 
@@ -359,4 +359,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmt, const LilyAstStmt *self);
  */
 DESTRUCTOR(LilyAstStmt, const LilyAstStmt *self);
 
-#endif // LILY_CORE_LILY_AST_STMT_H
+#endif // LILY_CORE_LILY_PARSER_AST_STMT_H

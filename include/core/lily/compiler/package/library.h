@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PACKAGE_LIBRARY_H
-#define LILY_CORE_LILY_PACKAGE_LIBRARY_H
+#ifndef LILY_CORE_LILY_COMPILER_PACKAGE_LIBRARY_H
+#define LILY_CORE_LILY_COMPILER_PACKAGE_LIBRARY_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -57,4 +57,4 @@ CONSTRUCTOR(LilyLibrary *,
  */
 DESTRUCTOR(LilyLibrary, LilyLibrary *self);
 
-#endif // LILY_CORE_LILY_PACKAGE_LIBRARY_H
+#endif // LILY_CORE_LILY_COMPILER_PACKAGE_LIBRARY_H

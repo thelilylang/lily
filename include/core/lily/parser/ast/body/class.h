@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_BODY_CLASS_H
-#define LILY_CORE_LILY_AST_BODY_CLASS_H
+#ifndef LILY_CORE_LILY_PARSER_AST_BODY_CLASS_H
+#define LILY_CORE_LILY_PARSER_AST_BODY_CLASS_H
 
 #include <core/lily/parser/ast/decl/attribute.h>
 #include <core/lily/parser/ast/decl/method.h>
@@ -98,4 +98,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyAstBodyClassItem, LilyAstBodyClassItem *self);
 
-#endif // LILY_CORE_LILY_AST_BODY_CLASS_H
+#endif // LILY_CORE_LILY_PARSER_AST_BODY_CLASS_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_PATTERN_NAME_H
-#define LILY_CORE_LILY_AST_PATTERN_NAME_H
+#ifndef LILY_CORE_LILY_PARSER_AST_PATTERN_NAME_H
+#define LILY_CORE_LILY_PARSER_AST_PATTERN_NAME_H
 
 #include <base/macros.h>
 #include <base/new.h>
@@ -62,4 +62,4 @@ inline DESTRUCTOR(LilyAstPatternName, const LilyAstPatternName *self)
     FREE_MOVE(self->name, FREE(String, self->name));
 }
 
-#endif // LILY_CORE_LILY_AST_PATTERN_NAME_H
+#endif // LILY_CORE_LILY_PARSER_AST_PATTERN_NAME_H

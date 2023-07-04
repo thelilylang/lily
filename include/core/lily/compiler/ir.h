@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_H
-#define LILY_CORE_LILY_IR_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_H
+#define LILY_CORE_LILY_COMPILER_IR_H
 
 #include <base/macros.h>
 
@@ -103,4 +103,4 @@ run__LilyIr(LilyPackage *self);
  */
 DESTRUCTOR(LilyIr, const LilyIr *self);
 
-#endif // LILY_CORE_LILY_IR_H
+#endif // LILY_CORE_LILY_COMPILER_IR_H

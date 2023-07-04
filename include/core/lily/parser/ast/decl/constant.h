@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_DECL_CONSTANT_H
-#define LILY_CORE_LILY_AST_DECL_CONSTANT_H
+#ifndef LILY_CORE_LILY_PARSER_AST_DECL_CONSTANT_H
+#define LILY_CORE_LILY_PARSER_AST_DECL_CONSTANT_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -73,4 +73,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclConstant, const LilyAstDeclConstant *self);
  */
 DESTRUCTOR(LilyAstDeclConstant, const LilyAstDeclConstant *self);
 
-#endif // LILY_CORE_LILY_AST_DECL_CONSTANT_H
+#endif // LILY_CORE_LILY_PARSER_AST_DECL_CONSTANT_H

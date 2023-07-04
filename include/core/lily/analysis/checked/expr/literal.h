@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_EXPR_LITERAL_H
-#define LILY_CORE_LILY_CHECKED_EXPR_LITERAL_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_LITERAL_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_LITERAL_H
 
 #include <base/macros.h>
 #include <base/new.h>
@@ -500,4 +500,4 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedExprLiteral *self);
 #endif
 
-#endif // LILY_CORE_LILY_CHECKED_EXPR_LITERAL_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_LITERAL_H

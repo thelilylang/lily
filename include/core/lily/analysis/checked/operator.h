@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_OPERATOR_H
-#define LILY_CORE_LILY_CHECKED_OPERATOR_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_OPERATOR_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_OPERATOR_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -100,4 +100,4 @@ inline DESTRUCTOR(LilyCheckedOperator, LilyCheckedOperator *self)
     lily_free(self);
 }
 
-#endif // LILY_CORE_LILY_CHECKED_OPERATOR_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_OPERATOR_H

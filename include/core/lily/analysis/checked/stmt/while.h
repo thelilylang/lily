@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_STMT_WHILE_H
-#define LILY_CORE_LILY_CHECKED_STMT_WHILE_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_WHILE_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_WHILE_H
 
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/scope.h>

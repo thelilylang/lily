@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_TYPES_H
-#define LILY_CORE_LILY_IR_LLVM_TYPES_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_TYPES_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_TYPES_H
 
 #include <core/lily/compiler/ir/llvm.h>
 #include <core/lily/compiler/ir/llvm/primary.h>
@@ -40,4 +40,4 @@ str__LilyIrLlvm(const LilyIrLlvm *self)
       false);
 }
 
-#endif // LILY_CORE_LILY_IR_LLVM_TYPES_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_TYPES_H

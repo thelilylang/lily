@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PACKAGE_CONFIG
-#define LILY_CORE_LILY_PACKAGE_CONFIG
+#ifndef LILY_CORE_LILY_COMPILER_PACKAGE_CONFIG
+#define LILY_CORE_LILY_COMPILER_PACKAGE_CONFIG
 
 #include <base/alloc.h>
 #include <base/macros.h>
@@ -105,4 +105,4 @@ from_CompileConfig__LilyPackageConfig(const LilycConfig *lilyc_config)
                0);
 }
 
-#endif // LILY_CORE_LILY_PACKAGE_CONFIG
+#endif // LILY_CORE_LILY_COMPILER_PACKAGE_CONFIG

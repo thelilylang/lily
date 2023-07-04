@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_WARNING_H
-#define LILY_CORE_LILY_WARNING_H
+#ifndef LILY_CORE_LILY_DIAGNOSTIC_WARNING_H
+#define LILY_CORE_LILY_DIAGNOSTIC_WARNING_H
 
 #include <base/macros.h>
 
@@ -71,4 +71,4 @@ to_code__LilyWarning(const LilyWarning *self);
 char *
 to_string__LilyWarning(const LilyWarning *self);
 
-#endif // LILY_CORE_LILY_WARNING_H
+#endif // LILY_CORE_LILY_DIAGNOSTIC_WARNING_H

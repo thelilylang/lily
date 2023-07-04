@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_H
-#define LILY_CORE_LILY_AST_H
+#ifndef LILY_CORE_LILY_PARSER_AST_H
+#define LILY_CORE_LILY_PARSER_AST_H
 
 #include <core/lily/parser/ast/data_type.h>
 #include <core/lily/parser/ast/decl.h>
@@ -34,4 +34,4 @@
 #if 0
 #endif
 
-#endif // LILY_CORE_LILY_AST_H
+#endif // LILY_CORE_LILY_PARSER_AST_H

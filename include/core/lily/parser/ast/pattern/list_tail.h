@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_PATTERN_LIST_TAIL_H
-#define LILY_CORE_LILY_AST_PATTERN_LIST_TAIL_H
+#ifndef LILY_CORE_LILY_PARSER_AST_PATTERN_LIST_TAIL_H
+#define LILY_CORE_LILY_PARSER_AST_PATTERN_LIST_TAIL_H
 
 typedef struct LilyAstPattern LilyAstPattern;
 
@@ -63,4 +63,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyAstPatternListTail, const LilyAstPatternListTail *self);
 
-#endif // LILY_CORE_LILY_AST_PATTERN_LIST_TAIL_H
+#endif // LILY_CORE_LILY_PARSER_AST_PATTERN_LIST_TAIL_H

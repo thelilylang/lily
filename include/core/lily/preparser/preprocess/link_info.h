@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PREPROCESS_LINK_INFO_H
-#define LILY_CORE_LILY_PREPROCESS_LINK_INFO_H
+#ifndef LILY_CORE_LILY_PREPARSER_PREPROCESS_LINK_INFO_H
+#define LILY_CORE_LILY_PREPARSER_PREPROCESS_LINK_INFO_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -69,4 +69,4 @@ inline CONSTRUCTOR(LilyPreprocessLinkInfo, LilyPreprocessLinkInfo)
  */
 DESTRUCTOR(LilyPreprocessLinkInfo, const LilyPreprocessLinkInfo *self);
 
-#endif // LILY_CORE_LILY_PREPROCESS_LINK_INFO_H
+#endif // LILY_CORE_LILY_PREPARSER_PREPROCESS_LINK_INFO_H

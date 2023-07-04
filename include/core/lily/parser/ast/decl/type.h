@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_DECL_TYPE_H
-#define LILY_CORE_LILY_AST_DECL_TYPE_H
+#ifndef LILY_CORE_LILY_PARSER_AST_DECL_TYPE_H
+#define LILY_CORE_LILY_PARSER_AST_DECL_TYPE_H
 
 #include <core/lily/parser/ast/decl/alias.h>
 #include <core/lily/parser/ast/decl/enum.h>
@@ -112,4 +112,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclType, const LilyAstDeclType *self);
  */
 DESTRUCTOR(LilyAstDeclType, const LilyAstDeclType *self);
 
-#endif // LILY_CORE_LILY_AST_DECL_TYPE_H
+#endif // LILY_CORE_LILY_PARSER_AST_DECL_TYPE_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_STMT_DROP_H
-#define LILY_CORE_LILY_CHECKED_STMT_DROP_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_DROP_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_DROP_H
 
 #include <core/lily/analysis/checked/expr.h>
 
@@ -58,4 +58,4 @@ inline DESTRUCTOR(LilyCheckedStmtDrop, const LilyCheckedStmtDrop *self)
     FREE(LilyCheckedExpr, self->expr);
 }
 
-#endif // LILY_CORE_LILY_CHECKED_STMT_DROP_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_DROP_H

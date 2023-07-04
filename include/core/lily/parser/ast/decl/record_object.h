@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_DECL_RECORD_OBJECT_H
-#define LILY_CORE_LILY_AST_DECL_RECORD_OBJECT_H
+#ifndef LILY_CORE_LILY_PARSER_AST_DECL_RECORD_OBJECT_H
+#define LILY_CORE_LILY_PARSER_AST_DECL_RECORD_OBJECT_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -79,4 +79,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyAstDeclRecordObject, const LilyAstDeclRecordObject *self);
 
-#endif // LILY_CORE_LILY_AST_DECL_RECORD_OBJECT_H
+#endif // LILY_CORE_LILY_PARSER_AST_DECL_RECORD_OBJECT_H

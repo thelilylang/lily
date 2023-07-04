@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_PATTERN_NAME_H
-#define LILY_CORE_LILY_CHECKED_PATTERN_NAME_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_NAME_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_NAME_H
 
 #include <base/macros.h>
 #include <base/new.h>
@@ -53,4 +53,4 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedPatternName, const LilyCheckedPatternName *self);
 #endif
 
-#endif // LILY_CORE_LILY_CHECKED_PATTERN_NAME_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_NAME_H

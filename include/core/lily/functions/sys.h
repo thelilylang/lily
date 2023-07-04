@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_SYS_H
-#define LILY_CORE_LILY_SYS_H
+#ifndef LILY_CORE_LILY_FUNCTIONS_SYS_H
+#define LILY_CORE_LILY_FUNCTIONS_SYS_H
 
 #include <core/lily/analysis/checked/data_type.h>
 
@@ -78,4 +78,4 @@ IMPL_FOR_DEBUG(to_string, LilySysFun, const LilySysFun *self);
  */
 DESTRUCTOR(LilySysFun, const LilySysFun *self);
 
-#endif // LILY_CORE_LILY_SYS_H
+#endif // LILY_CORE_LILY_FUNCTIONS_SYS_H

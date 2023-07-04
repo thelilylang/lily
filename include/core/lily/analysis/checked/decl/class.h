@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DECL_CLASS_H
-#define LILY_CORE_LILY_CHECKED_DECL_CLASS_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_CLASS_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_CLASS_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -93,4 +93,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedDeclClass, const LilyCheckedDeclClass *self);
 
-#endif // LILY_CORE_LILY_CHECKED_DECL_CLASS_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_CLASS_H

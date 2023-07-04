@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_EXPR_BINARY_H
-#define LILY_CORE_LILY_AST_EXPR_BINARY_H
+#ifndef LILY_CORE_LILY_PARSER_AST_EXPR_BINARY_H
+#define LILY_CORE_LILY_PARSER_AST_EXPR_BINARY_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -142,4 +142,4 @@ from_token__LilyAstExprBinary(const LilyToken *token);
  */
 DESTRUCTOR(LilyAstExprBinary, const LilyAstExprBinary *self);
 
-#endif // LILY_CORE_LILY_AST_EXPR_BINARY_H
+#endif // LILY_CORE_LILY_PARSER_AST_EXPR_BINARY_H

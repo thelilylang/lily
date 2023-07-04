@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_GLOBAL_NAME_H
-#define LILY_CORE_LILY_CHECKED_GLOBAL_NAME_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_GLOBAL_NAME_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_GLOBAL_NAME_H
 
 #include <base/string.h>
 #include <base/vec.h>
@@ -62,4 +62,4 @@ generate_global_variant_name__LilyCheckedGlobalName(
     serialize__LilyCheckedDataType(resolve_dt, global_name);
 }
 
-#endif // LILY_CORE_LILY_CHECKED_GLOBAL_NAME_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_GLOBAL_NAME_H

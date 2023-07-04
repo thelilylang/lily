@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PACKAGE_PACKAGE_H
-#define LILY_CORE_LILY_PACKAGE_PACKAGE_H
+#ifndef LILY_CORE_LILY_COMPILER_PACKAGE_PACKAGE_H
+#define LILY_CORE_LILY_COMPILER_PACKAGE_PACKAGE_H
 
 #include <base/string.h>
 #include <base/types.h>
@@ -43,7 +43,7 @@
 #include <core/lily/functions/sys.h>
 #include <core/lily/mir/mir.h>
 #include <core/lily/parser/parser.h>
-#include <core/lily/precompiler/precompile.h>
+#include <core/lily/precompiler/precompiler.h>
 #include <core/lily/preparser/preparser.h>
 #include <core/lily/scanner/scanner.h>
 #include <core/lily/shared/visibility.h>
@@ -203,4 +203,4 @@ add_sys_fun_to_sys_usage__LilyPackage(LilyPackage *self, LilySysFun *fun_sys);
  */
 DESTRUCTOR(LilyPackage, LilyPackage *self);
 
-#endif // LILY_CORE_LILY_PACKAGE_PACKAGE_H
+#endif // LILY_CORE_LILY_COMPILER_PACKAGE_PACKAGE_H

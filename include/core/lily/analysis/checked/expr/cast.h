@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_EXPR_CAST_H
-#define LILY_CORE_LILY_CHECKED_EXPR_CAST_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_CAST_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_CAST_H
 
 #include <core/lily/analysis/checked/data_type.h>
 
@@ -107,4 +107,4 @@ is_llvm_sext__LilyCheckedExprCast(const LilyCheckedExprCast *self);
  */
 DESTRUCTOR(LilyCheckedExprCast, const LilyCheckedExprCast *self);
 
-#endif // LILY_CORE_LILY_CHECKED_EXPR_CAST_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_CAST_H

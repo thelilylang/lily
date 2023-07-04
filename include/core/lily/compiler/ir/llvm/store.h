@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_STORE_H
-#define LILY_CORE_LILY_IR_LLVM_STORE_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_STORE_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_STORE_H
 
 #include <core/lily/analysis/checked.h>
 #include <core/lily/compiler/ir/llvm.h>
@@ -44,4 +44,4 @@ can_store_in_record_call__LilyIrLlvm(LilyCheckedExpr *expr);
 bool
 can_store_in_variable_alloc__LilyIrLlvm(LilyCheckedExpr *expr);
 
-#endif // LILY_CORE_LILY_IR_LLVM_STORE_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_STORE_H

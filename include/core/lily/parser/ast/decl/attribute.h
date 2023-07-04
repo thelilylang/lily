@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_DECL_ATTRIBUTE_H
-#define LILY_CORE_LILY_AST_DECL_ATTRIBUTE_H
+#ifndef LILY_CORE_LILY_PARSER_AST_DECL_ATTRIBUTE_H
+#define LILY_CORE_LILY_PARSER_AST_DECL_ATTRIBUTE_H
 
 #include <base/string.h>
 
@@ -80,4 +80,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyAstDeclAttribute, const LilyAstDeclAttribute *self);
 
-#endif // LILY_CORE_LILY_AST_DECL_ATTRIBUTE_H
+#endif // LILY_CORE_LILY_PARSER_AST_DECL_ATTRIBUTE_H

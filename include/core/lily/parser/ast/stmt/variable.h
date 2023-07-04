@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_STMT_VARIABLE_H
-#define LILY_CORE_LILY_AST_STMT_VARIABLE_H
+#ifndef LILY_CORE_LILY_PARSER_AST_STMT_VARIABLE_H
+#define LILY_CORE_LILY_PARSER_AST_STMT_VARIABLE_H
 
 #include <base/macros.h>
 #include <base/string.h>

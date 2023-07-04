@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_EXPR_H
-#define LILY_CORE_LILY_AST_EXPR_H
+#ifndef LILY_CORE_LILY_PARSER_AST_EXPR_H
+#define LILY_CORE_LILY_PARSER_AST_EXPR_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -282,4 +282,4 @@ get_generic_params_from_variant_call__LilyAstExpr(LilyAstExpr *self);
  */
 DESTRUCTOR(LilyAstExpr, LilyAstExpr *self);
 
-#endif // LILY_CORE_LILY_AST_EXPR_H
+#endif // LILY_CORE_LILY_PARSER_AST_EXPR_H

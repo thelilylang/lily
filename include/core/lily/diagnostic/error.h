@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_ERROR_H
-#define LILY_CORE_LILY_ERROR_H
+#ifndef LILY_CORE_LILY_DIAGNOSTIC_ERROR_H
+#define LILY_CORE_LILY_DIAGNOSTIC_ERROR_H
 
 #include <base/macros.h>
 
@@ -227,4 +227,4 @@ to_code__LilyError(const LilyError *self);
 char *
 to_string__LilyError(const LilyError *self);
 
-#endif // LILY_CORE_LILY_ERROR_H
+#endif // LILY_CORE_LILY_DIAGNOSTIC_ERROR_H

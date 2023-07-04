@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_STMT_NEXT_H
-#define LILY_CORE_LILY_AST_STMT_NEXT_H
+#ifndef LILY_CORE_LILY_PARSER_AST_STMT_NEXT_H
+#define LILY_CORE_LILY_PARSER_AST_STMT_NEXT_H
 
 #include <base/macros.h>
 #include <base/new.h>
@@ -54,4 +54,4 @@ inline DESTRUCTOR(LilyAstStmtNext, const LilyAstStmtNext *self)
     FREE_MOVE(self->name, FREE(String, self->name));
 }
 
-#endif // LILY_CORE_LILY_AST_STMT_NEXT_H
+#endif // LILY_CORE_LILY_PARSER_AST_STMT_NEXT_H

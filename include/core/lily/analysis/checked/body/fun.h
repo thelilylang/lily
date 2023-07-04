@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_BODY_FUN_H
-#define LILY_CORE_LILY_CHECKED_BODY_FUN_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_BODY_FUN_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_BODY_FUN_H
 
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/stmt.h>
@@ -90,4 +90,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedBodyFunItem, const LilyCheckedBodyFunItem *
  */
 DESTRUCTOR(LilyCheckedBodyFunItem, LilyCheckedBodyFunItem *self);
 
-#endif // LILY_CORE_LILY_CHECKED_BODY_FUN_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_BODY_FUN_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_GENERATOR_BODY_FUNCTION_H
-#define LILY_CORE_LILY_IR_LLVM_GENERATOR_BODY_FUNCTION_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_BODY_FUNCTION_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_BODY_FUNCTION_H
 
 #define GENERATE_FUNCTION_BODY(body, fun, exit_block, cond_block, llvm_scope)  \
     for (Usize x = 0; x < body->len; ++x) {                                    \
@@ -45,4 +45,4 @@
         }                                                                      \
     }
 
-#endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_BODY_FUNCTION_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_BODY_FUNCTION_H

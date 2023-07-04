@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_DECL_H
-#define LILY_CORE_LILY_AST_DECL_H
+#ifndef LILY_CORE_LILY_PARSER_AST_DECL_H
+#define LILY_CORE_LILY_PARSER_AST_DECL_H
 
 #include <base/macros.h>
 
@@ -167,4 +167,4 @@ IMPL_FOR_DEBUG(debug, LilyAstDecl, const LilyAstDecl *self);
  */
 DESTRUCTOR(LilyAstDecl, LilyAstDecl *self);
 
-#endif // LILY_CORE_LILY_AST_DECL_H
+#endif // LILY_CORE_LILY_PARSER_AST_DECL_H

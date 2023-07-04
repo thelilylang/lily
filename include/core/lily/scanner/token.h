@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_TOKEN_H
-#define LILY_CORE_LILY_TOKEN_H
+#ifndef LILY_CORE_LILY_SCANNER_TOKEN_H
+#define LILY_CORE_LILY_SCANNER_TOKEN_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -646,4 +646,4 @@ clone__LilyToken(const LilyToken *self);
  */
 DESTRUCTOR(LilyToken, LilyToken *self);
 
-#endif // LILY_CORE_LILY_TOKEN_H
+#endif // LILY_CORE_LILY_SCANNER_TOKEN_H

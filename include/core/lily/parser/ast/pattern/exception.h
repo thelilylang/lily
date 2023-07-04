@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_PATTERN_EXCEPTION_H
-#define LILY_CORE_LILY_AST_PATTERN_EXCEPTION_H
+#ifndef LILY_CORE_LILY_PARSER_AST_PATTERN_EXCEPTION_H
+#define LILY_CORE_LILY_PARSER_AST_PATTERN_EXCEPTION_H
 
 #include <base/string.h>
 #include <base/vec.h>
@@ -67,4 +67,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyAstPatternException, const LilyAstPatternException *self);
 
-#endif // LILY_CORE_LILY_AST_PATTERN_EXCEPTION_H
+#endif // LILY_CORE_LILY_PARSER_AST_PATTERN_EXCEPTION_H

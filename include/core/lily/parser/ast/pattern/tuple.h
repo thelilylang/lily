@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_PATTERN_TUPLE_H
-#define LILY_CORE_LILY_AST_PATTERN_TUPLE_H
+#ifndef LILY_CORE_LILY_PARSER_AST_PATTERN_TUPLE_H
+#define LILY_CORE_LILY_PARSER_AST_PATTERN_TUPLE_H
 
 #include <base/macros.h>
 #include <base/new.h>

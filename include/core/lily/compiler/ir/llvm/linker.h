@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_LINKER_H
-#define LILY_CORE_LILY_IR_LLVM_LINKER_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_LINKER_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_LINKER_H
 
 #include <base/new.h>
 #include <base/string.h>
@@ -60,4 +60,4 @@ inline DESTRUCTOR(LilyIrLlvmLinker, const LilyIrLlvmLinker *self)
     FREE(String, self->command);
 }
 
-#endif // LILY_CORE_LILY_IR_LLVM_LINKER_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_LINKER_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_STMT_WHILE_H
-#define LILY_CORE_LILY_AST_STMT_WHILE_H
+#ifndef LILY_CORE_LILY_PARSER_AST_STMT_WHILE_H
+#define LILY_CORE_LILY_PARSER_AST_STMT_WHILE_H
 
 #include <core/lily/parser/ast/expr.h>
 

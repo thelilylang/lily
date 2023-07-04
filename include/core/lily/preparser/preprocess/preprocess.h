@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PREPROCESS_H
-#define LILY_CORE_LILY_PREPROCESS_H
+#ifndef LILY_CORE_LILY_PREPARSER_PREPROCESS_H
+#define LILY_CORE_LILY_PREPARSER_PREPROCESS_H
 
 #include <core/lily/preprocess/allow.h>
 #include <core/lily/preprocess/arch.h>
@@ -102,4 +102,4 @@ typedef struct LilyPreprocess
     };
 } LilyPreprocess;
 
-#endif // LILY_CORE_LILY_PREPROCESS_H
+#endif // LILY_CORE_LILY_PREPARSER_PREPROCESS_H

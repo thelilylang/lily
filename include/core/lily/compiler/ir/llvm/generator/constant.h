@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_GENERATOR_CONSTANT_H
-#define LILY_CORE_LILY_IR_LLVM_GENERATOR_CONSTANT_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_CONSTANT_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_CONSTANT_H
 
 #include <core/lily/analysis/checked.h>
 #include <core/lily/compiler/ir/llvm.h>
@@ -38,4 +38,4 @@ generate_constant__LilyIrLlvm(const LilyIrLlvm *self,
                               const LilyCheckedDeclConstant *constant,
                               LilyLlvmScope *scope);
 
-#endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_CONSTANT_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_CONSTANT_H

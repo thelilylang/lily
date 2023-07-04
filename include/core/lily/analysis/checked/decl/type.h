@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DECL_TYPE_H
-#define LILY_CORE_LILY_CHECKED_DECL_TYPE_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_TYPE_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_TYPE_H
 
 #include <core/lily/analysis/checked/decl/alias.h>
 #include <core/lily/analysis/checked/decl/enum.h>
@@ -121,4 +121,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclType, const LilyCheckedDeclType *self);
  */
 DESTRUCTOR(LilyCheckedDeclType, const LilyCheckedDeclType *self);
 
-#endif // LILY_CORE_LILY_CHECKED_DECL_TYPE_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_TYPE_H

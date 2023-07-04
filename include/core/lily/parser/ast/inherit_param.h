@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_INHERIT_PARAM_H
-#define LILY_CORE_LILY_AST_INHERIT_PARAM_H
+#ifndef LILY_CORE_LILY_PARSER_AST_INHERIT_PARAM_H
+#define LILY_CORE_LILY_PARSER_AST_INHERIT_PARAM_H
 
 #include <core/lily/parser/ast/data_type.h>
 
@@ -60,4 +60,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstInheritParam, const LilyAstInheritParam *self);
  */
 DESTRUCTOR(LilyAstInheritParam, LilyAstInheritParam *self);
 
-#endif // LILY_CORE_LILY_AST_INHERIT_PARAM_H
+#endif // LILY_CORE_LILY_PARSER_AST_INHERIT_PARAM_H

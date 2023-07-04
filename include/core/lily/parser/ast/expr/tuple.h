@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_EXPR_TUPLE_H
-#define LILY_CORE_LILY_AST_EXPR_TUPLE_H
+#ifndef LILY_CORE_LILY_PARSER_AST_EXPR_TUPLE_H
+#define LILY_CORE_LILY_PARSER_AST_EXPR_TUPLE_H
 
 #include <base/vec.h>
 
@@ -57,4 +57,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprTuple, const LilyAstExprTuple *self);
  */
 DESTRUCTOR(LilyAstExprTuple, const LilyAstExprTuple *self);
 
-#endif // LILY_CORE_LILY_AST_EXPR_TUPLE_H
+#endif // LILY_CORE_LILY_PARSER_AST_EXPR_TUPLE_H

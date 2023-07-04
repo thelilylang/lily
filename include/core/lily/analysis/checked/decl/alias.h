@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DECL_ALIAS_H
-#define LILY_CORE_LILY_CHECKED_DECL_ALIAS_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_ALIAS_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_ALIAS_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -84,4 +84,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedDeclAlias, const LilyCheckedDeclAlias *self);
 
-#endif // LILY_CORE_LILY_CHECKED_DECL_ALIAS_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_ALIAS_H

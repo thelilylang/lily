@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_STMT_AWAIT_H
-#define LILY_CORE_LILY_CHECKED_STMT_AWAIT_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_AWAIT_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_AWAIT_H
 
 #include <core/lily/analysis/checked/expr.h>
 
@@ -60,4 +60,4 @@ inline DESTRUCTOR(LilyCheckedStmtAwait, const LilyCheckedStmtAwait *self)
     FREE(LilyCheckedExpr, self->expr);
 }
 
-#endif // LILY_CORE_LILY_CHECKED_STMT_AWAIT_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_AWAIT_H

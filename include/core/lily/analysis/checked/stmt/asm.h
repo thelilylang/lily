@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_STMT_ASM_H
-#define LILY_CORE_LILY_CHECKED_STMT_ASM_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_ASM_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_ASM_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -66,4 +66,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtAsm, const LilyCheckedStmtAsm *self);
  */
 DESTRUCTOR(LilyCheckedStmtAsm, const LilyCheckedStmtAsm *self);
 
-#endif // LILY_CORE_LILY_CHECKED_STMT_ASM_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_ASM_H

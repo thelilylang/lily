@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_FIELD_H
-#define LILY_CORE_LILY_CHECKED_FIELD_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_FIELD_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_FIELD_H
 
 #include <base/macros.h>
 #include <base/new.h>
@@ -71,4 +71,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedField, const LilyCheckedField *self);
  */
 DESTRUCTOR(LilyCheckedField, LilyCheckedField *self);
 
-#endif // LILY_CORE_LILY_CHECKED_FIELD_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_FIELD_H

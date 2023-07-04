@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_JS_H
-#define LILY_CORE_LILY_IR_JS_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_JS_H
+#define LILY_CORE_LILY_COMPILER_IR_JS_H
 
 #include <base/macros.h>
 
@@ -37,4 +37,4 @@ typedef struct LilyIrJs
  */
 CONSTRUCTOR(LilyIrJs, LilyIrJs);
 
-#endif // LILY_CORE_LILY_IR_JS_H
+#endif // LILY_CORE_LILY_COMPILER_IR_JS_H

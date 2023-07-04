@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_BODY_CLASS_H
-#define LILY_CORE_LILY_CHECKED_BODY_CLASS_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_BODY_CLASS_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_BODY_CLASS_H
 
 #include <core/lily/analysis/checked/decl/attribute.h>
 #include <core/lily/analysis/checked/decl/method.h>
@@ -98,4 +98,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedBodyClassItem, LilyCheckedBodyClassItem *self);
 
-#endif // LILY_CORE_LILY_CHECKED_BODY_CLASS_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_BODY_CLASS_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_VISIBILITY_H
-#define LILY_CORE_LILY_VISIBILITY_H
+#ifndef LILY_CORE_LILY_SHARED_VISIBILITY_H
+#define LILY_CORE_LILY_SHARED_VISIBILITY_H
 
 #include <base/macros.h>
 
@@ -44,4 +44,4 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyVisibility, enum LilyVisibility self);
 #endif
 
-#endif // LILY_CORE_LILY_VISIBILITY_H
+#endif // LILY_CORE_LILY_SHARED_VISIBILITY_H

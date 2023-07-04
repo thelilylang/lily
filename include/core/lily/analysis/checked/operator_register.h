@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_OPERATOR_REGISTER_H
-#define LILY_CORE_LILY_CHECKED_OPERATOR_REGISTER_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_OPERATOR_REGISTER_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_OPERATOR_REGISTER_H
 
 #include <core/lily/analysis/checked/operator.h>
 
@@ -115,4 +115,4 @@ typecheck_binary__LilyCheckedOperatorRegister(
 DESTRUCTOR(LilyCheckedOperatorRegister,
            const LilyCheckedOperatorRegister *self);
 
-#endif // LILY_CORE_LILY_CHECKED_OPERATOR_REGISTER_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_OPERATOR_REGISTER_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_SCOPE_H
-#define LILY_CORE_LILY_IR_LLVM_SCOPE_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_SCOPE_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_SCOPE_H
 
 #include <base/alloc.h>
 #include <base/string.h>
@@ -162,4 +162,4 @@ search_fun__LilyLlvmScope(LilyLlvmScope *self, char *name);
  */
 DESTRUCTOR(LilyLlvmScope, LilyLlvmScope *self);
 
-#endif // LILY_CORE_LILY_IR_LLVM_SCOPE_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_SCOPE_H

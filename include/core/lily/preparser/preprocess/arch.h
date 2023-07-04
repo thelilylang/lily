@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PREPROCESS_ARCH_H
-#define LILY_CORE_LILY_PREPROCESS_ARCH_H
+#ifndef LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+#define LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -51,4 +51,4 @@ inline DESTRUCTOR(LilyPreprocessArch, const LilyPreprocessArch *self)
     FREE(String, self->value);
 }
 
-#endif // LILY_CORE_LILY_PREPROCESS_ARCH_H
+#endif // LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_SCOPE_DECLS_H
-#define LILY_CORE_LILY_CHECKED_SCOPE_DECLS_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_DECLS_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_DECLS_H
 
 #include <base/vec.h>
 
@@ -104,4 +104,4 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeDecls,
                                     .scope = scope };
 }
 
-#endif // LILY_CORE_LILY_CHECKED_SCOPE_DECLS_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_DECLS_H

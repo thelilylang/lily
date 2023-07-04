@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PREPROCESS_ALLOW_H
-#define LILY_CORE_LILY_PREPROCESS_ALLOW_H
+#ifndef LILY_CORE_LILY_PREPARSER_PREPROCESS_ALLOW_H
+#define LILY_CORE_LILY_PREPARSER_PREPROCESS_ALLOW_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -51,4 +51,4 @@ inline DESTRUCTOR(LilyPreprocessAllow, const LilyPreprocessAllow *self)
     FREE(String, self->value);
 }
 
-#endif // LILY_CORE_LILY_PREPROCESS_ALLOW_H
+#endif // LILY_CORE_LILY_PREPARSER_PREPROCESS_ALLOW_H

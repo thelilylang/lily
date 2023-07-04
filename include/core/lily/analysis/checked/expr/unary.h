@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_EXPR_UNARY_H
-#define LILY_CORE_LILY_CHECKED_EXPR_UNARY_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_UNARY_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_UNARY_H
 
 #include <base/macros.h>
 
@@ -99,4 +99,4 @@ to_string__LilyCheckedExprUnaryKind(enum LilyCheckedExprUnaryKind kind);
  */
 DESTRUCTOR(LilyCheckedExprUnary, const LilyCheckedExprUnary *self);
 
-#endif // LILY_CORE_LILY_CHECKED_EXPR_UNARY_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_UNARY_H

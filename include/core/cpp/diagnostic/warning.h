@@ -22,66 +22,51 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_CPP_ERROR_H
-#define LILY_CORE_CPP_ERROR_H
+#ifndef LILY_CORE_CPP_DIAGNOSTIC_WARNING_H
+#define LILY_CORE_CPP_DIAGNOSTIC_WARNING_H
 
 #include <base/macros.h>
 
-enum CppErrorKind
+enum CppWarningKind
 {
-    CPP_ERROR_KIND_UNEXPECTED_TOKEN
+    CPP_WARNING_KIND_UNUSED_PAREN
 };
 
-typedef struct CppError
+typedef struct CppWarning
 {
-    enum CppErrorKind kind;
-    union
-    {
-        char *unexpected_token;
-    };
-} CppError;
+    enum CppWarningKind kind;
+    // union
+    // {};
+} CppWarning;
 
 /**
  *
- * @brief Construct CppError.
+ * @brief Construct CppWarning.
  */
-inline CONSTRUCTOR(CppError, CppError, enum CppErrorKind kind)
+inline CONSTRUCTOR(CppWarning, CppWarning, enum CppWarningKind kind)
 {
-    return (CppError){ .kind = kind };
+    return (CppWarning){ .kind = kind };
 }
 
 /**
  *
- * @brief Construct CppError (CPP_ERROR_KIND_UNEXPECTED_TOKEN).
+ * @brief Convert CppWarning in msg.
  */
-inline VARIANT_CONSTRUCTOR(CppError,
-                           CppError,
-                           unexpected_token,
-                           char *unexpected_token)
-{
-    return (CppError){ .kind = CPP_ERROR_KIND_UNEXPECTED_TOKEN,
-                       .unexpected_token = unexpected_token };
-}
+char *
+to_msg__CppWarning(const CppWarning *self);
 
 /**
  *
- * @brief Convert CppError in msg.
+ * @brief Convert CppWarning in code.
  */
 char *
-to_msg__CppError(const CppError *self);
+to_code__CppWarning(const CppWarning *self);
 
 /**
  *
- * @brief Convert CppError in code.
+ * @brief Convert CppWarning in str.
  */
 char *
-to_code__CppError(const CppError *self);
+to_string__CppWarning(const CppWarning *self);
 
-/**
- *
- * @brief Convert CppError in str.
- */
-char *
-to_string__CppError(const CppError *self);
-
-#endif // LILY_CORE_CPP_ERROR_H
+#endif // LILY_CORE_CPP_DIAGNOSTIC_WARNING_H

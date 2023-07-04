@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_H
-#define LILY_CORE_LILY_CHECKED_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_H
 
 #include <core/lily/analysis/checked/data_type.h>
 #include <core/lily/analysis/checked/decl.h>
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/stmt.h>
 
-#endif // LILY_CORE_LILY_CHECKED_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_H

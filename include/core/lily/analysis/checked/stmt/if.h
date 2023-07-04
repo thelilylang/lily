@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_STMT_IF_H
-#define LILY_CORE_LILY_CHECKED_STMT_IF_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_IF_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_IF_H
 
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/scope.h>
@@ -132,4 +132,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtIf, const LilyCheckedStmtIf *self);
  */
 DESTRUCTOR(LilyCheckedStmtIf, const LilyCheckedStmtIf *self);
 
-#endif // LILY_CORE_LILY_CHECKED_STMT_IF_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_IF_H

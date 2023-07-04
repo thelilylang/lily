@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_H
-#define LILY_CORE_LILY_IR_LLVM_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -75,4 +75,4 @@ get_filename_from_path(const char *path);
  */
 DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self);
 
-#endif // LILY_CORE_LILY_IR_LLVM_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_SCOPE_CONTAINER_H
-#define LILY_CORE_LILY_CHECKED_SCOPE_CONTAINER_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_CONTAINER_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_CONTAINER_H
 
 #include <base/alloc.h>
 #include <base/string.h>
@@ -746,4 +746,4 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedScopeContainer *self);
 #endif
 
-#endif // LILY_CORE_LILY_CHECKED_SCOPE_CONTAINER_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_CONTAINER_H

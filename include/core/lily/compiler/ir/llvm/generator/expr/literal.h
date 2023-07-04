@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_GENERATOR_EXPR_LITERAL_H
-#define LILY_CORE_LILY_IR_LLVM_GENERATOR_EXPR_LITERAL_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_EXPR_LITERAL_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_EXPR_LITERAL_H
 
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/compiler/ir/llvm.h>
@@ -39,4 +39,4 @@ generate_literal_expr__LilyIrLlvm(const LilyIrLlvm *self,
                                   LLVMValueRef ptr,
                                   LilyLlvmScope *scope);
 
-#endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_EXPR_LITERAL_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_EXPR_LITERAL_H

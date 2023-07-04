@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_DECL_ENUM_H
-#define LILY_CORE_LILY_AST_DECL_ENUM_H
+#ifndef LILY_CORE_LILY_PARSER_AST_DECL_ENUM_H
+#define LILY_CORE_LILY_PARSER_AST_DECL_ENUM_H
 
 #include <base/string.h>
 #include <base/vec.h>
@@ -68,4 +68,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclEnum, const LilyAstDeclEnum *self);
  */
 DESTRUCTOR(LilyAstDeclEnum, const LilyAstDeclEnum *self);
 
-#endif // LILY_CORE_LILY_AST_DECL_ENUM_H
+#endif // LILY_CORE_LILY_PARSER_AST_DECL_ENUM_H

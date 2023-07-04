@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_EXPR_LAMBDA_H
-#define LILY_CORE_LILY_AST_EXPR_LAMBDA_H
+#ifndef LILY_CORE_LILY_PARSER_AST_EXPR_LAMBDA_H
+#define LILY_CORE_LILY_PARSER_AST_EXPR_LAMBDA_H
 
 #include <base/string.h>
 
@@ -220,4 +220,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprLambda, const LilyAstExprLambda *self);
  */
 DESTRUCTOR(LilyAstExprLambda, const LilyAstExprLambda *self);
 
-#endif // LILY_CORE_LILY_AST_EXPR_LAMBDA_H
+#endif // LILY_CORE_LILY_PARSER_AST_EXPR_LAMBDA_H

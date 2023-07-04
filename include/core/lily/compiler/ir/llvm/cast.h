@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_CAST_H
-#define LILY_CORE_LILY_IR_LLVM_CAST_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_CAST_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_CAST_H
 
 #include <core/lily/compiler/ir/llvm/primary.h>
 
@@ -107,4 +107,4 @@ cast_to_double__LilyIrLlvm(const LilyIrLlvm *self, LLVMValueRef value)
     return LLVMBuildSExt(self->builder, value, double__LilyIrLlvm(self), "");
 }
 
-#endif // LILY_CORE_LILY_IR_LLVM_CAST_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_CAST_H

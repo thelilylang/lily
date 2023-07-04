@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_IMPL_PARAM_H
-#define LILY_CORE_LILY_AST_IMPL_PARAM_H
+#ifndef LILY_CORE_LILY_PARSER_AST_IMPL_PARAM_H
+#define LILY_CORE_LILY_PARSER_AST_IMPL_PARAM_H
 
 #include <core/lily/parser/ast/data_type.h>
 
@@ -58,4 +58,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstImplParam, const LilyAstImplParam *self);
  */
 DESTRUCTOR(LilyAstImplParam, LilyAstImplParam *self);
 
-#endif // LILY_CORE_LILY_AST_IMPL_PARAM_H
+#endif // LILY_CORE_LILY_PARSER_AST_IMPL_PARAM_H

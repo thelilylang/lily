@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DROP_TABLE_H
-#define LILY_CORE_LILY_CHECKED_DROP_TABLE_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DROP_TABLE_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DROP_TABLE_H
 
 #include <base/new.h>
 #include <base/vec.h>
@@ -51,4 +51,4 @@ inline DESTRUCTOR(LilyCheckedDropTable, const LilyCheckedDropTable *self)
     FREE(Vec, self->variables);
 }
 
-#endif // LILY_CORE_LILY_CHECKED_DROP_TABLE_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DROP_TABLE_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_EXPR_CAST_H
-#define LILY_CORE_LILY_AST_EXPR_CAST_H
+#ifndef LILY_CORE_LILY_PARSER_AST_EXPR_CAST_H
+#define LILY_CORE_LILY_PARSER_AST_EXPR_CAST_H
 
 #include <core/lily/parser/ast/data_type.h>
 
@@ -66,4 +66,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprCast, const LilyAstExprCast *self);
  */
 DESTRUCTOR(LilyAstExprCast, const LilyAstExprCast *self);
 
-#endif // LILY_CORE_LILY_AST_EXPR_CAST_H
+#endif // LILY_CORE_LILY_PARSER_AST_EXPR_CAST_H

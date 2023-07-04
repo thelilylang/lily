@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_CC_H
-#define LILY_CORE_LILY_IR_CC_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_CC_H
+#define LILY_CORE_LILY_COMPILER_IR_CC_H
 
 #include <base/macros.h>
 
@@ -37,4 +37,4 @@ typedef struct LilyIrCc
  */
 CONSTRUCTOR(LilyIrCc, LilyIrCc);
 
-#endif // LILY_CORE_LILY_IR_CC_H
+#endif // LILY_CORE_LILY_COMPILER_IR_CC_H

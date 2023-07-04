@@ -22,51 +22,66 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_CC_WARNING_H
-#define LILY_CORE_CC_WARNING_H
+#ifndef LILY_CORE_CPP_DIAGNOSTIC_ERROR_H
+#define LILY_CORE_CPP_DIAGNOSTIC_ERROR_H
 
 #include <base/macros.h>
 
-enum CcWarningKind
+enum CppErrorKind
 {
-    CC_WARNING_KIND_UNUSED_PAREN
+    CPP_ERROR_KIND_UNEXPECTED_TOKEN
 };
 
-typedef struct CcWarning
+typedef struct CppError
 {
-    enum CcWarningKind kind;
-    // union
-    // {};
-} CcWarning;
+    enum CppErrorKind kind;
+    union
+    {
+        char *unexpected_token;
+    };
+} CppError;
 
 /**
  *
- * @brief Construct CppWarning.
+ * @brief Construct CppError.
  */
-inline CONSTRUCTOR(CcWarning, CcWarning, enum CcWarningKind kind)
+inline CONSTRUCTOR(CppError, CppError, enum CppErrorKind kind)
 {
-    return (CcWarning){ .kind = kind };
+    return (CppError){ .kind = kind };
 }
 
 /**
  *
- * @brief Convert CcWarning in msg.
+ * @brief Construct CppError (CPP_ERROR_KIND_UNEXPECTED_TOKEN).
  */
-char *
-to_msg__CcWarning(const CcWarning *self);
+inline VARIANT_CONSTRUCTOR(CppError,
+                           CppError,
+                           unexpected_token,
+                           char *unexpected_token)
+{
+    return (CppError){ .kind = CPP_ERROR_KIND_UNEXPECTED_TOKEN,
+                       .unexpected_token = unexpected_token };
+}
 
 /**
  *
- * @brief Convert CcWarning in code.
+ * @brief Convert CppError in msg.
  */
 char *
-to_code__CcWarning(const CcWarning *self);
+to_msg__CppError(const CppError *self);
 
 /**
  *
- * @brief Convert CcWarning in str.
+ * @brief Convert CppError in code.
  */
 char *
-to_string__CcWarning(const CcWarning *self);
+to_code__CppError(const CppError *self);
 
-#endif // LILY_CORE_CC_WARNING_H
+/**
+ *
+ * @brief Convert CppError in str.
+ */
+char *
+to_string__CppError(const CppError *self);
+
+#endif // LILY_CORE_CPP_DIAGNOSTIC_ERROR_H

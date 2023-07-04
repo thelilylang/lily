@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_IMPL_PARAM_H
-#define LILY_CORE_LILY_CHECKED_IMPL_PARAM_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_IMPL_PARAM_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_IMPL_PARAM_H
 
 #include <core/lily/analysis/checked/data_type.h>
 
@@ -62,4 +62,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedImplParam, LilyCheckedImplParam *self);
 
-#endif // LILY_CORE_LILY_CHECKED_IMPL_PARAM_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_IMPL_PARAM_H

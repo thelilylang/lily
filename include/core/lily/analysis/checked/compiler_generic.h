@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_COMPILER_GENERIC_H
-#define LILY_CORE_LILY_CHECKED_COMPILER_GENERIC_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_COMPILER_GENERIC_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_COMPILER_GENERIC_H
 
 #include <base/alloc.h>
 #include <base/string.h>
@@ -96,4 +96,4 @@ add_compiler_generic__LilyCheckedCompilerGeneric(Vec *used_compiler_generic)
                 used_compiler_generic));
 }
 
-#endif // LILY_CORE_LILY_CHECKED_COMPILER_GENERIC_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_COMPILER_GENERIC_H

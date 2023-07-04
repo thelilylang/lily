@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_BUILTIN_H
-#define LILY_CORE_LILY_BUILTIN_H
+#ifndef LILY_CORE_LILY_FUNCTIONS_BUILTIN_H
+#define LILY_CORE_LILY_FUNCTIONS_BUILTIN_H
 
 #include <base/macros.h>
 #include <base/vec.h>
@@ -112,4 +112,4 @@ IMPL_FOR_DEBUG(to_string, LilyBuiltinFun, const LilyBuiltinFun *self);
  */
 DESTRUCTOR(LilyBuiltinFun, const LilyBuiltinFun *self);
 
-#endif // LILY_CORE_LILY_BUILTIN_H
+#endif // LILY_CORE_LILY_FUNCTIONS_BUILTIN_H

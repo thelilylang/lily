@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_SCOPE_H
-#define LILY_CORE_LILY_CHECKED_SCOPE_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_H
 
 #include <base/alloc.h>
 #include <base/macros.h>
@@ -413,4 +413,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self);
  */
 DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self);
 
-#endif // LILY_CORE_LILY_CHECKED_SCOPE_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_H

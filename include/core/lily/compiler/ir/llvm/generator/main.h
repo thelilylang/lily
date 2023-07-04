@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_IR_LLVM_GENERATOR_MAIN_H
-#define LILY_CORE_LILY_IR_LLVM_GENERATOR_MAIN_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_MAIN_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_MAIN_H
 
 #include <core/lily/analysis/checked.h>
 #include <core/lily/compiler/ir/llvm.h>
@@ -39,4 +39,4 @@ generate_main_function__LilyIrLlvm(const LilyIrLlvm *self,
                                    LilyLlvmScope *scope,
                                    const Location *location);
 
-#endif // LILY_CORE_LILY_IR_LLVM_GENERATOR_MAIN_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_MAIN_H

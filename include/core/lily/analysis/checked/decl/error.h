@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_DECL_ERROR_H
-#define LILY_CORE_LILY_CHECKED_DECL_ERROR_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_ERROR_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_ERROR_H
 
 #include <base/macros.h>
 #include <base/string.h>
@@ -81,4 +81,4 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedDeclError, const LilyCheckedDeclError *self);
 
-#endif // LILY_CORE_LILY_CHECKED_DECL_ERROR_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_ERROR_H

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LiLY_CHECKED_PATTERN_LIST_H
-#define LILY_CORE_LiLY_CHECKED_PATTERN_LIST_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_LIST_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_LIST_H
 
 #include <base/macros.h>
 #include <base/new.h>
@@ -60,4 +60,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPatternList, const LilyCheckedPatternList *
  */
 DESTRUCTOR(LilyCheckedPatternList, LilyCheckedPatternList *self);
 
-#endif // LILY_CORE_LiLY_CHECKED_PATTERN_ARRAY_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_ARRAY_H

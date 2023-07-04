@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_CHECKED_STMT_TRY_H
-#define LILY_CORE_LILY_CHECKED_STMT_TRY_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_TRY_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_TRY_H
 
 #include <base/macros.h>
 
@@ -77,4 +77,4 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtTry, const LilyCheckedStmtTry *self);
  */
 DESTRUCTOR(LilyCheckedStmtTry, const LilyCheckedStmtTry *self);
 
-#endif // LILY_CORE_LILY_CHECKED_STMT_TRY_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_TRY_H

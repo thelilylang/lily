@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_AST_STMT_MATCH_H
-#define LILY_CORE_LILY_AST_STMT_MATCH_H
+#ifndef LILY_CORE_LILY_PARSER_AST_STMT_MATCH_H
+#define LILY_CORE_LILY_PARSER_AST_STMT_MATCH_H
 
 #include <core/lily/parser/ast/expr.h>
 #include <core/lily/parser/ast/pattern.h>
@@ -99,4 +99,4 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtMatch, const LilyAstStmtMatch *self);
  */
 DESTRUCTOR(LilyAstStmtMatch, const LilyAstStmtMatch *self);
 
-#endif // LILY_CORE_LILY_AST_STMT_MATCH_H
+#endif // LILY_CORE_LILY_PARSER_AST_STMT_MATCH_H
