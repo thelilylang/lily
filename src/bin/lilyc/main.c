@@ -24,10 +24,10 @@
 
 #include <base/cli/result.h>
 
-#include <cli/lilyc.h>
+#include <cli/lilyc/lilyc.h>
 #include <cli/lilyc/parse_config.h>
 
-#include <command/lilyc.h>
+#include <command/lilyc/lilyc.h>
 
 #include <llvm-c/Core.h>
 

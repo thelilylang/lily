@@ -2,7 +2,7 @@
 
 #include <base/test.h>
 
-#include <core/lily/parser.h>
+#include <core/lily/parser/parser.h>
 
 CASE(expr_array, {
     RUN_PARSE_EXPR(FILE_EXPR_ARRAY);

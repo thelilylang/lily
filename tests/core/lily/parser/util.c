@@ -3,8 +3,8 @@
 
 #include <base/file.h>
 
-#include <core/lily/parser.h>
-#include <core/lily/scanner.h>
+#include <core/lily/parser/parser.h>
+#include <core/lily/scanner/scanner.h>
 
 #define FILE_DATA_TYPE_ARRAY_DYNAMIC \
     "./tests/core/lily/parser/input/data_type/array/dynamic.lily"
