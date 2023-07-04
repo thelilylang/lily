@@ -28,9 +28,9 @@
 
 #include <command/lilyc/lilyc.h>
 
-#include <core/lily/lily.h>
 #include <core/lily/compiler/package.h>
 #include <core/lily/compiler/package/program.h>
+#include <core/lily/lily.h>
 
 #include <stdlib.h>
 

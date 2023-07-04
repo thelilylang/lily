@@ -27,7 +27,6 @@
 #include <base/print.h>
 
 #include <core/lily/analysis/analysis.h>
-#include <core/lily/parser/ast.h>
 #include <core/lily/analysis/checked/compiler_generic.h>
 #include <core/lily/analysis/checked/history.h>
 #include <core/lily/analysis/checked/limits.h>
@@ -35,8 +34,9 @@
 #include <core/lily/analysis/checked/safety_mode.h>
 #include <core/lily/analysis/checked/signature.h>
 #include <core/lily/analysis/checked/virtual_scope.h>
-#include <core/lily/lily.h>
 #include <core/lily/compiler/package.h>
+#include <core/lily/lily.h>
+#include <core/lily/parser/ast.h>
 
 #include <core/shared/diagnostic.h>
 

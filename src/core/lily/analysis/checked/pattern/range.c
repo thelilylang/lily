@@ -29,11 +29,14 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedPatternRange, const LilyCheckedPatternRange *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedPatternRange,
+               const LilyCheckedPatternRange *self)
 {
-    return format__String("LilyCheckedPatternRange{{ left = {Sr}, right = {Sr} }",
-                          to_string__Debug__LilyCheckedPattern(self->left),
-                          to_string__Debug__LilyCheckedPattern(self->right));
+    return format__String(
+      "LilyCheckedPatternRange{{ left = {Sr}, right = {Sr} }",
+      to_string__Debug__LilyCheckedPattern(self->left),
+      to_string__Debug__LilyCheckedPattern(self->right));
 }
 #endif
 

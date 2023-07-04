@@ -27,7 +27,9 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedPatternTuple, const LilyCheckedPatternTuple *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedPatternTuple,
+               const LilyCheckedPatternTuple *self)
 {
     String *res = from__String("LilyCheckedPatternTuple{ patterns = { ");
 
@@ -41,6 +43,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPatternTuple, const LilyCheckedPatternTuple
 
 DESTRUCTOR(LilyCheckedPatternTuple, LilyCheckedPatternTuple *self)
 {
-    FREE_BUFFER_ITEMS(self->patterns->buffer, self->patterns->len, LilyCheckedExpr);
+    FREE_BUFFER_ITEMS(
+      self->patterns->buffer, self->patterns->len, LilyCheckedExpr);
     FREE(Vec, self->patterns);
 }

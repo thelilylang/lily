@@ -26,7 +26,9 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedPatternName, const LilyCheckedPatternName *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedPatternName,
+               const LilyCheckedPatternName *self)
 {
     return format__String("LilyCheckedPatternName{{ name = {S} }", self->name);
 }

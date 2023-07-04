@@ -30,10 +30,14 @@
 #include <stdlib.h>
 
 // Free LilyCheckedBodyFunItem type (LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR).
-static VARIANT_DESTRUCTOR(LilyCheckedBodyFunItem, expr, LilyCheckedBodyFunItem *self);
+static VARIANT_DESTRUCTOR(LilyCheckedBodyFunItem,
+                          expr,
+                          LilyCheckedBodyFunItem *self);
 
 // Free LilyCheckedBodyFunItem type (LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT).
-static VARIANT_DESTRUCTOR(LilyCheckedBodyFunItem, stmt, LilyCheckedBodyFunItem *self);
+static VARIANT_DESTRUCTOR(LilyCheckedBodyFunItem,
+                          stmt,
+                          LilyCheckedBodyFunItem *self);
 
 #ifdef ENV_DEBUG
 char *
@@ -80,7 +84,9 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyFunItem *,
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedBodyFunItem, const LilyCheckedBodyFunItem *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedBodyFunItem,
+               const LilyCheckedBodyFunItem *self)
 {
     switch (self->kind) {
         case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:

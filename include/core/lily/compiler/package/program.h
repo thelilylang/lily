@@ -28,8 +28,8 @@
 #include <base/macros.h>
 #include <base/vec.h>
 
-#include <core/lily/functions/builtin.h>
 #include <core/lily/analysis/checked/operator.h>
+#include <core/lily/functions/builtin.h>
 #include <core/lily/functions/sys.h>
 
 typedef struct LilyPackage LilyPackage;

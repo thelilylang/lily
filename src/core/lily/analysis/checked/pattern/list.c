@@ -27,7 +27,9 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedPatternList, const LilyCheckedPatternList *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedPatternList,
+               const LilyCheckedPatternList *self)
 {
     String *res = from__String("LilyCheckedPatternList{ patterns = { ");
 

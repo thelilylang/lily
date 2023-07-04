@@ -32,20 +32,20 @@
 #include <cli/lilyc/config.h>
 
 #include <core/lily/analysis/analysis.h>
-#include <core/lily/functions/builtin.h>
 #include <core/lily/analysis/checked/operator.h>
 #include <core/lily/analysis/checked/operator_register.h>
 #include <core/lily/compiler/ir.h>
 #include <core/lily/compiler/linker/linker.h>
-#include <core/lily/mir/mir.h>
 #include <core/lily/compiler/package/config.h>
 #include <core/lily/compiler/package/library.h>
+#include <core/lily/compiler/package/program.h>
+#include <core/lily/functions/builtin.h>
+#include <core/lily/functions/sys.h>
+#include <core/lily/mir/mir.h>
 #include <core/lily/parser/parser.h>
 #include <core/lily/precompiler/precompile.h>
 #include <core/lily/preparser/preparser.h>
-#include <core/lily/compiler/package/program.h>
 #include <core/lily/scanner/scanner.h>
-#include <core/lily/functions/sys.h>
 #include <core/lily/shared/visibility.h>
 
 enum LilyPackageStatus

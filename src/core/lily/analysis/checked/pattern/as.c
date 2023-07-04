@@ -29,7 +29,9 @@
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedPatternAs, const LilyCheckedPatternAs *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedPatternAs,
+               const LilyCheckedPatternAs *self)
 {
     return format__String("LilyCheckedPatternAs{{ pattern = {Sr}, as = {S} }",
                           to_string__Debug__LilyCheckedPattern(self->pattern),

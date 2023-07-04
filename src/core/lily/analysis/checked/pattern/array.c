@@ -22,13 +22,15 @@
  * SOFTWARE.
  */
 
-#include <core/lily/analysis/checked/pattern.h>
 #include <core/lily/analysis/checked/expr.h>
+#include <core/lily/analysis/checked/pattern.h>
 #include <core/lily/analysis/checked/pattern/array.h>
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedPatternArray, const LilyCheckedPatternArray *self)
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedPatternArray,
+               const LilyCheckedPatternArray *self)
 {
     String *res = from__String("LilyCheckedPatternArray{ patterns = { ");
 
@@ -42,6 +44,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPatternArray, const LilyCheckedPatternArray
 
 DESTRUCTOR(LilyCheckedPatternArray, LilyCheckedPatternArray *self)
 {
-    FREE_BUFFER_ITEMS(self->patterns->buffer, self->patterns->len, LilyCheckedPattern);
+    FREE_BUFFER_ITEMS(
+      self->patterns->buffer, self->patterns->len, LilyCheckedPattern);
     FREE(Vec, self->patterns);
 }

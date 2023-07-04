@@ -29,12 +29,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Free LilyCheckedBodyTraitItem type (LILY_CHECKED_BODY_TRAIT_ITEM_KIND_ATTRIBUTE).
+// Free LilyCheckedBodyTraitItem type
+// (LILY_CHECKED_BODY_TRAIT_ITEM_KIND_ATTRIBUTE).
 static VARIANT_DESTRUCTOR(LilyCheckedBodyTraitItem,
                           attribute,
                           LilyCheckedBodyTraitItem *self);
 
-// Free LilyCheckedBodyTraitItem type (LILY_CHECKED_BODY_TRAIT_ITEM_KIND_ATTRIBUTE).
+// Free LilyCheckedBodyTraitItem type
+// (LILY_CHECKED_BODY_TRAIT_ITEM_KIND_ATTRIBUTE).
 static VARIANT_DESTRUCTOR(LilyCheckedBodyTraitItem,
                           prototype,
                           LilyCheckedBodyTraitItem *self);
@@ -62,7 +64,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyTraitItem *,
                     Location location,
                     LilyCheckedDeclAttribute attribute)
 {
-    LilyCheckedBodyTraitItem *self = lily_malloc(sizeof(LilyCheckedBodyTraitItem));
+    LilyCheckedBodyTraitItem *self =
+      lily_malloc(sizeof(LilyCheckedBodyTraitItem));
 
     self->kind = LILY_CHECKED_BODY_TRAIT_ITEM_KIND_ATTRIBUTE;
     self->location = location;
@@ -82,7 +85,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyTraitItem *,
                     Location location,
                     LilyCheckedDeclPrototype prototype)
 {
-    LilyCheckedBodyTraitItem *self = lily_malloc(sizeof(LilyCheckedBodyTraitItem));
+    LilyCheckedBodyTraitItem *self =
+      lily_malloc(sizeof(LilyCheckedBodyTraitItem));
 
     self->kind = LILY_CHECKED_BODY_TRAIT_ITEM_KIND_PROTOTYPE;
     self->location = location;
@@ -100,14 +104,16 @@ IMPL_FOR_DEBUG(to_string,
     switch (self->kind) {
         case LILY_CHECKED_BODY_TRAIT_ITEM_KIND_ATTRIBUTE:
             return format__String(
-              "LilyCheckedBodyTraitItem{{ kind = {s}, location = {sa}, attribute = "
+              "LilyCheckedBodyTraitItem{{ kind = {s}, location = {sa}, "
+              "attribute = "
               "{Sr} }",
               to_string__Debug__LilyCheckedBodyTraitItemKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyCheckedDeclAttribute(&self->attribute));
         case LILY_CHECKED_BODY_TRAIT_ITEM_KIND_PROTOTYPE:
             return format__String(
-              "LilyCheckedBodyTraitItem{{ kind = {s}, location = {sa}, prototype = "
+              "LilyCheckedBodyTraitItem{{ kind = {s}, location = {sa}, "
+              "prototype = "
               "{Sr} }",
               to_string__Debug__LilyCheckedBodyTraitItemKind(self->kind),
               to_string__Debug__Location(&self->location),
@@ -118,13 +124,17 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
-VARIANT_DESTRUCTOR(LilyCheckedBodyTraitItem, attribute, LilyCheckedBodyTraitItem *self)
+VARIANT_DESTRUCTOR(LilyCheckedBodyTraitItem,
+                   attribute,
+                   LilyCheckedBodyTraitItem *self)
 {
     FREE(LilyCheckedDeclAttribute, &self->attribute);
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyCheckedBodyTraitItem, prototype, LilyCheckedBodyTraitItem *self)
+VARIANT_DESTRUCTOR(LilyCheckedBodyTraitItem,
+                   prototype,
+                   LilyCheckedBodyTraitItem *self)
 {
     FREE(LilyCheckedDeclPrototype, &self->prototype);
     lily_free(self);

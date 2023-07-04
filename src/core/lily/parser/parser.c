@@ -26,9 +26,9 @@
 #include <base/atoi.h>
 #include <base/optional.h>
 
-#include <core/lily/parser/ast/decl.h>
-#include <core/lily/lily.h>
 #include <core/lily/compiler/package/package.h>
+#include <core/lily/lily.h>
+#include <core/lily/parser/ast/decl.h>
 #include <core/lily/parser/parser.h>
 
 #include <stdio.h>

@@ -47,7 +47,8 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
-DESTRUCTOR(LilyCheckedPatternVariantCall, const LilyCheckedPatternVariantCall *self)
+DESTRUCTOR(LilyCheckedPatternVariantCall,
+           const LilyCheckedPatternVariantCall *self)
 {
     FREE(LilyCheckedExpr, self->id);
 

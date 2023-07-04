@@ -27,7 +27,6 @@
 
 #include <base/macros.h>
 
-#include <core/lily/parser/ast/stmt.h>
 #include <core/lily/analysis/checked/stmt/asm.h>
 #include <core/lily/analysis/checked/stmt/await.h>
 #include <core/lily/analysis/checked/stmt/block.h>
@@ -43,6 +42,7 @@
 #include <core/lily/analysis/checked/stmt/unsafe.h>
 #include <core/lily/analysis/checked/stmt/variable.h>
 #include <core/lily/analysis/checked/stmt/while.h>
+#include <core/lily/parser/ast/stmt.h>
 
 #ifdef ENV_DEBUG
 #include <base/string.h>

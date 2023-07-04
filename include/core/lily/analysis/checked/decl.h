@@ -27,13 +27,13 @@
 
 #include <base/macros.h>
 
-#include <core/lily/parser/ast/decl.h>
 #include <core/lily/analysis/checked/decl/error.h>
 #include <core/lily/analysis/checked/decl/fun.h>
 #include <core/lily/analysis/checked/decl/method.h>
 #include <core/lily/analysis/checked/decl/module.h>
 #include <core/lily/analysis/checked/decl/object.h>
 #include <core/lily/analysis/checked/decl/type.h>
+#include <core/lily/parser/ast/decl.h>
 
 enum LilyCheckedDeclKind
 {

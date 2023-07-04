@@ -23,13 +23,13 @@
  */
 
 #include <core/lily/analysis/checked/signature.h>
-#include <core/lily/mir/mir.h>
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
 #include <core/lily/mir/generator/fun.h>
 #include <core/lily/mir/generator/stmt.h>
 #include <core/lily/mir/generator/val.h>
 #include <core/lily/mir/linkage.h>
+#include <core/lily/mir/mir.h>
 
 #include <stdio.h>
 

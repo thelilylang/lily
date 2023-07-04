@@ -25,7 +25,6 @@
 #ifndef LILY_CORE_LILY_CHECKED_PATTERN_H
 #define LILY_CORE_LILY_CHECKED_PATTERN_H
 
-#include <core/lily/parser/ast/pattern.h>
 #include <core/lily/analysis/checked/data_type.h>
 #include <core/lily/analysis/checked/pattern/array.h>
 #include <core/lily/analysis/checked/pattern/as.h>
@@ -39,6 +38,7 @@
 #include <core/lily/analysis/checked/pattern/record_call.h>
 #include <core/lily/analysis/checked/pattern/tuple.h>
 #include <core/lily/analysis/checked/pattern/variant_call.h>
+#include <core/lily/parser/ast/pattern.h>
 
 #include <core/shared/location.h>
 

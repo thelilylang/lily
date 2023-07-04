@@ -31,9 +31,9 @@
 #include <cli/lilyc/config.h>
 
 #include <core/lily/compiler/ir/llvm/generator.h>
+#include <core/lily/compiler/package/package.h>
 #include <core/lily/lily.h>
 #include <core/lily/mir/generator.h>
-#include <core/lily/compiler/package/package.h>
 
 #include <pthread.h>
 #include <stdio.h>

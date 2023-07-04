@@ -29,9 +29,9 @@
 #include <base/string.h>
 #include <base/vec.h>
 
-#include <core/lily/functions/builtin.h>
 #include <core/lily/analysis/checked/access.h>
 #include <core/lily/analysis/checked/data_type.h>
+#include <core/lily/functions/builtin.h>
 #include <core/lily/functions/sys.h>
 
 typedef struct LilyCheckedExpr LilyCheckedExpr;

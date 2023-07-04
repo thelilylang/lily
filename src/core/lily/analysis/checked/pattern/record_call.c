@@ -76,8 +76,9 @@ IMPL_FOR_DEBUG(to_string,
     String *res = NULL;
 
     if (self->id) {
-        res = format__String("LilyCheckedPatternRecordCall{{ id = {Sr}, fields =",
-                             to_string__Debug__LilyCheckedExpr(self->id));
+        res =
+          format__String("LilyCheckedPatternRecordCall{{ id = {Sr}, fields =",
+                         to_string__Debug__LilyCheckedExpr(self->id));
     } else {
         res = from__String("LilyCheckedPatternRecordCall{ id = NULL, fields =");
     }
@@ -90,7 +91,8 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
-DESTRUCTOR(LilyCheckedPatternRecordCall, const LilyCheckedPatternRecordCall *self)
+DESTRUCTOR(LilyCheckedPatternRecordCall,
+           const LilyCheckedPatternRecordCall *self)
 {
     if (self->id) {
         FREE(LilyCheckedExpr, self->id);

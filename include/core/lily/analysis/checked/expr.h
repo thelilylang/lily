@@ -27,7 +27,6 @@
 
 #include <base/string.h>
 
-#include <core/lily/parser/ast/expr.h>
 #include <core/lily/analysis/checked/data_type.h>
 #include <core/lily/analysis/checked/expr/array.h>
 #include <core/lily/analysis/checked/expr/binary.h>
@@ -38,6 +37,7 @@
 #include <core/lily/analysis/checked/expr/literal.h>
 #include <core/lily/analysis/checked/expr/tuple.h>
 #include <core/lily/analysis/checked/expr/unary.h>
+#include <core/lily/parser/ast/expr.h>
 
 #include <core/shared/location.h>
 
