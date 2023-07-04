@@ -137,7 +137,6 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                                     LilyCheckedScope *scope,
                                     LilyCheckedDataType *defined_data_type,
                                     enum LilyCheckedSafetyMode safety_mode,
-                                    bool is_moved_expr,
                                     bool must_mut);
 
 static LilyCheckedExpr *
@@ -145,7 +144,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                 LilyAstExpr *expr,
                                 LilyCheckedScope *scope,
                                 enum LilyCheckedSafetyMode safety_mode,
-                                bool is_moved_expr,
                                 LilyCheckedDataType *defined_data_type);
 
 static LilyCheckedExpr *
@@ -156,7 +154,6 @@ typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                     LilyCheckedExpr *right,
                                     enum LilyCheckedExprBinaryKind kind,
                                     enum LilyCheckedSafetyMode safety_mode,
-                                    bool is_moved_expr,
                                     LilyCheckedDataType *defined_data_type);
 
 static void
@@ -247,7 +244,6 @@ get_call_from_expr__LilyAnalysis(LilyAnalysis *self,
                                  LilyCheckedScope *scope,
                                  LilyCheckedDataType *defined_data_type,
                                  enum LilyCheckedSafetyMode safety_mode,
-                                 bool is_moved_expr,
                                  bool must_mut);
 
 static LilyCheckedExpr *
@@ -257,7 +253,6 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
                                  LilyCheckedScope *scope,
                                  LilyCheckedScope *record_scope,
                                  enum LilyCheckedSafetyMode safety_mode,
-                                 bool is_moved_expr,
                                  bool must_mut);
 
 /// @brief Check the fields of a record call.
@@ -272,17 +267,12 @@ check_fields_call__LilyAnalysis(LilyAnalysis *self,
                                 OrderedHashMap *checked_generic_params_call,
                                 enum LilyCheckedSafetyMode safety_mode);
 
-/// @param is_moved_expr If `is_moved_expr` is false it is when the expression
-/// that is passed is not surrounded by a reference or a trace. Also this
-/// parameter to know if when the variable is called it should be marked as
-/// moved.
 /// @param set_data_type LilyCheckedDataType*?
 static LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *expr,
                          LilyCheckedScope *scope,
                          enum LilyCheckedSafetyMode safety_mode,
-                         bool is_moved_expr,
                          bool must_mut,
                          LilyCheckedDataType *defined_data_type);
 
@@ -1479,7 +1469,6 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                                     LilyCheckedScope *scope,
                                     LilyCheckedDataType *defined_data_type,
                                     enum LilyCheckedSafetyMode safety_mode,
-                                    bool is_moved_expr,
                                     bool must_mut)
 {
     ASSERT(expr->kind == LILY_AST_EXPR_KIND_IDENTIFIER);
@@ -1540,10 +1529,6 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                           NULL,
                           NULL);
                     }
-                }
-
-                if (is_moved_expr) {
-                    response.variable->is_moved = true;
                 }
 
                 data_type =
@@ -1621,10 +1606,6 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                     //         NULL),
                     //       &self->package->count_error);
                     // }
-                }
-
-                if (is_moved_expr) {
-                    response.fun_param->is_moved = true;
                 }
 
                 switch (response.fun_param->data_type->kind) {
@@ -1791,7 +1772,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                 LilyAstExpr *expr,
                                 LilyCheckedScope *scope,
                                 enum LilyCheckedSafetyMode safety_mode,
-                                bool is_moved_expr,
                                 LilyCheckedDataType *defined_data_type)
 {
     switch (expr->binary.kind) {
@@ -1821,7 +1801,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                                              expr->binary.left,
                                                              scope,
                                                              safety_mode,
-                                                             is_moved_expr,
                                                              false,
                                                              NULL);
             LilyCheckedExpr *right =
@@ -1829,7 +1808,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                        expr->binary.right,
                                        scope,
                                        safety_mode,
-                                       is_moved_expr,
                                        false,
                                        NULL);
 
@@ -1841,7 +1819,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
               right,
               (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
               safety_mode,
-              is_moved_expr,
               defined_data_type);
         }
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_ADD:
@@ -1860,7 +1837,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                                              expr->binary.left,
                                                              scope,
                                                              safety_mode,
-                                                             is_moved_expr,
                                                              true,
                                                              NULL);
             LilyCheckedExpr *right =
@@ -1868,7 +1844,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                        expr->binary.right,
                                        scope,
                                        safety_mode,
-                                       is_moved_expr,
                                        false,
                                        NULL);
 
@@ -1880,7 +1855,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
               right,
               (enum LilyCheckedExprBinaryKind)(int)expr->binary.kind,
               safety_mode,
-              is_moved_expr,
               defined_data_type);
         };
         case LILY_AST_EXPR_BINARY_KIND_CHAIN: {
@@ -1940,7 +1914,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                                        expr->binary.left,
                                                        scope,
                                                        safety_mode,
-                                                       is_moved_expr,
                                                        false,
                                                        NULL);
                             LilyCheckedExpr *right =
@@ -1948,7 +1921,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                                        expr->binary.right,
                                                        scope,
                                                        safety_mode,
-                                                       is_moved_expr,
                                                        false,
                                                        NULL);
 
@@ -1974,7 +1946,6 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                             expr->binary.right,
                                             scope,
                                             safety_mode,
-                                            is_moved_expr,
                                             false,
                                             defined_data_type);
         }
@@ -1991,7 +1962,6 @@ typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
                                     LilyCheckedExpr *right,
                                     enum LilyCheckedExprBinaryKind kind,
                                     enum LilyCheckedSafetyMode safety_mode,
-                                    bool is_moved_expr,
                                     LilyCheckedDataType *defined_data_type)
 {
     // TODO: add support to avoid duplication of data type in compiler choice
@@ -2974,7 +2944,6 @@ check_fun_params_call__LilyAnalysis(LilyAnalysis *self,
                                          scope,
                                          safety_mode,
                                          false,
-                                         false,
                                          defined_data_type);
 
         FREE(LilyCheckedDataType, defined_data_type);
@@ -3011,7 +2980,7 @@ check_builtin_fun_params_call__LilyAnalysis(
         LilyAstExprFunParamCall *call_param = get__Vec(ast_params, i);
 
         LilyCheckedExpr *value = check_expr__LilyAnalysis(
-          self, call_param->value, scope, safety_mode, false, false, NULL);
+          self, call_param->value, scope, safety_mode, false, NULL);
 
         switch (call_param->kind) {
             case LILY_AST_EXPR_FUN_PARAM_CALL_KIND_DEFAULT:
@@ -3060,7 +3029,6 @@ check_sys_fun_params_call__LilyAnalysis(LilyAnalysis *self,
                                                           call_param->value,
                                                           scope,
                                                           safety_mode,
-                                                          false,
                                                           false,
                                                           param_data_type);
 
@@ -3111,7 +3079,6 @@ get_call_from_expr__LilyAnalysis(LilyAnalysis *self,
                                  LilyCheckedScope *scope,
                                  LilyCheckedDataType *defined_data_type,
                                  enum LilyCheckedSafetyMode safety_mode,
-                                 bool is_moved_expr,
                                  bool must_mut)
 {
     switch (expr->kind) {
@@ -3123,7 +3090,6 @@ get_call_from_expr__LilyAnalysis(LilyAnalysis *self,
                                                        scope,
                                                        defined_data_type,
                                                        safety_mode,
-                                                       is_moved_expr,
                                                        must_mut);
         default:
             UNREACHABLE("this situation is impossible");
@@ -3137,7 +3103,6 @@ check_field_access__LilyAnalysis(LilyAnalysis *self,
                                  LilyCheckedScope *scope,
                                  LilyCheckedScope *record_scope,
                                  enum LilyCheckedSafetyMode safety_mode,
-                                 bool is_moved_expr,
                                  bool must_mut)
 {
     LilyCheckedScope *current_scope = record_scope;
@@ -3419,7 +3384,6 @@ check_fields_call__LilyAnalysis(LilyAnalysis *self,
                                    scope,
                                    safety_mode,
                                    false,
-                                   false,
                                    field_data_type);
 
         if (field_data_type) {
@@ -3453,7 +3417,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *expr,
                          LilyCheckedScope *scope,
                          enum LilyCheckedSafetyMode safety_mode,
-                         bool is_moved_expr,
                          bool must_mut,
                          LilyCheckedDataType *defined_data_type)
 {
@@ -3467,7 +3430,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                     //                                 expr->access.global_path,
                     //                                 self->module.scope,
                     //                                 safety_mode,
-                    //                                 is_moved_expr,
                     //                                 must_mut,
                     //                                 NULL);
                 case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH: {
@@ -3569,7 +3531,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                        scope,
                                                        defined_data_type,
                                                        safety_mode,
-                                                       false,
                                                        false);
 
                     switch (first->call.kind) {
@@ -3593,7 +3554,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                             custom->custom.scope.id)
                                             ->type.record.scope,
                                           safety_mode,
-                                          is_moved_expr,
                                           must_mut);
                                     }
                                     case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD_OBJECT:
@@ -3653,7 +3613,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                 first->call.enum_->type.enum_.scope,
                                 first->data_type,
                                 safety_mode,
-                                is_moved_expr,
                                 must_mut);
 
                             FREE(LilyCheckedExpr, first);
@@ -3684,7 +3643,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                            get__Vec(expr->array.items, i),
                                            scope,
                                            safety_mode,
-                                           false,
                                            false,
                                            NULL));
             }
@@ -3765,7 +3723,7 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_EXPR_KIND_BINARY:
             return check_binary_expr__LilyAnalysis(
-              self, expr, scope, safety_mode, is_moved_expr, defined_data_type);
+              self, expr, scope, safety_mode, defined_data_type);
         case LILY_AST_EXPR_KIND_CALL:
             switch (expr->call.kind) {
                 case LILY_AST_EXPR_CALL_KIND_FUN: {
@@ -4368,7 +4326,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                scope,
                                                safety_mode,
                                                false,
-                                               false,
                                                NULL);
 
                     // Check if the length is computable at compile-time
@@ -4730,7 +4687,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   expr->call.variant.value,
                                   scope,
                                   safety_mode,
-                                  is_moved_expr,
                                   false,
                                   NULL);
 
@@ -4755,7 +4711,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                   expr->call.variant.value,
                                   scope,
                                   safety_mode,
-                                  is_moved_expr,
                                   false,
                                   checked_value_data_type);
                             }
@@ -4861,7 +4816,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                              expr->cast.expr,
                                                              scope,
                                                              safety_mode,
-                                                             is_moved_expr,
                                                              must_mut,
                                                              NULL);
             LilyCheckedDataType *dest = check_data_type__LilyAnalysis(
@@ -4891,7 +4845,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                                  expr->grouping,
                                                                  scope,
                                                                  safety_mode,
-                                                                 is_moved_expr,
                                                                  must_mut,
                                                                  NULL);
 
@@ -4908,7 +4861,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                        scope,
                                                        defined_data_type,
                                                        safety_mode,
-                                                       is_moved_expr,
                                                        must_mut);
         case LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR:
             TODO("identifier dollar expression");
@@ -4925,7 +4877,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                            get__Vec(expr->array.items, i),
                                            scope,
                                            safety_mode,
-                                           false,
                                            false,
                                            NULL));
             }
@@ -5839,7 +5790,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                 get__Vec(expr->tuple.items, i),
                                 scope,
                                 safety_mode,
-                                is_moved_expr,
                                 must_mut,
                                 get__Vec(defined_data_type->tuple, i)));
                 }
@@ -5860,7 +5810,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                       get__Vec(expr->tuple.items, i),
                       scope,
                       safety_mode,
-                      is_moved_expr,
                       must_mut,
                       get__Vec(defined_data_type->tuple, i));
 
@@ -5883,7 +5832,6 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                                               expr->unary.right,
                                                               scope,
                                                               safety_mode,
-                                                              is_moved_expr,
                                                               false,
                                                               NULL);
 
@@ -6091,7 +6039,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_STMT_KIND_DROP: {
             LilyCheckedExpr *drop_expr = check_expr__LilyAnalysis(
-              self, stmt->drop.expr, scope, safety_mode, false, false, NULL);
+              self, stmt->drop.expr, scope, safety_mode, false, NULL);
 
             switch (drop_expr->kind) {
                 case LILY_CHECKED_EXPR_KIND_CALL:
@@ -6196,7 +6144,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             TODO("analysis for stmt");
         case LILY_AST_STMT_KIND_IF: {
             LilyCheckedExpr *if_cond = check_expr__LilyAnalysis(
-              self, stmt->if_.if_expr, scope, safety_mode, true, false, NULL);
+              self, stmt->if_.if_expr, scope, safety_mode, false, NULL);
 
             EXPECTED_BOOL_EXPR(if_cond);
 
@@ -6220,7 +6168,6 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                       get__Vec(stmt->if_.elif_exprs, k),
                       scope,
                       safety_mode,
-                      true,
                       false,
                       NULL);
 
@@ -6404,7 +6351,6 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                                                 stmt->return_.expr,
                                                 scope,
                                                 safety_mode,
-                                                true,
                                                 false,
                                                 fun_return_data_type);
 
@@ -6570,7 +6516,6 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                                        stmt->variable.expr,
                                        scope,
                                        safety_mode,
-                                       true,
                                        false,
                                        checked_data_type);
 
@@ -6605,7 +6550,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_STMT_KIND_WHILE: {
             LilyCheckedExpr *expr = check_expr__LilyAnalysis(
-              self, stmt->while_.expr, scope, safety_mode, true, false, NULL);
+              self, stmt->while_.expr, scope, safety_mode, false, NULL);
 
             EXPECTED_BOOL_EXPR(expr);
 
@@ -6651,7 +6596,7 @@ check_fun_item__LilyAnalysis(LilyAnalysis *self,
               LilyCheckedBodyFunItem,
               expr,
               check_expr__LilyAnalysis(
-                self, ast_item->expr, scope, safety_mode, true, false, NULL));
+                self, ast_item->expr, scope, safety_mode, false, NULL));
         case LILY_AST_BODY_FUN_ITEM_KIND_STMT:
             return check_stmt__LilyAnalysis(self,
                                             &ast_item->stmt,
@@ -6740,7 +6685,6 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
                                            param->default_,
                                            scope,
                                            LILY_CHECKED_SAFETY_MODE_SAFE,
-                                           true,
                                            false,
                                            checked_param_data_type);
 
@@ -7128,7 +7072,6 @@ check_constant__LilyAnalysis(LilyAnalysis *self,
                                constant->ast_decl->constant.expr,
                                scope,
                                LILY_CHECKED_SAFETY_MODE_SAFE,
-                               true,
                                false,
                                constant->constant.data_type);
 
@@ -7199,7 +7142,6 @@ check_record_fields__LilyAnalysis(LilyAnalysis *self,
                                        ast_field->optional_expr,
                                        scope,
                                        LILY_CHECKED_SAFETY_MODE_SAFE,
-                                       false,
                                        false,
                                        data_type);
         }
