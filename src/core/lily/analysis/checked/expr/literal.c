@@ -29,7 +29,7 @@
 #include <base/alloc.h>
 #include <base/format.h>
 
-#include <core/lily/checked/expr/literal.h>
+#include <core/lily/analysis/checked/expr/literal.h>
 
 #include <stdio.h>
 #include <stdlib.h>

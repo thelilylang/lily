@@ -25,7 +25,7 @@
 #include <base/macros.h>
 
 #ifdef ENV_DEBUG
-#include <core/lily/visibility.h>
+#include <core/lily/shared/visibility.h>
 
 #include <stdio.h>
 #include <stdlib.h>
