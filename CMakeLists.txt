@@ -210,7 +210,8 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     src/core/lily/analysis/analysis.c)
 
 add_library(lily_core_lily_analysis STATIC ${LILY_CORE_LILY_ANALYSIS_SRC})
-target_link_libraries(lily_core_lily_analysis lily_core_shared lily_base)
+target_link_libraries(lily_core_lily_analysis lily_core_shared
+                      lily_core_lily_functions lily_base)
 target_include_directories(lily_core_lily_analysis PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_bytecode set(LILY_CORE_LILY_BYTECODE_SRC)
@@ -593,41 +594,58 @@ function(move_tests_dir)
   message("Move `tests` directory in build directory")
 endfunction()
 
-# if (LILY_DEBUG) if (EXISTS ${ CMAKE_CURRENT_BINARY_DIR } / tests) file(REMOVE
-# tests) move_tests_dir() else() move_tests_dir() endif()
-#
-# enable_testing()
-#
-# add_executable(test_base tests / base / base.c)
-# target_link_libraries(test_base lily_base)
-#
-# add_test(NAME test_base COMMAND test_base)
-#
-# add_executable(test_core_scanner tests / core / lily / scanner / scanner.c)
-# target_link_libraries(test_core_scanner lily_base lily_core)
-#
-# add_test(NAME test_core_scanner COMMAND test_core_scanner)
-#
-# add_executable(test_core_preparser tests / core / lily / preparser / \
-# preparser.c) target_link_libraries(test_core_preparser lily_base lily_core)
-#
-# add_test(NAME test_core_preparser COMMAND test_core_preparser)
-#
-# add_executable(test_core_precompile tests / core / lily / precompile / \
-# precompile.c) target_link_libraries(test_core_precompile lily_base lily_core)
-#
-# add_test(NAME test_core_precompile COMMAND test_core_precompile)
-#
-# add_executable(test_core_parser tests / core / lily / parser / parser.c)
-# target_link_libraries(test_core_parser lily_base lily_core)
-#
-# add_test(NAME test_core_parser COMMAND test_core_parser)
-#
-# add_executable(bench_vec benchmarks / base / vec.c)
-# target_link_libraries(bench_vec lily_base)
-#
-# add_executable(bench_string benchmarks / base / string.c)
-# target_link_libraries(bench_string lily_base)
-#
-# add_executable(bench_hash_map benchmarks / base / hash_map.c)
-# target_link_libraries(bench_hash_map lily_base) endif()
+if(LILY_DEBUG)
+  if(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/tests)
+    file(REMOVE tests)
+    move_tests_dir()
+  else()
+    move_tests_dir()
+  endif()
+
+  enable_testing()
+
+  add_executable(test_base tests/base/base.c)
+  target_link_libraries(test_base lily_base)
+  target_include_directories(test_base PRIVATE include)
+
+  add_test(NAME test_base COMMAND test_base)
+
+  add_executable(test_core_scanner tests/core/lily/scanner/scanner.c)
+  target_link_libraries(test_core_scanner lily_base lily_core_lily_scanner)
+  target_include_directories(test_core_scanner PRIVATE include)
+
+  add_test(NAME test_core_scanner COMMAND test_core_scanner)
+
+  add_executable(test_core_preparser tests/core/lily/preparser/preparser.c)
+  target_link_libraries(test_core_preparser lily_base lily_core_lily_preparser)
+  target_include_directories(test_core_preparser PRIVATE include)
+
+  add_test(NAME test_core_preparser COMMAND test_core_preparser)
+
+  add_executable(test_core_precompile tests/core/lily/precompile/precompile.c)
+  target_link_libraries(test_core_precompile lily_base
+                        lily_core_lily_precompiler)
+  target_include_directories(test_core_precompile PRIVATE include)
+
+  add_test(NAME test_core_precompile COMMAND test_core_precompile)
+
+  add_executable(test_core_parser tests/core/lily/parser/parser.c)
+  target_link_libraries(
+    test_core_parser lily_base lily_core_lily_parser lily_core_lily_preparser
+    lily_core_lily_compiler_package)
+  target_include_directories(test_core_parser PRIVATE include)
+
+  add_test(NAME test_core_parser COMMAND test_core_parser)
+
+  add_executable(bench_vec benchmarks/base/vec.c)
+  target_link_libraries(bench_vec lily_base)
+  target_include_directories(bench_vec PRIVATE include)
+
+  add_executable(bench_string benchmarks/base/string.c)
+  target_link_libraries(bench_string lily_base)
+  target_include_directories(bench_string PRIVATE include)
+
+  add_executable(bench_hash_map benchmarks/base/hash_map.c)
+  target_link_libraries(bench_hash_map lily_base)
+  target_include_directories(bench_hash_map PRIVATE include)
+endif()
