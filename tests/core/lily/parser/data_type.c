@@ -2,7 +2,7 @@
 
 #include <base/test.h>
 
-#include <core/lily/parser.h>
+#include <core/lily/parser/parser.h>
 
 #include <string.h>
 

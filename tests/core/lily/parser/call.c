@@ -2,7 +2,7 @@
 
 #include <base/test.h>
 
-#include <core/lily/parser.h>
+#include <core/lily/parser/parser.h>
 
 SKIP_CASE(expr_call, {
     RUN_PARSE_EXPR(FILE_EXPR_ACCESS);
