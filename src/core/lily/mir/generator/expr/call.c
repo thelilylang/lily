@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-#include <core/lily/checked/decl.h>
-#include <core/lily/checked/decl/fun.h>
-#include <core/lily/checked/limits.h>
+#include <core/lily/analysis/checked/decl.h>
+#include <core/lily/analysis/checked/decl/fun.h>
+#include <core/lily/analysis/checked/limits.h>
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
 #include <core/lily/mir/generator/expr/call.h>

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include <core/lily/checked/signature.h>
-#include <core/lily/mir.h>
+#include <core/lily/analysis/checked/signature.h>
+#include <core/lily/mir/mir.h>
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
 #include <core/lily/mir/generator/fun.h>

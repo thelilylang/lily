@@ -30,7 +30,7 @@
 #include <core/lily/mir/generator/enum.h>
 #include <core/lily/mir/generator/fun.h>
 #include <core/lily/mir/generator/record.h>
-#include <core/lily/package.h>
+#include <core/lily/compiler/package/package.h>
 
 #define RESOLVE_TYPE_DEPS(decl_kind)                                      \
     for (Usize i = 0; i < type->decl_kind.deps->len; ++i) {               \

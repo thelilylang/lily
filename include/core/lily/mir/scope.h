@@ -27,7 +27,7 @@
 
 #include <base/vec.h>
 
-#include <core/lily/checked/data_type.h>
+#include <core/lily/analysis/checked/data_type.h>
 
 typedef struct LilyMirScopeParam
 {

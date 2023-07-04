@@ -25,7 +25,7 @@
 #ifndef LILY_CORE_LILY_MIR_LINKAGE_H
 #define LILY_CORE_LILY_MIR_LINKAGE_H
 
-#include <core/lily/visibility.h>
+#include <core/lily/shared/visibility.h>
 
 enum LilyMirLinkage
 {

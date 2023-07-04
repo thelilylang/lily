@@ -27,7 +27,7 @@
 #include <base/new.h>
 #include <base/platform.h>
 
-#include <cli/lily.h>
+#include <cli/lily/lily.h>
 #include <cli/lily/parse_config.h>
 
 #include <command/lily/compile.h>

@@ -25,9 +25,9 @@
 #ifndef LILY_CORE_LILY_MIR_GENERATOR_EXPR_BINARY_H
 #define LILY_CORE_LILY_MIR_GENERATOR_EXPR_BINARY_H
 
-#include <core/lily/checked/expr.h>
-#include <core/lily/checked/signature.h>
-#include <core/lily/mir.h>
+#include <core/lily/analysis/checked/expr.h>
+#include <core/lily/analysis/checked/signature.h>
+#include <core/lily/mir/mir.h>
 
 /**
  *

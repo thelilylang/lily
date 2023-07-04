@@ -1027,96 +1027,102 @@ typedef struct RenameFile
 /**
  * Delete file options
  */
-typedef struct DeleteFileOptions {
-	/**
-	 * Delete the content recursively if a folder is denoted.
-	 */
-	OPTIONAL(bool) recursive;
+typedef struct DeleteFileOptions
+{
+    /**
+     * Delete the content recursively if a folder is denoted.
+     */
+    OPTIONAL(bool) recursive;
 
-	/**
-	 * Ignore the operation if the file doesn't exist.
-	 */
-	OPTIONAL(bool) ignoreIfExists;
+    /**
+     * Ignore the operation if the file doesn't exist.
+     */
+    OPTIONAL(bool) ignoreIfExists;
 } DeleteFileOptions;
 
 /**
  * Delete file operation
  */
-typedef struct DeleteFile {
-	/**
-	 * A delete
-	 */
-	// kind: 'delete';
+typedef struct DeleteFile
+{
+    /**
+     * A delete
+     */
+    // kind: 'delete';
 
-	/**
-	 * The file to delete.
-	 */
-	DocumentUri uri;
+    /**
+     * The file to delete.
+     */
+    DocumentUri uri;
 
-	/**
-	 * Delete options.
-	 */
-	OPTIONAL(DeleteFileOptions) options;
+    /**
+     * Delete options.
+     */
+    OPTIONAL(DeleteFileOptions) options;
 
-	/**
-	 * An optional annotation identifier describing the operation.
-	 *
-	 * @since 3.16.0
-	 */
-	ChangeAnnotationIdentifier annotationId;
+    /**
+     * An optional annotation identifier describing the operation.
+     *
+     * @since 3.16.0
+     */
+    ChangeAnnotationIdentifier annotationId;
 } DeleteFile;
 
-enum DocumentChangeKind {
-	DOCUMENT_CHANGE_KIND_TEXT_DOCUMENT_EDIT,
-	DOCUMENT_CHANGE_KIND_CREATE_FILE,
-	DOCUMENT_CHANGE_KIND_RENAME_FILE,
-	DOCUMENT_CHANGE_KIND_DELETE_FILE
+enum DocumentChangeKind
+{
+    DOCUMENT_CHANGE_KIND_TEXT_DOCUMENT_EDIT,
+    DOCUMENT_CHANGE_KIND_CREATE_FILE,
+    DOCUMENT_CHANGE_KIND_RENAME_FILE,
+    DOCUMENT_CHANGE_KIND_DELETE_FILE
 };
 
-typedef struct DocumentChange {
-	enum DocumentChangeKind kind;
-	union {
-		TextDocumentEdit textDocumentEdit;
-		CreateFile createFile;
-		RenameFile renameFile;
-		DeleteFile deleteFile;
-	};
+typedef struct DocumentChange
+{
+    enum DocumentChangeKind kind;
+    union
+    {
+        TextDocumentEdit textDocumentEdit;
+        CreateFile createFile;
+        RenameFile renameFile;
+        DeleteFile deleteFile;
+    };
 } DocumentChange;
 
-typedef struct WorkspaceEdit {
-	/**
-	 * Holds changes to existing resources.
-	 */
-	OPTIONAL(ARRAY(MAP(DocumentUri, ARRAY(TextEdit)))) changes;
+typedef struct WorkspaceEdit
+{
+    /**
+     * Holds changes to existing resources.
+     */
+    OPTIONAL(ARRAY(MAP(DocumentUri, ARRAY(TextEdit)))) changes;
 
-	/**
-	 * Depending on the client capability
-	 * `workspace.workspaceEdit.resourceOperations` document changes are either
-	 * an array of `TextDocumentEdit`s to express changes to n different text
-	 * documents where each text document edit addresses a specific version of
-	 * a text document. Or it can contain above `TextDocumentEdit`s mixed with
-	 * create, rename and delete file / folder operations.
-	 *
-	 * Whether a client supports versioned document edits is expressed via
-	 * `workspace.workspaceEdit.documentChanges` client capability.
-	 *
-	 * If a client neither supports `documentChanges` nor
-	 * `workspace.workspaceEdit.resourceOperations` then only plain `TextEdit`s
-	 * using the `changes` property are supported.
-	 */
-	OPTIONAL(ARRAY(DocumentChange)) documentChanges;
+    /**
+     * Depending on the client capability
+     * `workspace.workspaceEdit.resourceOperations` document changes are either
+     * an array of `TextDocumentEdit`s to express changes to n different text
+     * documents where each text document edit addresses a specific version of
+     * a text document. Or it can contain above `TextDocumentEdit`s mixed with
+     * create, rename and delete file / folder operations.
+     *
+     * Whether a client supports versioned document edits is expressed via
+     * `workspace.workspaceEdit.documentChanges` client capability.
+     *
+     * If a client neither supports `documentChanges` nor
+     * `workspace.workspaceEdit.resourceOperations` then only plain `TextEdit`s
+     * using the `changes` property are supported.
+     */
+    OPTIONAL(ARRAY(DocumentChange)) documentChanges;
 
-	/**
-	 * A map of change annotations that can be referenced in
-	 * `AnnotatedTextEdit`s or create, rename and delete file / folder
-	 * operations.
-	 *
-	 * Whether clients honor this property depends on the client capability
-	 * `workspace.changeAnnotationSupport`.
-	 *
-	 * @since 3.16.0
-	 */
-	OPTIONAL(ARRAY(MAP(string, ChangeAnnotation))) changeAnnotations;
+    /**
+     * A map of change annotations that can be referenced in
+     * `AnnotatedTextEdit`s or create, rename and delete file / folder
+     * operations.
+     *
+     * Whether clients honor this property depends on the client capability
+     * `workspace.changeAnnotationSupport`.
+     *
+     * @since 3.16.0
+     */
+    OPTIONAL(ARRAY(MAP(string, ChangeAnnotation))) changeAnnotations;
 } WorkspaceEdit;
 
 #endif // LILY_CORE_LSP_TYPES_H

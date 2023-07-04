@@ -25,8 +25,8 @@
 #ifndef LILY_CORE_LILY_MIR_GENERATOR_DT_H
 #define LILY_CORE_LILY_MIR_GENERATOR_DT_H
 
-#include <core/lily/checked/data_type.h>
-#include <core/lily/mir.h>
+#include <core/lily/analysis/checked/data_type.h>
+#include <core/lily/mir/mir.h>
 
 LilyMirDt *
 generate_dt__LilyMir(LilyMirModule *module, LilyCheckedDataType *data_type);

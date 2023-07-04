@@ -35,8 +35,8 @@
 #include <core/cc/warning.h>
 #include <core/cpp/error.h>
 #include <core/cpp/warning.h>
-#include <core/lily/error.h>
-#include <core/lily/warning.h>
+#include <core/lily/diagnostic/error.h>
+#include <core/lily/diagnostic/warning.h>
 #include <core/shared/file.h>
 #include <core/shared/location.h>
 

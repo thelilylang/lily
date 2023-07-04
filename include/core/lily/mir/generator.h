@@ -25,8 +25,8 @@
 #ifndef LILY_CORE_LILY_MIR_GENERATOR_H
 #define LILY_CORE_LILY_MIR_GENERATOR_H
 
-#include <core/lily/checked/decl.h>
-#include <core/lily/mir.h>
+#include <core/lily/analysis/checked/decl.h>
+#include <core/lily/mir/mir.h>
 
 typedef struct LilyPackage LilyPackage;
 

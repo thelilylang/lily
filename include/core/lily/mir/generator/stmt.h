@@ -25,9 +25,9 @@
 #ifndef LILY_CORE_LILY_MIR_GENERATOR_STMT_H
 #define LILY_CORE_LILY_MIR_GENERATOR_STMT_H
 
-#include <core/lily/checked/signature.h>
-#include <core/lily/checked/stmt.h>
-#include <core/lily/mir.h>
+#include <core/lily/analysis/checked/signature.h>
+#include <core/lily/analysis/checked/stmt.h>
+#include <core/lily/mir/mir.h>
 
 /**
  *
