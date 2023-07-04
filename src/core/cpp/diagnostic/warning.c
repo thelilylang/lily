@@ -25,7 +25,7 @@
 #include <base/color.h>
 #include <base/format.h>
 
-#include <core/cpp/warning.h>
+#include <core/cpp/diagnostic/warning.h>
 
 #include <stdio.h>
 #include <stdlib.h>
