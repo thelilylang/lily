@@ -29,7 +29,7 @@
 #include <core/lily/compiler/package/default_path.h>
 #include <core/lily/compiler/package/package.h>
 #include <core/lily/lily.h>
-#include <core/lily/precompiler/precompile.h>
+#include <core/lily/precompiler/precompiler.h>
 
 #include <ctype.h>
 #include <stdio.h>
