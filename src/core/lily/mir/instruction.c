@@ -340,7 +340,9 @@ static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
                                  xor,
                                  LilyMirInstruction *self);
 
+#ifdef ENV_DEBUG
 static Usize tab_count = 0;
+#endif
 
 CONSTRUCTOR(LilyMirInstructionVal *,
             LilyMirInstructionVal,
