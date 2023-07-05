@@ -151,13 +151,40 @@ Create static property with `global val`.
 global val name Str
 ```
 
+#### close
+
+> The `close` keyword means that the class or trait cannot be added as an inheritance to another class.
+
+```lily
+// ...
+close object Cat inherit Animal in class =
+end
+```
+
 ### Object type
 
-> The `Object` type is used to talk about child definition. That's very useful on specific trait. NOTE: In general trait Object is not recommented to use.
+> The `Object` type is used to talk about any objects.
+
+```lily
+fun add(x Object) = return x; end
+```
+
+> The `Self.Object` type is used to talk about any objects implemented or inherited in the current object.
+
+```lily
+// ...
+object Cat inherit Animal in class =
+    fun get_animal(x Self.Object) = return x; end
+end
+```
 
 ### Self type
 
 > The `Self` type is used to talk about self definition.
+
+```lily
+Self.call()
+```
 
 ### Trait
 
@@ -1051,6 +1078,7 @@ break
 cast
 catch
 class
+close
 comptime
 defer
 do
