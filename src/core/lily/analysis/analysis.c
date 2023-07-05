@@ -289,6 +289,20 @@ check_self_path_expr__LilyAnalysis(LilyAnalysis *self,
                                    bool must_mut,
                                    LilyCheckedDataType *defined_data_type);
 
+static LilyCheckedExpr *
+check_hook_access_expr__LilyAnalysis(LilyAnalysis *self,
+                                     LilyAstExpr *expr,
+                                     LilyCheckedScope *scope,
+                                     enum LilyCheckedSafetyMode safety_mode,
+                                     bool must_mut,
+                                     LilyCheckedDataType *defined_data_type);
+
+// LilyCheckedScope*? (&)
+static LilyCheckedScope *
+check_object_access_expr__LilyAnalysis(LilyAnalysis *self,
+                                       LilyAstExpr *expr,
+                                       LilyCheckedScope *scope);
+
 /// @param set_data_type LilyCheckedDataType*?
 static LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
@@ -3435,6 +3449,40 @@ check_self_path_expr__LilyAnalysis(LilyAnalysis *self,
 }
 
 LilyCheckedExpr *
+check_hook_access_expr__LilyAnalysis(LilyAnalysis *self,
+                                     LilyAstExpr *expr,
+                                     LilyCheckedScope *scope,
+                                     enum LilyCheckedSafetyMode safety_mode,
+                                     bool must_mut,
+                                     LilyCheckedDataType *defined_data_type)
+{
+    TODO("check hook access");
+}
+
+LilyCheckedScope *
+check_object_access_expr__LilyAnalysis(LilyAnalysis *self,
+                                       LilyAstExpr *expr,
+                                       LilyCheckedScope *scope)
+{
+    LilyCheckedDecl *object = get_current_object__LilyCheckedScope(scope);
+
+    if (!object) {
+        ANALYSIS_EMIT_DIAGNOSTIC(
+          self,
+          simple_lily_error,
+          (&expr->location),
+          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT),
+          NULL,
+          NULL,
+          NULL);
+
+        return NULL;
+    }
+
+    return get_scope__LilyCheckedDecl(object);
+}
+
+LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *expr,
                          LilyCheckedScope *scope,
@@ -3465,28 +3513,15 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                       must_mut,
                       defined_data_type);
                 case LILY_AST_EXPR_ACCESS_KIND_HOOK:
-                    TODO("resolve hook access");
-                case LILY_AST_EXPR_ACCESS_KIND_OBJECT: {
-                    LilyCheckedDecl *object =
-                      get_current_object__LilyCheckedScope(scope);
-
-                    if (!object) {
-                        ANALYSIS_EMIT_DIAGNOSTIC(
-                          self,
-                          simple_lily_error,
-                          (&expr->location),
-                          NEW(LilyError,
-                              LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT),
-                          NULL,
-                          NULL,
-                          NULL);
-
-                        return NEW_VARIANT(
-                          LilyCheckedExpr, unknown, &expr->location, expr);
-                    }
-
+                    return check_hook_access_expr__LilyAnalysis(
+                      self,
+                      expr,
+                      scope,
+                      safety_mode,
+                      must_mut,
+                      defined_data_type);
+                case LILY_AST_EXPR_ACCESS_KIND_OBJECT_PATH:
                     UNREACHABLE("Object is not expected in this context");
-                }
                 case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT: {
                     LilyCheckedDecl *method =
                       get_current_method__LilyCheckedScope(scope);
