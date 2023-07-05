@@ -30,9 +30,9 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/lily/compiler/package/config.h>
 #include <core/lily/parser/ast/data_type.h>
 #include <core/lily/parser/ast/expr.h>
-#include <core/lily/compiler/package/config.h>
 #include <core/lily/preparser/preparser.h>
 
 typedef struct LilyPackage LilyPackage;
