@@ -297,11 +297,27 @@ check_hook_access_expr__LilyAnalysis(LilyAnalysis *self,
                                      bool must_mut,
                                      LilyCheckedDataType *defined_data_type);
 
-// LilyCheckedScope*? (&)
+/// @return LilyCheckedScope*? (&)
 static LilyCheckedScope *
 check_object_access_expr__LilyAnalysis(LilyAnalysis *self,
                                        LilyAstExpr *expr,
                                        LilyCheckedScope *scope);
+
+static LilyCheckedExpr *
+check_property_init_expr__LilyAnalysis(LilyAnalysis *self,
+                                       LilyAstExpr *expr,
+                                       LilyCheckedScope *scope,
+                                       enum LilyCheckedSafetyMode safety_mode,
+                                       bool must_mut,
+                                       LilyCheckedDataType *defined_data_type);
+
+static LilyCheckedExpr *
+check_assignable_expr__LilyAnalysis(LilyAnalysis *self,
+                                    LilyAstExpr *expr,
+                                    LilyCheckedScope *scope,
+                                    enum LilyCheckedSafetyMode safety_mode,
+                                    bool must_mut,
+                                    LilyCheckedDataType *defined_data_type);
 
 /// @param set_data_type LilyCheckedDataType*?
 static LilyCheckedExpr *
@@ -3483,6 +3499,50 @@ check_object_access_expr__LilyAnalysis(LilyAnalysis *self,
 }
 
 LilyCheckedExpr *
+check_property_init_expr__LilyAnalysis(LilyAnalysis *self,
+                                       LilyAstExpr *expr,
+                                       LilyCheckedScope *scope,
+                                       enum LilyCheckedSafetyMode safety_mode,
+                                       bool must_mut,
+                                       LilyCheckedDataType *defined_data_type)
+{
+    LilyCheckedDecl *method = get_current_method__LilyCheckedScope(scope);
+
+    if (!method) {
+        ANALYSIS_EMIT_DIAGNOSTIC(
+          self,
+          simple_lily_error,
+          (&expr->location),
+          NEW(LilyError, LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT),
+          NULL,
+          NULL,
+          from__String("property init is not expected in function"));
+
+        return NEW_VARIANT(LilyCheckedExpr, unknown, &expr->location, expr);
+    }
+
+    TODO("check property init");
+}
+
+LilyCheckedExpr *
+check_assignable_expr__LilyAnalysis(LilyAnalysis *self,
+                                    LilyAstExpr *expr,
+                                    LilyCheckedScope *scope,
+                                    enum LilyCheckedSafetyMode safety_mode,
+                                    bool must_mut,
+                                    LilyCheckedDataType *defined_data_type)
+{
+    switch (expr->kind) {
+        case LILY_AST_EXPR_KIND_IDENTIFIER:
+        case LILY_AST_EXPR_KIND_ACCESS:
+            return check_expr__LilyAnalysis(
+              self, expr, scope, safety_mode, must_mut, defined_data_type);
+        default:
+            FAILED("expected assignable expression");
+    }
+}
+
+LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *expr,
                          LilyCheckedScope *scope,
@@ -3522,28 +3582,14 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                       defined_data_type);
                 case LILY_AST_EXPR_ACCESS_KIND_OBJECT_PATH:
                     UNREACHABLE("Object is not expected in this context");
-                case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT: {
-                    LilyCheckedDecl *method =
-                      get_current_method__LilyCheckedScope(scope);
-
-                    if (!method) {
-                        ANALYSIS_EMIT_DIAGNOSTIC(
-                          self,
-                          simple_lily_error,
-                          (&expr->location),
-                          NEW(LilyError,
-                              LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT),
-                          NULL,
-                          NULL,
-                          from__String(
-                            "property init is not expected in function"));
-
-                        return NEW_VARIANT(
-                          LilyCheckedExpr, unknown, &expr->location, expr);
-                    }
-
-                    TODO("resolve property init access");
-                }
+                case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT:
+                    return check_property_init_expr__LilyAnalysis(
+                      self,
+                      expr,
+                      scope,
+                      safety_mode,
+                      must_mut,
+                      defined_data_type);
                 case LILY_AST_EXPR_ACCESS_KIND_PATH: {
                     LilyAstExpr *first_ast_expr =
                       get__Vec(expr->access.path, 0);
