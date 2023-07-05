@@ -267,6 +267,28 @@ check_fields_call__LilyAnalysis(LilyAnalysis *self,
                                 OrderedHashMap *checked_generic_params_call,
                                 enum LilyCheckedSafetyMode safety_mode);
 
+static LilyCheckedExpr *
+check_global_path_expr__LilyAnalysis(LilyAnalysis *self,
+                                     LilyAstExpr *expr,
+                                     enum LilyCheckedSafetyMode safety_mode,
+                                     LilyCheckedDataType *defined_data_type);
+
+static LilyCheckedExpr *
+check_Self_path_expr__LilyAnalysis(LilyAnalysis *self,
+                                   LilyAstExpr *expr,
+                                   LilyCheckedScope *scope,
+                                   enum LilyCheckedSafetyMode safety_mode,
+                                   bool must_mut,
+                                   LilyCheckedDataType *defined_data_type);
+
+static LilyCheckedExpr *
+check_self_path_expr__LilyAnalysis(LilyAnalysis *self,
+                                   LilyAstExpr *expr,
+                                   LilyCheckedScope *scope,
+                                   enum LilyCheckedSafetyMode safety_mode,
+                                   bool must_mut,
+                                   LilyCheckedDataType *defined_data_type);
+
 /// @param set_data_type LilyCheckedDataType*?
 static LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
@@ -1797,19 +1819,10 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_BINARY_KIND_RANGE:
         case LILY_AST_EXPR_BINARY_KIND_LIST_TAIL:
         case LILY_AST_EXPR_BINARY_KIND_LIST_HEAD: {
-            LilyCheckedExpr *left = check_expr__LilyAnalysis(self,
-                                                             expr->binary.left,
-                                                             scope,
-                                                             safety_mode,
-                                                             false,
-                                                             NULL);
-            LilyCheckedExpr *right =
-              check_expr__LilyAnalysis(self,
-                                       expr->binary.right,
-                                       scope,
-                                       safety_mode,
-                                       false,
-                                       NULL);
+            LilyCheckedExpr *left = check_expr__LilyAnalysis(
+              self, expr->binary.left, scope, safety_mode, false, NULL);
+            LilyCheckedExpr *right = check_expr__LilyAnalysis(
+              self, expr->binary.right, scope, safety_mode, false, NULL);
 
             return typecheck_binary_expr__LilyAnalysis(
               self,
@@ -1833,19 +1846,10 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_SUB:
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_XOR:
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN: {
-            LilyCheckedExpr *left = check_expr__LilyAnalysis(self,
-                                                             expr->binary.left,
-                                                             scope,
-                                                             safety_mode,
-                                                             true,
-                                                             NULL);
-            LilyCheckedExpr *right =
-              check_expr__LilyAnalysis(self,
-                                       expr->binary.right,
-                                       scope,
-                                       safety_mode,
-                                       false,
-                                       NULL);
+            LilyCheckedExpr *left = check_expr__LilyAnalysis(
+              self, expr->binary.left, scope, safety_mode, true, NULL);
+            LilyCheckedExpr *right = check_expr__LilyAnalysis(
+              self, expr->binary.right, scope, safety_mode, false, NULL);
 
             return typecheck_binary_expr__LilyAnalysis(
               self,
@@ -3025,12 +3029,8 @@ check_sys_fun_params_call__LilyAnalysis(LilyAnalysis *self,
         LilyCheckedDataType *param_data_type = get__Vec(sys_params, i);
         LilyAstExprFunParamCall *call_param = get__Vec(ast_params, i);
 
-        LilyCheckedExpr *value = check_expr__LilyAnalysis(self,
-                                                          call_param->value,
-                                                          scope,
-                                                          safety_mode,
-                                                          false,
-                                                          param_data_type);
+        LilyCheckedExpr *value = check_expr__LilyAnalysis(
+          self, call_param->value, scope, safety_mode, false, param_data_type);
 
         if (!eq__LilyCheckedDataType(param_data_type, value->data_type)) {
             ANALYSIS_EMIT_DIAGNOSTIC(
@@ -3085,12 +3085,8 @@ get_call_from_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_KIND_ACCESS:
             TODO("resolve access");
         case LILY_AST_EXPR_KIND_IDENTIFIER:
-            return check_identifier_expr__LilyAnalysis(self,
-                                                       expr,
-                                                       scope,
-                                                       defined_data_type,
-                                                       safety_mode,
-                                                       must_mut);
+            return check_identifier_expr__LilyAnalysis(
+              self, expr, scope, defined_data_type, safety_mode, must_mut);
         default:
             UNREACHABLE("this situation is impossible");
     }
@@ -3378,13 +3374,8 @@ check_fields_call__LilyAnalysis(LilyAnalysis *self,
             }
         }
 
-        LilyCheckedExpr *checked_value =
-          check_expr__LilyAnalysis(self,
-                                   param->value,
-                                   scope,
-                                   safety_mode,
-                                   false,
-                                   field_data_type);
+        LilyCheckedExpr *checked_value = check_expr__LilyAnalysis(
+          self, param->value, scope, safety_mode, false, field_data_type);
 
         if (field_data_type) {
             if (!eq__LilyCheckedDataType(checked_value->data_type,
@@ -3413,6 +3404,37 @@ check_fields_call__LilyAnalysis(LilyAnalysis *self,
 }
 
 LilyCheckedExpr *
+check_global_path_expr__LilyAnalysis(LilyAnalysis *self,
+                                     LilyAstExpr *expr,
+                                     enum LilyCheckedSafetyMode safety_mode,
+                                     LilyCheckedDataType *defined_data_type)
+{
+    TODO("check global path");
+}
+
+LilyCheckedExpr *
+check_Self_path_expr__LilyAnalysis(LilyAnalysis *self,
+                                   LilyAstExpr *expr,
+                                   LilyCheckedScope *scope,
+                                   enum LilyCheckedSafetyMode safety_mode,
+                                   bool must_mut,
+                                   LilyCheckedDataType *defined_data_type)
+{
+    TODO("check Self path");
+}
+
+LilyCheckedExpr *
+check_self_path_expr__LilyAnalysis(LilyAnalysis *self,
+                                   LilyAstExpr *expr,
+                                   LilyCheckedScope *scope,
+                                   enum LilyCheckedSafetyMode safety_mode,
+                                   bool must_mut,
+                                   LilyCheckedDataType *defined_data_type)
+{
+    TODO("check self path");
+}
+
+LilyCheckedExpr *
 check_expr__LilyAnalysis(LilyAnalysis *self,
                          LilyAstExpr *expr,
                          LilyCheckedScope *scope,
@@ -3422,59 +3444,26 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
 {
     switch (expr->kind) {
         case LILY_AST_EXPR_KIND_ACCESS:
-            // TODO: maybe remove variant access.
             switch (expr->access.kind) {
                 case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH:
-                    TODO("global path");
-                    // return check_expr__LilyAnalysis(self,
-                    //                                 expr->access.global_path,
-                    //                                 self->module.scope,
-                    //                                 safety_mode,
-                    //                                 must_mut,
-                    //                                 NULL);
-                case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH: {
-                    // LilyCheckedDecl *object =
-                    //   get_current_object__LilyCheckedScope(scope);
-
-                    // if (!object) {
-                    //     ANALYSIS_EMIT_DIAGNOSTIC(
-                    //       self,
-                    //       simple_lily_error,
-                    //       (&expr->location),
-                    //       NEW(LilyError,
-                    //           LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT),
-                    //       NULL,
-                    //       NULL,
-                    //       NULL);
-
-                    //     return NEW_VARIANT(
-                    //       LilyCheckedExpr, unknown, &expr->location, expr);
-                    // }
-
-                    TODO("resolve Self access");
-                }
-                case LILY_AST_EXPR_ACCESS_KIND_self_PATH: {
-                    // LilyCheckedDecl *method =
-                    //   get_current_method__LilyCheckedScope(scope);
-
-                    // if (!method) {
-                    //     ANALYSIS_EMIT_DIAGNOSTIC(
-                    //       self,
-                    //       simple_lily_error,
-                    //       (&expr->location),
-                    //       NEW(LilyError,
-                    //           LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT),
-                    //       NULL,
-                    //       NULL,
-                    //       from__String(
-                    //         "self access is not expected in function"));
-
-                    //     return NEW_VARIANT(
-                    //       LilyCheckedExpr, unknown, &expr->location, expr);
-                    // }
-
-                    TODO("resolve self access");
-                }
+                    return check_global_path_expr__LilyAnalysis(
+                      self, expr, safety_mode, defined_data_type);
+                case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH:
+                    return check_Self_path_expr__LilyAnalysis(
+                      self,
+                      expr,
+                      scope,
+                      safety_mode,
+                      must_mut,
+                      defined_data_type);
+                case LILY_AST_EXPR_ACCESS_KIND_self_PATH:
+                    return check_self_path_expr__LilyAnalysis(
+                      self,
+                      expr,
+                      scope,
+                      safety_mode,
+                      must_mut,
+                      defined_data_type);
                 case LILY_AST_EXPR_ACCESS_KIND_HOOK:
                     TODO("resolve hook access");
                 case LILY_AST_EXPR_ACCESS_KIND_OBJECT: {
@@ -4320,13 +4309,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                       sys_signature)));
                 }
                 case LILY_AST_EXPR_CALL_KIND_LEN: {
-                    LilyCheckedExpr *len_expr =
-                      check_expr__LilyAnalysis(self,
-                                               expr->call.len,
-                                               scope,
-                                               safety_mode,
-                                               false,
-                                               NULL);
+                    LilyCheckedExpr *len_expr = check_expr__LilyAnalysis(
+                      self, expr->call.len, scope, safety_mode, false, NULL);
 
                     // Check if the length is computable at compile-time
                     switch (len_expr->kind) {
@@ -4812,12 +4796,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                     UNREACHABLE("unknown variant");
             }
         case LILY_AST_EXPR_KIND_CAST: {
-            LilyCheckedExpr *left = check_expr__LilyAnalysis(self,
-                                                             expr->cast.expr,
-                                                             scope,
-                                                             safety_mode,
-                                                             must_mut,
-                                                             NULL);
+            LilyCheckedExpr *left = check_expr__LilyAnalysis(
+              self, expr->cast.expr, scope, safety_mode, must_mut, NULL);
             LilyCheckedDataType *dest = check_data_type__LilyAnalysis(
               self, expr->cast.dest_data_type, scope, NULL, safety_mode);
             enum LilyCheckedExprCastKind kind;
@@ -4841,12 +4821,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                NEW(LilyCheckedExprCast, kind, left, dest));
         }
         case LILY_AST_EXPR_KIND_GROUPING: {
-            LilyCheckedExpr *grouping = check_expr__LilyAnalysis(self,
-                                                                 expr->grouping,
-                                                                 scope,
-                                                                 safety_mode,
-                                                                 must_mut,
-                                                                 NULL);
+            LilyCheckedExpr *grouping = check_expr__LilyAnalysis(
+              self, expr->grouping, scope, safety_mode, must_mut, NULL);
 
             return NEW_VARIANT(LilyCheckedExpr,
                                grouping,
@@ -4856,12 +4832,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                                grouping);
         }
         case LILY_AST_EXPR_KIND_IDENTIFIER:
-            return check_identifier_expr__LilyAnalysis(self,
-                                                       expr,
-                                                       scope,
-                                                       defined_data_type,
-                                                       safety_mode,
-                                                       must_mut);
+            return check_identifier_expr__LilyAnalysis(
+              self, expr, scope, defined_data_type, safety_mode, must_mut);
         case LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR:
             TODO("identifier dollar expression");
         case LILY_AST_EXPR_KIND_LAMBDA:
@@ -5828,12 +5800,8 @@ check_expr__LilyAnalysis(LilyAnalysis *self,
                   NEW(LilyCheckedExprTuple, tuple_expr));
             }
         case LILY_AST_EXPR_KIND_UNARY: {
-            LilyCheckedExpr *right = check_expr__LilyAnalysis(self,
-                                                              expr->unary.right,
-                                                              scope,
-                                                              safety_mode,
-                                                              false,
-                                                              NULL);
+            LilyCheckedExpr *right = check_expr__LilyAnalysis(
+              self, expr->unary.right, scope, safety_mode, false, NULL);
 
             switch (expr->unary.kind) {
                 case LILY_AST_EXPR_UNARY_KIND_DEREFERENCE: {
