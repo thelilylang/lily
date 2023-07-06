@@ -471,59 +471,18 @@ static LilyCheckedHistory *history = NULL;
         FREE(Vec, end_body);                                        \
     }
 
-#define EXPECTED_BOOL_EXPR(expr)                                             \
-    if (expr->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||      \
-        expr->data_type->kind ==                                             \
-          LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {                    \
-        expr->data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_BOOL;            \
-    } else if (expr->data_type->kind ==                                      \
-               LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE) {    \
-        for (Usize i = 0;                                                    \
-             i < expr->data_type->conditional_compiler_choice.choices->len;  \
-             ++i) {                                                          \
-            LilyCheckedDataType *data_type = get__Vec(                       \
-              expr->data_type->conditional_compiler_choice.choices, i);      \
-            if (data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) {       \
-                ANALYSIS_EMIT_DIAGNOSTIC(                                    \
-                  self,                                                      \
-                  simple_lily_error,                                         \
-                  data_type->location,                                       \
-                  NEW(LilyError,                                             \
-                      LILY_ERROR_KIND_EXPECTED_DATA_TYPE_IS_NOT_GUARANTEED), \
-                  NULL,                                                      \
-                  NULL,                                                      \
-                  from__String("the boolean type is not guaranteed"));       \
-            }                                                                \
-        }                                                                    \
-    } else if (expr->data_type->kind ==                                      \
-               LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {                \
-        for (Usize i = 0; i < expr->data_type->compiler_choice->len; ++i) {  \
-            LilyCheckedDataType *data_type =                                 \
-              get__Vec(expr->data_type->compiler_choice, i);                 \
-            if (data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) {       \
-                ANALYSIS_EMIT_DIAGNOSTIC(                                    \
-                  self,                                                      \
-                  simple_lily_error,                                         \
-                  data_type->location,                                       \
-                  NEW(LilyError,                                             \
-                      LILY_ERROR_KIND_EXPECTED_DATA_TYPE_IS_NOT_GUARANTEED), \
-                  NULL,                                                      \
-                  NULL,                                                      \
-                  from__String("the boolean type is not guaranteed"));       \
-            }                                                                \
-        }                                                                    \
-    } else if (expr->data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_BOOL) {  \
-        emit__Diagnostic(                                                    \
-          NEW_VARIANT(                                                       \
-            Diagnostic,                                                      \
-            simple_lily_error,                                               \
-            &self->package->file,                                            \
-            expr->location,                                                  \
-            NEW(LilyError, LILY_ERROR_KIND_EXPECTED_BOOLEAN_EXPRESSION),     \
-            NULL,                                                            \
-            NULL,                                                            \
-            NULL),                                                           \
-          &self->package->count_error);                                      \
+#define EXPECTED_BOOL_EXPR(expr)                                     \
+    if (!is_guarantee__LilyCheckedDataType(                          \
+          expr->data_type, LILY_CHECKED_DATA_TYPE_KIND_BOOL)) {      \
+        ANALYSIS_EMIT_DIAGNOSTIC(                                    \
+          self,                                                      \
+          simple_lily_error,                                         \
+          expr->data_type->location,                                 \
+          NEW(LilyError,                                             \
+              LILY_ERROR_KIND_EXPECTED_DATA_TYPE_IS_NOT_GUARANTEED), \
+          NULL,                                                      \
+          NULL,                                                      \
+          from__String("the boolean type is not guaranteed"));       \
     }
 
 void
