@@ -808,6 +808,16 @@ generate_generic_params_from_resolved_fields__LilyCheckedDataType(
 
 /**
  *
+ * @brief Checks whether the given data type is guaranteed by this type.
+ * @note If the data type corresponds to an unknown data type or a compiler
+ * generic, the data type is replaced by the given guaranteed type.
+ */
+bool
+is_guarantee__LilyCheckedDataType(LilyCheckedDataType *self,
+                                  enum LilyCheckedDataTypeKind guarantee);
+
+/**
+ *
  * @brief Convert LilyCheckedDataTypeKind in string.
  * @note This function is only used to debug.
  */

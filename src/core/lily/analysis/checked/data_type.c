@@ -2358,6 +2358,41 @@ generate_generic_params_from_resolved_fields__LilyCheckedDataType(
     return resolved_generic_params;
 }
 
+bool
+is_guarantee__LilyCheckedDataType(LilyCheckedDataType *self,
+                                  enum LilyCheckedDataTypeKind guarantee)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+            for (Usize i = 0; self->conditional_compiler_choice.choices->len;
+                 ++i) {
+                if (!is_guarantee__LilyCheckedDataType(
+                      get__Vec(self->conditional_compiler_choice.choices, i),
+                      guarantee)) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
+            for (Usize i = 0; self->compiler_choice->len; ++i) {
+                if (!is_guarantee__LilyCheckedDataType(
+                      get__Vec(self->compiler_choice, i), guarantee)) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+            self->kind = guarantee;
+
+            return true;
+        default:
+            return self->kind == guarantee;
+    }
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
