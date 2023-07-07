@@ -634,8 +634,8 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other);
  * @brief Return true if the both data types are equal otherwise return false.
  */
 bool
-eq_return_data_type__LilyCheckedDataType(const LilyCheckedDataType *self,
-                                         const LilyCheckedDataType *other);
+eq_return_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
+                                         LilyCheckedDataType *other);
 
 /**
  *

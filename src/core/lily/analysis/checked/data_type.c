@@ -921,7 +921,7 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
                             bool is_match = false;
 
                             for (Usize j = 0; j < other_choices->len; ++j) {
-                                if (eq__LilyCheckedAccessModule(
+                                if (eq__LilyCheckedDataType(
                                       data_type, get__Vec(other_choices, j))) {
                                     is_match = true;
                                     break;
@@ -999,8 +999,8 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
 }
 
 bool
-eq_return_data_type__LilyCheckedDataType(const LilyCheckedDataType *self,
-                                         const LilyCheckedDataType *other)
+eq_return_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
+                                         LilyCheckedDataType *other)
 {
     if (self->kind != other->kind &&
         other->kind ==
