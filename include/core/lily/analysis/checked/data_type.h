@@ -269,31 +269,43 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedDataTypeCustom *self);
 #endif
 
-typedef struct LilyCheckedDataTypeChoice
+typedef struct LilyCheckedDataTypeCondition
 {
     Vec *conds; // Vec<LilyCheckedDataType* (&)>*
     Usize return_data_type_id;
-} LilyCheckedDataTypeChoice;
+} LilyCheckedDataTypeCondition;
 
 /**
  *
- * @brief Construct LilyCheckedDataTypeChoice type.
+ * @brief Construct LilyCheckedDataTypeCondition type.
  */
-CONSTRUCTOR(LilyCheckedDataTypeChoice *,
-            LilyCheckedDataTypeChoice,
+CONSTRUCTOR(LilyCheckedDataTypeCondition *,
+            LilyCheckedDataTypeCondition,
             Vec *conds,
             Usize return_data_type_id);
 
 /**
  *
- * @brief Free LilyCheckedDataTypeChoice type.
+ * @brief Convert LilyCheckedDataTypeCondition in String.
+ * @note This function is only used to debug.
  */
-DESTRUCTOR(LilyCheckedDataTypeChoice, LilyCheckedDataTypeChoice *self);
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeCondition,
+               const LilyCheckedDataTypeCondition *self)
+#endif
+
+  /**
+   *
+   * @brief Free LilyCheckedDataTypeCondition type.
+   */
+  DESTRUCTOR(LilyCheckedDataTypeCondition, LilyCheckedDataTypeCondition *self);
 
 typedef struct LilyCheckedDataTypeConditionalCompilerChoice
 {
-    Vec *choices; // Vec<LilyCheckedDataType* (&)>*
-    Vec *conds;   // Vec<Vec<LilyCheckedDataType* (&)>*>* => params
+    Vec *conds;   // Vec<LilyCheckedDataTypeCondition*>* => params
+    Vec *choices; // Vec<LilyCheckedDataType* (&)>* => return data types
 } LilyCheckedDataTypeConditionalCompilerChoice;
 
 /**
@@ -305,8 +317,8 @@ inline CONSTRUCTOR(LilyCheckedDataTypeConditionalCompilerChoice,
                    Vec *choices,
                    Vec *conds)
 {
-    return (LilyCheckedDataTypeConditionalCompilerChoice){ .choices = choices,
-                                                           .conds = conds };
+    return (LilyCheckedDataTypeConditionalCompilerChoice){ .conds = conds,
+                                                           .choices = choices };
 }
 
 /**
