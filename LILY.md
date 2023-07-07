@@ -423,6 +423,13 @@ import "@std";
 import "@std.io.*" as io;
 ```
 
+### import with right to overwrite imported items
+
+```lily
+// useful when writing a prelude
+import "@std.io.write"?;
+```
+
 ## Use
 
 ```lily
