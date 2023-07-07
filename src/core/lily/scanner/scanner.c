@@ -807,7 +807,7 @@ end_token__LilyScanner(LilyScanner *self,
                        Usize position)
 {
     ASSERT(self->location.start_line <= line);
-    ASSERT(self->location.start_column <= column);
+    ASSERT(self->location.start_column <= column || self->location.start_line != line);
 
     self->location.end_line = line;
     self->location.end_column = column;
