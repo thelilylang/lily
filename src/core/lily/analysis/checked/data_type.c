@@ -130,6 +130,34 @@ generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
   const String *name,
   LilyCheckedDataType *original);
 
+/// @return If it returns 1, this means that the compiler cannot guarantee the
+/// data types defined by the compiler, otherwise if it returns 0, this means
+/// that the compiler guarantees both data types.
+static int
+guarantee_compiler_defined_data_type__LilyCheckedDataType(
+  LilyCheckedDataType *self,
+  LilyCheckedDataType *other);
+
+#define GUARANTEE_COMPILER_DEFINED_DATA_TYPE(min_choices, max_choices) \
+    for (Usize i = 0; i < max_choices->len;) {                         \
+        LilyCheckedDataType *data_type = get__Vec(max_choices, i);     \
+        bool is_match = false;                                         \
+                                                                       \
+        for (Usize j = 0; j < min_choices->len; ++j) {                 \
+            if (eq__LilyCheckedDataType(data_type,                     \
+                                        get__Vec(min_choices, j))) {   \
+                is_match = true;                                       \
+                break;                                                 \
+            }                                                          \
+        }                                                              \
+                                                                       \
+        if (!is_match) {                                               \
+            FREE(LilyCheckedDataType, remove__Vec(max_choices, i));    \
+        } else {                                                       \
+            ++i;                                                       \
+        }                                                              \
+    }
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -286,6 +314,28 @@ DESTRUCTOR(LilyCheckedDataTypeCustom, const LilyCheckedDataTypeCustom *self)
     }
 }
 
+CONSTRUCTOR(LilyCheckedDataTypeChoice *,
+            LilyCheckedDataTypeChoice,
+            Vec *conds,
+            Usize return_data_type_id)
+{
+    LilyCheckedDataTypeChoice *self =
+      lily_malloc(sizeof(LilyCheckedDataTypeChoice));
+
+    self->conds = conds;
+    self->return_data_type_id = return_data_type_id;
+
+    return self;
+}
+
+DESTRUCTOR(LilyCheckedDataTypeChoice, LilyCheckedDataTypeChoice *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->conds->buffer, self->conds->len, LilyCheckedDataType);
+    FREE(Vec, self->conds);
+    lily_free(self);
+}
+
 DESTRUCTOR(LilyCheckedDataTypeConditionalCompilerChoice,
            const LilyCheckedDataTypeConditionalCompilerChoice *self)
 {
@@ -333,6 +383,7 @@ CONSTRUCTOR(LilyCheckedDataType *,
 
     self->kind = kind;
     self->location = location;
+    self->is_lock = true;
     self->ref_count = 0;
 
     return self;
@@ -349,6 +400,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_ARRAY;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->array = array;
 
     return self;
@@ -365,6 +417,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_BYTES;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->bytes = bytes;
 
     return self;
@@ -381,6 +434,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_CUSTOM;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->custom = custom;
 
     return self;
@@ -397,6 +451,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->exception = exception;
 
     return self;
@@ -413,6 +468,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_LAMBDA;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->lambda = lambda;
 
     return self;
@@ -429,6 +485,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_LIST;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->list = list;
 
     return self;
@@ -445,6 +502,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_MUT;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->mut = mut;
 
     return self;
@@ -461,6 +519,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->optional = optional;
 
     return self;
@@ -477,6 +536,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_PTR;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->ptr = ptr;
 
     return self;
@@ -493,6 +553,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->ptr_mut = ptr_mut;
 
     return self;
@@ -509,6 +570,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_REF;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->ref = ref;
 
     return self;
@@ -525,6 +587,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_REF_MUT;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->ref_mut = ref_mut;
 
     return self;
@@ -541,6 +604,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_STR;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->str = str;
 
     return self;
@@ -557,6 +621,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_TRACE;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->trace = trace;
 
     return self;
@@ -573,6 +638,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->trace_mut = trace_mut;
 
     return self;
@@ -589,6 +655,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_TUPLE;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->tuple = tuple;
 
     return self;
@@ -606,6 +673,7 @@ VARIANT_CONSTRUCTOR(
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = false;
     self->conditional_compiler_choice = conditional_compiler_choice;
 
     return self;
@@ -622,6 +690,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = false;
     self->compiler_choice = compiler_choice;
 
     return self;
@@ -638,14 +707,14 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC;
     self->location = location;
     self->ref_count = 0;
+    self->is_lock = true;
     self->compiler_generic = compiler_generic;
 
     return self;
 }
 
 bool
-eq__LilyCheckedDataType(const LilyCheckedDataType *self,
-                        const LilyCheckedDataType *other)
+eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
 {
     if (self->kind != other->kind &&
         other->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE) {
@@ -810,53 +879,79 @@ eq__LilyCheckedDataType(const LilyCheckedDataType *self,
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
             switch (other->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
-                    if (self->compiler_choice->len !=
-                        other->compiler_choice->len) {
-                        return false;
-                    }
+                case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {
+                    Vec *self_choices = get_choices__LilyCheckedDataType(self);
+                    Vec *other_choices =
+                      get_choices__LilyCheckedDataType(other);
 
-                    for (Usize i = 0; i < self->compiler_choice->len; ++i) {
-                        if (!eq__LilyCheckedDataType(
-                              get__Vec(self->compiler_choice, i),
-                              get__Vec(other->compiler_choice, i))) {
-                            return false;
+                    // Check if the data types are lock.
+                    if (self->is_lock && other->is_lock) {
+                        if (self_choices->len != other_choices->len) {
+                        } else {
                         }
+                    } else if (!self->is_lock && !other->is_lock) {
+                    } else if (!self->is_lock) {
+                    } else {
                     }
 
-                    return true;
-                case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
-                    if (self->compiler_choice->len !=
-                        other->conditional_compiler_choice.choices->len) {
-                        return false;
-                    }
-
-                    for (Usize i = 0; i < self->compiler_choice->len; ++i) {
+                    for (Usize i = 0; i < self->compiler_choice->len;) {
                         LilyCheckedDataType *choice =
                           get__Vec(self->compiler_choice, i);
                         bool is_match = false;
 
-                        for (Usize j = 0;
-                             j <
-                             other->conditional_compiler_choice.choices->len;
+                        for (Usize j = 0; j < other->compiler_choice->len;
                              ++j) {
                             if (eq__LilyCheckedDataType(
                                   choice,
-                                  get__Vec(
-                                    other->conditional_compiler_choice.choices,
-                                    j))) {
+                                  get__Vec(other->compiler_choice, j))) {
                                 is_match = true;
                                 break;
                             }
                         }
 
                         if (!is_match) {
-                            return false;
+                            FREE(LilyCheckedDataType,
+                                 remove__Vec(self->compiler_choice, i));
+                        } else {
+                            ++i;
                         }
                     }
 
+                    return !guarantee_compiler_defined_data_type__LilyCheckedDataType(
+                      self, other);
+                }
+                default: {
+                    for (Usize i = 0; i < self->compiler_choice->len;) {
+                        if (!eq__LilyCheckedDataType(
+                              get__Vec(self->compiler_choice, i), other)) {
+                            FREE(LilyCheckedDataType,
+                                 remove__Vec(self->compiler_choice, i));
+                        } else {
+                            ++i;
+                        }
+                    }
+
+                    if (self->compiler_choice->len == 0) {
+                        return false;
+                    }
+
+                    LilyCheckedDataType *matched =
+                      pop__Vec(self->compiler_choice);
+
+                    if (self->compiler_choice->len == 1) {
+                        FREE(LilyCheckedDataType, matched);
+                        FREE(Vec, self->compiler_choice);
+                    } else {
+                        FREE_BUFFER_ITEMS(self->compiler_choice->buffer,
+                                          self->compiler_choice->len,
+                                          LilyCheckedDataType);
+                        FREE(Vec, self->compiler_choice);
+                    }
+
+                    update_data_type__LilyCheckedDataType(self, matched);
+
                     return true;
-                default:
-                    return false;
+                }
             }
         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
             switch (other->kind) {
@@ -1192,12 +1287,16 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                 push__Vec(conds, item);
             }
 
-            return NEW_VARIANT(LilyCheckedDataType,
-                               conditional_compiler_choice,
-                               self->location,
-                               NEW(LilyCheckedDataTypeConditionalCompilerChoice,
-                                   choices,
-                                   conds));
+            LilyCheckedDataType *res = NEW_VARIANT(
+              LilyCheckedDataType,
+              conditional_compiler_choice,
+              self->location,
+              NEW(
+                LilyCheckedDataTypeConditionalCompilerChoice, choices, conds));
+
+            res->is_lock = self->is_lock;
+
+            return res;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE: {
             Vec *choices = NEW(Vec);
@@ -1206,8 +1305,12 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                 push__Vec(choices, get__Vec(self->compiler_choice, i));
             }
 
-            return NEW_VARIANT(
+            LilyCheckedDataType *res = NEW_VARIANT(
               LilyCheckedDataType, compiler_choice, self->location, choices);
+
+            res->is_lock = self->is_lock;
+
+            return res;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
             return NEW_VARIANT(LilyCheckedDataType,
@@ -2362,6 +2465,11 @@ bool
 is_guarantee__LilyCheckedDataType(LilyCheckedDataType *self,
                                   enum LilyCheckedDataTypeKind guarantee)
 {
+    ASSERT(guarantee != LILY_CHECKED_DATA_TYPE_KIND_CUSTOM &&
+           guarantee != LILY_CHECKED_DATA_TYPE_KIND_LAMBDA &&
+           guarantee != LILY_CHECKED_DATA_TYPE_KIND_TUPLE &&
+           guarantee != LILY_CHECKED_DATA_TYPE_KIND_ARRAY);
+
     switch (self->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
             for (Usize i = 0; self->conditional_compiler_choice.choices->len;
@@ -2384,12 +2492,104 @@ is_guarantee__LilyCheckedDataType(LilyCheckedDataType *self,
 
             return true;
         case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
-        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
-            self->kind = guarantee;
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC: {
+            LilyCheckedDataType *update = NULL;
+
+            switch (guarantee) {
+                case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+                    update = NEW_VARIANT(
+                      LilyCheckedDataType, exception, self->location, self);
+                    break;
+                case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+                    update = NEW_VARIANT(
+                      LilyCheckedDataType, list, self->location, self);
+                    break;
+                case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+                    update = NEW_VARIANT(
+                      LilyCheckedDataType, mut, self->location, self);
+                    break;
+                case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+                    update = NEW_VARIANT(
+                      LilyCheckedDataType, optional, self->location, self);
+                    break;
+                case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+                    update = NEW_VARIANT(
+                      LilyCheckedDataType, ptr, self->location, self);
+                    break;
+                case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+                    update = NEW_VARIANT(
+                      LilyCheckedDataType, ptr_mut, self->location, self);
+                    break;
+                case LILY_CHECKED_DATA_TYPE_KIND_REF:
+                    update = NEW_VARIANT(
+                      LilyCheckedDataType, ref, self->location, self);
+                    break;
+                case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+                    update = NEW_VARIANT(
+                      LilyCheckedDataType, ref_mut, self->location, self);
+                    break;
+                case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+                    update = NEW_VARIANT(
+                      LilyCheckedDataType, trace, self->location, self);
+                    break;
+                case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+                    update = NEW_VARIANT(
+                      LilyCheckedDataType, trace_mut, self->location, self);
+                    break;
+                default:
+                    self->kind = guarantee;
+            }
+
+            if (update) {
+                self = update;
+            }
 
             return true;
+        }
         default:
             return self->kind == guarantee;
+    }
+}
+
+int
+guarantee_compiler_defined_data_type__LilyCheckedDataType(
+  LilyCheckedDataType *self,
+  LilyCheckedDataType *other)
+{
+    ASSERT(is_compiler_defined_and_known_dt__LilyCheckedDataType(self) &&
+           is_compiler_defined_and_known_dt__LilyCheckedDataType(other));
+
+    Vec *self_choices = get_choices__LilyCheckedDataType(self);
+
+    if (!self_choices) {
+        return 0;
+    }
+
+    Vec *other_choices = get_choices__LilyCheckedDataType(other);
+
+    if (!other_choices) {
+        return 0;
+    }
+
+    if (self_choices->len <= other_choices->len) {
+        GUARANTEE_COMPILER_DEFINED_DATA_TYPE(self_choices, other_choices);
+    } else if (self_choices->len > other_choices->len) {
+        GUARANTEE_COMPILER_DEFINED_DATA_TYPE(other_choices, self_choices);
+    }
+
+    return self_choices->len == other_choices->len ? 0 : 1;
+}
+
+Vec *
+get_choices__LilyCheckedDataType(const LilyCheckedDataType *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
+            return self->compiler_choice;
+        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+            return self->conditional_compiler_choice.choices;
+        default:
+            return NULL;
     }
 }
 
@@ -2511,14 +2711,16 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
     String *res = NULL;
 
     if (self->location) {
-        res =
-          format__String("LilyCheckedDataType{{ kind = {s}, location = {sa}",
-                         to_string__Debug__LilyCheckedDataTypeKind(self->kind),
-                         to_string__Debug__Location(self->location));
+        res = format__String(
+          "LilyCheckedDataType{{ kind = {s}, location = {sa}, is_lock = {b}",
+          to_string__Debug__LilyCheckedDataTypeKind(self->kind),
+          to_string__Debug__Location(self->location),
+          self->is_lock);
     } else {
-        res =
-          format__String("LilyCheckedDataType{{ kind = {s}, location = NULL",
-                         to_string__Debug__LilyCheckedDataTypeKind(self->kind));
+        res = format__String(
+          "LilyCheckedDataType{{ kind = {s}, location = NULL, is_lock = {b}",
+          to_string__Debug__LilyCheckedDataTypeKind(self->kind),
+          self->is_lock);
     }
 
     switch (self->kind) {

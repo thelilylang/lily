@@ -269,6 +269,27 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedDataTypeCustom *self);
 #endif
 
+typedef struct LilyCheckedDataTypeChoice
+{
+    Vec *conds; // Vec<LilyCheckedDataType* (&)>*
+    Usize return_data_type_id;
+} LilyCheckedDataTypeChoice;
+
+/**
+ *
+ * @brief Construct LilyCheckedDataTypeChoice type.
+ */
+CONSTRUCTOR(LilyCheckedDataTypeChoice *,
+            LilyCheckedDataTypeChoice,
+            Vec *conds,
+            Usize return_data_type_id);
+
+/**
+ *
+ * @brief Free LilyCheckedDataTypeChoice type.
+ */
+DESTRUCTOR(LilyCheckedDataTypeChoice, LilyCheckedDataTypeChoice *self);
+
 typedef struct LilyCheckedDataTypeConditionalCompilerChoice
 {
     Vec *choices; // Vec<LilyCheckedDataType* (&)>*
@@ -340,6 +361,16 @@ struct LilyCheckedDataType
     enum LilyCheckedDataTypeKind kind;
     const Location *location; // const Location*? (&)
     Usize ref_count;
+    // NOTE: only using for compiler choice data type
+    // (`LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE` and
+    // `LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE`). By default,
+    // is set on true on all data types except for compiler choice defined data
+    // type. Moreover, this value indicates if the compiler can eleminate a type
+    // of the choice. This value is set on true when the function is finish to
+    // analysis. In addition, all data types from other functions or methods
+    // cannot be modified when they are called (type elimination is not possible
+    // after function or method analysis).
+    bool is_lock;
     union
     {
         LilyCheckedDataTypeArray array;
@@ -584,8 +615,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
  * @brief Return true if the both data types are equal otherwise return false.
  */
 bool
-eq__LilyCheckedDataType(const LilyCheckedDataType *self,
-                        const LilyCheckedDataType *other);
+eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other);
 
 /**
  *
@@ -809,12 +839,23 @@ generate_generic_params_from_resolved_fields__LilyCheckedDataType(
 /**
  *
  * @brief Checks whether the given data type is guaranteed by this type.
+ * @param guarantee It cannot equal to `LILY_CHECKED_DATA_TYPE_KIND_CUSTOM` and
+ * `LILY_CHECKED_DATA_TYPE_KIND_LAMBDA` and
+ * `LILY_CHECKED_DATA_TYPE_KIND_TUPLE` and `LILY_CHECKED_DATA_TYPE_KIND_ARRAY`.
  * @note If the data type corresponds to an unknown data type or a compiler
  * generic, the data type is replaced by the given guaranteed type.
  */
 bool
 is_guarantee__LilyCheckedDataType(LilyCheckedDataType *self,
                                   enum LilyCheckedDataTypeKind guarantee);
+
+/**
+ *
+ * @brief Get choice from data type.
+ * @return Vec<LilyCheckedDataType*>*? (&)
+ */
+Vec *
+get_choices__LilyCheckedDataType(const LilyCheckedDataType *self);
 
 /**
  *
