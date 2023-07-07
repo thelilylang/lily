@@ -88,6 +88,14 @@ fun mul(x, y) = x * y end
 fun div(x, y) = x / y end
 ```
 
+### `<dt>(...)` data type
+
+```lily
+fun add(x, y Int32(...2)) =
+    // ...
+end
+```
+
 ## Module
 
 ```lily
@@ -942,6 +950,46 @@ end
 - All values are moved
 - All values are automatically drop
 
+## Comptime mode
+
+```
+comptime <stmt|expr>
+```
+
+## Generic
+
+> Normal generic param
+
+```
+T
+```
+
+> Constraint generic param
+
+```
+T: Abc
+```
+
+> List generic param
+
+```
+T(...)
+```
+
+> List generic param + constraint
+
+```
+T(...): Abc
+```
+
+> You can also add a minimum of given data type
+
+```
+T(1...2)
+T(...4)
+T(4...)
+```
+
 ## Operators
 
 ```
@@ -999,7 +1047,7 @@ xor
 ```lily
 @len("Hello")
 @len(b"Hello")
-@len([1, 2, 3]
+@len([1, 2, 3])
 @len({1, 2, 3})
 ```
 
@@ -1007,6 +1055,26 @@ xor
 
 - Concurrent
 - Mark and sweep
+
+## C mode
+
+```lily
+@cc =
+    int add(int x, int y) {
+        return x + y;
+    }
+@end
+```
+
+## C++ mode
+
+```lily
+@cpp =
+    auto add(int y, int y) -> int {
+        return x + y;
+    }
+@end
+```
 
 ## Library organization
 
