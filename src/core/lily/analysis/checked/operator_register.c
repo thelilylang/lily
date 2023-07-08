@@ -132,7 +132,7 @@ generate_compiler_choice_according_operator_collection__LilyCheckedOperatorRegis
         Vec *compiler_choice = NEW(Vec); // Vec<LilyCheckedDataType* (&)>*
 
         for (Usize i = 0; i < operators->len; ++i) {
-            push__Vec(
+            add_choice__LilyCheckedDataType(
               compiler_choice,
               get__Vec(
                 CAST(LilyCheckedOperator *, get__Vec(operators, i))->signature,
@@ -151,26 +151,31 @@ generate_conditional_compiler_choice_according_operator_collection__LilyCheckedO
   const Location *location)
 {
     Vec *choices = NEW(Vec); // Vec<LilyCheckedDataType* (&)>*
-    Vec *conds = NEW(Vec);   // Vec<Vec<LilyCheckedDataType* (&)>*>*
+    Vec *conds = NEW(Vec);   // Vec<LilyCheckedDataTypeCondition*>*
+
+    LilyCheckedDataTypeConditionalCompilerChoice cond_cc =
+      NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds);
 
     for (Usize i = 0; i < operators->len; ++i) {
         LilyCheckedOperator *operator= get__Vec(operators, i);
-        Vec *cond = NEW(Vec);
 
-        push__Vec(choices, last__Vec(operator->signature));
+        ASSERT(operator->signature->len> 0);
+
+        LilyCheckedDataTypeCondition *condition =
+          NEW(LilyCheckedDataTypeCondition,
+              NEW(Vec),
+              add_choice__LilyCheckedDataTypeConditionalCompilerChoice(
+                &cond_cc, last__Vec(operator->signature)));
 
         for (Usize j = 0; j < operator->signature->len - 1; ++j) {
-            push__Vec(cond, get__Vec(operator->signature, j));
+            push__Vec(condition->params, get__Vec(operator->signature, j));
         }
 
-        push__Vec(conds, cond);
+        push__Vec(conds, condition);
     }
 
     return NEW_VARIANT(
-      LilyCheckedDataType,
-      conditional_compiler_choice,
-      location,
-      NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds));
+      LilyCheckedDataType, conditional_compiler_choice, location, cond_cc);
 }
 
 #define FILTER_OPERATOR(dt_op, dt)                                             \
@@ -226,18 +231,18 @@ generate_conditional_compiler_choice_according_operator_collection__LilyCheckedO
 
 #define BINARY_UPDATE_DATA_TYPE()                                          \
     if (position == 0 || position == 1) {                                  \
-        Vec *choice = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */       \
+        Vec *choices = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */      \
                                                                            \
         for (Usize i = 0; i < operators->len; ++i) {                       \
-            push__Vec(                                                     \
-              choice,                                                      \
+            add_choice__LilyCheckedDataType(                               \
+              choices,                                                     \
               get__Vec(CAST(LilyCheckedOperator *, get__Vec(operators, i)) \
                          ->signature,                                      \
                        position));                                         \
         }                                                                  \
                                                                            \
         data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE;     \
-        data_type->compiler_choice = choice;                               \
+        data_type->compiler_choice = choices;                              \
     }
 
 #define BINARY_CHECK_CHOICE(choice)           \
