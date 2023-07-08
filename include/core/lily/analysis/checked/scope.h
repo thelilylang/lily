@@ -225,6 +225,14 @@ get_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
 
 /**
  *
+ * @brief Get parent (fun, method or lambda).
+ * @return const LilyCheckedScopeDecls*? (&)
+ */
+const LilyCheckedScopeDecls *
+get_parent__LilyCheckedScope(const LilyCheckedScope *self);
+
+/**
+ *
  * @brief Search a module in the scope.
  */
 LilyCheckedScopeResponse
