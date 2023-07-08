@@ -126,7 +126,7 @@ typedef struct LilyCheckedDeclFun
     Vec *used_compiler_generic; // Vec<String*>*
     Vec *signatures;            // Vec<LilyCheckedSignatureFun*>*
     Vec *fun_deps;              // Vec<LilyCheckedDecl* (&)>*
-    Vec *uncertain_call;        // Vec<LilyCheckedExpr* (&)>*
+    Vec *unlock_data_type;      // Vec<LilyCheckedDataType* (&)>*
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
@@ -168,6 +168,7 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
                                  .used_compiler_generic = NEW(Vec),
                                  .signatures = NEW(Vec),
                                  .fun_deps = NEW(Vec),
+                                 .unlock_data_type = NEW(Vec),
                                  .visibility = visibility,
                                  .is_async = is_async,
                                  .is_operator = is_operator,

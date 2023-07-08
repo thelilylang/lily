@@ -444,4 +444,5 @@ DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
     FREE(Vec, self->signatures);
 
     FREE(Vec, self->fun_deps);
+    FREE(Vec, self->unlock_data_type);
 }
