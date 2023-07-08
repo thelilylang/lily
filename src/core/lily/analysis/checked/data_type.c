@@ -308,13 +308,13 @@ DESTRUCTOR(LilyCheckedDataTypeCustom, const LilyCheckedDataTypeCustom *self)
 
 CONSTRUCTOR(LilyCheckedDataTypeCondition *,
             LilyCheckedDataTypeCondition,
-            Vec *conds,
+            Vec *params,
             Usize return_data_type_id)
 {
     LilyCheckedDataTypeCondition *self =
       lily_malloc(sizeof(LilyCheckedDataTypeCondition));
 
-    self->conds = conds;
+    self->params = params;
     self->return_data_type_id = return_data_type_id;
 
     return self;
@@ -326,9 +326,9 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedDataTypeCondition,
                const LilyCheckedDataTypeCondition *self)
 {
-    Strign *res = format__String("LilyCheckedDataTypeCondition{{ conds =");
+    Strign *res = format__String("LilyCheckedDataTypeCondition{{ params =");
 
-    DEBUG_VEC_STRING(self->conds, res, LilyCheckedDataType);
+    DEBUG_VEC_STRING(self->params, res, LilyCheckedDataType);
 
     {
         char *s =
@@ -344,9 +344,25 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyCheckedDataTypeCondition, LilyCheckedDataTypeCondition *self)
 {
     FREE_BUFFER_ITEMS(
-      self->conds->buffer, self->conds->len, LilyCheckedDataType);
-    FREE(Vec, self->conds);
+      self->params->buffer, self->params->len, LilyCheckedDataType);
+    FREE(Vec, self->params);
     lily_free(self);
+}
+
+Usize
+add_choice__LilyCheckedDataTypeConditionalCompilerChoice(
+  const LilyCheckedDataTypeConditionalCompilerChoice *self,
+  LilyCheckedDataType *choice)
+{
+    for (Usize i = 0; i < self->choices->len; ++i) {
+        if (eq__LilyCheckedDataType(get__Vec(self->choices, i), choice)) {
+            return i;
+        }
+    }
+
+    push__Vec(self->choices, choice);
+
+    return self->choices->len - 1;
 }
 
 DESTRUCTOR(LilyCheckedDataTypeConditionalCompilerChoice,
@@ -1046,10 +1062,10 @@ get_return_data_type_of_conditional_compiler_choice(
           get__Vec(self->conditional_compiler_choice.conds, i);
         bool is_match = true;
 
-        ASSERT(self_cond->conds->len == cond->len);
+        ASSERT(self_cond->params->len == cond->len);
 
-        for (Usize j = 0; j < self_cond->conds->len; ++j) {
-            if (!eq__LilyCheckedDataType(get__Vec(self_cond->conds, j),
+        for (Usize j = 0; j < self_cond->params->len; ++j) {
+            if (!eq__LilyCheckedDataType(get__Vec(self_cond->params, j),
                                          get__Vec(cond, j))) {
                 is_match = false;
                 break;
@@ -2530,6 +2546,18 @@ get_choices__LilyCheckedDataType(const LilyCheckedDataType *self)
         default:
             return NULL;
     }
+}
+
+void
+add_choice__LilyCheckedDataType(Vec *choices, LilyCheckedDataType *choice)
+{
+    for (Usize i = 0; i < choices->len; ++i) {
+        if (eq__LilyCheckedDataType(get__Vec(choices, i), choice)) {
+            return;
+        }
+    }
+
+    push__Vec(choices, choice);
 }
 
 #ifdef ENV_DEBUG

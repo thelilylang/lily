@@ -271,7 +271,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyCheckedDataTypeCondition
 {
-    Vec *conds; // Vec<LilyCheckedDataType* (&)>*
+    Vec *params; // Vec<LilyCheckedDataType* (&)>*
     Usize return_data_type_id;
 } LilyCheckedDataTypeCondition;
 
@@ -281,7 +281,7 @@ typedef struct LilyCheckedDataTypeCondition
  */
 CONSTRUCTOR(LilyCheckedDataTypeCondition *,
             LilyCheckedDataTypeCondition,
-            Vec *conds,
+            Vec *params,
             Usize return_data_type_id);
 
 /**
@@ -293,14 +293,14 @@ CONSTRUCTOR(LilyCheckedDataTypeCondition *,
 String *
 IMPL_FOR_DEBUG(to_string,
                LilyCheckedDataTypeCondition,
-               const LilyCheckedDataTypeCondition *self)
+               const LilyCheckedDataTypeCondition *self);
 #endif
 
-  /**
-   *
-   * @brief Free LilyCheckedDataTypeCondition type.
-   */
-  DESTRUCTOR(LilyCheckedDataTypeCondition, LilyCheckedDataTypeCondition *self);
+/**
+ *
+ * @brief Free LilyCheckedDataTypeCondition type.
+ */
+DESTRUCTOR(LilyCheckedDataTypeCondition, LilyCheckedDataTypeCondition *self);
 
 typedef struct LilyCheckedDataTypeConditionalCompilerChoice
 {
@@ -320,6 +320,16 @@ inline CONSTRUCTOR(LilyCheckedDataTypeConditionalCompilerChoice,
     return (LilyCheckedDataTypeConditionalCompilerChoice){ .conds = conds,
                                                            .choices = choices };
 }
+
+/**
+ *
+ * @brief Check if the choice is not duplicate then add it.
+ * @return Return index of the pushed choice.
+ */
+Usize
+add_choice__LilyCheckedDataTypeConditionalCompilerChoice(
+  const LilyCheckedDataTypeConditionalCompilerChoice *self,
+  LilyCheckedDataType *choice);
 
 /**
  *
@@ -868,6 +878,13 @@ is_guarantee__LilyCheckedDataType(LilyCheckedDataType *self,
  */
 Vec *
 get_choices__LilyCheckedDataType(const LilyCheckedDataType *self);
+
+/**
+ *
+ * @brief Add a choice to a choices (without duplication).
+ */
+void
+add_choice__LilyCheckedDataType(Vec *choices, LilyCheckedDataType *choice);
 
 /**
  *
