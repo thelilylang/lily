@@ -32,7 +32,7 @@
 CONSTRUCTOR(LilyCheckedCompilerGenericValue *,
             LilyCheckedCompilerGenericValue,
             const String *name,
-            const LilyCheckedDataType *data_type)
+            LilyCheckedDataType *data_type)
 {
     LilyCheckedCompilerGenericValue *self =
       lily_malloc(sizeof(LilyCheckedCompilerGenericValue));

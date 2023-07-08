@@ -34,7 +34,7 @@ typedef struct LilyCheckedDataType LilyCheckedDataType;
 typedef struct LilyCheckedCompilerGenericValue
 {
     const String *name;                   // String* (&)
-    const LilyCheckedDataType *data_type; // LilyCheckedDataType* (&)
+    LilyCheckedDataType *data_type; // LilyCheckedDataType* (&)
 } LilyCheckedCompilerGenericValue;
 
 /**
@@ -44,7 +44,7 @@ typedef struct LilyCheckedCompilerGenericValue
 CONSTRUCTOR(LilyCheckedCompilerGenericValue *,
             LilyCheckedCompilerGenericValue,
             const String *name,
-            const LilyCheckedDataType *data_type);
+            LilyCheckedDataType *data_type);
 
 /**
  *
