@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <core/lily/analysis/checked/decl.h>
 #include <core/lily/analysis/checked/scope_decls.h>
 
 #include <stdio.h>
@@ -45,3 +46,26 @@ IMPL_FOR_DEBUG(to_string,
     }
 }
 #endif
+
+void
+add_unlock_data_type__LilyCheckedScopeDecls(LilyCheckedScopeDecls *self,
+                                            LilyCheckedDataType *unlock)
+{
+    // TODO: add unlock data type to lambda and method
+    switch (self->kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            switch (self->decl->kind) {
+                case LILY_CHECKED_DECL_KIND_FUN:
+                    push__Vec(self->decl->fun.unlock_data_type, unlock);
+                    break;
+                case LILY_CHECKED_DECL_KIND_METHOD:
+                    TODO("add unlock data type to method");
+                default:
+                    UNREACHABLE("cannot add unlock data type");
+            }
+
+            break;
+        default:
+            UNREACHABLE("cannot add unlock data type");
+    }
+}
