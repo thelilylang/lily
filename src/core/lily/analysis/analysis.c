@@ -7354,6 +7354,9 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
         }
     }
 
+    // 9. Lock all data types
+    lock_data_types__LilyCheckedDeclFun(&fun->fun);
+
     fun->fun.is_checked = true;
 }
 
