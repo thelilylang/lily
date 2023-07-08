@@ -66,12 +66,10 @@ push__Stack(Stack *self, void *item)
         return;
     }
 
-    self->buffer = realloc(self->buffer, PTR_SIZE * self->len);
+    self->buffer = lily_realloc(self->buffer, PTR_SIZE * self->len);
     self->buffer[self->len - 1] = self->top;
     self->top = item;
     ++self->len;
-
-    return;
 }
 
 void *

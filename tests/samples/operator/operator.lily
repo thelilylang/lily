@@ -1,4 +1,4 @@
-fun `+`(x, y) = x + y end
+fun `+`(x Int32, y Int64) Int64 = return (x cast Int64) + y; end
 
 fun main =
 end

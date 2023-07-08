@@ -170,6 +170,7 @@ get_signatures__LilyCheckedDecl(const LilyCheckedDecl *self);
 /**
  *
  * @brief Get scope from declaration.
+ * @return LilyCheckedScope*? (&)
  */
 LilyCheckedScope *
 get_scope__LilyCheckedDecl(const LilyCheckedDecl *self);

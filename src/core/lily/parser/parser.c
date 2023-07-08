@@ -73,7 +73,7 @@ parse_hook_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access);
 // A.@Object@Object2@Object3
 /// @param access LilyAstExpr*?
 static LilyAstExpr *
-parse_object_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access);
+parse_at_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access);
 
 // Parse access expression
 static LilyAstExpr *
@@ -1528,6 +1528,7 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
         current_location = &current_access->location;
     } else {
         ASSERT(kind == LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH ||
+               kind == LILY_AST_EXPR_ACCESS_KIND_OBJECT_PATH ||
                kind == LILY_AST_EXPR_ACCESS_KIND_SELF_PATH ||
                kind == LILY_AST_EXPR_ACCESS_KIND_self_PATH ||
                kind == LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT);
@@ -1549,6 +1550,14 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
                   NEW_VARIANT(LilyAstExprAccess, global_path, NEW(Vec)));
 
                 break;
+            case LILY_AST_EXPR_ACCESS_KIND_OBJECT_PATH:
+                current_access = NEW_VARIANT(
+                  LilyAstExpr,
+                  access,
+                  expr_location,
+                  NEW_VARIANT(LilyAstExprAccess, object_path, NEW(Vec)));
+
+                break;
             case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH:
                 current_access = NEW_VARIANT(
                   LilyAstExpr,
@@ -1563,6 +1572,14 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
                   access,
                   expr_location,
                   NEW_VARIANT(LilyAstExprAccess, self_path, NEW(Vec)));
+
+                break;
+            case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT:
+                current_access = NEW_VARIANT(
+                  LilyAstExpr,
+                  access,
+                  expr_location,
+                  NEW_VARIANT(LilyAstExprAccess, property_init, NEW(Vec)));
 
                 break;
             default:
@@ -1673,7 +1690,7 @@ parse_hook_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
 }
 
 LilyAstExpr *
-parse_object_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
+parse_at_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
 {
     // <access>@Object@Object2
     Location location;
@@ -1684,36 +1701,35 @@ parse_object_access__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *access)
         location = clone__Location(&self->current->location);
     }
 
-    Vec *object = NEW(Vec); // Vec<LilyAstDataType*>*
+    Vec *objects = NEW(Vec); // Vec<LilyAstDataType*>*
 
     while (self->previous->kind == LILY_TOKEN_KIND_AT) {
         LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
 
         if (!dt) {
             FREE(LilyAstExpr, access);
-            FREE_BUFFER_ITEMS(object->buffer, object->len, LilyAstDataType);
-            FREE(Vec, object);
+            FREE_BUFFER_ITEMS(objects->buffer, objects->len, LilyAstDataType);
+            FREE(Vec, objects);
 
             return NULL;
         }
 
-        push__Vec(object, dt);
+        push__Vec(objects, dt);
         next_token__LilyParseBlock(self);
     }
 
     {
-        LilyAstDataType *last = last__Vec(object);
+        LilyAstDataType *last = last__Vec(objects);
 
         END_LOCATION(&location, last->location);
     }
 
-    return NEW_VARIANT(
-      LilyAstExpr,
-      access,
-      location,
-      NEW_VARIANT(LilyAstExprAccess,
-                  object,
-                  NEW(LilyAstExprAccessObject, access, object)));
+    return NEW_VARIANT(LilyAstExpr,
+                       access,
+                       location,
+                       NEW_VARIANT(LilyAstExprAccess,
+                                   at,
+                                   NEW(LilyAstExprAccessAt, access, objects)));
 }
 
 LilyAstExpr *
@@ -1727,6 +1743,9 @@ parse_access_expr__LilyParseBlock(LilyParseBlock *self)
     switch (kind) {
         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
             access_kind = LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH;
+            break;
+        case LILY_TOKEN_KIND_KEYWORD_OBJECT:
+            access_kind = LILY_AST_EXPR_ACCESS_KIND_OBJECT_PATH;
             break;
         case LILY_TOKEN_KIND_KEYWORD_SELF:
             access_kind = LILY_AST_EXPR_ACCESS_KIND_SELF_PATH;
@@ -1759,6 +1778,7 @@ parse_only_access_expr__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_IDENTIFIER_STRING:
             return parse_only_identifier_expr__LilyParseBlock(self);
         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
+        case LILY_TOKEN_KIND_KEYWORD_OBJECT:
         case LILY_TOKEN_KIND_KEYWORD_SELF:
         case LILY_TOKEN_KIND_KEYWORD_self:
         case LILY_TOKEN_KIND_AT:
@@ -2918,6 +2938,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
             }
         }
         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
+        case LILY_TOKEN_KIND_KEYWORD_OBJECT:
         case LILY_TOKEN_KIND_KEYWORD_self:
         case LILY_TOKEN_KIND_KEYWORD_SELF:
         case LILY_TOKEN_KIND_AT:
@@ -2934,7 +2955,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
 
             if (self->previous->kind == LILY_TOKEN_KIND_AT &&
                 self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL) {
-                return parse_object_access__LilyParseBlock(self, NULL);
+                return parse_at_access__LilyParseBlock(self, NULL);
             }
 
             if (self->current->kind == LILY_TOKEN_KIND_DOT) {
@@ -3272,6 +3293,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
 
                     switch (expr_block.current->kind) {
                         case LILY_TOKEN_KIND_KEYWORD_GLOBAL:
+                        case LILY_TOKEN_KIND_KEYWORD_OBJECT:
                         case LILY_TOKEN_KIND_KEYWORD_SELF:
                         case LILY_TOKEN_KIND_KEYWORD_self:
                             path =
@@ -3399,7 +3421,7 @@ parse_postfix_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr)
         case LILY_TOKEN_KIND_AT:
             switch (expr->kind) {
                 case LILY_AST_EXPR_KIND_ACCESS:
-                    expr = parse_object_access__LilyParseBlock(self, expr);
+                    expr = parse_at_access__LilyParseBlock(self, expr);
 
                     if (!expr) {
                         return NULL;

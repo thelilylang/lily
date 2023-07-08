@@ -64,6 +64,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyFunItem *,
     LilyCheckedBodyFunItem *self = lily_malloc(sizeof(LilyCheckedBodyFunItem));
 
     self->kind = LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR;
+	self->ref_count = 0;
     self->expr = expr;
 
     return self;
@@ -77,6 +78,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyFunItem *,
     LilyCheckedBodyFunItem *self = lily_malloc(sizeof(LilyCheckedBodyFunItem));
 
     self->kind = LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT;
+	self->ref_count = 0;
     self->stmt = stmt;
 
     return self;
@@ -113,6 +115,12 @@ VARIANT_DESTRUCTOR(LilyCheckedBodyFunItem, stmt, LilyCheckedBodyFunItem *self)
 
 DESTRUCTOR(LilyCheckedBodyFunItem, LilyCheckedBodyFunItem *self)
 {
+	if (self->ref_count > 0) {
+		--self->ref_count;
+
+		return;
+	}
+
     switch (self->kind) {
         case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
             FREE_VARIANT(LilyCheckedBodyFunItem, expr, self);

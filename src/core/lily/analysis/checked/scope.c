@@ -326,6 +326,25 @@ get_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
     return NULL;
 }
 
+const LilyCheckedScopeDecls *
+get_parent__LilyCheckedScope(const LilyCheckedScope *self)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+            return NULL;
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            switch (self->decls.decl->kind) {
+                case LILY_CHECKED_DECL_KIND_FUN:
+                case LILY_CHECKED_DECL_KIND_METHOD:
+                    return &self->decls;
+                default:
+                    return NULL;
+            }
+        case LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE:
+            return get_parent__LilyCheckedScope(self->parent->scope);
+    }
+}
+
 LilyCheckedScopeResponse
 search_module_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                  const String *name)

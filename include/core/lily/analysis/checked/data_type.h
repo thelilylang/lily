@@ -269,10 +269,43 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedDataTypeCustom *self);
 #endif
 
+typedef struct LilyCheckedDataTypeCondition
+{
+    Vec *params; // Vec<LilyCheckedDataType* (&)>*
+    Usize return_data_type_id;
+} LilyCheckedDataTypeCondition;
+
+/**
+ *
+ * @brief Construct LilyCheckedDataTypeCondition type.
+ */
+CONSTRUCTOR(LilyCheckedDataTypeCondition *,
+            LilyCheckedDataTypeCondition,
+            Vec *params,
+            Usize return_data_type_id);
+
+/**
+ *
+ * @brief Convert LilyCheckedDataTypeCondition in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeCondition,
+               const LilyCheckedDataTypeCondition *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedDataTypeCondition type.
+ */
+DESTRUCTOR(LilyCheckedDataTypeCondition, LilyCheckedDataTypeCondition *self);
+
 typedef struct LilyCheckedDataTypeConditionalCompilerChoice
 {
-    Vec *choices; // Vec<LilyCheckedDataType* (&)>*
-    Vec *conds;   // Vec<Vec<LilyCheckedDataType* (&)>*>* => params
+    Vec *conds;   // Vec<LilyCheckedDataTypeCondition*>* => params
+    Vec *choices; // Vec<LilyCheckedDataType* (&)>* => return data types
 } LilyCheckedDataTypeConditionalCompilerChoice;
 
 /**
@@ -284,9 +317,19 @@ inline CONSTRUCTOR(LilyCheckedDataTypeConditionalCompilerChoice,
                    Vec *choices,
                    Vec *conds)
 {
-    return (LilyCheckedDataTypeConditionalCompilerChoice){ .choices = choices,
-                                                           .conds = conds };
+    return (LilyCheckedDataTypeConditionalCompilerChoice){ .conds = conds,
+                                                           .choices = choices };
 }
+
+/**
+ *
+ * @brief Check if the choice is not duplicate then add it.
+ * @return Return index of the pushed choice.
+ */
+Usize
+add_choice__LilyCheckedDataTypeConditionalCompilerChoice(
+  const LilyCheckedDataTypeConditionalCompilerChoice *self,
+  LilyCheckedDataType *choice);
 
 /**
  *
@@ -340,6 +383,16 @@ struct LilyCheckedDataType
     enum LilyCheckedDataTypeKind kind;
     const Location *location; // const Location*? (&)
     Usize ref_count;
+    // NOTE: only using for compiler choice data type
+    // (`LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE` and
+    // `LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE`). By default,
+    // is set on true on all data types except for compiler choice defined data
+    // type. Moreover, this value indicates if the compiler can eleminate a type
+    // of the choice. This value is set on true when the function is finish to
+    // analysis. In addition, all data types from other functions or methods
+    // cannot be modified when they are called (type elimination is not possible
+    // after function or method analysis).
+    bool is_lock;
     union
     {
         LilyCheckedDataTypeArray array;
@@ -584,16 +637,15 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
  * @brief Return true if the both data types are equal otherwise return false.
  */
 bool
-eq__LilyCheckedDataType(const LilyCheckedDataType *self,
-                        const LilyCheckedDataType *other);
+eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other);
 
 /**
  *
  * @brief Return true if the both data types are equal otherwise return false.
  */
 bool
-eq_return_data_type__LilyCheckedDataType(const LilyCheckedDataType *self,
-                                         const LilyCheckedDataType *other);
+eq_return_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
+                                         LilyCheckedDataType *other);
 
 /**
  *
@@ -805,6 +857,34 @@ generate_generic_params_from_resolved_fields__LilyCheckedDataType(
   Vec *params,
   Vec *generic_params,
   Vec *fields);
+
+/**
+ *
+ * @brief Checks whether the given data type is guaranteed by this type.
+ * @param guarantee It cannot equal to `LILY_CHECKED_DATA_TYPE_KIND_CUSTOM` and
+ * `LILY_CHECKED_DATA_TYPE_KIND_LAMBDA` and
+ * `LILY_CHECKED_DATA_TYPE_KIND_TUPLE` and `LILY_CHECKED_DATA_TYPE_KIND_ARRAY`.
+ * @note If the data type corresponds to an unknown data type or a compiler
+ * generic, the data type is replaced by the given guaranteed type.
+ */
+bool
+is_guarantee__LilyCheckedDataType(LilyCheckedDataType *self,
+                                  enum LilyCheckedDataTypeKind guarantee);
+
+/**
+ *
+ * @brief Get choice from data type.
+ * @return Vec<LilyCheckedDataType*>*? (&)
+ */
+Vec *
+get_choices__LilyCheckedDataType(const LilyCheckedDataType *self);
+
+/**
+ *
+ * @brief Add a choice to a choices (without duplication).
+ */
+void
+add_choice__LilyCheckedDataType(Vec *choices, LilyCheckedDataType *choice);
 
 /**
  *

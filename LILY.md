@@ -88,6 +88,14 @@ fun mul(x, y) = x * y end
 fun div(x, y) = x / y end
 ```
 
+### `<dt>(...)` data type
+
+```lily
+fun add(x, y Int32(...2)) =
+    // ...
+end
+```
+
 ## Module
 
 ```lily
@@ -151,13 +159,40 @@ Create static property with `global val`.
 global val name Str
 ```
 
+#### close
+
+> The `close` keyword means that the class or trait cannot be added as an inheritance to another class.
+
+```lily
+// ...
+close object Cat inherit Animal in class =
+end
+```
+
 ### Object type
 
-> The `Object` type is used to talk about child definition. That's very useful on specific trait. NOTE: In general trait Object is not recommented to use.
+> The `Object` type is used to talk about any objects.
+
+```lily
+fun add(x Object) = return x; end
+```
+
+> The `Self.Object` type is used to talk about any objects implemented or inherited in the current object.
+
+```lily
+// ...
+object Cat inherit Animal in class =
+    fun get_animal(x Self.Object) = return x; end
+end
+```
 
 ### Self type
 
 > The `Self` type is used to talk about self definition.
+
+```lily
+Self.call()
+```
 
 ### Trait
 
@@ -388,6 +423,13 @@ import "@std";
 import "@std.io.*" as io;
 ```
 
+### import with right to overwrite imported items
+
+```lily
+// useful when writing a prelude
+import "@std.io.write"?;
+```
+
 ## Use
 
 ```lily
@@ -510,6 +552,12 @@ fun main =
     val x Int32 := 30;
     val y Int32 := 100;
 end
+```
+
+## Optional value
+
+```lily
+val x := ?30;
 ```
 
 ## Typecheck
@@ -915,6 +963,46 @@ end
 - All values are moved
 - All values are automatically drop
 
+## Comptime mode
+
+```
+comptime <stmt|expr>
+```
+
+## Generic
+
+> Normal generic param
+
+```
+T
+```
+
+> Constraint generic param
+
+```
+T: Abc
+```
+
+> List generic param
+
+```
+T(...)
+```
+
+> List generic param + constraint
+
+```
+T(...): Abc
+```
+
+> You can also add a minimum of given data type
+
+```
+T(1...2)
+T(...4)
+T(4...)
+```
+
 ## Operators
 
 ```
@@ -972,7 +1060,7 @@ xor
 ```lily
 @len("Hello")
 @len(b"Hello")
-@len([1, 2, 3]
+@len([1, 2, 3])
 @len({1, 2, 3})
 ```
 
@@ -980,6 +1068,26 @@ xor
 
 - Concurrent
 - Mark and sweep
+
+## C mode
+
+```lily
+@cc =
+    int add(int x, int y) {
+        return x + y;
+    }
+@end
+```
+
+## C++ mode
+
+```lily
+@cpp =
+    auto add(int y, int y) -> int {
+        return x + y;
+    }
+@end
+```
 
 ## Library organization
 
@@ -1051,6 +1159,7 @@ break
 cast
 catch
 class
+close
 comptime
 defer
 do

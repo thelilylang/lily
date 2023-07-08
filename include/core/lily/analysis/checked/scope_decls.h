@@ -27,6 +27,8 @@
 
 #include <base/vec.h>
 
+#include <core/lily/analysis/checked/data_type.h>
+
 typedef struct LilyCheckedDecl LilyCheckedDecl;
 typedef struct LilyCheckedDeclModule LilyCheckedDeclModule;
 
@@ -103,5 +105,13 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeDecls,
     return (LilyCheckedScopeDecls){ .kind = LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE,
                                     .scope = scope };
 }
+
+/**
+ *
+ * @brief Add unlock data type to a function, a method or a lambda function.
+ */
+void
+add_unlock_data_type__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self,
+                                            LilyCheckedDataType *unlock);
 
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_DECLS_H
