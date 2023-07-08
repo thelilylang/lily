@@ -49,6 +49,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyCheckedBodyFunItem
 {
     enum LilyCheckedBodyFunItemKind kind;
+	Usize ref_count;
     union
     {
         LilyCheckedStmt stmt;
@@ -73,6 +74,18 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyFunItem *,
                     LilyCheckedBodyFunItem,
                     stmt,
                     LilyCheckedStmt stmt);
+
+/**
+ *
+ * @brief Pass to ref a data type and increment the `ref_count`.
+ * @return LilyCheckedBodyFunItem* (&)
+ */
+inline LilyCheckedBodyFunItem *
+ref__LilyCheckedBodyFunItem(LilyCheckedBodyFunItem *self)
+{
+	++self->ref_count;
+	return self;
+}
 
 /**
  *
