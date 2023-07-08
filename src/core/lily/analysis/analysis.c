@@ -2149,6 +2149,7 @@ typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
     // TODO: add support to avoid duplication of data type in compiler choice
     // (not in conditional compiler choice)
     char *binary_kind_string = to_string__LilyCheckedExprBinaryKind(kind);
+    bool defined_data_type_is_null = defined_data_type ? 0 : 1;
 
     Vec *operators = collect_all_operators__LilyCheckedOperatorRegister(
       &self->package->operator_register, binary_kind_string, 3);
@@ -2164,7 +2165,9 @@ typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
     return NEW_VARIANT(LilyCheckedExpr,
                        binary,
                        &expr->location,
-                       clone__LilyCheckedDataType(defined_data_type),
+                       defined_data_type_is_null
+                         ? defined_data_type
+                         : clone__LilyCheckedDataType(defined_data_type),
                        expr,
                        NEW(LilyCheckedExprBinary, kind, left, right));
 }
