@@ -405,6 +405,15 @@ get_original_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self)
     return get__Vec(self->signatures, 0);
 }
 
+void
+lock_data_types__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
+{
+    for (Usize i = 0; i < self->unlock_data_type->len; ++i) {
+        CAST(LilyCheckedDataType *, get__Vec(self->unlock_data_type, i))
+          ->is_lock = true;
+    }
+}
+
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 {
     FREE(String, self->global_name);

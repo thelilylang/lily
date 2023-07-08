@@ -259,6 +259,13 @@ get_original_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self);
 
 /**
  *
+ * @brief Lock all data types contains in the `unlock_data_type` field.
+ */
+void
+lock_data_types__LilyCheckedDeclFun(const LilyCheckedDeclFun *self);
+
+/**
+ *
  * @brief Free LilyCheckedDeclFun type.
  */
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self);
