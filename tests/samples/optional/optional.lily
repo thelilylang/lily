@@ -1,5 +1,5 @@
 fun main =
-	val n ?Int32 := 230;
+	val n := 230;
 
 	match n do
 		n => ();
