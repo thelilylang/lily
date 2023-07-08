@@ -130,24 +130,30 @@ generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
   const String *name,
   LilyCheckedDataType *original);
 
-#define GUARANTEE_COMPILER_DEFINED_DATA_TYPE(min_choices, max_choices) \
-    for (Usize i = 0; i < max_choices->len;) {                         \
-        LilyCheckedDataType *data_type = get__Vec(max_choices, i);     \
-        bool is_match = false;                                         \
-                                                                       \
-        for (Usize j = 0; j < min_choices->len; ++j) {                 \
-            if (eq__LilyCheckedDataType(data_type,                     \
-                                        get__Vec(min_choices, j))) {   \
-                is_match = true;                                       \
-                break;                                                 \
-            }                                                          \
-        }                                                              \
-                                                                       \
-        if (!is_match) {                                               \
-            FREE(LilyCheckedDataType, remove__Vec(max_choices, i));    \
-        } else {                                                       \
-            ++i;                                                       \
-        }                                                              \
+static void
+remove_choice__LilyCheckedDataType(LilyCheckedDataType *self, Usize id);
+
+static inline bool
+can_update__LilyCheckedDataType(LilyCheckedDataType *self);
+
+#define GUARANTEE_COMPILER_DEFINED_DATA_TYPE(dt, min_choices, max_choices) \
+    for (Usize i = 0; i < max_choices->len;) {                             \
+        LilyCheckedDataType *data_type = get__Vec(max_choices, i);         \
+        bool is_match = false;                                             \
+                                                                           \
+        for (Usize j = 0; j < min_choices->len; ++j) {                     \
+            if (eq__LilyCheckedDataType(data_type,                         \
+                                        get__Vec(min_choices, j))) {       \
+                is_match = true;                                           \
+                break;                                                     \
+            }                                                              \
+        }                                                                  \
+                                                                           \
+        if (!is_match) {                                                   \
+            remove_choice__LilyCheckedDataType(dt, i);                     \
+        } else {                                                           \
+            ++i;                                                           \
+        }                                                                  \
     }
 
 #ifdef ENV_DEBUG
@@ -952,11 +958,11 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
                         return true;
                     } else if (!self->is_lock && !other->is_lock) {
                         if (self_choices->len >= other_choices->len) {
-                            GUARANTEE_COMPILER_DEFINED_DATA_TYPE(self_choices,
-                                                                 other_choices);
+                            GUARANTEE_COMPILER_DEFINED_DATA_TYPE(
+                              self, self_choices, other_choices);
                         } else if (self_choices->len < other_choices->len) {
-                            GUARANTEE_COMPILER_DEFINED_DATA_TYPE(other_choices,
-                                                                 self_choices);
+                            GUARANTEE_COMPILER_DEFINED_DATA_TYPE(
+                              other, other_choices, self_choices);
                         }
 
                         if (self_choices->len != other_choices->len) {
@@ -965,8 +971,8 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
 
                         return true;
                     } else if (!self->is_lock) {
-                        GUARANTEE_COMPILER_DEFINED_DATA_TYPE(other_choices,
-                                                             self_choices);
+                        GUARANTEE_COMPILER_DEFINED_DATA_TYPE(
+                          other, other_choices, self_choices);
 
                         if (self_choices->len == other_choices->len &&
                             other_choices->len != 0) {
@@ -976,8 +982,8 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
                         return false;
                     }
 
-                    GUARANTEE_COMPILER_DEFINED_DATA_TYPE(self_choices,
-                                                         other_choices);
+                    GUARANTEE_COMPILER_DEFINED_DATA_TYPE(
+                      self, self_choices, other_choices);
 
                     if (self_choices->len == other_choices->len &&
                         self_choices->len != 0) {
@@ -988,17 +994,31 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
                 }
                 default: {
                     Vec *self_choices = get_choices__LilyCheckedDataType(self);
-                    bool is_match = false;
 
-                    for (Usize i = 0; i < self_choices->len; ++i) {
+                    if (self->is_lock) {
+                        bool is_match = false;
+
+                        for (Usize i = 0; i < self_choices->len; ++i) {
+                            if (eq__LilyCheckedDataType(
+                                  get__Vec(self_choices, i), other)) {
+                                is_match = true;
+                                break;
+                            }
+                        }
+
+                        return is_match;
+                    }
+
+                    for (Usize i = 0; i < self_choices->len;) {
                         if (eq__LilyCheckedDataType(get__Vec(self_choices, i),
                                                     other)) {
-                            is_match = true;
-                            break;
+                            ++i;
+                        } else {
+                            remove_choice__LilyCheckedDataType(self, i);
                         }
                     }
 
-                    return is_match;
+                    return self_choices->len > 0 ? true : false;
                 }
             }
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
@@ -1465,10 +1485,9 @@ void
 update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
                                       LilyCheckedDataType *other)
 {
-    // ASSERT((self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
-    //         other->kind != LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) ||
-    //        (self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
-    //         other->kind != LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC));
+    if (!can_update__LilyCheckedDataType(self)) {
+        return;
+    }
 
     switch (other->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_ANY:
@@ -2351,6 +2370,46 @@ generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
         default:
             return NULL;
     }
+}
+
+void
+remove_choice__LilyCheckedDataType(LilyCheckedDataType *self, Usize id)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+            remove__Vec(self->conditional_compiler_choice.choices, id);
+
+            for (Usize i = 0;
+                 i < self->conditional_compiler_choice.conds->len;) {
+                LilyCheckedDataTypeCondition *cond =
+                  get__Vec(self->conditional_compiler_choice.conds, i);
+
+                if (cond->return_data_type_id == id) {
+                    FREE(
+                      LilyCheckedDataTypeCondition,
+                      remove__Vec(self->conditional_compiler_choice.conds, i));
+                } else if (cond->return_data_type_id > id) {
+                    --cond->return_data_type_id;
+                    ++i;
+                } else {
+                    ++i;
+                }
+            }
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
+            remove__Vec(self->compiler_choice, id);
+            break;
+        default:
+            UNREACHABLE("not expected in this context");
+    }
+}
+
+bool
+can_update__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    return self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||
+           self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC;
 }
 
 OrderedHashMap *
