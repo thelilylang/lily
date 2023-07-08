@@ -283,23 +283,28 @@ binary_update_return_data_type_according_operator_collection__LilyCheckedOperato
     if (is_compiler_defined__LilyCheckedDataType(left) ||
         is_compiler_defined__LilyCheckedDataType(right)) {
         Vec *choices = NEW(Vec); /* Vec<LilyCheckedDataType* (&)>* */
-        Vec *conds = NEW(Vec);   /* Vec<Vec<LilyCheckedDataType* (&)>*>* */
+        Vec *conds = NEW(Vec);   /* Vec<LilyCheckedDataTypeCondition*>* */
+        LilyCheckedDataTypeConditionalCompilerChoice cond_cc =
+          NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds);
 
         for (Usize i = 0; i < operators->len; ++i) {
             LilyCheckedOperator *operator= get__Vec(operators, i);
 
-            push__Vec(choices, last__Vec(operator->signature));
-            push__Vec(conds,
-                      init__Vec(2,
-                                get__Vec(operator->signature, 0),
-                                get__Vec(operator->signature, 1)));
+            push__Vec(
+              conds,
+              NEW(LilyCheckedDataTypeCondition,
+                  init__Vec(2,
+                            get__Vec(operator->signature, 0),
+                            get__Vec(operator->signature, 1)),
+                  add_choice__LilyCheckedDataTypeConditionalCompilerChoice(
+                    &cond_cc, last__Vec(operator->signature))));
         }
 
-        LilyCheckedDataType *update_return_data_type = NEW_VARIANT(
-          LilyCheckedDataType,
-          conditional_compiler_choice,
-          expr_location,
-          NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds));
+        LilyCheckedDataType *update_return_data_type =
+          NEW_VARIANT(LilyCheckedDataType,
+                      conditional_compiler_choice,
+                      expr_location,
+                      cond_cc);
 
         if (*return_data_type) {
             if (!eq__LilyCheckedDataType(*return_data_type,
@@ -307,12 +312,7 @@ binary_update_return_data_type_according_operator_collection__LilyCheckedOperato
                 FAILED("return data type doesn't match");
             }
 
-            (*return_data_type)->kind =
-              LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE;
-            (*return_data_type)->conditional_compiler_choice =
-              NEW(LilyCheckedDataTypeConditionalCompilerChoice, choices, conds);
-
-            lily_free(update_return_data_type);
+            FREE(LilyCheckedDataType, update_return_data_type);
         } else {
             *return_data_type = update_return_data_type;
         }
