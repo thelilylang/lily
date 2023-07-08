@@ -554,6 +554,12 @@ fun main =
 end
 ```
 
+## Optional value
+
+```lily
+val x := ?30;
+```
+
 ## Typecheck
 
 - Check class
