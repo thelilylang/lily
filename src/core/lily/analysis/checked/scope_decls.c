@@ -48,7 +48,7 @@ IMPL_FOR_DEBUG(to_string,
 #endif
 
 void
-add_unlock_data_type__LilyCheckedScopeDecls(LilyCheckedScopeDecls *self,
+add_unlock_data_type__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self,
                                             LilyCheckedDataType *unlock)
 {
     // TODO: add unlock data type to lambda and method

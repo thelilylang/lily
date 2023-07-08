@@ -111,7 +111,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeDecls,
  * @brief Add unlock data type to a function, a method or a lambda function.
  */
 void
-add_unlock_data_type__LilyCheckedScopeDecls(LilyCheckedScopeDecls *self,
+add_unlock_data_type__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self,
                                             LilyCheckedDataType *unlock);
 
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_DECLS_H
