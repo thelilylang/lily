@@ -555,6 +555,25 @@ end
 val x := ?30;
 ```
 
+## Block raising
+
+> With `!` unary operator you can block the raising of value, to transform your exception data type in result data type.
+
+```
+Int32 raise Error become Error!Int32
+```
+
+```lily
+match !run() do
+    @ok(_) => ();
+    @err(_) => ();
+end
+```
+
+## Result vs. Exception
+
+> The difference with the exception is that the result does not propagate the error to other functions. Also Result is better in a situation where memory consumption is a concern.
+
 ## Typecheck
 
 - Check class
@@ -1183,8 +1202,8 @@ next
 nil
 none
 not
-object
 Object
+object
 or
 package
 pub
@@ -1193,8 +1212,8 @@ record
 ref
 req
 return
-self
 Self
+self
 set
 test
 trace
