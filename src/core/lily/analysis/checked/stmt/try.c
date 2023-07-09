@@ -75,8 +75,10 @@ DESTRUCTOR(LilyCheckedStmtTry, const LilyCheckedStmtTry *self)
 
     FREE(LilyCheckedScope, self->try_scope);
 
-    if (self->catch_expr) {
-        FREE(LilyCheckedExpr, self->catch_expr);
+    if (self->catch_body) {
+        if (self->catch_expr) {
+            FREE(LilyCheckedExpr, self->catch_expr);
+        }
 
         FREE_BUFFER_ITEMS(self->catch_body->buffer,
                           self->catch_body->len,

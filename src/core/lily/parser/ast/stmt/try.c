@@ -57,8 +57,10 @@ DESTRUCTOR(LilyAstStmtTry, const LilyAstStmtTry *self)
       self->try_body->buffer, self->try_body->len, LilyAstBodyFunItem);
     FREE(Vec, self->try_body);
 
-    if (self->catch_expr) {
-        FREE(LilyAstExpr, self->catch_expr);
+    if (self->catch_body) {
+        if (self->catch_expr) {
+            FREE(LilyAstExpr, self->catch_expr);
+        }
 
         FREE_BUFFER_ITEMS(
           self->catch_body->buffer, self->catch_body->len, LilyAstBodyFunItem);
