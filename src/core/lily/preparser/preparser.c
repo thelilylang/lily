@@ -2595,11 +2595,11 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtTry,
       self->block->buffer, self->block->len, LilyPreparserFunBodyItem);
     FREE(Vec, self->block);
 
-    if (self->catch_expr) {
-        FREE(Vec, self->catch_expr);
-    }
-
     if (self->catch_block) {
+		if (self->catch_expr) {
+			FREE(Vec, self->catch_expr);
+		}
+
         FREE_BUFFER_ITEMS(self->catch_block->buffer,
                           self->catch_block->len,
                           LilyPreparserFunBodyItem);
@@ -8594,11 +8594,15 @@ preparse_try_block__LilyPreparser(LilyPreparser *self)
             next_token__LilyPreparser(self);
 
             // 2. Preparse catch expression
-            Vec *catch_expr = NEW(Vec); // Vec<LilyToken* (&)>*
+            Vec *catch_expr = NULL; // Vec<LilyToken* (&)>*?
 
-            PREPARSE_UNTIL(catch_expr,
+			if (self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO) {
+				catch_expr = NEW(Vec);
+
+				PREPARSE_UNTIL(catch_expr,
                            self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
                              self->current->kind != LILY_TOKEN_KIND_EOF);
+			}
 
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_KEYWORD_DO:
