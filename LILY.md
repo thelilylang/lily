@@ -356,16 +356,11 @@ pub error BadArgument:Str;
 pub fun err() = raise BadArgument("failed");
 
 fun main =
-    try err() do
+    try do
+        err()
+    catch err do
         ()
-    // or
-    // catch err do
-    //  ()
-    // end
-    catch err => do
-        BadArgument(s) => (),
-        _ => ()
-    end
+    end 
 end
 ```
 
