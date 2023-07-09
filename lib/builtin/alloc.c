@@ -47,7 +47,7 @@ __align__$Alloc(void *mem, Usize align)
     ASSERT(align % 2 == 0);
 
     Uptr addr = (Uptr)mem;
-    Uptr aligned_addr = (addr + align - 1) & ~(align - 1);
+    Uptr aligned_addr = (addr + (align - 1)) & ~(align - 1);
 
     return (void *)aligned_addr;
 }
