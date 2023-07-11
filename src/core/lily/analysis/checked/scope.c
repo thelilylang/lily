@@ -111,6 +111,14 @@ CONSTRUCTOR(LilyCheckedScope *,
     LilyCheckedScope *self = lily_malloc(sizeof(LilyCheckedScope));
 
     self->id = parent ? parent->scope->id + 1 : 0;
+    // TODO: add support for lambda
+    self->raises = decls.kind == LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE ||
+                       (decls.kind == LILY_CHECKED_SCOPE_DECLS_KIND_DECL
+                          ? decls.decl->kind == LILY_CHECKED_DECL_KIND_FUN ||
+                              decls.decl->kind == LILY_CHECKED_DECL_KIND_METHOD
+                          : false)
+                     ? NEW(HashMap)
+                     : NULL;
     self->modules = NEW(Vec);
     self->constants = NEW(Vec);
     self->enums = NEW(Vec);
@@ -1571,7 +1579,15 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
 {
     String *res =
-      format__String("LilyCheckedScope{{ id = {d}, modules =", self->id);
+      format__String("LilyCheckedScope{{ id = {d}, raises =", self->id);
+
+    if (self->raises) {
+        DEBUG_HASH_MAP_STRING(self->raises, res, LilyCheckedDataType);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", modules =");
 
     DEBUG_VEC_STR(self->modules, res, LilyCheckedScopeContainerModule);
 
@@ -1642,6 +1658,11 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
 
 DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
 {
+    if (self->raises) {
+        FREE_HASHMAP_VALUES(self->raises, LilyCheckedDataType);
+        FREE(HashMap, self->raises);
+    }
+
     FREE_BUFFER_ITEMS(self->modules->buffer,
                       self->modules->len,
                       LilyCheckedScopeContainerModule);

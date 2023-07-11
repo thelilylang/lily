@@ -44,6 +44,7 @@ typedef struct LilyCheckedBodyFunItem LilyCheckedBodyFunItem;
 typedef struct LilyCheckedScope
 {
     Usize id;
+    HashMap *raises;           // Vec<LilyCheckedDataType*>*?
     Vec *modules;              // Vec<LilyCheckedScopeContainerModule*>*
     Vec *constants;            // Vec<LilyCheckedScopeContainerConstant*>*
     Vec *enums;                // Vec<LilyCheckedScopeContainerEnum*>*
