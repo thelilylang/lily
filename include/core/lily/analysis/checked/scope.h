@@ -41,17 +41,56 @@ typedef struct LilyCheckedParent LilyCheckedParent;
 typedef struct LilyCheckedStmtVariable LilyCheckedStmtVariable;
 typedef struct LilyCheckedBodyFunItem LilyCheckedBodyFunItem;
 
+typedef struct LilyCheckedScopeCatch
+{
+    String *name;             // String* (&)
+    const Location *location; // const Location* (&)
+    HashMap *raises;          // HashMap<LilyCheckedDataType*>* (&)
+} LilyCheckedScopeCatch;
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeCatch type.
+ */
+CONSTRUCTOR(LilyCheckedScopeCatch *,
+            LilyCheckedScopeCatch,
+            String *name,
+            const Location *location,
+            HashMap *raises);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeCatch in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeCatch,
+               const LilyCheckedScopeCatch *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedScopeCatch type.
+ */
+inline DESTRUCTOR(LilyCheckedScopeCatch, LilyCheckedScopeCatch *self)
+{
+    lily_free(self);
+}
+
 typedef struct LilyCheckedScope
 {
     Usize id;
-    HashMap *raises;           // Vec<LilyCheckedDataType*>*?
-    Vec *modules;              // Vec<LilyCheckedScopeContainerModule*>*
-    Vec *constants;            // Vec<LilyCheckedScopeContainerConstant*>*
-    Vec *enums;                // Vec<LilyCheckedScopeContainerEnum*>*
-    Vec *records;              // Vec<LilyCheckedScopeContainerRecord*>*
-    Vec *aliases;              // Vec<LilyCheckedScopeContainerAlias*>*
-    Vec *errors;               // Vec<LilyCheckedScopeContainerError*>*
-    Vec *enums_object;         // Vec<LilyCheckedScopeContainerEnumObject*>*
+    HashMap *raises;              // HashMap<LilyCheckedDataType*>*?
+    LilyCheckedScopeCatch *catch; // LilyCheckedScopeCatch*?
+    Vec *modules;                 // Vec<LilyCheckedScopeContainerModule*>*
+    Vec *constants;               // Vec<LilyCheckedScopeContainerConstant*>*
+    Vec *enums;                   // Vec<LilyCheckedScopeContainerEnum*>*
+    Vec *records;                 // Vec<LilyCheckedScopeContainerRecord*>*
+    Vec *aliases;                 // Vec<LilyCheckedScopeContainerAlias*>*
+    Vec *errors;                  // Vec<LilyCheckedScopeContainerError*>*
+    Vec *enums_object;            // Vec<LilyCheckedScopeContainerEnumObject*>*
     Vec *records_object;       // Vec<LilyCheckedScopeContainerRecordObject*>*
     Vec *classes;              // Vec<LilyCheckedScopeContainerClass*>*
     Vec *traits;               // Vec<LilyCheckedScopeContainerTrait*>*
@@ -405,6 +444,16 @@ LilyCheckedBodyFunItem *
 get_variable_from_id__LilyCheckedScope(LilyCheckedScope *self,
                                        Usize id,
                                        String *name);
+
+/**
+ *
+ * @brief Set a catch name to the scope.
+ */
+void
+set_catch_name__LilyCheckedScope(LilyCheckedScope *self,
+                                 String *catch_name,
+                                 const Location *location,
+                                 HashMap *raises);
 
 /**
  *

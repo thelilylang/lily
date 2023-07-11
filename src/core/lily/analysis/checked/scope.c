@@ -103,6 +103,40 @@ search_trait_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                       \
     return 0;
 
+CONSTRUCTOR(LilyCheckedScopeCatch *,
+            LilyCheckedScopeCatch,
+            String *name,
+            const Location *location,
+            HashMap *raises)
+{
+    LilyCheckedScopeCatch *self = lily_malloc(sizeof(LilyCheckedScopeCatch));
+
+    self->name = name;
+    self->location = location;
+    self->raises = raises;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeCatch,
+               const LilyCheckedScopeCatch *self)
+{
+    String *res = format__String(
+      "LilyCheckedScopeCatch{{ name = {S}, location = {sa}, raises =",
+      self->name,
+      to_string__Debug__Location(self->location));
+
+    DEBUG_HASH_MAP_STRING(self->raises, res, LilyCheckedDataType);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedScope *,
             LilyCheckedScope,
             LilyCheckedParent *parent,
@@ -119,6 +153,7 @@ CONSTRUCTOR(LilyCheckedScope *,
                           : false)
                      ? NEW(HashMap)
                      : NULL;
+    self->catch = NULL;
     self->modules = NEW(Vec);
     self->constants = NEW(Vec);
     self->enums = NEW(Vec);
@@ -1386,6 +1421,15 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
         }
     }
 
+    if (self->catch && index_with_largest_id == -1) {
+        if (!strcmp(name->buffer, self->catch->name->buffer)) {
+            return NEW_VARIANT(LilyCheckedScopeResponse,
+                               catch_variable,
+                               self->catch->location,
+                               self->catch->raises);
+        }
+    }
+
     if (self->parent && index_with_largest_id == -1) {
         return search_identifier__LilyCheckedScope(self->parent->scope, name);
     }
@@ -1574,6 +1618,17 @@ get_current_object__LilyCheckedScope(LilyCheckedScope *self)
              : NULL;
 }
 
+void
+set_catch_name__LilyCheckedScope(LilyCheckedScope *self,
+                                 String *catch_name,
+                                 const Location *location,
+                                 HashMap *raises)
+{
+    ASSERT(!self->catch);
+
+    self->catch = NEW(LilyCheckedScopeCatch, catch_name, location, raises);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
@@ -1585,6 +1640,16 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
         DEBUG_HASH_MAP_STRING(self->raises, res, LilyCheckedDataType);
     } else {
         push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", catch = ");
+
+    if (self->catch) {
+        String *s = to_string__Debug__LilyCheckedScopeCatch(self->catch);
+
+        APPEND_AND_FREE(res, s);
+    } else {
+        push_str__String(res, "NULL");
     }
 
     push_str__String(res, ", modules =");
@@ -1661,6 +1726,10 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
     if (self->raises) {
         FREE_HASHMAP_VALUES(self->raises, LilyCheckedDataType);
         FREE(HashMap, self->raises);
+    }
+
+    if (self->catch) {
+        FREE(LilyCheckedScopeCatch, self->catch);
     }
 
     FREE_BUFFER_ITEMS(self->modules->buffer,
