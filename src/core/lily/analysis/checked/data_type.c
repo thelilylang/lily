@@ -1485,7 +1485,8 @@ void
 update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
                                       LilyCheckedDataType *other)
 {
-    if (!can_update__LilyCheckedDataType(self)) {
+    if (!can_update__LilyCheckedDataType(self) ||
+        other->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
         return;
     }
 
