@@ -31,6 +31,8 @@
 
 #include <core/lily/analysis/checked/data_type.h>
 #include <core/lily/analysis/checked/generic_param.h>
+#include <core/lily/analysis/checked/scope.h>
+#include <core/lily/analysis/checked/signature.h>
 #include <core/lily/shared/visibility.h>
 
 typedef struct LilyCheckedDeclError
@@ -38,9 +40,12 @@ typedef struct LilyCheckedDeclError
     String *name; // String* (&)
     String *global_name;
     Vec *generic_params;            // Vec<LilyCheckedGenericParam*>*?
+    Vec *signatures;                // Vec<LilyCheckedSignatureType*>*
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
+    LilyCheckedScope *scope;
     enum LilyVisibility visibility;
     bool is_checked;
+    bool is_recursive;
 } LilyCheckedDeclError;
 
 /**
@@ -52,15 +57,19 @@ inline CONSTRUCTOR(LilyCheckedDeclError,
                    String *name,
                    String *global_name,
                    Vec *generic_params,
+                   LilyCheckedScope *scope,
                    LilyCheckedDataType *data_type,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclError){ .name = name,
                                    .global_name = global_name,
                                    .generic_params = generic_params,
+                                   .signatures = NEW(Vec),
                                    .data_type = data_type,
+                                   .scope = scope,
                                    .visibility = visibility,
-                                   .is_checked = false };
+                                   .is_checked = false,
+                                   .is_recursive = false };
 }
 
 /**
