@@ -603,6 +603,7 @@ static inline void
 run_step2__LilyAnalysis(LilyAnalysis *self);
 
 static LilyCheckedHistory *history = NULL;
+static bool in_try = false;
 
 #define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop) \
     {                                                               \
@@ -4263,7 +4264,8 @@ check_call_expr__LilyAnalysis(LilyAnalysis *self,
                                     collect_raises__LilyCheckedDeclFun(
                                       &current_fun->decl->fun,
                                       scope,
-                                      fun->fun.raises);
+                                      fun->fun.raises,
+                                      in_try);
                                 }
                             }
 
@@ -6539,7 +6541,7 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
                 ASSERT(fun);
 
                 add_raise__LilyCheckedDeclFun(
-                  &fun->decl->fun, scope, raise_expr->data_type);
+                  &fun->decl->fun, scope, raise_expr->data_type, in_try);
             }
 
             return NEW_VARIANT(
@@ -6716,7 +6718,72 @@ check_try_stmt__LilyAnalysis(LilyAnalysis *self,
                              enum LilyCheckedSafetyMode safety_mode,
                              Vec *current_body)
 {
-    TODO("check try stmt");
+    Vec *try_body = NEW(Vec);
+    LilyCheckedScope *scope_try =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
+          NEW_VARIANT(LilyCheckedScopeDecls, scope, try_body));
+
+    in_try = true;
+
+    CHECK_FUN_BODY(stmt->try.try_body,
+                   scope_try,
+                   try_body,
+                   LILY_CHECKED_SAFETY_MODE_SAFE,
+                   in_loop);
+
+    in_try = false;
+
+    if (stmt->try.catch_body) {
+        Vec *catch_body = NEW(Vec);
+        LilyCheckedScope *scope_catch =
+          NEW(LilyCheckedScope,
+              NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
+              NEW_VARIANT(LilyCheckedScopeDecls, scope, catch_body));
+
+        if (stmt->try.catch_expr) {
+            switch (stmt->try.catch_expr->kind) {
+                case LILY_AST_EXPR_KIND_IDENTIFIER: {
+                    set_catch_name__LilyCheckedScope(
+                      scope_catch,
+                      stmt->try.catch_expr->identifier.name,
+                      &stmt->try.catch_expr->location,
+                      scope_try->raises);
+
+                    break;
+                }
+                default:
+                    FAILED("expected identifier");
+            }
+        }
+
+        CHECK_FUN_BODY(stmt->try.catch_body,
+                       scope_catch,
+                       catch_body,
+                       LILY_CHECKED_SAFETY_MODE_SAFE,
+                       in_loop);
+
+        return NEW_VARIANT(LilyCheckedBodyFunItem,
+                           stmt,
+                           NEW_VARIANT(LilyCheckedStmt,
+                                       try,
+                                       &stmt->location,
+                                       stmt,
+                                       NEW(LilyCheckedStmtTry,
+                                           try_body,
+                                           scope_try,
+                                           catch_body,
+                                           scope_catch)));
+    }
+
+    return NEW_VARIANT(
+      LilyCheckedBodyFunItem,
+      stmt,
+      NEW_VARIANT(LilyCheckedStmt,
+                  try,
+                  &stmt->location,
+                  stmt,
+                  NEW(LilyCheckedStmtTry, try_body, scope_try, NULL, NULL)));
 }
 
 LilyCheckedBodyFunItem *
