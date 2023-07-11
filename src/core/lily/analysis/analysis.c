@@ -6651,10 +6651,15 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                                                       expr->data_type);
             } else if (!eq__LilyCheckedDataType(fun_return_data_type,
                                                 expr->data_type)) {
+                // TODO: add help on this error
+                const Location *location = fun_return_data_type->location
+                                             ? fun_return_data_type->location
+                                             : expr->data_type->location;
+
                 ANALYSIS_EMIT_DIAGNOSTIC(
                   self,
                   simple_lily_error,
-                  fun_return_data_type->location,
+                  location,
                   NEW(
                     LilyError,
                     LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH_WITH_INFER_DATA_TYPE),
@@ -6662,7 +6667,12 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                   NULL,
                   from__String("or the specified return data type "
                                "passed to the function"));
+            } else {
+                update_data_type__LilyCheckedDataType(fun_return_data_type,
+                                                      expr->data_type);
             }
+        } else {
+            UNREACHABLE("return data type cannot be null");
         }
     } else {
         if (fun_return_data_type) {
