@@ -4261,7 +4261,9 @@ check_call_expr__LilyAnalysis(LilyAnalysis *self,
                                     add_fun_dep__LilyCheckedDeclFun(
                                       &current_fun->decl->fun, fun);
                                     collect_raises__LilyCheckedDeclFun(
-                                      &current_fun->decl->fun, fun->fun.raises);
+                                      &current_fun->decl->fun,
+                                      scope,
+                                      fun->fun.raises);
                                 }
                             }
 
@@ -6536,8 +6538,8 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
 
                 ASSERT(fun);
 
-                add_raise__LilyCheckedDeclFun(&fun->decl->fun,
-                                              raise_expr->data_type);
+                add_raise__LilyCheckedDeclFun(
+                  &fun->decl->fun, scope, raise_expr->data_type);
             }
 
             return NEW_VARIANT(
