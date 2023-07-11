@@ -7732,7 +7732,7 @@ check_enum_variants__LilyAnalysis(LilyAnalysis *self,
               check_data_type__LilyAnalysis(self,
                                             ast_variant->data_type,
                                             scope,
-                                            NULL,
+                                            enum_->type.deps,
                                             LILY_CHECKED_SAFETY_MODE_SAFE);
         }
 
@@ -7838,7 +7838,7 @@ check_error__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *error)
           check_data_type__LilyAnalysis(self,
                                         error->ast_decl->error.data_type,
                                         error->error.scope,
-                                        NULL,
+                                        error->error.deps,
                                         LILY_CHECKED_SAFETY_MODE_SAFE);
 
         // Check for recursive data type
