@@ -245,6 +245,12 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
     push_str__String(res, ", fun_deps =");
     DEBUG_VEC_STRING(self->fun_deps, res, LilyCheckedDecl);
 
+    push_str__String(res, ", unlock_data_type =");
+    DEBUG_VEC_STRING(self->unlock_data_type, res, LilyCheckedDataType);
+
+    push_str__String(res, ", raises =");
+    DEBUG_VEC_STRING(self->raises, res, LilyCheckedDataType);
+
     {
         char *s = format(", visibility = {s}, is_async = {b}, is_operator = "
                          "{b}, can_raise = {b}, can_inline = {b}, is_main = "
@@ -414,6 +420,31 @@ lock_data_types__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
     }
 }
 
+void
+collect_raises__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
+                                   const Vec *raises)
+{
+    for (Usize i = 0; i < raises->len; ++i) {
+        collect_raises__LilyCheckedDeclFun(self, get__Vec(raises, i));
+    }
+}
+
+void
+add_raise__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
+                              LilyCheckedDataType *raise)
+{
+    for (Usize i = 0; i < self->raises->len; ++i) {
+        LilyCheckedDataType *raises_item = get__Vec(self->raises, i);
+
+        if (!strcmp(raises_item->custom.global_name->buffer,
+                    raise->custom.global_name->buffer)) {
+            return;
+        }
+    }
+
+    push__Vec(self->raises, ref__LilyCheckedDataType(raise));
+}
+
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 {
     FREE(String, self->global_name);
@@ -454,4 +485,8 @@ DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 
     FREE(Vec, self->fun_deps);
     FREE(Vec, self->unlock_data_type);
+
+    FREE_BUFFER_ITEMS(
+      self->raises->buffer, self->raises->len, LilyCheckedDataType);
+    FREE(Vec, self->raises);
 }

@@ -127,6 +127,7 @@ typedef struct LilyCheckedDeclFun
     Vec *signatures;            // Vec<LilyCheckedSignatureFun*>*
     Vec *fun_deps;              // Vec<LilyCheckedDecl* (&)>*
     Vec *unlock_data_type;      // Vec<LilyCheckedDataType* (&)>*
+    Vec *raises;                // Vec<LilyCheckedDataType*>*
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
@@ -169,6 +170,7 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
                                  .signatures = NEW(Vec),
                                  .fun_deps = NEW(Vec),
                                  .unlock_data_type = NEW(Vec),
+                                 .raises = NEW(Vec),
                                  .visibility = visibility,
                                  .is_async = is_async,
                                  .is_operator = is_operator,
@@ -263,6 +265,24 @@ get_original_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self);
  */
 void
 lock_data_types__LilyCheckedDeclFun(const LilyCheckedDeclFun *self);
+
+/**
+ *
+ * @brief Collect raises (from fun call, method call or lambda call).
+ * @param raises const Vec<LilyCheckedDataType*>* (&)
+ */
+void
+collect_raises__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
+                                   const Vec *raises);
+
+/**
+ *
+ * @brief Add raise to the raises field.
+ * @param LilyCheckedDataType* (&)
+ */
+void
+add_raise__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
+                              LilyCheckedDataType *raise);
 
 /**
  *
