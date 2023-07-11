@@ -6751,6 +6751,10 @@ check_try_stmt__LilyAnalysis(LilyAnalysis *self,
                    LILY_CHECKED_SAFETY_MODE_SAFE,
                    in_loop);
 
+    if (scope_try->raises->len == 0) {
+        FAILED("no raises are expected in this scope");
+    }
+
     in_try = false;
 
     if (stmt->try.catch_body) {
