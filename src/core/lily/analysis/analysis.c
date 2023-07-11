@@ -4250,12 +4250,18 @@ check_call_expr__LilyAnalysis(LilyAnalysis *self,
                             }
 
                             {
+                                // TODO: later replace
+                                // `get_current_fun__LilyCheckedScope` by
+                                // `get_parent__LilyCheckedScope`, when method
+                                // or lambda are be available.
                                 LilyCheckedScopeDecls *current_fun =
                                   get_current_fun__LilyCheckedScope(scope);
 
                                 if (current_fun) {
                                     add_fun_dep__LilyCheckedDeclFun(
                                       &current_fun->decl->fun, fun);
+                                    collect_raises__LilyCheckedDeclFun(
+                                      &current_fun->decl->fun, fun->fun.raises);
                                 }
                             }
 
@@ -6491,6 +6497,10 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
                                           &stmt->raise.expr->location,
                                           stmt->raise.expr))));
         case LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR: {
+            if (!raise_response_expr.error->is_checked) {
+                TODO("check error declaration");
+            }
+
             // TODO: add a support for generics
             LilyCheckedExpr *raise_expr = NEW_VARIANT(
               LilyCheckedExpr,
@@ -6515,6 +6525,20 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
                   raise_response_expr.error->global_name,
                   (LilyCheckedAccessScope){
                     .id = raise_response_expr.scope_container.scope_id }));
+
+            // TODO: later replace
+            // `get_current_fun__LilyCheckedScope` by
+            // `get_parent__LilyCheckedScope`, when method
+            // or lambda are be available.
+            {
+                LilyCheckedScopeDecls *fun =
+                  get_current_fun__LilyCheckedScope(scope);
+
+                ASSERT(fun);
+
+                add_raise__LilyCheckedDeclFun(&fun->decl->fun,
+                                              raise_expr->data_type);
+            }
 
             return NEW_VARIANT(
               LilyCheckedBodyFunItem,
