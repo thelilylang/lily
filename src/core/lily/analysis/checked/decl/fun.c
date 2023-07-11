@@ -423,20 +423,22 @@ lock_data_types__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
 void
 collect_raises__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
                                    LilyCheckedScope *scope,
-                                   HashMap *raises)
+                                   HashMap *raises,
+                                   bool in_try)
 {
     HashMapIter iter = NEW(HashMapIter, raises);
     LilyCheckedDataType *current = NULL;
 
     while ((current = next__HashMapIter(&iter))) {
-        add_raise__LilyCheckedDeclFun(self, scope, current);
+        add_raise__LilyCheckedDeclFun(self, scope, current, in_try);
     }
 }
 
 void
 add_raise__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
                               LilyCheckedScope *scope,
-                              LilyCheckedDataType *raise)
+                              LilyCheckedDataType *raise,
+                              bool in_try)
 {
     ASSERT(raise->kind == LILY_CHECKED_DATA_TYPE_KIND_CUSTOM
              ? raise->custom.kind == LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ERROR
@@ -447,9 +449,12 @@ add_raise__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
       get__HashMap(self->raises, raise->custom.global_name->buffer);
 
     if (!match) {
-        insert__HashMap(self->raises,
-                        raise->custom.global_name->buffer,
-                        ref__LilyCheckedDataType(raise));
+        if (!in_try) {
+            insert__HashMap(self->raises,
+                            raise->custom.global_name->buffer,
+                            ref__LilyCheckedDataType(raise));
+        }
+
         insert__HashMap(scope->raises,
                         raise->custom.global_name->buffer,
                         ref__LilyCheckedDataType(raise));

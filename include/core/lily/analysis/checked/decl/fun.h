@@ -274,17 +274,21 @@ lock_data_types__LilyCheckedDeclFun(const LilyCheckedDeclFun *self);
 void
 collect_raises__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
                                    LilyCheckedScope *scope,
-                                   HashMap *raises);
+                                   HashMap *raises,
+                                   bool in_try);
 
 /**
  *
  * @brief Add raise to the raises field.
- * @param LilyCheckedDataType* (&)
+ * @param raise LilyCheckedDataType* (&)
+ * @param in_try If this is true, we don't insert `raise` in the function's
+ * `raises` field.
  */
 void
 add_raise__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
                               LilyCheckedScope *scope,
-                              LilyCheckedDataType *raise);
+                              LilyCheckedDataType *raise,
+                              bool in_try);
 
 /**
  *
