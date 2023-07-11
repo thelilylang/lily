@@ -573,7 +573,7 @@ search_error_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->constants->len; ++i) {
+            for (Usize i = 0; i < self->errors->len; ++i) {
                 LilyCheckedScopeContainerError *error =
                   get__Vec(self->errors, i);
 
@@ -1393,12 +1393,14 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
       search_variant__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse enum_ =
       search_enum_in_current_scope__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse error =
+      search_error_in_current_scope__LilyCheckedScope(self, name);
 
-    // [variable, fun, module, constant, field, variant, enum]
-#define RESPONSES_IDENTIFIER_LEN 7
+    // [variable, fun, module, constant, field, variant, enum, error]
+#define RESPONSES_IDENTIFIER_LEN 8
     LilyCheckedScopeResponse *responses[RESPONSES_IDENTIFIER_LEN] =
       (LilyCheckedScopeResponse *[RESPONSES_IDENTIFIER_LEN]){
-          &variable, &fun, &module, &constant, &field, &variant, &enum_
+          &variable, &fun, &module, &constant, &field, &variant, &enum_, &error
       };
     int index_with_largest_id = -1;
 
