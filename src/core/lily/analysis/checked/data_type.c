@@ -332,7 +332,7 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedDataTypeCondition,
                const LilyCheckedDataTypeCondition *self)
 {
-    Strign *res = format__String("LilyCheckedDataTypeCondition{{ params =");
+    String *res = format__String("LilyCheckedDataTypeCondition{{ params =");
 
     DEBUG_VEC_STRING(self->params, res, LilyCheckedDataType);
 
