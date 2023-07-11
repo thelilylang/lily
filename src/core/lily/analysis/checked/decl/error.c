@@ -45,9 +45,10 @@ IMPL_FOR_DEBUG(to_string,
     }
 
     push_str__String(res, ", signatures =");
-    DEBUG_VEC_STRING(self->signatures->buffer,
-                     self->signatures->len,
-                     LilyCheckedSignatureType);
+    DEBUG_VEC_STRING(self->signatures, res, LilyCheckedSignatureType);
+
+    push_str__String(res, ", deps =");
+    DEBUG_VEC_STRING(self->deps, res, LilyCheckedDataType);
 
     if (self->data_type) {
         char *s = format(", data_type = {Sr}, scope = {Sr}, visibility = {s}, "
@@ -89,6 +90,8 @@ DESTRUCTOR(LilyCheckedDeclError, const LilyCheckedDeclError *self)
                       self->signatures->len,
                       LilyCheckedSignatureType);
     FREE(Vec, self->signatures);
+
+    FREE(Vec, self->deps);
 
     if (self->data_type) {
         FREE(LilyCheckedDataType, self->data_type);

@@ -41,6 +41,7 @@ typedef struct LilyCheckedDeclError
     String *global_name;
     Vec *generic_params;            // Vec<LilyCheckedGenericParam*>*?
     Vec *signatures;                // Vec<LilyCheckedSignatureType*>*
+    Vec *deps;                      // Vec<LilyCheckedDataType* (&)>*
     LilyCheckedDataType *data_type; // LilyCheckedDataType*?
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
@@ -65,6 +66,7 @@ inline CONSTRUCTOR(LilyCheckedDeclError,
                                    .global_name = global_name,
                                    .generic_params = generic_params,
                                    .signatures = NEW(Vec),
+                                   .deps = NEW(Vec),
                                    .data_type = data_type,
                                    .scope = scope,
                                    .visibility = visibility,
