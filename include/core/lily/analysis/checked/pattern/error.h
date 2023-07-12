@@ -22,49 +22,49 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PARSER_AST_PATTERN_EXCEPTION_H
-#define LILY_CORE_LILY_PARSER_AST_PATTERN_EXCEPTION_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_ERROR_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_ERROR_H
 
 #include <base/string.h>
 #include <base/vec.h>
 
-typedef struct LilyAstExpr LilyAstExpr;
-typedef struct LilyAstPattern LilyAstPattern;
+typedef struct LilyCheckedExpr LilyCheckedExpr;
+typedef struct LilyCheckedPattern LilyCheckedPattern;
 
-typedef struct LilyAstPatternException
+typedef struct LilyCheckedPatternError
 {
-    LilyAstExpr *id;
-    LilyAstPattern *pattern; // LilyAstPattern*?
-} LilyAstPatternException;
+    LilyCheckedExpr *id;
+    LilyCheckedPattern *pattern;
+} LilyCheckedPatternError;
 
 /**
  *
- * @brief Construct LilyAstPatternException type.
+ * @brief Construct LilyCheckedPatternError type.
  */
-inline CONSTRUCTOR(LilyAstPatternException,
-                   LilyAstPatternException,
-                   LilyAstExpr *id,
-                   LilyAstPattern *pattern)
+inline CONSTRUCTOR(LilyCheckedPatternError,
+                   LilyCheckedPatternError,
+                   LilyCheckedExpr *id,
+                   LilyCheckedPattern *pattern)
 {
-    return (LilyAstPatternException){ .id = id, .pattern = pattern };
+    return (LilyCheckedPatternError){ .id = id, .pattern = pattern };
 }
 
 /**
  *
- * @brief Convert LilyAstPatternException in String.
+ * @brief Convert LilyCheckedPatternError in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
-               LilyAstPatternException,
-               const LilyAstPatternException *self);
+               LilyCheckedPatternError,
+               const LilyCheckedPatternError *self);
 #endif
 
 /**
  *
- * @brief Free LilyAstPatternException type.
+ * @brief Free LilyCheckedPatternError type.
  */
-DESTRUCTOR(LilyAstPatternException, const LilyAstPatternException *self);
+DESTRUCTOR(LilyCheckedPatternError, const LilyCheckedPatternError *self);
 
-#endif // LILY_CORE_LILY_PARSER_AST_PATTERN_EXCEPTION_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_EXCEPTION_H
