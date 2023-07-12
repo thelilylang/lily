@@ -40,8 +40,8 @@ static VARIANT_DESTRUCTOR(LilyAstPattern, array, LilyAstPattern *self);
 // Free LilyAstPattern type (LILY_AST_PATTERN_KIND_AS).
 static VARIANT_DESTRUCTOR(LilyAstPattern, as, LilyAstPattern *self);
 
-// Free LilyAstPattern type (LILY_AST_PATTERN_KIND_EXCEPTION).
-static VARIANT_DESTRUCTOR(LilyAstPattern, exception, LilyAstPattern *self);
+// Free LilyAstPattern type (LILY_AST_PATTERN_KIND_ERROR).
+static VARIANT_DESTRUCTOR(LilyAstPattern, error, LilyAstPattern *self);
 
 // Free LilyAstPattern type (LILY_AST_PATTERN_KIND_LIST).
 static VARIANT_DESTRUCTOR(LilyAstPattern, list, LilyAstPattern *self);
@@ -81,8 +81,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstPatternKind, enum LilyAstPatternKind self)
             return "LILY_AST_PATTERN_KIND_AS";
         case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
             return "LILY_AST_PATTERN_KIND_AUTO_COMPLETE";
-        case LILY_AST_PATTERN_KIND_EXCEPTION:
-            return "LILY_AST_PATTERN_KIND_EXCEPTION";
+        case LILY_AST_PATTERN_KIND_ERROR:
+            return "LILY_AST_PATTERN_KIND_ERROR";
         case LILY_AST_PATTERN_KIND_LIST:
             return "LILY_AST_PATTERN_KIND_LIST";
         case LILY_AST_PATTERN_KIND_LIST_HEAD:
@@ -141,15 +141,15 @@ VARIANT_CONSTRUCTOR(LilyAstPattern *,
 
 VARIANT_CONSTRUCTOR(LilyAstPattern *,
                     LilyAstPattern,
-                    exception,
+                    error,
                     Location location,
-                    LilyAstPatternException exception)
+                    LilyAstPatternError error)
 {
     LilyAstPattern *self = lily_malloc(sizeof(LilyAstPattern));
 
-    self->kind = LILY_AST_PATTERN_KIND_EXCEPTION;
+    self->kind = LILY_AST_PATTERN_KIND_ERROR;
     self->location = location;
-    self->exception = exception;
+    self->error = error;
 
     return self;
 }
@@ -333,10 +333,10 @@ IMPL_FOR_DEBUG(to_string, LilyAstPattern, const LilyAstPattern *self)
         case LILY_AST_PATTERN_KIND_WILDCARD:
             push_str__String(res, " }");
             break;
-        case LILY_AST_PATTERN_KIND_EXCEPTION: {
-            char *s = format(
-              ", exception = {Sr} }",
-              to_string__Debug__LilyAstPatternException(&self->exception));
+        case LILY_AST_PATTERN_KIND_ERROR: {
+            char *s =
+              format(", error = {Sr} }",
+                     to_string__Debug__LilyAstPatternError(&self->error));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -447,9 +447,9 @@ VARIANT_DESTRUCTOR(LilyAstPattern, as, LilyAstPattern *self)
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyAstPattern, exception, LilyAstPattern *self)
+VARIANT_DESTRUCTOR(LilyAstPattern, error, LilyAstPattern *self)
 {
-    FREE(LilyAstPatternException, &self->exception);
+    FREE(LilyAstPatternError, &self->error);
     lily_free(self);
 }
 
@@ -520,8 +520,8 @@ DESTRUCTOR(LilyAstPattern, LilyAstPattern *self)
         case LILY_AST_PATTERN_KIND_WILDCARD:
             lily_free(self);
             break;
-        case LILY_AST_PATTERN_KIND_EXCEPTION:
-            FREE_VARIANT(LilyAstPattern, exception, self);
+        case LILY_AST_PATTERN_KIND_ERROR:
+            FREE_VARIANT(LilyAstPattern, error, self);
             break;
         case LILY_AST_PATTERN_KIND_LIST:
             FREE_VARIANT(LilyAstPattern, list, self);

@@ -40,6 +40,7 @@ typedef struct LilyCheckedDecl LilyCheckedDecl;
 enum LilyCheckedExprCallKind
 {
     LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE,
+    LILY_CHECKED_EXPR_CALL_KIND_CATCH_VARIABLE,
     LILY_CHECKED_EXPR_CALL_KIND_CLASS,
     LILY_CHECKED_EXPR_CALL_KIND_CONSTANT,
     LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN,
@@ -579,10 +580,12 @@ typedef struct LilyCheckedExprCall
                                   // LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN or
                                   // LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS or
                                   // LILY_CHECKED_EXPR_CALL_KIND_STR_LEN or
-                                  // LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN
+                                  // LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN or
+                                  // LILY_CHECKED_EXPR_CALL_KIND_CATCH_VARIABLE
     String *global_name;          // String*? (&)
     union
     {
+        HashMap *catch_variable; // HashMap<LilyCheckedDataType*>* (&)
         LilyCheckedExpr *cstr_len;
         LilyCheckedDecl *enum_; // LilyCheckedDecl* (&)
         LilyCheckedExprCallError error;
@@ -612,6 +615,23 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
     return (LilyCheckedExprCall){ .kind = LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN,
                                   .global_name = NULL,
                                   .cstr_len = cstr_len };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedExprCall type
+ * (LILY_CHECKED_EXPR_CALL_KIND_CATCH_VARIABLE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedExprCall,
+                           LilyCheckedExprCall,
+                           catch_variable,
+                           String *global_name,
+                           HashMap *catch_variable)
+{
+    return (LilyCheckedExprCall){ .kind =
+                                    LILY_CHECKED_EXPR_CALL_KIND_CATCH_VARIABLE,
+                                  .global_name = global_name,
+                                  .catch_variable = catch_variable };
 }
 
 /**

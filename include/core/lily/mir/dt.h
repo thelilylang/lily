@@ -42,7 +42,7 @@ enum LilyMirDtKind
     LILY_MIR_DT_KIND_ANY,
     LILY_MIR_DT_KIND_ARRAY,
     LILY_MIR_DT_KIND_BYTES,
-    LILY_MIR_DT_KIND_EXCEPTION,
+    LILY_MIR_DT_KIND_RESULT,
     LILY_MIR_DT_KIND_I1,
     LILY_MIR_DT_KIND_I8,
     LILY_MIR_DT_KIND_I16,
@@ -94,29 +94,29 @@ inline DESTRUCTOR(LilyMirDtArray, const LilyMirDtArray *self)
     FREE(LilyMirDt, self->dt);
 }
 
-typedef struct LilyMirDtException
+typedef struct LilyMirDtResult
 {
     LilyMirDt *ok;
     LilyMirDt *err;
-} LilyMirDtException;
+} LilyMirDtResult;
 
 /**
  *
- * @brief Construct LilyMirDtException type.
+ * @brief Construct LilyMirDtResult type.
  */
-inline CONSTRUCTOR(LilyMirDtException,
-                   LilyMirDtException,
+inline CONSTRUCTOR(LilyMirDtResult,
+                   LilyMirDtResult,
                    LilyMirDt *ok,
                    LilyMirDt *err)
 {
-    return (LilyMirDtException){ .ok = ok, .err = err };
+    return (LilyMirDtResult){ .ok = ok, .err = err };
 }
 
 /**
  *
- * @brief Free LilyMirDtException type.
+ * @brief Free LilyMirDtResult type.
  */
-inline DESTRUCTOR(LilyMirDtException, const LilyMirDtException *self)
+inline DESTRUCTOR(LilyMirDtResult, const LilyMirDtResult *self)
 {
     FREE(LilyMirDt, self->ok);
     FREE(LilyMirDt, self->err);
@@ -129,10 +129,10 @@ typedef struct LilyMirDt
     {
         LilyMirDtArray array;
         Usize bytes;
-        LilyMirDtException exception;
         LilyMirDt *list;
         LilyMirDt *ptr;
         LilyMirDt *ref;
+        LilyMirDtResult result;
         Usize str;
         Vec *struct_;            // Vec<LilyMirDt*>*
         const char *struct_name; // const char* (&)
@@ -161,15 +161,6 @@ VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, bytes, Usize bytes);
 
 /**
  *
- * @brief Construct LilyMirDt type (LILY_MIR_DT_KIND_EXCEPTION).
- */
-VARIANT_CONSTRUCTOR(LilyMirDt *,
-                    LilyMirDt,
-                    exception,
-                    LilyMirDtException exception);
-
-/**
- *
  * @brief Construct LilyMirDt type (LILY_MIR_DT_KIND_LIST).
  */
 VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, list, LilyMirDt *list);
@@ -185,6 +176,12 @@ VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, ptr, LilyMirDt *ptr);
  * @brief Construct LilyMirDt type (LILY_MIR_DT_KIND_REF).
  */
 VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, ref, LilyMirDt *ref);
+
+/**
+ *
+ * @brief Construct LilyMirDt type (LILY_MIR_DT_KIND_RESULT).
+ */
+VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, result, LilyMirDtResult result);
 
 /**
  *

@@ -55,7 +55,7 @@ generate_data_type__LilyIrLlvm(const LilyIrLlvm *self,
                                       data_type->custom.global_name->buffer);
             // return search_type__LilyLlvmScope(scope,
             //                                   data_type->custom.global_name)->type;
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
             TODO("generate exception data type");
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
         case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:

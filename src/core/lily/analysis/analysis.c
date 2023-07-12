@@ -65,7 +65,7 @@ push_constant__LilyAnalysis(LilyAnalysis *self,
                             LilyAstDecl *constant,
                             LilyCheckedDeclModule *module);
 
-static inline void
+static void
 push_error__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *error,
                          LilyCheckedDeclModule *module);
@@ -586,6 +586,9 @@ static void
 check_enum__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *enum_);
 
 static void
+check_error__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *error);
+
+static void
 check_decls__LilyAnalysis(LilyAnalysis *self,
                           Vec *decls,
                           LilyCheckedScope *scope);
@@ -603,6 +606,7 @@ static inline void
 run_step2__LilyAnalysis(LilyAnalysis *self);
 
 static LilyCheckedHistory *history = NULL;
+static bool in_try = false;
 
 #define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop) \
     {                                                               \
@@ -668,19 +672,25 @@ push_error__LilyAnalysis(LilyAnalysis *self,
                          LilyAstDecl *error,
                          LilyCheckedDeclModule *module)
 {
-    push__Vec(
-      module->decls,
-      NEW_VARIANT(
-        LilyCheckedDecl,
-        error,
-        &error->location,
-        error,
-        NEW(LilyCheckedDeclError,
-            error->error.name,
-            format__String("{S}.{S}", module->global_name, error->error.name),
-            NULL,
-            NULL,
-            error->error.visibility)));
+    LilyCheckedDecl *checked_error = NEW_VARIANT(
+      LilyCheckedDecl,
+      error,
+      &error->location,
+      error,
+      NEW(LilyCheckedDeclError,
+          error->error.name,
+          format__String("{S}.{S}", module->global_name, error->error.name),
+          NULL,
+          NULL,
+          NULL,
+          error->error.visibility));
+
+    checked_error->error.scope =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
+          NEW_VARIANT(LilyCheckedScopeDecls, decl, checked_error));
+
+    push__Vec(module->decls, checked_error);
 }
 
 void
@@ -1498,13 +1508,50 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
 
             TODO("check custom data type");
         }
-        case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
+        case LILY_AST_DATA_TYPE_KIND_RESULT: {
+            Vec *errs = NULL; // Vec<LilyCheckedDataType*>*?
+
+            if (data_type->result.errs) {
+                errs = NEW(Vec);
+
+                for (Usize i = 0; i < data_type->result.errs->len; ++i) {
+                    LilyCheckedDataType *err = check_data_type__LilyAnalysis(
+                      self,
+                      get__Vec(data_type->result.errs, i),
+                      scope,
+                      deps,
+                      safety_mode);
+
+                    switch (err->kind) {
+                        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                            switch (err->custom.kind) {
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ERROR:
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                                    break;
+                                default:
+                                    FAILED("expected error or generic");
+                            }
+
+                            break;
+                        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+                            break;
+                        default:
+                            UNREACHABLE("this situation is impossible");
+                    }
+
+                    push__Vec(errs, err);
+                }
+            }
+
             return NEW_VARIANT(
               LilyCheckedDataType,
-              exception,
+              result,
               &data_type->location,
-              check_data_type__LilyAnalysis(
-                self, data_type->exception, scope, deps, safety_mode));
+              NEW(LilyCheckedDataTypeResult,
+                  check_data_type__LilyAnalysis(
+                    self, data_type->result.ok, scope, deps, safety_mode),
+                  errs));
+        }
         case LILY_AST_DATA_TYPE_KIND_FLOAT32:
             return NEW(LilyCheckedDataType,
                        LILY_CHECKED_DATA_TYPE_KIND_FLOAT32,
@@ -4250,12 +4297,21 @@ check_call_expr__LilyAnalysis(LilyAnalysis *self,
                             }
 
                             {
+                                // TODO: later replace
+                                // `get_current_fun__LilyCheckedScope` by
+                                // `get_parent__LilyCheckedScope`, when method
+                                // or lambda are be available.
                                 LilyCheckedScopeDecls *current_fun =
                                   get_current_fun__LilyCheckedScope(scope);
 
                                 if (current_fun) {
                                     add_fun_dep__LilyCheckedDeclFun(
                                       &current_fun->decl->fun, fun);
+                                    collect_raises__LilyCheckedDeclFun(
+                                      &current_fun->decl->fun,
+                                      scope,
+                                      fun->fun.raises,
+                                      in_try);
                                 }
                             }
 
@@ -6491,6 +6547,10 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
                                           &stmt->raise.expr->location,
                                           stmt->raise.expr))));
         case LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR: {
+            if (!raise_response_expr.error->is_checked) {
+                TODO("check error declaration");
+            }
+
             // TODO: add a support for generics
             LilyCheckedExpr *raise_expr = NEW_VARIANT(
               LilyCheckedExpr,
@@ -6515,6 +6575,20 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
                   raise_response_expr.error->global_name,
                   (LilyCheckedAccessScope){
                     .id = raise_response_expr.scope_container.scope_id }));
+
+            // TODO: later replace
+            // `get_current_fun__LilyCheckedScope` by
+            // `get_parent__LilyCheckedScope`, when method
+            // or lambda are be available.
+            {
+                LilyCheckedScopeDecls *fun =
+                  get_current_fun__LilyCheckedScope(scope);
+
+                ASSERT(fun);
+
+                add_raise__LilyCheckedDeclFun(
+                  &fun->decl->fun, scope, raise_expr->data_type, in_try);
+            }
 
             return NEW_VARIANT(
               LilyCheckedBodyFunItem,
@@ -6614,10 +6688,15 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                                                       expr->data_type);
             } else if (!eq__LilyCheckedDataType(fun_return_data_type,
                                                 expr->data_type)) {
+                // TODO: add help on this error
+                const Location *location = fun_return_data_type->location
+                                             ? fun_return_data_type->location
+                                             : expr->data_type->location;
+
                 ANALYSIS_EMIT_DIAGNOSTIC(
                   self,
                   simple_lily_error,
-                  fun_return_data_type->location,
+                  location,
                   NEW(
                     LilyError,
                     LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH_WITH_INFER_DATA_TYPE),
@@ -6625,7 +6704,12 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                   NULL,
                   from__String("or the specified return data type "
                                "passed to the function"));
+            } else {
+                update_data_type__LilyCheckedDataType(fun_return_data_type,
+                                                      expr->data_type);
             }
+        } else {
+            UNREACHABLE("return data type cannot be null");
         }
     } else {
         if (fun_return_data_type) {
@@ -6690,7 +6774,76 @@ check_try_stmt__LilyAnalysis(LilyAnalysis *self,
                              enum LilyCheckedSafetyMode safety_mode,
                              Vec *current_body)
 {
-    TODO("check try stmt");
+    Vec *try_body = NEW(Vec);
+    LilyCheckedScope *scope_try =
+      NEW(LilyCheckedScope,
+          NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
+          NEW_VARIANT(LilyCheckedScopeDecls, scope, try_body));
+
+    in_try = true;
+
+    CHECK_FUN_BODY(stmt->try.try_body,
+                   scope_try,
+                   try_body,
+                   LILY_CHECKED_SAFETY_MODE_SAFE,
+                   in_loop);
+
+    if (scope_try->raises->len == 0) {
+        FAILED("no raises are expected in this scope");
+    }
+
+    in_try = false;
+
+    if (stmt->try.catch_body) {
+        Vec *catch_body = NEW(Vec);
+        LilyCheckedScope *scope_catch =
+          NEW(LilyCheckedScope,
+              NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
+              NEW_VARIANT(LilyCheckedScopeDecls, scope, catch_body));
+
+        if (stmt->try.catch_expr) {
+            switch (stmt->try.catch_expr->kind) {
+                case LILY_AST_EXPR_KIND_IDENTIFIER: {
+                    set_catch_name__LilyCheckedScope(
+                      scope_catch,
+                      stmt->try.catch_expr->identifier.name,
+                      &stmt->try.catch_expr->location,
+                      scope_try->raises);
+
+                    break;
+                }
+                default:
+                    FAILED("expected identifier");
+            }
+        }
+
+        CHECK_FUN_BODY(stmt->try.catch_body,
+                       scope_catch,
+                       catch_body,
+                       LILY_CHECKED_SAFETY_MODE_SAFE,
+                       in_loop);
+
+        return NEW_VARIANT(LilyCheckedBodyFunItem,
+                           stmt,
+                           NEW_VARIANT(LilyCheckedStmt,
+                                       try,
+                                       &stmt->location,
+                                       stmt,
+                                       NEW(LilyCheckedStmtTry,
+                                           try_body,
+                                           scope_try,
+                                           catch_body,
+                                           scope_catch)));
+    }
+
+    return NEW_VARIANT(
+      LilyCheckedBodyFunItem,
+      stmt,
+      NEW_VARIANT(LilyCheckedStmt,
+                  try,
+                  &stmt->location,
+                  stmt,
+                  NEW(LilyCheckedStmtTry, try_body, scope_try, NULL, NULL)));
 }
 
 LilyCheckedBodyFunItem *
@@ -7399,6 +7552,39 @@ check_constant__LilyAnalysis(LilyAnalysis *self,
     constant->constant.is_checked = true;
 }
 
+#define ADD_NEW_TYPE_SIGNATURE(decl)                                          \
+    {                                                                         \
+        OrderedHashMap *generic_params = NULL;                                \
+                                                                              \
+        if (decl.generic_params) {                                            \
+            generic_params = NEW(OrderedHashMap);                             \
+                                                                              \
+            for (Usize i = 0; i < decl.generic_params->len; ++i) {            \
+                LilyCheckedGenericParam *generic_param =                      \
+                  get__Vec(decl.generic_params, i);                           \
+                                                                              \
+                insert__OrderedHashMap(                                       \
+                  generic_params,                                             \
+                  get_name__LilyCheckedGenericParam(generic_param)->buffer,   \
+                  NEW_VARIANT(LilyCheckedDataType,                            \
+                              custom,                                         \
+                              generic_param->location,                        \
+                              NEW(LilyCheckedDataTypeCustom,                  \
+                                  decl.scope->id,                             \
+                                  (LilyCheckedAccessScope){ .id = i },        \
+                                  generic_param->constraint.name,             \
+                                  generic_param->constraint.name,             \
+                                  NULL,                                       \
+                                  LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC, \
+                                  false)));                                   \
+            }                                                                 \
+        }                                                                     \
+                                                                              \
+        push__Vec(                                                            \
+          decl.signatures,                                                    \
+          NEW(LilyCheckedSignatureType, decl.global_name, generic_params));   \
+    }
+
 void
 check_alias__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *alias)
 {
@@ -7497,7 +7683,7 @@ check_for_recursive_data_type__LilyAnalysis(LilyAnalysis *self,
                     global_name->buffer)) {
             switch (data_type->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
-                case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+                case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
                 case LILY_CHECKED_DATA_TYPE_KIND_LIST:
                 case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
                 case LILY_CHECKED_DATA_TYPE_KIND_PTR:
@@ -7548,41 +7734,7 @@ check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record)
                                record->type.record.scope);
     }
 
-    // Add a new signature
-    {
-        OrderedHashMap *generic_params = NULL;
-
-        if (record->type.record.generic_params) {
-            generic_params = NEW(OrderedHashMap);
-
-            for (Usize i = 0; i < record->type.record.generic_params->len;
-                 ++i) {
-                LilyCheckedGenericParam *generic_param =
-                  get__Vec(record->type.record.generic_params, i);
-
-                insert__OrderedHashMap(
-                  generic_params,
-                  get_name__LilyCheckedGenericParam(generic_param)->buffer,
-                  NEW_VARIANT(LilyCheckedDataType,
-                              custom,
-                              generic_param->location,
-                              NEW(LilyCheckedDataTypeCustom,
-                                  record->type.record.scope->id,
-                                  (LilyCheckedAccessScope){ .id = i },
-                                  generic_param->constraint.name,
-                                  generic_param->constraint.name,
-                                  NULL,
-                                  LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
-                                  false)));
-            }
-        }
-
-        push__Vec(record->type.record.signatures,
-                  NEW(LilyCheckedSignatureType,
-                      record->type.record.global_name,
-                      generic_params));
-    }
-
+    ADD_NEW_TYPE_SIGNATURE(record->type.record);
     check_record_fields__LilyAnalysis(self,
                                       record->ast_decl->type.record.fields,
                                       record->type.record.scope,
@@ -7621,7 +7773,7 @@ check_enum_variants__LilyAnalysis(LilyAnalysis *self,
               check_data_type__LilyAnalysis(self,
                                             ast_variant->data_type,
                                             scope,
-                                            NULL,
+                                            enum_->type.deps,
                                             LILY_CHECKED_SAFETY_MODE_SAFE);
         }
 
@@ -7670,40 +7822,7 @@ check_enum__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *enum_)
                                enum_->type.enum_.scope);
     }
 
-    // Add a new signature
-    {
-        OrderedHashMap *generic_params = NULL;
-
-        if (enum_->type.enum_.generic_params) {
-            generic_params = NEW(OrderedHashMap);
-
-            for (Usize i = 0; i < enum_->type.enum_.generic_params->len; ++i) {
-                LilyCheckedGenericParam *generic_param =
-                  get__Vec(enum_->type.enum_.generic_params, i);
-
-                insert__OrderedHashMap(
-                  generic_params,
-                  get_name__LilyCheckedGenericParam(generic_param)->buffer,
-                  NEW_VARIANT(LilyCheckedDataType,
-                              custom,
-                              generic_param->location,
-                              NEW(LilyCheckedDataTypeCustom,
-                                  enum_->type.enum_.scope->id,
-                                  (LilyCheckedAccessScope){ .id = i },
-                                  generic_param->constraint.name,
-                                  generic_param->constraint.name,
-                                  NULL,
-                                  LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC,
-                                  false)));
-            }
-        }
-
-        push__Vec(enum_->type.enum_.signatures,
-                  NEW(LilyCheckedSignatureType,
-                      enum_->type.enum_.global_name,
-                      generic_params));
-    }
-
+    ADD_NEW_TYPE_SIGNATURE(enum_->type.enum_)
     check_enum_variants__LilyAnalysis(self,
                                       enum_->ast_decl->type.enum_.variants,
                                       enum_->type.enum_.scope,
@@ -7742,6 +7861,36 @@ check_enum__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *enum_)
 }
 
 void
+check_error__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *error)
+{
+    if (error->error.is_checked) {
+        return;
+    }
+
+    if (error->ast_decl->error.generic_params) {
+        error->error.generic_params = check_generic_params(
+          self, error->ast_decl->error.generic_params, error->error.scope);
+    }
+
+    ADD_NEW_TYPE_SIGNATURE(error->error);
+
+    if (error->ast_decl->error.data_type) {
+        error->error.data_type =
+          check_data_type__LilyAnalysis(self,
+                                        error->ast_decl->error.data_type,
+                                        error->error.scope,
+                                        error->error.deps,
+                                        LILY_CHECKED_SAFETY_MODE_SAFE);
+
+        // Check for recursive data type
+        error->error.is_recursive = check_for_recursive_data_type__LilyAnalysis(
+          self, error->error.data_type, error->error.global_name);
+    }
+
+    error->error.is_checked = true;
+}
+
+void
 check_decls__LilyAnalysis(LilyAnalysis *self,
                           Vec *decls,
                           LilyCheckedScope *scope)
@@ -7776,6 +7925,10 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
                     default:
                         UNREACHABLE("unknown variant");
                 }
+
+                break;
+            case LILY_CHECKED_DECL_KIND_ERROR:
+                check_error__LilyAnalysis(self, decl);
 
                 break;
             default:

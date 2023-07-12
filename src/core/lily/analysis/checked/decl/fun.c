@@ -245,6 +245,12 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
     push_str__String(res, ", fun_deps =");
     DEBUG_VEC_STRING(self->fun_deps, res, LilyCheckedDecl);
 
+    push_str__String(res, ", unlock_data_type =");
+    DEBUG_VEC_STRING(self->unlock_data_type, res, LilyCheckedDataType);
+
+    push_str__String(res, ", raises =");
+    DEBUG_HASH_MAP_STRING(self->raises, res, LilyCheckedDataType);
+
     {
         char *s = format(", visibility = {s}, is_async = {b}, is_operator = "
                          "{b}, can_raise = {b}, can_inline = {b}, is_main = "
@@ -414,6 +420,56 @@ lock_data_types__LilyCheckedDeclFun(const LilyCheckedDeclFun *self)
     }
 }
 
+void
+collect_raises__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
+                                   LilyCheckedScope *scope,
+                                   HashMap *raises,
+                                   bool in_try)
+{
+    HashMapIter iter = NEW(HashMapIter, raises);
+    LilyCheckedDataType *current = NULL;
+
+    while ((current = next__HashMapIter(&iter))) {
+        add_raise__LilyCheckedDeclFun(self, scope, current, in_try);
+    }
+}
+
+void
+add_raise__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
+                              LilyCheckedScope *scope,
+                              LilyCheckedDataType *raise,
+                              bool in_try)
+{
+    ASSERT(raise->kind == LILY_CHECKED_DATA_TYPE_KIND_CUSTOM
+             ? raise->custom.kind == LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ERROR
+             : false);
+    ASSERT(scope->raises);
+
+    LilyCheckedDataType *match =
+      get__HashMap(self->raises, raise->custom.global_name->buffer);
+
+    if (!match) {
+        if (!in_try) {
+            insert__HashMap(self->raises,
+                            raise->custom.global_name->buffer,
+                            ref__LilyCheckedDataType(raise));
+        }
+
+        insert__HashMap(scope->raises,
+                        raise->custom.global_name->buffer,
+                        ref__LilyCheckedDataType(raise));
+    } else {
+        LilyCheckedDataType *match =
+          get__HashMap(scope->raises, raise->custom.global_name->buffer);
+
+        if (!match) {
+            insert__HashMap(scope->raises,
+                            raise->custom.global_name->buffer,
+                            ref__LilyCheckedDataType(raise));
+        }
+    }
+}
+
 DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 {
     FREE(String, self->global_name);
@@ -454,4 +510,7 @@ DESTRUCTOR(LilyCheckedDeclFun, const LilyCheckedDeclFun *self)
 
     FREE(Vec, self->fun_deps);
     FREE(Vec, self->unlock_data_type);
+
+    FREE_HASHMAP_VALUES(self->raises, LilyCheckedDataType);
+    FREE(HashMap, self->raises);
 }

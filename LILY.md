@@ -356,16 +356,11 @@ pub error BadArgument:Str;
 pub fun err() = raise BadArgument("failed");
 
 fun main =
-    try err() do
+    try do
+        err()
+    catch err do
         ()
-    // or
-    // catch err do
-    //  ()
-    // end
-    catch err => do
-        BadArgument(s) => (),
-        _ => ()
-    end
+    end 
 end
 ```
 
@@ -559,6 +554,75 @@ end
 ```lily
 val x := ?30;
 ```
+
+## Block raising
+
+> With `!:` unary operator you can block the raising of value, to transform your exception data type in result data type.
+
+```
+Int32 raise Error become <Error>!Int32
+```
+
+```lily
+match !:run() do
+    @ok(_) => ();
+    @err(_) => ();
+end
+```
+
+## Result vs. Exception
+
+> The difference with the exception is that the result does not propagate the error to other functions. Also Result is better in a situation where memory consumption is a concern. Moreover, when you don't specify an error type for result, it implicitly passes the Error type, which accepts all error types, so the compiler will infer on result's error types.
+
+## Result operators
+
+### !?
+
+```
+!?<expr>
+```
+
+> The exception becomes a result data type and unpacks the values to return an optional type. If the value is Ok, it returns that value directly, otherwise it returns none. 
+
+example:
+
+```
+Ok(value) become value
+Err(value) become none
+```
+
+### !!
+
+```
+!!<expr>
+```
+
+> The exception becomes a result data type and unwrap the Ok value, and if an error is caught, it is returned directly.
+
+### !:
+
+```
+!:<expr>
+```
+
+> The exception becomes a result data type (or vice versa). So, if we have a function that returns an Int32 and raises an error, the result data type becomes a result (Error!Int32). 
+
+### ?
+
+```
+?<expr>
+```
+
+> The Ok value is unwrap and the Error value becomes none.
+
+
+### !
+
+```
+!<expr>
+```
+
+> The Ok value is unwrap and the error value is returned. 
 
 ## Typecheck
 
@@ -1188,8 +1252,8 @@ next
 nil
 none
 not
-object
 Object
+object
 or
 package
 pub
@@ -1198,8 +1262,8 @@ record
 ref
 req
 return
-self
 Self
+self
 set
 test
 trace

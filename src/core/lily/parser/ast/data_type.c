@@ -46,9 +46,6 @@ static VARIANT_DESTRUCTOR(LilyAstDataType, array, LilyAstDataType *self);
 // Free LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_CUSTOM).
 static VARIANT_DESTRUCTOR(LilyAstDataType, custom, LilyAstDataType *self);
 
-// Free LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_EXCEPTION).
-static VARIANT_DESTRUCTOR(LilyAstDataType, exception, LilyAstDataType *self);
-
 // Free LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_LAMBDA).
 static VARIANT_DESTRUCTOR(LilyAstDataType, lambda, LilyAstDataType *self);
 
@@ -66,6 +63,9 @@ static VARIANT_DESTRUCTOR(LilyAstDataType, ptr, LilyAstDataType *self);
 
 // Free LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_REF).
 static VARIANT_DESTRUCTOR(LilyAstDataType, ref, LilyAstDataType *self);
+
+// Free LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_RESULT).
+static VARIANT_DESTRUCTOR(LilyAstDataType, result, LilyAstDataType *self);
 
 // Free LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_TRACE).
 static VARIANT_DESTRUCTOR(LilyAstDataType, trace, LilyAstDataType *self);
@@ -213,6 +213,37 @@ DESTRUCTOR(LilyAstDataTypeCustom, const LilyAstDataTypeCustom *self)
     FREE_MOVE(self->name, FREE(String, self->name));
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDataTypeResult,
+               const LilyAstDataTypeResult *self)
+{
+    String *res = format__String("LilyAstDataTypeResult{{ ok = {Sr}, errs =",
+                                 to_string__Debug__LilyAstDataType(self->ok));
+
+    if (self->errs) {
+        DEBUG_VEC_STRING(self->errs, res, LilyAstDataType);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyAstDataTypeResult, const LilyAstDataTypeResult *self)
+{
+    FREE(LilyAstDataType, self->ok);
+
+    if (self->errs) {
+        FREE_BUFFER_ITEMS(self->errs->buffer, self->errs->len, LilyAstDataType);
+        FREE(Vec, self->errs);
+    }
+}
+
 CONSTRUCTOR(LilyAstDataType *,
             LilyAstDataType,
             enum LilyAstDataTypeKind kind,
@@ -252,21 +283,6 @@ VARIANT_CONSTRUCTOR(LilyAstDataType *,
     self->kind = LILY_AST_DATA_TYPE_KIND_CUSTOM;
     self->location = location;
     self->custom = custom;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyAstDataType *,
-                    LilyAstDataType,
-                    exception,
-                    Location location,
-                    LilyAstDataType *exception)
-{
-    LilyAstDataType *self = lily_malloc(sizeof(LilyAstDataType));
-
-    self->kind = LILY_AST_DATA_TYPE_KIND_EXCEPTION;
-    self->location = location;
-    self->exception = exception;
 
     return self;
 }
@@ -363,6 +379,21 @@ VARIANT_CONSTRUCTOR(LilyAstDataType *,
 
 VARIANT_CONSTRUCTOR(LilyAstDataType *,
                     LilyAstDataType,
+                    result,
+                    Location location,
+                    LilyAstDataTypeResult result)
+{
+    LilyAstDataType *self = lily_malloc(sizeof(LilyAstDataType));
+
+    self->kind = LILY_AST_DATA_TYPE_KIND_RESULT;
+    self->location = location;
+    self->result = result;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstDataType *,
+                    LilyAstDataType,
                     trace,
                     Location location,
                     LilyAstDataType *trace)
@@ -434,8 +465,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataTypeKind, enum LilyAstDataTypeKind self)
             return "LILY_AST_DATA_TYPE_KIND_CVOID";
         case LILY_AST_DATA_TYPE_KIND_CUSTOM:
             return "LILY_AST_DATA_TYPE_KIND_CUSTOM";
-        case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
-            return "LILY_AST_DATA_TYPE_KIND_EXCEPTION";
         case LILY_AST_DATA_TYPE_KIND_FLOAT32:
             return "LILY_AST_DATA_TYPE_KIND_FLOAT32";
         case LILY_AST_DATA_TYPE_KIND_FLOAT64:
@@ -507,13 +536,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataType, const LilyAstDataType *self)
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataTypeCustom(&self->custom));
-        case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
-            return format__String(
-              "LilyAstDataType{{ kind = {s}, location = {sa}, exception = {Sr} "
-              "}",
-              to_string__Debug__LilyAstDataTypeKind(self->kind),
-              to_string__Debug__Location(&self->location),
-              to_string__Debug__LilyAstDataType(self->exception));
         case LILY_AST_DATA_TYPE_KIND_LAMBDA:
             return format__String(
               "LilyAstDataType{{ kind = {s}, location = {sa}, lambda = {Sr} }",
@@ -554,6 +576,13 @@ IMPL_FOR_DEBUG(to_string, LilyAstDataType, const LilyAstDataType *self)
               to_string__Debug__LilyAstDataTypeKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDataType(self->ref));
+        case LILY_AST_DATA_TYPE_KIND_RESULT:
+            return format__String(
+              "LilyAstDataType{{ kind = {s}, location = {sa}, result = {Sr} "
+              "}",
+              to_string__Debug__LilyAstDataTypeKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDataTypeResult(&self->result));
         case LILY_AST_DATA_TYPE_KIND_TRACE:
             return format__String(
               "LilyAstDataType{{ kind = {s}, location = {sa}, trace = {Sr} "
@@ -682,9 +711,42 @@ to_string__LilyAstDataType(const LilyAstDataType *self)
 
             return res;
         }
-        case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
-            return format__String("!{Sr}",
-                                  to_string__LilyAstDataType(self->exception));
+        case LILY_AST_DATA_TYPE_KIND_RESULT: {
+            String *res = NEW(String);
+
+            if (self->result.errs) {
+                if (self->result.errs->len == 1) {
+                    String *s =
+                      to_string__LilyAstDataType(last__Vec(self->result.errs));
+
+                    APPEND_AND_FREE(res, s);
+                } else {
+                    push_str__String(res, "<");
+
+                    for (Usize i = 0; i < self->result.errs->len; ++i) {
+                        String *s = to_string__LilyAstDataType(
+                          get__Vec(self->result.errs, i));
+
+                        APPEND_AND_FREE(res, s);
+
+                        if (i + 1 != self->result.errs->len) {
+                            push_str__String(res, ", ");
+                        }
+                    }
+
+                    push_str__String(res, ">");
+                }
+            }
+
+            {
+                char *s =
+                  format("!{Sr}", to_string__LilyAstDataType(self->result.ok));
+
+                PUSH_STR_AND_FREE(res, s);
+            }
+
+            return res;
+        }
         case LILY_AST_DATA_TYPE_KIND_FLOAT32:
             return from__String("Float32");
         case LILY_AST_DATA_TYPE_KIND_FLOAT64:
@@ -801,12 +863,6 @@ VARIANT_DESTRUCTOR(LilyAstDataType, custom, LilyAstDataType *self)
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyAstDataType, exception, LilyAstDataType *self)
-{
-    FREE(LilyAstDataType, self->exception);
-    lily_free(self);
-}
-
 VARIANT_DESTRUCTOR(LilyAstDataType, lambda, LilyAstDataType *self)
 {
     FREE(LilyAstDataTypeLambda, &self->lambda);
@@ -843,6 +899,12 @@ VARIANT_DESTRUCTOR(LilyAstDataType, ref, LilyAstDataType *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyAstDataType, result, LilyAstDataType *self)
+{
+    FREE(LilyAstDataTypeResult, &self->result);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyAstDataType, trace, LilyAstDataType *self)
 {
     FREE(LilyAstDataType, self->trace);
@@ -865,9 +927,6 @@ DESTRUCTOR(LilyAstDataType, LilyAstDataType *self)
         case LILY_AST_DATA_TYPE_KIND_CUSTOM:
             FREE_VARIANT(LilyAstDataType, custom, self);
             break;
-        case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
-            FREE_VARIANT(LilyAstDataType, exception, self);
-            break;
         case LILY_AST_DATA_TYPE_KIND_LAMBDA:
             FREE_VARIANT(LilyAstDataType, lambda, self);
             break;
@@ -885,6 +944,9 @@ DESTRUCTOR(LilyAstDataType, LilyAstDataType *self)
             break;
         case LILY_AST_DATA_TYPE_KIND_REF:
             FREE_VARIANT(LilyAstDataType, ref, self);
+            break;
+        case LILY_AST_DATA_TYPE_KIND_RESULT:
+            FREE_VARIANT(LilyAstDataType, result, self);
             break;
         case LILY_AST_DATA_TYPE_KIND_TRACE:
             FREE_VARIANT(LilyAstDataType, trace, self);

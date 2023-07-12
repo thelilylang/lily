@@ -24,34 +24,31 @@
 
 #include <base/new.h>
 
-#include <core/lily/analysis/checked/expr.h>
-#include <core/lily/analysis/checked/pattern.h>
-#include <core/lily/analysis/checked/pattern/exception.h>
+#include <core/lily/parser/ast/expr.h>
+#include <core/lily/parser/ast/pattern.h>
+#include <core/lily/parser/ast/pattern/error.h>
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedPatternException,
-               const LilyCheckedPatternException *self)
+IMPL_FOR_DEBUG(to_string, LilyAstPatternError, const LilyAstPatternError *self)
 {
     if (self->pattern) {
         return format__String(
-          "LilyCheckedPatternException{{ name = {Sr}, pattern = {Sr} }",
-          to_string__Debug__LilyCheckedExpr(self->id),
-          to_string__Debug__LilyCheckedPattern(self->pattern));
+          "LilyAstPatternError{{ name = {Sr}, pattern = {Sr} }",
+          to_string__Debug__LilyAstExpr(self->id),
+          to_string__Debug__LilyAstPattern(self->pattern));
     }
 
-    return format__String(
-      "LilyCheckedPatternException{{ name = {Sr}, pattern = NULL }",
-      to_string__Debug__LilyCheckedExpr(self->id));
+    return format__String("LilyAstPatternError{{ name = {Sr}, pattern = NULL }",
+                          to_string__Debug__LilyAstExpr(self->id));
 }
 #endif
 
-DESTRUCTOR(LilyCheckedPatternException, const LilyCheckedPatternException *self)
+DESTRUCTOR(LilyAstPatternError, const LilyAstPatternError *self)
 {
-    FREE(LilyCheckedExpr, self->id);
+    FREE(LilyAstExpr, self->id);
 
     if (self->pattern) {
-        FREE(LilyCheckedPattern, self->pattern);
+        FREE(LilyAstPattern, self->pattern);
     }
 }

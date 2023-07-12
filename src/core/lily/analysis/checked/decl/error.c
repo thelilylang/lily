@@ -44,19 +44,29 @@ IMPL_FOR_DEBUG(to_string,
         push_str__String(res, " NULL");
     }
 
+    push_str__String(res, ", signatures =");
+    DEBUG_VEC_STRING(self->signatures, res, LilyCheckedSignatureType);
+
+    push_str__String(res, ", deps =");
+    DEBUG_VEC_STRING(self->deps, res, LilyCheckedDataType);
+
     if (self->data_type) {
-        char *s =
-          format(", data_type = {Sr}, visibility = {s}, is_checked = {b} }",
-                 to_string__Debug__LilyCheckedDataType(self->data_type),
-                 to_string__Debug__LilyVisibility(self->visibility),
-                 self->is_checked);
+        char *s = format(", data_type = {Sr}, scope = {Sr}, visibility = {s}, "
+                         "is_checked = {b}, is_recursive = {b} }",
+                         to_string__Debug__LilyCheckedDataType(self->data_type),
+                         to_string__Debug__LilyCheckedScope(self->scope),
+                         to_string__Debug__LilyVisibility(self->visibility),
+                         self->is_checked,
+                         self->is_recursive);
 
         PUSH_STR_AND_FREE(res, s);
     } else {
-        char *s =
-          format(", data_type = NULL, visibility = {s}, is_checked = {b} }",
-                 to_string__Debug__LilyVisibility(self->visibility),
-                 self->is_checked);
+        char *s = format(", data_type = NULL, scope = {Sr}, visibility = {s}, "
+                         "is_checked = {b}, is_recursive = {b} }",
+                         to_string__Debug__LilyCheckedScope(self->scope),
+                         to_string__Debug__LilyVisibility(self->visibility),
+                         self->is_checked,
+                         self->is_recursive);
 
         PUSH_STR_AND_FREE(res, s);
     }
@@ -76,7 +86,16 @@ DESTRUCTOR(LilyCheckedDeclError, const LilyCheckedDeclError *self)
         FREE(Vec, self->generic_params);
     }
 
+    FREE_BUFFER_ITEMS(self->signatures->buffer,
+                      self->signatures->len,
+                      LilyCheckedSignatureType);
+    FREE(Vec, self->signatures);
+
+    FREE(Vec, self->deps);
+
     if (self->data_type) {
         FREE(LilyCheckedDataType, self->data_type);
     }
+
+    FREE(LilyCheckedScope, self->scope);
 }

@@ -40,7 +40,7 @@ static VARIANT_DESTRUCTOR(LilyCheckedPattern, array, LilyCheckedPattern *self);
 // Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_AS).
 static VARIANT_DESTRUCTOR(LilyCheckedPattern, as, LilyCheckedPattern *self);
 
-// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_EXCEPTION).
+// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_ERROR).
 static VARIANT_DESTRUCTOR(LilyCheckedPattern,
                           exception,
                           LilyCheckedPattern *self);
@@ -95,8 +95,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_PATTERN_KIND_AS";
         case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
             return "LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE";
-        case LILY_CHECKED_PATTERN_KIND_EXCEPTION:
-            return "LILY_CHECKED_PATTERN_KIND_EXCEPTION";
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
+            return "LILY_CHECKED_PATTERN_KIND_ERROR";
         case LILY_CHECKED_PATTERN_KIND_LIST:
             return "LILY_CHECKED_PATTERN_KIND_LIST";
         case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
@@ -169,11 +169,11 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     const Location *location,
                     LilyCheckedDataType *data_type,
                     const LilyAstPattern *ast_pattern,
-                    LilyCheckedPatternException exception)
+                    LilyCheckedPatternError exception)
 {
     LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
 
-    self->kind = LILY_CHECKED_PATTERN_KIND_EXCEPTION;
+    self->kind = LILY_CHECKED_PATTERN_KIND_ERROR;
     self->location = location;
     self->data_type = data_type;
     self->ast_pattern = ast_pattern;
@@ -405,10 +405,10 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)
         case LILY_CHECKED_PATTERN_KIND_NONE:
             push_str__String(res, " }");
             break;
-        case LILY_CHECKED_PATTERN_KIND_EXCEPTION: {
+        case LILY_CHECKED_PATTERN_KIND_ERROR: {
             char *s = format(
               ", exception = {Sr} }",
-              to_string__Debug__LilyCheckedPatternException(&self->exception));
+              to_string__Debug__LilyCheckedPatternError(&self->exception));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -519,7 +519,7 @@ VARIANT_DESTRUCTOR(LilyCheckedPattern, as, LilyCheckedPattern *self)
 
 VARIANT_DESTRUCTOR(LilyCheckedPattern, exception, LilyCheckedPattern *self)
 {
-    FREE(LilyCheckedPatternException, &self->exception);
+    FREE(LilyCheckedPatternError, &self->exception);
     lily_free(self);
 }
 
@@ -598,7 +598,7 @@ DESTRUCTOR(LilyCheckedPattern, LilyCheckedPattern *self)
             FREE(LilyCheckedDataType, self->data_type);
             lily_free(self);
             break;
-        case LILY_CHECKED_PATTERN_KIND_EXCEPTION:
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
             FREE_VARIANT(LilyCheckedPattern, exception, self);
             break;
         case LILY_CHECKED_PATTERN_KIND_LIST:

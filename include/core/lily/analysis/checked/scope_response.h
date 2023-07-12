@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_RESPONSE_H
 #define LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_RESPONSE_H
 
+#include <base/hash_map.h>
 #include <base/new.h>
 
 #include <core/shared/location.h>
@@ -59,6 +60,7 @@ enum LilyCheckedScopeResponseKind
 {
     LILY_CHECKED_SCOPE_RESPONSE_KIND_MODULE,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_CONSTANT,
+    LILY_CHECKED_SCOPE_RESPONSE_KIND_CATCH_VARIABLE,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT_OBJECT,
@@ -88,16 +90,18 @@ typedef struct LilyCheckedScopeResponse
     const Location *location; // const Location*? (&)
     LilyCheckedScopeContainer
       scope_container; // NOTE: scope_container is undef when kind is equal to
-                       // LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND
+                       // LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND or
+                       // LILY_CHECKED_SCOPE_RESPONSE_KIND_CATCH
     // NOTE: NULL when it's a function and is not an object or a type or an
     // error declaration.
     LilyCheckedDecl *decl; // LilyCheckedDecl*? (&)
     union
     {
-        LilyCheckedDeclModule *module;           // LilyCheckedDeclModule* (&)
-        LilyCheckedDeclConstant *constant;       // LilyCheckedDeclConstant* (&)
-        LilyCheckedDeclEnum *enum_;              // LilyCheckedDeclEnum* (&)
-        LilyCheckedVariant *enum_variant;        // LilyCheckedVariant* (&)
+        HashMap *catch_variable;           // HashMap<LilyCheckedDataType*>* (&)
+        LilyCheckedDeclModule *module;     // LilyCheckedDeclModule* (&)
+        LilyCheckedDeclConstant *constant; // LilyCheckedDeclConstant* (&)
+        LilyCheckedDeclEnum *enum_;        // LilyCheckedDeclEnum* (&)
+        LilyCheckedVariant *enum_variant;  // LilyCheckedVariant* (&)
         LilyCheckedVariant *enum_variant_object; // LilyCheckedVariant* (&)
         LilyCheckedDeclRecord *record;           // LilyCheckedDeclRecord* (&)
         LilyCheckedField *record_field;          // LilyCheckedField* (&)
@@ -128,6 +132,24 @@ inline CONSTRUCTOR(LilyCheckedScopeResponse, LilyCheckedScopeResponse)
 {
     return (LilyCheckedScopeResponse){
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND, .location = NULL
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeResponse type
+ * (LILY_CHECKED_SCOPE_RESPONSE_KIND_CATCH).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
+                           LilyCheckedScopeResponse,
+                           catch_variable,
+                           const Location *location,
+                           HashMap *catch_variable)
+{
+    return (LilyCheckedScopeResponse){
+        .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_CATCH_VARIABLE,
+        .location = location,
+        .catch_variable = catch_variable
     };
 }
 

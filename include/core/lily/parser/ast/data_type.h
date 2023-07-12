@@ -53,7 +53,6 @@ enum LilyAstDataTypeKind
     LILY_AST_DATA_TYPE_KIND_CSTR,
     LILY_AST_DATA_TYPE_KIND_CVOID,
     LILY_AST_DATA_TYPE_KIND_CUSTOM,
-    LILY_AST_DATA_TYPE_KIND_EXCEPTION,
     LILY_AST_DATA_TYPE_KIND_FLOAT32,
     LILY_AST_DATA_TYPE_KIND_FLOAT64,
     LILY_AST_DATA_TYPE_KIND_INT16,
@@ -69,6 +68,7 @@ enum LilyAstDataTypeKind
     LILY_AST_DATA_TYPE_KIND_OPTIONAL,
     LILY_AST_DATA_TYPE_KIND_PTR,
     LILY_AST_DATA_TYPE_KIND_REF,
+    LILY_AST_DATA_TYPE_KIND_RESULT,
     LILY_AST_DATA_TYPE_KIND_SELF,
     LILY_AST_DATA_TYPE_KIND_STR,
     LILY_AST_DATA_TYPE_KIND_TRACE,
@@ -204,7 +204,7 @@ inline CONSTRUCTOR(LilyAstDataTypeCustom,
 
 /**
  *
- * @brief Convert LilyAstDataTypeCustom in string.
+ * @brief Convert LilyAstDataTypeCustom in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
@@ -214,6 +214,42 @@ IMPL_FOR_DEBUG(to_string,
                const LilyAstDataTypeCustom *self);
 #endif
 
+typedef struct LilyAstDataTypeResult
+{
+    LilyAstDataType *ok;
+    Vec *errs; // Vec<LilyAstDataType*>*?
+} LilyAstDataTypeResult;
+
+/**
+ *
+ * @brief Construct LilyAstDataTypeResult type.
+ */
+inline CONSTRUCTOR(LilyAstDataTypeResult,
+                   LilyAstDataTypeResult,
+                   LilyAstDataType *ok,
+                   Vec *errs)
+{
+    return (LilyAstDataTypeResult){ .ok = ok, .errs = errs };
+}
+
+/**
+ *
+ * @brief Convert LilyAstDataTypeResult in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstDataTypeResult,
+               const LilyAstDataTypeResult *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyAstDataTypeResult type.
+ */
+DESTRUCTOR(LilyAstDataTypeResult, const LilyAstDataTypeResult *self);
+
 struct LilyAstDataType
 {
     enum LilyAstDataTypeKind kind;
@@ -222,13 +258,13 @@ struct LilyAstDataType
     {
         LilyAstDataTypeArray array;
         LilyAstDataTypeCustom custom;
-        LilyAstDataType *exception;
         LilyAstDataTypeLambda lambda;
         LilyAstDataType *list;
         LilyAstDataType *mut;
         LilyAstDataType *optional;
         LilyAstDataType *ptr;
         LilyAstDataType *ref;
+        LilyAstDataTypeResult result;
         LilyAstDataType *trace;
         Vec *tuple; // Vec<LilyAstDataType*>*
     };
@@ -263,15 +299,6 @@ VARIANT_CONSTRUCTOR(LilyAstDataType *,
                     Location location,
                     LilyAstDataTypeCustom custom);
 
-/**
- *
- * @brief Construct LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_EXCEPTION).
- */
-VARIANT_CONSTRUCTOR(LilyAstDataType *,
-                    LilyAstDataType,
-                    exception,
-                    Location location,
-                    LilyAstDataType *exception);
 /**
  *
  * @brief Construct LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_LAMBDA).
@@ -331,6 +358,16 @@ VARIANT_CONSTRUCTOR(LilyAstDataType *,
                     ref,
                     Location location,
                     LilyAstDataType *ref);
+
+/**
+ *
+ * @brief Construct LilyAstDataType type (LILY_AST_DATA_TYPE_KIND_RESULT).
+ */
+VARIANT_CONSTRUCTOR(LilyAstDataType *,
+                    LilyAstDataType,
+                    result,
+                    Location location,
+                    LilyAstDataTypeResult result);
 
 /**
  *

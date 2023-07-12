@@ -127,6 +127,7 @@ typedef struct LilyCheckedDeclFun
     Vec *signatures;            // Vec<LilyCheckedSignatureFun*>*
     Vec *fun_deps;              // Vec<LilyCheckedDecl* (&)>*
     Vec *unlock_data_type;      // Vec<LilyCheckedDataType* (&)>*
+    HashMap *raises;            // HashMap<LilyCheckedDataType*>*
     enum LilyVisibility visibility;
     bool is_async;
     bool is_operator;
@@ -169,6 +170,7 @@ inline CONSTRUCTOR(LilyCheckedDeclFun,
                                  .signatures = NEW(Vec),
                                  .fun_deps = NEW(Vec),
                                  .unlock_data_type = NEW(Vec),
+                                 .raises = NEW(HashMap),
                                  .visibility = visibility,
                                  .is_async = is_async,
                                  .is_operator = is_operator,
@@ -263,6 +265,30 @@ get_original_signature__LilyCheckedDeclFun(LilyCheckedDeclFun *self);
  */
 void
 lock_data_types__LilyCheckedDeclFun(const LilyCheckedDeclFun *self);
+
+/**
+ *
+ * @brief Collect raises (from fun call, method call or lambda call).
+ * @param raises const HashMap<LilyCheckedDataType*>* (&)
+ */
+void
+collect_raises__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
+                                   LilyCheckedScope *scope,
+                                   HashMap *raises,
+                                   bool in_try);
+
+/**
+ *
+ * @brief Add raise to the raises field.
+ * @param raise LilyCheckedDataType* (&)
+ * @param in_try If this is true, we don't insert `raise` in the function's
+ * `raises` field.
+ */
+void
+add_raise__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
+                              LilyCheckedScope *scope,
+                              LilyCheckedDataType *raise,
+                              bool in_try);
 
 /**
  *

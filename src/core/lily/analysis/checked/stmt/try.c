@@ -41,12 +41,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtTry, const LilyCheckedStmtTry *self)
         APPEND_AND_FREE(res, s);
     }
 
-    if (self->catch_expr) {
-        String *s = to_string__Debug__LilyCheckedExpr(self->catch_expr);
-
-        push_str__String(res, ", catch_expr = ");
-        APPEND_AND_FREE(res, s);
-
+    if (self->catch_body) {
         push_str__String(res, ", catch_body =");
         DEBUG_VEC_STRING(self->catch_body, res, LilyCheckedBodyFunItem);
 
@@ -75,9 +70,7 @@ DESTRUCTOR(LilyCheckedStmtTry, const LilyCheckedStmtTry *self)
 
     FREE(LilyCheckedScope, self->try_scope);
 
-    if (self->catch_expr) {
-        FREE(LilyCheckedExpr, self->catch_expr);
-
+    if (self->catch_body) {
         FREE_BUFFER_ITEMS(self->catch_body->buffer,
                           self->catch_body->len,
                           LilyCheckedBodyFunItem);

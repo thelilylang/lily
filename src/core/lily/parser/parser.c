@@ -759,6 +759,7 @@ peek_token__LilyParseBlock(LilyParseBlock *self, Usize n)
         case LILY_TOKEN_KIND_L_BRACE:           \
         case LILY_TOKEN_KIND_L_HOOK:            \
         case LILY_TOKEN_KIND_L_PAREN:           \
+        case LILY_TOKEN_KIND_L_SHIFT:           \
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL: \
             return true;                        \
         default:                                \
@@ -795,7 +796,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
     // CDouble
     // CStr
     // CVoid
-    // !<dt>
+    // <<err|errs>>!<dt>
     // Float32
     // Float64
     // Int16
@@ -1240,6 +1241,49 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 
             break;
 
+        case LILY_TOKEN_KIND_L_SHIFT: {
+            Vec *errs = NEW(Vec);
+
+            while (self->current->kind != LILY_TOKEN_KIND_R_SHIFT &&
+                   self->current->kind != LILY_TOKEN_KIND_EOF) {
+                LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
+
+                if (dt) {
+                    switch (dt->kind) {
+                        case LILY_AST_DATA_TYPE_KIND_CUSTOM:
+                            push__Vec(errs, dt);
+                            break;
+                        default:
+                            FAILED("expected error data type");
+                    }
+                }
+            }
+
+            if (self->current->kind == LILY_TOKEN_KIND_EOF) {
+                FAILED("expected `>`");
+            } else {
+                next_token__LilyParseBlock(self); // skip `>`
+            }
+
+            if (self->current->kind == LILY_TOKEN_KIND_BANG) {
+                next_token__LilyParseBlock(self); // skip `!`
+            } else {
+                FAILED("expected `!`");
+            }
+
+            LilyAstDataType *ok = parse_data_type__LilyParseBlock(self);
+
+            END_LOCATION(&location, ok->location);
+
+            if (ok) {
+                return NEW_VARIANT(LilyAstDataType,
+                                   result,
+                                   location,
+                                   NEW(LilyAstDataTypeResult, ok, errs));
+            }
+
+            return NULL;
+        }
         case LILY_TOKEN_KIND_BANG:
         case LILY_TOKEN_KIND_INTERROGATION:
         case LILY_TOKEN_KIND_STAR:
@@ -1247,7 +1291,6 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_KEYWORD_TRACE:
         case LILY_TOKEN_KIND_KEYWORD_MUT: {
             enum LilyTokenKind kind = self->previous->kind;
-
             LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
 
             if (!dt) {
@@ -1258,8 +1301,10 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 
             switch (kind) {
                 case LILY_TOKEN_KIND_BANG:
-                    return NEW_VARIANT(
-                      LilyAstDataType, exception, location, dt);
+                    return NEW_VARIANT(LilyAstDataType,
+                                       result,
+                                       location,
+                                       NEW(LilyAstDataTypeResult, dt, NULL));
                 case LILY_TOKEN_KIND_INTERROGATION:
                     return NEW_VARIANT(LilyAstDataType, optional, location, dt);
                 case LILY_TOKEN_KIND_STAR:
@@ -4493,9 +4538,9 @@ parse_exception_pattern__LilyParseBlock(LilyParseBlock *self)
             next_token__LilyParseBlock(self);
 
             return NEW_VARIANT(LilyAstPattern,
-                               exception,
+                               error,
                                location,
-                               NEW(LilyAstPatternException, id, NULL));
+                               NEW(LilyAstPatternError, id, NULL));
         default: {
             String *token_s = to_string__LilyToken(self->current);
 
@@ -4527,10 +4572,8 @@ parse_exception_pattern__LilyParseBlock(LilyParseBlock *self)
 
     END_LOCATION(&location, pattern->location);
 
-    return NEW_VARIANT(LilyAstPattern,
-                       exception,
-                       location,
-                       NEW(LilyAstPatternException, id, pattern));
+    return NEW_VARIANT(
+      LilyAstPattern, error, location, NEW(LilyAstPatternError, id, pattern));
 }
 
 LilyAstPattern *

@@ -103,6 +103,40 @@ search_trait_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                       \
     return 0;
 
+CONSTRUCTOR(LilyCheckedScopeCatch *,
+            LilyCheckedScopeCatch,
+            String *name,
+            const Location *location,
+            HashMap *raises)
+{
+    LilyCheckedScopeCatch *self = lily_malloc(sizeof(LilyCheckedScopeCatch));
+
+    self->name = name;
+    self->location = location;
+    self->raises = raises;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeCatch,
+               const LilyCheckedScopeCatch *self)
+{
+    String *res = format__String(
+      "LilyCheckedScopeCatch{{ name = {S}, location = {sa}, raises =",
+      self->name,
+      to_string__Debug__Location(self->location));
+
+    DEBUG_HASH_MAP_STRING(self->raises, res, LilyCheckedDataType);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedScope *,
             LilyCheckedScope,
             LilyCheckedParent *parent,
@@ -111,6 +145,15 @@ CONSTRUCTOR(LilyCheckedScope *,
     LilyCheckedScope *self = lily_malloc(sizeof(LilyCheckedScope));
 
     self->id = parent ? parent->scope->id + 1 : 0;
+    // TODO: add support for lambda
+    self->raises = decls.kind == LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE ||
+                       (decls.kind == LILY_CHECKED_SCOPE_DECLS_KIND_DECL
+                          ? decls.decl->kind == LILY_CHECKED_DECL_KIND_FUN ||
+                              decls.decl->kind == LILY_CHECKED_DECL_KIND_METHOD
+                          : false)
+                     ? NEW(HashMap)
+                     : NULL;
+    self->catch = NULL;
     self->modules = NEW(Vec);
     self->constants = NEW(Vec);
     self->enums = NEW(Vec);
@@ -530,7 +573,7 @@ search_error_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
 {
     switch (self->decls.kind) {
         case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->constants->len; ++i) {
+            for (Usize i = 0; i < self->errors->len; ++i) {
                 LilyCheckedScopeContainerError *error =
                   get__Vec(self->errors, i);
 
@@ -1350,12 +1393,14 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
       search_variant__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse enum_ =
       search_enum_in_current_scope__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse error =
+      search_error_in_current_scope__LilyCheckedScope(self, name);
 
-    // [variable, fun, module, constant, field, variant, enum]
-#define RESPONSES_IDENTIFIER_LEN 7
+    // [variable, fun, module, constant, field, variant, enum, error]
+#define RESPONSES_IDENTIFIER_LEN 8
     LilyCheckedScopeResponse *responses[RESPONSES_IDENTIFIER_LEN] =
       (LilyCheckedScopeResponse *[RESPONSES_IDENTIFIER_LEN]){
-          &variable, &fun, &module, &constant, &field, &variant, &enum_
+          &variable, &fun, &module, &constant, &field, &variant, &enum_, &error
       };
     int index_with_largest_id = -1;
 
@@ -1375,6 +1420,15 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
                         index_with_largest_id = i;
                     }
                 }
+        }
+    }
+
+    if (self->catch && index_with_largest_id == -1) {
+        if (!strcmp(name->buffer, self->catch->name->buffer)) {
+            return NEW_VARIANT(LilyCheckedScopeResponse,
+                               catch_variable,
+                               self->catch->location,
+                               self->catch->raises);
         }
     }
 
@@ -1566,12 +1620,41 @@ get_current_object__LilyCheckedScope(LilyCheckedScope *self)
              : NULL;
 }
 
+void
+set_catch_name__LilyCheckedScope(LilyCheckedScope *self,
+                                 String *catch_name,
+                                 const Location *location,
+                                 HashMap *raises)
+{
+    ASSERT(!self->catch);
+
+    self->catch = NEW(LilyCheckedScopeCatch, catch_name, location, raises);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
 {
     String *res =
-      format__String("LilyCheckedScope{{ id = {d}, modules =", self->id);
+      format__String("LilyCheckedScope{{ id = {d}, raises =", self->id);
+
+    if (self->raises) {
+        DEBUG_HASH_MAP_STRING(self->raises, res, LilyCheckedDataType);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", catch = ");
+
+    if (self->catch) {
+        String *s = to_string__Debug__LilyCheckedScopeCatch(self->catch);
+
+        APPEND_AND_FREE(res, s);
+    } else {
+        push_str__String(res, "NULL");
+    }
+
+    push_str__String(res, ", modules =");
 
     DEBUG_VEC_STR(self->modules, res, LilyCheckedScopeContainerModule);
 
@@ -1642,6 +1725,15 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
 
 DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
 {
+    if (self->raises) {
+        FREE_HASHMAP_VALUES(self->raises, LilyCheckedDataType);
+        FREE(HashMap, self->raises);
+    }
+
+    if (self->catch) {
+        FREE(LilyCheckedScopeCatch, self->catch);
+    }
+
     FREE_BUFFER_ITEMS(self->modules->buffer,
                       self->modules->len,
                       LilyCheckedScopeContainerModule);
