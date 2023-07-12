@@ -574,48 +574,55 @@ end
 
 > The difference with the exception is that the result does not propagate the error to other functions. Also Result is better in a situation where memory consumption is a concern.
 
-### Result operators
+## Result operators
 
-#### !?
+### !?
 
 ```
 !?<expr>
 ```
 
-> The exception become a result data type and unwrap Ok value and if an error is catched, it's directly return.
+> The exception becomes a result data type and unpacks the values to return an optional type. If the value is Ok, it returns that value directly, otherwise it returns none. 
 
-#### !!
+example:
+
+```
+Ok(value) become value
+Err(value) become none
+```
+
+### !!
 
 ```
 !!<expr>
 ```
 
-> The exception become a result data type and unwrap Ok value and if an error is catched, it's directly return.
+> The exception becomes a result data type and unwrap the Ok value, and if an error is caught, it is returned directly.
 
-#### !:
+### !:
 
 ```
 !:<expr>
 ```
 
-> The exception become a result data type. So, if we have a function who return an Int32 and raises an Error, the result data type become a result (Error!Int32).
+> The exception becomes a result data type (or vice versa). So, if we have a function that returns an Int32 and raises an error, the result data type becomes a result (Error!Int32). 
 
-#### ?
+### ?
 
 ```
 ?<expr>
 ```
 
-> The Ok value become a Some(val) and the Error value become none.
+> The Ok value is unwrap and the Error value becomes none.
 
 
-#### !
+### !
 
 ```
 !<expr>
 ```
 
-> The Ok value is unwrap and the error value is return.
+> The Ok value is unwrap and the error value is returned. 
 
 ## Typecheck
 
