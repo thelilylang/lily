@@ -123,13 +123,43 @@ generate_dt__LilyMir(LilyMirModule *module, LilyCheckedDataType *data_type)
                                        struct_name,
                                        data_type->custom.global_name->buffer);
             }
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT: {
+            if (data_type->result->errs) {
+                if (data_type->result->errs->len > 1) {
+                    Vec *struct_ =
+                      init__Vec(1, NEW(LilyMirDt, LILY_MIR_DT_KIND_U8));
+
+                    for (Usize i = 0; i < data_type->result->errs->len; ++i) {
+                        push__Vec(
+                          struct_,
+                          generate_dt__LilyMir(
+                            module, get__Vec(data_type->result->errs, i)));
+                    }
+
+                    return NEW_VARIANT(
+                      LilyMirDt,
+                      result,
+                      NEW(LilyMirDtResult,
+                          generate_dt__LilyMir(module, data_type->result->ok),
+                          NEW_VARIANT(LilyMirDt, struct, struct_)));
+                }
+
+                return NEW_VARIANT(
+                  LilyMirDt,
+                  result,
+                  NEW(LilyMirDtResult,
+                      generate_dt__LilyMir(module, data_type->result->ok),
+                      generate_dt__LilyMir(
+                        module, last__Vec(data_type->result->errs))));
+            }
+
             return NEW_VARIANT(
               LilyMirDt,
-              exception,
-              NEW(LilyMirDtException,
-                  generate_dt__LilyMir(module, data_type->exception),
+              result,
+              NEW(LilyMirDtResult,
+                  generate_dt__LilyMir(module, data_type->result->ok),
                   NEW(LilyMirDt, LILY_MIR_DT_KIND_ANY)));
+        }
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
             return NEW(LilyMirDt, LILY_MIR_DT_KIND_F32);
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:

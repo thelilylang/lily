@@ -61,11 +61,6 @@ static VARIANT_DESTRUCTOR(LilyCheckedDataType,
                           custom,
                           LilyCheckedDataType *self);
 
-// Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION).
-static VARIANT_DESTRUCTOR(LilyCheckedDataType,
-                          exception,
-                          LilyCheckedDataType *self);
-
 // Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_LAMBDA).
 static VARIANT_DESTRUCTOR(LilyCheckedDataType,
                           lambda,
@@ -96,6 +91,11 @@ static VARIANT_DESTRUCTOR(LilyCheckedDataType, ref, LilyCheckedDataType *self);
 // Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_REF_MUT).
 static VARIANT_DESTRUCTOR(LilyCheckedDataType,
                           ref_mut,
+                          LilyCheckedDataType *self);
+
+// Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_RESULT).
+static VARIANT_DESTRUCTOR(LilyCheckedDataType,
+                          result,
                           LilyCheckedDataType *self);
 
 // Free LilyCheckedDataType type (LILY_CHECKED_DATA_TYPE_KIND_TRACE).
@@ -410,6 +410,61 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+CONSTRUCTOR(LilyCheckedDataTypeResult *,
+            LilyCheckedDataTypeResult,
+            LilyCheckedDataType *ok,
+            Vec *errs)
+{
+    LilyCheckedDataTypeResult *self =
+      lily_malloc(sizeof(LilyCheckedDataTypeResult));
+
+    self->ok = ok;
+    self->errs = errs;
+    self->ref_count = 0;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeResult,
+               const LilyCheckedDataTypeResult *self)
+{
+    String *res =
+      format__String("LilyCheckedDataTypeResult{{ ok = {Sr}, errs =",
+                     to_string__Debug__LilyCheckedDataType(self->ok));
+
+    if (self->errs) {
+        DEBUG_VEC_STRING(self->errs, res, LilyCheckedDataType);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyCheckedDataTypeResult, LilyCheckedDataTypeResult *self)
+{
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
+    FREE(LilyCheckedDataType, self->ok);
+
+    if (self->errs) {
+        FREE_BUFFER_ITEMS(
+          self->errs->buffer, self->errs->len, LilyCheckedDataType);
+        FREE(Vec, self->errs);
+    }
+
+    lily_free(self);
+}
+
 CONSTRUCTOR(LilyCheckedDataType *,
             LilyCheckedDataType,
             enum LilyCheckedDataTypeKind kind,
@@ -472,23 +527,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->ref_count = 0;
     self->is_lock = true;
     self->custom = custom;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
-                    LilyCheckedDataType,
-                    exception,
-                    const Location *location,
-                    LilyCheckedDataType *exception)
-{
-    LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
-
-    self->kind = LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION;
-    self->location = location;
-    self->ref_count = 0;
-    self->is_lock = true;
-    self->exception = exception;
 
     return self;
 }
@@ -625,6 +663,23 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
     self->ref_count = 0;
     self->is_lock = true;
     self->ref_mut = ref_mut;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    result,
+                    const Location *location,
+                    LilyCheckedDataTypeResult *result)
+{
+    LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
+
+    self->kind = LILY_CHECKED_DATA_TYPE_KIND_RESULT;
+    self->location = location;
+    self->ref_count = 0;
+    self->is_lock = true;
+    self->result = result;
 
     return self;
 }
@@ -839,11 +894,28 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
                 default:
                     return false;
             }
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
-            return self->kind == other->kind
-                     ? eq__LilyCheckedDataType(self->exception,
-                                               other->exception)
-                     : false;
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT: {
+            if (self->kind == other->kind) {
+                if (self->result->errs && other->result->errs) {
+                    if (self->result->errs->len != other->result->errs->len) {
+                        return false;
+                    }
+
+                    for (Usize i = 0; i < self->result->errs->len; ++i) {
+                        if (!eq__LilyCheckedDataType(
+                              get__Vec(self->result->errs, i),
+                              get__Vec(other->result->errs, i))) {
+                            return false;
+                        }
+                    }
+                }
+
+                return eq__LilyCheckedDataType(self->result->ok,
+                                               other->result->ok);
+            }
+
+            return false;
+        }
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
             if (self->lambda.params->len == other->lambda.params->len) {
                 for (Usize i = 0; i < self->lambda.params->len; ++i) {
@@ -1414,9 +1486,9 @@ contains_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
     switch (self->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             return true;
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
             return contains_direct_custom_data_type__LilyCheckedDataType(
-              self->exception);
+              self->result->ok);
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
             return contains_direct_custom_data_type__LilyCheckedDataType(
               self->mut);
@@ -1452,9 +1524,9 @@ get_direct_custom_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
     switch (self->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             return self;
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
             return get_direct_custom_data_type__LilyCheckedDataType(
-              self->exception);
+              self->result->ok);
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
             return get_direct_custom_data_type__LilyCheckedDataType(self->mut);
         case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
@@ -1593,6 +1665,10 @@ update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
             self->ref_mut = clone__LilyCheckedDataType(other->ref_mut);
+
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
+            self->result = ref__LilyCheckedDataTypeResult(self->result);
 
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
@@ -1836,6 +1912,22 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
 
             break;
         }
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT: {
+            char *s = format("{d}", self->kind);
+
+            PUSH_STR_AND_FREE(ser, s);
+
+            if (self->result->errs) {
+                for (Usize i = 0; i < self->result->errs->len; ++i) {
+                    serialize__LilyCheckedDataType(
+                      get__Vec(self->result->errs, i), ser);
+                }
+            }
+
+            serialize__LilyCheckedDataType(self->result->ok, ser);
+
+            break;
+        }
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE: {
             char *s = format("{d}", self->kind);
 
@@ -1984,16 +2076,6 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
                                                                                \
                         return clone__LilyCheckedDataType(self);               \
                 }                                                              \
-            case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION: {                      \
-                LilyCheckedDataType *exception =                               \
-                  fname(self->exception, generic_params);                      \
-                                                                               \
-                return exception ? NEW_VARIANT(LilyCheckedDataType,            \
-                                               exception,                      \
-                                               self->location,                 \
-                                               exception)                      \
-                                 : NULL;                                       \
-            }                                                                  \
             case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {                         \
                 Vec *params = NULL;                                            \
                 LilyCheckedDataType *return_data_type =                        \
@@ -2083,6 +2165,34 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
                                              ref_mut)                          \
                                : NULL;                                         \
             }                                                                  \
+            case LILY_CHECKED_DATA_TYPE_KIND_RESULT: {                         \
+                Vec *errs = NULL; /* Vec<LilyCheckedDataType*>*? */            \
+                                                                               \
+                if (self->result->errs) {                                      \
+                    errs = NEW(Vec);                                           \
+                                                                               \
+                    for (Usize i = 0; i < self->result->errs->len; ++i) {      \
+                        LilyCheckedDataType *err = fname(                      \
+                          get__Vec(self->result->errs, i), generic_params);    \
+                                                                               \
+                        if (!err) {                                            \
+                            return NULL;                                       \
+                        }                                                      \
+                                                                               \
+                        push__Vec(errs, err);                                  \
+                    }                                                          \
+                }                                                              \
+                                                                               \
+                LilyCheckedDataType *ok =                                      \
+                  fname(self->result->ok, generic_params);                     \
+                                                                               \
+                return ok ? NEW_VARIANT(                                       \
+                              LilyCheckedDataType,                             \
+                              result,                                          \
+                              self->location,                                  \
+                              NEW(LilyCheckedDataTypeResult, ok, errs))        \
+                          : NULL;                                              \
+            }                                                                  \
             case LILY_CHECKED_DATA_TYPE_KIND_TRACE: {                          \
                 LilyCheckedDataType *trace =                                   \
                   fname(self->trace, generic_params);                          \
@@ -2151,9 +2261,18 @@ contains_generic_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
                 default:
                     return false;
             }
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
+            if (self->result->errs) {
+                for (Usize i = 0; i < self->result->errs->len; ++i) {
+                    if (contains_generic_data_type__LilyCheckedDataType(
+                          get__Vec(self->result->errs, i))) {
+                        return true;
+                    }
+                }
+            }
+
             return contains_generic_data_type__LilyCheckedDataType(
-              self->exception);
+              self->result->ok);
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
             if (self->lambda.params) {
                 for (Usize i = 0; i < self->lambda.params->len; ++i) {
@@ -2203,7 +2322,7 @@ contains_generic_data_type__LilyCheckedDataType(LilyCheckedDataType *self)
 
             return false;
         default:
-            return clone__LilyCheckedDataType(self);
+            return false;
     }
 }
 
@@ -2240,14 +2359,6 @@ generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
                 default:
                     return NULL;
             }
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
-            if (contains_generic_data_type__LilyCheckedDataType(
-                  original->exception)) {
-                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
-                  self->exception, name, original->exception);
-            }
-
-            return NULL;
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
             if (original->lambda.params) {
                 ASSERT(self->lambda.params);
@@ -2331,6 +2442,13 @@ generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
                   original->ref_mut)) {
                 return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
                   self->ref_mut, name, original->ref_mut);
+            }
+
+            return NULL;
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
+            if (contains_generic_data_type__LilyCheckedDataType(original)) {
+                return generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
+                  self, name, original);
             }
 
             return NULL;
@@ -2540,9 +2658,12 @@ is_guarantee__LilyCheckedDataType(LilyCheckedDataType *self,
             LilyCheckedDataType *update = NULL;
 
             switch (guarantee) {
-                case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
-                    update = NEW_VARIANT(
-                      LilyCheckedDataType, exception, self->location, self);
+                case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
+                    update =
+                      NEW_VARIANT(LilyCheckedDataType,
+                                  result,
+                                  self->location,
+                                  NEW(LilyCheckedDataTypeResult, self, NULL));
                     break;
                 case LILY_CHECKED_DATA_TYPE_KIND_LIST:
                     update = NEW_VARIANT(
@@ -2665,8 +2786,6 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_DATA_TYPE_KIND_CVOID";
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             return "LILY_CHECKED_DATA_TYPE_KIND_CUSTOM";
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
-            return "LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION";
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
             return "LILY_CHECKED_DATA_TYPE_KIND_FLOAT32";
         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
@@ -2699,6 +2818,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_DATA_TYPE_KIND_REF";
         case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
             return "LILY_CHECKED_DATA_TYPE_KIND_REF_MUT";
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
+            return "LILY_CHECKED_DATA_TYPE_KIND_RESULT";
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
             return "LILY_CHECKED_DATA_TYPE_KIND_STR";
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
@@ -2776,15 +2897,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
 
             break;
         }
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION: {
-            char *s =
-              format(", exception = {Sr} }",
-                     to_string__Debug__LilyCheckedDataType(self->exception));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA: {
             char *s = format(
               ", lambda = {Sr} }",
@@ -2848,6 +2960,15 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
             char *s =
               format(", ref_mut = {Sr} }",
                      to_string__Debug__LilyCheckedDataType(self->ref_mut));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT: {
+            char *s =
+              format(", result = {Sr} }",
+                     to_string__Debug__LilyCheckedDataTypeResult(self->result));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -2947,12 +3068,6 @@ VARIANT_DESTRUCTOR(LilyCheckedDataType, custom, LilyCheckedDataType *self)
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyCheckedDataType, exception, LilyCheckedDataType *self)
-{
-    FREE(LilyCheckedDataType, self->exception);
-    lily_free(self);
-}
-
 VARIANT_DESTRUCTOR(LilyCheckedDataType, lambda, LilyCheckedDataType *self)
 {
     FREE(LilyCheckedDataTypeLambda, &self->lambda);
@@ -2998,6 +3113,12 @@ VARIANT_DESTRUCTOR(LilyCheckedDataType, ref, LilyCheckedDataType *self)
 VARIANT_DESTRUCTOR(LilyCheckedDataType, ref_mut, LilyCheckedDataType *self)
 {
     FREE(LilyCheckedDataType, self->ref_mut);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(LilyCheckedDataType, result, LilyCheckedDataType *self)
+{
+    FREE(LilyCheckedDataTypeResult, self->result);
     lily_free(self);
 }
 
@@ -3053,9 +3174,6 @@ DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self)
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             FREE_VARIANT(LilyCheckedDataType, custom, self);
             break;
-        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
-            FREE_VARIANT(LilyCheckedDataType, exception, self);
-            break;
         case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
             FREE_VARIANT(LilyCheckedDataType, lambda, self);
             break;
@@ -3079,6 +3197,9 @@ DESTRUCTOR(LilyCheckedDataType, LilyCheckedDataType *self)
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
             FREE_VARIANT(LilyCheckedDataType, ref_mut, self);
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
+            FREE_VARIANT(LilyCheckedDataType, result, self);
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             FREE_VARIANT(LilyCheckedDataType, trace, self);

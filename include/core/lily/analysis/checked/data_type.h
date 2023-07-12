@@ -59,7 +59,7 @@ enum LilyCheckedDataTypeKind
     LILY_CHECKED_DATA_TYPE_KIND_CSTR,
     LILY_CHECKED_DATA_TYPE_KIND_CVOID,
     LILY_CHECKED_DATA_TYPE_KIND_CUSTOM,
-    LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION,
+    LILY_CHECKED_DATA_TYPE_KIND_RESULT,
     LILY_CHECKED_DATA_TYPE_KIND_FLOAT32,
     LILY_CHECKED_DATA_TYPE_KIND_FLOAT64,
     LILY_CHECKED_DATA_TYPE_KIND_INT16,
@@ -378,6 +378,52 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedDataTypeCompilerGeneric *self);
 #endif
 
+typedef struct LilyCheckedDataTypeResult
+{
+    LilyCheckedDataType *ok;
+    Vec *errs; // Vec<LilyCheckedDataType*>*?
+    Usize ref_count;
+} LilyCheckedDataTypeResult;
+
+/**
+ *
+ * @brief Construct LilyCheckedDataTypeResult type.
+ */
+CONSTRUCTOR(LilyCheckedDataTypeResult *,
+            LilyCheckedDataTypeResult,
+            LilyCheckedDataType *ok,
+            Vec *errs);
+
+/**
+ *
+ * @brief Pass to ref a data type and increment the `ref_count`.
+ * @return LilyCheckedDataTypeResult* (&)
+ */
+inline LilyCheckedDataTypeResult *
+ref__LilyCheckedDataTypeResult(LilyCheckedDataTypeResult *self)
+{
+    ++self->ref_count;
+    return self;
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedDataTypeResult in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeResult,
+               const LilyCheckedDataTypeResult *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedDataTypeResult type.
+ */
+DESTRUCTOR(LilyCheckedDataTypeResult, LilyCheckedDataTypeResult *self);
+
 struct LilyCheckedDataType
 {
     enum LilyCheckedDataTypeKind kind;
@@ -398,7 +444,6 @@ struct LilyCheckedDataType
         LilyCheckedDataTypeArray array;
         Isize bytes; // size of Bytes
         LilyCheckedDataTypeCustom custom;
-        LilyCheckedDataType *exception;
         LilyCheckedDataTypeLambda lambda;
         LilyCheckedDataType *list;
         LilyCheckedDataType *mut;
@@ -407,6 +452,7 @@ struct LilyCheckedDataType
         LilyCheckedDataType *ptr_mut;
         LilyCheckedDataType *ref;
         LilyCheckedDataType *ref_mut;
+        LilyCheckedDataTypeResult *result;
         Isize str; // size of Str
         LilyCheckedDataType *trace;
         LilyCheckedDataType *trace_mut;
@@ -460,16 +506,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     const Location *location,
                     LilyCheckedDataTypeCustom custom);
 
-/**
- *
- * @brief Construct LilyCheckedDataType type
- * (LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION).
- */
-VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
-                    LilyCheckedDataType,
-                    exception,
-                    const Location *location,
-                    LilyCheckedDataType *exception);
 /**
  *
  * @brief Construct LilyCheckedDataType type
@@ -554,6 +590,17 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     ref_mut,
                     const Location *location,
                     LilyCheckedDataType *ref_mut);
+
+/**
+ *
+ * @brief Construct LilyCheckedDataType type
+ * (LILY_CHECKED_DATA_TYPE_KIND_RESULT).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
+                    LilyCheckedDataType,
+                    result,
+                    const Location *location,
+                    LilyCheckedDataTypeResult *result);
 
 /**
  *

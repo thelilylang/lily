@@ -36,13 +36,13 @@ static VARIANT_DESTRUCTOR(LilyMirDt, array, LilyMirDt *self);
 
 static inline VARIANT_DESTRUCTOR(LilyMirDt, bytes, LilyMirDt *self);
 
-static VARIANT_DESTRUCTOR(LilyMirDt, exception, LilyMirDt *self);
-
 static VARIANT_DESTRUCTOR(LilyMirDt, list, LilyMirDt *self);
 
 static VARIANT_DESTRUCTOR(LilyMirDt, ptr, LilyMirDt *self);
 
 static VARIANT_DESTRUCTOR(LilyMirDt, ref, LilyMirDt *self);
+
+static VARIANT_DESTRUCTOR(LilyMirDt, result, LilyMirDt *self);
 
 static inline VARIANT_DESTRUCTOR(LilyMirDt, str, LilyMirDt *self);
 
@@ -83,19 +83,6 @@ VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, bytes, Usize bytes)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(LilyMirDt *,
-                    LilyMirDt,
-                    exception,
-                    LilyMirDtException exception)
-{
-    LilyMirDt *self = lily_malloc(sizeof(LilyMirDt));
-
-    self->kind = LILY_MIR_DT_KIND_EXCEPTION;
-    self->exception = exception;
-
-    return self;
-}
-
 VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, list, LilyMirDt *list)
 {
     LilyMirDt *self = lily_malloc(sizeof(LilyMirDt));
@@ -122,6 +109,16 @@ VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, ref, LilyMirDt *ref)
 
     self->kind = LILY_MIR_DT_KIND_REF;
     self->ref = ref;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, result, LilyMirDtResult result)
+{
+    LilyMirDt *self = lily_malloc(sizeof(LilyMirDt));
+
+    self->kind = LILY_MIR_DT_KIND_RESULT;
+    self->result = result;
 
     return self;
 }
@@ -191,18 +188,18 @@ clone__LilyMirDt(LilyMirDt *self)
                                    clone__LilyMirDt(self->array.dt)));
         case LILY_MIR_DT_KIND_BYTES:
             return NEW_VARIANT(LilyMirDt, bytes, self->bytes);
-        case LILY_MIR_DT_KIND_EXCEPTION:
-            return NEW_VARIANT(LilyMirDt,
-                               exception,
-                               NEW(LilyMirDtException,
-                                   clone__LilyMirDt(self->exception.ok),
-                                   clone__LilyMirDt(self->exception.err)));
         case LILY_MIR_DT_KIND_LIST:
             return NEW_VARIANT(LilyMirDt, list, clone__LilyMirDt(self->list));
         case LILY_MIR_DT_KIND_PTR:
             return NEW_VARIANT(LilyMirDt, ptr, clone__LilyMirDt(self->list));
         case LILY_MIR_DT_KIND_REF:
             return NEW_VARIANT(LilyMirDt, ref, clone__LilyMirDt(self->list));
+        case LILY_MIR_DT_KIND_RESULT:
+            return NEW_VARIANT(LilyMirDt,
+                               result,
+                               NEW(LilyMirDtResult,
+                                   clone__LilyMirDt(self->result.ok),
+                                   clone__LilyMirDt(self->result.err)));
         case LILY_MIR_DT_KIND_STR:
             return NEW_VARIANT(LilyMirDt, str, self->str);
         case LILY_MIR_DT_KIND_STRUCT: {
@@ -245,13 +242,11 @@ eq__LilyMirDt(LilyMirDt *self, LilyMirDt *other)
                 default:
                     return false;
             }
-        case LILY_MIR_DT_KIND_EXCEPTION:
+        case LILY_MIR_DT_KIND_RESULT:
             switch (other->kind) {
-                case LILY_MIR_DT_KIND_EXCEPTION:
-                    return eq__LilyMirDt(self->exception.ok,
-                                         other->exception.ok) &&
-                           eq__LilyMirDt(self->exception.err,
-                                         other->exception.err);
+                case LILY_MIR_DT_KIND_RESULT:
+                    return eq__LilyMirDt(self->result.ok, other->result.ok) &&
+                           eq__LilyMirDt(self->result.err, other->result.err);
                 default:
                     return false;
             }
@@ -344,11 +339,11 @@ IMPL_FOR_DEBUG(to_string, LilyMirDt, const LilyMirDt *self)
                                   to_string__Debug__LilyMirDt(self->array.dt));
         case LILY_MIR_DT_KIND_BYTES:
             return format__String("\x1b[35mBytes\x1b[0m");
-        case LILY_MIR_DT_KIND_EXCEPTION:
+        case LILY_MIR_DT_KIND_RESULT:
             return format__String(
               "\x1b[35mstruct {{{Sr}, {Sr}}\x1b[0m",
-              to_string__Debug__LilyMirDt(self->exception.ok),
-              to_string__Debug__LilyMirDt(self->exception.err));
+              to_string__Debug__LilyMirDt(self->result.ok),
+              to_string__Debug__LilyMirDt(self->result.err));
         case LILY_MIR_DT_KIND_I1:
             return format__String("\x1b[35mi1\x1b[0m");
         case LILY_MIR_DT_KIND_I8:
@@ -447,9 +442,9 @@ VARIANT_DESTRUCTOR(LilyMirDt, bytes, LilyMirDt *self)
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyMirDt, exception, LilyMirDt *self)
+VARIANT_DESTRUCTOR(LilyMirDt, result, LilyMirDt *self)
 {
-    FREE(LilyMirDtException, &self->exception);
+    FREE(LilyMirDtResult, &self->result);
     lily_free(self);
 }
 
@@ -510,8 +505,8 @@ DESTRUCTOR(LilyMirDt, LilyMirDt *self)
         case LILY_MIR_DT_KIND_BYTES:
             FREE_VARIANT(LilyMirDt, bytes, self);
             break;
-        case LILY_MIR_DT_KIND_EXCEPTION:
-            FREE_VARIANT(LilyMirDt, exception, self);
+        case LILY_MIR_DT_KIND_RESULT:
+            FREE_VARIANT(LilyMirDt, result, self);
             break;
         case LILY_MIR_DT_KIND_LIST:
             FREE_VARIANT(LilyMirDt, list, self);
