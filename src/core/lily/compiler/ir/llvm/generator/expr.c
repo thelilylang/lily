@@ -501,7 +501,7 @@ generate_expr__LilyIrLlvm(const LilyIrLlvm *self,
                             TODO("implements equal for bytes");
                         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
                             TODO("implements equal for custom");
-                        case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+                        case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
                             TODO("implements equal for exception");
                         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
                         case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
