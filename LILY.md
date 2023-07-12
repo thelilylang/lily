@@ -557,14 +557,14 @@ val x := ?30;
 
 ## Block raising
 
-> With `!` unary operator you can block the raising of value, to transform your exception data type in result data type.
+> With `!:` unary operator you can block the raising of value, to transform your exception data type in result data type.
 
 ```
 Int32 raise Error become Error!Int32
 ```
 
 ```lily
-match !run() do
+match !:run() do
     @ok(_) => ();
     @err(_) => ();
 end
@@ -573,6 +573,49 @@ end
 ## Result vs. Exception
 
 > The difference with the exception is that the result does not propagate the error to other functions. Also Result is better in a situation where memory consumption is a concern.
+
+### Result operators
+
+#### !?
+
+```
+!?<expr>
+```
+
+> The exception become a result data type and unwrap Ok value and if an error is catched, it's directly return.
+
+#### !!
+
+```
+!!<expr>
+```
+
+> The exception become a result data type and unwrap Ok value and if an error is catched, it's directly return.
+
+#### !:
+
+```
+!:<expr>
+```
+
+> The exception become a result data type. So, if we have a function who return an Int32 and raises an Error, the result data type become a result (Error!Int32).
+
+#### ?
+
+```
+?<expr>
+```
+
+> The Ok value become a Some(val) and the Error value become none.
+
+
+#### !
+
+```
+!<expr>
+```
+
+> The Ok value is unwrap and the error value is return.
 
 ## Typecheck
 
