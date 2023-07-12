@@ -560,7 +560,7 @@ val x := ?30;
 > With `!:` unary operator you can block the raising of value, to transform your exception data type in result data type.
 
 ```
-Int32 raise Error become Error!Int32
+Int32 raise Error become <Error>!Int32
 ```
 
 ```lily
@@ -572,7 +572,7 @@ end
 
 ## Result vs. Exception
 
-> The difference with the exception is that the result does not propagate the error to other functions. Also Result is better in a situation where memory consumption is a concern.
+> The difference with the exception is that the result does not propagate the error to other functions. Also Result is better in a situation where memory consumption is a concern. Moreover, when you don't specify an error type for result, it implicitly passes the Error type, which accepts all error types, so the compiler will infer on result's error types.
 
 ## Result operators
 
