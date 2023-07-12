@@ -156,7 +156,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     src/core/lily/analysis/checked/expr/unary.c
     src/core/lily/analysis/checked/pattern/array.c
     src/core/lily/analysis/checked/pattern/as.c
-    src/core/lily/analysis/checked/pattern/exception.c
+    src/core/lily/analysis/checked/pattern/error.c
     src/core/lily/analysis/checked/pattern/list_head.c
     src/core/lily/analysis/checked/pattern/list_tail.c
     src/core/lily/analysis/checked/pattern/list.c
@@ -463,7 +463,7 @@ set(LILY_CORE_LILY_PARSER_SRC
     src/core/lily/parser/ast/expr/unary.c
     src/core/lily/parser/ast/pattern/array.c
     src/core/lily/parser/ast/pattern/as.c
-    src/core/lily/parser/ast/pattern/exception.c
+    src/core/lily/parser/ast/pattern/error.c
     src/core/lily/parser/ast/pattern/list.c
     src/core/lily/parser/ast/pattern/list_head.c
     src/core/lily/parser/ast/pattern/list_tail.c
