@@ -1508,13 +1508,50 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
 
             TODO("check custom data type");
         }
-        case LILY_AST_DATA_TYPE_KIND_EXCEPTION:
+        case LILY_AST_DATA_TYPE_KIND_RESULT: {
+            Vec *errs = NULL; // Vec<LilyCheckedDataType*>*?
+
+            if (data_type->result.errs) {
+                errs = NEW(Vec);
+
+                for (Usize i = 0; i < data_type->result.errs->len; ++i) {
+                    LilyCheckedDataType *err = check_data_type__LilyAnalysis(
+                      self,
+                      get__Vec(data_type->result.errs, i),
+                      scope,
+                      deps,
+                      safety_mode);
+
+                    switch (err->kind) {
+                        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+                            switch (err->custom.kind) {
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ERROR:
+                                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                                    break;
+                                default:
+                                    FAILED("expected error or generic");
+                            }
+
+                            break;
+                        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+                            break;
+                        default:
+                            UNREACHABLE("this situation is impossible");
+                    }
+
+                    push__Vec(errs, err);
+                }
+            }
+
             return NEW_VARIANT(
               LilyCheckedDataType,
-              exception,
+              result,
               &data_type->location,
-              check_data_type__LilyAnalysis(
-                self, data_type->exception, scope, deps, safety_mode));
+              NEW(LilyCheckedDataTypeResult,
+                  check_data_type__LilyAnalysis(
+                    self, data_type->result.ok, scope, deps, safety_mode),
+                  errs));
+        }
         case LILY_AST_DATA_TYPE_KIND_FLOAT32:
             return NEW(LilyCheckedDataType,
                        LILY_CHECKED_DATA_TYPE_KIND_FLOAT32,
@@ -7646,7 +7683,7 @@ check_for_recursive_data_type__LilyAnalysis(LilyAnalysis *self,
                     global_name->buffer)) {
             switch (data_type->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
-                case LILY_CHECKED_DATA_TYPE_KIND_EXCEPTION:
+                case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
                 case LILY_CHECKED_DATA_TYPE_KIND_LIST:
                 case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
                 case LILY_CHECKED_DATA_TYPE_KIND_PTR:
