@@ -28,7 +28,7 @@
 #include <core/lily/analysis/checked/data_type.h>
 #include <core/lily/analysis/checked/pattern/array.h>
 #include <core/lily/analysis/checked/pattern/as.h>
-#include <core/lily/analysis/checked/pattern/exception.h>
+#include <core/lily/analysis/checked/pattern/error.h>
 #include <core/lily/analysis/checked/pattern/list.h>
 #include <core/lily/analysis/checked/pattern/list_head.h>
 #include <core/lily/analysis/checked/pattern/list_tail.h>
@@ -47,7 +47,7 @@ enum LilyCheckedPatternKind
     LILY_CHECKED_PATTERN_KIND_ARRAY,
     LILY_CHECKED_PATTERN_KIND_AS,
     LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE,
-    LILY_CHECKED_PATTERN_KIND_EXCEPTION,
+    LILY_CHECKED_PATTERN_KIND_ERROR,
     LILY_CHECKED_PATTERN_KIND_LIST,
     LILY_CHECKED_PATTERN_KIND_LIST_HEAD,
     LILY_CHECKED_PATTERN_KIND_LIST_TAIL,
@@ -84,7 +84,7 @@ typedef struct LilyCheckedPattern
     {
         LilyCheckedPatternArray array;
         LilyCheckedPatternAs as;
-        LilyCheckedPatternException exception;
+        LilyCheckedPatternError exception;
         LilyCheckedPatternList list;
         LilyCheckedPatternListHead list_head;
         LilyCheckedPatternListTail list_tail;
@@ -124,7 +124,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 /**
  *
  * @brief Construct LilyCheckedPattern type
- * (LILY_CHECKED_PATTERN_KIND_EXCEPTION).
+ * (LILY_CHECKED_PATTERN_KIND_ERROR).
  */
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
@@ -132,7 +132,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     const Location *location,
                     LilyCheckedDataType *data_type,
                     const LilyAstPattern *ast_pattern,
-                    LilyCheckedPatternException exception);
+                    LilyCheckedPatternError exception);
 
 /**
  *

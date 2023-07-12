@@ -27,7 +27,7 @@
 
 #include <core/lily/parser/ast/pattern/array.h>
 #include <core/lily/parser/ast/pattern/as.h>
-#include <core/lily/parser/ast/pattern/exception.h>
+#include <core/lily/parser/ast/pattern/error.h>
 #include <core/lily/parser/ast/pattern/list.h>
 #include <core/lily/parser/ast/pattern/list_head.h>
 #include <core/lily/parser/ast/pattern/list_tail.h>
@@ -45,7 +45,7 @@ enum LilyAstPatternKind
     LILY_AST_PATTERN_KIND_ARRAY,
     LILY_AST_PATTERN_KIND_AS,
     LILY_AST_PATTERN_KIND_AUTO_COMPLETE,
-    LILY_AST_PATTERN_KIND_EXCEPTION,
+    LILY_AST_PATTERN_KIND_ERROR,
     LILY_AST_PATTERN_KIND_LIST,
     LILY_AST_PATTERN_KIND_LIST_HEAD,
     LILY_AST_PATTERN_KIND_LIST_TAIL,
@@ -76,7 +76,7 @@ typedef struct LilyAstPattern
     {
         LilyAstPatternArray array;
         LilyAstPatternAs as;
-        LilyAstPatternException exception;
+        LilyAstPatternError error;
         LilyAstPatternList list;
         LilyAstPatternListHead list_head;
         LilyAstPatternListTail list_tail;
@@ -111,13 +111,13 @@ VARIANT_CONSTRUCTOR(LilyAstPattern *,
 
 /**
  *
- * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_EXCEPTION).
+ * @brief Construct LilyAstPattern type (LILY_AST_PATTERN_KIND_ERROR).
  */
 VARIANT_CONSTRUCTOR(LilyAstPattern *,
                     LilyAstPattern,
-                    exception,
+                    error,
                     Location location,
-                    LilyAstPatternException exception);
+                    LilyAstPatternError error);
 
 /**
  *
