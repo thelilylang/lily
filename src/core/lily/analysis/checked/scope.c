@@ -44,6 +44,10 @@ search_variable_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                    const String *name);
 
 static LilyCheckedScopeResponse
+search_param_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                const String *name);
+
+static LilyCheckedScopeResponse
 search_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                               const String *name);
 
@@ -87,7 +91,12 @@ static LilyCheckedScopeResponse
 search_trait_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                 const String *name);
 
-#define CHECK_IF_EXISTS(container, item, container_name)                    \
+#define HASH_MAP_CHECK_IF_EXISTS(container, item)      \
+    if (get__HashMap(container, item->name->buffer)) { \
+        return 1;                                      \
+    }
+
+#define VEC_CHECK_IF_EXISTS(container, item, container_name)                \
     for (Usize i = 0; i < container->len; ++i) {                            \
         if (!strcmp(                                                        \
               CAST(container_name *, get__Vec(container, i))->name->buffer, \
@@ -96,11 +105,18 @@ search_trait_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
         }                                                                   \
     }
 
-#define ADD_TO_SCOPE(container, item, container_name) \
-    CHECK_IF_EXISTS(container, item, container_name); \
-                                                      \
-    push__Vec(container, item);                       \
-                                                      \
+#define HASH_MAP_ADD_TO_SCOPE(container, item)            \
+    HASH_MAP_CHECK_IF_EXISTS(container, item);            \
+                                                          \
+    insert__HashMap(container, item->name->buffer, item); \
+                                                          \
+    return 0;
+
+#define VEC_ADD_TO_SCOPE(container, item, container_name) \
+    VEC_CHECK_IF_EXISTS(container, item, container_name); \
+                                                          \
+    push__Vec(container, item);                           \
+                                                          \
     return 0;
 
 CONSTRUCTOR(LilyCheckedScopeCatch *,
@@ -154,21 +170,21 @@ CONSTRUCTOR(LilyCheckedScope *,
                      ? NEW(HashMap)
                      : NULL;
     self->catch = NULL;
-    self->modules = NEW(Vec);
-    self->constants = NEW(Vec);
-    self->enums = NEW(Vec);
-    self->records = NEW(Vec);
-    self->aliases = NEW(Vec);
-    self->errors = NEW(Vec);
-    self->enums_object = NEW(Vec);
-    self->records_object = NEW(Vec);
-    self->classes = NEW(Vec);
-    self->traits = NEW(Vec);
+    self->modules = NEW(HashMap);
+    self->constants = NEW(HashMap);
+    self->enums = NEW(HashMap);
+    self->records = NEW(HashMap);
+    self->aliases = NEW(HashMap);
+    self->errors = NEW(HashMap);
+    self->enums_object = NEW(HashMap);
+    self->records_object = NEW(HashMap);
+    self->classes = NEW(HashMap);
+    self->traits = NEW(HashMap);
     self->funs = NEW(Vec);
-    self->labels = NEW(Vec);
-    self->variables = NEW(Vec);
-    self->params = NEW(Vec);
-    self->generics = NEW(Vec);
+    self->labels = NEW(HashMap);
+    self->variables = NEW(HashMap);
+    self->params = NEW(HashMap);
+    self->generics = NEW(HashMap);
     self->methods = NEW(Vec);
     self->parent = parent;
     self->decls = decls;
@@ -181,70 +197,64 @@ int
 add_module__LilyCheckedScope(LilyCheckedScope *self,
                              LilyCheckedScopeContainerModule *module)
 {
-    CHECK_IF_EXISTS(self->constants, module, LilyCheckedScopeContainerConstant);
-    CHECK_IF_EXISTS(self->funs, module, LilyCheckedScopeContainerFun);
-    ADD_TO_SCOPE(self->modules, module, LilyCheckedScopeContainerModule);
+    HASH_MAP_CHECK_IF_EXISTS(self->constants, module);
+    VEC_CHECK_IF_EXISTS(self->funs, module, LilyCheckedScopeContainerFun);
+    HASH_MAP_ADD_TO_SCOPE(self->modules, module);
 }
 
 int
 add_constant__LilyCheckedScope(LilyCheckedScope *self,
                                LilyCheckedScopeContainerConstant *constant)
 {
-    CHECK_IF_EXISTS(self->funs, constant, LilyCheckedScopeContainerFun);
-    CHECK_IF_EXISTS(self->modules, constant, LilyCheckedScopeContainerModule);
-    ADD_TO_SCOPE(self->constants, constant, LilyCheckedScopeContainerConstant);
+    VEC_CHECK_IF_EXISTS(self->funs, constant, LilyCheckedScopeContainerFun);
+    HASH_MAP_CHECK_IF_EXISTS(self->modules, constant);
+    HASH_MAP_ADD_TO_SCOPE(self->constants, constant);
 }
 
 int
 add_enum__LilyCheckedScope(LilyCheckedScope *self,
                            LilyCheckedScopeContainerEnum *enum_)
 {
-    CHECK_IF_EXISTS(self->records, enum_, LilyCheckedScopeContainerRecord);
-    CHECK_IF_EXISTS(self->aliases, enum_, LilyCheckedScopeContainerAlias);
-    CHECK_IF_EXISTS(
-      self->records_object, enum_, LilyCheckedScopeContainerRecordObject);
-    CHECK_IF_EXISTS(
-      self->enums_object, enum_, LilyCheckedScopeContainerEnumObject);
-    CHECK_IF_EXISTS(self->classes, enum_, LilyCheckedScopeContainerClass);
-    CHECK_IF_EXISTS(self->traits, enum_, LilyCheckedScopeContainerTrait);
-    ADD_TO_SCOPE(self->enums, enum_, LilyCheckedScopeContainerEnum);
+    HASH_MAP_CHECK_IF_EXISTS(self->records, enum_);
+    HASH_MAP_CHECK_IF_EXISTS(self->aliases, enum_);
+    HASH_MAP_CHECK_IF_EXISTS(self->records_object, enum_);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums_object, enum_);
+    HASH_MAP_CHECK_IF_EXISTS(self->classes, enum_);
+    HASH_MAP_CHECK_IF_EXISTS(self->traits, enum_);
+    HASH_MAP_ADD_TO_SCOPE(self->enums, enum_);
 }
 
 int
 add_record__LilyCheckedScope(LilyCheckedScope *self,
                              LilyCheckedScopeContainerRecord *record)
 {
-    CHECK_IF_EXISTS(self->enums, record, LilyCheckedScopeContainerEnum);
-    CHECK_IF_EXISTS(self->aliases, record, LilyCheckedScopeContainerAlias);
-    CHECK_IF_EXISTS(
-      self->records_object, record, LilyCheckedScopeContainerRecordObject);
-    CHECK_IF_EXISTS(
-      self->enums_object, record, LilyCheckedScopeContainerEnumObject);
-    CHECK_IF_EXISTS(self->classes, record, LilyCheckedScopeContainerClass);
-    CHECK_IF_EXISTS(self->traits, record, LilyCheckedScopeContainerTrait);
-    ADD_TO_SCOPE(self->records, record, LilyCheckedScopeContainerRecord);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums, record);
+    HASH_MAP_CHECK_IF_EXISTS(self->aliases, record);
+    HASH_MAP_CHECK_IF_EXISTS(self->records_object, record);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums_object, record);
+    HASH_MAP_CHECK_IF_EXISTS(self->classes, record);
+    HASH_MAP_CHECK_IF_EXISTS(self->traits, record);
+    HASH_MAP_ADD_TO_SCOPE(self->records, record);
 }
 
 int
 add_alias__LilyCheckedScope(LilyCheckedScope *self,
                             LilyCheckedScopeContainerAlias *alias)
 {
-    CHECK_IF_EXISTS(self->enums, alias, LilyCheckedScopeContainerEnum);
-    CHECK_IF_EXISTS(self->records, alias, LilyCheckedScopeContainerRecord);
-    CHECK_IF_EXISTS(
-      self->records_object, alias, LilyCheckedScopeContainerRecordObject);
-    CHECK_IF_EXISTS(
-      self->enums_object, alias, LilyCheckedScopeContainerEnumObject);
-    CHECK_IF_EXISTS(self->classes, alias, LilyCheckedScopeContainerClass);
-    CHECK_IF_EXISTS(self->traits, alias, LilyCheckedScopeContainerTrait);
-    ADD_TO_SCOPE(self->aliases, alias, LilyCheckedScopeContainerAlias);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums, alias);
+    HASH_MAP_CHECK_IF_EXISTS(self->records, alias);
+    HASH_MAP_CHECK_IF_EXISTS(self->records_object, alias);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums_object, alias);
+    HASH_MAP_CHECK_IF_EXISTS(self->classes, alias);
+    HASH_MAP_CHECK_IF_EXISTS(self->traits, alias);
+    HASH_MAP_ADD_TO_SCOPE(self->aliases, alias);
 }
 
 int
 add_error__LilyCheckedScope(LilyCheckedScope *self,
                             LilyCheckedScopeContainerError *error)
 {
-    ADD_TO_SCOPE(self->errors, error, LilyCheckedScopeContainerError);
+    HASH_MAP_ADD_TO_SCOPE(self->errors, error);
 }
 
 int
@@ -252,16 +262,13 @@ add_enum_object__LilyCheckedScope(
   LilyCheckedScope *self,
   LilyCheckedScopeContainerEnumObject *enum_object)
 {
-    CHECK_IF_EXISTS(self->enums, enum_object, LilyCheckedScopeContainerEnum);
-    CHECK_IF_EXISTS(
-      self->records, enum_object, LilyCheckedScopeContainerRecord);
-    CHECK_IF_EXISTS(
-      self->records_object, enum_object, LilyCheckedScopeContainerRecordObject);
-    CHECK_IF_EXISTS(self->aliases, enum_object, LilyCheckedScopeContainerAlias);
-    CHECK_IF_EXISTS(self->classes, enum_object, LilyCheckedScopeContainerClass);
-    CHECK_IF_EXISTS(self->traits, enum_object, LilyCheckedScopeContainerTrait);
-    ADD_TO_SCOPE(
-      self->enums_object, enum_object, LilyCheckedScopeContainerEnumObject);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums, enum_object);
+    HASH_MAP_CHECK_IF_EXISTS(self->records, enum_object);
+    HASH_MAP_CHECK_IF_EXISTS(self->records_object, enum_object);
+    HASH_MAP_CHECK_IF_EXISTS(self->aliases, enum_object);
+    HASH_MAP_CHECK_IF_EXISTS(self->classes, enum_object);
+    HASH_MAP_CHECK_IF_EXISTS(self->traits, enum_object);
+    HASH_MAP_ADD_TO_SCOPE(self->enums_object, enum_object);
 }
 
 int
@@ -269,89 +276,78 @@ add_record_object__LilyCheckedScope(
   LilyCheckedScope *self,
   LilyCheckedScopeContainerRecordObject *record_object)
 {
-    CHECK_IF_EXISTS(self->enums, record_object, LilyCheckedScopeContainerEnum);
-    CHECK_IF_EXISTS(
-      self->records, record_object, LilyCheckedScopeContainerRecord);
-    CHECK_IF_EXISTS(
-      self->aliases, record_object, LilyCheckedScopeContainerAlias);
-    CHECK_IF_EXISTS(
-      self->enums_object, record_object, LilyCheckedScopeContainerEnumObject);
-    CHECK_IF_EXISTS(
-      self->classes, record_object, LilyCheckedScopeContainerClass);
-    CHECK_IF_EXISTS(
-      self->traits, record_object, LilyCheckedScopeContainerTrait);
-    ADD_TO_SCOPE(self->records_object,
-                 record_object,
-                 LilyCheckedScopeContainerRecordObject);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums, record_object);
+    HASH_MAP_CHECK_IF_EXISTS(self->records, record_object);
+    HASH_MAP_CHECK_IF_EXISTS(self->aliases, record_object);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums_object, record_object);
+    HASH_MAP_CHECK_IF_EXISTS(self->classes, record_object);
+    HASH_MAP_CHECK_IF_EXISTS(self->traits, record_object);
+    HASH_MAP_ADD_TO_SCOPE(self->records_object, record_object);
 }
 
 int
 add_class__LilyCheckedScope(LilyCheckedScope *self,
                             LilyCheckedScopeContainerClass *class)
 {
-    CHECK_IF_EXISTS(self->enums, class, LilyCheckedScopeContainerEnum);
-    CHECK_IF_EXISTS(self->records, class, LilyCheckedScopeContainerRecord);
-    CHECK_IF_EXISTS(
-      self->records_object, class, LilyCheckedScopeContainerRecordObject);
-    CHECK_IF_EXISTS(
-      self->enums_object, class, LilyCheckedScopeContainerEnumObject);
-    CHECK_IF_EXISTS(self->aliases, class, LilyCheckedScopeContainerAlias);
-    CHECK_IF_EXISTS(self->traits, class, LilyCheckedScopeContainerTrait);
-    ADD_TO_SCOPE(self->classes, class, LilyCheckedScopeContainerClass);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums, class);
+    HASH_MAP_CHECK_IF_EXISTS(self->records, class);
+    HASH_MAP_CHECK_IF_EXISTS(self->records_object, class);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums_object, class);
+    HASH_MAP_CHECK_IF_EXISTS(self->aliases, class);
+    HASH_MAP_CHECK_IF_EXISTS(self->traits, class);
+    HASH_MAP_ADD_TO_SCOPE(self->classes, class);
 }
 
 int
 add_trait__LilyCheckedScope(LilyCheckedScope *self,
                             LilyCheckedScopeContainerTrait *trait)
 {
-    CHECK_IF_EXISTS(self->enums, trait, LilyCheckedScopeContainerEnum);
-    CHECK_IF_EXISTS(self->records, trait, LilyCheckedScopeContainerRecord);
-    CHECK_IF_EXISTS(
-      self->records_object, trait, LilyCheckedScopeContainerRecordObject);
-    CHECK_IF_EXISTS(
-      self->enums_object, trait, LilyCheckedScopeContainerEnumObject);
-    CHECK_IF_EXISTS(self->classes, trait, LilyCheckedScopeContainerClass);
-    CHECK_IF_EXISTS(self->aliases, trait, LilyCheckedScopeContainerAlias);
-    ADD_TO_SCOPE(self->traits, trait, LilyCheckedScopeContainerTrait);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums, trait);
+    HASH_MAP_CHECK_IF_EXISTS(self->records, trait);
+    HASH_MAP_CHECK_IF_EXISTS(self->records_object, trait);
+    HASH_MAP_CHECK_IF_EXISTS(self->enums_object, trait);
+    HASH_MAP_CHECK_IF_EXISTS(self->classes, trait);
+    HASH_MAP_CHECK_IF_EXISTS(self->aliases, trait);
+    HASH_MAP_ADD_TO_SCOPE(self->traits, trait);
 }
 
 int
 add_fun__LilyCheckedScope(LilyCheckedScope *self,
                           LilyCheckedScopeContainerFun *fun)
 {
-    CHECK_IF_EXISTS(self->variables, fun, LilyCheckedScopeContainerVariable);
-    CHECK_IF_EXISTS(self->modules, fun, LilyCheckedScopeContainerModule);
-    ADD_TO_SCOPE(self->funs, fun, LilyCheckedScopeContainerFun);
+    HASH_MAP_CHECK_IF_EXISTS(self->variables, fun);
+    HASH_MAP_CHECK_IF_EXISTS(self->modules, fun);
+    VEC_ADD_TO_SCOPE(self->funs, fun, LilyCheckedScopeContainerFun);
 }
 
 int
 add_label__LilyCheckedScope(LilyCheckedScope *self,
                             LilyCheckedScopeContainerLabel *label)
 {
-    CHECK_IF_EXISTS(self->variables, label, LilyCheckedScopeContainerVariable);
-    ADD_TO_SCOPE(self->labels, label, LilyCheckedScopeContainerLabel);
+    HASH_MAP_CHECK_IF_EXISTS(self->variables, label);
+    HASH_MAP_ADD_TO_SCOPE(self->labels, label);
 }
 
 int
 add_variable__LilyCheckedScope(LilyCheckedScope *self,
                                LilyCheckedScopeContainerVariable *variable)
 {
-    CHECK_IF_EXISTS(self->labels, variable, LilyCheckedScopeContainerLabel);
-    ADD_TO_SCOPE(self->variables, variable, LilyCheckedScopeContainerVariable);
+    HASH_MAP_CHECK_IF_EXISTS(self->labels, variable);
+    HASH_MAP_ADD_TO_SCOPE(self->variables, variable);
 }
 
 int
 add_param__LilyCheckedScope(LilyCheckedScope *self,
                             LilyCheckedScopeContainerVariable *param)
 {
-    ADD_TO_SCOPE(self->params, param, LilyCheckedScopeContainerVariable);
+    HASH_MAP_ADD_TO_SCOPE(self->params, param);
 }
 
 int
 add_generic__LilyCheckedScope(LilyCheckedScope *self,
                               LilyCheckedScopeContainerGeneric *generic)
 {
-    ADD_TO_SCOPE(self->generics, generic, LilyCheckedScopeContainerGeneric);
+    HASH_MAP_ADD_TO_SCOPE(self->generics, generic);
 }
 
 LilyCheckedScopeContainerFun *
@@ -393,26 +389,25 @@ search_module_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                  const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->modules->len; ++i) {
-                LilyCheckedScopeContainerModule *module =
-                  get__Vec(self->modules, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE: {
+            LilyCheckedScopeContainerModule *module =
+              get__HashMap(self->modules, name->buffer);
 
-                if (!strcmp(module->name->buffer, name->buffer)) {
-                    LilyCheckedDecl *m =
-                      get__Vec(self->decls.module->decls, module->id);
+            if (module) {
+                LilyCheckedDecl *m =
+                  get__Vec(self->decls.module->decls, module->id);
 
-                    return NEW_VARIANT(
-                      LilyCheckedScopeResponse,
-                      module,
-                      m->location,
-                      NEW_VARIANT(
-                        LilyCheckedScopeContainer, module, self->id, module),
-                      &m->module);
-                }
+                return NEW_VARIANT(
+                  LilyCheckedScopeResponse,
+                  module,
+                  m->location,
+                  NEW_VARIANT(
+                    LilyCheckedScopeContainer, module, self->id, module),
+                  &m->module);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -423,75 +418,53 @@ search_variable_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                    const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE:
-            for (Usize i = 0; i < self->variables->len; ++i) {
-                LilyCheckedScopeContainerVariable *variable =
-                  get__Vec(self->variables, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE: {
+            LilyCheckedScopeContainerVariable *variable =
+              get__HashMap(self->variables, name->buffer);
 
-                if (!strcmp(variable->name->buffer, name->buffer)) {
-                    LilyCheckedBodyFunItem *item =
-                      get__Vec(self->decls.scope, variable->id);
+            if (variable) {
+                LilyCheckedBodyFunItem *item =
+                  get__Vec(self->decls.scope, variable->id);
+
+                return NEW_VARIANT(
+                  LilyCheckedScopeResponse,
+                  variable,
+                  item->stmt.location,
+                  NEW_VARIANT(
+                    LilyCheckedScopeContainer, variable, self->id, variable),
+                  &item->stmt.variable);
+            }
+
+            return NEW(LilyCheckedScopeResponse);
+        }
+        default:
+            return NEW(LilyCheckedScopeResponse);
+    }
+}
+
+LilyCheckedScopeResponse
+search_param_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
+                                                const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            if (self->decls.decl->kind == LILY_CHECKED_DECL_KIND_FUN ||
+                self->decls.decl->kind == LILY_CHECKED_DECL_KIND_METHOD) {
+                LilyCheckedScopeContainerVariable *variable =
+                  get__HashMap(self->params, name->buffer);
+
+                if (variable) {
+                    LilyCheckedDeclFunParam *param =
+                      get__Vec(self->decls.decl->fun.params, variable->id);
 
                     return NEW_VARIANT(LilyCheckedScopeResponse,
-                                       variable,
-                                       item->stmt.location,
+                                       fun_param,
+                                       param->location,
                                        NEW_VARIANT(LilyCheckedScopeContainer,
                                                    variable,
                                                    self->id,
                                                    variable),
-                                       &item->stmt.variable);
-                }
-            }
-
-            return NEW(LilyCheckedScopeResponse);
-        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
-            if (self->decls.decl->kind == LILY_CHECKED_DECL_KIND_FUN) {
-                for (Usize i = 0; i < self->params->len; ++i) {
-                    LilyCheckedScopeContainerVariable *variable =
-                      get__Vec(self->params, i);
-
-                    if (!strcmp(variable->name->buffer, name->buffer)) {
-                        LilyCheckedDeclFunParam *param =
-                          get__Vec(self->decls.decl->fun.params, variable->id);
-
-                        return NEW_VARIANT(
-                          LilyCheckedScopeResponse,
-                          fun_param,
-                          param->location,
-                          NEW_VARIANT(LilyCheckedScopeContainer,
-                                      variable,
-                                      self->id,
-                                      variable),
-                          param);
-                    }
-                }
-            } else if (self->decls.decl->kind == LILY_CHECKED_DECL_KIND_TYPE) {
-                switch (self->decls.decl->type.kind) {
-                    case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
-                        for (Usize i = 0; i < self->variables->len; ++i) {
-                            LilyCheckedScopeContainerVariable *variable =
-                              get__Vec(self->variables, i);
-
-                            if (!strcmp(variable->name->buffer, name->buffer)) {
-                                LilyCheckedField *field =
-                                  get__Vec(self->decls.decl->type.record.fields,
-                                           variable->id);
-
-                                return NEW_VARIANT(
-                                  LilyCheckedScopeResponse,
-                                  record_field,
-                                  field->location,
-                                  NEW_VARIANT(LilyCheckedScopeContainer,
-                                              variable,
-                                              self->id,
-                                              variable),
-                                  field);
-                            }
-                        }
-
-                        break;
-                    default:
-                        break;
+                                       param);
                 }
             }
 
@@ -541,27 +514,25 @@ search_constant_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                    const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->constants->len; ++i) {
-                LilyCheckedScopeContainerConstant *constant =
-                  get__Vec(self->constants, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE: {
+            LilyCheckedScopeContainerConstant *constant =
+              get__HashMap(self->constants, name->buffer);
 
-                if (!strcmp(constant->name->buffer, name->buffer)) {
-                    LilyCheckedDecl *c =
-                      get__Vec(self->decls.module->decls, constant->id);
+            if (constant) {
+                LilyCheckedDecl *c =
+                  get__Vec(self->decls.module->decls, constant->id);
 
-                    return NEW_VARIANT(LilyCheckedScopeResponse,
-                                       constant,
-                                       c->location,
-                                       NEW_VARIANT(LilyCheckedScopeContainer,
-                                                   constant,
-                                                   self->id,
-                                                   constant),
-                                       &c->constant);
-                }
+                return NEW_VARIANT(
+                  LilyCheckedScopeResponse,
+                  constant,
+                  c->location,
+                  NEW_VARIANT(
+                    LilyCheckedScopeContainer, constant, self->id, constant),
+                  &c->constant);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -572,27 +543,26 @@ search_error_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                 const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->errors->len; ++i) {
-                LilyCheckedScopeContainerError *error =
-                  get__Vec(self->errors, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE: {
+            LilyCheckedScopeContainerError *error =
+              get__HashMap(self->errors, name->buffer);
 
-                if (!strcmp(error->name->buffer, name->buffer)) {
-                    LilyCheckedDecl *e =
-                      get__Vec(self->decls.module->decls, error->id);
+            if (error) {
+                LilyCheckedDecl *e =
+                  get__Vec(self->decls.module->decls, error->id);
 
-                    return NEW_VARIANT(
-                      LilyCheckedScopeResponse,
-                      error,
-                      e->location,
-                      NEW_VARIANT(
-                        LilyCheckedScopeContainer, error, self->id, error),
-                      e,
-                      &e->error);
-                }
+                return NEW_VARIANT(
+                  LilyCheckedScopeResponse,
+                  error,
+                  e->location,
+                  NEW_VARIANT(
+                    LilyCheckedScopeContainer, error, self->id, error),
+                  e,
+                  &e->error);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -603,27 +573,26 @@ search_alias_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                 const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->aliases->len; ++i) {
-                LilyCheckedScopeContainerAlias *alias =
-                  get__Vec(self->aliases, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE: {
+            LilyCheckedScopeContainerAlias *alias =
+              get__HashMap(self->aliases, name->buffer);
 
-                if (!strcmp(alias->name->buffer, name->buffer)) {
-                    LilyCheckedDecl *a =
-                      get__Vec(self->decls.module->decls, alias->id);
+            if (alias) {
+                LilyCheckedDecl *a =
+                  get__Vec(self->decls.module->decls, alias->id);
 
-                    return NEW_VARIANT(
-                      LilyCheckedScopeResponse,
-                      alias,
-                      a->location,
-                      NEW_VARIANT(
-                        LilyCheckedScopeContainer, alias, self->id, alias),
-                      a,
-                      &a->type.alias);
-                }
+                return NEW_VARIANT(
+                  LilyCheckedScopeResponse,
+                  alias,
+                  a->location,
+                  NEW_VARIANT(
+                    LilyCheckedScopeContainer, alias, self->id, alias),
+                  a,
+                  &a->type.alias);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -634,27 +603,26 @@ search_record_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                  const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->records->len; ++i) {
-                LilyCheckedScopeContainerRecord *record =
-                  get__Vec(self->records, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE: {
+            LilyCheckedScopeContainerRecord *record =
+              get__HashMap(self->records, name->buffer);
 
-                if (!strcmp(record->name->buffer, name->buffer)) {
-                    LilyCheckedDecl *r =
-                      get__Vec(self->decls.module->decls, record->id);
+            if (record) {
+                LilyCheckedDecl *r =
+                  get__Vec(self->decls.module->decls, record->id);
 
-                    return NEW_VARIANT(
-                      LilyCheckedScopeResponse,
-                      record,
-                      r->location,
-                      NEW_VARIANT(
-                        LilyCheckedScopeContainer, record, self->id, record),
-                      r,
-                      &r->type.record);
-                }
+                return NEW_VARIANT(
+                  LilyCheckedScopeResponse,
+                  record,
+                  r->location,
+                  NEW_VARIANT(
+                    LilyCheckedScopeContainer, record, self->id, record),
+                  r,
+                  &r->type.record);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -665,26 +633,26 @@ search_enum_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->enums->len; ++i) {
-                LilyCheckedScopeContainerEnum *enum_ = get__Vec(self->enums, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE: {
+            LilyCheckedScopeContainerEnum *enum_ =
+              get__HashMap(self->enums, name->buffer);
 
-                if (!strcmp(enum_->name->buffer, name->buffer)) {
-                    LilyCheckedDecl *e =
-                      get__Vec(self->decls.module->decls, enum_->id);
+            if (enum_) {
+                LilyCheckedDecl *e =
+                  get__Vec(self->decls.module->decls, enum_->id);
 
-                    return NEW_VARIANT(
-                      LilyCheckedScopeResponse,
-                      enum_,
-                      e->location,
-                      NEW_VARIANT(
-                        LilyCheckedScopeContainer, enum_, self->id, enum_),
-                      e,
-                      &e->type.enum_);
-                }
+                return NEW_VARIANT(
+                  LilyCheckedScopeResponse,
+                  enum_,
+                  e->location,
+                  NEW_VARIANT(
+                    LilyCheckedScopeContainer, enum_, self->id, enum_),
+                  e,
+                  &e->type.enum_);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -695,158 +663,155 @@ search_generic_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                   const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
-            for (Usize i = 0; i < self->generics->len; ++i) {
-                LilyCheckedScopeContainerGeneric *generic =
-                  get__Vec(self->generics, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL: {
+            LilyCheckedScopeContainerGeneric *generic =
+              get__HashMap(self->generics, name->buffer);
 
-                if (!strcmp(generic->name->buffer, name->buffer)) {
-                    LilyCheckedGenericParam *g = NULL;
+            if (generic) {
+                LilyCheckedGenericParam *g = NULL;
 
-                    switch (self->decls.decl->kind) {
-                        case LILY_CHECKED_DECL_KIND_FUN:
-                            ASSERT(self->decls.decl->fun.generic_params);
-                            ASSERT(generic->id <
-                                   self->decls.decl->fun.generic_params->len);
+                switch (self->decls.decl->kind) {
+                    case LILY_CHECKED_DECL_KIND_FUN:
+                        ASSERT(self->decls.decl->fun.generic_params);
+                        ASSERT(generic->id <
+                               self->decls.decl->fun.generic_params->len);
 
-                            g = get__Vec(self->decls.decl->fun.generic_params,
-                                         generic->id);
+                        g = get__Vec(self->decls.decl->fun.generic_params,
+                                     generic->id);
 
-                            break;
-                        case LILY_CHECKED_DECL_KIND_ERROR:
-                            ASSERT(self->decls.decl->error.generic_params);
-                            ASSERT(generic->id <
-                                   self->decls.decl->error.generic_params->len);
+                        break;
+                    case LILY_CHECKED_DECL_KIND_ERROR:
+                        ASSERT(self->decls.decl->error.generic_params);
+                        ASSERT(generic->id <
+                               self->decls.decl->error.generic_params->len);
 
-                            g = get__Vec(self->decls.decl->error.generic_params,
-                                         generic->id);
+                        g = get__Vec(self->decls.decl->error.generic_params,
+                                     generic->id);
 
-                            break;
-                        case LILY_CHECKED_DECL_KIND_METHOD:
-                            ASSERT(self->decls.decl->method.generic_params);
-                            ASSERT(
-                              generic->id <
-                              self->decls.decl->method.generic_params->len);
+                        break;
+                    case LILY_CHECKED_DECL_KIND_METHOD:
+                        ASSERT(self->decls.decl->method.generic_params);
+                        ASSERT(generic->id <
+                               self->decls.decl->method.generic_params->len);
 
-                            g =
-                              get__Vec(self->decls.decl->method.generic_params,
-                                       generic->id);
+                        g = get__Vec(self->decls.decl->method.generic_params,
+                                     generic->id);
 
-                            break;
-                        case LILY_CHECKED_DECL_KIND_OBJECT:
-                            switch (self->decls.decl->object.kind) {
-                                case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
-                                    ASSERT(self->decls.decl->object
-                                             .class.generic_params);
-                                    ASSERT(generic->id <
-                                           self->decls.decl->object
-                                             .class.generic_params->len);
+                        break;
+                    case LILY_CHECKED_DECL_KIND_OBJECT:
+                        switch (self->decls.decl->object.kind) {
+                            case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
+                                ASSERT(self->decls.decl->object
+                                         .class.generic_params);
+                                ASSERT(generic->id <
+                                       self->decls.decl->object
+                                         .class.generic_params->len);
 
-                                    g = get__Vec(self->decls.decl->object
-                                                   .class.generic_params,
-                                                 generic->id);
+                                g = get__Vec(
+                                  self->decls.decl->object.class.generic_params,
+                                  generic->id);
 
-                                    break;
-                                case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
-                                    ASSERT(self->decls.decl->object.enum_
-                                             .generic_params);
-                                    ASSERT(generic->id <
-                                           self->decls.decl->object.enum_
-                                             .generic_params->len);
+                                break;
+                            case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+                                ASSERT(self->decls.decl->object.enum_
+                                         .generic_params);
+                                ASSERT(generic->id <
+                                       self->decls.decl->object.enum_
+                                         .generic_params->len);
 
-                                    g = get__Vec(self->decls.decl->object.enum_
-                                                   .generic_params,
-                                                 generic->id);
+                                g = get__Vec(
+                                  self->decls.decl->object.enum_.generic_params,
+                                  generic->id);
 
-                                    break;
-                                case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
-                                    ASSERT(self->decls.decl->object.record
-                                             .generic_params);
-                                    ASSERT(generic->id <
-                                           self->decls.decl->object.record
-                                             .generic_params->len);
+                                break;
+                            case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+                                ASSERT(self->decls.decl->object.record
+                                         .generic_params);
+                                ASSERT(generic->id <
+                                       self->decls.decl->object.record
+                                         .generic_params->len);
 
-                                    g = get__Vec(self->decls.decl->object.record
-                                                   .generic_params,
-                                                 generic->id);
+                                g = get__Vec(self->decls.decl->object.record
+                                               .generic_params,
+                                             generic->id);
 
-                                    break;
-                                case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
-                                    ASSERT(self->decls.decl->object.trait
-                                             .generic_params);
-                                    ASSERT(generic->id <
-                                           self->decls.decl->object.trait
-                                             .generic_params->len);
+                                break;
+                            case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
+                                ASSERT(self->decls.decl->object.trait
+                                         .generic_params);
+                                ASSERT(generic->id <
+                                       self->decls.decl->object.trait
+                                         .generic_params->len);
 
-                                    g = get__Vec(self->decls.decl->object.trait
-                                                   .generic_params,
-                                                 generic->id);
+                                g = get__Vec(
+                                  self->decls.decl->object.trait.generic_params,
+                                  generic->id);
 
-                                    break;
-                                default:
-                                    UNREACHABLE("unknown variant");
-                            }
+                                break;
+                            default:
+                                UNREACHABLE("unknown variant");
+                        }
 
-                            break;
-                        case LILY_CHECKED_DECL_KIND_TYPE:
-                            switch (self->decls.decl->type.kind) {
-                                case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
-                                    ASSERT(self->decls.decl->type.alias
-                                             .generic_params);
-                                    ASSERT(generic->id <
-                                           self->decls.decl->type.alias
-                                             .generic_params->len);
+                        break;
+                    case LILY_CHECKED_DECL_KIND_TYPE:
+                        switch (self->decls.decl->type.kind) {
+                            case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
+                                ASSERT(
+                                  self->decls.decl->type.alias.generic_params);
+                                ASSERT(generic->id <
+                                       self->decls.decl->type.alias
+                                         .generic_params->len);
 
-                                    g = get__Vec(self->decls.decl->type.alias
-                                                   .generic_params,
-                                                 generic->id);
+                                g = get__Vec(
+                                  self->decls.decl->type.alias.generic_params,
+                                  generic->id);
 
-                                    break;
-                                case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
-                                    ASSERT(self->decls.decl->type.enum_
-                                             .generic_params);
-                                    ASSERT(generic->id <
-                                           self->decls.decl->type.enum_
-                                             .generic_params->len);
+                                break;
+                            case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                                ASSERT(
+                                  self->decls.decl->type.enum_.generic_params);
+                                ASSERT(generic->id <
+                                       self->decls.decl->type.enum_
+                                         .generic_params->len);
 
-                                    g = get__Vec(self->decls.decl->type.enum_
-                                                   .generic_params,
-                                                 generic->id);
+                                g = get__Vec(
+                                  self->decls.decl->type.enum_.generic_params,
+                                  generic->id);
 
-                                    break;
-                                case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
-                                    ASSERT(self->decls.decl->type.record
-                                             .generic_params);
-                                    ASSERT(generic->id <
-                                           self->decls.decl->type.record
-                                             .generic_params->len);
+                                break;
+                            case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+                                ASSERT(
+                                  self->decls.decl->type.record.generic_params);
+                                ASSERT(generic->id <
+                                       self->decls.decl->type.record
+                                         .generic_params->len);
 
-                                    g = get__Vec(self->decls.decl->type.record
-                                                   .generic_params,
-                                                 generic->id);
+                                g = get__Vec(
+                                  self->decls.decl->type.record.generic_params,
+                                  generic->id);
 
-                                    break;
-                                default:
-                                    UNREACHABLE("unknown variant");
-                            }
+                                break;
+                            default:
+                                UNREACHABLE("unknown variant");
+                        }
 
-                            break;
-                        default:
-                            UNREACHABLE("generic params are not expected in "
-                                        "this context");
-                    }
-
-                    return NEW_VARIANT(
-                      LilyCheckedScopeResponse,
-                      generic,
-                      g->location,
-                      NEW_VARIANT(
-                        LilyCheckedScopeContainer, generic, self->id, generic),
-                      g);
+                        break;
+                    default:
+                        UNREACHABLE("generic params are not expected in "
+                                    "this context");
                 }
+
+                return NEW_VARIANT(
+                  LilyCheckedScopeResponse,
+                  generic,
+                  g->location,
+                  NEW_VARIANT(
+                    LilyCheckedScopeContainer, generic, self->id, generic),
+                  g);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -857,27 +822,26 @@ search_class_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                 const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->classes->len; ++i) {
-                LilyCheckedScopeContainerClass *class =
-                  get__Vec(self->classes, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE: {
+            LilyCheckedScopeContainerClass *class =
+              get__HashMap(self->classes, name->buffer);
 
-                if (!strcmp(class->name->buffer, name->buffer)) {
-                    LilyCheckedDecl *c =
-                      get__Vec(self->decls.module->decls, class->id);
+            if (class) {
+                LilyCheckedDecl *c =
+                  get__Vec(self->decls.module->decls, class->id);
 
-                    return NEW_VARIANT(
-                      LilyCheckedScopeResponse,
-                      class,
-                      c->location,
-                      NEW_VARIANT(
-                        LilyCheckedScopeContainer, class, self->id, class),
-                      c,
-                      &c->object.class);
-                }
+                return NEW_VARIANT(
+                  LilyCheckedScopeResponse,
+                  class,
+                  c->location,
+                  NEW_VARIANT(
+                    LilyCheckedScopeContainer, class, self->id, class),
+                  c,
+                  &c->object.class);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -888,28 +852,27 @@ search_record_object_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                         const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->records_object->len; ++i) {
-                LilyCheckedScopeContainerRecordObject *record_object =
-                  get__Vec(self->records_object, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE: {
+            LilyCheckedScopeContainerRecordObject *record_object =
+              get__HashMap(self->records_object, name->buffer);
 
-                if (!strcmp(record_object->name->buffer, name->buffer)) {
-                    LilyCheckedDecl *r =
-                      get__Vec(self->decls.module->decls, record_object->id);
+            if (record_object) {
+                LilyCheckedDecl *r =
+                  get__Vec(self->decls.module->decls, record_object->id);
 
-                    return NEW_VARIANT(LilyCheckedScopeResponse,
-                                       record_object,
-                                       r->location,
-                                       NEW_VARIANT(LilyCheckedScopeContainer,
-                                                   record_object,
-                                                   self->id,
-                                                   record_object),
-                                       r,
-                                       &r->object.record);
-                }
+                return NEW_VARIANT(LilyCheckedScopeResponse,
+                                   record_object,
+                                   r->location,
+                                   NEW_VARIANT(LilyCheckedScopeContainer,
+                                               record_object,
+                                               self->id,
+                                               record_object),
+                                   r,
+                                   &r->object.record);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -920,28 +883,27 @@ search_enum_object_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                       const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->enums_object->len; ++i) {
-                LilyCheckedScopeContainerEnumObject *enum_object =
-                  get__Vec(self->enums_object, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE: {
+            LilyCheckedScopeContainerEnumObject *enum_object =
+              get__HashMap(self->enums_object, name->buffer);
 
-                if (!strcmp(enum_object->name->buffer, name->buffer)) {
-                    LilyCheckedDecl *e =
-                      get__Vec(self->decls.module->decls, enum_object->id);
+            if (enum_object) {
+                LilyCheckedDecl *e =
+                  get__Vec(self->decls.module->decls, enum_object->id);
 
-                    return NEW_VARIANT(LilyCheckedScopeResponse,
-                                       enum_object,
-                                       e->location,
-                                       NEW_VARIANT(LilyCheckedScopeContainer,
-                                                   enum_object,
-                                                   self->id,
-                                                   enum_object),
-                                       e,
-                                       &e->object.enum_);
-                }
+                return NEW_VARIANT(LilyCheckedScopeResponse,
+                                   enum_object,
+                                   e->location,
+                                   NEW_VARIANT(LilyCheckedScopeContainer,
+                                               enum_object,
+                                               self->id,
+                                               enum_object),
+                                   e,
+                                   &e->object.enum_);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -952,27 +914,26 @@ search_trait_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                 const String *name)
 {
     switch (self->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
-            for (Usize i = 0; i < self->traits->len; ++i) {
-                LilyCheckedScopeContainerTrait *trait =
-                  get__Vec(self->traits, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE: {
+            LilyCheckedScopeContainerTrait *trait =
+              get__HashMap(self->traits, name->buffer);
 
-                if (!strcmp(trait->name->buffer, name->buffer)) {
-                    LilyCheckedDecl *t =
-                      get__Vec(self->decls.module->decls, trait->id);
+            if (trait) {
+                LilyCheckedDecl *t =
+                  get__Vec(self->decls.module->decls, trait->id);
 
-                    return NEW_VARIANT(
-                      LilyCheckedScopeResponse,
-                      trait,
-                      t->location,
-                      NEW_VARIANT(
-                        LilyCheckedScopeContainer, trait, self->id, trait),
-                      t,
-                      &t->object.trait);
-                }
+                return NEW_VARIANT(
+                  LilyCheckedScopeResponse,
+                  trait,
+                  t->location,
+                  NEW_VARIANT(
+                    LilyCheckedScopeContainer, trait, self->id, trait),
+                  t,
+                  &t->object.trait);
             }
 
             return NEW(LilyCheckedScopeResponse);
+        }
         default:
             return NEW(LilyCheckedScopeResponse);
     }
@@ -1236,62 +1197,60 @@ search_field__LilyCheckedScope(LilyCheckedScope *self, const String *name)
         case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
             if (self->decls.decl->kind == LILY_CHECKED_DECL_KIND_TYPE) {
                 switch (self->decls.decl->type.kind) {
-                    case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
-                        for (Usize i = 0; i < self->variables->len; ++i) {
-                            LilyCheckedScopeContainerVariable *variable =
-                              get__Vec(self->variables, i);
+                    case LILY_CHECKED_DECL_TYPE_KIND_RECORD: {
+                        LilyCheckedScopeContainerVariable *variable =
+                          get__HashMap(self->variables, name->buffer);
 
-                            if (!strcmp(variable->name->buffer, name->buffer)) {
-                                LilyCheckedField *field =
-                                  get__Vec(self->decls.decl->type.record.fields,
-                                           variable->id);
+                        if (variable) {
+                            LilyCheckedField *field =
+                              get__Vec(self->decls.decl->type.record.fields,
+                                       variable->id);
 
-                                return NEW_VARIANT(
-                                  LilyCheckedScopeResponse,
-                                  record_field,
-                                  field->location,
-                                  NEW_VARIANT(LilyCheckedScopeContainer,
-                                              variable,
-                                              self->id,
-                                              variable),
-                                  field);
-                            }
+                            return NEW_VARIANT(
+                              LilyCheckedScopeResponse,
+                              record_field,
+                              field->location,
+                              NEW_VARIANT(LilyCheckedScopeContainer,
+                                          variable,
+                                          self->id,
+                                          variable),
+                              field);
                         }
 
                         break;
+                    }
                     default:
                         break;
                 }
             } else if (self->decls.decl->kind ==
                        LILY_CHECKED_DECL_KIND_OBJECT) {
                 switch (self->decls.decl->object.kind) {
-                    case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
-                        for (Usize i = 0; i < self->variables->len; ++i) {
-                            LilyCheckedScopeContainerVariable *variable =
-                              get__Vec(self->variables, i);
+                    case LILY_CHECKED_DECL_OBJECT_KIND_RECORD: {
+                        LilyCheckedScopeContainerVariable *variable =
+                          get__HashMap(self->variables, name->buffer);
 
-                            if (!strcmp(variable->name->buffer, name->buffer)) {
-                                LilyCheckedBodyRecordObjectItem *field =
-                                  get__Vec(self->decls.decl->object.record.body,
-                                           variable->id);
+                        if (variable) {
+                            LilyCheckedBodyRecordObjectItem *field =
+                              get__Vec(self->decls.decl->object.record.body,
+                                       variable->id);
 
-                                ASSERT(
-                                  field->kind ==
-                                  LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_FIELD);
+                            ASSERT(
+                              field->kind ==
+                              LILY_CHECKED_BODY_RECORD_OBJECT_ITEM_KIND_FIELD);
 
-                                return NEW_VARIANT(
-                                  LilyCheckedScopeResponse,
-                                  record_field_object,
-                                  field->location,
-                                  NEW_VARIANT(LilyCheckedScopeContainer,
-                                              variable,
-                                              self->id,
-                                              variable),
-                                  &field->field);
-                            }
+                            return NEW_VARIANT(
+                              LilyCheckedScopeResponse,
+                              record_field_object,
+                              field->location,
+                              NEW_VARIANT(LilyCheckedScopeContainer,
+                                          variable,
+                                          self->id,
+                                          variable),
+                              &field->field);
                         }
 
                         break;
+                    }
                     default:
                         break;
                 }
@@ -1310,62 +1269,60 @@ search_variant__LilyCheckedScope(LilyCheckedScope *self, const String *name)
         case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
             if (self->decls.decl->kind == LILY_CHECKED_DECL_KIND_TYPE) {
                 switch (self->decls.decl->type.kind) {
-                    case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
-                        for (Usize i = 0; i < self->variables->len; ++i) {
-                            LilyCheckedScopeContainerVariable *variable =
-                              get__Vec(self->variables, i);
+                    case LILY_CHECKED_DECL_TYPE_KIND_ENUM: {
+                        LilyCheckedScopeContainerVariable *variable =
+                          get__HashMap(self->variables, name->buffer);
 
-                            if (!strcmp(variable->name->buffer, name->buffer)) {
-                                LilyCheckedVariant *enum_variant = get__Vec(
-                                  self->decls.decl->type.enum_.variants,
-                                  variable->id);
+                        if (variable) {
+                            LilyCheckedVariant *enum_variant =
+                              get__Vec(self->decls.decl->type.enum_.variants,
+                                       variable->id);
 
-                                return NEW_VARIANT(
-                                  LilyCheckedScopeResponse,
-                                  enum_variant,
-                                  enum_variant->location,
-                                  NEW_VARIANT(LilyCheckedScopeContainer,
-                                              variable,
-                                              self->id,
-                                              variable),
-                                  enum_variant);
-                            }
+                            return NEW_VARIANT(
+                              LilyCheckedScopeResponse,
+                              enum_variant,
+                              enum_variant->location,
+                              NEW_VARIANT(LilyCheckedScopeContainer,
+                                          variable,
+                                          self->id,
+                                          variable),
+                              enum_variant);
                         }
 
                         break;
+                    }
                     default:
                         break;
                 }
             } else if (self->decls.decl->kind ==
                        LILY_CHECKED_DECL_KIND_OBJECT) {
                 switch (self->decls.decl->object.kind) {
-                    case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
-                        for (Usize i = 0; i < self->variables->len; ++i) {
-                            LilyCheckedScopeContainerVariable *variable =
-                              get__Vec(self->variables, i);
+                    case LILY_CHECKED_DECL_OBJECT_KIND_ENUM: {
+                        LilyCheckedScopeContainerVariable *variable =
+                          get__HashMap(self->variables, name->buffer);
 
-                            if (!strcmp(variable->name->buffer, name->buffer)) {
-                                LilyCheckedBodyEnumObjectItem *variant =
-                                  get__Vec(self->decls.decl->object.enum_.body,
-                                           variable->id);
+                        if (variable) {
+                            LilyCheckedBodyEnumObjectItem *variant =
+                              get__Vec(self->decls.decl->object.enum_.body,
+                                       variable->id);
 
-                                ASSERT(
-                                  variant->kind ==
-                                  LILY_CHECKED_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT);
+                            ASSERT(
+                              variant->kind ==
+                              LILY_CHECKED_BODY_ENUM_OBJECT_ITEM_KIND_VARIANT);
 
-                                return NEW_VARIANT(
-                                  LilyCheckedScopeResponse,
-                                  enum_variant_object,
-                                  variant->location,
-                                  NEW_VARIANT(LilyCheckedScopeContainer,
-                                              variable,
-                                              self->id,
-                                              variable),
-                                  variant->variant);
-                            }
+                            return NEW_VARIANT(
+                              LilyCheckedScopeResponse,
+                              enum_variant_object,
+                              variant->location,
+                              NEW_VARIANT(LilyCheckedScopeContainer,
+                                          variable,
+                                          self->id,
+                                          variable),
+                              variant->variant);
                         }
 
                         break;
+                    }
                     default:
                         break;
                 }
@@ -1382,6 +1339,8 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
 {
     LilyCheckedScopeResponse variable =
       search_variable_in_current_scope__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse param =
+      search_param_in_current_scope__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse fun =
       search_fun_in_current_scope__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse module =
@@ -1396,11 +1355,12 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
     LilyCheckedScopeResponse error =
       search_error_in_current_scope__LilyCheckedScope(self, name);
 
-    // [variable, fun, module, constant, field, variant, enum, error]
-#define RESPONSES_IDENTIFIER_LEN 8
+    // [variable, param, fun, module, constant, field, variant, enum, error]
+#define RESPONSES_IDENTIFIER_LEN 9
     LilyCheckedScopeResponse *responses[RESPONSES_IDENTIFIER_LEN] =
       (LilyCheckedScopeResponse *[RESPONSES_IDENTIFIER_LEN]){
-          &variable, &fun, &module, &constant, &field, &variant, &enum_, &error
+          &variable, &param,   &fun,   &module, &constant,
+          &field,    &variant, &enum_, &error
       };
     int index_with_largest_id = -1;
 
@@ -1538,17 +1498,16 @@ get_variable_from_id__LilyCheckedScope(LilyCheckedScope *self,
     LilyCheckedScope *scope = get_scope_from_id__LilyCheckedScope(self, id);
 
     switch (scope->decls.kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE:
-            for (Usize i = 0; i < scope->variables->len; ++i) {
-                LilyCheckedScopeContainerVariable *variable =
-                  get__Vec(scope->variables, i);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE: {
+            LilyCheckedScopeContainerVariable *variable =
+              get__HashMap(self->variables, name->buffer);
 
-                if (!strcmp(variable->name->buffer, name->buffer)) {
-                    return get__Vec(scope->decls.scope, variable->id);
-                }
+            if (variable) {
+                return get__Vec(scope->decls.scope, variable->id);
             }
 
             UNREACHABLE("the scope have a bug!!");
+        }
         default:
             return NULL;
     }
@@ -1656,44 +1615,45 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
 
     push_str__String(res, ", modules =");
 
-    DEBUG_VEC_STR(self->modules, res, LilyCheckedScopeContainerModule);
+    DEBUG_HASH_MAP_STR(self->modules, res, LilyCheckedScopeContainerModule);
 
     push_str__String(res, ", constants =");
 
-    DEBUG_VEC_STR(self->constants, res, LilyCheckedScopeContainerConstant);
+    DEBUG_HASH_MAP_STR(self->constants, res, LilyCheckedScopeContainerConstant);
 
     push_str__String(res, ", enums =");
 
-    DEBUG_VEC_STR(self->enums, res, LilyCheckedScopeContainerEnum);
+    DEBUG_HASH_MAP_STR(self->enums, res, LilyCheckedScopeContainerEnum);
 
     push_str__String(res, ", records =");
 
-    DEBUG_VEC_STR(self->records, res, LilyCheckedScopeContainerRecord);
+    DEBUG_HASH_MAP_STR(self->records, res, LilyCheckedScopeContainerRecord);
 
     push_str__String(res, ", aliases =");
 
-    DEBUG_VEC_STR(self->aliases, res, LilyCheckedScopeContainerAlias);
+    DEBUG_HASH_MAP_STR(self->aliases, res, LilyCheckedScopeContainerAlias);
 
     push_str__String(res, ", errors =");
 
-    DEBUG_VEC_STR(self->errors, res, LilyCheckedScopeContainerError);
+    DEBUG_HASH_MAP_STR(self->errors, res, LilyCheckedScopeContainerError);
 
     push_str__String(res, ", enums_object =");
 
-    DEBUG_VEC_STR(self->enums_object, res, LilyCheckedScopeContainerEnumObject);
+    DEBUG_HASH_MAP_STR(
+      self->enums_object, res, LilyCheckedScopeContainerEnumObject);
 
     push_str__String(res, ", records_object =");
 
-    DEBUG_VEC_STR(
+    DEBUG_HASH_MAP_STR(
       self->records_object, res, LilyCheckedScopeContainerRecordObject);
 
     push_str__String(res, ", classes =");
 
-    DEBUG_VEC_STR(self->classes, res, LilyCheckedScopeContainerClass);
+    DEBUG_HASH_MAP_STR(self->classes, res, LilyCheckedScopeContainerClass);
 
     push_str__String(res, ", traits =");
 
-    DEBUG_VEC_STR(self->traits, res, LilyCheckedScopeContainerTrait);
+    DEBUG_HASH_MAP_STR(self->traits, res, LilyCheckedScopeContainerTrait);
 
     push_str__String(res, ", funs =");
 
@@ -1701,11 +1661,23 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
 
     push_str__String(res, ", labels =");
 
-    DEBUG_VEC_STR(self->labels, res, LilyCheckedScopeContainerLabel);
+    DEBUG_HASH_MAP_STR(self->labels, res, LilyCheckedScopeContainerLabel);
 
     push_str__String(res, ", variables =");
 
-    DEBUG_VEC_STR(self->variables, res, LilyCheckedScopeContainerVariable);
+    DEBUG_HASH_MAP_STR(self->variables, res, LilyCheckedScopeContainerVariable);
+
+    push_str__String(res, ", params =");
+
+    DEBUG_HASH_MAP_STR(self->params, res, LilyCheckedScopeContainerVariable);
+
+    push_str__String(res, ", generics =");
+
+    DEBUG_HASH_MAP_STR(self->params, res, LilyCheckedScopeContainerGeneric);
+
+    push_str__String(res, ", methods =");
+
+    DEBUG_VEC_STRING(self->methods, res, LilyCheckedScopeContainerMethod);
 
     push_str__String(res, ", parent = ");
 
@@ -1734,75 +1706,53 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
         FREE(LilyCheckedScopeCatch, self->catch);
     }
 
-    FREE_BUFFER_ITEMS(self->modules->buffer,
-                      self->modules->len,
-                      LilyCheckedScopeContainerModule);
-    FREE(Vec, self->modules);
+    FREE_HASHMAP_VALUES(self->modules, LilyCheckedScopeContainerModule);
+    FREE(HashMap, self->modules);
 
-    FREE_BUFFER_ITEMS(self->constants->buffer,
-                      self->constants->len,
-                      LilyCheckedScopeContainerConstant);
-    FREE(Vec, self->constants);
+    FREE_HASHMAP_VALUES(self->constants, LilyCheckedScopeContainerConstant);
+    FREE(HashMap, self->constants);
 
-    FREE_BUFFER_ITEMS(
-      self->enums->buffer, self->enums->len, LilyCheckedScopeContainerEnum);
-    FREE(Vec, self->enums);
+    FREE_HASHMAP_VALUES(self->enums, LilyCheckedScopeContainerEnum);
+    FREE(HashMap, self->enums);
 
-    FREE_BUFFER_ITEMS(self->records->buffer,
-                      self->records->len,
-                      LilyCheckedScopeContainerRecord);
-    FREE(Vec, self->records);
+    FREE_HASHMAP_VALUES(self->records, LilyCheckedScopeContainerRecord);
+    FREE(HashMap, self->records);
 
-    FREE_BUFFER_ITEMS(self->aliases->buffer,
-                      self->aliases->len,
-                      LilyCheckedScopeContainerAlias);
-    FREE(Vec, self->aliases);
+    FREE_HASHMAP_VALUES(self->aliases, LilyCheckedScopeContainerAlias);
+    FREE(HashMap, self->aliases);
 
-    FREE_BUFFER_ITEMS(
-      self->errors->buffer, self->errors->len, LilyCheckedScopeContainerError);
-    FREE(Vec, self->errors);
+    FREE_HASHMAP_VALUES(self->errors, LilyCheckedScopeContainerError);
+    FREE(HashMap, self->errors);
 
-    FREE_BUFFER_ITEMS(self->enums_object->buffer,
-                      self->enums_object->len,
-                      LilyCheckedScopeContainerEnumObject);
-    FREE(Vec, self->enums_object);
+    FREE_HASHMAP_VALUES(self->enums_object,
+                        LilyCheckedScopeContainerEnumObject);
+    FREE(HashMap, self->enums_object);
 
-    FREE_BUFFER_ITEMS(self->records_object->buffer,
-                      self->records_object->len,
-                      LilyCheckedScopeContainerRecordObject);
-    FREE(Vec, self->records_object);
+    FREE_HASHMAP_VALUES(self->records_object,
+                        LilyCheckedScopeContainerRecordObject);
+    FREE(HashMap, self->records_object);
 
-    FREE_BUFFER_ITEMS(self->classes->buffer,
-                      self->classes->len,
-                      LilyCheckedScopeContainerClass);
-    FREE(Vec, self->classes);
+    FREE_HASHMAP_VALUES(self->classes, LilyCheckedScopeContainerClass);
+    FREE(HashMap, self->classes);
 
-    FREE_BUFFER_ITEMS(
-      self->traits->buffer, self->traits->len, LilyCheckedScopeContainerTrait);
-    FREE(Vec, self->traits);
+    FREE_HASHMAP_VALUES(self->traits, LilyCheckedScopeContainerTrait);
+    FREE(HashMap, self->traits);
 
-    FREE_BUFFER_ITEMS(
-      self->labels->buffer, self->labels->len, LilyCheckedScopeContainerLabel);
-    FREE(Vec, self->labels);
+    FREE_HASHMAP_VALUES(self->labels, LilyCheckedScopeContainerLabel);
+    FREE(HashMap, self->labels);
 
     FREE_BUFFER_ITEMS(
       self->funs->buffer, self->funs->len, LilyCheckedScopeContainerFun);
     FREE(Vec, self->funs);
 
-    FREE_BUFFER_ITEMS(self->variables->buffer,
-                      self->variables->len,
-                      LilyCheckedScopeContainerVariable);
-    FREE(Vec, self->variables);
+    FREE_HASHMAP_VALUES(self->variables, LilyCheckedScopeContainerVariable);
+    FREE(HashMap, self->variables);
 
-    FREE_BUFFER_ITEMS(self->params->buffer,
-                      self->params->len,
-                      LilyCheckedScopeContainerVariable);
-    FREE(Vec, self->params);
+    FREE_HASHMAP_VALUES(self->params, LilyCheckedScopeContainerVariable);
+    FREE(HashMap, self->params);
 
-    FREE_BUFFER_ITEMS(self->generics->buffer,
-                      self->generics->len,
-                      LilyCheckedScopeContainerGeneric);
-    FREE(Vec, self->generics);
+    FREE_HASHMAP_VALUES(self->generics, LilyCheckedScopeContainerGeneric);
+    FREE(HashMap, self->generics);
 
     FREE_BUFFER_ITEMS(self->methods->buffer,
                       self->methods->len,
