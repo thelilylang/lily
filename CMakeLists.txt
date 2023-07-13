@@ -185,7 +185,6 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     src/core/lily/analysis/checked/compiler_generic.c
     src/core/lily/analysis/checked/data_type.c
     src/core/lily/analysis/checked/decl.c
-    src/core/lily/analysis/checked/drop_table.c
     src/core/lily/analysis/checked/expr.c
     src/core/lily/analysis/checked/field.c
     src/core/lily/analysis/checked/field_object.c
