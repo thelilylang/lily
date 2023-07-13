@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_FOR_H
 #define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_FOR_H
 
+#include <core/lily/analysis/checked/captured_variable.h>
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/scope.h>
 
@@ -32,8 +33,9 @@
 
 typedef struct LilyCheckedStmtFor
 {
-    LilyCheckedExpr *expr_left;
-    LilyCheckedExpr *expr_right;
+    OrderedHashMap
+      *captured_variables; // OrderedHashMap<LilyCheckedCapturedVariable*>*
+    LilyCheckedExpr *expr;
     Vec *body; // Vec<LilyCheckedBodyFunItem*>*
     LilyCheckedScope *scope;
 } LilyCheckedStmtFor;
@@ -44,8 +46,8 @@ typedef struct LilyCheckedStmtFor
  */
 CONSTRUCTOR(LilyCheckedStmtFor,
             LilyCheckedStmtFor,
-            LilyCheckedExpr *expr_left,
-            LilyCheckedExpr *expr_right,
+            OrderedHashMap *captured_variables,
+            LilyCheckedExpr *expr,
             Vec *body,
             LilyCheckedScope *scope);
 

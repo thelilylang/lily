@@ -22,18 +22,20 @@
  * SOFTWARE.
  */
 
+#include <base/format.h>
+
 #include <core/lily/analysis/checked/body/fun.h>
 #include <core/lily/analysis/checked/stmt/for.h>
 
 CONSTRUCTOR(LilyCheckedStmtFor,
             LilyCheckedStmtFor,
-            LilyCheckedExpr *expr_left,
-            LilyCheckedExpr *expr_right,
+            OrderedHashMap *captured_variables,
+            LilyCheckedExpr *expr,
             Vec *body,
             LilyCheckedScope *scope)
 {
-    return (LilyCheckedStmtFor){ .expr_left = expr_left,
-                                 .expr_right = expr_right,
+    return (LilyCheckedStmtFor){ .captured_variables = captured_variables,
+                                 .expr = expr,
                                  .body = body,
                                  .scope = scope };
 }
@@ -42,10 +44,17 @@ CONSTRUCTOR(LilyCheckedStmtFor,
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedStmtFor, const LilyCheckedStmtFor *self)
 {
-    String *res = format__String(
-      "LilyCheckedStmtFor{{ expr_left = {Sr}, expr_right = {Sr}, body =",
-      to_string__Debug__LilyCheckedExpr(self->expr_left),
-      to_string__Debug__LilyCheckedExpr(self->expr_right));
+    String *res = from__String("LilyCheckedStmtFor{ captured_variables =");
+
+    DEBUG_ORD_HASH_MAP_STRING(
+      self->captured_variables, res, LilyCheckedCapturedVariable);
+
+    {
+        char *s = format(", expr = {Sr}",
+                         to_string__Debug__LilyCheckedExpr(self->expr));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyFunItem);
 
@@ -65,8 +74,10 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtFor, const LilyCheckedStmtFor *self)
 
 DESTRUCTOR(LilyCheckedStmtFor, const LilyCheckedStmtFor *self)
 {
-    FREE(LilyCheckedExpr, self->expr_left);
-    FREE(LilyCheckedExpr, self->expr_right);
+    FREE_ORD_HASHMAP_VALUES(self->captured_variables,
+                            LilyCheckedCapturedVariable);
+    FREE(OrderedHashMap, self->captured_variables);
+    FREE(LilyCheckedExpr, self->expr);
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyCheckedBodyFunItem);
     FREE(Vec, self->body);
