@@ -35,6 +35,7 @@
 #include <stddef.h>
 
 typedef struct LilyCheckedDecl LilyCheckedDecl;
+typedef struct LilyCheckedCapturedVariable LilyCheckedCapturedVariable;
 typedef struct LilyCheckedDeclModule LilyCheckedDeclModule;
 typedef struct LilyCheckedDeclConstant LilyCheckedDeclConstant;
 typedef struct LilyCheckedDeclEnum LilyCheckedDeclEnum;
@@ -61,6 +62,7 @@ enum LilyCheckedScopeResponseKind
     LILY_CHECKED_SCOPE_RESPONSE_KIND_MODULE,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_CONSTANT,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_CATCH_VARIABLE,
+    LILY_CHECKED_SCOPE_RESPONSE_KIND_CAPTURED_VARIABLE,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT,
     LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT_OBJECT,
@@ -97,7 +99,9 @@ typedef struct LilyCheckedScopeResponse
     LilyCheckedDecl *decl; // LilyCheckedDecl*? (&)
     union
     {
-        HashMap *catch_variable;           // HashMap<LilyCheckedDataType*>* (&)
+        HashMap *catch_variable; // HashMap<LilyCheckedDataType*>* (&)
+        LilyCheckedCapturedVariable
+          *captured_variable;              // LilyCheckedCapturedVariable* (&)
         LilyCheckedDeclModule *module;     // LilyCheckedDeclModule* (&)
         LilyCheckedDeclConstant *constant; // LilyCheckedDeclConstant* (&)
         LilyCheckedDeclEnum *enum_;        // LilyCheckedDeclEnum* (&)
@@ -150,6 +154,26 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
         .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_CATCH_VARIABLE,
         .location = location,
         .catch_variable = catch_variable
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeResponse type
+ * (LILY_CHECKED_SCOPE_RESPONSE_KIND_CAPTURED_VARIABLE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedScopeResponse,
+                           LilyCheckedScopeResponse,
+                           captured_variable,
+                           const Location *location,
+                           LilyCheckedScopeContainer scope_container,
+                           LilyCheckedCapturedVariable *captured_variable)
+{
+    return (LilyCheckedScopeResponse){
+        .kind = LILY_CHECKED_SCOPE_RESPONSE_KIND_CAPTURED_VARIABLE,
+        .location = location,
+        .scope_container = scope_container,
+        .captured_variable = captured_variable
     };
 }
 
