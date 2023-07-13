@@ -1990,6 +1990,25 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                                 .id = response.scope_container.scope_id },
                               response.enum_variant->global_name,
                               NEW(LilyCheckedExprCallVariant, NULL)));
+            case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  (&expr->location),
+                  NEW(LilyError, LILY_ERROR_KIND_IDENTIFIER_NOT_FOUND),
+                  NULL,
+                  NULL,
+                  NULL);
+
+                return NEW_VARIANT(LilyCheckedExpr,
+                                   call,
+                                   &expr->location,
+                                   data_type,
+                                   expr,
+                                   NEW(LilyCheckedExprCall,
+                                       LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                                       NULL,
+                                       (LilyCheckedAccessScope){ .id = 0 }));
             default:
                 ANALYSIS_EMIT_DIAGNOSTIC(
                   self,
