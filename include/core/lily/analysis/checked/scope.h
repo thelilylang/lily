@@ -31,7 +31,6 @@
 #include <base/types.h>
 #include <base/vec.h>
 
-#include <core/lily/analysis/checked/drop_table.h>
 #include <core/lily/analysis/checked/scope_container.h>
 #include <core/lily/analysis/checked/scope_decls.h>
 #include <core/lily/analysis/checked/scope_response.h>
@@ -84,12 +83,14 @@ typedef struct LilyCheckedScope
     Usize id;
     HashMap *raises;              // HashMap<LilyCheckedDataType*>*?
     LilyCheckedScopeCatch *catch; // LilyCheckedScopeCatch*?
-    HashMap *modules;             // HashMap<LilyCheckedScopeContainerModule*>*
-    HashMap *constants;      // HashMap<LilyCheckedScopeContainerConstant*>*
-    HashMap *enums;          // HashMap<LilyCheckedScopeContainerEnum*>*
-    HashMap *records;        // HashMap<LilyCheckedScopeContainerRecord*>*
-    HashMap *aliases;        // HashMap<LilyCheckedScopeContainerAlias*>*
-    HashMap *errors;         // HashMap<LilyCheckedScopeContainerError*>*
+    HashMap *
+      captured_variables; // HashMap<LilyCheckedScopeContainerCapturedVariable*>*
+    HashMap *modules;     // HashMap<LilyCheckedScopeContainerModule*>*
+    HashMap *constants;   // HashMap<LilyCheckedScopeContainerConstant*>*
+    HashMap *enums;       // HashMap<LilyCheckedScopeContainerEnum*>*
+    HashMap *records;     // HashMap<LilyCheckedScopeContainerRecord*>*
+    HashMap *aliases;     // HashMap<LilyCheckedScopeContainerAlias*>*
+    HashMap *errors;      // HashMap<LilyCheckedScopeContainerError*>*
     HashMap *enums_object;   // HashMap<LilyCheckedScopeContainerEnumObject*>*
     HashMap *records_object; // HashMap<LilyCheckedScopeContainerRecordObject*>*
     HashMap *classes;        // HashMap<LilyCheckedScopeContainerClass*>*
@@ -102,7 +103,6 @@ typedef struct LilyCheckedScope
     Vec *methods;            // Vec<LilyCheckedScopeContainerMethod*>*
     LilyCheckedParent *parent; // LilyCheckedParent*?
     LilyCheckedScopeDecls decls;
-    LilyCheckedDropTable drop_table;
 } LilyCheckedScope;
 
 /**
@@ -114,6 +114,16 @@ CONSTRUCTOR(LilyCheckedScope *,
             LilyCheckedScope,
             LilyCheckedParent *parent,
             LilyCheckedScopeDecls decls);
+
+/**
+ *
+ * @brief Add a captured variable to the scope.
+ * @return Return the status 0 for success otherwise 1 for failure.
+ */
+int
+add_captured_variable__LilyCheckedScope(
+  LilyCheckedScope *self,
+  LilyCheckedScopeContainerCapturedVariable *captured_variable);
 
 /**
  *
