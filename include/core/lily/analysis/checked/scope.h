@@ -84,22 +84,22 @@ typedef struct LilyCheckedScope
     Usize id;
     HashMap *raises;              // HashMap<LilyCheckedDataType*>*?
     LilyCheckedScopeCatch *catch; // LilyCheckedScopeCatch*?
-    Vec *modules;                 // Vec<LilyCheckedScopeContainerModule*>*
-    Vec *constants;               // Vec<LilyCheckedScopeContainerConstant*>*
-    Vec *enums;                   // Vec<LilyCheckedScopeContainerEnum*>*
-    Vec *records;                 // Vec<LilyCheckedScopeContainerRecord*>*
-    Vec *aliases;                 // Vec<LilyCheckedScopeContainerAlias*>*
-    Vec *errors;                  // Vec<LilyCheckedScopeContainerError*>*
-    Vec *enums_object;            // Vec<LilyCheckedScopeContainerEnumObject*>*
-    Vec *records_object;       // Vec<LilyCheckedScopeContainerRecordObject*>*
-    Vec *classes;              // Vec<LilyCheckedScopeContainerClass*>*
-    Vec *traits;               // Vec<LilyCheckedScopeContainerTrait*>*
-    Vec *funs;                 // Vec<LilyCheckedScopeContainerFun*>*
-    Vec *labels;               // Vec<LilyCheckedScopeContainerLabel*>*
-    Vec *variables;            // Vec<LilyCheckedScopeContainerVariable*>*
-    Vec *params;               // Vec<LilyCheckedScopeContainerVariable*>*
-    Vec *generics;             // Vec<LilyCheckedScopeContainerGeneric*>*
-    Vec *methods;              // Vec<LilyCheckedScopeContainerMethod*>*
+    HashMap *modules;             // HashMap<LilyCheckedScopeContainerModule*>*
+    HashMap *constants;      // HashMap<LilyCheckedScopeContainerConstant*>*
+    HashMap *enums;          // HashMap<LilyCheckedScopeContainerEnum*>*
+    HashMap *records;        // HashMap<LilyCheckedScopeContainerRecord*>*
+    HashMap *aliases;        // HashMap<LilyCheckedScopeContainerAlias*>*
+    HashMap *errors;         // HashMap<LilyCheckedScopeContainerError*>*
+    HashMap *enums_object;   // HashMap<LilyCheckedScopeContainerEnumObject*>*
+    HashMap *records_object; // HashMap<LilyCheckedScopeContainerRecordObject*>*
+    HashMap *classes;        // HashMap<LilyCheckedScopeContainerClass*>*
+    HashMap *traits;         // HashMap<LilyCheckedScopeContainerTrait*>*
+    Vec *funs;               // Vec<LilyCheckedScopeContainerFun*>*
+    HashMap *labels;         // HashMap<LilyCheckedScopeContainerLabel*>*
+    HashMap *variables;      // HashMap<LilyCheckedScopeContainerVariable*>*
+    HashMap *params;         // HashMap<LilyCheckedScopeContainerVariable*>*
+    HashMap *generics;       // HashMap<LilyCheckedScopeContainerGeneric*>*
+    Vec *methods;            // Vec<LilyCheckedScopeContainerMethod*>*
     LilyCheckedParent *parent; // LilyCheckedParent*?
     LilyCheckedScopeDecls decls;
     LilyCheckedDropTable drop_table;
