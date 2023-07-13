@@ -6224,7 +6224,17 @@ check_await_stmt__LilyAnalysis(LilyAnalysis *self,
                                LilyCheckedScope *scope,
                                enum LilyCheckedSafetyMode safety_mode)
 {
-    TODO("analysis await stmt");
+    // TODO: add check to verify if the expression can be use with await
+    LilyCheckedExpr *expr = check_expr__LilyAnalysis(
+      self, stmt->await.expr, scope, safety_mode, false, NULL);
+
+    return NEW_VARIANT(LilyCheckedBodyFunItem,
+                       stmt,
+                       NEW_VARIANT(LilyCheckedStmt,
+                                   await,
+                                   &stmt->location,
+                                   stmt,
+                                   NEW(LilyCheckedStmtAwait, expr)));
 }
 
 LilyCheckedBodyFunItem *
