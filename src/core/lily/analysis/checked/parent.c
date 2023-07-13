@@ -96,6 +96,21 @@ VARIANT_CONSTRUCTOR(LilyCheckedParent *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(LilyCheckedParent *,
+                    LilyCheckedParent,
+                    stmt,
+                    LilyCheckedScope *scope,
+                    LilyCheckedScopeStmt stmt)
+{
+    LilyCheckedParent *self = lily_malloc(sizeof(LilyCheckedParent));
+
+    self->kind = LILY_CHECKED_PARENT_KIND_STMT;
+    self->scope = scope;
+    self->stmt = stmt;
+
+    return self;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedParent, const LilyCheckedParent *self)
@@ -122,6 +137,13 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedParent, const LilyCheckedParent *self)
         }
         case LILY_CHECKED_PARENT_KIND_SCOPE:
             break;
+        case LILY_CHECKED_PARENT_KIND_STMT: {
+            char *s = format(", stmt = {S} }");
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         default:
             UNREACHABLE("unknown variant");
     }
