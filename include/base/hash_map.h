@@ -78,6 +78,19 @@
         }                                                  \
         push_str__String(str, " }");                       \
     }
+
+#define DEBUG_HASH_MAP_STR(self, str, type)              \
+    {                                                    \
+        push_str__String(str, " { ");                    \
+        HashMapIter iter = NEW(HashMapIter, self);       \
+        void *current = NULL;                            \
+                                                         \
+        while ((current = next__HashMapIter(&iter))) {   \
+            char *s = to_string__Debug__##type(current); \
+            PUSH_STR_AND_FREE(str, s);                   \
+        }                                                \
+        push_str__String(str, " }");                     \
+    }
 #endif
 
 typedef struct HashMapPair
@@ -195,6 +208,7 @@ DESTRUCTOR(HashMap, HashMap *self);
 typedef struct HashMapIter
 {
     HashMap *hash_map;
+    HashMapBucket *current;
     Usize count;
 } HashMapIter;
 
@@ -204,7 +218,7 @@ typedef struct HashMapIter
  */
 inline CONSTRUCTOR(HashMapIter, HashMapIter, HashMap *hash_map)
 {
-    return (HashMapIter){ .hash_map = hash_map, .count = 0 };
+    return (HashMapIter){ .hash_map = hash_map, .current = NULL, .count = 0 };
 }
 
 /**

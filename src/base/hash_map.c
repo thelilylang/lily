@@ -27,7 +27,7 @@
 
 #include <stdlib.h>
 
-static void *
+static const HashMapBucket *
 get_bucket__HashMapBucket(const HashMapBucket *self, char *key);
 
 static void *
@@ -63,11 +63,11 @@ CONSTRUCTOR(HashMap *, HashMap)
     return self;
 }
 
-void *
+const HashMapBucket *
 get_bucket__HashMapBucket(const HashMapBucket *self, char *key)
 {
     if (!strcmp(self->pair.key, key)) {
-        return self->pair.value;
+        return self;
     }
 
     return self->next ? get_bucket__HashMapBucket(self->next, key) : NULL;
@@ -82,7 +82,13 @@ get__HashMap(HashMap *self, char *key)
     Usize index = index__HashMap(self, key);
     HashMapBucket *bucket = self->buckets[index];
 
-    return bucket ? get_bucket__HashMapBucket(bucket, key) : NULL;
+    if (bucket) {
+        const HashMapBucket *res = get_bucket__HashMapBucket(bucket, key);
+
+        return res ? res->pair.value : NULL;
+    }
+
+    return NULL;
 }
 
 void *
@@ -182,16 +188,21 @@ DESTRUCTOR(HashMap, HashMap *self)
 void *
 next__HashMapIter(HashMapIter *self)
 {
-    HashMapBucket **current = self->hash_map->buckets;
-
-    if (!current) {
+    if (!self->hash_map->buckets) {
         return NULL;
     }
 
-    for (; !(*current) && self->count < self->hash_map->capacity;
-         ++self->count, ++current)
+    for (; !self->current && self->count < self->hash_map->capacity;
+         self->current = self->hash_map->buckets[self->count++])
         ;
 
-    return self->count < self->hash_map->capacity ? (*current)->pair.value
-                                                  : NULL;
+    if (self->current) {
+        void *tmp = self->current->pair.value;
+
+        self->current = self->current->next;
+
+        return tmp;
+    } else {
+        return NULL;
+    }
 }
