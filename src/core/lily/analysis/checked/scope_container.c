@@ -33,6 +33,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+CONSTRUCTOR(LilyCheckedScopeContainerCapturedVariable *,
+            LilyCheckedScopeContainerCapturedVariable,
+            String *name,
+            Usize id)
+{
+    LilyCheckedScopeContainerCapturedVariable *self =
+      lily_malloc(sizeof(LilyCheckedScopeContainerCapturedVariable));
+
+    self->name = name;
+    self->id = id;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerCapturedVariable,
+               const LilyCheckedScopeContainerCapturedVariable *self)
+{
+    return format(
+      "LilyCheckedScopeContainerCapturedVariable{{ name = {S}, id = {d} }",
+      self->name,
+      self->id);
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedScopeContainerModule *,
             LilyCheckedScopeContainerModule,
             String *name,
@@ -480,6 +507,8 @@ IMPL_FOR_DEBUG(to_string,
                enum LilyCheckedScopeContainerKind self)
 {
     switch (self) {
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_CAPTURED_VARIABLE:
+            return "LILY_CHECKED_SCOPE_CONTAINER_KIND_CAPTURED_VARIABLE";
         case LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE:
             return "LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE";
         case LILY_CHECKED_SCOPE_CONTAINER_KIND_CONSTANT:
@@ -523,6 +552,14 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedScopeContainer *self)
 {
     switch (self->kind) {
+        case LILY_CHECKED_SCOPE_CONTAINER_KIND_CAPTURED_VARIABLE:
+            return format__String(
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, module "
+              "= {Sr} }",
+              to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
+              self->scope_id,
+              to_string__Debug__LilyCheckedScopeContainerVariable(
+                self->captured_variable));
         case LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE:
             return format__String(
               "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, module "

@@ -29,6 +29,43 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+typedef struct LilyCheckedScopeContainerCapturedVariable
+{
+    String *name; // String* (&)
+    Usize id;
+} LilyCheckedScopeContainerCapturedVariable;
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeContainerCapturedVariable type.
+ */
+CONSTRUCTOR(LilyCheckedScopeContainerCapturedVariable *,
+            LilyCheckedScopeContainerCapturedVariable,
+            String *name,
+            Usize id);
+
+/**
+ *
+ * @brief Convert LilyCheckedScopeContainerCapturedVariable in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedScopeContainerCapturedVariable,
+               const LilyCheckedScopeContainerCapturedVariable *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedScopeContainerCapturedVariable type.
+ */
+inline DESTRUCTOR(LilyCheckedScopeContainerCapturedVariable,
+                  LilyCheckedScopeContainerCapturedVariable *self)
+{
+    lily_free(self);
+}
+
 typedef struct LilyCheckedScopeContainerModule
 {
     String *name; // String* (&)
@@ -581,6 +618,7 @@ DESTRUCTOR(LilyCheckedScopeContainerMethod,
 
 enum LilyCheckedScopeContainerKind
 {
+    LILY_CHECKED_SCOPE_CONTAINER_KIND_CAPTURED_VARIABLE,
     LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE,
     LILY_CHECKED_SCOPE_CONTAINER_KIND_CONSTANT,
     LILY_CHECKED_SCOPE_CONTAINER_KIND_ENUM,
@@ -616,6 +654,9 @@ typedef struct LilyCheckedScopeContainer
     Usize scope_id;
     union
     {
+        const LilyCheckedScopeContainerCapturedVariable
+          *captured_variable; // const
+                              // LilyCheckedScopeContainerCapturedVariable* (&)
         const LilyCheckedScopeContainerModule
           *module; // const LilyCheckedScopeContainerModule* (&)
         const LilyCheckedScopeContainerConstant
@@ -660,6 +701,11 @@ typedef struct LilyCheckedScopeContainer
                                             .scope_id = scope_id, \
                                             .n = n };             \
     }
+
+LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
+  LILY_CHECKED_SCOPE_CONTAINER_KIND_CAPTURED_VARIABLE,
+  LilyCheckedScopeContainerCapturedVariable,
+  captured_variable);
 
 LILY_CHECKED_SCOPE_CONTAINER_CONSTRUCTOR(
   LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE,
