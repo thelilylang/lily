@@ -357,7 +357,7 @@ parse_attribute_decl_for_trait__LilyParser(
 // Parse body of class.
 /// @param body Vec<LilyPreparserClassBodyItem*>*
 static Vec *
-parse_class_body__LilyParser(LilyParser *self, Vec *body);
+parse_class_body__LilyParser(LilyParser *self, Vec *pre_body);
 
 // Parse class declaration.
 static LilyAstDecl *
@@ -549,6 +549,11 @@ static void
 apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
                                           LilyPreparserEnumBodyItem *item,
                                           Vec *body);
+
+static void
+apply_macro_expansion_in_class__LilyParser(LilyParser *self,
+                                           LilyPreparserClassBodyItem *item,
+                                           Vec *body);
 
 /// @param body Body of record object
 static void
@@ -5377,38 +5382,44 @@ parse_attribute_decl_for_trait__LilyParser(
 }
 
 Vec *
-parse_class_body__LilyParser(LilyParser *self, Vec *body)
+parse_class_body__LilyParser(LilyParser *self, Vec *pre_body)
 {
-    Vec *res = NEW(Vec); // Vec<LilyAstBodyClassItem*>*
+    Vec *body = NEW(Vec); // Vec<LilyAstBodyClassItem*>*
 
-    for (Usize i = 0; i < body->len; ++i) {
-        LilyPreparserClassBodyItem *pre_item = get__Vec(body, i);
-        LilyAstBodyClassItem *item = NULL;
+    for (Usize i = 0; i < pre_body->len; ++i) {
+        LilyPreparserClassBodyItem *item = get__Vec(pre_body, i);
 
-        switch (pre_item->kind) {
-            case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE:
-                item =
-                  parse_attribute_decl_for_class__LilyParser(self, pre_item);
+        switch (item->kind) {
+            case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_ATTRIBUTE: {
+                LilyAstBodyClassItem *res =
+                  parse_attribute_decl_for_class__LilyParser(self, item);
 
-                break;
-            case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND: {
-                TODO("macro expand #119");
+                if (res) {
+                    push__Vec(body, res);
+                }
 
                 break;
             }
+            case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_MACRO_EXPAND:
+                apply_macro_expansion_in_class__LilyParser(self, item, body);
+
+                break;
             case LILY_PREPARSER_CLASS_BODY_ITEM_KIND_METHOD: {
-                item = parse_method_decl__LilyParser(self, pre_item);
+                LilyAstBodyClassItem *res =
+                  parse_method_decl__LilyParser(self, item);
+
+                if (res) {
+                    push__Vec(body, res);
+                }
 
                 break;
             }
-        }
-
-        if (item) {
-            push__Vec(res, item);
+            default:
+                UNREACHABLE("unknown variant");
         }
     }
 
-    return res;
+    return body;
 }
 
 LilyAstDecl *
@@ -7605,6 +7616,49 @@ apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
         }
 
         CLEAN_UP_CHECK_MACRO(pre_enum_body_items, LilyPreparserEnumBodyItem);
+    }
+}
+
+void
+apply_macro_expansion_in_class__LilyParser(LilyParser *self,
+                                           LilyPreparserClassBodyItem *item,
+                                           Vec *body)
+{
+    CHECK_MACRO(item);
+
+    // 3. Prepare and parse the content of the macro, then expand
+    // it.
+    {
+        const File *file = get_file_from_filename__LilyPackage(
+          self->root_package, macro->location.filename);
+        LilyPreparser preparse_macro_expand =
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+
+        preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
+
+        Vec *pre_class_body_items =
+          preparse_class_body__LilyPreparser(&preparse_macro_expand);
+
+        if (!pre_class_body_items) {
+            return;
+        }
+
+        LilyPackage *package = search_package_from_filename__LilyPackage(
+          self->root_package, file->name);
+        LilyParser parser = (LilyParser){ .decls = NULL,
+                                          .package = package,
+                                          .root_package = self->root_package,
+                                          .current = NULL,
+                                          .preparser_info = NULL,
+                                          .position = 0 };
+
+        Vec *expand_body =
+          parse_class_body__LilyParser(&parser, pre_class_body_items);
+
+        append__Vec(body, expand_body);
+
+        CLEAN_UP_CHECK_MACRO(pre_class_body_items, LilyPreparserClassBodyItem);
+        FREE(Vec, expand_body);
     }
 }
 
