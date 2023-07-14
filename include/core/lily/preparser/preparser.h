@@ -794,6 +794,12 @@ IMPL_FOR_DEBUG(to_string,
                const LilyPreparserClassBodyItem *self);
 #endif
 
+/**
+ *
+ * @brief Free LilyPreparserClassBodyItem type.
+ */
+DESTRUCTOR(LilyPreparserClassBodyItem, LilyPreparserClassBodyItem *self);
+
 typedef struct LilyPreparserClass
 {
     String *name;
@@ -1582,6 +1588,14 @@ preparse_record_body__LilyPreparser(LilyPreparser *self);
  */
 Vec *
 preparse_enum_body__LilyPreparser(LilyPreparser *self);
+
+/*
+ *
+ * @brief Preparse the body of class.
+ * @return Vec<LilyPreparserClassBodyItem*>*?
+ */
+Vec *
+preparse_class_body__LilyPreparser(LilyPreparser *self);
 
 /*
  *

@@ -606,9 +606,6 @@ static VARIANT_DESTRUCTOR(LilyPreparserClassBodyItem,
                           method,
                           LilyPreparserClassBodyItem *self);
 
-// Free LilyPreparserClassBodyItem type.
-static DESTRUCTOR(LilyPreparserClassBodyItem, LilyPreparserClassBodyItem *self);
-
 // Construct LilyPreparserClass type.
 static inline CONSTRUCTOR(LilyPreparserClass,
                           LilyPreparserClass,
@@ -10663,18 +10660,9 @@ preparse_method_for_class__LilyPreparser(LilyPreparser *self)
     return NULL;
 }
 
-LilyPreparserDecl *
-preparse_class__LilyPreparser(LilyPreparser *self,
-                              String *name,
-                              Vec *impls,
-                              Vec *inherits,
-                              Vec *generic_params,
-                              bool is_close)
+Vec *
+preparse_class_body__LilyPreparser(LilyPreparser *self)
 {
-    Location location = clone__Location(&location_decl);
-    enum LilyVisibility visibility = visibility_decl;
-
-    // 1. Preparse class body
     Vec *body = NEW(Vec); // Vec<LilyPreparserClassBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
@@ -10901,25 +10889,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                 if (method) {
                     push__Vec(body, method);
                 } else {
-                clean_up : {
-                    FREE(String, name);
-
-                    if (impls) {
-                        FREE_BUFFER_ITEMS(impls->buffer, impls->len, Vec);
-                        FREE(Vec, impls);
-                    }
-
-                    if (inherits) {
-                        FREE_BUFFER_ITEMS(inherits->buffer, inherits->len, Vec);
-                        FREE(Vec, inherits);
-                    }
-
-                    FREE_BUFFER_ITEMS(
-                      body->buffer, body->len, LilyPreparserClassBodyItem);
-                    FREE(Vec, body);
-
-                    return NULL;
-                }
+                    goto clean_up;
                 }
 
                 break;
@@ -10942,12 +10912,40 @@ preparse_class__LilyPreparser(LilyPreparser *self,
                 FREE(String, current_s);
 
                 next_token__LilyPreparser(self);
-
-                break;
             }
         }
+    }
 
-        visibility_decl = LILY_VISIBILITY_PRIVATE;
+    return body;
+
+clean_up : {
+    // Clean up allocations
+
+    FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserTraitBodyItem);
+    FREE(Vec, body);
+
+    visibility_decl = LILY_VISIBILITY_PRIVATE;
+
+    return NULL;
+}
+}
+
+LilyPreparserDecl *
+preparse_class__LilyPreparser(LilyPreparser *self,
+                              String *name,
+                              Vec *impls,
+                              Vec *inherits,
+                              Vec *generic_params,
+                              bool is_close)
+{
+    Location location = clone__Location(&location_decl);
+    enum LilyVisibility visibility = visibility_decl;
+
+    // 1. Preparse class body
+    Vec *body = preparse_class_body__LilyPreparser(self);
+
+    if (!body) {
+        goto clean_up;
     }
 
     switch (self->current->kind) {
@@ -10972,6 +10970,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
 
             // Clean up allocations
 
+        clean_up : {
             FREE(String, name);
 
             if (impls) {
@@ -10991,6 +10990,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
             visibility_decl = LILY_VISIBILITY_PRIVATE;
 
             return NULL;
+        }
 
         default:
             UNREACHABLE("this way is possible");
