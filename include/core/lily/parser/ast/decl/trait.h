@@ -41,6 +41,7 @@ typedef struct LilyAstDeclTrait
     Vec *inherit_params; // Vec<LilyAstInheritParam*>*?
     Vec *body;           // Vec<LilyAstBodyTraitItem*>*
     enum LilyVisibility visibility;
+    bool is_close;
 } LilyAstDeclTrait;
 
 /**
@@ -53,13 +54,15 @@ inline CONSTRUCTOR(LilyAstDeclTrait,
                    Vec *generic_params,
                    Vec *inherit_params,
                    Vec *body,
-                   enum LilyVisibility visibility)
+                   enum LilyVisibility visibility,
+                   bool is_close)
 {
     return (LilyAstDeclTrait){ .name = name,
                                .generic_params = generic_params,
                                .inherit_params = inherit_params,
                                .body = body,
-                               .visibility = visibility };
+                               .visibility = visibility,
+                               .is_close = is_close };
 }
 
 /**
