@@ -554,11 +554,12 @@ IMPL_FOR_DEBUG(to_string,
     switch (self->kind) {
         case LILY_CHECKED_SCOPE_CONTAINER_KIND_CAPTURED_VARIABLE:
             return format__String(
-              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, module "
+              "LilyCheckedScopeContainer{{ kind = {s}, scope_id = {d}, "
+              "captured_variable "
               "= {Sr} }",
               to_string__Debug__LilyCheckedScopeContainerKind(self->kind),
               self->scope_id,
-              to_string__Debug__LilyCheckedScopeContainerVariable(
+              to_string__Debug__LilyCheckedScopeContainerCapturedVariable(
                 self->captured_variable));
         case LILY_CHECKED_SCOPE_CONTAINER_KIND_MODULE:
             return format__String(
