@@ -43,6 +43,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstExprUnaryKind, enum LilyAstExprUnaryKind self)
             return "LILY_AST_EXPR_UNARY_KIND_NEG";
         case LILY_AST_EXPR_UNARY_KIND_NOT:
             return "LILY_AST_EXPR_UNARY_KIND_NOT";
+        case LILY_AST_EXPR_UNARY_KIND_OPTIONAL:
+            return "LILY_AST_EXPR_UNARY_KIND_OPTIONAL";
         case LILY_AST_EXPR_UNARY_KIND_REF:
             return "LILY_AST_EXPR_UNARY_KIND_REF";
         case LILY_AST_EXPR_UNARY_KIND_REF_MUT:
