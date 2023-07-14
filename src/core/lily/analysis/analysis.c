@@ -6430,6 +6430,11 @@ check_for_stmt__LilyAnalysis(LilyAnalysis *self,
     // TODO: add check on value (iter, ...)
     switch (stmt->for_.expr_left->kind) {
         case LILY_AST_EXPR_KIND_IDENTIFIER:
+            add_captured_variable__LilyCheckedScope(
+              scope_for_stmt,
+              NEW(LilyCheckedScopeContainerCapturedVariable,
+                  stmt->for_.expr_left->identifier.name,
+                  0));
             insert__OrderedHashMap(
               checked_body_item->stmt.for_.captured_variables,
               stmt->for_.expr_left->identifier.name->buffer,
@@ -6453,7 +6458,17 @@ check_for_stmt__LilyAnalysis(LilyAnalysis *self,
                   get__Vec(stmt->for_.expr_left->tuple.items, i);
 
                 switch (checked_body_item->stmt.for_.expr->kind) {
-                    case LILY_AST_EXPR_KIND_IDENTIFIER:
+                    case LILY_AST_EXPR_KIND_IDENTIFIER: {
+                        int res = add_captured_variable__LilyCheckedScope(
+                          scope_for_stmt,
+                          NEW(LilyCheckedScopeContainerCapturedVariable,
+                              expr_cap->identifier.name,
+                              i));
+
+                        if (res) {
+                            FAILED("duplicate captured variable");
+                        }
+
                         insert__OrderedHashMap(
                           checked_body_item->stmt.for_.captured_variables,
                           expr_cap->identifier.name->buffer,
@@ -6465,6 +6480,7 @@ check_for_stmt__LilyAnalysis(LilyAnalysis *self,
                                 i)));
 
                         break;
+                    }
                     default:
                         FAILED("expected identifier");
                 }
