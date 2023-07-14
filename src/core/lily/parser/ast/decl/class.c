@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/format.h>
 #include <base/new.h>
 
 #include <core/lily/parser/ast/decl/class.h>
