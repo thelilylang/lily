@@ -779,7 +779,8 @@ push_class__LilyAnalysis(LilyAnalysis *self,
                                   NULL,
                                   NULL,
                                   NULL,
-                                  class->object.class.visibility)));
+                                  class->object.class.visibility,
+                                  class->object.class.is_close)));
 
     checked_class->object.class.scope =
       NEW(LilyCheckedScope,
@@ -872,7 +873,8 @@ push_trait__LilyAnalysis(LilyAnalysis *self,
                                   NULL,
                                   NULL,
                                   NULL,
-                                  trait->object.trait.visibility)));
+                                  trait->object.trait.visibility,
+                                  trait->object.trait.is_close)));
 
     checked_trait->object.trait.scope =
       NEW(LilyCheckedScope,
