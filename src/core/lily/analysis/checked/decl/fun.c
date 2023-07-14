@@ -443,7 +443,10 @@ add_raise__LilyCheckedDeclFun(const LilyCheckedDeclFun *self,
     ASSERT(raise->kind == LILY_CHECKED_DATA_TYPE_KIND_CUSTOM
              ? raise->custom.kind == LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ERROR
              : false);
-    ASSERT(scope->raises);
+
+    if (!scope->raises) {
+        scope->raises = NEW(HashMap);
+    }
 
     LilyCheckedDataType *match =
       get__HashMap(self->raises, raise->custom.global_name->buffer);
