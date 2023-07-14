@@ -6000,7 +6000,7 @@ check_unary_expr__LilyAnalysis(LilyAnalysis *self,
                 TODO("check if `-` operator is implemented for this type");
             }
         }
-        case LILY_CHECKED_EXPR_UNARY_KIND_NOT: {
+        case LILY_AST_EXPR_UNARY_KIND_NOT: {
             switch (right->data_type->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
                     return NEW_VARIANT(
@@ -6017,7 +6017,19 @@ check_unary_expr__LilyAnalysis(LilyAnalysis *self,
                          "this type");
             }
         }
-        case LILY_CHECKED_EXPR_UNARY_KIND_REF: {
+        case LILY_AST_EXPR_UNARY_KIND_OPTIONAL:
+            if (defined_data_type) {
+                if (defined_data_type->kind !=
+                    LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL) {
+                    FAILED("expected optional data type as defined data type");
+                }
+            }
+
+            right->data_type = NEW_VARIANT(
+              LilyCheckedDataType, optional, right->location, right->data_type);
+
+            return right;
+        case LILY_AST_EXPR_UNARY_KIND_REF: {
             if (defined_data_type) {
                 switch (defined_data_type->kind) {
                     case LILY_CHECKED_DATA_TYPE_KIND_PTR:

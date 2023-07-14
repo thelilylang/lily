@@ -3264,6 +3264,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
                   clone__String(self->previous->identifier_dollar)));
         case LILY_TOKEN_KIND_KEYWORD_REF:
         case LILY_TOKEN_KIND_KEYWORD_TRACE:
+        case LILY_TOKEN_KIND_INTERROGATION:
         case LILY_TOKEN_KIND_MINUS:
         case LILY_TOKEN_KIND_KEYWORD_NOT: {
             enum LilyAstExprUnaryKind op = 0;
@@ -3274,6 +3275,9 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
                     break;
                 case LILY_TOKEN_KIND_KEYWORD_NOT:
                     op = LILY_AST_EXPR_UNARY_KIND_NOT;
+                    break;
+                case LILY_TOKEN_KIND_INTERROGATION:
+                    op = LILY_AST_EXPR_UNARY_KIND_OPTIONAL;
                     break;
                 case LILY_TOKEN_KIND_KEYWORD_REF: {
                     if (self->current->kind == LILY_TOKEN_KIND_KEYWORD_MUT) {
