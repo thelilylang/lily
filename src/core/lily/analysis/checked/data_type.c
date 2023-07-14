@@ -1032,7 +1032,7 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
                         if (self_choices->len >= other_choices->len) {
                             GUARANTEE_COMPILER_DEFINED_DATA_TYPE(
                               self, self_choices, other_choices);
-                        } else if (self_choices->len < other_choices->len) {
+                        } else {
                             GUARANTEE_COMPILER_DEFINED_DATA_TYPE(
                               other, other_choices, self_choices);
                         }
