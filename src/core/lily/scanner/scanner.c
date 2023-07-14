@@ -657,6 +657,8 @@ get_keyword__LilyScanner(char *id)
         return LILY_TOKEN_KIND_KEYWORD_CATCH;
     else if (!strcmp(id, "class"))
         return LILY_TOKEN_KIND_KEYWORD_CLASS;
+	else if (!strcmp(id, "close"))
+		return LILY_TOKEN_KIND_KEYWORD_CLOSE;
     else if (!strcmp(id, "comptime"))
         return LILY_TOKEN_KIND_KEYWORD_COMPTIME;
     else if (!strcmp(id, "defer"))
