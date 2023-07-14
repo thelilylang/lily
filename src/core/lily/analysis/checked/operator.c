@@ -47,25 +47,25 @@ valid_operator__LilyCheckedOperator(String *name)
         !strcmp(name->buffer, "+=") || !strcmp(name->buffer, "&=") ||
         !strcmp(name->buffer, "<<=") || !strcmp(name->buffer, "|=") ||
         !strcmp(name->buffer, ">>=") || !strcmp(name->buffer, "/=") ||
-        !strcmp(name->buffer, "**=") || !strcmp(name->buffer, "**=") ||
-        !strcmp(name->buffer, "%=") || !strcmp(name->buffer, "*=") ||
-        !strcmp(name->buffer, "-=") || !strcmp(name->buffer, "xor=") ||
-        !strcmp(name->buffer, "=") || !strcmp(name->buffer, "&") ||
-        !strcmp(name->buffer, "|") || !strcmp(name->buffer, "/") ||
-        !strcmp(name->buffer, "==") || !strcmp(name->buffer, "**") ||
-        !strcmp(name->buffer, ">=") || !strcmp(name->buffer, ">") ||
-        !strcmp(name->buffer, "<<") || !strcmp(name->buffer, "<=") ||
-        !strcmp(name->buffer, "<") || !strcmp(name->buffer, "%") ||
-        !strcmp(name->buffer, "*") || !strcmp(name->buffer, "not=") ||
-        !strcmp(name->buffer, "or") || !strcmp(name->buffer, ">>") ||
-        !strcmp(name->buffer, ">>") || !strcmp(name->buffer, "..") ||
-        !strcmp(name->buffer, "-") || !strcmp(name->buffer, "xor") ||
-        !strcmp(name->buffer, "->") || !strcmp(name->buffer, "<-") ||
-        !strcmp(name->buffer, "[n]") || !strcmp(name->buffer, "[n..n]") ||
-        !strcmp(name->buffer, "[n..]") || !strcmp(name->buffer, "[..n]") ||
-        !strcmp(name->buffer, ".*") || !strcmp(name->buffer, "not") ||
-        !strcmp(name->buffer, "ref") || !strcmp(name->buffer, "ref mut") ||
-        !strcmp(name->buffer, "trace") || !strcmp(name->buffer, "trace mut")) {
+        !strcmp(name->buffer, "**=") || !strcmp(name->buffer, "%=") ||
+        !strcmp(name->buffer, "*=") || !strcmp(name->buffer, "-=") ||
+        !strcmp(name->buffer, "xor=") || !strcmp(name->buffer, "=") ||
+        !strcmp(name->buffer, "&") || !strcmp(name->buffer, "|") ||
+        !strcmp(name->buffer, "/") || !strcmp(name->buffer, "==") ||
+        !strcmp(name->buffer, "**") || !strcmp(name->buffer, ">=") ||
+        !strcmp(name->buffer, ">") || !strcmp(name->buffer, "<<") ||
+        !strcmp(name->buffer, "<=") || !strcmp(name->buffer, "<") ||
+        !strcmp(name->buffer, "%") || !strcmp(name->buffer, "*") ||
+        !strcmp(name->buffer, "not=") || !strcmp(name->buffer, "or") ||
+        !strcmp(name->buffer, ">>") || !strcmp(name->buffer, ">>") ||
+        !strcmp(name->buffer, "..") || !strcmp(name->buffer, "-") ||
+        !strcmp(name->buffer, "xor") || !strcmp(name->buffer, "->") ||
+        !strcmp(name->buffer, "<-") || !strcmp(name->buffer, "[n]") ||
+        !strcmp(name->buffer, "[n..n]") || !strcmp(name->buffer, "[n..]") ||
+        !strcmp(name->buffer, "[..n]") || !strcmp(name->buffer, ".*") ||
+        !strcmp(name->buffer, "not") || !strcmp(name->buffer, "ref") ||
+        !strcmp(name->buffer, "ref mut") || !strcmp(name->buffer, "trace") ||
+        !strcmp(name->buffer, "trace mut")) {
         return true;
     }
 
