@@ -45,6 +45,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_PARENT_KIND_MODULE";
         case LILY_CHECKED_PARENT_KIND_SCOPE:
             return "LILY_CHECKED_PARENT_KIND_SCOPE";
+        case LILY_CHECKED_PARENT_KIND_STMT:
+            return "LILY_CHECKED_PARENT_KIND_STMT";
         default:
             UNREACHABLE("unknown variant");
     }
