@@ -1,43 +1,74 @@
-import "@sys";
+// import "@sys";
+// import "@builtin";
+// 
+// macro write($s expr) = {
+// 	@sys.write(1, {{s}}, @len({{s}}))	
+// };
 
 type Person record =
 	name Str;
 	age Uint8;
 end
 
-// type Node record =
-// 	value Int32;
-// 	node *Node;
+type MyType record =
+	color Color;
+end
+
+type Color enum =
+	Hex:Uint8;
+	Rgb:(Uint8, Uint8, Uint8);
+	R;
+end
+
+type MyValue[T] record =
+	value T;
+end
+
+// type Letter enum =
+// 	A;
+// 	B;
+// 	C;
 // end
 
-fun get_name(person ref Person) Str = return person.name; end
-fun get_age(person ref Person) Uint8 = return person.age; end
+// fun add(x, y) = return x + y; end
 
-fun main Int32 =	
-	val p := Person { name := "John", age := 30 };
-	val name := get_name(ref p);
-	val age := get_age(ref p);
+// fun add(x) =
+// 	if true do
+// 		return x;
+// 	elif x do
+// 		return x;
+// 	else
+// 		return false;
+// 	end
+// end
 
-	@sys.write(1, name cast CStr, 5)
-	@sys.write(1, "\n" cast CStr, 1)
+// fun `==`(x Int32, y Int64) Bool = return x cast Int64 == y; end
 
-	if age == 30 do
-		val msg := "Hello\n";
-		@sys.write(1, msg cast CStr, 5)
-	end
+// fun add(x Int32, y Int32) Int32 = return x + y; end
 
-	val p2 := p;
+fun add[T](x T) T = return x; end
+fun add2[T](x T) T = return add::[T](x); end
+fun add3[T](x T) T = return add2::[T](x); end
 
-	@sys.write(1, "\n" cast CStr, 1)
-	@sys.write(1, p2.name cast CStr, 5);
-	@sys.write(1, "\n" cast CStr, 1)
+error Invalid;
 
-	mut i := 0;
+// fun get_err(n Int32) =
+// 	if n == 0 do
+// 		raise Invalid;
+// 	end
+// 
+// 	return n;
+// end
 
-	while i < 100 do
-		@sys.write(1, "Hello\n" cast CStr, 7)
-		i += 1
-	end
+fun main =
+	val x := global.add3::[Int32](34);
+	val y := global.add3::[Int64](34);
+	val z := global.add3::[Int64](y);
+	val d := MyValue { value := 40 };
+	val e := MyValue { value := "Hello" };
 
-	return 0;
+	// try do
+	// 	get_err(404);
+	// catch do
+	// end
 end
