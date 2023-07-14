@@ -802,6 +802,7 @@ typedef struct LilyPreparserClass
     Vec *implements;     // Vec<Vec<LilyToken* (&)>*>*?
     Vec *body;           // Vec<LilyPreparserClassBodyItem*>*
     enum LilyVisibility visibility;
+    bool is_close;
 } LilyPreparserClass;
 
 /**
@@ -890,6 +891,7 @@ typedef struct LilyPreparserTrait
     Vec *inherits;       // Vec<Vec<LilyToken* (&)>*>*?
     Vec *body;           // Vec<LilyPreparserTraitBodyItem*>*
     enum LilyVisibility visibility;
+    bool is_close;
 } LilyPreparserTrait;
 
 /**
