@@ -58,9 +58,13 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclClass, const LilyAstDeclClass *self)
     push_str__String(res, ", body =");
     DEBUG_VEC_STRING(self->body, res, LilyAstBodyClassItem);
 
-    push_str__String(res, ", visibility = ");
-    push_str__String(res, to_string__Debug__LilyVisibility(self->visibility));
-    push_str__String(res, " }");
+    {
+        char *s = format(", visibility = {s}, is_close = {b} }",
+                         to_string__Debug__LilyVisibility(self->visibility),
+                         self->is_close);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }

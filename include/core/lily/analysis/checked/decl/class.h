@@ -46,6 +46,7 @@ typedef struct LilyCheckedDeclClass
     Vec *body;           // Vec<LilyCheckedBodyClassItem*>*
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
+    bool is_close;
     bool is_checked;
 } LilyCheckedDeclClass;
 
@@ -62,7 +63,8 @@ inline CONSTRUCTOR(LilyCheckedDeclClass,
                    Vec *impl_params,
                    Vec *body,
                    LilyCheckedScope *scope,
-                   enum LilyVisibility visibility)
+                   enum LilyVisibility visibility,
+                   bool is_close)
 {
     return (LilyCheckedDeclClass){ .name = name,
                                    .global_name = global_name,
@@ -72,6 +74,7 @@ inline CONSTRUCTOR(LilyCheckedDeclClass,
                                    .body = body,
                                    .scope = scope,
                                    .visibility = visibility,
+                                   .is_close = is_close,
                                    .is_checked = false };
 }
 

@@ -5450,7 +5450,8 @@ parse_class_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                                        impl_params,
                                        parse_class_body__LilyParser(
                                          self, decl->object.class.body),
-                                       decl->object.class.visibility)));
+                                       decl->object.class.visibility,
+                                       decl->object.class.is_close)));
 }
 
 #define PARSE_CONSTANT_INFO(self, info, location, dt)                   \
@@ -6689,7 +6690,8 @@ parse_trait_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                                        generic_params,
                                        inherit_params,
                                        body,
-                                       decl->object.trait.visibility)));
+                                       decl->object.trait.visibility,
+                                       decl->object.trait.is_close)));
 }
 
 LilyAstDecl *

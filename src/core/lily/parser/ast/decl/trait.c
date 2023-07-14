@@ -54,8 +54,9 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclTrait, const LilyAstDeclTrait *self)
     DEBUG_VEC_STRING(self->body, res, LilyAstBodyTraitItem);
 
     {
-        char *s = format(", visibility = {s} }",
-                         to_string__Debug__LilyVisibility(self->visibility));
+        char *s = format(", visibility = {s}, is_close = {b} }",
+                         to_string__Debug__LilyVisibility(self->visibility),
+                         self->is_close);
 
         PUSH_STR_AND_FREE(res, s);
     }
