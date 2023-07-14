@@ -25,6 +25,11 @@
 #ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_PARENT_H
 #define LILY_CORE_LILY_ANALYSIS_CHECKED_PARENT_H
 
+#include <base/alloc.h>
+#include <base/vec.h>
+
+#include <core/lily/analysis/checked/scope_stmt.h>
+
 typedef struct LilyCheckedDecl LilyCheckedDecl;
 typedef struct LilyCheckedDeclModule LilyCheckedDeclModule;
 typedef struct LilyCheckedScope LilyCheckedScope;
@@ -33,7 +38,8 @@ enum LilyCheckedParentKind
 {
     LILY_CHECKED_PARENT_KIND_DECL,
     LILY_CHECKED_PARENT_KIND_MODULE,
-    LILY_CHECKED_PARENT_KIND_SCOPE
+    LILY_CHECKED_PARENT_KIND_SCOPE,
+    LILY_CHECKED_PARENT_KIND_STMT
 };
 
 /**
@@ -57,6 +63,7 @@ typedef struct LilyCheckedParent
         LilyCheckedDecl *decl;         // LilyCheckedDecl* (&)
         LilyCheckedDeclModule *module; // LilyCheckedDeclModule* (&)
         Vec *scope_body;               // Vec<LilyCheckedBodyFunItem*>* (&)
+        LilyCheckedScopeStmt stmt;
     };
 } LilyCheckedParent;
 
@@ -89,6 +96,16 @@ VARIANT_CONSTRUCTOR(LilyCheckedParent *,
                     scope,
                     LilyCheckedScope *scope,
                     Vec *scope_body);
+
+/**
+ *
+ * @brief Construct LilyCheckedParent type (LILY_CHECKED_PARENT_KIND_STMT).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedParent *,
+                    LilyCheckedParent,
+                    stmt,
+                    LilyCheckedScope *scope,
+                    LilyCheckedScopeStmt stmt);
 
 /**
  *

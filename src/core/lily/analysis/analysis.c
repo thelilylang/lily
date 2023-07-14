@@ -32,6 +32,7 @@
 #include <core/lily/analysis/checked/limits.h>
 #include <core/lily/analysis/checked/parent.h>
 #include <core/lily/analysis/checked/safety_mode.h>
+#include <core/lily/analysis/checked/scope_stmt.h>
 #include <core/lily/analysis/checked/signature.h>
 #include <core/lily/analysis/checked/virtual_scope.h>
 #include <core/lily/compiler/package.h>
@@ -442,7 +443,8 @@ static LilyCheckedBodyFunItem *
 check_for_stmt__LilyAnalysis(LilyAnalysis *self,
                              const LilyAstStmt *stmt,
                              LilyCheckedScope *scope,
-                             enum LilyCheckedSafetyMode safety_mode);
+                             enum LilyCheckedSafetyMode safety_mode,
+                             Vec *current_body);
 
 static LilyCheckedBodyFunItem *
 check_if_stmt__LilyAnalysis(LilyAnalysis *self,
@@ -6414,9 +6416,91 @@ LilyCheckedBodyFunItem *
 check_for_stmt__LilyAnalysis(LilyAnalysis *self,
                              const LilyAstStmt *stmt,
                              LilyCheckedScope *scope,
-                             enum LilyCheckedSafetyMode safety_mode)
+                             enum LilyCheckedSafetyMode safety_mode,
+                             Vec *current_body)
 {
-    TODO("check for stmt");
+    LilyCheckedBodyFunItem *checked_body_item = NEW_VARIANT(LilyCheckedBodyFunItem, stmt, NEW_VARIANT(LilyCheckedStmt, for, &stmt->location, stmt, NEW(LilyCheckedStmtFor, NEW(OrderedHashMap), NULL, NEW(Vec), NULL)));
+
+    LilyCheckedScope *scope_for_stmt = NEW(LilyCheckedScope, NEW_VARIANT(LilyCheckedParent, scope, scope, current_body), NEW_VARIANT(LilyCheckedScopeDecls, stmt, NEW_VARIANT(LilyCheckedScopeStmt, for, &checked_body_item->stmt.for_)));
+
+    checked_body_item->stmt.for_.expr = check_expr__LilyAnalysis(
+      self, stmt->for_.expr_right, scope, safety_mode, false, NULL);
+
+    // Check for captured variables
+    // TODO: add check on value (iter, ...)
+    switch (stmt->for_.expr_left->kind) {
+        case LILY_AST_EXPR_KIND_IDENTIFIER:
+            add_captured_variable__LilyCheckedScope(
+              scope_for_stmt,
+              NEW(LilyCheckedScopeContainerCapturedVariable,
+                  stmt->for_.expr_left->identifier.name,
+                  0));
+            insert__OrderedHashMap(
+              checked_body_item->stmt.for_.captured_variables,
+              stmt->for_.expr_left->identifier.name->buffer,
+              NEW(LilyCheckedCapturedVariable,
+                  stmt->for_.expr_left->identifier.name,
+                  &stmt->for_.expr_left->location,
+                  checked_body_item->stmt.for_.expr->data_type));
+
+            break;
+        case LILY_AST_EXPR_KIND_TUPLE:
+            if (checked_body_item->stmt.for_.expr->kind !=
+                LILY_CHECKED_EXPR_KIND_TUPLE) {
+                FAILED("expected tuple");
+            } else if (checked_body_item->stmt.for_.expr->tuple.items->len !=
+                       stmt->for_.expr_left->tuple.items->len) {
+                FAILED("bad length");
+            }
+
+            for (Usize i = 0; i < stmt->for_.expr_left->tuple.items->len; ++i) {
+                LilyAstExpr *expr_cap =
+                  get__Vec(stmt->for_.expr_left->tuple.items, i);
+
+                switch (checked_body_item->stmt.for_.expr->kind) {
+                    case LILY_AST_EXPR_KIND_IDENTIFIER: {
+                        int res = add_captured_variable__LilyCheckedScope(
+                          scope_for_stmt,
+                          NEW(LilyCheckedScopeContainerCapturedVariable,
+                              expr_cap->identifier.name,
+                              i));
+
+                        if (res) {
+                            FAILED("duplicate captured variable");
+                        }
+
+                        insert__OrderedHashMap(
+                          checked_body_item->stmt.for_.captured_variables,
+                          expr_cap->identifier.name->buffer,
+                          NEW(LilyCheckedCapturedVariable,
+                              expr_cap->identifier.name,
+                              &expr_cap->location,
+                              get__Vec(
+                                checked_body_item->stmt.for_.expr->tuple.items,
+                                i)));
+
+                        break;
+                    }
+                    default:
+                        FAILED("expected identifier");
+                }
+            }
+
+            break;
+        default:
+            FAILED(
+              "this expression is not expected. expected: identifier or tuple");
+    }
+
+    checked_body_item->stmt.for_.scope = NEW(LilyCheckedScope, NEW_VARIANT(LilyCheckedParent, stmt, scope_for_stmt, NEW_VARIANT(LilyCheckedScopeStmt, for, &checked_body_item->stmt.for_)), NEW_VARIANT(LilyCheckedScopeDecls, scope, checked_body_item->stmt.for_.body));
+
+    CHECK_FUN_BODY(stmt->for_.body,
+                   checked_body_item->stmt.for_.scope,
+                   checked_body_item->stmt.for_.body,
+                   safety_mode,
+                   true);
+
+    return checked_body_item;
 }
 
 LilyCheckedBodyFunItem *
@@ -7035,7 +7119,8 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
             return check_drop_stmt__LilyAnalysis(
               self, stmt, scope, safety_mode);
         case LILY_AST_STMT_KIND_FOR:
-            return check_for_stmt__LilyAnalysis(self, stmt, scope, safety_mode);
+            return check_for_stmt__LilyAnalysis(
+              self, stmt, scope, safety_mode, current_body);
         case LILY_AST_STMT_KIND_IF:
             return check_if_stmt__LilyAnalysis(
               self, stmt, scope, in_loop, safety_mode, current_body);

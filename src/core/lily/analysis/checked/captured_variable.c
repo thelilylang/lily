@@ -22,4 +22,35 @@
  * SOFTWARE.
  */
 
-#include <core/lily/analysis/checked/drop_table.h>
+#include <core/lily/analysis/checked/captured_variable.h>
+
+CONSTRUCTOR(LilyCheckedCapturedVariable *,
+            LilyCheckedCapturedVariable,
+            String *name,
+            const Location *location,
+            LilyCheckedDataType *data_type)
+{
+    LilyCheckedCapturedVariable *self =
+      lily_malloc(sizeof(LilyCheckedCapturedVariable));
+
+    self->name = name;
+    self->location = location;
+    self->data_type = data_type;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedCapturedVariable,
+               const LilyCheckedCapturedVariable *self)
+{
+    return format__String(
+      "LilyCheckedCapturedVariable{{ name = {S}, location = {sa}, "
+      "data_type = {Sr} }",
+      self->name,
+      to_string__Debug__Location(self->location),
+      to_string__Debug__LilyCheckedDataType(self->data_type));
+}
+#endif

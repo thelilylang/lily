@@ -28,6 +28,7 @@
 #include <base/vec.h>
 
 #include <core/lily/analysis/checked/data_type.h>
+#include <core/lily/analysis/checked/scope_stmt.h>
 
 typedef struct LilyCheckedDecl LilyCheckedDecl;
 typedef struct LilyCheckedDeclModule LilyCheckedDeclModule;
@@ -37,7 +38,8 @@ enum LilyCheckedScopeDeclsKind
 {
     LILY_CHECKED_SCOPE_DECLS_KIND_DECL,
     LILY_CHECKED_SCOPE_DECLS_KIND_MODULE,
-    LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE
+    LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE,
+    LILY_CHECKED_SCOPE_DECLS_KIND_STMT
 };
 
 /**
@@ -60,6 +62,7 @@ typedef struct LilyCheckedScopeDecls
         LilyCheckedDecl *decl;         // LilyCheckedDecl* (&)
         LilyCheckedDeclModule *module; // LilyCheckedDeclModule* (&)
         Vec *scope;                    // Vec<LilyCheckedBodyFunItem*>* (&)
+        LilyCheckedScopeStmt stmt;
     };
 } LilyCheckedScopeDecls;
 
@@ -104,6 +107,20 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedScopeDecls,
 {
     return (LilyCheckedScopeDecls){ .kind = LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE,
                                     .scope = scope };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeDecls type
+ * (LILY_CHECKED_SCOPE_DECLS_KIND_STMT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedScopeDecls,
+                           LilyCheckedScopeDecls,
+                           stmt,
+                           LilyCheckedScopeStmt stmt)
+{
+    return (LilyCheckedScopeDecls){ .kind = LILY_CHECKED_SCOPE_DECLS_KIND_STMT,
+                                    .stmt = stmt };
 }
 
 /**

@@ -22,49 +22,50 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_FOR_H
-#define LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_FOR_H
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_CAPTURED_VARIABLE_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_CAPTURED_VARIABLE_H
 
-#include <core/lily/analysis/checked/captured_variable.h>
-#include <core/lily/analysis/checked/expr.h>
-#include <core/lily/analysis/checked/scope.h>
+#include <base/string.h>
 
-#include <base/vec.h>
+#include <core/lily/analysis/checked/data_type.h>
 
-typedef struct LilyCheckedStmtFor
+typedef struct LilyCheckedCapturedVariable
 {
-    OrderedHashMap
-      *captured_variables; // OrderedHashMap<LilyCheckedCapturedVariable*>*
-    LilyCheckedExpr *expr;
-    Vec *body; // Vec<LilyCheckedBodyFunItem*>*
-    LilyCheckedScope *scope;
-} LilyCheckedStmtFor;
+    String *name;                   // String* (&)
+    const Location *location;       // const Location* (&)
+    LilyCheckedDataType *data_type; // LilyCheckedDataType* (&)
+} LilyCheckedCapturedVariable;
 
 /**
  *
- * @brief Construct LilyCheckedStmtFor type.
+ * @brief Construct LilyCheckedCapturedVariable type.
  */
-CONSTRUCTOR(LilyCheckedStmtFor,
-            LilyCheckedStmtFor,
-            OrderedHashMap *captured_variables,
-            LilyCheckedExpr *expr,
-            Vec *body,
-            LilyCheckedScope *scope);
+CONSTRUCTOR(LilyCheckedCapturedVariable *,
+            LilyCheckedCapturedVariable,
+            String *name,
+            const Location *location,
+            LilyCheckedDataType *data_type);
 
 /**
  *
- * @brief Convert LilyCheckedStmtFor in String.
+ * @brief Convert LilyCheckedCapturedVariable in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedStmtFor, const LilyCheckedStmtFor *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedCapturedVariable,
+               const LilyCheckedCapturedVariable *self);
 #endif
 
 /**
  *
- * @brief Free LilyCheckedStmtFor type.
+ * @brief Free LilyCheckedCapturedVariable type.
  */
-DESTRUCTOR(LilyCheckedStmtFor, const LilyCheckedStmtFor *self);
+inline DESTRUCTOR(LilyCheckedCapturedVariable,
+                  LilyCheckedCapturedVariable *self)
+{
+    lily_free(self);
+}
 
-#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_STMT_FOR_H
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_CAPTURED_VARIABLE_H

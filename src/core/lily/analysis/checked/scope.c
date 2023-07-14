@@ -36,6 +36,11 @@
 #include <string.h>
 
 static LilyCheckedScopeResponse
+search_captured_variable_in_current_scope__LilyCheckedScope(
+  LilyCheckedScope *self,
+  const String *name);
+
+static LilyCheckedScopeResponse
 search_module_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
                                                  const String *name);
 
@@ -170,6 +175,7 @@ CONSTRUCTOR(LilyCheckedScope *,
                      ? NEW(HashMap)
                      : NULL;
     self->catch = NULL;
+    self->captured_variables = NEW(HashMap);
     self->modules = NEW(HashMap);
     self->constants = NEW(HashMap);
     self->enums = NEW(HashMap);
@@ -188,9 +194,16 @@ CONSTRUCTOR(LilyCheckedScope *,
     self->methods = NEW(Vec);
     self->parent = parent;
     self->decls = decls;
-    self->drop_table = NEW(LilyCheckedDropTable);
 
     return self;
+}
+
+int
+add_captured_variable__LilyCheckedScope(
+  LilyCheckedScope *self,
+  LilyCheckedScopeContainerCapturedVariable *captured_variable)
+{
+    HASH_MAP_ADD_TO_SCOPE(self->captured_variables, captured_variable);
 }
 
 int
@@ -381,7 +394,48 @@ get_parent__LilyCheckedScope(const LilyCheckedScope *self)
             }
         case LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE:
             return get_parent__LilyCheckedScope(self->parent->scope);
+        case LILY_CHECKED_SCOPE_DECLS_KIND_STMT:
+            return NULL;
+        default:
+            UNREACHABLE("unknown variant");
     }
+}
+
+LilyCheckedScopeResponse
+search_captured_variable_in_current_scope__LilyCheckedScope(
+  LilyCheckedScope *self,
+  const String *name)
+{
+    switch (self->decls.kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_STMT: {
+            LilyCheckedScopeContainerCapturedVariable *captured_variable =
+              get__HashMap(self->captured_variables, name->buffer);
+
+            if (captured_variable) {
+                LilyCheckedCapturedVariable *cv = get_from_id__OrderedHashMap(
+                  get_captured_variables__LilyCheckedScopeStmt(
+                    &self->decls.stmt),
+                  captured_variable->id);
+
+                ASSERT(cv);
+
+                return NEW_VARIANT(LilyCheckedScopeResponse,
+                                   captured_variable,
+                                   cv->location,
+                                   NEW_VARIANT(LilyCheckedScopeContainer,
+                                               captured_variable,
+                                               self->id,
+                                               captured_variable),
+                                   cv);
+            }
+
+            break;
+        }
+        default:
+            break;
+    }
+
+    return NEW(LilyCheckedScopeResponse);
 }
 
 LilyCheckedScopeResponse
@@ -967,9 +1021,7 @@ search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name)
     switch (response.kind) {
         case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
             if (self->parent && (self->parent->scope->decls.kind ==
-                                   LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE ||
-                                 self->parent->scope->decls.kind ==
-                                   LILY_CHECKED_SCOPE_DECLS_KIND_DECL)) {
+                                 LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE)) {
                 return search_variable__LilyCheckedScope(self->parent->scope,
                                                          name);
             }
@@ -1354,13 +1406,16 @@ search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name)
       search_enum_in_current_scope__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse error =
       search_error_in_current_scope__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse captured_variable =
+      search_captured_variable_in_current_scope__LilyCheckedScope(self, name);
 
-    // [variable, param, fun, module, constant, field, variant, enum, error]
-#define RESPONSES_IDENTIFIER_LEN 9
+    // [variable, param, fun, module, constant, field, variant, enum, error,
+    // captured_variable]
+#define RESPONSES_IDENTIFIER_LEN 10
     LilyCheckedScopeResponse *responses[RESPONSES_IDENTIFIER_LEN] =
       (LilyCheckedScopeResponse *[RESPONSES_IDENTIFIER_LEN]){
           &variable, &param,   &fun,   &module, &constant,
-          &field,    &variant, &enum_, &error
+          &field,    &variant, &enum_, &error,  &captured_variable
       };
     int index_with_largest_id = -1;
 
@@ -1613,6 +1668,11 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self)
         push_str__String(res, "NULL");
     }
 
+    push_str__String(res, ", captured_variables =");
+
+    DEBUG_HASH_MAP_STR(
+      self->captured_variables, res, LilyCheckedScopeContainerCapturedVariable);
+
     push_str__String(res, ", modules =");
 
     DEBUG_HASH_MAP_STR(self->modules, res, LilyCheckedScopeContainerModule);
@@ -1706,6 +1766,10 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
         FREE(LilyCheckedScopeCatch, self->catch);
     }
 
+    FREE_HASHMAP_VALUES(self->captured_variables,
+                        LilyCheckedScopeContainerCapturedVariable);
+    FREE(HashMap, self->captured_variables);
+
     FREE_HASHMAP_VALUES(self->modules, LilyCheckedScopeContainerModule);
     FREE(HashMap, self->modules);
 
@@ -1762,8 +1826,6 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
     if (self->parent) {
         FREE(LilyCheckedParent, self->parent);
     }
-
-    FREE(LilyCheckedDropTable, &self->drop_table);
 
     lily_free(self);
 }

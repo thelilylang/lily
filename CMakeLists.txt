@@ -182,10 +182,10 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     src/core/lily/analysis/checked/stmt/variable.c
     src/core/lily/analysis/checked/stmt/while.c
     src/core/lily/analysis/checked/access.c
+    src/core/lily/analysis/checked/captured_variable.c
     src/core/lily/analysis/checked/compiler_generic.c
     src/core/lily/analysis/checked/data_type.c
     src/core/lily/analysis/checked/decl.c
-    src/core/lily/analysis/checked/drop_table.c
     src/core/lily/analysis/checked/expr.c
     src/core/lily/analysis/checked/field.c
     src/core/lily/analysis/checked/field_object.c
@@ -203,6 +203,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     src/core/lily/analysis/checked/scope_container.c
     src/core/lily/analysis/checked/scope_decls.c
     src/core/lily/analysis/checked/scope_response.c
+    src/core/lily/analysis/checked/scope_stmt.c
     src/core/lily/analysis/checked/signature.c
     src/core/lily/analysis/checked/stmt.c
     src/core/lily/analysis/checked/variant.c
