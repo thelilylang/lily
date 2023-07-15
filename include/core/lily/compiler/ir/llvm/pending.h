@@ -22,45 +22,55 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_SCOPE_H
-#define LILY_CORE_LILY_COMPILER_IR_LLVM_SCOPE_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_PENDING_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_PENDING_H
 
 #include <base/hash_map.h>
 
 #include <llvm-c/Core.h>
 
-typedef struct LilyIrLlvmScope
+typedef struct LilyIrLlvmPending
 {
-    HashMap *values;                // HashMap<LLVMValueRef>*
-    struct LilyIrLlvmScope *parent; // struct LilyIrLLvmScope*?
-} LilyIrLlvmScope;
+    LLVMValueRef current_fun; // LLVMValueRef? (&)
+    HashMap *structs;         // HashMap<LLVMTypeRef (&)>*
+    HashMap *funs;            // HashMap<LLVMValueRef (&)>*
+} LilyIrLlvmPending;
 
 /**
  *
- * @brief Construct LilyIrLlvmScope type.
+ * @brief Construct LilyIrLlvmPending type.
  */
-CONSTRUCTOR(LilyIrLlvmScope *, LilyIrLlvmScope, LilyIrLlvmScope *parent);
+inline CONSTRUCTOR(LilyIrLlvmPending, LilyIrLlvmPending)
+{
+    return (LilyIrLlvmPending){ .current_fun = NULL,
+                                .structs = NEW(HashMap),
+                                .funs = NEW(HashMap) };
+}
 
 /**
  *
- * @brief Get value from the scope.
+ * @brief Get struct from `structs` field.
  */
-LLVMValueRef
-get__LilyIrLlvmScope(const LilyIrLlvmScope *self, char *name);
+inline LLVMTypeRef
+get_struct__LilyIrLlvmPending(const LilyIrLlvmPending *self, const char *name)
+{
+    return get__HashMap(self->structs, (char *)name);
+}
 
 /**
  *
- * @brief Add value to the scope.
+ * @brief Get function from `funs` field.
  */
-void
-add__LilyIrLlvmScope(const LilyIrLlvmScope *self,
-                     char *name,
-                     LLVMValueRef value);
+inline LLVMValueRef
+get_fun__LilyIrLlvmPending(const LilyIrLlvmPending *self, const char *name)
+{
+    return get__HashMap(self->funs, (char *)name);
+}
 
 /**
  *
- * @brief Free LilyIrLlvmScope type.
+ * @brief Free LilyIrLLvmPending type.
  */
-DESTRUCTOR(LilyIrLlvmScope, LilyIrLlvmScope *self);
+DESTRUCTOR(LilyIrLLvmPending, const LilyIrLlvmPending *self);
 
-#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_SCOPE_H
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_PENDING_H

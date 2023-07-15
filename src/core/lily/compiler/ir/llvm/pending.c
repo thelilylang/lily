@@ -22,33 +22,10 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_EXPR_CALL_H
-#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_EXPR_CALL_H
+#include <core/lily/compiler/ir/llvm/pending.h>
 
-#include <core/lily/analysis/checked.h>
-#include <core/lily/compiler/ir/llvm/scope.h>
-
-#include <llvm-c/Core.h>
-
-/**
- *
- * @brief Generate LLVM IR for call expressions.
- */
-LLVMValueRef
-generate_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
-                               const LilyCheckedExpr *expr,
-                               LilyLlvmScope *scope,
-                               LLVMValueRef fun,
-                               LLVMValueRef ptr);
-
-/**
- *
- * @brief Generate LLVM IR for call expressions.
- */
-LLVMValueRef
-generate_ref_call_expr__LilyIrLlvm(const LilyIrLlvm *self,
-                                   const LilyCheckedExpr *expr,
-                                   LilyLlvmScope *scope,
-                                   LLVMValueRef fun);
-
-#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_EXPR_CALL_H
+DESTRUCTOR(LilyIrLLvmPending, const LilyIrLlvmPending *self)
+{
+    FREE(HashMap, self->funs);
+    FREE(HashMap, self->structs);
+}

@@ -22,21 +22,42 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_FUNCTION_H
-#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_FUNCTION_H
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_LILY_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_LILY_H
 
-#include <core/lily/analysis/checked.h>
 #include <core/lily/compiler/ir/llvm.h>
+#include <core/lily/compiler/ir/llvm/pending.h>
 #include <core/lily/compiler/ir/llvm/scope.h>
 
-/**
- *
- * @brief Generate a function in LLVM IR.
- */
-void
-generate_function__LilyIrLlvm(const LilyIrLlvm *self,
-                              const LilyCheckedDeclFun *fun,
-                              LilyLlvmScope *scope,
-                              const Location *location);
+#include <core/lily/mir/instruction.h>
 
-#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_FUNCTION_H
+#include <llvm-c/Core.h>
+
+LLVMValueRef
+LilyLLVMBuildAdd(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *LHS,
+                 const LilyMirInstructionVal *RHS,
+                 bool IsFloat,
+                 const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildVal(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *Val);
+
+LLVMValueRef
+LilyLLVMBuildInst(const LilyIrLlvm *Self,
+                  const LilyIrLlvmScope *Scope,
+                  const LilyIrLlvmPending *Pending,
+                  const LilyMirInstruction *Inst,
+                  const char *Name);
+
+LLVMTypeRef
+LilyLLVMGetType(const LilyIrLlvm *Self,
+                const LilyIrLlvmPending *Pending,
+                const LilyMirDt *DT);
+
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_LILY_H

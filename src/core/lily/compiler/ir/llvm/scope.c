@@ -22,164 +22,45 @@
  * SOFTWARE.
  */
 
-#include <base/new.h>
+#include <base/alloc.h>
 
-#include <core/lily/compiler/ir/llvm.h>
 #include <core/lily/compiler/ir/llvm/scope.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-CONSTRUCTOR(LilyLlvmValue *, LilyLlvmValue, String *name, LLVMValueRef value)
+CONSTRUCTOR(LilyIrLlvmScope *, LilyIrLlvmScope, LilyIrLlvmScope *parent)
 {
-    LilyLlvmValue *self = lily_malloc(sizeof(LilyLlvmValue));
+    LilyIrLlvmScope *self = lily_malloc(sizeof(LilyIrLlvmScope));
 
-    self->name = name;
-    self->value = value;
-
-    return self;
-}
-
-CONSTRUCTOR(LilyLlvmType *, LilyLlvmType, String *name, LLVMTypeRef type)
-{
-    LilyLlvmType *self = lily_malloc(sizeof(LilyLlvmType));
-
-    self->name = name;
-    self->type = type;
-
-    return self;
-}
-
-CONSTRUCTOR(LilyLlvmFun *,
-            LilyLlvmFun,
-            String *name,
-            LLVMValueRef fun,
-            LLVMTypeRef fun_type)
-{
-    LilyLlvmFun *self = lily_malloc(sizeof(LilyLlvmFun));
-
-    self->name = name;
-    self->fun = fun;
-    self->fun_type = fun_type;
-
-    return self;
-}
-
-CONSTRUCTOR(LilyLlvmScope *, LilyLlvmScope, LilyLlvmScope *parent)
-{
-    LilyLlvmScope *self = lily_malloc(sizeof(LilyLlvmScope));
-
-    self->values = NEW(Vec);
-    self->types = NEW(Vec);
-    self->loads = NEW(Vec);
-    self->funs = NEW(Vec);
+    self->values = NEW(HashMap);
     self->parent = parent;
 
     return self;
 }
 
-LilyLlvmValue *
-search_value__LilyLlvmScope(LilyLlvmScope *self, String *name)
-{
-    for (Usize i = 0; i < self->values->len; ++i) {
-        LilyLlvmValue *value = get__Vec(self->values, i);
-
-        if (!strcmp(value->name->buffer, name->buffer)) {
-            return value;
-        }
-    }
-
-    if (self->parent) {
-        return search_value__LilyLlvmScope(self->parent, name);
-    }
-
-    UNREACHABLE("(search value) the analysis or the codegen have a bug!!");
-}
-
-LilyLlvmType *
-search_type__LilyLlvmScope(LilyLlvmScope *self, String *name)
-{
-    for (Usize i = 0; i < self->types->len; ++i) {
-        LilyLlvmType *type = get__Vec(self->types, i);
-
-        if (!strcmp(type->name->buffer, name->buffer)) {
-            return type;
-        }
-    }
-
-    if (self->parent) {
-        return search_type__LilyLlvmScope(self->parent, name);
-    }
-
-    UNREACHABLE("(search type) the analysis or the codegen have a bug!!");
-}
-
-LilyLlvmValue *
-search_load__LilyLlvmScope(LilyLlvmScope *self, String *name)
-{
-    for (Usize i = 0; i < self->loads->len; ++i) {
-        LilyLlvmValue *load = get__Vec(self->loads, i);
-
-        if (!strcmp(load->name->buffer, name->buffer)) {
-            return load;
-        }
-    }
-
-    return NULL;
-}
-
 LLVMValueRef
-load_value__LilyLlvmScope(LilyLlvmScope *self,
-                          const LilyIrLlvm *llvm,
-                          LLVMTypeRef type,
-                          String *name)
+get__LilyIrLlvmScope(const LilyIrLlvmScope *self, char *name)
 {
-    LilyLlvmValue *load = search_load__LilyLlvmScope(self, name);
+    LLVMValueRef value = get__HashMap(self->values, name);
 
-    if (load) {
-        return load->value;
-    }
-
-    LLVMValueRef new_load = LLVMBuildLoad2(
-      llvm->builder, type, search_value__LilyLlvmScope(self, name)->value, "");
-
-    push__Vec(self->loads, NEW(LilyLlvmValue, name, new_load));
-
-    return new_load;
+    return value          ? value
+           : self->parent ? get__LilyIrLlvmScope(self->parent, name)
+                          : NULL;
 }
 
-LilyLlvmFun *
-search_fun__LilyLlvmScope(LilyLlvmScope *self, char *name)
+void
+add__LilyIrLlvmScope(const LilyIrLlvmScope *self,
+                     char *name,
+                     LLVMValueRef value)
 {
-    for (Usize i = 0; i < self->funs->len; ++i) {
-        LilyLlvmFun *fun = get__Vec(self->funs, i);
-
-        if (!strcmp(fun->name->buffer, name)) {
-            return fun;
-        }
+    if (insert__HashMap(self->values, name, value)) {
+        UNREACHABLE("duplicate name in the scope");
     }
-
-    if (self->parent) {
-        return search_fun__LilyLlvmScope(self->parent, name);
-    }
-
-    UNREACHABLE("(search fun) the analysis or the codegen have a bug!!");
 }
 
-DESTRUCTOR(LilyLlvmScope, LilyLlvmScope *self)
+DESTRUCTOR(LilyIrLlvmScope, LilyIrLlvmScope *self)
 {
-    FREE_BUFFER_ITEMS(self->values->buffer, self->values->len, LilyLlvmValue);
-    FREE(Vec, self->values);
-
-    FREE_BUFFER_ITEMS(self->types->buffer, self->types->len, LilyLlvmType);
-    FREE(Vec, self->types);
-
-    FREE_BUFFER_ITEMS(self->loads->buffer, self->loads->len, LilyLlvmValue);
-    FREE(Vec, self->loads);
-
-    FREE_BUFFER_ITEMS(self->funs->buffer, self->funs->len, LilyLlvmFun);
-    FREE(Vec, self->funs);
-
+    FREE(HashMap, self->values);
     lily_free(self);
 }

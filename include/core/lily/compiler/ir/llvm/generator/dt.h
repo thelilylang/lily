@@ -22,30 +22,19 @@
  * SOFTWARE.
  */
 
-#include <core/lily/compiler/ir/llvm/generator/data_type.h>
-#include <core/lily/compiler/ir/llvm/generator/expr.h>
-#include <core/lily/compiler/ir/llvm/generator/stmt/variable.h>
-#include <core/lily/compiler/ir/llvm/primary.h>
-#include <core/lily/compiler/ir/llvm/store.h>
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_DT_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_DT_H
 
-LLVMValueRef
-generate_variable_stmt__LilyIrLlvm(const LilyIrLlvm *self,
-                                   const LilyCheckedStmt *stmt,
-                                   LLVMValueRef fun,
-                                   LilyLlvmScope *scope)
-{
-    LLVMTypeRef variable_type =
-      generate_data_type__LilyIrLlvm(self, stmt->variable.data_type, scope);
-    LLVMValueRef variable = LLVMBuildAlloca(
-      self->builder, variable_type, stmt->variable.name->buffer);
-    LLVMValueRef variable_value = generate_expr__LilyIrLlvm(
-      self, stmt->variable.expr, scope, fun, variable);
+#include <llvm-c/Core.h>
 
-    push__Vec(scope->values, NEW(LilyLlvmValue, stmt->variable.name, variable));
+#include <core/lily/compiler/ir/llvm.h>
+#include <core/lily/compiler/ir/llvm/scope.h>
 
-    if (variable_value) {
-        LLVMBuildStore(self->builder, variable_value, variable);
-    }
+#include <core/lily/mir/dt.h>
 
-    return variable;
-}
+LLVMTypeRef
+generate_dt__LilyIrLlvm(const LilyIrLlvm *self,
+                        const LilyMirDt *dt,
+                        const LilyIrLlvmScope *scope);
+
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_GENERATOR_DT_H
