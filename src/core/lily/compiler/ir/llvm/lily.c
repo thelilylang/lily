@@ -56,10 +56,72 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
                  const LilyMirInstructionVal *Val)
 {
     switch (Val->kind) {
-        case LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY:
-            TODO("Array");
-        case LILY_MIR_INSTRUCTION_VAL_KIND_BYTES:
-            TODO("Bytes");
+        // TODO: add const array
+        case LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY: {
+            ASSERT(Val->dt->kind == LILY_MIR_DT_KIND_ARRAY);
+
+            LLVMTypeRef ElementType =
+              LilyLLVMGetType(Self, Pending, Val->dt->array.dt);
+            LLVMTypeRef array_type = LilyLLVMGetType(Self, Pending, Val->dt);
+            LLVMValueRef array_ptr =
+              LLVMBuildAlloca(Self->builder, array_type, "local.array");
+
+            for (Usize i = 0; i < Val->array->len; ++i) {
+                LLVMValueRef value_item = LilyLLVMBuildVal(
+                  Self, Scope, Pending, get__Vec(Val->array, i));
+                LLVMValueRef array_ptr_item = LLVMBuildGEP2(
+                  Self->builder,
+                  ElementType,
+                  array_ptr,
+                  (LLVMValueRef[]){
+                    LLVMConstInt(i8__LilyIrLlvm(Self), 0, true),
+                    LLVMConstInt(i8__LilyIrLlvm(Self), 0, true),
+                    LLVMConstInt(intptr__LilyIrLlvm(Self), i, true) },
+                  3,
+                  "local.array.item");
+
+				ASSERT(array_ptr_item);
+
+				LLVMBuildStore(Self->builder, array_ptr_item, value_item);
+            }
+
+            return array_ptr;
+        }
+        case LILY_MIR_INSTRUCTION_VAL_KIND_BYTES: {
+            // [i8 x n]
+            Usize bytes_buffer_len = strlen((const char *)Val->bytes);
+            LLVMTypeRef bytes_buffer_type =
+              LLVMArrayType(i8__LilyIrLlvm(Self), bytes_buffer_len + 1);
+            LLVMValueRef global_bytes =
+              LLVMAddGlobal(Self->module, bytes_buffer_type, "bytes");
+
+            LLVMSetInitializer(global_bytes,
+                               LLVMConstString((const char *)Val->bytes,
+                                               bytes_buffer_len,
+                                               false));
+            LLVMSetUnnamedAddr(global_bytes, true);
+
+            // Construct { i8*, iptr }
+            LLVMTypeRef bytes_type = LilyLLVMGetType(Self, Pending, Val->dt);
+            LLVMValueRef bytes_ptr =
+              LLVMBuildAlloca(Self->builder, bytes_type, "local.bytes");
+            LLVMValueRef bytes_ptr_value = LLVMBuildLoad2(
+              Self->builder, bytes_type, bytes_ptr, "local.bytes.load");
+
+            LLVMBuildInsertValue(Self->builder,
+                                 bytes_ptr_value,
+                                 global_bytes,
+                                 0,
+                                 "local.bytes.buffer");
+            LLVMBuildInsertValue(
+              Self->builder,
+              bytes_ptr_value,
+              LLVMConstInt(intptr__LilyIrLlvm(Self), bytes_buffer_len, true),
+              1,
+              "local.bytes.len");
+
+            return bytes_ptr;
+        }
         case LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION:
             TODO("Exception");
         case LILY_MIR_INSTRUCTION_VAL_KIND_FLOAT:
@@ -80,8 +142,36 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
             return get__LilyIrLlvmScope(Scope, Val->reg->buffer);
         case LILY_MIR_INSTRUCTION_VAL_KIND_SLICE:
             TODO("slice");
-        case LILY_MIR_INSTRUCTION_VAL_KIND_STR:
-            TODO("str");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_STR: {
+            // [i32 x n]
+            LLVMTypeRef str_buffer_type =
+              LLVMArrayType(i32__LilyIrLlvm(Self), Val->str->len + 1);
+            LLVMValueRef global_str =
+              LLVMAddGlobal(Self->module, str_buffer_type, "str");
+
+            LLVMSetInitializer(
+              global_str,
+              LLVMConstString(Val->str->buffer, Val->str->len, false));
+            LLVMSetUnnamedAddr(global_str, true);
+
+            // Construct { i32*, iptr }
+            LLVMTypeRef str_type = LilyLLVMGetType(Self, Pending, Val->dt);
+            LLVMValueRef str_ptr =
+              LLVMBuildAlloca(Self->builder, str_type, "local.str");
+            LLVMValueRef str_ptr_value = LLVMBuildLoad2(
+              Self->builder, str_type, str_ptr, "local.str.load");
+
+            LLVMBuildInsertValue(
+              Self->builder, str_ptr_value, global_str, 0, "local.str.buffer");
+            LLVMBuildInsertValue(
+              Self->builder,
+              str_ptr_value,
+              LLVMConstInt(intptr__LilyIrLlvm(Self), Val->str->len, true),
+              1,
+              "local.str.len");
+
+            return str_ptr;
+        }
         case LILY_MIR_INSTRUCTION_VAL_KIND_STRUCT:
             TODO("struct");
         case LILY_MIR_INSTRUCTION_VAL_KIND_TRACE:
@@ -96,7 +186,7 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
         case LILY_MIR_INSTRUCTION_VAL_KIND_UNIT:
             UNREACHABLE("try to generate a return void instruction");
         case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
-            TODO("var");
+            return get__LilyIrLlvmScope(Scope, Val->reg->buffer);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -155,7 +245,11 @@ LilyLLVMGetType(const LilyIrLlvm *Self,
 
             ASSERT(ElementType);
 
-            return LLVMArrayType(ElementType, DT->array.len);
+            return LLVMStructType(
+              (LLVMTypeRef[]){ LLVMArrayType(ElementType, DT->array.len),
+                               intptr__LilyIrLlvm(Self) },
+              2,
+              false);
         }
         case LILY_MIR_DT_KIND_BYTES:
             return LLVMStructType(
