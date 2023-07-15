@@ -32,6 +32,100 @@
 #include <stdlib.h>
 
 LLVMValueRef
+LilyLLVMBuildAlloc(const LilyIrLlvm *Self,
+                   const LilyIrLlvmPending *Pending,
+                   const LilyMirInstruction *Inst,
+                   const char *Name)
+{
+    LLVMTypeRef alloc_type = LilyLLVMGetType(Self, Pending, Inst->alloc.dt);
+
+    ASSERT(alloc_type);
+
+    return LLVMBuildAlloca(Self->builder, alloc_type, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildAnd(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *LHS,
+                 const LilyMirInstructionVal *RHS,
+                 const char *Name)
+{
+    LLVMValueRef left = LilyLLVMBuildVal(Self, Scope, Pending, LHS);
+    LLVMValueRef right = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(left && right);
+
+    return LLVMBuildAnd(Self->builder, left, right, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildBitCast(const LilyIrLlvm *Self,
+                     const LilyIrLlvmScope *Scope,
+                     const LilyIrLlvmPending *Pending,
+                     const LilyMirInstructionVal *Val,
+                     const LilyMirDt *DestDt,
+                     const char *Name)
+{
+    LLVMValueRef val = LilyLLVMBuildVal(Self, Scope, Pending, Val);
+    LLVMTypeRef dest_dt = LilyLLVMGetType(Self, Pending, DestDt);
+
+    ASSERT(val && dest_dt);
+
+    return LLVMBuildBitCast(Self->builder, val, dest_dt, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildNot(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *RHS,
+                 const char *Name)
+{
+    LLVMValueRef right = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(right);
+
+    return LLVMBuildNot(Self->builder, right, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildOr(const LilyIrLlvm *Self,
+                const LilyIrLlvmScope *Scope,
+                const LilyIrLlvmPending *Pending,
+                const LilyMirInstructionVal *LHS,
+                const LilyMirInstructionVal *RHS,
+                const char *Name)
+{
+    LLVMValueRef left = LilyLLVMBuildVal(Self, Scope, Pending, LHS);
+    LLVMValueRef right = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(left && right);
+
+    return LLVMBuildOr(Self->builder, left, right, Name);
+}
+
+LLVMBasicBlockRef
+LilyLLVMBuildBlock(const LilyIrLlvm *Self,
+                   const LilyIrLlvmScope *Scope,
+                   const LilyIrLlvmPending *Pending,
+                   Vec *Insts,
+                   const char *Name)
+{
+    LLVMBasicBlockRef block =
+      LLVMCreateBasicBlockInContext(Self->context, Name);
+
+    LLVMPositionBuilderAtEnd(Self->builder, block);
+
+    for (Usize i = 0; i < Insts->len; ++i) {
+        LilyLLVMBuildInst(Self, Scope, Pending, get__Vec(Insts, i), NULL);
+    }
+
+    return block;
+}
+
+LLVMValueRef
 LilyLLVMBuildAdd(const LilyIrLlvm *Self,
                  const LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
@@ -80,9 +174,9 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
                   3,
                   "local.array.item");
 
-				ASSERT(array_ptr_item);
+                ASSERT(array_ptr_item);
 
-				LLVMBuildStore(Self->builder, array_ptr_item, value_item);
+                LLVMBuildStore(Self->builder, array_ptr_item, value_item);
             }
 
             return array_ptr;
@@ -202,6 +296,32 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
     LLVMValueRef res = NULL;
 
     switch (Inst->kind) {
+        case LILY_MIR_INSTRUCTION_KIND_ALLOC:
+            res = LilyLLVMBuildAlloc(Self, Pending, Inst, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_AND:
+            res = LilyLLVMBuildAnd(
+              Self, Scope, Pending, Inst->and.dest, Inst->and.src, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_BITCAST:
+            res = LilyLLVMBuildBitCast(
+              Self, Scope, Pending, Inst->bitcast.val, Inst->bitcast.dt, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_BITAND:
+            res = LilyLLVMBuildAnd(
+              Self, Scope, Pending, Inst->bitand.dest, Inst->bitand.src, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_BITNOT:
+            res =
+              LilyLLVMBuildNot(Self, Scope, Pending, Inst->bitnot.src, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_BITOR:
+            res = LilyLLVMBuildOr(
+              Self, Scope, Pending, Inst->bitor.dest, Inst->bitor.src, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_BLOCK:
+            LilyLLVMBuildBlock(Self, Scope, Pending, Inst->block.insts, Name);
+            break;
         case LILY_MIR_INSTRUCTION_KIND_IADD:
             res = LilyLLVMBuildAdd(Self,
                                    Scope,
@@ -224,9 +344,9 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
             UNREACHABLE("unknown variant");
     }
 
-    ASSERT(res);
-
-    add__LilyIrLlvmScope(Scope, (char *)Name, res);
+	if (Inst->kind != LILY_MIR_INSTRUCTION_KIND_BLOCK) {
+		ASSERT(res);
+	}
 
     return res;
 }

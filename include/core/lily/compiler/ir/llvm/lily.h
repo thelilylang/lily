@@ -34,6 +34,50 @@
 #include <llvm-c/Core.h>
 
 LLVMValueRef
+LilyLLVMBuildAlloc(const LilyIrLlvm *Self,
+                   const LilyIrLlvmPending *Pending,
+                   const LilyMirInstruction *Inst,
+                   const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildAnd(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *LHS,
+                 const LilyMirInstructionVal *RHS,
+                 const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildBitCast(const LilyIrLlvm *Self,
+                     const LilyIrLlvmScope *Scope,
+                     const LilyIrLlvmPending *Pending,
+                     const LilyMirInstructionVal *Val,
+                     const LilyMirDt *DestDt,
+                     const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildNot(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *RHS,
+                 const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildOr(const LilyIrLlvm *Self,
+                const LilyIrLlvmScope *Scope,
+                const LilyIrLlvmPending *Pending,
+                const LilyMirInstructionVal *LHS,
+                const LilyMirInstructionVal *RHS,
+                const char *Name);
+
+LLVMBasicBlockRef
+LilyLLVMBuildBlock(const LilyIrLlvm *Self,
+                   const LilyIrLlvmScope *Scope,
+                   const LilyIrLlvmPending *Pending,
+                   Vec *Insts,
+                   const char *Name);
+
+LLVMValueRef
 LilyLLVMBuildAdd(const LilyIrLlvm *Self,
                  const LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
