@@ -344,9 +344,9 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
             UNREACHABLE("unknown variant");
     }
 
-	if (Inst->kind != LILY_MIR_INSTRUCTION_KIND_BLOCK) {
-		ASSERT(res);
-	}
+    if (Inst->kind != LILY_MIR_INSTRUCTION_KIND_BLOCK) {
+        ASSERT(res);
+    }
 
     return res;
 }
