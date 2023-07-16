@@ -25,15 +25,22 @@
 #ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_PENDING_H
 #define LILY_CORE_LILY_COMPILER_IR_LLVM_PENDING_H
 
+#include <base/assert.h>
 #include <base/hash_map.h>
+#include <base/stack.h>
 
 #include <llvm-c/Core.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef struct LilyIrLlvmPending
 {
     LLVMValueRef current_fun; // LLVMValueRef? (&)
     HashMap *structs;         // HashMap<LLVMTypeRef (&)>*
     HashMap *funs;            // HashMap<LLVMValueRef (&)>*
+    HashMap *blocks;          // HashMap<LLVMBasicBlockRef (&)>*
 } LilyIrLlvmPending;
 
 /**
@@ -44,7 +51,8 @@ inline CONSTRUCTOR(LilyIrLlvmPending, LilyIrLlvmPending)
 {
     return (LilyIrLlvmPending){ .current_fun = NULL,
                                 .structs = NEW(HashMap),
-                                .funs = NEW(HashMap) };
+                                .funs = NEW(HashMap),
+                                .blocks = NEW(HashMap) };
 }
 
 /**
@@ -65,6 +73,28 @@ inline LLVMValueRef
 get_fun__LilyIrLlvmPending(const LilyIrLlvmPending *self, const char *name)
 {
     return get__HashMap(self->funs, (char *)name);
+}
+
+/**
+ *
+ * @brief Get block from `blocks` field.
+ */
+inline LLVMBasicBlockRef
+get_block__LilyIrLlvmPending(const LilyIrLlvmPending *self, const char *name)
+{
+    return remove__HashMap(self->blocks, (char *)name);
+}
+
+/**
+ *
+ * @brief Add block to the `blocks` field.
+ */
+inline void
+add_block__LilyIrLlvmPending(const LilyIrLlvmPending *self,
+                             const char *name,
+                             LLVMBasicBlockRef block)
+{
+    ASSERT(!insert__HashMap(self->blocks, (char *)name, block));
 }
 
 /**

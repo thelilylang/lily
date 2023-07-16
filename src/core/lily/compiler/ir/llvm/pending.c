@@ -28,4 +28,5 @@ DESTRUCTOR(LilyIrLLvmPending, const LilyIrLlvmPending *self)
 {
     FREE(HashMap, self->funs);
     FREE(HashMap, self->structs);
+    FREE(HashMap, self->blocks);
 }
