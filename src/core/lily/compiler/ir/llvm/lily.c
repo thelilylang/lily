@@ -31,6 +31,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+LLVMBasicBlockRef
+LilyLLVMCreateBasicBlock(const LilyIrLlvm *Self,
+                         const LilyIrLlvmPending *Pending,
+                         const char *Name)
+{
+    LLVMBasicBlockRef match = get_block__LilyIrLlvmPending(Pending, Name);
+
+    if (match) {
+        return match;
+    }
+
+    return LLVMCreateBasicBlockInContext(Self->context, Name);
+}
+
 LLVMValueRef
 LilyLLVMGetNamedFunction(const LilyIrLlvm *Self,
                          const LilyIrLlvmPending *Pending,
@@ -131,8 +145,7 @@ LilyLLVMBuildBlock(const LilyIrLlvm *Self,
                    const Vec *Insts,
                    const char *Name)
 {
-    LLVMBasicBlockRef block =
-      LLVMCreateBasicBlockInContext(Self->context, Name);
+    LLVMBasicBlockRef block = LilyLLVMCreateBasicBlock(Self, Pending, Name);
 
     LLVMPositionBuilderAtEnd(Self->builder, block);
 
@@ -518,6 +531,52 @@ LilyLLVMBuildGetPtr(const LilyIrLlvm *Self,
 }
 
 LLVMValueRef
+LilyLLVMBuildJmp(const LilyIrLlvm *Self,
+                 const LilyIrLlvmPending *Pending,
+                 const char *Name)
+{
+    LLVMBasicBlockRef Dest = LilyLLVMCreateBasicBlock(Self, Pending, Name);
+    LLVMValueRef jmp = LLVMBuildBr(Self->builder, Dest);
+
+    LLVMPositionBuilderAtEnd(Self->builder, Dest);
+
+    return jmp;
+}
+
+LLVMValueRef
+LilyLLVMBuildJmpCond(const LilyIrLlvm *Self,
+                     const LilyIrLlvmScope *Scope,
+                     const LilyIrLlvmPending *Pending,
+                     const LilyMirInstructionVal *Cond,
+                     const char *ThenName,
+                     const char *ElseName)
+{
+    LLVMBasicBlockRef Then = LilyLLVMCreateBasicBlock(Self, Pending, ThenName);
+    LLVMBasicBlockRef Else = LilyLLVMCreateBasicBlock(Self, Pending, ElseName);
+    LLVMValueRef If = LilyLLVMBuildVal(Self, Scope, Pending, Cond);
+
+    add_block__LilyIrLlvmPending(Pending, ElseName, Else);
+
+    return LLVMBuildCondBr(Self->builder, If, Then, Else);
+}
+
+LLVMValueRef
+LilyLLVMBuildLoad(const LilyIrLlvm *Self,
+                  const LilyIrLlvmScope *Scope,
+                  const LilyIrLlvmPending *Pending,
+                  const LilyMirInstructionVal *Val,
+                  const LilyMirDt *DT,
+                  const char *Name)
+{
+    LLVMTypeRef Ty = LilyLLVMGetType(Self, Pending, DT);
+
+    ASSERT(Ty);
+
+    return LLVMBuildLoad2(
+      Self->builder, Ty, LilyLLVMBuildVal(Self, Scope, Pending, Val), Name);
+}
+
+LLVMValueRef
 LilyLLVMBuildVal(const LilyIrLlvm *Self,
                  const LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
@@ -874,6 +933,220 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                    false,
                                    Name);
             break;
+        case LILY_MIR_INSTRUCTION_KIND_ICMP_EQ:
+            res = LilyLLVMBuildCmpEq(Self,
+                                     Scope,
+                                     Pending,
+                                     Inst->icmp_eq.dest,
+                                     Inst->icmp_eq.src,
+                                     false,
+                                     Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_ICMP_NE:
+            res = LilyLLVMBuildCmpNe(Self,
+                                     Scope,
+                                     Pending,
+                                     Inst->icmp_eq.dest,
+                                     Inst->icmp_eq.src,
+                                     false,
+                                     Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_ICMP_LE:
+        case LILY_MIR_INSTRUCTION_KIND_ICMP_LT:
+        case LILY_MIR_INSTRUCTION_KIND_ICMP_GE:
+        case LILY_MIR_INSTRUCTION_KIND_ICMP_GT:
+        case LILY_MIR_INSTRUCTION_KIND_IDIV:
+        case LILY_MIR_INSTRUCTION_KIND_IREM: {
+            bool left_is_signed = is_signed__LilyMirDt(Inst->icmp_eq.dest->dt);
+            bool right_is_signed = is_signed__LilyMirDt(Inst->icmp_eq.src->dt);
+
+            if (left_is_signed && right_is_signed) {
+                switch (Inst->kind) {
+                    case LILY_MIR_INSTRUCTION_KIND_ICMP_LE:
+                        res = LilyLLVMBuildCmpLe(Self,
+                                                 Scope,
+                                                 Pending,
+                                                 Inst->icmp_le.dest,
+                                                 Inst->icmp_le.src,
+                                                 false,
+                                                 true,
+                                                 Name);
+                        break;
+                    case LILY_MIR_INSTRUCTION_KIND_ICMP_LT:
+                        res = LilyLLVMBuildCmpLt(Self,
+                                                 Scope,
+                                                 Pending,
+                                                 Inst->icmp_lt.dest,
+                                                 Inst->icmp_lt.src,
+                                                 false,
+                                                 true,
+                                                 Name);
+                        break;
+                    case LILY_MIR_INSTRUCTION_KIND_ICMP_GE:
+                        res = LilyLLVMBuildCmpGe(Self,
+                                                 Scope,
+                                                 Pending,
+                                                 Inst->icmp_ge.dest,
+                                                 Inst->icmp_ge.src,
+                                                 false,
+                                                 true,
+                                                 Name);
+                        break;
+                    case LILY_MIR_INSTRUCTION_KIND_ICMP_GT:
+                        res = LilyLLVMBuildCmpGt(Self,
+                                                 Scope,
+                                                 Pending,
+                                                 Inst->icmp_gt.dest,
+                                                 Inst->icmp_gt.src,
+                                                 false,
+                                                 true,
+                                                 Name);
+                        break;
+                    case LILY_MIR_INSTRUCTION_KIND_IDIV:
+                        res = LilyLLVMBuildDiv(Self,
+                                               Scope,
+                                               Pending,
+                                               Inst->idiv.dest,
+                                               Inst->idiv.src,
+                                               false,
+                                               true,
+                                               Name);
+                        break;
+                    case LILY_MIR_INSTRUCTION_KIND_IREM:
+                        res = LilyLLVMBuildRem(Self,
+                                               Scope,
+                                               Pending,
+                                               Inst->irem.dest,
+                                               Inst->irem.src,
+                                               false,
+                                               true,
+                                               Name);
+                        break;
+                    default:
+                        UNREACHABLE("this variant is not expected");
+                }
+            } else if (!left_is_signed && !right_is_signed) {
+                switch (Inst->kind) {
+                    case LILY_MIR_INSTRUCTION_KIND_ICMP_LE:
+                        res = LilyLLVMBuildCmpLe(Self,
+                                                 Scope,
+                                                 Pending,
+                                                 Inst->icmp_le.dest,
+                                                 Inst->icmp_le.src,
+                                                 false,
+                                                 false,
+                                                 Name);
+                        break;
+                    case LILY_MIR_INSTRUCTION_KIND_ICMP_LT:
+                        res = LilyLLVMBuildCmpLt(Self,
+                                                 Scope,
+                                                 Pending,
+                                                 Inst->icmp_lt.dest,
+                                                 Inst->icmp_lt.src,
+                                                 false,
+                                                 false,
+                                                 Name);
+                        break;
+                    case LILY_MIR_INSTRUCTION_KIND_ICMP_GE:
+                        res = LilyLLVMBuildCmpGe(Self,
+                                                 Scope,
+                                                 Pending,
+                                                 Inst->icmp_ge.dest,
+                                                 Inst->icmp_ge.src,
+                                                 false,
+                                                 false,
+                                                 Name);
+                        break;
+                    case LILY_MIR_INSTRUCTION_KIND_ICMP_GT:
+                        res = LilyLLVMBuildCmpGt(Self,
+                                                 Scope,
+                                                 Pending,
+                                                 Inst->icmp_gt.dest,
+                                                 Inst->icmp_gt.src,
+                                                 false,
+                                                 false,
+                                                 Name);
+                        break;
+                    case LILY_MIR_INSTRUCTION_KIND_IDIV:
+                        res = LilyLLVMBuildDiv(Self,
+                                               Scope,
+                                               Pending,
+                                               Inst->idiv.dest,
+                                               Inst->idiv.src,
+                                               false,
+                                               false,
+                                               Name);
+                        break;
+                    case LILY_MIR_INSTRUCTION_KIND_IREM:
+                        res = LilyLLVMBuildRem(Self,
+                                               Scope,
+                                               Pending,
+                                               Inst->irem.dest,
+                                               Inst->irem.src,
+                                               false,
+                                               false,
+                                               Name);
+                        break;
+                    default:
+                        UNREACHABLE("this variant is not expected");
+                }
+            } else {
+                UNREACHABLE("both sides of the expression are expected with "
+                            "the same integer types (unsigned or signed).");
+            }
+
+            break;
+        }
+        case LILY_MIR_INSTRUCTION_KIND_IMUL:
+            res = LilyLLVMBuildMul(Self,
+                                   Scope,
+                                   Pending,
+                                   Inst->imul.dest,
+                                   Inst->imul.src,
+                                   false,
+                                   Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_INCTRACE:
+            TODO("inctrace");
+        case LILY_MIR_INSTRUCTION_KIND_INEG:
+            res = LilyLLVMBuildNeg(
+              Self, Scope, Pending, Inst->ineg.src, false, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_ISOK:
+            TODO("isok");
+        case LILY_MIR_INSTRUCTION_KIND_ISERR:
+            TODO("iserr");
+        case LILY_MIR_INSTRUCTION_KIND_ISUB:
+            res = LilyLLVMBuildSub(Self,
+                                   Scope,
+                                   Pending,
+                                   Inst->isub.dest,
+                                   Inst->isub.src,
+                                   false,
+                                   Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_JMP:
+            res = LilyLLVMBuildJmp(Self, Pending, Inst->jmp->name->buffer);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_JMPCOND:
+            res = LilyLLVMBuildJmpCond(Self,
+                                       Scope,
+                                       Pending,
+                                       Inst->jmpcond.cond,
+                                       Inst->jmpcond.then_block->name->buffer,
+                                       Inst->jmpcond.else_block->name->buffer);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_LEN:
+            res = LilyLLVMBuildLen(Self, Scope, Pending, Inst->len.src, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_LOAD:
+            res = LilyLLVMBuildLoad(
+              Self, Scope, Pending, Inst->load.src.src, Inst->load.dt, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_MAKEREF:
+            TODO("makeref");
+        case LILY_MIR_INSTRUCTION_KIND_MAKEOPT:
+            TODO("makeopt");
         default:
             UNREACHABLE("unknown variant");
     }

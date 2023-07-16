@@ -33,6 +33,11 @@
 
 #include <llvm-c/Core.h>
 
+LLVMBasicBlockRef
+LilyLLVMCreateBasicBlock(const LilyIrLlvm *Self,
+                         const LilyIrLlvmPending *Pending,
+                         const char *Name);
+
 LLVMValueRef
 LilyLLVMGetNamedFunction(const LilyIrLlvm *Self,
                          const LilyIrLlvmPending *Pending,
@@ -241,10 +246,42 @@ LilyLLVMBuildGetPtr(const LilyIrLlvm *Self,
                     const char *Name);
 
 LLVMValueRef
+LilyLLVMBuildJmp(const LilyIrLlvm *Self,
+                 const LilyIrLlvmPending *Pending,
+                 const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildJmpCond(const LilyIrLlvm *Self,
+                     const LilyIrLlvmScope *Scope,
+                     const LilyIrLlvmPending *Pending,
+                     const LilyMirInstructionVal *Cond,
+                     const char *ThenName,
+                     const char *ElseName);
+
+LLVMValueRef
+LilyLLVMBuildLoad(const LilyIrLlvm *Self,
+                  const LilyIrLlvmScope *Scope,
+                  const LilyIrLlvmPending *Pending,
+                  const LilyMirInstructionVal *Val,
+                  const LilyMirDt *DT,
+                  const char *Name);
+
+LLVMValueRef
 LilyLLVMBuildVal(const LilyIrLlvm *Self,
                  const LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *Val);
+
+inline LLVMValueRef
+LilyLLVMBuildLen(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *Val,
+                 const char *Name)
+{
+    return LLVMBuildExtractValue(
+      Self->builder, LilyLLVMBuildVal(Self, Scope, Pending, Val), 1, Name);
+}
 
 LLVMValueRef
 LilyLLVMBuildInst(const LilyIrLlvm *Self,
