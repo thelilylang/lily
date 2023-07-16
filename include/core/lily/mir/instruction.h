@@ -929,7 +929,8 @@ DESTRUCTOR(LilyMirInstructionLoad, const LilyMirInstructionLoad *self);
 typedef struct LilyMirInstructionJmpCond
 {
     LilyMirInstructionVal *cond;
-    LilyMirInstructionBlock *block; // LilyMirInstructionBlock* (&)
+    LilyMirInstructionBlock *then_block; // LilyMirInstructionBlock* (&)
+    LilyMirInstructionBlock *else_block; // LilyMirInstructionBlock* (&)
 } LilyMirInstructionJmpCond;
 
 /**
@@ -939,9 +940,12 @@ typedef struct LilyMirInstructionJmpCond
 inline CONSTRUCTOR(LilyMirInstructionJmpCond,
                    LilyMirInstructionJmpCond,
                    LilyMirInstructionVal *cond,
-                   LilyMirInstructionBlock *block)
+                   LilyMirInstructionBlock *then_block,
+                   LilyMirInstructionBlock *else_block)
 {
-    return (LilyMirInstructionJmpCond){ .cond = cond, .block = block };
+    return (LilyMirInstructionJmpCond){ .cond = cond,
+                                        .then_block = then_block,
+                                        .else_block = else_block };
 }
 
 /**

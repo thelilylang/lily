@@ -1197,9 +1197,11 @@ IMPL_FOR_DEBUG(to_string,
                const LilyMirInstructionJmpCond *self)
 {
     return format__String(
-      "\x1b[34mjmpcond\x1b[0m {Sr}, \x1b[33mblock\x1b[0m {s}",
+      "\x1b[34mjmpcond\x1b[0m {Sr} then \x1b[33mblock\x1b[0m {S} else "
+      "\x1b[33mblock\x1b[0m {S}",
       to_string__Debug__LilyMirInstructionVal(self->cond),
-      self->block->name);
+      self->then_block->name,
+      self->else_block->name);
 }
 #endif
 
