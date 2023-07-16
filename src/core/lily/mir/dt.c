@@ -326,6 +326,29 @@ eq__LilyMirDt(LilyMirDt *self, LilyMirDt *other)
     }
 }
 
+bool
+is_signed__LilyMirDt(LilyMirDt *self)
+{
+    switch (self->kind) {
+        case LILY_MIR_DT_KIND_BYTES:
+        case LILY_MIR_DT_KIND_U8:
+        case LILY_MIR_DT_KIND_U16:
+        case LILY_MIR_DT_KIND_U32:
+        case LILY_MIR_DT_KIND_U64:
+        case LILY_MIR_DT_KIND_USIZE:
+            return false;
+        case LILY_MIR_DT_KIND_I1:
+        case LILY_MIR_DT_KIND_I8:
+        case LILY_MIR_DT_KIND_I16:
+        case LILY_MIR_DT_KIND_I32:
+        case LILY_MIR_DT_KIND_I64:
+        case LILY_MIR_DT_KIND_ISIZE:
+            return true;
+        default:
+            UNREACHABLE("no expected to check if is a signed data type");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyMirDt, const LilyMirDt *self)

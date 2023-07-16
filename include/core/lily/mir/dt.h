@@ -232,6 +232,13 @@ eq__LilyMirDt(LilyMirDt *self, LilyMirDt *other);
 
 /**
  *
+ * @brief Return true if the data type is signed, otherwise return false.
+ */
+bool
+is_signed__LilyMirDt(LilyMirDt *self);
+
+/**
+ *
  * @brief Convert LilyMirDt in String.
  * @note This function is only used to debug.
  */
