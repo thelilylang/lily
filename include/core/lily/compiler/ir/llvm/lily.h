@@ -34,6 +34,11 @@
 #include <llvm-c/Core.h>
 
 LLVMValueRef
+LilyLLVMGetNamedFunction(const LilyIrLlvm *Self,
+                         const LilyIrLlvmPending *Pending,
+                         const char *Name);
+
+LLVMValueRef
 LilyLLVMBuildAlloc(const LilyIrLlvm *Self,
                    const LilyIrLlvmPending *Pending,
                    const LilyMirInstruction *Inst,
@@ -74,8 +79,24 @@ LLVMBasicBlockRef
 LilyLLVMBuildBlock(const LilyIrLlvm *Self,
                    const LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
-                   Vec *Insts,
+                   const Vec *Insts,
                    const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildBuiltinCall(const LilyIrLlvm *Self,
+                         const LilyIrLlvmScope *Scope,
+                         const LilyIrLlvmPending *Pending,
+                         const Vec *Params,
+                         const char *BuiltinName,
+                         const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildCall(const LilyIrLlvm *Self,
+                  const LilyIrLlvmScope *Scope,
+                  const LilyIrLlvmPending *Pending,
+                  const Vec *Params,
+                  const char *FnName,
+                  const char *Name);
 
 LLVMValueRef
 LilyLLVMBuildAdd(const LilyIrLlvm *Self,
@@ -85,6 +106,64 @@ LilyLLVMBuildAdd(const LilyIrLlvm *Self,
                  const LilyMirInstructionVal *RHS,
                  bool IsFloat,
                  const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildCmpEq(const LilyIrLlvm *Self,
+                   const LilyIrLlvmScope *Scope,
+                   const LilyIrLlvmPending *Pending,
+                   const LilyMirInstructionVal *LHS,
+                   const LilyMirInstructionVal *RHS,
+                   bool IsFloat,
+                   const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildCmpNe(const LilyIrLlvm *Self,
+                   const LilyIrLlvmScope *Scope,
+                   const LilyIrLlvmPending *Pending,
+                   const LilyMirInstructionVal *LHS,
+                   const LilyMirInstructionVal *RHS,
+                   bool IsFloat,
+                   const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildCmpLe(const LilyIrLlvm *Self,
+                   const LilyIrLlvmScope *Scope,
+                   const LilyIrLlvmPending *Pending,
+                   const LilyMirInstructionVal *LHS,
+                   const LilyMirInstructionVal *RHS,
+                   bool IsFloat,
+                   bool IsSigned,
+                   const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildCmpLt(const LilyIrLlvm *Self,
+                   const LilyIrLlvmScope *Scope,
+                   const LilyIrLlvmPending *Pending,
+                   const LilyMirInstructionVal *LHS,
+                   const LilyMirInstructionVal *RHS,
+                   bool IsFloat,
+                   bool IsSigned,
+                   const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildCmpGe(const LilyIrLlvm *Self,
+                   const LilyIrLlvmScope *Scope,
+                   const LilyIrLlvmPending *Pending,
+                   const LilyMirInstructionVal *LHS,
+                   const LilyMirInstructionVal *RHS,
+                   bool IsFloat,
+                   bool IsSigned,
+                   const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildCmpGt(const LilyIrLlvm *Self,
+                   const LilyIrLlvmScope *Scope,
+                   const LilyIrLlvmPending *Pending,
+                   const LilyMirInstructionVal *LHS,
+                   const LilyMirInstructionVal *RHS,
+                   bool IsFloat,
+                   bool IsSigned,
+                   const char *Name);
 
 LLVMValueRef
 LilyLLVMBuildVal(const LilyIrLlvm *Self,
