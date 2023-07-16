@@ -217,10 +217,28 @@ LLVMValueRef
 LilyLLVMBuildGetArray(const LilyIrLlvm *Self,
                       const LilyIrLlvmScope *Scope,
                       const LilyIrLlvmPending *Pending,
-                      LilyMirInstructionVal *Val,
-                      LilyMirDt *DT,
-                      Vec *Indexes,
+                      const LilyMirInstructionVal *Val,
+                      const LilyMirDt *DT,
+                      const Vec *Indexes,
+                      bool IsConst,
                       const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildGetField(const LilyIrLlvm *Self,
+                      const LilyIrLlvmScope *Scope,
+                      const LilyIrLlvmPending *Pending,
+                      const LilyMirInstructionVal *Val,
+                      const LilyMirDt *DT,
+                      const Vec *Indexes,
+                      const char *Name);
+
+LLVMValueRef
+LilyLLVMBuildGetPtr(const LilyIrLlvm *Self,
+                    const LilyIrLlvmScope *Scope,
+                    const LilyIrLlvmPending *Pending,
+                    const LilyMirInstructionVal *Val,
+                    const LilyMirDt *DT,
+                    const char *Name);
 
 LLVMValueRef
 LilyLLVMBuildVal(const LilyIrLlvm *Self,

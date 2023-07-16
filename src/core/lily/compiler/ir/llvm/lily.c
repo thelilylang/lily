@@ -432,9 +432,57 @@ LLVMValueRef
 LilyLLVMBuildGetArray(const LilyIrLlvm *Self,
                       const LilyIrLlvmScope *Scope,
                       const LilyIrLlvmPending *Pending,
-                      LilyMirInstructionVal *Val,
-                      LilyMirDt *DT,
-                      Vec *Indexes,
+                      const LilyMirInstructionVal *Val,
+                      const LilyMirDt *DT,
+                      const Vec *Indexes,
+                      bool IsConst,
+                      const char *Name)
+{
+    LLVMTypeRef ResultType = LilyLLVMGetType(Self, Pending, DT);
+
+    ASSERT(ResultType);
+
+    if (IsConst) {
+        LLVMValueRef CurrentValue = LilyLLVMBuildVal(Self, Scope, Pending, Val);
+
+        for (Usize i = 0; i < Indexes->len; ++i) {
+            LilyMirInstructionVal *item = get__Vec(Indexes, i);
+            Usize Index;
+
+            switch (item->kind) {
+                case LILY_MIR_INSTRUCTION_VAL_KIND_UINT:
+                    Index = item->uint;
+                    break;
+                default:
+                    UNREACHABLE("these values are not expected");
+            }
+
+            CurrentValue = LLVMBuildExtractValue(
+              Self->builder, CurrentValue, Index, "extract.const.array");
+        }
+
+        return CurrentValue;
+    }
+
+    LLVMValueRef Pointer = LilyLLVMBuildVal(Self, Scope, Pending, Val);
+    LLVMValueRef Layers[MAX_LAYERS] = { 0 };
+
+    for (Usize i = 0; i < Indexes->len; ++i) {
+        Layers[i] =
+          LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Indexes, i));
+    }
+
+    return LLVMBuildGEP2(
+      Self->builder, ResultType, Pointer, Layers, Indexes->len, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildGetField(const LilyIrLlvm *Self,
+                      const LilyIrLlvmScope *Scope,
+                      const LilyIrLlvmPending *Pending,
+                      const LilyMirInstructionVal *Val,
+                      const LilyMirDt *DT,
+                      const Vec *Indexes,
                       const char *Name)
 {
     LLVMTypeRef ResultType = LilyLLVMGetType(Self, Pending, DT);
@@ -442,19 +490,31 @@ LilyLLVMBuildGetArray(const LilyIrLlvm *Self,
     ASSERT(ResultType);
 
     LLVMValueRef Pointer = LilyLLVMBuildVal(Self, Scope, Pending, Val);
-    LLVMValueRef Layers[MAX_LAYERS] = { 0 };
+    LLVMValueRef Layers[MAX_RECORD_FIELDS] = { 0 };
 
     for (Usize i = 0; i < Indexes->len; ++i) {
-        LLVMValueRef Layer =
+        Layers[i] =
           LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Indexes, i));
-
-        ASSERT(Layer);
-
-        Layers[i] = Layer;
     }
 
     return LLVMBuildGEP2(
       Self->builder, ResultType, Pointer, Layers, Indexes->len, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildGetPtr(const LilyIrLlvm *Self,
+                    const LilyIrLlvmScope *Scope,
+                    const LilyIrLlvmPending *Pending,
+                    const LilyMirInstructionVal *Val,
+                    const LilyMirDt *DT,
+                    const char *Name)
+{
+    LLVMTypeRef Ty = LilyLLVMGetType(Self, Pending, DT);
+
+    ASSERT(Ty);
+
+    return LLVMBuildLoad2(
+      Self->builder, Ty, LilyLLVMBuildVal(Self, Scope, Pending, Val), Name);
 }
 
 LLVMValueRef
@@ -774,6 +834,36 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
         case LILY_MIR_INSTRUCTION_KIND_GETARG:
             TODO("getarg");
         case LILY_MIR_INSTRUCTION_KIND_GETARRAY:
+            res = LilyLLVMBuildGetArray(Self,
+                                        Scope,
+                                        Pending,
+                                        Inst->getarray.val,
+                                        Inst->getarray.dt,
+                                        Inst->getarray.indexes,
+                                        Inst->getarray.is_const,
+                                        Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_GETLIST:
+            TODO("getlist");
+        case LILY_MIR_INSTRUCTION_KIND_GETSLICE:
+            TODO("getslice");
+        case LILY_MIR_INSTRUCTION_KIND_GETFIELD:
+            res = LilyLLVMBuildGetField(Self,
+                                        Scope,
+                                        Pending,
+                                        Inst->getfield.val,
+                                        Inst->getfield.dt,
+                                        Inst->getfield.indexes,
+                                        Name);
+        case LILY_MIR_INSTRUCTION_KIND_GETPTR:
+            ASSERT(Inst->getptr.src->dt->kind == LILY_MIR_DT_KIND_PTR);
+
+            res = LilyLLVMBuildGetPtr(Self,
+                                      Scope,
+                                      Pending,
+                                      Inst->getptr.src,
+                                      Inst->getptr.src->dt->ptr,
+                                      Name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_IADD:
             res = LilyLLVMBuildAdd(Self,
