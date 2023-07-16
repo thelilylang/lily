@@ -148,9 +148,14 @@ LilyLLVMBuildBuiltinCall(const LilyIrLlvm *Self,
                          const LilyIrLlvmScope *Scope,
                          const LilyIrLlvmPending *Pending,
                          const Vec *Params,
+                         const LilyMirDt *DT,
                          const char *BuiltinName,
                          const char *Name)
 {
+    LLVMTypeRef CallType = LilyLLVMGetType(Self, Pending, DT);
+
+    ASSERT(CallType);
+
     LLVMValueRef Fn = LLVMGetNamedFunction(Self->module, BuiltinName);
     LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
 
@@ -158,8 +163,7 @@ LilyLLVMBuildBuiltinCall(const LilyIrLlvm *Self,
         Args[i] = LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Params, i));
     }
 
-    return LLVMBuildCall2(
-      Self->builder, LLVMTypeOf(Fn), Fn, Args, Params->len, Name);
+    return LLVMBuildCall2(Self->builder, CallType, Fn, Args, Params->len, Name);
 }
 
 LLVMValueRef
@@ -167,9 +171,14 @@ LilyLLVMBuildCall(const LilyIrLlvm *Self,
                   const LilyIrLlvmScope *Scope,
                   const LilyIrLlvmPending *Pending,
                   const Vec *Params,
+                  const LilyMirDt *DT,
                   const char *FnName,
                   const char *Name)
 {
+    LLVMTypeRef CallType = LilyLLVMGetType(Self, Pending, DT);
+
+    ASSERT(CallType);
+
     LLVMValueRef Fn = LilyLLVMGetNamedFunction(Self, Pending, FnName);
     LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
 
@@ -177,8 +186,7 @@ LilyLLVMBuildCall(const LilyIrLlvm *Self,
         Args[i] = LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Params, i));
     }
 
-    return LLVMBuildCall2(
-      Self->builder, LLVMTypeOf(Fn), Fn, Args, Params->len, Name);
+    return LLVMBuildCall2(Self->builder, CallType, Fn, Args, Params->len, Name);
 }
 
 LLVMValueRef
@@ -326,6 +334,127 @@ LilyLLVMBuildCmpGt(const LilyIrLlvm *Self,
            : IsSigned
              ? LLVMBuildICmp(Self->builder, LLVMIntSGT, left, right, Name)
              : LLVMBuildICmp(Self->builder, LLVMIntUGT, left, right, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildDiv(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *LHS,
+                 const LilyMirInstructionVal *RHS,
+                 bool IsFloat,
+                 bool IsSigned,
+                 const char *Name)
+{
+    LLVMValueRef left = LilyLLVMBuildVal(Self, Scope, Pending, LHS);
+    LLVMValueRef right = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(left && right);
+
+    return IsFloat    ? LLVMBuildFDiv(Self->builder, left, right, Name)
+           : IsSigned ? LLVMBuildSDiv(Self->builder, left, right, Name)
+                      : LLVMBuildUDiv(Self->builder, left, right, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildMul(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *LHS,
+                 const LilyMirInstructionVal *RHS,
+                 bool IsFloat,
+                 const char *Name)
+{
+    LLVMValueRef left = LilyLLVMBuildVal(Self, Scope, Pending, LHS);
+    LLVMValueRef right = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(left && right);
+
+    return IsFloat ? LLVMBuildFMul(Self->builder, left, right, Name)
+                   : LLVMBuildMul(Self->builder, left, right, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildNeg(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *RHS,
+                 bool IsFloat,
+                 const char *Name)
+{
+    LLVMValueRef V = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(V);
+
+    return IsFloat ? LLVMBuildFNeg(Self->builder, V, Name)
+                   : LLVMBuildNeg(Self->builder, V, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildRem(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *LHS,
+                 const LilyMirInstructionVal *RHS,
+                 bool IsFloat,
+                 bool IsSigned,
+                 const char *Name)
+{
+    LLVMValueRef left = LilyLLVMBuildVal(Self, Scope, Pending, LHS);
+    LLVMValueRef right = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(left && right);
+
+    return IsFloat    ? LLVMBuildFRem(Self->builder, left, right, Name)
+           : IsSigned ? LLVMBuildSRem(Self->builder, left, right, Name)
+                      : LLVMBuildURem(Self->builder, left, right, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildSub(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *LHS,
+                 const LilyMirInstructionVal *RHS,
+                 bool IsFloat,
+                 const char *Name)
+{
+    LLVMValueRef left = LilyLLVMBuildVal(Self, Scope, Pending, LHS);
+    LLVMValueRef right = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(left && right);
+
+    return IsFloat ? LLVMBuildFSub(Self->builder, left, right, Name)
+                   : LLVMBuildSub(Self->builder, left, right, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildGetArray(const LilyIrLlvm *Self,
+                      const LilyIrLlvmScope *Scope,
+                      const LilyIrLlvmPending *Pending,
+                      LilyMirInstructionVal *Val,
+                      LilyMirDt *DT,
+                      Vec *Indexes,
+                      const char *Name)
+{
+    LLVMTypeRef ResultType = LilyLLVMGetType(Self, Pending, DT);
+
+    ASSERT(ResultType);
+
+    LLVMValueRef Pointer = LilyLLVMBuildVal(Self, Scope, Pending, Val);
+    LLVMValueRef Layers[MAX_LAYERS] = { 0 };
+
+    for (Usize i = 0; i < Indexes->len; ++i) {
+        LLVMValueRef Layer =
+          LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Indexes, i));
+
+        ASSERT(Layer);
+
+        Layers[i] = Layer;
+    }
+
+    return LLVMBuildGEP2(
+      Self->builder, ResultType, Pointer, Layers, Indexes->len, Name);
 }
 
 LLVMValueRef
@@ -516,12 +645,18 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                            Scope,
                                            Pending,
                                            Inst->builtin_call.params,
+                                           Inst->builtin_call.return_dt,
                                            Inst->builtin_call.name,
                                            Name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_CALL:
-            res = LilyLLVMBuildCall(
-              Self, Scope, Pending, Inst->call.params, Inst->call.name, Name);
+            res = LilyLLVMBuildCall(Self,
+                                    Scope,
+                                    Pending,
+                                    Inst->call.params,
+                                    Inst->call.return_dt,
+                                    Inst->call.name,
+                                    Name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_DROP:
             TODO("drop instruction");
@@ -593,6 +728,52 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                      true,
                                      true,
                                      Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_FDIV:
+            res = LilyLLVMBuildDiv(Self,
+                                   Scope,
+                                   Pending,
+                                   Inst->fdiv.dest,
+                                   Inst->fdiv.src,
+                                   true,
+                                   true,
+                                   Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_FMUL:
+            res = LilyLLVMBuildMul(Self,
+                                   Scope,
+                                   Pending,
+                                   Inst->fmul.dest,
+                                   Inst->fmul.src,
+                                   true,
+                                   Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_FNEG:
+            res = LilyLLVMBuildNeg(
+              Self, Scope, Pending, Inst->fneg.src, true, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_FREM:
+            res = LilyLLVMBuildRem(Self,
+                                   Scope,
+                                   Pending,
+                                   Inst->frem.dest,
+                                   Inst->frem.src,
+                                   true,
+                                   true,
+                                   Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_FSUB:
+            res = LilyLLVMBuildSub(Self,
+                                   Scope,
+                                   Pending,
+                                   Inst->fsub.dest,
+                                   Inst->fsub.src,
+                                   true,
+                                   Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_GETARG:
+            TODO("getarg");
+        case LILY_MIR_INSTRUCTION_KIND_GETARRAY:
             break;
         case LILY_MIR_INSTRUCTION_KIND_IADD:
             res = LilyLLVMBuildAdd(Self,
