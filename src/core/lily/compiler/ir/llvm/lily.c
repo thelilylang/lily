@@ -577,6 +577,161 @@ LilyLLVMBuildLoad(const LilyIrLlvm *Self,
 }
 
 LLVMValueRef
+LilyLLVMBuildRet(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstruction *Inst)
+{
+    switch (Inst->kind) {
+        case LILY_MIR_INSTRUCTION_KIND_VAL:
+            switch (Inst->val->kind) {
+                case LILY_MIR_INSTRUCTION_VAL_KIND_UNIT:
+                    return LLVMBuildRetVoid(Self->builder);
+                default:
+                    break;
+            }
+        default:
+            return LLVMBuildRet(
+              Self->builder,
+              LilyLLVMBuildInst(Self, Scope, Pending, Inst, NULL));
+    }
+}
+
+LLVMValueRef
+LilyLLVMBuildShl(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *LHS,
+                 const LilyMirInstructionVal *RHS,
+                 const char *Name)
+{
+    LLVMValueRef left = LilyLLVMBuildVal(Self, Scope, Pending, LHS);
+    LLVMValueRef right = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(left && right);
+
+    return LLVMBuildShl(Self->builder, left, right, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildShr(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *LHS,
+                 const LilyMirInstructionVal *RHS,
+                 const char *Name)
+{
+    LLVMValueRef left = LilyLLVMBuildVal(Self, Scope, Pending, LHS);
+    LLVMValueRef right = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(left && right);
+
+    return LLVMBuildAShr(Self->builder, left, right, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildStore(const LilyIrLlvm *Self,
+                   const LilyIrLlvmScope *Scope,
+                   const LilyIrLlvmPending *Pending,
+                   const LilyMirInstructionVal *Src,
+                   const LilyMirInstructionVal *Dest,
+                   const char *Name)
+{
+    LLVMValueRef src = LilyLLVMBuildVal(Self, Scope, Pending, Src);
+    LLVMValueRef dest = LilyLLVMBuildVal(Self, Scope, Pending, Dest);
+
+    ASSERT(src && dest);
+
+    return LLVMBuildStore(Self->builder, src, dest);
+}
+
+LLVMValueRef
+LilyLLVMBuildSwitch(const LilyIrLlvm *Self,
+                    const LilyIrLlvmScope *Scope,
+                    const LilyIrLlvmPending *Pending,
+                    const LilyMirInstructionVal *Val,
+                    const Vec *Cases,
+                    const LilyMirInstructionBlock *DefaultBlock)
+{
+    LLVMValueRef SwitchVal = LilyLLVMBuildVal(Self, Scope, Pending, Val);
+    LLVMBasicBlockRef Else =
+      LilyLLVMCreateBasicBlock(Self, Pending, DefaultBlock->name->buffer);
+    LLVMValueRef Switch =
+      LLVMBuildSwitch(Self->builder, SwitchVal, Else, Cases->len);
+
+    add_block__LilyIrLlvmPending(Pending, DefaultBlock->name->buffer, Else);
+
+    for (Usize i = 0; i < Cases->len; ++i) {
+        LilyMirInstructionSwitchCase *case_ = get__Vec(Cases, i);
+        LLVMValueRef CaseVal =
+          LilyLLVMBuildVal(Self, Scope, Pending, case_->val);
+        LLVMBasicBlockRef CaseBlock = LilyLLVMCreateBasicBlock(
+          Self, Pending, case_->block_dest->name->buffer);
+
+        LLVMAddCase(Switch, CaseVal, CaseBlock);
+        add_block__LilyIrLlvmPending(
+          Pending, case_->block_dest->name->buffer, CaseBlock);
+    }
+
+    return Switch;
+}
+
+LLVMValueRef
+LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
+                     const LilyIrLlvmScope *Scope,
+                     const LilyIrLlvmPending *Pending,
+                     const Vec *Params,
+                     const LilyMirDt *DT,
+                     const char *SysName,
+                     const char *Name)
+{
+    LLVMTypeRef CallType = LilyLLVMGetType(Self, Pending, DT);
+
+    ASSERT(CallType);
+
+    LLVMValueRef Fn = LLVMGetNamedFunction(Self->module, SysName);
+    LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
+
+    for (Usize i = 0; i < Params->len; ++i) {
+        Args[i] = LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Params, i));
+    }
+
+    return LLVMBuildCall2(Self->builder, CallType, Fn, Args, Params->len, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildTrunc(const LilyIrLlvm *Self,
+                   const LilyIrLlvmScope *Scope,
+                   const LilyIrLlvmPending *Pending,
+                   const LilyMirInstructionVal *Src,
+                   const LilyMirDt *DT,
+                   const char *Name)
+{
+    LLVMValueRef Val = LilyLLVMBuildVal(Self, Scope, Pending, Src);
+    LLVMTypeRef DestTy = LilyLLVMGetType(Self, Pending, DT);
+
+    ASSERT(DestTy);
+
+    return LLVMBuildTrunc(Self->builder, Val, DestTy, Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildXor(const LilyIrLlvm *Self,
+                 const LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *LHS,
+                 const LilyMirInstructionVal *RHS,
+                 const char *Name)
+{
+    LLVMValueRef left = LilyLLVMBuildVal(Self, Scope, Pending, LHS);
+    LLVMValueRef right = LilyLLVMBuildVal(Self, Scope, Pending, RHS);
+
+    ASSERT(left && right);
+
+    return LLVMBuildXor(Self->builder, left, right, Name);
+}
+
+LLVMValueRef
 LilyLLVMBuildVal(const LilyIrLlvm *Self,
                  const LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
@@ -1147,6 +1302,76 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
             TODO("makeref");
         case LILY_MIR_INSTRUCTION_KIND_MAKEOPT:
             TODO("makeopt");
+        case LILY_MIR_INSTRUCTION_KIND_NON_NIL:
+            TODO("non nil");
+        case LILY_MIR_INSTRUCTION_KIND_NOT:
+            res = LilyLLVMBuildNot(Self, Scope, Pending, Inst->not .src, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_OR:
+            res = LilyLLVMBuildOr(
+              Self, Scope, Pending, Inst->or.dest, Inst->or.src, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_REF_PTR:
+            TODO("ref ptr");
+        case LILY_MIR_INSTRUCTION_KIND_REG:
+            res = LilyLLVMBuildReg(
+              Self, Scope, Pending, Inst->reg.inst, Inst->reg.name->buffer);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_RET:
+            res = LilyLLVMBuildRet(Self, Scope, Pending, Inst->ret);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_SHL:
+            res = LilyLLVMBuildShl(
+              Self, Scope, Pending, Inst->shl.dest, Inst->shl.src, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_SHR:
+            res = LilyLLVMBuildShr(
+              Self, Scope, Pending, Inst->shr.dest, Inst->shr.src, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_STORE:
+            res = LilyLLVMBuildStore(
+              Self, Scope, Pending, Inst->store.src, Inst->store.dest, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_CONST:
+        case LILY_MIR_INSTRUCTION_KIND_FUN:
+        case LILY_MIR_INSTRUCTION_KIND_STRUCT:
+            UNREACHABLE("not expected in this context");
+        case LILY_MIR_INSTRUCTION_KIND_SWITCH:
+            res = LilyLLVMBuildSwitch(Self,
+                                      Scope,
+                                      Pending,
+                                      Inst->switch_.val,
+                                      Inst->switch_.cases,
+                                      Inst->switch_.default_block);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_SYS_CALL:
+            res = LilyLLVMBuildSysCall(Self,
+                                       Scope,
+                                       Pending,
+                                       Inst->sys_call.params,
+                                       Inst->sys_call.return_dt,
+                                       Inst->sys_call.name,
+                                       Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_TRUNC:
+            res = LilyLLVMBuildTrunc(
+              Self, Scope, Pending, Inst->trunc.val, Inst->trunc.dt, Name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_TRY:
+            TODO("try");
+        case LILY_MIR_INSTRUCTION_KIND_TRY_PTR:
+            TODO("try ptr");
+        case LILY_MIR_INSTRUCTION_KIND_VAL:
+            res = LilyLLVMBuildVal(Self, Scope, Pending, Inst->val);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_VAR:
+            res = LilyLLVMBuildVar(
+              Self, Scope, Pending, Inst->var.inst, Inst->var.name);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_XOR:
+            res = LilyLLVMBuildXor(
+              Self, Scope, Pending, Inst->xor.dest, Inst->xor.src, Name);
+            break;
         default:
             UNREACHABLE("unknown variant");
     }
