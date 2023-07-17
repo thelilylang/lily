@@ -186,35 +186,16 @@ LilyLLVMBuildBuiltinCall(const LilyIrLlvm *Self,
                          LilyIrLlvmScope *Scope,
                          const LilyIrLlvmPending *Pending,
                          const Vec *Params,
+                         const LilyMirDt *ReturnDT,
                          const char *BuiltinName,
                          const char *Name)
 {
     LLVMValueRef Fn = LLVMGetNamedFunction(Self->module, BuiltinName);
-    LLVMTypeRef FnTypes = LLVMTypeOf(Fn);
     LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
+    LLVMTypeRef ParamTypes[MAX_FUN_PARAMS] = { 0 };
+    LLVMTypeRef ReturnType = LilyLLVMGetType(Self, ReturnDT);
 
-    ASSERT(FnTypes);
-
-    for (Usize i = 0; i < Params->len; ++i) {
-        Args[i] = LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Params, i));
-    }
-
-    return LLVMBuildCall2(Self->builder, FnTypes, Fn, Args, Params->len, Name);
-}
-
-LLVMValueRef
-LilyLLVMBuildCall(const LilyIrLlvm *Self,
-                  LilyIrLlvmScope *Scope,
-                  const LilyIrLlvmPending *Pending,
-                  const Vec *Params,
-                  const char *FnName,
-                  const char *Name)
-{
-    LLVMValueRef Fn = LilyLLVMGetNamedFunction(Self, FnName);
-    LLVMTypeRef FnTypes = LLVMTypeOf(Fn);
-    LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
-
-    ASSERT(FnTypes);
+    ASSERT(ReturnType);
 
     for (Usize i = 0; i < Params->len; ++i) {
         LLVMValueRef Arg =
@@ -223,9 +204,51 @@ LilyLLVMBuildCall(const LilyIrLlvm *Self,
         ASSERT(Arg);
 
         Args[i] = Arg;
+        ParamTypes[i] = LLVMTypeOf(Arg);
     }
 
-    return LLVMBuildCall2(Self->builder, FnTypes, Fn, Args, Params->len, Name);
+    return LLVMBuildCall2(
+      Self->builder,
+      LLVMFunctionType(ReturnType, ParamTypes, Params->len, false),
+      Fn,
+      Args,
+      Params->len,
+      Name);
+}
+
+LLVMValueRef
+LilyLLVMBuildCall(const LilyIrLlvm *Self,
+                  LilyIrLlvmScope *Scope,
+                  const LilyIrLlvmPending *Pending,
+                  const Vec *Params,
+                  const LilyMirDt *ReturnDT,
+                  const char *FnName,
+                  const char *Name)
+{
+    LLVMValueRef Fn = LilyLLVMGetNamedFunction(Self, FnName);
+    LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
+    LLVMTypeRef ParamTypes[MAX_FUN_PARAMS] = { 0 };
+    LLVMTypeRef ReturnType = LilyLLVMGetType(Self, ReturnDT);
+
+    ASSERT(ReturnType);
+
+    for (Usize i = 0; i < Params->len; ++i) {
+        LLVMValueRef Arg =
+          LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Params, i));
+
+        ASSERT(Arg);
+
+        Args[i] = Arg;
+        ParamTypes[i] = LLVMTypeOf(Arg);
+    }
+
+    return LLVMBuildCall2(
+      Self->builder,
+      LLVMFunctionType(ReturnType, ParamTypes, Params->len, false),
+      Fn,
+      Args,
+      Params->len,
+      Name);
 }
 
 LLVMValueRef
@@ -732,20 +755,34 @@ LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
                      LilyIrLlvmScope *Scope,
                      const LilyIrLlvmPending *Pending,
                      const Vec *Params,
+                     const LilyMirDt *ReturnDT,
                      const char *SysName,
                      const char *Name)
 {
     LLVMValueRef Fn = LLVMGetNamedFunction(Self->module, SysName);
-    LLVMTypeRef FnTypes = LLVMTypeOf(Fn);
     LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
+    LLVMTypeRef ParamTypes[MAX_FUN_PARAMS] = { 0 };
+    LLVMTypeRef ReturnType = LilyLLVMGetType(Self, ReturnDT);
 
-    ASSERT(FnTypes);
+    ASSERT(ReturnType);
 
     for (Usize i = 0; i < Params->len; ++i) {
-        Args[i] = LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Params, i));
+        LLVMValueRef Arg =
+          LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Params, i));
+
+        ASSERT(Arg);
+
+        Args[i] = Arg;
+        ParamTypes[i] = LLVMTypeOf(Arg);
     }
 
-    return LLVMBuildCall2(Self->builder, FnTypes, Fn, Args, Params->len, Name);
+    return LLVMBuildCall2(
+      Self->builder,
+      LLVMFunctionType(ReturnType, ParamTypes, Params->len, false),
+      Fn,
+      Args,
+      Params->len,
+      Name);
 }
 
 LLVMValueRef
@@ -986,12 +1023,18 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                            Scope,
                                            Pending,
                                            Inst->builtin_call.params,
+                                           Inst->builtin_call.return_dt,
                                            Inst->builtin_call.name,
                                            Name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_CALL:
-            res = LilyLLVMBuildCall(
-              Self, Scope, Pending, Inst->call.params, Inst->call.name, Name);
+            res = LilyLLVMBuildCall(Self,
+                                    Scope,
+                                    Pending,
+                                    Inst->call.params,
+                                    Inst->call.return_dt,
+                                    Inst->call.name,
+                                    Name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_DROP:
             TODO("drop instruction");
@@ -1448,6 +1491,7 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                        Scope,
                                        Pending,
                                        Inst->sys_call.params,
+                                       Inst->sys_call.return_dt,
                                        Inst->sys_call.name,
                                        Name);
             break;

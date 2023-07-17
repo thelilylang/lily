@@ -96,6 +96,7 @@ LilyLLVMBuildBuiltinCall(const LilyIrLlvm *Self,
                          LilyIrLlvmScope *Scope,
                          const LilyIrLlvmPending *Pending,
                          const Vec *Params,
+                         const LilyMirDt *ReturnDT,
                          const char *BuiltinName,
                          const char *Name);
 
@@ -104,6 +105,7 @@ LilyLLVMBuildCall(const LilyIrLlvm *Self,
                   LilyIrLlvmScope *Scope,
                   const LilyIrLlvmPending *Pending,
                   const Vec *Params,
+                  const LilyMirDt *ReturnDT,
                   const char *FnName,
                   const char *Name);
 
@@ -311,6 +313,7 @@ LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
                      LilyIrLlvmScope *Scope,
                      const LilyIrLlvmPending *Pending,
                      const Vec *Params,
+                     const LilyMirDt *ReturnDT,
                      const char *SysName,
                      const char *Name);
 
