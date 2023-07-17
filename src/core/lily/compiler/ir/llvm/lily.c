@@ -36,31 +36,50 @@ LilyLLVMCreateBasicBlock(const LilyIrLlvm *Self,
                          const LilyIrLlvmPending *Pending,
                          const char *Name)
 {
+    ASSERT(Pending->current_fun);
+
     LLVMBasicBlockRef match = get_block__LilyIrLlvmPending(Pending, Name);
 
     if (match) {
         return match;
     }
 
-    return LLVMCreateBasicBlockInContext(Self->context, Name);
+    return LLVMAppendBasicBlockInContext(
+      Self->context, Pending->current_fun, Name);
 }
 
 LLVMValueRef
-LilyLLVMGetNamedFunction(const LilyIrLlvm *Self,
-                         const LilyIrLlvmPending *Pending,
-                         const char *Name)
+LilyLLVMGetNamedFunction(const LilyIrLlvm *Self, const char *Name)
 {
     LLVMValueRef Fn = LLVMGetNamedFunction(Self->module, Name);
-
-    if (Fn) {
-        return Fn;
-    }
-
-    Fn = get_fun__LilyIrLlvmPending(Pending, Name);
 
     ASSERT(Fn);
 
     return Fn;
+}
+
+LLVMTypeRef
+LilyLLVMGetTypeByName(const LilyIrLlvm *Self, const char *Name)
+{
+    LLVMTypeRef Ty = LLVMGetTypeByName2(Self->context, Name);
+
+    ASSERT(Ty);
+
+    return Ty;
+}
+
+void
+LilyLLVMSetLinkage(LLVMValueRef Global, const enum LilyMirLinkage Linkage)
+{
+    switch (Linkage) {
+        case LILY_MIR_LINKAGE_PRIVATE:
+            LLVMSetLinkage(Global, LLVMLinkerPrivateLinkage);
+            break;
+        case LILY_MIR_LINKAGE_PUBLIC:
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 LLVMValueRef
@@ -78,7 +97,7 @@ LilyLLVMBuildAlloc(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildAnd(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *LHS,
                  const LilyMirInstructionVal *RHS,
@@ -94,7 +113,7 @@ LilyLLVMBuildAnd(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildBitCast(const LilyIrLlvm *Self,
-                     const LilyIrLlvmScope *Scope,
+                     LilyIrLlvmScope *Scope,
                      const LilyIrLlvmPending *Pending,
                      const LilyMirInstructionVal *Val,
                      const LilyMirDt *DestDt,
@@ -110,7 +129,7 @@ LilyLLVMBuildBitCast(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildNot(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *RHS,
                  const char *Name)
@@ -124,7 +143,7 @@ LilyLLVMBuildNot(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildOr(const LilyIrLlvm *Self,
-                const LilyIrLlvmScope *Scope,
+                LilyIrLlvmScope *Scope,
                 const LilyIrLlvmPending *Pending,
                 const LilyMirInstructionVal *LHS,
                 const LilyMirInstructionVal *RHS,
@@ -140,17 +159,24 @@ LilyLLVMBuildOr(const LilyIrLlvm *Self,
 
 LLVMBasicBlockRef
 LilyLLVMBuildBlock(const LilyIrLlvm *Self,
-                   const LilyIrLlvmScope *Scope,
+                   LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const Vec *Insts,
+                   const Usize id,
                    const char *Name)
 {
     LLVMBasicBlockRef block = LilyLLVMCreateBasicBlock(Self, Pending, Name);
 
     LLVMPositionBuilderAtEnd(Self->builder, block);
 
+    LilyIrLlvmScope *ScopeBlock = id != 0 ? NEW(LilyIrLlvmScope, Scope) : Scope;
+
     for (Usize i = 0; i < Insts->len; ++i) {
-        LilyLLVMBuildInst(Self, Scope, Pending, get__Vec(Insts, i), NULL);
+        LilyLLVMBuildInst(Self, ScopeBlock, Pending, get__Vec(Insts, i), NULL);
+    }
+
+    if (id != 0) {
+        FREE(LilyIrLlvmScope, ScopeBlock);
     }
 
     return block;
@@ -158,7 +184,7 @@ LilyLLVMBuildBlock(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildBuiltinCall(const LilyIrLlvm *Self,
-                         const LilyIrLlvmScope *Scope,
+                         LilyIrLlvmScope *Scope,
                          const LilyIrLlvmPending *Pending,
                          const Vec *Params,
                          const LilyMirDt *DT,
@@ -181,30 +207,32 @@ LilyLLVMBuildBuiltinCall(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildCall(const LilyIrLlvm *Self,
-                  const LilyIrLlvmScope *Scope,
+                  LilyIrLlvmScope *Scope,
                   const LilyIrLlvmPending *Pending,
                   const Vec *Params,
                   const LilyMirDt *DT,
                   const char *FnName,
                   const char *Name)
 {
-    LLVMTypeRef CallType = LilyLLVMGetType(Self, Pending, DT);
-
-    ASSERT(CallType);
-
-    LLVMValueRef Fn = LilyLLVMGetNamedFunction(Self, Pending, FnName);
+    LLVMValueRef Fn = LilyLLVMGetNamedFunction(Self, FnName);
     LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
 
     for (Usize i = 0; i < Params->len; ++i) {
-        Args[i] = LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Params, i));
+        LLVMValueRef Arg =
+          LilyLLVMBuildVal(Self, Scope, Pending, get__Vec(Params, i));
+
+        ASSERT(Arg);
+
+        Args[i] = Arg;
     }
 
-    return LLVMBuildCall2(Self->builder, CallType, Fn, Args, Params->len, Name);
+    return LLVMBuildCall2(
+      Self->builder, LLVMTypeOf(Fn), Fn, Args, Params->len, Name);
 }
 
 LLVMValueRef
 LilyLLVMBuildAdd(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *LHS,
                  const LilyMirInstructionVal *RHS,
@@ -222,7 +250,7 @@ LilyLLVMBuildAdd(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildCmpEq(const LilyIrLlvm *Self,
-                   const LilyIrLlvmScope *Scope,
+                   LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const LilyMirInstructionVal *LHS,
                    const LilyMirInstructionVal *RHS,
@@ -244,7 +272,7 @@ LilyLLVMBuildCmpEq(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildCmpNe(const LilyIrLlvm *Self,
-                   const LilyIrLlvmScope *Scope,
+                   LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const LilyMirInstructionVal *LHS,
                    const LilyMirInstructionVal *RHS,
@@ -263,7 +291,7 @@ LilyLLVMBuildCmpNe(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildCmpLe(const LilyIrLlvm *Self,
-                   const LilyIrLlvmScope *Scope,
+                   LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const LilyMirInstructionVal *LHS,
                    const LilyMirInstructionVal *RHS,
@@ -285,7 +313,7 @@ LilyLLVMBuildCmpLe(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildCmpLt(const LilyIrLlvm *Self,
-                   const LilyIrLlvmScope *Scope,
+                   LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const LilyMirInstructionVal *LHS,
                    const LilyMirInstructionVal *RHS,
@@ -307,7 +335,7 @@ LilyLLVMBuildCmpLt(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildCmpGe(const LilyIrLlvm *Self,
-                   const LilyIrLlvmScope *Scope,
+                   LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const LilyMirInstructionVal *LHS,
                    const LilyMirInstructionVal *RHS,
@@ -329,7 +357,7 @@ LilyLLVMBuildCmpGe(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildCmpGt(const LilyIrLlvm *Self,
-                   const LilyIrLlvmScope *Scope,
+                   LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const LilyMirInstructionVal *LHS,
                    const LilyMirInstructionVal *RHS,
@@ -351,7 +379,7 @@ LilyLLVMBuildCmpGt(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildDiv(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *LHS,
                  const LilyMirInstructionVal *RHS,
@@ -370,8 +398,19 @@ LilyLLVMBuildDiv(const LilyIrLlvm *Self,
 }
 
 LLVMValueRef
+LilyLLVMBuildLen(const LilyIrLlvm *Self,
+                 LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstructionVal *Val,
+                 const char *Name)
+{
+    return LLVMBuildExtractValue(
+      Self->builder, LilyLLVMBuildVal(Self, Scope, Pending, Val), 1, Name);
+}
+
+LLVMValueRef
 LilyLLVMBuildMul(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *LHS,
                  const LilyMirInstructionVal *RHS,
@@ -389,7 +428,7 @@ LilyLLVMBuildMul(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildNeg(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *RHS,
                  bool IsFloat,
@@ -405,7 +444,7 @@ LilyLLVMBuildNeg(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildRem(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *LHS,
                  const LilyMirInstructionVal *RHS,
@@ -425,7 +464,7 @@ LilyLLVMBuildRem(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildSub(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *LHS,
                  const LilyMirInstructionVal *RHS,
@@ -443,7 +482,7 @@ LilyLLVMBuildSub(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildGetArray(const LilyIrLlvm *Self,
-                      const LilyIrLlvmScope *Scope,
+                      LilyIrLlvmScope *Scope,
                       const LilyIrLlvmPending *Pending,
                       const LilyMirInstructionVal *Val,
                       const LilyMirDt *DT,
@@ -491,7 +530,7 @@ LilyLLVMBuildGetArray(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildGetField(const LilyIrLlvm *Self,
-                      const LilyIrLlvmScope *Scope,
+                      LilyIrLlvmScope *Scope,
                       const LilyIrLlvmPending *Pending,
                       const LilyMirInstructionVal *Val,
                       const LilyMirDt *DT,
@@ -516,7 +555,7 @@ LilyLLVMBuildGetField(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildGetPtr(const LilyIrLlvm *Self,
-                    const LilyIrLlvmScope *Scope,
+                    LilyIrLlvmScope *Scope,
                     const LilyIrLlvmPending *Pending,
                     const LilyMirInstructionVal *Val,
                     const LilyMirDt *DT,
@@ -545,7 +584,7 @@ LilyLLVMBuildJmp(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildJmpCond(const LilyIrLlvm *Self,
-                     const LilyIrLlvmScope *Scope,
+                     LilyIrLlvmScope *Scope,
                      const LilyIrLlvmPending *Pending,
                      const LilyMirInstructionVal *Cond,
                      const char *ThenName,
@@ -562,7 +601,7 @@ LilyLLVMBuildJmpCond(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildLoad(const LilyIrLlvm *Self,
-                  const LilyIrLlvmScope *Scope,
+                  LilyIrLlvmScope *Scope,
                   const LilyIrLlvmPending *Pending,
                   const LilyMirInstructionVal *Val,
                   const LilyMirDt *DT,
@@ -577,8 +616,22 @@ LilyLLVMBuildLoad(const LilyIrLlvm *Self,
 }
 
 LLVMValueRef
+LilyLLVMBuildReg(const LilyIrLlvm *Self,
+                 LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstruction *Inst,
+                 const char *Name)
+{
+    LLVMValueRef res = LilyLLVMBuildInst(Self, Scope, Pending, Inst, Name);
+
+    add__LilyIrLlvmScope(Scope, (char *)Name, res);
+
+    return res;
+}
+
+LLVMValueRef
 LilyLLVMBuildRet(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstruction *Inst)
 {
@@ -599,7 +652,7 @@ LilyLLVMBuildRet(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildShl(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *LHS,
                  const LilyMirInstructionVal *RHS,
@@ -615,7 +668,7 @@ LilyLLVMBuildShl(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildShr(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *LHS,
                  const LilyMirInstructionVal *RHS,
@@ -631,7 +684,7 @@ LilyLLVMBuildShr(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildStore(const LilyIrLlvm *Self,
-                   const LilyIrLlvmScope *Scope,
+                   LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const LilyMirInstructionVal *Src,
                    const LilyMirInstructionVal *Dest,
@@ -647,7 +700,7 @@ LilyLLVMBuildStore(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildSwitch(const LilyIrLlvm *Self,
-                    const LilyIrLlvmScope *Scope,
+                    LilyIrLlvmScope *Scope,
                     const LilyIrLlvmPending *Pending,
                     const LilyMirInstructionVal *Val,
                     const Vec *Cases,
@@ -678,7 +731,7 @@ LilyLLVMBuildSwitch(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
-                     const LilyIrLlvmScope *Scope,
+                     LilyIrLlvmScope *Scope,
                      const LilyIrLlvmPending *Pending,
                      const Vec *Params,
                      const LilyMirDt *DT,
@@ -701,7 +754,7 @@ LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildTrunc(const LilyIrLlvm *Self,
-                   const LilyIrLlvmScope *Scope,
+                   LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const LilyMirInstructionVal *Src,
                    const LilyMirDt *DT,
@@ -716,8 +769,22 @@ LilyLLVMBuildTrunc(const LilyIrLlvm *Self,
 }
 
 LLVMValueRef
+LilyLLVMBuildVar(const LilyIrLlvm *Self,
+                 LilyIrLlvmScope *Scope,
+                 const LilyIrLlvmPending *Pending,
+                 const LilyMirInstruction *Inst,
+                 const char *Name)
+{
+    LLVMValueRef var = LilyLLVMBuildInst(Self, Scope, Pending, Inst, Name);
+
+    add__LilyIrLlvmScope(Scope, (char *)Name, var);
+
+    return var;
+}
+
+LLVMValueRef
 LilyLLVMBuildXor(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *LHS,
                  const LilyMirInstructionVal *RHS,
@@ -733,7 +800,7 @@ LilyLLVMBuildXor(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildVal(const LilyIrLlvm *Self,
-                 const LilyIrLlvmScope *Scope,
+                 LilyIrLlvmScope *Scope,
                  const LilyIrLlvmPending *Pending,
                  const LilyMirInstructionVal *Val)
 {
@@ -867,8 +934,13 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
             return LLVMGetUndef(LilyLLVMGetType(Self, Pending, Val->dt));
         case LILY_MIR_INSTRUCTION_VAL_KIND_UNIT:
             UNREACHABLE("try to generate a return void instruction");
-        case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
-            return get__LilyIrLlvmScope(Scope, Val->reg->buffer);
+        case LILY_MIR_INSTRUCTION_VAL_KIND_VAR: {
+            LLVMValueRef Res = get__LilyIrLlvmScope(Scope, (char *)Val->var);
+
+            ASSERT(Res);
+
+            return Res;
+        }
         default:
             UNREACHABLE("unknown variant");
     }
@@ -876,7 +948,7 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
 
 LLVMValueRef
 LilyLLVMBuildInst(const LilyIrLlvm *Self,
-                  const LilyIrLlvmScope *Scope,
+                  LilyIrLlvmScope *Scope,
                   const LilyIrLlvmPending *Pending,
                   const LilyMirInstruction *Inst,
                   const char *Name)
@@ -912,6 +984,7 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                Scope,
                                Pending,
                                Inst->block.insts,
+                               Inst->block.id,
                                Inst->block.name->buffer);
             break;
         case LILY_MIR_INSTRUCTION_KIND_BUILTIN_CALL:
@@ -1477,7 +1550,7 @@ LilyLLVMGetType(const LilyIrLlvm *Self,
                 return res;
             }
 
-            res = get_struct__LilyIrLlvmPending(Pending, DT->struct_name);
+            res = LilyLLVMGetTypeByName(Self, DT->struct_name);
 
             ASSERT(res);
 
@@ -1513,5 +1586,218 @@ LilyLLVMGetType(const LilyIrLlvm *Self,
             TODO("va arg");
         default:
             UNREACHABLE("unknown variant");
+    }
+}
+
+LLVMValueRef
+LilyLLVMPrepareConst(const LilyIrLlvm *Self,
+                     LilyIrLlvmScope *Scope,
+                     const LilyIrLlvmPending *Pending,
+                     const enum LilyMirLinkage Linkage,
+                     const LilyMirDt *DT,
+                     const char *Name)
+{
+    LLVMTypeRef ConstTy = LilyLLVMGetType(Self, Pending, DT);
+
+    ASSERT(ConstTy);
+
+    LLVMValueRef Const = LLVMAddGlobal(Self->module, ConstTy, Name);
+
+    LLVMSetGlobalConstant(Const, true);
+    LilyLLVMSetLinkage(Const, Linkage);
+
+    return Const;
+}
+
+LLVMValueRef
+LilyLLVMPrepareFunction(const LilyIrLlvm *Self,
+                        LilyIrLlvmScope *Scope,
+                        const LilyIrLlvmPending *Pending,
+                        const enum LilyMirLinkage Linkage,
+                        const Vec *Args,
+                        const LilyMirDt *ReturnDT,
+                        const char *Name)
+{
+    // TODO: manage attribute
+    if (!strcmp(Name, "main")) {
+        LLVMTypeRef FunType = LLVMFunctionType(
+          i32__LilyIrLlvm(Self),
+          (LLVMTypeRef[]){ i32__LilyIrLlvm(Self),
+                           ptr__LilyIrLlvm(Self, i8__LilyIrLlvm(Self)) },
+          2,
+          false);
+        LLVMValueRef Fun = LLVMAddFunction(Self->module, "main", FunType);
+
+        return Fun;
+    }
+
+    LLVMTypeRef ReturnTy = LilyLLVMGetType(Self, Pending, ReturnDT);
+
+    ASSERT(ReturnTy);
+
+    LLVMTypeRef ParamTypes[MAX_FUN_PARAMS] = { 0 };
+
+    for (Usize i = 0; i < Args->len; ++i) {
+        const LilyMirInstruction *Arg =
+          get_arg__LilyMirInstruction(get__Vec(Args, i));
+
+        ASSERT(Arg);
+
+        // TODO: add optimization on non-nil parameter
+        LLVMTypeRef ParamType = LilyLLVMGetType(Self, Pending, Arg->arg.dt);
+
+        ASSERT(ParamType);
+
+        ParamTypes[i] = ParamType;
+    }
+
+    // TODO: add support for va_arg
+    LLVMTypeRef FunType =
+      LLVMFunctionType(ReturnTy, ParamTypes, Args->len, false);
+    LLVMValueRef Fun = LLVMAddFunction(Self->module, Name, FunType);
+
+    // Set param alignment
+    for (Usize i = 0; i < Args->len; ++i) {
+        const LilyMirInstruction *Arg =
+          get_arg__LilyMirInstruction(get__Vec(Args, i));
+
+        switch (Arg->arg.dt->kind) {
+            case LILY_MIR_DT_KIND_REF: {
+                LLVMValueRef Arg = LLVMGetParam(Fun, i);
+
+                LLVMSetParamAlignment(
+                  Arg,
+                  LLVMABIAlignmentOfType(Self->target_data, LLVMTypeOf(Arg)));
+
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    LilyLLVMSetLinkage(Fun, Linkage);
+
+    return Fun;
+}
+
+void
+LilyLLVMPrepareModule(const LilyIrLlvm *Self,
+                      LilyIrLlvmScope *Scope,
+                      const LilyIrLlvmPending *Pending,
+                      OrderedHashMap *Insts)
+{
+    OrderedHashMapIter iter = NEW(OrderedHashMapIter, Insts);
+    LilyMirInstruction *Inst = NULL;
+
+    while ((Inst = next__OrderedHashMapIter(&iter))) {
+        switch (Inst->kind) {
+            case LILY_MIR_INSTRUCTION_KIND_CONST:
+                LilyLLVMPrepareConst(Self,
+                                     Scope,
+                                     Pending,
+                                     Inst->const_.linkage,
+                                     Inst->const_.val->dt,
+                                     Inst->const_.name);
+                break;
+            case LILY_MIR_INSTRUCTION_KIND_FUN:
+                LilyLLVMPrepareFunction(Self,
+                                        Scope,
+                                        Pending,
+                                        Inst->fun.linkage,
+                                        Inst->fun.args,
+                                        Inst->fun.return_data_type,
+                                        Inst->fun.name);
+                break;
+            case LILY_MIR_INSTRUCTION_KIND_STRUCT:
+                LilyLLVMPrepareStruct(Self, Inst->struct_.name);
+                break;
+            default:
+                UNREACHABLE("this variant is not expected in global");
+        }
+    }
+}
+
+void
+LilyLLVMFinishFunction(const LilyIrLlvm *Self,
+                       LilyIrLlvmScope *Scope,
+                       LilyIrLlvmPending *Pending,
+                       LLVMValueRef Fn,
+                       const Vec *Insts)
+{
+    Pending->current_fun = Fn;
+
+    for (Usize i = 0; i < Insts->len; ++i) {
+        LilyLLVMBuildInst(Self, Scope, Pending, get__Vec(Insts, i), NULL);
+    }
+}
+
+void
+LilyLLVMFinishStruct(const LilyIrLlvm *Self,
+                     const LilyIrLlvmPending *Pending,
+                     LLVMTypeRef Struct,
+                     const Vec *Types)
+{
+    LLVMTypeRef StructTypes[MAX_RECORD_FIELDS] = { 0 };
+
+    for (Usize i = 0; i < Types->len; ++i) {
+        LLVMTypeRef StructType =
+          LilyLLVMGetType(Self, Pending, get__Vec(Types, i));
+
+        ASSERT(StructType);
+
+        StructTypes[i] = StructType;
+    }
+
+    LLVMStructSetBody(Struct, StructTypes, Types->len, false);
+}
+
+void
+LilyLLVMRunModule(const LilyIrLlvm *Self,
+                  LilyIrLlvmScope *Scope,
+                  LilyIrLlvmPending *Pending,
+                  OrderedHashMap *Insts)
+{
+    OrderedHashMapIter iter = NEW(OrderedHashMapIter, Insts);
+    LilyMirInstruction *Inst = NULL;
+
+    while ((Inst = next__OrderedHashMapIter(&iter))) {
+        switch (Inst->kind) {
+            case LILY_MIR_INSTRUCTION_KIND_CONST: {
+                LLVMValueRef Const =
+                  LLVMGetNamedGlobal(Self->module, Inst->const_.name);
+
+                ASSERT(Const);
+
+                LilyLLVMFinishConst(
+                  Self, Scope, Pending, Const, Inst->const_.val);
+
+                break;
+            }
+            case LILY_MIR_INSTRUCTION_KIND_FUN: {
+                LLVMValueRef Fn =
+                  LLVMGetNamedFunction(Self->module, Inst->fun.name);
+
+                ASSERT(Fn);
+
+                LilyLLVMFinishFunction(
+                  Self, Scope, Pending, Fn, Inst->fun.insts);
+
+                break;
+            }
+            case LILY_MIR_INSTRUCTION_KIND_STRUCT: {
+                LLVMTypeRef Struct =
+                  LLVMGetTypeByName2(Self->context, Inst->struct_.name);
+
+                ASSERT(Struct);
+
+                LilyLLVMFinishStruct(
+                  Self, Pending, Struct, Inst->struct_.fields);
+
+                break;
+            }
+            default:
+                UNREACHABLE("this variant is not expected in global");
+        }
     }
 }
