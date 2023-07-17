@@ -31,15 +31,8 @@
 void
 run__LilyIrLlvmGenerator(LilyPackage *self)
 {
-    LilyIrLlvmScope *scope = NEW(LilyIrLlvmScope, NULL);
-    LilyIrLlvmPending pending = NEW(LilyIrLlvmPending);
-
-    LilyLLVMPrepareModule(
-      &self->ir.llvm, scope, &pending, self->mir_module.insts);
-    LilyLLVMRunModule(&self->ir.llvm, scope, &pending, self->mir_module.insts);
-
-    FREE(LilyIrLlvmScope, scope);
-    FREE(LilyIrLlvmPending, &pending);
+    LilyLLVMPrepareModule(&self->ir.llvm, self->mir_module.insts);
+    LilyLLVMRunModule(&self->ir.llvm, self->mir_module.insts);
 
 #ifdef DEBUG_MIR
     printf("====LLVM IR Generator(%s)====\n", self->global_name->buffer);
