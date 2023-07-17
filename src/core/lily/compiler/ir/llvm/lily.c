@@ -84,11 +84,10 @@ LilyLLVMSetLinkage(LLVMValueRef Global, const enum LilyMirLinkage Linkage)
 
 LLVMValueRef
 LilyLLVMBuildAlloc(const LilyIrLlvm *Self,
-                   const LilyIrLlvmPending *Pending,
-                   const LilyMirInstruction *Inst,
+                   const LilyMirDt *DT,
                    const char *Name)
 {
-    LLVMTypeRef alloc_type = LilyLLVMGetType(Self, Inst->alloc.dt);
+    LLVMTypeRef alloc_type = LilyLLVMGetType(Self, DT);
 
     ASSERT(alloc_type);
 
@@ -873,7 +872,7 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
             return LLVMConstReal(LilyLLVMGetType(Self, Val->dt), Val->float_);
         case LILY_MIR_INSTRUCTION_VAL_KIND_INT:
             return LLVMConstInt(
-              LilyLLVMGetType(Self, Val->dt), Val->uint, false);
+              LilyLLVMGetType(Self, Val->dt), Val->int_, false);
         case LILY_MIR_INSTRUCTION_VAL_KIND_LIST:
             TODO("List");
         case LILY_MIR_INSTRUCTION_VAL_KIND_NIL:
@@ -952,7 +951,7 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
 
     switch (Inst->kind) {
         case LILY_MIR_INSTRUCTION_KIND_ALLOC:
-            res = LilyLLVMBuildAlloc(Self, Pending, Inst, Name);
+            res = LilyLLVMBuildAlloc(Self, Inst->alloc.dt, Name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_AND:
             res = LilyLLVMBuildAnd(
@@ -1056,7 +1055,7 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                      Name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_FCMP_GT:
-            res = LilyLLVMBuildCmpGe(Self,
+            res = LilyLLVMBuildCmpGt(Self,
                                      Scope,
                                      Pending,
                                      Inst->fcmp_gt.dest,
@@ -1131,6 +1130,7 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                         Inst->getfield.dt,
                                         Inst->getfield.indexes,
                                         Name);
+            break;
         case LILY_MIR_INSTRUCTION_KIND_GETPTR:
             ASSERT(Inst->getptr.src->dt->kind == LILY_MIR_DT_KIND_PTR);
 
@@ -1163,8 +1163,8 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
             res = LilyLLVMBuildCmpNe(Self,
                                      Scope,
                                      Pending,
-                                     Inst->icmp_eq.dest,
-                                     Inst->icmp_eq.src,
+                                     Inst->icmp_ne.dest,
+                                     Inst->icmp_ne.src,
                                      false,
                                      Name);
             break;
@@ -1174,8 +1174,45 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
         case LILY_MIR_INSTRUCTION_KIND_ICMP_GT:
         case LILY_MIR_INSTRUCTION_KIND_IDIV:
         case LILY_MIR_INSTRUCTION_KIND_IREM: {
-            bool left_is_signed = is_signed__LilyMirDt(Inst->icmp_eq.dest->dt);
-            bool right_is_signed = is_signed__LilyMirDt(Inst->icmp_eq.src->dt);
+            bool left_is_signed;
+            bool right_is_signed;
+
+            switch (Inst->kind) {
+                case LILY_MIR_INSTRUCTION_KIND_ICMP_LE:
+                    left_is_signed =
+                      is_signed__LilyMirDt(Inst->icmp_le.dest->dt);
+                    right_is_signed =
+                      is_signed__LilyMirDt(Inst->icmp_le.src->dt);
+                    break;
+                case LILY_MIR_INSTRUCTION_KIND_ICMP_LT:
+                    left_is_signed =
+                      is_signed__LilyMirDt(Inst->icmp_lt.dest->dt);
+                    right_is_signed =
+                      is_signed__LilyMirDt(Inst->icmp_lt.src->dt);
+                    break;
+                case LILY_MIR_INSTRUCTION_KIND_ICMP_GE:
+                    left_is_signed =
+                      is_signed__LilyMirDt(Inst->icmp_ge.dest->dt);
+                    right_is_signed =
+                      is_signed__LilyMirDt(Inst->icmp_ge.src->dt);
+                    break;
+                case LILY_MIR_INSTRUCTION_KIND_ICMP_GT:
+                    left_is_signed =
+                      is_signed__LilyMirDt(Inst->icmp_gt.dest->dt);
+                    right_is_signed =
+                      is_signed__LilyMirDt(Inst->icmp_gt.src->dt);
+                    break;
+                case LILY_MIR_INSTRUCTION_KIND_IDIV:
+                    left_is_signed = is_signed__LilyMirDt(Inst->idiv.dest->dt);
+                    right_is_signed = is_signed__LilyMirDt(Inst->idiv.src->dt);
+                    break;
+                case LILY_MIR_INSTRUCTION_KIND_IREM:
+                    left_is_signed = is_signed__LilyMirDt(Inst->irem.dest->dt);
+                    right_is_signed = is_signed__LilyMirDt(Inst->irem.src->dt);
+                    break;
+                default:
+                    UNREACHABLE("unknown variant in this context");
+            }
 
             if (left_is_signed && right_is_signed) {
                 switch (Inst->kind) {
@@ -1499,9 +1536,15 @@ LilyLLVMGetType(const LilyIrLlvm *Self, const LilyMirDt *DT)
             return double__LilyIrLlvm(Self);
         case LILY_MIR_DT_KIND_LIST:
             TODO("list");
-        case LILY_MIR_DT_KIND_PTR:
-        case LILY_MIR_DT_KIND_REF: {
+        case LILY_MIR_DT_KIND_PTR: {
             LLVMTypeRef ptr_type = LilyLLVMGetType(Self, DT->ptr);
+
+            ASSERT(ptr_type);
+
+            return ptr__LilyIrLlvm(Self, ptr_type);
+        }
+        case LILY_MIR_DT_KIND_REF: {
+            LLVMTypeRef ptr_type = LilyLLVMGetType(Self, DT->ref);
 
             ASSERT(ptr_type);
 

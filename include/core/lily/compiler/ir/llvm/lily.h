@@ -49,8 +49,7 @@ LilyLLVMSetLinkage(LLVMValueRef Global, const enum LilyMirLinkage Linkage);
 
 LLVMValueRef
 LilyLLVMBuildAlloc(const LilyIrLlvm *Self,
-                   const LilyIrLlvmPending *Pending,
-                   const LilyMirInstruction *Inst,
+                   const LilyMirDt *DT,
                    const char *Name);
 
 LLVMValueRef
