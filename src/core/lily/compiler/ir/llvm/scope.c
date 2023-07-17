@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 
 #include <core/lily/compiler/ir/llvm/scope.h>
 
