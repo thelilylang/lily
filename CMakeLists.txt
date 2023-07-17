@@ -64,7 +64,6 @@ set(BASE_SRC
     src/base/itoa.c
     src/base/linked_list.c
     src/base/list.c
-    src/base/memory/api.c
     src/base/memory/arena.c
     src/base/memory/pool.c
     src/base/mutex.c
@@ -90,6 +89,7 @@ set(BASE_SRC
     src/base/vec.c)
 
 add_library(lily_base STATIC ${BASE_SRC})
+target_link_libraries(lily_base PUBLIC lily_builtin)
 target_include_directories(lily_base PRIVATE ${LILY_INCLUDE})
 
 # lily_cli
