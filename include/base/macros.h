@@ -74,6 +74,10 @@
 
 #endif
 
+#ifndef CLANG_VERSION
+#warning "Only Clang version >= 15 is fully supported."
+#endif
+
 #define PTR_SIZE sizeof(void *)
 
 // Vec<T>
