@@ -40,56 +40,31 @@
  *
  * @brief Align pointer with the given size alignment.
  */
-inline void *
-align__MemoryApi(void *mem, Usize align)
-{
-    return __align__$Alloc(mem, align);
-}
+void *
+align__MemoryApi(void *mem, Usize align);
 
 /**
  *
  * @brief Alloc to a pointer with the given size + align the allocated pointer.
  */
-inline void *
-alloc__MemoryApi(Usize size, Usize align)
-{
-#ifdef USE_C_MEMORY_API
-    return malloc(size);
-#else
-    return __alloc__$Alloc(size, align);
-#endif
-}
+void *
+alloc__MemoryApi(Usize size, Usize align);
 
 /**
  *
  * @brief Resize the given pointer with the new_size + align the resized
  * pointer.
  */
-inline void *
-resize__MemoryApi(void *mem, Usize new_size, Usize align)
-{
-#ifdef USE_C_MEMORY_API
-    mem = realloc(mem, new_size);
-    return mem;
-#else
-    return __resize__$Alloc(mem, new_size, align);
-#endif
-}
+void *
+resize__MemoryApi(void *mem, Usize new_size, Usize align);
 
 /**
  *
  * @brief Free the given pointer according the given size and alignment.
  * @note The given freed pointer is assigned to NULL at the end.
  */
-inline void
-free__MemoryApi(void **mem, Usize size, Usize align)
-{
-#ifdef USE_C_MEMORY_API
-    return free(*mem);
-#else
-    return __free__$Alloc(mem, size, align);
-#endif
-}
+void
+free__MemoryApi(void **mem, Usize size, Usize align);
 
 typedef struct MemoryApi
 {
