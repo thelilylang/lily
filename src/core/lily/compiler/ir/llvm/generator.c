@@ -22,25 +22,28 @@
  * SOFTWARE.
  */
 
+#include <core/lily/compiler/ir/llvm/dump.h>
 #include <core/lily/compiler/ir/llvm/generator.h>
+#include <core/lily/compiler/ir/llvm/lily.h>
 #include <core/lily/compiler/package.h>
+#include <core/lily/lily.h>
 
 void
 run__LilyIrLlvmGenerator(LilyPackage *self)
 {
-    OrderedHashMapIter iter = NEW(OrderedHashMapIter, self->mir_module.insts);
-    LilyMirInstruction *current = NULL;
+    LilyIrLlvmScope *scope = NEW(LilyIrLlvmScope, NULL);
+    LilyIrLlvmPending pending = NEW(LilyIrLlvmPending);
 
-    while ((current = next__OrderedHashMapIter(&iter))) {
-        switch (current->kind) {
-            case LILY_MIR_INSTRUCTION_KIND_CONST:
-                TODO("const...");
-            case LILY_MIR_INSTRUCTION_KIND_FUN:
-                TODO("fun...");
-            case LILY_MIR_INSTRUCTION_KIND_STRUCT:
-                TODO("struct...");
-            default:
-                UNREACHABLE("instruction not expected in global");
-        }
-    }
+    LilyLLVMPrepareModule(
+      &self->ir.llvm, scope, &pending, self->mir_module.insts);
+    LilyLLVMRunModule(&self->ir.llvm, scope, &pending, self->mir_module.insts);
+
+    FREE(LilyIrLlvmScope, scope);
+    FREE(LilyIrLlvmPending, &pending);
+
+#ifdef DEBUG_MIR
+    printf("====LLVM IR Generator(%s)====\n", self->global_name->buffer);
+
+    dump__LilyIrLlvm(&self->ir.llvm);
+#endif
 }
