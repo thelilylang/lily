@@ -41,6 +41,21 @@
 #error "This OS is not yet supported"
 #endif
 
+Usize
+__max_capacity__$Alloc()
+{
+#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
+    return sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE);
+#elif defined(LILY_WINDOWS_OS)
+    MEMORYSTATUSEX status;
+    status.dwLength = sizeof(status);
+    GlobalMemoryStatusEx(&status);
+    return status.ullTotalPhys;
+#else
+#error "This OS is not yet supported"
+#endif
+}
+
 void *
 __align__$Alloc(void *mem, Usize align)
 {
@@ -55,14 +70,7 @@ __align__$Alloc(void *mem, Usize align)
 void *
 __alloc__$Alloc(Usize size, Usize align)
 {
-#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
-    Usize max_capacity = sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE);
-#elif defined(LILY_WINDOWS_OS)
-    MEMORYSTATUSEX status;
-    status.dwLength = sizeof(status);
-    GlobalMemoryStatusEx(&status);
-    Usize max_capacity = status.ullTotalPhys;
-#endif
+    Usize max_capacity = __max_capacity__$Alloc();
 
     if (size > max_capacity) {
         perror("Lily(Fail): too much memory allocation allocated");
