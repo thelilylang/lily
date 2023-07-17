@@ -25,6 +25,9 @@
 #ifndef LILY_BASE_MEMORY_API_H
 #define LILY_BASE_MEMORY_API_H
 
+#define USE_C_MEMORY_API
+#undef USE_C_MEMORY_API
+
 #include <builtin/alloc.h>
 
 /**
