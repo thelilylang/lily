@@ -25,141 +25,42 @@
 #ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_SCOPE_H
 #define LILY_CORE_LILY_COMPILER_IR_LLVM_SCOPE_H
 
-#include <base/alloc.h>
-#include <base/string.h>
-#include <base/vec.h>
+#include <base/hash_map.h>
 
 #include <llvm-c/Core.h>
 
-typedef struct LilyIrLlvm LilyIrLlvm;
-
-typedef struct LilyLlvmValue
+typedef struct LilyIrLlvmScope
 {
-    String *name;       // String* (&)
-    LLVMValueRef value; // LLVMValueRef (&)
-} LilyLlvmValue;
+    HashMap *values;                // HashMap<LLVMValueRef>*
+    struct LilyIrLlvmScope *parent; // struct LilyIrLLvmScope*?
+} LilyIrLlvmScope;
 
 /**
  *
- * @brief Construct LilyLlvmValue type.
+ * @brief Construct LilyIrLlvmScope type.
  */
-CONSTRUCTOR(LilyLlvmValue *, LilyLlvmValue, String *name, LLVMValueRef value);
+CONSTRUCTOR(LilyIrLlvmScope *, LilyIrLlvmScope, LilyIrLlvmScope *parent);
 
 /**
  *
- * @brief Free LilyLlvmValue type.
- */
-inline DESTRUCTOR(LilyLlvmValue, LilyLlvmValue *self)
-{
-    lily_free(self);
-}
-
-typedef struct LilyLlvmType
-{
-    String *name;     // String* (&)
-    LLVMTypeRef type; // LLVMTypeRef (&)
-} LilyLlvmType;
-
-/**
- *
- * @brief Construct LilyLlvmType type.
- */
-CONSTRUCTOR(LilyLlvmType *, LilyLlvmType, String *name, LLVMTypeRef type);
-
-/**
- *
- * @brief Free LilyLlvmType type.
- */
-inline DESTRUCTOR(LilyLlvmType, LilyLlvmType *self)
-{
-    lily_free(self);
-}
-
-typedef struct LilyLlvmFun
-{
-    String *name; // String* (&)
-    LLVMValueRef fun;
-    LLVMTypeRef fun_type;
-} LilyLlvmFun;
-
-/**
- *
- * @brief Construct LilyLlvmFun type.
- */
-CONSTRUCTOR(LilyLlvmFun *,
-            LilyLlvmFun,
-            String *name,
-            LLVMValueRef fun,
-            LLVMTypeRef fun_type);
-
-/**
- *
- * @brief Free LilyLlvmType type.
- */
-inline DESTRUCTOR(LilyLlvmFun, LilyLlvmFun *self)
-{
-    lily_free(self);
-}
-
-typedef struct LilyLlvmScope
-{
-    LLVMMetadataRef scope;
-    Vec *values;                  // Vec<LilyLlvmValue*>*
-    Vec *types;                   // Vec<LilyLlvmType*>*
-    Vec *loads;                   // Vec<LilyLlvmValue*>*
-    Vec *funs;                    // Vec<LilyLlvmFun*>*
-    struct LilyLlvmScope *parent; // LilyLlvmScope*? (&)
-} LilyLlvmScope;
-
-/**
- *
- * @brief Construct LilyLlvmScope type.
- */
-CONSTRUCTOR(LilyLlvmScope *, LilyLlvmScope, LilyLlvmScope *parent);
-
-/**
- *
- * @brief Search for a value in the scope.
- */
-LilyLlvmValue *
-search_value__LilyLlvmScope(LilyLlvmScope *self, String *name);
-
-/**
- *
- * @brief Search for a type in the scope.
- */
-LilyLlvmType *
-search_type__LilyLlvmScope(LilyLlvmScope *self, String *name);
-
-/**
- *
- * @brief Search for a loaded value in the scope.
- */
-LilyLlvmValue *
-search_load__LilyLlvmScope(LilyLlvmScope *self, String *name);
-
-/**
- *
- * @brief Search for a loaded value in the scope. If no load value is found
- * below the specified value.
+ * @brief Get value from the scope.
  */
 LLVMValueRef
-load_value__LilyLlvmScope(LilyLlvmScope *self,
-                          const LilyIrLlvm *llvm,
-                          LLVMTypeRef type,
-                          String *name);
+get__LilyIrLlvmScope(const LilyIrLlvmScope *self, char *name);
 
 /**
  *
- * @brief Search for a fun in the scope.
+ * @brief Add value to the scope.
  */
-LilyLlvmFun *
-search_fun__LilyLlvmScope(LilyLlvmScope *self, char *name);
+void
+add__LilyIrLlvmScope(const LilyIrLlvmScope *self,
+                     char *name,
+                     LLVMValueRef value);
 
 /**
  *
- * @brief Free LilyLlvmScope type.
+ * @brief Free LilyIrLlvmScope type.
  */
-DESTRUCTOR(LilyLlvmScope, LilyLlvmScope *self);
+DESTRUCTOR(LilyIrLlvmScope, LilyIrLlvmScope *self);
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_SCOPE_H

@@ -1108,6 +1108,40 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionGetArray,
+               const LilyMirInstructionGetArray *self)
+{
+    String *res =
+      format__String("\x1b[34{s} mgetarray({Sr})\x1b[0m {Sr}, [",
+                     self->is_const ? "const" : "",
+                     to_string__Debug__LilyMirDt(self->dt),
+                     to_string__Debug__LilyMirInstructionVal(self->val));
+
+    for (Usize i = 0; i < self->indexes->len; ++i) {
+        String *index =
+          to_string__Debug__LilyMirInstructionVal(get__Vec(self->indexes, i));
+
+        APPEND_AND_FREE(res, index);
+    }
+
+    push_str__String(res, "]");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyMirInstructionGetArray, const LilyMirInstructionGetArray *self)
+{
+    FREE(LilyMirDt, self->dt);
+    FREE(LilyMirInstructionVal, self->val);
+    FREE_BUFFER_ITEMS(
+      self->indexes->buffer, self->indexes->len, LilyMirInstructionVal);
+    FREE(Vec, self->indexes);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
                LilyMirInstructionGetField,
                const LilyMirInstructionGetField *self)
 {
@@ -1163,9 +1197,11 @@ IMPL_FOR_DEBUG(to_string,
                const LilyMirInstructionJmpCond *self)
 {
     return format__String(
-      "\x1b[34mjmpcond\x1b[0m {Sr}, \x1b[33mblock\x1b[0m {s}",
+      "\x1b[34mjmpcond\x1b[0m {Sr} then \x1b[33mblock\x1b[0m {S} else "
+      "\x1b[33mblock\x1b[0m {S}",
       to_string__Debug__LilyMirInstructionVal(self->cond),
-      self->block->name);
+      self->then_block->name,
+      self->else_block->name);
 }
 #endif
 
@@ -1682,7 +1718,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     getarray,
-                    LilyMirInstructionSrc getarray)
+                    LilyMirInstructionGetArray getarray)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
@@ -2265,6 +2301,19 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     return self;
 }
 
+const LilyMirInstruction *
+get_arg__LilyMirInstruction(const LilyMirInstruction *self)
+{
+    switch (self->kind) {
+        case LILY_MIR_INSTRUCTION_KIND_ARG:
+            return self;
+        case LILY_MIR_INSTRUCTION_KIND_NON_NIL:
+            return get_arg__LilyMirInstruction(self->non_nil);
+        default:
+            return NULL;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
@@ -2405,9 +2454,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
               to_string__Debug__LilyMirInstructionSrc(&self->getarg));
             break;
         case LILY_MIR_INSTRUCTION_KIND_GETARRAY:
-            res = format__String(
-              "\x1b[34mgetarray\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrc(&self->getarray));
+            res = to_string__Debug__LilyMirInstructionGetArray(&self->getarray);
             break;
         case LILY_MIR_INSTRUCTION_KIND_GETLIST:
             res = format__String(
@@ -2783,7 +2830,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, fun, LilyMirInstruction *self)
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, getarray, LilyMirInstruction *self)
 {
-    FREE(LilyMirInstructionSrc, &self->getarray);
+    FREE(LilyMirInstructionGetArray, &self->getarray);
     lily_free(self);
 }
 

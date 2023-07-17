@@ -22,46 +22,60 @@
  * SOFTWARE.
  */
 
-#include <base/alloc.h>
-#include <base/assert.h>
+#ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_PENDING_H
+#define LILY_CORE_LILY_COMPILER_IR_LLVM_PENDING_H
 
-#include <core/lily/compiler/ir/llvm/scope.h>
+#include <base/assert.h>
+#include <base/hash_map.h>
+#include <base/stack.h>
+
+#include <llvm-c/Core.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-CONSTRUCTOR(LilyIrLlvmScope *, LilyIrLlvmScope, LilyIrLlvmScope *parent)
+typedef struct LilyIrLlvmPending
 {
-    LilyIrLlvmScope *self = lily_malloc(sizeof(LilyIrLlvmScope));
+    LLVMValueRef current_fun; // LLVMValueRef? (&)
+    HashMap *blocks;          // HashMap<LLVMBasicBlockRef (&)>*
+} LilyIrLlvmPending;
 
-    self->values = NEW(HashMap);
-    self->parent = parent;
-
-    return self;
+/**
+ *
+ * @brief Construct LilyIrLlvmPending type.
+ */
+inline CONSTRUCTOR(LilyIrLlvmPending, LilyIrLlvmPending)
+{
+    return (LilyIrLlvmPending){ .current_fun = NULL, .blocks = NEW(HashMap) };
 }
 
-LLVMValueRef
-get__LilyIrLlvmScope(const LilyIrLlvmScope *self, char *name)
+/**
+ *
+ * @brief Get block from `blocks` field.
+ */
+inline LLVMBasicBlockRef
+get_block__LilyIrLlvmPending(const LilyIrLlvmPending *self, const char *name)
 {
-    LLVMValueRef value = get__HashMap(self->values, name);
-
-    return value          ? value
-           : self->parent ? get__LilyIrLlvmScope(self->parent, name)
-                          : NULL;
+    return remove__HashMap(self->blocks, (char *)name);
 }
 
+/**
+ *
+ * @brief Add block to the `blocks` field.
+ */
 void
-add__LilyIrLlvmScope(const LilyIrLlvmScope *self,
-                     char *name,
-                     LLVMValueRef value)
+add_block__LilyIrLlvmPending(const LilyIrLlvmPending *self,
+                             const char *name,
+                             LLVMBasicBlockRef block);
+
+/**
+ *
+ * @brief Free LilyIrLLvmPending type.
+ */
+inline DESTRUCTOR(LilyIrLlvmPending, const LilyIrLlvmPending *self)
 {
-    if (insert__HashMap(self->values, name, value)) {
-        UNREACHABLE("duplicate name in the scope");
-    }
+    FREE(HashMap, self->blocks);
 }
 
-DESTRUCTOR(LilyIrLlvmScope, LilyIrLlvmScope *self)
-{
-    FREE(HashMap, self->values);
-    lily_free(self);
-}
+#endif // LILY_CORE_LILY_COMPILER_IR_LLVM_PENDING_H

@@ -86,7 +86,7 @@ inline CONSTRUCTOR(LilyMirCurrentFun,
 {
     return (LilyMirCurrentFun){ .fun = fun,
                                 .block_manager = NEW(LilyMirNameManager, "bb"),
-                                .reg_manager = NEW(LilyMirNameManager, "") };
+                                .reg_manager = NEW(LilyMirNameManager, "r") };
 }
 
 /**

@@ -170,6 +170,53 @@ insert__HashMap(HashMap *self, char *key, void *value)
     return NULL;
 }
 
+void *
+remove__HashMap(HashMap *self, char *key)
+{
+    if (!self->buckets) {
+        return NULL;
+    }
+
+    HashMapBucket *match = NULL;
+    HashMapBucket *prev = NULL;
+
+    for (Usize i = 0; i < self->capacity; ++i) {
+        HashMapBucket *current = self->buckets[i];
+
+        if (!current) {
+            continue;
+        }
+
+    verify_key : {
+        if (!strcmp(current->pair.key, key)) {
+            match = current;
+            break;
+        }
+    }
+
+        if (current->next) {
+            prev = current;
+            current = current->next;
+
+            goto verify_key;
+        } else {
+            break;
+        }
+    }
+
+    if (match) {
+        void *res = match->pair.value;
+
+        prev->next = match->next;
+
+        lily_free(match);
+
+        return res;
+    }
+
+    return NULL;
+}
+
 DESTRUCTOR(HashMap, HashMap *self)
 {
     if (self->buckets) {

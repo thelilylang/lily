@@ -423,7 +423,6 @@ inline DESTRUCTOR(LilyMirInstructionDestSrc,
 // drop <val>
 // fneg <val>
 // getarg <val>
-// getarray <val>
 // getlist <val>
 // getslice <val>
 // getfield <val>
@@ -810,6 +809,48 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self);
 
+typedef struct LilyMirInstructionGetArray
+{
+    LilyMirDt *dt;              // data type of the final item
+    LilyMirInstructionVal *val; // variable, param, ...
+    Vec *indexes;               // Vec<LilyMirInstructionVal*>*
+    bool is_const; // true if the array and the indexes are constant.
+} LilyMirInstructionGetArray;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionGetArray type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionGetArray,
+                   LilyMirInstructionGetArray,
+                   LilyMirDt *dt,
+                   LilyMirInstructionVal *val,
+                   Vec *indexes,
+                   bool is_const)
+{
+    return (LilyMirInstructionGetArray){
+        .dt = dt, .val = val, .indexes = indexes, .is_const = is_const
+    };
+}
+
+/**
+ *
+ * @brief Convert LilyMirInstructionGetArray in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionGetArray,
+               const LilyMirInstructionGetArray *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyMirInstructionGetArray type.
+ */
+DESTRUCTOR(LilyMirInstructionGetArray, const LilyMirInstructionGetArray *self);
+
 typedef struct LilyMirInstructionGetField
 {
     LilyMirDt *dt;              // data type of the final field
@@ -888,7 +929,8 @@ DESTRUCTOR(LilyMirInstructionLoad, const LilyMirInstructionLoad *self);
 typedef struct LilyMirInstructionJmpCond
 {
     LilyMirInstructionVal *cond;
-    LilyMirInstructionBlock *block; // LilyMirInstructionBlock* (&)
+    LilyMirInstructionBlock *then_block; // LilyMirInstructionBlock* (&)
+    LilyMirInstructionBlock *else_block; // LilyMirInstructionBlock* (&)
 } LilyMirInstructionJmpCond;
 
 /**
@@ -898,9 +940,12 @@ typedef struct LilyMirInstructionJmpCond
 inline CONSTRUCTOR(LilyMirInstructionJmpCond,
                    LilyMirInstructionJmpCond,
                    LilyMirInstructionVal *cond,
-                   LilyMirInstructionBlock *block)
+                   LilyMirInstructionBlock *then_block,
+                   LilyMirInstructionBlock *else_block)
 {
-    return (LilyMirInstructionJmpCond){ .cond = cond, .block = block };
+    return (LilyMirInstructionJmpCond){ .cond = cond,
+                                        .then_block = then_block,
+                                        .else_block = else_block };
 }
 
 /**
@@ -1191,7 +1236,7 @@ typedef struct LilyMirInstruction
         LilyMirInstructionDestSrc frem;
         LilyMirInstructionDestSrc fsub;
         LilyMirInstructionFun fun;
-        LilyMirInstructionSrc getarray;
+        LilyMirInstructionGetArray getarray;
         LilyMirInstructionSrc getarg;
         LilyMirInstructionGetField getfield;
         LilyMirInstructionSrc getlist;
@@ -1492,7 +1537,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     getarray,
-                    LilyMirInstructionSrc getarray);
+                    LilyMirInstructionGetArray getarray);
 
 /**
  *
@@ -1943,6 +1988,13 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     xor,
                     LilyMirInstructionDestSrc xor);
+
+/**
+ *
+ * @brief Get arg from the given instruction.
+ */
+const LilyMirInstruction *
+get_arg__LilyMirInstruction(const LilyMirInstruction *self);
 
 /**
  *

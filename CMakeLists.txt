@@ -302,54 +302,19 @@ target_include_directories(lily_core_lily_compiler_ir_cpp
 
 # lily_core_lily_compiler_ir_llvm
 set(LILY_CORE_LILY_COMPILER_IR_LLVM_SRC
-    src/core/lily/compiler/ir/llvm/generator/builtin.c
-    src/core/lily/compiler/ir/llvm/generator/constant.c
-    src/core/lily/compiler/ir/llvm/generator/data_type.c
-    src/core/lily/compiler/ir/llvm/generator/error.c
-    src/core/lily/compiler/ir/llvm/generator/expr/array.c
-    src/core/lily/compiler/ir/llvm/generator/expr/binary.c
-    src/core/lily/compiler/ir/llvm/generator/expr/call.c
-    src/core/lily/compiler/ir/llvm/generator/expr/cast.c
-    src/core/lily/compiler/ir/llvm/generator/expr/lambda.c
-    src/core/lily/compiler/ir/llvm/generator/expr/list.c
-    src/core/lily/compiler/ir/llvm/generator/expr/literal.c
-    src/core/lily/compiler/ir/llvm/generator/expr/tuple.c
-    src/core/lily/compiler/ir/llvm/generator/expr/unary.c
-    src/core/lily/compiler/ir/llvm/generator/expr.c
-    src/core/lily/compiler/ir/llvm/generator/function.c
-    src/core/lily/compiler/ir/llvm/generator/main.c
-    src/core/lily/compiler/ir/llvm/generator/object/class.c
-    src/core/lily/compiler/ir/llvm/generator/object/enum_object.c
-    src/core/lily/compiler/ir/llvm/generator/object/record_object.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/asm.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/await.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/block.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/break.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/drop.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/for.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/if.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/match.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/next.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/raise.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/return.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/try.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/unsafe.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/variable.c
-    src/core/lily/compiler/ir/llvm/generator/stmt/while.c
-    src/core/lily/compiler/ir/llvm/generator/stmt.c
-    src/core/lily/compiler/ir/llvm/generator/sys.c
-    src/core/lily/compiler/ir/llvm/generator/type/enum.c
-    src/core/lily/compiler/ir/llvm/generator/type/record.c
+    src/core/lily/compiler/ir/llvm/generator/dt.c
+    src/core/lily/compiler/ir/llvm/generator/inst.c
+    src/core/lily/compiler/ir/llvm/generator/val.c
     src/core/lily/compiler/ir/llvm/generator.c
-    src/core/lily/compiler/ir/llvm/linkage.c
+    src/core/lily/compiler/ir/llvm/lily.c
     src/core/lily/compiler/ir/llvm/linker.c
-    src/core/lily/compiler/ir/llvm/scope.c
-    src/core/lily/compiler/ir/llvm/store.c
-    src/core/lily/compiler/ir/llvm/types.c)
+    src/core/lily/compiler/ir/llvm/pending.c
+    src/core/lily/compiler/ir/llvm/scope.c)
 
 add_library(lily_core_lily_compiler_ir_llvm STATIC
             ${LILY_CORE_LILY_COMPILER_IR_LLVM_SRC})
-target_link_libraries(lily_core_lily_compiler_ir_llvm lily_base LLVM)
+target_link_libraries(lily_core_lily_compiler_ir_llvm lily_base
+                      lily_core_lily_mir LLVM)
 target_include_directories(lily_core_lily_compiler_ir_llvm
                            PRIVATE ${LILY_INCLUDE})
 

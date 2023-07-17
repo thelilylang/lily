@@ -22,30 +22,12 @@
  * SOFTWARE.
  */
 
-#include <core/lily/compiler/ir/llvm/generator/data_type.h>
-#include <core/lily/compiler/ir/llvm/generator/expr.h>
-#include <core/lily/compiler/ir/llvm/generator/stmt/variable.h>
-#include <core/lily/compiler/ir/llvm/primary.h>
-#include <core/lily/compiler/ir/llvm/store.h>
+#include <core/lily/compiler/ir/llvm/pending.h>
 
-LLVMValueRef
-generate_variable_stmt__LilyIrLlvm(const LilyIrLlvm *self,
-                                   const LilyCheckedStmt *stmt,
-                                   LLVMValueRef fun,
-                                   LilyLlvmScope *scope)
+void
+add_block__LilyIrLlvmPending(const LilyIrLlvmPending *self,
+                             const char *name,
+                             LLVMBasicBlockRef block)
 {
-    LLVMTypeRef variable_type =
-      generate_data_type__LilyIrLlvm(self, stmt->variable.data_type, scope);
-    LLVMValueRef variable = LLVMBuildAlloca(
-      self->builder, variable_type, stmt->variable.name->buffer);
-    LLVMValueRef variable_value = generate_expr__LilyIrLlvm(
-      self, stmt->variable.expr, scope, fun, variable);
-
-    push__Vec(scope->values, NEW(LilyLlvmValue, stmt->variable.name, variable));
-
-    if (variable_value) {
-        LLVMBuildStore(self->builder, variable_value, variable);
-    }
-
-    return variable;
+    ASSERT(!insert__HashMap(self->blocks, (char *)name, block));
 }

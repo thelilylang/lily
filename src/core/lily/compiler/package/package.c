@@ -280,7 +280,7 @@ run__LilyPackage(void *self)
     run__LilyParser(&tree->package->parser, false);
     run__LilyAnalysis(&tree->package->analysis);
     run__LilyMir(tree->package);
-    // run__LilyIr(tree->package);
+    run__LilyIr(tree->package);
 
     if (tree->package->status == LILY_PACKAGE_STATUS_MAIN) {
         // run__LilyLinker(tree->package);

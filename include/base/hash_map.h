@@ -201,6 +201,14 @@ insert__HashMap(HashMap *self, char *key, void *value);
 
 /**
  *
+ * @brief Remove a pair from a key.
+ * @return void*?
+ */
+void *
+remove__HashMap(HashMap *self, char *key);
+
+/**
+ *
  * @brief Free HashMap type.
  */
 DESTRUCTOR(HashMap, HashMap *self);
