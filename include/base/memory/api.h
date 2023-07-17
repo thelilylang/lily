@@ -28,7 +28,13 @@
 #define USE_C_MEMORY_API
 #undef USE_C_MEMORY_API
 
+#include <base/macros.h>
+
+#ifdef USE_C_MEMORY_API
+#include <stdlib.h>
+#else
 #include <builtin/alloc.h>
+#endif
 
 /**
  *
@@ -47,7 +53,11 @@ align__MemoryApi(void *mem, Usize align)
 inline void *
 alloc__MemoryApi(Usize size, Usize align)
 {
+#ifdef USE_C_MEMORY_API
+    return malloc(size);
+#else
     return __alloc__$Alloc(size, align);
+#endif
 }
 
 /**
@@ -58,17 +68,47 @@ alloc__MemoryApi(Usize size, Usize align)
 inline void *
 resize__MemoryApi(void *mem, Usize new_size, Usize align)
 {
+#ifdef USE_C_MEMORY_API
+    mem = realloc(mem, new_size);
+    return mem;
+#else
     return __resize__$Alloc(mem, new_size, align);
+#endif
 }
 
 /**
  *
  * @brief Free the given pointer according the given size and alignment.
+ * @note The given freed pointer is assigned to NULL at the end.
  */
 inline void
 free__MemoryApi(void **mem, Usize size, Usize align)
 {
+#ifdef USE_C_MEMORY_API
+    return free(*mem);
+#else
     return __free__$Alloc(mem, size, align);
+#endif
+}
+
+typedef struct MemoryApi
+{
+    void *(*align)(void *, Usize);
+    void *(*alloc)(Usize, Usize);
+    void *(*resize)(void *, Usize, Usize);
+    void (*free)(void **, Usize, Usize);
+} MemoryApi;
+
+/**
+ *
+ * @brief Construct MemoryApi type.
+ */
+inline CONSTRUCTOR(MemoryApi, MemoryApi)
+{
+    return (MemoryApi){ .align = &align__MemoryApi,
+                        .alloc = &alloc__MemoryApi,
+                        .resize = &resize__MemoryApi,
+                        .free = &free__MemoryApi };
 }
 
 #endif // LILY_BASE_MEMORY_API_H
