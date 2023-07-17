@@ -3,6 +3,7 @@
 #include "hash_map.c"
 #include "hash_set.c"
 #include "itoa.c"
+#include "memory/arena.c"
 #include "stack.c"
 #include "str.c"
 #include "string.c"
@@ -48,6 +49,9 @@ main()
     test_itoa_base_2();
     test_itoa_base_8();
     test_itoa_base_16();
+
+    // Test MemoryArena
+    test_alloc__MemoryArena();
 
     // Test Stack
     test_new__Stack();
