@@ -173,6 +173,10 @@ insert__HashMap(HashMap *self, char *key, void *value)
 void *
 remove__HashMap(HashMap *self, char *key)
 {
+    if (!self->buckets) {
+        return NULL;
+    }
+
     HashMapBucket *match = NULL;
     HashMapBucket *prev = NULL;
 
