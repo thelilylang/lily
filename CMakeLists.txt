@@ -64,6 +64,7 @@ set(BASE_SRC
     src/base/itoa.c
     src/base/linked_list.c
     src/base/list.c
+    src/base/memory/api.c
     src/base/memory/arena.c
     src/base/memory/pool.c
     src/base/mutex.c
