@@ -313,7 +313,8 @@ set(LILY_CORE_LILY_COMPILER_IR_LLVM_SRC
 
 add_library(lily_core_lily_compiler_ir_llvm STATIC
             ${LILY_CORE_LILY_COMPILER_IR_LLVM_SRC})
-target_link_libraries(lily_core_lily_compiler_ir_llvm lily_base LLVM)
+target_link_libraries(lily_core_lily_compiler_ir_llvm lily_base
+                      lily_core_lily_mir LLVM)
 target_include_directories(lily_core_lily_compiler_ir_llvm
                            PRIVATE ${LILY_INCLUDE})
 
