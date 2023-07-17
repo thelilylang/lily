@@ -1991,6 +1991,13 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 
 /**
  *
+ * @brief Get arg from the given instruction.
+ */
+const LilyMirInstruction *
+get_arg__LilyMirInstruction(const LilyMirInstruction *self);
+
+/**
+ *
  * @brief Convert LilyMirInstruction in String.
  * @note This function is only used to debug.
  */

@@ -2301,6 +2301,19 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     return self;
 }
 
+const LilyMirInstruction *
+get_arg__LilyMirInstruction(const LilyMirInstruction *self)
+{
+    switch (self->kind) {
+        case LILY_MIR_INSTRUCTION_KIND_ARG:
+            return self;
+        case LILY_MIR_INSTRUCTION_KIND_NON_NIL:
+            return get_arg__LilyMirInstruction(self->non_nil);
+        default:
+            return NULL;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
