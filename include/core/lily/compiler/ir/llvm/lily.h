@@ -97,7 +97,6 @@ LilyLLVMBuildBuiltinCall(const LilyIrLlvm *Self,
                          LilyIrLlvmScope *Scope,
                          const LilyIrLlvmPending *Pending,
                          const Vec *Params,
-                         const LilyMirDt *DT,
                          const char *BuiltinName,
                          const char *Name);
 
@@ -106,7 +105,6 @@ LilyLLVMBuildCall(const LilyIrLlvm *Self,
                   LilyIrLlvmScope *Scope,
                   const LilyIrLlvmPending *Pending,
                   const Vec *Params,
-                  const LilyMirDt *DT,
                   const char *FnName,
                   const char *Name);
 
@@ -314,7 +312,6 @@ LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
                      LilyIrLlvmScope *Scope,
                      const LilyIrLlvmPending *Pending,
                      const Vec *Params,
-                     const LilyMirDt *DT,
                      const char *SysName,
                      const char *Name);
 
@@ -369,22 +366,16 @@ LilyLLVMBuildVar(const LilyIrLlvm *Self,
                  const char *Name);
 
 LLVMTypeRef
-LilyLLVMGetType(const LilyIrLlvm *Self,
-                const LilyIrLlvmPending *Pending,
-                const LilyMirDt *DT);
+LilyLLVMGetType(const LilyIrLlvm *Self, const LilyMirDt *DT);
 
 LLVMValueRef
 LilyLLVMPrepareConst(const LilyIrLlvm *Self,
-                     LilyIrLlvmScope *Scope,
-                     const LilyIrLlvmPending *Pending,
                      const enum LilyMirLinkage Linkage,
                      const LilyMirDt *DT,
                      const char *Name);
 
 LLVMValueRef
 LilyLLVMPrepareFunction(const LilyIrLlvm *Self,
-                        LilyIrLlvmScope *Scope,
-                        const LilyIrLlvmPending *Pending,
                         const enum LilyMirLinkage Linkage,
                         const Vec *Args,
                         const LilyMirDt *ReturnDT,
@@ -397,38 +388,27 @@ LilyLLVMPrepareStruct(const LilyIrLlvm *Self, const char *Name)
 }
 
 void
-LilyLLVMPrepareModule(const LilyIrLlvm *Self,
-                      LilyIrLlvmScope *Scope,
-                      const LilyIrLlvmPending *Pending,
-                      OrderedHashMap *Insts);
+LilyLLVMPrepareModule(const LilyIrLlvm *Self, OrderedHashMap *Insts);
 
 inline void
 LilyLLVMFinishConst(const LilyIrLlvm *Self,
-                    LilyIrLlvmScope *Scope,
-                    const LilyIrLlvmPending *Pending,
                     LLVMValueRef Const,
                     const LilyMirInstructionVal *Val)
 {
-    LLVMSetInitializer(Const, LilyLLVMBuildVal(Self, Scope, Pending, Val));
+    LLVMSetInitializer(Const, LilyLLVMBuildVal(Self, NULL, NULL, Val));
 }
 
 void
 LilyLLVMFinishFunction(const LilyIrLlvm *Self,
-                       LilyIrLlvmScope *Scope,
-                       LilyIrLlvmPending *Pending,
                        LLVMValueRef Fn,
                        const Vec *Insts);
 
 void
 LilyLLVMFinishStruct(const LilyIrLlvm *Self,
-                     const LilyIrLlvmPending *Pending,
                      LLVMTypeRef Struct,
                      const Vec *Types);
 
 void
-LilyLLVMRunModule(const LilyIrLlvm *Self,
-                  LilyIrLlvmScope *Scope,
-                  LilyIrLlvmPending *Pending,
-                  OrderedHashMap *Insts);
+LilyLLVMRunModule(const LilyIrLlvm *Self, OrderedHashMap *Insts);
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_LILY_H
