@@ -302,9 +302,6 @@ target_include_directories(lily_core_lily_compiler_ir_cpp
 
 # lily_core_lily_compiler_ir_llvm
 set(LILY_CORE_LILY_COMPILER_IR_LLVM_SRC
-    src/core/lily/compiler/ir/llvm/generator/dt.c
-    src/core/lily/compiler/ir/llvm/generator/inst.c
-    src/core/lily/compiler/ir/llvm/generator/val.c
     src/core/lily/compiler/ir/llvm/generator.c
     src/core/lily/compiler/ir/llvm/lily.c
     src/core/lily/compiler/ir/llvm/linker.c
