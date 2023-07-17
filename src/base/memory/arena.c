@@ -24,9 +24,13 @@
 
 #include <base/memory/arena.h>
 #include <base/macros.h>
+#include <base/units.h>
+#include <base/print.h>
+#include <base/assert.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 CONSTRUCTOR(MemoryArena, MemoryArena) {
 
@@ -35,8 +39,23 @@ CONSTRUCTOR(MemoryArena, MemoryArena) {
 
 	return (MemoryArena){
 		.api = api,
-		.arena = api.alloc(capacity, 8),
+		.arena = api.alloc(capacity, DEFAULT_ALIGNMENT),
 		.total_size = 0,
+		.pos = 0,
+		.capacity = capacity,
+	};
+}
+
+MemoryArena
+from_capacity__MemoryArena(Usize capacity)
+{
+	MemoryApi api = NEW(MemoryApi);
+
+	return (MemoryArena){
+		.api = api,
+		.arena = api.alloc(capacity, DEFAULT_ALIGNMENT),
+		.total_size = 0,
+		.pos = 0,
 		.capacity = capacity,
 	};
 }
@@ -46,26 +65,30 @@ alloc__MemoryArena(MemoryArena *self, Usize size)
 {
 	if (self->total_size + size > self->capacity) {
 		FAILED("alloc: too mutch allocated memory");
+	} else if (self->pos + size > self->capacity) {
+		FAILED("alloc: out of memory");
 	}
 
-	void *res = self->arena + self->total_size;
 	self->total_size += size;
+	self->pos += size;
 
-	return res;
+	return self->arena + self->pos;
 }
 
 void *
 resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size)
 {
-	void *resized_mem = self->api.resize(mem, new_size, 8);
-
-	if (resized_mem > self->arena) {
-		FAILED("resize: too mutch allocated memory");
-	} else if (resized_mem < self->arena + self->total_size) {
-		self->total_size = resized_mem - self->arena;
+	ASSERT(mem);
+	
+	if (new_size == 0) {
+		return NULL;
 	}
 
-	return resized_mem;
+	void *new_mem = alloc__MemoryArena(self, new_size);
+
+	memcpy(new_mem, mem, new_size);
+
+	return new_mem;
 }
 
 void
@@ -74,5 +97,19 @@ reset__MemoryArena(MemoryArena *self)
 	destroy__MemoryArena(self);
 
 	self->total_size = 0;
-	self->arena = self->api.alloc(self->capacity, 8);
+	self->pos = 0;
+	self->arena = self->api.alloc(self->capacity, DEFAULT_ALIGNMENT);
+}
+
+void
+print_stat__MemoryArena(const MemoryArena *self)
+{
+	Float32 total_size = self->total_size / MiB;
+	Float32 capacity = self->capacity / MiB;
+
+	PRINTLN("===================================");
+	PRINTLN("==========Arena allocator==========");
+	PRINTLN("total size: {d} b => {f} MiB", self->total_size, total_size);
+	PRINTLN("capacity: {d} b => {f} MiB", self->capacity, capacity);
+	PRINTLN("===================================");
 }

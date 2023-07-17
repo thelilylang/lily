@@ -28,11 +28,14 @@
 #include <base/memory/api.h>
 #include <base/new.h>
 
+#define DEFAULT_ALIGNMENT sizeof(void *) * 2
+
 typedef struct MemoryArena
 {
     MemoryApi api;
     void *arena;
     Usize total_size;
+    Usize pos;
     Usize capacity;
 } MemoryArena;
 
@@ -41,6 +44,13 @@ typedef struct MemoryArena
  * @brief Construct MemoryArena type.
  */
 CONSTRUCTOR(MemoryArena, MemoryArena);
+
+/**
+ *
+ * @brief Construct MemoryArena type with default capacity.
+ */
+MemoryArena
+from_capacity__MemoryArena(Usize capacity);
 
 /**
  *
@@ -73,5 +83,12 @@ destroy__MemoryArena(MemoryArena *self)
  */
 void
 reset__MemoryArena(MemoryArena *self);
+
+/**
+ *
+ * @brief Print the stats of the arena Allocator.
+ */
+void
+print_stat__MemoryArena(const MemoryArena *self);
 
 #endif // LILY_BASE_MEMORY_ARENA_H
