@@ -61,7 +61,6 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/compiler/ir/cpp/builder/function/*.h
 	${CLANG_FORMAT} ./include/core/lily/compiler/ir/cpp/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/compiler/ir/llvm/*.h
-	${CLANG_FORMAT} ./include/core/lily/compiler/ir/llvm/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/expr/*.h
@@ -119,7 +118,6 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/compiler/ir/cpp/builder/function/*.c
 	${CLANG_FORMAT} ./src/core/lily/compiler/ir/cpp/generator/*.c
 	${CLANG_FORMAT} ./src/core/lily/compiler/ir/llvm/*.c
-	${CLANG_FORMAT} ./src/core/lily/compiler/ir/llvm/generator/*.c
 	${CLANG_FORMAT} ./src/core/lily/compiler/ir/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/*.c
