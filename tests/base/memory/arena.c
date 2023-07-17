@@ -36,4 +36,6 @@ test_alloc__MemoryArena()
 	}
 
 	// print_stat__MemoryArena(&arena);
+
+	destroy__MemoryArena(&arena);
 }
