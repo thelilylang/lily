@@ -24,9 +24,10 @@
 
 #include <core/lily/compiler/ir/llvm/pending.h>
 
-DESTRUCTOR(LilyIrLLvmPending, const LilyIrLlvmPending *self)
+void
+add_block__LilyIrLlvmPending(const LilyIrLlvmPending *self,
+                             const char *name,
+                             LLVMBasicBlockRef block)
 {
-    FREE(HashMap, self->funs);
-    FREE(HashMap, self->structs);
-    FREE(HashMap, self->blocks);
+    ASSERT(!insert__HashMap(self->blocks, (char *)name, block));
 }

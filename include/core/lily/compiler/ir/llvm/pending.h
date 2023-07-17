@@ -38,8 +38,6 @@
 typedef struct LilyIrLlvmPending
 {
     LLVMValueRef current_fun; // LLVMValueRef? (&)
-    HashMap *structs;         // HashMap<LLVMTypeRef (&)>*
-    HashMap *funs;            // HashMap<LLVMValueRef (&)>*
     HashMap *blocks;          // HashMap<LLVMBasicBlockRef (&)>*
 } LilyIrLlvmPending;
 
@@ -49,30 +47,7 @@ typedef struct LilyIrLlvmPending
  */
 inline CONSTRUCTOR(LilyIrLlvmPending, LilyIrLlvmPending)
 {
-    return (LilyIrLlvmPending){ .current_fun = NULL,
-                                .structs = NEW(HashMap),
-                                .funs = NEW(HashMap),
-                                .blocks = NEW(HashMap) };
-}
-
-/**
- *
- * @brief Get struct from `structs` field.
- */
-inline LLVMTypeRef
-get_struct__LilyIrLlvmPending(const LilyIrLlvmPending *self, const char *name)
-{
-    return get__HashMap(self->structs, (char *)name);
-}
-
-/**
- *
- * @brief Get function from `funs` field.
- */
-inline LLVMValueRef
-get_fun__LilyIrLlvmPending(const LilyIrLlvmPending *self, const char *name)
-{
-    return get__HashMap(self->funs, (char *)name);
+    return (LilyIrLlvmPending){ .current_fun = NULL, .blocks = NEW(HashMap) };
 }
 
 /**
@@ -89,18 +64,18 @@ get_block__LilyIrLlvmPending(const LilyIrLlvmPending *self, const char *name)
  *
  * @brief Add block to the `blocks` field.
  */
-inline void
+void
 add_block__LilyIrLlvmPending(const LilyIrLlvmPending *self,
                              const char *name,
-                             LLVMBasicBlockRef block)
-{
-    ASSERT(!insert__HashMap(self->blocks, (char *)name, block));
-}
+                             LLVMBasicBlockRef block);
 
 /**
  *
  * @brief Free LilyIrLLvmPending type.
  */
-DESTRUCTOR(LilyIrLLvmPending, const LilyIrLlvmPending *self);
+inline DESTRUCTOR(LilyIrLlvmPending, const LilyIrLlvmPending *self)
+{
+    FREE(HashMap, self->blocks);
+}
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_PENDING_H
