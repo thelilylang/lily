@@ -79,6 +79,7 @@
 #endif
 
 #define PTR_SIZE sizeof(void *)
+#define DEFAULT_ALIGNMENT sizeof(void *) * 2
 
 // Vec<T>
 // FREE_BUFFER_ITEMS(buffer, len, type)
