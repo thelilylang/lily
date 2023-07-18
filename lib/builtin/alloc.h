@@ -40,7 +40,10 @@ extern "C"
 
     LILY_API void *__alloc__$Alloc(Usize size, Usize align);
 
-    LILY_API void *__resize__$Alloc(void *mem, Usize new_size, Usize align);
+    LILY_API void *__resize__$Alloc(void *old_mem,
+                                    Usize old_size,
+                                    Usize new_size,
+                                    Usize align);
 
     LILY_API void __free__$Alloc(void **mem, Usize size, Usize align);
 
