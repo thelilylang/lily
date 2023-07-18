@@ -324,8 +324,8 @@ to_msg__LilyError(const LilyError *self)
             return "the tuples have not the same size";
         case LILY_ERROR_KIND_EXPECTED_FUN_CALL:
             return "expected fun call";
-		case LILY_ERROR_KIND_UNEXPECTED_CLOSE:
-			return "unexpected close";
+        case LILY_ERROR_KIND_UNEXPECTED_CLOSE:
+            return "unexpected close";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -619,8 +619,8 @@ to_code__LilyError(const LilyError *self)
             return "0141";
         case LILY_ERROR_KIND_EXPECTED_FUN_CALL:
             return "0142";
-		case LILY_ERROR_KIND_UNEXPECTED_CLOSE:
-			return "0143";
+        case LILY_ERROR_KIND_UNEXPECTED_CLOSE:
+            return "0143";
         default:
             UNREACHABLE("unknown variant");
     }
