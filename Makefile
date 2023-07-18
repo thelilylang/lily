@@ -80,6 +80,7 @@ format:
 	${CLANG_FORMAT} ./src/base/*.c
 	${CLANG_FORMAT} ./src/base/cli/*.c
 	${CLANG_FORMAT} ./src/base/cli/result/*.c
+	${CLANG_FORMAT} ./src/base/memory/*.c
 	${CLANG_FORMAT} ./src/base/hash/*.c
 	${CLANG_FORMAT} ./src/bin/lily/*.c
 	${CLANG_FORMAT} ./src/bin/lilyc/*.c
