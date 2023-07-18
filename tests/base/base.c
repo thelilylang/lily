@@ -4,6 +4,7 @@
 #include "hash_set.c"
 #include "itoa.c"
 #include "memory/arena.c"
+#include "memory/global.c"
 #include "stack.c"
 #include "str.c"
 #include "string.c"
@@ -52,6 +53,9 @@ main()
 
     // Test MemoryArena
     test_alloc__MemoryArena();
+
+    // Test MemoryGlobal
+    test_alloc__MemoryGlobal();
 
     // Test Stack
     test_new__Stack();
