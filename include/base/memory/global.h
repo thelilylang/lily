@@ -44,11 +44,7 @@ typedef struct MemoryGlobalCell
  *
  * @brief Construct MemoryGlobalCell type.
  */
-inline CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, void *mem, Usize size)
-{
-    return &(MemoryGlobalCell){ .layout = NEW(MemoryLayout, mem, size),
-                                .next = NULL };
-}
+CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryLayout layout);
 
 /**
  *
@@ -68,6 +64,7 @@ typedef struct MemoryGlobal
     Usize total_cell_free;
     Usize total_size_free;
     Usize capacity;
+    bool is_destroy;
 } MemoryGlobal;
 
 /**
@@ -110,8 +107,16 @@ free__MemoryGlobal(MemoryGlobal *self, MemoryLayout *layout);
 
 /**
  *
- * @brief Free MemoryGlobal type.
+ * @brief Print the stats of the global Allocator.
  */
-DESTRUCTOR(MemoryGlobal, MemoryGlobal *self);
+void
+print_stat__MemoryGlobal(const MemoryGlobal *self);
+
+/**
+ *
+ * @brief Destroy global Allocator.
+ */
+void
+destroy__MemoryGlobal(MemoryGlobal *self);
 
 #endif // LILY_BASE_MEMORY_GLOBAL_H
