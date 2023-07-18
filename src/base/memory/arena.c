@@ -41,7 +41,6 @@ CONSTRUCTOR(MemoryArena, MemoryArena) {
 		.api = api,
 		.arena = api.alloc(capacity, DEFAULT_ALIGNMENT),
 		.total_size = 0,
-		.pos = 0,
 		.capacity = capacity,
 	};
 }
@@ -55,7 +54,6 @@ from_capacity__MemoryArena(Usize capacity)
 		.api = api,
 		.arena = api.alloc(capacity, DEFAULT_ALIGNMENT),
 		.total_size = 0,
-		.pos = 0,
 		.capacity = capacity,
 	};
 }
@@ -65,22 +63,21 @@ alloc__MemoryArena(MemoryArena *self, Usize size)
 {
 	if (self->total_size + size > self->capacity) {
 		FAILED("alloc: too mutch allocated memory");
-	} else if (self->pos + size > self->capacity) {
-		FAILED("alloc: out of memory");
-	}
+	} 
+
+	void *res = self->arena + self->total_size;
 
 	self->total_size += size;
-	self->pos += size;
 
-	return self->arena + self->pos;
+	return res;
 }
 
 void *
 resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size)
 {
-	ASSERT(mem);
-	
-	if (new_size == 0) {
+	if (!mem) {
+		return alloc__MemoryArena(self, new_size);
+	} else if (new_size == 0) {
 		return NULL;
 	}
 
@@ -97,7 +94,6 @@ reset__MemoryArena(MemoryArena *self)
 	destroy__MemoryArena(self);
 
 	self->total_size = 0;
-	self->pos = 0;
 	self->arena = self->api.alloc(self->capacity, DEFAULT_ALIGNMENT);
 }
 

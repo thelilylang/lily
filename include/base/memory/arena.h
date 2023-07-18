@@ -35,7 +35,6 @@ typedef struct MemoryArena
     MemoryApi api;
     void *arena;
     Usize total_size;
-    Usize pos;
     Usize capacity;
 } MemoryArena;
 
@@ -73,7 +72,9 @@ resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size);
 inline void
 destroy__MemoryArena(MemoryArena *self)
 {
-    self->api.free(&self->arena, self->total_size, 8);
+    if (self->total_size > 0) {
+        self->api.free(&self->arena, self->total_size, 8);
+    }
 }
 
 /**
