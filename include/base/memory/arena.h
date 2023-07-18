@@ -28,8 +28,6 @@
 #include <base/memory/api.h>
 #include <base/new.h>
 
-#define DEFAULT_ALIGNMENT sizeof(void *) * 2
-
 typedef struct MemoryArena
 {
     MemoryApi api;
