@@ -29,11 +29,11 @@
 #undef USE_C_MEMORY_API
 
 #include <base/macros.h>
+#include <base/types.h>
+#include <builtin/alloc.h>
 
 #ifdef USE_C_MEMORY_API
 #include <stdlib.h>
-#else
-#include <builtin/alloc.h>
 #endif
 
 /**
@@ -56,7 +56,7 @@ alloc__MemoryApi(Usize size, Usize align);
  * pointer.
  */
 void *
-resize__MemoryApi(void *mem, Usize new_size, Usize align);
+resize__MemoryApi(void *old_mem, Usize old_size, Usize new_size, Usize align);
 
 /**
  *
@@ -70,7 +70,7 @@ typedef struct MemoryApi
 {
     void *(*align)(void *, Usize);
     void *(*alloc)(Usize, Usize);
-    void *(*resize)(void *, Usize, Usize);
+    void *(*resize)(void *, Usize, Usize, Usize);
     void (*free)(void **, Usize, Usize);
 } MemoryApi;
 

@@ -41,13 +41,12 @@ alloc__MemoryApi(Usize size, Usize align)
 }
 
 void *
-resize__MemoryApi(void *mem, Usize new_size, Usize align)
+resize__MemoryApi(void *old_mem, Usize old_size, Usize new_size, Usize align)
 {
 #ifdef USE_C_MEMORY_API
-    mem = realloc(mem, new_size);
-    return mem;
+    return realloc(old_mem, new_size);
 #else
-    return __resize__$Alloc(mem, new_size, align);
+    return __resize__$Alloc(old_mem, old_size, new_size, align);
 #endif
 }
 
