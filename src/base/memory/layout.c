@@ -26,9 +26,16 @@
 
 #include <builtin/alloc.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 DESTRUCTOR(MemoryLayout, MemoryLayout *self)
 {
-	__free__$Alloc(&self->mem, self->size, DEFAULT_ALIGNMENT);
-	self->size = 0;
-	self->is_free = true;
+    if (self->size == 0) {
+        perror("Lily(Fail): this layout is already free");
+        exit(1);
+    }
+
+    __free__$Alloc(&self->mem, self->size, DEFAULT_ALIGNMENT);
+    self->size = 0;
 }

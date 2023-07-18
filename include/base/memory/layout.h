@@ -32,7 +32,6 @@ typedef struct MemoryLayout
 {
     void *mem;
     Usize size;
-    bool is_free;
 } MemoryLayout;
 
 /**
@@ -41,7 +40,10 @@ typedef struct MemoryLayout
  */
 inline CONSTRUCTOR(MemoryLayout, MemoryLayout, void *mem, Usize size)
 {
-    return (MemoryLayout){ .mem = mem, .size = size, .is_free = false };
+    return (MemoryLayout){
+        .mem = mem,
+        .size = size,
+    };
 }
 
 /**
