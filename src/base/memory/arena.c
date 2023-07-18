@@ -22,90 +22,91 @@
  * SOFTWARE.
  */
 
-#include <base/memory/arena.h>
-#include <base/macros.h>
-#include <base/units.h>
-#include <base/print.h>
 #include <base/assert.h>
+#include <base/macros.h>
+#include <base/memory/arena.h>
+#include <base/print.h>
+#include <base/units.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-CONSTRUCTOR(MemoryArena, MemoryArena) {
+CONSTRUCTOR(MemoryArena, MemoryArena)
+{
 
-	Usize capacity = __max_capacity__$Alloc();
-	MemoryApi api = NEW(MemoryApi);
+    Usize capacity = __max_capacity__$Alloc();
+    MemoryApi api = NEW(MemoryApi);
 
-	return (MemoryArena){
-		.api = api,
-		.arena = api.alloc(capacity, DEFAULT_ALIGNMENT),
-		.total_size = 0,
-		.capacity = capacity,
-	};
+    return (MemoryArena){
+        .api = api,
+        .arena = api.alloc(capacity, DEFAULT_ALIGNMENT),
+        .total_size = 0,
+        .capacity = capacity,
+    };
 }
 
 MemoryArena
 from_capacity__MemoryArena(Usize capacity)
 {
-	MemoryApi api = NEW(MemoryApi);
+    MemoryApi api = NEW(MemoryApi);
 
-	return (MemoryArena){
-		.api = api,
-		.arena = api.alloc(capacity, DEFAULT_ALIGNMENT),
-		.total_size = 0,
-		.capacity = capacity,
-	};
+    return (MemoryArena){
+        .api = api,
+        .arena = api.alloc(capacity, DEFAULT_ALIGNMENT),
+        .total_size = 0,
+        .capacity = capacity,
+    };
 }
 
 void *
 alloc__MemoryArena(MemoryArena *self, Usize size)
 {
-	if (self->total_size + size > self->capacity) {
-		FAILED("alloc: too mutch allocated memory");
-	} 
+    if (self->total_size + size > self->capacity) {
+        FAILED("alloc: too mutch allocated memory");
+    }
 
-	void *res = self->arena + self->total_size;
+    void *res = self->arena + self->total_size;
 
-	self->total_size += size;
+    self->total_size += size;
 
-	return res;
+    return res;
 }
 
 void *
 resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size)
 {
-	if (!mem) {
-		return alloc__MemoryArena(self, new_size);
-	} else if (new_size == 0) {
-		return NULL;
-	}
+    if (!mem) {
+        return alloc__MemoryArena(self, new_size);
+    } else if (new_size == 0) {
+        return NULL;
+    }
 
-	void *new_mem = alloc__MemoryArena(self, new_size);
+    void *new_mem = alloc__MemoryArena(self, new_size);
 
-	memcpy(new_mem, mem, new_size);
+    memcpy(new_mem, mem, new_size);
 
-	return new_mem;
+    return new_mem;
 }
 
 void
 reset__MemoryArena(MemoryArena *self)
 {
-	destroy__MemoryArena(self);
+    destroy__MemoryArena(self);
 
-	self->total_size = 0;
-	self->arena = self->api.alloc(self->capacity, DEFAULT_ALIGNMENT);
+    self->total_size = 0;
+    self->arena = self->api.alloc(self->capacity, DEFAULT_ALIGNMENT);
 }
 
 void
 print_stat__MemoryArena(const MemoryArena *self)
 {
-	Float32 total_size = self->total_size / MiB;
-	Float32 capacity = self->capacity / MiB;
+    Float32 mib_total_size = self->total_size / MiB;
+    Float32 mib_capacity = self->capacity / MiB;
 
-	PRINTLN("===================================");
-	PRINTLN("==========Arena allocator==========");
-	PRINTLN("total size: {d} b => {f} MiB", self->total_size, total_size);
-	PRINTLN("capacity: {d} b => {f} MiB", self->capacity, capacity);
-	PRINTLN("===================================");
+    PRINTLN("===================================");
+    PRINTLN("==========Arena allocator==========");
+    PRINTLN("total size: {d} b => {f} MiB", self->total_size, mib_total_size);
+    PRINTLN("capacity: {d} b => {f} MiB", self->capacity, mib_capacity);
+    PRINTLN("===================================");
 }
