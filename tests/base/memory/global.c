@@ -39,5 +39,5 @@ void test_alloc__MemoryGlobal()
 	free__MemoryGlobal(&global, s_block);
 	destroy__MemoryGlobal(&global);
 
-	print_stat__MemoryGlobal(&global);
+	// print_stat__MemoryGlobal(&global);
 }
