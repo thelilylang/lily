@@ -86,12 +86,14 @@ alloc__MemoryArena(MemoryArena *self, Usize size, Usize align)
     if (!self->last_cell) {
         self->cells =
           NEW(MemoryCell,
-              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, false));
+              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, false),
+              &self->api);
         self->last_cell = self->cells;
     } else {
         self->last_cell->next =
           NEW(MemoryCell,
-              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, false));
+              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, false),
+              &self->api);
         self->last_cell = self->last_cell->next;
     }
 
