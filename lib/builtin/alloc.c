@@ -63,9 +63,9 @@ __max_capacity__$Alloc()
 void *
 __align__$Alloc(void *mem, Usize align)
 {
-    ASSERT(align % 2 == 0);
+    ASSERT(align % ALIGNMENT_COEFF == 0);
 
-    return (void *)(((Uptr)mem + (align - 1)) & ~(align - 1));
+    return (void *)ALIGN(mem, align);
 }
 
 void *
