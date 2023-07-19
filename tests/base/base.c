@@ -1,3 +1,4 @@
+#include "allocator.c"
 #include "atoi.c"
 #include "format.c"
 #include "hash_map.c"
@@ -5,6 +6,7 @@
 #include "itoa.c"
 #include "memory/arena.c"
 #include "memory/global.c"
+#include "memory/page.c"
 #include "stack.c"
 #include "str.c"
 #include "string.c"
@@ -15,6 +17,9 @@
 int
 main()
 {
+    // Test Allocator
+    test_alloc__Allocator();
+
     // Test atoi
     test_check_int8_overflow__Atoi();
     test_check_int16_overflow__Atoi();
@@ -56,6 +61,9 @@ main()
 
     // Test MemoryGlobal
     test_alloc__MemoryGlobal();
+
+    // Test MemoryPage
+    test_alloc__MemoryPage();
 
     // Test Stack
     test_new__Stack();
