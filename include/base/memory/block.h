@@ -28,6 +28,8 @@
 #include <base/memory/api.h>
 #include <base/memory/layout.h>
 
+#include <stdbool.h>
+
 typedef struct MemoryBlock
 {
     MemoryLayout layout;
