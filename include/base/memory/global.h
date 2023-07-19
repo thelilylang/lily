@@ -26,6 +26,7 @@
 #define LILY_BASE_MEMORY_GLOBAL_H
 
 #include <base/macros.h>
+#include <base/memory/api.h>
 #include <base/memory/block.h>
 #include <base/new.h>
 #include <base/types.h>
@@ -58,13 +59,14 @@ CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryBlock block);
  *
  * @brief Free MemoryGlobalCell type.
  */
-inline DESTRUCTOR(MemoryGlobalCell, MemoryGlobalCell *self)
+inline DESTRUCTOR(MemoryGlobalCell, MemoryGlobalCell *self, MemoryApi *api)
 {
-    FREE(MemoryBlock, &self->block);
+    FREE(MemoryBlock, &self->block, api);
 }
 
 typedef struct MemoryGlobal
 {
+    MemoryApi api;
     MemoryGlobalCell *cells;      // MemoryGlobalCell*?
     MemoryGlobalCell *last_cells; // MemoryGlobalCell*?
     Usize total_size;
@@ -82,6 +84,7 @@ typedef struct MemoryGlobal
 inline CONSTRUCTOR(MemoryGlobal, MemoryGlobal)
 {
     return (MemoryGlobal){
+        .api = NEW(MemoryApi),
         .cells = NULL,
         .last_cells = NULL,
         .total_size = 0,

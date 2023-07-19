@@ -55,7 +55,7 @@ alloc__MemoryGlobal(MemoryGlobal *self, Usize size, Usize align)
         exit(1);
     }
 
-    void *mem = __alloc__$Alloc(size, align);
+    void *mem = self->api.alloc(size, align);
 
     if (!self->last_cells) {
         self->cells =
@@ -91,7 +91,7 @@ resize__MemoryGlobal(MemoryGlobal *self, MemoryBlock *block, Usize new_size)
         exit(1);
     }
 
-    block->mem = __resize__$Alloc(
+    block->mem = self->api.resize(
       block->mem, block->layout.size, new_size, DEFAULT_ALIGNMENT);
     block->layout.size = new_size;
     block->is_free = false;
@@ -106,7 +106,7 @@ free__MemoryGlobal(MemoryGlobal *self, MemoryBlock *block)
 
     Usize layout_size = block->layout.size;
 
-    FREE(MemoryBlock, block);
+    FREE(MemoryBlock, block, &self->api);
 
     ++self->total_cell_free;
     self->total_size_free += layout_size;
@@ -142,7 +142,7 @@ destroy__MemoryGlobal(MemoryGlobal *self)
 
             current = current->next;
 
-            __free__$Alloc((void **)&tmp,
+            self->api.free((void **)&tmp,
                            sizeof(MemoryGlobalCell),
                            alignof(MemoryGlobalCell));
 
@@ -152,7 +152,7 @@ destroy__MemoryGlobal(MemoryGlobal *self)
 
         Usize cell_size = current->block.layout.size;
 
-        FREE(MemoryGlobalCell, current);
+        FREE(MemoryGlobalCell, current, &self->api);
 
         ++self->total_cell_free;
         self->total_size_free += cell_size;
@@ -161,7 +161,7 @@ destroy__MemoryGlobal(MemoryGlobal *self)
 
         current = current->next;
 
-        __free__$Alloc(
+        self->api.free(
           (void **)&tmp, sizeof(MemoryGlobalCell), alignof(MemoryGlobalCell));
 
         // Memory using by MemoryGlobalCell.
