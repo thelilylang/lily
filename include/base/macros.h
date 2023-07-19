@@ -165,4 +165,8 @@
         exit(1);                                                      \
     }
 
+#if defined(CLANG_VERSION) || defined(MSCV_VERSION)
+#define alignof(T) _Alignof(T)
+#endif
+
 #endif // LILY_BASE_MACROS_H
