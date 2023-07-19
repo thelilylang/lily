@@ -24,6 +24,8 @@
 
 #include <base/memory/api.h>
 
+#include <stddef.h>
+
 void *
 __align__(void *mem, Usize align)
 {
