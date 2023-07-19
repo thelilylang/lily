@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-DESTRUCTOR(MemoryBlock, MemoryBlock *self)
+DESTRUCTOR(MemoryBlock, MemoryBlock *self, MemoryApi *api)
 {
     if (self->is_free) {
         perror("Lily(Fail): this block is already free");
@@ -42,7 +42,7 @@ DESTRUCTOR(MemoryBlock, MemoryBlock *self)
 
     self->is_free = true;
 
-    __free__$Alloc(&self->mem, self->layout.size, self->layout.align);
+    api->free(&self->mem, self->layout.size, self->layout.align);
 
     FREE(MemoryLayout, &self->layout);
 }

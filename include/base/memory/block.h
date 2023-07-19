@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_MEMORY_BLOCK_H
 #define LILY_BASE_MEMORY_BLOCK_H
 
+#include <base/memory/api.h>
 #include <base/memory/layout.h>
 
 typedef struct MemoryBlock
@@ -47,6 +48,6 @@ inline CONSTRUCTOR(MemoryBlock, MemoryBlock, MemoryLayout layout, void *mem)
  *
  * @brief Free MemoryBlock type.
  */
-DESTRUCTOR(MemoryBlock, MemoryBlock *self);
+DESTRUCTOR(MemoryBlock, MemoryBlock *self, MemoryApi *api);
 
 #endif // LILY_BASE_MEMORY_BLOCK_H
