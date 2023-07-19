@@ -34,12 +34,13 @@
 
 #define MEMORY_PAGE_RESIZE(T, self, n) resize__MemoryPage(self, sizeof(T) * n)
 
-#define MEMORY_PAGE_FREE(self) free__MemoryPage(self)
+#define MEMORY_PAGE_FREE(self) destroy__MemoryPage(self)
 
 typedef struct MemoryPage
 {
     MemoryApi api;
     MemoryBlock block; // undef
+	Usize size;
     bool is_undef;
 } MemoryPage;
 
@@ -49,7 +50,7 @@ typedef struct MemoryPage
  */
 inline CONSTRUCTOR(MemoryPage, MemoryPage)
 {
-    return (MemoryPage){ .api = NEW(MemoryApi), .is_undef = true };
+    return (MemoryPage){ .api = NEW(MemoryApi), .size = 0, .is_undef = true };
 }
 
 /**
@@ -68,10 +69,24 @@ resize__MemoryPage(MemoryPage *self, Usize new_size);
 
 /**
  *
- * @brief Free a block of memory.
+ * @brief Destroy Page allocator.
  */
 void
-free__MemoryPage(MemoryPage *self);
+destroy__MemoryPage(MemoryPage *self);
+
+/**
+ *
+ * @brief Reset Page allocator.
+ */
+void
+reset__MemoryPage(MemoryPage *self);
+
+/**
+ *
+ * @brief Print stat of the Page allocator.
+ */
+void
+print_stat__MemoryPage(MemoryPage *self);
 
 /**
  *

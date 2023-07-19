@@ -24,6 +24,8 @@
 
 #include <base/assert.h>
 #include <base/memory/page.h>
+#include <base/print.h>
+#include <base/units.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +38,7 @@ alloc__MemoryPage(MemoryPage *self, Usize size, Usize align)
                       self->api.alloc(size, align),
                       true);
     self->is_undef = false;
+	self->size = self->block.layout.size;
 
     return &self->block;
 }
@@ -49,14 +52,40 @@ resize__MemoryPage(MemoryPage *self, Usize new_size)
                                        self->block.layout.size,
                                        new_size,
                                        self->block.layout.align);
+	self->size = self->block.layout.size;
+
     return &self->block;
 }
 
 void
-free__MemoryPage(MemoryPage *self)
+destroy__MemoryPage(MemoryPage *self)
 {
     ASSERT(!self->is_undef);
 
     FREE(MemoryBlock, &self->block, &self->api);
     self->is_undef = true;
+}
+
+void
+reset__MemoryPage(MemoryPage *self)
+{
+	destroy__MemoryPage(self);
+	self->size = 0;
+}
+
+void
+print_stat__MemoryPage(MemoryPage *self)
+{
+    Float32 mib_total_size = self->size / MiB;
+    Float32 mib_total_size_free =
+      self->block.is_free ? self->size / MiB : 0.0;
+
+    PRINTLN("==================================");
+    PRINTLN("==========Page allocator==========");
+    PRINTLN(
+      "total size: {d} b => {f} MiB", self->size, mib_total_size);
+    PRINTLN("total size free: {d} b => {f} MiB",
+            self->block.is_free ? self->size : 0,
+            mib_total_size_free);
+    PRINTLN("==================================");
 }
