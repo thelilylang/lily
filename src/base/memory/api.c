@@ -25,13 +25,13 @@
 #include <base/memory/api.h>
 
 void *
-align__MemoryApi(void *mem, Usize align)
+__align__(void *mem, Usize align)
 {
     return __align__$Alloc(mem, align);
 }
 
 void *
-alloc__MemoryApi(Usize size, Usize align)
+__alloc__(Usize size, Usize align)
 {
 #ifdef USE_C_MEMORY_API
     return malloc(size);
@@ -41,7 +41,7 @@ alloc__MemoryApi(Usize size, Usize align)
 }
 
 void *
-resize__MemoryApi(void *old_mem, Usize old_size, Usize new_size, Usize align)
+__resize__(void *old_mem, Usize old_size, Usize new_size, Usize align)
 {
 #ifdef USE_C_MEMORY_API
     return realloc(old_mem, new_size);
@@ -51,7 +51,7 @@ resize__MemoryApi(void *old_mem, Usize old_size, Usize new_size, Usize align)
 }
 
 void
-free__MemoryApi(void **mem, Usize size, Usize align)
+__free__(void **mem, Usize size, Usize align)
 {
 #ifdef USE_C_MEMORY_API
     return free(*mem);

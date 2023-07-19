@@ -41,14 +41,14 @@
  * @brief Align pointer with the given size alignment.
  */
 void *
-align__MemoryApi(void *mem, Usize align);
+__align__(void *mem, Usize align);
 
 /**
  *
  * @brief Alloc to a pointer with the given size + align the allocated pointer.
  */
 void *
-alloc__MemoryApi(Usize size, Usize align);
+__alloc__(Usize size, Usize align);
 
 /**
  *
@@ -56,7 +56,7 @@ alloc__MemoryApi(Usize size, Usize align);
  * pointer.
  */
 void *
-resize__MemoryApi(void *old_mem, Usize old_size, Usize new_size, Usize align);
+__resize__(void *old_mem, Usize old_size, Usize new_size, Usize align);
 
 /**
  *
@@ -64,7 +64,7 @@ resize__MemoryApi(void *old_mem, Usize old_size, Usize new_size, Usize align);
  * @note The given freed pointer is assigned to NULL at the end.
  */
 void
-free__MemoryApi(void **mem, Usize size, Usize align);
+__free__(void **mem, Usize size, Usize align);
 
 typedef struct MemoryApi
 {
@@ -80,10 +80,10 @@ typedef struct MemoryApi
  */
 inline CONSTRUCTOR(MemoryApi, MemoryApi)
 {
-    return (MemoryApi){ .align = &align__MemoryApi,
-                        .alloc = &alloc__MemoryApi,
-                        .resize = &resize__MemoryApi,
-                        .free = &free__MemoryApi };
+    return (MemoryApi){ .align = &__align__,
+                        .alloc = &__alloc__,
+                        .resize = &__resize__,
+                        .free = &__free__ };
 }
 
 #endif // LILY_BASE_MEMORY_API_H
