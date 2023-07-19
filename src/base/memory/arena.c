@@ -69,9 +69,11 @@ alloc__MemoryArena(MemoryArena *self, Usize size, Usize align)
     ASSERT(!self->is_destroy);
 
     if (self->total_size + size > self->capacity) {
-        FAILED("alloc: too mutch allocated memory");
+        perror("Lily(Fail): too mutch allocated memory");
+        exit(1);
     } else if (self->pos + size + align > self->capacity) {
-        FAILED("alloc: out of memory");
+        perror("Lily(Fail): out of memory");
+        exit(1);
     }
 
     void *mem = (void *)ALIGN(self->arena + self->pos, align);
