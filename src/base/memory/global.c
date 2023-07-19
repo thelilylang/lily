@@ -31,17 +31,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryBlock block)
-{
-    MemoryGlobalCell *self =
-      __alloc__$Alloc(sizeof(MemoryGlobalCell), alignof(MemoryGlobalCell));
-
-    self->block = block;
-    self->next = NULL;
-
-    return self;
-}
-
 MemoryBlock *
 alloc__MemoryGlobal(MemoryGlobal *self, Usize size, Usize align)
 {
@@ -57,22 +46,22 @@ alloc__MemoryGlobal(MemoryGlobal *self, Usize size, Usize align)
 
     void *mem = self->api.alloc(size, align);
 
-    if (!self->last_cells) {
+    if (!self->last_cell) {
         self->cells =
-          NEW(MemoryGlobalCell,
-              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem));
-        self->last_cells = self->cells;
+          NEW(MemoryCell,
+              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, true));
+        self->last_cell = self->cells;
     } else {
-        self->last_cells->next =
-          NEW(MemoryGlobalCell,
-              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem));
-        self->last_cells = self->last_cells->next;
+        self->last_cell->next =
+          NEW(MemoryCell,
+              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, true));
+        self->last_cell = self->last_cell->next;
     }
 
-    // Memory using by MemoryGlobalCell.
-    self->total_size += sizeof(MemoryGlobalCell);
+    // Memory using by MemoryCell.
+    self->total_size += sizeof(MemoryCell);
 
-    return &self->last_cells->block;
+    return &self->last_cell->block;
 }
 
 MemoryBlock *
@@ -134,38 +123,36 @@ print_stat__MemoryGlobal(const MemoryGlobal *self)
 void
 destroy__MemoryGlobal(MemoryGlobal *self)
 {
-    MemoryGlobalCell *current = self->cells;
+    MemoryCell *current = self->cells;
 
     while (current) {
         if (current->block.is_free) {
-            MemoryGlobalCell *tmp = current;
+            MemoryCell *tmp = current;
 
             current = current->next;
 
-            self->api.free((void **)&tmp,
-                           sizeof(MemoryGlobalCell),
-                           alignof(MemoryGlobalCell));
+            self->api.free(
+              (void **)&tmp, sizeof(MemoryCell), alignof(MemoryCell));
 
-            self->total_size_free += sizeof(MemoryGlobalCell);
+            self->total_size_free += sizeof(MemoryCell);
             continue;
         }
 
         Usize cell_size = current->block.layout.size;
 
-        FREE(MemoryGlobalCell, current, &self->api);
+        FREE(MemoryCell, current, &self->api);
 
         ++self->total_cell_free;
         self->total_size_free += cell_size;
 
-        MemoryGlobalCell *tmp = current;
+        MemoryCell *tmp = current;
 
         current = current->next;
 
-        self->api.free(
-          (void **)&tmp, sizeof(MemoryGlobalCell), alignof(MemoryGlobalCell));
+        self->api.free((void **)&tmp, sizeof(MemoryCell), alignof(MemoryCell));
 
-        // Memory using by MemoryGlobalCell.
-        self->total_size_free += sizeof(MemoryGlobalCell);
+        // Memory using by MemoryCell.
+        self->total_size_free += sizeof(MemoryCell);
     }
 
     self->is_destroy = true;

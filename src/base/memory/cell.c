@@ -22,31 +22,16 @@
  * SOFTWARE.
  */
 
-#include <base/memory/block.h>
-#include <base/new.h>
+#include <base/memory/cell.h>
 
-#include <builtin/alloc.h>
+#include <stddef.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-
-DESTRUCTOR(MemoryBlock, MemoryBlock *self, MemoryApi *api)
+CONSTRUCTOR(MemoryCell *, MemoryCell, MemoryBlock block)
 {
-    if (!self->can_free) {
-        return;
-    }
+    MemoryCell *self = __alloc__$Alloc(sizeof(MemoryCell), alignof(MemoryCell));
 
-    if (self->is_free) {
-        perror("Lily(Fail): this block is already free");
-        exit(1);
-    } else if (!self->mem) {
-        perror("Lily(Fail): this block is not allocated");
-        exit(1);
-    }
+    self->block = block;
+    self->next = NULL;
 
-    self->is_free = true;
-
-    api->free(&self->mem, self->layout.size, self->layout.align);
-
-    FREE(MemoryLayout, &self->layout);
+    return self;
 }

@@ -28,6 +28,7 @@
 #include <base/macros.h>
 #include <base/memory/api.h>
 #include <base/memory/block.h>
+#include <base/memory/cell.h>
 #include <base/new.h>
 #include <base/types.h>
 
@@ -43,32 +44,11 @@
 
 #define MEMORY_GLOBAL_FREE(self, block) free__MemoryGlobal(self, block)
 
-typedef struct MemoryGlobalCell
-{
-    MemoryBlock block;
-    struct MemoryGlobalCell *next; // struct MemoryGlobalCell*?
-} MemoryGlobalCell;
-
-/**
- *
- * @brief Construct MemoryGlobalCell type.
- */
-CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryBlock block);
-
-/**
- *
- * @brief Free MemoryGlobalCell type.
- */
-inline DESTRUCTOR(MemoryGlobalCell, MemoryGlobalCell *self, MemoryApi *api)
-{
-    FREE(MemoryBlock, &self->block, api);
-}
-
 typedef struct MemoryGlobal
 {
     MemoryApi api;
-    MemoryGlobalCell *cells;      // MemoryGlobalCell*?
-    MemoryGlobalCell *last_cells; // MemoryGlobalCell*?
+    MemoryCell *cells;     // MemoryGlobalCell*?
+    MemoryCell *last_cell; // MemoryGlobalCell*?
     Usize total_size;
     Usize total_cell;
     Usize total_cell_free;
@@ -86,7 +66,7 @@ inline CONSTRUCTOR(MemoryGlobal, MemoryGlobal)
     return (MemoryGlobal){
         .api = NEW(MemoryApi),
         .cells = NULL,
-        .last_cells = NULL,
+        .last_cell = NULL,
         .total_size = 0,
         .total_cell = 0,
         .total_cell_free = 0,

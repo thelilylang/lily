@@ -22,31 +22,31 @@
  * SOFTWARE.
  */
 
+#ifndef LILY_BASE_MEMORY_CELL_H
+#define LILY_BASE_MEMORY_CELL_H
+
 #include <base/memory/block.h>
 #include <base/new.h>
 
-#include <builtin/alloc.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-
-DESTRUCTOR(MemoryBlock, MemoryBlock *self, MemoryApi *api)
+typedef struct MemoryCell
 {
-    if (!self->can_free) {
-        return;
-    }
+    MemoryBlock block;
+    struct MemoryCell *next; // struct MemoryCell*?
+} MemoryCell;
 
-    if (self->is_free) {
-        perror("Lily(Fail): this block is already free");
-        exit(1);
-    } else if (!self->mem) {
-        perror("Lily(Fail): this block is not allocated");
-        exit(1);
-    }
+/**
+ *
+ * @brief Construct MemoryCell type.
+ */
+CONSTRUCTOR(MemoryCell *, MemoryCell, MemoryBlock block);
 
-    self->is_free = true;
-
-    api->free(&self->mem, self->layout.size, self->layout.align);
-
-    FREE(MemoryLayout, &self->layout);
+/**
+ *
+ * @brief Free MemoryCell type.
+ */
+inline DESTRUCTOR(MemoryCell, MemoryCell *self, MemoryApi *api)
+{
+    FREE(MemoryBlock, &self->block, api);
 }
+
+#endif // LILY_BASE_MEMORY_CELL_H

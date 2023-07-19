@@ -33,15 +33,22 @@ typedef struct MemoryBlock
     MemoryLayout layout;
     void *mem; // void*?
     bool is_free;
+    bool can_free;
 } MemoryBlock;
 
 /**
  *
  * @brief Construct MemoryBlock type.
  */
-inline CONSTRUCTOR(MemoryBlock, MemoryBlock, MemoryLayout layout, void *mem)
+inline CONSTRUCTOR(MemoryBlock,
+                   MemoryBlock,
+                   MemoryLayout layout,
+                   void *mem,
+                   bool can_free)
 {
-    return (MemoryBlock){ .layout = layout, .mem = mem, .is_free = false };
+    return (MemoryBlock){
+        .layout = layout, .mem = mem, .is_free = false, .can_free = can_free
+    };
 }
 
 /**
