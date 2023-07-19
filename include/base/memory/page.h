@@ -40,7 +40,7 @@ typedef struct MemoryPage
 {
     MemoryApi api;
     MemoryBlock block; // undef
-	Usize size;
+    Usize size;
     bool is_undef;
 } MemoryPage;
 
