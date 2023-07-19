@@ -105,6 +105,13 @@ print_stat__MemoryGlobal(const MemoryGlobal *self);
 
 /**
  *
+ * @brief Reset Global allocator.
+ */
+void
+reset__MemoryGlobal(MemoryGlobal *self);
+
+/**
+ *
  * @brief Destroy global Allocator.
  */
 void

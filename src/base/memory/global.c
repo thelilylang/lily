@@ -157,3 +157,16 @@ destroy__MemoryGlobal(MemoryGlobal *self)
 
     self->is_destroy = true;
 }
+
+void
+reset__MemoryGlobal(MemoryGlobal *self)
+{
+    destroy__MemoryGlobal(self);
+
+    self->cells = NULL;
+    self->last_cell = NULL;
+    self->total_size = 0;
+    self->total_cell = 0;
+    self->total_cell_free = 0;
+    self->total_size_free = 0;
+}
