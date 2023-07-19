@@ -11,8 +11,8 @@ test_alloc__MemoryArena()
 {
 	MemoryArena arena = from_capacity__MemoryArena(1024);
 
-	MemoryBlock block = MEMORY_ARENA_ALLOC(int, &arena, 5);
-	int *arr = block.mem;
+	MemoryBlock *block = MEMORY_ARENA_ALLOC(int, &arena, 5);
+	int *arr = block->mem;
 
 	arr[0] = 1;
 	arr[1] = 2;
@@ -24,8 +24,8 @@ test_alloc__MemoryArena()
 		ASSERT_EQ(i + 1, arr[i]);
 	}
 
-	block = MEMORY_ARENA_RESIZE(int, &arena, &block, 10);
-	arr = block.mem;
+	block = MEMORY_ARENA_RESIZE(int, &arena, block, 10);
+	arr = block->mem;
 
 	arr[5] = 6;
 	arr[6] = 7;
