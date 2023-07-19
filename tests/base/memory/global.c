@@ -36,6 +36,15 @@ void test_alloc__MemoryGlobal()
 		ASSERT_EQ(s[i], 'a' + i);
 	}
 
+	MemoryBlock *s2_block = MEMORY_GLOBAL_ALLOC(char, &global, 6);
+	char *s2 = s2_block->mem;
+
+	s2[0] = 'h';
+	s2[1] = 'e';
+	s2[2] = 'l';
+	s2[3] = 'l';
+	s2[4] = 'o';
+
 	MEMORY_GLOBAL_FREE(&global, s_block);
 	destroy__MemoryGlobal(&global);
 
