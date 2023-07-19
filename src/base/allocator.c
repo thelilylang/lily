@@ -31,8 +31,6 @@ void
 destroy__Allocator(Allocator *self)
 {
     switch (self->kind) {
-        case ALLOCATOR_KIND_API:
-            return;
         case ALLOCATOR_KIND_ARENA:
             return destroy__MemoryArena(&self->arena);
         case ALLOCATOR_KIND_GLOBAL:

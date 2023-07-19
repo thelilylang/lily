@@ -39,7 +39,6 @@
 
 enum AllocatorKind
 {
-    ALLOCATOR_KIND_API,
     ALLOCATOR_KIND_ARENA,
     ALLOCATOR_KIND_GLOBAL,
     ALLOCATOR_KIND_PAGE,
@@ -51,23 +50,10 @@ typedef struct Allocator
     enum AllocatorKind kind;
     union
     {
-        MemoryApi api;
         MemoryArena arena;
         MemoryGlobal global;
     };
 } Allocator;
-
-/**
- *
- * @brief Construct Allocator type (ALLOCATOR_KIND_API).
- */
-inline VARIANT_CONSTRUCTOR(Allocator, Allocator, api)
-{
-    return (Allocator){
-        .kind = ALLOCATOR_KIND_API,
-        .api = NEW(MemoryApi),
-    };
-}
 
 /**
  *
@@ -94,8 +80,6 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, global)
         MemoryBlock *_block = NULL;                              \
                                                                  \
         switch ((a).kind) {                                      \
-            case ALLOCATOR_KIND_API:                             \
-                break;                                           \
             case ALLOCATOR_KIND_ARENA:                           \
                 _block = MEMORY_ARENA_ALLOC(T, &(a).arena, n);   \
                 break;                                           \
