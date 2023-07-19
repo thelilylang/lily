@@ -25,13 +25,9 @@
 #ifndef LILY_BASE_ALLOCATOR_H
 #define LILY_BASE_ALLOCATOR_H
 
-#include <base/memory/api.h>
 #include <base/memory/arena.h>
 #include <base/memory/global.h>
 #include <base/memory/page.h>
-#include <base/memory/pool.h>
-
-#define API_ALLOCATOR() NEW_VARIANT(Allocator, api)
 
 #define ARENA_ALLOCATOR() NEW_VARIANT(Allocator, arena)
 
@@ -42,7 +38,6 @@ enum AllocatorKind
     ALLOCATOR_KIND_ARENA,
     ALLOCATOR_KIND_GLOBAL,
     ALLOCATOR_KIND_PAGE,
-    ALLOCATOR_KIND_POOL,
 };
 
 typedef struct Allocator
@@ -52,6 +47,7 @@ typedef struct Allocator
     {
         MemoryArena arena;
         MemoryGlobal global;
+        MemoryPage page;
     };
 } Allocator;
 
@@ -75,6 +71,15 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, global)
                         .global = NEW(MemoryGlobal) };
 }
 
+/**
+ *
+ * @brief Construct Allocator type (ALLOCATOR_KIND_PAGE).
+ */
+inline VARIANT_CONSTRUCTOR(Allocator, Allocator, page)
+{
+    return (Allocator){ .kind = ALLOCATOR_KIND_PAGE, .page = NEW(MemoryPage) };
+}
+
 #define ALLOC(T, a, n)                                           \
     ({                                                           \
         MemoryBlock *_block = NULL;                              \
@@ -87,8 +92,7 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, global)
                 _block = MEMORY_GLOBAL_ALLOC(T, &(a).global, n); \
                 break;                                           \
             case ALLOCATOR_KIND_PAGE:                            \
-                break;                                           \
-            case ALLOCATOR_KIND_POOL:                            \
+                _block = MEMORY_PAGE_ALLOC(T, &(a).page, n);     \
                 break;                                           \
             default:                                             \
                 UNREACHABLE("unknown variant");                  \

@@ -36,9 +36,7 @@ destroy__Allocator(Allocator *self)
         case ALLOCATOR_KIND_GLOBAL:
             return destroy__MemoryGlobal(&self->global);
         case ALLOCATOR_KIND_PAGE:
-            return;
-        case ALLOCATOR_KIND_POOL:
-            return;
+            return free__MemoryPage(&self->page);
         default:
             UNREACHABLE("unknown variant");
     }
