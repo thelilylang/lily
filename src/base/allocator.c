@@ -36,7 +36,22 @@ destroy__Allocator(Allocator *self)
         case ALLOCATOR_KIND_GLOBAL:
             return destroy__MemoryGlobal(&self->global);
         case ALLOCATOR_KIND_PAGE:
-            return free__MemoryPage(&self->page);
+            return destroy__MemoryPage(&self->page);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+void
+reset__Allocator(Allocator *self)
+{
+    switch (self->kind) {
+        case ALLOCATOR_KIND_ARENA:
+            return reset__MemoryArena(&self->arena);
+        case ALLOCATOR_KIND_GLOBAL:
+            return reset__MemoryGlobal(&self->global);
+        case ALLOCATOR_KIND_PAGE:
+            return reset__MemoryPage(&self->page);
         default:
             UNREACHABLE("unknown variant");
     }

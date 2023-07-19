@@ -80,7 +80,7 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, page)
     return (Allocator){ .kind = ALLOCATOR_KIND_PAGE, .page = NEW(MemoryPage) };
 }
 
-#define ALLOC(T, a, n)                                           \
+#define A_ALLOC(T, a, n)                                         \
     ({                                                           \
         MemoryBlock *_block = NULL;                              \
                                                                  \
@@ -101,11 +101,62 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, page)
         _block;                                                  \
     })
 
+#define A_RESIZE(T, a, b, n)                            \
+    switch ((a).kind) {                                 \
+        case ALLOCATOR_KIND_ARENA:                      \
+            MEMORY_ARENA_RESIZE(T, &(a).arena, b, n);   \
+            break;                                      \
+        case ALLOCATOR_KIND_GLOBAL:                     \
+            MEMORY_GLOBAL_RESIZE(T, &(a).global, b, n); \
+            break;                                      \
+        case ALLOCATOR_KIND_PAGE:                       \
+            MEMORY_PAGE_RESIZE(T, &(a).page, n);        \
+            break;                                      \
+        default:                                        \
+            UNREACHABLE("unknown variant");             \
+    }
+
+#define A_FREE(a)                            \
+    switch ((a).kind) {                      \
+        case ALLOCATOR_KIND_ARENA:           \
+            break;                           \
+        case ALLOCATOR_KIND_GLOBAL:          \
+            MEMORY_GLOBAL_FREE(&(a).global); \
+            break;                           \
+        case ALLOCATOR_KIND_PAGE:            \
+            MEMORY_PAGE_FREE(&(a).page);     \
+            break;                           \
+        default:                             \
+            UNREACHABLE("unknown variant");  \
+    }
+
+#define A_PRINT_STAT(a)                            \
+    switch ((a).kind) {                            \
+        case ALLOCATOR_KIND_ARENA:                 \
+            print_stat__MemoryArena(&(a).arena);   \
+            break;                                 \
+        case ALLOCATOR_KIND_GLOBAL:                \
+            print_stat__MemoryGlobal(&(a).global); \
+            break;                                 \
+        case ALLOCATOR_KIND_PAGE:                  \
+            print_stat__MemoryPage(&(a).page);     \
+            break;                                 \
+        default:                                   \
+            UNREACHABLE("unknown variant");        \
+    }
+
 /**
  *
  * @brief Destroy Allocator type.
  */
 void
 destroy__Allocator(Allocator *self);
+
+/**
+ *
+ * @brief Reset Allocator.
+ */
+void
+reset__Allocator(Allocator *self);
 
 #endif // LILY_BASE_ALLOCATOR_H
