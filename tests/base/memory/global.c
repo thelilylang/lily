@@ -10,9 +10,9 @@ void test_alloc__MemoryGlobal()
 {
 	MemoryGlobal global = NEW(MemoryGlobal);
 
-	MemoryLayout *s_layout = alloc__MemoryGlobal(&global, 5);
+	MemoryBlock *s_block = alloc__MemoryGlobal(&global, 5);
 
-	char *s = s_layout->mem;
+	char *s = s_block->mem;
 
 	s[0] = 'a';
 	s[1] = 'b';
@@ -24,7 +24,7 @@ void test_alloc__MemoryGlobal()
 		ASSERT_EQ(s[i], 'a' + i);
 	}
 
-	resize__MemoryGlobal(&global, s_layout, 10);
+	resize__MemoryGlobal(&global, s_block, 10);
 
 	s[5] = 'f';
 	s[6] = 'g';
@@ -36,8 +36,8 @@ void test_alloc__MemoryGlobal()
 		ASSERT_EQ(s[i], 'a' + i);
 	}
 
-	free__MemoryGlobal(&global, s_layout);
+	free__MemoryGlobal(&global, s_block);
 	destroy__MemoryGlobal(&global);
 
-	// print_stat__MemoryGlobal(&global);
+	print_stat__MemoryGlobal(&global);
 }
