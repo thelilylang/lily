@@ -42,7 +42,9 @@ CONSTRUCTOR(MemoryArena, MemoryArena)
         .api = api,
         .arena = api.alloc(capacity, DEFAULT_ALIGNMENT),
         .total_size = 0,
+        .pos = 0,
         .capacity = capacity,
+        .is_destroy = false,
     };
 }
 
@@ -55,34 +57,44 @@ from_capacity__MemoryArena(Usize capacity)
         .api = api,
         .arena = api.alloc(capacity, DEFAULT_ALIGNMENT),
         .total_size = 0,
+        .pos = 0,
         .capacity = capacity,
+        .is_destroy = false,
     };
 }
 
 MemoryBlock
-alloc__MemoryArena(MemoryArena *self, Usize size)
+alloc__MemoryArena(MemoryArena *self, Usize size, Usize align)
 {
+    ASSERT(!self->is_destroy);
+
     if (self->total_size + size > self->capacity) {
         FAILED("alloc: too mutch allocated memory");
+    } else if (self->pos + size + align > self->capacity) {
+        FAILED("alloc: out of memory");
     }
 
-    void *mem = self->arena + self->total_size;
+    void *mem = (void *)ALIGN(self->arena + self->pos, align);
 
     self->total_size += size;
+    self->pos += size + align;
 
-    return NEW(MemoryBlock, NEW(MemoryLayout, DEFAULT_ALIGNMENT, size), mem);
+    return NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem);
 }
 
 MemoryBlock
 resize__MemoryArena(MemoryArena *self, MemoryBlock *block, Usize new_size)
 {
+    ASSERT(!self->is_destroy);
+
     if (!block) {
-        return alloc__MemoryArena(self, new_size);
+        return alloc__MemoryArena(self, new_size, block->layout.align);
     } else if (new_size == 0) {
         return NEW(MemoryBlock, NEW(MemoryLayout, DEFAULT_ALIGNMENT, 0), NULL);
     }
 
-    MemoryBlock new_block = alloc__MemoryArena(self, new_size);
+    MemoryBlock new_block =
+      alloc__MemoryArena(self, new_size, block->layout.align);
 
     memcpy(new_block.mem, block->mem, new_size);
 
@@ -96,6 +108,7 @@ reset__MemoryArena(MemoryArena *self)
 
     self->total_size = 0;
     self->arena = self->api.alloc(self->capacity, DEFAULT_ALIGNMENT);
+    self->is_destroy = false;
 }
 
 void

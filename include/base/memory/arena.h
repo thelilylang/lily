@@ -29,12 +29,20 @@
 #include <base/memory/block.h>
 #include <base/new.h>
 
+#define MEMORY_ARENA_ALLOC(T, self, n) \
+    alloc__MemoryArena(self, sizeof(T) * n, alignof(T) * ALIGNMENT_COEFF)
+
+#define MEMORY_ARENA_RESIZE(T, self, block, n) \
+    resize__MemoryArena(self, block, sizeof(T) * n)
+
 typedef struct MemoryArena
 {
     MemoryApi api;
     void *arena;
     Usize total_size;
+    Usize pos;
     Usize capacity;
+    bool is_destroy;
 } MemoryArena;
 
 /**
@@ -55,7 +63,7 @@ from_capacity__MemoryArena(Usize capacity);
  * @brief Reserve region of the Arena.
  */
 MemoryBlock
-alloc__MemoryArena(MemoryArena *self, Usize size);
+alloc__MemoryArena(MemoryArena *self, Usize size, Usize align);
 
 /**
  *
@@ -73,6 +81,7 @@ destroy__MemoryArena(MemoryArena *self)
 {
     if (self->total_size > 0) {
         self->api.free(&self->arena, self->total_size, 8);
+        self->is_destroy = true;
     }
 }
 
