@@ -1,5 +1,6 @@
 #include "allocator.c"
 #include "atoi.c"
+#include "buffer.c"
 #include "format.c"
 #include "hash_map.c"
 #include "hash_set.c"
@@ -31,6 +32,9 @@ main()
     test_check_uint64_overflow__Atoi();
     test_atoi__Atoi();
     test_atoi_safe__Atoi();
+
+    // Test buffer
+    test_push__Buffer();
 
     // Test format
     test_s_specifier__Format();
