@@ -26,6 +26,7 @@
 #define LILY_BASE_MEMORY_ARENA_H
 
 #include <base/memory/api.h>
+#include <base/memory/block.h>
 #include <base/new.h>
 
 typedef struct MemoryArena
@@ -53,15 +54,15 @@ from_capacity__MemoryArena(Usize capacity);
  *
  * @brief Reserve region of the Arena.
  */
-void *
+MemoryBlock
 alloc__MemoryArena(MemoryArena *self, Usize size);
 
 /**
  *
  * @brief Resize region of the Arena.
  */
-void *
-resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size);
+MemoryBlock
+resize__MemoryArena(MemoryArena *self, MemoryBlock *block, Usize new_size);
 
 /**
  *

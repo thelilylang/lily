@@ -59,34 +59,34 @@ from_capacity__MemoryArena(Usize capacity)
     };
 }
 
-void *
+MemoryBlock
 alloc__MemoryArena(MemoryArena *self, Usize size)
 {
     if (self->total_size + size > self->capacity) {
         FAILED("alloc: too mutch allocated memory");
     }
 
-    void *res = self->arena + self->total_size;
+    void *mem = self->arena + self->total_size;
 
     self->total_size += size;
 
-    return res;
+    return NEW(MemoryBlock, NEW(MemoryLayout, DEFAULT_ALIGNMENT, size), mem);
 }
 
-void *
-resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size)
+MemoryBlock
+resize__MemoryArena(MemoryArena *self, MemoryBlock *block, Usize new_size)
 {
-    if (!mem) {
+    if (!block) {
         return alloc__MemoryArena(self, new_size);
     } else if (new_size == 0) {
-        return NULL;
+        return NEW(MemoryBlock, NEW(MemoryLayout, DEFAULT_ALIGNMENT, 0), NULL);
     }
 
-    void *new_mem = alloc__MemoryArena(self, new_size);
+    MemoryBlock new_block = alloc__MemoryArena(self, new_size);
 
-    memcpy(new_mem, mem, new_size);
+    memcpy(new_block.mem, block->mem, new_size);
 
-    return new_mem;
+    return new_block;
 }
 
 void
