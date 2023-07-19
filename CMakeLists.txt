@@ -629,4 +629,12 @@ if(LILY_DEBUG)
   add_executable(bench_hash_map benchmarks/base/hash_map.c)
   target_link_libraries(bench_hash_map lily_base)
   target_include_directories(bench_hash_map PRIVATE include)
+
+  add_executable(bench_global_allocator benchmarks/base/memory/global.c)
+  target_link_libraries(bench_global_allocator lily_base)
+  target_include_directories(bench_global_allocator PRIVATE include)
+
+  add_executable(bench_page_allocator benchmarks/base/memory/page.c)
+  target_link_libraries(bench_page_allocator lily_base)
+  target_include_directories(bench_page_allocator PRIVATE include)
 endif()
