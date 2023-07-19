@@ -26,7 +26,7 @@
 #define LILY_BASE_MEMORY_GLOBAL_H
 
 #include <base/macros.h>
-#include <base/memory/layout.h>
+#include <base/memory/block.h>
 #include <base/new.h>
 #include <base/types.h>
 
@@ -36,7 +36,7 @@
 
 typedef struct MemoryGlobalCell
 {
-    MemoryLayout layout;
+    MemoryBlock block;
     struct MemoryGlobalCell *next; // struct MemoryGlobalCell*?
 } MemoryGlobalCell;
 
@@ -44,7 +44,7 @@ typedef struct MemoryGlobalCell
  *
  * @brief Construct MemoryGlobalCell type.
  */
-CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryLayout layout);
+CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryBlock block);
 
 /**
  *
@@ -52,7 +52,7 @@ CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryLayout layout);
  */
 inline DESTRUCTOR(MemoryGlobalCell, MemoryGlobalCell *self)
 {
-    FREE(MemoryLayout, &self->layout);
+    FREE(MemoryBlock, &self->block);
 }
 
 typedef struct MemoryGlobal
@@ -88,22 +88,22 @@ inline CONSTRUCTOR(MemoryGlobal, MemoryGlobal)
  *
  * @brief Create a new cell for a new allocation.
  */
-MemoryLayout *
+MemoryBlock *
 alloc__MemoryGlobal(MemoryGlobal *self, Usize size);
 
 /**
  *
  * @brief Resize a previous allocated mem.
  */
-MemoryLayout *
-resize__MemoryGlobal(MemoryGlobal *self, MemoryLayout *layout, Usize new_size);
+MemoryBlock *
+resize__MemoryGlobal(MemoryGlobal *self, MemoryBlock *block, Usize new_size);
 
 /**
  *
  * @brief Free a layout.
  */
 void
-free__MemoryGlobal(MemoryGlobal *self, MemoryLayout *layout);
+free__MemoryGlobal(MemoryGlobal *self, MemoryBlock *block);
 
 /**
  *

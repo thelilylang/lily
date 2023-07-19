@@ -31,18 +31,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryLayout layout)
+CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryBlock block)
 {
     MemoryGlobalCell *self =
       __alloc__$Alloc(sizeof(MemoryGlobalCell), DEFAULT_ALIGNMENT);
 
-    self->layout = layout;
+    self->block = block;
     self->next = NULL;
 
     return self;
 }
 
-MemoryLayout *
+MemoryBlock *
 alloc__MemoryGlobal(MemoryGlobal *self, Usize size)
 {
     ASSERT(!self->is_destroy);
@@ -58,51 +58,55 @@ alloc__MemoryGlobal(MemoryGlobal *self, Usize size)
     void *mem = __alloc__$Alloc(size, DEFAULT_ALIGNMENT);
 
     if (!self->last_cells) {
-        self->cells = NEW(MemoryGlobalCell, NEW(MemoryLayout, mem, size));
+        self->cells = NEW(
+          MemoryGlobalCell,
+          NEW(MemoryBlock, NEW(MemoryLayout, DEFAULT_ALIGNMENT, size), mem));
         self->last_cells = self->cells;
     } else {
-        self->last_cells->next =
-          NEW(MemoryGlobalCell, NEW(MemoryLayout, mem, size));
+        self->last_cells->next = NEW(
+          MemoryGlobalCell,
+          NEW(MemoryBlock, NEW(MemoryLayout, DEFAULT_ALIGNMENT, size), mem));
         self->last_cells = self->last_cells->next;
     }
 
     // Memory using by MemoryGlobalCell.
     self->total_size += sizeof(MemoryGlobalCell);
 
-    return &self->last_cells->layout;
+    return &self->last_cells->block;
 }
 
-MemoryLayout *
-resize__MemoryGlobal(MemoryGlobal *self, MemoryLayout *layout, Usize new_size)
+MemoryBlock *
+resize__MemoryGlobal(MemoryGlobal *self, MemoryBlock *block, Usize new_size)
 {
-    ASSERT(!self->is_destroy);
+    ASSERT(!self->is_destroy && block);
 
-    if (new_size < layout->size) {
-        return layout;
+    if (new_size < block->layout.size) {
+        return block;
     }
 
-    if (self->total_size + (new_size - layout->size) < self->capacity) {
-        self->total_size += (new_size - layout->size);
+    if (self->total_size + (new_size - block->layout.size) < self->capacity) {
+        self->total_size += (new_size - block->layout.size);
     } else {
         perror("Lily(Fail): too much memory allocation allocated");
         exit(1);
     }
 
-    layout->mem =
-      __resize__$Alloc(layout->mem, layout->size, new_size, DEFAULT_ALIGNMENT);
-    layout->size = new_size;
+    block->mem = __resize__$Alloc(
+      block->mem, block->layout.size, new_size, DEFAULT_ALIGNMENT);
+    block->layout.size = new_size;
+    block->is_free = false;
 
-    return layout;
+    return block;
 }
 
 void
-free__MemoryGlobal(MemoryGlobal *self, MemoryLayout *layout)
+free__MemoryGlobal(MemoryGlobal *self, MemoryBlock *block)
 {
     ASSERT(!self->is_destroy);
 
-    Usize layout_size = layout->size;
+    Usize layout_size = block->layout.size;
 
-    FREE(MemoryLayout, layout);
+    FREE(MemoryBlock, block);
 
     ++self->total_cell_free;
     self->total_size_free += layout_size;
@@ -133,7 +137,7 @@ destroy__MemoryGlobal(MemoryGlobal *self)
     MemoryGlobalCell *current = self->cells;
 
     while (current) {
-        if (current->layout.size == 0) {
+        if (current->block.is_free) {
             MemoryGlobalCell *tmp = current;
 
             current = current->next;
@@ -145,7 +149,7 @@ destroy__MemoryGlobal(MemoryGlobal *self)
             continue;
         }
 
-        Usize cell_size = current->layout.size;
+        Usize cell_size = current->block.layout.size;
 
         FREE(MemoryGlobalCell, current);
 
