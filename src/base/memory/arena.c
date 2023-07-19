@@ -107,7 +107,7 @@ resize__MemoryArena(MemoryArena *self, MemoryBlock *block, Usize new_size)
     ASSERT(!self->is_destroy);
 
     if (!block) {
-        return alloc__MemoryArena(self, new_size, block->layout.align);
+        return alloc__MemoryArena(self, new_size, DEFAULT_ALIGNMENT);
     } else if (new_size == 0) {
         block->layout.size = 0;
         block->mem = NULL;
