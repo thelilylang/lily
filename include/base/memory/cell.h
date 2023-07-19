@@ -32,21 +32,19 @@ typedef struct MemoryCell
 {
     MemoryBlock block;
     struct MemoryCell *next; // struct MemoryCell*?
+    struct MemoryCell *prev; // struct MemoryCell*?
 } MemoryCell;
 
 /**
  *
  * @brief Construct MemoryCell type.
  */
-CONSTRUCTOR(MemoryCell *, MemoryCell, MemoryBlock block);
+CONSTRUCTOR(MemoryCell *, MemoryCell, MemoryBlock block, MemoryApi *api);
 
 /**
  *
  * @brief Free MemoryCell type.
  */
-inline DESTRUCTOR(MemoryCell, MemoryCell *self, MemoryApi *api)
-{
-    FREE(MemoryBlock, &self->block, api);
-}
+DESTRUCTOR(MemoryCell, MemoryCell *self, MemoryApi *api);
 
 #endif // LILY_BASE_MEMORY_CELL_H

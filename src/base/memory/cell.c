@@ -26,12 +26,18 @@
 
 #include <stddef.h>
 
-CONSTRUCTOR(MemoryCell *, MemoryCell, MemoryBlock block)
+CONSTRUCTOR(MemoryCell *, MemoryCell, MemoryBlock block, MemoryApi *api)
 {
-    MemoryCell *self = __alloc__$Alloc(sizeof(MemoryCell), alignof(MemoryCell));
+    MemoryCell *self = api->alloc(sizeof(MemoryCell), alignof(MemoryCell));
 
     self->block = block;
     self->next = NULL;
+    self->prev = NULL;
 
     return self;
+}
+
+DESTRUCTOR(MemoryCell, MemoryCell *self, MemoryApi *api)
+{
+    FREE(MemoryBlock, &self->block, api);
 }
