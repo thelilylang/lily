@@ -165,8 +165,12 @@
         exit(1);                                                      \
     }
 
+#define ALIGNMENT_COEFF 2
+
 #if defined(CLANG_VERSION) || defined(MSCV_VERSION)
 #define alignof(T) _Alignof(T)
 #endif
+
+#define ALIGN(mem, align) (((Uptr)mem + (align - 1)) & ~(align - 1));
 
 #endif // LILY_BASE_MACROS_H
