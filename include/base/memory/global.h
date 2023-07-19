@@ -34,6 +34,7 @@
 
 #include <builtin/alloc.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #define MEMORY_GLOBAL_ALLOC(T, self, n) \

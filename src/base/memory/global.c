@@ -49,12 +49,14 @@ alloc__MemoryGlobal(MemoryGlobal *self, Usize size, Usize align)
     if (!self->last_cell) {
         self->cells =
           NEW(MemoryCell,
-              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, true));
+              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, true),
+              &self->api);
         self->last_cell = self->cells;
     } else {
         self->last_cell->next =
           NEW(MemoryCell,
-              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, true));
+              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, true),
+              &self->api);
         self->last_cell = self->last_cell->next;
     }
 
