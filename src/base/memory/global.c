@@ -34,7 +34,7 @@
 CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryBlock block)
 {
     MemoryGlobalCell *self =
-      __alloc__$Alloc(sizeof(MemoryGlobalCell), DEFAULT_ALIGNMENT);
+      __alloc__$Alloc(sizeof(MemoryGlobalCell), alignof(MemoryGlobalCell));
 
     self->block = block;
     self->next = NULL;
@@ -43,7 +43,7 @@ CONSTRUCTOR(MemoryGlobalCell *, MemoryGlobalCell, MemoryBlock block)
 }
 
 MemoryBlock *
-alloc__MemoryGlobal(MemoryGlobal *self, Usize size)
+alloc__MemoryGlobal(MemoryGlobal *self, Usize size, Usize align)
 {
     ASSERT(!self->is_destroy);
 
@@ -55,17 +55,17 @@ alloc__MemoryGlobal(MemoryGlobal *self, Usize size)
         exit(1);
     }
 
-    void *mem = __alloc__$Alloc(size, DEFAULT_ALIGNMENT);
+    void *mem = __alloc__$Alloc(size, align);
 
     if (!self->last_cells) {
-        self->cells = NEW(
-          MemoryGlobalCell,
-          NEW(MemoryBlock, NEW(MemoryLayout, DEFAULT_ALIGNMENT, size), mem));
+        self->cells =
+          NEW(MemoryGlobalCell,
+              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem));
         self->last_cells = self->cells;
     } else {
-        self->last_cells->next = NEW(
-          MemoryGlobalCell,
-          NEW(MemoryBlock, NEW(MemoryLayout, DEFAULT_ALIGNMENT, size), mem));
+        self->last_cells->next =
+          NEW(MemoryGlobalCell,
+              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem));
         self->last_cells = self->last_cells->next;
     }
 
@@ -142,8 +142,9 @@ destroy__MemoryGlobal(MemoryGlobal *self)
 
             current = current->next;
 
-            __free__$Alloc(
-              (void **)&tmp, sizeof(MemoryGlobalCell), DEFAULT_ALIGNMENT);
+            __free__$Alloc((void **)&tmp,
+                           sizeof(MemoryGlobalCell),
+                           alignof(MemoryGlobalCell));
 
             self->total_size_free += sizeof(MemoryGlobalCell);
             continue;
@@ -161,7 +162,7 @@ destroy__MemoryGlobal(MemoryGlobal *self)
         current = current->next;
 
         __free__$Alloc(
-          (void **)&tmp, sizeof(MemoryGlobalCell), DEFAULT_ALIGNMENT);
+          (void **)&tmp, sizeof(MemoryGlobalCell), alignof(MemoryGlobalCell));
 
         // Memory using by MemoryGlobalCell.
         self->total_size_free += sizeof(MemoryGlobalCell);

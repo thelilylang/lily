@@ -34,6 +34,14 @@
 
 #include <stddef.h>
 
+#define MEMORY_GLOBAL_ALLOC(T, self, n) \
+    alloc__MemoryGlobal(self, sizeof(T) * n, alignof(T) * ALIGNMENT_COEFF)
+
+#define MEMORY_GLOBAL_RESIZE(T, self, block, n) \
+    resize__MemoryGlobal(self, block, sizeof(T) * n)
+
+#define MEMORY_GLOBAL_FREE(self, block) free__MemoryGlobal(self, block)
+
 typedef struct MemoryGlobalCell
 {
     MemoryBlock block;
@@ -89,7 +97,7 @@ inline CONSTRUCTOR(MemoryGlobal, MemoryGlobal)
  * @brief Create a new cell for a new allocation.
  */
 MemoryBlock *
-alloc__MemoryGlobal(MemoryGlobal *self, Usize size);
+alloc__MemoryGlobal(MemoryGlobal *self, Usize size, Usize align);
 
 /**
  *
