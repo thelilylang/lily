@@ -30,7 +30,7 @@
 
 typedef struct MemoryLayout
 {
-    void *mem;
+    Usize align;
     Usize size;
 } MemoryLayout;
 
@@ -38,10 +38,10 @@ typedef struct MemoryLayout
  *
  * @brief Construct MemoryLayout type.
  */
-inline CONSTRUCTOR(MemoryLayout, MemoryLayout, void *mem, Usize size)
+inline CONSTRUCTOR(MemoryLayout, MemoryLayout, Usize align, Usize size)
 {
     return (MemoryLayout){
-        .mem = mem,
+        .align = align,
         .size = size,
     };
 }
