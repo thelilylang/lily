@@ -34,9 +34,11 @@
 void *
 alloc__MemoryPage(MemoryPage *self, Usize size, Usize align)
 {
-    MemoryBlock *block = alloc__MemoryGlobal(size, align);
+    void *mem = alloc__MemoryGlobal(size, align);
 
-    self->mem = (void *)(block + 1);
+    ASSERT(mem);
+
+    self->mem = mem;
     self->is_undef = false;
 
     return self->mem;

@@ -33,26 +33,17 @@
 CONSTRUCTOR(MemoryBlock *,
             MemoryBlock,
             MemoryApi *api,
-            MemoryLayout layout,
+            Usize size,
+            Usize align,
             MemoryBlock *prev)
 {
     MemoryBlock *self =
-      api->alloc(sizeof(MemoryBlock) + layout.size, DEFAULT_ALIGNMENT);
+      api->alloc(sizeof(MemoryBlock) + size, DEFAULT_ALIGNMENT);
 
-    self->layout = layout;
+    self->size = size;
+    self->align = align;
     self->next = NULL;
     self->prev = prev;
 
     return self;
-}
-
-void
-split__MemoryBlock(MemoryBlock *self, Usize size, Usize align)
-{
-  MemoryBlock *new_block = (MemoryBlock*)((void*)self + sizeof(MemoryBlock) + size);
-  new_block->layout.size = self->layout.size - size - sizeof(MemoryBlock);
-  new_block->layout.align = align;
-  new_block->next = self->next;
-  self->layout.size = size;
-  self->next = new_block;
 }

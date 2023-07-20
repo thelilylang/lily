@@ -26,13 +26,13 @@
 #define LILY_BASE_MEMORY_BLOCK_H
 
 #include <base/memory/api.h>
-#include <base/memory/layout.h>
 
 #include <stdbool.h>
 
 typedef struct MemoryBlock
 {
-    MemoryLayout layout;
+    Usize size;
+    Usize align;
     struct MemoryBlock *next; // struct MemoryBlock*?
     struct MemoryBlock *prev; // struct MemoryBlock*?
 } MemoryBlock;
@@ -44,14 +44,8 @@ typedef struct MemoryBlock
 CONSTRUCTOR(MemoryBlock *,
             MemoryBlock,
             MemoryApi *api,
-            MemoryLayout layout,
+            Usize size,
+            Usize align,
             MemoryBlock *prev);
-
-/**
- *
- * @brief Split block.
- */
-void
-split__MemoryBlock(MemoryBlock *self, Usize size, Usize align);
 
 #endif // LILY_BASE_MEMORY_BLOCK_H

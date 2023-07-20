@@ -59,7 +59,7 @@ resize__MemoryGlobal(void *mem, Usize new_size);
 
 /**
  *
- * @brief Free a layout.
+ * @brief Free a block of memory.
  */
 void
 free__MemoryGlobal(void *mem);

@@ -1,15 +1,17 @@
-#include <base/memory/page.h>
 #include <base/assert.h>
 #include <base/macros.h>
+#include <base/memory/page.h>
 #include <base/new.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-void test_alloc__MemoryPage() {
-	MemoryPage page = NEW(MemoryPage);
+void
+test_alloc__MemoryPage()
+{
+    MemoryPage page = NEW(MemoryPage);
 
-  char *s = MEMORY_PAGE_ALLOC(char, &page, 5);
+    char *s = MEMORY_PAGE_ALLOC(char, &page, 5);
 
     s[0] = 'a';
     s[1] = 'b';
@@ -21,9 +23,9 @@ void test_alloc__MemoryPage() {
         ASSERT_EQ(s[i], 'a' + i);
     }
 
-	s = MEMORY_PAGE_RESIZE(char, &page, 10);
+    s = MEMORY_PAGE_RESIZE(char, &page, 10);
 
-	s[5] = 'f';
+    s[5] = 'f';
     s[6] = 'g';
     s[7] = 'h';
     s[8] = 'i';

@@ -19,7 +19,7 @@ int
 main()
 {
     // Test Allocator
-    // test_alloc__Allocator();
+    test_alloc__Allocator();
 
     // Test atoi
     test_check_int8_overflow__Atoi();
@@ -34,7 +34,7 @@ main()
     test_atoi_safe__Atoi();
 
     // Test buffer
-    // test_push__Buffer();
+    test_push__Buffer();
 
     // Test format
     test_s_specifier__Format();
@@ -61,13 +61,13 @@ main()
     test_itoa_base_16();
 
     // Test MemoryArena
-    // test_alloc__MemoryArena();
+    test_alloc__MemoryArena();
 
     // Test MemoryGlobal
     test_alloc__MemoryGlobal();
 
     // Test MemoryPage
-    // test_alloc__MemoryPage();
+    test_alloc__MemoryPage();
 
     // Test Stack
     test_new__Stack();

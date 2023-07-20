@@ -107,7 +107,7 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, page)
             MEMORY_ARENA_RESIZE(T, &(a).arena, m, n); \
             break;                                    \
         case ALLOCATOR_KIND_GLOBAL:                   \
-            MEMORY_GLOBAL_RESIZE(T, m, n);            \
+            m = MEMORY_GLOBAL_RESIZE(T, m, n);        \
             break;                                    \
         case ALLOCATOR_KIND_PAGE:                     \
             MEMORY_PAGE_RESIZE(T, &(a).page, n);      \
