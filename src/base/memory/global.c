@@ -208,8 +208,6 @@ void
 free__MemoryGlobal(void *mem)
 {
 #ifdef USE_C_MEMORY_API
-#include <malloc.h>
-
     Usize mem_size = malloc_usable_size(mem);
 
     free(mem);
