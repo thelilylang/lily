@@ -29,9 +29,11 @@
 #include <base/memory/global.h>
 #include <base/memory/page.h>
 
-#define ARENA_ALLOCATOR() NEW_VARIANT(Allocator, arena)
+#define ARENA_ALLOCATOR(capacity) NEW_VARIANT(Allocator, arena, capacity)
 
 #define GLOBAL_ALLOCATOR() NEW_VARIANT(Allocator, global)
+
+#define PAGE_ALLOCATOR() NEW_VARIANT(Allocator, page)
 
 enum AllocatorKind
 {
@@ -46,7 +48,6 @@ typedef struct Allocator
     union
     {
         MemoryArena arena;
-        MemoryGlobal global;
         MemoryPage page;
     };
 } Allocator;
@@ -55,10 +56,10 @@ typedef struct Allocator
  *
  * @brief Construct Allocator type (ALLOCATOR_KIND_ARENA).
  */
-inline VARIANT_CONSTRUCTOR(Allocator, Allocator, arena)
+inline VARIANT_CONSTRUCTOR(Allocator, Allocator, arena, Usize capacity)
 {
     return (Allocator){ .kind = ALLOCATOR_KIND_ARENA,
-                        .arena = NEW(MemoryArena) };
+                        .arena = NEW(MemoryArena, capacity) };
 }
 
 /**
@@ -67,8 +68,7 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, arena)
  */
 inline VARIANT_CONSTRUCTOR(Allocator, Allocator, global)
 {
-    return (Allocator){ .kind = ALLOCATOR_KIND_GLOBAL,
-                        .global = NEW(MemoryGlobal) };
+    return (Allocator){ .kind = ALLOCATOR_KIND_GLOBAL };
 }
 
 /**
@@ -80,54 +80,54 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, page)
     return (Allocator){ .kind = ALLOCATOR_KIND_PAGE, .page = NEW(MemoryPage) };
 }
 
-#define A_ALLOC(T, a, n)                                         \
-    ({                                                           \
-        MemoryBlock *_block = NULL;                              \
-                                                                 \
-        switch ((a).kind) {                                      \
-            case ALLOCATOR_KIND_ARENA:                           \
-                _block = MEMORY_ARENA_ALLOC(T, &(a).arena, n);   \
-                break;                                           \
-            case ALLOCATOR_KIND_GLOBAL:                          \
-                _block = MEMORY_GLOBAL_ALLOC(T, &(a).global, n); \
-                break;                                           \
-            case ALLOCATOR_KIND_PAGE:                            \
-                _block = MEMORY_PAGE_ALLOC(T, &(a).page, n);     \
-                break;                                           \
-            default:                                             \
-                UNREACHABLE("unknown variant");                  \
-        }                                                        \
-                                                                 \
-        _block;                                                  \
+#define A_ALLOC(T, a, n)                                     \
+    ({                                                       \
+        void *_mem = NULL;                                   \
+                                                             \
+        switch ((a).kind) {                                  \
+            case ALLOCATOR_KIND_ARENA:                       \
+                _mem = MEMORY_ARENA_ALLOC(T, &(a).arena, n); \
+                break;                                       \
+            case ALLOCATOR_KIND_GLOBAL:                      \
+                _mem = MEMORY_GLOBAL_ALLOC(T, n);            \
+                break;                                       \
+            case ALLOCATOR_KIND_PAGE:                        \
+                _mem = MEMORY_PAGE_ALLOC(T, &(a).page, n);   \
+                break;                                       \
+            default:                                         \
+                UNREACHABLE("unknown variant");              \
+        }                                                    \
+                                                             \
+        _mem;                                                \
     })
 
-#define A_RESIZE(T, a, b, n)                            \
-    switch ((a).kind) {                                 \
-        case ALLOCATOR_KIND_ARENA:                      \
-            MEMORY_ARENA_RESIZE(T, &(a).arena, b, n);   \
-            break;                                      \
-        case ALLOCATOR_KIND_GLOBAL:                     \
-            MEMORY_GLOBAL_RESIZE(T, &(a).global, b, n); \
-            break;                                      \
-        case ALLOCATOR_KIND_PAGE:                       \
-            MEMORY_PAGE_RESIZE(T, &(a).page, n);        \
-            break;                                      \
-        default:                                        \
-            UNREACHABLE("unknown variant");             \
+#define A_RESIZE(T, a, m, n)                          \
+    switch ((a).kind) {                               \
+        case ALLOCATOR_KIND_ARENA:                    \
+            MEMORY_ARENA_RESIZE(T, &(a).arena, m, n); \
+            break;                                    \
+        case ALLOCATOR_KIND_GLOBAL:                   \
+            MEMORY_GLOBAL_RESIZE(T, m, n);            \
+            break;                                    \
+        case ALLOCATOR_KIND_PAGE:                     \
+            MEMORY_PAGE_RESIZE(T, &(a).page, n);      \
+            break;                                    \
+        default:                                      \
+            UNREACHABLE("unknown variant");           \
     }
 
-#define A_FREE(a)                            \
-    switch ((a).kind) {                      \
-        case ALLOCATOR_KIND_ARENA:           \
-            break;                           \
-        case ALLOCATOR_KIND_GLOBAL:          \
-            MEMORY_GLOBAL_FREE(&(a).global); \
-            break;                           \
-        case ALLOCATOR_KIND_PAGE:            \
-            MEMORY_PAGE_FREE(&(a).page);     \
-            break;                           \
-        default:                             \
-            UNREACHABLE("unknown variant");  \
+#define A_FREE(a, mem)                      \
+    switch ((a).kind) {                     \
+        case ALLOCATOR_KIND_ARENA:          \
+            break;                          \
+        case ALLOCATOR_KIND_GLOBAL:         \
+            MEMORY_GLOBAL_FREE(mem);        \
+            break;                          \
+        case ALLOCATOR_KIND_PAGE:           \
+            MEMORY_PAGE_FREE(&(a).page);    \
+            break;                          \
+        default:                            \
+            UNREACHABLE("unknown variant"); \
     }
 
 #define A_PRINT_STAT(a)                            \
@@ -139,7 +139,6 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, page)
             print_stat__MemoryGlobal(&(a).global); \
             break;                                 \
         case ALLOCATOR_KIND_PAGE:                  \
-            print_stat__MemoryPage(&(a).page);     \
             break;                                 \
         default:                                   \
             UNREACHABLE("unknown variant");        \

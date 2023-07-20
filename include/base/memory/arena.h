@@ -27,26 +27,20 @@
 
 #include <base/memory/api.h>
 #include <base/memory/block.h>
-#include <base/memory/cell.h>
+#include <base/memory/global.h>
 #include <base/new.h>
 
 #define MEMORY_ARENA_ALLOC(T, self, n) \
     alloc__MemoryArena(self, sizeof(T) * n, alignof(T) * ALIGNMENT_COEFF)
 
 #define MEMORY_ARENA_RESIZE(T, self, block, n) \
-    resize__MemoryArena(self, block, sizeof(T) * n)
+    resize__MemoryArena(                       \
+      self, block, sizeof(T) * n, alignof(T) * ALIGNMENT_COEFF)
 
 typedef struct MemoryArena
 {
-    MemoryApi api;
-    MemoryCell *cells;     // MemoryCell*?
-    MemoryCell *last_cell; // MemoryCell*?
     void *arena;
     Usize total_size;
-    Usize total_cell;
-    Usize total_cell_free;
-    Usize total_size_free;
-    Usize pos;
     Usize capacity;
     bool is_destroy;
 } MemoryArena;
@@ -55,28 +49,29 @@ typedef struct MemoryArena
  *
  * @brief Construct MemoryArena type.
  */
-CONSTRUCTOR(MemoryArena, MemoryArena);
-
-/**
- *
- * @brief Construct MemoryArena type with default capacity.
- */
-MemoryArena
-from_capacity__MemoryArena(Usize capacity);
+inline CONSTRUCTOR(MemoryArena, MemoryArena, Usize capacity)
+{
+    return (MemoryArena){
+        .arena = alloc__MemoryGlobal(capacity, DEFAULT_ALIGNMENT),
+        .total_size = 0,
+        .capacity = capacity,
+        .is_destroy = false,
+    };
+}
 
 /**
  *
  * @brief Reserve region of the Arena.
  */
-MemoryBlock *
+void *
 alloc__MemoryArena(MemoryArena *self, Usize size, Usize align);
 
 /**
  *
  * @brief Resize region of the Arena.
  */
-MemoryBlock *
-resize__MemoryArena(MemoryArena *self, MemoryBlock *block, Usize new_size);
+void *
+resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size, Usize align);
 
 /**
  *

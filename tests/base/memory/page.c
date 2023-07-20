@@ -9,10 +9,9 @@
 void test_alloc__MemoryPage() {
 	MemoryPage page = NEW(MemoryPage);
 
-	MemoryBlock *s_block = MEMORY_PAGE_ALLOC(char, &page, 5);
-	char *s = s_block->mem;
+  char *s = MEMORY_PAGE_ALLOC(char, &page, 5);
 
-	s[0] = 'a';
+    s[0] = 'a';
     s[1] = 'b';
     s[2] = 'c';
     s[3] = 'd';
@@ -22,7 +21,7 @@ void test_alloc__MemoryPage() {
         ASSERT_EQ(s[i], 'a' + i);
     }
 
-	s_block = MEMORY_PAGE_RESIZE(char, &page, 10);
+	s = MEMORY_PAGE_RESIZE(char, &page, 10);
 
 	s[5] = 'f';
     s[6] = 'g';
@@ -33,7 +32,4 @@ void test_alloc__MemoryPage() {
     for (int i = 0; i < 10; ++i) {
         ASSERT_EQ(s[i], 'a' + i);
     }
-
-	destroy__MemoryPage(&page);
-	// print_stat__MemoryPage(&page);
 }

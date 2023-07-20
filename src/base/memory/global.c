@@ -28,147 +28,110 @@
 #include <base/print.h>
 #include <base/units.h>
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-MemoryBlock *
-alloc__MemoryGlobal(MemoryGlobal *self, Usize size, Usize align)
-{
-    ASSERT(!self->is_destroy);
+static MemoryApi api = { .align = __align__,
+                         .alloc = __alloc__,
+                         .resize = __resize__,
+                         .free = __free__ };
+static Usize total_size = 0;
+static Usize total_block = 0;
+static Usize total_block_free = 0;
+static Usize total_size_free = 0;
+static MemoryBlock *blocks = NULL;
+static MemoryBlock *last_block = NULL;
+static Usize capacity = 0;
 
-    if (self->total_size + size < self->capacity) {
-        self->total_size += size;
-        ++self->total_cell;
+void *
+alloc__MemoryGlobal(Usize size, Usize align)
+{
+    if (capacity == 0) {
+        capacity = __max_capacity__$Alloc();
+    }
+
+    if (total_size + size < capacity) {
+        total_size += size + sizeof(MemoryBlock);
+        ++total_block;
     } else {
         perror("Lily(Fail): too much memory allocation allocated");
         exit(1);
     }
 
-    void *mem = self->api.alloc(size, align);
-
-    if (!self->last_cell) {
-        self->cells =
-          NEW(MemoryCell,
-              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, true),
-              &self->api);
-        self->last_cell = self->cells;
+    if (!last_block) {
+        blocks =
+          NEW(MemoryBlock, &api, NEW(MemoryLayout, align, size), NULL);
+        last_block = blocks;
     } else {
-        self->last_cell->next =
-          NEW(MemoryCell,
-              NEW(MemoryBlock, NEW(MemoryLayout, align, size), mem, true),
-              &self->api);
-        self->last_cell = self->last_cell->next;
+        last_block->next = NEW(
+          MemoryBlock, &api, NEW(MemoryLayout, align, size), last_block);
+        last_block->next->prev = last_block;
+        last_block = last_block->next;
     }
 
-    // Memory using by MemoryCell.
-    self->total_size += sizeof(MemoryCell);
-
-    return &self->last_cell->block;
+    return (void *)(last_block + sizeof(MemoryBlock));
 }
 
-MemoryBlock *
-resize__MemoryGlobal(MemoryGlobal *self, MemoryBlock *block, Usize new_size)
+void *
+resize__MemoryGlobal(void *mem, Usize new_size)
 {
-    ASSERT(!self->is_destroy && block);
+    ASSERT(mem);
+
+    MemoryBlock *block = (MemoryBlock *)(mem - sizeof(MemoryBlock));
 
     if (new_size < block->layout.size) {
-        return block;
+        return mem;
+    } else if (capacity == 0) {
+        capacity = __max_capacity__$Alloc();
     }
 
-    if (self->total_size + (new_size - block->layout.size) < self->capacity) {
-        self->total_size += (new_size - block->layout.size);
+    if (total_size + (new_size - block->layout.size) < capacity) {
+        total_size += (new_size - block->layout.size);
     } else {
         perror("Lily(Fail): too much memory allocation allocated");
         exit(1);
     }
 
-    block->mem = self->api.resize(
-      block->mem, block->layout.size, new_size, DEFAULT_ALIGNMENT);
+    mem = api.resize(block,
+                       block->layout.size + sizeof(MemoryBlock),
+                       new_size + sizeof(MemoryBlock),
+                       block->layout.align);
     block->layout.size = new_size;
-    block->is_free = false;
 
-    return block;
+    return (void *)(block + sizeof(MemoryBlock));
 }
 
 void
-free__MemoryGlobal(MemoryGlobal *self, MemoryBlock *block)
+free__MemoryGlobal(void *mem)
 {
-    ASSERT(!self->is_destroy);
+    MemoryBlock *block = (MemoryBlock *)(mem - sizeof(MemoryBlock));
 
-    Usize layout_size = block->layout.size;
+    if (block->prev) {
+        block->prev->next = block->next;
+    }
 
-    FREE(MemoryBlock, block, &self->api);
+    api.free((void **)&block, block->layout.size + sizeof(MemoryBlock), block->layout.align);
 
-    ++self->total_cell_free;
-    self->total_size_free += layout_size;
+    ++total_block_free;
+    total_size_free += block->layout.size + sizeof(MemoryBlock);
 }
 
 void
-print_stat__MemoryGlobal(const MemoryGlobal *self)
+print_stat__MemoryGlobal()
 {
-    Float32 mib_total_size = self->total_size / MiB;
-    Float32 mib_total_size_free = self->total_size_free / MiB;
-    Float32 mib_capacity = self->capacity / MiB;
+    Float32 mib_total_size = total_size / MiB;
+    Float32 mib_total_size_free = total_size_free / MiB;
+    Float32 mib_capacity = capacity / MiB;
 
     PRINTLN("==================================");
     PRINTLN("=========Global allocator=========");
-    PRINTLN("total size: {d} b => {f} MiB", self->total_size, mib_total_size);
-    PRINTLN("total cell: {d}", self->total_cell);
-    PRINTLN("total cell free: {d}", self->total_cell_free);
+    PRINTLN("total size: {d} b => {f} MiB", total_size, mib_total_size);
+    PRINTLN("total block: {d}", total_block);
+    PRINTLN("total block free: {d}", total_block_free);
     PRINTLN("total size free: {d} b => {f} MiB",
-            self->total_size_free,
+            total_size_free,
             mib_total_size_free);
-    PRINTLN("capacity: {d} b => {f} MiB", self->capacity, mib_capacity);
+    PRINTLN("capacity: {d} b => {f} MiB", capacity, mib_capacity);
     PRINTLN("==================================");
-}
-
-void
-destroy__MemoryGlobal(MemoryGlobal *self)
-{
-    MemoryCell *current = self->cells;
-
-    while (current) {
-        if (current->block.is_free) {
-            MemoryCell *tmp = current;
-
-            current = current->next;
-
-            self->api.free(
-              (void **)&tmp, sizeof(MemoryCell), alignof(MemoryCell));
-
-            self->total_size_free += sizeof(MemoryCell);
-            continue;
-        }
-
-        Usize cell_size = current->block.layout.size;
-
-        FREE(MemoryCell, current, &self->api);
-
-        ++self->total_cell_free;
-        self->total_size_free += cell_size;
-
-        MemoryCell *tmp = current;
-
-        current = current->next;
-
-        self->api.free((void **)&tmp, sizeof(MemoryCell), alignof(MemoryCell));
-
-        // Memory using by MemoryCell.
-        self->total_size_free += sizeof(MemoryCell);
-    }
-
-    self->is_destroy = true;
-}
-
-void
-reset__MemoryGlobal(MemoryGlobal *self)
-{
-    destroy__MemoryGlobal(self);
-
-    self->cells = NULL;
-    self->last_cell = NULL;
-    self->total_size = 0;
-    self->total_cell = 0;
-    self->total_cell_free = 0;
-    self->total_size_free = 0;
 }

@@ -9,10 +9,9 @@
 void
 test_alloc__Allocator()
 {
-    Allocator alloc = ARENA_ALLOCATOR();
+    Allocator alloc = ARENA_ALLOCATOR(1024);
 
-    MemoryBlock *s_block = A_ALLOC(char, alloc, 5);
-    char *s = s_block->mem;
+    char *s = A_ALLOC(char, alloc, 5);
 
     s[0] = 'a';
     s[1] = 'b';
@@ -24,7 +23,7 @@ test_alloc__Allocator()
         ASSERT_EQ(s[i], 'a' + i);
     }
 
-    A_RESIZE(char, alloc, s_block, 10);
+    A_RESIZE(char, alloc, s, 10);
 
     s[5] = 'f';
     s[6] = 'g';
@@ -36,7 +35,5 @@ test_alloc__Allocator()
         ASSERT_EQ(s[i], 'a' + i);
     }
 
-    destroy__Allocator(&alloc);
-
-    // A_PRINT_STAT(alloc);
+    A_FREE(alloc, s);
 }

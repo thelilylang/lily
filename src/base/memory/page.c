@@ -23,6 +23,7 @@
  */
 
 #include <base/assert.h>
+#include <base/memory/global.h>
 #include <base/memory/page.h>
 #include <base/print.h>
 #include <base/units.h>
@@ -30,60 +31,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-MemoryBlock *
+void *
 alloc__MemoryPage(MemoryPage *self, Usize size, Usize align)
 {
-    self->block = NEW(MemoryBlock,
-                      NEW(MemoryLayout, align, size),
-                      self->api.alloc(size, align),
-                      true);
-    self->is_undef = false;
-    self->size = self->block.layout.size;
+    MemoryBlock *block = alloc__MemoryGlobal(size, align);
 
-    return &self->block;
+    self->mem = (void *)(block + 1);
+    self->is_undef = false;
+
+    return self->mem;
 }
 
-MemoryBlock *
+void *
 resize__MemoryPage(MemoryPage *self, Usize new_size)
 {
-    ASSERT(!self->is_undef);
+    ASSERT(!self->is_undef && self->mem);
 
-    self->block.mem = self->api.resize(self->block.mem,
-                                       self->block.layout.size,
-                                       new_size,
-                                       self->block.layout.align);
-    self->size = self->block.layout.size;
+    self->mem = resize__MemoryGlobal(self->mem, new_size);
 
-    return &self->block;
+    return self->mem;
 }
 
 void
-destroy__MemoryPage(MemoryPage *self)
+free__MemoryPage(MemoryPage *self)
 {
-    ASSERT(!self->is_undef);
+    ASSERT(!self->is_undef && self->mem);
 
-    FREE(MemoryBlock, &self->block, &self->api);
     self->is_undef = true;
-}
-
-void
-reset__MemoryPage(MemoryPage *self)
-{
-    destroy__MemoryPage(self);
-    self->size = 0;
-}
-
-void
-print_stat__MemoryPage(MemoryPage *self)
-{
-    Float32 mib_total_size = self->size / MiB;
-    Float32 mib_total_size_free = self->block.is_free ? self->size / MiB : 0.0;
-
-    PRINTLN("==================================");
-    PRINTLN("==========Page allocator==========");
-    PRINTLN("total size: {d} b => {f} MiB", self->size, mib_total_size);
-    PRINTLN("total size free: {d} b => {f} MiB",
-            self->block.is_free ? self->size : 0,
-            mib_total_size_free);
-    PRINTLN("==================================");
+    free__MemoryGlobal(self->mem);
 }

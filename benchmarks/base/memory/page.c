@@ -13,15 +13,13 @@ int main() {
 
 	MemoryPage page = NEW(MemoryPage);
 
-	MemoryBlock *s_block = MEMORY_PAGE_ALLOC(char, &page, BYTES);
-	char *s = s_block->mem;
+	char *s = MEMORY_PAGE_ALLOC(char, &page, BYTES);
 
 	for (Usize i = 0; i < BYTES; ++i) {
 		s[i] = i % 127;
 	}
 
-	destroy__MemoryPage(&page);
-	print_stat__MemoryPage(&page);
+	free__MemoryPage(&page);
 
     printf("Time: %.2fs\n", (double)(clock() - start) / CLOCKS_PER_SEC);
 }

@@ -30,23 +30,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-DESTRUCTOR(MemoryBlock, MemoryBlock *self, MemoryApi *api)
+CONSTRUCTOR(MemoryBlock *,
+            MemoryBlock,
+            MemoryApi *api,
+            MemoryLayout layout,
+            MemoryBlock *prev)
 {
-    if (!self->can_free) {
-        return;
-    }
+    MemoryBlock *self =
+      api->alloc(sizeof(MemoryBlock) + layout.size, DEFAULT_ALIGNMENT);
 
-    if (self->is_free) {
-        perror("Lily(Fail): this block is already free");
-        exit(1);
-    } else if (!self->mem) {
-        perror("Lily(Fail): this block is not allocated");
-        exit(1);
-    }
+    self->layout = layout;
+    self->next = NULL;
+    self->prev = prev;
 
-    self->is_free = true;
+    return self;
+}
 
-    api->free(&self->mem, self->layout.size, self->layout.align);
-
-    FREE(MemoryLayout, &self->layout);
+void
+split__MemoryBlock(MemoryBlock *self, Usize size, Usize align)
+{
+  MemoryBlock *new_block = (MemoryBlock*)((void*)self + sizeof(MemoryBlock) + size);
+  new_block->layout.size = self->layout.size - size - sizeof(MemoryBlock);
+  new_block->layout.align = align;
+  new_block->next = self->next;
+  self->layout.size = size;
+  self->next = new_block;
 }

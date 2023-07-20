@@ -28,7 +28,6 @@
 #include <base/macros.h>
 #include <base/memory/api.h>
 #include <base/memory/block.h>
-#include <base/memory/cell.h>
 #include <base/new.h>
 #include <base/types.h>
 
@@ -37,85 +36,39 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define MEMORY_GLOBAL_ALLOC(T, self, n) \
-    alloc__MemoryGlobal(self, sizeof(T) * n, alignof(T) * ALIGNMENT_COEFF)
+#define MEMORY_GLOBAL_ALLOC(T, n) \
+    alloc__MemoryGlobal(sizeof(T) * n, alignof(T) * ALIGNMENT_COEFF)
 
-#define MEMORY_GLOBAL_RESIZE(T, self, block, n) \
-    resize__MemoryGlobal(self, block, sizeof(T) * n)
+#define MEMORY_GLOBAL_RESIZE(T, mem, n) resize__MemoryGlobal(mem, sizeof(T) * n)
 
-#define MEMORY_GLOBAL_FREE(self, block) free__MemoryGlobal(self, block)
-
-typedef struct MemoryGlobal
-{
-    MemoryApi api;
-    MemoryCell *cells;     // MemoryGlobalCell*?
-    MemoryCell *last_cell; // MemoryGlobalCell*?
-    Usize total_size;
-    Usize total_cell;
-    Usize total_cell_free;
-    Usize total_size_free;
-    Usize capacity;
-    bool is_destroy;
-} MemoryGlobal;
-
-/**
- *
- * @brief Construct MemoryGlobal type.
- */
-inline CONSTRUCTOR(MemoryGlobal, MemoryGlobal)
-{
-    return (MemoryGlobal){
-        .api = NEW(MemoryApi),
-        .cells = NULL,
-        .last_cell = NULL,
-        .total_size = 0,
-        .total_cell = 0,
-        .total_cell_free = 0,
-        .total_size_free = 0,
-        .capacity = __max_capacity__$Alloc(),
-    };
-}
+#define MEMORY_GLOBAL_FREE(mem) free__MemoryGlobal(mem)
 
 /**
  *
  * @brief Create a new cell for a new allocation.
  */
-MemoryBlock *
-alloc__MemoryGlobal(MemoryGlobal *self, Usize size, Usize align);
+void *
+alloc__MemoryGlobal(Usize size, Usize align);
 
 /**
  *
  * @brief Resize a previous allocated mem.
  */
-MemoryBlock *
-resize__MemoryGlobal(MemoryGlobal *self, MemoryBlock *block, Usize new_size);
+void *
+resize__MemoryGlobal(void *mem, Usize new_size);
 
 /**
  *
  * @brief Free a layout.
  */
 void
-free__MemoryGlobal(MemoryGlobal *self, MemoryBlock *block);
+free__MemoryGlobal(void *mem);
 
 /**
  *
  * @brief Print the stats of the global Allocator.
  */
 void
-print_stat__MemoryGlobal(const MemoryGlobal *self);
-
-/**
- *
- * @brief Reset Global allocator.
- */
-void
-reset__MemoryGlobal(MemoryGlobal *self);
-
-/**
- *
- * @brief Destroy global Allocator.
- */
-void
-destroy__MemoryGlobal(MemoryGlobal *self);
+print_stat__MemoryGlobal();
 
 #endif // LILY_BASE_MEMORY_GLOBAL_H

@@ -33,30 +33,25 @@
 typedef struct MemoryBlock
 {
     MemoryLayout layout;
-    void *mem; // void*?
-    bool is_free;
-    bool can_free;
+    struct MemoryBlock *next; // struct MemoryBlock*?
+    struct MemoryBlock *prev; // struct MemoryBlock*?
 } MemoryBlock;
 
 /**
  *
  * @brief Construct MemoryBlock type.
  */
-inline CONSTRUCTOR(MemoryBlock,
-                   MemoryBlock,
-                   MemoryLayout layout,
-                   void *mem,
-                   bool can_free)
-{
-    return (MemoryBlock){
-        .layout = layout, .mem = mem, .is_free = false, .can_free = can_free
-    };
-}
+CONSTRUCTOR(MemoryBlock *,
+            MemoryBlock,
+            MemoryApi *api,
+            MemoryLayout layout,
+            MemoryBlock *prev);
 
 /**
  *
- * @brief Free MemoryBlock type.
+ * @brief Split block.
  */
-DESTRUCTOR(MemoryBlock, MemoryBlock *self, MemoryApi *api);
+void
+split__MemoryBlock(MemoryBlock *self, Usize size, Usize align);
 
 #endif // LILY_BASE_MEMORY_BLOCK_H
