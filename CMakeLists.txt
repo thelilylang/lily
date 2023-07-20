@@ -68,7 +68,6 @@ set(BASE_SRC
     src/base/memory/arena.c
     src/base/memory/block.c
     src/base/memory/global.c
-    src/base/memory/layout.c
     src/base/memory/page.c
     src/base/mutex.c
     src/base/non_null.c
