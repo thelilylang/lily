@@ -32,45 +32,43 @@
     struct                    \
     {                         \
         Allocator *allocator; \
-        MemoryBlock *block;   \
         T *mem; /* T*? */     \
         Usize len;            \
         Usize capacity;       \
         Usize resize_coeff;   \
     }
 
-#define __new__Buffer(a, c, rc)                                              \
-    {                                                                        \
-        .allocator = a, .block = NULL, .mem = NULL, .len = 0, .capacity = c, \
-        .resize_coeff = rc                                                   \
+#define __new__Buffer(a, c, rc)                               \
+    {                                                         \
+        .allocator = a, .mem = NULL, .len = 0, .capacity = c, \
+        .resize_coeff = rc                                    \
     }
 
-#define push__Buffer(buffer, item)                              \
-    do {                                                        \
-        if (!(buffer).block) {                                  \
-            (buffer).block = A_ALLOC(__typeof__(*(buffer).mem), \
-                                     *(buffer).allocator,       \
-                                     (buffer).capacity);        \
-            (buffer).mem = (buffer).block->mem;                 \
-            (buffer).mem[0] = item;                             \
-            ++(buffer).len;                                     \
-                                                                \
-            break;                                              \
-        }                                                       \
-                                                                \
-        if ((buffer).capacity == (buffer).len) {                \
-            grow__Buffer(buffer);                               \
-        }                                                       \
-                                                                \
-        (buffer).mem[(buffer).len++] = item;                    \
+#define push__Buffer(buffer, item)                            \
+    do {                                                      \
+        if (!(buffer).mem) {                                  \
+            (buffer).mem = A_ALLOC(__typeof__(*(buffer).mem), \
+                                   *(buffer).allocator,       \
+                                   (buffer).capacity);        \
+            (buffer).mem[0] = item;                           \
+            ++(buffer).len;                                   \
+                                                              \
+            break;                                            \
+        }                                                     \
+                                                              \
+        if ((buffer).capacity == (buffer).len) {              \
+            grow__Buffer(buffer);                             \
+        }                                                     \
+                                                              \
+        (buffer).mem[(buffer).len++] = item;                  \
     } while (0);
 
 #define grow__Buffer(buffer)                    \
-    ASSERT((buffer).block);                     \
+    ASSERT((buffer).mem);                       \
     (buffer).capacity *= (buffer).resize_coeff; \
     A_RESIZE(__typeof__(*(buffer).mem),         \
              *(buffer).allocator,               \
-             (buffer).block,                    \
+             (buffer).mem,                      \
              (buffer).capacity);
 
 #endif // LILY_BASE_BUFFER_H
