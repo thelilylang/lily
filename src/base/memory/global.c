@@ -94,7 +94,7 @@ alloc__MemoryGlobal(Usize size, Usize align)
         Usize remaining_size = last->size - alloc_size;
 
         if (remaining_size >= sizeof(MemoryBlock)) {
-            MemoryBlock *new_block = (MemoryBlock *)((char *)last + alloc_size);
+            MemoryBlock *new_block = (MemoryBlock *)((void *)last + alloc_size);
 
             new_block->size = remaining_size - sizeof(MemoryBlock);
             new_block->align = last->align;
@@ -148,7 +148,7 @@ resize__MemoryGlobal(void *mem, Usize new_size)
 
     pthread_mutex_lock(&global_mutex);
 
-    MemoryBlock *block = (MemoryBlock *)((char *)mem - sizeof(MemoryBlock));
+    MemoryBlock *block = (MemoryBlock *)((void *)mem - sizeof(MemoryBlock));
     Usize old_size = block->size;
     Usize align = block->align;
     void *resized_mem = mem;
@@ -191,7 +191,7 @@ resize__MemoryGlobal(void *mem, Usize new_size)
 
         if (resized_mem) {
             block->size = new_size;
-            resized_mem = (void *)((char *)resized_mem + sizeof(MemoryBlock));
+            resized_mem = (void *)((void *)resized_mem + sizeof(MemoryBlock));
             ++total_block;
             total_size +=
               new_size < old_size ? old_size - new_size : new_size - old_size;
@@ -215,7 +215,7 @@ free__MemoryGlobal(void *mem)
     free(mem);
 
     ++total_block;
-    total_block_free += mem_size;
+    total_size_free += mem_size;
 #else
     if (!mem) {
         return;
@@ -223,7 +223,7 @@ free__MemoryGlobal(void *mem)
 
     pthread_mutex_lock(&global_mutex);
 
-    MemoryBlock *block = (MemoryBlock *)((char *)mem - sizeof(MemoryBlock));
+    MemoryBlock *block = (MemoryBlock *)((void *)mem - sizeof(MemoryBlock));
 
     if (block->size == 0 || block->next != NULL) {
         ++total_block_free;
