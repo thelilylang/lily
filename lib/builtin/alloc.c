@@ -133,22 +133,24 @@ __resize__$Alloc(void *old_mem, Usize old_size, Usize new_size, Usize align)
 void
 __free__$Alloc(void **mem, Usize size, Usize align)
 {
-    if (!(*mem)) {
+    if (!(*mem) || !mem) {
         perror("Lily(Fail): fail to free a pointer, because the value is NULL");
         exit(1);
     }
 
-    if (align > 0) {
-        mem = __align__$Alloc(mem, align);
-    }
+    // Calculate the aligned starting address based on the alignment
+    void *aligned_mem = (void *)((uintptr_t)(*mem) & ~(align - 1));
+
+    // Calculate the size to unmap, taking into account the alignment
+    size_t aligned_size = size + ((uintptr_t)(*mem) - (uintptr_t)(aligned_mem));
 
 #if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
-    if (munmap(*mem, size) == -1) {
+    if (munmap(aligned_mem, aligned_size) == -1) {
         perror("Lily(Fail): fail to free memory");
         exit(1);
     }
 #elif defined(LILY_WINDOWS_OS)
-    if (!VirtualFree(*mem, 0, MEM_RELEASE)) {
+    if (!VirtualFree(aligned_mem, aligned_size, MEM_RELEASE)) {
         perror("Lily(Fail): fail to free memory");
         exit(1);
     }
