@@ -132,6 +132,7 @@ format:
 	${CLANG_FORMAT} ./src/core/shared/target/*.c
 	${CLANG_FORMAT} ./benchmarks/base/*.c
 	${CLANG_FORMAT} ./tests/base/*.c
+	${CLANG_FORMAT} ./tests/base/memory/*.c
 	${CLANG_FORMAT} ./tests/core/lily/parser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/precompile/*.c
 	${CLANG_FORMAT} ./tests/core/lily/preparser/*.c
