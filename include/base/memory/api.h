@@ -25,8 +25,10 @@
 #ifndef LILY_BASE_MEMORY_API_H
 #define LILY_BASE_MEMORY_API_H
 
+// NOTE: For the moment, we'll be using C's memory management API, until our API
+// is stabilized and there are no more bugs.
 #define USE_C_MEMORY_API
-#undef USE_C_MEMORY_API
+// #undef USE_C_MEMORY_API
 
 #include <base/macros.h>
 #include <base/types.h>
