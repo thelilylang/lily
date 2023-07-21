@@ -184,14 +184,17 @@ resize__MemoryGlobal(void *mem, Usize new_size)
 
         resized_mem = NULL;
     } else if (new_size != old_size) {
-        resized_mem = api.resize(block,
-                                 old_size + sizeof(MemoryBlock),
-                                 new_size + sizeof(MemoryBlock),
-                                 align);
+        MemoryBlock *resized_block = api.resize(block,
+                                                old_size + sizeof(MemoryBlock),
+                                                new_size + sizeof(MemoryBlock),
+                                                align);
 
-        if (resized_mem) {
-            block->size = new_size;
-            resized_mem = (void *)((char *)resized_mem + sizeof(MemoryBlock));
+        if (resized_block) {
+            // FIXME: leak here. You should probably use api.alloc instead of
+            // api.resize. Plus you'd probably have to add a new block to the
+            // linked list and remove the old one and free it.
+            resized_block->size = new_size;
+            resized_mem = (void *)((char *)resized_block + sizeof(MemoryBlock));
             ++total_block;
             total_size +=
               new_size < old_size ? old_size - new_size : new_size - old_size;
