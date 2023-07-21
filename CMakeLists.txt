@@ -616,6 +616,10 @@ if(LILY_DEBUG)
 
   add_test(NAME test_core_parser COMMAND test_core_parser)
 
+  add_executable(bench_buffer benchmarks/base/buffer.c)
+  target_link_libraries(bench_buffer lily_base)
+  target_include_directories(bench_buffer PRIVATE include)
+
   add_executable(bench_vec benchmarks/base/vec.c)
   target_link_libraries(bench_vec lily_base)
   target_include_directories(bench_vec PRIVATE include)
