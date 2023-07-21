@@ -168,7 +168,9 @@ generate_conditional_compiler_choice_according_operator_collection__LilyCheckedO
                 &cond_cc, last__Vec(operator->signature)));
 
         for (Usize j = 0; j < operator->signature->len - 1; ++j) {
-            push__Vec(condition->params, get__Vec(operator->signature, j));
+            push__Vec(
+              condition->params,
+              ref__LilyCheckedDataType(get__Vec(operator->signature, j)));
         }
 
         push__Vec(conds, condition);
@@ -245,10 +247,6 @@ generate_conditional_compiler_choice_according_operator_collection__LilyCheckedO
         data_type->compiler_choice = choices;                              \
     }
 
-#define BINARY_CHECK_CHOICE(choice)           \
-    for (Usize i = 0; i < choice->len; ++i) { \
-    }
-
 void
 binary_update_data_type_according_operator_collection__LilyCheckedOperatorRegister(
   Vec *operators,
@@ -260,9 +258,6 @@ binary_update_data_type_according_operator_collection__LilyCheckedOperatorRegist
             case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
             case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
                 BINARY_UPDATE_DATA_TYPE();
-                break;
-            case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
-            case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
                 break;
             default:
                 break;
@@ -293,9 +288,10 @@ binary_update_return_data_type_according_operator_collection__LilyCheckedOperato
             push__Vec(
               conds,
               NEW(LilyCheckedDataTypeCondition,
-                  init__Vec(2,
-                            get__Vec(operator->signature, 0),
-                            get__Vec(operator->signature, 1)),
+                  init__Vec(
+                    2,
+                    ref__LilyCheckedDataType(get__Vec(operator->signature, 0)),
+                    ref__LilyCheckedDataType(get__Vec(operator->signature, 1))),
                   add_choice__LilyCheckedDataTypeConditionalCompilerChoice(
                     &cond_cc, last__Vec(operator->signature))));
         }
@@ -307,8 +303,11 @@ binary_update_return_data_type_according_operator_collection__LilyCheckedOperato
                       cond_cc);
 
         if (*return_data_type) {
-            if (!eq__LilyCheckedDataType(*return_data_type,
-                                         update_return_data_type)) {
+            update_data_type__LilyCheckedDataType(*return_data_type,
+                                                  update_return_data_type);
+
+            if (!eq__LilyCheckedDataType(update_return_data_type,
+                                         *return_data_type)) {
                 FAILED("return data type doesn't match");
             }
 
