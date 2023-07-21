@@ -349,12 +349,13 @@ load_builtins__LilyBuiltin()
           NULL,
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
         .params = init__Vec(
-          3,
+          4,
           NEW_VARIANT(
             LilyCheckedDataType,
             ptr,
             NULL,
             NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ANY, NULL)),
+          NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL))
     };
