@@ -22,33 +22,30 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BUILTIN_ALLOC_H
-#define LILY_BUILTIN_ALLOC_H
+#ifndef LILY_BASE_MEMORY_BLOCK_H
+#define LILY_BASE_MEMORY_BLOCK_H
 
-#include <base/types.h>
+#include <base/memory/api.h>
 
-#include <api.h>
+#include <stdbool.h>
 
-#if defined(__cplusplus)
-extern "C"
+typedef struct MemoryBlock
 {
-#endif
+    Usize size;
+    Usize align;
+    struct MemoryBlock *next; // struct MemoryBlock*?
+    struct MemoryBlock *prev; // struct MemoryBlock*?
+} MemoryBlock;
 
-    LILY_API Usize __max_capacity__$Alloc();
+/**
+ *
+ * @brief Construct MemoryBlock type.
+ */
+CONSTRUCTOR(MemoryBlock *,
+            MemoryBlock,
+            MemoryApi *api,
+            Usize size,
+            Usize align,
+            MemoryBlock *prev);
 
-    LILY_API void *__align__$Alloc(void *mem, Usize align);
-
-    LILY_API void *__alloc__$Alloc(Usize size, Usize align);
-
-    LILY_API void *__resize__$Alloc(void *old_mem,
-                                    Usize old_size,
-                                    Usize new_size,
-                                    Usize align);
-
-    LILY_API void __free__$Alloc(void **mem, Usize size, Usize align);
-
-#if defined(__cplusplus)
-}
-#endif
-
-#endif // LILY_BUILTIN_ALLOC_H
+#endif // LILY_BASE_MEMORY_BLOCK_H

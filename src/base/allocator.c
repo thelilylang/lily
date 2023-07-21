@@ -22,33 +22,35 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BUILTIN_ALLOC_H
-#define LILY_BUILTIN_ALLOC_H
+#include <base/allocator.h>
 
-#include <base/types.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include <api.h>
-
-#if defined(__cplusplus)
-extern "C"
+void
+destroy__Allocator(Allocator *self)
 {
-#endif
-
-    LILY_API Usize __max_capacity__$Alloc();
-
-    LILY_API void *__align__$Alloc(void *mem, Usize align);
-
-    LILY_API void *__alloc__$Alloc(Usize size, Usize align);
-
-    LILY_API void *__resize__$Alloc(void *old_mem,
-                                    Usize old_size,
-                                    Usize new_size,
-                                    Usize align);
-
-    LILY_API void __free__$Alloc(void **mem, Usize size, Usize align);
-
-#if defined(__cplusplus)
+    switch (self->kind) {
+        case ALLOCATOR_KIND_ARENA:
+            return destroy__MemoryArena(&self->arena);
+        case ALLOCATOR_KIND_GLOBAL:
+        case ALLOCATOR_KIND_PAGE:
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
-#endif
 
-#endif // LILY_BUILTIN_ALLOC_H
+void
+reset__Allocator(Allocator *self)
+{
+    switch (self->kind) {
+        case ALLOCATOR_KIND_ARENA:
+            return reset__MemoryArena(&self->arena);
+        case ALLOCATOR_KIND_GLOBAL:
+        case ALLOCATOR_KIND_PAGE:
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}

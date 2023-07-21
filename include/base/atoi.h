@@ -29,6 +29,8 @@
 #include <base/platform.h>
 #include <base/types.h>
 
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
 // MAX: 0b1111111, 0o177, 127, 0x7F
 // MIN: -0b10000000, -0o200, -128, -0x80
 // NOTE: return 0 if is overflow/underflow otherwise return 1.

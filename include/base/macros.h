@@ -74,7 +74,12 @@
 
 #endif
 
+#ifndef CLANG_VERSION
+#warning "Only Clang version >= 15 is fully supported."
+#endif
+
 #define PTR_SIZE sizeof(void *)
+#define DEFAULT_ALIGNMENT 0
 
 // Vec<T>
 // FREE_BUFFER_ITEMS(buffer, len, type)
@@ -159,6 +164,14 @@
         printf("UNREACHABLE: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
         exit(1);                                                      \
     }
+
+#define ALIGNMENT_COEFF 2
+
+#if defined(CLANG_VERSION) || defined(MSCV_VERSION)
+#define alignof(T) _Alignof(T)
+#endif
+
+#define ALIGN(mem, align) (((Uptr)mem + (align - 1)) & ~(align - 1));
 
 #define threadlocal _Thread_local
 

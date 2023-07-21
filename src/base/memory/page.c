@@ -22,33 +22,43 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BUILTIN_ALLOC_H
-#define LILY_BUILTIN_ALLOC_H
+#include <base/assert.h>
+#include <base/memory/global.h>
+#include <base/memory/page.h>
+#include <base/print.h>
+#include <base/units.h>
 
-#include <base/types.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include <api.h>
-
-#if defined(__cplusplus)
-extern "C"
+void *
+alloc__MemoryPage(MemoryPage *self, Usize size, Usize align)
 {
-#endif
+    void *mem = alloc__MemoryGlobal(size, align);
 
-    LILY_API Usize __max_capacity__$Alloc();
+    ASSERT(mem);
 
-    LILY_API void *__align__$Alloc(void *mem, Usize align);
+    self->mem = mem;
+    self->is_undef = false;
 
-    LILY_API void *__alloc__$Alloc(Usize size, Usize align);
-
-    LILY_API void *__resize__$Alloc(void *old_mem,
-                                    Usize old_size,
-                                    Usize new_size,
-                                    Usize align);
-
-    LILY_API void __free__$Alloc(void **mem, Usize size, Usize align);
-
-#if defined(__cplusplus)
+    return self->mem;
 }
-#endif
 
-#endif // LILY_BUILTIN_ALLOC_H
+void *
+resize__MemoryPage(MemoryPage *self, Usize new_size)
+{
+    ASSERT(!self->is_undef && self->mem);
+
+    self->mem = resize__MemoryGlobal(self->mem, new_size);
+
+    return self->mem;
+}
+
+void
+free__MemoryPage(MemoryPage *self)
+{
+    ASSERT(!self->is_undef && self->mem);
+
+    self->is_undef = true;
+    free__MemoryGlobal(self->mem);
+}

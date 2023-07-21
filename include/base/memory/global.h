@@ -22,33 +22,53 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BUILTIN_ALLOC_H
-#define LILY_BUILTIN_ALLOC_H
+#ifndef LILY_BASE_MEMORY_GLOBAL_H
+#define LILY_BASE_MEMORY_GLOBAL_H
 
+#include <base/macros.h>
+#include <base/memory/api.h>
+#include <base/memory/block.h>
+#include <base/new.h>
 #include <base/types.h>
 
-#include <api.h>
+#include <builtin/alloc.h>
 
-#if defined(__cplusplus)
-extern "C"
-{
-#endif
+#include <stdbool.h>
+#include <stddef.h>
 
-    LILY_API Usize __max_capacity__$Alloc();
+#define MEMORY_GLOBAL_ALLOC(T, n) \
+    alloc__MemoryGlobal(sizeof(T) * n, alignof(T) * ALIGNMENT_COEFF)
 
-    LILY_API void *__align__$Alloc(void *mem, Usize align);
+#define MEMORY_GLOBAL_RESIZE(T, mem, n) resize__MemoryGlobal(mem, sizeof(T) * n)
 
-    LILY_API void *__alloc__$Alloc(Usize size, Usize align);
+#define MEMORY_GLOBAL_FREE(mem) free__MemoryGlobal(mem)
 
-    LILY_API void *__resize__$Alloc(void *old_mem,
-                                    Usize old_size,
-                                    Usize new_size,
-                                    Usize align);
+/**
+ *
+ * @brief Create a new cell for a new allocation.
+ */
+void *
+alloc__MemoryGlobal(Usize size, Usize align);
 
-    LILY_API void __free__$Alloc(void **mem, Usize size, Usize align);
+/**
+ *
+ * @brief Resize a previous allocated mem.
+ */
+void *
+resize__MemoryGlobal(void *mem, Usize new_size);
 
-#if defined(__cplusplus)
-}
-#endif
+/**
+ *
+ * @brief Free a block of memory.
+ */
+void
+free__MemoryGlobal(void *mem);
 
-#endif // LILY_BUILTIN_ALLOC_H
+/**
+ *
+ * @brief Print the stats of the global Allocator.
+ */
+void
+print_stat__MemoryGlobal();
+
+#endif // LILY_BASE_MEMORY_GLOBAL_H

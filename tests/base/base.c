@@ -1,8 +1,13 @@
+#include "allocator.c"
 #include "atoi.c"
+#include "buffer.c"
 #include "format.c"
 #include "hash_map.c"
 #include "hash_set.c"
 #include "itoa.c"
+#include "memory/arena.c"
+#include "memory/global.c"
+#include "memory/page.c"
 #include "stack.c"
 #include "str.c"
 #include "string.c"
@@ -13,6 +18,9 @@
 int
 main()
 {
+    // Test Allocator
+    test_alloc__Allocator();
+
     // Test atoi
     test_check_int8_overflow__Atoi();
     test_check_int16_overflow__Atoi();
@@ -24,6 +32,9 @@ main()
     test_check_uint64_overflow__Atoi();
     test_atoi__Atoi();
     test_atoi_safe__Atoi();
+
+    // Test buffer
+    test_push__Buffer();
 
     // Test format
     test_s_specifier__Format();
@@ -48,6 +59,15 @@ main()
     test_itoa_base_2();
     test_itoa_base_8();
     test_itoa_base_16();
+
+    // Test MemoryArena
+    test_alloc__MemoryArena();
+
+    // Test MemoryGlobal
+    test_alloc__MemoryGlobal();
+
+    // Test MemoryPage
+    test_alloc__MemoryPage();
 
     // Test Stack
     test_new__Stack();

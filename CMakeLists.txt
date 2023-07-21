@@ -28,9 +28,16 @@ set(LILY_INCLUDE include lib/local)
 
 # lily_base
 set(BASE_SRC
+    src/base/allocator.c
     src/base/alloc.c
+    src/base/arc.c
     src/base/atof.c
     src/base/atoi.c
+    src/base/binary_heap.c
+    src/base/binary_search.c
+    src/base/bitmap.c
+    src/base/buffer.c
+    src/base/char.c
     src/base/cli/command.c
     src/base/cli/default_action.c
     src/base/cli/diagnostic.c
@@ -42,6 +49,7 @@ set(BASE_SRC
     src/base/cli/result.c
     src/base/cli.c
     src/base/color.c
+    src/base/error.c
     src/base/file.c
     src/base/format.c
     src/base/hash/custom.c
@@ -51,22 +59,40 @@ set(BASE_SRC
     src/base/hash_map.c
     src/base/hash_set.c
     src/base/heap.c
-    src/base/itoa.c
+    src/base/int128.c
     src/base/io.c
-    src/base/list.c
+    src/base/itoa.c
     src/base/linked_list.c
+    src/base/list.c
+    src/base/memory/api.c
+    src/base/memory/arena.c
+    src/base/memory/block.c
+    src/base/memory/global.c
+    src/base/memory/page.c
+    src/base/mutex.c
+    src/base/non_null.c
     src/base/optional.c
     src/base/ordered_hash_map.c
     src/base/queue.c
+    src/base/quick_select.c
+    src/base/quick_sort.c
+    src/base/rc.c
+    src/base/ref.c
+    src/base/ref_mut.c
+    src/base/ref_non_null.c
+    src/base/result.c
+    src/base/singleton.c
     src/base/sized_array.c
     src/base/stack.c
     src/base/str.c
     src/base/string.c
     src/base/test.c
     src/base/tree.c
+    src/base/tree_map.c
     src/base/vec.c)
 
 add_library(lily_base STATIC ${BASE_SRC})
+target_link_libraries(lily_base PUBLIC lily_builtin)
 target_include_directories(lily_base PRIVATE ${LILY_INCLUDE})
 
 # lily_cli
@@ -590,6 +616,10 @@ if(LILY_DEBUG)
 
   add_test(NAME test_core_parser COMMAND test_core_parser)
 
+  add_executable(bench_buffer benchmarks/base/buffer.c)
+  target_link_libraries(bench_buffer lily_base)
+  target_include_directories(bench_buffer PRIVATE include)
+
   add_executable(bench_vec benchmarks/base/vec.c)
   target_link_libraries(bench_vec lily_base)
   target_include_directories(bench_vec PRIVATE include)
@@ -601,4 +631,12 @@ if(LILY_DEBUG)
   add_executable(bench_hash_map benchmarks/base/hash_map.c)
   target_link_libraries(bench_hash_map lily_base)
   target_include_directories(bench_hash_map PRIVATE include)
+
+  add_executable(bench_global_allocator benchmarks/base/memory/global.c)
+  target_link_libraries(bench_global_allocator lily_base)
+  target_include_directories(bench_global_allocator PRIVATE include)
+
+  add_executable(bench_page_allocator benchmarks/base/memory/page.c)
+  target_link_libraries(bench_page_allocator lily_base)
+  target_include_directories(bench_page_allocator PRIVATE include)
 endif()

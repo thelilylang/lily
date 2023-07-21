@@ -22,33 +22,28 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BUILTIN_ALLOC_H
-#define LILY_BUILTIN_ALLOC_H
+#include <base/memory/block.h>
+#include <base/new.h>
 
-#include <base/types.h>
+#include <builtin/alloc.h>
 
-#include <api.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#if defined(__cplusplus)
-extern "C"
+CONSTRUCTOR(MemoryBlock *,
+            MemoryBlock,
+            MemoryApi *api,
+            Usize size,
+            Usize align,
+            MemoryBlock *prev)
 {
-#endif
+    MemoryBlock *self =
+      api->alloc(sizeof(MemoryBlock) + size, DEFAULT_ALIGNMENT);
 
-    LILY_API Usize __max_capacity__$Alloc();
+    self->size = size;
+    self->align = align;
+    self->next = NULL;
+    self->prev = prev;
 
-    LILY_API void *__align__$Alloc(void *mem, Usize align);
-
-    LILY_API void *__alloc__$Alloc(Usize size, Usize align);
-
-    LILY_API void *__resize__$Alloc(void *old_mem,
-                                    Usize old_size,
-                                    Usize new_size,
-                                    Usize align);
-
-    LILY_API void __free__$Alloc(void **mem, Usize size, Usize align);
-
-#if defined(__cplusplus)
+    return self;
 }
-#endif
-
-#endif // LILY_BUILTIN_ALLOC_H

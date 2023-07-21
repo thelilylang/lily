@@ -22,33 +22,54 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BUILTIN_ALLOC_H
-#define LILY_BUILTIN_ALLOC_H
+#ifndef LILY_BASE_MEMORY_PAGE_H
+#define LILY_BASE_MEMORY_PAGE_H
 
-#include <base/types.h>
+#include <base/memory/api.h>
+#include <base/memory/block.h>
+#include <base/new.h>
 
-#include <api.h>
+#define MEMORY_PAGE_ALLOC(T, self, n) \
+    alloc__MemoryPage(self, sizeof(T) * n, alignof(T) * ALIGNMENT_COEFF)
 
-#if defined(__cplusplus)
-extern "C"
+#define MEMORY_PAGE_RESIZE(T, self, n) resize__MemoryPage(self, sizeof(T) * n)
+
+#define MEMORY_PAGE_FREE(self) free__MemoryPage(self)
+
+typedef struct MemoryPage
 {
-#endif
+    void *mem; // undef
+    bool is_undef;
+} MemoryPage;
 
-    LILY_API Usize __max_capacity__$Alloc();
-
-    LILY_API void *__align__$Alloc(void *mem, Usize align);
-
-    LILY_API void *__alloc__$Alloc(Usize size, Usize align);
-
-    LILY_API void *__resize__$Alloc(void *old_mem,
-                                    Usize old_size,
-                                    Usize new_size,
-                                    Usize align);
-
-    LILY_API void __free__$Alloc(void **mem, Usize size, Usize align);
-
-#if defined(__cplusplus)
+/**
+ *
+ * @brief Construct MemoryPage type.
+ */
+inline CONSTRUCTOR(MemoryPage, MemoryPage)
+{
+    return (MemoryPage){ .is_undef = true };
 }
-#endif
 
-#endif // LILY_BUILTIN_ALLOC_H
+/**
+ *
+ * @brief Create a new allocation.
+ */
+void *
+alloc__MemoryPage(MemoryPage *self, Usize size, Usize align);
+
+/**
+ *
+ * @brief Resize a block of memory.
+ */
+void *
+resize__MemoryPage(MemoryPage *self, Usize new_size);
+
+/**
+ *
+ * @brief Destroy Page allocator.
+ */
+void
+free__MemoryPage(MemoryPage *self);
+
+#endif // LILY_BASE_MEMORY_PAGE_H

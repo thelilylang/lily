@@ -22,33 +22,42 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BUILTIN_ALLOC_H
-#define LILY_BUILTIN_ALLOC_H
+#include <base/memory/api.h>
 
-#include <base/types.h>
+#include <stddef.h>
 
-#include <api.h>
-
-#if defined(__cplusplus)
-extern "C"
+void *
+__align__(void *mem, Usize align)
 {
-#endif
-
-    LILY_API Usize __max_capacity__$Alloc();
-
-    LILY_API void *__align__$Alloc(void *mem, Usize align);
-
-    LILY_API void *__alloc__$Alloc(Usize size, Usize align);
-
-    LILY_API void *__resize__$Alloc(void *old_mem,
-                                    Usize old_size,
-                                    Usize new_size,
-                                    Usize align);
-
-    LILY_API void __free__$Alloc(void **mem, Usize size, Usize align);
-
-#if defined(__cplusplus)
+    return __align__$Alloc(mem, align);
 }
-#endif
 
-#endif // LILY_BUILTIN_ALLOC_H
+void *
+__alloc__(Usize size, Usize align)
+{
+#ifdef USE_C_MEMORY_API
+    return malloc(size);
+#else
+    return __alloc__$Alloc(size, align);
+#endif
+}
+
+void *
+__resize__(void *old_mem, Usize old_size, Usize new_size, Usize align)
+{
+#ifdef USE_C_MEMORY_API
+    return realloc(old_mem, new_size);
+#else
+    return __resize__$Alloc(old_mem, old_size, new_size, align);
+#endif
+}
+
+void
+__free__(void **mem, Usize size, Usize align)
+{
+#ifdef USE_C_MEMORY_API
+    return free(*mem);
+#else
+    return __free__$Alloc(mem, size, align);
+#endif
+}

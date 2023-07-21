@@ -20,6 +20,7 @@ format:
 	${CLANG_FORMAT} ./include/base/cli/*.h	
 	${CLANG_FORMAT} ./include/base/cli/result/*.h	
 	${CLANG_FORMAT} ./include/base/hash/*.h
+	${CLANG_FORMAT} ./include/base/memory/*.h
 	${CLANG_FORMAT} ./include/cli/*.h
 	${CLANG_FORMAT} ./include/cli/lily/*.h
 	${CLANG_FORMAT} ./include/cli/lily/config/*.h
@@ -80,6 +81,7 @@ format:
 	${CLANG_FORMAT} ./src/base/*.c
 	${CLANG_FORMAT} ./src/base/cli/*.c
 	${CLANG_FORMAT} ./src/base/cli/result/*.c
+	${CLANG_FORMAT} ./src/base/memory/*.c
 	${CLANG_FORMAT} ./src/base/hash/*.c
 	${CLANG_FORMAT} ./src/bin/lily/*.c
 	${CLANG_FORMAT} ./src/bin/lilyc/*.c
@@ -132,6 +134,7 @@ format:
 	${CLANG_FORMAT} ./src/core/shared/target/*.c
 	${CLANG_FORMAT} ./benchmarks/base/*.c
 	${CLANG_FORMAT} ./tests/base/*.c
+	${CLANG_FORMAT} ./tests/base/memory/*.c
 	${CLANG_FORMAT} ./tests/core/lily/parser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/precompile/*.c
 	${CLANG_FORMAT} ./tests/core/lily/preparser/*.c

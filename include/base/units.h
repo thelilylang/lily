@@ -22,33 +22,15 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BUILTIN_ALLOC_H
-#define LILY_BUILTIN_ALLOC_H
+#ifndef LILY_BASE_UNITS_H
+#define LILY_BASE_UNITS_H
 
-#include <base/types.h>
+#define b (1)
+#define KiB (1024)
+#define MiB (1024 * 1024)
+#define GiB (1024 * 1024 * 1024)
+#define TiB (1024 * 1024 * 1024 * 1024)
+#define PiB (1024 * 1024 * 1024 * 1024 * 1024)
+#define EiB (1024 * 1024 * 1024 * 1024 * 1024 * 1024)
 
-#include <api.h>
-
-#if defined(__cplusplus)
-extern "C"
-{
-#endif
-
-    LILY_API Usize __max_capacity__$Alloc();
-
-    LILY_API void *__align__$Alloc(void *mem, Usize align);
-
-    LILY_API void *__alloc__$Alloc(Usize size, Usize align);
-
-    LILY_API void *__resize__$Alloc(void *old_mem,
-                                    Usize old_size,
-                                    Usize new_size,
-                                    Usize align);
-
-    LILY_API void __free__$Alloc(void **mem, Usize size, Usize align);
-
-#if defined(__cplusplus)
-}
-#endif
-
-#endif // LILY_BUILTIN_ALLOC_H
+#endif // LILY_BASE_UNITS_H
