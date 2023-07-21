@@ -273,6 +273,7 @@ typedef struct LilyCheckedDataTypeCondition
 {
     Vec *params; // Vec<LilyCheckedDataType* (&)>*
     Usize return_data_type_id;
+    Usize ref_count;
 } LilyCheckedDataTypeCondition;
 
 /**
@@ -283,6 +284,18 @@ CONSTRUCTOR(LilyCheckedDataTypeCondition *,
             LilyCheckedDataTypeCondition,
             Vec *params,
             Usize return_data_type_id);
+
+/**
+ *
+ * @brief Pass to ref a data type and increment the `ref_count`.
+ * @return LilyCheckedDataTypeCondition* (&)
+ */
+inline LilyCheckedDataTypeCondition *
+ref__LilyCheckedDataTypeCondition(LilyCheckedDataTypeCondition *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *
@@ -325,6 +338,7 @@ inline CONSTRUCTOR(LilyCheckedDataTypeConditionalCompilerChoice,
  *
  * @brief Check if the choice is not duplicate then add it.
  * @return Return index of the pushed choice.
+ * @param LilyCheckedDataType* (&)
  */
 Usize
 add_choice__LilyCheckedDataTypeConditionalCompilerChoice(
