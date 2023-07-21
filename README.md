@@ -115,6 +115,12 @@ You can test the compiler with the command:
 ./build/lily compile ./tests/mypkg/main.lily
 ```
 
+or
+
+```bash
+./build/lilyc ./tests/mypkg/main.lily
+```
+
 ## License
 
 Lily is licensed under a MIT license.
