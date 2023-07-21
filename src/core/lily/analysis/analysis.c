@@ -607,8 +607,8 @@ run_step1__LilyAnalysis(LilyAnalysis *self);
 static inline void
 run_step2__LilyAnalysis(LilyAnalysis *self);
 
-static LilyCheckedHistory *history = NULL;
-static bool in_try = false;
+static threadlocal LilyCheckedHistory *history = NULL;
+static threadlocal bool in_try = false;
 
 #define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop) \
     {                                                               \

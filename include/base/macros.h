@@ -173,4 +173,6 @@
 
 #define ALIGN(mem, align) (((Uptr)mem + (align - 1)) & ~(align - 1));
 
+#define threadlocal _Thread_local
+
 #endif // LILY_BASE_MACROS_H
