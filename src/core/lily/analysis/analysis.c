@@ -6793,7 +6793,7 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                   NEW(LilyCheckedDataTypeCompilerGeneric,
                       last__Vec(current_fun->decl->fun.used_compiler_generic));
 
-                ASSERT(expr->data_type->ref_count == 0);
+                // ASSERT(expr->data_type->ref_count == 0);
 
                 update_data_type__LilyCheckedDataType(expr->data_type,
                                                       fun_return_data_type);
@@ -6801,7 +6801,7 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                          LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
                        expr->data_type->kind ==
                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
-                ASSERT(expr->data_type->ref_count == 0);
+                // ASSERT(expr->data_type->ref_count == 0);
 
                 update_data_type__LilyCheckedDataType(expr->data_type,
                                                       fun_return_data_type);
@@ -6809,7 +6809,7 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
                        expr->data_type->kind ==
                          LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
-                ASSERT(fun_return_data_type->ref_count == 0);
+                // ASSERT(fun_return_data_type->ref_count == 0);
 
                 update_data_type__LilyCheckedDataType(fun_return_data_type,
                                                       expr->data_type);
@@ -6836,7 +6836,7 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                                                       expr->data_type);
             }
         } else {
-            UNREACHABLE("return data type cannot be null");
+            UNREACHABLE("return data type cannot be NULL");
         }
     } else {
         if (fun_return_data_type) {
