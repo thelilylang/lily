@@ -129,9 +129,11 @@ resize__MemoryGlobal(void *mem, Usize new_size)
     void *new_mem = realloc(mem, new_size);
 
     if (new_mem) {
-        total_size +=
-          new_size < old_size ? old_size - new_size : new_size - old_size;
+        total_size += new_size;
+        total_size_free += old_size;
+
         ++total_block;
+        ++total_block_free;
     }
 
     return new_mem;
@@ -215,7 +217,7 @@ free__MemoryGlobal(void *mem)
 
     free(mem);
 
-    ++total_block;
+    ++total_block_free;
     total_size_free += mem_size;
 #else
     if (!mem) {
