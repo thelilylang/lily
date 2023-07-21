@@ -71,4 +71,6 @@
              (buffer).mem,                      \
              (buffer).capacity);
 
+#define __free__Buffer(buffer) A_FREE(*(buffer).allocator, (buffer).mem);
+
 #endif // LILY_BASE_BUFFER_H
