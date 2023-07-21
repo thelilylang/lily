@@ -31,9 +31,18 @@ void
 generate_global_fun_name_with_vec__LilyCheckedGlobalName(String *global_name,
                                                          const Vec *fun)
 {
+    String *ser = NEW(String);
+
     for (Usize i = 0; i < fun->len; ++i) {
-        serialize__LilyCheckedDataType(get__Vec(fun, i), global_name);
+        if (is_compiler_defined__LilyCheckedDataType(get__Vec(fun, i))) {
+            FREE(String, ser);
+            return;
+        } else {
+            serialize__LilyCheckedDataType(get__Vec(fun, i), ser);
+        }
     }
+
+    APPEND_AND_FREE(global_name, ser);
 }
 
 void
