@@ -72,7 +72,7 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDeclType,
                            LilyCheckedDeclAlias alias)
 {
     return (LilyCheckedDeclType){ .kind = LILY_CHECKED_DECL_TYPE_KIND_ALIAS,
-                                  .deps = NULL,
+                                  .deps = NEW(Vec),
                                   .alias = alias };
 }
 
