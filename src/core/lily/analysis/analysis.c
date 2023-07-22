@@ -333,8 +333,8 @@ check_fun_call_expr__LilyAnalysis(LilyAnalysis *self,
                                   LilyAstExpr *expr,
                                   LilyCheckedScope *scope,
                                   enum LilyCheckedSafetyMode safety_mode,
-                                  bool must_mut,
-                                  LilyCheckedDataType *defined_data_type);
+                                  LilyCheckedDataType *defined_data_type,
+                                  const LilyCheckedScopeResponse *response);
 
 static LilyCheckedExpr *
 check_call_expr__LilyAnalysis(LilyAnalysis *self,
@@ -3947,9 +3947,308 @@ check_fun_call_expr__LilyAnalysis(LilyAnalysis *self,
                                   LilyAstExpr *expr,
                                   LilyCheckedScope *scope,
                                   enum LilyCheckedSafetyMode safety_mode,
-                                  bool must_mut,
-                                  LilyCheckedDataType *defined_data_type)
+                                  LilyCheckedDataType *defined_data_type,
+                                  const LilyCheckedScopeResponse *response)
 {
+    LilyCheckedDecl *fun = get__Vec(response->fun, 0);
+
+    if (!fun->fun.is_checked &&
+        !contains_for_fun__LilyCheckedHistory(
+          history, get_original_signature__LilyCheckedDeclFun(&fun->fun))) {
+        // Add fun dependency to the current
+        // function.
+        // TODO: method
+        LilyCheckedScopeDecls *current_fun =
+          get_current_fun__LilyCheckedScope(scope);
+
+        if (current_fun) {
+            add_fun_dep__LilyCheckedDeclFun(&current_fun->decl->fun, fun);
+        }
+
+        ASSERT(history);
+
+        add__LilyCheckedHistory(history, fun);
+        check_fun__LilyAnalysis(self, fun);
+
+        FREE(LilyCheckedHistory, &history);
+    }
+
+    if (fun->fun.is_main) {
+        ANALYSIS_EMIT_DIAGNOSTIC(
+          self,
+          simple_lily_error,
+          (&expr->location),
+          NEW(LilyError, LILY_ERROR_KIND_MAIN_FUNCTION_IS_NOT_CALLABLE),
+          NULL,
+          NULL,
+          NULL);
+
+        return NEW_VARIANT(LilyCheckedExpr,
+                           call,
+                           &expr->location,
+                           NEW(LilyCheckedDataType,
+                               LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                               &expr->location),
+                           expr,
+                           NEW(LilyCheckedExprCall,
+                               LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                               NULL,
+                               (LilyCheckedAccessScope){ .id = 0 }));
+    }
+
+    HashMap *generic_params = NULL;
+
+    if (fun->fun.generic_params) {
+        generic_params = NEW(HashMap);
+
+        Vec *ast_generic_params =
+          get_generic_params__LilyAstExpr(expr->call.fun.id);
+
+        ASSERT(ast_generic_params);
+
+        if (verify_generic_params__LilyCheckedDecl(fun, ast_generic_params)) {
+            FAILED("the size of the generic params "
+                   "is not the same");
+        }
+
+        for (Usize i = 0; i < ast_generic_params->len; ++i) {
+            LilyCheckedGenericParam *generic_param =
+              get__Vec(fun->fun.generic_params, i);
+            LilyAstDataType *generic_param_call =
+              get__Vec(ast_generic_params, i);
+
+            insert__HashMap(
+              generic_params,
+              get_name__LilyCheckedGenericParam(generic_param)->buffer,
+              check_data_type__LilyAnalysis(
+                self, generic_param_call, scope, NULL, safety_mode));
+        }
+    }
+
+    Vec *checked_params =
+      check_fun_params_call__LilyAnalysis(self,
+                                          &expr->location,
+                                          expr->call.fun.params,
+                                          generic_params,
+                                          &fun->fun,
+                                          scope,
+                                          safety_mode);
+
+    if (!valid_function_signature__LilyAnalysis(self,
+                                                fun->location,
+                                                fun->fun.params,
+                                                checked_params,
+                                                generic_params)) {
+        LilyCheckedExpr *unknown_call =
+          NEW_VARIANT(LilyCheckedExpr,
+                      call,
+                      &expr->location,
+                      NEW(LilyCheckedDataType,
+                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                          &expr->location),
+                      expr,
+                      NEW(LilyCheckedExprCall,
+                          LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
+                          NULL,
+                          (LilyCheckedAccessScope){ .id = 0 }));
+
+        FREE(LilyCheckedScopeResponse, response);
+
+        return unknown_call;
+    } else {
+        // Get the signature of the function without
+        // the return data type.
+        Vec *fun_types = NEW(Vec);
+
+        if (checked_params && fun->fun.params) {
+            if (checked_params->len == fun->fun.params->len) {
+                for (Usize i = 0; i < checked_params->len; ++i) {
+                    push__Vec(fun_types,
+                              CAST(LilyCheckedExprCallFunParam *,
+                                   get__Vec(checked_params, i))
+                                ->value->data_type);
+                }
+            } else {
+            params_signature : {
+                for (Usize i = 0; i < fun->fun.params->len; ++i) {
+                    LilyCheckedDeclFunParam *param =
+                      get__Vec(fun->fun.params, i);
+
+                    switch (param->kind) {
+                        case LILY_CHECKED_DECL_FUN_PARAM_KIND_NORMAL:
+                            if (
+                              is_compiler_defined_and_known_dt__LilyCheckedDataType(
+                                param->data_type)) {
+                                push__Vec(fun_types,
+                                          CAST(LilyCheckedExprCallFunParam *,
+                                               get__Vec(checked_params, i))
+                                            ->value->data_type);
+                            } else {
+                                push__Vec(fun_types, param->data_type);
+                            }
+
+                            break;
+                        case LILY_CHECKED_DECL_FUN_PARAM_KIND_DEFAULT:
+                            push__Vec(fun_types, param->data_type);
+
+                            break;
+                        default:
+                            UNREACHABLE("unknown variant");
+                    }
+                }
+            }
+            }
+        } else if (fun->fun.params) {
+            goto params_signature;
+        }
+
+        // Get the return data type of the function
+        // call.
+        LilyCheckedDataType *return_data_type = NULL;
+
+        switch (fun->fun.return_data_type->kind) {
+            case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {
+                return_data_type = ref__LilyCheckedDataType(
+                  get_return_data_type_of_conditional_compiler_choice(
+                    fun->fun.return_data_type, fun_types));
+
+                if (!return_data_type) {
+                    ANALYSIS_EMIT_DIAGNOSTIC(
+                      self,
+                      simple_lily_error,
+                      fun->location,
+                      NEW(LilyError,
+                          LILY_ERROR_KIND_IMPOSSIBLE_TO_GET_RETURN_DATA_TYPE),
+                      init__Vec(1,
+                                from__String("the signature do you "
+                                             "try to pass is "
+                                             "invalid")),
+                      NULL,
+                      NULL);
+                }
+
+                break;
+            }
+            case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+                return_data_type = ref__LilyCheckedDataType(get__Vec(
+                  fun_types,
+                  get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
+                    &fun->fun,
+                    fun->fun.return_data_type->compiler_generic.name)));
+
+                break;
+            default:
+                return_data_type =
+                  resolve_generic_data_type_with_hash_map__LilyCheckedDataType(
+                    fun->fun.return_data_type, generic_params);
+        }
+
+        LilyCheckedExpr *fun_call = NULL;
+
+        // Push a new signature
+        if (contains_uncertain_dt__LilyCheckedDeclFun(&fun->fun)) {
+            push__Vec(fun_types, ref__LilyCheckedDataType(return_data_type));
+
+            if (add_signature__LilyCheckedDeclFun(
+                  &fun->fun, fun_types, generic_params)) {
+                LilyCheckedSignatureFun *signature =
+                  get_signature__LilyCheckedDeclFun(
+                    &fun->fun, fun->fun.global_name, fun_types);
+
+                fun_call = NEW_VARIANT(
+                  LilyCheckedExpr,
+                  call,
+                  &expr->location,
+                  return_data_type,
+                  expr,
+                  NEW_VARIANT(
+                    LilyCheckedExprCall,
+                    fun,
+                    (LilyCheckedAccessScope){
+                      .id = response->scope_container.scope_id },
+                    get_ser_global_name_of_signature__LilyCheckedDeclFun(
+                      &fun->fun, signature->types),
+                    NEW(LilyCheckedExprCallFun,
+                        fun,
+                        checked_params,
+                        signature->generic_params)));
+
+                FREE_HASHMAP_VALUES(generic_params, LilyCheckedDataType);
+                FREE(HashMap, generic_params);
+                FREE(LilyCheckedDataType, last__Vec(fun_types));
+                FREE(Vec, fun_types);
+            } else {
+                // Re-analyze called function if the
+                // param(s) are/is a compiler
+                // defined data type or the return
+                // data type is a compiler defined
+                // data type.
+                LilyCheckedSignatureFun *signature =
+                  get_signature__LilyCheckedDeclFun(
+                    &fun->fun, fun->fun.global_name, fun_types);
+
+                ASSERT(signature);
+
+                reanalyze_fun_call_with_signature__LilyAnalysis(
+                  self, signature, fun);
+
+                fun_call = NEW_VARIANT(
+                  LilyCheckedExpr,
+                  call,
+                  &expr->location,
+                  return_data_type,
+                  expr,
+                  NEW_VARIANT(LilyCheckedExprCall,
+                              fun,
+                              (LilyCheckedAccessScope){
+                                .id = response->scope_container.scope_id },
+                              signature->ser_global_name,
+                              NEW(LilyCheckedExprCallFun,
+                                  fun,
+                                  checked_params,
+                                  generic_params)));
+            }
+        } else {
+            fun_call = NEW_VARIANT(
+              LilyCheckedExpr,
+              call,
+              &expr->location,
+              return_data_type,
+              expr,
+              NEW_VARIANT(LilyCheckedExprCall,
+                          fun,
+                          (LilyCheckedAccessScope){
+                            .id = response->scope_container.scope_id },
+                          CAST(LilyCheckedSignatureFun *,
+                               get__Vec(fun->fun.signatures, 0))
+                            ->ser_global_name,
+                          NEW(LilyCheckedExprCallFun,
+                              fun,
+                              checked_params,
+                              generic_params)));
+
+            FREE(Vec, fun_types);
+        }
+
+        {
+            // TODO: later replace
+            // `get_current_fun__LilyCheckedScope` by
+            // `get_parent__LilyCheckedScope`, when method
+            // or lambda are be available.
+            LilyCheckedScopeDecls *current_fun =
+              get_current_fun__LilyCheckedScope(scope);
+
+            if (current_fun) {
+                add_fun_dep__LilyCheckedDeclFun(&current_fun->decl->fun, fun);
+                collect_raises__LilyCheckedDeclFun(
+                  &current_fun->decl->fun, scope, fun->fun.raises, in_try);
+            }
+        }
+
+        FREE(LilyCheckedScopeResponse, response);
+
+        return fun_call;
+    }
 }
 
 LilyCheckedExpr *
@@ -3994,354 +4293,13 @@ check_call_expr__LilyAnalysis(LilyAnalysis *self,
                           (LilyCheckedAccessScope){ .id = 0 }));
                 default: {
                     if (response.fun->len == 1) {
-                        LilyCheckedDecl *fun = get__Vec(response.fun, 0);
-
-                        if (!fun->fun.is_checked &&
-                            !contains_for_fun__LilyCheckedHistory(
-                              history,
-                              get_original_signature__LilyCheckedDeclFun(
-                                &fun->fun))) {
-                            // Add fun dependency to the current
-                            // function.
-                            // TODO: method
-                            LilyCheckedScopeDecls *current_fun =
-                              get_current_fun__LilyCheckedScope(scope);
-
-                            if (current_fun) {
-                                add_fun_dep__LilyCheckedDeclFun(
-                                  &current_fun->decl->fun, fun);
-                            }
-
-                            ASSERT(history);
-
-                            add__LilyCheckedHistory(history, fun);
-                            check_fun__LilyAnalysis(self, fun);
-
-                            FREE(LilyCheckedHistory, &history);
-                        }
-
-                        if (fun->fun.is_main) {
-                            ANALYSIS_EMIT_DIAGNOSTIC(
-                              self,
-                              simple_lily_error,
-                              (&expr->location),
-                              NEW(
-                                LilyError,
-                                LILY_ERROR_KIND_MAIN_FUNCTION_IS_NOT_CALLABLE),
-                              NULL,
-                              NULL,
-                              NULL);
-
-                            return NEW_VARIANT(
-                              LilyCheckedExpr,
-                              call,
-                              &expr->location,
-                              NEW(LilyCheckedDataType,
-                                  LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
-                                  &expr->location),
-                              expr,
-                              NEW(LilyCheckedExprCall,
-                                  LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
-                                  NULL,
-                                  (LilyCheckedAccessScope){ .id = 0 }));
-                        }
-
-                        HashMap *generic_params = NULL;
-
-                        if (fun->fun.generic_params) {
-                            generic_params = NEW(HashMap);
-
-                            Vec *ast_generic_params =
-                              get_generic_params__LilyAstExpr(
-                                expr->call.fun.id);
-
-                            ASSERT(ast_generic_params);
-
-                            if (verify_generic_params__LilyCheckedDecl(
-                                  fun, ast_generic_params)) {
-                                FAILED("the size of the generic params "
-                                       "is not the same");
-                            }
-
-                            for (Usize i = 0; i < ast_generic_params->len;
-                                 ++i) {
-                                LilyCheckedGenericParam *generic_param =
-                                  get__Vec(fun->fun.generic_params, i);
-                                LilyAstDataType *generic_param_call =
-                                  get__Vec(ast_generic_params, i);
-
-                                insert__HashMap(
-                                  generic_params,
-                                  get_name__LilyCheckedGenericParam(
-                                    generic_param)
-                                    ->buffer,
-                                  check_data_type__LilyAnalysis(
-                                    self,
-                                    generic_param_call,
-                                    scope,
-                                    NULL,
-                                    safety_mode));
-                            }
-                        }
-
-                        Vec *checked_params =
-                          check_fun_params_call__LilyAnalysis(
-                            self,
-                            &expr->location,
-                            expr->call.fun.params,
-                            generic_params,
-                            &fun->fun,
-                            scope,
-                            safety_mode);
-
-                        if (!valid_function_signature__LilyAnalysis(
-                              self,
-                              fun->location,
-                              fun->fun.params,
-                              checked_params,
-                              generic_params)) {
-                            LilyCheckedExpr *unknown_call = NEW_VARIANT(
-                              LilyCheckedExpr,
-                              call,
-                              &expr->location,
-                              NEW(LilyCheckedDataType,
-                                  LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
-                                  &expr->location),
-                              expr,
-                              NEW(LilyCheckedExprCall,
-                                  LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN,
-                                  NULL,
-                                  (LilyCheckedAccessScope){ .id = 0 }));
-
-                            FREE(LilyCheckedScopeResponse, &response);
-
-                            return unknown_call;
-                        } else {
-                            // Get the signature of the function without
-                            // the return data type.
-                            Vec *fun_types = NEW(Vec);
-
-                            if (checked_params && fun->fun.params) {
-                                if (checked_params->len ==
-                                    fun->fun.params->len) {
-                                    for (Usize i = 0; i < checked_params->len;
-                                         ++i) {
-                                        push__Vec(
-                                          fun_types,
-                                          CAST(LilyCheckedExprCallFunParam *,
-                                               get__Vec(checked_params, i))
-                                            ->value->data_type);
-                                    }
-                                } else {
-                                params_signature : {
-                                    for (Usize i = 0; i < fun->fun.params->len;
-                                         ++i) {
-                                        LilyCheckedDeclFunParam *param =
-                                          get__Vec(fun->fun.params, i);
-
-                                        switch (param->kind) {
-                                            case LILY_CHECKED_DECL_FUN_PARAM_KIND_NORMAL:
-                                                if (
-                                                  is_compiler_defined_and_known_dt__LilyCheckedDataType(
-                                                    param->data_type)) {
-                                                    push__Vec(
-                                                      fun_types,
-                                                      CAST(
-                                                        LilyCheckedExprCallFunParam
-                                                          *,
-                                                        get__Vec(checked_params,
-                                                                 i))
-                                                        ->value->data_type);
-                                                } else {
-                                                    push__Vec(fun_types,
-                                                              param->data_type);
-                                                }
-
-                                                break;
-                                            case LILY_CHECKED_DECL_FUN_PARAM_KIND_DEFAULT:
-                                                push__Vec(fun_types,
-                                                          param->data_type);
-
-                                                break;
-                                            default:
-                                                UNREACHABLE("unknown variant");
-                                        }
-                                    }
-                                }
-                                }
-                            } else if (fun->fun.params) {
-                                goto params_signature;
-                            }
-
-                            // Get the return data type of the function
-                            // call.
-                            LilyCheckedDataType *return_data_type = NULL;
-
-                            switch (fun->fun.return_data_type->kind) {
-                                case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {
-                                    return_data_type = ref__LilyCheckedDataType(
-                                      get_return_data_type_of_conditional_compiler_choice(
-                                        fun->fun.return_data_type, fun_types));
-
-                                    if (!return_data_type) {
-                                        ANALYSIS_EMIT_DIAGNOSTIC(
-                                          self,
-                                          simple_lily_error,
-                                          fun->location,
-                                          NEW(
-                                            LilyError,
-                                            LILY_ERROR_KIND_IMPOSSIBLE_TO_GET_RETURN_DATA_TYPE),
-                                          init__Vec(
-                                            1,
-                                            from__String("the signature do you "
-                                                         "try to pass is "
-                                                         "invalid")),
-                                          NULL,
-                                          NULL);
-                                    }
-
-                                    break;
-                                }
-                                case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
-                                    return_data_type =
-                                      ref__LilyCheckedDataType(get__Vec(
-                                        fun_types,
-                                        get_id_of_param_from_compiler_generic__LilyCheckedDeclFun(
-                                          &fun->fun,
-                                          fun->fun.return_data_type
-                                            ->compiler_generic.name)));
-
-                                    break;
-                                default:
-                                    return_data_type =
-                                      resolve_generic_data_type_with_hash_map__LilyCheckedDataType(
-                                        fun->fun.return_data_type,
-                                        generic_params);
-                            }
-
-                            LilyCheckedExpr *fun_call = NULL;
-
-                            // Push a new signature
-                            if (contains_uncertain_dt__LilyCheckedDeclFun(
-                                  &fun->fun)) {
-                                push__Vec(
-                                  fun_types,
-                                  ref__LilyCheckedDataType(return_data_type));
-
-                                if (add_signature__LilyCheckedDeclFun(
-                                      &fun->fun, fun_types, generic_params)) {
-                                    LilyCheckedSignatureFun *signature =
-                                      get_signature__LilyCheckedDeclFun(
-                                        &fun->fun,
-                                        fun->fun.global_name,
-                                        fun_types);
-
-                                    fun_call = NEW_VARIANT(
-                                      LilyCheckedExpr,
-                                      call,
-                                      &expr->location,
-                                      return_data_type,
-                                      expr,
-                                      NEW_VARIANT(
-                                        LilyCheckedExprCall,
-                                        fun,
-                                        (LilyCheckedAccessScope){
-                                          .id =
-                                            response.scope_container.scope_id },
-                                        get_ser_global_name_of_signature__LilyCheckedDeclFun(
-                                          &fun->fun, signature->types),
-                                        NEW(LilyCheckedExprCallFun,
-                                            fun,
-                                            checked_params,
-                                            signature->generic_params)));
-
-                                    FREE_HASHMAP_VALUES(generic_params,
-                                                        LilyCheckedDataType);
-                                    FREE(HashMap, generic_params);
-                                    FREE(LilyCheckedDataType,
-                                         last__Vec(fun_types));
-                                    FREE(Vec, fun_types);
-                                } else {
-                                    // Re-analyze called function if the
-                                    // param(s) are/is a compiler
-                                    // defined data type or the return
-                                    // data type is a compiler defined
-                                    // data type.
-                                    LilyCheckedSignatureFun *signature =
-                                      get_signature__LilyCheckedDeclFun(
-                                        &fun->fun,
-                                        fun->fun.global_name,
-                                        fun_types);
-
-                                    ASSERT(signature);
-
-                                    reanalyze_fun_call_with_signature__LilyAnalysis(
-                                      self, signature, fun);
-
-                                    fun_call = NEW_VARIANT(
-                                      LilyCheckedExpr,
-                                      call,
-                                      &expr->location,
-                                      return_data_type,
-                                      expr,
-                                      NEW_VARIANT(
-                                        LilyCheckedExprCall,
-                                        fun,
-                                        (LilyCheckedAccessScope){
-                                          .id =
-                                            response.scope_container.scope_id },
-                                        signature->ser_global_name,
-                                        NEW(LilyCheckedExprCallFun,
-                                            fun,
-                                            checked_params,
-                                            generic_params)));
-                                }
-                            } else {
-                                fun_call = NEW_VARIANT(
-                                  LilyCheckedExpr,
-                                  call,
-                                  &expr->location,
-                                  return_data_type,
-                                  expr,
-                                  NEW_VARIANT(
-                                    LilyCheckedExprCall,
-                                    fun,
-                                    (LilyCheckedAccessScope){
-                                      .id = response.scope_container.scope_id },
-                                    CAST(LilyCheckedSignatureFun *,
-                                         get__Vec(fun->fun.signatures, 0))
-                                      ->ser_global_name,
-                                    NEW(LilyCheckedExprCallFun,
-                                        fun,
-                                        checked_params,
-                                        generic_params)));
-
-                                FREE(Vec, fun_types);
-                            }
-
-                            {
-                                // TODO: later replace
-                                // `get_current_fun__LilyCheckedScope` by
-                                // `get_parent__LilyCheckedScope`, when method
-                                // or lambda are be available.
-                                LilyCheckedScopeDecls *current_fun =
-                                  get_current_fun__LilyCheckedScope(scope);
-
-                                if (current_fun) {
-                                    add_fun_dep__LilyCheckedDeclFun(
-                                      &current_fun->decl->fun, fun);
-                                    collect_raises__LilyCheckedDeclFun(
-                                      &current_fun->decl->fun,
-                                      scope,
-                                      fun->fun.raises,
-                                      in_try);
-                                }
-                            }
-
-                            FREE(LilyCheckedScopeResponse, &response);
-
-                            return fun_call;
-                        }
+                        return check_fun_call_expr__LilyAnalysis(
+                          self,
+                          expr,
+                          scope,
+                          safety_mode,
+                          defined_data_type,
+                          &response);
                     } else {
                         // Vec *checked_params =
                         //   check_fun_params_call__LilyAnalysis(
