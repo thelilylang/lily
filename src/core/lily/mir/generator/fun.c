@@ -117,6 +117,30 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
             }
         }
 
+        // Add a virtual return if the function return unit and the last
+        // statement is not a ret statement. This is useful to avoid a bug in
+        // the LLVM part, because LLVM expects a ret statement at the end of the
+        // function for all return types.
+        if (inst->fun.return_data_type->kind == LILY_MIR_DT_KIND_UNIT) {
+            LilyMirInstruction *last_inst = last__Vec(inst->fun.insts);
+
+            ASSERT(last_inst->kind == LILY_MIR_INSTRUCTION_KIND_BLOCK);
+
+            if (CAST(LilyMirInstruction *, last__Vec(last_inst->block.insts))
+                  ->kind != LILY_MIR_INSTRUCTION_KIND_RET) {
+                LilyMirAddInst(
+                  module,
+                  NEW_VARIANT(
+                    LilyMirInstruction,
+                    ret,
+                    NEW_VARIANT(LilyMirInstruction,
+                                val,
+                                NEW(LilyMirInstructionVal,
+                                    LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,
+                                    NEW(LilyMirDt, LILY_MIR_DT_KIND_UNIT)))));
+            }
+        }
+
         LilyMirPopCurrent(module);
     }
 }
