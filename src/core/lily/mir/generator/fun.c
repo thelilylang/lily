@@ -126,18 +126,22 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
 
             ASSERT(last_inst->kind == LILY_MIR_INSTRUCTION_KIND_BLOCK);
 
-            if (CAST(LilyMirInstruction *, last__Vec(last_inst->block.insts))
-                  ->kind != LILY_MIR_INSTRUCTION_KIND_RET) {
-                LilyMirAddInst(
-                  module,
-                  NEW_VARIANT(
-                    LilyMirInstruction,
-                    ret,
-                    NEW_VARIANT(LilyMirInstruction,
-                                val,
-                                NEW(LilyMirInstructionVal,
-                                    LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,
-                                    NEW(LilyMirDt, LILY_MIR_DT_KIND_UNIT)))));
+            if (last_inst->block.insts->len > 0) {
+                if (CAST(LilyMirInstruction *,
+                         last__Vec(last_inst->block.insts))
+                      ->kind != LILY_MIR_INSTRUCTION_KIND_RET) {
+                    LilyMirAddInst(
+                      module,
+                      NEW_VARIANT(
+                        LilyMirInstruction,
+                        ret,
+                        NEW_VARIANT(
+                          LilyMirInstruction,
+                          val,
+                          NEW(LilyMirInstructionVal,
+                              LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,
+                              NEW(LilyMirDt, LILY_MIR_DT_KIND_UNIT)))));
+                }
             }
         }
 
