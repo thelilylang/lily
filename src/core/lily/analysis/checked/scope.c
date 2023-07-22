@@ -200,6 +200,7 @@ CONSTRUCTOR(LilyCheckedScope *,
     self->methods = NULL;
     self->parent = parent;
     self->decls = decls;
+    self->has_return = false;
 
     return self;
 }
