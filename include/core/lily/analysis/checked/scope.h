@@ -104,6 +104,7 @@ typedef struct LilyCheckedScope
     Vec *methods;       // Vec<LilyCheckedScopeContainerMethod*>*?
     LilyCheckedParent *parent; // LilyCheckedParent*?
     LilyCheckedScopeDecls decls;
+    bool has_return;
 } LilyCheckedScope;
 
 /**
