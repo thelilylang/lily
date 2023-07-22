@@ -6844,11 +6844,17 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                 case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
                 case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
                     break;
+                case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+                    fun_return_data_type->kind =
+                      LILY_CHECKED_DATA_TYPE_KIND_UNIT;
+                    break;
                 default:
                     ANALYSIS_EMIT_DIAGNOSTIC(
                       self,
                       simple_lily_error,
-                      fun_return_data_type->location,
+                      (fun_return_data_type->location
+                         ? fun_return_data_type->location
+                         : &stmt->location),
                       NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
                       NULL,
                       NULL,
