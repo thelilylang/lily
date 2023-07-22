@@ -71,3 +71,26 @@ add_unlock_data_type__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self,
             UNREACHABLE("cannot add unlock data type");
     }
 }
+
+void
+set_has_return__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self)
+{
+    // TODO: add support for method and lambda function
+    switch (self->kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            switch (self->decl->kind) {
+                case LILY_CHECKED_DECL_KIND_FUN:
+                    self->decl->fun.has_return = true;
+
+                    break;
+                case LILY_CHECKED_DECL_KIND_METHOD:
+                    TODO("method");
+                default:
+                    UNREACHABLE("not expected in this context");
+            }
+
+            break;
+        default:
+            UNREACHABLE("not expected in this context");
+    }
+}

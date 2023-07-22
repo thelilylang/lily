@@ -131,4 +131,11 @@ void
 add_unlock_data_type__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self,
                                             LilyCheckedDataType *unlock);
 
+/**
+ *
+ * @brief Set `has_return` on function, method or lambda function.
+ */
+void
+set_has_return__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self);
+
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_DECLS_H
