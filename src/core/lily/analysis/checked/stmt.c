@@ -139,11 +139,20 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtKind, enum LilyCheckedStmtKind self)
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedStmt, const LilyCheckedStmt *self)
 {
-    String *res = format__String(
-      "LilyCheckedStmt{{ kind = {s}, location = {sa}, ast_stmt = {Sr}",
-      to_string__Debug__LilyCheckedStmtKind(self->kind),
-      to_string__Debug__Location(self->location),
-      to_string__Debug__LilyAstStmt(self->ast_stmt));
+    String *res = NULL;
+
+    if (self->ast_stmt) {
+        res = format__String(
+          "LilyCheckedStmt{{ kind = {s}, location = {sa}, ast_stmt = {Sr}",
+          to_string__Debug__LilyCheckedStmtKind(self->kind),
+          to_string__Debug__Location(self->location),
+          to_string__Debug__LilyAstStmt(self->ast_stmt));
+    } else {
+        res = format__String(
+          "LilyCheckedStmt{{ kind = {s}, location = {sa}, ast_stmt = NULL",
+          to_string__Debug__LilyCheckedStmtKind(self->kind),
+          to_string__Debug__Location(self->location));
+    }
 
     switch (self->kind) {
         case LILY_CHECKED_STMT_KIND_ASM: {
