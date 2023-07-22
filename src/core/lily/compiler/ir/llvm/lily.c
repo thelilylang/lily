@@ -31,6 +31,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define LILY_MAIN "lily.main"
+
+static threadlocal LLVMTypeRef LilyMainFunType = NULL;
+
 LLVMBasicBlockRef
 LilyLLVMCreateBasicBlock(const LilyIrLlvm *Self,
                          const LilyIrLlvmPending *Pending,
@@ -1688,15 +1692,18 @@ LilyLLVMPrepareFunction(const LilyIrLlvm *Self,
 {
     // TODO: manage attribute
     if (!strcmp(Name, "main")) {
-        LLVMTypeRef FunType = LLVMFunctionType(
-          i32__LilyIrLlvm(Self),
+        LilyMainFunType = LLVMFunctionType(
+          LilyLLVMGetType(Self, ReturnDT),
           (LLVMTypeRef[]){ i32__LilyIrLlvm(Self),
                            ptr__LilyIrLlvm(Self, i8__LilyIrLlvm(Self)) },
           2,
           false);
-        LLVMValueRef Fun = LLVMAddFunction(Self->module, "main", FunType);
+        LLVMValueRef LilyMainFun =
+          LLVMAddFunction(Self->module, LILY_MAIN, LilyMainFunType);
 
-        return Fun;
+        LilyLLVMSetLinkage(LilyMainFun, LILY_MIR_LINKAGE_PRIVATE);
+
+        return LilyMainFun;
     }
 
     LLVMTypeRef ReturnTy = LilyLLVMGetType(Self, ReturnDT);
@@ -1834,12 +1841,53 @@ LilyLLVMRunModule(const LilyIrLlvm *Self, OrderedHashMap *Insts)
                 break;
             }
             case LILY_MIR_INSTRUCTION_KIND_FUN: {
-                LLVMValueRef Fn =
-                  LLVMGetNamedFunction(Self->module, Inst->fun.name);
+                if (!strcmp(Inst->fun.name, "main")) {
+                    LLVMValueRef Fn =
+                      LLVMGetNamedFunction(Self->module, LILY_MAIN);
 
-                ASSERT(Fn);
+                    ASSERT(Fn);
 
-                LilyLLVMFinishFunction(Self, Fn, Inst->fun.insts);
+                    LilyLLVMFinishFunction(Self, Fn, Inst->fun.insts);
+
+                    LLVMTypeRef MainFnType = LLVMFunctionType(
+                      i32__LilyIrLlvm(Self),
+                      (LLVMTypeRef[]){
+                        i32__LilyIrLlvm(Self),
+                        ptr__LilyIrLlvm(Self, i8__LilyIrLlvm(Self)) },
+                      2,
+                      false);
+
+                    ASSERT(LilyMainFunType);
+
+                    LLVMValueRef MainFn =
+                      LLVMAddFunction(Self->module, "main", MainFnType);
+
+                    LLVMBasicBlockRef entry_main =
+                      LLVMAppendBasicBlockInContext(
+                        Self->context, MainFn, "entry");
+
+                    LLVMPositionBuilderAtEnd(Self->builder, entry_main);
+
+                    LLVMBuildCall2(Self->builder,
+                                   LilyMainFunType,
+                                   Fn,
+                                   (LLVMValueRef[]){ LLVMGetParam(Fn, 0),
+                                                     LLVMGetParam(Fn, 1) },
+                                   2,
+                                   "r0");
+
+                    // TODO: Check the return value of the `lily.main` function.
+                    // For the moment we return 0, in all cases.
+                    LLVMBuildRet(Self->builder,
+                                 LLVMConstInt(i32__LilyIrLlvm(Self), 0, false));
+                } else {
+                    LLVMValueRef Fn =
+                      LLVMGetNamedFunction(Self->module, Inst->fun.name);
+
+                    ASSERT(Fn);
+
+                    LilyLLVMFinishFunction(Self, Fn, Inst->fun.insts);
+                }
 
                 break;
             }
