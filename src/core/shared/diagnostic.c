@@ -1224,10 +1224,15 @@ emit_warning__Diagnostic(Diagnostic self,
             UNREACHABLE("expected warning diagnostic");
     }
 
-    for (Usize i = 0; i < disable_codes->len; ++i) {
-        if (!strcmp(CAST(String *, disable_codes->buffer[i])->buffer, code)) {
-            FREE(Diagnostic, &self);
-            return;
+    // TODO: Remove the verification after adding the disabled codes in the
+    // package.
+    if (disable_codes) {
+        for (Usize i = 0; i < disable_codes->len; ++i) {
+            if (!strcmp(CAST(String *, disable_codes->buffer[i])->buffer,
+                        code)) {
+                FREE(Diagnostic, &self);
+                return;
+            }
         }
     }
 
