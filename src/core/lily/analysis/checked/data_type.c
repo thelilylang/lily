@@ -133,9 +133,6 @@ generate_generic_param_from_resolved_data_type__LilyCheckedDataType(
 static void
 remove_choice__LilyCheckedDataType(LilyCheckedDataType *self, Usize id);
 
-static inline bool
-can_update__LilyCheckedDataType(LilyCheckedDataType *self);
-
 #define GUARANTEE_COMPILER_DEFINED_DATA_TYPE(dt, min_choices, max_choices) \
     for (Usize i = 0; i < max_choices->len;) {                             \
         LilyCheckedDataType *data_type = get__Vec(max_choices, i);         \
@@ -2539,13 +2536,6 @@ remove_choice__LilyCheckedDataType(LilyCheckedDataType *self, Usize id)
         default:
             UNREACHABLE("not expected in this context");
     }
-}
-
-bool
-can_update__LilyCheckedDataType(LilyCheckedDataType *self)
-{
-    return self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||
-           self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC;
 }
 
 OrderedHashMap *

@@ -949,6 +949,17 @@ add_choice__LilyCheckedDataType(Vec *choices, LilyCheckedDataType *choice);
 
 /**
  *
+ * @brief Check if the data type is updatable.
+ */
+inline bool
+can_update__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    return self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||
+           self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC;
+}
+
+/**
+ *
  * @brief Convert LilyCheckedDataTypeKind in string.
  * @note This function is only used to debug.
  */
