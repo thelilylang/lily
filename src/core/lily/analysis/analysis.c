@@ -122,6 +122,9 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
                              const Vec *decls,
                              LilyCheckedDeclModule *module);
 
+static void
+dump_end_body_to_current_body__LilyAnalysis(Vec *current_body, Vec *end_body);
+
 /// @param deps Vec<LilyCheckedDecl* (&)>* (&)?
 /// @note The deps parameter is always NULL when is used for check data type
 /// inside a function or method (not a type or object or error).
@@ -423,6 +426,10 @@ check_break_stmt__LilyAnalysis(LilyAnalysis *self,
                                bool in_loop,
                                enum LilyCheckedSafetyMode safety_mode);
 
+// Check if the last item is not a return statement.
+static bool
+check_end_body__LilyAnalysis(LilyAnalysis *self, Vec *end_body);
+
 static LilyCheckedBodyFunItem *
 check_defer_stmt__LilyAnalysis(LilyAnalysis *self,
                                const LilyAstStmt *stmt,
@@ -476,6 +483,7 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
                                bool in_loop,
                                enum LilyCheckedSafetyMode safety_mode);
 
+// @return LilyCheckedBodyFunItem*?
 static LilyCheckedBodyFunItem *
 check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                                 const LilyAstStmt *stmt,
@@ -517,6 +525,7 @@ check_while_stmt__LilyAnalysis(LilyAnalysis *self,
                                Vec *current_body);
 
 /// @param end_body Vec<LilyCheckedBodyFunItem*>*
+// @return LilyCheckedBodyFunItem*?
 static LilyCheckedBodyFunItem *
 check_stmt__LilyAnalysis(LilyAnalysis *self,
                          const LilyAstStmt *stmt,
@@ -527,6 +536,7 @@ check_stmt__LilyAnalysis(LilyAnalysis *self,
                          Vec *end_body,
                          Vec *current_body);
 
+// @return LilyCheckedBodyFunItem*?
 static LilyCheckedBodyFunItem *
 check_fun_item__LilyAnalysis(LilyAnalysis *self,
                              const LilyAstBodyFunItem *ast_item,
@@ -610,101 +620,119 @@ run_step2__LilyAnalysis(LilyAnalysis *self);
 static threadlocal LilyCheckedHistory *history = NULL;
 static threadlocal bool in_try = false;
 
-#define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop)             \
-    {                                                                           \
-        Vec *end_body = NEW(Vec);                                               \
-                                                                                \
-        for (Usize j = 0; j < ast_body->len; ++j) {                             \
-            if (scope->has_return) {                                            \
-                LilyAstBodyFunItem *item = get__Vec(ast_body, j);               \
-                                                                                \
-                ANALYSIS_EMIT_WARNING_DIAGNOSTIC(                               \
-                  self,                                                         \
-                  simple_lily_warning,                                          \
-                  (item->kind == LILY_AST_BODY_FUN_ITEM_KIND_EXPR               \
-                     ? &item->expr->location                                    \
-                     : &item->stmt.location),                                   \
-                  NEW(LilyWarning, LILY_WARNING_KIND_UNREACHABLE_CODE),         \
-                  NULL,                                                         \
-                  NULL,                                                         \
-                  NULL);                                                        \
-                                                                                \
-                break;                                                          \
-            }                                                                   \
-                                                                                \
-            LilyCheckedBodyFunItem *item =                                      \
-              check_fun_item__LilyAnalysis(self,                                \
-                                           get__Vec(ast_body, j),               \
-                                           scope,                               \
-                                           j,                                   \
-                                           in_loop,                             \
-                                           safety_mode,                         \
-                                           end_body,                            \
-                                           body);                               \
-                                                                                \
-            if (item) {                                                         \
-                /* Check for implicit return */                                 \
-                switch (item->kind) {                                           \
-                    case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:                  \
-                        switch (item->expr->data_type->kind) {                  \
-                            case LILY_CHECKED_DATA_TYPE_KIND_UNIT:              \
-                            case LILY_CHECKED_DATA_TYPE_KIND_CVOID:             \
-                                break;                                          \
-                            default: {                                          \
-                                const LilyCheckedScopeDecls *parent =           \
-                                  get_parent__LilyCheckedScope(scope);          \
-                                                                                \
-                                ASSERT(parent);                                 \
-                                                                                \
-                                /* TODO: add support for method and lambda      \
-                                 * function. */                                 \
-                                switch (parent->kind) {                         \
-                                    case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:    \
-                                        switch (parent->decl->kind) {           \
-                                            case LILY_CHECKED_DECL_KIND_FUN:    \
-                                                parent->decl->fun.has_return =  \
-                                                  true;                         \
-                                                break;                          \
-                                            case LILY_CHECKED_DECL_KIND_METHOD: \
-                                                TODO("method");                 \
-                                            default:                            \
-                                                UNREACHABLE("not expected in "  \
-                                                            "this context");    \
-                                        }                                       \
-                                                                                \
-                                        break;                                  \
-                                    default:                                    \
-                                        UNREACHABLE(                            \
-                                          "not expected in this context");      \
-                                }                                               \
-                                                                                \
-                                item->kind =                                    \
-                                  LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT;         \
-                                item->stmt = NEW_VARIANT(                       \
-                                  LilyCheckedStmt,                              \
-                                  return,                                       \
-                                  item->expr->location,                         \
-                                  NULL,                                         \
-                                  NEW(LilyCheckedStmtReturn, item->expr));      \
-                                                                                \
-                                scope->has_return = true;                       \
-                            }                                                   \
-                        }                                                       \
-                                                                                \
-                        break;                                                  \
-                    default:                                                    \
-                        /* TODO: certain statement returns a type without       \
-                         * speaking of return. */                               \
-                        break;                                                  \
-                }                                                               \
-                                                                                \
-                push__Vec(body, item);                                          \
-            }                                                                   \
-        }                                                                       \
-                                                                                \
-        FREE_BUFFER_ITEMS(                                                      \
-          end_body->buffer, end_body->len, LilyCheckedBodyFunItem);             \
-        FREE(Vec, end_body);                                                    \
+#define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop, n)         \
+    {                                                                          \
+        Vec *end_body = NEW(Vec);                                              \
+                                                                               \
+        for (Usize j = 0; j < ast_body->len; ++j) {                            \
+            if (scope->has_return) {                                           \
+                LilyAstBodyFunItem *item = get__Vec(ast_body, j);              \
+                                                                               \
+                ANALYSIS_EMIT_WARNING_DIAGNOSTIC(                              \
+                  self,                                                        \
+                  simple_lily_warning,                                         \
+                  (item->kind == LILY_AST_BODY_FUN_ITEM_KIND_EXPR              \
+                     ? &item->expr->location                                   \
+                     : &item->stmt.location),                                  \
+                  NEW(LilyWarning, LILY_WARNING_KIND_UNREACHABLE_CODE),        \
+                  NULL,                                                        \
+                  NULL,                                                        \
+                  NULL);                                                       \
+                                                                               \
+                break;                                                         \
+            }                                                                  \
+                                                                               \
+            LilyCheckedBodyFunItem *item =                                     \
+              check_fun_item__LilyAnalysis(self,                               \
+                                           get__Vec(ast_body, j),              \
+                                           scope,                              \
+                                           j,                                  \
+                                           in_loop,                            \
+                                           safety_mode,                        \
+                                           end_body,                           \
+                                           body);                              \
+                                                                               \
+            if (item) {                                                        \
+                /* Check for implicit return */                                \
+                switch (item->kind) {                                          \
+                    case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:                 \
+                        switch (item->expr->data_type->kind) {                 \
+                            case LILY_CHECKED_DATA_TYPE_KIND_UNIT:             \
+                            case LILY_CHECKED_DATA_TYPE_KIND_CVOID:            \
+                                break;                                         \
+                            default: {                                         \
+                                item->kind =                                   \
+                                  LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT;        \
+                                item->stmt = NEW_VARIANT(                      \
+                                  LilyCheckedStmt,                             \
+                                  return,                                      \
+                                  item->expr->location,                        \
+                                  NULL,                                        \
+                                  NEW(LilyCheckedStmtReturn, item->expr));     \
+                                                                               \
+                                /* Dump defer content before return statement. \
+                                 */                                            \
+                                dump_end_body_to_current_body__LilyAnalysis(   \
+                                  body, end_body);                             \
+                                                                               \
+                                if (check_end_body__LilyAnalysis(self,         \
+                                                                 end_body)) {  \
+                                    const LilyCheckedScopeDecls *parent =      \
+                                      get_parent__LilyCheckedScope(scope);     \
+                                                                               \
+                                    ASSERT(parent);                            \
+                                                                               \
+                                    scope->has_return = true;                  \
+                                    set_has_return__LilyCheckedScopeDecls(     \
+                                      parent);                                 \
+                                } else {                                       \
+                                    ANALYSIS_EMIT_WARNING_DIAGNOSTIC(          \
+                                      self,                                    \
+                                      simple_lily_warning,                     \
+                                      item->stmt.location,                     \
+                                      NEW(LilyWarning,                         \
+                                          LILY_WARNING_KIND_UNREACHABLE_CODE), \
+                                      NULL,                                    \
+                                      NULL,                                    \
+                                      NULL);                                   \
+                                                                               \
+                                    goto analysis_body_exit##n;                \
+                                }                                              \
+                            }                                                  \
+                        }                                                      \
+                                                                               \
+                        break;                                                 \
+                    default:                                                   \
+                        /* TODO: certain statement returns a type without      \
+                         * speaking of return. */                              \
+                        break;                                                 \
+                }                                                              \
+                                                                               \
+                push__Vec(body, item);                                         \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        /* Dump defer content before the end of the scope. */                  \
+        dump_end_body_to_current_body__LilyAnalysis(body, end_body);           \
+                                                                               \
+        /* Check if the last item is a return statement. */                    \
+        if (!check_end_body__LilyAnalysis(self, end_body)) {                   \
+            const LilyCheckedScopeDecls *parent =                              \
+              get_parent__LilyCheckedScope(scope);                             \
+                                                                               \
+            ASSERT(parent);                                                    \
+                                                                               \
+            scope->has_return = true;                                          \
+            set_has_return__LilyCheckedScopeDecls(parent);                     \
+        }                                                                      \
+                                                                               \
+        analysis_body_exit##n:                                                 \
+        {                                                                      \
+                                                                               \
+            FREE_BUFFER_ITEMS(                                                 \
+              end_body->buffer, end_body->len, LilyCheckedBodyFunItem);        \
+            FREE(Vec, end_body);                                               \
+        }                                                                      \
     }
 
 #define EXPECTED_BOOL_EXPR(expr)                                     \
@@ -1352,6 +1380,15 @@ push_all_decls__LilyAnalysis(LilyAnalysis *self,
             default:
                 UNREACHABLE("unknown variant");
         }
+    }
+}
+
+void
+dump_end_body_to_current_body__LilyAnalysis(Vec *current_body, Vec *end_body)
+{
+    for (Usize i = 0; i < end_body->len; ++i) {
+        push__Vec(current_body,
+                  ref__LilyCheckedBodyFunItem(get__Vec(end_body, i)));
     }
 }
 
@@ -6298,7 +6335,8 @@ check_block_stmt__LilyAnalysis(LilyAnalysis *self,
           NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
           NEW_VARIANT(LilyCheckedScopeDecls, scope, body));
 
-    CHECK_FUN_BODY(stmt->block.body, scope_block, body, safety_mode, in_loop);
+    CHECK_FUN_BODY(
+      stmt->block.body, scope_block, body, safety_mode, in_loop, 0);
 
     return NEW_VARIANT(
       LilyCheckedBodyFunItem,
@@ -6336,6 +6374,33 @@ check_break_stmt__LilyAnalysis(LilyAnalysis *self,
                   &stmt->location,
                   stmt,
                   NEW(LilyCheckedStmtBreak, stmt->break_.name)));
+}
+
+bool
+check_end_body__LilyAnalysis(LilyAnalysis *self, Vec *end_body)
+{
+    ASSERT(end_body);
+
+    if (end_body->len > 0) {
+        LilyCheckedBodyFunItem *last_item = last__Vec(end_body);
+
+        switch (last_item->kind) {
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
+                switch (last_item->stmt.kind) {
+                    case LILY_CHECKED_STMT_KIND_RETURN:
+                        return false;
+                    case LILY_CHECKED_STMT_KIND_BLOCK:
+                        return check_end_body__LilyAnalysis(
+                          self, last_item->stmt.block.body);
+                    default:
+                        return true;
+                }
+            default:
+                return true;
+        }
+    }
+
+    return true;
 }
 
 LilyCheckedBodyFunItem *
@@ -6542,7 +6607,8 @@ check_for_stmt__LilyAnalysis(LilyAnalysis *self,
                    checked_body_item->stmt.for_.scope,
                    checked_body_item->stmt.for_.body,
                    safety_mode,
-                   true);
+                   true,
+                   0);
 
     return checked_body_item;
 }
@@ -6566,7 +6632,8 @@ check_if_stmt__LilyAnalysis(LilyAnalysis *self,
           NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
           NEW_VARIANT(LilyCheckedScopeDecls, scope, if_body));
 
-    CHECK_FUN_BODY(stmt->if_.if_body, if_scope, if_body, safety_mode, in_loop);
+    CHECK_FUN_BODY(
+      stmt->if_.if_body, if_scope, if_body, safety_mode, in_loop, 0);
 
     Vec *elifs = NULL; // Vec<LilyCheckedStmtIfBranch*>*?
 
@@ -6592,7 +6659,7 @@ check_if_stmt__LilyAnalysis(LilyAnalysis *self,
             Vec *ast_elif_body = get__Vec(stmt->if_.elif_bodies, k);
 
             CHECK_FUN_BODY(
-              ast_elif_body, elif_scope, elif_body, safety_mode, in_loop);
+              ast_elif_body, elif_scope, elif_body, safety_mode, in_loop, 1);
 
             push__Vec(
               elifs,
@@ -6610,7 +6677,7 @@ check_if_stmt__LilyAnalysis(LilyAnalysis *self,
               NEW_VARIANT(LilyCheckedScopeDecls, scope, else_body));
 
         CHECK_FUN_BODY(
-          stmt->if_.else_body, else_scope, else_body, safety_mode, in_loop);
+          stmt->if_.else_body, else_scope, else_body, safety_mode, in_loop, 2);
 
         else_ = NEW(LilyCheckedStmtElseBranch, else_body, else_scope);
     }
@@ -6771,7 +6838,6 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                                 Vec *current_body)
 {
     const LilyCheckedScopeDecls *parent = get_parent__LilyCheckedScope(scope);
-    bool *parent_has_return = NULL;
     LilyCheckedExpr *expr = NULL;
     LilyCheckedDataType *fun_return_data_type = NULL;
 
@@ -6782,7 +6848,6 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
             switch (parent->decl->kind) {
                 case LILY_CHECKED_DECL_KIND_FUN:
-                    parent_has_return = &parent->decl->fun.has_return;
                     fun_return_data_type = parent->decl->fun.return_data_type;
 
                     break;
@@ -6911,17 +6976,26 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
         }
     }
 
-    // TODO: add the `end_body` implicit return.
-    // Add the `end_body` before the return statement
     ASSERT(end_body);
 
-    for (Usize i = 0; i < end_body->len; ++i) {
-        push__Vec(current_body,
-                  ref__LilyCheckedBodyFunItem(get__Vec(end_body, i)));
-    }
+    // Dump defer content before return statement.
+    dump_end_body_to_current_body__LilyAnalysis(current_body, end_body);
 
-    *parent_has_return = true;
-    scope->has_return = true;
+    if (check_end_body__LilyAnalysis(self, end_body)) {
+        scope->has_return = true;
+        set_has_return__LilyCheckedScopeDecls(parent);
+    } else {
+        ANALYSIS_EMIT_WARNING_DIAGNOSTIC(
+          self,
+          simple_lily_warning,
+          (&stmt->location),
+          NEW(LilyWarning, LILY_WARNING_KIND_UNREACHABLE_CODE),
+          NULL,
+          NULL,
+          NULL);
+
+        return NULL;
+    }
 
     return NEW_VARIANT(LilyCheckedBodyFunItem,
                        stmt,
@@ -6952,7 +7026,8 @@ check_try_stmt__LilyAnalysis(LilyAnalysis *self,
                    scope_try,
                    try_body,
                    LILY_CHECKED_SAFETY_MODE_SAFE,
-                   in_loop);
+                   in_loop,
+                   0);
 
     if (!scope_try->raises) {
         FAILED("no raises are expected in this scope");
@@ -6987,7 +7062,8 @@ check_try_stmt__LilyAnalysis(LilyAnalysis *self,
                        scope_catch,
                        catch_body,
                        LILY_CHECKED_SAFETY_MODE_SAFE,
-                       in_loop);
+                       in_loop,
+                       1);
 
         return NEW_VARIANT(LilyCheckedBodyFunItem,
                            stmt,
@@ -7030,7 +7106,8 @@ check_unsafe_stmt__LilyAnalysis(LilyAnalysis *self,
                    scope_unsafe,
                    body,
                    LILY_CHECKED_SAFETY_MODE_UNSAFE,
-                   false);
+                   false,
+                   0);
 
     return NEW_VARIANT(
       LilyCheckedBodyFunItem,
@@ -7124,7 +7201,7 @@ check_while_stmt__LilyAnalysis(LilyAnalysis *self,
           NEW_VARIANT(LilyCheckedParent, scope, scope, current_body),
           NEW_VARIANT(LilyCheckedScopeDecls, scope, body));
 
-    CHECK_FUN_BODY(stmt->while_.body, scope_while, body, safety_mode, true);
+    CHECK_FUN_BODY(stmt->while_.body, scope_while, body, safety_mode, true, 1);
 
     return NEW_VARIANT(
       LilyCheckedBodyFunItem,
@@ -7606,7 +7683,8 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
                    fun->fun.scope,
                    fun->fun.body,
                    LILY_CHECKED_SAFETY_MODE_SAFE,
-                   false);
+                   false,
+                   0);
 
     // 6. Check return data type.
     if (fun->fun.is_main) {
@@ -7624,12 +7702,7 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
 
                 break;
             case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
-                if (!fun->fun.has_return) {
-                    fun->fun.return_data_type->kind =
-                      LILY_CHECKED_DATA_TYPE_KIND_UNIT;
-                }
-
-                break;
+                goto update_return_data_type;
             default:
                 FAILED("expected Int32, Unit or CVoid for the main function")
         }
@@ -7640,6 +7713,22 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
                 fun->fun.return_data_type->kind !=
                   LILY_CHECKED_DATA_TYPE_KIND_CVOID) {
                 FAILED("expected a return statement");
+            }
+        } else if (!fun->fun.default_return_dt_is_set) {
+            switch (fun->fun.return_data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+                    if (!fun->fun.has_return) {
+                        // TODO: add compiler choice to the return data type.
+                        // [Unit, CVoid]
+                    update_return_data_type : {
+                        fun->fun.return_data_type->kind =
+                          LILY_CHECKED_DATA_TYPE_KIND_UNIT;
+                    }
+                    }
+
+                    break;
+                default:
+                    break;
             }
         }
     }
