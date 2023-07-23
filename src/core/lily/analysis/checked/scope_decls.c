@@ -94,3 +94,42 @@ set_has_return__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self)
             UNREACHABLE("not expected in this context");
     }
 }
+
+LilyCheckedDataType *
+get_return_data_type__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self)
+{
+    // TODO: add support for method and lambda function
+    switch (self->kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            switch (self->decl->kind) {
+                case LILY_CHECKED_DECL_KIND_FUN:
+                    return self->decl->fun.return_data_type;
+                case LILY_CHECKED_DECL_KIND_METHOD:
+                    TODO("method");
+                default:
+                    UNREACHABLE("not expected in this context");
+            }
+        default:
+            UNREACHABLE("not expected in this context");
+    }
+}
+
+Vec *
+get_used_compiler_generic__LilyCheckedScopeDecls(
+  const LilyCheckedScopeDecls *self)
+{
+    // TODO: add support for method and lambda function
+    switch (self->kind) {
+        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+            switch (self->decl->kind) {
+                case LILY_CHECKED_DECL_KIND_FUN:
+                    return self->decl->fun.used_compiler_generic;
+                case LILY_CHECKED_DECL_KIND_METHOD:
+                    TODO("method");
+                default:
+                    UNREACHABLE("not expected in this context");
+            }
+        default:
+            UNREACHABLE("not expected in this context");
+    }
+}

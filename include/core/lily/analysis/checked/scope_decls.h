@@ -138,4 +138,19 @@ add_unlock_data_type__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self,
 void
 set_has_return__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self);
 
+/**
+ *
+ * @brief Get return data type from function, method or lambda function.
+ */
+LilyCheckedDataType *
+get_return_data_type__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self);
+
+/**
+ *
+ * @brief Get used compiler generic from function, method or lambda function.
+ */
+Vec *
+get_used_compiler_generic__LilyCheckedScopeDecls(
+  const LilyCheckedScopeDecls *self);
+
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_DECLS_H
