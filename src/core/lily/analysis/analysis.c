@@ -6784,11 +6784,13 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
     }
 
     LilyCheckedScopeResponse raise_response_expr =
-      resolve_id__LilyAnalysis(self,
-                               error_id,
-                               scope,
-                               LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR,
-                               safety_mode);
+      error_id
+        ? resolve_id__LilyAnalysis(self,
+                                   error_id,
+                                   scope,
+                                   LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR,
+                                   safety_mode)
+        : NEW(LilyCheckedScopeResponse);
 
     switch (raise_response_expr.kind) {
         case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
