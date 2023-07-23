@@ -6998,8 +6998,14 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
     // Expect at least one unknown data type
     ASSERT(return_data_type);
 
-    LilyCheckedExpr *expr = check_expr__LilyAnalysis(
-      self, stmt->return_.expr, scope, safety_mode, false, return_data_type);
+    LilyCheckedExpr *expr = stmt->return_.expr
+                              ? check_expr__LilyAnalysis(self,
+                                                         stmt->return_.expr,
+                                                         scope,
+                                                         safety_mode,
+                                                         false,
+                                                         return_data_type)
+                              : NULL;
 
     check_return_data_type__LilyAnalysis(
       self, parent, safety_mode, expr, return_data_type);
