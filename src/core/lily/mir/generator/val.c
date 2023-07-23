@@ -61,6 +61,10 @@ generate_val__LilyMir(LilyMirModule *module,
                     TODO("do [*]");
                 case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNDETERMINED:
                     TODO("do [?]");
+                case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNKNOWN:
+                    TODO("do unknown array");
+                default:
+                    UNREACHABLE("unknown variant");
             }
         }
         case LILY_CHECKED_EXPR_KIND_CALL:

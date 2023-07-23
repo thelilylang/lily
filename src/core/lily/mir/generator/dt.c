@@ -50,7 +50,7 @@ generate_dt__LilyMir(LilyMirModule *module, LilyCheckedDataType *data_type)
                       LilyMirDt,
                       array,
                       NEW(LilyMirDtArray,
-                          data_type->array.size,
+                          data_type->array.sized,
                           generate_dt__LilyMir(module,
                                                data_type->array.data_type)));
                 case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNDETERMINED:
