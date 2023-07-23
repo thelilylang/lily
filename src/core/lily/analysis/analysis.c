@@ -660,7 +660,7 @@ static threadlocal bool in_try = false;
                                            end_body,                           \
                                            body);                              \
                                                                                \
-            if (item) {                                                        \
+            if (item && j + 1 == ast_body->len) {                              \
                 /* Check for implicit return */                                \
                 switch (item->kind) {                                          \
                     case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:                 \
