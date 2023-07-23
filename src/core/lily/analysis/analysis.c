@@ -6916,7 +6916,8 @@ check_return_data_type__LilyAnalysis(LilyAnalysis *self,
 
                 update_data_type__LilyCheckedDataType(return_data_type,
                                                       expr->data_type);
-            } else if (!eq__LilyCheckedDataType(return_data_type,
+            } else if (!can_update__LilyCheckedDataType(return_data_type) &&
+                       !eq__LilyCheckedDataType(return_data_type,
                                                 expr->data_type)) {
                 // TODO: add help on this error
                 const Location *location = return_data_type->location
