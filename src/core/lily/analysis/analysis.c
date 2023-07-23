@@ -4025,7 +4025,7 @@ check_array_expr__LilyAnalysis(LilyAnalysis *self,
 
     if (defined_data_type) {
         switch (defined_data_type->kind) {
-            case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+            case LILY_CHECKED_DATA_TYPE_KIND_ARRAY: {
                 if (!eq__LilyCheckedDataType(
                       data_type_item, defined_data_type->array.data_type)) {
                     ANALYSIS_EMIT_DIAGNOSTIC(
@@ -4038,19 +4038,32 @@ check_array_expr__LilyAnalysis(LilyAnalysis *self,
                       NULL);
                 }
 
-                return NEW_VARIANT(
-                  LilyCheckedExpr,
-                  array,
-                  &expr->location,
+                LilyCheckedDataType *array_data_type =
                   NEW_VARIANT(LilyCheckedDataType,
                               array,
                               &expr->location,
                               NEW(LilyCheckedDataTypeArray,
                                   defined_data_type->array.kind,
                                   clone__LilyCheckedDataType(
-                                    defined_data_type->array.data_type))),
-                  expr,
-                  NEW(LilyCheckedExprArray, items));
+                                    defined_data_type->array.data_type)));
+
+                if (array_data_type->array.kind ==
+                    LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED) {
+                    array_data_type->array.sized = items->len;
+
+                    if (defined_data_type->array.sized !=
+                        array_data_type->array.sized) {
+                        FAILED("expected sized array with the same size");
+                    }
+                }
+
+                return NEW_VARIANT(LilyCheckedExpr,
+                                   array,
+                                   &expr->location,
+                                   array_data_type,
+                                   expr,
+                                   NEW(LilyCheckedExprArray, items));
+            }
             default:
                 ANALYSIS_EMIT_DIAGNOSTIC(
                   self,
@@ -4070,9 +4083,10 @@ check_array_expr__LilyAnalysis(LilyAnalysis *self,
       NEW_VARIANT(LilyCheckedDataType,
                   array,
                   &expr->location,
-                  NEW(LilyCheckedDataTypeArray,
-                      LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED,
-                      clone__LilyCheckedDataType(data_type_item))),
+                  NEW_VARIANT(LilyCheckedDataTypeArray,
+                              unknown,
+                              clone__LilyCheckedDataType(data_type_item),
+                              items->len)),
       expr,
       NEW(LilyCheckedExprArray, items));
 }
