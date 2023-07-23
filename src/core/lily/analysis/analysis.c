@@ -483,6 +483,14 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
                                bool in_loop,
                                enum LilyCheckedSafetyMode safety_mode);
 
+// Infer or check return data type.
+static void
+check_return_data_type__LilyAnalysis(LilyAnalysis *self,
+                                     const LilyCheckedScopeDecls *parent,
+                                     enum LilyCheckedSafetyMode safety_mode,
+                                     LilyCheckedExpr *expr,
+                                     LilyCheckedDataType *return_data_type);
+
 // @return LilyCheckedBodyFunItem*?
 static LilyCheckedBodyFunItem *
 check_return_stmt__LilyAnalysis(LilyAnalysis *self,
@@ -661,6 +669,18 @@ static threadlocal bool in_try = false;
                             case LILY_CHECKED_DATA_TYPE_KIND_CVOID:            \
                                 break;                                         \
                             default: {                                         \
+                                const LilyCheckedScopeDecls *parent =          \
+                                  get_parent__LilyCheckedScope(scope);         \
+                                                                               \
+                                ASSERT(parent);                                \
+                                                                               \
+                                LilyCheckedDataType *return_data_type =        \
+                                  get_return_data_type__LilyCheckedScopeDecls( \
+                                    parent);                                   \
+                                                                               \
+                                /* Expect at least one unknown data type */    \
+                                ASSERT(return_data_type);                      \
+                                                                               \
                                 item->kind =                                   \
                                   LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT;        \
                                 item->stmt = NEW_VARIANT(                      \
@@ -670,6 +690,13 @@ static threadlocal bool in_try = false;
                                   NULL,                                        \
                                   NEW(LilyCheckedStmtReturn, item->expr));     \
                                                                                \
+                                check_return_data_type__LilyAnalysis(          \
+                                  self,                                        \
+                                  parent,                                      \
+                                  safety_mode,                                 \
+                                  item->stmt.return_.expr,                     \
+                                  return_data_type);                           \
+                                                                               \
                                 /* Dump defer content before return statement. \
                                  */                                            \
                                 dump_end_body_to_current_body__LilyAnalysis(   \
@@ -677,11 +704,6 @@ static threadlocal bool in_try = false;
                                                                                \
                                 if (check_end_body__LilyAnalysis(self,         \
                                                                  end_body)) {  \
-                                    const LilyCheckedScopeDecls *parent =      \
-                                      get_parent__LilyCheckedScope(scope);     \
-                                                                               \
-                                    ASSERT(parent);                            \
-                                                                               \
                                     scope->has_return = true;                  \
                                     set_has_return__LilyCheckedScopeDecls(     \
                                       parent);                                 \
@@ -6828,93 +6850,54 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
     }
 }
 
-LilyCheckedBodyFunItem *
-check_return_stmt__LilyAnalysis(LilyAnalysis *self,
-                                const LilyAstStmt *stmt,
-                                LilyCheckedScope *scope,
-                                bool in_loop,
-                                enum LilyCheckedSafetyMode safety_mode,
-                                Vec *end_body,
-                                Vec *current_body)
+void
+check_return_data_type__LilyAnalysis(LilyAnalysis *self,
+                                     const LilyCheckedScopeDecls *parent,
+                                     enum LilyCheckedSafetyMode safety_mode,
+                                     LilyCheckedExpr *expr,
+                                     LilyCheckedDataType *return_data_type)
 {
-    const LilyCheckedScopeDecls *parent = get_parent__LilyCheckedScope(scope);
-    LilyCheckedExpr *expr = NULL;
-    LilyCheckedDataType *fun_return_data_type = NULL;
-
-    ASSERT(parent);
-
-    // TODO: add a support for method and lambda function
-    switch (parent->kind) {
-        case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
-            switch (parent->decl->kind) {
-                case LILY_CHECKED_DECL_KIND_FUN:
-                    fun_return_data_type = parent->decl->fun.return_data_type;
-
-                    break;
-                case LILY_CHECKED_DECL_KIND_METHOD:;
-                    TODO("method");
-                default:
-                    UNREACHABLE("must obtain a function, a method");
-            }
-
-            break;
-        default:
-            UNREACHABLE("not expected in this context");
-    }
-
-    if (stmt->return_.expr) {
-        // Check the data type of the return expression
-        expr = check_expr__LilyAnalysis(self,
-                                        stmt->return_.expr,
-                                        scope,
-                                        safety_mode,
-                                        false,
-                                        fun_return_data_type);
-
-        if (fun_return_data_type) {
-            if (fun_return_data_type->kind ==
-                  LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
+    if (expr) {
+        if (return_data_type) {
+            if (return_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
                 expr->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
-                // TODO: add method
-                LilyCheckedScopeDecls *current_fun =
-                  get_current_fun__LilyCheckedScope(scope);
-
-                ASSERT(current_fun);
+                Vec *used_compiler_generic =
+                  get_used_compiler_generic__LilyCheckedScopeDecls(parent);
 
                 add_compiler_generic__LilyCheckedCompilerGeneric(
-                  current_fun->decl->fun.used_compiler_generic);
+                  used_compiler_generic);
 
-                fun_return_data_type->kind =
+                return_data_type->kind =
                   LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC;
-                fun_return_data_type->compiler_generic =
+                return_data_type->compiler_generic =
                   NEW(LilyCheckedDataTypeCompilerGeneric,
-                      last__Vec(current_fun->decl->fun.used_compiler_generic));
+                      last__Vec(used_compiler_generic));
 
                 // ASSERT(expr->data_type->ref_count == 0);
 
                 update_data_type__LilyCheckedDataType(expr->data_type,
-                                                      fun_return_data_type);
-            } else if (fun_return_data_type->kind ==
+                                                      return_data_type);
+            } else if (return_data_type->kind ==
                          LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC &&
                        expr->data_type->kind ==
                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
                 // ASSERT(expr->data_type->ref_count == 0);
 
                 update_data_type__LilyCheckedDataType(expr->data_type,
-                                                      fun_return_data_type);
-            } else if (fun_return_data_type->kind ==
+                                                      return_data_type);
+            } else if (return_data_type->kind ==
                          LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN &&
                        expr->data_type->kind ==
                          LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC) {
                 // ASSERT(fun_return_data_type->ref_count == 0);
 
-                update_data_type__LilyCheckedDataType(fun_return_data_type,
+                update_data_type__LilyCheckedDataType(return_data_type,
                                                       expr->data_type);
-            } else if (!eq__LilyCheckedDataType(fun_return_data_type,
+            } else if (!eq__LilyCheckedDataType(return_data_type,
                                                 expr->data_type)) {
                 // TODO: add help on this error
-                const Location *location = fun_return_data_type->location
-                                             ? fun_return_data_type->location
+                const Location *location = return_data_type->location
+                                             ? return_data_type->location
                                              : expr->data_type->location;
 
                 ANALYSIS_EMIT_DIAGNOSTIC(
@@ -6929,29 +6912,27 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
                   from__String("or the specified return data type "
                                "passed to the function"));
             } else {
-                update_data_type__LilyCheckedDataType(fun_return_data_type,
+                update_data_type__LilyCheckedDataType(return_data_type,
                                                       expr->data_type);
             }
         } else {
             UNREACHABLE("return data type cannot be NULL");
         }
     } else {
-        if (fun_return_data_type) {
-            switch (fun_return_data_type->kind) {
+        if (return_data_type) {
+            switch (return_data_type->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
                 case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
                     break;
                 case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
-                    fun_return_data_type->kind =
-                      LILY_CHECKED_DATA_TYPE_KIND_UNIT;
+                    return_data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_UNIT;
                     break;
                 default:
                     ANALYSIS_EMIT_DIAGNOSTIC(
                       self,
                       simple_lily_error,
-                      (fun_return_data_type->location
-                         ? fun_return_data_type->location
-                         : &stmt->location),
+                      (return_data_type->location ? return_data_type->location
+                                                  : expr->location),
                       NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
                       NULL,
                       NULL,
@@ -6962,19 +6943,42 @@ check_return_stmt__LilyAnalysis(LilyAnalysis *self,
             // TODO:Add the possibility for the compiler to have a list
             // of potential return types (this data type will not be
             // definable by the user).
-            if (fun_return_data_type->kind !=
-                  LILY_CHECKED_DATA_TYPE_KIND_UNIT &&
-                fun_return_data_type->kind !=
-                  LILY_CHECKED_DATA_TYPE_KIND_CVOID &&
-                fun_return_data_type->kind !=
-                  LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+            if (return_data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_UNIT &&
+                return_data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_CVOID &&
+                return_data_type->kind != LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
                 FAILED("error mismatched data type");
-            } else if (fun_return_data_type->kind ==
+            } else if (return_data_type->kind ==
                        LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
-                fun_return_data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_UNIT;
+                return_data_type->kind = LILY_CHECKED_DATA_TYPE_KIND_UNIT;
             }
         }
     }
+}
+
+LilyCheckedBodyFunItem *
+check_return_stmt__LilyAnalysis(LilyAnalysis *self,
+                                const LilyAstStmt *stmt,
+                                LilyCheckedScope *scope,
+                                bool in_loop,
+                                enum LilyCheckedSafetyMode safety_mode,
+                                Vec *end_body,
+                                Vec *current_body)
+{
+    const LilyCheckedScopeDecls *parent = get_parent__LilyCheckedScope(scope);
+
+    ASSERT(parent);
+
+    LilyCheckedDataType *return_data_type =
+      get_return_data_type__LilyCheckedScopeDecls(parent);
+
+    // Expect at least one unknown data type
+    ASSERT(return_data_type);
+
+    LilyCheckedExpr *expr = check_expr__LilyAnalysis(
+      self, stmt->return_.expr, scope, safety_mode, false, return_data_type);
+
+    check_return_data_type__LilyAnalysis(
+      self, parent, safety_mode, expr, return_data_type);
 
     ASSERT(end_body);
 
