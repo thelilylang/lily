@@ -6762,9 +6762,30 @@ check_raise_stmt__LilyAnalysis(LilyAnalysis *self,
                                bool in_loop,
                                enum LilyCheckedSafetyMode safety_mode)
 {
+    LilyAstExpr *error_id = NULL;
+
+    switch (stmt->raise.expr->kind) {
+        case LILY_AST_EXPR_KIND_IDENTIFIER:
+            error_id = stmt->raise.expr;
+            break;
+        case LILY_AST_EXPR_KIND_CALL:
+            switch (stmt->raise.expr->call.kind) {
+                case LILY_AST_EXPR_CALL_KIND_VARIANT:
+                    error_id = stmt->raise.expr->call.variant.id;
+                    break;
+                default:
+                    FAILED(
+                      "this expression is not expected in raise statement");
+            }
+
+            break;
+        default:
+            FAILED("this expression is not expected in raise statement");
+    }
+
     LilyCheckedScopeResponse raise_response_expr =
       resolve_id__LilyAnalysis(self,
-                               stmt->raise.expr,
+                               error_id,
                                scope,
                                LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR,
                                safety_mode);
