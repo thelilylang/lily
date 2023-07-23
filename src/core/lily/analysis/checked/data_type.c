@@ -207,6 +207,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED";
         case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNDETERMINED:
             return "LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNDETERMINED";
+        case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNKNOWN:
+            return "LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNKNOWN";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -226,11 +228,12 @@ IMPL_FOR_DEBUG(to_string,
 {
     if (self->kind == LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED) {
         return format(
-          "LilyCheckedDataTypeArray{{ kind = {s}, data_type = {Sr}, size = {d} "
+          "LilyCheckedDataTypeArray{{ kind = {s}, data_type = {Sr}, sized = "
+          "{d} "
           "}",
           to_string__Debug__LilyCheckedDataTypeArrayKind(self->kind),
           to_string__Debug__LilyCheckedDataType(self->data_type),
-          self->size);
+          self->sized);
     } else {
         return format(
           "LilyCheckedDataTypeArray{{ kind = {s}, data_type = {Sr} }",
@@ -864,17 +867,42 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
         case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
             switch (other->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
-                    return self->array.kind == other->array.kind
-                             ? self->array.kind ==
-                                   LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED
-                                 ? self->array.size == other->array.size &&
-                                     eq__LilyCheckedDataType(
-                                       self->array.data_type,
-                                       other->array.data_type)
-                                 : eq__LilyCheckedDataType(
+                    if (self->array.kind == other->array.kind) {
+                        if (self->array.kind ==
+                            LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED) {
+                            return self->array.sized == other->array.sized &&
+                                   eq__LilyCheckedDataType(
                                      self->array.data_type,
-                                     other->array.data_type)
-                             : 0;
+                                     other->array.data_type);
+                        }
+
+                        return eq__LilyCheckedDataType(self->array.data_type,
+                                                       other->array.data_type);
+                    } else if (self->array.kind != other->array.kind &&
+                               self->array.kind ==
+                                 LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNKNOWN) {
+                        self->array.kind = other->array.kind;
+
+                        if (self->array.kind ==
+                            LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED) {
+                            self->array.sized = self->array.unknown;
+                        }
+
+                        return true;
+                    } else if (self->array.kind != other->array.kind &&
+                               other->array.kind ==
+                                 LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+                        other->array.kind = self->array.kind;
+
+                        if (other->array.kind ==
+                            LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED) {
+                            other->array.sized = other->array.unknown;
+                        }
+
+                        return true;
+                    }
+
+                    return false;
                 default:
                     return false;
             }
@@ -1237,7 +1265,7 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                                                    sized,
                                                    clone__LilyCheckedDataType(
                                                      self->array.data_type),
-                                                   self->array.size));
+                                                   self->array.sized));
                 default:
                     return NEW_VARIANT(
                       LilyCheckedDataType,
@@ -1580,6 +1608,26 @@ update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
     if (!can_update__LilyCheckedDataType(self) ||
         other->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
         return;
+    }
+
+    // Update array data type (unknown)
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+            switch (other->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+                    self->array.kind = other->array.kind;
+
+                    if (self->array.kind ==
+                        LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED) {
+                        self->array.sized = self->array.unknown;
+                    }
+
+                    return;
+                default:
+                    return;
+            }
+        default:
+            break;
     }
 
     switch (other->kind) {
@@ -2034,7 +2082,7 @@ serialize__LilyCheckedDataType(LilyCheckedDataType *self, String *ser)
                           NEW_VARIANT(LilyCheckedDataTypeArray,                \
                                       sized,                                   \
                                       array_data_type,                         \
-                                      self->array.size));                      \
+                                      self->array.sized));                     \
                     default: {                                                 \
                         return NEW_VARIANT(LilyCheckedDataType,                \
                                            array,                              \
@@ -2746,6 +2794,21 @@ add_choice__LilyCheckedDataType(Vec *choices, LilyCheckedDataType *choice)
     }
 
     push__Vec(choices, choice);
+}
+
+bool
+can_update__LilyCheckedDataType(LilyCheckedDataType *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+            return self->array.kind ==
+                   LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNKNOWN;
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+            return true;
+        default:
+            return false;
+    }
 }
 
 #ifdef ENV_DEBUG

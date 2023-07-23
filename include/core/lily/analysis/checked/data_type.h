@@ -133,6 +133,7 @@ enum LilyCheckedDataTypeArrayKind
     LILY_CHECKED_DATA_TYPE_ARRAY_KIND_MULTI_POINTERS,
     LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED,
     LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNDETERMINED,
+    LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNKNOWN
 };
 
 typedef struct LilyCheckedDataTypeArray
@@ -141,7 +142,8 @@ typedef struct LilyCheckedDataTypeArray
     LilyCheckedDataType *data_type;
     union
     {
-        Usize size;
+        Usize sized;
+        Usize unknown; // Size of the unknown array
     };
 } LilyCheckedDataTypeArray;
 
@@ -166,12 +168,30 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedDataTypeArray,
                            LilyCheckedDataTypeArray,
                            sized,
                            LilyCheckedDataType *data_type,
-                           Usize size)
+                           Usize sized)
 {
     return (LilyCheckedDataTypeArray){
         .kind = LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED,
         .data_type = data_type,
-        .size = size
+        .sized = sized
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedDataTypeArray type
+ * (LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNKNOWN).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedDataTypeArray,
+                           LilyCheckedDataTypeArray,
+                           unknown,
+                           LilyCheckedDataType *data_type,
+                           Usize unknown)
+{
+    return (LilyCheckedDataTypeArray){
+        .kind = LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNKNOWN,
+        .data_type = data_type,
+        .unknown = unknown
     };
 }
 
@@ -951,12 +971,8 @@ add_choice__LilyCheckedDataType(Vec *choices, LilyCheckedDataType *choice);
  *
  * @brief Check if the data type is updatable.
  */
-inline bool
-can_update__LilyCheckedDataType(LilyCheckedDataType *self)
-{
-    return self->kind == LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN ||
-           self->kind == LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC;
-}
+bool
+can_update__LilyCheckedDataType(LilyCheckedDataType *self);
 
 /**
  *
