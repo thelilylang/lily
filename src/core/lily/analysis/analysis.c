@@ -4006,7 +4006,26 @@ check_array_expr__LilyAnalysis(LilyAnalysis *self,
     }
 
     LilyCheckedDataType *data_type_item =
-      CAST(LilyCheckedExpr *, get__Vec(items, 0))->data_type;
+      items->len > 0 ? CAST(LilyCheckedExpr *, get__Vec(items, 0))->data_type
+                     : NULL;
+
+    if (!data_type_item) {
+        const LilyCheckedScopeDecls *parent =
+          get_parent__LilyCheckedScope(scope);
+
+        ASSERT(parent);
+
+        Vec *used_compiler_generic =
+          get_used_compiler_generic__LilyCheckedScopeDecls(parent);
+
+        add_compiler_generic__LilyCheckedCompilerGeneric(used_compiler_generic);
+
+        data_type_item = NEW_VARIANT(LilyCheckedDataType,
+                                     compiler_generic,
+                                     &expr->location,
+                                     NEW(LilyCheckedDataTypeCompilerGeneric,
+                                         last__Vec(used_compiler_generic)));
+    }
 
     for (Usize i = 1; i < items->len; ++i) {
         if (!eq__LilyCheckedDataType(
