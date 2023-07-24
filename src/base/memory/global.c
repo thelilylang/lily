@@ -129,7 +129,12 @@ void *
 resize__MemoryGlobal(void *mem, Usize new_size)
 {
 #ifdef USE_C_MEMORY_API
+#if defined(LILY_APPLE_OS)
+	Usize old_size = malloc_size(mem);
+#else
     Usize old_size = malloc_usable_size(mem);
+#endif
+
     void *new_mem = realloc(mem, new_size);
 
     if (new_mem) {
@@ -217,7 +222,11 @@ void
 free__MemoryGlobal(void *mem)
 {
 #ifdef USE_C_MEMORY_API
+#if defined(LILY_APPLE_OS)
+	Usize mem_size = malloc_size(mem);
+#else
     Usize mem_size = malloc_usable_size(mem);
+#endif
 
     free(mem);
 
