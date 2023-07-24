@@ -6764,7 +6764,38 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
                             LilyCheckedScope *scope)
 {
-    TODO("check pattern");
+    switch (pattern->kind) {
+        case LILY_AST_PATTERN_KIND_ARRAY:
+            TODO("pattern array");
+        case LILY_AST_PATTERN_KIND_AS:
+            TODO("pattern as");
+        case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
+            TODO("pattern auto complete");
+        case LILY_AST_PATTERN_KIND_ERROR:
+            TODO("pattern error");
+        case LILY_AST_PATTERN_KIND_LIST:
+            TODO("pattern list");
+        case LILY_AST_PATTERN_KIND_LIST_HEAD:
+            TODO("pattern list head");
+        case LILY_AST_PATTERN_KIND_LIST_TAIL:
+            TODO("pattern list tail");
+        case LILY_AST_PATTERN_KIND_LITERAL:
+            TODO("pattern literal");
+        case LILY_AST_PATTERN_KIND_NAME:
+            TODO("pattern name");
+        case LILY_AST_PATTERN_KIND_RANGE:
+            TODO("pattern range");
+        case LILY_AST_PATTERN_KIND_RECORD_CALL:
+            TODO("pattern record call");
+        case LILY_AST_PATTERN_KIND_TUPLE:
+            TODO("pattern tuple");
+        case LILY_AST_PATTERN_KIND_VARIANT_CALL:
+            TODO("pattern variant call");
+        case LILY_AST_PATTERN_KIND_WILDCARD:
+            TODO("pattern wildcard");
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 LilyCheckedBodyFunItem *
