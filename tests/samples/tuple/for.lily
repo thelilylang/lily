@@ -1,5 +1,6 @@
 fun main =
-    for (i, j) in (0..10, 0..10) do
-        _ = i + j
-    end
+	// TODO: activate the moment when the prelude is activated
+    // for (i, j) in (0..10, 0..10) do
+    //     _ = i + j
+    // end
 end

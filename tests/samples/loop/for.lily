@@ -1,4 +1,5 @@
 fun main =
-	for i in 0..10 do
-	end
+	// TODO: activate the moment when the prelude is activated
+	// for i in 0..10 do
+	//end
 end
