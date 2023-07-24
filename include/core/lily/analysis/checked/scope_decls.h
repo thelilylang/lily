@@ -148,6 +148,7 @@ get_return_data_type__LilyCheckedScopeDecls(const LilyCheckedScopeDecls *self);
 /**
  *
  * @brief Get used compiler generic from function, method or lambda function.
+ * @return Vec<String*>*
  */
 Vec *
 get_used_compiler_generic__LilyCheckedScopeDecls(
