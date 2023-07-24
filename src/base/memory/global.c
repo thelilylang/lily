@@ -33,7 +33,11 @@
 #include <stdlib.h>
 
 #ifdef USE_C_MEMORY_API
+#if defined(LILY_APPLE_OS)
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 #endif
 
 [[maybe_unused]] static MemoryApi api = { .align = __align__,
