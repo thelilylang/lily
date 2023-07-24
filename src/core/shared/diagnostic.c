@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
 #include <base/color.h>
 #include <base/format.h>
 #include <base/macros.h>
@@ -143,9 +144,10 @@ to_string__Diagnostic(const Diagnostic *self);
 static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
 
 #define LINES(location, file)                                                  \
-    Usize start_position = location->start_position == file->len - 1           \
-                             ? location->start_position - 1                    \
-                             : location->start_position;                       \
+    Usize start_position =                                                     \
+      location->start_position == file->len - 1                                \
+        ? location->start_position != 0 ? location->start_position - 1 : 0     \
+        : location->start_position;                                            \
     Usize end_position = location->end_position;                               \
                                                                                \
     for (; start_position > 0 && file->content[start_position] != '\n';        \
@@ -157,18 +159,25 @@ static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
          ++end_position)                                                       \
         ;                                                                      \
                                                                                \
-    if (start_position + 1 != file->len - 1)                                   \
+    if (start_position + 1 != file->len - 1 && start_position != 0 &&          \
+        end_position != 0)                                                     \
         ++start_position;                                                      \
                                                                                \
     Vec *lines = NULL;                                                         \
                                                                                \
     if (location->end_line - location->start_line == 0) {                      \
-        char *slice =                                                          \
-          get_slice__Str(file->content, start_position, end_position);         \
+        ASSERT(start_position <= end_position);                                \
                                                                                \
-        lines = split__Str(slice, '\n');                                       \
+        if (start_position < end_position) {                                   \
+            char *slice =                                                      \
+              get_slice__Str(file->content, start_position, end_position);     \
                                                                                \
-        lily_free(slice);                                                      \
+            lines = split__Str(slice, '\n');                                   \
+                                                                               \
+            lily_free(slice);                                                  \
+        } else {                                                               \
+            lines = NEW(Vec);                                                  \
+        }                                                                      \
     } else {                                                                   \
         String *slice = NEW(String);                                           \
         Usize position = start_position;                                       \
@@ -186,13 +195,17 @@ static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
             push__String(slice, file->content[position++]);                    \
         }                                                                      \
                                                                                \
-        lines = split__String(slice, '\n');                                    \
+        lines = split__Str(slice->buffer, '\n');                               \
                                                                                \
         FREE(String, slice);                                                   \
     }                                                                          \
                                                                                \
     if (lines->len == 0) {                                                     \
-        push__Vec(lines, NEW(String));                                         \
+        char *empty_str = malloc(1);                                           \
+                                                                               \
+        empty_str[0] = '\0';                                                   \
+                                                                               \
+        push__Vec(lines, empty_str);                                           \
     }
 
 DESTRUCTOR(DiagnosticLevel, const DiagnosticLevel *self)
