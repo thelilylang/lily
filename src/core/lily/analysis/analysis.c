@@ -461,6 +461,11 @@ check_if_stmt__LilyAnalysis(LilyAnalysis *self,
                             enum LilyCheckedSafetyMode safety_mode,
                             Vec *current_body);
 
+static LilyCheckedPattern *
+check_pattern__LilyAnalysis(LilyAnalysis *self,
+                            const LilyAstPattern *pattern,
+                            LilyCheckedScope *scope);
+
 static LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                                const LilyAstStmt *stmt,
@@ -6754,6 +6759,14 @@ check_if_stmt__LilyAnalysis(LilyAnalysis *self,
                       else_)));
 }
 
+LilyCheckedPattern *
+check_pattern__LilyAnalysis(LilyAnalysis *self,
+                            const LilyAstPattern *pattern,
+                            LilyCheckedScope *scope)
+{
+    TODO("check pattern");
+}
+
 LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                                const LilyAstStmt *stmt,
@@ -6762,7 +6775,76 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                                enum LilyCheckedSafetyMode safety_mode,
                                Vec *current_body)
 {
-    TODO("analysis match stmt");
+    LilyCheckedExpr *expr = check_expr__LilyAnalysis(
+      self, stmt->match.expr, scope, safety_mode, false, NULL);
+
+    switch (expr->data_type->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+            FAILED("this data type is not expected to use in match statement");
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+            switch (expr->data_type->custom.kind) {
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                    FAILED("this data type is not expected to use in match "
+                           "statement");
+                default:
+                    break;
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    switch (expr->kind) {
+        case LILY_CHECKED_EXPR_KIND_LITERAL:
+            FAILED("literal expression is not expected to pass to a match "
+                   "statement");
+        default:
+            break;
+    }
+
+    Vec *cases = NEW(Vec); // Vec<LilyCheckedStmtMatchCase*>*
+
+    for (Usize i = 0; i < stmt->match.cases->len; ++i) {
+        LilyAstStmtMatchCase *ast_case = get__Vec(stmt->match.cases, i);
+        LilyCheckedPattern *check_pattern =
+          check_pattern__LilyAnalysis(self, ast_case->pattern, scope);
+        LilyCheckedExpr *check_cond =
+          ast_case->cond
+            ? check_expr__LilyAnalysis(
+                self, ast_case->cond, scope, safety_mode, false, NULL)
+            : NULL;
+
+        if (check_cond) {
+            EXPECTED_BOOL_EXPR(check_cond);
+        }
+
+        LilyCheckedBodyFunItem *check_item =
+          check_fun_item__LilyAnalysis(self,
+                                       ast_case->body_item,
+                                       scope,
+                                       0,
+                                       in_loop,
+                                       safety_mode,
+                                       NULL,
+                                       NULL);
+
+        ASSERT(check_item);
+
+        push__Vec(
+          cases,
+          NEW(LilyCheckedStmtMatchCase, check_pattern, check_cond, check_item));
+    }
+
+    return NEW_VARIANT(LilyCheckedBodyFunItem,
+                       stmt,
+                       NEW_VARIANT(LilyCheckedStmt,
+                                   match,
+                                   &stmt->location,
+                                   stmt,
+                                   NEW(LilyCheckedStmtMatch, expr, cases)));
 }
 
 LilyCheckedBodyFunItem *
