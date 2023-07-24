@@ -118,13 +118,50 @@ __resize__$Alloc(void *old_mem, Usize old_size, Usize new_size, Usize align)
         return old_mem;
     }
 
+#if defined(LILY_LINUX_OS)
     void *new_mem = mremap(old_mem, old_size, new_size, MREMAP_MAYMOVE);
 
     if (new_mem == MAP_FAILED) {
         new_mem = __alloc__$Alloc(new_size, align);
 
         memcpy(new_mem, old_mem, old_size);
+        // NOTE: We assume that the alignment does not change
         __free__$Alloc(&old_mem, old_size, align);
+    }
+#elif defined(LILY_APPLE_OS)
+    void *new_mem = mmap(NULL,
+                         new_size,
+                         PROT_READ | PROT_WRITE,
+                         MAP_PRIVATE | MAP_ANONYMOUS,
+                         -1,
+                         0);
+
+    if (new_mem == MAP_FAILED) {
+        perror("Lily(Fail): fail to allocate memory");
+        exit(1);
+    }
+
+    memcpy(new_mem, old_mem, old_size);
+    // NOTE: We assume that the alignment does not change
+    __free__$Alloc(&old_mem, old_size, align);
+#elif defined(LILY_WINDOWS_OS)
+    LPVOID new_mem =
+      VirtualAlloc(NULL, new_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    if (!new_mem) {
+        perror("Lily(Fail): fail to allocate memory");
+        exit(1);
+    }
+
+    memcpy(new_mem, old_mem, old_size);
+    // NOTE: We assume that the alignment does not change
+    __free__$Alloc(&old_mem, old_size, align);
+#else
+#error "This is not yet supported"
+#endif
+
+    if (align > 0) {
+        new_mem = __align__$Alloc(new_mem, align);
     }
 
     return new_mem;
