@@ -34,7 +34,7 @@
 
 #ifdef USE_C_MEMORY_API
 #if defined(LILY_APPLE_OS)
-#include <stdlib.h>
+#include <malloc/malloc.h>
 #else
 #include <malloc.h>
 #endif
