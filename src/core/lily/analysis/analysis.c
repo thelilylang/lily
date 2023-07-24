@@ -461,10 +461,12 @@ check_if_stmt__LilyAnalysis(LilyAnalysis *self,
                             enum LilyCheckedSafetyMode safety_mode,
                             Vec *current_body);
 
+/// @param defined_data_type LilyCheckedDataType* (&)
 static LilyCheckedPattern *
 check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
-                            LilyCheckedScope *scope);
+                            LilyCheckedScope *scope,
+                            LilyCheckedDataType *defined_data_type);
 
 static LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
@@ -6762,11 +6764,53 @@ check_if_stmt__LilyAnalysis(LilyAnalysis *self,
 LilyCheckedPattern *
 check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
-                            LilyCheckedScope *scope)
+                            LilyCheckedScope *scope,
+                            LilyCheckedDataType *defined_data_type)
 {
+    ASSERT(defined_data_type);
+
     switch (pattern->kind) {
-        case LILY_AST_PATTERN_KIND_ARRAY:
-            TODO("pattern array");
+        case LILY_AST_PATTERN_KIND_ARRAY: {
+            // Some verifications to the pattern
+            switch (defined_data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+                    switch (defined_data_type->array.kind) {
+                        case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_SIZED:
+                            if (pattern->array.patterns->len !=
+                                defined_data_type->array.sized) {
+                                FAILED("expected pattern array with the same "
+                                       "size of the matched expression");
+                            }
+
+                            break;
+                        default:
+                            break;
+                    }
+
+                    break;
+                default:
+                    FAILED("expected array as data type like the matched "
+                           "expression");
+            }
+
+            Vec *array = NEW(Vec);
+
+            for (Usize i = 0; i < pattern->array.patterns->len; ++i) {
+                push__Vec(array,
+                          check_pattern__LilyAnalysis(
+                            self,
+                            get__Vec(pattern->array.patterns, i),
+                            scope,
+                            defined_data_type->array.data_type));
+            }
+
+            return NEW_VARIANT(LilyCheckedPattern,
+                               array,
+                               &pattern->location,
+                               ref__LilyCheckedDataType(defined_data_type),
+                               pattern,
+                               NEW(LilyCheckedPatternArray, array));
+        }
         case LILY_AST_PATTERN_KIND_AS:
             TODO("pattern as");
         case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
@@ -6840,8 +6884,8 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
 
     for (Usize i = 0; i < stmt->match.cases->len; ++i) {
         LilyAstStmtMatchCase *ast_case = get__Vec(stmt->match.cases, i);
-        LilyCheckedPattern *check_pattern =
-          check_pattern__LilyAnalysis(self, ast_case->pattern, scope);
+        LilyCheckedPattern *check_pattern = check_pattern__LilyAnalysis(
+          self, ast_case->pattern, scope, expr->data_type);
         LilyCheckedExpr *check_cond =
           ast_case->cond
             ? check_expr__LilyAnalysis(
