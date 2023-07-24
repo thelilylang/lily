@@ -6051,13 +6051,13 @@ check_tuple_expr__LilyAnalysis(LilyAnalysis *self,
         Vec *tuple_expr = NEW(Vec); // Vec<LilyCheckedExpr*>*
 
         for (Usize i = 0; i < expr->tuple.items->len; ++i) {
-            LilyCheckedExpr *item =
-              check_expr__LilyAnalysis(self,
-                                       get__Vec(expr->tuple.items, i),
-                                       scope,
-                                       safety_mode,
-                                       false,
-                                       get__Vec(defined_data_type->tuple, i));
+            LilyCheckedExpr *item = check_expr__LilyAnalysis(
+              self,
+              get__Vec(expr->tuple.items, i),
+              scope,
+              safety_mode,
+              false,
+              defined_data_type ? get__Vec(defined_data_type->tuple, i) : NULL);
 
             push__Vec(tuple_dt, ref__LilyCheckedDataType(item->data_type));
             push__Vec(tuple_expr, item);
