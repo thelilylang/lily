@@ -28,10 +28,14 @@
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/pattern.h>
 
+#include <base/ordered_hash_map.h>
+
 typedef struct LilyCheckedBodyFunItem LilyCheckedBodyFunItem;
 
 typedef struct LilyCheckedStmtMatchCase
 {
+    OrderedHashMap
+      *captured_variables; // OrderedHashMap<LilyCheckedCapturedVariable*>*
     LilyCheckedPattern *pattern;
     LilyCheckedExpr *cond; // LilyCheckedExpr*?
     LilyCheckedBodyFunItem *body_item;
@@ -43,6 +47,7 @@ typedef struct LilyCheckedStmtMatchCase
  */
 CONSTRUCTOR(LilyCheckedStmtMatchCase *,
             LilyCheckedStmtMatchCase,
+            OrderedHashMap *captured_variables,
             LilyCheckedPattern *pattern,
             LilyCheckedExpr *cond,
             LilyCheckedBodyFunItem *body_item);
