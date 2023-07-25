@@ -466,7 +466,8 @@ static LilyCheckedPattern *
 check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
                             LilyCheckedScope *scope,
-                            LilyCheckedDataType *defined_data_type);
+                            LilyCheckedDataType *defined_data_type,
+                            OrderedHashMap *captured_variables);
 
 static LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
@@ -6642,17 +6643,17 @@ check_for_stmt__LilyAnalysis(LilyAnalysis *self,
 
                         if (res) {
                             FAILED("duplicate captured variable");
+                        } else {
+                            insert__OrderedHashMap(
+                              checked_body_item->stmt.for_.captured_variables,
+                              expr_cap->identifier.name->buffer,
+                              NEW(LilyCheckedCapturedVariable,
+                                  expr_cap->identifier.name,
+                                  &expr_cap->location,
+                                  get__Vec(checked_body_item->stmt.for_.expr
+                                             ->tuple.items,
+                                           i)));
                         }
-
-                        insert__OrderedHashMap(
-                          checked_body_item->stmt.for_.captured_variables,
-                          expr_cap->identifier.name->buffer,
-                          NEW(LilyCheckedCapturedVariable,
-                              expr_cap->identifier.name,
-                              &expr_cap->location,
-                              get__Vec(
-                                checked_body_item->stmt.for_.expr->tuple.items,
-                                i)));
 
                         break;
                     }
@@ -6765,7 +6766,8 @@ LilyCheckedPattern *
 check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
                             LilyCheckedScope *scope,
-                            LilyCheckedDataType *defined_data_type)
+                            LilyCheckedDataType *defined_data_type,
+                            OrderedHashMap *captured_variables)
 {
     ASSERT(defined_data_type);
 
@@ -6801,7 +6803,8 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                             self,
                             get__Vec(pattern->array.patterns, i),
                             scope,
-                            defined_data_type->array.data_type));
+                            defined_data_type->array.data_type,
+                            captured_variables));
             }
 
             return NEW_VARIANT(LilyCheckedPattern,
@@ -6811,8 +6814,39 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                                pattern,
                                NEW(LilyCheckedPatternArray, array));
         }
-        case LILY_AST_PATTERN_KIND_AS:
-            TODO("pattern as");
+        case LILY_AST_PATTERN_KIND_AS: {
+            LilyCheckedPattern *as_pattern =
+              check_pattern__LilyAnalysis(self,
+                                          pattern->as.pattern,
+                                          scope,
+                                          defined_data_type,
+                                          captured_variables);
+
+            int res = add_captured_variable__LilyCheckedScope(
+              scope,
+              NEW(LilyCheckedScopeContainerCapturedVariable,
+                  pattern->as.name,
+                  captured_variables->len));
+
+            if (res) {
+                FAILED("duplicate captured variable");
+            } else {
+                insert__OrderedHashMap(captured_variables,
+                                       pattern->as.name->buffer,
+                                       NEW(LilyCheckedCapturedVariable,
+                                           pattern->as.name,
+                                           &pattern->location,
+                                           defined_data_type));
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedPattern,
+              as,
+              &pattern->location,
+              defined_data_type,
+              pattern,
+              NEW(LilyCheckedPatternAs, as_pattern, pattern->as.name));
+        }
         case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
             TODO("pattern auto complete");
         case LILY_AST_PATTERN_KIND_ERROR:
@@ -6884,8 +6918,9 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
 
     for (Usize i = 0; i < stmt->match.cases->len; ++i) {
         LilyAstStmtMatchCase *ast_case = get__Vec(stmt->match.cases, i);
+        OrderedHashMap *captured_variables = NEW(OrderedHashMap);
         LilyCheckedPattern *check_pattern = check_pattern__LilyAnalysis(
-          self, ast_case->pattern, scope, expr->data_type);
+          self, ast_case->pattern, scope, expr->data_type, captured_variables);
         LilyCheckedExpr *check_cond =
           ast_case->cond
             ? check_expr__LilyAnalysis(
@@ -6908,9 +6943,12 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
 
         ASSERT(check_item);
 
-        push__Vec(
-          cases,
-          NEW(LilyCheckedStmtMatchCase, check_pattern, check_cond, check_item));
+        push__Vec(cases,
+                  NEW(LilyCheckedStmtMatchCase,
+                      captured_variables,
+                      check_pattern,
+                      check_cond,
+                      check_item));
     }
 
     return NEW_VARIANT(LilyCheckedBodyFunItem,
