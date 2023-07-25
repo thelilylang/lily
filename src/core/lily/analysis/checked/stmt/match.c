@@ -33,6 +33,7 @@
 
 CONSTRUCTOR(LilyCheckedStmtMatchCase *,
             LilyCheckedStmtMatchCase,
+            OrderedHashMap *captured_variables,
             LilyCheckedPattern *pattern,
             LilyCheckedExpr *cond,
             LilyCheckedBodyFunItem *body_item)
@@ -40,6 +41,7 @@ CONSTRUCTOR(LilyCheckedStmtMatchCase *,
     LilyCheckedStmtMatchCase *self =
       lily_malloc(sizeof(LilyCheckedStmtMatchCase));
 
+    self->captured_variables = captured_variables;
     self->pattern = pattern;
     self->cond = cond;
     self->body_item = body_item;
@@ -54,8 +56,17 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedStmtMatchCase *self)
 {
     String *res =
-      format__String("LilyCheckedStmtMatchCase{{ pattern = {Sr}",
-                     to_string__Debug__LilyCheckedPattern(self->pattern));
+      from__String("LilyCheckedStmtMatchCase{ captured_variables =");
+
+    DEBUG_ORD_HASH_MAP_STRING(
+      self->captured_variables, res, LilyCheckedCapturedVariable);
+
+    {
+        char *s = format(", pattern = {Sr}",
+                         to_string__Debug__LilyCheckedPattern(self->pattern));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     if (self->cond) {
         char *s =
@@ -78,6 +89,10 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedStmtMatchCase, LilyCheckedStmtMatchCase *self)
 {
+    FREE(OrderedHashMap, self->captured_variables);
+    FREE_ORD_HASHMAP_VALUES(self->captured_variables,
+                            LilyCheckedCapturedVariable);
+
     FREE(LilyCheckedPattern, self->pattern);
 
     if (self->cond) {
