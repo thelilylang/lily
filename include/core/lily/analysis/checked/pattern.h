@@ -84,7 +84,7 @@ typedef struct LilyCheckedPattern
     {
         LilyCheckedPatternArray array;
         LilyCheckedPatternAs as;
-        LilyCheckedPatternError exception;
+        LilyCheckedPatternError error;
         LilyCheckedPatternList list;
         LilyCheckedPatternListHead list_head;
         LilyCheckedPatternListTail list_tail;
@@ -128,11 +128,11 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
  */
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
-                    exception,
+                    error,
                     const Location *location,
                     LilyCheckedDataType *data_type,
                     const LilyAstPattern *ast_pattern,
-                    LilyCheckedPatternError exception);
+                    LilyCheckedPatternError error);
 
 /**
  *

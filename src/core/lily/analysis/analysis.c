@@ -466,6 +466,7 @@ static LilyCheckedPattern *
 check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
                             LilyCheckedScope *scope,
+                            enum LilyCheckedSafetyMode safety_mode,
                             LilyCheckedDataType *defined_data_type,
                             OrderedHashMap *captured_variables);
 
@@ -6766,6 +6767,7 @@ LilyCheckedPattern *
 check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
                             LilyCheckedScope *scope,
+                            enum LilyCheckedSafetyMode safety_mode,
                             LilyCheckedDataType *defined_data_type,
                             OrderedHashMap *captured_variables)
 {
@@ -6803,6 +6805,7 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                             self,
                             get__Vec(pattern->array.patterns, i),
                             scope,
+                            safety_mode,
                             defined_data_type->array.data_type,
                             captured_variables));
             }
@@ -6819,6 +6822,7 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
               check_pattern__LilyAnalysis(self,
                                           pattern->as.pattern,
                                           scope,
+                                          safety_mode,
                                           defined_data_type,
                                           captured_variables);
 
@@ -6849,8 +6853,140 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
             TODO("pattern auto complete");
-        case LILY_AST_PATTERN_KIND_ERROR:
-            TODO("pattern error");
+        case LILY_AST_PATTERN_KIND_ERROR: {
+            // 1. Resolve error identifier
+            LilyCheckedScopeResponse response_id =
+              resolve_id__LilyAnalysis(self,
+                                       pattern->error.id,
+                                       scope,
+                                       LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR,
+                                       safety_mode);
+
+            // 2. Check if the error is found
+            switch (response_id.kind) {
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+                    FAILED("the error is not found");
+                default:
+                    if (!response_id.error->is_checked) {
+                        FAILED("this error is not used anywhere");
+                    }
+            }
+
+            // 3. Check generic params
+            Vec *generics = NULL; // Vec<LilyCheckedDataType*>*?
+            OrderedHashMap *signature_generic_params =
+              NULL; // OrderedHashMap<LilyCheckedDataType*>*?
+            LilyCheckedDataType *check_error_pattern_data_type =
+              NULL; // LilyCheckedDataType*?
+
+            {
+                Vec *id_generics =
+                  get_generic_params__LilyAstExpr(pattern->error.id);
+
+                if (id_generics) {
+                    generics = NEW(Vec);
+                    signature_generic_params = NEW(OrderedHashMap);
+
+                    if (id_generics->len !=
+                        response_id.error->generic_params->len) {
+                        FAILED("expected generic with the same length");
+                    }
+
+                    for (Usize i = 0; i < id_generics->len; ++i) {
+                        // TODO: add check on generic param with constraint
+                        LilyCheckedGenericParam *check_generic_param =
+                          get__Vec(response_id.error->generic_params, i);
+                        LilyCheckedDataType *check_data_type =
+                          check_data_type__LilyAnalysis(
+                            self,
+                            get__Vec(id_generics, i),
+                            scope,
+                            NULL,
+                            safety_mode);
+
+                        push__Vec(generics, check_data_type);
+                        insert__OrderedHashMap(
+                          signature_generic_params,
+                          get_name__LilyCheckedGenericParam(check_generic_param)
+                            ->buffer,
+                          ref__LilyCheckedDataType(check_data_type));
+                    }
+
+                    if (response_id.error->data_type) {
+                        check_error_pattern_data_type =
+                          resolve_generic_data_type_with_ordered_hash_map__LilyCheckedDataType(
+                            response_id.error->data_type,
+                            signature_generic_params);
+                    }
+
+                    if (!add_signature__LilyCheckedSignatureType(
+                          response_id.error->global_name,
+                          signature_generic_params,
+                          response_id.error->signatures)) {
+                        FAILED("the current signature error is unused "
+                               "anywhere, this case can't never happening");
+                    } else {
+                        FREE_ORD_HASHMAP_VALUES(signature_generic_params,
+                                                LilyCheckedDataType);
+                        FREE(OrderedHashMap, signature_generic_params);
+                    }
+                } else if (response_id.error->generic_params) {
+                    FAILED("can you provide the generic params, for the moment "
+                           "the compiler doesn't support the implicit generic "
+                           "params on error");
+                } else {
+                    if (response_id.error->data_type) {
+                        check_error_pattern_data_type =
+                          ref__LilyCheckedDataType(
+                            response_id.error->data_type);
+                    }
+                }
+            }
+
+            LilyCheckedPattern *check_error_pattern =
+              check_pattern__LilyAnalysis(self,
+                                          pattern->error.pattern,
+                                          scope,
+                                          safety_mode,
+                                          check_error_pattern_data_type,
+                                          captured_variables);
+
+            FREE(LilyCheckedDataType, check_error_pattern_data_type);
+
+            LilyCheckedDataType *error_id_data_type =
+              NEW_VARIANT(LilyCheckedDataType,
+                          custom,
+                          &pattern->error.id->location,
+                          NEW(LilyCheckedDataTypeCustom,
+                              response_id.scope_container.scope_id,
+                              (LilyCheckedAccessScope){
+                                .id = response_id.scope_container.error->id },
+                              response_id.error->name,
+                              response_id.error->global_name,
+                              generics,
+                              LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ERROR,
+                              response_id.error->is_recursive));
+            LilyCheckedExpr *error_id = NEW_VARIANT(
+              LilyCheckedExpr,
+              call,
+              &pattern->error.id->location,
+              error_id_data_type,
+              pattern->error.id,
+              NEW_VARIANT(LilyCheckedExprCall,
+                          error,
+                          (LilyCheckedAccessScope){
+                            .id = response_id.scope_container.error->id },
+                          response_id.error->global_name,
+                          NEW(LilyCheckedExprCallError, NULL)));
+
+            return NEW_VARIANT(
+              LilyCheckedPattern,
+              error,
+              &pattern->location,
+              ref__LilyCheckedDataType(defined_data_type),
+              pattern,
+              NEW(LilyCheckedPatternError, error_id, check_error_pattern));
+        }
         case LILY_AST_PATTERN_KIND_LIST:
             TODO("pattern list");
         case LILY_AST_PATTERN_KIND_LIST_HEAD:
@@ -6919,8 +7055,13 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
     for (Usize i = 0; i < stmt->match.cases->len; ++i) {
         LilyAstStmtMatchCase *ast_case = get__Vec(stmt->match.cases, i);
         OrderedHashMap *captured_variables = NEW(OrderedHashMap);
-        LilyCheckedPattern *check_pattern = check_pattern__LilyAnalysis(
-          self, ast_case->pattern, scope, expr->data_type, captured_variables);
+        LilyCheckedPattern *check_pattern =
+          check_pattern__LilyAnalysis(self,
+                                      ast_case->pattern,
+                                      scope,
+                                      safety_mode,
+                                      expr->data_type,
+                                      captured_variables);
         LilyCheckedExpr *check_cond =
           ast_case->cond
             ? check_expr__LilyAnalysis(
