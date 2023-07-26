@@ -49,7 +49,8 @@ generate_call_expr__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_EXPR_CALL_KIND_FUN: {
             Vec *params = NEW(Vec);
             LilyMirDt *types[MAX_FUN_PARAMS + 1] = { 0 };
-            const Usize types_len = expr->call.fun.params->len + 1;
+            const Usize types_len =
+              expr->call.fun.params ? expr->call.fun.params->len + 1 : 1;
 
             if (expr->call.fun.params) {
                 for (Usize i = 0; i < expr->call.fun.params->len; ++i) {
