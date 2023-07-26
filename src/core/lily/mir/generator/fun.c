@@ -98,13 +98,16 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
             LilyCheckedBodyFunItem *item = get__Vec(fun->fun.body, i);
 
             switch (item->kind) {
-                case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
-                    LilyMirAddInst(
-                      module,
-                      generate_expr__LilyMir(
-                        module, signature, &inst->fun.scope, item->expr));
+                case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR: {
+                    LilyMirInstruction *expr = generate_expr__LilyMir(
+                      module, signature, &inst->fun.scope, item->expr);
+
+                    if (expr) {
+                        LilyMirAddInst(module, expr);
+                    }
 
                     break;
+                }
                 case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
                     LilyMirAddInst(
                       module,
