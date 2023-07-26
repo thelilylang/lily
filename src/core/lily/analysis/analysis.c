@@ -8154,7 +8154,42 @@ check_range_pattern__LilyAnalysis(LilyAnalysis *self,
                                   LilyCheckedDataType *defined_data_type,
                                   OrderedHashMap *captured_variables)
 {
-    TODO("pattern range");
+    // TODO: maybe implement custom pattern #279
+    switch (defined_data_type->kind) {
+		case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+		case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+		case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+		case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+		case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+		case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+		case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+		case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+            break;
+        default:
+            FAILED("expected integer");
+    }
+
+    LilyCheckedPattern *left =
+      check_pattern__LilyAnalysis(self,
+                                  pattern->range.left,
+                                  scope,
+                                  safety_mode,
+                                  defined_data_type,
+                                  captured_variables);
+    LilyCheckedPattern *right =
+      check_pattern__LilyAnalysis(self,
+                                  pattern->range.right,
+                                  scope,
+                                  safety_mode,
+                                  defined_data_type,
+                                  captured_variables);
+
+    return NEW_VARIANT(LilyCheckedPattern,
+                       range,
+                       &pattern->location,
+                       ref__LilyCheckedDataType(defined_data_type),
+                       pattern,
+                       NEW(LilyCheckedPatternRange, left, right));
 }
 
 LilyCheckedPattern *
