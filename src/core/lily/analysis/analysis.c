@@ -6987,8 +6987,34 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
               pattern,
               NEW(LilyCheckedPatternError, error_id, check_error_pattern));
         }
-        case LILY_AST_PATTERN_KIND_LIST:
-            TODO("pattern list");
+        case LILY_AST_PATTERN_KIND_LIST: {
+            switch (defined_data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+                    break;
+                default:
+                    FAILED("expected list");
+            }
+
+            Vec *list = NEW(Vec); // Vec<LilyCheckedPattern*>*
+
+            for (Usize i = 0; i < pattern->list.patterns->len; ++i) {
+                push__Vec(list,
+                          check_pattern__LilyAnalysis(
+                            self,
+                            get__Vec(pattern->list.patterns, i),
+                            scope,
+                            safety_mode,
+                            defined_data_type->list,
+                            captured_variables));
+            }
+
+            return NEW_VARIANT(LilyCheckedPattern,
+                               list,
+                               &pattern->location,
+                               ref__LilyCheckedDataType(defined_data_type),
+                               pattern,
+                               NEW(LilyCheckedPatternList, list));
+        }
         case LILY_AST_PATTERN_KIND_LIST_HEAD: {
             // TODO: maybe implement custom pattern #279
             switch (defined_data_type->kind) {
