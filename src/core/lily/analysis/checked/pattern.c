@@ -113,6 +113,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_PATTERN_KIND_RECORD_CALL";
         case LILY_CHECKED_PATTERN_KIND_TUPLE:
             return "LILY_CHECKED_PATTERN_KIND_TUPLE";
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
+            return "LILY_CHECKED_PATTERN_KIND_UNKNOWN";
         case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
             return "LILY_CHECKED_PATTERN_KIND_VARIANT_CALL";
         case LILY_CHECKED_PATTERN_KIND_WILDCARD:
@@ -334,6 +336,23 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
 
 VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedPattern,
+                    unknown,
+                    const Location *location,
+                    const LilyAstPattern *ast_pattern)
+{
+    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
+
+    self->kind = LILY_CHECKED_PATTERN_KIND_UNKNOWN;
+    self->location = location;
+    self->data_type =
+      NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, location);
+    self->ast_pattern = ast_pattern;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
                     variant_call,
                     const Location *location,
                     LilyCheckedDataType *data_type,
@@ -401,6 +420,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)
         case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
         case LILY_CHECKED_PATTERN_KIND_WILDCARD:
         case LILY_CHECKED_PATTERN_KIND_NONE:
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
             push_str__String(res, " }");
             break;
         case LILY_CHECKED_PATTERN_KIND_ERROR: {
