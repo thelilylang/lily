@@ -6989,8 +6989,37 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
         }
         case LILY_AST_PATTERN_KIND_LIST:
             TODO("pattern list");
-        case LILY_AST_PATTERN_KIND_LIST_HEAD:
-            TODO("pattern list head");
+        case LILY_AST_PATTERN_KIND_LIST_HEAD: {
+            // TODO: maybe implement custom pattern #279
+            switch (defined_data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+                    break;
+                default:
+                    FAILED("expected list");
+            }
+
+            LilyCheckedPattern *left =
+              check_pattern__LilyAnalysis(self,
+                                          pattern->list_head.left,
+                                          scope,
+                                          safety_mode,
+                                          defined_data_type->list,
+                                          captured_variables);
+            LilyCheckedPattern *right =
+              check_pattern__LilyAnalysis(self,
+                                          pattern->list_head.right,
+                                          scope,
+                                          safety_mode,
+                                          defined_data_type,
+                                          captured_variables);
+
+            return NEW_VARIANT(LilyCheckedPattern,
+                               list_head,
+                               &pattern->location,
+                               ref__LilyCheckedDataType(defined_data_type),
+                               pattern,
+                               NEW(LilyCheckedPatternListHead, left, right));
+        }
         case LILY_AST_PATTERN_KIND_LIST_TAIL:
             TODO("pattern list tail");
         case LILY_AST_PATTERN_KIND_LITERAL:
