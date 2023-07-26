@@ -8122,7 +8122,28 @@ check_name_pattern__LilyAnalysis(LilyAnalysis *self,
                                  LilyCheckedDataType *defined_data_type,
                                  OrderedHashMap *captured_variables)
 {
-    TODO("pattern name");
+    if (add_captured_variable__LilyCheckedScope(
+          scope,
+          NEW(LilyCheckedScopeContainerCapturedVariable,
+              pattern->name.name,
+              captured_variables->len))) {
+        FAILED("duplicate captured variable");
+    } else {
+        insert__OrderedHashMap(
+          captured_variables,
+          pattern->name.name->buffer,
+          NEW(LilyCheckedCapturedVariable,
+              pattern->name.name,
+              &pattern->location,
+              ref__LilyCheckedDataType(defined_data_type)));
+    }
+
+    return NEW_VARIANT(LilyCheckedPattern,
+                       name,
+                       &pattern->location,
+                       ref__LilyCheckedDataType(defined_data_type),
+                       pattern,
+                       NEW(LilyCheckedPatternName, pattern->name.name));
 }
 
 LilyCheckedPattern *
