@@ -57,6 +57,7 @@ enum LilyCheckedPatternKind
     LILY_CHECKED_PATTERN_KIND_RANGE,
     LILY_CHECKED_PATTERN_KIND_RECORD_CALL,
     LILY_CHECKED_PATTERN_KIND_TUPLE,
+    LILY_CHECKED_PATTERN_KIND_UNKNOWN,
     LILY_CHECKED_PATTERN_KIND_VARIANT_CALL,
     LILY_CHECKED_PATTERN_KIND_WILDCARD
 };
@@ -232,6 +233,16 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedDataType *data_type,
                     const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternTuple tuple);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_UNKNOWN).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    unknown,
+                    const Location *location,
+                    const LilyAstPattern *ast_pattern);
 
 /**
  *
