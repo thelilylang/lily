@@ -252,7 +252,7 @@ LilyLLVMBuildCall(const LilyIrLlvm *Self,
       Fn,
       Args,
       Params->len,
-      Name);
+      Name ? Name : "");
 }
 
 LLVMValueRef
@@ -1874,7 +1874,7 @@ LilyLLVMRunModule(const LilyIrLlvm *Self, OrderedHashMap *Insts)
                                    (LLVMValueRef[]){ LLVMGetParam(Fn, 0),
                                                      LLVMGetParam(Fn, 1) },
                                    2,
-                                   "r0");
+                                   "");
 
                     // TODO: Check the return value of the `lily.main` function.
                     // For the moment we return 0, in all cases.
