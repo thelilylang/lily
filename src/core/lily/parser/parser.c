@@ -2830,6 +2830,7 @@ parse_path_access_for_pattern__LilyParseBlock(LilyParseBlock *self,
           clone__Location(&begin->location),
           NEW_VARIANT(LilyAstExprAccess, path, init__Vec(1, begin)));
         current_location = &current_access->location;
+        current_path = current_access->access.path;
     } else {
         ASSERT(kind == LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH ||
                kind == LILY_AST_EXPR_ACCESS_KIND_SELF_PATH);
