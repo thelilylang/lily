@@ -8343,25 +8343,27 @@ check_variant_call_pattern__LilyAnalysis(LilyAnalysis *self,
             break;
     }
 
-    LilyCheckedPattern *variant_call_pattern = pattern->variant_call.pattern ?
-      check_pattern__LilyAnalysis(self,
-                                  pattern->variant_call.pattern,
-                                  scope,
-                                  safety_mode,
-                                  response_id.enum_variant->data_type,
-                                  captured_variables) : NULL;
-    LilyCheckedExpr *variant_call_id =
-      NEW_VARIANT(LilyCheckedExpr,
-                  call,
-                  &pattern->location,
-                  ref__LilyCheckedDataType(defined_data_type),
-                  pattern->variant_call.id,
-                  NEW_VARIANT(LilyCheckedExprCall,
-                              variant,
-                              (LilyCheckedAccessScope){
-                                .id = response_id.scope_container.variable->id },
-                              response_id.enum_variant->global_name,
-                              NEW(LilyCheckedExprCallVariant, NULL)));
+    LilyCheckedPattern *variant_call_pattern =
+      pattern->variant_call.pattern
+        ? check_pattern__LilyAnalysis(self,
+                                      pattern->variant_call.pattern,
+                                      scope,
+                                      safety_mode,
+                                      response_id.enum_variant->data_type,
+                                      captured_variables)
+        : NULL;
+    LilyCheckedExpr *variant_call_id = NEW_VARIANT(
+      LilyCheckedExpr,
+      call,
+      &pattern->location,
+      ref__LilyCheckedDataType(defined_data_type),
+      pattern->variant_call.id,
+      NEW_VARIANT(LilyCheckedExprCall,
+                  variant,
+                  (LilyCheckedAccessScope){
+                    .id = response_id.scope_container.variable->id },
+                  response_id.enum_variant->global_name,
+                  NEW(LilyCheckedExprCallVariant, NULL)));
 
     return NEW_VARIANT(LilyCheckedPattern,
                        variant_call,
