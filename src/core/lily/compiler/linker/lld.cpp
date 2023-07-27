@@ -42,12 +42,12 @@ class LilyOSStream : public raw_ostream
     }
     ~LilyOSStream() { FREE(String, m_buffer); }
 
-    auto write_impl(const char *s, Usize len) -> void override
+    auto write_impl(const char *s, size_t len) -> void override
     {
         push_str_with_len__String(m_buffer, s, len);
     }
 
-    auto current_pos() const -> Uint64 override { return m_buffer->len; }
+    auto current_pos() const -> uint64_t override { return m_buffer->len; }
 
   private:
     String *m_buffer;
