@@ -8343,6 +8343,20 @@ check_variant_call_pattern__LilyAnalysis(LilyAnalysis *self,
             break;
     }
 
+    switch (defined_data_type->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+            switch (defined_data_type->custom.kind) {
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ENUM:
+                    break;
+                default:
+                    FAILED("expected enum data type");
+            }
+
+            break;
+        default:
+            FAILED("expected enum data type");
+    }
+
     LilyCheckedPattern *variant_call_pattern =
       pattern->variant_call.pattern
         ? check_pattern__LilyAnalysis(self,
