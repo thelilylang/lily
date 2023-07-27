@@ -342,7 +342,10 @@ target_include_directories(lily_core_lily_compiler_ir_llvm
                            PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_compiler_linker
-set(LILY_CORE_LILY_COMPILER_LINKER_SRC src/core/lily/compiler/linker/linker.c)
+set(LILY_CORE_LILY_COMPILER_LINKER_SRC
+    src/core/lily/compiler/linker/linker.c
+    src/core/lily/compiler/linker/lld.cpp
+    src/core/lily/compiler/linker/object_format.c)
 
 add_library(lily_core_lily_compiler_linker STATIC
             ${LILY_CORE_LILY_COMPILER_LINKER_SRC})
