@@ -8199,7 +8199,79 @@ check_record_call_pattern__LilyAnalysis(LilyAnalysis *self,
                                         LilyCheckedDataType *defined_data_type,
                                         OrderedHashMap *captured_variables)
 {
-    TODO("pattern record call");
+    LilyCheckedScopeResponse response_id =
+      resolve_id__LilyAnalysis(self,
+                               pattern->record_call.id,
+                               scope,
+                               LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD,
+                               safety_mode);
+
+    switch (response_id.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            FAILED("identifier not found, expected record");
+        default:
+            break;
+    }
+
+    switch (defined_data_type->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+            switch (defined_data_type->custom.kind) {
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD:
+                    if (strcmp(defined_data_type->custom.name->buffer,
+                               response_id.record->name->buffer)) {
+                        FAILED("expected same record name");
+                    }
+
+                    break;
+                default:
+                    FAILED("expected record");
+            }
+
+            break;
+        default:
+            FAILED("expected record");
+    }
+
+    Vec *fields = NEW(Vec); // Vec<LilyCheckedPattern*>*
+
+    for (Usize i = 0; i < pattern->record_call.fields->len; ++i) {
+        LilyCheckedPattern *item =
+          check_pattern__LilyAnalysis(self,
+                                      get__Vec(pattern->record_call.fields, i),
+                                      scope,
+                                      safety_mode,
+                                      get__Vec(response_id.record->fields, i),
+                                      captured_variables);
+        const LilyCheckedPattern *name = get_name__LilyCheckedPattern(item);
+
+        if (name) {
+            if (!field_exists__LilyCheckedDeclRecord(response_id.record,
+                                                     name->name.name)) {
+                FAILED("the field doesn't exist");
+            }
+        }
+
+        push__Vec(fields, item);
+    }
+
+    return NEW_VARIANT(
+      LilyCheckedPattern,
+      record_call,
+      &pattern->location,
+      ref__LilyCheckedDataType(defined_data_type),
+      pattern,
+      NEW(LilyCheckedPatternRecordCall,
+          NEW_VARIANT(LilyCheckedExpr,
+                      call,
+                      &pattern->location,
+                      ref__LilyCheckedDataType(defined_data_type),
+                      NULL,
+                      NEW(LilyCheckedExprCall,
+                          LILY_CHECKED_EXPR_CALL_KIND_RECORD,
+                          response_id.record->global_name,
+                          (LilyCheckedAccessScope){
+                            .id = response_id.scope_container.scope_id })),
+          fields));
 }
 
 LilyCheckedPattern *
