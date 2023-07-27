@@ -8282,7 +8282,36 @@ check_tuple_pattern__LilyAnalysis(LilyAnalysis *self,
                                   LilyCheckedDataType *defined_data_type,
                                   OrderedHashMap *captured_variables)
 {
-    TODO("pattern tuple");
+    Vec *patterns = NEW(Vec);
+
+    switch (defined_data_type->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
+            if (pattern->tuple.patterns->len > defined_data_type->tuple->len) {
+                FAILED("expected same data type");
+            }
+
+            break;
+        default:
+            FAILED("expected tuple");
+    }
+
+    for (Usize i = 0; i < pattern->tuple.patterns->len; ++i) {
+        push__Vec(
+          patterns,
+          check_pattern__LilyAnalysis(self,
+                                      get__Vec(pattern->tuple.patterns, i),
+                                      scope,
+                                      safety_mode,
+                                      get__Vec(defined_data_type->tuple, i),
+                                      captured_variables));
+    }
+
+    return NEW_VARIANT(LilyCheckedPattern,
+                       tuple,
+                       &pattern->location,
+                       ref__LilyCheckedDataType(defined_data_type),
+                       pattern,
+                       NEW(LilyCheckedPatternTuple, patterns));
 }
 
 LilyCheckedPattern *
