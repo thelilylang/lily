@@ -25,6 +25,21 @@
 #include <core/lily/analysis/checked/decl/record.h>
 #include <core/lily/analysis/checked/generic_param.h>
 
+bool
+field_exists__LilyCheckedDeclRecord(const LilyCheckedDeclRecord *self,
+                                    String *name)
+{
+    for (Usize i = 0; i < self->fields->len; ++i) {
+        if (!strcmp(
+              CAST(LilyCheckedField *, get__Vec(self->fields, i))->name->buffer,
+              name->buffer)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 #ifdef ENV_DEBUG
 #include <base/format.h>
 

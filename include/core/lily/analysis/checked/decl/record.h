@@ -80,6 +80,14 @@ add_signature__LilyCheckedDeclRecord(LilyCheckedDeclRecord *self,
 
 /**
  *
+ * @brief Check if the field exists.
+ */
+bool
+field_exists__LilyCheckedDeclRecord(const LilyCheckedDeclRecord *self,
+                                    String *name);
+
+/**
+ *
  * @brief Convert LilyCheckedDeclRecord in String.
  * @note This function is only used to debug.
  */
