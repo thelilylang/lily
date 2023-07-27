@@ -3058,6 +3058,10 @@ resolve_id__LilyAnalysis(LilyAnalysis *self,
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_MODULE:
                     return search_module__LilyCheckedScope(scope,
                                                            id->identifier.name);
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT:
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT_OBJECT:
+                    return search_variant__LilyCheckedScope(
+                      scope, id->identifier.name);
                 default:
                     UNREACHABLE("this situation is impossible");
             }
@@ -8194,6 +8198,7 @@ check_record_call_pattern__LilyAnalysis(LilyAnalysis *self,
                                         LilyCheckedDataType *defined_data_type,
                                         OrderedHashMap *captured_variables)
 {
+    // TODO: add support for record object
     LilyCheckedScopeResponse response_id =
       resolve_id__LilyAnalysis(self,
                                pattern->record_call.id,
@@ -8205,6 +8210,10 @@ check_record_call_pattern__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
             FAILED("identifier not found, expected record");
         default:
+            if (!response_id.record->is_checked) {
+                FAILED("this record is not used anywhere");
+            }
+
             break;
     }
 
@@ -8249,24 +8258,26 @@ check_record_call_pattern__LilyAnalysis(LilyAnalysis *self,
         push__Vec(fields, item);
     }
 
+    LilyCheckedExpr *record_call_id =
+      NEW_VARIANT(LilyCheckedExpr,
+                  call,
+                  &pattern->location,
+                  ref__LilyCheckedDataType(defined_data_type),
+                  pattern->record_call.id,
+                  NEW_VARIANT(LilyCheckedExprCall,
+                              record,
+                              (LilyCheckedAccessScope){
+                                .id = response_id.scope_container.record->id },
+                              response_id.record->global_name,
+                              NEW(LilyCheckedExprCallRecord, NULL)));
+
     return NEW_VARIANT(
       LilyCheckedPattern,
       record_call,
       &pattern->location,
       ref__LilyCheckedDataType(defined_data_type),
       pattern,
-      NEW(LilyCheckedPatternRecordCall,
-          NEW_VARIANT(LilyCheckedExpr,
-                      call,
-                      &pattern->location,
-                      ref__LilyCheckedDataType(defined_data_type),
-                      NULL,
-                      NEW(LilyCheckedExprCall,
-                          LILY_CHECKED_EXPR_CALL_KIND_RECORD,
-                          response_id.record->global_name,
-                          (LilyCheckedAccessScope){
-                            .id = response_id.scope_container.scope_id })),
-          fields));
+      NEW(LilyCheckedPatternRecordCall, record_call_id, fields));
 }
 
 LilyCheckedPattern *
@@ -8317,7 +8328,49 @@ check_variant_call_pattern__LilyAnalysis(LilyAnalysis *self,
                                          LilyCheckedDataType *defined_data_type,
                                          OrderedHashMap *captured_variables)
 {
-    TODO("pattern variant call");
+    // TODO: add support for enum variant object
+    LilyCheckedScopeResponse response_id =
+      resolve_id__LilyAnalysis(self,
+                               pattern->variant_call.id,
+                               scope,
+                               LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT,
+                               safety_mode);
+
+    switch (response_id.kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            FAILED("variant not found");
+        default:
+            break;
+    }
+
+    LilyCheckedPattern *variant_call_pattern = pattern->variant_call.pattern ?
+      check_pattern__LilyAnalysis(self,
+                                  pattern->variant_call.pattern,
+                                  scope,
+                                  safety_mode,
+                                  response_id.enum_variant->data_type,
+                                  captured_variables) : NULL;
+    LilyCheckedExpr *variant_call_id =
+      NEW_VARIANT(LilyCheckedExpr,
+                  call,
+                  &pattern->location,
+                  ref__LilyCheckedDataType(defined_data_type),
+                  pattern->variant_call.id,
+                  NEW_VARIANT(LilyCheckedExprCall,
+                              variant,
+                              (LilyCheckedAccessScope){
+                                .id = response_id.scope_container.variable->id },
+                              response_id.enum_variant->global_name,
+                              NEW(LilyCheckedExprCallVariant, NULL)));
+
+    return NEW_VARIANT(LilyCheckedPattern,
+                       variant_call,
+                       &pattern->location,
+                       ref__LilyCheckedDataType(defined_data_type),
+                       pattern,
+                       NEW(LilyCheckedPatternVariantCall,
+                           variant_call_id,
+                           variant_call_pattern));
 }
 
 LilyCheckedPattern *
