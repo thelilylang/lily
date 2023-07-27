@@ -8,8 +8,8 @@ fun main =
 	val l := Letter.A;
 
 	match l do
-		A:$ => ();
-		B:$ => ();
-		C:$ => ();
+		Letter.A:$ => ();
+		Letter.B:$ => ();
+		Letter.C:$ => ();
 	end
 end
