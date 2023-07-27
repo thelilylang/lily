@@ -580,13 +580,10 @@ check_variant_call_pattern__LilyAnalysis(LilyAnalysis *self,
                                          OrderedHashMap *captured_variables);
 
 /// @param defined_data_type LilyCheckedDataType* (&)
-static LilyCheckedPattern *
+static inline LilyCheckedPattern *
 check_wildcard_pattern__LilyAnalysis(LilyAnalysis *self,
                                      const LilyAstPattern *pattern,
-                                     LilyCheckedScope *scope,
-                                     enum LilyCheckedSafetyMode safety_mode,
-                                     LilyCheckedDataType *defined_data_type,
-                                     OrderedHashMap *captured_variables);
+                                     LilyCheckedDataType *defined_data_type);
 
 /// @param defined_data_type LilyCheckedDataType* (&)
 static LilyCheckedPattern *
@@ -8328,12 +8325,13 @@ check_variant_call_pattern__LilyAnalysis(LilyAnalysis *self,
 LilyCheckedPattern *
 check_wildcard_pattern__LilyAnalysis(LilyAnalysis *self,
                                      const LilyAstPattern *pattern,
-                                     LilyCheckedScope *scope,
-                                     enum LilyCheckedSafetyMode safety_mode,
-                                     LilyCheckedDataType *defined_data_type,
-                                     OrderedHashMap *captured_variables)
+                                     LilyCheckedDataType *defined_data_type)
 {
-    TODO("pattern wildcard");
+    return NEW(LilyCheckedPattern,
+               LILY_CHECKED_PATTERN_KIND_WILDCARD,
+               &pattern->location,
+               ref__LilyCheckedDataType(defined_data_type),
+               pattern);
 }
 
 LilyCheckedPattern *
@@ -8440,12 +8438,8 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                                                             defined_data_type,
                                                             captured_variables);
         case LILY_AST_PATTERN_KIND_WILDCARD:
-            return check_wildcard_pattern__LilyAnalysis(self,
-                                                        pattern,
-                                                        scope,
-                                                        safety_mode,
-                                                        defined_data_type,
-                                                        captured_variables);
+            return check_wildcard_pattern__LilyAnalysis(
+              self, pattern, defined_data_type);
         default:
             UNREACHABLE("unknown variant");
     }
