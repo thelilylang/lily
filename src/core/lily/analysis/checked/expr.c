@@ -326,13 +326,26 @@ CONSTRUCTOR(LilyCheckedExpr *,
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
 {
-    String *res = format__String(
-      "LilyAstExpr{{ kind = {s}, ast_expr = {Sr}, location = {sa}, data_type = "
-      "{Sr}",
-      to_string__Debug__LilyCheckedExprKind(self->kind),
-      to_string__Debug__LilyAstExpr(self->ast_expr),
-      to_string__Debug__Location(self->location),
-      to_string__Debug__LilyCheckedDataType(self->data_type));
+    String *res = NULL;
+
+    if (self->ast_expr) {
+        res = format__String(
+          "LilyAstExpr{{ kind = {s}, ast_expr = {Sr}, location = {sa}, "
+          "data_type = "
+          "{Sr}",
+          to_string__Debug__LilyCheckedExprKind(self->kind),
+          to_string__Debug__LilyAstExpr(self->ast_expr),
+          to_string__Debug__Location(self->location),
+          to_string__Debug__LilyCheckedDataType(self->data_type));
+    } else {
+        res = format__String(
+          "LilyAstExpr{{ kind = {s}, ast_expr = NULL, location = {sa}, "
+          "data_type = "
+          "{Sr}",
+          to_string__Debug__LilyCheckedExprKind(self->kind),
+          to_string__Debug__Location(self->location),
+          to_string__Debug__LilyCheckedDataType(self->data_type));
+    }
 
     switch (self->kind) {
         case LILY_CHECKED_EXPR_KIND_ARRAY: {

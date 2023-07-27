@@ -387,6 +387,32 @@ CONSTRUCTOR(LilyCheckedPattern *,
     return self;
 }
 
+const LilyCheckedPattern *
+get_name__LilyCheckedPattern(const LilyCheckedPattern *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY:
+        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
+        case LILY_CHECKED_PATTERN_KIND_LIST:
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
+        case LILY_CHECKED_PATTERN_KIND_LITERAL:
+        case LILY_CHECKED_PATTERN_KIND_NONE:
+        case LILY_CHECKED_PATTERN_KIND_RANGE:
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
+        case LILY_CHECKED_PATTERN_KIND_TUPLE:
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
+        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
+            return NULL;
+        case LILY_CHECKED_PATTERN_KIND_AS:
+            return get_name__LilyCheckedPattern(self->as.pattern);
+        case LILY_CHECKED_PATTERN_KIND_NAME:
+            return self;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)

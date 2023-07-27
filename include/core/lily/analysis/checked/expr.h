@@ -63,7 +63,7 @@ typedef struct LilyCheckedExpr
     const Location *location; // const Location* (&)
                               // This is the result data type of the expression.
     LilyCheckedDataType *data_type; // LilyCheckedDataType*
-    const LilyAstExpr *ast_expr;    // const LilyAstExpr* (&)
+    const LilyAstExpr *ast_expr;    // const LilyAstExpr*? (&)
     union
     {
         LilyCheckedExprArray array;

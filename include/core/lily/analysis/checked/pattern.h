@@ -270,6 +270,13 @@ CONSTRUCTOR(LilyCheckedPattern *,
 
 /**
  *
+ * @brief Get name from pattern.
+ */
+const LilyCheckedPattern *
+get_name__LilyCheckedPattern(const LilyCheckedPattern *self);
+
+/**
+ *
  * @brief Convert LilyCheckedPattern in String.
  * @note This function is only used to debug.
  */
