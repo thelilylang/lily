@@ -480,14 +480,11 @@ check_as_pattern__LilyAnalysis(LilyAnalysis *self,
                                OrderedHashMap *captured_variables);
 
 /// @param defined_data_type LilyCheckedDataType* (&)
-static LilyCheckedPattern *
+static inline LilyCheckedPattern *
 check_auto_complete_pattern__LilyAnalysis(
   LilyAnalysis *self,
   const LilyAstPattern *pattern,
-  LilyCheckedScope *scope,
-  enum LilyCheckedSafetyMode safety_mode,
-  LilyCheckedDataType *defined_data_type,
-  OrderedHashMap *captured_variables);
+  LilyCheckedDataType *defined_data_type);
 
 /// @param defined_data_type LilyCheckedDataType* (&)
 static LilyCheckedPattern *
@@ -7006,12 +7003,13 @@ LilyCheckedPattern *
 check_auto_complete_pattern__LilyAnalysis(
   LilyAnalysis *self,
   const LilyAstPattern *pattern,
-  LilyCheckedScope *scope,
-  enum LilyCheckedSafetyMode safety_mode,
-  LilyCheckedDataType *defined_data_type,
-  OrderedHashMap *captured_variables)
+  LilyCheckedDataType *defined_data_type)
 {
-    TODO("pattern auto complete");
+    return NEW(LilyCheckedPattern,
+               LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE,
+               &pattern->location,
+               ref__LilyCheckedDataType(defined_data_type),
+               pattern);
 }
 
 LilyCheckedPattern *
@@ -8361,12 +8359,7 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                                                   captured_variables);
         case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
             return check_auto_complete_pattern__LilyAnalysis(
-              self,
-              pattern,
-              scope,
-              safety_mode,
-              defined_data_type,
-              captured_variables);
+              self, pattern, defined_data_type);
         case LILY_AST_PATTERN_KIND_ERROR:
             return check_error_pattern__LilyAnalysis(self,
                                                      pattern,
