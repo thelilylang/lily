@@ -155,6 +155,13 @@ push_str__String(String *self, char *s);
 
 /**
  *
+ * @brief Push str according its len to String.
+ */
+void
+push_str_with_len__String(String *self, const char *s, Usize len);
+
+/**
+ *
  * @brief Repeat n times a str.
  */
 String *

@@ -176,6 +176,14 @@ push_str__String(String *self, char *s)
     }
 }
 
+void
+push_str_with_len__String(String *self, const char *s, Usize len)
+{
+    for (Usize i = 0; i < len; ++i) {
+        push__String(self, s[i]);
+    }
+}
+
 String *
 repeat__String(char *s, Usize n)
 {
