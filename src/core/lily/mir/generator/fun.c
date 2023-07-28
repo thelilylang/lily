@@ -23,6 +23,7 @@
  */
 
 #include <core/lily/analysis/checked/signature.h>
+#include <core/lily/mir/generator/body.h>
 #include <core/lily/mir/generator/dt.h>
 #include <core/lily/mir/generator/expr.h>
 #include <core/lily/mir/generator/fun.h>
@@ -94,31 +95,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
                                       i)));
         }
 
-        for (Usize i = 0; i < fun->fun.body->len; ++i) {
-            LilyCheckedBodyFunItem *item = get__Vec(fun->fun.body, i);
-
-            switch (item->kind) {
-                case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR: {
-                    LilyMirInstruction *expr = generate_expr__LilyMir(
-                      module, signature, &inst->fun.scope, item->expr);
-
-                    if (expr) {
-                        LilyMirAddInst(module, expr);
-                    }
-
-                    break;
-                }
-                case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
-                    LilyMirAddInst(
-                      module,
-                      generate_stmt__LilyMir(
-                        module, signature, &inst->fun.scope, &item->stmt));
-
-                    break;
-                default:
-                    UNREACHABLE("unknown variant");
-            }
-        }
+        GENERATE_BODY(module, signature, (&inst->fun.scope), fun->fun.body);
 
         // Add a virtual return if the function return unit and the last
         // statement is not a ret statement. This is useful to avoid a bug in
