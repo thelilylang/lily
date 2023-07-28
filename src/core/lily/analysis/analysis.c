@@ -10057,6 +10057,8 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
         LilyCheckedDecl *decl = get__Vec(decls, i);
         history = NEW(LilyCheckedHistory);
 
+        add__LilyCheckedHistory(history, decl);
+
         switch (decl->kind) {
             case LILY_CHECKED_DECL_KIND_FUN:
                 check_fun__LilyAnalysis(self, decl);
