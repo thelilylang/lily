@@ -32,6 +32,7 @@
 /**
  *
  * @param fun_signature LilyCheckedSignatureFun*? (&)
+ * @return LilyMirInstruction*?
  */
 LilyMirInstruction *
 generate_stmt__LilyMir(LilyMirModule *module,

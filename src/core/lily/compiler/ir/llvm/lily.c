@@ -602,7 +602,7 @@ LilyLLVMBuildJmp(const LilyIrLlvm *Self,
     LLVMBasicBlockRef Dest = LilyLLVMCreateBasicBlock(Self, Pending, Name);
     LLVMValueRef jmp = LLVMBuildBr(Self->builder, Dest);
 
-    LLVMPositionBuilderAtEnd(Self->builder, Dest);
+    add_block__LilyIrLlvmPending(Pending, Name, Dest);
 
     return jmp;
 }
@@ -619,6 +619,7 @@ LilyLLVMBuildJmpCond(const LilyIrLlvm *Self,
     LLVMBasicBlockRef Else = LilyLLVMCreateBasicBlock(Self, Pending, ElseName);
     LLVMValueRef If = LilyLLVMBuildVal(Self, Scope, Pending, Cond);
 
+    add_block__LilyIrLlvmPending(Pending, ThenName, Then);
     add_block__LilyIrLlvmPending(Pending, ElseName, Else);
 
     return LLVMBuildCondBr(Self->builder, If, Then, Else);

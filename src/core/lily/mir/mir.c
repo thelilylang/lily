@@ -25,6 +25,10 @@
 #include <base/format.h>
 #include <base/string.h>
 
+#include <core/lily/analysis/checked/body/fun.h>
+#include <core/lily/mir/generator/body.h>
+#include <core/lily/mir/generator/expr.h>
+#include <core/lily/mir/generator/stmt.h>
 #include <core/lily/mir/mir.h>
 
 #include <string.h>
@@ -322,32 +326,27 @@ LilyMirBuildCall(LilyMirModule *Module,
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    LilyMirInstruction *inst = NULL;
-
     if (ReturnDt->kind == LILY_MIR_DT_KIND_UNIT) {
-        inst = NEW_VARIANT(
+        return NEW_VARIANT(
           LilyMirInstruction,
           call,
           NEW(
             LilyMirInstructionCall, clone__LilyMirDt(ReturnDt), Name, Params));
-
-        LilyMirAddInst(Module, inst);
-
-        return NULL;
     }
 
     char *name = LilyMirGenerateName(&current->fun.reg_manager);
 
-    inst = NEW_VARIANT(LilyMirInstruction,
-                       reg,
-                       NEW(LilyMirInstructionReg,
-                           from__String(name),
-                           NEW_VARIANT(LilyMirInstruction,
-                                       call,
-                                       NEW(LilyMirInstructionCall,
-                                           clone__LilyMirDt(ReturnDt),
-                                           Name,
-                                           Params))));
+    LilyMirInstruction *inst =
+      NEW_VARIANT(LilyMirInstruction,
+                  reg,
+                  NEW(LilyMirInstructionReg,
+                      from__String(name),
+                      NEW_VARIANT(LilyMirInstruction,
+                                  call,
+                                  NEW(LilyMirInstructionCall,
+                                      clone__LilyMirDt(ReturnDt),
+                                      Name,
+                                      Params))));
 
     LilyMirAddInst(Module, inst);
 
@@ -399,12 +398,35 @@ LilyMirBuildBlock(LilyMirModule *Module)
 void
 LilyMirAddBlock(LilyMirModule *Module, LilyMirInstruction *Block)
 {
-    LilyMirCurrent *current = Module->current->top;
+    LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
     push__Vec(current->fun.fun->fun.insts, Block);
     push__Stack(current->fun.fun->fun.block_stack, &Block->block);
+}
+
+LilyMirInstructionBlock *
+LilyMirPopBlock(LilyMirModule *Module)
+{
+    LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
+
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(current->fun.fun->fun.block_stack->len > 0);
+
+    return pop__Stack(current->fun.fun->fun.block_stack);
+}
+
+char *
+LilyMirGenerateName(LilyMirNameManager *NameManager)
+{
+    char *name = format("{s}{d}", NameManager->base_name, NameManager->count);
+
+    push__Vec(NameManager->names, name);
+
+    ++NameManager->count;
+
+    return name;
 }
 
 LilyMirInstructionVal *
@@ -459,28 +481,25 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
 
     // Search in the stack (for unpushed function to the insts field)
     if (Module->current->len > 0) {
-        LilyMirInstruction *top = Module->current->top;
+        LilyMirCurrent *top = Module->current->top;
 
         if (top) {
-            if (!strcmp(BaseName, top->fun.base_name) &&
-                LilyMirValidTypesOfFun(&top->fun, Types, Len)) {
-                return top->fun.name;
+            ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);
+
+            if (!strcmp(BaseName, top->fun.fun->fun.base_name) &&
+                LilyMirValidTypesOfFun(&top->fun.fun->fun, Types, Len)) {
+                return top->fun.fun->fun.name;
             }
         }
 
         for (Usize i = 0; i < Module->current->len - 1; ++i) {
-            LilyMirInstruction *current = Module->current->buffer[i];
+            LilyMirCurrent *current = Module->current->buffer[i];
 
-            switch (current->kind) {
-                case LILY_MIR_INSTRUCTION_KIND_FUN:
-                    if (!strcmp(BaseName, current->fun.base_name) &&
-                        LilyMirValidTypesOfFun(&current->fun, Types, Len)) {
-                        return current->fun.name;
-                    }
+            ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-                    break;
-                default:
-                    continue;
+            if (!strcmp(BaseName, current->fun.fun->fun.base_name) &&
+                LilyMirValidTypesOfFun(&current->fun.fun->fun, Types, Len)) {
+                return current->fun.fun->fun.name;
             }
         }
     }
@@ -488,14 +507,195 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
     UNREACHABLE("the analysis has a bug!!");
 }
 
-char *
-LilyMirGenerateName(LilyMirNameManager *NameManager)
+void
+LilyMirAddFinalInstruction(LilyMirModule *Module,
+                           LilyMirInstruction *exit_block)
 {
-    char *name = format("{s}{d}", NameManager->base_name, NameManager->count);
+    LilyMirCurrent *top = Module->current->top;
 
-    push__Vec(NameManager->names, name);
+    ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(top->fun.fun->fun.insts->len > 0);
 
-    ++NameManager->count;
+    LilyMirInstructionBlock *current_block = top->fun.fun->fun.block_stack->top;
 
-    return name;
+    if (current_block->insts->len == 0) {
+        return LilyMirAddInst(Module, LilyMirBuildJmp(Module, exit_block));
+    }
+
+    LilyMirInstruction *last_inst = last__Vec(current_block->insts);
+
+    if (last_inst->kind != LILY_MIR_INSTRUCTION_KIND_RET) {
+        return LilyMirAddInst(Module, LilyMirBuildJmp(Module, exit_block));
+    }
+}
+
+bool
+LilyMirHasRetInstruction(LilyMirModule *Module)
+{
+    LilyMirCurrent *top = Module->current->top;
+
+    ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(top->fun.fun->fun.insts->len > 0);
+
+    LilyMirInstructionBlock *current_block = top->fun.fun->fun.block_stack->top;
+
+    if (current_block->insts->len == 0) {
+        return false;
+    }
+
+    LilyMirInstruction *last_inst = last__Vec(current_block->insts);
+
+    if (last_inst->kind != LILY_MIR_INSTRUCTION_KIND_RET) {
+        return false;
+    }
+
+    return true;
+}
+
+void
+LilyMirBuildIfBranch(LilyMirModule *Module,
+                     LilyCheckedSignatureFun *fun_signature,
+                     LilyMirScope *scope,
+                     const LilyCheckedStmtIfBranch *if_branch,
+                     LilyMirInstruction *next_block,
+                     LilyMirInstruction *exit_block)
+{
+    //   ; ...
+    //   jmp cond
+    // cond:
+    //   %0 = <cond>
+    //   jmpcond %0, if, next
+    // if:
+    //   ; ...
+    //   jmp exit
+    // next:
+    //   ; ...
+    // exit:
+    //   ; ...
+
+    LilyMirInstruction *cond_block = LilyMirBuildBlock(Module);
+
+    // 1. Add jmp cond
+    LilyMirAddInst(Module, LilyMirBuildJmp(Module, cond_block));
+
+    // 2. Add cond block
+    LilyMirPopBlock(Module);
+    LilyMirAddBlock(Module, cond_block);
+
+    LilyMirInstruction *cond =
+      generate_expr__LilyMir(Module, fun_signature, scope, if_branch->cond);
+    LilyMirInstruction *if_block = LilyMirBuildBlock(Module);
+
+    // 3. Add conditional jmp
+    LilyMirAddInst(Module,
+                   LilyMirBuildJmpCond(Module, cond, if_block, next_block));
+
+    LilyMirPopBlock(Module);
+    LilyMirAddBlock(Module, if_block);
+
+    // 4. Generate the content of the body
+    GENERATE_BODY(Module, fun_signature, scope, if_branch->body);
+
+    // 5. Add final instruction
+    LilyMirAddFinalInstruction(Module, exit_block);
+
+    lily_free(cond);
+}
+
+void
+LilyMirBuildElifBranch(LilyMirModule *Module,
+                       LilyCheckedSignatureFun *fun_signature,
+                       LilyMirScope *scope,
+                       const LilyCheckedStmtIfBranch *elif_branch,
+                       LilyMirInstruction *next_block,
+                       LilyMirInstruction *current_block,
+                       LilyMirInstruction *exit_block)
+{
+    LilyMirPopBlock(Module);
+    LilyMirAddBlock(Module, current_block);
+
+    LilyMirInstruction *cond =
+      generate_expr__LilyMir(Module, fun_signature, scope, elif_branch->cond);
+    LilyMirInstruction *elif_block = LilyMirBuildBlock(Module);
+
+    // 1. Add conditional jmp
+    LilyMirAddInst(Module,
+                   LilyMirBuildJmpCond(Module, cond, elif_block, next_block));
+
+    LilyMirPopBlock(Module);
+    LilyMirAddBlock(Module, elif_block);
+
+    // 2. Generate the content of the body
+    GENERATE_BODY(Module, fun_signature, scope, elif_branch->body);
+
+    // 3. Add final instruction
+    LilyMirAddFinalInstruction(Module, exit_block);
+
+    lily_free(cond);
+}
+
+void
+LilyMirBuildElseBranch(LilyMirModule *Module,
+                       LilyCheckedSignatureFun *fun_signature,
+                       LilyMirScope *scope,
+                       const LilyCheckedStmtElseBranch *else_branch,
+                       LilyMirInstruction *current_block,
+                       LilyMirInstruction *exit_block)
+{
+    LilyMirPopBlock(Module);
+    LilyMirAddBlock(Module, current_block);
+
+    // 1. Generate the content of the body
+    GENERATE_BODY(Module, fun_signature, scope, else_branch->body);
+
+    // 2. Add final instruction
+    LilyMirAddFinalInstruction(Module, exit_block);
+}
+
+void
+LilyMirBuildIf(LilyMirModule *Module,
+               LilyCheckedSignatureFun *fun_signature,
+               LilyMirScope *scope,
+               const LilyCheckedStmtIf *if_stmt)
+{
+    LilyMirInstruction *exit_block = LilyMirBuildBlock(Module);
+    LilyMirInstruction *next_block = !if_stmt->elifs && !if_stmt->else_
+                                       ? exit_block
+                                       : LilyMirBuildBlock(Module);
+
+    LilyMirBuildIfBranch(
+      Module, fun_signature, scope, if_stmt->if_, next_block, exit_block);
+
+    if (if_stmt->elifs) {
+        for (Usize i = 0; i < if_stmt->elifs->len; ++i) {
+            LilyMirInstruction *current_block = next_block;
+
+            next_block = i + 1 == if_stmt->elifs->len && !if_stmt->else_
+                           ? exit_block
+                           : LilyMirBuildBlock(Module);
+
+            LilyMirBuildElifBranch(Module,
+                                   fun_signature,
+                                   scope,
+                                   get__Vec(if_stmt->elifs, i),
+                                   next_block,
+                                   current_block,
+                                   exit_block);
+        }
+    }
+
+    if (if_stmt->else_) {
+        LilyMirBuildElseBranch(
+          Module, fun_signature, scope, if_stmt->else_, next_block, exit_block);
+
+        if (!LilyMirHasRetInstruction(Module)) {
+            LilyMirPopBlock(Module);
+            LilyMirAddBlock(Module, exit_block);
+        } else {
+            FREE(LilyMirInstruction, exit_block);
+        }
+    } else {
+        LilyMirPopBlock(Module);
+        LilyMirAddBlock(Module, exit_block);
+    }
 }

@@ -31,6 +31,8 @@
 #include <base/vec.h>
 
 #include <core/lily/analysis/checked/expr.h>
+#include <core/lily/analysis/checked/signature.h>
+#include <core/lily/analysis/checked/stmt/if.h>
 #include <core/lily/mir/instruction.h>
 #include <core/lily/mir/scope.h>
 
@@ -215,6 +217,9 @@ void
 LilyMirAddBlock(LilyMirModule *Module, LilyMirInstruction *Block);
 
 LilyMirInstructionBlock *
+LilyMirPopBlock(LilyMirModule *Module);
+
+LilyMirInstructionBlock *
 LilyMirGetInsertBlock(LilyMirModule *Module);
 
 void
@@ -262,8 +267,26 @@ LilyMirBuildRetUnit(LilyMirModule *Module);
 LilyMirInstruction *
 LilyMirBuildRet(LilyMirModule *Module);
 
-LilyMirInstruction *
-LilyMirBuildJmp(LilyMirModule *Module);
+inline LilyMirInstruction *
+LilyMirBuildJmp(LilyMirModule *Module, LilyMirInstruction *block)
+{
+    return NEW_VARIANT(LilyMirInstruction, jmp, &block->block);
+}
+
+inline LilyMirInstruction *
+LilyMirBuildJmpCond(LilyMirModule *Module,
+                    LilyMirInstruction *Cond,
+                    LilyMirInstruction *ThenBlock,
+                    LilyMirInstruction *ElseBlock)
+{
+    ASSERT(Cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+    return NEW_VARIANT(LilyMirInstruction,
+                       jmpcond,
+                       NEW(LilyMirInstructionJmpCond,
+                           Cond->val,
+                           &ThenBlock->block,
+                           &ElseBlock->block));
+}
 
 /**
  *
@@ -324,6 +347,48 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
                            const char *BaseName,
                            LilyMirDt **Types,
                            Usize Len);
+
+void
+LilyMirAddFinalInstruction(LilyMirModule *Module,
+                           LilyMirInstruction *exit_block);
+
+bool
+LilyMirHasRetInstruction(LilyMirModule *Module);
+
+/// @param signature LilyCheckedSignatureFun*? (&)
+void
+LilyMirBuildIfBranch(LilyMirModule *Module,
+                     LilyCheckedSignatureFun *fun_signature,
+                     LilyMirScope *scope,
+                     const LilyCheckedStmtIfBranch *if_branch,
+                     LilyMirInstruction *next_block,
+                     LilyMirInstruction *exit_block);
+
+/// @param signature LilyCheckedSignatureFun*? (&)
+void
+LilyMirBuildElifBranch(LilyMirModule *Module,
+                       LilyCheckedSignatureFun *fun_signature,
+                       LilyMirScope *scope,
+                       const LilyCheckedStmtIfBranch *elif_branch,
+                       LilyMirInstruction *next_block,
+                       LilyMirInstruction *current_block,
+                       LilyMirInstruction *exit_block);
+
+/// @param signature LilyCheckedSignatureFun*? (&)
+void
+LilyMirBuildElseBranch(LilyMirModule *Module,
+                       LilyCheckedSignatureFun *fun_signature,
+                       LilyMirScope *scope,
+                       const LilyCheckedStmtElseBranch *else_branch,
+                       LilyMirInstruction *current_block,
+                       LilyMirInstruction *exit_block);
+
+/// @param signature LilyCheckedSignatureFun*? (&)
+void
+LilyMirBuildIf(LilyMirModule *Module,
+               LilyCheckedSignatureFun *fun_signature,
+               LilyMirScope *scope,
+               const LilyCheckedStmtIf *if_stmt);
 
 inline LilyMirCurrent *
 LilyMirGetCurrentOnTop(LilyMirModule *Module)

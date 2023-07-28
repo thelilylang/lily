@@ -2550,7 +2550,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
               to_string__Debug__LilyMirInstructionDestSrc(&self->isub));
             break;
         case LILY_MIR_INSTRUCTION_KIND_JMP:
-            res = format__String("\x1b[34mjmp\x1b[34m \x1b[33mblock\x1b[0m {s}",
+            res = format__String("\x1b[34mjmp\x1b[34m \x1b[33mblock\x1b[0m {S}",
                                  self->jmp->name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_JMPCOND:

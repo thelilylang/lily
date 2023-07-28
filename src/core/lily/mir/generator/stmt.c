@@ -46,7 +46,9 @@ generate_stmt__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_STMT_KIND_FOR:
             TODO("generate for stmt");
         case LILY_CHECKED_STMT_KIND_IF:
-            TODO("generate if stmt");
+            LilyMirBuildIf(module, fun_signature, scope, &stmt->if_);
+
+            return NULL;
         case LILY_CHECKED_STMT_KIND_MATCH:
             TODO("generate match stmt");
         case LILY_CHECKED_STMT_KIND_NEXT:
