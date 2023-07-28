@@ -9668,6 +9668,9 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
     // 9. Lock all data types
     lock_data_types__LilyCheckedDeclFun(&fun->fun);
 
+    // 10. Free history
+    FREE(LilyCheckedHistory, &history);
+
     fun->fun.is_checked = true;
 }
 
@@ -9765,6 +9768,8 @@ check_alias__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *alias)
                                     alias->type.alias.scope,
                                     NULL,
                                     LILY_CHECKED_SAFETY_MODE_SAFE);
+
+    FREE(LilyCheckedHistory, &history);
 
     alias->type.alias.is_checked = true;
 }
@@ -9910,6 +9915,8 @@ check_record__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *record)
         }
     }
 
+    FREE(LilyCheckedHistory, &history);
+
     record->type.record.is_checked = true;
 }
 
@@ -10015,6 +10022,8 @@ check_enum__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *enum_)
         }
     }
 
+    FREE(LilyCheckedHistory, &history);
+
     enum_->type.enum_.is_checked = true;
 }
 
@@ -10044,6 +10053,8 @@ check_error__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *error)
         error->error.is_recursive = check_for_recursive_data_type__LilyAnalysis(
           self, error->error.data_type, error->error.global_name);
     }
+
+    FREE(LilyCheckedHistory, &history);
 
     error->error.is_checked = true;
 }
