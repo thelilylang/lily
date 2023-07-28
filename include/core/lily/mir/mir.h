@@ -222,6 +222,9 @@ LilyMirPopBlock(LilyMirModule *Module);
 LilyMirInstructionBlock *
 LilyMirGetInsertBlock(LilyMirModule *Module);
 
+bool
+LilyMirEmptyBlock(LilyMirModule *Module);
+
 void
 LilyMirDeleteBasicBlock(LilyMirInstructionBlock *Block);
 

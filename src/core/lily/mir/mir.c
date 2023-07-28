@@ -417,6 +417,30 @@ LilyMirPopBlock(LilyMirModule *Module)
     return pop__Stack(current->fun.fun->fun.block_stack);
 }
 
+LilyMirInstructionBlock *
+LilyMirGetInsertBlock(LilyMirModule *Module)
+{
+    LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
+
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(current->fun.fun->fun.block_stack->len > 0);
+
+    return current->fun.fun->fun.block_stack->top;
+}
+
+bool
+LilyMirEmptyBlock(LilyMirModule *Module)
+{
+    LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
+
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(current->fun.fun->fun.block_stack->len > 0);
+
+    return CAST(LilyMirInstructionBlock *,
+                current->fun.fun->fun.block_stack->top)
+             ->insts->len == 0;
+}
+
 char *
 LilyMirGenerateName(LilyMirNameManager *NameManager)
 {
@@ -573,14 +597,17 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     // exit:
     //   ; ...
 
-    LilyMirInstruction *cond_block = LilyMirBuildBlock(Module);
+    // If the previous block is empty, no condition block will be created.
+    LilyMirInstruction *cond_block =
+      LilyMirEmptyBlock(Module) ? NULL : LilyMirBuildBlock(Module);
 
     // 1. Add jmp cond
-    LilyMirAddInst(Module, LilyMirBuildJmp(Module, cond_block));
-
     // 2. Add cond block
-    LilyMirPopBlock(Module);
-    LilyMirAddBlock(Module, cond_block);
+    if (cond_block) {
+        LilyMirAddInst(Module, LilyMirBuildJmp(Module, cond_block));
+        LilyMirPopBlock(Module);
+        LilyMirAddBlock(Module, cond_block);
+    }
 
     LilyMirInstruction *cond =
       generate_expr__LilyMir(Module, fun_signature, scope, if_branch->cond);
