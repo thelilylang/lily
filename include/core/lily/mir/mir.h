@@ -217,6 +217,9 @@ void
 LilyMirAddBlock(LilyMirModule *Module, LilyMirInstruction *Block);
 
 LilyMirInstructionBlock *
+LilyMirPopBlock(LilyMirModule *Module);
+
+LilyMirInstructionBlock *
 LilyMirGetInsertBlock(LilyMirModule *Module);
 
 void
@@ -348,6 +351,9 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
 void
 LilyMirAddFinalInstruction(LilyMirModule *Module,
                            LilyMirInstruction *exit_block);
+
+bool
+LilyMirHasRetInstruction(LilyMirModule *Module);
 
 /// @param signature LilyCheckedSignatureFun*? (&)
 void

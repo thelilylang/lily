@@ -398,12 +398,23 @@ LilyMirBuildBlock(LilyMirModule *Module)
 void
 LilyMirAddBlock(LilyMirModule *Module, LilyMirInstruction *Block)
 {
-    LilyMirCurrent *current = Module->current->top;
+    LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
     push__Vec(current->fun.fun->fun.insts, Block);
     push__Stack(current->fun.fun->fun.block_stack, &Block->block);
+}
+
+LilyMirInstructionBlock *
+LilyMirPopBlock(LilyMirModule *Module)
+{
+    LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
+
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(current->fun.fun->fun.block_stack->len > 0);
+
+    return pop__Stack(current->fun.fun->fun.block_stack);
 }
 
 char *
@@ -505,19 +516,40 @@ LilyMirAddFinalInstruction(LilyMirModule *Module,
     ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);
     ASSERT(top->fun.fun->fun.insts->len > 0);
 
-    LilyMirInstruction *last_block = last__Vec(top->fun.fun->fun.insts);
+    LilyMirInstructionBlock *current_block = top->fun.fun->fun.block_stack->top;
 
-    ASSERT(last_block->kind == LILY_MIR_INSTRUCTION_KIND_BLOCK);
-
-    if (last_block->block.insts->len == 0) {
+    if (current_block->insts->len == 0) {
         return LilyMirAddInst(Module, LilyMirBuildJmp(Module, exit_block));
     }
 
-    LilyMirInstruction *last_inst = last__Vec(last_block->block.insts);
+    LilyMirInstruction *last_inst = last__Vec(current_block->insts);
 
     if (last_inst->kind != LILY_MIR_INSTRUCTION_KIND_RET) {
         return LilyMirAddInst(Module, LilyMirBuildJmp(Module, exit_block));
     }
+}
+
+bool
+LilyMirHasRetInstruction(LilyMirModule *Module)
+{
+    LilyMirCurrent *top = Module->current->top;
+
+    ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(top->fun.fun->fun.insts->len > 0);
+
+    LilyMirInstructionBlock *current_block = top->fun.fun->fun.block_stack->top;
+
+    if (current_block->insts->len == 0) {
+        return false;
+    }
+
+    LilyMirInstruction *last_inst = last__Vec(current_block->insts);
+
+    if (last_inst->kind != LILY_MIR_INSTRUCTION_KIND_RET) {
+        return false;
+    }
+
+    return true;
 }
 
 void
@@ -547,6 +579,7 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     LilyMirAddInst(Module, LilyMirBuildJmp(Module, cond_block));
 
     // 2. Add cond block
+    LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, cond_block);
 
     LilyMirInstruction *cond =
@@ -557,6 +590,7 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     LilyMirAddInst(Module,
                    LilyMirBuildJmpCond(Module, cond, if_block, next_block));
 
+    LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, if_block);
 
     // 4. Generate the content of the body
@@ -577,6 +611,7 @@ LilyMirBuildElifBranch(LilyMirModule *Module,
                        LilyMirInstruction *current_block,
                        LilyMirInstruction *exit_block)
 {
+    LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, current_block);
 
     LilyMirInstruction *cond =
@@ -587,6 +622,7 @@ LilyMirBuildElifBranch(LilyMirModule *Module,
     LilyMirAddInst(Module,
                    LilyMirBuildJmpCond(Module, cond, elif_block, next_block));
 
+    LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, elif_block);
 
     // 2. Generate the content of the body
@@ -606,6 +642,7 @@ LilyMirBuildElseBranch(LilyMirModule *Module,
                        LilyMirInstruction *current_block,
                        LilyMirInstruction *exit_block)
 {
+    LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, current_block);
 
     // 1. Generate the content of the body
@@ -650,7 +687,15 @@ LilyMirBuildIf(LilyMirModule *Module,
     if (if_stmt->else_) {
         LilyMirBuildElseBranch(
           Module, fun_signature, scope, if_stmt->else_, next_block, exit_block);
-    }
 
-    LilyMirAddBlock(Module, exit_block);
+        if (!LilyMirHasRetInstruction(Module)) {
+            LilyMirPopBlock(Module);
+            LilyMirAddBlock(Module, exit_block);
+        } else {
+            FREE(LilyMirInstruction, exit_block);
+        }
+    } else {
+        LilyMirPopBlock(Module);
+        LilyMirAddBlock(Module, exit_block);
+    }
 }
