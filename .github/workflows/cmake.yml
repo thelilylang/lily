@@ -50,6 +50,9 @@ jobs:
 
     - name: Download & Install LLVM
       run: brew install llvm@15
+
+    - name: Download & Install ZLib
+      run: brew install zlib
     
     - name: Download & Install python requirements
       run: cd ${{github.workspace}} && pip install -r requirements.txt
