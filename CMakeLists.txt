@@ -43,7 +43,7 @@ execute_process(
 set(LILY_LLD_LIBS lily_lld_common lily_lld_coff lily_lld_elf lily_lld_mach_o
                   lily_lld_mingw lily_lld_wasm)
 
-find_library(ZLIB NAMES libz.a libz.so zlib libz)
+find_library(ZLIB NAMES libz.a libz.so zlib libz z)
 list(APPEND LILY_LLVM_LIBS "${ZLIB}")
 
 set(LILY_INCLUDE include lib/local/include)
