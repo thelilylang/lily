@@ -25,6 +25,8 @@
 #ifndef LILY_BASE_DIR_H
 #define LILY_BASE_DIR_H
 
+#include <stdbool.h>
+
 // NOTE: Only useful on Unix operating systems
 enum DirMode
 {
