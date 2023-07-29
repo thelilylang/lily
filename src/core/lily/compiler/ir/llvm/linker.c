@@ -42,10 +42,13 @@ run__LilyIrLlvmLinker(LilyPackage *self)
       get_slice__Str(self->file.name, 0, strlen(self->file.name) - 5);
 
     String *object_path = format__String("{sa}.o", path_base);
+    // char *error_msg = NULL;
 
-    LilyLLDLink(LILY_COMPILER_LINKER_OBJECT_FORMAT_ELF,
-                (const char **)self->linker.llvm.args->buffer,
-                self->linker.llvm.args->len);
+    // LLVMTargetMachineEmitToFile(self->ir.llvm.machine,
+    //                             self->ir.llvm.module,
+    //                             object_path->buffer,
+    //                             LLVMObjectFile,
+    //                             &error_msg);
 
     // append__String(self->linker.llvm.command, path);
     // push_str__String(self->linker.llvm.command, " -llily_sys
@@ -57,6 +60,10 @@ run__LilyIrLlvmLinker(LilyPackage *self)
 
     // system(self->linker.llvm.command->buffer);
     // remove(path->buffer);
+
+    LilyLLDLink(LILY_COMPILER_LINKER_OBJECT_FORMAT_ELF,
+                (const char **)self->linker.llvm.args->buffer,
+                self->linker.llvm.args->len);
 
     // lily_free(content);
     // FREE(String, path);
