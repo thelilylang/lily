@@ -147,7 +147,7 @@ set(LLD_ELF_SRC
     ${CMAKE_SOURCE_DIR}/lib/local/src/lld/ELF/Writer.cpp)
 
 add_library(lily_lld_elf STATIC ${LLD_ELF_SRC})
-target_link_libraries(lily_lld_elf PRIVATE ${LILY_LLVM_LIBS})
+target_link_libraries(lily_lld_elf PRIVATE ${LILY_LLVM_LIBS} lily_lld_common)
 target_include_directories(
   lily_lld_elf
   PRIVATE ${LILY_INCLUDE} lib/local/src/lld/ELF
@@ -187,7 +187,7 @@ set(LLD_MACH_O_SRC
     ${CMAKE_SOURCE_DIR}/lib/local/src/lld/MachO/Writer.cpp)
 
 add_library(lily_lld_mach_o STATIC ${LLD_MACH_O_SRC})
-target_link_libraries(lily_lld_mach_o PRIVATE ${LILY_LLVM_LIBS})
+target_link_libraries(lily_lld_mach_o PRIVATE ${LILY_LLVM_LIBS} lily_lld_common)
 target_include_directories(
   lily_lld_mach_o
   PRIVATE ${LILY_INCLUDE} lib/local/src/lld/MachO
@@ -200,7 +200,7 @@ set_target_properties(lily_lld_mach_o PROPERTIES COMPILE_FLAGS
 set(LLD_MINGW_SRC lib/local/src/lld/MinGW/Driver.cpp)
 
 add_library(lily_lld_mingw STATIC ${LLD_MINGW_SRC})
-target_link_libraries(lily_lld_mingw PRIVATE ${LILY_LLVM_LIBS})
+target_link_libraries(lily_lld_mingw PRIVATE ${LILY_LLVM_LIBS} lily_lld_common)
 target_include_directories(
   lily_lld_mingw
   PRIVATE ${LILY_INCLUDE} lib/local/src/lld/MinGW
@@ -226,7 +226,7 @@ set(LLD_WASM_SRC
     ${CMAKE_SOURCE_DIR}/lib/local/src/lld/wasm/WriterUtils.cpp)
 
 add_library(lily_lld_wasm STATIC ${LLD_WASM_SRC})
-target_link_libraries(lily_lld_wasm PRIVATE ${LILY_LLVM_LIBS})
+target_link_libraries(lily_lld_wasm PRIVATE ${LILY_LLVM_LIBS} lily_lld_common)
 target_include_directories(
   lily_lld_wasm
   PRIVATE ${LILY_INCLUDE} lib/local/src/lld/wasm
@@ -778,7 +778,8 @@ target_link_libraries(lily lily_cli lily_command)
 target_include_directories(lily PRIVATE ${LILY_INCLUDE})
 
 add_executable(lilyc ${CMAKE_SOURCE_DIR}/src/bin/lilyc/main.c)
-target_link_libraries(lilyc lilyc_cli lilyc_command ${LILY_LLD_LIBS} ${LILY_LLVM_LIBS})
+target_link_libraries(lilyc lilyc_cli lilyc_command ${LILY_LLD_LIBS}
+                      ${LILY_LLVM_LIBS})
 target_include_directories(lilyc PRIVATE ${LILY_INCLUDE})
 
 # lily_builtin
