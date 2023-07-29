@@ -22,11 +22,14 @@
  * SOFTWARE.
  */
 
+extern "C"
+{
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/string.h>
 
 #include <core/lily/compiler/linker/lld.h>
+}
 
 #include <lld/Common/Driver.h>
 
