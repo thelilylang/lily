@@ -778,7 +778,7 @@ target_link_libraries(lily lily_cli lily_command)
 target_include_directories(lily PRIVATE ${LILY_INCLUDE})
 
 add_executable(lilyc ${CMAKE_SOURCE_DIR}/src/bin/lilyc/main.c)
-target_link_libraries(lilyc lilyc_cli lilyc_command)
+target_link_libraries(lilyc lilyc_cli lilyc_command ${LILY_LLD_LIBS} ${LILY_LLVM_LIBS})
 target_include_directories(lilyc PRIVATE ${LILY_INCLUDE})
 
 # lily_builtin
