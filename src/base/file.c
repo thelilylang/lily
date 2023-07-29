@@ -22,46 +22,22 @@
  * SOFTWARE.
  */
 
-#include <base/platform.h>
-
-#ifdef LILY_WINDOWS_OS
-#include <windows.h>
-#else
-#include <dirent.h>
-#include <sys/stat.h>
-#endif
-
 #include <base/alloc.h>
 #include <base/assert.h>
+#include <base/dir.h>
 #include <base/file.h>
 #include <base/macros.h>
+#include <base/platform.h>
+#include <base/sys.h>
 #include <base/types.h>
 
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-bool
-is_directory__File(const char *path)
-{
 #ifdef LILY_WINDOWS_OS
-    DWORD dwAttrib = GetFileAttributes(path);
-
-    return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
-            (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-#else
-    DIR *dir = opendir(path);
-
-    if (ENOENT == errno || dir == NULL) {
-        return false;
-    }
-
-    closedir(dir);
+#include <windows.h>
 #endif
-
-    return true;
-}
 
 char *
 get_extension__File(const char *path)
@@ -88,15 +64,15 @@ get_extension__File(const char *path)
     return extension;
 }
 
-#ifdef LILY_WINDOWS_OS
-// TODO: optimize the read of file for Windows
 Usize
 get_size__File(const char *path)
 {
-    // TODO: get size of the file
-    return 0;
+    struct __stat__ st;
+    __stat__(path, &st);
+    return st.st_size;
 }
 
+#ifdef LILY_WINDOWS_OS
 char *
 read_file__File(const char *path)
 {
@@ -132,20 +108,10 @@ read_file__File(const char *path)
     return content;
 }
 #else
-struct stat st;
-
-Usize
-get_size__File(const char *path)
-{
-    stat(path, &st);
-
-    return st.st_size;
-}
-
 char *
 read_file__File(const char *path)
 {
-    if (is_directory__File(path)) {
+    if (is__Dir(path)) {
         printf("\x1b[31merror\x1b[0m: the file is a directory: `%s`\n", path);
         exit(1);
     }
@@ -157,7 +123,9 @@ read_file__File(const char *path)
         exit(1);
     }
 
-    stat(path, &st);
+    struct __stat__ st;
+
+    __stat__(path, &st);
 
     Usize size = st.st_size + 2;
     char *content = lily_malloc(size);
