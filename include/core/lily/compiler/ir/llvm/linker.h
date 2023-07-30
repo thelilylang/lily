@@ -26,7 +26,7 @@
 #define LILY_CORE_LILY_COMPILER_IR_LLVM_LINKER_H
 
 #include <base/new.h>
-#include <base/string.h>
+#include <base/vec.h>
 
 #include <core/lily/compiler/ir/llvm.h>
 
@@ -35,13 +35,12 @@ typedef struct LilyPackage LilyPackage;
 typedef struct LilyIrLlvmLinker
 {
     const LilyIrLlvm *llvm;
-    String *command;
+    Vec *args; // Vec<char*>*
 } LilyIrLlvmLinker;
 
 inline CONSTRUCTOR(LilyIrLlvmLinker, LilyIrLlvmLinker, const LilyIrLlvm *llvm)
 {
-    return (LilyIrLlvmLinker){ .llvm = llvm,
-                               .command = from__String("clang ") };
+    return (LilyIrLlvmLinker){ .llvm = llvm, .args = NEW(Vec) };
 }
 
 /**
@@ -55,9 +54,6 @@ run__LilyIrLlvmLinker(LilyPackage *self);
  *
  * @brief Free LilyIrLlvmLinker type.
  */
-inline DESTRUCTOR(LilyIrLlvmLinker, const LilyIrLlvmLinker *self)
-{
-    FREE(String, self->command);
-}
+DESTRUCTOR(LilyIrLlvmLinker, const LilyIrLlvmLinker *self);
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_LINKER_H

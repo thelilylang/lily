@@ -53,6 +53,18 @@
     PUSH_STR(d_s);                    \
     lily_free(d_s);
 
+#ifdef PLATFORM_64
+#define PUSH_ZU(d, base)                \
+    char *zu_s = itoa__Uint64(d, base); \
+    PUSH_STR(zu_s);                     \
+    lily_free(zu_s);
+#else
+#define PUSH_ZU(d, base)                \
+    char *zu_s = itoa__Uint32(d, base); \
+    PUSH_STR(zu_s);                     \
+    lily_free(zu_s);
+#endif
+
 char *
 format(const char *fmt, ...)
 {
@@ -233,6 +245,19 @@ format(const char *fmt, ...)
                             i += 3;
                         } else {
                             i += 2;
+                        }
+
+                        break;
+                    }
+                    case 'z': {
+                        if (fmt[i + 2] == 'u') {
+                            size_t zu = va_arg(vl, size_t);
+
+                            PUSH_ZU(zu, 10);
+
+                            i += 3;
+                        } else {
+                            FAILED("expected {zu}");
                         }
 
                         break;

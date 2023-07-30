@@ -26,10 +26,13 @@
 #include <base/new.h>
 #include <base/platform.h>
 
+#include <cli/emit.h>
+
 #include <core/lily/compiler/ir/llvm.h>
 
 #include <llvm-c/DebugInfo.h>
 
+#include <stdio.h>
 #include <string.h>
 
 // Get default target triple.
@@ -98,12 +101,21 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     LLVMInitializeNativeAsmParser();
     LLVMInitializeCore(LLVMGetGlobalPassRegistry());
 
-    LLVMModuleRef module = LLVMModuleCreateWithName(module_name);
-    LLVMTargetRef target = LLVMGetFirstTarget();
-
     char *triple = get_triple();
     char *cpu = get_cpu();
     char *cpu_features = get_cpu_features();
+
+    LLVMModuleRef module = LLVMModuleCreateWithName(module_name);
+    LLVMTargetRef target = NULL;
+    char *target_error_msg = NULL;
+
+    if (LLVMGetTargetFromTriple(triple, &target, &target_error_msg) != 0) {
+        EMIT_ERROR(target_error_msg);
+        LLVMDisposeMessage(target_error_msg);
+        exit(1);
+    }
+
+    // LLVMTargetRef target = LLVMGetFirstTarget();
 
     LLVMSetTarget(module, triple);
 

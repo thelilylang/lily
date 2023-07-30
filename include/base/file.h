@@ -31,13 +31,6 @@
 
 /**
  *
- * @brief Check if the path is a directory.
- */
-bool
-is_directory__File(const char *path);
-
-/**
- *
  * @brief Get extension of the path.
  */
 char *

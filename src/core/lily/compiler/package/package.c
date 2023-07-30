@@ -30,7 +30,10 @@
 #include <cli/emit.h>
 #include <cli/lilyc/config.h>
 
+#include <core/lily/compiler/ir/llvm/compile.h>
 #include <core/lily/compiler/ir/llvm/generator.h>
+#include <core/lily/compiler/output/cache.h>
+#include <core/lily/compiler/output/obj.h>
 #include <core/lily/compiler/package/package.h>
 #include <core/lily/lily.h>
 #include <core/lily/mir/generator.h>
@@ -239,6 +242,9 @@ build__LilyPackage(const LilycConfig *config,
     exit(0);
 #endif
 
+    // Create `out.lily` cache
+    create_cache__LilyCompilerOutputCache();
+
     package_threads =
       lily_malloc(sizeof(pthread_t) * self->precompile.dependency_trees->len);
 
@@ -281,6 +287,7 @@ run__LilyPackage(void *self)
     run__LilyAnalysis(&tree->package->analysis);
     run__LilyMir(tree->package);
     run__LilyIr(tree->package);
+    compile__LilyCompilerOutputObj(tree, &compile__LilyCompilerIrLlvm);
 
     if (tree->package->status == LILY_PACKAGE_STATUS_MAIN) {
         // run__LilyLinker(tree->package);

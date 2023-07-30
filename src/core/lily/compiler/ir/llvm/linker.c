@@ -28,6 +28,7 @@
 #include <cli/emit.h>
 #include <core/lily/compiler/ir/llvm/dump.h>
 #include <core/lily/compiler/ir/llvm/linker.h>
+#include <core/lily/compiler/linker/lld.h>
 #include <core/lily/compiler/package.h>
 
 void
@@ -41,19 +42,13 @@ run__LilyIrLlvmLinker(LilyPackage *self)
       get_slice__Str(self->file.name, 0, strlen(self->file.name) - 5);
 
     String *object_path = format__String("{sa}.o", path_base);
-    char *error_msg = NULL;
+    // char *error_msg = NULL;
 
-    LLVMTargetMachineEmitToFile(self->ir.llvm.machine,
-                                self->ir.llvm.module,
-                                object_path->buffer,
-                                LLVMObjectFile,
-                                &error_msg);
-
-    if (error_msg) {
-        EMIT_ERROR(error_msg);
-        LLVMDisposeMessage(error_msg);
-        exit(1);
-    }
+    // LLVMTargetMachineEmitToFile(self->ir.llvm.machine,
+    //                             self->ir.llvm.module,
+    //                             object_path->buffer,
+    //                             LLVMObjectFile,
+    //                             &error_msg);
 
     // append__String(self->linker.llvm.command, path);
     // push_str__String(self->linker.llvm.command, " -llily_sys
@@ -66,7 +61,20 @@ run__LilyIrLlvmLinker(LilyPackage *self)
     // system(self->linker.llvm.command->buffer);
     // remove(path->buffer);
 
+    LilyLLDLink(LILY_COMPILER_LINKER_OBJECT_FORMAT_ELF,
+                (const char **)self->linker.llvm.args->buffer,
+                self->linker.llvm.args->len);
+
     // lily_free(content);
     // FREE(String, path);
 #endif
+}
+
+DESTRUCTOR(LilyIrLlvmLinker, const LilyIrLlvmLinker *self)
+{
+    for (Usize i = 0; i < self->args->len; ++i) {
+        lily_free(get__Vec(self->args, i));
+    }
+
+    FREE(Vec, self->args);
 }

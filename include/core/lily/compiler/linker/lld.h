@@ -25,13 +25,21 @@
 #ifndef LILY_CORE_LILY_COMPILER_LINKER_LLD_H
 #define LILY_CORE_LILY_COMPILER_LINKER_LLD_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <core/lily/compiler/linker/object_format.h>
 
 #include <base/types.h>
 
-bool
-LilyLLDLink(enum LilyCompilerLinkerObjectFormat obj_format,
-            const char **args,
-            Usize arg_len);
+    bool LilyLLDLink(enum LilyCompilerLinkerObjectFormat obj_format,
+                     const char **args,
+                     Usize arg_len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LILY_CORE_LILY_COMPILER_LINKER_LLD_H

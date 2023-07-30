@@ -58,6 +58,11 @@ typedef struct LilyPackageConfig
     bool wasm_ir; // Use WASM IR instead of LLVM IR.
     enum Arch arch_target;
     enum Os os_target;
+    bool o0;
+    bool o1;
+    bool o2;
+    bool o3;
+    bool oz;
 } LilyPackageConfig;
 
 /**
@@ -79,7 +84,12 @@ CONSTRUCTOR(LilyPackageConfig,
             bool cpp_ir,
             bool js_ir,
             bool llvm_ir,
-            bool wasm_ir);
+            bool wasm_ir,
+            bool o0,
+            bool o1,
+            bool o2,
+            bool o3,
+            bool oz);
 
 /**
  *
@@ -101,8 +111,13 @@ from_CompileConfig__LilyPackageConfig(const LilycConfig *lilyc_config)
                lilyc_config->cc_ir,
                lilyc_config->cpp_ir,
                lilyc_config->js_ir,
-               0,
-               0);
+               lilyc_config->llvm_ir,
+               lilyc_config->wasm_ir,
+               lilyc_config->o0,
+               lilyc_config->o1,
+               lilyc_config->o2,
+               lilyc_config->o3,
+               lilyc_config->oz);
 }
 
 #endif // LILY_CORE_LILY_COMPILER_PACKAGE_CONFIG
