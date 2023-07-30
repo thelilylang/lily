@@ -43,20 +43,27 @@ void
 compile__LilyCompilerIrLlvm(const LilyPackage *package)
 {
 #ifdef PLATFORM_64
-    char *path = format("{s}{S}{zu}{s}",
+    char *path = format("{s}{S}{zu}{zu}{s}",
                         DIR_CACHE_OBJ,
                         package->name,
                         hash_sip(package->global_name->buffer,
                                  package->global_name->len,
                                  0x0123456789abcdefULL,
                                  0xfedcba9876543210ULL),
+                        hash_sip(package->file.name,
+                                 strlen(package->file.name),
+                                 0x0123456789abcdefULL,
+                                 0xfedcba9876543210ULL),
                         OBJ_EXT);
 #else
-    char *path = format("{s}{S}{zu}{s}",
+    char *path = format("{s}{S}{zu}{zu}{s}",
                         DIR_CACHE_OBJ,
                         package->name,
                         hash_sip(package->global_name->buffer,
                                  package->global_name->len,
+                                 0x01234567,
+                                 0x89abcdef),
+                        hash_sip(package->file.name strlen(package->file.name),
                                  0x01234567,
                                  0x89abcdef),
                         OBJ_EXT);
