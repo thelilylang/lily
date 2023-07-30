@@ -40,6 +40,7 @@ run__LilycParseConfig(const Vec *results)
          run_ir = false;
     bool cc_ir = false, cpp_ir = false, js_ir = false, llvm_ir = false,
          wasm_ir = false;
+    bool o0 = false, o1 = false, o2 = false, o3 = false, oz = false;
     const char *target = NULL;
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
@@ -106,6 +107,24 @@ run__LilycParseConfig(const Vec *results)
                         target = current->option->value->single;
 
                         break;
+                    case 19:
+                    case 22:
+                        o0 = true;
+                        break;
+                    case 20:
+                    case 25:
+                        o3 = true;
+                        break;
+                    case 21:
+                    case 26:
+                        oz = true;
+                        break;
+                    case 23:
+                        o1 = true;
+                        break;
+                    case 24:
+                        o2 = true;
+                        break;
                     default:
                         UNREACHABLE("unknown option");
                 }
@@ -131,5 +150,10 @@ run__LilycParseConfig(const Vec *results)
                cpp_ir,
                js_ir,
                llvm_ir,
-               wasm_ir);
+               wasm_ir,
+               o0,
+               o1,
+               o2,
+               o3,
+               oz);
 }

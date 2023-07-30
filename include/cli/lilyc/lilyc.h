@@ -44,6 +44,14 @@
     CliOption *js_ir = NEW(CliOption, "--js-ir");                             \
     CliOption *wasm_ir = NEW(CliOption, "--wasm-ir");                         \
     CliOption *target = NEW(CliOption, "--target");                           \
+    CliOption *ODebug = NEW(CliOption, "-ODebug");                            \
+    CliOption *ORelease = NEW(CliOption, "-ORelease");                        \
+    CliOption *OSize = NEW(CliOption, "-OSize");                              \
+    CliOption *O0 = NEW(CliOption, "-O0");                                    \
+    CliOption *O1 = NEW(CliOption, "-O1");                                    \
+    CliOption *O2 = NEW(CliOption, "-O2");                                    \
+    CliOption *O3 = NEW(CliOption, "-O3");                                    \
+    CliOption *Oz = NEW(CliOption, "-Oz");                                    \
                                                                               \
     dump_scanner->$help(dump_scanner, "Dump scanner output");                 \
     dump_parser->$help(dump_parser, "Dump parser output");                    \
@@ -63,6 +71,14 @@
       ->$help(target,                                                         \
               "Specify the target of the compilation (<arch>-<os>-<abi>)")    \
       ->$value(target, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "TARGET", true)); \
+    ODebug->$help(ODebug, "Debug optimization");                              \
+    ORelease->$help(ORelease, "Release optimization");                        \
+    OSize->$help(OSize, "Size optimization");                                 \
+    O0->$help(O0, "Level 0 of optimization (Debug)");                         \
+    O1->$help(O1, "Level 1 of optimization");                                 \
+    O2->$help(O2, "Level 2 of optimization");                                 \
+    O3->$help(O3, "Level 3 of optimization (Release)");                       \
+    Oz->$help(Oz, "Size optimization");                                       \
                                                                               \
     self->$option(self, dump_scanner)                                         \
       ->$option(self, dump_parser)                                            \
@@ -78,7 +94,15 @@
       ->$option(self, cpp_ir)                                                 \
       ->$option(self, js_ir)                                                  \
       ->$option(self, wasm_ir)                                                \
-      ->$option(self, target);
+      ->$option(self, target)                                                 \
+      ->$option(self, ODebug)                                                 \
+      ->$option(self, ORelease)                                               \
+      ->$option(self, OSize)                                                  \
+      ->$option(self, O0)                                                     \
+      ->$option(self, O1)                                                     \
+      ->$option(self, O2)                                                     \
+      ->$option(self, O3)                                                     \
+      ->$option(self, Oz);
 
 Cli
 build__CliLilyc(Vec *args);

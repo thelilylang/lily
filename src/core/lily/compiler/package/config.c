@@ -39,7 +39,12 @@ CONSTRUCTOR(LilyPackageConfig,
             bool cpp_ir,
             bool js_ir,
             bool llvm_ir,
-            bool wasm_ir)
+            bool wasm_ir,
+            bool o0,
+            bool o1,
+            bool o2,
+            bool o3,
+            bool oz)
 {
     enum Os os = -1;
     enum Arch arch = -1;
@@ -83,5 +88,10 @@ CONSTRUCTOR(LilyPackageConfig,
                                 .llvm_ir = llvm_ir,
                                 .wasm_ir = wasm_ir,
                                 .arch_target = arch,
-                                .os_target = os };
+                                .os_target = os,
+                                .o0 = o0,
+                                .o1 = o1,
+                                .o2 = o2,
+                                .o3 = o3,
+                                .oz = oz };
 }
