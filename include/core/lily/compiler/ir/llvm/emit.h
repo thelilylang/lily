@@ -36,13 +36,13 @@ extern "C"
      *
      * @brief Emit object, assembly, IR or bitcode file.
      */
-    bool LilyLLVMEmit(const LilyIrLlvm *self,
-                      char **error_msg,
-                      const char *filename,
-                      bool emit_obj,
-                      bool emit_asm,
-                      bool emit_ir,
-                      bool emit_bitcode);
+    int LilyLLVMEmit(const LilyIrLlvm *self,
+                     char **error_msg,
+                     const char *filename,
+                     bool emit_obj,
+                     bool emit_asm,
+                     bool emit_ir,
+                     bool emit_bitcode);
 
 #ifdef __cplusplus
 }

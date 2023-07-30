@@ -34,7 +34,7 @@
 
 using namespace llvm;
 
-bool
+int
 LilyLLVMEmit(const LilyIrLlvm *self,
              char **error_msg,
              const char *filename,
@@ -99,7 +99,6 @@ LilyLLVMEmit(const LilyIrLlvm *self,
 
     cpm.add(
       createTargetTransformInfoWrapperPass(machine.getTargetIRAnalysis()));
-    cpm.run(module);
 
     if (emit_obj) {
         if (machine.addPassesToEmitFile(
@@ -117,6 +116,9 @@ LilyLLVMEmit(const LilyIrLlvm *self,
         }
     }
 
+    // CodeGen phase
+    // cpm.run(module);
+
     if (emit_ir) {
         if (LLVMPrintModuleToFile(self->module, filename, error_msg)) {
             return 1;
@@ -124,7 +126,13 @@ LilyLLVMEmit(const LilyIrLlvm *self,
     }
 
     if (emit_obj) {
-        WriteBitcodeToFile(module, *out_obj);
+        if (LLVMTargetMachineEmitToFile(self->machine,
+                                        self->module,
+                                        filename,
+                                        LLVMObjectFile,
+                                        error_msg)) {
+            return 1;
+        }
     }
 
     if (emit_bitcode) {
