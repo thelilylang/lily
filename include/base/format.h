@@ -47,6 +47,7 @@
  * - {u}: Unsigned
  * - {S}: Dynamic String (base/string.h)
  * - {Sr}: Raw dynamic string (free it after use) (base/string.h)
+ * - {zu} size_t
  */
 char *
 format(const char *fmt, ...);
