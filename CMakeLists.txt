@@ -544,9 +544,11 @@ target_include_directories(lily_core_lily_compiler_ir_cpp
 
 # lily_core_lily_compiler_ir_llvm
 set(LILY_CORE_LILY_COMPILER_IR_LLVM_SRC
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/compile.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/generator.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/lily.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/linker.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/optimize.cpp
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/pending.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/scope.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/linker/lld.cpp
@@ -575,7 +577,9 @@ target_include_directories(lily_core_lily_compiler_linker
 
 # lily_core_lily_compiler_output
 set(LILY_CORE_LILY_COMPILER_OUTPUT
-    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/output/cache.c)
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/output/cache.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/output/bin.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/output/lib.c)
 
 add_library(lily_core_lily_compiler_output STATIC
             ${LILY_CORE_LILY_COMPILER_OUTPUT})
@@ -595,9 +599,13 @@ set(LILY_CORE_LILY_COMPILER_PACKAGE_SRC
 add_library(lily_core_lily_compiler_package STATIC
             ${LILY_CORE_LILY_COMPILER_PACKAGE_SRC})
 target_link_libraries(
-  lily_core_lily_compiler_package lily_core_lily_compiler_ir
-  lily_core_lily_compiler_linker lily_core_lily_mir lily_core_lily_parser
-  lily_core_lily_precompiler)
+  lily_core_lily_compiler_package
+  lily_core_lily_compiler_ir
+  lily_core_lily_compiler_linker
+  lily_core_lily_mir
+  lily_core_lily_parser
+  lily_core_lily_precompiler
+  lily_core_lily_compiler_output)
 target_include_directories(lily_core_lily_compiler_package
                            PRIVATE ${LILY_INCLUDE})
 
