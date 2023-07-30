@@ -23,54 +23,65 @@
  */
 
 #include <base/hash/sip.h>
+#include <base/platform.h>
 
 #include <core/lily/compiler/ir/llvm/compile.h>
 #include <core/lily/compiler/ir/llvm/dump.h>
+#include <core/lily/compiler/ir/llvm/emit.h>
 #include <core/lily/compiler/ir/llvm/optimize.h>
 #include <core/lily/compiler/output/cache.h>
 
 #include <llvm-c/Core.h>
 
+#ifdef LILY_WINDOWS_OS
+#define OBJ_EXT ".obj"
+#else
+#define OBJ_EXT ".o"
+#endif
+
 void
 compile__LilyCompilerIrLlvm(const LilyPackage *package)
 {
 #ifdef PLATFORM_64
-#ifdef LILY_WINDOWS_OS
-    char *path = format("{s}{zu}.obj",
+    char *path = format("{s}{S}{zu}{s}",
                         DIR_CACHE_OBJ,
+                        package->name,
                         hash_sip(package->global_name->buffer,
                                  package->global_name->len,
                                  0x0123456789abcdefULL,
-                                 0xfedcba9876543210ULL));
+                                 0xfedcba9876543210ULL),
+                        OBJ_EXT);
 #else
-    char *path = format("{s}{zu}.o",
+    char *path = format("{s}{S}{zu}{s}",
                         DIR_CACHE_OBJ,
-                        hash_sip(package->global_name->buffer,
-                                 package->global_name->len,
-                                 0x0123456789abcdefULL,
-                                 0xfedcba9876543210ULL));
-
-#endif
-#else
-#ifdef LILY_WINDOWS_OS
-    char *path = format("{s}{zu}.obj",
-                        DIR_CACHE_OBJ,
+                        package->name,
                         hash_sip(package->global_name->buffer,
                                  package->global_name->len,
                                  0x01234567,
-                                 0x89abcdef));
-#else
-    char *path = format("{s}{zu}.o",
-                        DIR_CACHE_OBJ,
-                        hash_sip(package->global_name->buffer,
-                                 package->global_name->len,
-                                 0x01234567,
-                                 0x89abcdef));
-#endif
+                                 0x89abcdef),
+                        OBJ_EXT);
 #endif
 
     // TODO: Set optimization level (is_debug).
-    LilyLLVMOptimize(&package->ir.llvm, LILY_OPT_LEVEL_DEBUG);
+    char *error_msg = NULL;
+
+    if (LilyLLVMOptimize(&package->ir.llvm,
+                         LILY_OPT_LEVEL_DEBUG,
+                         &error_msg,
+                         path,
+                         true,
+                         false,
+                         false,
+                         false)) {
+        EMIT_ERROR(error_msg);
+        exit(1);
+    }
+
+    if (LilyLLVMEmit(
+          &package->ir.llvm, &error_msg, path, true, false, false, false)) {
+        EMIT_ERROR(error_msg);
+        exit(1);
+    }
 
 #ifdef ENV_DEBUG
     printf("====Optimized LLVM IR(%s)====\n", package->global_name->buffer);
@@ -78,17 +89,15 @@ compile__LilyCompilerIrLlvm(const LilyPackage *package)
     dump__LilyIrLlvm(&package->ir.llvm);
 #endif
 
-    //    char *error_msg = NULL;
-
-    //    if (LLVMTargetMachineEmitToFile(package->ir.llvm.machine,
-    //                                package->ir.llvm.module,
-    //                                path,
-    //                                LLVMObjectFile,
-    //                                &error_msg) != 0) {
-    //		EMIT_ERROR(error_msg);
-    //        LLVMDisposeMessage(error_msg);
-    //        exit(1);
-    //	}
+    // if (LLVMTargetMachineEmitToFile(package->ir.llvm.machine,
+    //                                 package->ir.llvm.module,
+    //                                 path,
+    //                                 LLVMObjectFile,
+    //                                 &error_msg)) {
+    //     EMIT_ERROR(error_msg);
+    //     LLVMDisposeMessage(error_msg);
+    //     exit(1);
+    // }
 
     lily_free(path);
 }
