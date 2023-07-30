@@ -101,7 +101,7 @@ LilyLLVMOptimize(const LilyIrLlvm *self,
     OptimizationLevel opt_level;
 
     switch (lily_opt_level) {
-		case LILY_OPT_LEVEL_O0:
+        case LILY_OPT_LEVEL_O0:
             opt_level = OptimizationLevel::O0;
             break;
         case LILY_OPT_LEVEL_O1:
