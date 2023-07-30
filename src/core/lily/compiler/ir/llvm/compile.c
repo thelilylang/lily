@@ -62,9 +62,10 @@ compile__LilyCompilerIrLlvm(const LilyPackage *package)
                         OBJ_EXT);
 #endif
 
-    // TODO: Set optimization level (is_debug).
     char *error_msg = NULL;
     enum LilyOptLevel lily_opt_level;
+
+    // TODO: -Oz
 
     if (package->config->o0) {
         lily_opt_level = LILY_OPT_LEVEL_DEBUG;
