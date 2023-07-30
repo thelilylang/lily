@@ -70,12 +70,12 @@ compile__LilyCompilerIrLlvm(const LilyPackage *package)
 #endif
 
     char *error_msg = NULL;
-    enum LilyOptLevel lily_opt_level;
+    enum LilyOptLevel lily_opt_level = LILY_OPT_LEVEL_O0;
 
     // TODO: -Oz
 
     if (package->config->o0) {
-        lily_opt_level = LILY_OPT_LEVEL_DEBUG;
+        lily_opt_level = LILY_OPT_LEVEL_O0;
     }
 
     if (package->config->o1) {
