@@ -93,7 +93,7 @@ LilyLLVMEmit(const LilyIrLlvm *self,
 
     cpm.add(
       createTargetTransformInfoWrapperPass(machine.getTargetIRAnalysis()));
-    cpm.run(module); 
+    cpm.run(module);
 
     if (emit_obj) {
         if (machine.addPassesToEmitFile(
