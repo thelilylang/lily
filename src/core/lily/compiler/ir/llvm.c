@@ -130,7 +130,11 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
 
     LLVMTargetDataRef target_data =
       LLVMCreateTargetData(LLVMGetDataLayoutStr(module));
+    char *layout = LLVMCopyStringRepOfTargetData(target_data);
 
+    LLVMSetDataLayout(module, layout);
+
+    LLVMDisposeMessage(layout);
     lily_free(triple);
 
     return (LilyIrLlvm){ .context = LLVMContextCreate(),
