@@ -90,14 +90,7 @@ compile__LilyCompilerIrLlvm(const LilyPackage *package)
         lily_opt_level = LILY_OPT_LEVEL_O3;
     }
 
-    if (LilyLLVMOptimize(&package->ir.llvm,
-                         lily_opt_level,
-                         &error_msg,
-                         path,
-                         true,
-                         false,
-                         false,
-                         false)) {
+    if (LilyLLVMOptimize(&package->ir.llvm, lily_opt_level, &error_msg, path)) {
         EMIT_ERROR(error_msg);
         exit(1);
     }
