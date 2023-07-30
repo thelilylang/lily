@@ -34,7 +34,7 @@ extern "C"
 
     enum LilyOptLevel
     {
-        LILY_OPT_LEVEL_DEBUG = 0,
+        LILY_OPT_LEVEL_O0 = 0,
         LILY_OPT_LEVEL_O1 = 1,
         LILY_OPT_LEVEL_O2 = 2,
         LILY_OPT_LEVEL_O3 = 3,
