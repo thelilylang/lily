@@ -35,6 +35,8 @@
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Transforms/Utils/AddDiscriminators.h>
 
+#include <llvm-c/DebugInfo.h>
+
 #include <cstdlib>
 
 using namespace llvm;
@@ -49,6 +51,8 @@ LilyLLVMOptimize(const LilyIrLlvm *self,
                  bool emit_ir,
                  bool emit_bitcode)
 {
+    LLVMDIBuilderFinalize(self->di_builder);
+
     auto &module = *unwrap(self->module);
     auto &machine = *reinterpret_cast<TargetMachine *>(self->machine);
 
@@ -94,7 +98,6 @@ LilyLLVMOptimize(const LilyIrLlvm *self,
           });
     }
 
-    ModulePassManager mpm;
     OptimizationLevel opt_level;
 
     switch (lily_opt_level) {
@@ -114,11 +117,9 @@ LilyLLVMOptimize(const LilyIrLlvm *self,
             UNREACHABLE("invalid optimization level");
     }
 
-    if (opt_level == OptimizationLevel::O0) {
-        mpm = pb.buildO0DefaultPipeline(opt_level);
-    } else {
-        mpm = pb.buildPerModuleDefaultPipeline(opt_level);
-    }
+    ModulePassManager mpm = opt_level == OptimizationLevel::O0
+                              ? pb.buildO0DefaultPipeline(opt_level)
+                              : pb.buildPerModuleDefaultPipeline(opt_level);
 
     // Run optimization
     mpm.run(module, mam);

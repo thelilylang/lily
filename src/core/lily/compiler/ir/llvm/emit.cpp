@@ -30,6 +30,8 @@
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Target/TargetMachine.h>
 
+#include <llvm-c/Analysis.h>
+
 using namespace llvm;
 
 bool
@@ -41,6 +43,10 @@ LilyLLVMEmit(const LilyIrLlvm *self,
              bool emit_ir,
              bool emit_bitcode)
 {
+    // if (LLVMVerifyModule(self->module, LLVMPrintMessageAction, error_msg)) {
+    //     return 1;
+    // }
+
     raw_fd_ostream *out_obj_ptr = nullptr;
     raw_fd_ostream *out_asm_ptr = nullptr;
     raw_fd_ostream *out_bc_ptr = nullptr;
