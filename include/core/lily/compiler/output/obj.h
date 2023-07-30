@@ -22,34 +22,20 @@
  * SOFTWARE.
  */
 
-#include <base/dir.h>
+#ifndef LILY_CORE_LILY_COMPILER_OUTPUT_OBJ_H
+#define LILY_CORE_LILY_COMPILER_OUTPUT_OBJ_H
 
-#include <core/lily/compiler/output/cache.h>
+#include <core/lily/compiler/package.h>
 
-void
-create_cache__LilyCompilerOutputCache()
+/**
+ *
+ * @brief Compile package to object file (.o, .obj, ...).
+ */
+inline void
+compile__LilyCompilerOutputObj(const LilyPackageDependencyTree *tree,
+                               void (*compile)(const LilyPackage *package))
 {
-    if (!exists__Dir(DIR_CACHE_NAME)) {
-        create__Dir(DIR_CACHE_NAME,
-                    DIR_MODE_RWXU | DIR_MODE_XGRP | DIR_MODE_RGRP |
-                      DIR_MODE_XOTH);
-    }
-
-    if (!exists__Dir(DIR_CACHE_BIN)) {
-        create__Dir(DIR_CACHE_BIN,
-                    DIR_MODE_RWXU | DIR_MODE_XGRP | DIR_MODE_RGRP |
-                      DIR_MODE_XOTH);
-    }
-
-    if (!exists__Dir(DIR_CACHE_LIB)) {
-        create__Dir(DIR_CACHE_LIB,
-                    DIR_MODE_RWXU | DIR_MODE_XGRP | DIR_MODE_RGRP |
-                      DIR_MODE_XOTH);
-    }
-
-    if (!exists__Dir(DIR_CACHE_OBJ)) {
-        create__Dir(DIR_CACHE_OBJ,
-                    DIR_MODE_RWXU | DIR_MODE_XGRP | DIR_MODE_RGRP |
-                      DIR_MODE_XOTH);
-    }
+    return compile(tree->package);
 }
+
+#endif // LILY_CORE_LILY_COMPILER_OUTPUT_OBJ_H

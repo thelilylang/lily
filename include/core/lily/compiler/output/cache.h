@@ -27,15 +27,20 @@
 
 #include <base/macros.h>
 
+#define DIR_CACHE_NAME "out.lily/"
+#define DIR_CACHE_BIN DIR_CACHE_NAME "bin/"
+#define DIR_CACHE_LIB DIR_CACHE_NAME "lib/"
+#define DIR_CACHE_OBJ DIR_CACHE_NAME "obj/"
+
 /**
- * 
+ *
  * @brief Create cache.
  *
  * e.g.
  * out.lily/
  * ├── bin
  * ├── lib
- * └── obj 
+ * └── obj
  */
 void
 create_cache__LilyCompilerOutputCache();
