@@ -27,18 +27,27 @@
 #include <core/lily/compiler/ir/llvm/optimize.h>
 
 #include <llvm/ADT/Triple.h>
+#include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Analysis/LoopAnalysisManager.h>
-#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/Analysis/TargetTransformInfo.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/StandardInstrumentations.h>
 #include <llvm/Target/TargetMachine.h>
+#include <llvm/Transforms/Utils/AddDiscriminators.h>
 
 #include <cstdlib>
 
 using namespace llvm;
 
-void
-LilyLLVMOptimize(const LilyIrLlvm *self, enum LilyOptLevel lily_opt_level)
+int
+LilyLLVMOptimize(const LilyIrLlvm *self,
+                 enum LilyOptLevel lily_opt_level,
+                 char **error_msg,
+                 const char *filename,
+                 bool emit_obj,
+                 bool emit_asm,
+                 bool emit_ir,
+                 bool emit_bitcode)
 {
     auto &module = *unwrap(self->module);
     auto &machine = *reinterpret_cast<TargetMachine *>(self->machine);
@@ -51,18 +60,25 @@ LilyLLVMOptimize(const LilyIrLlvm *self, enum LilyOptLevel lily_opt_level)
     pipeline_opts.LoopInterleaving = !lily_opt_level;
     pipeline_opts.MergeFunctions = !lily_opt_level;
 
-    //        PassInstrumentationCallbacks instr_callbacks;
-    //        StandardInstrumentations std_instrumentations(module.getContext(),
-    //        false); std_instrumentations.registerCallbacks(instr_callbacks);
+    PassInstrumentationCallbacks instr_callbacks;
+    StandardInstrumentations std_instrumentations(false);
+    std_instrumentations.registerCallbacks(instr_callbacks);
 
-    auto pb = PassBuilder(&machine, pipeline_opts);
+    Optional<PGOOptions> opt_pgo_options = {};
+    auto pb =
+      PassBuilder(&machine, pipeline_opts, opt_pgo_options, &instr_callbacks);
 
     LoopAnalysisManager lam;
     FunctionAnalysisManager fam;
     ModuleAnalysisManager mam;
     CGSCCAnalysisManager cgam;
 
+    fam.registerPass([&] { return pb.buildDefaultAAPipeline(); });
+
     Triple target_triple(module.getTargetTriple());
+    auto tlii = std::make_unique<TargetLibraryInfoImpl>(target_triple);
+
+    fam.registerPass([&] { return TargetLibraryAnalysis(*tlii); });
 
     pb.registerModuleAnalyses(mam);
     pb.registerFunctionAnalyses(fam);
@@ -70,9 +86,13 @@ LilyLLVMOptimize(const LilyIrLlvm *self, enum LilyOptLevel lily_opt_level)
     pb.registerCGSCCAnalyses(cgam);
     pb.crossRegisterProxies(lam, fam, cgam, mam);
 
-    //    fam.registerPass([&] {
-    //        return pb.buildDefaultAAPipeline();
-    //    });
+    if (!lily_opt_level) {
+        pb.registerPipelineStartEPCallback(
+          [](ModulePassManager &mpm, OptimizationLevel opt_level) {
+              mpm.addPass(
+                createModuleToFunctionPassAdaptor(AddDiscriminatorsPass()));
+          });
+    }
 
     ModulePassManager mpm;
     OptimizationLevel opt_level;
@@ -100,11 +120,8 @@ LilyLLVMOptimize(const LilyIrLlvm *self, enum LilyOptLevel lily_opt_level)
         mpm = pb.buildPerModuleDefaultPipeline(opt_level);
     }
 
-    legacy::PassManager cpm;
-
     // Run optimization
     mpm.run(module, mam);
 
-    // Run codegen
-    cpm.run(module);
+    return 0;
 }

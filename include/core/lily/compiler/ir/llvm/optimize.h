@@ -42,10 +42,17 @@ extern "C"
 
     /**
      *
-     * Optimize IR code.
+     * @brief Optimize IR code.
+     * @return 1 for Failed, 0 for success.
      */
-    void LilyLLVMOptimize(const LilyIrLlvm *self,
-                          enum LilyOptLevel lily_opt_level);
+    int LilyLLVMOptimize(const LilyIrLlvm *self,
+                         enum LilyOptLevel lily_opt_level,
+                         char **error_msg,
+                         const char *filename,
+                         bool emit_obj,
+                         bool emit_asm,
+                         bool emit_ir,
+                         bool emit_bitcode);
 #ifdef __cplusplus
 };
 #endif
