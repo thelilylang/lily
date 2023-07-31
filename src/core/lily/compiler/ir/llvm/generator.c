@@ -22,15 +22,47 @@
  * SOFTWARE.
  */
 
+#include <cli/version.h>
+
 #include <core/lily/compiler/ir/llvm/dump.h>
 #include <core/lily/compiler/ir/llvm/generator.h>
 #include <core/lily/compiler/ir/llvm/lily.h>
 #include <core/lily/compiler/package.h>
 #include <core/lily/lily.h>
 
+#include <llvm-c/DebugInfo.h>
+
 void
 run__LilyIrLlvmGenerator(LilyPackage *self)
 {
+    // Init file (LLVMMetadataRef)
+    // TODO: improve that later
+    self->ir.llvm.file = LLVMDIBuilderCreateFile(self->ir.llvm.di_builder,
+                                                 self->file.name,
+                                                 strlen(self->file.name),
+                                                 "",
+                                                 0);
+    self->ir.llvm.compile_unit = LLVMDIBuilderCreateCompileUnit(
+      self->ir.llvm.di_builder,
+      LLVMDWARFSourceLanguageC, // Source language (e.g., C, C++, etc.)
+      self->ir.llvm.file,
+      "lily-" VERSION, // Compiler version string
+      strlen("lily-" VERSION),
+      self->config->o0 ? false : true,
+      "",
+      0,
+      0,
+      "",
+      0,
+      LLVMDWARFEmissionFull,
+      0,
+      false,
+      false,
+      "",
+      0,
+      "",
+      0);
+
     LilyLLVMPrepareModule(&self->ir.llvm, self->mir_module.insts);
     LilyLLVMRunModule(&self->ir.llvm, self->mir_module.insts);
 
