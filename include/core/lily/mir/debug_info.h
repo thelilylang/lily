@@ -37,23 +37,23 @@ typedef struct LilyMirDebugInfoFile
 
 typedef struct LilyMirDebugInfoBlock
 {
-    LilyMirDebugInfo *scope;    // LilyMirDebugInfo* (&)
-    LilyMirDebugInfoFile *file; // LilyMirDebugInfoFile* (&)
+    const LilyMirDebugInfo *scope;    // const LilyMirDebugInfo* (&)
+    const LilyMirDebugInfoFile *file; // const LilyMirDebugInfoFile* (&)
     Usize line;
     Usize column;
 } LilyMirDebugInfoBlock;
 
 typedef struct LilyMirDebugInfoLocation
 {
-    LilyMirDebugInfo *scope; // LilyMirDebugInfo* (&)
+    const LilyMirDebugInfo *scope; // const LilyMirDebugInfo* (&)
     Usize line;
     Usize column;
 } LilyMirDebugInfoLocation;
 
 typedef struct LilyMirDebugInfoSubProgram
 {
-    LilyMirDebugInfo *scope;    // LilyMirDebugInfo* (&)
-    LilyMirDebugInfoFile *file; // LilyMirDebugInfoFile* (&)
+    const LilyMirDebugInfo *scope;    // const LilyMirDebugInfo* (&)
+    const LilyMirDebugInfoFile *file; // const LilyMirDebugInfoFile* (&)
     Usize line;
     Usize column;
 } LilyMirDebugInfoSubProgram;
@@ -67,7 +67,74 @@ typedef struct LilyMirDebugInfoEnumerator
 
 typedef struct LilyMirDebugInfoGlobalVariable
 {
+    const LilyMirDebugInfo *scope;    // const LilyMirDebugInfo* (&)
+    const LilyMirDebugInfoFile *file; // const LilyMirDebugInfoFile* (&)
+    const char *name;
+    const char *linkage_name;
+    bool is_local;
+    bool is_definition;
 } LilyMirDebugInfoGlobalVariable;
+
+typedef struct LilyMirDebugInfoLocalVariable
+{
+    const LilyMirDebugInfo *scope;    // const LilyMirDebugInfo* (&)
+    const LilyMirDebugInfoFile *file; // const LilyMirDebugInfoFile* (&)
+    const LilyMirDebugInfo *type;     // const LilyMirDebugInfo* (&)
+    const char *name;
+    Usize arg_count;
+    Usize line;
+} LilyMirDebugInfoLocalVariable;
+
+enum LilyMirDebugInfoEncoding
+{
+    LILY_MIR_DEBUG_INFO_ENCODING_ADDR,
+    LILY_MIR_DEBUG_INFO_ENCODING_BOOL,
+    LILY_MIR_DEBUG_INFO_ENCODING_CMPX_FLOAT,
+    LILY_MIR_DEBUG_INFO_ENCODING_FLOAT,
+    LILY_MIR_DEBUG_INFO_ENCODING_SIGNED,
+    LILY_MIR_DEBUG_INFO_ENCODING_UNSIGNED,
+    LILY_MIR_DEBUG_INFO_ENCODING_SIGNED_CHAR,
+    LILY_MIR_DEBUG_INFO_ENCODING_UNSIGNED_CHAR,
+    LILY_MIR_DEBUG_INFO_ENCODING_VOID
+};
+
+typedef struct LilyMirDebugInfoType
+{
+    const char *name;
+    Usize size;
+    enum LilyMirDebugInfoEncoding encoding;
+} LilyMirDebugInfoType;
+
+enum LilyMirDebugInfoTag
+{
+    LILY_MIR_DEBUG_INFO_TAG_MEMBER,
+    LILY_MIR_DEBUG_INFO_TAG_STRUCTURE_TYPE
+};
+
+typedef struct LilyMirDebugInfoDerivedType
+{
+    const LilyMirDebugInfo *scope;     // const LilyMirDebugInfo* (&)
+    const LilyMirDebugInfo *base_type; // const LilyMirDebugInfo* (&)
+    enum LilyMirDebugInfoTag tag;
+    const char *name;
+    Usize size;
+    Usize align;
+    Usize offset;
+} LilyMirDebugInfoDerivedType;
+
+typedef struct LilyMirDebugInfoCompositeType
+{
+    enum LilyMirDebugInfoTag tag;
+    const char *name;
+    Usize size;
+    Usize align;
+    const LilyMirDebugInfo *elements; // const LilyMirDebugInfo* (&)
+} LilyMirDebugInfoCompositeType;
+
+typedef struct LilyMirDebugInfoElements
+{
+    Vec *items; // Vec<LilyMirDebugInfo* (&)>*
+} LilyMirDebugInfoElements;
 
 enum LilyMirDebugInfoKind
 {
@@ -79,6 +146,10 @@ enum LilyMirDebugInfoKind
     LILY_MIR_DEBUG_INFO_KIND_GLOBAL_VARIABLE,
     LILY_MIR_DEBUG_INFO_KIND_LOCAL_VARIABLE,
     LILY_MIR_DEBUG_INFO_KIND_EXPRESSION,
+    LILY_MIR_DEBUG_INFO_KIND_TYPE,
+    LILY_MIR_DEBUG_INFO_KIND_DERIVED_TYPE,
+    LILY_MIR_DEBUG_INFO_KIND_COMP_TYPE,
+    LILY_MIR_DEBUG_INFO_KIND_ELEMENTS,
 };
 
 typedef struct LilyMirDebugInfo
@@ -92,6 +163,13 @@ typedef struct LilyMirDebugInfo
         LilyMirDebugInfoLocation location;
         LilyMirDebugInfoSubProgram sub_program;
         LilyMirDebugInfoEnumerator enumerator;
+        LilyMirDebugInfoGlobalVariable global_variable;
+        LilyMirDebugInfoLocalVariable local_variable;
+        LilyMirDebugInfo *expression;
+        LilyMirDebugInfoType type;
+        LilyMirDebugInfoDerivedType dervied_type;
+        LilyMirDebugInfoCompositeType composite_type;
+        LilyMirDebugInfoElements elements;
     };
 } LilyMirDebugInfo;
 
