@@ -35,6 +35,25 @@ typedef struct LilyMirDebugInfoFile
     String *directory;
 } LilyMirDebugInfoFile;
 
+/**
+ *
+ * @brief Construct LilyMirDebugInfoFile type.
+ */
+inline CONSTRUCTOR(LilyMirDebugInfoFile,
+                   LilyMirDebugInfoFile,
+                   String *filename,
+                   String *directory)
+{
+    return (LilyMirDebugInfoFile){ .filename = filename,
+                                   .directory = directory };
+}
+
+/**
+ *
+ * @brief Free LilyMirDebugInfoFile type.
+ */
+DESTRUCTOR(LilyMirDebugInfoFile, const LilyMirDebugInfoFile *self);
+
 typedef struct LilyMirDebugInfoBlock
 {
     const LilyMirDebugInfo *scope;    // const LilyMirDebugInfo* (&)

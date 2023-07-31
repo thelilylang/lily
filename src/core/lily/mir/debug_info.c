@@ -22,4 +22,12 @@
  * SOFTWARE.
  */
 
+#include <base/new.h>
+
 #include <core/lily/mir/debug_info.h>
+
+DESTRUCTOR(LilyMirDebugInfoFile, const LilyMirDebugInfoFile *self)
+{
+    FREE(String, self->filename);
+    FREE(String, self->directory);
+}
