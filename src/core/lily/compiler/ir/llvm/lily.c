@@ -34,6 +34,7 @@
 #define LILY_MAIN "lily.main"
 
 static threadlocal LLVMTypeRef LilyMainFunType = NULL;
+static threadlocal LLVMValueRef CurrentPtr = NULL;
 
 LLVMBasicBlockRef
 LilyLLVMCreateBasicBlock(const LilyIrLlvm *Self,
@@ -716,12 +717,21 @@ LilyLLVMBuildStore(const LilyIrLlvm *Self,
                    const LilyMirInstructionVal *Dest,
                    const char *Name)
 {
-    LLVMValueRef src = LilyLLVMBuildVal(Self, Scope, Pending, Src);
     LLVMValueRef dest = LilyLLVMBuildVal(Self, Scope, Pending, Dest);
+
+    CurrentPtr = dest;
+
+    LLVMValueRef src = LilyLLVMBuildVal(Self, Scope, Pending, Src);
+
+    CurrentPtr = NULL;
 
     ASSERT(src && dest);
 
-    return LLVMBuildStore(Self->builder, src, dest);
+    if (src != dest) {
+        return LLVMBuildStore(Self->builder, src, dest);
+    }
+
+    return dest;
 }
 
 LLVMValueRef
@@ -890,7 +900,9 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
             // Construct { i8*, iptr }
             LLVMTypeRef bytes_type = LilyLLVMGetType(Self, Val->dt);
             LLVMValueRef bytes_ptr =
-              LLVMBuildAlloca(Self->builder, bytes_type, "local.bytes");
+              CurrentPtr
+                ? CurrentPtr
+                : LLVMBuildAlloca(Self->builder, bytes_type, "local.bytes");
             LLVMValueRef bytes_ptr_value = LLVMBuildLoad2(
               Self->builder, bytes_type, bytes_ptr, "local.bytes.load");
 
@@ -942,7 +954,9 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
             // Construct { i32*, iptr }
             LLVMTypeRef str_type = LilyLLVMGetType(Self, Val->dt);
             LLVMValueRef str_ptr =
-              LLVMBuildAlloca(Self->builder, str_type, "local.str");
+              CurrentPtr
+                ? CurrentPtr
+                : LLVMBuildAlloca(Self->builder, str_type, "local.str");
             LLVMValueRef str_ptr_value = LLVMBuildLoad2(
               Self->builder, str_type, str_ptr, "local.str.load");
 
