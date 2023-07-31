@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/new.h>
 #include <base/platform.h>
 
@@ -31,6 +32,8 @@
 #include <core/lily/compiler/ir/llvm.h>
 
 #include <llvm-c/DebugInfo.h>
+#include <llvm-c/Initialization.h>
+#include <llvm-c/Support.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -46,6 +49,13 @@ get_cpu();
 // Get CPU features of the host.
 static inline char *
 get_cpu_features();
+
+static inline void
+lily_fatal_error(const char *reason);
+
+/// Init all LLVM features.
+static bool
+LilyLLVMInit();
 
 char *
 get_triple()
@@ -63,6 +73,12 @@ char *
 get_cpu_features()
 {
     return LLVMGetHostCPUFeatures();
+}
+
+void
+lily_fatal_error(const char *reason)
+{
+    printf("Lily(Fatal): LLVM error: %s\n", reason);
 }
 
 String *
@@ -94,12 +110,8 @@ get_filename_from_path(const char *path)
 
 CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
 {
-    LLVMInitializeAllTargets();
-    LLVMInitializeAllTargetMCs();
-    LLVMInitializeNativeTarget();
-    LLVMInitializeNativeAsmPrinter();
-    LLVMInitializeNativeAsmParser();
-    LLVMInitializeCore(LLVMGetGlobalPassRegistry());
+    // TODO: Check whether we need to initialize LLVM for each LLVM module
+    ASSERT(LilyLLVMInit());
 
     char *triple = get_triple();
     char *cpu = get_cpu();
@@ -159,6 +171,37 @@ get_current_scope__LilyIrLlvm(LLVMValueRef inst)
         return NULL;
 
     return LLVMDILocationGetScope(debug_loc);
+}
+
+bool
+LilyLLVMInit()
+{
+    LLVMInitializeNativeTarget();
+    LLVMInitializeAllTargets();
+    LLVMInitializeAllTargetMCs();
+    LLVMInitializeAllTargetInfos();
+    LLVMInitializeAllAsmPrinters();
+    LLVMInitializeAllAsmParsers();
+    LLVMEnablePrettyStackTrace();
+    LLVMInstallFatalErrorHandler(lily_fatal_error);
+    LLVMLoadLibraryPermanently(NULL);
+
+    LLVMPassRegistryRef pass_reg = LLVMGetGlobalPassRegistry();
+
+    LLVMInitializeCore(pass_reg);
+    LLVMInitializeTransformUtils(pass_reg);
+    LLVMInitializeScalarOpts(pass_reg);
+    LLVMInitializeObjCARCOpts(pass_reg);
+    LLVMInitializeVectorization(pass_reg);
+    LLVMInitializeInstCombine(pass_reg);
+    LLVMInitializeIPO(pass_reg);
+    LLVMInitializeInstrumentation(pass_reg);
+    LLVMInitializeAnalysis(pass_reg);
+    LLVMInitializeIPA(pass_reg);
+    LLVMInitializeCodeGen(pass_reg);
+    LLVMInitializeTarget(pass_reg);
+
+    return true;
 }
 
 DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self)
