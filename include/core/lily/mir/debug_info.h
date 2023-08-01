@@ -25,7 +25,9 @@
 #ifndef LILY_CORE_LILY_MIR_DEBUG_INFO_H
 #define LILY_CORE_LILY_MIR_DEBUG_INFO_H
 
+#include <base/new.h>
 #include <base/string.h>
+#include <base/vec.h>
 
 typedef struct LilyMirDebugInfo LilyMirDebugInfo;
 
@@ -489,8 +491,44 @@ VARIANT_CONSTRUCTOR(LilyMirDebugInfo *,
 
 /**
  *
+ * @brief Check if the debug info is equal.
+ */
+bool
+eq__LilyMirDebugInfo(const LilyMirDebugInfo *self,
+                     const LilyMirDebugInfo *other);
+
+/**
+ *
  * @brief Free LilyMirDebugInfo type.
  */
 DESTRUCTOR(LilyMirDebugInfo, LilyMirDebugInfo *self);
+
+typedef struct LilyMirDebugInfoManager
+{
+    Vec *debug_infos; // Vec<LilyMirDebugInfo*>*
+} LilyMirDebugInfoManager;
+
+/**
+ *
+ * @brief Construct LilyMirDebugInfoManager type.
+ */
+inline CONSTRUCTOR(LilyMirDebugInfoManager, LilyMirDebugInfoManager)
+{
+    return (LilyMirDebugInfoManager){ .debug_infos = NEW(Vec) };
+}
+
+/**
+ *
+ * @brief Add debug info to `debug_infos`.
+ */
+LilyMirDebugInfo *
+add__LilyMirDebugInfoManager(const LilyMirDebugInfoManager *self,
+                             LilyMirDebugInfo *debug_info);
+
+/**
+ *
+ * @brief Free LilyMirDebugInfoManager type.
+ */
+DESTRUCTOR(LilyMirDebugInfoManager, const LilyMirDebugInfoManager *self);
 
 #endif // LILY_CORE_LILY_MIR_DEBUG_INFO_H
