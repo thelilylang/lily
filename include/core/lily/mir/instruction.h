@@ -31,6 +31,7 @@
 #include <base/stack.h>
 #include <base/vec.h>
 
+#include <core/lily/mir/debug_info.h>
 #include <core/lily/mir/dt.h>
 #include <core/lily/mir/linkage.h>
 #include <core/lily/mir/scope.h>
@@ -1207,6 +1208,7 @@ DESTRUCTOR(LilyMirInstructionStruct, const LilyMirInstructionStruct *self);
 typedef struct LilyMirInstruction
 {
     enum LilyMirInstructionKind kind;
+    LilyMirDebugInfo *debug_info; // LilyMirDebugInfo*?
     union
     {
         LilyMirInstructionAlloc alloc;
