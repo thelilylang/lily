@@ -140,10 +140,18 @@
 #ifdef ENV_DEBUG
 #define IMPL_FOR_DEBUG(name, struct_name, ...) \
     name##__Debug__##struct_name(__VA_ARGS__)
+
 #define CALL_DEBUG_IMPL(name, struct_name, ...) \
     name##__Debug__##struct_name(__VA_ARGS__)
+
 #define CALL_DEBUG(name, ...) debug__Debug__##name(__VA_ARGS__)
 #endif
+
+#define IMPL_FOR(T, name, trait, struct_name, ...) \
+    T name##__##trait##__##struct_name(__VA_ARGS__)
+
+#define CALL_IMPL(name, trait, struct_name, ...) \
+    name##__##trait##__##struct_name(__VA_ARGS__)
 
 #define TEST(type, name, ...) type name##__Test__(__VA_ARGS__)
 #define CALL_TEST(name, ...) name##__Test__(__VA_ARGS__)
