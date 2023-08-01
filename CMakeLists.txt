@@ -311,8 +311,7 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/string.c
     ${CMAKE_SOURCE_DIR}/src/base/test.c
     ${CMAKE_SOURCE_DIR}/src/base/tree.c
-    ${CMAKE_SOURCE_DIR}/src/base/tree_map.c
-    ${CMAKE_SOURCE_DIR}/src/base/vec.c)
+    ${CMAKE_SOURCE_DIR}/src/base/tree_map.c)
 
 add_library(lily_base STATIC ${BASE_SRC})
 target_link_libraries(lily_base PUBLIC lily_builtin)
