@@ -74,4 +74,16 @@ typedef double Float64;
 
 typedef uintptr_t Uptr;
 
+typedef char Char;
+typedef short Short;
+typedef int Int;
+typedef long Long;
+typedef long long Longlong;
+
+typedef unsigned char Uchar;
+typedef unsigned short Ushort;
+typedef unsigned int Uint;
+typedef unsigned long Ulong;
+typedef unsigned long long Ulonglong;
+
 #endif // LILY_BASE_TYPES_H
