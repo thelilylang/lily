@@ -357,12 +357,23 @@ LilyMirBuildCall(LilyMirModule *Module,
 }
 
 void
+LilyMirAddDebugInfoFile(LilyMirModule *Module, LilyMirDebugInfo *file)
+{
+    ASSERT(file->kind == LILY_MIR_DEBUG_INFO_KIND_FILE);
+    push__Vec(Module->files, file);
+}
+
+void
 LilyMirDisposeModule(const LilyMirModule *Module)
 {
     FREE_ORD_HASHMAP_VALUES(Module->insts, LilyMirInstruction);
     FREE(OrderedHashMap, Module->insts);
     FREE_STACK_ITEMS(Module->current, LilyMirCurrent);
     FREE(Stack, Module->current);
+    FREE_BUFFER_ITEMS(
+      Module->files->buffer, Module->files->len, LilyMirDebugInfoFile);
+    FREE(Vec, Module->files);
+    FREE(LilyMirDebugInfoManager, &Module->debug_info_manager);
 }
 
 void

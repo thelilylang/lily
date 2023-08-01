@@ -145,6 +145,8 @@ typedef struct LilyMirModule
 {
     OrderedHashMap *insts; // OrderedHashMap<LilyMirInstruction*>*
     Stack *current;        // Stack<LilyMirCurrent*>*
+    Vec *files;            // Vec<LilyMirDebugInfo*>*
+    LilyMirDebugInfoManager debug_info_manager;
 } LilyMirModule;
 
 /**
@@ -155,7 +157,10 @@ inline LilyMirModule
 LilyMirCreateModule()
 {
     return (LilyMirModule){ .insts = NEW(OrderedHashMap),
-                            .current = NEW(Stack, MAX_CURRENT_INST) };
+                            .current = NEW(Stack, MAX_CURRENT_INST),
+                            .files = NEW(Vec),
+                            .debug_info_manager =
+                              NEW(LilyMirDebugInfoManager) };
 }
 
 /**
@@ -194,6 +199,9 @@ LilyMirAddParam(LilyMirScope *Scope, LilyCheckedDataType *data_type)
 {
     push__Vec(Scope->params, NEW(LilyMirScopeParam, data_type));
 }
+
+void
+LilyMirAddDebugInfoFile(LilyMirModule *Module, LilyMirDebugInfo *file);
 
 void
 LilyMirDisposeModule(const LilyMirModule *Module);
