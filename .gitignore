@@ -7,3 +7,8 @@
 /out
 /src/core/cc/comptime_gen/target
 /target
+/lib/local/src
+/lib/local/include/libunwind
+/lib/local/include/lld
+/lib/local/include/llvm
+/lib/local/include/llvm-c
