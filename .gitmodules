@@ -3,6 +3,9 @@
 	url = https://github.com/llvm/llvm-project.git
 	ignore = dirty
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 	branch = llvmorg-15.0.7^0
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
