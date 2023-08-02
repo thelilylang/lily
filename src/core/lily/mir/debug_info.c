@@ -348,7 +348,7 @@ DESTRUCTOR(LilyMirDebugInfo, LilyMirDebugInfo *self)
 }
 
 LilyMirDebugInfo *
-add__LilyMirDebugInfoManager(const LilyMirDebugInfoManager *self,
+add__LilyMirDebugInfoManager(LilyMirDebugInfoManager *self,
                              LilyMirDebugInfo *debug_info)
 {
     for (Usize i = 0; i < self->debug_infos->len; ++i) {
@@ -362,6 +362,8 @@ add__LilyMirDebugInfoManager(const LilyMirDebugInfoManager *self,
     }
 
     push__Vec(self->debug_infos, debug_info);
+
+    ++self->count;
 
     return debug_info;
 }

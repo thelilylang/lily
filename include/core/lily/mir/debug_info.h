@@ -506,6 +506,7 @@ DESTRUCTOR(LilyMirDebugInfo, LilyMirDebugInfo *self);
 typedef struct LilyMirDebugInfoManager
 {
     Vec *debug_infos; // Vec<LilyMirDebugInfo*>*
+    Usize count;
 } LilyMirDebugInfoManager;
 
 /**
@@ -522,7 +523,7 @@ inline CONSTRUCTOR(LilyMirDebugInfoManager, LilyMirDebugInfoManager)
  * @brief Add debug info to `debug_infos`.
  */
 LilyMirDebugInfo *
-add__LilyMirDebugInfoManager(const LilyMirDebugInfoManager *self,
+add__LilyMirDebugInfoManager(LilyMirDebugInfoManager *self,
                              LilyMirDebugInfo *debug_info);
 
 /**
