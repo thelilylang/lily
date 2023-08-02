@@ -200,8 +200,82 @@ LilyMirAddParam(LilyMirScope *Scope, LilyCheckedDataType *data_type)
     push__Vec(Scope->params, NEW(LilyMirScopeParam, data_type));
 }
 
-void
-LilyMirAddDebugInfoFile(LilyMirModule *Module, LilyMirDebugInfo *file);
+LilyMirDebugInfo *
+LilyMirBuildDIFile(LilyMirModule *Module, String *filename, String *directory);
+
+LilyMirDebugInfo *
+LilyMirBuildDIBlock(LilyMirModule *Module,
+                    const LilyMirDebugInfo *Scope,
+                    const LilyMirDebugInfoFile *File,
+                    Usize Line,
+                    Usize Column);
+
+LilyMirDebugInfo *
+LilyMirBuildDILocation(LilyMirModule *Module,
+                       const LilyMirDebugInfo *Scope,
+                       Usize Line,
+                       Usize Column);
+
+LilyMirDebugInfo *
+LilyMirBuildDISubProgram(LilyMirModule *Module,
+                         const LilyMirDebugInfo *Scope,
+                         const LilyMirDebugInfoFile *File,
+                         Usize Line,
+                         Usize Column);
+
+LilyMirDebugInfo *
+LilyMirBuildDIEnumerator(LilyMirModule *Module,
+                         const char *name,
+                         Usize value,
+                         bool is_unsigned);
+
+LilyMirDebugInfo *
+LilyMirBuildDIGlobalVariable(LilyMirModule *Module,
+                             const LilyMirDebugInfo *Scope,
+                             const LilyMirDebugInfoFile *File,
+                             const char *Name,
+                             const char *LinkageName,
+                             bool IsLocal,
+                             bool IsDefinition);
+
+LilyMirDebugInfo *
+LilyMirBuildDILocalVariable(LilyMirModule *Module,
+                            const LilyMirDebugInfo *Scope,
+                            const LilyMirDebugInfoFile *File,
+                            const LilyMirDebugInfo *Type,
+                            const char *Name,
+                            Usize ArgCount,
+                            Usize Line);
+
+LilyMirDebugInfo *
+LilyMirBuildDIExpression(LilyMirModule *Module, LilyMirDebugInfo *Expression);
+
+LilyMirDebugInfo *
+LilyMirBuildDIType(LilyMirModule *Module,
+                   const char *Name,
+                   Usize Size,
+                   enum LilyMirDebugInfoEncoding Encoding);
+
+LilyMirDebugInfo *
+LilyMirBuildDIDerivedType(LilyMirModule *Module,
+                          const LilyMirDebugInfo *Scope,
+                          const LilyMirDebugInfo *BaseType,
+                          enum LilyMirDebugInfoTag Tag,
+                          const char *Name,
+                          Usize Size,
+                          Usize Align,
+                          Usize Offset);
+
+LilyMirDebugInfo *
+LilyMirBuildDICompositeType(LilyMirModule *Module,
+                            enum LilyMirDebugInfoTag Tag,
+                            const char *Name,
+                            Usize Size,
+                            Usize Align,
+                            LilyMirDebugInfo *Elements);
+
+LilyMirDebugInfo *
+LilyMirBuildDIElements(LilyMirModule *Module, Vec *items);
 
 void
 LilyMirDisposeModule(const LilyMirModule *Module);
