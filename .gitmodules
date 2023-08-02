@@ -1,4 +1,5 @@
 [submodule "deps/llvm"]
 	path = deps/llvm
-	url = https://github.com/llvm/llvm-project
+	url = https://github.com/llvm/llvm-project.git
 	ignore = dirty
+	branch = tags/llvmorg-15.0.7
