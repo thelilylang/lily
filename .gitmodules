@@ -1,0 +1,4 @@
+[submodule "deps/llvm/src"]
+	path = deps/llvm/src
+	url = https://github.com/llvm/llvm-project
+	ignore = dirty
