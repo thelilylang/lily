@@ -2,6 +2,16 @@ CLANG_FORMAT = @clang-format -i
 CMAKE_FORMAT = @cmake-format -i
 RUSTFMT = @rustfmt
 
+submodule:
+	git submodule update --init --recursive
+	mkdir -p lib/local/src/
+	cd lib/local/src && ln -sf ../../../deps/llvm/lld ./lld
+	cd lib/local/src && ln -sf ../../../deps/llvm/llvm ./llvm
+	cd lib/local/include/ && ln -sf ../../../deps/llvm/lld/include/lld ./lld
+	cd lib/local/include/ && ln -sf ../../../deps/llvm/llvm/include/llvm ./llvm
+	cd lib/local/include/ && ln -sf ../../../deps/llvm/llvm/include/llvm-c ./llvm-c
+	cd lib/local/include/ && ln -sf ../../../deps/llvm/libunwind/include ./libunwind
+
 setup:
 	cd .git/hooks && ln -s ../../scripts/git/pre-commit .
 
