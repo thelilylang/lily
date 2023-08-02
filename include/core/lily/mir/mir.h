@@ -277,6 +277,9 @@ LilyMirBuildDICompositeType(LilyMirModule *Module,
 LilyMirDebugInfo *
 LilyMirBuildDIElements(LilyMirModule *Module, Vec *items);
 
+#define LILY_MIR_SET_DI(inst, build_di, ...) \
+    inst->debug_info = build_di(__VA_ARGS__)
+
 void
 LilyMirDisposeModule(const LilyMirModule *Module);
 
