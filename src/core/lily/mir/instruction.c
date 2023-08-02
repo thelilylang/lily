@@ -50,295 +50,201 @@ static VARIANT_DESTRUCTOR(LilyMirInstructionVal,
                           tuple,
                           LilyMirInstructionVal *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 alloc,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 and,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 arg,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 asm,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 bitcast,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                   bitand,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 bitnot,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 bitor
-                                 ,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 block,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 builtin_call,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 call,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 const,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 drop,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 exp,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fadd,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fcmp_eq,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fcmp_ne,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fcmp_le,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fcmp_lt,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fcmp_ge,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fcmp_gt,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fdiv,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fmul,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fneg,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 frem,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fsub,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, alloc, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 fun,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, and, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 getarray,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, arg, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 getarg,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, asm, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 getfield,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          bitcast,
+                          LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 getlist,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, bitand, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 getptr,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, bitnot, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 getslice,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, bitor, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 iadd,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, block, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 icmp_eq,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          builtin_call,
+                          LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 icmp_ne,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, call, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 icmp_le,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, const, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 icmp_lt,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, drop, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 icmp_ge,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, exp, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 icmp_gt,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, fadd, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 idiv,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          fcmp_eq,
+                          LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 imul,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          fcmp_ne,
+                          LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 inctrace,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          fcmp_le,
+                          LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 ineg,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          fcmp_lt,
+                          LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 irem,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          fcmp_ge,
+                          LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 isok,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          fcmp_gt,
+                          LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 iserr,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, fdiv, LilyMirInstruction *self);
 
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 isub,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 jmp,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 jmpcond,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 len,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 load,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 makeref,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 makeopt,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 non_nil,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 not,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 or
-                                 ,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 reg,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 ref_ptr,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 ret,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 shl,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 shr,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 store,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 struct,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 switch,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 sys_call,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 trunc,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 try,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 try_ptr,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 val,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 var,
-                                 LilyMirInstruction *self);
-
-static inline VARIANT_DESTRUCTOR(LilyMirInstruction,
-                                 xor,
-                                 LilyMirInstruction *self);
+static VARIANT_DESTRUCTOR(LilyMirInstruction, fmul, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, fneg, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, frem, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, fsub, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, fun, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          getarray,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, getarg, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          getfield,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          getlist,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, getptr, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          getslice,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, iadd, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          icmp_eq,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          icmp_ne,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          icmp_le,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          icmp_lt,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          icmp_ge,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          icmp_gt,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, idiv, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, imul, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          inctrace,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, ineg, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, irem, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, isok, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, iserr, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, isub, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, jmp, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          jmpcond,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, len, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, load, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          makeref,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          makeopt,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          non_nil,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, not, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, or, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, reg, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          ref_ptr,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, ret, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, shl, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, shr, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, store, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, struct, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, switch, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          sys_call,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, trunc, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, try, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          try_ptr,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, val, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, var, LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction, xor, LilyMirInstruction *self);
 
 #ifdef ENV_DEBUG
 static threadlocal Usize tab_count = 0;
@@ -1371,6 +1277,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ALLOC;
+    self->debug_info = NULL;
     self->alloc = alloc;
 
     return self;
@@ -1384,6 +1291,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_AND;
+    self->debug_info = NULL;
     self->and = and;
 
     return self;
@@ -1397,6 +1305,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ARG;
+    self->debug_info = NULL;
     self->arg = arg;
 
     return self;
@@ -1410,6 +1319,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ASM;
+    self->debug_info = NULL;
     self->asm = asm;
 
     return self;
@@ -1423,6 +1333,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_BITCAST;
+    self->debug_info = NULL;
     self->bitcast = bitcast;
 
     return self;
@@ -1436,6 +1347,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_BITAND;
+    self->debug_info = NULL;
     self->bitand = bitand;
 
     return self;
@@ -1449,6 +1361,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_BITNOT;
+    self->debug_info = NULL;
     self->bitnot = bitnot;
 
     return self;
@@ -1463,6 +1376,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_BITOR;
+    self->debug_info = NULL;
     self->bitor = bitor ;
 
     return self;
@@ -1476,6 +1390,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_BLOCK;
+    self->debug_info = NULL;
     self->block = block;
 
     return self;
@@ -1489,6 +1404,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_BUILTIN_CALL;
+    self->debug_info = NULL;
     self->builtin_call = builtin_call;
 
     return self;
@@ -1502,6 +1418,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_CALL;
+    self->debug_info = NULL;
     self->call = call;
 
     return self;
@@ -1515,6 +1432,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_CONST;
+    self->debug_info = NULL;
     self->const_ = const_;
 
     return self;
@@ -1528,6 +1446,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_DROP;
+    self->debug_info = NULL;
     self->drop = drop;
 
     return self;
@@ -1541,6 +1460,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_EXP;
+    self->debug_info = NULL;
     self->exp = exp;
 
     return self;
@@ -1554,6 +1474,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FADD;
+    self->debug_info = NULL;
     self->fadd = fadd;
 
     return self;
@@ -1567,6 +1488,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FCMP_EQ;
+    self->debug_info = NULL;
     self->fcmp_eq = fcmp_eq;
 
     return self;
@@ -1580,6 +1502,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FCMP_NE;
+    self->debug_info = NULL;
     self->fcmp_ne = fcmp_ne;
 
     return self;
@@ -1593,6 +1516,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FCMP_LE;
+    self->debug_info = NULL;
     self->fcmp_le = fcmp_le;
 
     return self;
@@ -1606,6 +1530,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FCMP_LT;
+    self->debug_info = NULL;
     self->fcmp_lt = fcmp_lt;
 
     return self;
@@ -1619,6 +1544,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FCMP_GE;
+    self->debug_info = NULL;
     self->fcmp_ge = fcmp_ge;
 
     return self;
@@ -1632,6 +1558,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FCMP_GT;
+    self->debug_info = NULL;
     self->fcmp_gt = fcmp_gt;
 
     return self;
@@ -1645,6 +1572,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FDIV;
+    self->debug_info = NULL;
     self->fdiv = fdiv;
 
     return self;
@@ -1658,6 +1586,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FMUL;
+    self->debug_info = NULL;
     self->fmul = fmul;
 
     return self;
@@ -1671,6 +1600,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FNEG;
+    self->debug_info = NULL;
     self->fneg = fneg;
 
     return self;
@@ -1684,6 +1614,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FREM;
+    self->debug_info = NULL;
     self->frem = frem;
 
     return self;
@@ -1697,6 +1628,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FSUB;
+    self->debug_info = NULL;
     self->fsub = fsub;
 
     return self;
@@ -1710,6 +1642,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_FUN;
+    self->debug_info = NULL;
     self->fun = fun;
 
     return self;
@@ -1723,6 +1656,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_GETARRAY;
+    self->debug_info = NULL;
     self->getarray = getarray;
 
     return self;
@@ -1736,6 +1670,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_GETARG;
+    self->debug_info = NULL;
     self->getarg = getarg;
 
     return self;
@@ -1749,6 +1684,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_GETFIELD;
+    self->debug_info = NULL;
     self->getfield = getfield;
 
     return self;
@@ -1762,6 +1698,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_GETLIST;
+    self->debug_info = NULL;
     self->getlist = getlist;
 
     return self;
@@ -1775,6 +1712,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_GETPTR;
+    self->debug_info = NULL;
     self->getptr = getptr;
 
     return self;
@@ -1788,6 +1726,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_GETSLICE;
+    self->debug_info = NULL;
     self->getslice = getslice;
 
     return self;
@@ -1801,6 +1740,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_IADD;
+    self->debug_info = NULL;
     self->iadd = iadd;
 
     return self;
@@ -1814,6 +1754,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ICMP_EQ;
+    self->debug_info = NULL;
     self->icmp_eq = icmp_eq;
 
     return self;
@@ -1827,6 +1768,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ICMP_NE;
+    self->debug_info = NULL;
     self->icmp_ne = icmp_ne;
 
     return self;
@@ -1840,6 +1782,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ICMP_LE;
+    self->debug_info = NULL;
     self->icmp_le = icmp_le;
 
     return self;
@@ -1853,6 +1796,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ICMP_LT;
+    self->debug_info = NULL;
     self->icmp_lt = icmp_lt;
 
     return self;
@@ -1866,6 +1810,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ICMP_GE;
+    self->debug_info = NULL;
     self->icmp_ge = icmp_ge;
 
     return self;
@@ -1879,6 +1824,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ICMP_GT;
+    self->debug_info = NULL;
     self->icmp_gt = icmp_gt;
 
     return self;
@@ -1892,6 +1838,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_IDIV;
+    self->debug_info = NULL;
     self->idiv = idiv;
 
     return self;
@@ -1905,6 +1852,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_IMUL;
+    self->debug_info = NULL;
     self->imul = imul;
 
     return self;
@@ -1918,6 +1866,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_INCTRACE;
+    self->debug_info = NULL;
     self->imul = inctrace;
 
     return self;
@@ -1931,6 +1880,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_INEG;
+    self->debug_info = NULL;
     self->ineg = ineg;
 
     return self;
@@ -1944,6 +1894,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_IREM;
+    self->debug_info = NULL;
     self->irem = irem;
 
     return self;
@@ -1957,6 +1908,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ISOK;
+    self->debug_info = NULL;
     self->isok = isok;
 
     return self;
@@ -1970,6 +1922,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ISERR;
+    self->debug_info = NULL;
     self->iserr = iserr;
 
     return self;
@@ -1983,6 +1936,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_ISUB;
+    self->debug_info = NULL;
     self->isub = isub;
 
     return self;
@@ -1996,6 +1950,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_JMP;
+    self->debug_info = NULL;
     self->jmp = jmp;
 
     return self;
@@ -2009,6 +1964,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_JMPCOND;
+    self->debug_info = NULL;
     self->jmpcond = jmpcond;
 
     return self;
@@ -2022,6 +1978,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_LEN;
+    self->debug_info = NULL;
     self->len = len;
 
     return self;
@@ -2035,6 +1992,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_LOAD;
+    self->debug_info = NULL;
     self->load = load;
 
     return self;
@@ -2048,6 +2006,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_MAKEREF;
+    self->debug_info = NULL;
     self->makeref = makeref;
 
     return self;
@@ -2061,6 +2020,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_MAKEOPT;
+    self->debug_info = NULL;
     self->makeopt = makeopt;
 
     return self;
@@ -2074,6 +2034,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_NON_NIL;
+    self->debug_info = NULL;
     self->non_nil = non_nil;
 
     return self;
@@ -2087,6 +2048,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_NOT;
+    self->debug_info = NULL;
     self->not = not ;
 
     return self;
@@ -2101,6 +2063,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_OR;
+    self->debug_info = NULL;
     self->or = or ;
 
     return self;
@@ -2114,6 +2077,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_REG;
+    self->debug_info = NULL;
     self->reg = reg;
 
     return self;
@@ -2127,6 +2091,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_REF_PTR;
+    self->debug_info = NULL;
     self->ref_ptr = ref_ptr;
 
     return self;
@@ -2140,6 +2105,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_RET;
+    self->debug_info = NULL;
     self->ret = ret;
 
     return self;
@@ -2153,6 +2119,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_SHL;
+    self->debug_info = NULL;
     self->shl = shl;
 
     return self;
@@ -2166,6 +2133,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_SHR;
+    self->debug_info = NULL;
     self->shr = shr;
 
     return self;
@@ -2179,6 +2147,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_STORE;
+    self->debug_info = NULL;
     self->store = store;
 
     return self;
@@ -2192,6 +2161,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_STRUCT;
+    self->debug_info = NULL;
     self->struct_ = struct_;
 
     return self;
@@ -2205,6 +2175,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_SWITCH;
+    self->debug_info = NULL;
     self->switch_ = switch_;
 
     return self;
@@ -2218,6 +2189,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_SYS_CALL;
+    self->debug_info = NULL;
     self->sys_call = sys_call;
 
     return self;
@@ -2231,6 +2203,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_TRUNC;
+    self->debug_info = NULL;
     self->trunc = trunc;
 
     return self;
@@ -2244,6 +2217,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_TRY;
+    self->debug_info = NULL;
     self->try = try;
 
     return self;
@@ -2257,6 +2231,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_TRY_PTR;
+    self->debug_info = NULL;
     self->try_ptr = try_ptr;
 
     return self;
@@ -2270,6 +2245,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_VAL;
+    self->debug_info = NULL;
     self->val = val;
 
     return self;
@@ -2283,6 +2259,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_VAR;
+    self->debug_info = NULL;
     self->var = var;
 
     return self;
@@ -2296,6 +2273,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_XOR;
+    self->debug_info = NULL;
     self->xor = xor;
 
     return self;
@@ -2667,432 +2645,509 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
 }
 #endif
 
+#define FREE_DEBUG_INFO(self)                     \
+    if (self->debug_info) {                       \
+        FREE(LilyMirDebugInfo, self->debug_info); \
+    }
+
 VARIANT_DESTRUCTOR(LilyMirInstruction, alloc, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionAlloc, &self->alloc);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, and, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->and);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, arg, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionArg, &self->arg);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, asm, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, bitcast, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionValDt, &self->bitcast);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, bitand, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->bitand);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, bitnot, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->bitnot);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, bitor, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->bitor);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, block, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionBlock, &self->block);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, builtin_call, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionCall, &self->builtin_call);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, call, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionCall, &self->call);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, const, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionConst, &self->const_);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, drop, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->drop);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, exp, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->exp);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fadd, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->fadd);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_eq, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->fcmp_eq);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_ne, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->fcmp_ne);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_le, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->fcmp_le);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_lt, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->fcmp_lt);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_ge, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->fcmp_ge);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fcmp_gt, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->fcmp_gt);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fdiv, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->fdiv);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fmul, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->fmul);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fneg, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->fneg);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, frem, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->frem);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fsub, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->fsub);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, fun, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionFun, &self->fun);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, getarray, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionGetArray, &self->getarray);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, getarg, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->getarg);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, getfield, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionGetField, &self->getfield);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, getlist, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->getlist);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, getptr, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->getptr);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, getslice, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->getslice);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, iadd, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->iadd);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_eq, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->icmp_eq);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_ne, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->icmp_ne);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_le, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->icmp_le);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_lt, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->icmp_lt);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_ge, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->icmp_ge);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, icmp_gt, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->icmp_gt);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, idiv, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->idiv);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, imul, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->imul);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, inctrace, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->inctrace);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, ineg, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->ineg);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, irem, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->irem);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, isok, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->isok);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, iserr, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->iserr);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, isub, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->isub);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, jmp, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, jmpcond, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionJmpCond, &self->jmpcond);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, len, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->len);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, load, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionLoad, &self->load);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, makeref, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->makeref);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, makeopt, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->makeopt);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, non_nil, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstruction, self->non_nil);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, not, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->not );
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, or, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->or);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, reg, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionReg, &self->reg);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, ref_ptr, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSrc, &self->ref_ptr);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, ret, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstruction, self->ret);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, shl, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->shl);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, shr, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->shr);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, store, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->store);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, struct, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionStruct, &self->struct_);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, switch, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionSwitch, &self->switch_);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, sys_call, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionCall, &self->sys_call);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, trunc, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionValDt, &self->trunc);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, try, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionTry, &self->try);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, try_ptr, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionTry, &self->try_ptr);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, val, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionVal, self->val);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, var, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionVar, &self->var);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(LilyMirInstruction, xor, LilyMirInstruction *self)
 {
+    FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionDestSrc, &self->xor);
     lily_free(self);
 }

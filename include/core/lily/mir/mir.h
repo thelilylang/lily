@@ -145,6 +145,8 @@ typedef struct LilyMirModule
 {
     OrderedHashMap *insts; // OrderedHashMap<LilyMirInstruction*>*
     Stack *current;        // Stack<LilyMirCurrent*>*
+    Vec *files;            // Vec<LilyMirDebugInfo*>*
+    LilyMirDebugInfoManager debug_info_manager;
 } LilyMirModule;
 
 /**
@@ -155,7 +157,10 @@ inline LilyMirModule
 LilyMirCreateModule()
 {
     return (LilyMirModule){ .insts = NEW(OrderedHashMap),
-                            .current = NEW(Stack, MAX_CURRENT_INST) };
+                            .current = NEW(Stack, MAX_CURRENT_INST),
+                            .files = NEW(Vec),
+                            .debug_info_manager =
+                              NEW(LilyMirDebugInfoManager) };
 }
 
 /**
@@ -194,6 +199,86 @@ LilyMirAddParam(LilyMirScope *Scope, LilyCheckedDataType *data_type)
 {
     push__Vec(Scope->params, NEW(LilyMirScopeParam, data_type));
 }
+
+LilyMirDebugInfo *
+LilyMirBuildDIFile(LilyMirModule *Module, String *filename, String *directory);
+
+LilyMirDebugInfo *
+LilyMirBuildDIBlock(LilyMirModule *Module,
+                    const LilyMirDebugInfo *Scope,
+                    const LilyMirDebugInfoFile *File,
+                    Usize Line,
+                    Usize Column);
+
+LilyMirDebugInfo *
+LilyMirBuildDILocation(LilyMirModule *Module,
+                       const LilyMirDebugInfo *Scope,
+                       Usize Line,
+                       Usize Column);
+
+LilyMirDebugInfo *
+LilyMirBuildDISubProgram(LilyMirModule *Module,
+                         const LilyMirDebugInfo *Scope,
+                         const LilyMirDebugInfoFile *File,
+                         Usize Line,
+                         Usize Column);
+
+LilyMirDebugInfo *
+LilyMirBuildDIEnumerator(LilyMirModule *Module,
+                         const char *name,
+                         Usize value,
+                         bool is_unsigned);
+
+LilyMirDebugInfo *
+LilyMirBuildDIGlobalVariable(LilyMirModule *Module,
+                             const LilyMirDebugInfo *Scope,
+                             const LilyMirDebugInfoFile *File,
+                             const char *Name,
+                             const char *LinkageName,
+                             bool IsLocal,
+                             bool IsDefinition);
+
+LilyMirDebugInfo *
+LilyMirBuildDILocalVariable(LilyMirModule *Module,
+                            const LilyMirDebugInfo *Scope,
+                            const LilyMirDebugInfoFile *File,
+                            const LilyMirDebugInfo *Type,
+                            const char *Name,
+                            Usize ArgCount,
+                            Usize Line);
+
+LilyMirDebugInfo *
+LilyMirBuildDIExpression(LilyMirModule *Module, LilyMirDebugInfo *Expression);
+
+LilyMirDebugInfo *
+LilyMirBuildDIType(LilyMirModule *Module,
+                   const char *Name,
+                   Usize Size,
+                   enum LilyMirDebugInfoEncoding Encoding);
+
+LilyMirDebugInfo *
+LilyMirBuildDIDerivedType(LilyMirModule *Module,
+                          const LilyMirDebugInfo *Scope,
+                          const LilyMirDebugInfo *BaseType,
+                          enum LilyMirDebugInfoTag Tag,
+                          const char *Name,
+                          Usize Size,
+                          Usize Align,
+                          Usize Offset);
+
+LilyMirDebugInfo *
+LilyMirBuildDICompositeType(LilyMirModule *Module,
+                            enum LilyMirDebugInfoTag Tag,
+                            const char *Name,
+                            Usize Size,
+                            Usize Align,
+                            LilyMirDebugInfo *Elements);
+
+LilyMirDebugInfo *
+LilyMirBuildDIElements(LilyMirModule *Module, Vec *items);
+
+#define LILY_MIR_SET_DI(inst, build_di, ...) \
+    inst->debug_info = build_di(__VA_ARGS__)
 
 void
 LilyMirDisposeModule(const LilyMirModule *Module);

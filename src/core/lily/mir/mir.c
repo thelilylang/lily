@@ -356,6 +356,235 @@ LilyMirBuildCall(LilyMirModule *Module,
       NEW_VARIANT(LilyMirInstructionVal, reg, ReturnDt, from__String(name)));
 }
 
+LilyMirDebugInfo *
+LilyMirBuildDIFile(LilyMirModule *Module, String *filename, String *directory)
+{
+    LilyMirDebugInfo *file =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  file,
+                  Module->debug_info_manager.count,
+                  NEW(LilyMirDebugInfoFile, filename, directory));
+
+    for (Usize i = 0; i < Module->files->len; ++i) {
+        LilyMirDebugInfo *item = get__Vec(Module->files, i);
+
+        if (eq__LilyMirDebugInfo(item, file)) {
+            FREE(LilyMirDebugInfo, file);
+
+            return item;
+        }
+    }
+
+    ++Module->debug_info_manager.count;
+
+    push__Vec(Module->files, file);
+
+    return file;
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDIBlock(LilyMirModule *Module,
+                    const LilyMirDebugInfo *Scope,
+                    const LilyMirDebugInfoFile *File,
+                    Usize Line,
+                    Usize Column)
+{
+    LilyMirDebugInfo *block_debug_info =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  block,
+                  Module->debug_info_manager.count,
+                  NEW(LilyMirDebugInfoBlock, Scope, File, Line, Column));
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        block_debug_info);
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDILocation(LilyMirModule *Module,
+                       const LilyMirDebugInfo *Scope,
+                       Usize Line,
+                       Usize Column)
+{
+    LilyMirDebugInfo *location_debug_info =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  location,
+                  Module->debug_info_manager.count,
+                  NEW(LilyMirDebugInfoLocation, Scope, Line, Column));
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        location_debug_info);
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDISubProgram(LilyMirModule *Module,
+                         const LilyMirDebugInfo *Scope,
+                         const LilyMirDebugInfoFile *File,
+                         Usize Line,
+                         Usize Column)
+{
+    LilyMirDebugInfo *sub_program_debug_info =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  sub_program,
+                  Module->debug_info_manager.count,
+                  NEW(LilyMirDebugInfoSubProgram, Scope, File, Line, Column));
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        sub_program_debug_info);
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDIEnumerator(LilyMirModule *Module,
+                         const char *name,
+                         Usize value,
+                         bool is_unsigned)
+{
+    LilyMirDebugInfo *enumerator_debug_info =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  enumerator,
+                  Module->debug_info_manager.count,
+                  NEW(LilyMirDebugInfoEnumerator, name, value, is_unsigned));
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        enumerator_debug_info);
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDIGlobalVariable(LilyMirModule *Module,
+                             const LilyMirDebugInfo *Scope,
+                             const LilyMirDebugInfoFile *File,
+                             const char *Name,
+                             const char *LinkageName,
+                             bool IsLocal,
+                             bool IsDefinition)
+{
+    LilyMirDebugInfo *global_variable_debug_info =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  global_variable,
+                  Module->debug_info_manager.count,
+                  NEW(LilyMirDebugInfoGlobalVariable,
+                      Scope,
+                      File,
+                      Name,
+                      LinkageName,
+                      IsLocal,
+                      IsDefinition));
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        global_variable_debug_info);
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDILocalVariable(LilyMirModule *Module,
+                            const LilyMirDebugInfo *Scope,
+                            const LilyMirDebugInfoFile *File,
+                            const LilyMirDebugInfo *Type,
+                            const char *Name,
+                            Usize ArgCount,
+                            Usize Line)
+{
+    LilyMirDebugInfo *local_variable_debug_info =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  local_variable,
+                  Module->debug_info_manager.count,
+                  NEW(LilyMirDebugInfoLocalVariable,
+                      Scope,
+                      File,
+                      Type,
+                      Name,
+                      ArgCount,
+                      Line));
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        local_variable_debug_info);
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDIExpression(LilyMirModule *Module, LilyMirDebugInfo *Expression)
+{
+    LilyMirDebugInfo *expression_debug_info =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  expression,
+                  Module->debug_info_manager.count,
+                  Expression);
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        expression_debug_info);
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDIType(LilyMirModule *Module,
+                   const char *Name,
+                   Usize Size,
+                   enum LilyMirDebugInfoEncoding Encoding)
+{
+    LilyMirDebugInfo *type_debug_info =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  type,
+                  Module->debug_info_manager.count,
+                  NEW(LilyMirDebugInfoType, Name, Size, Encoding));
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        type_debug_info);
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDIDerivedType(LilyMirModule *Module,
+                          const LilyMirDebugInfo *Scope,
+                          const LilyMirDebugInfo *BaseType,
+                          enum LilyMirDebugInfoTag Tag,
+                          const char *Name,
+                          Usize Size,
+                          Usize Align,
+                          Usize Offset)
+{
+    LilyMirDebugInfo *derived_type_debug_info =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  derived_type,
+                  Module->debug_info_manager.count,
+                  NEW(LilyMirDebugInfoDerivedType,
+                      Scope,
+                      BaseType,
+                      Tag,
+                      Name,
+                      Size,
+                      Align,
+                      Offset));
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        derived_type_debug_info);
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDICompositeType(LilyMirModule *Module,
+                            enum LilyMirDebugInfoTag Tag,
+                            const char *Name,
+                            Usize Size,
+                            Usize Align,
+                            LilyMirDebugInfo *Elements)
+{
+    LilyMirDebugInfo *composite_type_debug_info = NEW_VARIANT(
+      LilyMirDebugInfo,
+      comp_type,
+      Module->debug_info_manager.count,
+      NEW(LilyMirDebugInfoCompositeType, Tag, Name, Size, Align, Elements));
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        composite_type_debug_info);
+}
+
+LilyMirDebugInfo *
+LilyMirBuildDIElements(LilyMirModule *Module, Vec *items)
+{
+    LilyMirDebugInfo *elements_debug_info =
+      NEW_VARIANT(LilyMirDebugInfo,
+                  elements,
+                  Module->debug_info_manager.count,
+                  NEW(LilyMirDebugInfoElements, items));
+
+    return add__LilyMirDebugInfoManager(&Module->debug_info_manager,
+                                        elements_debug_info);
+}
+
 void
 LilyMirDisposeModule(const LilyMirModule *Module)
 {
@@ -363,6 +592,10 @@ LilyMirDisposeModule(const LilyMirModule *Module)
     FREE(OrderedHashMap, Module->insts);
     FREE_STACK_ITEMS(Module->current, LilyMirCurrent);
     FREE(Stack, Module->current);
+    FREE_BUFFER_ITEMS(
+      Module->files->buffer, Module->files->len, LilyMirDebugInfoFile);
+    FREE(Vec, Module->files);
+    FREE(LilyMirDebugInfoManager, &Module->debug_info_manager);
 }
 
 void

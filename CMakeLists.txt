@@ -647,6 +647,7 @@ set(LILY_CORE_LILY_MIR_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/stmt.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/val.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/stmt/variable.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/mir/debug_info.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/dt.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/instruction.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/linkage.c
