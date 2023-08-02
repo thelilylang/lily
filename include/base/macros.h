@@ -26,7 +26,7 @@
 #define LILY_BASE_MACROS_H
 
 #define ENV_DEBUG
-#undef ENV_DEBUG
+// #undef ENV_DEBUG
 
 #define ENV_INSTALL
 #undef ENV_INSTALL

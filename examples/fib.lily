@@ -1,4 +1,4 @@
-import "@sys";
+// import "@sys";
 
 fun fib(n Int32) Int32 =
 	if n < 0 do
@@ -14,8 +14,9 @@ end
 
 fun main Int32 =
 	val res := fib(40);
+	val res2 := fib(20) + res;
 
-	@sys.write(1, "Sucess!!\n" cast CStr, 9)
+	// @sys.write(1, c"Sucess!!\n", 9)
 
 	return 0;
 end

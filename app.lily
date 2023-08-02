@@ -30,8 +30,6 @@ end
 // 	C;
 // end
 
-// fun add(x, y) = return x + y; end
-
 // fun add(x) =
 // 	if true do
 // 		return x;
@@ -44,13 +42,13 @@ end
 
 // fun `==`(x Int32, y Int64) Bool = return x cast Int64 == y; end
 
-// fun add(x Int32, y Int32) Int32 = return x + y; end
+// fun add(x) = return x; end
 
-fun add[T](x T) T = return x; end
-fun add2[T](x T) T = return add::[T](x); end
-fun add3[T](x T) T = return add2::[T](x); end
+fun add[T](x T) T = x end
+fun add2[T](x T) T = add::[T](x) end
+fun add3[T](x T) T = add2::[T](x) end
 
-error Invalid;
+// error Invalid;
 
 // fun get_err(n Int32) =
 // 	if n == 0 do
@@ -62,13 +60,27 @@ error Invalid;
 
 fun main =
 	val x := global.add3::[Int32](34);
-	val y := global.add3::[Int64](34);
-	val z := global.add3::[Int64](y);
-	val d := MyValue { value := 40 };
-	val e := MyValue { value := "Hello" };
+	val d := 340;
+	val s := "Hello";
+
+	if d < 500 do
+		return;
+	end
+
+	// match d do
+	// 	0 => ();
+	// 	_ => ();
+	// end
+	// val y := global.add3::[Int64](34);
+	// val z := global.add3::[Int64](y);
+	// val d := MyValue { value := 40 };
+	// val e := MyValue { value := "Hello" };
+	// val a Int32 := 430;
+	// val b Int32 := 5000;
 
 	// try do
 	// 	get_err(404);
 	// catch do
 	// end
+	return;
 end
