@@ -34,13 +34,8 @@ endif()
 
 add_subdirectory(deps)
 
-# find_package(LLVM 15 CONFIG REQUIRED PATHS "./deps/llvm/llvm/cmake/modules/")
 find_package(LLVM 15 CONFIG REQUIRED)
 message(STATUS "Found LLVM v${LLVM_PACKAGE_VERSION}")
-
-# find_package(LLD CONFIG REQUIRED PATHS "./deps/llvm/lld/cmake/modules")
-find_package(LLD CONFIG REQUIRED)
-message(STATUS "Found LLD v${LLVM_PACKAGE_VERSION}")
 
 llvm_map_components_to_libnames(LILY_LLVM_LIBS all)
 
