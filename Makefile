@@ -20,16 +20,16 @@ setup:
 	cd .git/hooks && ln -s ../../scripts/git/pre-commit .
 
 configure:
-	@export CC=clang && export CXX=clang++ && mkdir -p build && cd build && cmake .. -G Ninja
+	@export CC=clang && export CXX=clang++ && mkdir -p build && cd build && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
 
 debug:
 	@export CC=clang && export CXX=clang++ && mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -s Debug/compile_commands.json .
 
 build_lily:
-	ninja -C build
+	ninja -C build -j 3
 
 build_debug_lily:
-	ninja -C build/Debug
+	ninja -C build/Debug -j 3
 
 format:
 	${CLANG_FORMAT} ./include/base/*.h	
