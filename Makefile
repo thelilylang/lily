@@ -2,6 +2,10 @@ CLANG_FORMAT = @clang-format -i
 CMAKE_FORMAT = @cmake-format -i
 RUSTFMT = @rustfmt
 
+all: submodule configure build_lily
+
+all_debug: submodule debug build_debug_lily
+
 submodule:
 	git submodule update --init --recursive
 	mkdir -p lib/local/src/
@@ -15,15 +19,17 @@ submodule:
 setup:
 	cd .git/hooks && ln -s ../../scripts/git/pre-commit .
 
-build:
-	ninja -C build
-	ninja -C build/Debug
-
 configure:
-	@mkdir -p build && cd build && cmake .. -G Ninja
+	@export CC=clang && export CXX=clang++ && mkdir -p build && cd build && cmake .. -G Ninja
 
 debug:
-	@mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -s Debug/compile_commands.json .
+	@export CC=clang && export CXX=clang++ && mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -s Debug/compile_commands.json .
+
+build_lily:
+	ninja -C build
+
+build_debug_lily:
+	ninja -C build/Debug
 
 format:
 	${CLANG_FORMAT} ./include/base/*.h	
