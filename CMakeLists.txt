@@ -21,7 +21,7 @@ set(LILY_VERSION
 message(STATUS "Build lily v${LILY_VERSION}")
 
 if(NOT WIN32)
-  add_compile_options(-Wall -O3 -fdiagnostics-color=always)
+  add_compile_options(-Wall -fdiagnostics-color=always)
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
@@ -32,24 +32,26 @@ if(UNIX AND NOT APPLE)
   set(LILY_LINUX 1)
 endif()
 
-find_package(LLVM 15 CONFIG REQUIRED)
+add_subdirectory(deps)
+
+find_package(LLVM 15 CONFIG REQUIRED PATHS "./deps/llvm/llvm/cmake/modules/")
 message(STATUS "Found LLVM v${LLVM_PACKAGE_VERSION}")
 
-# find_package(clang 15 CONFIG REQUIRED) find_package(lld 15 CONFIG REQUIRED)
-set(LILY_LLVM_LIBS LLVM)
+find_package(LLD CONFIG REQUIRED PATHS "./deps/llvm/lld/cmake/modules")
+message(STATUS "Found LLD v${LLVM_PACKAGE_VERSION}")
+
+llvm_map_components_to_libnames(LILY_LLVM_LIBS all)
+
 set(LILY_LLD_LIBS lily_lld_common lily_lld_coff lily_lld_elf lily_lld_mach_o
                   lily_lld_mingw lily_lld_wasm)
 
 find_library(ZLIB NAMES libz.a libz.so zlib libz z)
 list(APPEND LILY_LLVM_LIBS "${ZLIB}")
 
-set(LILY_INCLUDE include lib/local/include)
+set(LILY_INCLUDE include lib/local/include/)
 
-if(MSVC)
-  set(LILY_LLD_COMPILE_FLAGS "-std=c++14")
-else()
-  set(LILY_LLD_COMPILE_FLAGS "-std=c++14")
-endif()
+set(LILY_LLD_COMPILE_FLAGS "-std=c++14 -fno-rtti")
+set(CMAKE_CXX_FLAGS "-std=c++14 -fno-rtti")
 
 # lily_lld_common
 set(LLD_COMMON_SRC
@@ -98,7 +100,7 @@ set(LLD_COFF_SRC
 add_library(lily_lld_coff STATIC ${LLD_COFF_SRC})
 target_link_libraries(lily_lld_coff PRIVATE ${LILY_LLVM_LIBS} lily_lld_common)
 target_include_directories(
-  lily_lld_coff PRIVATE ${LILY_INCLUDE} lib/local/include/lld-prebuilt/COFF
+	lily_lld_coff PRIVATE ${LILY_INCLUDE} lib/local/include/lld-prebuilt/COFF
                         lib/local/include/lld-prebuilt)
 set_target_properties(
   lily_lld_coff PROPERTIES COMPILE_FLAGS ${LILY_LLD_COMPILE_FLAGS} LINK_FLAGS
@@ -235,7 +237,7 @@ target_include_directories(
           lib/local/include/lld-prebuilt/wasm lib/local/include/lld-prebuilt)
 set_target_properties(
   lily_lld_wasm PROPERTIES COMPILE_FLAGS ${LILY_LLD_COMPILE_FLAGS} LINK_FLAGS
-                                                                   " ")
+" ")
 
 # lily_base
 set(BASE_SRC
@@ -798,13 +800,14 @@ target_link_libraries(lily_core_shared lily_base lily_core_lily_diagnostic
                       lily_core_cc_diagnostic lily_core_cpp_diagnostic)
 target_include_directories(lily_core_shared PRIVATE ${LILY_INCLUDE})
 
+# lily
 add_executable(lily ${CMAKE_SOURCE_DIR}/src/bin/lily/main.c)
 target_link_libraries(lily lily_cli lily_command)
 target_include_directories(lily PRIVATE ${LILY_INCLUDE})
 
+# lilyc
 add_executable(lilyc ${CMAKE_SOURCE_DIR}/src/bin/lilyc/main.c)
-target_link_libraries(lilyc lilyc_cli lilyc_command ${LILY_LLD_LIBS}
-                      ${LILY_LLVM_LIBS})
+target_link_libraries(lilyc lilyc_cli lilyc_command ${LILY_LLVM_LIBS})
 target_include_directories(lilyc PRIVATE ${LILY_INCLUDE})
 
 # lily_builtin
