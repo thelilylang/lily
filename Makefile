@@ -23,7 +23,7 @@ configure:
 	@export CC=clang && export CXX=clang++ && mkdir -p build && cd build && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
 
 debug:
-	@export CC=clang && export CXX=clang++ && mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -s Debug/compile_commands.json .
+	@export CC=clang && export CXX=clang++ && mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -sf Debug/compile_commands.json .
 
 build_lily:
 	ninja -C build -j 3
