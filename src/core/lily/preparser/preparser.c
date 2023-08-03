@@ -7813,16 +7813,32 @@ preparse_defer_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_warning,
-                          self->file,
-                          &self->current->location,
-                          NEW(LilyWarning, LILY_WARNING_KIND_UNUSED_SEMICOLON),
-                          NULL,
-                          NULL,
-                          NULL),
-              &self->count_warning);
+            // Show a warning except for an element that does not end with a
+            // `;`.
+            switch (item->kind) {
+                case LILY_PREPARSER_FUN_BODY_ITEM_KIND_EXPRS:
+                case LILY_PREPARSER_FUN_BODY_ITEM_KIND_LAMBDA:
+                case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_FOR:
+                case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_MATCH:
+                case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_IF:
+                case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_TRY:
+                case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_UNSAFE:
+                case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_WHILE:
+                case LILY_PREPARSER_FUN_BODY_ITEM_KIND_STMT_BLOCK:
+                    break;
+                default:
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_warning,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyWarning, LILY_WARNING_KIND_UNUSED_SEMICOLON),
+                        NULL,
+                        NULL,
+                        NULL),
+                      &self->count_warning);
+            }
 
             END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
