@@ -7813,28 +7813,48 @@ preparse_defer_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_warning,
+                          self->file,
+                          &self->current->location,
+                          NEW(LilyWarning, LILY_WARNING_KIND_UNUSED_SEMICOLON),
+                          NULL,
+                          NULL,
+                          NULL),
+              &self->count_warning);
+
             END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
             break;
         default: {
-            String *current_s = to_string__LilyToken(self->current);
+            LilyToken *prev = get__Vec(self->tokens, self->position - 1);
 
-            emit__Diagnostic(
-              NEW_VARIANT(
-                Diagnostic,
-                simple_lily_error,
-                self->file,
-                &self->current->location,
-                NEW_VARIANT(LilyError, unexpected_token, current_s->buffer),
-                NULL,
-                NULL,
-                from__String("expected `;`")),
-              &self->count_error);
+            switch (prev->kind) {
+                case LILY_TOKEN_KIND_SEMICOLON:
+                    END_LOCATION(&location, prev->location);
+                    break;
+                default: {
+                    String *current_s = to_string__LilyToken(self->current);
 
-            FREE(String, current_s);
+                    emit__Diagnostic(NEW_VARIANT(Diagnostic,
+                                                 simple_lily_error,
+                                                 self->file,
+                                                 &self->current->location,
+                                                 NEW_VARIANT(LilyError,
+                                                             unexpected_token,
+                                                             current_s->buffer),
+                                                 NULL,
+                                                 NULL,
+                                                 from__String("expected `;`")),
+                                     &self->count_error);
 
-            return NULL;
+                    FREE(String, current_s);
+
+                    return NULL;
+                }
+            }
         }
     }
 
