@@ -27,6 +27,9 @@ jobs:
     - name: Download & Install python requirements
       run: cd ${{github.workspace}} && pip install -r requirements.txt
 
+    - name: Install Ninja
+      run: sudo apt-get install ninja-build
+
     - name: Configure CMake & Build
       working-directory: ${{github.workspace}}
       run: make all_debug
@@ -51,6 +54,9 @@ jobs:
     
     - name: Download & Install python requirements
       run: cd ${{github.workspace}} && pip install -r requirements.txt
+
+    - name: Install Ninja
+      run: brew install ninja 
 
     - name: Setup LLVM & Configure CMake & Build
       working-directory: ${{github.workspace}}
