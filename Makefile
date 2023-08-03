@@ -13,7 +13,6 @@ submodule:
 	cd lib/local/src && ln -sf ../../../deps/llvm/llvm ./llvm
 	cd lib/local/include/ && ln -sf ../../../deps/llvm/lld/include/lld ./lld
 	cd lib/local/include/ && ln -sf ../../../deps/llvm/llvm/include/llvm ./llvm
-	cd lib/local/include/llvm/Config/ && ln -sf ../../../../../../deps/llvm/utils/bazel/llvm-project-overlay/llvm/include/llvm/Config/llvm-config.h ./llvm-config.h
 	cd lib/local/include/ && ln -sf ../../../deps/llvm/llvm/include/llvm-c ./llvm-c
 	cd lib/local/include/ && ln -sf ../../../deps/llvm/libunwind/include ./libunwind
 
