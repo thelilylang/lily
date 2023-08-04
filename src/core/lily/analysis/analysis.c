@@ -1876,7 +1876,42 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_TRAIT:
                     TODO("check trait data type");
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_ALIAS:
+                    if (deps && custom_dt_response.alias->data_type->kind ==
+                                  LILY_CHECKED_DATA_TYPE_KIND_CUSTOM) {
+                        LilyCheckedScopeResponse aliassed_data_type =
+                          search_custom_type__LilyCheckedScope(
+                            scope,
+                            custom_dt_response.alias->data_type->custom.name);
+
+                        ASSERT(aliassed_data_type.kind !=
+                               LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND);
+                        ASSERT(aliassed_data_type.decl);
+
+                        push__Vec(deps, aliassed_data_type.decl);
+                    }
+
                     if (data_type->custom.generics) {
+                        // TODO: perhaps remove the condition later when we're
+                        // sure we have a custom data type 100% of the time
+                        // (replace all FAILED statements with a diagnostic
+                        // call).
+                        if (custom_dt_response.alias->data_type->kind ==
+                            LILY_CHECKED_DATA_TYPE_KIND_CUSTOM) {
+                            Vec *generics_tmp = custom_dt_response.alias
+                                                  ->data_type->custom.generics;
+                            custom_dt_response.alias->data_type->custom
+                              .generics = NULL;
+
+                            LilyCheckedDataType *res =
+                              clone__LilyCheckedDataType(
+                                custom_dt_response.alias->data_type);
+
+                            res->custom.generics = generics;
+                            custom_dt_response.alias->data_type->custom
+                              .generics = generics_tmp;
+
+                            return res;
+                        }
                     }
 
                     return ref__LilyCheckedDataType(
@@ -1884,8 +1919,6 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                 default:
                     UNREACHABLE("this situation is impossible");
             }
-
-            TODO("check custom data type");
         }
         case LILY_AST_DATA_TYPE_KIND_RESULT: {
             Vec *errs = NULL; // Vec<LilyCheckedDataType*>*?
