@@ -31,7 +31,7 @@
 typedef struct LilyCheckedStmtWhile
 {
     String *name; // String*? (&)
-    LilyCheckedExpr *expr;
+    LilyCheckedExpr *cond;
     Vec *body; // Vec<LilyCheckedBodyFunItem*>*
     LilyCheckedScope *scope;
 } LilyCheckedStmtWhile;
@@ -43,12 +43,12 @@ typedef struct LilyCheckedStmtWhile
 inline CONSTRUCTOR(LilyCheckedStmtWhile,
                    LilyCheckedStmtWhile,
                    String *name,
-                   LilyCheckedExpr *expr,
+                   LilyCheckedExpr *cond,
                    Vec *body,
                    LilyCheckedScope *scope)
 {
     return (LilyCheckedStmtWhile){
-        .name = name, .expr = expr, .body = body, .scope = scope
+        .name = name, .cond = cond, .body = body, .scope = scope
     };
 }
 
