@@ -382,6 +382,49 @@ verify_generic_params__LilyCheckedDecl(const LilyCheckedDecl *self,
     }
 }
 
+bool
+is_checked__LilyCheckedDecl(const LilyCheckedDecl *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_DECL_KIND_CONSTANT:
+            return self->constant.is_checked;
+        case LILY_CHECKED_DECL_KIND_ERROR:
+            return self->error.is_checked;
+        case LILY_CHECKED_DECL_KIND_FUN:
+            return self->fun.is_checked;
+        case LILY_CHECKED_DECL_KIND_METHOD:
+            return self->method.is_checked;
+        case LILY_CHECKED_DECL_KIND_MODULE:
+            return self->module.is_checked;
+        case LILY_CHECKED_DECL_KIND_OBJECT:
+            switch (self->object.kind) {
+                case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
+                    return self->object.class.is_checked;
+                case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+                    return self->object.enum_.is_checked;
+                case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+                    return self->object.record.is_checked;
+                case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
+                    return self->object.trait.is_checked;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case LILY_CHECKED_DECL_KIND_TYPE:
+            switch (self->type.kind) {
+                case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
+                    return self->type.alias.is_checked;
+                case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                    return self->type.enum_.is_checked;
+                case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+                    return self->type.record.is_checked;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedDecl, const LilyCheckedDecl *self)
