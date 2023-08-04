@@ -90,6 +90,8 @@ generate_stmt__LilyMir(LilyMirModule *module,
                                    inst);
         }
         case LILY_CHECKED_STMT_KIND_WHILE:
-            TODO("generate while stmt");
+            LilyMirBuildWhile(module, fun_signature, scope, &stmt->while_);
+
+            return NULL;
     }
 }
