@@ -102,14 +102,17 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
         // the LLVM part, because LLVM expects a ret instruction at the end of
         // the function for all return types.
         if (inst->fun.return_data_type->kind == LILY_MIR_DT_KIND_UNIT) {
-            LilyMirInstruction *last_inst = last__Vec(inst->fun.insts);
+            LilyMirInstruction *last_block = last__Vec(inst->fun.insts);
 
-            ASSERT(last_inst->kind == LILY_MIR_INSTRUCTION_KIND_BLOCK);
+            ASSERT(last_block->kind == LILY_MIR_INSTRUCTION_KIND_BLOCK);
 
-            if (last_inst->block.insts->len > 0) {
-                if (CAST(LilyMirInstruction *,
-                         last__Vec(last_inst->block.insts))
-                      ->kind != LILY_MIR_INSTRUCTION_KIND_RET) {
+            if (last_block->block.insts->len > 0) {
+                LilyMirInstruction *last_inst =
+                  last__Vec(last_block->block.insts);
+
+                if (last_inst->kind != LILY_MIR_INSTRUCTION_KIND_RET &&
+                    last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMP &&
+                    last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMPCOND) {
                     LilyMirAddInst(
                       module,
                       NEW_VARIANT(
