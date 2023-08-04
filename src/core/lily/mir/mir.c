@@ -959,3 +959,52 @@ LilyMirBuildIf(LilyMirModule *Module,
         LilyMirAddBlock(Module, exit_block);
     }
 }
+
+void
+LilyMirBuildWhile(LilyMirModule *Module,
+                  LilyCheckedSignatureFun *fun_signature,
+                  LilyMirScope *scope,
+                  const LilyCheckedStmtWhile *while_stmt)
+{
+    //   ; ...
+    //   jmp cond
+    // cond:
+    //   %0 = <cond>
+    //   jmpcond %0, if, exit
+    // while:
+    //   ; ...
+    //   jmp cond
+    // exit:
+    //   ; ...
+
+    LilyMirInstruction *cond_block =
+      LilyMirEmptyBlock(Module) ? NULL : LilyMirBuildBlock(Module);
+    LilyMirInstruction *while_block = LilyMirBuildBlock(Module);
+    LilyMirInstruction *exit_block = LilyMirBuildBlock(Module);
+
+    // 1. Add jmp cond
+    // 2. Add cond block
+    if (cond_block) {
+        LilyMirAddInst(Module, LilyMirBuildJmp(Module, cond_block));
+        LilyMirPopBlock(Module);
+        LilyMirAddBlock(Module, cond_block);
+    }
+
+    LilyMirInstruction *cond =
+      generate_expr__LilyMir(Module, fun_signature, scope, while_stmt->cond);
+
+    // 3. Add conditional jmp
+    LilyMirAddInst(Module,
+                   LilyMirBuildJmpCond(Module, cond, while_block, exit_block));
+
+    LilyMirPopBlock(Module);
+    LilyMirAddBlock(Module, while_block);
+
+    // 4. Generate the content of the body
+    GENERATE_BODY(Module, fun_signature, scope, while_stmt->body);
+
+    // 5. Add final instruction
+    LilyMirAddFinalInstruction(Module, cond_block);
+
+    lily_free(cond);
+}

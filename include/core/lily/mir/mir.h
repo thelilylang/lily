@@ -471,12 +471,19 @@ LilyMirBuildElseBranch(LilyMirModule *Module,
                        LilyMirInstruction *current_block,
                        LilyMirInstruction *exit_block);
 
-/// @param signature LilyCheckedSignatureFun*? (&)
+/// @param fun_signature LilyCheckedSignatureFun*? (&)
 void
 LilyMirBuildIf(LilyMirModule *Module,
                LilyCheckedSignatureFun *fun_signature,
                LilyMirScope *scope,
                const LilyCheckedStmtIf *if_stmt);
+
+/// @param fun_signature LilyCheckedSignatureFun*? (&)
+void
+LilyMirBuildWhile(LilyMirModule *Module,
+                  LilyCheckedSignatureFun *fun_signature,
+                  LilyMirScope *scope,
+                  const LilyCheckedStmtWhile *while_stmt);
 
 inline LilyMirCurrent *
 LilyMirGetCurrentOnTop(LilyMirModule *Module)
