@@ -1006,5 +1006,8 @@ LilyMirBuildWhile(LilyMirModule *Module,
     // 5. Add final instruction
     LilyMirAddFinalInstruction(Module, cond_block);
 
+    LilyMirPopBlock(Module);
+    LilyMirAddBlock(Module, exit_block);
+
     lily_free(cond);
 }
