@@ -113,6 +113,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
                 if (last_inst->kind != LILY_MIR_INSTRUCTION_KIND_RET &&
                     last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMP &&
                     last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMPCOND) {
+                add_virtual_ret_inst : {
                     LilyMirAddInst(
                       module,
                       NEW_VARIANT(
@@ -125,9 +126,13 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
                               LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,
                               NEW(LilyMirDt, LILY_MIR_DT_KIND_UNIT)))));
                 }
+                }
+            } else {
+                goto add_virtual_ret_inst;
             }
         }
 
+        LilyMirPopBlock(module);
         LilyMirPopCurrent(module);
     }
 }
