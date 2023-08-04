@@ -37,10 +37,20 @@ IMPL_FOR_DEBUG(to_string,
 {
     String *res =
       format__String("LilyCheckedDeclAlias{{ name = {S}, global_name = {S}, "
-                     "scope = {Sr}, generic_params =",
+                     "scope = {Sr}, jump_scope = ",
                      self->name,
                      self->global_name,
                      to_string__Debug__LilyCheckedScope(self->scope));
+
+    if (self->jump_scope) {
+        String *s = to_string__Debug__LilyCheckedScope(self->jump_scope);
+
+        APPEND_AND_FREE(res, s);
+    } else {
+        push_str__String(res, "NULL");
+    }
+
+    push_str__String(res, ", generic_params =");
 
     if (self->generic_params) {
         DEBUG_VEC_STRING(self->generic_params, res, LilyCheckedGenericParam);
@@ -48,12 +58,22 @@ IMPL_FOR_DEBUG(to_string,
         push_str__String(res, " NULL");
     }
 
+    push_str__String(res, ", signature = ");
+
+    if (self->signature) {
+        String *s = to_string__Debug__LilyCheckedSignatureType(self->signature);
+
+        APPEND_AND_FREE(res, s);
+    } else {
+        push_str__String(res, "NULL");
+    }
+
     {
-        char *s =
-          format(", data_type = {Sr}, visibility = {s}, is_checked = {b} }",
-                 to_string__Debug__LilyCheckedDataType(self->data_type),
-                 to_string__Debug__LilyVisibility(self->visibility),
-                 self->is_checked);
+        char *s = format(", data_type = {Sr}, visibility = {s}, "
+                         "is_checked = {b} }",
+                         to_string__Debug__LilyCheckedDataType(self->data_type),
+                         to_string__Debug__LilyVisibility(self->visibility),
+                         self->is_checked);
 
         PUSH_STR_AND_FREE(res, s);
     }
@@ -65,7 +85,6 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyCheckedDeclAlias, const LilyCheckedDeclAlias *self)
 {
     FREE(String, self->global_name);
-    FREE(LilyCheckedScope, self->scope);
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
