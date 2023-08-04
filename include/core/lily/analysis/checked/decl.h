@@ -196,6 +196,13 @@ verify_generic_params__LilyCheckedDecl(const LilyCheckedDecl *self,
 
 /**
  *
+ * @brief Return if the declaration is checked.
+ */
+bool
+is_checked__LilyCheckedDecl(const LilyCheckedDecl *self);
+
+/**
+ *
  * @brief Convert LilyCheckedDecl in String.
  * @note This function is only used to debug.
  */

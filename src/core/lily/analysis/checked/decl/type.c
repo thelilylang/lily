@@ -87,6 +87,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDeclType, const LilyCheckedDeclType *self)
 
 VARIANT_DESTRUCTOR(LilyCheckedDeclType, alias, const LilyCheckedDeclType *self)
 {
+    FREE(Vec, self->deps);
     FREE(LilyCheckedDeclAlias, &self->alias);
 }
 

@@ -739,6 +739,20 @@ static void
 check_error__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *error);
 
 static void
+check_class__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *class);
+
+static void
+check_enum_object__LilyAnalysis(LilyAnalysis *self,
+                                LilyCheckedDecl *enum_object);
+
+static void
+check_record_object__LilyAnalysis(LilyAnalysis *self,
+                                  LilyCheckedDecl *record_object);
+
+static void
+check_trait__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *trait);
+
+static void
 check_decls__LilyAnalysis(LilyAnalysis *self,
                           Vec *decls,
                           LilyCheckedScope *scope);
@@ -757,6 +771,7 @@ run_step2__LilyAnalysis(LilyAnalysis *self);
 
 static threadlocal LilyCheckedHistory *history = NULL;
 static threadlocal bool in_try = false;
+static threadlocal LilyCheckedDeclAlias *alias_decl = NULL;
 
 #define CHECK_FUN_BODY(ast_body, scope, body, safety_mode, in_loop, n)             \
     {                                                                              \
@@ -1156,15 +1171,12 @@ push_alias__LilyAnalysis(LilyAnalysis *self,
                       alias->type.alias.name,
                       format__String(
                         "{S}.{S}", module->global_name, alias->type.alias.name),
+                      module->scope,
+                      NULL,
                       NULL,
                       NULL,
                       NULL,
                       alias->type.alias.visibility)));
-
-    checked_alias->type.alias.scope =
-      NEW(LilyCheckedScope,
-          NEW_VARIANT(LilyCheckedParent, module, module->scope, module),
-          NEW_VARIANT(LilyCheckedScopeDecls, decl, checked_alias));
 
     push__Vec(module->decls, checked_alias);
 }
@@ -1555,6 +1567,20 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                               Vec *deps,
                               enum LilyCheckedSafetyMode safety_mode)
 {
+    // Check if the generic params is required in alias declaration
+    if (alias_decl) {
+        if (data_type->kind != LILY_AST_DATA_TYPE_KIND_CUSTOM) {
+            if (alias_decl->generic_params) {
+                FAILED(
+                  "the generic params of the alias is not expected in this "
+                  "context");
+            }
+        } else if (alias_decl->generic_params && !data_type->custom.generics) {
+            FAILED("the generic params of the alias is not expected in this "
+                   "context");
+        }
+    }
+
     switch (data_type->kind) {
         case LILY_AST_DATA_TYPE_KIND_ANY:
             if (safety_mode == LILY_CHECKED_SAFETY_MODE_SAFE) {
@@ -1668,6 +1694,95 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
             LilyCheckedScopeResponse custom_dt_response =
               search_custom_type__LilyCheckedScope(scope,
                                                    data_type->custom.name);
+
+            if (custom_dt_response.kind ==
+                LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND) {
+                ANALYSIS_EMIT_DIAGNOSTIC(
+                  self,
+                  simple_lily_error,
+                  (&data_type->location),
+                  NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_NOT_FOUND),
+                  NULL,
+                  NULL,
+                  NULL);
+
+                return NEW(LilyCheckedDataType,
+                           LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
+                           &data_type->location);
+            }
+
+            if (custom_dt_response.decl) {
+                if (!is_checked__LilyCheckedDecl(custom_dt_response.decl)) {
+                    switch (custom_dt_response.decl->kind) {
+                        case LILY_CHECKED_DECL_KIND_OBJECT:
+                            switch (custom_dt_response.decl->object.kind) {
+                                case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
+                                    check_class__LilyAnalysis(
+                                      self, custom_dt_response.decl);
+
+                                    break;
+                                case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+                                    check_enum_object__LilyAnalysis(
+                                      self, custom_dt_response.decl);
+
+                                    break;
+                                case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+                                    check_record_object__LilyAnalysis(
+                                      self, custom_dt_response.decl);
+
+                                    break;
+                                case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
+                                    check_trait__LilyAnalysis(
+                                      self, custom_dt_response.decl);
+
+                                    break;
+                                default:
+                                    UNREACHABLE("unknown variant");
+                            }
+
+                            break;
+                        case LILY_CHECKED_DECL_KIND_TYPE:
+                            switch (custom_dt_response.decl->type.kind) {
+                                case LILY_CHECKED_DECL_TYPE_KIND_ALIAS: {
+                                    ASSERT(alias_decl);
+
+                                    LilyCheckedDeclAlias *local_alias_decl =
+                                      alias_decl;
+                                    alias_decl = NULL;
+
+                                    check_alias__LilyAnalysis(
+                                      self, custom_dt_response.decl);
+
+                                    alias_decl = local_alias_decl;
+
+                                    break;
+                                }
+                                case LILY_CHECKED_DECL_TYPE_KIND_ENUM:
+                                    check_enum__LilyAnalysis(
+                                      self, custom_dt_response.decl);
+
+                                    break;
+                                case LILY_CHECKED_DECL_TYPE_KIND_RECORD:
+                                    check_record__LilyAnalysis(
+                                      self, custom_dt_response.decl);
+
+                                    break;
+                                default:
+                                    UNREACHABLE("unknown variant");
+                            }
+
+                            break;
+                        default:
+                            UNREACHABLE(
+                              "not expected in this context, expected "
+                              "type or object");
+                    }
+                }
+            } else {
+                ASSERT(custom_dt_response.kind ==
+                       LILY_CHECKED_SCOPE_RESPONSE_KIND_GENERIC);
+            }
+
             Vec *generics = NULL; // Vec<LilyCheckedDataType*>*?
 
             if (data_type->custom.generics) {
@@ -1698,18 +1813,7 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
 
             switch (custom_dt_response.kind) {
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
-                    ANALYSIS_EMIT_DIAGNOSTIC(
-                      self,
-                      simple_lily_error,
-                      (&data_type->location),
-                      NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_NOT_FOUND),
-                      NULL,
-                      NULL,
-                      NULL);
-
-                    return NEW(LilyCheckedDataType,
-                               LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
-                               &data_type->location);
+                    UNREACHABLE("this situation is impossible");
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD:
                     if (deps) {
                         push__Vec(deps, custom_dt_response.decl);
@@ -1771,11 +1875,50 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                     TODO("check class data type");
                 case LILY_CHECKED_SCOPE_RESPONSE_KIND_TRAIT:
                     TODO("check trait data type");
+                case LILY_CHECKED_SCOPE_RESPONSE_KIND_ALIAS:
+                    if (deps && custom_dt_response.alias->data_type->kind ==
+                                  LILY_CHECKED_DATA_TYPE_KIND_CUSTOM) {
+                        LilyCheckedScopeResponse aliassed_data_type =
+                          search_custom_type__LilyCheckedScope(
+                            scope,
+                            custom_dt_response.alias->data_type->custom.name);
+
+                        ASSERT(aliassed_data_type.kind !=
+                               LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND);
+                        ASSERT(aliassed_data_type.decl);
+
+                        push__Vec(deps, aliassed_data_type.decl);
+                    }
+
+                    if (data_type->custom.generics) {
+                        // TODO: perhaps remove the condition later when we're
+                        // sure we have a custom data type 100% of the time
+                        // (replace all FAILED statements with a diagnostic
+                        // call).
+                        if (custom_dt_response.alias->data_type->kind ==
+                            LILY_CHECKED_DATA_TYPE_KIND_CUSTOM) {
+                            Vec *generics_tmp = custom_dt_response.alias
+                                                  ->data_type->custom.generics;
+                            custom_dt_response.alias->data_type->custom
+                              .generics = NULL;
+
+                            LilyCheckedDataType *res =
+                              clone__LilyCheckedDataType(
+                                custom_dt_response.alias->data_type);
+
+                            res->custom.generics = generics;
+                            custom_dt_response.alias->data_type->custom
+                              .generics = generics_tmp;
+
+                            return res;
+                        }
+                    }
+
+                    return ref__LilyCheckedDataType(
+                      custom_dt_response.alias->data_type);
                 default:
                     UNREACHABLE("this situation is impossible");
             }
-
-            TODO("check custom data type");
         }
         case LILY_AST_DATA_TYPE_KIND_RESULT: {
             Vec *errs = NULL; // Vec<LilyCheckedDataType*>*?
@@ -9753,6 +9896,8 @@ check_alias__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *alias)
         return;
     }
 
+    alias_decl = &alias->type.alias;
+
     // 1. Check generic params.
     if (alias->ast_decl->type.alias.generic_params) {
         alias->type.alias.generic_params =
@@ -9768,6 +9913,8 @@ check_alias__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *alias)
                                     alias->type.alias.scope,
                                     NULL,
                                     LILY_CHECKED_SAFETY_MODE_SAFE);
+
+    alias_decl = NULL;
 
     FREE(LilyCheckedHistory, &history);
 
@@ -10060,6 +10207,32 @@ check_error__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *error)
 }
 
 void
+check_class__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *class)
+{
+    TODO("class");
+}
+
+void
+check_enum_object__LilyAnalysis(LilyAnalysis *self,
+                                LilyCheckedDecl *enum_object)
+{
+    TODO("enum object");
+}
+
+void
+check_record_object__LilyAnalysis(LilyAnalysis *self,
+                                  LilyCheckedDecl *record_object)
+{
+    TODO("record object");
+}
+
+void
+check_trait__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *trait)
+{
+    TODO("trait");
+}
+
+void
 check_decls__LilyAnalysis(LilyAnalysis *self,
                           Vec *decls,
                           LilyCheckedScope *scope)
@@ -10079,6 +10252,33 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
                 check_constant__LilyAnalysis(self, decl, scope);
 
                 break;
+            case LILY_CHECKED_DECL_KIND_ERROR:
+                check_error__LilyAnalysis(self, decl);
+
+                break;
+            case LILY_CHECKED_DECL_KIND_OBJECT:
+                switch (decl->object.kind) {
+                    case LILY_CHECKED_DECL_OBJECT_KIND_CLASS:
+                        check_class__LilyAnalysis(self, decl);
+
+                        break;
+                    case LILY_CHECKED_DECL_OBJECT_KIND_ENUM:
+                        check_enum_object__LilyAnalysis(self, decl);
+
+                        break;
+                    case LILY_CHECKED_DECL_OBJECT_KIND_RECORD:
+                        check_record_object__LilyAnalysis(self, decl);
+
+                        break;
+                    case LILY_CHECKED_DECL_OBJECT_KIND_TRAIT:
+                        check_trait__LilyAnalysis(self, decl);
+
+                        break;
+                    default:
+                        UNREACHABLE("unknown variant");
+                }
+
+                break;
             case LILY_CHECKED_DECL_KIND_TYPE:
                 switch (decl->type.kind) {
                     case LILY_CHECKED_DECL_TYPE_KIND_ALIAS:
@@ -10096,10 +10296,6 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
                     default:
                         UNREACHABLE("unknown variant");
                 }
-
-                break;
-            case LILY_CHECKED_DECL_KIND_ERROR:
-                check_error__LilyAnalysis(self, decl);
 
                 break;
             default:

@@ -52,7 +52,8 @@ typedef struct LilyCheckedDeclType
 {
     enum LilyCheckedDeclTypeKind kind;
     // Type dependencies
-    Vec *deps; // Vec<LilyCheckedDataType* (&)>*
+    // TODO: maybe make deps NULL for alias
+    Vec *deps; // Vec<LilyCheckedDecl* (&)>*
     union
     {
         LilyCheckedDeclAlias alias;

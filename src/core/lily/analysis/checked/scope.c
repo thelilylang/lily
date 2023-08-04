@@ -1516,13 +1516,15 @@ search_custom_type__LilyCheckedScope(LilyCheckedScope *self, const String *name)
       search_enum_object_in_current_scope__LilyCheckedScope(self, name);
     LilyCheckedScopeResponse trait =
       search_trait_in_current_scope__LilyCheckedScope(self, name);
+    LilyCheckedScopeResponse alias =
+      search_alias_in_current_scope__LilyCheckedScope(self, name);
 
-    // [record, enum, generic, class, record_object, enum_object, trait]
-#define RESPONSES_CUSTOM_TYPE_LEN 7
+    // [record, enum, generic, class, record_object, enum_object, trait, alias]
+#define RESPONSES_CUSTOM_TYPE_LEN 8
     LilyCheckedScopeResponse *responses[RESPONSES_CUSTOM_TYPE_LEN] =
       (LilyCheckedScopeResponse *[RESPONSES_CUSTOM_TYPE_LEN]){
           &record,        &enum_,       &generic, &class,
-          &record_object, &enum_object, &trait
+          &record_object, &enum_object, &trait,   &alias
       };
     int index_with_largest_id = -1;
 
