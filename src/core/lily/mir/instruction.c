@@ -844,6 +844,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyMirInstructionBlock, const LilyMirInstructionBlock *self)
 {
+    FREE(LilyMirBlockLimit, self->limit);
     FREE_BUFFER_ITEMS(
       self->insts->buffer, self->insts->len, LilyMirInstruction);
     FREE(Vec, self->insts);
@@ -921,15 +922,16 @@ CONSTRUCTOR(LilyMirInstructionFun,
             const char *base_name,
             Vec *args,
             HashMap *generic_params,
-            LilyMirDt *return_data_type)
+            LilyMirDt *return_data_type,
+            LilyMirBlockLimit *limit)
 {
     Stack *block_stack = NEW(Stack, 1024);
     Vec *insts = NEW(Vec);
 
-    LilyMirInstruction *block =
-      NEW_VARIANT(LilyMirInstruction,
-                  block,
-                  NEW(LilyMirInstructionBlock, from__String("entry"), 0));
+    LilyMirInstruction *block = NEW_VARIANT(
+      LilyMirInstruction,
+      block,
+      NEW(LilyMirInstructionBlock, from__String("entry"), limit, 0));
 
     push__Vec(insts, block);
     push__Stack(block_stack, &block->block);

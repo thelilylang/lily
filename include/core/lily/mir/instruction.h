@@ -31,6 +31,7 @@
 #include <base/stack.h>
 #include <base/vec.h>
 
+#include <core/lily/mir/block_limit.h>
 #include <core/lily/mir/debug_info.h>
 #include <core/lily/mir/dt.h>
 #include <core/lily/mir/linkage.h>
@@ -619,6 +620,7 @@ inline DESTRUCTOR(LilyMirInstructionValDt, const LilyMirInstructionValDt *self)
 typedef struct LilyMirInstructionBlock
 {
     String *name;
+    LilyMirBlockLimit *limit;
     Vec *insts; // Vec<LilyMirInstruction*>*
     Usize id;
 } LilyMirInstructionBlock;
@@ -630,10 +632,12 @@ typedef struct LilyMirInstructionBlock
 inline CONSTRUCTOR(LilyMirInstructionBlock,
                    LilyMirInstructionBlock,
                    String *name,
+                   LilyMirBlockLimit *limit,
                    Usize id)
 {
-    return (
-      LilyMirInstructionBlock){ .name = name, .insts = NEW(Vec), .id = id };
+    return (LilyMirInstructionBlock){
+        .name = name, .limit = limit, .insts = NEW(Vec), .id = id
+    };
 }
 
 /**
@@ -790,7 +794,8 @@ CONSTRUCTOR(LilyMirInstructionFun,
             const char *base_name,
             Vec *args,
             HashMap *generic_params,
-            LilyMirDt *return_data_type);
+            LilyMirDt *return_data_type,
+            LilyMirBlockLimit *limit);
 
 /**
  *
