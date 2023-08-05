@@ -69,6 +69,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
 
         ASSERT(signature->types->len != 0);
 
+        LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
         LilyMirInstruction *inst = NEW_VARIANT(
           LilyMirInstruction,
           fun,
@@ -78,7 +79,8 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
               signature->global_name->buffer,
               NEW(Vec),
               signature->generic_params,
-              generate_dt__LilyMir(module, last__Vec(signature->types))));
+              generate_dt__LilyMir(module, last__Vec(signature->types)),
+              block_limit));
 
         LilyMirAddInst(module, inst);
 
@@ -95,7 +97,8 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
                                       i)));
         }
 
-        GENERATE_BODY(module, signature, (&inst->fun.scope), fun->fun.body);
+        GENERATE_BODY(
+          module, signature, (&inst->fun.scope), block_limit, fun->fun.body);
 
         // Add a virtual return if the function return unit and the last
         // statement is not a ret statement. This is useful to avoid a bug in
@@ -132,7 +135,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
             }
         }
 
-        LilyMirPopBlock(module);
+        LilyMirSetBlockLimit(block_limit, LilyMirPopBlock(module)->id);
         LilyMirPopCurrent(module);
     }
 }
