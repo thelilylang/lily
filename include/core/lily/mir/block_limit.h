@@ -31,16 +31,16 @@
 typedef struct LilyMirBlockLimit
 {
     Usize ref_count;
-    // This is the name of the last block of the parent.
+    // This is the id of the last block of the parent.
     // This limit will be use in the LLVM IR.
-    const char *name; // const char*? (&)
+    Usize id;
 } LilyMirBlockLimit;
 
 /**
  *
  * @brief Construct LilyMirBlockLimit type.
  */
-CONSTRUCTOR(LilyMirBlockLimit *, LilyMirBlockLimit, const char *name);
+CONSTRUCTOR(LilyMirBlockLimit *, LilyMirBlockLimit);
 
 /**
  *
@@ -53,6 +53,16 @@ ref__LilyMirBlockLimit(LilyMirBlockLimit *self)
     ++self->ref_count;
     return self;
 }
+
+/**
+ *
+ * @brief Convert LilyMirBlockLimit in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyMirBlockLimit, const LilyMirBlockLimit *self);
+#endif
 
 /**
  *

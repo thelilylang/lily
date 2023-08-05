@@ -23,18 +23,29 @@
  */
 
 #include <base/alloc.h>
+#include <base/format.h>
 
 #include <core/lily/mir/block_limit.h>
 
-CONSTRUCTOR(LilyMirBlockLimit *, LilyMirBlockLimit, const char *name)
+CONSTRUCTOR(LilyMirBlockLimit *, LilyMirBlockLimit)
 {
     LilyMirBlockLimit *self = lily_malloc(sizeof(LilyMirBlockLimit));
 
     self->ref_count = 0;
-    self->name = name;
+    self->id = 0;
 
     return self;
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyMirBlockLimit, const LilyMirBlockLimit *self)
+{
+    return format("LilyMirBlockLimit {{ ref_count = {zu}, id = {zu} }",
+                  self->ref_count,
+                  self->id);
+}
+#endif
 
 DESTRUCTOR(LilyMirBlockLimit, LilyMirBlockLimit *self)
 {
