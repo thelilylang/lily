@@ -307,7 +307,8 @@ CONSTRUCTOR(LilyCheckedDataTypeCondition *,
 
 /**
  *
- * @brief Pass to ref a data type and increment the `ref_count`.
+ * @brief Pass to ref a pointer of `LilyCheckedDataTypeCondition` and increment
+ * the `ref_count`.
  * @return LilyCheckedDataTypeCondition* (&)
  */
 inline LilyCheckedDataTypeCondition *
