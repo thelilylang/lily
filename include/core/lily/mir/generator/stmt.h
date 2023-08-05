@@ -38,6 +38,7 @@ LilyMirInstruction *
 generate_stmt__LilyMir(LilyMirModule *module,
                        LilyCheckedSignatureFun *fun_signature,
                        LilyMirScope *scope,
+                       LilyMirBlockLimit *block_limit,
                        LilyCheckedStmt *stmt);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_STMT_H

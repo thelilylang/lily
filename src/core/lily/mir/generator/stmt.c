@@ -30,6 +30,7 @@ LilyMirInstruction *
 generate_stmt__LilyMir(LilyMirModule *module,
                        LilyCheckedSignatureFun *fun_signature,
                        LilyMirScope *scope,
+                       LilyMirBlockLimit *block_limit,
                        LilyCheckedStmt *stmt)
 {
     switch (stmt->kind) {
@@ -38,7 +39,8 @@ generate_stmt__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_STMT_KIND_AWAIT:
             TODO("generate await stmt");
         case LILY_CHECKED_STMT_KIND_BLOCK:
-            LilyMirBuildBlockStmt(module, fun_signature, scope, &stmt->block);
+            LilyMirBuildBlockStmt(
+              module, fun_signature, scope, block_limit, &stmt->block);
 
             return NULL;
         case LILY_CHECKED_STMT_KIND_BREAK:
@@ -48,7 +50,8 @@ generate_stmt__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_STMT_KIND_FOR:
             TODO("generate for stmt");
         case LILY_CHECKED_STMT_KIND_IF:
-            LilyMirBuildIf(module, fun_signature, scope, &stmt->if_);
+            LilyMirBuildIf(
+              module, fun_signature, scope, block_limit, &stmt->if_);
 
             return NULL;
         case LILY_CHECKED_STMT_KIND_MATCH:
@@ -92,7 +95,8 @@ generate_stmt__LilyMir(LilyMirModule *module,
                                    inst);
         }
         case LILY_CHECKED_STMT_KIND_WHILE:
-            LilyMirBuildWhile(module, fun_signature, scope, &stmt->while_);
+            LilyMirBuildWhile(
+              module, fun_signature, scope, block_limit, &stmt->while_);
 
             return NULL;
     }
