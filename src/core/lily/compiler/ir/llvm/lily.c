@@ -935,8 +935,13 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
             ASSERT(Pending->current_fun);
 
             return LLVMGetParam(Pending->current_fun, Val->param);
-        case LILY_MIR_INSTRUCTION_VAL_KIND_REG:
-            return get__LilyIrLlvmScope(Scope, Val->reg->buffer);
+        case LILY_MIR_INSTRUCTION_VAL_KIND_REG: {
+            LLVMValueRef value = get__LilyIrLlvmScope(Scope, Val->reg->buffer);
+
+            ASSERT(value);
+
+            return value;
+        }
         case LILY_MIR_INSTRUCTION_VAL_KIND_SLICE:
             TODO("slice");
         case LILY_MIR_INSTRUCTION_VAL_KIND_STR: {
