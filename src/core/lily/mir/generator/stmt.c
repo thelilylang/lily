@@ -38,7 +38,9 @@ generate_stmt__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_STMT_KIND_AWAIT:
             TODO("generate await stmt");
         case LILY_CHECKED_STMT_KIND_BLOCK:
-            TODO("generate block stmt");
+            LilyMirBuildBlockStmt(module, fun_signature, scope, &stmt->block);
+
+            return NULL;
         case LILY_CHECKED_STMT_KIND_BREAK:
             TODO("generate break stmt");
         case LILY_CHECKED_STMT_KIND_DROP:
