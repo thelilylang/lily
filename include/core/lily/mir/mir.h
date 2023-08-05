@@ -34,6 +34,7 @@
 #include <core/lily/analysis/checked/signature.h>
 #include <core/lily/analysis/checked/stmt/block.h>
 #include <core/lily/analysis/checked/stmt/if.h>
+#include <core/lily/mir/block_limit.h>
 #include <core/lily/mir/instruction.h>
 #include <core/lily/mir/scope.h>
 
@@ -296,8 +297,12 @@ LilyMirNextBlock(LilyMirModule *Module)
 void
 LilyMirNextBlockAndClearScope(LilyMirModule *Module, LilyMirScope *Scope);
 
+/**
+ *
+ * @param limit LilyMirBlockLimit*
+ */
 LilyMirInstruction *
-LilyMirBuildBlock(LilyMirModule *Module);
+LilyMirBuildBlock(LilyMirModule *Module, LilyMirBlockLimit *limit);
 
 void
 LilyMirAddBlock(LilyMirModule *Module, LilyMirInstruction *Block);
@@ -444,6 +449,12 @@ LilyMirAddFinalInstruction(LilyMirModule *Module,
 bool
 LilyMirHasRetInstruction(LilyMirModule *Module);
 
+inline void
+LilyMirSetBlockLimit(LilyMirBlockLimit *block_limit, Usize id)
+{
+    block_limit->id = id;
+}
+
 /// @param signature LilyCheckedSignatureFun*? (&)
 void
 LilyMirBuildIfBranch(LilyMirModule *Module,
@@ -477,6 +488,7 @@ void
 LilyMirBuildIf(LilyMirModule *Module,
                LilyCheckedSignatureFun *fun_signature,
                LilyMirScope *scope,
+               LilyMirBlockLimit *parent_block_limit,
                const LilyCheckedStmtIf *if_stmt);
 
 /// @param fun_signature LilyCheckedSignatureFun*? (&)
@@ -484,6 +496,7 @@ void
 LilyMirBuildWhile(LilyMirModule *Module,
                   LilyCheckedSignatureFun *fun_signature,
                   LilyMirScope *scope,
+                  LilyMirBlockLimit *parent_block_limit,
                   const LilyCheckedStmtWhile *while_stmt);
 
 /// @param fun_signature LilyCheckedSignatureFun*? (&)
@@ -491,6 +504,7 @@ void
 LilyMirBuildBlockStmt(LilyMirModule *Module,
                       LilyCheckedSignatureFun *fun_signature,
                       LilyMirScope *scope,
+                      LilyMirBlockLimit *parent_block_limit,
                       const LilyCheckedStmtBlock *block_stmt);
 
 inline LilyMirCurrent *
