@@ -96,8 +96,11 @@ push_bucket__HashMap(HashMap *self, Usize index, HashMapBucket *new)
 {
     void *is_exist = get__HashMap(self, new->pair.key);
 
-    if (is_exist)
+    if (is_exist) {
+        FREE(HashMapBucket, new);
+
         return is_exist;
+    }
 
     if (self->buckets[index]) {
         HashMapBucket *current = self->buckets[index];
