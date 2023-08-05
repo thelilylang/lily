@@ -1011,3 +1011,35 @@ LilyMirBuildWhile(LilyMirModule *Module,
 
     lily_free(cond);
 }
+
+void
+LilyMirBuildBlockStmt(LilyMirModule *Module,
+                      LilyCheckedSignatureFun *fun_signature,
+                      LilyMirScope *scope,
+                      const LilyCheckedStmtBlock *block_stmt)
+{
+    //   ; ...
+    //   jmp block
+    // block:
+    //   ; ...
+    //   jmp exit
+    // exit:
+    //   ; ...
+
+    LilyMirInstruction *block = LilyMirBuildBlock(Module);
+    LilyMirInstruction *exit_block = LilyMirBuildBlock(Module);
+
+    LilyMirAddInst(Module, LilyMirBuildJmp(Module, block));
+    LilyMirPopBlock(Module);
+    LilyMirAddBlock(Module, block);
+
+    GENERATE_BODY(Module, fun_signature, scope, block_stmt->body);
+
+    if (LilyMirHasRetInstruction(Module)) {
+        FREE(LilyMirInstruction, exit_block);
+    } else {
+        LilyMirAddFinalInstruction(Module, exit_block);
+        LilyMirPopBlock(Module);
+        LilyMirAddBlock(Module, exit_block);
+    }
+}

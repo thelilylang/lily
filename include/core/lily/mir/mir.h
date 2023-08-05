@@ -32,6 +32,7 @@
 
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/signature.h>
+#include <core/lily/analysis/checked/stmt/block.h>
 #include <core/lily/analysis/checked/stmt/if.h>
 #include <core/lily/mir/instruction.h>
 #include <core/lily/mir/scope.h>
@@ -484,6 +485,13 @@ LilyMirBuildWhile(LilyMirModule *Module,
                   LilyCheckedSignatureFun *fun_signature,
                   LilyMirScope *scope,
                   const LilyCheckedStmtWhile *while_stmt);
+
+/// @param fun_signature LilyCheckedSignatureFun*? (&)
+void
+LilyMirBuildBlockStmt(LilyMirModule *Module,
+                      LilyCheckedSignatureFun *fun_signature,
+                      LilyMirScope *scope,
+                      const LilyCheckedStmtBlock *block_stmt);
 
 inline LilyMirCurrent *
 LilyMirGetCurrentOnTop(LilyMirModule *Module)
