@@ -25,7 +25,7 @@
 #ifndef LILY_CORE_LILY_MIR_GENERATOR_BODY_H
 #define LILY_CORE_LILY_MIR_GENERATOR_BODY_H
 
-#define GENERATE_BODY(module, signature, scope, body)                    \
+#define GENERATE_BODY(module, signature, scope, block_limit, body)       \
     for (Usize i = 0; i < body->len; ++i) {                              \
         LilyCheckedBodyFunItem *item = get__Vec(body, i);                \
                                                                          \
@@ -38,7 +38,7 @@
                 break;                                                   \
             case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT: {                 \
                 LilyMirInstruction *stmt = generate_stmt__LilyMir(       \
-                  module, signature, scope, &item->stmt);                \
+                  module, signature, scope, block_limit, &item->stmt);   \
                                                                          \
                 if (stmt) {                                              \
                     LilyMirAddInst(module, stmt);                        \
