@@ -57,7 +57,7 @@ inline CONSTRUCTOR(LilyIrLlvmPending, LilyIrLlvmPending)
 inline LLVMBasicBlockRef
 get_block__LilyIrLlvmPending(const LilyIrLlvmPending *self, const char *name)
 {
-    return remove__HashMap(self->blocks, (char *)name);
+    return get__HashMap(self->blocks, (char *)name);
 }
 
 /**

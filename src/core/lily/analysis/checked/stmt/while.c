@@ -38,12 +38,12 @@ IMPL_FOR_DEBUG(to_string,
     String *res = NULL;
 
     if (self->name) {
-        res = format__String("LilyCheckedStmtWhile{{ name = {S}, expr = {Sr}",
+        res = format__String("LilyCheckedStmtWhile{{ name = {S}, cond = {Sr}",
                              self->name,
-                             to_string__Debug__LilyCheckedExpr(self->expr));
+                             to_string__Debug__LilyCheckedExpr(self->cond));
     } else {
-        res = format__String("LilyCheckedStmtWhile{{ name = NULL, expr = {Sr}",
-                             to_string__Debug__LilyCheckedExpr(self->expr));
+        res = format__String("LilyCheckedStmtWhile{{ name = NULL, cond = {Sr}",
+                             to_string__Debug__LilyCheckedExpr(self->cond));
     }
 
     push_str__String(res, ", body =");
@@ -66,7 +66,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedStmtWhile, const LilyCheckedStmtWhile *self)
 {
-    FREE(LilyCheckedExpr, self->expr);
+    FREE(LilyCheckedExpr, self->cond);
 
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyCheckedBodyFunItem);

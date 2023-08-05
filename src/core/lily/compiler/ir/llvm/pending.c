@@ -29,5 +29,5 @@ add_block__LilyIrLlvmPending(const LilyIrLlvmPending *self,
                              const char *name,
                              LLVMBasicBlockRef block)
 {
-    ASSERT(!insert__HashMap(self->blocks, (char *)name, block));
+    insert__HashMap(self->blocks, (char *)name, block);
 }
