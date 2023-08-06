@@ -32,6 +32,7 @@ generate_stmt__LilyMir(LilyMirModule *module,
                        LilyMirScope *scope,
                        LilyMirBlockLimit *block_limit,
                        LilyMirInstruction *exit_block,
+                       LilyMirInstruction *next_block,
                        LilyCheckedStmt *stmt)
 {
     switch (stmt->kind) {
@@ -60,7 +61,9 @@ generate_stmt__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_STMT_KIND_MATCH:
             TODO("generate match stmt");
         case LILY_CHECKED_STMT_KIND_NEXT:
-            TODO("generate next stmt");
+            LilyMirBuildNext(module, next_block);
+
+            return NULL;
         case LILY_CHECKED_STMT_KIND_RAISE:
             TODO("generate raise stmt");
         case LILY_CHECKED_STMT_KIND_RETURN:

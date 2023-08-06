@@ -33,6 +33,7 @@
  *
  * @param fun_signature LilyCheckedSignatureFun*? (&)
  * @param exit_block LilyMirInstruction*?
+ * @param next_block LilyMirInstruction*?
  * @return LilyMirInstruction*?
  */
 LilyMirInstruction *
@@ -41,6 +42,7 @@ generate_stmt__LilyMir(LilyMirModule *module,
                        LilyMirScope *scope,
                        LilyMirBlockLimit *block_limit,
                        LilyMirInstruction *exit_block,
+                       LilyMirInstruction *next_block,
                        LilyCheckedStmt *stmt);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_STMT_H
