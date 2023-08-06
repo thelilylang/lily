@@ -507,6 +507,9 @@ LilyMirBuildBlockStmt(LilyMirModule *Module,
                       LilyMirBlockLimit *parent_block_limit,
                       const LilyCheckedStmtBlock *block_stmt);
 
+void
+LilyMirBuildBreak(LilyMirModule *Module, LilyMirInstruction *exit_block);
+
 inline LilyMirCurrent *
 LilyMirGetCurrentOnTop(LilyMirModule *Module)
 {
