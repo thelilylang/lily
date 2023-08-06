@@ -30,24 +30,45 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-CONSTRUCTOR(LilyIrLlvmScope *, LilyIrLlvmScope, LilyIrLlvmScope *parent)
+CONSTRUCTOR(LilyIrLlvmScopeItem *, LilyIrLlvmScopeItem, Usize limit_block_id)
 {
-    LilyIrLlvmScope *self = lily_malloc(sizeof(LilyIrLlvmScope));
+    LilyIrLlvmScopeItem *self = lily_malloc(sizeof(LilyIrLlvmScopeItem));
 
     self->values = NEW(HashMap);
-    self->parent = parent;
+    self->limit_block_id = limit_block_id;
 
     return self;
+}
+
+void
+add__LilyIrLlvmScopeItem(const LilyIrLlvmScopeItem *self,
+                         char *name,
+                         LLVMValueRef value)
+{
+    if (insert__HashMap(self->values, name, value)) {
+        UNREACHABLE("duplicate name in the scope");
+    }
+}
+
+DESTRUCTOR(LilyIrLlvmScopeItem, LilyIrLlvmScopeItem *self)
+{
+    FREE(HashMap, self->values);
+    lily_free(self);
 }
 
 LLVMValueRef
 get__LilyIrLlvmScope(const LilyIrLlvmScope *self, char *name)
 {
-    LLVMValueRef value = get__HashMap(self->values, name);
+    for (Usize i = self->items->len; i--;) {
+        LLVMValueRef value =
+          get__LilyIrLlvmScopeItem(get__Vec(self->items, i), name);
 
-    return value          ? value
-           : self->parent ? get__LilyIrLlvmScope(self->parent, name)
-                          : NULL;
+        if (value) {
+            return value;
+        }
+    }
+
+    UNREACHABLE("impossible to found the value with the given name");
 }
 
 void
@@ -55,13 +76,31 @@ add__LilyIrLlvmScope(const LilyIrLlvmScope *self,
                      char *name,
                      LLVMValueRef value)
 {
-    if (insert__HashMap(self->values, name, value)) {
-        UNREACHABLE("duplicate name in the scope");
+    ASSERT(self->items->len > 0);
+
+    LilyIrLlvmScopeItem *last_item = last__Vec(self->items);
+
+    return add__LilyIrLlvmScopeItem(last_item, name, value);
+}
+
+void
+destroy_scope_items__LilyIrLlvmScope(const LilyIrLlvmScope *self,
+                                     Usize limit_block_id)
+{
+    for (Usize i = 0; i < self->items->len;) {
+        LilyIrLlvmScopeItem *item = get__Vec(self->items, i);
+
+        if (item->limit_block_id == limit_block_id) {
+            FREE(LilyIrLlvmScopeItem, remove__Vec(self->items, i));
+        } else {
+            ++i;
+        }
     }
 }
 
-DESTRUCTOR(LilyIrLlvmScope, LilyIrLlvmScope *self)
+DESTRUCTOR(LilyIrLlvmScope, const LilyIrLlvmScope *self)
 {
-    FREE(HashMap, self->values);
-    lily_free(self);
+    FREE_BUFFER_ITEMS(
+      self->items->buffer, self->items->len, LilyIrLlvmScopeItem);
+    FREE(Vec, self->items);
 }
