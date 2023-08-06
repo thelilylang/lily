@@ -9224,10 +9224,12 @@ must_preparse_exprs(LilyPreparser *self)
             case LILY_TOKEN_KIND_AT:
                 return peeked->kind != LILY_TOKEN_KIND_L_BRACE;
             case LILY_TOKEN_KIND_KEYWORD_BEGIN:
+            case LILY_TOKEN_KIND_KEYWORD_BREAK:
             case LILY_TOKEN_KIND_KEYWORD_FOR:
             case LILY_TOKEN_KIND_KEYWORD_FUN:
             case LILY_TOKEN_KIND_KEYWORD_IF:
             case LILY_TOKEN_KIND_KEYWORD_MATCH:
+            case LILY_TOKEN_KIND_KEYWORD_NEXT:
             case LILY_TOKEN_KIND_KEYWORD_WHILE:
             case LILY_TOKEN_KIND_KEYWORD_MUT:
             case LILY_TOKEN_KIND_KEYWORD_VAL:
@@ -9252,6 +9254,7 @@ must_preparse_exprs(LilyPreparser *self)
     } else {
         switch (self->current->kind) {
             case LILY_TOKEN_KIND_KEYWORD_BEGIN:
+            case LILY_TOKEN_KIND_KEYWORD_BREAK:
             case LILY_TOKEN_KIND_KEYWORD_FOR:
             case LILY_TOKEN_KIND_KEYWORD_FUN:
             case LILY_TOKEN_KIND_KEYWORD_IF:
@@ -9259,6 +9262,7 @@ must_preparse_exprs(LilyPreparser *self)
             case LILY_TOKEN_KIND_KEYWORD_TRY:
             case LILY_TOKEN_KIND_KEYWORD_WHILE:
             case LILY_TOKEN_KIND_KEYWORD_MUT:
+            case LILY_TOKEN_KIND_KEYWORD_NEXT:
             case LILY_TOKEN_KIND_KEYWORD_VAL:
             case LILY_TOKEN_KIND_KEYWORD_RETURN:
             case LILY_TOKEN_KIND_EOF:
