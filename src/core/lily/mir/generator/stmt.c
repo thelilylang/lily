@@ -86,7 +86,10 @@ generate_stmt__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_STMT_KIND_TRY:
             TODO("generate try stmt");
         case LILY_CHECKED_STMT_KIND_UNSAFE:
-            TODO("generate unsafe stmt");
+            LilyMirBuildUnsafe(
+              module, fun_signature, scope, block_limit, &stmt->unsafe);
+
+            return NULL;
         case LILY_CHECKED_STMT_KIND_VARIABLE: {
             LilyCheckedDataType *var_data_type =
               LilyMirGetCheckedDtFromExpr(module, scope, stmt->variable.expr);
