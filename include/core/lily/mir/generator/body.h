@@ -25,35 +25,37 @@
 #ifndef LILY_CORE_LILY_MIR_GENERATOR_BODY_H
 #define LILY_CORE_LILY_MIR_GENERATOR_BODY_H
 
-#define GENERATE_BODY(module, signature, scope, block_limit, exit_block, body) \
-    for (Usize i = 0; i < body->len; ++i) {                                    \
-        LilyCheckedBodyFunItem *item = get__Vec(body, i);                      \
-                                                                               \
-        switch (item->kind) {                                                  \
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:                         \
-                LilyMirAddInst(module,                                         \
-                               generate_expr__LilyMir(                         \
-                                 module, signature, scope, item->expr));       \
-                                                                               \
-                break;                                                         \
-            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT: {                       \
-                LilyMirInstruction *stmt =                                     \
-                  generate_stmt__LilyMir(module,                               \
-                                         signature,                            \
-                                         scope,                                \
-                                         block_limit,                          \
-                                         exit_block,                           \
-                                         &item->stmt);                         \
-                                                                               \
-                if (stmt) {                                                    \
-                    LilyMirAddInst(module, stmt);                              \
-                }                                                              \
-                                                                               \
-                break;                                                         \
-            }                                                                  \
-            default:                                                           \
-                UNREACHABLE("unknown variant");                                \
-        }                                                                      \
+#define GENERATE_BODY(                                                   \
+  module, signature, scope, block_limit, exit_block, next_block, body)   \
+    for (Usize i = 0; i < body->len; ++i) {                              \
+        LilyCheckedBodyFunItem *item = get__Vec(body, i);                \
+                                                                         \
+        switch (item->kind) {                                            \
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:                   \
+                LilyMirAddInst(module,                                   \
+                               generate_expr__LilyMir(                   \
+                                 module, signature, scope, item->expr)); \
+                                                                         \
+                break;                                                   \
+            case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT: {                 \
+                LilyMirInstruction *stmt =                               \
+                  generate_stmt__LilyMir(module,                         \
+                                         signature,                      \
+                                         scope,                          \
+                                         block_limit,                    \
+                                         exit_block,                     \
+                                         next_block,                     \
+                                         &item->stmt);                   \
+                                                                         \
+                if (stmt) {                                              \
+                    LilyMirAddInst(module, stmt);                        \
+                }                                                        \
+                                                                         \
+                break;                                                   \
+            }                                                            \
+            default:                                                     \
+                UNREACHABLE("unknown variant");                          \
+        }                                                                \
     }
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_BODY_H
