@@ -97,8 +97,12 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
                                       i)));
         }
 
-        GENERATE_BODY(
-          module, signature, (&inst->fun.scope), block_limit, fun->fun.body);
+        GENERATE_BODY(module,
+                      signature,
+                      (&inst->fun.scope),
+                      block_limit,
+                      NULL,
+                      fun->fun.body);
 
         // Add a virtual return if the function return unit and the last
         // statement is not a ret statement. This is useful to avoid a bug in
