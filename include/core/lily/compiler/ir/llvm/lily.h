@@ -88,6 +88,7 @@ LilyLLVMBuildBlock(const LilyIrLlvm *Self,
                    LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const Vec *Insts,
+                   const Usize limit_block_id,
                    const Usize id,
                    const char *Name);
 

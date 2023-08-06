@@ -166,21 +166,21 @@ LilyLLVMBuildBlock(const LilyIrLlvm *Self,
                    LilyIrLlvmScope *Scope,
                    const LilyIrLlvmPending *Pending,
                    const Vec *Insts,
+                   const Usize limit_block_id,
                    const Usize id,
                    const char *Name)
 {
     LLVMBasicBlockRef block = LilyLLVMCreateBasicBlock(Self, Pending, Name);
 
     LLVMPositionBuilderAtEnd(Self->builder, block);
-
-    LilyIrLlvmScope *ScopeBlock = id != 0 ? NEW(LilyIrLlvmScope, Scope) : Scope;
+    add_scope_item__LilyIrLlvmScope(Scope, limit_block_id);
 
     for (Usize i = 0; i < Insts->len; ++i) {
-        LilyLLVMBuildInst(Self, ScopeBlock, Pending, get__Vec(Insts, i), NULL);
+        LilyLLVMBuildInst(Self, Scope, Pending, get__Vec(Insts, i), NULL);
     }
 
-    if (id != 0) {
-        FREE(LilyIrLlvmScope, ScopeBlock);
+    if (id == limit_block_id) {
+        destroy_scope_items__LilyIrLlvmScope(Scope, limit_block_id);
     }
 
     return block;
@@ -1039,6 +1039,7 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                Scope,
                                Pending,
                                Inst->block.insts,
+                               Inst->block.limit->id,
                                Inst->block.id,
                                Inst->block.name->buffer);
             break;
@@ -1812,16 +1813,16 @@ LilyLLVMFinishFunction(const LilyIrLlvm *Self,
                        const Vec *Insts)
 {
     LilyIrLlvmPending Pending = NEW(LilyIrLlvmPending);
-    LilyIrLlvmScope *Scope = NEW(LilyIrLlvmScope, NULL);
+    LilyIrLlvmScope Scope = NEW(LilyIrLlvmScope);
 
     Pending.current_fun = Fn;
 
     for (Usize i = 0; i < Insts->len; ++i) {
-        LilyLLVMBuildInst(Self, Scope, &Pending, get__Vec(Insts, i), NULL);
+        LilyLLVMBuildInst(Self, &Scope, &Pending, get__Vec(Insts, i), NULL);
     }
 
     FREE(LilyIrLlvmPending, &Pending);
-    FREE(LilyIrLlvmScope, Scope);
+    FREE(LilyIrLlvmScope, &Scope);
 }
 
 void
