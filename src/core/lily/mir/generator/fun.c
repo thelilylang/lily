@@ -102,6 +102,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
                       (&inst->fun.scope),
                       block_limit,
                       NULL,
+                      NULL,
                       fun->fun.body);
 
         // Add a virtual return if the function return unit and the last
