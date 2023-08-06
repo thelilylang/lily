@@ -860,7 +860,7 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
 
     // 4. Generate the content of the body
     GENERATE_BODY(
-      Module, fun_signature, scope, block_limit, NULL, if_branch->body);
+      Module, fun_signature, scope, block_limit, NULL, NULL, if_branch->body);
 
     // 5. Add final instruction
     LilyMirSetBlockLimit(block_limit, LilyMirGetInsertBlock(Module)->id);
@@ -899,6 +899,7 @@ LilyMirBuildElifBranch(LilyMirModule *Module,
                   scope,
                   elif_block->block.limit,
                   NULL,
+                  NULL,
                   elif_branch->body);
 
     // 3. Add final instruction
@@ -925,6 +926,7 @@ LilyMirBuildElseBranch(LilyMirModule *Module,
                   fun_signature,
                   scope,
                   current_block->block.limit,
+                  NULL,
                   NULL,
                   else_branch->body);
 
@@ -1031,8 +1033,13 @@ LilyMirBuildWhile(LilyMirModule *Module,
     LilyMirAddBlock(Module, while_block);
 
     // 4. Generate the content of the body
-    GENERATE_BODY(
-      Module, fun_signature, scope, block_limit, exit_block, while_stmt->body);
+    GENERATE_BODY(Module,
+                  fun_signature,
+                  scope,
+                  block_limit,
+                  exit_block,
+                  cond_block,
+                  while_stmt->body);
 
     // 5. Add final instruction
     LilyMirSetBlockLimit(block_limit, LilyMirGetInsertBlock(Module)->id);
@@ -1068,8 +1075,13 @@ LilyMirBuildBlockStmt(LilyMirModule *Module,
     LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, block);
 
-    GENERATE_BODY(
-      Module, fun_signature, scope, block->block.limit, NULL, block_stmt->body);
+    GENERATE_BODY(Module,
+                  fun_signature,
+                  scope,
+                  block->block.limit,
+                  NULL,
+                  NULL,
+                  block_stmt->body);
 
     LilyMirSetBlockLimit(block->block.limit, LilyMirGetInsertBlock(Module)->id);
 
@@ -1087,4 +1099,11 @@ LilyMirBuildBreak(LilyMirModule *Module, LilyMirInstruction *exit_block)
 {
     ASSERT(exit_block);
     LilyMirAddInst(Module, LilyMirBuildJmp(Module, exit_block));
+}
+
+void
+LilyMirBuildNext(LilyMirModule *Module, LilyMirInstruction *next_block)
+{
+    ASSERT(next_block);
+    LilyMirAddInst(Module, LilyMirBuildJmp(Module, next_block));
 }

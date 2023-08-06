@@ -510,6 +510,9 @@ LilyMirBuildBlockStmt(LilyMirModule *Module,
 void
 LilyMirBuildBreak(LilyMirModule *Module, LilyMirInstruction *exit_block);
 
+void
+LilyMirBuildNext(LilyMirModule *Module, LilyMirInstruction *next_block);
+
 inline LilyMirCurrent *
 LilyMirGetCurrentOnTop(LilyMirModule *Module)
 {
