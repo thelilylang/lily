@@ -1107,3 +1107,46 @@ LilyMirBuildNext(LilyMirModule *Module, LilyMirInstruction *next_block)
     ASSERT(next_block);
     LilyMirAddInst(Module, LilyMirBuildJmp(Module, next_block));
 }
+
+void
+LilyMirBuildUnsafe(LilyMirModule *Module,
+                   LilyCheckedSignatureFun *fun_signature,
+                   LilyMirScope *scope,
+                   LilyMirBlockLimit *parent_block_limit,
+                   const LilyCheckedStmtUnsafe *unsafe_stmt)
+{
+    //   ; ...
+    //   jmp unsafe
+    // unsafe:
+    //   ; ...
+    //   jmp exit
+    // exit:
+    //   ; ...
+
+    LilyMirInstruction *block =
+      LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+    LilyMirInstruction *exit_block =
+      LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(parent_block_limit));
+
+    LilyMirAddInst(Module, LilyMirBuildJmp(Module, block));
+    LilyMirPopBlock(Module);
+    LilyMirAddBlock(Module, block);
+
+    GENERATE_BODY(Module,
+                  fun_signature,
+                  scope,
+                  block->block.limit,
+                  NULL,
+                  NULL,
+                  unsafe_stmt->body);
+
+    LilyMirSetBlockLimit(block->block.limit, LilyMirGetInsertBlock(Module)->id);
+
+    if (LilyMirHasRetInstruction(Module)) {
+        FREE(LilyMirInstruction, exit_block);
+    } else {
+        LilyMirAddFinalInstruction(Module, exit_block);
+        LilyMirPopBlock(Module);
+        LilyMirAddBlock(Module, exit_block);
+    }
+}
