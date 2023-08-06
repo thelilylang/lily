@@ -31,6 +31,7 @@ generate_stmt__LilyMir(LilyMirModule *module,
                        LilyCheckedSignatureFun *fun_signature,
                        LilyMirScope *scope,
                        LilyMirBlockLimit *block_limit,
+                       LilyMirInstruction *exit_block,
                        LilyCheckedStmt *stmt)
 {
     switch (stmt->kind) {
@@ -44,7 +45,9 @@ generate_stmt__LilyMir(LilyMirModule *module,
 
             return NULL;
         case LILY_CHECKED_STMT_KIND_BREAK:
-            TODO("generate break stmt");
+            LilyMirBuildBreak(module, exit_block);
+
+            return NULL;
         case LILY_CHECKED_STMT_KIND_DROP:
             TODO("generate drop stmt");
         case LILY_CHECKED_STMT_KIND_FOR:
