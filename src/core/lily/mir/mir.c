@@ -832,24 +832,23 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     //   ; ...
 
     // If the previous block is empty, no condition block will be created.
+	LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
     LilyMirInstruction *cond_block =
       LilyMirEmptyBlock(Module)
         ? NULL
-        : LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+        : LilyMirBuildBlock(Module, block_limit);
 
     // 1. Add jmp cond
     // 2. Add cond block
     if (cond_block) {
         LilyMirAddInst(Module, LilyMirBuildJmp(Module, cond_block));
-        LilyMirSetBlockLimit(cond_block->block.limit, cond_block->block.id);
         LilyMirPopBlock(Module);
         LilyMirAddBlock(Module, cond_block);
     }
 
     LilyMirInstruction *cond =
       generate_expr__LilyMir(Module, fun_signature, scope, if_branch->cond);
-    LilyMirBlockLimit *if_block_limit = NEW(LilyMirBlockLimit);
-    LilyMirInstruction *if_block = LilyMirBuildBlock(Module, if_block_limit);
+    LilyMirInstruction *if_block = LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(block_limit));
 
     // 3. Add conditional jmp
     LilyMirAddInst(Module,
@@ -860,10 +859,10 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
 
     // 4. Generate the content of the body
     GENERATE_BODY(
-      Module, fun_signature, scope, if_block_limit, if_branch->body);
+      Module, fun_signature, scope, block_limit, if_branch->body);
 
     // 5. Add final instruction
-    LilyMirSetBlockLimit(if_block_limit, LilyMirGetInsertBlock(Module)->id);
+    LilyMirSetBlockLimit(block_limit, LilyMirGetInsertBlock(Module)->id);
     LilyMirAddFinalInstruction(Module, exit_block);
 
     lily_free(cond);
@@ -879,13 +878,12 @@ LilyMirBuildElifBranch(LilyMirModule *Module,
                        LilyMirInstruction *exit_block)
 {
     LilyMirPopBlock(Module);
-    LilyMirSetBlockLimit(current_block->block.limit, current_block->block.id);
     LilyMirAddBlock(Module, current_block);
 
     LilyMirInstruction *cond =
       generate_expr__LilyMir(Module, fun_signature, scope, elif_branch->cond);
     LilyMirInstruction *elif_block =
-      LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+      LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(current_block->block.limit));
 
     // 1. Add conditional jmp
     LilyMirAddInst(Module,
@@ -999,12 +997,13 @@ LilyMirBuildWhile(LilyMirModule *Module,
     // exit:
     //   ; ...
 
+	LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
     LilyMirInstruction *cond_block =
       LilyMirEmptyBlock(Module)
         ? NULL
-        : LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+        : LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(block_limit));
     LilyMirInstruction *while_block =
-      LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+      LilyMirBuildBlock(Module, block_limit);
     LilyMirInstruction *exit_block =
       LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(parent_block_limit));
 
@@ -1012,7 +1011,6 @@ LilyMirBuildWhile(LilyMirModule *Module,
     // 2. Add cond block
     if (cond_block) {
         LilyMirAddInst(Module, LilyMirBuildJmp(Module, cond_block));
-        LilyMirSetBlockLimit(cond_block->block.limit, cond_block->block.id);
         LilyMirPopBlock(Module);
         LilyMirAddBlock(Module, cond_block);
     }
@@ -1029,10 +1027,10 @@ LilyMirBuildWhile(LilyMirModule *Module,
 
     // 4. Generate the content of the body
     GENERATE_BODY(
-      Module, fun_signature, scope, while_block->block.limit, while_stmt->body);
+      Module, fun_signature, scope, block_limit, while_stmt->body);
 
     // 5. Add final instruction
-    LilyMirSetBlockLimit(while_block->block.limit,
+    LilyMirSetBlockLimit(block_limit,
                          LilyMirGetInsertBlock(Module)->id);
     LilyMirAddFinalInstruction(Module, cond_block);
 
