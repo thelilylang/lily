@@ -2282,6 +2282,7 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                             }
                         } else {
                         unknown_defined_data_type : {
+                            // TODO: add support for lambda function and method
                             LilyCheckedScopeDecls *current_fun =
                               get_current_fun__LilyCheckedScope(scope);
 
@@ -2674,6 +2675,8 @@ typecheck_binary_expr__LilyAnalysis(LilyAnalysis *self,
         }                                                       \
     }
 
+// TODO: add a function to reanalyze a function without signature (the first one
+// signature must be a known-signature)
 void
 reanalyze_fun_call_with_signature__LilyAnalysis(
   LilyAnalysis *self,
@@ -2727,6 +2730,16 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
                              LilyCheckedVirtualScope *virtual_scope,
                              LilyCheckedDataType *return_data_type)
 {
+    switch (expr->data_type->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+            FAILED("compiler generic data type or unknown data type is not "
+                   "expected at this point, please give a known data type to "
+                   "skip this error");
+        default:
+            break;
+    }
+
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
@@ -6045,20 +6058,53 @@ check_literal_expr__LilyAnalysis(LilyAnalysis *self,
                           NEW(LilyCheckedExprLiteral,
                               LILY_CHECKED_EXPR_LITERAL_KIND_NIL));
                     default:
-                        goto get_nil_unknown_dt;
+                        goto get_nil_cg_dt;
                 }
             } else {
-            get_nil_unknown_dt : {
+            get_nil_cg_dt : {
+                const LilyCheckedScopeDecls *current_parent =
+                  get_parent__LilyCheckedScope(scope);
+                String *compiler_generic_name = NULL;
+
+                // TODO: add support for lambda function and method
+                switch (current_parent->kind) {
+                    case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+                        switch (current_parent->decl->kind) {
+                            case LILY_CHECKED_DECL_KIND_FUN:
+                                add_compiler_generic__LilyCheckedCompilerGeneric(
+                                  current_parent->decl->fun
+                                    .used_compiler_generic);
+                                compiler_generic_name =
+                                  last__Vec(current_parent->decl->fun
+                                              .used_compiler_generic);
+
+                                break;
+                            case LILY_CHECKED_DECL_KIND_METHOD:
+                                TODO("add support for method");
+                            default:
+                                FAILED("not expected in this case, please give "
+                                       "a known data type");
+                        }
+
+                        break;
+                    default:
+                        FAILED("not expected in this case, please give a known "
+                               "data type");
+                }
+
                 return NEW_VARIANT(
                   LilyCheckedExpr,
                   literal,
                   &expr->location,
-                  NEW_VARIANT(LilyCheckedDataType,
-                              ptr,
-                              &expr->location,
-                              NEW(LilyCheckedDataType,
-                                  LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
-                                  &expr->location)),
+                  NEW_VARIANT(
+                    LilyCheckedDataType,
+                    ptr,
+                    &expr->location,
+                    NEW_VARIANT(LilyCheckedDataType,
+                                compiler_generic,
+                                &expr->location,
+                                NEW(LilyCheckedDataTypeCompilerGeneric,
+                                    compiler_generic_name))),
                   expr,
                   NEW(LilyCheckedExprLiteral,
                       LILY_CHECKED_EXPR_LITERAL_KIND_NIL));
@@ -8660,11 +8706,15 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
 {
     LilyCheckedExpr *expr = check_expr__LilyAnalysis(
       self, stmt->match.expr, scope, safety_mode, false, NULL);
+    bool use_switch = false;
 
     switch (expr->data_type->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ANY:
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
         case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_CHOICE:
         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
             FAILED("this data type is not expected to use in match statement");
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             switch (expr->data_type->custom.kind) {
@@ -8675,6 +8725,33 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                     break;
             }
 
+            break;
+        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+            use_switch = true;
             break;
         default:
             break;
@@ -8730,13 +8807,14 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                       check_item));
     }
 
-    return NEW_VARIANT(LilyCheckedBodyFunItem,
-                       stmt,
-                       NEW_VARIANT(LilyCheckedStmt,
-                                   match,
-                                   &stmt->location,
-                                   stmt,
-                                   NEW(LilyCheckedStmtMatch, expr, cases)));
+    return NEW_VARIANT(
+      LilyCheckedBodyFunItem,
+      stmt,
+      NEW_VARIANT(LilyCheckedStmt,
+                  match,
+                  &stmt->location,
+                  stmt,
+                  NEW(LilyCheckedStmtMatch, expr, cases, use_switch)));
 }
 
 LilyCheckedBodyFunItem *
