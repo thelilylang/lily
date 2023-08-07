@@ -34,10 +34,10 @@
  * @brief Generate pattern in Lily MIR.
  * @param fun_signature LilyCheckedSignatureFun*? (&)
  */
-LilyMirInstruction *
+LilyMirInstructionVal *
 generate_pattern__LilyMir(LilyMirModule *module,
-                       LilyCheckedSignatureFun *fun_signature,
-                       LilyMirScope *scope,
-                       LilyCheckedPattern *pattern);
+                          LilyCheckedSignatureFun *fun_signature,
+                          LilyMirScope *scope,
+                          LilyCheckedPattern *pattern);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_PATTERN_H
