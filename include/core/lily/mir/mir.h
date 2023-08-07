@@ -34,6 +34,7 @@
 #include <core/lily/analysis/checked/signature.h>
 #include <core/lily/analysis/checked/stmt/block.h>
 #include <core/lily/analysis/checked/stmt/if.h>
+#include <core/lily/analysis/checked/stmt/match.h>
 #include <core/lily/analysis/checked/stmt/unsafe.h>
 #include <core/lily/mir/block_limit.h>
 #include <core/lily/mir/instruction.h>
@@ -520,6 +521,13 @@ LilyMirBuildUnsafe(LilyMirModule *Module,
                    LilyMirScope *scope,
                    LilyMirBlockLimit *parent_block_limit,
                    const LilyCheckedStmtUnsafe *unsafe_stmt);
+
+void
+LilyMirBuildMatch(LilyMirModule *Module,
+                  LilyCheckedSignatureFun *fun_signature,
+                  LilyMirScope *scope,
+                  LilyMirBlockLimit *parent_block_limit,
+                  const LilyCheckedStmtMatch *match_stmt);
 
 inline LilyMirCurrent *
 LilyMirGetCurrentOnTop(LilyMirModule *Module)

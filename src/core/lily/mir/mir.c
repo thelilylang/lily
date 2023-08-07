@@ -1150,3 +1150,21 @@ LilyMirBuildUnsafe(LilyMirModule *Module,
         LilyMirAddBlock(Module, exit_block);
     }
 }
+
+void
+LilyMirBuildMatch(LilyMirModule *Module,
+                  LilyCheckedSignatureFun *fun_signature,
+                  LilyMirScope *scope,
+                  LilyMirBlockLimit *parent_block_limit,
+                  const LilyCheckedStmtMatch *match_stmt)
+{
+    if (match_stmt->use_switch) {
+        for (Usize i = 0; i < match_stmt->cases->len; ++i) {
+            LilyCheckedStmtMatchCase *case_ = get__Vec(match_stmt->cases, i);
+        }
+
+        TODO("generate match stmt");
+    } else {
+        TODO("generate match stmt");
+    }
+}
