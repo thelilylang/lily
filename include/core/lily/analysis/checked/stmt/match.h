@@ -74,6 +74,7 @@ typedef struct LilyCheckedStmtMatch
 {
     LilyCheckedExpr *expr;
     Vec *cases; // Vec<LilyCheckedStmtMatchCase*>*
+    bool use_switch;
 } LilyCheckedStmtMatch;
 
 /**
@@ -83,9 +84,12 @@ typedef struct LilyCheckedStmtMatch
 inline CONSTRUCTOR(LilyCheckedStmtMatch,
                    LilyCheckedStmtMatch,
                    LilyCheckedExpr *expr,
-                   Vec *cases)
+                   Vec *cases,
+                   bool use_switch)
 {
-    return (LilyCheckedStmtMatch){ .expr = expr, .cases = cases };
+    return (LilyCheckedStmtMatch){ .expr = expr,
+                                   .cases = cases,
+                                   .use_switch = use_switch };
 }
 
 /**

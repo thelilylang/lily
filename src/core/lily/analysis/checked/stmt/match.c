@@ -114,7 +114,11 @@ IMPL_FOR_DEBUG(to_string,
 
     DEBUG_VEC_STRING(self->cases, res, LilyCheckedStmtMatchCase);
 
-    push_str__String(res, " }");
+    {
+        char *s = format(", use_switch = {b} }", self->use_switch);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
