@@ -643,6 +643,7 @@ set(LILY_CORE_LILY_MIR_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/expr/unary.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/expr.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/fun.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/pattern.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/record.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/stmt.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/val.c
