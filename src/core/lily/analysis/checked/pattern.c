@@ -413,6 +413,86 @@ get_name__LilyCheckedPattern(const LilyCheckedPattern *self)
     }
 }
 
+bool
+is_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY:
+            for (Usize i = 0; i < self->array.patterns->len; ++i) {
+                if (!is_else_pattern__LilyCheckedPattern(
+                      get__Vec(self->array.patterns, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_PATTERN_KIND_AS:
+            return is_else_pattern__LilyCheckedPattern(self->as.pattern);
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
+        case LILY_CHECKED_PATTERN_KIND_LITERAL:
+            return false;
+        case LILY_CHECKED_PATTERN_KIND_LIST:
+            for (Usize i = 0; i < self->list.patterns->len; ++i) {
+                if (!is_else_pattern__LilyCheckedPattern(
+                      get__Vec(self->list.patterns, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
+            return is_else_pattern__LilyCheckedPattern(self->list_head.left) &&
+                   is_else_pattern__LilyCheckedPattern(self->list_head.right);
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
+            return is_else_pattern__LilyCheckedPattern(self->list_tail.left) &&
+                   is_else_pattern__LilyCheckedPattern(self->list_tail.right);
+        case LILY_CHECKED_PATTERN_KIND_RANGE:
+            return is_else_pattern__LilyCheckedPattern(self->range.left) &&
+                   is_else_pattern__LilyCheckedPattern(self->range.right);
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
+            for (Usize i = 0; i < self->record_call.fields->len; ++i) {
+                LilyCheckedPatternRecordField *field =
+                  get__Vec(self->record_call.fields, i);
+
+                if (!is_else_pattern__LilyCheckedPattern(field->pattern)) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_PATTERN_KIND_TUPLE:
+            for (Usize i = 0; i < self->tuple.patterns->len; ++i) {
+                if (!is_else_pattern__LilyCheckedPattern(
+                      get__Vec(self->tuple.patterns, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
+            return is_else_pattern__LilyCheckedPattern(
+              self->variant_call.pattern);
+        case LILY_CHECKED_PATTERN_KIND_NAME:
+        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
+        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
+        case LILY_CHECKED_PATTERN_KIND_NONE:
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
+            return true;
+    }
+}
+
+bool
+is_final_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_NAME:
+        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
+            return true;
+        default:
+            return false;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)

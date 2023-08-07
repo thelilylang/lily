@@ -277,6 +277,20 @@ get_name__LilyCheckedPattern(const LilyCheckedPattern *self);
 
 /**
  *
+ * @brief Is else pattern.
+ */
+bool
+is_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self);
+
+/**
+ *
+ * @brief Is the last else pattern.
+ */
+bool
+is_final_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self);
+
+/**
+ *
  * @brief Convert LilyCheckedPattern in String.
  * @note This function is only used to debug.
  */
