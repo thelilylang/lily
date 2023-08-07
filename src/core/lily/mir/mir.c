@@ -28,6 +28,7 @@
 #include <core/lily/analysis/checked/body/fun.h>
 #include <core/lily/mir/generator/body.h>
 #include <core/lily/mir/generator/expr.h>
+#include <core/lily/mir/generator/pattern.h>
 #include <core/lily/mir/generator/stmt.h>
 #include <core/lily/mir/mir.h>
 
@@ -1158,13 +1159,89 @@ LilyMirBuildMatch(LilyMirModule *Module,
                   LilyMirBlockLimit *parent_block_limit,
                   const LilyCheckedStmtMatch *match_stmt)
 {
+    TODO("generate match");
+
+    LilyMirInstruction *exit_block =
+      LilyMirBuildBlock(Module, parent_block_limit);
+
     if (match_stmt->use_switch) {
+        LilyMirInstruction *switched_inst = generate_expr__LilyMir(
+          Module, fun_signature, scope, match_stmt->expr);
+        LilyMirInstructionVal *switched_val = switched_inst->val;
+        Vec *cases = NEW(Vec); // Vec<LilyMirInstructionSwitchCase*>*
+
+        LilyMirInstruction *default_block =
+          LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+        LilyMirInstruction *switch_inst =
+          NEW_VARIANT(LilyMirInstruction,
+                      switch,
+                      NEW(LilyMirInstructionSwitch,
+                          switched_val,
+                          &default_block->block,
+                          cases));
+
+        LilyMirAddInst(Module, switch_inst);
+
         for (Usize i = 0; i < match_stmt->cases->len; ++i) {
+            if (i + 1 == match_stmt->cases->len && match_stmt->has_else) {
+                break;
+            }
+
             LilyCheckedStmtMatchCase *case_ = get__Vec(match_stmt->cases, i);
+            LilyMirInstructionVal *case_pattern = generate_pattern__LilyMir(
+              Module, fun_signature, scope, case_->pattern);
+            LilyMirInstruction *block =
+              LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+
+            if (case_->cond) {
+                TODO("generate cond...");
+            }
+
+            LilyMirPopBlock(Module);
+            LilyMirAddBlock(Module, block);
+
+            push__Vec(
+              cases,
+              NEW(LilyMirInstructionSwitchCase, case_pattern, &block->block));
+
+            GENERATE_BODY_ITEM(Module,
+                               fun_signature,
+                               scope,
+                               block->block.limit,
+                               NULL,
+                               NULL,
+                               case_->body_item);
+
+            LilyMirSetBlockLimit(block->block.limit,
+                                 LilyMirGetInsertBlock(Module)->id);
+            LilyMirAddFinalInstruction(Module, exit_block);
         }
 
-        TODO("generate match stmt");
+        if (match_stmt->has_else) {
+            LilyCheckedStmtMatchCase *default_case =
+              last__Vec(match_stmt->cases);
+            default_block = LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+
+            LilyMirPopBlock(Module);
+            LilyMirAddBlock(Module, default_block);
+
+            GENERATE_BODY_ITEM(Module,
+                               fun_signature,
+                               scope,
+                               default_block->block.limit,
+                               exit_block,
+                               NULL,
+                               default_case->body_item);
+
+            LilyMirSetBlockLimit(default_block->block.limit,
+                                 LilyMirGetInsertBlock(Module)->id);
+            LilyMirAddFinalInstruction(Module, exit_block);
+        }
+
+        lily_free(switched_inst);
     } else {
         TODO("generate match stmt");
     }
+
+    LilyMirAddBlock(Module, exit_block);
 }
