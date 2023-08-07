@@ -59,7 +59,10 @@ generate_stmt__LilyMir(LilyMirModule *module,
 
             return NULL;
         case LILY_CHECKED_STMT_KIND_MATCH:
-            TODO("generate match stmt");
+            LilyMirBuildMatch(
+              module, fun_signature, scope, block_limit, &stmt->match);
+
+            return NULL;
         case LILY_CHECKED_STMT_KIND_NEXT:
             LilyMirBuildNext(module, next_block);
 
