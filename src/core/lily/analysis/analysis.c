@@ -41,6 +41,8 @@
 
 #include <core/shared/diagnostic.h>
 
+#include <limits.h>
+
 #define ANALYSIS_EMIT_DIAGNOSTIC(self, name, location, ...)           \
     {                                                                 \
         const File *file = get_file_from_filename__LilyPackage(       \
@@ -590,6 +592,11 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                             enum LilyCheckedSafetyMode safety_mode,
                             LilyCheckedDataType *defined_data_type,
                             OrderedHashMap *captured_variables);
+
+static Usize
+count_total_cases__LilyAnalysis(LilyAnalysis *self,
+                                enum LilyCheckedSafetyMode safety_mode,
+                                LilyCheckedDataType *dt);
 
 static LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
@@ -8696,6 +8703,84 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
     }
 }
 
+Usize
+count_total_cases__LilyAnalysis(LilyAnalysis *self,
+                                enum LilyCheckedSafetyMode safety_mode,
+                                LilyCheckedDataType *dt)
+{
+    ASSERT(dt);
+
+    switch (dt->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_ARRAY:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSTR:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_LIST:
+        case LILY_CHECKED_DATA_TYPE_KIND_STR:
+        case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+            return 1;
+        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+        case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+            return 2;
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+            switch (safety_mode) {
+                case LILY_CHECKED_SAFETY_MODE_SAFE:
+                    return count_total_cases__LilyAnalysis(
+                      self, safety_mode, dt->ptr);
+                case LILY_CHECKED_SAFETY_MODE_UNSAFE:
+                    return 2;
+            }
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            switch (safety_mode) {
+                case LILY_CHECKED_SAFETY_MODE_SAFE:
+                    return count_total_cases__LilyAnalysis(
+                      self, safety_mode, dt->ptr_mut);
+                case LILY_CHECKED_SAFETY_MODE_UNSAFE:
+                    return 2;
+            }
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            return count_total_cases__LilyAnalysis(self, safety_mode, dt->mut);
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            return count_total_cases__LilyAnalysis(self, safety_mode, dt->ref);
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            return count_total_cases__LilyAnalysis(
+              self, safety_mode, dt->ref_mut);
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+            return count_total_cases__LilyAnalysis(
+              self, safety_mode, dt->trace);
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            return count_total_cases__LilyAnalysis(
+              self, safety_mode, dt->trace_mut);
+        default:
+            return 0;
+    }
+}
+
 LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                                const LilyAstStmt *stmt,
@@ -8707,6 +8792,18 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
     LilyCheckedExpr *expr = check_expr__LilyAnalysis(
       self, stmt->match.expr, scope, safety_mode, false, NULL);
     bool use_switch = false;
+    bool has_else = false;
+    Usize total_cases =
+      count_total_cases__LilyAnalysis(self, safety_mode, expr->data_type);
+    Usize nb_cases = 0;
+
+    switch (expr->kind) {
+        case LILY_CHECKED_EXPR_KIND_LITERAL:
+            FAILED("literal expression is not expected to pass to a match "
+                   "statement");
+        default:
+            break;
+    }
 
     switch (expr->data_type->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_ANY:
@@ -8715,6 +8812,8 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE:
         case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
         case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+        case LILY_CHECKED_DATA_TYPE_KIND_LAMBDA:
+        case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
             FAILED("this data type is not expected to use in match statement");
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             switch (expr->data_type->custom.kind) {
@@ -8757,18 +8856,16 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
             break;
     }
 
-    switch (expr->kind) {
-        case LILY_CHECKED_EXPR_KIND_LITERAL:
-            FAILED("literal expression is not expected to pass to a match "
-                   "statement");
-        default:
-            break;
-    }
-
     Vec *cases = NEW(Vec); // Vec<LilyCheckedStmtMatchCase*>*
 
     for (Usize i = 0; i < stmt->match.cases->len; ++i) {
         LilyAstStmtMatchCase *ast_case = get__Vec(stmt->match.cases, i);
+
+        if (nb_cases == total_cases) {
+            FAILED("warning: these cases are unused");
+            continue;
+        }
+
         OrderedHashMap *captured_variables = NEW(OrderedHashMap);
         LilyCheckedPattern *check_pattern =
           check_pattern__LilyAnalysis(self,
@@ -8782,9 +8879,20 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
             ? check_expr__LilyAnalysis(
                 self, ast_case->cond, scope, safety_mode, false, NULL)
             : NULL;
+        bool is_final_else =
+          is_final_else_pattern__LilyCheckedPattern(check_pattern);
 
         if (check_cond) {
+            use_switch = false;
             EXPECTED_BOOL_EXPR(check_cond);
+        }
+
+        if (!check_cond && is_else_pattern__LilyCheckedPattern(check_pattern)) {
+            if (is_final_else) {
+                nb_cases = total_cases;
+            } else {
+                ++nb_cases;
+            }
         }
 
         LilyCheckedBodyFunItem *check_item =
@@ -8805,16 +8913,27 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                       check_pattern,
                       check_cond,
                       check_item));
+
+        if (is_final_else) {
+            break;
+        }
+    }
+
+    if (nb_cases > total_cases) {
+        UNREACHABLE("check_match_stmt__LilyAnalysis has a bug!!");
+    } else if (nb_cases != total_cases) {
+        FAILED("non-exhaustive patterns");
     }
 
     return NEW_VARIANT(
       LilyCheckedBodyFunItem,
       stmt,
-      NEW_VARIANT(LilyCheckedStmt,
-                  match,
-                  &stmt->location,
-                  stmt,
-                  NEW(LilyCheckedStmtMatch, expr, cases, use_switch)));
+      NEW_VARIANT(
+        LilyCheckedStmt,
+        match,
+        &stmt->location,
+        stmt,
+        NEW(LilyCheckedStmtMatch, expr, cases, use_switch, has_else)));
 }
 
 LilyCheckedBodyFunItem *
