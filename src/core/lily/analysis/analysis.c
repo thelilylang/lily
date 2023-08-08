@@ -8862,7 +8862,7 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
         LilyAstStmtMatchCase *ast_case = get__Vec(stmt->match.cases, i);
 
         if (nb_cases == total_cases) {
-            FAILED("warning: these cases are unused");
+            FAILED("warning: this case is unused");
             continue;
         }
 
@@ -8911,9 +8911,17 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
         for (Usize j = 0; j < cases->len; ++j) {
             LilyCheckedStmtMatchCase *case_ = get__Vec(cases, j);
 
-            if (eq__LilyCheckedPattern(case_->pattern, check_pattern)) {
-                FAILED("duplicate case");
+            if (case_->cond) {
+                continue;
             }
+
+			bool is_eq = eq__LilyCheckedPattern(case_->pattern, check_pattern);
+
+			if (is_eq && check_cond) {
+                FAILED("unused case");
+            } else if (is_eq) {
+                FAILED("duplicate case");
+			}
         }
 
         push__Vec(cases,
