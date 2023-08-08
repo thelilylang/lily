@@ -1159,8 +1159,6 @@ LilyMirBuildMatch(LilyMirModule *Module,
                   LilyMirBlockLimit *parent_block_limit,
                   const LilyCheckedStmtMatch *match_stmt)
 {
-    TODO("generate match");
-
     LilyMirInstruction *exit_block =
       LilyMirBuildBlock(Module, parent_block_limit);
 
@@ -1217,13 +1215,12 @@ LilyMirBuildMatch(LilyMirModule *Module,
             LilyMirAddFinalInstruction(Module, exit_block);
         }
 
+        LilyMirPopBlock(Module);
+        LilyMirAddBlock(Module, default_block);
+
         if (match_stmt->has_else) {
             LilyCheckedStmtMatchCase *default_case =
               last__Vec(match_stmt->cases);
-            default_block = LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
-
-            LilyMirPopBlock(Module);
-            LilyMirAddBlock(Module, default_block);
 
             GENERATE_BODY_ITEM(Module,
                                fun_signature,
@@ -1236,6 +1233,11 @@ LilyMirBuildMatch(LilyMirModule *Module,
             LilyMirSetBlockLimit(default_block->block.limit,
                                  LilyMirGetInsertBlock(Module)->id);
             LilyMirAddFinalInstruction(Module, exit_block);
+        } else {
+            LilyMirAddInst(Module,
+                           NEW_VARIANT(LilyMirInstruction, unreachable));
+            LilyMirSetBlockLimit(default_block->block.limit,
+                                 LilyMirGetInsertBlock(Module)->id);
         }
 
         lily_free(switched_inst);
@@ -1243,5 +1245,6 @@ LilyMirBuildMatch(LilyMirModule *Module,
         TODO("generate match stmt");
     }
 
+    LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, exit_block);
 }
