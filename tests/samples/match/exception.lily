@@ -12,5 +12,6 @@ fun main =
 	match is_err(true) do
 		error Failed:_ => ();
 		0 => ();
+		_ => ();
 	end
 end
