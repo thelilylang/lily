@@ -595,6 +595,7 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
 
 static Usize
 count_total_cases__LilyAnalysis(LilyAnalysis *self,
+                                LilyCheckedScope *scope,
                                 enum LilyCheckedSafetyMode safety_mode,
                                 LilyCheckedDataType *dt);
 
@@ -813,6 +814,8 @@ static threadlocal LilyCheckedDeclAlias *alias_decl = NULL;
                                            body);                                  \
                                                                                    \
             if (item) {                                                            \
+                bool value_is_unused = false;                                      \
+                                                                                   \
                 if (j + 1 == ast_body->len) {                                      \
                     /* Check for implicit return */                                \
                     switch (item->kind) {                                          \
@@ -885,8 +888,33 @@ static threadlocal LilyCheckedDeclAlias *alias_decl = NULL;
                              * speaking of return. */                              \
                             break;                                                 \
                     }                                                              \
+                } else {                                                           \
+                    switch (item->kind) {                                          \
+                        case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:                 \
+                            switch (item->expr->data_type->kind) {                 \
+                                case LILY_CHECKED_DATA_TYPE_KIND_UNIT:             \
+                                case LILY_CHECKED_DATA_TYPE_KIND_CVOID:            \
+                                case LILY_CHECKED_DATA_TYPE_KIND_NEVER:            \
+                                    break;                                         \
+                                default:                                           \
+                                    value_is_unused = true;                        \
+                                    FAILED("warning: unused value");               \
+                            }                                                      \
+                                                                                   \
+                            break;                                                 \
+                        case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:                 \
+                            /* TODO: When we add data type to statement we         \
+                             * have some code to add here to verify if the         \
+                             * value is used. */                                   \
+                            break;                                                 \
+                        default:                                                   \
+                            UNREACHABLE("unknown variant");                        \
+                    }                                                              \
                 }                                                                  \
-                push__Vec(body, item);                                             \
+                                                                                   \
+                if (!value_is_unused) {                                            \
+                    push__Vec(body, item);                                         \
+                }                                                                  \
             }                                                                      \
         }                                                                          \
                                                                                    \
@@ -8705,6 +8733,7 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
 
 Usize
 count_total_cases__LilyAnalysis(LilyAnalysis *self,
+                                LilyCheckedScope *scope,
                                 enum LilyCheckedSafetyMode safety_mode,
                                 LilyCheckedDataType *dt)
 {
@@ -8731,7 +8760,6 @@ count_total_cases__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
         case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
         case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
-        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
         case LILY_CHECKED_DATA_TYPE_KIND_INT16:
         case LILY_CHECKED_DATA_TYPE_KIND_INT32:
         case LILY_CHECKED_DATA_TYPE_KIND_INT64:
@@ -8747,11 +8775,45 @@ count_total_cases__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_DATA_TYPE_KIND_RESULT:
         case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
             return 2;
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
+            switch (dt->custom.kind) {
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ENUM: {
+                    LilyCheckedScopeResponse enum_response =
+                      search_from_scope_id__LilyCheckedScope(
+                        scope,
+                        dt->custom.scope_id,
+                        dt->custom.name,
+                        LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM);
+
+                    ASSERT(enum_response.kind !=
+                           LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND);
+
+                    return enum_response.enum_->variants->len;
+                }
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ENUM_OBJECT: {
+                    LilyCheckedScopeResponse enum_object_response =
+                      search_from_scope_id__LilyCheckedScope(
+                        scope,
+                        dt->custom.scope_id,
+                        dt->custom.name,
+                        LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_OBJECT);
+
+                    ASSERT(enum_object_response.kind !=
+                           LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND);
+
+                    return enum_object_response.enum_object->nb_variants;
+                }
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD:
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_RECORD_OBJECT:
+                    return 1;
+                default:
+                    return 0;
+            }
         case LILY_CHECKED_DATA_TYPE_KIND_PTR:
             switch (safety_mode) {
                 case LILY_CHECKED_SAFETY_MODE_SAFE:
                     return count_total_cases__LilyAnalysis(
-                      self, safety_mode, dt->ptr);
+                      self, scope, safety_mode, dt->ptr);
                 case LILY_CHECKED_SAFETY_MODE_UNSAFE:
                     return 2;
             }
@@ -8759,23 +8821,25 @@ count_total_cases__LilyAnalysis(LilyAnalysis *self,
             switch (safety_mode) {
                 case LILY_CHECKED_SAFETY_MODE_SAFE:
                     return count_total_cases__LilyAnalysis(
-                      self, safety_mode, dt->ptr_mut);
+                      self, scope, safety_mode, dt->ptr_mut);
                 case LILY_CHECKED_SAFETY_MODE_UNSAFE:
                     return 2;
             }
         case LILY_CHECKED_DATA_TYPE_KIND_MUT:
-            return count_total_cases__LilyAnalysis(self, safety_mode, dt->mut);
+            return count_total_cases__LilyAnalysis(
+              self, scope, safety_mode, dt->mut);
         case LILY_CHECKED_DATA_TYPE_KIND_REF:
-            return count_total_cases__LilyAnalysis(self, safety_mode, dt->ref);
+            return count_total_cases__LilyAnalysis(
+              self, scope, safety_mode, dt->ref);
         case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
             return count_total_cases__LilyAnalysis(
-              self, safety_mode, dt->ref_mut);
+              self, scope, safety_mode, dt->ref_mut);
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return count_total_cases__LilyAnalysis(
-              self, safety_mode, dt->trace);
+              self, scope, safety_mode, dt->trace);
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
             return count_total_cases__LilyAnalysis(
-              self, safety_mode, dt->trace_mut);
+              self, scope, safety_mode, dt->trace_mut);
         default:
             return 0;
     }
@@ -8793,8 +8857,8 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
       self, stmt->match.expr, scope, safety_mode, false, NULL);
     bool use_switch = false;
     bool has_else = false;
-    Usize total_cases =
-      count_total_cases__LilyAnalysis(self, safety_mode, expr->data_type);
+    Usize total_cases = count_total_cases__LilyAnalysis(
+      self, scope, safety_mode, expr->data_type);
     Usize nb_cases = 0;
 
     switch (expr->kind) {
@@ -8818,6 +8882,9 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM:
             switch (expr->data_type->custom.kind) {
                 case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_GENERIC:
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_ERROR:
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_CLASS:
+                case LILY_CHECKED_DATA_TYPE_CUSTOM_KIND_TRAIT:
                     FAILED("this data type is not expected to use in match "
                            "statement");
                 default:
