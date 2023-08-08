@@ -1168,7 +1168,7 @@ LilyMirBuildMatch(LilyMirModule *Module,
                   const LilyCheckedStmtMatch *match_stmt)
 {
     LilyMirInstruction *exit_block =
-      LilyMirBuildBlock(Module, parent_block_limit);
+      LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(parent_block_limit));
 
     if (match_stmt->use_switch) {
         LilyMirInstruction *switched_inst = generate_expr__LilyMir(
@@ -1209,10 +1209,6 @@ LilyMirBuildMatch(LilyMirModule *Module,
             LilyMirPopBlock(Module);
             LilyMirAddBlock(Module, block);
 
-            push__Vec(
-              cases,
-              NEW(LilyMirInstructionSwitchCase, case_pattern, &block->block));
-
             GENERATE_BODY_ITEM(Module,
                                fun_signature,
                                scope,
@@ -1224,6 +1220,10 @@ LilyMirBuildMatch(LilyMirModule *Module,
             LilyMirSetBlockLimit(block->block.limit,
                                  LilyMirGetInsertBlock(Module)->id);
             LilyMirAddFinalInstruction(Module, exit_block);
+
+            push__Vec(
+              cases,
+              NEW(LilyMirInstructionSwitchCase, case_pattern, &block->block));
         }
 
         LilyMirPopBlock(Module);
