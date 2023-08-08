@@ -1223,7 +1223,7 @@ DESTRUCTOR(LilyMirInstructionSwitch, const LilyMirInstructionSwitch *self)
 {
     FREE(LilyMirInstructionVal, self->val);
     FREE_BUFFER_ITEMS(
-      self->cases->buffer, self->cases->len, LilyMirInstructionSwitch);
+      self->cases->buffer, self->cases->len, LilyMirInstructionSwitchCase);
     FREE(Vec, self->cases);
 }
 
