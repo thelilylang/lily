@@ -42,6 +42,7 @@ typedef struct LilyCheckedDeclEnumObject
     Vec *generic_params; // Vec<LilyCheckedGenericParam*>*?
     Vec *impl_params;    // Vec<LilyCheckedImplParam*>*?
     Vec *body;           // Vec<LilyCheckedBodyEnumObjectItem*>*
+    Usize nb_variants;
     LilyCheckedScope *scope;
     enum LilyVisibility visibility;
     bool is_checked;
@@ -66,6 +67,7 @@ inline CONSTRUCTOR(LilyCheckedDeclEnumObject,
                                         .generic_params = generic_params,
                                         .impl_params = impl_params,
                                         .body = body,
+                                        .nb_variants = 0,
                                         .scope = scope,
                                         .visibility = visibility,
                                         .is_checked = false };

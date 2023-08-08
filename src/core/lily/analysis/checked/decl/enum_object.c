@@ -55,7 +55,9 @@ IMPL_FOR_DEBUG(to_string,
     DEBUG_VEC_STRING(self->body, res, LilyCheckedBodyEnumObjectItem);
 
     {
-        char *s = format(", scope = {Sr}, visibility = {s}, is_checked = {b} }",
+        char *s = format(", nb_variants = {zu}, scope = {Sr}, visibility = "
+                         "{s}, is_checked = {b} }",
+                         self->nb_variants,
                          to_string__Debug__LilyCheckedScope(self->scope),
                          to_string__Debug__LilyVisibility(self->visibility),
                          self->is_checked);
