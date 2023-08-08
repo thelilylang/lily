@@ -8924,6 +8924,7 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                       check_item));
 
         if (is_final_else) {
+            has_else = true;
             break;
         }
     }
