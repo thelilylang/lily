@@ -89,9 +89,9 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedStmtMatchCase, LilyCheckedStmtMatchCase *self)
 {
-    FREE(OrderedHashMap, self->captured_variables);
     FREE_ORD_HASHMAP_VALUES(self->captured_variables,
                             LilyCheckedCapturedVariable);
+    FREE(OrderedHashMap, self->captured_variables);
 
     FREE(LilyCheckedPattern, self->pattern);
 
