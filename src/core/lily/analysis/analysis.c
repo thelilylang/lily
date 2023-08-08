@@ -8915,13 +8915,13 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                 continue;
             }
 
-			bool is_eq = eq__LilyCheckedPattern(case_->pattern, check_pattern);
+            bool is_eq = eq__LilyCheckedPattern(case_->pattern, check_pattern);
 
-			if (is_eq && check_cond) {
-                FAILED("unused case");
+            if (is_eq && check_cond) {
+                FAILED("warning: unused case");
             } else if (is_eq) {
-                FAILED("duplicate case");
-			}
+                FAILED("warning: duplicate case");
+            }
         }
 
         push__Vec(cases,
