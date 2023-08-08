@@ -1579,6 +1579,84 @@ safe_get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id)
     }
 }
 
+LilyCheckedScopeResponse
+search_from_scope_id__LilyCheckedScope(
+  LilyCheckedScope *self,
+  Usize id,
+  const String *name,
+  enum LilyCheckedScopeResponseKind res_kind)
+{
+    LilyCheckedScope *current_scope =
+      safe_get_scope_from_id__LilyCheckedScope(self, id);
+
+    if (!current_scope) {
+        return NEW(LilyCheckedScopeResponse);
+    }
+
+    switch (res_kind) {
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_MODULE:
+            return search_module_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_CONSTANT:
+            return search_constant_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_CATCH_VARIABLE:
+            TODO("catch variable");
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_CAPTURED_VARIABLE:
+            return search_captured_variable_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM:
+            return search_enum_in_current_scope__LilyCheckedScope(current_scope,
+                                                                  name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT:
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT_OBJECT:
+            return search_variant__LilyCheckedScope(current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD:
+            return search_record_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD:
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_FIELD_OBJECT:
+            return search_field__LilyCheckedScope(current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_ALIAS:
+            return search_alias_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_ERROR:
+            return search_error_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_OBJECT:
+            return search_enum_object_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD_OBJECT:
+            return search_record_object_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_CLASS:
+            return search_class_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_TRAIT:
+            return search_trait_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN:
+            return search_fun_in_current_scope__LilyCheckedScope(current_scope,
+                                                                 name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_LABEL:
+            TODO("label");
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_VARIABLE:
+            return search_variable_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_FUN_PARAM:
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_METHOD_PARAM:
+            return search_param_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_GENERIC:
+            return search_generic_in_current_scope__LilyCheckedScope(
+              current_scope, name);
+        case LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND:
+            return NEW(LilyCheckedScopeResponse);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 LilyCheckedDecl *
 get_decl_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id, Usize pos)
 {

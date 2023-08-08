@@ -422,6 +422,17 @@ safe_get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id);
 
 /**
  *
+ * @brief Get response from scope id and kind of response.
+ */
+LilyCheckedScopeResponse
+search_from_scope_id__LilyCheckedScope(
+  LilyCheckedScope *self,
+  Usize id,
+  const String *name,
+  enum LilyCheckedScopeResponseKind res_kind);
+
+/**
+ *
  * @brief Try to get the current fun declaration (include lambda) in the scope.
  */
 LilyCheckedScopeDecls *
