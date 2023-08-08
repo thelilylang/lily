@@ -291,6 +291,14 @@ is_final_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self);
 
 /**
  *
+ * @brief Check if the both pattern are equal.
+ */
+bool
+eq__LilyCheckedPattern(const LilyCheckedPattern *self,
+                       const LilyCheckedPattern *other);
+
+/**
+ *
  * @brief Convert LilyCheckedPattern in String.
  * @note This function is only used to debug.
  */

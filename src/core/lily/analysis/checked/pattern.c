@@ -493,6 +493,201 @@ is_final_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
     }
 }
 
+bool
+eq__LilyCheckedPattern(const LilyCheckedPattern *self,
+                       const LilyCheckedPattern *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY:
+            // TODO: improve
+            if (self->array.patterns->len != other->array.patterns->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->array.patterns->len; ++i) {
+                if (!eq__LilyCheckedPattern(
+                      get__Vec(self->array.patterns, i),
+                      get__Vec(other->array.patterns, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_PATTERN_KIND_AS:
+            return eq__LilyCheckedPattern(self->as.pattern, other->as.pattern);
+        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
+            return true;
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
+            // TODO: check if the both id are equal
+            return eq__LilyCheckedPattern(self->error.pattern,
+                                          other->error.pattern);
+        case LILY_CHECKED_PATTERN_KIND_LIST:
+            // TODO: improve
+            if (self->list.patterns->len != other->list.patterns->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->list.patterns->len; ++i) {
+                if (!eq__LilyCheckedPattern(
+                      get__Vec(self->list.patterns, i),
+                      get__Vec(other->list.patterns, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
+            return eq__LilyCheckedPattern(self->list_head.left,
+                                          other->list_head.left) &&
+                   eq__LilyCheckedPattern(self->list_head.right,
+                                          other->list_head.right);
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
+            return eq__LilyCheckedPattern(self->list_tail.left,
+                                          other->list_tail.left) &&
+                   eq__LilyCheckedPattern(self->list_tail.right,
+                                          other->list_tail.right);
+        case LILY_CHECKED_PATTERN_KIND_LITERAL:
+            if (self->literal.kind != other->literal.kind) {
+                return false;
+            }
+
+            switch (self->literal.kind) {
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BOOL:
+                    return self->literal.bool_ == other->literal.bool_;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTE:
+                    return self->literal.byte == other->literal.byte;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTES:
+                    return !strcmp((char *)self->literal.bytes,
+                                   (char *)other->literal.bytes);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_CHAR:
+                    return self->literal.char_ == other->literal.char_;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_CSTR:
+                    return !strcmp(self->literal.cstr, other->literal.cstr);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT32:
+                    return self->literal.float32 == other->literal.float32;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT64:
+                    return self->literal.float64 == other->literal.float64;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_INT32:
+                    return self->literal.int32 == other->literal.int32;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_INT64:
+                    return self->literal.int64 == other->literal.int64;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_NIL:
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_NONE:
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UNDEF:
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UNIT:
+                    return true;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_STR:
+                    return !strcmp(self->literal.str->buffer,
+                                   other->literal.str->buffer);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_FLOAT32:
+                    return self->literal.suffix_float32 ==
+                           other->literal.suffix_float32;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_FLOAT64:
+                    return self->literal.suffix_float64 ==
+                           other->literal.suffix_float64;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT8:
+                    return self->literal.suffix_int8 ==
+                           other->literal.suffix_int8;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT16:
+                    return self->literal.suffix_int16 ==
+                           other->literal.suffix_int16;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT32:
+                    return self->literal.suffix_int32 ==
+                           other->literal.suffix_int32;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT64:
+                    return self->literal.suffix_int64 ==
+                           other->literal.suffix_int64;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_ISIZE:
+                    return self->literal.suffix_isize ==
+                           other->literal.suffix_isize;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT8:
+                    return self->literal.suffix_uint8 ==
+                           other->literal.suffix_uint8;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT16:
+                    return self->literal.suffix_uint16 ==
+                           other->literal.suffix_uint16;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT32:
+                    return self->literal.suffix_uint32 ==
+                           other->literal.suffix_uint32;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT64:
+                    return self->literal.suffix_uint64 ==
+                           other->literal.suffix_uint64;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_USIZE:
+                    return self->literal.suffix_usize ==
+                           other->literal.suffix_usize;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case LILY_CHECKED_PATTERN_KIND_NAME:
+            return !strcmp(self->name.name->buffer, other->name.name->buffer);
+        case LILY_CHECKED_PATTERN_KIND_NONE:
+        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
+            return true;
+        case LILY_CHECKED_PATTERN_KIND_RANGE:
+            return eq__LilyCheckedPattern(self->range.left,
+                                          other->range.left) &&
+                   eq__LilyCheckedPattern(self->range.right,
+                                          other->range.right);
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
+            // TODO: cmp id
+            // TODO: improve
+
+            if (self->record_call.fields->len !=
+                other->record_call.fields->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->record_call.fields->len; ++i) {
+                LilyCheckedPatternRecordField *self_field =
+                  get__Vec(self->record_call.fields, i);
+                LilyCheckedPatternRecordField *other_field =
+                  get__Vec(other->record_call.fields, i);
+
+                if (self_field->name && other_field->name) {
+                    if (!(!strcmp(self_field->name->buffer,
+                                  other_field->name->buffer) &&
+                          eq__LilyCheckedPattern(self_field->pattern,
+                                                 other_field->pattern))) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_PATTERN_KIND_TUPLE:
+            // TODO: improve
+            if (self->tuple.patterns->len != other->tuple.patterns->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->tuple.patterns->len; ++i) {
+                if (!eq__LilyCheckedPattern(
+                      get__Vec(self->tuple.patterns, i),
+                      get__Vec(other->tuple.patterns, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
+            return false;
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
+            // TODO: improve
+            // TODO: cmp id
+
+            return eq__LilyCheckedPattern(self->variant_call.pattern,
+                                          other->variant_call.pattern);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)
