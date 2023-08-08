@@ -51,6 +51,14 @@ inline CONSTRUCTOR(LilyCheckedPatternError,
 
 /**
  *
+ * @brief Check if the both pattern error are equal.
+ */
+bool
+eq__LilyCheckedPatternError(const LilyCheckedPatternError *self,
+                            const LilyCheckedPatternError *other);
+
+/**
+ *
  * @brief Convert LilyCheckedPatternError in String.
  * @note This function is only used to debug.
  */

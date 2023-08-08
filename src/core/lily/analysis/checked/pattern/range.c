@@ -27,6 +27,14 @@
 #include <core/lily/analysis/checked/pattern.h>
 #include <core/lily/analysis/checked/pattern/range.h>
 
+bool
+eq__LilyCheckedPatternRange(const LilyCheckedPatternRange *self,
+                            const LilyCheckedPatternRange *other)
+{
+    return eq__LilyCheckedPattern(self->left, other->left) &&
+           eq__LilyCheckedPattern(self->right, other->right);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,

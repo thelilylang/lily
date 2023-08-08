@@ -50,6 +50,14 @@ inline CONSTRUCTOR(LilyCheckedPatternListTail,
 
 /**
  *
+ * @brief Check if the both pattern list tail are equal.
+ */
+bool
+eq__LilyCheckedPatternListTail(const LilyCheckedPatternListTail *self,
+                               const LilyCheckedPatternListTail *other);
+
+/**
+ *
  * @brief Convert LilyCheckedPatternListTail in String.
  * @note This function is only used to debug.
  */

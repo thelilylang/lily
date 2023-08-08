@@ -50,12 +50,22 @@ inline CONSTRUCTOR(LilyCheckedPatternRange,
 
 /**
  *
+ * @brief Check if the both pattern range are equal.
+ */
+bool
+eq__LilyCheckedPatternRange(const LilyCheckedPatternRange *self,
+                            const LilyCheckedPatternRange *other);
+
+/**
+ *
  * @brief Convert LilyCheckedPatternRange in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedPatternRange, const LilyCheckedPatternRange *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedPatternRange,
+               const LilyCheckedPatternRange *self);
 #endif
 
 /**

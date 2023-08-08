@@ -39,10 +39,20 @@ typedef struct LilyCheckedPatternList
  *
  * @brief Construct LilyCheckedPatternList type.
  */
-inline CONSTRUCTOR(LilyCheckedPatternList, LilyCheckedPatternList, Vec *patterns)
+inline CONSTRUCTOR(LilyCheckedPatternList,
+                   LilyCheckedPatternList,
+                   Vec *patterns)
 {
     return (LilyCheckedPatternList){ .patterns = patterns };
 }
+
+/**
+ *
+ * @brief Check if the both pattern list are equal.
+ */
+bool
+eq__LilyCheckedPatternList(const LilyCheckedPatternList *self,
+                           const LilyCheckedPatternList *other);
 
 /**
  *
@@ -51,7 +61,9 @@ inline CONSTRUCTOR(LilyCheckedPatternList, LilyCheckedPatternList, Vec *patterns
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedPatternList, const LilyCheckedPatternList *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedPatternList,
+               const LilyCheckedPatternList *self);
 #endif
 
 /**

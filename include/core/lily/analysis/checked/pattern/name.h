@@ -45,12 +45,22 @@ inline CONSTRUCTOR(LilyCheckedPatternName, LilyCheckedPatternName, String *name)
 
 /**
  *
+ * @brief Check if the both pattern name are equal.
+ */
+bool
+eq__LilyCheckedPatternName(const LilyCheckedPatternName *self,
+                           const LilyCheckedPatternName *other);
+
+/**
+ *
  * @brief Convert LilyCheckedPatternName in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedPatternName, const LilyCheckedPatternName *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedPatternName,
+               const LilyCheckedPatternName *self);
 #endif
 
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_NAME_H

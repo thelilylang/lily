@@ -25,8 +25,8 @@
 #ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_RECORD_CALL_H
 #define LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_RECORD_CALL_H
 
-#include <base/string.h>
 #include <base/macros.h>
+#include <base/string.h>
 #include <base/vec.h>
 
 #include <core/lily/analysis/checked/expr.h>
@@ -71,7 +71,7 @@ DESTRUCTOR(LilyCheckedPatternRecordField, LilyCheckedPatternRecordField *self);
 typedef struct LilyCheckedPatternRecordCall
 {
     LilyCheckedExpr *id; // LilyCheckedExpr*?
-    Vec *fields;     // Vec<LilyCheckedPatternRecordField*>*
+    Vec *fields;         // Vec<LilyCheckedPatternRecordField*>*
 } LilyCheckedPatternRecordCall;
 
 /**
@@ -85,6 +85,14 @@ inline CONSTRUCTOR(LilyCheckedPatternRecordCall,
 {
     return (LilyCheckedPatternRecordCall){ .id = id, .fields = fields };
 }
+
+/**
+ *
+ * @brief Check if the both pattern record call are equal.
+ */
+bool
+eq__LilyCheckedPatternRecordCall(const LilyCheckedPatternRecordCall *self,
+                                 const LilyCheckedPatternRecordCall *other);
 
 /**
  *
@@ -102,6 +110,7 @@ IMPL_FOR_DEBUG(to_string,
  *
  * @brief Free LilyCheckedPatternRecordCall type.
  */
-DESTRUCTOR(LilyCheckedPatternRecordCall, const LilyCheckedPatternRecordCall *self);
+DESTRUCTOR(LilyCheckedPatternRecordCall,
+           const LilyCheckedPatternRecordCall *self);
 
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_RECORD_CALL_H

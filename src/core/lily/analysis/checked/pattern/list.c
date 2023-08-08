@@ -25,6 +25,25 @@
 #include <core/lily/analysis/checked/pattern.h>
 #include <core/lily/analysis/checked/pattern/list.h>
 
+bool
+eq__LilyCheckedPatternList(const LilyCheckedPatternList *self,
+                           const LilyCheckedPatternList *other)
+{
+    // TODO: improve
+    if (self->patterns->len != other->patterns->len) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self->patterns->len; ++i) {
+        if (!eq__LilyCheckedPattern(get__Vec(self->patterns, i),
+                                    get__Vec(other->patterns, i))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,

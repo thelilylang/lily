@@ -27,6 +27,14 @@
 #include <core/lily/analysis/checked/pattern.h>
 #include <core/lily/analysis/checked/pattern/list_tail.h>
 
+bool
+eq__LilyCheckedPatternListTail(const LilyCheckedPatternListTail *self,
+                               const LilyCheckedPatternListTail *other)
+{
+    return eq__LilyCheckedPattern(self->left, other->left) &&
+           eq__LilyCheckedPattern(self->right, other->right);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,

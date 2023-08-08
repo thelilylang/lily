@@ -50,6 +50,14 @@ inline CONSTRUCTOR(LilyCheckedPatternListHead,
 
 /**
  *
+ * @brief Check if the both pattern list head are equal.
+ */
+bool
+eq__LilyCheckedPatternListHead(const LilyCheckedPatternListHead *self,
+                               const LilyCheckedPatternListHead *other);
+
+/**
+ *
  * @brief Convert LilyCheckedPatternListHead in String.
  * @note This function is only used to debug.
  */

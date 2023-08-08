@@ -67,6 +67,36 @@ DESTRUCTOR(LilyCheckedPatternRecordField, LilyCheckedPatternRecordField *self)
     lily_free(self);
 }
 
+bool
+eq__LilyCheckedPatternRecordCall(const LilyCheckedPatternRecordCall *self,
+                                 const LilyCheckedPatternRecordCall *other)
+{
+    // TODO: cmp id
+    // TODO: improve
+
+    if (self->fields->len != other->fields->len) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self->fields->len; ++i) {
+        LilyCheckedPatternRecordField *self_field = get__Vec(self->fields, i);
+        LilyCheckedPatternRecordField *other_field = get__Vec(other->fields, i);
+
+        if (self_field->name && other_field->name) {
+            if (!(!strcmp(self_field->name->buffer,
+                          other_field->name->buffer) &&
+                  eq__LilyCheckedPattern(self_field->pattern,
+                                         other_field->pattern))) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,

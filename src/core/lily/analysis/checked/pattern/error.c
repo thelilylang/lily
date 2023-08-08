@@ -28,6 +28,14 @@
 #include <core/lily/analysis/checked/pattern.h>
 #include <core/lily/analysis/checked/pattern/error.h>
 
+bool
+eq__LilyCheckedPatternError(const LilyCheckedPatternError *self,
+                            const LilyCheckedPatternError *other)
+{
+    // TODO: check if the both id are equal
+    return eq__LilyCheckedPattern(self->pattern, other->pattern);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,

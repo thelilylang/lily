@@ -27,6 +27,13 @@
 #include <core/lily/analysis/checked/pattern.h>
 #include <core/lily/analysis/checked/pattern/as.h>
 
+bool
+eq__LilyCheckedPatternAs(const LilyCheckedPatternAs *self,
+                         const LilyCheckedPatternAs *other)
+{
+    return eq__LilyCheckedPattern(self->pattern, other->pattern);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,

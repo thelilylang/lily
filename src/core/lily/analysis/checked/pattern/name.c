@@ -24,6 +24,15 @@
 
 #include <core/lily/analysis/checked/pattern/name.h>
 
+#include <string.h>
+
+bool
+eq__LilyCheckedPatternName(const LilyCheckedPatternName *self,
+                           const LilyCheckedPatternName *other)
+{
+    return !strcmp(self->name->buffer, other->name->buffer);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,

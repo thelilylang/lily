@@ -28,6 +28,17 @@
 #include <core/lily/analysis/checked/pattern.h>
 #include <core/lily/analysis/checked/pattern/variant_call.h>
 
+bool
+eq__LilyCheckedPatternVariantCall(const LilyCheckedPatternVariantCall *self,
+                                  const LilyCheckedPatternVariantCall *other)
+{
+    // TODO: improve
+    // TODO: cmp id
+
+    return self->pattern ? eq__LilyCheckedPattern(self->pattern, other->pattern)
+                         : false;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,

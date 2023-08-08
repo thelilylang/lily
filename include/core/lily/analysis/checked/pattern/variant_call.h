@@ -49,6 +49,14 @@ inline CONSTRUCTOR(LilyCheckedPatternVariantCall,
 
 /**
  *
+ * @brief Check if the both pattern variant call are equal.
+ */
+bool
+eq__LilyCheckedPatternVariantCall(const LilyCheckedPatternVariantCall *self,
+                                  const LilyCheckedPatternVariantCall *other);
+
+/**
+ *
  * @brief Convert LilyCheckedPatternVariantCall in String.
  * @note This function is only used to debug.
  */
@@ -63,6 +71,7 @@ IMPL_FOR_DEBUG(to_string,
  *
  * @brief Free LilyCheckedPatternVariantCall type.
  */
-DESTRUCTOR(LilyCheckedPatternVariantCall, const LilyCheckedPatternVariantCall *self);
+DESTRUCTOR(LilyCheckedPatternVariantCall,
+           const LilyCheckedPatternVariantCall *self);
 
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_PATTERN_VARIANT_CALL_H

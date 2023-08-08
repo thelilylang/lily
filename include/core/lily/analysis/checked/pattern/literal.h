@@ -83,7 +83,7 @@ typedef struct LilyCheckedPatternLiteral
         Uint8 byte;
         Uint8 *bytes; // Uint8* (&)
         char char_;
-		char *cstr; // char* (&)
+        char *cstr; // char* (&)
         Float32 float32;
         Float64 float64;
         Int32 int32;
@@ -116,9 +116,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            bool_,
                            bool bool_)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_BOOL,
-                                     .bool_ = bool_ };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_BOOL, .bool_ = bool_
+    };
 }
 
 /**
@@ -131,9 +131,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            byte,
                            Uint8 byte)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_BYTE,
-                                     .byte = byte };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_BYTE, .byte = byte
+    };
 }
 
 /**
@@ -146,9 +146,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            bytes,
                            Uint8 *bytes)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_BYTES,
-                                     .bytes = bytes };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_BYTES, .bytes = bytes
+    };
 }
 
 /**
@@ -161,9 +161,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            char,
                            char char_)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_CHAR,
-                                     .char_ = char_ };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_CHAR, .char_ = char_
+    };
 }
 
 /**
@@ -174,11 +174,11 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
 inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            LilyCheckedPatternLiteral,
                            cstr,
-                           char* cstr)
+                           char *cstr)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_CSTR,
-                                     .cstr = cstr };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_CSTR, .cstr = cstr
+    };
 }
 
 /**
@@ -191,9 +191,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            float32,
                            Float32 float32)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT32,
-                                     .float32 = float32 };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT32, .float32 = float32
+    };
 }
 
 /**
@@ -206,9 +206,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            float64,
                            Float64 float64)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT64,
-                                     .float64 = float64 };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT64, .float64 = float64
+    };
 }
 
 /**
@@ -221,9 +221,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            int32,
                            Int32 int32)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_INT32,
-                                     .int32 = int32 };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_INT32, .int32 = int32
+    };
 }
 
 /**
@@ -236,9 +236,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            int64,
                            Int64 int64)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_INT64,
-                                     .int64 = int64 };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_INT64, .int64 = int64
+    };
 }
 
 /**
@@ -251,8 +251,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            str,
                            String *str)
 {
-    return (LilyCheckedPatternLiteral){ .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_STR,
-                                     .str = str };
+    return (LilyCheckedPatternLiteral){ .kind =
+                                          LILY_CHECKED_PATTERN_LITERAL_KIND_STR,
+                                        .str = str };
 }
 
 /**
@@ -457,9 +458,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            uint32,
                            Uint32 uint32)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_UINT32,
-                                     .uint32 = uint32 };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_UINT32, .uint32 = uint32
+    };
 }
 
 /**
@@ -472,9 +473,9 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedPatternLiteral,
                            uint64,
                            Uint64 uint64)
 {
-    return (LilyCheckedPatternLiteral){ .kind =
-                                       LILY_CHECKED_PATTERN_LITERAL_KIND_UINT64,
-                                     .uint64 = uint64 };
+    return (LilyCheckedPatternLiteral){
+        .kind = LILY_CHECKED_PATTERN_LITERAL_KIND_UINT64, .uint64 = uint64
+    };
 }
 
 /**
@@ -487,6 +488,14 @@ inline CONSTRUCTOR(LilyCheckedPatternLiteral,
 {
     return (LilyCheckedPatternLiteral){ .kind = kind };
 }
+
+/**
+ *
+ * @brief Check if the both pattern literal are equal.
+ */
+bool
+eq__LilyCheckedPatternLiteral(const LilyCheckedPatternLiteral *self,
+                              const LilyCheckedPatternLiteral *other);
 
 /**
  *

@@ -50,12 +50,22 @@ inline CONSTRUCTOR(LilyCheckedPatternAs,
 
 /**
  *
+ * @brief Check if the both pattern as are equal.
+ */
+bool
+eq__LilyCheckedPatternAs(const LilyCheckedPatternAs *self,
+                         const LilyCheckedPatternAs *other);
+
+/**
+ *
  * @brief Convert LilyCheckedPatternAs in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedPatternAs, const LilyCheckedPatternAs *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedPatternAs,
+               const LilyCheckedPatternAs *self);
 #endif
 
 /**

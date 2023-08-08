@@ -24,16 +24,18 @@
 
 #include <base/macros.h>
 
-#ifdef ENV_DEBUG
-
-#include <base/alloc.h>
-#include <base/format.h>
-
 #include <core/lily/analysis/checked/pattern/literal.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+#ifdef ENV_DEBUG
+#include <base/alloc.h>
+#include <base/format.h>
+#endif
+
+#ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
                LilyCheckedPatternLiteralKind,
@@ -100,7 +102,72 @@ IMPL_FOR_DEBUG(to_string,
             UNREACHABLE("unknown variant");
     }
 }
+#endif
 
+bool
+eq__LilyCheckedPatternLiteral(const LilyCheckedPatternLiteral *self,
+                              const LilyCheckedPatternLiteral *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_BOOL:
+            return self->bool_ == other->bool_;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTE:
+            return self->byte == other->byte;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTES:
+            return !strcmp((char *)self->bytes, (char *)other->bytes);
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_CHAR:
+            return self->char_ == other->char_;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_CSTR:
+            return !strcmp(self->cstr, other->cstr);
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT32:
+            return self->float32 == other->float32;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT64:
+            return self->float64 == other->float64;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_INT32:
+            return self->int32 == other->int32;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_INT64:
+            return self->int64 == other->int64;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_NIL:
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_NONE:
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_UNDEF:
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_UNIT:
+            return true;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_STR:
+            return !strcmp(self->str->buffer, other->str->buffer);
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_FLOAT32:
+            return self->suffix_float32 == other->suffix_float32;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_FLOAT64:
+            return self->suffix_float64 == other->suffix_float64;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT8:
+            return self->suffix_int8 == other->suffix_int8;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT16:
+            return self->suffix_int16 == other->suffix_int16;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT32:
+            return self->suffix_int32 == other->suffix_int32;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT64:
+            return self->suffix_int64 == other->suffix_int64;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_ISIZE:
+            return self->suffix_isize == other->suffix_isize;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT8:
+            return self->suffix_uint8 == other->suffix_uint8;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT16:
+            return self->suffix_uint16 == other->suffix_uint16;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT32:
+            return self->suffix_uint32 == other->suffix_uint32;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT64:
+            return self->suffix_uint64 == other->suffix_uint64;
+        case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_USIZE:
+            return self->suffix_usize == other->suffix_usize;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+#ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
                LilyCheckedPatternLiteral,
