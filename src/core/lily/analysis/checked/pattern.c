@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/macros.h>
 
 #include <core/lily/analysis/checked/pattern.h>
@@ -416,6 +417,8 @@ get_name__LilyCheckedPattern(const LilyCheckedPattern *self)
 bool
 is_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
 {
+    ASSERT(self);
+
     switch (self->kind) {
         case LILY_CHECKED_PATTERN_KIND_ARRAY:
             for (Usize i = 0; i < self->array.patterns->len; ++i) {
@@ -470,8 +473,10 @@ is_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
 
             return true;
         case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
-            return is_else_pattern__LilyCheckedPattern(
-              self->variant_call.pattern);
+            return self->variant_call.pattern
+                     ? is_else_pattern__LilyCheckedPattern(
+                         self->variant_call.pattern)
+                     : true;
         case LILY_CHECKED_PATTERN_KIND_NAME:
         case LILY_CHECKED_PATTERN_KIND_WILDCARD:
         case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
@@ -484,6 +489,8 @@ is_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
 bool
 is_final_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
 {
+    ASSERT(self);
+
     switch (self->kind) {
         case LILY_CHECKED_PATTERN_KIND_NAME:
         case LILY_CHECKED_PATTERN_KIND_WILDCARD:
@@ -681,8 +688,10 @@ eq__LilyCheckedPattern(const LilyCheckedPattern *self,
             // TODO: improve
             // TODO: cmp id
 
-            return eq__LilyCheckedPattern(self->variant_call.pattern,
-                                          other->variant_call.pattern);
+            return self->variant_call.pattern
+                     ? eq__LilyCheckedPattern(self->variant_call.pattern,
+                                              other->variant_call.pattern)
+                     : false;
         default:
             UNREACHABLE("unknown variant");
     }
