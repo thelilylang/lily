@@ -108,6 +108,7 @@ enum LilyMirInstructionKind
     LILY_MIR_INSTRUCTION_KIND_TRUNC,
     LILY_MIR_INSTRUCTION_KIND_TRY,
     LILY_MIR_INSTRUCTION_KIND_TRY_PTR,
+    LILY_MIR_INSTRUCTION_KIND_UNREACHABLE,
     LILY_MIR_INSTRUCTION_KIND_VAL,
     LILY_MIR_INSTRUCTION_KIND_VAR,
     LILY_MIR_INSTRUCTION_KIND_XOR
@@ -1965,6 +1966,13 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     try_ptr,
                     LilyMirInstructionTry try_ptr);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_UNREACHABLE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *, LilyMirInstruction, unreachable);
 
 /**
  *

@@ -240,6 +240,10 @@ static VARIANT_DESTRUCTOR(LilyMirInstruction,
                           try_ptr,
                           LilyMirInstruction *self);
 
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          unreachable,
+                          LilyMirInstruction *self);
+
 static VARIANT_DESTRUCTOR(LilyMirInstruction, val, LilyMirInstruction *self);
 
 static VARIANT_DESTRUCTOR(LilyMirInstruction, var, LilyMirInstruction *self);
@@ -1168,7 +1172,7 @@ IMPL_FOR_DEBUG(to_string,
                LilyMirInstructionSwitchCase,
                const LilyMirInstructionSwitchCase *self)
 {
-    return format__String("case {Sr}, block {s}",
+    return format__String("case {Sr}, block {S}",
                           to_string__Debug__LilyMirInstructionVal(self->val),
                           self->block_dest->name);
 }
@@ -1187,7 +1191,7 @@ IMPL_FOR_DEBUG(to_string,
                const LilyMirInstructionSwitch *self)
 {
     String *res =
-      format__String("switch {Sr}, block {s} {{",
+      format__String("switch {Sr}, block {S} {{\n",
                      to_string__Debug__LilyMirInstructionVal(self->val),
                      self->default_block->name);
 
@@ -1197,7 +1201,8 @@ IMPL_FOR_DEBUG(to_string,
 
     for (Usize i = 0; i < self->cases->len; ++i) {
         String *case_ =
-          format__String("{Sr}\n",
+          format__String("{S}{Sr}\n",
+                         tab,
                          to_string__Debug__LilyMirInstructionSwitchCase(
                            get__Vec(self->cases, i)));
 
@@ -1206,8 +1211,7 @@ IMPL_FOR_DEBUG(to_string,
 
     --tab_count;
 
-    append__String(res, tab);
-    push_str__String(res, "}");
+    push_str__String(res, "  }");
 
     FREE(String, tab);
 
@@ -2239,6 +2243,16 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(LilyMirInstruction *, LilyMirInstruction, unreachable)
+{
+    LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
+
+    self->kind = LILY_MIR_INSTRUCTION_KIND_UNREACHABLE;
+    self->debug_info = NULL;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     val,
@@ -2625,6 +2639,9 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_TRY_PTR:
             res = format__String(
               "{Sr}", to_string__Debug__LilyMirInstructionTry(&self->try_ptr));
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_UNREACHABLE:
+            res = from__String("\x1b[34munreachable\x1b[0m");
             break;
         case LILY_MIR_INSTRUCTION_KIND_VAL:
             res = format__String(
@@ -3133,6 +3150,12 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, try_ptr, LilyMirInstruction *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyMirInstruction, unreachable, LilyMirInstruction *self)
+{
+    FREE_DEBUG_INFO(self);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyMirInstruction, val, LilyMirInstruction *self)
 {
     FREE_DEBUG_INFO(self);
@@ -3363,6 +3386,9 @@ DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self)
             break;
         case LILY_MIR_INSTRUCTION_KIND_TRY_PTR:
             FREE_VARIANT(LilyMirInstruction, try_ptr, self);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_UNREACHABLE:
+            FREE_VARIANT(LilyMirInstruction, unreachable, self);
             break;
         case LILY_MIR_INSTRUCTION_KIND_VAL:
             FREE_VARIANT(LilyMirInstruction, val, self);
