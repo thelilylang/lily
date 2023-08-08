@@ -847,8 +847,11 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
         LilyMirAddBlock(Module, cond_block);
     }
 
-    LilyMirInstruction *cond =
-      generate_expr__LilyMir(Module, fun_signature, scope, if_branch->cond);
+    LilyMirInstruction *cond = generate_expr__LilyMir(
+      Module, fun_signature, scope, if_branch->cond, false);
+
+    ASSERT(cond);
+
     LilyMirInstruction *if_block =
       LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(block_limit));
 
@@ -882,8 +885,11 @@ LilyMirBuildElifBranch(LilyMirModule *Module,
     LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, current_block);
 
-    LilyMirInstruction *cond =
-      generate_expr__LilyMir(Module, fun_signature, scope, elif_branch->cond);
+    LilyMirInstruction *cond = generate_expr__LilyMir(
+      Module, fun_signature, scope, elif_branch->cond, false);
+
+    ASSERT(cond);
+
     LilyMirInstruction *elif_block = LilyMirBuildBlock(
       Module, ref__LilyMirBlockLimit(current_block->block.limit));
 
@@ -1023,8 +1029,10 @@ LilyMirBuildWhile(LilyMirModule *Module,
         LilyMirAddBlock(Module, cond_block);
     }
 
-    LilyMirInstruction *cond =
-      generate_expr__LilyMir(Module, fun_signature, scope, while_stmt->cond);
+    LilyMirInstruction *cond = generate_expr__LilyMir(
+      Module, fun_signature, scope, while_stmt->cond, false);
+
+    ASSERT(cond);
 
     // 3. Add conditional jmp
     LilyMirAddInst(Module,
@@ -1164,7 +1172,10 @@ LilyMirBuildMatch(LilyMirModule *Module,
 
     if (match_stmt->use_switch) {
         LilyMirInstruction *switched_inst = generate_expr__LilyMir(
-          Module, fun_signature, scope, match_stmt->expr);
+          Module, fun_signature, scope, match_stmt->expr, false);
+
+        ASSERT(switched_inst);
+
         LilyMirInstructionVal *switched_val = switched_inst->val;
         Vec *cases = NEW(Vec); // Vec<LilyMirInstructionSwitchCase*>*
 
