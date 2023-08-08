@@ -9702,6 +9702,16 @@ check_fun_params__LilyAnalysis(LilyAnalysis *self,
                                             scope,
                                             NULL,
                                             LILY_CHECKED_SAFETY_MODE_SAFE);
+
+            switch (checked_param_data_type->kind) {
+                case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+                case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+                case LILY_CHECKED_DATA_TYPE_KIND_NEVER:
+                    FAILED(
+                      "cannot pass Unit, CVoid or Never as param data type");
+                default:
+                    break;
+            }
         } else {
             checked_param_data_type = NEW(LilyCheckedDataType,
                                           LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN,
