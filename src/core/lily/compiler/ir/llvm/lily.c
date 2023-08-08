@@ -1528,6 +1528,9 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
             TODO("try");
         case LILY_MIR_INSTRUCTION_KIND_TRY_PTR:
             TODO("try ptr");
+        case LILY_MIR_INSTRUCTION_KIND_UNREACHABLE:
+            res = LLVMBuildUnreachable(Self->builder);
+            break;
         case LILY_MIR_INSTRUCTION_KIND_VAL:
             res = LilyLLVMBuildVal(Self, Scope, Pending, Inst->val);
             break;
