@@ -8907,6 +8907,15 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
 
         ASSERT(check_item);
 
+        // Check if we have no duplicate case
+        for (Usize j = 0; j < cases->len; ++j) {
+            LilyCheckedStmtMatchCase *case_ = get__Vec(cases, j);
+
+            if (eq__LilyCheckedPattern(case_->pattern, check_pattern)) {
+                FAILED("duplicate case");
+            }
+        }
+
         push__Vec(cases,
                   NEW(LilyCheckedStmtMatchCase,
                       captured_variables,
