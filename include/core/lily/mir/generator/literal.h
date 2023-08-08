@@ -25,7 +25,7 @@
 #ifndef LILY_CORE_LILY_MIR_GENERATOR_LITERAL_H
 #define LILY_CORE_LILY_MIR_GENERATOR_LITERAL_H
 
-#define GENERATE_LITERAL(v, name_u)                                        \
+#define GENERATE_LITERAL(v, name_u, in_return)                             \
     switch (v->literal.kind) {                                             \
         case LILY_CHECKED_##name_u##_LITERAL_KIND_BOOL:                    \
             return NEW_VARIANT(LilyMirInstructionVal,                      \
@@ -177,9 +177,13 @@
                        LILY_MIR_INSTRUCTION_VAL_KIND_UNDEF,                \
                        generate_dt__LilyMir(module, v->data_type));        \
         case LILY_CHECKED_##name_u##_LITERAL_KIND_UNIT:                    \
-            return NEW(LilyMirInstructionVal,                              \
-                       LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,                 \
-                       generate_dt__LilyMir(module, v->data_type));        \
+            if (in_return) {                                               \
+                return NEW(LilyMirInstructionVal,                          \
+                           LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,             \
+                           generate_dt__LilyMir(module, v->data_type));    \
+            } else {                                                       \
+                return NULL;                                               \
+            }                                                              \
         default:                                                           \
             UNREACHABLE("unknown variant");                                \
     }

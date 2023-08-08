@@ -75,7 +75,7 @@ generate_stmt__LilyMir(LilyMirModule *module,
                   LilyMirInstruction,
                   ret,
                   generate_expr__LilyMir(
-                    module, fun_signature, scope, stmt->return_.expr));
+                    module, fun_signature, scope, stmt->return_.expr, true));
             } else {
                 return NEW_VARIANT(
                   LilyMirInstruction,
@@ -97,7 +97,7 @@ generate_stmt__LilyMir(LilyMirModule *module,
             LilyCheckedDataType *var_data_type =
               LilyMirGetCheckedDtFromExpr(module, scope, stmt->variable.expr);
             LilyMirInstruction *inst = generate_expr__LilyMir(
-              module, fun_signature, scope, stmt->variable.expr);
+              module, fun_signature, scope, stmt->variable.expr, false);
 
             LilyMirAddVar(scope, stmt->variable.name, var_data_type);
 

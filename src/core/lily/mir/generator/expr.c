@@ -39,22 +39,24 @@ LilyMirInstruction *
 generate_expr__LilyMir(LilyMirModule *module,
                        LilyCheckedSignatureFun *fun_signature,
                        LilyMirScope *scope,
-                       LilyCheckedExpr *expr)
+                       LilyCheckedExpr *expr,
+                       bool in_return)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_BINARY:
             return generate_binary_expr__LilyMir(
-              module, fun_signature, scope, expr);
+              module, fun_signature, scope, expr, in_return);
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
-                    return NEW_VARIANT(LilyMirInstruction,
-                                       val,
-                                       generate_val__LilyMir(
-                                         module, fun_signature, scope, expr));
+                    return NEW_VARIANT(
+                      LilyMirInstruction,
+                      val,
+                      generate_val__LilyMir(
+                        module, fun_signature, scope, expr, in_return));
                 default:
                     return generate_call_expr__LilyMir(
                       module, fun_signature, scope, expr);
@@ -63,16 +65,21 @@ generate_expr__LilyMir(LilyMirModule *module,
             TODO("cast");
         case LILY_CHECKED_EXPR_KIND_GROUPING:
             return generate_expr__LilyMir(
-              module, fun_signature, scope, expr->grouping);
+              module, fun_signature, scope, expr->grouping, in_return);
         case LILY_CHECKED_EXPR_KIND_LAMBDA:
             TODO("lambda");
         case LILY_CHECKED_EXPR_KIND_UNARY:
             return generate_unary_expr__LilyMir(
-              module, fun_signature, scope, expr);
-        default:
-            return NEW_VARIANT(
-              LilyMirInstruction,
-              val,
-              generate_val__LilyMir(module, fun_signature, scope, expr));
+              module, fun_signature, scope, expr, in_return);
+        default: {
+            LilyMirInstructionVal *val = generate_val__LilyMir(
+              module, fun_signature, scope, expr, in_return);
+
+            if (val) {
+                return NEW_VARIANT(LilyMirInstruction, val, val);
+            }
+
+            return NULL;
+        }
     }
 }

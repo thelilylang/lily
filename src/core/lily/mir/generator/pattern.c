@@ -49,7 +49,7 @@ generate_pattern__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
             TODO("pattern list tail");
         case LILY_CHECKED_PATTERN_KIND_LITERAL:
-            GENERATE_LITERAL(pattern, PATTERN);
+            GENERATE_LITERAL(pattern, PATTERN, false);
         case LILY_CHECKED_PATTERN_KIND_NAME:
             TODO("pattern name");
         case LILY_CHECKED_PATTERN_KIND_NONE:

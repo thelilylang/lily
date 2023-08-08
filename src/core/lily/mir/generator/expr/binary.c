@@ -49,7 +49,8 @@ LilyMirInstruction *
 generate_binary_expr__LilyMir(LilyMirModule *module,
                               LilyCheckedSignatureFun *fun_signature,
                               LilyMirScope *scope,
-                              LilyCheckedExpr *expr)
+                              LilyCheckedExpr *expr,
+                              bool in_return)
 {
     ASSERT(expr->kind == LILY_CHECKED_EXPR_KIND_BINARY);
 
@@ -58,11 +59,13 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
     LilyCheckedDataType *right_data_type =
       LilyMirGetCheckedDtFromExpr(module, scope, expr->binary.right);
 
-    LilyMirInstruction *left_inst =
-      generate_expr__LilyMir(module, fun_signature, scope, expr->binary.left);
-    LilyMirInstruction *right_inst =
-      generate_expr__LilyMir(module, fun_signature, scope, expr->binary.right);
+    LilyMirInstruction *left_inst = generate_expr__LilyMir(
+      module, fun_signature, scope, expr->binary.left, in_return);
+    LilyMirInstruction *right_inst = generate_expr__LilyMir(
+      module, fun_signature, scope, expr->binary.right, in_return);
 
+    ASSERT(left_inst);
+    ASSERT(right_inst);
     ASSERT(left_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL &&
            right_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
 

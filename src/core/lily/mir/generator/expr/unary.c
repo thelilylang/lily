@@ -30,16 +30,18 @@ LilyMirInstruction *
 generate_unary_expr__LilyMir(LilyMirModule *module,
                              LilyCheckedSignatureFun *fun_signature,
                              LilyMirScope *scope,
-                             LilyCheckedExpr *expr)
+                             LilyCheckedExpr *expr,
+                             bool in_return)
 {
     ASSERT(expr->kind == LILY_CHECKED_EXPR_KIND_UNARY);
 
     LilyCheckedDataType *right_data_type =
       LilyMirGetCheckedDtFromExpr(module, scope, expr->unary.right);
 
-    LilyMirInstruction *right_inst =
-      generate_expr__LilyMir(module, fun_signature, scope, expr->unary.right);
+    LilyMirInstruction *right_inst = generate_expr__LilyMir(
+      module, fun_signature, scope, expr->unary.right, in_return);
 
+    ASSERT(right_inst);
     ASSERT(right_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
 
     bool operator_is_builtin = false;

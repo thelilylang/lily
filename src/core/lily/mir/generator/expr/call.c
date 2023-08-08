@@ -58,8 +58,9 @@ generate_call_expr__LilyMir(LilyMirModule *module,
                       get__Vec(expr->call.fun.params, i);
 
                     LilyMirInstruction *inst = generate_expr__LilyMir(
-                      module, fun_signature, scope, param->value);
+                      module, fun_signature, scope, param->value, false);
 
+                    ASSERT(inst);
                     ASSERT(inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
 
                     push__Vec(params, inst->val);
@@ -130,8 +131,10 @@ generate_call_expr__LilyMir(LilyMirModule *module,
                       scope,
                       CAST(LilyCheckedExprCallRecordParam *,
                            get__Vec(expr->call.record.params, i))
-                        ->value);
+                        ->value,
+                      false);
 
+                    ASSERT(val);
                     ASSERT(val->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
 
                     push__Vec(struct_, val->val);

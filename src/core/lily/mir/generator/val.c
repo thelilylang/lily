@@ -33,7 +33,8 @@ LilyMirInstructionVal *
 generate_val__LilyMir(LilyMirModule *module,
                       LilyCheckedSignatureFun *fun_signature,
                       LilyMirScope *scope,
-                      LilyCheckedExpr *expr)
+                      LilyCheckedExpr *expr,
+                      bool in_return)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_ARRAY: {
@@ -44,12 +45,13 @@ generate_val__LilyMir(LilyMirModule *module,
                     Vec *array = NEW(Vec); // Vec<LilyMirInstructionVal*>*
 
                     for (Usize i = 0; i < expr->array.items->len; ++i) {
-                        push__Vec(array,
-                                  generate_val__LilyMir(
-                                    module,
-                                    fun_signature,
-                                    scope,
-                                    get__Vec(expr->array.items, i)));
+                        push__Vec(
+                          array,
+                          generate_val__LilyMir(module,
+                                                fun_signature,
+                                                scope,
+                                                get__Vec(expr->array.items, i),
+                                                in_return));
                     }
 
                     return NEW_VARIANT(
@@ -104,17 +106,17 @@ generate_val__LilyMir(LilyMirModule *module,
                     UNREACHABLE("not expected to generate a val");
             }
         case LILY_CHECKED_EXPR_KIND_LITERAL:
-            GENERATE_LITERAL(expr, EXPR);
+            GENERATE_LITERAL(expr, EXPR, in_return);
         case LILY_CHECKED_EXPR_KIND_TUPLE: {
             Vec *tuple = NEW(Vec); // Vec<LilyMirInstructionVal*>*
 
             for (Usize i = 0; i < expr->tuple.items->len; ++i) {
-                push__Vec(
-                  tuple,
-                  generate_val__LilyMir(module,
-                                        fun_signature,
-                                        scope,
-                                        get__Vec(expr->tuple.items, i)));
+                push__Vec(tuple,
+                          generate_val__LilyMir(module,
+                                                fun_signature,
+                                                scope,
+                                                get__Vec(expr->tuple.items, i),
+                                                in_return));
             }
 
             return NEW_VARIANT(LilyMirInstructionVal,
@@ -130,7 +132,8 @@ generate_val__LilyMir(LilyMirModule *module,
                           generate_val__LilyMir(module,
                                                 fun_signature,
                                                 scope,
-                                                get__Vec(expr->list.items, i)));
+                                                get__Vec(expr->list.items, i),
+                                                in_return));
             }
 
             return NEW_VARIANT(LilyMirInstructionVal,
