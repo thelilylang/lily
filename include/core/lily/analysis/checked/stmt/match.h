@@ -109,7 +109,6 @@ typedef struct LilyCheckedStmtMatchCase
       captured_variables; // Vec<OrderedHashMap<LilyCheckedCapturedVariable*>*>*
     LilyCheckedStmtMatchCaseValue value;
     LilyCheckedBodyFunItem *body_item;
-    Usize subcase_count;
 } LilyCheckedStmtMatchCase;
 
 /**
@@ -154,7 +153,7 @@ add_captured_variables__LilyCheckedStmtMatchCase(
  * it's add a elif branch or else branch.
  */
 void
-add_subcase__LilyCheckedStmtMatchCase(LilyCheckedStmtMatchCase *self,
+add_subcase__LilyCheckedStmtMatchCase(const LilyCheckedStmtMatchCase *self,
                                       LilyCheckedExpr *cond,
                                       LilyCheckedBodyFunItem *body_item,
                                       LilyCheckedScope *parent);
@@ -165,9 +164,10 @@ add_subcase__LilyCheckedStmtMatchCase(LilyCheckedStmtMatchCase *self,
  */
 void
 add__LilyCheckedStmtMatchCase(const LilyCheckedStmtMatchCase *self,
-                              OrderedHashMap *captured_variables,
                               LilyCheckedExpr *cond,
-                              LilyCheckedBodyFunItem *body_item);
+                              LilyCheckedBodyFunItem *body_item,
+                              LilyCheckedScope *parent,
+                              OrderedHashMap *captured_variables);
 
 /**
  *

@@ -88,70 +88,57 @@ CONSTRUCTOR(LilyCheckedStmtMatchCase *,
         self->body_item = body_item;
     }
 
-    self->subcase_count = 1;
-
     return self;
 }
 
 void
-add_subcase__LilyCheckedStmtMatchCase(LilyCheckedStmtMatchCase *self,
+add_subcase__LilyCheckedStmtMatchCase(const LilyCheckedStmtMatchCase *self,
                                       LilyCheckedExpr *cond,
                                       LilyCheckedBodyFunItem *body_item,
                                       LilyCheckedScope *parent)
 {
-    switch (self->subcase_count) {
-        case 1: {
-            if (cond) {
-                LilyCheckedBodyFunInfo if_info =
-                  wrap_item_in_body__LilyCheckedBodyFunItem(self->body_item,
-                                                            parent);
-                LilyCheckedBodyFunInfo elif_info =
-                  wrap_item_in_body__LilyCheckedBodyFunItem(body_item, parent);
-                LilyCheckedStmt stmt = NEW_VARIANT(
-                  LilyCheckedStmt,
-                  if,
-                  cond->location,
-                  NULL,
-                  NEW(LilyCheckedStmtIf,
-                      NEW(LilyCheckedStmtIfBranch, cond, if_info.body, if_info.scope),
-                      init__Vec(1, NEW(LilyCheckedStmtIfBranch, ,
-                      NULL));
-            } else {
-                LilyCheckedBodyFunInfo if_info =
-                  wrap_item_in_body__LilyCheckedBodyFunItem(self->body_item,
-                                                            parent);
-                LilyCheckedBodyFunInfo else_info =
-                  wrap_item_in_body__LilyCheckedBodyFunItem(body_item, parent);
-                LilyCheckedStmt stmt =
-                  NEW_VARIANT(LilyCheckedStmt,
-                              if,
-                              cond->location,
-                              NULL,
-                              NEW(LilyCheckedStmtIf,
-                                  NEW(LilyCheckedStmtIfBranch,
-                                      cond,
-                                      if_info.body,
-                                      if_info.scope),
-                                  NULL,
-                                  NEW(LilyCheckedStmtElseBranch,
-                                      else_info.body,
-                                      else_info.scope)));
-            }
+    if (cond) {
+        LilyCheckedBodyFunInfo elif_info =
+          wrap_item_in_body__LilyCheckedBodyFunItem(body_item, parent);
 
-            break;
+        ASSERT(self->body_item->kind == LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT);
+        ASSERT(self->body_item->stmt.kind == LILY_CHECKED_STMT_KIND_IF);
+
+        if (self->body_item->stmt.if_.elifs) {
+            push__Vec(self->body_item->stmt.if_.elifs,
+                      NEW(LilyCheckedStmtIfBranch,
+                          cond,
+                          elif_info.body,
+                          elif_info.scope));
+        } else {
+            self->body_item->stmt.if_.elifs =
+              init__Vec(1,
+                        NEW(LilyCheckedStmtIfBranch,
+                            cond,
+                            elif_info.body,
+                            elif_info.scope));
         }
-        default:
-            break;
-    }
+    } else {
+        LilyCheckedBodyFunInfo else_info =
+          wrap_item_in_body__LilyCheckedBodyFunItem(body_item, parent);
 
-    ++self->subcase_count;
+        ASSERT(self->body_item->kind == LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT);
+        ASSERT(self->body_item->stmt.kind == LILY_CHECKED_STMT_KIND_IF);
+
+        self->body_item->stmt.if_.else_ =
+          NEW(LilyCheckedStmtElseBranch, else_info.body, else_info.scope);
+    }
 }
 
 void
 add__LilyCheckedStmtMatchCase(const LilyCheckedStmtMatchCase *self,
+                              LilyCheckedExpr *cond,
+                              LilyCheckedBodyFunItem *body_item,
+                              LilyCheckedScope *parent,
                               OrderedHashMap *captured_variables)
 {
     add_captured_variables__LilyCheckedStmtMatchCase(self, captured_variables);
+    add_subcase__LilyCheckedStmtMatchCase(self, cond, body_item, parent);
 }
 
 #ifdef ENV_DEBUG
