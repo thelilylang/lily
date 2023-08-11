@@ -34,7 +34,7 @@ typedef struct LilyCheckedPattern LilyCheckedPattern;
 typedef struct LilyCheckedPatternError
 {
     LilyCheckedExpr *id;
-    LilyCheckedPattern *pattern;
+    LilyCheckedPattern *pattern; // LilyCheckedPattern*?
 } LilyCheckedPatternError;
 
 /**

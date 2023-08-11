@@ -31,8 +31,12 @@ bool
 eq__LilyCheckedPatternRange(const LilyCheckedPatternRange *self,
                             const LilyCheckedPatternRange *other)
 {
-    return eq__LilyCheckedPattern(self->left, other->left) &&
-           eq__LilyCheckedPattern(self->right, other->right);
+    return self->left && self->right && other->left && other->right
+             ? eq__LilyCheckedPattern(self->left, other->left) &&
+                 eq__LilyCheckedPattern(self->right, other->right)
+           : !self->left && !self->right && !other->left && !other->right
+             ? true
+             : false;
 }
 
 #ifdef ENV_DEBUG
@@ -43,13 +47,20 @@ IMPL_FOR_DEBUG(to_string,
 {
     return format__String(
       "LilyCheckedPatternRange{{ left = {Sr}, right = {Sr} }",
-      to_string__Debug__LilyCheckedPattern(self->left),
-      to_string__Debug__LilyCheckedPattern(self->right));
+      self->left ? to_string__Debug__LilyCheckedPattern(self->left)
+                 : from__String("NULL"),
+      self->right ? to_string__Debug__LilyCheckedPattern(self->right)
+                  : from__String("NULL"));
 }
 #endif
 
 DESTRUCTOR(LilyCheckedPatternRange, const LilyCheckedPatternRange *self)
 {
-    FREE(LilyCheckedPattern, self->left);
-    FREE(LilyCheckedPattern, self->right);
+    if (self->left) {
+        FREE(LilyCheckedPattern, self->left);
+    }
+
+    if (self->right) {
+        FREE(LilyCheckedPattern, self->right);
+    }
 }

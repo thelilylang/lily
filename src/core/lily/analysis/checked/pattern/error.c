@@ -33,7 +33,10 @@ eq__LilyCheckedPatternError(const LilyCheckedPatternError *self,
                             const LilyCheckedPatternError *other)
 {
     // TODO: check if the both id are equal
-    return eq__LilyCheckedPattern(self->pattern, other->pattern);
+    return self->pattern && other->pattern
+             ? eq__LilyCheckedPattern(self->pattern, other->pattern)
+           : !self->pattern && !other->pattern ? true
+                                               : false;
 }
 
 #ifdef ENV_DEBUG

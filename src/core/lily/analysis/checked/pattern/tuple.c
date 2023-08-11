@@ -30,13 +30,16 @@ eq__LilyCheckedPatternTuple(const LilyCheckedPatternTuple *self,
                             const LilyCheckedPatternTuple *other)
 {
     // TODO: improve
-    if (self->patterns->len != other->patterns->len) {
+    if (self->table->len != other->table->len) {
         return false;
     }
 
-    for (Usize i = 0; i < self->patterns->len; ++i) {
-        if (!eq__LilyCheckedPattern(get__Vec(self->patterns, i),
-                                    get__Vec(other->patterns, i))) {
+    for (Usize i = 0; i < self->table->len; ++i) {
+        if (!eq__LilyCheckedPattern(
+              CAST(LilyCheckedPatternTableItem *, get__Vec(self->table, i))
+                ->value,
+              CAST(LilyCheckedPatternTableItem *, get__Vec(other->table, i))
+                ->value)) {
             return false;
         }
     }
@@ -50,9 +53,9 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedPatternTuple,
                const LilyCheckedPatternTuple *self)
 {
-    String *res = from__String("LilyCheckedPatternTuple{ patterns = { ");
+    String *res = from__String("LilyCheckedPatternTuple{ table = { ");
 
-    DEBUG_VEC_STRING(self->patterns, res, LilyCheckedPattern);
+    DEBUG_VEC_STR(self->table, res, LilyCheckedPatternTableItem);
 
     push_str__String(res, "} }");
 
@@ -62,7 +65,5 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedPatternTuple, LilyCheckedPatternTuple *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->patterns->buffer, self->patterns->len, LilyCheckedExpr);
-    FREE(Vec, self->patterns);
+    FREE_PATTERN_TABLE(self->table);
 }

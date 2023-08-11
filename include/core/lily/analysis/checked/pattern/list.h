@@ -30,9 +30,11 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+#include <core/lily/analysis/checked/pattern/table.h>
+
 typedef struct LilyCheckedPatternList
 {
-    Vec *patterns; // Vec<LilyCheckedPattern*>*
+    LilyCheckedPatternTable table;
 } LilyCheckedPatternList;
 
 /**
@@ -41,9 +43,9 @@ typedef struct LilyCheckedPatternList
  */
 inline CONSTRUCTOR(LilyCheckedPatternList,
                    LilyCheckedPatternList,
-                   Vec *patterns)
+                   LilyCheckedPatternTable table)
 {
-    return (LilyCheckedPatternList){ .patterns = patterns };
+    return (LilyCheckedPatternList){ .table = table };
 }
 
 /**
