@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/macros.h>
 
 #include <core/lily/parser/ast/pattern.h>
@@ -300,6 +301,115 @@ CONSTRUCTOR(LilyAstPattern *,
     self->location = location;
 
     return self;
+}
+
+const LilyAstPattern *
+get_name__LilyAstPattern(const LilyAstPattern *self)
+{
+    switch (self->kind) {
+        case LILY_AST_PATTERN_KIND_ARRAY:
+        case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
+        case LILY_AST_PATTERN_KIND_ERROR:
+        case LILY_AST_PATTERN_KIND_LIST:
+        case LILY_AST_PATTERN_KIND_LIST_HEAD:
+        case LILY_AST_PATTERN_KIND_LIST_TAIL:
+        case LILY_AST_PATTERN_KIND_LITERAL:
+        case LILY_AST_PATTERN_KIND_RANGE:
+        case LILY_AST_PATTERN_KIND_RECORD_CALL:
+        case LILY_AST_PATTERN_KIND_TUPLE:
+        case LILY_AST_PATTERN_KIND_VARIANT_CALL:
+        case LILY_AST_PATTERN_KIND_WILDCARD:
+            return NULL;
+        case LILY_AST_PATTERN_KIND_AS:
+            return get_name__LilyAstPattern(self->as.pattern);
+        case LILY_AST_PATTERN_KIND_NAME:
+            return self;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+bool
+is_else_pattern__LilyAstPattern(const LilyAstPattern *self)
+{
+    ASSERT(self);
+
+    switch (self->kind) {
+        case LILY_AST_PATTERN_KIND_ARRAY:
+            for (Usize i = 0; i < self->array.patterns->len; ++i) {
+                if (!is_else_pattern__LilyAstPattern(
+                      get__Vec(self->array.patterns, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_AST_PATTERN_KIND_AS:
+            return is_else_pattern__LilyAstPattern(self->as.pattern);
+        case LILY_AST_PATTERN_KIND_ERROR:
+        case LILY_AST_PATTERN_KIND_LITERAL:
+            return false;
+        case LILY_AST_PATTERN_KIND_LIST:
+            for (Usize i = 0; i < self->list.patterns->len; ++i) {
+                if (!is_else_pattern__LilyAstPattern(
+                      get__Vec(self->list.patterns, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_AST_PATTERN_KIND_LIST_HEAD:
+            return is_else_pattern__LilyAstPattern(self->list_head.left) &&
+                   is_else_pattern__LilyAstPattern(self->list_head.right);
+        case LILY_AST_PATTERN_KIND_LIST_TAIL:
+            return is_else_pattern__LilyAstPattern(self->list_tail.left) &&
+                   is_else_pattern__LilyAstPattern(self->list_tail.right);
+        case LILY_AST_PATTERN_KIND_RANGE:
+            return is_else_pattern__LilyAstPattern(self->range.left) &&
+                   is_else_pattern__LilyAstPattern(self->range.right);
+        case LILY_AST_PATTERN_KIND_RECORD_CALL:
+            for (Usize i = 0; i < self->record_call.fields->len; ++i) {
+                LilyAstPatternRecordField *field =
+                  get__Vec(self->record_call.fields, i);
+
+                if (!is_else_pattern__LilyAstPattern(field->pattern)) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_AST_PATTERN_KIND_TUPLE:
+            for (Usize i = 0; i < self->tuple.patterns->len; ++i) {
+                if (!is_else_pattern__LilyAstPattern(
+                      get__Vec(self->tuple.patterns, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_AST_PATTERN_KIND_VARIANT_CALL:
+            return self->variant_call.pattern ? is_else_pattern__LilyAstPattern(
+                                                  self->variant_call.pattern)
+                                              : true;
+        case LILY_AST_PATTERN_KIND_NAME:
+        case LILY_AST_PATTERN_KIND_WILDCARD:
+        case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
+            return true;
+    }
+}
+
+bool
+is_final_else_pattern__LilyAstPattern(const LilyAstPattern *self)
+{
+    ASSERT(self);
+
+    switch (self->kind) {
+        case LILY_AST_PATTERN_KIND_NAME:
+        case LILY_AST_PATTERN_KIND_WILDCARD:
+            return true;
+        default:
+            return false;
+    }
 }
 
 #ifdef ENV_DEBUG

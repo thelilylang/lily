@@ -25,6 +25,9 @@
 #ifndef LILY_CORE_LILY_PARSER_AST_PATTERN_LIST_HEAD_H
 #define LILY_CORE_LILY_PARSER_AST_PATTERN_LIST_HEAD_H
 
+#include <base/macros.h>
+#include <base/string.h>
+
 typedef struct LilyAstPattern LilyAstPattern;
 
 typedef struct LilyAstPatternListHead
