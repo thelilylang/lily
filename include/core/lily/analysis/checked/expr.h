@@ -222,6 +222,13 @@ CONSTRUCTOR(LilyCheckedExpr *,
 
 /**
  *
+ * @brief Check if the both expressions are equal.
+ */
+bool
+eq__LilyCheckedExpr(const LilyCheckedExpr *self, const LilyCheckedExpr *other);
+
+/**
+ *
  * @brief Convert LilyCheckedExprKind in string.
  * @note This function is only used to debug.
  */

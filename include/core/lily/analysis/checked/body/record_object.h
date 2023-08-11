@@ -110,6 +110,7 @@ IMPL_FOR_DEBUG(to_string,
  *
  * @brief Free LilyCheckedBodyRecordObjectItem type.
  */
-DESTRUCTOR(LilyCheckedBodyRecordObjectItem, LilyCheckedBodyRecordObjectItem *self);
+DESTRUCTOR(LilyCheckedBodyRecordObjectItem,
+           LilyCheckedBodyRecordObjectItem *self);
 
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_BODY_RECORD_OBJECT_H

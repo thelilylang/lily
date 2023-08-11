@@ -38,9 +38,6 @@
 // Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_ARRAY).
 static VARIANT_DESTRUCTOR(LilyCheckedPattern, array, LilyCheckedPattern *self);
 
-// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_AS).
-static VARIANT_DESTRUCTOR(LilyCheckedPattern, as, LilyCheckedPattern *self);
-
 // Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_ERROR).
 static VARIANT_DESTRUCTOR(LilyCheckedPattern, error, LilyCheckedPattern *self);
 
@@ -61,9 +58,6 @@ static VARIANT_DESTRUCTOR(LilyCheckedPattern,
 static VARIANT_DESTRUCTOR(LilyCheckedPattern,
                           literal,
                           LilyCheckedPattern *self);
-
-// Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_NAME).
-static VARIANT_DESTRUCTOR(LilyCheckedPattern, name, LilyCheckedPattern *self);
 
 // Free LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_RANGE).
 static VARIANT_DESTRUCTOR(LilyCheckedPattern, range, LilyCheckedPattern *self);
@@ -90,12 +84,10 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_CHECKED_PATTERN_KIND_ARRAY:
             return "LILY_CHECKED_PATTERN_KIND_ARRAY";
-        case LILY_CHECKED_PATTERN_KIND_AS:
-            return "LILY_CHECKED_PATTERN_KIND_AS";
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-            return "LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE";
         case LILY_CHECKED_PATTERN_KIND_ERROR:
             return "LILY_CHECKED_PATTERN_KIND_ERROR";
+        case LILY_CHECKED_PATTERN_KIND_ELSE:
+            return "LILY_CHECKED_PATTERN_KIND_ELSE";
         case LILY_CHECKED_PATTERN_KIND_LIST:
             return "LILY_CHECKED_PATTERN_KIND_LIST";
         case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
@@ -104,8 +96,6 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_PATTERN_KIND_LIST_TAIL";
         case LILY_CHECKED_PATTERN_KIND_LITERAL:
             return "LILY_CHECKED_PATTERN_KIND_LITERAL";
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-            return "LILY_CHECKED_PATTERN_KIND_NAME";
         case LILY_CHECKED_PATTERN_KIND_NONE:
             return "LILY_CHECKED_PATTERN_KIND_NONE";
         case LILY_CHECKED_PATTERN_KIND_RANGE:
@@ -118,8 +108,6 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_PATTERN_KIND_UNKNOWN";
         case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
             return "LILY_CHECKED_PATTERN_KIND_VARIANT_CALL";
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
-            return "LILY_CHECKED_PATTERN_KIND_WILDCARD";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -141,25 +129,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->data_type = data_type;
     self->ast_pattern = ast_pattern;
     self->array = array;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
-                    LilyCheckedPattern,
-                    as,
-                    const Location *location,
-                    LilyCheckedDataType *data_type,
-                    const LilyAstPattern *ast_pattern,
-                    LilyCheckedPatternAs as)
-{
-    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
-
-    self->kind = LILY_CHECKED_PATTERN_KIND_AS;
-    self->location = location;
-    self->data_type = data_type;
-    self->ast_pattern = ast_pattern;
-    self->as = as;
 
     return self;
 }
@@ -255,25 +224,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
     self->data_type = data_type;
     self->ast_pattern = ast_pattern;
     self->literal = literal;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
-                    LilyCheckedPattern,
-                    name,
-                    const Location *location,
-                    LilyCheckedDataType *data_type,
-                    const LilyAstPattern *ast_pattern,
-                    LilyCheckedPatternName name)
-{
-    LilyCheckedPattern *self = lily_malloc(sizeof(LilyCheckedPattern));
-
-    self->kind = LILY_CHECKED_PATTERN_KIND_NAME;
-    self->location = location;
-    self->data_type = data_type;
-    self->ast_pattern = ast_pattern;
-    self->name = name;
 
     return self;
 }
@@ -388,118 +338,6 @@ CONSTRUCTOR(LilyCheckedPattern *,
     return self;
 }
 
-const LilyCheckedPattern *
-get_name__LilyCheckedPattern(const LilyCheckedPattern *self)
-{
-    switch (self->kind) {
-        case LILY_CHECKED_PATTERN_KIND_ARRAY:
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-        case LILY_CHECKED_PATTERN_KIND_ERROR:
-        case LILY_CHECKED_PATTERN_KIND_LIST:
-        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
-        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
-        case LILY_CHECKED_PATTERN_KIND_LITERAL:
-        case LILY_CHECKED_PATTERN_KIND_NONE:
-        case LILY_CHECKED_PATTERN_KIND_RANGE:
-        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
-        case LILY_CHECKED_PATTERN_KIND_TUPLE:
-        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
-        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
-            return NULL;
-        case LILY_CHECKED_PATTERN_KIND_AS:
-            return get_name__LilyCheckedPattern(self->as.pattern);
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-            return self;
-    }
-}
-
-bool
-is_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
-{
-    ASSERT(self);
-
-    switch (self->kind) {
-        case LILY_CHECKED_PATTERN_KIND_ARRAY:
-            for (Usize i = 0; i < self->array.patterns->len; ++i) {
-                if (!is_else_pattern__LilyCheckedPattern(
-                      get__Vec(self->array.patterns, i))) {
-                    return false;
-                }
-            }
-
-            return true;
-        case LILY_CHECKED_PATTERN_KIND_AS:
-            return is_else_pattern__LilyCheckedPattern(self->as.pattern);
-        case LILY_CHECKED_PATTERN_KIND_ERROR:
-        case LILY_CHECKED_PATTERN_KIND_LITERAL:
-            return false;
-        case LILY_CHECKED_PATTERN_KIND_LIST:
-            for (Usize i = 0; i < self->list.patterns->len; ++i) {
-                if (!is_else_pattern__LilyCheckedPattern(
-                      get__Vec(self->list.patterns, i))) {
-                    return false;
-                }
-            }
-
-            return true;
-        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
-            return is_else_pattern__LilyCheckedPattern(self->list_head.left) &&
-                   is_else_pattern__LilyCheckedPattern(self->list_head.right);
-        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
-            return is_else_pattern__LilyCheckedPattern(self->list_tail.left) &&
-                   is_else_pattern__LilyCheckedPattern(self->list_tail.right);
-        case LILY_CHECKED_PATTERN_KIND_RANGE:
-            return is_else_pattern__LilyCheckedPattern(self->range.left) &&
-                   is_else_pattern__LilyCheckedPattern(self->range.right);
-        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
-            for (Usize i = 0; i < self->record_call.fields->len; ++i) {
-                LilyCheckedPatternRecordField *field =
-                  get__Vec(self->record_call.fields, i);
-
-                if (!is_else_pattern__LilyCheckedPattern(field->pattern)) {
-                    return false;
-                }
-            }
-
-            return true;
-        case LILY_CHECKED_PATTERN_KIND_TUPLE:
-            for (Usize i = 0; i < self->tuple.patterns->len; ++i) {
-                if (!is_else_pattern__LilyCheckedPattern(
-                      get__Vec(self->tuple.patterns, i))) {
-                    return false;
-                }
-            }
-
-            return true;
-        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
-            return self->variant_call.pattern
-                     ? is_else_pattern__LilyCheckedPattern(
-                         self->variant_call.pattern)
-                     : true;
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-        case LILY_CHECKED_PATTERN_KIND_NONE:
-        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
-            return true;
-    }
-}
-
-bool
-is_final_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
-{
-    ASSERT(self);
-
-    switch (self->kind) {
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
-            return true;
-        default:
-            return false;
-    }
-}
-
 bool
 eq__LilyCheckedPattern(const LilyCheckedPattern *self,
                        const LilyCheckedPattern *other)
@@ -511,10 +349,6 @@ eq__LilyCheckedPattern(const LilyCheckedPattern *self,
     switch (self->kind) {
         case LILY_CHECKED_PATTERN_KIND_ARRAY:
             return eq__LilyCheckedPatternArray(&self->array, &other->array);
-        case LILY_CHECKED_PATTERN_KIND_AS:
-            return eq__LilyCheckedPatternAs(&self->as, &other->as);
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-            return true;
         case LILY_CHECKED_PATTERN_KIND_ERROR:
             return eq__LilyCheckedPatternError(&self->error, &other->error);
         case LILY_CHECKED_PATTERN_KIND_LIST:
@@ -528,10 +362,7 @@ eq__LilyCheckedPattern(const LilyCheckedPattern *self,
         case LILY_CHECKED_PATTERN_KIND_LITERAL:
             return eq__LilyCheckedPatternLiteral(&self->literal,
                                                  &other->literal);
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-            return eq__LilyCheckedPatternName(&self->name, &other->name);
         case LILY_CHECKED_PATTERN_KIND_NONE:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
             return true;
         case LILY_CHECKED_PATTERN_KIND_RANGE:
             return eq__LilyCheckedPatternRange(&self->range, &other->range);
@@ -545,6 +376,42 @@ eq__LilyCheckedPattern(const LilyCheckedPattern *self,
         case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
             return eq__LilyCheckedPatternVariantCall(&self->variant_call,
                                                      &other->variant_call);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+bool
+lazy_eq__LilyCheckedPattern(const LilyCheckedPattern *self,
+                            const LilyCheckedPattern *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LITERAL:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_RANGE:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_TUPLE:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
+            return false;
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
+            break;
         default:
             UNREACHABLE("unknown variant");
     }
@@ -572,16 +439,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)
 
             break;
         }
-        case LILY_CHECKED_PATTERN_KIND_AS: {
-            char *s = format(", as = {Sr} }",
-                             to_string__Debug__LilyCheckedPatternAs(&self->as));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
         case LILY_CHECKED_PATTERN_KIND_NONE:
         case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
             push_str__String(res, " }");
@@ -626,15 +483,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)
             char *s = format(
               ", literal = {Sr} }",
               to_string__Debug__LilyCheckedPatternLiteral(&self->literal));
-
-            PUSH_STR_AND_FREE(res, s);
-
-            break;
-        }
-        case LILY_CHECKED_PATTERN_KIND_NAME: {
-            char *s =
-              format(", name = {Sr} }",
-                     to_string__Debug__LilyCheckedPatternName(&self->name));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -691,13 +539,6 @@ VARIANT_DESTRUCTOR(LilyCheckedPattern, array, LilyCheckedPattern *self)
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyCheckedPattern, as, LilyCheckedPattern *self)
-{
-    FREE(LilyCheckedPatternAs, &self->as);
-    FREE(LilyCheckedDataType, self->data_type);
-    lily_free(self);
-}
-
 VARIANT_DESTRUCTOR(LilyCheckedPattern, error, LilyCheckedPattern *self)
 {
     FREE(LilyCheckedPatternError, &self->error);
@@ -725,12 +566,6 @@ VARIANT_DESTRUCTOR(LilyCheckedPattern, list_tail, LilyCheckedPattern *self)
 }
 
 VARIANT_DESTRUCTOR(LilyCheckedPattern, literal, LilyCheckedPattern *self)
-{
-    FREE(LilyCheckedDataType, self->data_type);
-    lily_free(self);
-}
-
-VARIANT_DESTRUCTOR(LilyCheckedPattern, name, LilyCheckedPattern *self)
 {
     FREE(LilyCheckedDataType, self->data_type);
     lily_free(self);
@@ -770,12 +605,8 @@ DESTRUCTOR(LilyCheckedPattern, LilyCheckedPattern *self)
         case LILY_CHECKED_PATTERN_KIND_ARRAY:
             FREE_VARIANT(LilyCheckedPattern, array, self);
             break;
-        case LILY_CHECKED_PATTERN_KIND_AS:
-            FREE_VARIANT(LilyCheckedPattern, as, self);
-            break;
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
         case LILY_CHECKED_PATTERN_KIND_NONE:
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
             FREE(LilyCheckedDataType, self->data_type);
             lily_free(self);
             break;
@@ -793,9 +624,6 @@ DESTRUCTOR(LilyCheckedPattern, LilyCheckedPattern *self)
             break;
         case LILY_CHECKED_PATTERN_KIND_LITERAL:
             FREE_VARIANT(LilyCheckedPattern, literal, self);
-            break;
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-            FREE_VARIANT(LilyCheckedPattern, name, self);
             break;
         case LILY_CHECKED_PATTERN_KIND_RANGE:
             FREE_VARIANT(LilyCheckedPattern, range, self);

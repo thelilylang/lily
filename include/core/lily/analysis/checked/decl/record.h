@@ -88,6 +88,15 @@ field_exists__LilyCheckedDeclRecord(const LilyCheckedDeclRecord *self,
 
 /**
  *
+ * @brief Get the data type of the field from its name.
+ */
+LilyCheckedDataType *
+get_data_type_from_field_name__LilyCheckedDeclRecord(
+  const LilyCheckedDeclRecord *self,
+  String *name);
+
+/**
+ *
  * @brief Convert LilyCheckedDeclRecord in String.
  * @note This function is only used to debug.
  */

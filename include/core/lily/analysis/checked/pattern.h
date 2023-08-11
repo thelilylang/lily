@@ -27,13 +27,11 @@
 
 #include <core/lily/analysis/checked/data_type.h>
 #include <core/lily/analysis/checked/pattern/array.h>
-#include <core/lily/analysis/checked/pattern/as.h>
 #include <core/lily/analysis/checked/pattern/error.h>
 #include <core/lily/analysis/checked/pattern/list.h>
 #include <core/lily/analysis/checked/pattern/list_head.h>
 #include <core/lily/analysis/checked/pattern/list_tail.h>
 #include <core/lily/analysis/checked/pattern/literal.h>
-#include <core/lily/analysis/checked/pattern/name.h>
 #include <core/lily/analysis/checked/pattern/range.h>
 #include <core/lily/analysis/checked/pattern/record_call.h>
 #include <core/lily/analysis/checked/pattern/tuple.h>
@@ -45,21 +43,18 @@
 enum LilyCheckedPatternKind
 {
     LILY_CHECKED_PATTERN_KIND_ARRAY,
-    LILY_CHECKED_PATTERN_KIND_AS,
-    LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE,
+    LILY_CHECKED_PATTERN_KIND_ELSE,
     LILY_CHECKED_PATTERN_KIND_ERROR,
     LILY_CHECKED_PATTERN_KIND_LIST,
     LILY_CHECKED_PATTERN_KIND_LIST_HEAD,
     LILY_CHECKED_PATTERN_KIND_LIST_TAIL,
     LILY_CHECKED_PATTERN_KIND_LITERAL,
-    LILY_CHECKED_PATTERN_KIND_NAME,
     LILY_CHECKED_PATTERN_KIND_NONE,
     LILY_CHECKED_PATTERN_KIND_RANGE,
     LILY_CHECKED_PATTERN_KIND_RECORD_CALL,
     LILY_CHECKED_PATTERN_KIND_TUPLE,
     LILY_CHECKED_PATTERN_KIND_UNKNOWN,
     LILY_CHECKED_PATTERN_KIND_VARIANT_CALL,
-    LILY_CHECKED_PATTERN_KIND_WILDCARD
 };
 
 /**
@@ -84,13 +79,11 @@ typedef struct LilyCheckedPattern
     union
     {
         LilyCheckedPatternArray array;
-        LilyCheckedPatternAs as;
         LilyCheckedPatternError error;
         LilyCheckedPatternList list;
         LilyCheckedPatternListHead list_head;
         LilyCheckedPatternListTail list_tail;
         LilyCheckedPatternLiteral literal;
-        LilyCheckedPatternName name;
         LilyCheckedPatternRange range;
         LilyCheckedPatternRecordCall record_call;
         LilyCheckedPatternTuple tuple;
@@ -109,18 +102,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedDataType *data_type,
                     const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternArray array);
-
-/**
- *
- * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_AS).
- */
-VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
-                    LilyCheckedPattern,
-                    as,
-                    const Location *location,
-                    LilyCheckedDataType *data_type,
-                    const LilyAstPattern *ast_pattern,
-                    LilyCheckedPatternAs as);
 
 /**
  *
@@ -184,18 +165,6 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedDataType *data_type,
                     const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternLiteral literal);
-
-/**
- *
- * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_NAME).
- */
-VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
-                    LilyCheckedPattern,
-                    name,
-                    const Location *location,
-                    LilyCheckedDataType *data_type,
-                    const LilyAstPattern *ast_pattern,
-                    LilyCheckedPatternName name);
 
 /**
  *
@@ -270,32 +239,19 @@ CONSTRUCTOR(LilyCheckedPattern *,
 
 /**
  *
- * @brief Get name from pattern.
- */
-const LilyCheckedPattern *
-get_name__LilyCheckedPattern(const LilyCheckedPattern *self);
-
-/**
- *
- * @brief Is else pattern.
- */
-bool
-is_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self);
-
-/**
- *
- * @brief Is the last else pattern.
- */
-bool
-is_final_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self);
-
-/**
- *
  * @brief Check if the both pattern are equal.
  */
 bool
 eq__LilyCheckedPattern(const LilyCheckedPattern *self,
                        const LilyCheckedPattern *other);
+
+/**
+ *
+ * @brief Check if the body pattern are equal (lazy).
+ */
+bool
+lazy_eq__LilyCheckedPattern(const LilyCheckedPattern *self,
+                            const LilyCheckedPattern *other);
 
 /**
  *

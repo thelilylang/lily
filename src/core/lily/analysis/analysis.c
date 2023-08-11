@@ -31,6 +31,7 @@
 #include <core/lily/analysis/checked/history.h>
 #include <core/lily/analysis/checked/limits.h>
 #include <core/lily/analysis/checked/parent.h>
+#include <core/lily/analysis/checked/pattern/table.h>
 #include <core/lily/analysis/checked/safety_mode.h>
 #include <core/lily/analysis/checked/scope_stmt.h>
 #include <core/lily/analysis/checked/signature.h>
@@ -482,13 +483,6 @@ check_as_pattern__LilyAnalysis(LilyAnalysis *self,
                                OrderedHashMap *captured_variables);
 
 /// @param defined_data_type LilyCheckedDataType* (&)
-static inline LilyCheckedPattern *
-check_auto_complete_pattern__LilyAnalysis(
-  LilyAnalysis *self,
-  const LilyAstPattern *pattern,
-  LilyCheckedDataType *defined_data_type);
-
-/// @param defined_data_type LilyCheckedDataType* (&)
 static LilyCheckedPattern *
 check_error_pattern__LilyAnalysis(LilyAnalysis *self,
                                   const LilyAstPattern *pattern,
@@ -579,12 +573,6 @@ check_variant_call_pattern__LilyAnalysis(LilyAnalysis *self,
                                          OrderedHashMap *captured_variables);
 
 /// @param defined_data_type LilyCheckedDataType* (&)
-static inline LilyCheckedPattern *
-check_wildcard_pattern__LilyAnalysis(LilyAnalysis *self,
-                                     const LilyAstPattern *pattern,
-                                     LilyCheckedDataType *defined_data_type);
-
-/// @param defined_data_type LilyCheckedDataType* (&)
 static LilyCheckedPattern *
 check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
@@ -598,6 +586,14 @@ count_total_cases__LilyAnalysis(LilyAnalysis *self,
                                 LilyCheckedScope *scope,
                                 enum LilyCheckedSafetyMode safety_mode,
                                 LilyCheckedDataType *dt);
+
+static LilyCheckedStmtMatchCase *
+check_match_stmt_case__LilyAnalysis(LilyAnalysis *self,
+                                    const LilyAstStmtMatchCase *case_,
+                                    LilyCheckedScope *scope,
+                                    bool in_loop,
+                                    bool *is_final_else,
+                                    enum LilyCheckedSafetyMode safety_mode);
 
 static LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
@@ -2977,29 +2973,34 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
             for (Usize i = 0; i < stmt->match.cases->len; ++i) {
                 LilyCheckedStmtMatchCase *case_ =
                   get__Vec(stmt->match.cases, i);
-                LilyCheckedVirtualScope *case_virtual_scope =
-                  NEW(LilyCheckedVirtualScope, virtual_scope);
 
-                switch (case_->body_item->kind) {
-                    case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
-                        reanalyze_expr__LilyAnalysis(self,
-                                                     signature,
-                                                     case_->body_item->expr,
-                                                     case_virtual_scope,
-                                                     return_data_type);
-                        break;
-                    case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
-                        reanalyze_stmt__LilyAnalysis(self,
-                                                     signature,
-                                                     &case_->body_item->stmt,
-                                                     case_virtual_scope,
-                                                     return_data_type);
-                        break;
-                    default:
-                        UNREACHABLE("unknown variant");
+                for (Usize j = 0; j < case_->body_items->len; ++j) {
+                    LilyCheckedVirtualScope *case_virtual_scope =
+                      NEW(LilyCheckedVirtualScope, virtual_scope);
+                    LilyCheckedBodyFunItem *body_item =
+                      get__Vec(case_->body_items, j);
+
+                    switch (body_item->kind) {
+                        case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
+                            reanalyze_expr__LilyAnalysis(self,
+                                                         signature,
+                                                         body_item->expr,
+                                                         case_virtual_scope,
+                                                         return_data_type);
+                            break;
+                        case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
+                            reanalyze_stmt__LilyAnalysis(self,
+                                                         signature,
+                                                         &body_item->stmt,
+                                                         case_virtual_scope,
+                                                         return_data_type);
+                            break;
+                        default:
+                            UNREACHABLE("unknown variant");
+                    }
+
+                    FREE(LilyCheckedVirtualScope, case_virtual_scope);
                 }
-
-                FREE(LilyCheckedVirtualScope, case_virtual_scope);
             }
 
             break;
@@ -7165,17 +7166,21 @@ check_array_pattern__LilyAnalysis(LilyAnalysis *self,
                    "expression");
     }
 
-    Vec *array = NEW(Vec);
+    LilyCheckedPatternTable table = NEW(Vec);
 
     for (Usize i = 0; i < pattern->array.patterns->len; ++i) {
-        push__Vec(
-          array,
+        LilyCheckedPattern *check_pattern =
           check_pattern__LilyAnalysis(self,
                                       get__Vec(pattern->array.patterns, i),
                                       scope,
                                       safety_mode,
                                       defined_data_type->array.data_type,
-                                      captured_variables));
+                                      captured_variables);
+
+        if (pattern) {
+            add__LilyCheckedPatternTable(
+              table, NEW(LilyCheckedPatternTableItem, i, check_pattern));
+        }
     }
 
     return NEW_VARIANT(LilyCheckedPattern,
@@ -7183,7 +7188,7 @@ check_array_pattern__LilyAnalysis(LilyAnalysis *self,
                        &pattern->location,
                        ref__LilyCheckedDataType(defined_data_type),
                        pattern,
-                       NEW(LilyCheckedPatternArray, array));
+                       NEW(LilyCheckedPatternArray, table));
 }
 
 LilyCheckedPattern *
@@ -7194,13 +7199,16 @@ check_as_pattern__LilyAnalysis(LilyAnalysis *self,
                                LilyCheckedDataType *defined_data_type,
                                OrderedHashMap *captured_variables)
 {
-    LilyCheckedPattern *as_pattern =
-      check_pattern__LilyAnalysis(self,
-                                  pattern->as.pattern,
-                                  scope,
-                                  safety_mode,
-                                  defined_data_type,
-                                  captured_variables);
+    if (pattern->as.pattern->kind != LILY_AST_PATTERN_KIND_AUTO_COMPLETE) {
+        FAILED("expected name pattern");
+    }
+
+    check_pattern__LilyAnalysis(self,
+                                pattern->as.pattern,
+                                scope,
+                                safety_mode,
+                                defined_data_type,
+                                captured_variables);
 
     int res = add_captured_variable__LilyCheckedScope(
       scope,
@@ -7219,25 +7227,7 @@ check_as_pattern__LilyAnalysis(LilyAnalysis *self,
                                    defined_data_type));
     }
 
-    return NEW_VARIANT(LilyCheckedPattern,
-                       as,
-                       &pattern->location,
-                       defined_data_type,
-                       pattern,
-                       NEW(LilyCheckedPatternAs, as_pattern, pattern->as.name));
-}
-
-LilyCheckedPattern *
-check_auto_complete_pattern__LilyAnalysis(
-  LilyAnalysis *self,
-  const LilyAstPattern *pattern,
-  LilyCheckedDataType *defined_data_type)
-{
-    return NEW(LilyCheckedPattern,
-               LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE,
-               &pattern->location,
-               ref__LilyCheckedDataType(defined_data_type),
-               pattern);
+    return NULL;
 }
 
 LilyCheckedPattern *
@@ -7389,17 +7379,21 @@ check_list_pattern__LilyAnalysis(LilyAnalysis *self,
             FAILED("expected list");
     }
 
-    Vec *list = NEW(Vec); // Vec<LilyCheckedPattern*>*
+    LilyCheckedPatternTable table = NEW(Vec);
 
     for (Usize i = 0; i < pattern->list.patterns->len; ++i) {
-        push__Vec(
-          list,
+        LilyCheckedPattern *pattern_item =
           check_pattern__LilyAnalysis(self,
                                       get__Vec(pattern->list.patterns, i),
                                       scope,
                                       safety_mode,
                                       defined_data_type->list,
-                                      captured_variables));
+                                      captured_variables);
+
+        if (pattern_item) {
+            add__LilyCheckedPatternTable(
+              table, NEW(LilyCheckedPatternTableItem, i, pattern_item));
+        }
     }
 
     return NEW_VARIANT(LilyCheckedPattern,
@@ -7407,7 +7401,7 @@ check_list_pattern__LilyAnalysis(LilyAnalysis *self,
                        &pattern->location,
                        ref__LilyCheckedDataType(defined_data_type),
                        pattern,
-                       NEW(LilyCheckedPatternList, list));
+                       NEW(LilyCheckedPatternList, table));
 }
 
 LilyCheckedPattern *
@@ -8361,12 +8355,7 @@ check_name_pattern__LilyAnalysis(LilyAnalysis *self,
               ref__LilyCheckedDataType(defined_data_type)));
     }
 
-    return NEW_VARIANT(LilyCheckedPattern,
-                       name,
-                       &pattern->location,
-                       ref__LilyCheckedDataType(defined_data_type),
-                       pattern,
-                       NEW(LilyCheckedPatternName, pattern->name.name));
+    return NULL;
 }
 
 LilyCheckedPattern *
@@ -8460,26 +8449,81 @@ check_record_call_pattern__LilyAnalysis(LilyAnalysis *self,
             FAILED("expected record");
     }
 
-    Vec *fields = NEW(Vec); // Vec<LilyCheckedPattern*>*
+    Vec *fields = NEW(Vec); // Vec<LilyCheckedPatternRecordField*>*
 
     for (Usize i = 0; i < pattern->record_call.fields->len; ++i) {
-        LilyCheckedPattern *item =
+        LilyAstPatternRecordField *field =
+          get__Vec(pattern->record_call.fields, i);
+        LilyCheckedPattern *field_pattern =
           check_pattern__LilyAnalysis(self,
-                                      get__Vec(pattern->record_call.fields, i),
+                                      field->pattern,
                                       scope,
                                       safety_mode,
                                       get__Vec(response_id.record->fields, i),
                                       captured_variables);
-        const LilyCheckedPattern *name = get_name__LilyCheckedPattern(item);
 
-        if (name) {
+        if (field->name) {
             if (!field_exists__LilyCheckedDeclRecord(response_id.record,
-                                                     name->name.name)) {
+                                                     field->name)) {
                 FAILED("the field doesn't exist");
+            } else if (!field_pattern) {
+                if (add_captured_variable__LilyCheckedScope(
+                      scope,
+                      NEW(LilyCheckedScopeContainerCapturedVariable,
+                          field->name,
+                          captured_variables->len))) {
+                    FAILED("duplicate captured variable");
+                } else {
+                    insert__OrderedHashMap(
+                      captured_variables,
+                      field->name->buffer,
+                      NEW(
+                        LilyCheckedCapturedVariable,
+                        field->name,
+                        &pattern->location,
+                        ref__LilyCheckedDataType(
+                          get_data_type_from_field_name__LilyCheckedDeclRecord(
+                            response_id.record, field->name))));
+                }
+            }
+        } else {
+            const LilyAstPattern *name_pattern =
+              get_name__LilyAstPattern(field->pattern);
+
+            if (!name_pattern) {
+                FAILED("expected name pattern");
+            }
+
+            if (!field_exists__LilyCheckedDeclRecord(response_id.record,
+                                                     name_pattern->name.name)) {
+                FAILED("the field doesn't exist");
+            } else {
+                if (add_captured_variable__LilyCheckedScope(
+                      scope,
+                      NEW(LilyCheckedScopeContainerCapturedVariable,
+                          name_pattern->name.name,
+                          captured_variables->len))) {
+                    FAILED("duplicate captured variable");
+                } else {
+                    insert__OrderedHashMap(
+                      captured_variables,
+                      field->name->buffer,
+                      NEW(
+                        LilyCheckedCapturedVariable,
+                        field->name,
+                        &pattern->location,
+                        ref__LilyCheckedDataType(
+                          get_data_type_from_field_name__LilyCheckedDeclRecord(
+                            response_id.record, field->name))));
+                }
             }
         }
 
-        push__Vec(fields, item);
+        if (field_pattern) {
+            push__Vec(
+              fields,
+              NEW(LilyCheckedPatternRecordField, field->name, field_pattern));
+        }
     }
 
     LilyCheckedExpr *record_call_id =
@@ -8512,8 +8556,6 @@ check_tuple_pattern__LilyAnalysis(LilyAnalysis *self,
                                   LilyCheckedDataType *defined_data_type,
                                   OrderedHashMap *captured_variables)
 {
-    Vec *patterns = NEW(Vec);
-
     switch (defined_data_type->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
             if (pattern->tuple.patterns->len > defined_data_type->tuple->len) {
@@ -8525,15 +8567,21 @@ check_tuple_pattern__LilyAnalysis(LilyAnalysis *self,
             FAILED("expected tuple");
     }
 
+    LilyCheckedPatternTable table = NEW(Vec);
+
     for (Usize i = 0; i < pattern->tuple.patterns->len; ++i) {
-        push__Vec(
-          patterns,
+        LilyCheckedPattern *tuple_item =
           check_pattern__LilyAnalysis(self,
                                       get__Vec(pattern->tuple.patterns, i),
                                       scope,
                                       safety_mode,
                                       get__Vec(defined_data_type->tuple, i),
-                                      captured_variables));
+                                      captured_variables);
+
+        if (tuple_item) {
+            add__LilyCheckedPatternTable(
+              table, NEW(LilyCheckedPatternTableItem, i, tuple_item));
+        }
     }
 
     return NEW_VARIANT(LilyCheckedPattern,
@@ -8541,7 +8589,7 @@ check_tuple_pattern__LilyAnalysis(LilyAnalysis *self,
                        &pattern->location,
                        ref__LilyCheckedDataType(defined_data_type),
                        pattern,
-                       NEW(LilyCheckedPatternTuple, patterns));
+                       NEW(LilyCheckedPatternTuple, table));
 }
 
 LilyCheckedPattern *
@@ -8614,18 +8662,6 @@ check_variant_call_pattern__LilyAnalysis(LilyAnalysis *self,
 }
 
 LilyCheckedPattern *
-check_wildcard_pattern__LilyAnalysis(LilyAnalysis *self,
-                                     const LilyAstPattern *pattern,
-                                     LilyCheckedDataType *defined_data_type)
-{
-    return NEW(LilyCheckedPattern,
-               LILY_CHECKED_PATTERN_KIND_WILDCARD,
-               &pattern->location,
-               ref__LilyCheckedDataType(defined_data_type),
-               pattern);
-}
-
-LilyCheckedPattern *
 check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
                             LilyCheckedScope *scope,
@@ -8651,8 +8687,8 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                                                   defined_data_type,
                                                   captured_variables);
         case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
-            return check_auto_complete_pattern__LilyAnalysis(
-              self, pattern, defined_data_type);
+        case LILY_AST_PATTERN_KIND_WILDCARD:
+            return NULL;
         case LILY_AST_PATTERN_KIND_ERROR:
             return check_error_pattern__LilyAnalysis(self,
                                                      pattern,
@@ -8723,9 +8759,6 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                                                             safety_mode,
                                                             defined_data_type,
                                                             captured_variables);
-        case LILY_AST_PATTERN_KIND_WILDCARD:
-            return check_wildcard_pattern__LilyAnalysis(
-              self, pattern, defined_data_type);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -8845,6 +8878,24 @@ count_total_cases__LilyAnalysis(LilyAnalysis *self,
     }
 }
 
+LilyCheckedStmtMatchCase *
+check_match_stmt_case__LilyAnalysis(LilyAnalysis *self,
+                                    const LilyAstStmtMatchCase *case_,
+                                    LilyCheckedScope *scope,
+                                    bool in_loop,
+                                    bool *is_final_else,
+                                    enum LilyCheckedSafetyMode safety_mode)
+{
+    OrderedHashMap *captured_variables = NEW(OrderedHashMap);
+    *is_final_else = is_final_else_pattern__LilyAstPattern(case_->pattern);
+
+    if (case_->cond) {
+    } else {
+    }
+
+    return NULL;
+}
+
 LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                                const LilyAstStmt *stmt,
@@ -8924,6 +8975,8 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
     }
 
     Vec *cases = NEW(Vec); // Vec<LilyCheckedStmtMatchCase*>*
+    LilyCheckedStmtMatch match =
+      NEW(LilyCheckedStmtMatch, expr, cases, use_switch, has_else);
 
     for (Usize i = 0; i < stmt->match.cases->len; ++i) {
         LilyAstStmtMatchCase *ast_case = get__Vec(stmt->match.cases, i);
@@ -8947,14 +9000,14 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                 self, ast_case->cond, scope, safety_mode, false, NULL)
             : NULL;
         bool is_final_else =
-          is_final_else_pattern__LilyCheckedPattern(check_pattern);
+          is_final_else_pattern__LilyAstPattern(ast_case->pattern);
 
         if (check_cond) {
             use_switch = false;
             EXPECTED_BOOL_EXPR(check_cond);
         }
 
-        if (!check_cond && is_else_pattern__LilyCheckedPattern(check_pattern)) {
+        if (!check_cond && is_else_pattern__LilyAstPattern(ast_case->pattern)) {
             if (is_final_else) {
                 nb_cases = total_cases;
             } else {
@@ -8974,29 +9027,24 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
 
         ASSERT(check_item);
 
-        // Check if we have no duplicate case
-        for (Usize j = 0; j < cases->len; ++j) {
-            LilyCheckedStmtMatchCase *case_ = get__Vec(cases, j);
+        int err = look_for_case_error__LilyCheckedStmtMatch(
+          &match, check_pattern, check_cond);
 
-            if (case_->cond) {
-                continue;
-            }
-
-            bool is_eq = eq__LilyCheckedPattern(case_->pattern, check_pattern);
-
-            if (is_eq && check_cond) {
+        switch (err) {
+            case 0:
+                add_case__LilyCheckedStmtMatch(&match,
+                                               check_pattern,
+                                               captured_variables,
+                                               check_cond,
+                                               check_item);
+                break;
+            case 1:
                 FAILED("warning: unused case");
-            } else if (is_eq) {
-                FAILED("warning: duplicate case");
-            }
+            case 2:
+                FAILED("duplicate case");
+            default:
+                UNREACHABLE("unknown error code");
         }
-
-        push__Vec(cases,
-                  NEW(LilyCheckedStmtMatchCase,
-                      captured_variables,
-                      check_pattern,
-                      check_cond,
-                      check_item));
 
         if (is_final_else) {
             has_else = true;
@@ -9013,12 +9061,7 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
     return NEW_VARIANT(
       LilyCheckedBodyFunItem,
       stmt,
-      NEW_VARIANT(
-        LilyCheckedStmt,
-        match,
-        &stmt->location,
-        stmt,
-        NEW(LilyCheckedStmtMatch, expr, cases, use_switch, has_else)));
+      NEW_VARIANT(LilyCheckedStmt, match, &stmt->location, stmt, match));
 }
 
 LilyCheckedBodyFunItem *

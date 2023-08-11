@@ -82,7 +82,7 @@ typedef struct LilyCheckedStmt
     enum LilyCheckedStmtKind kind;
     const Location *location;    // const Location* (&)
     const LilyAstStmt *ast_stmt; // const LilyAstStmt*? (&) e.g. optional in
-                                 // the case of implicit return
+                                 // the case of implicit return, ...
     union
     {
         LilyCheckedStmtAsm asm_;

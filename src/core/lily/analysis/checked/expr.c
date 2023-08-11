@@ -322,6 +322,21 @@ CONSTRUCTOR(LilyCheckedExpr *,
     return self;
 }
 
+bool
+eq__LilyCheckedExpr(const LilyCheckedExpr *self, const LilyCheckedExpr *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_KIND_ARRAY:
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
