@@ -1202,7 +1202,7 @@ LilyMirBuildMatch(LilyMirModule *Module,
             LilyMirInstruction *block =
               LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
 
-            if (case_->cond) {
+            if (case_->conds) {
                 TODO("generate cond...");
             }
 

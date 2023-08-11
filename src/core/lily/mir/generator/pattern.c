@@ -35,11 +35,6 @@ generate_pattern__LilyMir(LilyMirModule *module,
     switch (pattern->kind) {
         case LILY_CHECKED_PATTERN_KIND_ARRAY:
             TODO("pattern array");
-        case LILY_CHECKED_PATTERN_KIND_AS:
-            TODO("pattern as");
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
-            return NULL;
         case LILY_CHECKED_PATTERN_KIND_ERROR:
             TODO("pattern error");
         case LILY_CHECKED_PATTERN_KIND_LIST:
@@ -50,8 +45,6 @@ generate_pattern__LilyMir(LilyMirModule *module,
             TODO("pattern list tail");
         case LILY_CHECKED_PATTERN_KIND_LITERAL:
             GENERATE_LITERAL(pattern, PATTERN, false);
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-            TODO("pattern name");
         case LILY_CHECKED_PATTERN_KIND_NONE:
             TODO("pattern none");
         case LILY_CHECKED_PATTERN_KIND_RANGE:
