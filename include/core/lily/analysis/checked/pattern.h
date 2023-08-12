@@ -255,6 +255,15 @@ lazy_eq__LilyCheckedPattern(const LilyCheckedPattern *self,
 
 /**
  *
+ * @brief Convert a pattern to an expression.
+ * @param variable_name Name of a variable or a virtual variable.
+ */
+LilyCheckedExpr *
+to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
+                            String *variable_name);
+
+/**
+ *
  * @brief Convert LilyCheckedPattern in String.
  * @note This function is only used to debug.
  */

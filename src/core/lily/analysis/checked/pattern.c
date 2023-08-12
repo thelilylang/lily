@@ -417,6 +417,39 @@ lazy_eq__LilyCheckedPattern(const LilyCheckedPattern *self,
     }
 }
 
+LilyCheckedExpr *
+to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
+                            String *variable_name)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY: {
+            break;
+        }
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LITERAL:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_RANGE:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_TUPLE:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
+            return NULL;
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)
