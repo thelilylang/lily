@@ -387,6 +387,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/decl/record_object.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/decl/trait.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/decl/type.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/access.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/array.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/binary.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/call.c
