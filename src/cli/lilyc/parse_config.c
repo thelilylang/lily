@@ -30,6 +30,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define DUMP_SCANNER_OPTION 4
+#define DUMP_PARSER_OPTION 5
+#define DUMP_TYPECHECK_OPTION 6
+#define DUMP_MIR_OPTION 7
+#define DUMP_IR_OPTION 8
+#define RUN_SCANNER_OPTION 9
+#define RUN_PARSER_OPTION 10
+#define RUN_TYPECHECK_OPTION 11
+#define RUN_IR_OPTION 12
+#define LLVM_IR_OPTION 13
+#define CC_IR_OPTION 14
+#define CPP_IR_OPTION 15
+#define JS_IR_OPTION 16
+#define WASM_IR_OPTION 17
+#define TARGET_OPTION 18
+#define ODEBUG_OPTION 19
+#define ORELEASE_OPTION 20
+#define OSIZE_OPTION 21
+#define O0_OPTION 22
+#define O1_OPTION 23
+#define O2_OPTION 24
+#define O3_OPTION 25
+#define OZ_OPTION 26
+
 LilycConfig
 run__LilycParseConfig(const Vec *results)
 {
@@ -57,49 +81,49 @@ run__LilycParseConfig(const Vec *results)
             case CLI_RESULT_KIND_OPTION:
                 switch (current->option->id) {
                     // 0, 1, 2 and 3 id are used by help and version option
-                    case 4:
+                    case DUMP_SCANNER_OPTION:
                         dump_scanner = true;
                         break;
-                    case 5:
+                    case DUMP_PARSER_OPTION:
                         dump_parser = true;
                         break;
-                    case 6:
+                    case DUMP_TYPECHECK_OPTION:
                         dump_typecheck = true;
                         break;
-                    case 7:
+                    case DUMP_MIR_OPTION:
                         dump_mir = true;
                         break;
-                    case 8:
+                    case DUMP_IR_OPTION:
                         dump_ir = true;
                         break;
-                    case 9:
+                    case RUN_SCANNER_OPTION:
                         run_scanner = true;
                         break;
-                    case 10:
+                    case RUN_PARSER_OPTION:
                         run_parser = true;
                         break;
-                    case 11:
+                    case RUN_TYPECHECK_OPTION:
                         run_typecheck = true;
                         break;
-                    case 12:
+                    case RUN_IR_OPTION:
                         run_ir = true;
                         break;
-                    case 13:
+                    case LLVM_IR_OPTION:
                         llvm_ir = true;
                         break;
-                    case 14:
+                    case CC_IR_OPTION:
                         cc_ir = true;
                         break;
-                    case 15:
+                    case CPP_IR_OPTION:
                         cpp_ir = true;
                         break;
-                    case 16:
+                    case JS_IR_OPTION:
                         js_ir = true;
                         break;
-                    case 17:
+                    case WASM_IR_OPTION:
                         wasm_ir = true;
                         break;
-                    case 18:
+                    case TARGET_OPTION:
                         ASSERT(current->option->value);
                         ASSERT(current->option->value->kind ==
                                CLI_RESULT_VALUE_KIND_SINGLE);
@@ -107,27 +131,28 @@ run__LilycParseConfig(const Vec *results)
                         target = current->option->value->single;
 
                         break;
-                    case 19:
-                    case 22:
+                    case ODEBUG_OPTION:
+                    case O0_OPTION:
                         o0 = true;
                         break;
-                    case 20:
-                    case 25:
+                    case ORELEASE_OPTION:
+                    case O3_OPTION:
                         o3 = true;
                         break;
-                    case 21:
-                    case 26:
+                    case OSIZE_OPTION:
+                    case OZ_OPTION:
                         oz = true;
                         break;
-                    case 23:
+                    case O1_OPTION:
                         o1 = true;
                         break;
-                    case 24:
+                    case O2_OPTION:
                         o2 = true;
                         break;
                     default:
                         UNREACHABLE("unknown option");
                 }
+
                 break;
             default:
                 UNREACHABLE("not expected in this context");

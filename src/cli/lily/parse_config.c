@@ -33,6 +33,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define BUILD_COMMAND 0
+#define CC_COMMAND 1
+#define COMPILE_COMMAND 2
+#define CPP_COMMAND 3
+#define INIT_COMMAND 4
+#define NEW_COMMAND 5
+#define RUN_COMMAND 6
+#define TEST_COMMAND 7
+#define TO_COMMAND 8
+
+#define BUILD_VERBOSE_OPTION 2
+
+#define TO_CC_OPTION 2
+#define TO_CPP_OPTION 3
+#define TO_JS_OPTION 4
+
 // Parse build config.
 static LilyConfig
 parse_build__LilyParseConfig(const Vec *results);
@@ -79,7 +95,7 @@ parse_build__LilyParseConfig(const Vec *results)
         ASSERT(current->kind == CLI_RESULT_KIND_OPTION);
 
         switch (current->option->id) {
-            case 2:
+            case BUILD_VERBOSE_OPTION:
                 verbose = true;
                 break;
             default:
@@ -303,13 +319,13 @@ parse_to__LilyParseConfig(const Vec *results)
             case CLI_RESULT_KIND_OPTION:
                 switch (current->option->id) {
                     // 0 and 1 id are used by help option
-                    case 2:
+                    case TO_CC_OPTION:
                         cc = true;
                         break;
-                    case 3:
+                    case TO_CPP_OPTION:
                         cpp = true;
                         break;
-                    case 4:
+                    case TO_JS_OPTION:
                         js = true;
                         break;
                     default:
@@ -334,23 +350,23 @@ run__LilyParseConfig(const Vec *results)
     ASSERT(command->kind == CLI_RESULT_KIND_COMMAND);
 
     switch (command->command.id) {
-        case 0:
+        case BUILD_COMMAND:
             return parse_build__LilyParseConfig(results);
-        case 1:
+        case CC_COMMAND:
             return parse_cc__LilyParseConfig(results);
-        case 2:
+        case COMPILE_COMMAND:
             return NEW_VARIANT(LilyConfig, compile);
-        case 3:
+        case CPP_COMMAND:
             return parse_cpp__LilyParseConfig(results);
-        case 4:
+        case INIT_COMMAND:
             return parse_init__LilyParseConfig(results);
-        case 5:
+        case NEW_COMMAND:
             return parse_new__LilyParseConfig(results);
-        case 6:
+        case RUN_COMMAND:
             return parse_run__LilyParseConfig(results);
-        case 7:
+        case TEST_COMMAND:
             return parse_test__LilyParseConfig(results);
-        case 8:
+        case TO_COMMAND:
             return parse_to__LilyParseConfig(results);
         default:
             UNREACHABLE("unknown command");
