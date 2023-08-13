@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <base/format.h>
+
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/expr/access.h>
 
@@ -36,17 +38,75 @@ static inline VARIANT_DESTRUCTOR(LilyCheckedExprAccess,
                                  tuple,
                                  const LilyCheckedExprAccess *self);
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprAccessKind,
+               enum LilyCheckedExprAccessKind kind)
+{
+    switch (kind) {
+        case LILY_CHECKED_EXPR_ACCESS_KIND_HOOK:
+            return "LILY_CHECKED_EXPR_ACCESS_KIND_HOOK";
+        case LILY_CHECKED_EXPR_ACCESS_KIND_TUPLE:
+            return "LILY_CHECKED_EXPR_ACCESS_KIND_TUPLE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprAccessHook,
+               const LilyCheckedExprAccessHook *self)
+{
+    return format("LilyCheckedExprAccessHook{{ left = {Sr}, index = {Sr} }",
+                  to_string__Debug__LilyCheckedExpr(self->left),
+                  to_string__Debug__LilyCheckedExpr(self->index));
+}
+#endif
+
 DESTRUCTOR(LilyCheckedExprAccessHook, const LilyCheckedExprAccessHook *self)
 {
     FREE(LilyCheckedExpr, self->left);
     FREE(LilyCheckedExpr, self->index);
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprAccessTuple,
+               const LilyCheckedExprAccessTuple *self)
+{
+    return format("LilyCheckedExprAccessTuple{{ left = {Sr}, n = {Sr} }",
+                  to_string__Debug__LilyCheckedExpr(self->left),
+                  to_string__Debug__LilyCheckedExpr(self->n));
+}
+#endif
+
 DESTRUCTOR(LilyCheckedExprAccessTuple, const LilyCheckedExprAccessTuple *self)
 {
     FREE(LilyCheckedExpr, self->left);
     FREE(LilyCheckedExpr, self->n);
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprAccess,
+               const LilyCheckedExprAccess *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_ACCESS_KIND_HOOK:
+            return to_string__Debug__LilyCheckedExprAccessHook(&self->hook);
+        case LILY_CHECKED_EXPR_ACCESS_KIND_TUPLE:
+            return to_string__Debug__LilyCheckedExprAccessTuple(&self->tuple);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
 
 VARIANT_DESTRUCTOR(LilyCheckedExprAccess,
                    hook,

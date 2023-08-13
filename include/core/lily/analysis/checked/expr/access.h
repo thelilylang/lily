@@ -35,6 +35,18 @@ enum LilyCheckedExprAccessKind
     LILY_CHECKED_EXPR_ACCESS_KIND_TUPLE,
 };
 
+/**
+ *
+ * @brief Convert LilyCheckedExprAccessKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprAccessKind,
+               enum LilyCheckedExprAccessKind kind);
+#endif
+
 // left[index]
 typedef struct LilyCheckedExprAccessHook
 {
@@ -53,6 +65,18 @@ inline CONSTRUCTOR(LilyCheckedExprAccessHook,
 {
     return (LilyCheckedExprAccessHook){ .left = left, .index = index };
 }
+
+/**
+ *
+ * @brief Convert LilyCheckedExprAccessHook in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprAccessHook,
+               const LilyCheckedExprAccessHook *self);
+#endif
 
 /**
  *
@@ -78,6 +102,18 @@ inline CONSTRUCTOR(LilyCheckedExprAccessTuple,
 {
     return (LilyCheckedExprAccessTuple){ .left = left, .n = n };
 }
+
+/**
+ *
+ * @brief Convert LilyCheckedExprAccessTuple in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprAccessTuple,
+               const LilyCheckedExprAccessTuple *self);
+#endif
 
 /**
  *
@@ -122,6 +158,18 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprAccess,
     return (LilyCheckedExprAccess){ .kind = LILY_CHECKED_EXPR_ACCESS_KIND_TUPLE,
                                     .tuple = tuple };
 }
+
+/**
+ *
+ * @brief Convert LilyCheckedExprAccess in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprAccess,
+               const LilyCheckedExprAccess *self);
+#endif
 
 /**
  *
