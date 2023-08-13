@@ -28,6 +28,7 @@
 #include <base/string.h>
 
 #include <core/lily/analysis/checked/data_type.h>
+#include <core/lily/analysis/checked/expr/access.h>
 #include <core/lily/analysis/checked/expr/array.h>
 #include <core/lily/analysis/checked/expr/binary.h>
 #include <core/lily/analysis/checked/expr/call.h>
@@ -41,8 +42,11 @@
 
 #include <core/shared/location.h>
 
+// TODO: create a ref count for LilyCheckedExpr
+
 enum LilyCheckedExprKind
 {
+    LILY_CHECKED_EXPR_KIND_ACCESS,
     LILY_CHECKED_EXPR_KIND_ARRAY,
     LILY_CHECKED_EXPR_KIND_BINARY,
     LILY_CHECKED_EXPR_KIND_CALL,
@@ -66,6 +70,7 @@ typedef struct LilyCheckedExpr
     const LilyAstExpr *ast_expr;    // const LilyAstExpr*? (&)
     union
     {
+        LilyCheckedExprAccess access;
         LilyCheckedExprArray array;
         LilyCheckedExprBinary binary;
         LilyCheckedExprCall call;
@@ -78,6 +83,18 @@ typedef struct LilyCheckedExpr
         LilyCheckedExprUnary unary;
     };
 } LilyCheckedExpr;
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_ACCESS).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    access,
+                    const Location *location,
+                    LilyCheckedDataType *data_type,
+                    const LilyAstExpr *ast_expr,
+                    LilyCheckedExprAccess access);
 
 /**
  *

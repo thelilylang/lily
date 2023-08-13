@@ -33,6 +33,9 @@
 #include <base/format.h>
 #endif
 
+// Free LilyCheckedExpr type (LILY_AST_EXPR_KIND_ACCESS).
+static VARIANT_DESTRUCTOR(LilyCheckedExpr, access, LilyCheckedExpr *self);
+
 // Free LilyCheckedExpr type (LILY_AST_EXPR_KIND_ARRAY).
 static VARIANT_DESTRUCTOR(LilyCheckedExpr, array, LilyCheckedExpr *self);
 
@@ -68,6 +71,8 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self)
 {
     switch (self) {
+        case LILY_CHECKED_EXPR_KIND_ACCESS:
+            return "LILY_CHECKED_EXPR_KIND_ACCESS";
         case LILY_CHECKED_EXPR_KIND_ARRAY:
             return "LILY_CHECKED_EXPR_KIND_ARRAY";
         case LILY_CHECKED_EXPR_KIND_BINARY:
@@ -97,6 +102,25 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self)
     }
 }
 #endif
+
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    access,
+                    const Location *location,
+                    LilyCheckedDataType *data_type,
+                    const LilyAstExpr *ast_expr,
+                    LilyCheckedExprAccess access)
+{
+    LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
+
+    self->kind = LILY_CHECKED_EXPR_KIND_ACCESS;
+    self->location = location;
+    self->data_type = data_type;
+    self->ast_expr = ast_expr;
+    self->access = access;
+
+    return self;
+}
 
 VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
@@ -363,6 +387,15 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
     }
 
     switch (self->kind) {
+        case LILY_CHECKED_EXPR_KIND_ACCESS: {
+            char *s =
+              format(", access = {sa} }",
+                     to_string__Debug__LilyCheckedExprAccess(&self->access));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_CHECKED_EXPR_KIND_ARRAY: {
             char *s =
               format(", array = {Sr} }",
@@ -464,6 +497,13 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
 }
 #endif
 
+VARIANT_DESTRUCTOR(LilyCheckedExpr, access, LilyCheckedExpr *self)
+{
+    FREE(LilyCheckedExprAccess, &self->access);
+    FREE(LilyCheckedDataType, self->data_type);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedExpr, array, LilyCheckedExpr *self)
 {
     FREE(LilyCheckedExprArray, &self->array);
@@ -536,6 +576,9 @@ VARIANT_DESTRUCTOR(LilyCheckedExpr, unary, LilyCheckedExpr *self)
 DESTRUCTOR(LilyCheckedExpr, LilyCheckedExpr *self)
 {
     switch (self->kind) {
+        case LILY_CHECKED_EXPR_KIND_ACCESS:
+            FREE_VARIANT(LilyCheckedExpr, access, self);
+            break;
         case LILY_CHECKED_EXPR_KIND_ARRAY:
             FREE_VARIANT(LilyCheckedExpr, array, self);
             break;
