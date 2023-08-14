@@ -262,7 +262,7 @@ LilyCheckedExpr *
 to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
                             const Location *location,
                             LilyCheckedScope *scope,
-                            String *variable_name);
+                            LilyCheckedExpr *current_expr);
 
 /**
  *

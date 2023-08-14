@@ -435,16 +435,11 @@ LilyCheckedExpr *
 to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
                             const Location *location,
                             LilyCheckedScope *scope,
-                            String *variable_name)
+                            LilyCheckedExpr *current_expr)
 {
-    LilyCheckedScopeResponse res_variable =
-      search_identifier__LilyCheckedScope(scope, variable_name);
-
-    ASSERT(res_variable.kind == LILY_CHECKED_SCOPE_RESPONSE_KIND_VARIABLE);
-
     switch (self->kind) {
         case LILY_CHECKED_PATTERN_KIND_ARRAY: {
-            ASSERT(res_variable.variable->data_type->kind ==
+            ASSERT(current_expr->data_type->kind ==
                    LILY_CHECKED_DATA_TYPE_KIND_ARRAY);
 
             LilyCheckedDataType *dt = NEW(
@@ -459,7 +454,7 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
                               self->array.must_eq
                                 ? LILY_CHECKED_EXPR_BINARY_KIND_EQ
                                 : LILY_CHECKED_EXPR_BINARY_KIND_GREATER_EQ,
-                              CALL_VARIABLE(location, res_variable),
+                              ref__LilyCheckedExpr(current_expr),
                               NEW_VARIANT(LilyCheckedExpr,
                                           literal,
                                           location,
@@ -474,48 +469,53 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
             for (Usize i = 0; i < self->array.table->len; ++i) {
                 LilyCheckedPatternTableItem *item =
                   get__Vec(self->array.table, i);
-
-                left = NEW_VARIANT(
+                LilyCheckedExpr *new_current_expr = NEW_VARIANT(
                   LilyCheckedExpr,
-                  binary,
+                  access,
                   location,
-                  ref__LilyCheckedDataType(dt),
+                  ref__LilyCheckedDataType(item->value->data_type),
                   NULL,
-                  NEW(LilyCheckedExprBinary,
-                      LILY_CHECKED_EXPR_BINARY_KIND_AND,
-                      left,
-                      NEW_VARIANT(
-                        LilyCheckedExpr,
-                        binary,
-                        location,
-                        ref__LilyCheckedDataType(dt),
-                        NULL,
-                        NEW(LilyCheckedExprBinary,
-                            LILY_CHECKED_EXPR_BINARY_KIND_EQ,
-                            NEW_VARIANT(
-                              LilyCheckedExpr,
-                              access,
-                              location,
-                              ref__LilyCheckedDataType(item->value->data_type),
-                              NULL,
-                              NEW_VARIANT(
-                                LilyCheckedExprAccess,
-                                hook,
-                                NEW(LilyCheckedExprAccessHook,
-                                    CALL_VARIABLE(location, res_variable),
-                                    NEW_VARIANT(
-                                      LilyCheckedExpr,
-                                      literal,
-                                      location,
-                                      NEW(LilyCheckedDataType,
-                                          LILY_CHECKED_DATA_TYPE_KIND_USIZE,
-                                          location),
-                                      NULL,
-                                      NEW_VARIANT(LilyCheckedExprLiteral,
-                                                  suffix_usize,
-                                                  item->id))))),
-                            to_expr__LilyCheckedPattern(
-                              item->value, location, scope, variable_name)))));
+                  NEW_VARIANT(
+                    LilyCheckedExprAccess,
+                    hook,
+                    NEW(LilyCheckedExprAccessHook,
+                        ref__LilyCheckedExpr(current_expr),
+                        NEW_VARIANT(LilyCheckedExpr,
+                                    literal,
+                                    location,
+                                    NEW(LilyCheckedDataType,
+                                        LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                        location),
+                                    NULL,
+                                    NEW_VARIANT(LilyCheckedExprLiteral,
+                                                suffix_usize,
+                                                item->id)))));
+                LilyCheckedExpr *right = to_expr__LilyCheckedPattern(
+                  item->value, location, scope, new_current_expr);
+
+                if (right) {
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      binary,
+                      location,
+                      ref__LilyCheckedDataType(dt),
+                      NULL,
+                      NEW(
+                        LilyCheckedExprBinary,
+                        LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                        left,
+                        NEW_VARIANT(LilyCheckedExpr,
+                                    binary,
+                                    location,
+                                    ref__LilyCheckedDataType(dt),
+                                    NULL,
+                                    NEW(LilyCheckedExprBinary,
+                                        LILY_CHECKED_EXPR_BINARY_KIND_EQ,
+                                        ref__LilyCheckedExpr(new_current_expr),
+                                        right))));
+                }
+
+                FREE(LilyCheckedExpr, new_current_expr);
             }
 
             return left;
@@ -523,7 +523,7 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
         case LILY_CHECKED_PATTERN_KIND_ERROR:
             TODO("convert error in expression");
         case LILY_CHECKED_PATTERN_KIND_LIST: {
-            ASSERT(res_variable.variable->data_type->kind ==
+            ASSERT(current_expr->data_type->kind ==
                    LILY_CHECKED_DATA_TYPE_KIND_LIST);
 
             LilyCheckedDataType *dt = NEW(
@@ -537,7 +537,7 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
               NEW(LilyCheckedExprBinary,
                   self->list.must_eq ? LILY_CHECKED_EXPR_BINARY_KIND_EQ
                                      : LILY_CHECKED_EXPR_BINARY_KIND_GREATER_EQ,
-                  CALL_VARIABLE(location, res_variable),
+                  ref__LilyCheckedExpr(current_expr),
                   NEW_VARIANT(LilyCheckedExpr,
                               literal,
                               location,
@@ -552,54 +552,95 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
             for (Usize i = 0; i < self->list.table->len; ++i) {
                 LilyCheckedPatternTableItem *item =
                   get__Vec(self->list.table, i);
-
-                left = NEW_VARIANT(
+                LilyCheckedExpr *new_current_expr = NEW_VARIANT(
                   LilyCheckedExpr,
-                  binary,
+                  access,
                   location,
-                  ref__LilyCheckedDataType(dt),
+                  ref__LilyCheckedDataType(item->value->data_type),
                   NULL,
-                  NEW(LilyCheckedExprBinary,
-                      LILY_CHECKED_EXPR_BINARY_KIND_AND,
-                      left,
-                      NEW_VARIANT(
-                        LilyCheckedExpr,
-                        binary,
-                        location,
-                        ref__LilyCheckedDataType(dt),
-                        NULL,
-                        NEW(LilyCheckedExprBinary,
-                            LILY_CHECKED_EXPR_BINARY_KIND_EQ,
-                            NEW_VARIANT(
-                              LilyCheckedExpr,
-                              access,
-                              location,
-                              ref__LilyCheckedDataType(item->value->data_type),
-                              NULL,
-                              NEW_VARIANT(
-                                LilyCheckedExprAccess,
-                                hook,
-                                NEW(LilyCheckedExprAccessHook,
-                                    CALL_VARIABLE(location, res_variable),
-                                    NEW_VARIANT(
-                                      LilyCheckedExpr,
-                                      literal,
-                                      location,
-                                      NEW(LilyCheckedDataType,
-                                          LILY_CHECKED_DATA_TYPE_KIND_USIZE,
-                                          location),
-                                      NULL,
-                                      NEW_VARIANT(LilyCheckedExprLiteral,
-                                                  suffix_usize,
-                                                  item->id))))),
-                            to_expr__LilyCheckedPattern(
-                              item->value, location, scope, variable_name)))));
+                  NEW_VARIANT(
+                    LilyCheckedExprAccess,
+                    hook,
+                    NEW(LilyCheckedExprAccessHook,
+                        ref__LilyCheckedExpr(current_expr),
+                        NEW_VARIANT(LilyCheckedExpr,
+                                    literal,
+                                    location,
+                                    NEW(LilyCheckedDataType,
+                                        LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                        location),
+                                    NULL,
+                                    NEW_VARIANT(LilyCheckedExprLiteral,
+                                                suffix_usize,
+                                                item->id)))));
+                LilyCheckedExpr *right = to_expr__LilyCheckedPattern(
+                  item->value, location, scope, new_current_expr);
+
+                if (right) {
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      binary,
+                      location,
+                      ref__LilyCheckedDataType(dt),
+                      NULL,
+                      NEW(
+                        LilyCheckedExprBinary,
+                        LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                        left,
+                        NEW_VARIANT(LilyCheckedExpr,
+                                    binary,
+                                    location,
+                                    ref__LilyCheckedDataType(dt),
+                                    NULL,
+                                    NEW(LilyCheckedExprBinary,
+                                        LILY_CHECKED_EXPR_BINARY_KIND_EQ,
+                                        ref__LilyCheckedExpr(new_current_expr),
+                                        right))));
+                }
+
+                FREE(LilyCheckedExpr, new_current_expr);
             }
 
             return left;
         }
-        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
-            TODO("convert list head in expression");
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD: {
+            LilyCheckedExpr *left = self->list_head.left
+                                      ? to_expr__LilyCheckedPattern(
+                                          self, location, scope, current_expr)
+                                      : NULL;
+            LilyCheckedExpr *right = self->list_head.right
+                                       ? to_expr__LilyCheckedPattern(
+                                           self, location, scope, current_expr)
+                                       : NULL;
+
+            if (left && right) {
+                return NEW_VARIANT(LilyCheckedExpr,
+                                   binary,
+                                   location,
+                                   NEW(LilyCheckedDataType,
+                                       LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                                       location),
+                                   NULL,
+                                   NEW(LilyCheckedExprBinary,
+                                       LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                                       left,
+                                       right));
+            } else if (left) {
+                return left;
+            } else if (right) {
+                return right;
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedExpr,
+              literal,
+              location,
+              NEW(LilyCheckedDataType,
+                  LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                  location),
+              NULL,
+              NEW_VARIANT(LilyCheckedExprLiteral, bool_, true));
+        }
         case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
             TODO("convert list tail in expression");
         case LILY_CHECKED_PATTERN_KIND_LITERAL:
