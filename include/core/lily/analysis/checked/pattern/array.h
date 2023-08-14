@@ -34,6 +34,8 @@
 
 typedef struct LilyCheckedPatternArray
 {
+    Usize len;
+    bool must_eq;
     LilyCheckedPatternTable table;
 } LilyCheckedPatternArray;
 
@@ -43,9 +45,13 @@ typedef struct LilyCheckedPatternArray
  */
 inline CONSTRUCTOR(LilyCheckedPatternArray,
                    LilyCheckedPatternArray,
+                   Usize len,
+                   bool must_eq,
                    LilyCheckedPatternTable table)
 {
-    return (LilyCheckedPatternArray){ .table = table };
+    return (LilyCheckedPatternArray){ .len = len,
+                                      .must_eq = must_eq,
+                                      .table = table };
 }
 
 /**
