@@ -42,8 +42,6 @@
 
 #include <core/shared/location.h>
 
-// TODO: create a ref count for LilyCheckedExpr
-
 enum LilyCheckedExprKind
 {
     LILY_CHECKED_EXPR_KIND_ACCESS,
@@ -68,6 +66,7 @@ typedef struct LilyCheckedExpr
                               // This is the result data type of the expression.
     LilyCheckedDataType *data_type; // LilyCheckedDataType*
     const LilyAstExpr *ast_expr;    // const LilyAstExpr*? (&)
+    Usize ref_count;
     union
     {
         LilyCheckedExprAccess access;
@@ -243,6 +242,19 @@ CONSTRUCTOR(LilyCheckedExpr *,
  */
 bool
 eq__LilyCheckedExpr(const LilyCheckedExpr *self, const LilyCheckedExpr *other);
+
+/**
+ *
+ * @brief Pass to ref a pointer of `LilyCheckedExpr` and increment
+ * the `ref_count`.
+ * @return LilyCheckedExpr* (&)
+ */
+inline LilyCheckedExpr *
+ref__LilyCheckedExpr(LilyCheckedExpr *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *

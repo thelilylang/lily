@@ -117,6 +117,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->access = access;
 
     return self;
@@ -136,6 +137,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->array = array;
 
     return self;
@@ -155,6 +157,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->binary = binary;
 
     return self;
@@ -174,6 +177,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->call = call;
 
     return self;
@@ -193,6 +197,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->cast = cast;
 
     return self;
@@ -212,6 +217,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->grouping = grouping;
 
     return self;
@@ -231,6 +237,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->lambda = lambda;
 
     return self;
@@ -250,6 +257,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->list = list;
 
     return self;
@@ -269,6 +277,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->literal = literal;
 
     return self;
@@ -288,6 +297,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->tuple = tuple;
 
     return self;
@@ -307,6 +317,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
     self->unary = unary;
 
     return self;
@@ -325,6 +336,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->data_type =
       NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN, location);
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
 
     return self;
 }
@@ -342,6 +354,7 @@ CONSTRUCTOR(LilyCheckedExpr *,
     self->location = location;
     self->data_type = data_type;
     self->ast_expr = ast_expr;
+    self->ref_count = 0;
 
     return self;
 }
@@ -371,19 +384,21 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
         res = format__String(
           "LilyAstExpr{{ kind = {s}, ast_expr = {Sr}, location = {sa}, "
           "data_type = "
-          "{Sr}",
+          "{Sr}, ref_count = {zu}",
           to_string__Debug__LilyCheckedExprKind(self->kind),
           to_string__Debug__LilyAstExpr(self->ast_expr),
           to_string__Debug__Location(self->location),
-          to_string__Debug__LilyCheckedDataType(self->data_type));
+          to_string__Debug__LilyCheckedDataType(self->data_type),
+          self->ref_count);
     } else {
         res = format__String(
           "LilyAstExpr{{ kind = {s}, ast_expr = NULL, location = {sa}, "
           "data_type = "
-          "{Sr}",
+          "{Sr}, ref_count = {zu}",
           to_string__Debug__LilyCheckedExprKind(self->kind),
           to_string__Debug__Location(self->location),
-          to_string__Debug__LilyCheckedDataType(self->data_type));
+          to_string__Debug__LilyCheckedDataType(self->data_type),
+          self->ref_count);
     }
 
     switch (self->kind) {
@@ -575,6 +590,11 @@ VARIANT_DESTRUCTOR(LilyCheckedExpr, unary, LilyCheckedExpr *self)
 
 DESTRUCTOR(LilyCheckedExpr, LilyCheckedExpr *self)
 {
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
     switch (self->kind) {
         case LILY_CHECKED_EXPR_KIND_ACCESS:
             FREE_VARIANT(LilyCheckedExpr, access, self);
