@@ -30,7 +30,8 @@ eq__LilyCheckedPatternList(const LilyCheckedPatternList *self,
                            const LilyCheckedPatternList *other)
 {
     // TODO: improve
-    if (self->table->len != other->table->len) {
+    if (self->table->len != other->table->len || self->len != other->len ||
+        self->must_eq != other->must_eq) {
         return false;
     }
 
@@ -53,7 +54,10 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedPatternList,
                const LilyCheckedPatternList *self)
 {
-    String *res = from__String("LilyCheckedPatternList{ table = { ");
+    String *res = format__String(
+      "LilyCheckedPatternList{{ len = {zu}, must_eq = {b}, table = {{ ",
+      self->len,
+      self->must_eq);
 
     DEBUG_VEC_STR(self->table, res, LilyCheckedPatternTableItem);
 
