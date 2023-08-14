@@ -260,6 +260,8 @@ lazy_eq__LilyCheckedPattern(const LilyCheckedPattern *self,
  */
 LilyCheckedExpr *
 to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
+                            const Location *location,
+                            LilyCheckedScope *scope,
                             String *variable_name);
 
 /**
