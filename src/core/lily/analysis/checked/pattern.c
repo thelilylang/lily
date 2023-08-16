@@ -1060,12 +1060,86 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
             TODO("convert range in expression");
         case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
             TODO("convert record call in expression");
-        case LILY_CHECKED_PATTERN_KIND_TUPLE:
-            TODO("convert tuple in expression");
+        case LILY_CHECKED_PATTERN_KIND_TUPLE: {
+            ASSERT(current_expr->data_type->kind ==
+                   LILY_CHECKED_DATA_TYPE_KIND_TUPLE);
+
+            LilyCheckedDataType *dt = NEW(
+              LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_BOOL, location);
+            LilyCheckedExpr *left = NULL;
+
+            for (Usize i = 0; i < self->tuple.table->len; ++i) {
+                LilyCheckedPatternTableItem *item =
+                  get__Vec(self->tuple.table, i);
+
+                LilyCheckedExpr *new_current_expr = NEW_VARIANT(
+                  LilyCheckedExpr,
+                  access,
+                  location,
+                  ref__LilyCheckedDataType(item->value->data_type),
+                  NULL,
+                  NEW_VARIANT(
+                    LilyCheckedExprAccess,
+                    tuple,
+                    NEW(LilyCheckedExprAccessTuple,
+                        ref__LilyCheckedExpr(current_expr),
+                        NEW_VARIANT(LilyCheckedExpr,
+                                    literal,
+                                    location,
+                                    NEW(LilyCheckedDataType,
+                                        LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                        location),
+                                    NULL,
+                                    NEW_VARIANT(LilyCheckedExprLiteral,
+                                                suffix_usize,
+                                                item->id)))));
+                LilyCheckedExpr *right = to_expr__LilyCheckedPattern(
+                  item->value, location, scope, new_current_expr);
+
+                if (left) {
+                    if (right) {
+                        left = NEW_VARIANT(
+                          LilyCheckedExpr,
+                          binary,
+                          location,
+                          ref__LilyCheckedDataType(dt),
+                          NULL,
+                          NEW(LilyCheckedExprBinary,
+                              LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                              left,
+                              NEW_VARIANT(
+                                LilyCheckedExpr,
+                                binary,
+                                location,
+                                ref__LilyCheckedDataType(dt),
+                                NULL,
+                                NEW(LilyCheckedExprBinary,
+                                    LILY_CHECKED_EXPR_BINARY_KIND_EQ,
+                                    ref__LilyCheckedExpr(new_current_expr),
+                                    right))));
+                    }
+
+                    FREE(LilyCheckedExpr, new_current_expr);
+                } else {
+                    left = right;
+                }
+            }
+
+            return left;
+        }
         case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
-            return NULL;
+            return NEW_VARIANT(
+              LilyCheckedExpr,
+              literal,
+              location,
+              NEW(LilyCheckedDataType,
+                  LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                  location),
+              NULL,
+              NEW_VARIANT(LilyCheckedExprLiteral, bool_, false));
         case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
-            TODO("convert variant call in expression");
+            return to_expr__LilyCheckedPattern(
+              self->variant_call.pattern, location, scope, current_expr);
         default:
             UNREACHABLE("unknown variant");
     }
