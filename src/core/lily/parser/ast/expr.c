@@ -551,6 +551,52 @@ get_generic_params_from_variant_call__LilyAstExpr(LilyAstExpr *self)
     }
 }
 
+String *
+get_last_name__LilyAstExpr(const LilyAstExpr *self)
+{
+    switch (self->kind) {
+        case LILY_AST_EXPR_KIND_IDENTIFIER:
+            return self->identifier.name;
+        case LILY_AST_EXPR_KIND_IDENTIFIER_DOLLAR:
+            return self->identifier_dollar.name;
+        case LILY_AST_EXPR_KIND_ACCESS:
+            switch (self->access.kind) {
+                case LILY_AST_EXPR_ACCESS_KIND_AT:
+                    if (self->access.at.access) {
+                        return get_last_name__LilyAstExpr(
+                          self->access.at.access);
+                    }
+
+                    return NULL;
+                case LILY_AST_EXPR_ACCESS_KIND_GLOBAL_PATH:
+                    return get_last_name__LilyAstExpr(
+                      last__Vec(self->access.global_path));
+                case LILY_AST_EXPR_ACCESS_KIND_HOOK:
+                    return get_last_name__LilyAstExpr(self->access.hook.access);
+                case LILY_AST_EXPR_ACCESS_KIND_PATH:
+                    return get_last_name__LilyAstExpr(
+                      last__Vec(self->access.path));
+                case LILY_AST_EXPR_ACCESS_KIND_OBJECT_PATH:
+                    return get_last_name__LilyAstExpr(
+                      last__Vec(self->access.global_path));
+                case LILY_AST_EXPR_ACCESS_KIND_PROPERTY_INIT:
+                    return get_last_name__LilyAstExpr(
+                      last__Vec(self->access.property_init));
+                case LILY_AST_EXPR_ACCESS_KIND_self_PATH:
+                    return get_last_name__LilyAstExpr(
+                      last__Vec(self->access.self_path));
+                case LILY_AST_EXPR_ACCESS_KIND_SELF_PATH:
+                    return get_last_name__LilyAstExpr(
+                      last__Vec(self->access.Self_path));
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+            break;
+        default:
+            return NULL;
+    }
+}
+
 VARIANT_DESTRUCTOR(LilyAstExpr, access, LilyAstExpr *self)
 {
     FREE(LilyAstExprAccess, &self->access);

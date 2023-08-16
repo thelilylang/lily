@@ -278,6 +278,14 @@ get_generic_params_from_variant_call__LilyAstExpr(LilyAstExpr *self);
 
 /**
  *
+ * @brief Get last name of expression.
+ * @return String*? (&)
+ */
+String *
+get_last_name__LilyAstExpr(const LilyAstExpr *self);
+
+/**
+ *
  * @brief Free LilyAstExpr type.
  */
 DESTRUCTOR(LilyAstExpr, LilyAstExpr *self);
