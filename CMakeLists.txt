@@ -392,6 +392,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/binary.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/call.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/cast.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/compiler_fun.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/lambda.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/list.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/literal.c
