@@ -56,6 +56,21 @@ get_data_type_from_field_name__LilyCheckedDeclRecord(
     return NULL;
 }
 
+Usize
+get_id_from_field_name__LilyCheckedDeclRecord(const LilyCheckedDeclRecord *self,
+                                              String *name)
+{
+    for (Usize i = 0; i < self->fields->len; ++i) {
+        LilyCheckedField *field = get__Vec(self->fields, i);
+
+        if (!strcmp(field->name->buffer, name->buffer)) {
+            return i;
+        }
+    }
+
+    return self->fields->len;
+}
+
 #ifdef ENV_DEBUG
 #include <base/format.h>
 
