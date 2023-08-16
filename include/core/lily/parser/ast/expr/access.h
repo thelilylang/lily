@@ -118,10 +118,8 @@ typedef struct LilyAstExprAccess
         Vec *path;          // Vec<LilyAstExpr*>*
         Vec *object_path;   // Vec<LilyAstExpr*>*
         Vec *property_init; // Vec<LilyAstExpr*>*
-        LilyAstExprAccessHook self_hook;
-        Vec *self_path; // Vec<LilyAstExpr*>*
-        LilyAstExprAccessHook Self_hook;
-        Vec *Self_path; // Vec<LilyAstExpr*>*
+        Vec *self_path;     // Vec<LilyAstExpr*>*
+        Vec *Self_path;     // Vec<LilyAstExpr*>*
     };
 } LilyAstExprAccess;
 
