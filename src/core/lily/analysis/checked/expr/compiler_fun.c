@@ -53,16 +53,6 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
-CONSTRUCTOR(LilyCheckedExprCompilerFunGetField,
-            LilyCheckedExprCompilerFunGetField,
-            LilyCheckedExpr *record,
-            LilyCheckedExpr *id)
-{
-    ASSERT(id->kind == LILY_CHECKED_EXPR_KIND_LITERAL);
-
-    return (LilyCheckedExprCompilerFunGetField){ .record = record, .id = id };
-}
-
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -70,9 +60,9 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedExprCompilerFunGetField *self)
 {
     return format(
-      "LilyCheckedExprCompilerFunGetField{{ record = {Sr}, id = {Sr} }",
+      "LilyCheckedExprCompilerFunGetField{{ record = {Sr}, id = {zu} }",
       to_string__Debug__LilyCheckedExpr(self->record),
-      to_string__Debug__LilyCheckedExpr(self->id));
+      self->id);
 }
 #endif
 
@@ -80,7 +70,6 @@ DESTRUCTOR(LilyCheckedExprCompilerFunGetField,
            const LilyCheckedExprCompilerFunGetField *self)
 {
     FREE(LilyCheckedExpr, self->record);
-    FREE(LilyCheckedExpr, self->id);
 }
 
 #ifdef ENV_DEBUG

@@ -26,6 +26,18 @@
 #define LILY_CORE_LILY_ANALYSIS_CHECKED_EXPR_COMPILER_FUN_H
 
 #include <base/macros.h>
+#include <base/types.h>
+
+#define EXPR_COMPILER_GET_FIELD(location, data_type, record, id) \
+    NEW_VARIANT(                                                 \
+      LilyCheckedExpr,                                           \
+      compiler_fun,                                              \
+      location,                                                  \
+      data_type,                                                 \
+      NULL,                                                      \
+      NEW_VARIANT(LilyCheckedExprCompilerFun,                    \
+                  get_field,                                     \
+                  NEW(LilyCheckedExprCompilerFunGetField, record, id)))
 
 typedef struct LilyCheckedExpr LilyCheckedExpr;
 
@@ -49,17 +61,20 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyCheckedExprCompilerFunGetField
 {
     LilyCheckedExpr *record;
-    LilyCheckedExpr *id; // expected literal
+    Usize id;
 } LilyCheckedExprCompilerFunGetField;
 
 /**
  *
  * @brief Construct LilyCheckedExprCompilerFunGetField type.
  */
-CONSTRUCTOR(LilyCheckedExprCompilerFunGetField,
-            LilyCheckedExprCompilerFunGetField,
-            LilyCheckedExpr *record,
-            LilyCheckedExpr *id);
+inline CONSTRUCTOR(LilyCheckedExprCompilerFunGetField,
+                   LilyCheckedExprCompilerFunGetField,
+                   LilyCheckedExpr *record,
+                   Usize id)
+{
+    return (LilyCheckedExprCompilerFunGetField){ .record = record, .id = id };
+}
 
 /**
  *
