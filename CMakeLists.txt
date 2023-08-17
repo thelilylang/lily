@@ -420,6 +420,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/next.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/raise.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/return.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/switch.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/try.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/unsafe.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/variable.c
