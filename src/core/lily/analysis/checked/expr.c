@@ -48,6 +48,9 @@ static VARIANT_DESTRUCTOR(LilyCheckedExpr, call, LilyCheckedExpr *self);
 // Free LilyCheckedExpr type (LILY_AST_EXPR_KIND_CAST).
 static VARIANT_DESTRUCTOR(LilyCheckedExpr, cast, LilyCheckedExpr *self);
 
+// Free LilyCheckedExpr type (LILY_AST_EXPR_KIND_COMPILER_FUN).
+static VARIANT_DESTRUCTOR(LilyCheckedExpr, compiler_fun, LilyCheckedExpr *self);
+
 // Free LilyCheckedExpr type (LILY_AST_EXPR_KIND_GROUPING).
 static VARIANT_DESTRUCTOR(LilyCheckedExpr, grouping, LilyCheckedExpr *self);
 
@@ -81,6 +84,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self)
             return "LILY_CHECKED_EXPR_KIND_CALL";
         case LILY_CHECKED_EXPR_KIND_CAST:
             return "LILY_CHECKED_EXPR_KIND_CAST";
+        case LILY_CHECKED_EXPR_KIND_COMPILER_FUN:
+            return "LILY_CHECKED_EXPR_KIND_COMPILER_FUN";
         case LILY_CHECKED_EXPR_KIND_LAMBDA:
             return "LILY_CHECKED_EXPR_KIND_LAMBDA";
         case LILY_CHECKED_EXPR_KIND_LIST:
@@ -199,6 +204,26 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
     self->ast_expr = ast_expr;
     self->ref_count = 0;
     self->cast = cast;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    compiler_fun,
+                    const Location *location,
+                    LilyCheckedDataType *data_type,
+                    const LilyAstExpr *ast_expr,
+                    LilyCheckedExprCompilerFun compiler_fun)
+{
+    LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
+
+    self->kind = LILY_CHECKED_EXPR_KIND_COMPILER_FUN;
+    self->location = location;
+    self->data_type = data_type;
+    self->ast_expr = ast_expr;
+    self->ref_count = 0;
+    self->compiler_fun = compiler_fun;
 
     return self;
 }
@@ -447,6 +472,15 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
 
             break;
         }
+        case LILY_CHECKED_EXPR_KIND_COMPILER_FUN: {
+            char *s = format(", compiler_fun = {Sr} }",
+                             to_string__Debug__LilyCheckedExprCompilerFun(
+                               &self->compiler_fun));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_CHECKED_EXPR_KIND_GROUPING: {
             char *s = format(", grouping = {Sr} }",
                              to_string__Debug__LilyCheckedExpr(self->grouping));
@@ -547,6 +581,13 @@ VARIANT_DESTRUCTOR(LilyCheckedExpr, cast, LilyCheckedExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyCheckedExpr, compiler_fun, LilyCheckedExpr *self)
+{
+    FREE(LilyCheckedExprCompilerFun, &self->compiler_fun);
+    FREE(LilyCheckedDataType, self->data_type);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedExpr, grouping, LilyCheckedExpr *self)
 {
     FREE(LilyCheckedExpr, self->grouping);
@@ -610,6 +651,9 @@ DESTRUCTOR(LilyCheckedExpr, LilyCheckedExpr *self)
             break;
         case LILY_CHECKED_EXPR_KIND_CAST:
             FREE_VARIANT(LilyCheckedExpr, cast, self);
+            break;
+        case LILY_CHECKED_EXPR_KIND_COMPILER_FUN:
+            FREE_VARIANT(LilyCheckedExpr, compiler_fun, self);
             break;
         case LILY_CHECKED_EXPR_KIND_GROUPING:
             FREE_VARIANT(LilyCheckedExpr, grouping, self);

@@ -33,6 +33,7 @@
 #include <core/lily/analysis/checked/expr/binary.h>
 #include <core/lily/analysis/checked/expr/call.h>
 #include <core/lily/analysis/checked/expr/cast.h>
+#include <core/lily/analysis/checked/expr/compiler_fun.h>
 #include <core/lily/analysis/checked/expr/lambda.h>
 #include <core/lily/analysis/checked/expr/list.h>
 #include <core/lily/analysis/checked/expr/literal.h>
@@ -49,6 +50,7 @@ enum LilyCheckedExprKind
     LILY_CHECKED_EXPR_KIND_BINARY,
     LILY_CHECKED_EXPR_KIND_CALL,
     LILY_CHECKED_EXPR_KIND_CAST,
+    LILY_CHECKED_EXPR_KIND_COMPILER_FUN, // only usable by the compiler
     LILY_CHECKED_EXPR_KIND_GROUPING,
     LILY_CHECKED_EXPR_KIND_LAMBDA,
     LILY_CHECKED_EXPR_KIND_LIST,
@@ -74,6 +76,7 @@ typedef struct LilyCheckedExpr
         LilyCheckedExprBinary binary;
         LilyCheckedExprCall call;
         LilyCheckedExprCast cast;
+        LilyCheckedExprCompilerFun compiler_fun;
         LilyCheckedExpr *grouping;
         LilyCheckedExprLambda lambda;
         LilyCheckedExprList list;
@@ -142,6 +145,18 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprCast cast);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_COMPILER_FUN).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    compiler_fun,
+                    const Location *location,
+                    LilyCheckedDataType *data_type,
+                    const LilyAstExpr *ast_expr,
+                    LilyCheckedExprCompilerFun compiler_fun);
 
 /**
  *
