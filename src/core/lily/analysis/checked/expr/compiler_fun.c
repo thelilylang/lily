@@ -30,9 +30,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef ENV_DEBUG
+#include <base/format.h>
+#endif
+
 static inline VARIANT_DESTRUCTOR(LilyCheckedExprCompilerFun,
                                  get_field,
                                  const LilyCheckedExprCompilerFun *self);
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCompilerFunKind,
+               enum LilyCheckedExprCompilerFunKind self)
+{
+    switch (self) {
+        case LILY_CHECKED_EXPR_COMPILER_FUN_KIND_GET_FIELD:
+            return "LILY_CHECKED_EXPR_COMPILER_FUN_KIND_GET_FIELD";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
 
 CONSTRUCTOR(LilyCheckedExprCompilerFunGetField,
             LilyCheckedExprCompilerFunGetField,
@@ -44,12 +63,44 @@ CONSTRUCTOR(LilyCheckedExprCompilerFunGetField,
     return (LilyCheckedExprCompilerFunGetField){ .record = record, .id = id };
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCompilerFunGetField,
+               const LilyCheckedExprCompilerFunGetField *self)
+{
+    return format(
+      "LilyCheckedExprCompilerFunGetField{{ record = {Sr}, id = {Sr} }",
+      to_string__Debug__LilyCheckedExpr(self->record),
+      to_string__Debug__LilyCheckedExpr(self->id));
+}
+#endif
+
 DESTRUCTOR(LilyCheckedExprCompilerFunGetField,
            const LilyCheckedExprCompilerFunGetField *self)
 {
     FREE(LilyCheckedExpr, self->record);
     FREE(LilyCheckedExpr, self->id);
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCompilerFun,
+               const LilyCheckedExprCompilerFun *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_COMPILER_FUN_KIND_GET_FIELD:
+            return format(
+              "LilyCheckedExprCompilerFun{{ kind = {s}, get_field = {sa} }",
+              to_string__Debug__LilyCheckedExprCompilerFunKind(self->kind),
+              to_string__Debug__LilyCheckedExprCompilerFunGetField(
+                &self->get_field));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
 
 VARIANT_DESTRUCTOR(LilyCheckedExprCompilerFun,
                    get_field,

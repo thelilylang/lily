@@ -34,6 +34,18 @@ enum LilyCheckedExprCompilerFunKind
     LILY_CHECKED_EXPR_COMPILER_FUN_KIND_GET_FIELD,
 };
 
+/**
+ *
+ * @brief Convert LilyCheckedExprCompilerFunKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCompilerFunKind,
+               enum LilyCheckedExprCompilerFunKind self);
+#endif
+
 typedef struct LilyCheckedExprCompilerFunGetField
 {
     LilyCheckedExpr *record;
@@ -48,6 +60,18 @@ CONSTRUCTOR(LilyCheckedExprCompilerFunGetField,
             LilyCheckedExprCompilerFunGetField,
             LilyCheckedExpr *record,
             LilyCheckedExpr *id);
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCompilerFunGetField in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCompilerFunGetField,
+               const LilyCheckedExprCompilerFunGetField *self);
+#endif
 
 /**
  *
@@ -80,6 +104,18 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprCompilerFun,
         .get_field = get_field
     };
 }
+
+/**
+ *
+ * @brief Convert LilyCheckedExprCompilerFun in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedExprCompilerFun,
+               const LilyCheckedExprCompilerFun *self);
+#endif
 
 /**
  *
