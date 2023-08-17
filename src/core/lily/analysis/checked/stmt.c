@@ -76,6 +76,11 @@ static inline VARIANT_DESTRUCTOR(LilyCheckedStmt,
                                  return,
                                  const LilyCheckedStmt *self);
 
+// Free LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_SWITCH).
+static inline VARIANT_DESTRUCTOR(LilyCheckedStmt,
+                                 switch,
+                                 const LilyCheckedStmt *self);
+
 // Free LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_TRY).
 static inline VARIANT_DESTRUCTOR(LilyCheckedStmt,
                                  try,
@@ -123,6 +128,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmtKind, enum LilyCheckedStmtKind self)
             return "LILY_CHECKED_STMT_KIND_RAISE";
         case LILY_CHECKED_STMT_KIND_RETURN:
             return "LILY_CHECKED_STMT_KIND_RETURN";
+        case LILY_CHECKED_STMT_KIND_SWITCH:
+            return "LILY_CHECKED_STMT_KIND_SWITCH";
         case LILY_CHECKED_STMT_KIND_TRY:
             return "LILY_CHECKED_STMT_KIND_TRY";
         case LILY_CHECKED_STMT_KIND_UNSAFE:
@@ -251,6 +258,15 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedStmt, const LilyCheckedStmt *self)
 
             break;
         }
+        case LILY_CHECKED_STMT_KIND_SWITCH: {
+            char *s =
+              format(", switch = {Sr} }",
+                     to_string__Debug__LilyCheckedStmtSwitch(&self->switch_));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_CHECKED_STMT_KIND_TRY: {
             char *s = format(", try = {Sr} }",
                              to_string__Debug__LilyCheckedStmtTry(&self->try));
@@ -339,6 +355,11 @@ VARIANT_DESTRUCTOR(LilyCheckedStmt, return, const LilyCheckedStmt *self)
     FREE(LilyCheckedStmtReturn, &self->return_);
 }
 
+VARIANT_DESTRUCTOR(LilyCheckedStmt, switch, const LilyCheckedStmt *self)
+{
+    FREE(LilyCheckedStmtSwitch, &self->switch_);
+}
+
 VARIANT_DESTRUCTOR(LilyCheckedStmt, try, const LilyCheckedStmt *self)
 {
     FREE(LilyCheckedStmtTry, &self->try);
@@ -388,6 +409,9 @@ DESTRUCTOR(LilyCheckedStmt, const LilyCheckedStmt *self)
             break;
         case LILY_CHECKED_STMT_KIND_RETURN:
             FREE_VARIANT(LilyCheckedStmt, return, self);
+            break;
+        case LILY_CHECKED_STMT_KIND_SWITCH:
+            FREE_VARIANT(LilyCheckedStmt, switch, self);
             break;
         case LILY_CHECKED_STMT_KIND_TRY:
             FREE_VARIANT(LilyCheckedStmt, try, self);
