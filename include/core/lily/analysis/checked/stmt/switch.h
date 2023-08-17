@@ -27,6 +27,7 @@
 
 #include <base/alloc.h>
 #include <base/macros.h>
+#include <base/string.h>
 #include <base/types.h>
 #include <base/vec.h>
 
@@ -152,6 +153,18 @@ CONSTRUCTOR(LilyCheckedStmtSwitchCase *,
 
 /**
  *
+ * @brief Convert LilyCheckedStmtSwitchCase in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtSwitchCase,
+               const LilyCheckedStmtSwitchCase *self);
+#endif
+
+/**
+ *
  * @brief Free LilyCheckedStmtSwitchCase type.
  */
 DESTRUCTOR(LilyCheckedStmtSwitchCase, LilyCheckedStmtSwitchCase *self);
@@ -174,6 +187,18 @@ inline CONSTRUCTOR(LilyCheckedStmtSwitch,
     return (LilyCheckedStmtSwitch){ .switched_expr = switched_expr,
                                     .cases = cases };
 }
+
+/**
+ *
+ * @brief Convert LilyCheckedStmtSwitch in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtSwitch,
+               const LilyCheckedStmtSwitch *self);
+#endif
 
 /**
  *
