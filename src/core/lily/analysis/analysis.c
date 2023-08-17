@@ -962,8 +962,8 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 {
     switch (self->kind) {
         case LILY_CHECKED_PATTERN_KIND_ARRAY: {
-            ASSERT(current_expr->data_type->kind ==
-                   LILY_CHECKED_DATA_TYPE_KIND_ARRAY);
+            ASSERT(is_contains_kind__LilyCheckedDataType(
+              current_expr->data_type, LILY_CHECKED_DATA_TYPE_KIND_ARRAY));
 
             LilyCheckedDataType *dt = NEW(
               LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_BOOL, location);
@@ -1046,8 +1046,8 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
         case LILY_CHECKED_PATTERN_KIND_ERROR:
             TODO("convert error in expression");
         case LILY_CHECKED_PATTERN_KIND_LIST: {
-            ASSERT(current_expr->data_type->kind ==
-                   LILY_CHECKED_DATA_TYPE_KIND_LIST);
+            ASSERT(is_contains_kind__LilyCheckedDataType(
+              current_expr->data_type, LILY_CHECKED_DATA_TYPE_KIND_LIST));
 
             LilyCheckedDataType *dt = NEW(
               LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_BOOL, location);
@@ -1213,8 +1213,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
             switch (self->literal.kind) {
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_BOOL:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_BOOL);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_BOOL));
 
                     left = NEW_VARIANT(
                       LilyCheckedExpr,
@@ -1227,8 +1228,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTE:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_BYTE);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_BYTE));
 
                     left = NEW_VARIANT(
                       LilyCheckedExpr,
@@ -1243,8 +1245,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTES:
                     TODO("convert bytes in expression");
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_CHAR:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_CHAR);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_CHAR));
 
                     left = NEW_VARIANT(
                       LilyCheckedExpr,
@@ -1259,8 +1262,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_CSTR:
                     TODO("convert cstr in expression");
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT32:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_FLOAT32);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_FLOAT32));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1274,8 +1278,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT64:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_FLOAT64);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_FLOAT64));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1289,8 +1294,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_INT32:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_INT32);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT32));
 
                     left = NEW_VARIANT(
                       LilyCheckedExpr,
@@ -1303,8 +1309,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_INT64:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_INT64);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT64));
 
                     left = NEW_VARIANT(
                       LilyCheckedExpr,
@@ -1317,10 +1324,12 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_NIL:
-                    ASSERT(current_expr->data_type->kind ==
-                             LILY_CHECKED_DATA_TYPE_KIND_PTR ||
-                           current_expr->data_type->kind ==
-                             LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                             current_expr->data_type,
+                             LILY_CHECKED_DATA_TYPE_KIND_PTR) ||
+                           is_contains_kind__LilyCheckedDataType(
+                             current_expr->data_type,
+                             LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1337,8 +1346,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
                 case LILY_CHECKED_EXPR_LITERAL_KIND_STR:
                     TODO("convert str in expression");
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT32:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_FLOAT32);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_FLOAT32));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1352,8 +1362,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT64:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_FLOAT64);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_FLOAT64));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1367,8 +1378,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT8:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_INT8);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT8));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1382,8 +1394,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT16:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_INT16);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT16));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1397,8 +1410,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT32:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_INT32);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT32));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1412,8 +1426,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT64:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_INT64);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT64));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1427,8 +1442,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_ISIZE:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_ISIZE);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_ISIZE));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1442,8 +1458,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT8:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_UINT8);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT8));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1457,8 +1474,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT16:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_UINT16);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT16));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1472,8 +1490,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT32:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_UINT32);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT32));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1487,8 +1506,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT64:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_UINT64);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT64));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1502,8 +1522,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_USIZE:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_USIZE);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_USIZE));
 
                     left =
                       NEW_VARIANT(LilyCheckedExpr,
@@ -1517,8 +1538,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_UINT32:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_UINT32);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT32));
 
                     left = NEW_VARIANT(
                       LilyCheckedExpr,
@@ -1531,8 +1553,9 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
 
                     break;
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_UINT64:
-                    ASSERT(current_expr->data_type->kind ==
-                           LILY_CHECKED_DATA_TYPE_KIND_UINT64);
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT64));
 
                     left = NEW_VARIANT(
                       LilyCheckedExpr,
@@ -1691,8 +1714,8 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
             return left;
         }
         case LILY_CHECKED_PATTERN_KIND_TUPLE: {
-            ASSERT(current_expr->data_type->kind ==
-                   LILY_CHECKED_DATA_TYPE_KIND_TUPLE);
+            ASSERT(is_contains_kind__LilyCheckedDataType(
+              current_expr->data_type, LILY_CHECKED_DATA_TYPE_KIND_TUPLE));
 
             LilyCheckedDataType *dt = NEW(
               LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_BOOL, location);
