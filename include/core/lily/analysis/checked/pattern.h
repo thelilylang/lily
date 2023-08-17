@@ -40,6 +40,8 @@
 
 #include <core/shared/location.h>
 
+typedef struct LilyAnalysis LilyAnalysis;
+
 enum LilyCheckedPatternKind
 {
     LILY_CHECKED_PATTERN_KIND_ARRAY,
@@ -260,6 +262,7 @@ lazy_eq__LilyCheckedPattern(const LilyCheckedPattern *self,
  */
 LilyCheckedExpr *
 to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
+                            LilyAnalysis *analysis,
                             const Location *location,
                             LilyCheckedScope *scope,
                             LilyCheckedExpr *current_expr);
