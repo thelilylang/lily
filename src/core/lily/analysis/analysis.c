@@ -11299,7 +11299,8 @@ check_enum_variants__LilyAnalysis(LilyAnalysis *self,
                                      ast_variant->name),
                       data_type,
                       &ast_variant->location,
-                      enum_));
+                      enum_,
+                      i));
     }
 
     enum_->type.enum_.variants = check_variants;
