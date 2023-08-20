@@ -589,12 +589,28 @@ count_total_cases__LilyAnalysis(LilyAnalysis *self,
                                 LilyCheckedDataType *dt);
 
 static LilyCheckedStmtMatchCase *
-check_match_stmt_case__LilyAnalysis(LilyAnalysis *self,
-                                    const LilyAstStmtMatchCase *case_,
-                                    LilyCheckedScope *scope,
-                                    bool in_loop,
-                                    bool *is_final_else,
-                                    enum LilyCheckedSafetyMode safety_mode);
+check_match_stmt_case_for_match__LilyAnalysis(
+  LilyAnalysis *self,
+  const LilyAstStmtMatchCase *ast_case,
+  LilyCheckedExpr *match_expr,
+  LilyCheckedScope *scope,
+  bool in_loop,
+  bool *is_final_else,
+  Usize *nb_cases,
+  const Usize *total_cases,
+  enum LilyCheckedSafetyMode safety_mode);
+
+static LilyCheckedStmtSwitchCase *
+check_match_stmt_case_for_switch__LilyAnalysis(
+  LilyAnalysis *self,
+  const LilyAstStmtMatchCase *ast_case,
+  LilyCheckedExpr *match_expr,
+  LilyCheckedScope *scope,
+  bool in_loop,
+  bool *is_final_else,
+  Usize *nb_cases,
+  const Usize *total_cases,
+  enum LilyCheckedSafetyMode safety_mode);
 
 static LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
@@ -9729,21 +9745,93 @@ count_total_cases__LilyAnalysis(LilyAnalysis *self,
 }
 
 LilyCheckedStmtMatchCase *
-check_match_stmt_case__LilyAnalysis(LilyAnalysis *self,
-                                    const LilyAstStmtMatchCase *case_,
-                                    LilyCheckedScope *scope,
-                                    bool in_loop,
-                                    bool *is_final_else,
-                                    enum LilyCheckedSafetyMode safety_mode)
+check_match_stmt_case_for_match__LilyAnalysis(
+  LilyAnalysis *self,
+  const LilyAstStmtMatchCase *ast_case,
+  LilyCheckedExpr *match_expr,
+  LilyCheckedScope *scope,
+  bool in_loop,
+  bool *is_final_else,
+  Usize *nb_cases,
+  const Usize *total_cases,
+  enum LilyCheckedSafetyMode safety_mode)
 {
+    // TODO: remove captured variables, because that's unused (re-add Name
+    // pattern, ...).
     OrderedHashMap *captured_variables = NEW(OrderedHashMap);
-    *is_final_else = is_final_else_pattern__LilyAstPattern(case_->pattern);
+    *is_final_else = is_final_else_pattern__LilyAstPattern(ast_case->pattern);
 
-    if (case_->cond) {
+    if (ast_case->cond) {
     } else {
     }
 
-    return NULL;
+    TODO("check match statement case for match");
+}
+
+LilyCheckedStmtSwitchCase *
+check_match_stmt_case_for_switch__LilyAnalysis(
+  LilyAnalysis *self,
+  const LilyAstStmtMatchCase *ast_case,
+  LilyCheckedExpr *match_expr,
+  LilyCheckedScope *scope,
+  bool in_loop,
+  bool *is_final_else,
+  Usize *nb_cases,
+  const Usize *total_cases,
+  enum LilyCheckedSafetyMode safety_mode)
+{
+    // TODO: remove captured variables, because we will generate that by the
+    // compiler
+    OrderedHashMap *captured_variables = NEW(OrderedHashMap);
+    LilyCheckedPattern *check_pattern =
+      check_pattern__LilyAnalysis(self,
+                                  ast_case->pattern,
+                                  scope,
+                                  safety_mode,
+                                  match_expr->data_type,
+                                  captured_variables);
+    LilyCheckedStmtSwitchCaseValue *switch_case_value =
+      to_switch_case_value__LilyCheckedPattern(check_pattern, scope);
+    LilyCheckedExpr *check_pattern_cond = to_expr__LilyCheckedPattern(
+      check_pattern, self, check_pattern->location, scope, match_expr);
+    // TODO: improve location precision of <left> and <right> expression.
+    LilyCheckedExpr *check_cond =
+      ast_case->cond
+        ? NEW_VARIANT(
+            LilyCheckedExpr,
+            binary,
+            check_pattern_cond->location,
+            NEW(LilyCheckedDataType,
+                LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                check_pattern_cond->location),
+            NULL,
+            NEW(LilyCheckedExprBinary,
+                LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                check_pattern_cond,
+                check_expr__LilyAnalysis(
+                  self, ast_case->cond, scope, safety_mode, false, NULL)))
+        : check_pattern_cond;
+    *is_final_else = is_final_else_pattern__LilyAstPattern(ast_case->pattern);
+
+    if (check_cond) {
+        EXPECTED_BOOL_EXPR(check_cond);
+    } else if (is_else_pattern__LilyAstPattern(ast_case->pattern)) {
+        if (*is_final_else) {
+            *nb_cases = *total_cases;
+        } else {
+            ++(*nb_cases);
+        }
+    }
+
+    LilyCheckedBodyFunItem *check_item = check_fun_item__LilyAnalysis(
+      self, ast_case->body_item, scope, 0, in_loop, safety_mode, NULL, NULL);
+
+    ASSERT(check_item);
+
+    FREE(LilyCheckedPattern, check_pattern);
+
+    return NEW(
+      LilyCheckedStmtSwitchCase, switch_case_value, check_cond, check_item);
 }
 
 LilyCheckedBodyFunItem *
@@ -11291,6 +11379,8 @@ check_enum_variants__LilyAnalysis(LilyAnalysis *self,
             FREE(LilyCheckedScopeContainerVariable, sc_variable);
         }
 
+        // TODO: With enum variant with pre-set value add it instead of `i`
+        // value
         push__Vec(check_variants,
                   NEW(LilyCheckedVariant,
                       ast_variant->name,
