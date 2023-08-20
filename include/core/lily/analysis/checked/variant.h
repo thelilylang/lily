@@ -40,6 +40,7 @@ typedef struct LilyCheckedVariant
     const Location *location;
     Vec *signatures;              // Vec<LilyCheckedSignatureVariant*>*
     const LilyCheckedDecl *enum_; // const LilyCheckedDecl* (&)
+    Usize id;
 } LilyCheckedVariant;
 
 /**
@@ -52,7 +53,8 @@ CONSTRUCTOR(LilyCheckedVariant *,
             String *global_name,
             LilyCheckedDataType *data_type,
             const Location *location,
-            const LilyCheckedDecl *enum_);
+            const LilyCheckedDecl *enum_,
+            Usize id);
 
 /**
  *
