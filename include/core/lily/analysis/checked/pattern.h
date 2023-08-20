@@ -36,6 +36,7 @@
 #include <core/lily/analysis/checked/pattern/record_call.h>
 #include <core/lily/analysis/checked/pattern/tuple.h>
 #include <core/lily/analysis/checked/pattern/variant_call.h>
+#include <core/lily/analysis/checked/stmt/switch.h>
 #include <core/lily/parser/ast/pattern.h>
 
 #include <core/shared/location.h>
@@ -266,6 +267,14 @@ to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
                             const Location *location,
                             LilyCheckedScope *scope,
                             LilyCheckedExpr *current_expr);
+
+/**
+ *
+ * @brief Convert pattern in switch case value.
+ */
+LilyCheckedStmtSwitchCaseValue *
+to_switch_case_value__LilyCheckedPattern(const LilyCheckedPattern *self,
+                                         LilyCheckedScope *scope);
 
 /**
  *

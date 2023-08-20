@@ -26,8 +26,8 @@
 #include <base/assert.h>
 #include <base/macros.h>
 
-#include <core/lily/analysis/checked/decl/record.h>
-#include <core/lily/analysis/checked/decl/record_object.h>
+#include <core/lily/analysis/checked/decl/enum.h>
+#include <core/lily/analysis/checked/decl/enum_object.h>
 #include <core/lily/analysis/checked/pattern.h>
 #include <core/lily/analysis/checked/scope.h>
 #include <core/lily/analysis/checked/stmt/variable.h>
@@ -421,17 +421,167 @@ lazy_eq__LilyCheckedPattern(const LilyCheckedPattern *self,
     }
 }
 
-#define CALL_VARIABLE(location, res_variable)             \
-    NEW_VARIANT(LilyCheckedExpr,                          \
-                call,                                     \
-                location,                                 \
-                res_variable.variable->data_type,         \
-                NULL,                                     \
-                NEW(LilyCheckedExprCall,                  \
-                    LILY_CHECKED_EXPR_CALL_KIND_VARIABLE, \
-                    variable_name,                        \
-                    (LilyCheckedAccessScope){             \
-                      .id = res_variable.scope_container.scope_id }))
+LilyCheckedStmtSwitchCaseValue *
+to_switch_case_value__LilyCheckedPattern(const LilyCheckedPattern *self,
+                                         LilyCheckedScope *scope)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY:
+            UNREACHABLE("impossible to convert array in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
+            TODO("convert error in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_LIST:
+            UNREACHABLE("impossible to convert list in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
+            UNREACHABLE("impossible to convert list head in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
+            UNREACHABLE("impossible to convert list tail in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_LITERAL:
+            switch (self->literal.kind) {
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BOOL:
+                    return NEW_VARIANT(
+                      LilyCheckedStmtSwitchCaseValue, int, self->literal.bool_);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTE:
+                    return NEW_VARIANT(
+                      LilyCheckedStmtSwitchCaseValue, uint, self->literal.byte);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTES:
+                    UNREACHABLE(
+                      "impossible to convert bytes in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_CHAR:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint,
+                                       self->literal.char_);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_CSTR:
+                    UNREACHABLE(
+                      "impossible to convert cstr in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       float,
+                                       self->literal.float32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       float,
+                                       self->literal.float64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_INT32:
+                    return NEW_VARIANT(
+                      LilyCheckedStmtSwitchCaseValue, int, self->literal.int32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_INT64:
+                    return NEW_VARIANT(
+                      LilyCheckedStmtSwitchCaseValue, int, self->literal.int64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_NIL:
+                    UNREACHABLE(
+                      "impossible to convert nil in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_NONE:
+                    UNREACHABLE(
+                      "impossible to convert none in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_STR:
+                    UNREACHABLE(
+                      "impossible to convert str in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_FLOAT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       float,
+                                       self->literal.suffix_float32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_FLOAT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       float,
+                                       self->literal.suffix_float64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT8:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int,
+                                       self->literal.suffix_int8);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT16:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int,
+                                       self->literal.suffix_int16);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int,
+                                       self->literal.suffix_int32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int,
+                                       self->literal.suffix_int64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_ISIZE:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int,
+                                       self->literal.suffix_isize);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT8:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint,
+                                       self->literal.suffix_uint8);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT16:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint,
+                                       self->literal.suffix_uint16);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint,
+                                       self->literal.suffix_uint32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint,
+                                       self->literal.suffix_uint64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_USIZE:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint,
+                                       self->literal.suffix_usize);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UINT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint,
+                                       self->literal.uint32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UINT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint,
+                                       self->literal.uint64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UNDEF:
+                    UNREACHABLE(
+                      "impossible to convert undef in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UNIT:
+                    UNREACHABLE(
+                      "impossible to convert unit in switch case value");
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case LILY_CHECKED_PATTERN_KIND_RANGE:
+            // NOTE: for the moment we can only use range with integer typing
+            // pattern.
+            TODO("convert range in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
+            UNREACHABLE(
+              "impossible to convert record call in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_TUPLE:
+            UNREACHABLE("impossible to convert tuple in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
+            UNREACHABLE("impossible to convert unknown in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL: {
+            ASSERT(self->variant_call.id->kind == LILY_CHECKED_EXPR_KIND_CALL);
+
+            String *name =
+              get_last_name__LilyAstExpr(self->variant_call.id->ast_expr);
+
+            ASSERT(name);
+
+            // TODO: add support for enum object variant
+            LilyCheckedScopeResponse response =
+              search_from_scope_id__LilyCheckedScope(
+                scope,
+                self->variant_call.id->call.scope.id,
+                name,
+                LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT);
+
+            ASSERT(response.kind != LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND);
+
+            // TODO: use the uint switch case value if applicable (in the case
+            // of a preset value of the enum variant).
+            return NEW_VARIANT(
+              LilyCheckedStmtSwitchCaseValue, int, response.enum_variant->id);
+        }
+        case LILY_CHECKED_PATTERN_KIND_ELSE:
+            return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue, else);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
 
 #ifdef ENV_DEBUG
 String *
