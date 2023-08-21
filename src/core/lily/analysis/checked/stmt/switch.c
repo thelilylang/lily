@@ -340,9 +340,9 @@ DESTRUCTOR(LilyCheckedStmtSwitchCase, LilyCheckedStmtSwitchCase *self)
 
 void
 add_case__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
-                           LilyCheckedStmtSwitchCaseValue *case_value,
-                           LilyCheckedExpr *cond,
-                           LilyCheckedBodyFunItem *body_item)
+                                LilyCheckedStmtSwitchCaseValue *case_value,
+                                LilyCheckedExpr *cond,
+                                LilyCheckedBodyFunItem *body_item)
 {
     for (Usize i = 0; i < self->cases->len; ++i) {
         LilyCheckedStmtSwitchCase *case_ = get__Vec(self->cases, i);

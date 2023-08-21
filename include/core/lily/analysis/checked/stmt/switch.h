@@ -244,9 +244,9 @@ inline CONSTRUCTOR(LilyCheckedStmtSwitch,
  */
 void
 add_case__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
-                           LilyCheckedStmtSwitchCaseValue *case_value,
-                           LilyCheckedExpr *cond,
-                           LilyCheckedBodyFunItem *body_item);
+                                LilyCheckedStmtSwitchCaseValue *case_value,
+                                LilyCheckedExpr *cond,
+                                LilyCheckedBodyFunItem *body_item);
 
 /**
  *
