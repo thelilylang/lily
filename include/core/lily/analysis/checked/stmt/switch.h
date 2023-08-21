@@ -185,6 +185,7 @@ DESTRUCTOR(LilyCheckedStmtSwitchSubCase, LilyCheckedStmtSwitchSubCase *self);
 // 		... (else case)
 // 		<sub_case.body_item>
 // 		break; --> implicit
+// NOTE: by default the switch cases are breakable.
 typedef struct LilyCheckedStmtSwitchCase
 {
     LilyCheckedStmtSwitchCaseValue *case_value;
