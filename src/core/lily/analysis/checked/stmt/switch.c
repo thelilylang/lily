@@ -276,14 +276,18 @@ IMPL_FOR_DEBUG(to_string,
 {
     return format(
       "LilyCheckedStmtSwitchSubCase{{ cond = {Sr}, body_item = {Sr} }",
-      to_string__Debug__LilyCheckedExpr(self->cond),
+      self->cond ? to_string__Debug__LilyCheckedExpr(self->cond)
+                 : from__String("NULL"),
       to_string__Debug__LilyCheckedBodyFunItem(self->body_item));
 }
 #endif
 
 DESTRUCTOR(LilyCheckedStmtSwitchSubCase, LilyCheckedStmtSwitchSubCase *self)
 {
-    FREE(LilyCheckedExpr, self->cond);
+    if (self->cond) {
+        FREE(LilyCheckedExpr, self->cond);
+    }
+
     FREE(LilyCheckedBodyFunItem, self->body_item);
     lily_free(self);
 }
@@ -298,8 +302,8 @@ CONSTRUCTOR(LilyCheckedStmtSwitchCase *,
       lily_malloc(sizeof(LilyCheckedStmtSwitchCase));
 
     self->case_value = case_value;
-    self->sub_cases = NEW(Vec);
-    self->body_item = body_item;
+    self->sub_cases =
+      init__Vec(1, NEW(LilyCheckedStmtSwitchSubCase, cond, body_item));
 
     return self;
 }
@@ -318,13 +322,7 @@ IMPL_FOR_DEBUG(to_string,
 
     DEBUG_VEC_STR(self->sub_cases, res, LilyCheckedStmtSwitchSubCase);
 
-    {
-        char *s =
-          format(", body_item = {Sr} }",
-                 to_string__Debug__LilyCheckedBodyFunItem(self->body_item));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
+    push_str__String(res, " }");
 
     return res;
 }
@@ -337,21 +335,30 @@ DESTRUCTOR(LilyCheckedStmtSwitchCase, LilyCheckedStmtSwitchCase *self)
                       self->sub_cases->len,
                       LilyCheckedStmtSwitchSubCase);
     FREE(Vec, self->sub_cases);
-    FREE(LilyCheckedBodyFunItem, self->body_item);
     lily_free(self);
 }
 
 void
-add__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
-                           LilyCheckedStmtSwitchCase *case_)
+add_case__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
+                           LilyCheckedStmtSwitchCaseValue *case_value,
+                           LilyCheckedExpr *cond,
+                           LilyCheckedBodyFunItem *body_item)
 {
     for (Usize i = 0; i < self->cases->len; ++i) {
-        LilyCheckedStmtSwitchCase *pushed_case = get__Vec(self->cases, i);
+        LilyCheckedStmtSwitchCase *case_ = get__Vec(self->cases, i);
 
-        if (eq__LilyCheckedStmtSwitchCaseValue(case_->case_value,
-                                               pushed_case->case_value)) {
+        if (eq__LilyCheckedStmtSwitchCaseValue(case_value, case_->case_value)) {
+            push__Vec(case_->sub_cases,
+                      NEW(LilyCheckedStmtSwitchSubCase, cond, body_item));
+
+            FREE(LilyCheckedStmtSwitchCaseValue, case_value);
+
+            return;
         }
     }
+
+    push__Vec(self->cases,
+              NEW(LilyCheckedStmtSwitchCase, case_value, cond, body_item));
 }
 
 #ifdef ENV_DEBUG

@@ -146,7 +146,7 @@ DESTRUCTOR(LilyCheckedStmtSwitchCaseValue,
 
 typedef struct LilyCheckedStmtSwitchSubCase
 {
-    LilyCheckedExpr *cond;
+    LilyCheckedExpr *cond; // LilyCheckedExpr*?
     LilyCheckedBodyFunItem *body_item;
 } LilyCheckedStmtSwitchSubCase;
 
@@ -180,15 +180,15 @@ DESTRUCTOR(LilyCheckedStmtSwitchSubCase, LilyCheckedStmtSwitchSubCase *self);
 // <case_value>:
 // 		if <sub_case.cond> do
 // 			<sub_case.body_item>
-// 		...
-// 		else
-// 			<body_item>
+// 			break;
 // 		end
+// 		... (else case)
+// 		<sub_case.body_item>
+// 		break;
 typedef struct LilyCheckedStmtSwitchCase
 {
     LilyCheckedStmtSwitchCaseValue *case_value;
     Vec *sub_cases; // Vec<LilyCheckedStmtSwitchSubCase*>*
-    LilyCheckedBodyFunItem *body_item;
 } LilyCheckedStmtSwitchCase;
 
 /**
@@ -243,8 +243,10 @@ inline CONSTRUCTOR(LilyCheckedStmtSwitch,
  * @brief Add case to switch statement.
  */
 void
-add__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
-                           LilyCheckedStmtSwitchCase *case_);
+add_case__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
+                           LilyCheckedStmtSwitchCaseValue *case_value,
+                           LilyCheckedExpr *cond,
+                           LilyCheckedBodyFunItem *body_item);
 
 /**
  *
