@@ -23,6 +23,7 @@
  */
 
 #include <core/lily/analysis/checked/body/fun.h>
+#include <core/lily/analysis/checked/parent.h>
 #include <core/lily/analysis/checked/stmt/switch.h>
 
 #include <stdio.h>

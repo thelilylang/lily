@@ -180,11 +180,11 @@ DESTRUCTOR(LilyCheckedStmtSwitchSubCase, LilyCheckedStmtSwitchSubCase *self);
 // <case_value>:
 // 		if <sub_case.cond> do
 // 			<sub_case.body_item>
-// 			break;
+// 			break; --> implicit
 // 		end
 // 		... (else case)
 // 		<sub_case.body_item>
-// 		break;
+// 		break; --> implicit
 typedef struct LilyCheckedStmtSwitchCase
 {
     LilyCheckedStmtSwitchCaseValue *case_value;
