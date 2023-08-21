@@ -40,7 +40,8 @@ enum LilyCheckedStmtSwitchCaseValueKind
     LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT,
     LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT,
     LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT,
-    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION
 };
 
 /**
@@ -63,6 +64,7 @@ typedef struct LilyCheckedStmtSwitchCaseValue
         Int64 int_;
         Float64 float_;
         Uint64 uint;
+        Vec *union_; // Vec<LilyCheckedStmtSwitchCaseValue*>*
     };
 } LilyCheckedStmtSwitchCaseValue;
 
@@ -107,6 +109,16 @@ VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
 
 /**
  *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    union,
+                    Vec *union_);
+
+/**
+ *
  * @brief Check if the both values are equal.
  */
 bool
@@ -115,11 +127,11 @@ eq__LilyCheckedStmtSwitchCaseValue(const LilyCheckedStmtSwitchCaseValue *self,
 
 /**
  *
- * @brief Convert LilyCheckedStmtSwitchCaseValue in string.
+ * @brief Convert LilyCheckedStmtSwitchCaseValue in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
-char *
+String *
 IMPL_FOR_DEBUG(to_string,
                LilyCheckedStmtSwitchCaseValue,
                const LilyCheckedStmtSwitchCaseValue *self);
@@ -129,15 +141,53 @@ IMPL_FOR_DEBUG(to_string,
  *
  * @brief Free LilyCheckedStmtSwitchCaseValue type.
  */
-inline DESTRUCTOR(LilyCheckedStmtSwitchCaseValue,
-                  LilyCheckedStmtSwitchCaseValue *self)
-{
-    return lily_free(self);
-}
+DESTRUCTOR(LilyCheckedStmtSwitchCaseValue,
+           LilyCheckedStmtSwitchCaseValue *self);
 
+typedef struct LilyCheckedStmtSwitchSubCase
+{
+    LilyCheckedExpr *cond;
+    LilyCheckedBodyFunItem *body_item;
+} LilyCheckedStmtSwitchSubCase;
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchSubCase type.
+ */
+CONSTRUCTOR(LilyCheckedStmtSwitchSubCase *,
+            LilyCheckedStmtSwitchSubCase,
+            LilyCheckedExpr *cond,
+            LilyCheckedBodyFunItem *body_item);
+
+/**
+ *
+ * @brief Convert LilyCheckedStmtSwitchSubCase in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtSwitchSubCase,
+               const LilyCheckedStmtSwitchSubCase *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedStmtSwitchSubCase type.
+ */
+DESTRUCTOR(LilyCheckedStmtSwitchSubCase, LilyCheckedStmtSwitchSubCase *self);
+
+// <case_value>:
+// 		if <sub_case.cond> do
+// 			<sub_case.body_item>
+// 		...
+// 		else
+// 			<body_item>
+// 		end
 typedef struct LilyCheckedStmtSwitchCase
 {
-    Vec *values; // Vec<LilyCheckedStmtSwitchCaseValue*>*
+    LilyCheckedStmtSwitchCaseValue *case_value;
+    Vec *sub_cases; // Vec<LilyCheckedStmtSwitchSubCase*>*
     LilyCheckedBodyFunItem *body_item;
 } LilyCheckedStmtSwitchCase;
 
@@ -147,7 +197,7 @@ typedef struct LilyCheckedStmtSwitchCase
  */
 CONSTRUCTOR(LilyCheckedStmtSwitchCase *,
             LilyCheckedStmtSwitchCase,
-            LilyCheckedStmtSwitchCaseValue *value,
+            LilyCheckedStmtSwitchCaseValue *case_value,
             LilyCheckedExpr *cond,
             LilyCheckedBodyFunItem *body_item);
 
@@ -187,6 +237,14 @@ inline CONSTRUCTOR(LilyCheckedStmtSwitch,
     return (LilyCheckedStmtSwitch){ .switched_expr = switched_expr,
                                     .cases = cases };
 }
+
+/**
+ *
+ * @brief Add case to switch statement.
+ */
+void
+add__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
+                           LilyCheckedStmtSwitchCase *case_);
 
 /**
  *

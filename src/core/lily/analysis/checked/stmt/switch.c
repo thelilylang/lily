@@ -32,6 +32,10 @@
 #include <base/format.h>
 #endif
 
+static VARIANT_DESTRUCTOR(LilyCheckedStmtSwitchCaseValue,
+                          union,
+                          LilyCheckedStmtSwitchCaseValue *self);
+
 VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
                     LilyCheckedStmtSwitchCaseValue,
                     int,
@@ -86,6 +90,20 @@ VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    union,
+                    Vec *union_)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION;
+    self->union_ = union_;
+
+    return self;
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -101,6 +119,8 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT";
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE:
             return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -114,6 +134,29 @@ eq__LilyCheckedStmtSwitchCaseValue(const LilyCheckedStmtSwitchCaseValue *self,
     if (self->kind != other->kind) {
         if (self->kind == LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE ||
             other->kind == LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE) {
+            return false;
+        } else if (self->kind ==
+                     LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION ||
+                   other->kind ==
+                     LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION) {
+            if (self->kind == LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION) {
+                for (Usize i = 0; i < self->union_->len; ++i) {
+                    if (eq__LilyCheckedStmtSwitchCaseValue(
+                          get__Vec(self->union_, i), other)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            for (Usize i = 0; i < other->union_->len; ++i) {
+                if (eq__LilyCheckedStmtSwitchCaseValue(
+                      get__Vec(other->union_, i), self)) {
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -129,53 +172,133 @@ eq__LilyCheckedStmtSwitchCaseValue(const LilyCheckedStmtSwitchCaseValue *self,
             return self->uint == other->uint;
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE:
             return true;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION:
+            if (self->union_->len != other->union_->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->union_->len; ++i) {
+                if (!eq__LilyCheckedStmtSwitchCaseValue(
+                      get__Vec(self->union_, i), get__Vec(other->union_, i))) {
+                    return false;
+                }
+            }
+
+            return true;
         default:
             UNREACHABLE("unknown variant");
     }
 }
 
 #ifdef ENV_DEBUG
-char *
+String *
 IMPL_FOR_DEBUG(to_string,
                LilyCheckedStmtSwitchCaseValue,
                const LilyCheckedStmtSwitchCaseValue *self)
 {
     switch (self->kind) {
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT:
-            return format(
+            return format__String(
               "LilyCheckedStmtSwitchCase{{ kind = {s}, int_ = {d} }",
               to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
               self->int_);
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT:
-            return format(
+            return format__String(
               "LilyCheckedStmtSwitchCase{{ kind = {s}, float_ = {f} }",
               to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
               self->float_);
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT:
-            return format(
+            return format__String(
               "LilyCheckedStmtSwitchCase{{ kind = {s}, float_ = {u} }",
               to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
               self->uint);
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE:
-            return format(
+            return format__String(
               "LilyCheckedStmtSwitchCase{{ kind = {s} }",
               to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind));
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION: {
+            String *res = format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, union_ =",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind));
+
+            DEBUG_VEC_STRING(self->union_, res, LilyCheckedStmtSwitchCaseValue);
+
+            push_str__String(res, " }");
+
+            return res;
+        }
         default:
             UNREACHABLE("unknown variant");
     }
 }
 #endif
 
+VARIANT_DESTRUCTOR(LilyCheckedStmtSwitchCaseValue,
+                   union,
+                   LilyCheckedStmtSwitchCaseValue *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->union_->buffer, self->union_->len, LilyCheckedStmtSwitchCaseValue);
+    FREE(Vec, self->union_);
+    lily_free(self);
+}
+
+DESTRUCTOR(LilyCheckedStmtSwitchCaseValue, LilyCheckedStmtSwitchCaseValue *self)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION:
+            FREE_VARIANT(LilyCheckedStmtSwitchCaseValue, union, self);
+            break;
+        default:
+            lily_free(self);
+    }
+}
+
+CONSTRUCTOR(LilyCheckedStmtSwitchSubCase *,
+            LilyCheckedStmtSwitchSubCase,
+            LilyCheckedExpr *cond,
+            LilyCheckedBodyFunItem *body_item)
+{
+    LilyCheckedStmtSwitchSubCase *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchSubCase));
+
+    self->cond = cond;
+    self->body_item = body_item;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtSwitchSubCase,
+               const LilyCheckedStmtSwitchSubCase *self)
+{
+    return format(
+      "LilyCheckedStmtSwitchSubCase{{ cond = {Sr}, body_item = {Sr} }",
+      to_string__Debug__LilyCheckedExpr(self->cond),
+      to_string__Debug__LilyCheckedBodyFunItem(self->body_item));
+}
+#endif
+
+DESTRUCTOR(LilyCheckedStmtSwitchSubCase, LilyCheckedStmtSwitchSubCase *self)
+{
+    FREE(LilyCheckedExpr, self->cond);
+    FREE(LilyCheckedBodyFunItem, self->body_item);
+    lily_free(self);
+}
+
 CONSTRUCTOR(LilyCheckedStmtSwitchCase *,
             LilyCheckedStmtSwitchCase,
-            LilyCheckedStmtSwitchCaseValue *value,
+            LilyCheckedStmtSwitchCaseValue *case_value,
             LilyCheckedExpr *cond,
             LilyCheckedBodyFunItem *body_item)
 {
     LilyCheckedStmtSwitchCase *self =
       lily_malloc(sizeof(LilyCheckedStmtSwitchCase));
 
-    self->values = init__Vec(1, value);
+    self->case_value = case_value;
+    self->sub_cases = NEW(Vec);
     self->body_item = body_item;
 
     return self;
@@ -187,9 +310,13 @@ IMPL_FOR_DEBUG(to_string,
                LilyCheckedStmtSwitchCase,
                const LilyCheckedStmtSwitchCase *self)
 {
-    String *res = format__String("LilyCheckedStmtSwitchCase{{ values =");
+    String *res = format__String(
+      "LilyCheckedStmtSwitchCase{{ case_value = {Sr}",
+      to_string__Debug__LilyCheckedStmtSwitchCaseValue(self->case_value));
 
-    DEBUG_VEC_STR(self->values, res, LilyCheckedStmtSwitchCaseValue);
+    push_str__String(res, ", sub_cases =");
+
+    DEBUG_VEC_STR(self->sub_cases, res, LilyCheckedStmtSwitchSubCase);
 
     {
         char *s =
@@ -205,11 +332,26 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedStmtSwitchCase, LilyCheckedStmtSwitchCase *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->values->buffer, self->values->len, LilyCheckedStmtSwitchCaseValue);
-    FREE(Vec, self->values);
+    FREE(LilyCheckedStmtSwitchCaseValue, self->case_value);
+    FREE_BUFFER_ITEMS(self->sub_cases->buffer,
+                      self->sub_cases->len,
+                      LilyCheckedStmtSwitchSubCase);
+    FREE(Vec, self->sub_cases);
     FREE(LilyCheckedBodyFunItem, self->body_item);
     lily_free(self);
+}
+
+void
+add__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
+                           LilyCheckedStmtSwitchCase *case_)
+{
+    for (Usize i = 0; i < self->cases->len; ++i) {
+        LilyCheckedStmtSwitchCase *pushed_case = get__Vec(self->cases, i);
+
+        if (eq__LilyCheckedStmtSwitchCaseValue(case_->case_value,
+                                               pushed_case->case_value)) {
+        }
+    }
 }
 
 #ifdef ENV_DEBUG
