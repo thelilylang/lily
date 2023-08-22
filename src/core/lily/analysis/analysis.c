@@ -8081,28 +8081,40 @@ check_array_pattern__LilyAnalysis(LilyAnalysis *self,
     }
 
     LilyCheckedPatternTable table = NEW(Vec);
+    bool must_eq = true;
 
     for (Usize i = 0; i < pattern->array.patterns->len; ++i) {
+        LilyAstPattern *ast_pattern = get__Vec(pattern->array.patterns, i);
         LilyCheckedPattern *check_pattern =
           check_pattern__LilyAnalysis(self,
-                                      get__Vec(pattern->array.patterns, i),
+                                      ast_pattern,
                                       scope,
                                       safety_mode,
                                       defined_data_type->array.data_type,
                                       captured_variables);
 
-        if (pattern) {
+        switch (ast_pattern->kind) {
+            case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
+                must_eq = false;
+                break;
+            default:
+                break;
+        }
+
+        if (check_pattern) {
             add__LilyCheckedPatternTable(
               table, NEW(LilyCheckedPatternTableItem, i, check_pattern));
         }
     }
 
-    return NEW_VARIANT(LilyCheckedPattern,
-                       array,
-                       &pattern->location,
-                       ref__LilyCheckedDataType(defined_data_type),
-                       pattern,
-                       NEW(LilyCheckedPatternArray, table));
+    return NEW_VARIANT(
+      LilyCheckedPattern,
+      array,
+      &pattern->location,
+      ref__LilyCheckedDataType(defined_data_type),
+      pattern,
+      NEW(
+        LilyCheckedPatternArray, pattern->array.patterns->len, must_eq, table));
 }
 
 LilyCheckedPattern *
@@ -8294,28 +8306,39 @@ check_list_pattern__LilyAnalysis(LilyAnalysis *self,
     }
 
     LilyCheckedPatternTable table = NEW(Vec);
+    bool must_eq = true;
 
     for (Usize i = 0; i < pattern->list.patterns->len; ++i) {
-        LilyCheckedPattern *pattern_item =
+        LilyAstPattern *ast_pattern = get__Vec(pattern->list.patterns, i);
+        LilyCheckedPattern *check_pattern =
           check_pattern__LilyAnalysis(self,
-                                      get__Vec(pattern->list.patterns, i),
+                                      ast_pattern,
                                       scope,
                                       safety_mode,
                                       defined_data_type->list,
                                       captured_variables);
 
-        if (pattern_item) {
+        switch (ast_pattern->kind) {
+            case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
+                must_eq = false;
+                break;
+            default:
+                break;
+        }
+
+        if (check_pattern) {
             add__LilyCheckedPatternTable(
-              table, NEW(LilyCheckedPatternTableItem, i, pattern_item));
+              table, NEW(LilyCheckedPatternTableItem, i, check_pattern));
         }
     }
 
-    return NEW_VARIANT(LilyCheckedPattern,
-                       list,
-                       &pattern->location,
-                       ref__LilyCheckedDataType(defined_data_type),
-                       pattern,
-                       NEW(LilyCheckedPatternList, table));
+    return NEW_VARIANT(
+      LilyCheckedPattern,
+      list,
+      &pattern->location,
+      ref__LilyCheckedDataType(defined_data_type),
+      pattern,
+      NEW(LilyCheckedPatternList, pattern->list.patterns->len, must_eq, table));
 }
 
 LilyCheckedPattern *
