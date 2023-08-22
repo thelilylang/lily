@@ -23,122 +23,66 @@
  */
 
 #include <base/alloc.h>
-#include <base/assert.h>
 
 #include <core/lily/analysis/checked/body/fun.h>
 #include <core/lily/analysis/checked/stmt/match.h>
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #ifdef ENV_DEBUG
 #include <base/format.h>
 #endif
 
-bool
-eq__LilyCheckedStmtMatchCaseValue(const LilyCheckedStmtMatchCaseValue *self,
-                                  const LilyCheckedStmtMatchCaseValue *other)
-{
-    if (self->kind != other->kind) {
-        UNREACHABLE("value must be the same");
-    }
-
-    switch (self->kind) {
-        case LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_INT:
-            return self->int_ == other->int_;
-        case LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_FLOAT:
-            return self->float_ == other->float_;
-        case LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_UINT:
-            return self->uint == other->uint;
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-
-CONSTRUCTOR(LilyCheckedStmtMatchCase *,
-            LilyCheckedStmtMatchCase,
+CONSTRUCTOR(LilyCheckedStmtMatchSubCase *,
+            LilyCheckedStmtMatchSubCase,
             LilyCheckedExpr *cond,
-            LilyCheckedStmtMatchCaseValue value,
-            LilyCheckedBodyFunItem *body_item,
-            LilyCheckedScope *parent)
+            LilyCheckedBodyFunItem *body_item)
 {
-    LilyCheckedStmtMatchCase *self =
-      lily_malloc(sizeof(LilyCheckedStmtMatchCase));
+    LilyCheckedStmtMatchSubCase *self =
+      lily_malloc(sizeof(LilyCheckedStmtMatchSubCase));
 
-    self->captured_variables = NEW(Vec);
-    self->value = value;
-
-    if (cond) {
-        LilyCheckedBodyFunInfo if_info =
-          wrap_item_in_body__LilyCheckedBodyFunItem(body_item, parent);
-
-        self->body_item = NEW_VARIANT(
-          LilyCheckedBodyFunItem,
-          stmt,
-          NEW_VARIANT(
-            LilyCheckedStmt,
-            if,
-            cond->location,
-            NULL,
-            NEW(LilyCheckedStmtIf,
-                NEW(LilyCheckedStmtIfBranch, cond, if_info.body, if_info.scope),
-                NULL,
-                NULL)));
-    } else {
-        self->body_item = body_item;
-    }
+    self->cond = cond;
+    self->body_item = body_item;
 
     return self;
 }
 
-void
-add_subcase__LilyCheckedStmtMatchCase(const LilyCheckedStmtMatchCase *self,
-                                      LilyCheckedExpr *cond,
-                                      LilyCheckedBodyFunItem *body_item,
-                                      LilyCheckedScope *parent)
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtMatchSubCase,
+               const LilyCheckedStmtMatchSubCase *self)
 {
-    if (cond) {
-        LilyCheckedBodyFunInfo elif_info =
-          wrap_item_in_body__LilyCheckedBodyFunItem(body_item, parent);
+    return format(
+      "LilyCheckedStmtMatchSubCase{{ cond = {Sr}, body_item = {Sr} }",
+      self->cond ? to_string__Debug__LilyCheckedExpr(self->cond)
+                 : from__String("NULL"),
+      to_string__Debug__LilyCheckedBodyFunItem(self->body_item));
+}
+#endif
 
-        ASSERT(self->body_item->kind == LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT);
-        ASSERT(self->body_item->stmt.kind == LILY_CHECKED_STMT_KIND_IF);
-
-        if (self->body_item->stmt.if_.elifs) {
-            push__Vec(self->body_item->stmt.if_.elifs,
-                      NEW(LilyCheckedStmtIfBranch,
-                          cond,
-                          elif_info.body,
-                          elif_info.scope));
-        } else {
-            self->body_item->stmt.if_.elifs =
-              init__Vec(1,
-                        NEW(LilyCheckedStmtIfBranch,
-                            cond,
-                            elif_info.body,
-                            elif_info.scope));
-        }
-    } else {
-        LilyCheckedBodyFunInfo else_info =
-          wrap_item_in_body__LilyCheckedBodyFunItem(body_item, parent);
-
-        ASSERT(self->body_item->kind == LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT);
-        ASSERT(self->body_item->stmt.kind == LILY_CHECKED_STMT_KIND_IF);
-
-        self->body_item->stmt.if_.else_ =
-          NEW(LilyCheckedStmtElseBranch, else_info.body, else_info.scope);
+DESTRUCTOR(LilyCheckedStmtMatchSubCase, LilyCheckedStmtMatchSubCase *self)
+{
+    if (self->cond) {
+        FREE(LilyCheckedExpr, self->cond);
     }
+
+    FREE(LilyCheckedBodyFunItem, self->body_item);
+    lily_free(self);
 }
 
-void
-add__LilyCheckedStmtMatchCase(const LilyCheckedStmtMatchCase *self,
-                              LilyCheckedExpr *cond,
-                              LilyCheckedBodyFunItem *body_item,
-                              LilyCheckedScope *parent,
-                              OrderedHashMap *captured_variables)
+CONSTRUCTOR(LilyCheckedStmtMatchCase *,
+            LilyCheckedStmtMatchCase,
+            LilyCheckedPattern *pattern,
+            LilyCheckedExpr *cond,
+            LilyCheckedBodyFunItem *body_item)
 {
-    add_captured_variables__LilyCheckedStmtMatchCase(self, captured_variables);
-    add_subcase__LilyCheckedStmtMatchCase(self, cond, body_item, parent);
+    LilyCheckedStmtMatchCase *self =
+      lily_malloc(sizeof(LilyCheckedStmtMatchCase));
+
+    self->pattern = pattern;
+    self->sub_cases =
+      init__Vec(1, NEW(LilyCheckedStmtMatchSubCase, cond, body_item));
+
+    return self;
 }
 
 #ifdef ENV_DEBUG
@@ -148,52 +92,12 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedStmtMatchCase *self)
 {
     String *res =
-      from__String("LilyCheckedStmtMatchCase{ captured_variables = { ");
+      format__String("LilyCheckedStmtMatchCase{{ pattern = {Sr}, sub_cases =",
+                     to_string__Debug__LilyCheckedPattern(self->pattern));
 
-    for (Usize i = 0; i < self->captured_variables->len; ++i) {
-        OrderedHashMap *captured_variables =
-          get__Vec(self->captured_variables,
-                   i); // OrderedHashMap<LilyCheckedCapturedVariable*>* (&)
+    DEBUG_VEC_STR(self->sub_cases, res, LilyCheckedStmtMatchSubCase);
 
-        DEBUG_ORD_HASH_MAP_STRING(
-          captured_variables, res, LilyCheckedCapturedVariable);
-
-        if (i + 1 != self->captured_variables->len) {
-            push_str__String(res, ", ");
-        }
-    }
-
-    {
-        char *s = format(" }, pattern = {Sr}",
-                         to_string__Debug__LilyCheckedPattern(self->pattern));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
-
-    push_str__String(res, ", conds = { ");
-
-    for (Usize i = 0; i < self->conds->len; ++i) {
-        LilyCheckedExpr *cond =
-          get__Vec(self->conds, i); // LilyCheckedExpr*? (&)
-
-        if (cond) {
-            String *s = to_string__Debug__LilyCheckedExpr(cond);
-
-            APPEND_AND_FREE(res, s);
-        } else {
-            push_str__String(res, "NULL");
-        }
-
-        if (i + 1 != self->conds->len) {
-            push_str__String(res, ", ");
-        }
-    }
-
-    push_str__String(res, " }, body_items = {");
-
-    DEBUG_VEC_STRING(self->body_items, res, LilyCheckedBodyFunItem);
-
-    push_str__String(res, "}");
+    push_str__String(res, " }");
 
     return res;
 }
@@ -201,37 +105,17 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyCheckedStmtMatchCase, LilyCheckedStmtMatchCase *self)
 {
-    for (Usize i = 0; i < self->captured_variables->len; ++i) {
-        OrderedHashMap *captured_variables =
-          get__Vec(self->captured_variables, i);
-
-        FREE_ORD_HASHMAP_VALUES(captured_variables,
-                                LilyCheckedCapturedVariable);
-        FREE(OrderedHashMap, captured_variables);
-    }
-
-    FREE(Vec, self->captured_variables);
     FREE(LilyCheckedPattern, self->pattern);
-
-    for (Usize i = 0; i < self->conds->len; ++i) {
-        LilyCheckedExpr *cond = get__Vec(self->conds, i);
-
-        if (cond) {
-            FREE(LilyCheckedExpr, cond);
-        }
-    }
-
-    FREE(Vec, self->conds);
-    FREE_BUFFER_ITEMS(
-      self->body_items->buffer, self->body_items->len, LilyCheckedBodyFunItem);
-    FREE(Vec, self->body_items);
+    FREE_BUFFER_ITEMS(self->sub_cases->buffer,
+                      self->sub_cases->len,
+                      LilyCheckedStmtMatchSubCase);
+    FREE(Vec, self->sub_cases);
     lily_free(self);
 }
 
 void
 add_case__LilyCheckedStmtMatch(const LilyCheckedStmtMatch *self,
                                LilyCheckedPattern *pattern,
-                               OrderedHashMap *captured_variables,
                                LilyCheckedExpr *cond,
                                LilyCheckedBodyFunItem *body_item)
 {
@@ -241,17 +125,15 @@ add_case__LilyCheckedStmtMatch(const LilyCheckedStmtMatch *self,
         if (eq__LilyCheckedPattern(pattern, case_->pattern)) {
             FREE(LilyCheckedPattern, pattern);
 
-            return add__LilyCheckedStmtMatchCase(
-              case_, captured_variables, cond, body_item);
+            push__Vec(case_->sub_cases,
+                      NEW(LilyCheckedStmtSwitchSubCase, cond, body_item));
+
+            return;
         }
     }
 
-    LilyCheckedStmtMatchCase *case_ = NEW(LilyCheckedStmtMatchCase, pattern);
-
-    push__Vec(self->cases, case_);
-
-    return add__LilyCheckedStmtMatchCase(
-      case_, captured_variables, cond, body_item);
+    push__Vec(self->cases,
+              NEW(LilyCheckedStmtMatchCase, pattern, cond, body_item));
 }
 
 int
@@ -266,20 +148,20 @@ look_for_case_error__LilyCheckedStmtMatch(const LilyCheckedStmtMatch *self,
             continue;
         }
 
-        ASSERT(case_->captured_variables->len == case_->body_items->len);
-        ASSERT(case_->body_items->len == case_->conds->len);
+        for (Usize j = 0; j < case_->sub_cases->len; ++j) {
+            LilyCheckedStmtMatchSubCase *sub_case =
+              get__Vec(case_->sub_cases, j);
 
-        for (Usize j = 0; j < case_->conds->len; ++j) {
-            LilyCheckedExpr *case_cond = get__Vec(case_->conds, j);
-
-            if (case_cond && cond) {
-                // TODO: check conditon
-            } else if (!case_cond && !cond) {
+            if (sub_case->cond && cond) {
+                if (eq__LilyCheckedExpr(sub_case->cond, cond)) {
+                    return 2;
+                }
+            } else if (!sub_case->cond && !cond) {
                 return 2;
             }
 
             // Check for unused case
-            if (j + 1 == case_->conds->len && cond && !case_cond) {
+            if (j + 1 == case_->sub_cases->len && cond && !sub_case->cond) {
                 return 1;
             }
         }
@@ -302,7 +184,7 @@ IMPL_FOR_DEBUG(to_string,
     DEBUG_VEC_STRING(self->cases, res, LilyCheckedStmtMatchCase);
 
     {
-        char *s = format(", use_switch = {b} }", self->use_switch);
+        char *s = format(", has_else = {b} }", self->has_else);
 
         PUSH_STR_AND_FREE(res, s);
     }

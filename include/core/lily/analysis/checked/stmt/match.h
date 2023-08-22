@@ -28,87 +28,45 @@
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/pattern.h>
 
-#include <base/ordered_hash_map.h>
-
 typedef struct LilyCheckedBodyFunItem LilyCheckedBodyFunItem;
 
-enum LilyCheckedStmtMatchCaseValueKind
+typedef struct LilyCheckedStmtMatchSubCase
 {
-    LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_INT,
-    LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_FLOAT,
-    LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_UINT,
-};
-
-typedef struct LilyCheckedStmtMatchCaseValue
-{
-    enum LilyCheckedStmtMatchCaseValueKind kind;
-    union
-    {
-        Int64 int_;
-        Float64 float_;
-        Uint64 uint;
-    };
-} LilyCheckedStmtMatchCaseValue;
+    LilyCheckedExpr *cond; // LilyCheckedExpr*?
+    LilyCheckedBodyFunItem *body_item;
+} LilyCheckedStmtMatchSubCase;
 
 /**
  *
- * @brief Construct LilyCheckedStmtMatchCaseValue type
- * (LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_INT).
+ * @brief Construct LilyCheckedStmtMatchSubCase type.
  */
-inline VARIANT_CONSTRUCTOR(LilyCheckedStmtMatchCaseValue,
-                           LilyCheckedStmtMatchCaseValue,
-                           int,
-                           Int64 int_)
-{
-    return (LilyCheckedStmtMatchCaseValue){
-        .kind = LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_INT, .int_ = int_
-    };
-}
+CONSTRUCTOR(LilyCheckedStmtMatchSubCase *,
+            LilyCheckedStmtMatchSubCase,
+            LilyCheckedExpr *cond,
+            LilyCheckedBodyFunItem *body_item);
 
 /**
  *
- * @brief Construct LilyCheckedStmtMatchCaseValue type
- * (LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_FLOAT).
+ * @brief Convert LilyCheckedStmtMatchSubCase in string.
+ * @note This function is only used to debug.
  */
-inline VARIANT_CONSTRUCTOR(LilyCheckedStmtMatchCaseValue,
-                           LilyCheckedStmtMatchCaseValue,
-                           float,
-                           Float64 float_)
-{
-    return (LilyCheckedStmtMatchCaseValue){
-        .kind = LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_FLOAT, .float_ = float_
-    };
-}
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtMatchSubCase,
+               const LilyCheckedStmtMatchSubCase *self);
+#endif
 
 /**
  *
- * @brief Construct LilyCheckedStmtMatchCaseValue type
- * (LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_UINT).
+ * @brief Free LilyCheckedStmtMatchSubCase type.
  */
-inline VARIANT_CONSTRUCTOR(LilyCheckedStmtMatchCaseValue,
-                           LilyCheckedStmtMatchCaseValue,
-                           uint,
-                           Uint64 uint)
-{
-    return (LilyCheckedStmtMatchCaseValue){
-        .kind = LILY_CHECKED_STMT_MATCH_CASE_VALUE_KIND_UINT, .uint = uint
-    };
-}
-
-/**
- *
- * @brief Check if the both values are equal.
- */
-bool
-eq__LilyCheckedStmtMatchCaseValue(const LilyCheckedStmtMatchCaseValue *self,
-                                  const LilyCheckedStmtMatchCaseValue *other);
+DESTRUCTOR(LilyCheckedStmtMatchSubCase, LilyCheckedStmtMatchSubCase *self);
 
 typedef struct LilyCheckedStmtMatchCase
 {
-    Vec *
-      captured_variables; // Vec<OrderedHashMap<LilyCheckedCapturedVariable*>*>*
-    LilyCheckedStmtMatchCaseValue value;
-    LilyCheckedBodyFunItem *body_item;
+    LilyCheckedPattern *pattern;
+    Vec *sub_cases; // Vec<LilyCheckedStmtMatchSubCase*>*
 } LilyCheckedStmtMatchCase;
 
 /**
@@ -117,10 +75,9 @@ typedef struct LilyCheckedStmtMatchCase
  */
 CONSTRUCTOR(LilyCheckedStmtMatchCase *,
             LilyCheckedStmtMatchCase,
+            LilyCheckedPattern *pattern,
             LilyCheckedExpr *cond,
-            LilyCheckedStmtMatchCaseValue value,
-            LilyCheckedBodyFunItem *body_item,
-            LilyCheckedScope *parent);
+            LilyCheckedBodyFunItem *body_item);
 
 /**
  *
@@ -136,41 +93,6 @@ IMPL_FOR_DEBUG(to_string,
 
 /**
  *
- * @brief Add captured_variables content to statement match case.
- */
-inline void
-add_captured_variables__LilyCheckedStmtMatchCase(
-  const LilyCheckedStmtMatchCase *self,
-  OrderedHashMap *captured_variables)
-{
-    return push__Vec(self->captured_variables, captured_variables);
-}
-
-/**
- *
- * @brief Add a new subcase to statement match case.
- * The compiler will generate a if statement if is not already created otherwise
- * it's add a elif branch or else branch.
- */
-void
-add_subcase__LilyCheckedStmtMatchCase(const LilyCheckedStmtMatchCase *self,
-                                      LilyCheckedExpr *cond,
-                                      LilyCheckedBodyFunItem *body_item,
-                                      LilyCheckedScope *parent);
-
-/**
- *
- * Add `captured_variables`, `cond` and `body_item` to statement match case.
- */
-void
-add__LilyCheckedStmtMatchCase(const LilyCheckedStmtMatchCase *self,
-                              LilyCheckedExpr *cond,
-                              LilyCheckedBodyFunItem *body_item,
-                              LilyCheckedScope *parent,
-                              OrderedHashMap *captured_variables);
-
-/**
- *
  * @brief Free LilyCheckedStmtMatchCase type.
  */
 DESTRUCTOR(LilyCheckedStmtMatchCase, LilyCheckedStmtMatchCase *self);
@@ -179,7 +101,6 @@ typedef struct LilyCheckedStmtMatch
 {
     LilyCheckedExpr *expr;
     Vec *cases; // Vec<LilyCheckedStmtMatchCase*>*
-    bool use_switch;
     bool has_else;
 } LilyCheckedStmtMatch;
 
@@ -190,26 +111,19 @@ typedef struct LilyCheckedStmtMatch
 inline CONSTRUCTOR(LilyCheckedStmtMatch,
                    LilyCheckedStmtMatch,
                    LilyCheckedExpr *expr,
-                   Vec *cases,
-                   bool use_switch,
-                   bool has_else)
+                   Vec *cases)
 {
-    return (LilyCheckedStmtMatch){ .expr = expr,
-                                   .cases = cases,
-                                   .use_switch = use_switch,
-                                   .has_else = has_else };
+    return (
+      LilyCheckedStmtMatch){ .expr = expr, .cases = cases, .has_else = false };
 }
 
 /**
  *
- * @brief Add a new case or use an already pushed case to add
- * `captured_variables`, `cond` and `body_item` to the case.
- * @note If the case if already pushed, we will free pattern parametter
+ * @brief Add case to match statement.
  */
 void
 add_case__LilyCheckedStmtMatch(const LilyCheckedStmtMatch *self,
                                LilyCheckedPattern *pattern,
-                               OrderedHashMap *captured_variables,
                                LilyCheckedExpr *cond,
                                LilyCheckedBodyFunItem *body_item);
 
