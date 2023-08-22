@@ -349,10 +349,10 @@ add_case__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
         LilyCheckedStmtSwitchCase *case_ = get__Vec(self->cases, i);
 
         if (eq__LilyCheckedStmtSwitchCaseValue(case_value, case_->case_value)) {
+            FREE(LilyCheckedStmtSwitchCaseValue, case_value);
+
             push__Vec(case_->sub_cases,
                       NEW(LilyCheckedStmtSwitchSubCase, cond, body_item));
-
-            FREE(LilyCheckedStmtSwitchCaseValue, case_value);
 
             return;
         }
@@ -360,6 +360,44 @@ add_case__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
 
     push__Vec(self->cases,
               NEW(LilyCheckedStmtSwitchCase, case_value, cond, body_item));
+}
+
+int
+look_for_case_error__LilyCheckedStmtSwitch(
+  const LilyCheckedStmtSwitch *self,
+  LilyCheckedStmtSwitchCaseValue *case_value,
+  LilyCheckedExpr *cond)
+{
+    for (Usize i = 0; i < self->cases->len; ++i) {
+        LilyCheckedStmtSwitchCase *case_ = get__Vec(self->cases, i);
+
+        if (!eq__LilyCheckedStmtSwitchCaseValue(case_->case_value,
+                                                case_value)) {
+            continue;
+        }
+
+        for (Usize j = 0; j < case_->sub_cases->len; ++j) {
+            LilyCheckedStmtSwitchSubCase *sub_case =
+              get__Vec(case_->sub_cases, j);
+
+            if (sub_case->cond && cond) {
+                if (eq__LilyCheckedExpr(sub_case->cond, cond)) {
+                    return 2;
+                }
+            } else if (!sub_case->cond && !cond) {
+                return 2;
+            }
+
+            // Check for unused case
+            if (j + 1 == case_->sub_cases->len && cond && !sub_case->cond) {
+                return 1;
+            }
+        }
+
+        break;
+    }
+
+    return 0;
 }
 
 #ifdef ENV_DEBUG

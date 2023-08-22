@@ -251,6 +251,18 @@ add_case__LilyCheckedStmtSwitch(const LilyCheckedStmtSwitch *self,
 
 /**
  *
+ * @return 0 Ok.
+ * @return 1 Unused case.
+ * @return 2 duplicate case.
+ */
+int
+look_for_case_error__LilyCheckedStmtSwitch(
+  const LilyCheckedStmtSwitch *self,
+  LilyCheckedStmtSwitchCaseValue *case_value,
+  LilyCheckedExpr *cond);
+
+/**
+ *
  * @brief Convert LilyCheckedStmtSwitch in String.
  * @note This function is only used to debug.
  */
