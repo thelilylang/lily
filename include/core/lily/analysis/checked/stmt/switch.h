@@ -224,6 +224,7 @@ typedef struct LilyCheckedStmtSwitch
 {
     LilyCheckedExpr *switched_expr;
     Vec *cases; // Vec<LilyCheckedStmtSwitchCase*>*
+    bool has_else;
 } LilyCheckedStmtSwitch;
 
 /**
@@ -236,7 +237,8 @@ inline CONSTRUCTOR(LilyCheckedStmtSwitch,
                    Vec *cases)
 {
     return (LilyCheckedStmtSwitch){ .switched_expr = switched_expr,
-                                    .cases = cases };
+                                    .cases = cases,
+                                    .has_else = false };
 }
 
 /**

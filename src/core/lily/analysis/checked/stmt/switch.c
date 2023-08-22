@@ -412,7 +412,11 @@ IMPL_FOR_DEBUG(to_string,
 
     DEBUG_VEC_STRING(self->cases, res, LilyCheckedStmtSwitchCase);
 
-    push_str__String(res, " }");
+    {
+        char *s = format(", has_else = {b} }", self->has_else);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
