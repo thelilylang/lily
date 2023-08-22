@@ -9926,6 +9926,7 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
     LilyCheckedExpr *expr = check_expr__LilyAnalysis(
       self, stmt->match.expr, scope, safety_mode, false, NULL);
     bool has_else = false;
+    bool use_switch = false;
     Usize total_cases = count_total_cases__LilyAnalysis(
       self, scope, safety_mode, expr->data_type);
     Usize nb_cases = 0;
@@ -9961,6 +9962,33 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
             }
 
             break;
+        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
+        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
+        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
+        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
+        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
+        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
+        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
+        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
+            use_switch = true;
+            break;
         default:
             break;
     }
@@ -9986,38 +10014,42 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
         }
 
         if (self->use_switch) {
-            LilyCheckedBodyFunItem *body_item = NULL;
-            LilyCheckedExpr *cond = NULL;
-            LilyCheckedStmtSwitchCaseValue *case_value = NULL;
+            if (use_switch) {
+                LilyCheckedBodyFunItem *body_item = NULL;
+                LilyCheckedExpr *cond = NULL;
+                LilyCheckedStmtSwitchCaseValue *case_value = NULL;
 
-            check_match_stmt_case_for_switch__LilyAnalysis(self,
-                                                           ast_case,
-                                                           expr,
-                                                           scope,
-                                                           in_loop,
-                                                           &is_final_else,
-                                                           &nb_cases,
-                                                           &total_cases,
-                                                           safety_mode,
-                                                           &body_item,
-                                                           &cond,
-                                                           &case_value);
+                check_match_stmt_case_for_switch__LilyAnalysis(self,
+                                                               ast_case,
+                                                               expr,
+                                                               scope,
+                                                               in_loop,
+                                                               &is_final_else,
+                                                               &nb_cases,
+                                                               &total_cases,
+                                                               safety_mode,
+                                                               &body_item,
+                                                               &cond,
+                                                               &case_value);
 
-            int err = look_for_case_error__LilyCheckedStmtSwitch(
-              &switch_, case_value, cond);
+                int err = look_for_case_error__LilyCheckedStmtSwitch(
+                  &switch_, case_value, cond);
 
-            switch (err) {
-                case 0:
-                    add_case__LilyCheckedStmtSwitch(
-                      &switch_, case_value, cond, body_item);
+                switch (err) {
+                    case 0:
+                        add_case__LilyCheckedStmtSwitch(
+                          &switch_, case_value, cond, body_item);
 
-                    break;
-                case 1:
-                    FAILED("warning: unused case");
-                case 2:
-                    FAILED("duplicate case");
-                default:
-                    UNREACHABLE("unknown error code");
+                        break;
+                    case 1:
+                        FAILED("warning: unused case");
+                    case 2:
+                        FAILED("duplicate case");
+                    default:
+                        UNREACHABLE("unknown error code");
+                }
+            } else {
+				TODO("use if condition");
             }
         } else {
             LilyCheckedBodyFunItem *body_item = NULL;
