@@ -439,35 +439,39 @@ to_switch_case_value__LilyCheckedPattern(const LilyCheckedPattern *self,
         case LILY_CHECKED_PATTERN_KIND_LITERAL:
             switch (self->literal.kind) {
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_BOOL:
-                    return NEW_VARIANT(
-                      LilyCheckedStmtSwitchCaseValue, int, self->literal.bool_);
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       bool,
+                                       self->literal.bool_);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTE:
-                    return NEW_VARIANT(
-                      LilyCheckedStmtSwitchCaseValue, uint, self->literal.byte);
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint8,
+                                       self->literal.byte);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTES:
                     UNREACHABLE(
                       "impossible to convert bytes in switch case value");
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_CHAR:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       uint,
+                                       uint8,
                                        self->literal.char_);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_CSTR:
                     UNREACHABLE(
                       "impossible to convert cstr in switch case value");
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT32:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       float,
+                                       float32,
                                        self->literal.float32);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT64:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       float,
+                                       float64,
                                        self->literal.float64);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_INT32:
-                    return NEW_VARIANT(
-                      LilyCheckedStmtSwitchCaseValue, int, self->literal.int32);
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int32,
+                                       self->literal.int32);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_INT64:
-                    return NEW_VARIANT(
-                      LilyCheckedStmtSwitchCaseValue, int, self->literal.int64);
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int64,
+                                       self->literal.int64);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_NIL:
                     UNREACHABLE(
                       "impossible to convert nil in switch case value");
@@ -479,59 +483,59 @@ to_switch_case_value__LilyCheckedPattern(const LilyCheckedPattern *self,
                       "impossible to convert str in switch case value");
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_FLOAT32:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       float,
+                                       float32,
                                        self->literal.suffix_float32);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_FLOAT64:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       float,
+                                       float64,
                                        self->literal.suffix_float64);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT8:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       int,
+                                       int8,
                                        self->literal.suffix_int8);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT16:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       int,
+                                       int16,
                                        self->literal.suffix_int16);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT32:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       int,
+                                       int32,
                                        self->literal.suffix_int32);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT64:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       int,
+                                       int64,
                                        self->literal.suffix_int64);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_ISIZE:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       int,
+                                       isize,
                                        self->literal.suffix_isize);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT8:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       uint,
+                                       uint8,
                                        self->literal.suffix_uint8);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT16:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       uint,
+                                       uint16,
                                        self->literal.suffix_uint16);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT32:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       uint,
+                                       uint32,
                                        self->literal.suffix_uint32);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT64:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       uint,
+                                       uint64,
                                        self->literal.suffix_uint64);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_USIZE:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       uint,
+                                       usize,
                                        self->literal.suffix_usize);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_UINT32:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       uint,
+                                       uint32,
                                        self->literal.uint32);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_UINT64:
                     return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
-                                       uint,
+                                       uint64,
                                        self->literal.uint64);
                 case LILY_CHECKED_PATTERN_LITERAL_KIND_UNDEF:
                     UNREACHABLE(
@@ -574,7 +578,7 @@ to_switch_case_value__LilyCheckedPattern(const LilyCheckedPattern *self,
             // TODO: use the uint switch case value if applicable (in the case
             // of a preset value of the enum variant).
             return NEW_VARIANT(
-              LilyCheckedStmtSwitchCaseValue, int, response.enum_variant->id);
+              LilyCheckedStmtSwitchCaseValue, uint8, response.enum_variant->id);
         }
         case LILY_CHECKED_PATTERN_KIND_ELSE:
             return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue, else);
