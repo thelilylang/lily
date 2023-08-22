@@ -9860,7 +9860,6 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
 {
     LilyCheckedExpr *expr = check_expr__LilyAnalysis(
       self, stmt->match.expr, scope, safety_mode, false, NULL);
-    bool use_switch = false;
     bool has_else = false;
     Usize total_cases = count_total_cases__LilyAnalysis(
       self, scope, safety_mode, expr->data_type);
@@ -9897,33 +9896,6 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
             }
 
             break;
-        case LILY_CHECKED_DATA_TYPE_KIND_BOOL:
-        case LILY_CHECKED_DATA_TYPE_KIND_BYTE:
-        case LILY_CHECKED_DATA_TYPE_KIND_CHAR:
-        case LILY_CHECKED_DATA_TYPE_KIND_CSHORT:
-        case LILY_CHECKED_DATA_TYPE_KIND_CUSHORT:
-        case LILY_CHECKED_DATA_TYPE_KIND_CINT:
-        case LILY_CHECKED_DATA_TYPE_KIND_CUINT:
-        case LILY_CHECKED_DATA_TYPE_KIND_CLONG:
-        case LILY_CHECKED_DATA_TYPE_KIND_CULONG:
-        case LILY_CHECKED_DATA_TYPE_KIND_CLONGLONG:
-        case LILY_CHECKED_DATA_TYPE_KIND_CULONGLONG:
-        case LILY_CHECKED_DATA_TYPE_KIND_CFLOAT:
-        case LILY_CHECKED_DATA_TYPE_KIND_CDOUBLE:
-        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT32:
-        case LILY_CHECKED_DATA_TYPE_KIND_FLOAT64:
-        case LILY_CHECKED_DATA_TYPE_KIND_INT16:
-        case LILY_CHECKED_DATA_TYPE_KIND_INT32:
-        case LILY_CHECKED_DATA_TYPE_KIND_INT64:
-        case LILY_CHECKED_DATA_TYPE_KIND_INT8:
-        case LILY_CHECKED_DATA_TYPE_KIND_ISIZE:
-        case LILY_CHECKED_DATA_TYPE_KIND_UINT16:
-        case LILY_CHECKED_DATA_TYPE_KIND_UINT32:
-        case LILY_CHECKED_DATA_TYPE_KIND_UINT64:
-        case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
-        case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
-            use_switch = true;
-            break;
         default:
             break;
     }
@@ -9936,7 +9908,7 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
     if (self->use_switch) {
         switch_ = NEW(LilyCheckedStmtSwitch, expr, cases);
     } else {
-        match = NEW(LilyCheckedStmtMatch, expr, cases, use_switch, has_else);
+        match = NEW(LilyCheckedStmtMatch, expr, cases);
     }
 
     for (Usize i = 0; i < stmt->match.cases->len; ++i) {
@@ -10005,7 +9977,9 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
 
             switch (err) {
                 case 0:
-                    // TODO: add case
+                    add_case__LilyCheckedStmtMatch(
+                      &match, pattern, cond, body_item);
+
                     break;
                 case 1:
                     FAILED("warning: unused case");
@@ -10029,11 +10003,15 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
     }
 
     if (self->use_switch) {
+        switch_.has_else = has_else;
+
         return NEW_VARIANT(
           LilyCheckedBodyFunItem,
           stmt,
           NEW_VARIANT(LilyCheckedStmt, switch, &stmt->location, stmt, switch_));
     }
+
+    match.has_else = has_else;
 
     return NEW_VARIANT(
       LilyCheckedBodyFunItem,
