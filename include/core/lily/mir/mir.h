@@ -523,11 +523,11 @@ LilyMirBuildUnsafe(LilyMirModule *Module,
                    const LilyCheckedStmtUnsafe *unsafe_stmt);
 
 void
-LilyMirBuildMatch(LilyMirModule *Module,
-                  LilyCheckedSignatureFun *fun_signature,
-                  LilyMirScope *scope,
-                  LilyMirBlockLimit *parent_block_limit,
-                  const LilyCheckedStmtMatch *match_stmt);
+LilyMirBuildSwitch(LilyMirModule *Module,
+                   LilyCheckedSignatureFun *fun_signature,
+                   LilyMirScope *scope,
+                   LilyMirBlockLimit *parent_block_limit,
+                   const LilyCheckedStmtSwitch *switch_stmt);
 
 inline LilyMirCurrent *
 LilyMirGetCurrentOnTop(LilyMirModule *Module)
