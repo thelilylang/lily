@@ -39,42 +39,182 @@ static VARIANT_DESTRUCTOR(LilyCheckedStmtSwitchCaseValue,
 
 VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
                     LilyCheckedStmtSwitchCaseValue,
-                    int,
-                    Int64 int_)
+                    bool,
+                    bool bool_)
 {
     LilyCheckedStmtSwitchCaseValue *self =
       lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
 
-    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT;
-    self->int_ = int_;
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_BOOL;
+    self->bool_ = bool_;
 
     return self;
 }
 
 VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
                     LilyCheckedStmtSwitchCaseValue,
-                    float,
-                    Float64 float_)
+                    int8,
+                    Int8 int8)
 {
     LilyCheckedStmtSwitchCaseValue *self =
       lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
 
-    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT;
-    self->float_ = float_;
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT8;
+    self->int8 = int8;
 
     return self;
 }
 
 VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
                     LilyCheckedStmtSwitchCaseValue,
-                    uint,
-                    Uint64 uint)
+                    int16,
+                    Int16 int16)
 {
     LilyCheckedStmtSwitchCaseValue *self =
       lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
 
-    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT;
-    self->uint = uint;
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT16;
+    self->int16 = int16;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    int32,
+                    Int32 int32)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT32;
+    self->int32 = int32;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    int64,
+                    Int64 int64)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT64;
+    self->int64 = int64;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    isize,
+                    Isize isize)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ISIZE;
+    self->isize = isize;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    float32,
+                    Float32 float32)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT32;
+    self->float32 = float32;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    float64,
+                    Float64 float64)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT64;
+    self->float64 = float64;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    uint8,
+                    Uint8 uint8)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT8;
+    self->uint8 = uint8;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    uint16,
+                    Uint16 uint16)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT16;
+    self->uint16 = uint16;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    uint32,
+                    Uint32 uint32)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT32;
+    self->uint32 = uint32;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    uint64,
+                    Uint64 uint64)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT64;
+    self->uint64 = uint64;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    usize,
+                    Usize usize)
+{
+    LilyCheckedStmtSwitchCaseValue *self =
+      lily_malloc(sizeof(LilyCheckedStmtSwitchCaseValue));
+
+    self->kind = LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_USIZE;
+    self->usize = usize;
 
     return self;
 }
@@ -112,12 +252,32 @@ IMPL_FOR_DEBUG(to_string,
                enum LilyCheckedStmtSwitchCaseValueKind self)
 {
     switch (self) {
-        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT:
-            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT";
-        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT:
-            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT";
-        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT:
-            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_BOOL:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_BOOL";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT8:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT8";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT16:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT16";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT32:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT32";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT64:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT64";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ISIZE:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ISIZE";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT32:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT32";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT64:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT64";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT8:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT8";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT16:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT16";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT32:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT32";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT64:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT64";
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_USIZE:
+            return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_USIZE";
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE:
             return "LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE";
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION:
@@ -165,12 +325,32 @@ eq__LilyCheckedStmtSwitchCaseValue(const LilyCheckedStmtSwitchCaseValue *self,
     }
 
     switch (self->kind) {
-        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT:
-            return self->int_ == other->int_;
-        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT:
-            return self->float_ == other->float_;
-        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT:
-            return self->uint == other->uint;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_BOOL:
+            return self->bool_ == other->bool_;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT8:
+            return self->int8 == other->int8;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT16:
+            return self->int16 == other->int16;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT32:
+            return self->int32 == other->int32;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT64:
+            return self->int64 == other->int64;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ISIZE:
+            return self->isize == other->isize;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT32:
+            return self->float32 == other->float32;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT64:
+            return self->float64 == other->float64;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT8:
+            return self->uint8 == other->uint8;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT16:
+            return self->uint16 == other->uint16;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT32:
+            return self->uint32 == other->uint32;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT64:
+            return self->uint64 == other->uint64;
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_USIZE:
+            return self->usize == other->usize;
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE:
             return true;
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION:
@@ -198,21 +378,71 @@ IMPL_FOR_DEBUG(to_string,
                const LilyCheckedStmtSwitchCaseValue *self)
 {
     switch (self->kind) {
-        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT:
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_BOOL:
             return format__String(
-              "LilyCheckedStmtSwitchCase{{ kind = {s}, int_ = {d} }",
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, bool_ = {d} }",
               to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
-              self->int_);
-        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT:
+              self->bool_);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT8:
             return format__String(
-              "LilyCheckedStmtSwitchCase{{ kind = {s}, float_ = {f} }",
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, int8 = {d} }",
               to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
-              self->float_);
-        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT:
+              self->int8);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT16:
             return format__String(
-              "LilyCheckedStmtSwitchCase{{ kind = {s}, float_ = {u} }",
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, int16 = {d} }",
               to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
-              self->uint);
+              self->int16);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT32:
+            return format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, int32 = {d} }",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
+              self->int32);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT64:
+            return format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, int64 = {d} }",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
+              self->int64);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ISIZE:
+            return format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, isize = {zu} }",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
+              self->isize);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT32:
+            return format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, float32 = {f} }",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
+              self->float32);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT64:
+            return format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, float64 = {f} }",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
+              self->float64);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT8:
+            return format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, uint8 = {u} }",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
+              self->uint8);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT16:
+            return format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, uint16 = {u} }",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
+              self->uint16);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT32:
+            return format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, uint32 = {u} }",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
+              self->uint32);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT64:
+            return format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, uint64 = {u} }",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
+              self->uint64);
+        case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_USIZE:
+            return format__String(
+              "LilyCheckedStmtSwitchCase{{ kind = {s}, usize = {u} }",
+              to_string__Debug__LilyCheckedStmtSwitchCaseValueKind(self->kind),
+              self->usize);
         case LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE:
             return format__String(
               "LilyCheckedStmtSwitchCase{{ kind = {s} }",

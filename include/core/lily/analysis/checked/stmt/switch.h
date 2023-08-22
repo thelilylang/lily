@@ -37,9 +37,19 @@ typedef struct LilyCheckedBodyFunItem LilyCheckedBodyFunItem;
 
 enum LilyCheckedStmtSwitchCaseValueKind
 {
-    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT,
-    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT,
-    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_BOOL,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT8,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT16,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT32,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT64,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ISIZE,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT32,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT64,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT8,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT16,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT32,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT64,
+    LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_USIZE,
     LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ELSE,
     LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UNION
 };
@@ -61,9 +71,19 @@ typedef struct LilyCheckedStmtSwitchCaseValue
     enum LilyCheckedStmtSwitchCaseValueKind kind;
     union
     {
-        Int64 int_;
-        Float64 float_;
-        Uint64 uint;
+        bool bool_;
+        Int8 int8;
+        Int16 int16;
+        Int32 int32;
+        Int64 int64;
+        Isize isize;
+        Float32 float32;
+        Float64 float64;
+        Uint8 uint8;
+        Uint16 uint16;
+        Uint32 uint32;
+        Uint64 uint64;
+        Usize usize;
         Vec *union_; // Vec<LilyCheckedStmtSwitchCaseValue*>*
     };
 } LilyCheckedStmtSwitchCaseValue;
@@ -71,32 +91,132 @@ typedef struct LilyCheckedStmtSwitchCaseValue
 /**
  *
  * @brief Construct LilyCheckedStmtSwitchCaseValue type
- * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT).
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_BOOL).
  */
 VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
                     LilyCheckedStmtSwitchCaseValue,
-                    int,
-                    Int64 int_);
+                    bool,
+                    bool bool_);
 
 /**
  *
  * @brief Construct LilyCheckedStmtSwitchCaseValue type
- * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT).
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT8).
  */
 VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
                     LilyCheckedStmtSwitchCaseValue,
-                    float,
-                    Float64 float_);
+                    int8,
+                    Int8 int8);
 
 /**
  *
  * @brief Construct LilyCheckedStmtSwitchCaseValue type
- * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT).
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT16).
  */
 VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
                     LilyCheckedStmtSwitchCaseValue,
-                    uint,
-                    Uint64 uint);
+                    int16,
+                    Int16 int16);
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT32).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    int32,
+                    Int32 int32);
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_INT64).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    int64,
+                    Int64 int64);
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_ISIZE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    isize,
+                    Isize isize);
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT32).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    float32,
+                    Float32 float32);
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_FLOAT64).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    float64,
+                    Float64 float64);
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT8).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    uint8,
+                    Uint8 uint8);
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT16).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    uint16,
+                    Uint16 uint16);
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT32).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    uint32,
+                    Uint32 uint32);
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_UINT64).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    uint64,
+                    Uint64 uint64);
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtSwitchCaseValue type
+ * (LILY_CHECKED_STMT_SWITCH_CASE_VALUE_KIND_USIZE).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedStmtSwitchCaseValue *,
+                    LilyCheckedStmtSwitchCaseValue,
+                    usize,
+                    Usize usize);
 
 /**
  *
