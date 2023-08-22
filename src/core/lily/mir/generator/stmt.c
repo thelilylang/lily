@@ -59,10 +59,7 @@ generate_stmt__LilyMir(LilyMirModule *module,
 
             return NULL;
         case LILY_CHECKED_STMT_KIND_MATCH:
-            LilyMirBuildMatch(
-              module, fun_signature, scope, block_limit, &stmt->match);
-
-            return NULL;
+            UNREACHABLE("match statement is not expected for MIR generator");
         case LILY_CHECKED_STMT_KIND_NEXT:
             LilyMirBuildNext(module, next_block);
 
@@ -86,6 +83,11 @@ generate_stmt__LilyMir(LilyMirModule *module,
                                   LILY_MIR_INSTRUCTION_VAL_KIND_UNIT,
                                   NEW(LilyMirDt, LILY_MIR_DT_KIND_UNIT))));
             }
+        case LILY_CHECKED_STMT_KIND_SWITCH:
+            LilyMirBuildSwitch(
+              module, fun_signature, scope, block_limit, &stmt->switch_);
+
+            return NULL;
         case LILY_CHECKED_STMT_KIND_TRY:
             TODO("generate try stmt");
         case LILY_CHECKED_STMT_KIND_UNSAFE:
@@ -111,5 +113,7 @@ generate_stmt__LilyMir(LilyMirModule *module,
               module, fun_signature, scope, block_limit, &stmt->while_);
 
             return NULL;
+        default:
+            UNREACHABLE("unknown variant");
     }
 }
