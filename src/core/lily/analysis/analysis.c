@@ -3841,31 +3841,35 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
 
             break;
         }
-        case LILY_CHECKED_STMT_KIND_MATCH: {
+        case LILY_CHECKED_STMT_KIND_MATCH:
             for (Usize i = 0; i < stmt->match.cases->len; ++i) {
                 LilyCheckedStmtMatchCase *case_ =
                   get__Vec(stmt->match.cases, i);
 
-                for (Usize j = 0; j < case_->body_items->len; ++j) {
+                for (Usize j = 0; j < case_->sub_cases->len; ++j) {
+                    LilyCheckedStmtMatchSubCase *sub_case =
+                      get__Vec(case_->sub_cases, j);
                     LilyCheckedVirtualScope *case_virtual_scope =
                       NEW(LilyCheckedVirtualScope, virtual_scope);
-                    LilyCheckedBodyFunItem *body_item =
-                      get__Vec(case_->body_items, j);
 
-                    switch (body_item->kind) {
+                    switch (sub_case->body_item->kind) {
                         case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
-                            reanalyze_expr__LilyAnalysis(self,
-                                                         signature,
-                                                         body_item->expr,
-                                                         case_virtual_scope,
-                                                         return_data_type);
+                            reanalyze_expr__LilyAnalysis(
+                              self,
+                              signature,
+                              sub_case->body_item->expr,
+                              case_virtual_scope,
+                              return_data_type);
+
                             break;
                         case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
-                            reanalyze_stmt__LilyAnalysis(self,
-                                                         signature,
-                                                         &body_item->stmt,
-                                                         case_virtual_scope,
-                                                         return_data_type);
+                            reanalyze_stmt__LilyAnalysis(
+                              self,
+                              signature,
+                              &sub_case->body_item->stmt,
+                              case_virtual_scope,
+                              return_data_type);
+
                             break;
                         default:
                             UNREACHABLE("unknown variant");
@@ -3876,7 +3880,6 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
             }
 
             break;
-        }
         case LILY_CHECKED_STMT_KIND_RETURN: {
             LilyCheckedDataType *expr_data_type =
               reanalyze_expr__LilyAnalysis(self,
@@ -3894,6 +3897,45 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
 
             break;
         }
+        case LILY_CHECKED_STMT_KIND_SWITCH:
+            for (Usize i = 0; i < stmt->switch_.cases->len; ++i) {
+                LilyCheckedStmtSwitchCase *case_ =
+                  get__Vec(stmt->switch_.cases, i);
+
+                for (Usize j = 0; j < case_->sub_cases->len; ++j) {
+                    LilyCheckedStmtSwitchSubCase *sub_case =
+                      get__Vec(case_->sub_cases, j);
+                    LilyCheckedVirtualScope *case_virtual_scope =
+                      NEW(LilyCheckedVirtualScope, virtual_scope);
+
+                    switch (sub_case->body_item->kind) {
+                        case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
+                            reanalyze_expr__LilyAnalysis(
+                              self,
+                              signature,
+                              sub_case->body_item->expr,
+                              case_virtual_scope,
+                              return_data_type);
+
+                            break;
+                        case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
+                            reanalyze_stmt__LilyAnalysis(
+                              self,
+                              signature,
+                              &sub_case->body_item->stmt,
+                              case_virtual_scope,
+                              return_data_type);
+
+                            break;
+                        default:
+                            UNREACHABLE("unknown variant");
+                    }
+
+                    FREE(LilyCheckedVirtualScope, case_virtual_scope);
+                }
+            }
+
+            break;
         case LILY_CHECKED_STMT_KIND_TRY: {
             LilyCheckedVirtualScope *try_virtual_scope =
               NEW(LilyCheckedVirtualScope, virtual_scope);
