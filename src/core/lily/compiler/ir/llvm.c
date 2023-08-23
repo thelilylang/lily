@@ -117,7 +117,9 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     char *cpu = get_cpu();
     char *cpu_features = get_cpu_features();
 
-    LLVMModuleRef module = LLVMModuleCreateWithName(module_name);
+    LLVMContextRef context = LLVMContextCreate();
+    LLVMModuleRef module =
+      LLVMModuleCreateWithNameInContext(module_name, context);
     LLVMTargetRef target = NULL;
     char *target_error_msg = NULL;
 
@@ -149,7 +151,7 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     LLVMDisposeMessage(layout);
     lily_free(triple);
 
-    return (LilyIrLlvm){ .context = LLVMContextCreate(),
+    return (LilyIrLlvm){ .context = context,
                          .module = module,
                          .builder = LLVMCreateBuilder(),
                          .di_builder = LLVMCreateDIBuilder(module),
