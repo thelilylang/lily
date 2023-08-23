@@ -31,6 +31,7 @@
 #include <core/lily/compiler/ir/llvm/optimize.h>
 #include <core/lily/compiler/output/cache.h>
 
+#include <llvm-c/Analysis.h>
 #include <llvm-c/Core.h>
 
 #ifdef LILY_WINDOWS_OS
@@ -90,14 +91,28 @@ compile__LilyCompilerIrLlvm(const LilyPackage *package)
         lily_opt_level = LILY_OPT_LEVEL_O3;
     }
 
+    // Verify LLVM module
+    {
+        char *error = NULL;
+
+        if (LLVMVerifyModule(
+              package->ir.llvm.module, LLVMReturnStatusAction, &error)) {
+            EMIT_ERROR(error);
+            LLVMDisposeMessage(error);
+            exit(1);
+        }
+    }
+
     if (LilyLLVMOptimize(&package->ir.llvm, lily_opt_level, &error_msg, path)) {
         EMIT_ERROR(error_msg);
+        LLVMDisposeMessage(error_msg);
         exit(1);
     }
 
     if (LilyLLVMEmit(
           &package->ir.llvm, &error_msg, path, true, false, false, false)) {
         EMIT_ERROR(error_msg);
+        LLVMDisposeMessage(error_msg);
         exit(1);
     }
 
@@ -106,16 +121,6 @@ compile__LilyCompilerIrLlvm(const LilyPackage *package)
 
     dump__LilyIrLlvm(&package->ir.llvm);
 #endif
-
-    // if (LLVMTargetMachineEmitToFile(package->ir.llvm.machine,
-    //                                 package->ir.llvm.module,
-    //                                 path,
-    //                                 LLVMObjectFile,
-    //                                 &error_msg)) {
-    //     EMIT_ERROR(error_msg);
-    //     LLVMDisposeMessage(error_msg);
-    //     exit(1);
-    // }
 
     lily_free(path);
 }
