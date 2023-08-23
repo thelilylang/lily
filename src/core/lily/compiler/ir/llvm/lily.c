@@ -1895,8 +1895,8 @@ LilyLLVMRunModule(const LilyIrLlvm *Self, OrderedHashMap *Insts)
                     LLVMBuildCall2(Self->builder,
                                    LilyMainFunType,
                                    Fn,
-                                   (LLVMValueRef[]){ LLVMGetParam(Fn, 0),
-                                                     LLVMGetParam(Fn, 1) },
+                                   (LLVMValueRef[]){ LLVMGetParam(MainFn, 0),
+                                                     LLVMGetParam(MainFn, 1) },
                                    2,
                                    "");
 
