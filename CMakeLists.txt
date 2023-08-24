@@ -640,6 +640,7 @@ target_include_directories(lily_core_lily_functions PRIVATE ${LILY_INCLUDE})
 # lily_core_lily_mir
 set(LILY_CORE_LILY_MIR_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/case_value.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/cond.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/constant.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/dt.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/enum.c
