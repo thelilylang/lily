@@ -48,14 +48,16 @@ typedef struct LilyMirNameManager
 {
     Vec *names; // Vec<char*>*
     Usize count;
-    char *base_name;
+    const char *base_name;
 } LilyMirNameManager;
 
 /**
  *
  * @brief Construct LilyMirNameManager type.
  */
-inline CONSTRUCTOR(LilyMirNameManager, LilyMirNameManager, char *base_name)
+inline CONSTRUCTOR(LilyMirNameManager,
+                   LilyMirNameManager,
+                   const char *base_name)
 {
     return (LilyMirNameManager){ .names = NEW(Vec),
                                  .count = 0,
@@ -80,6 +82,7 @@ typedef struct LilyMirCurrentFun
     LilyMirInstruction *fun;
     LilyMirNameManager block_manager;
     LilyMirNameManager reg_manager;
+    LilyMirNameManager virtual_variable_manager;
 } LilyMirCurrentFun;
 
 /**
@@ -92,7 +95,9 @@ inline CONSTRUCTOR(LilyMirCurrentFun,
 {
     return (LilyMirCurrentFun){ .fun = fun,
                                 .block_manager = NEW(LilyMirNameManager, "bb"),
-                                .reg_manager = NEW(LilyMirNameManager, "r") };
+                                .reg_manager = NEW(LilyMirNameManager, "r."),
+                                .virtual_variable_manager =
+                                  NEW(LilyMirNameManager, ".") };
 }
 
 /**
@@ -281,6 +286,9 @@ LilyMirBuildDICompositeType(LilyMirModule *Module,
 LilyMirDebugInfo *
 LilyMirBuildDIElements(LilyMirModule *Module, Vec *items);
 
+LilyMirInstructionVal *
+LilyMirBuildVirtualVariable(LilyMirModule *Module, LilyMirDt *dt);
+
 #define LILY_MIR_SET_DI(inst, build_di, ...) \
     inst->debug_info = build_di(__VA_ARGS__)
 
@@ -447,6 +455,9 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
 void
 LilyMirAddFinalInstruction(LilyMirModule *Module,
                            LilyMirInstruction *exit_block);
+
+bool
+LilyMirHasFinalInstruction(LilyMirModule *Module);
 
 bool
 LilyMirHasRetInstruction(LilyMirModule *Module);
