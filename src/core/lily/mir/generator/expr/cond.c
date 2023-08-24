@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <core/lily/mir/generator/cond.h>
+#include <core/lily/mir/generator/expr/cond.h>
 #include <core/lily/mir/generator/expr.h>
 
 #define GENERATE_ASSIGN0_BLOCK()                                              \
@@ -152,6 +152,7 @@ generate_cond__LilyMir(LilyMirModule *module,
                                              current_virtual_variable,
                                              assign0_block);
 
+					ASSERT(first_cond);
                     ASSERT(first_cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
                     ASSERT(!LilyMirHasFinalInstruction(module));
 
@@ -180,6 +181,7 @@ generate_cond__LilyMir(LilyMirModule *module,
                                              current_virtual_variable,
                                              assign1_block);
 
+					ASSERT(second_cond);
                     ASSERT(second_cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
                     ASSERT(!LilyMirHasFinalInstruction(module));
 
