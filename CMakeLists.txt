@@ -661,6 +661,7 @@ set(LILY_CORE_LILY_MIR_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/linkage.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/mir.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/mir/name_manager.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/scope.c)
 
 add_library(lily_core_lily_mir STATIC ${LILY_CORE_LILY_MIR_SRC})
