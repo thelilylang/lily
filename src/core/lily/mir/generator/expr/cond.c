@@ -83,13 +83,16 @@ generate_cond__LilyMir(LilyMirModule *module,
                        LilyMirInstructionVal *virtual_variable,
                        LilyMirInstruction *exit_block)
 {
-    // NOTE: maybe add optional type as agreate condition data type, ...
-    ASSERT(expr->data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL);
+    // NOTE: We don't add assert to verify the kind of data type (because we
+    // have the possibility to get compiler defined data type), btw that's
+    // already verify in the analysis.
 
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_BINARY:
             switch (expr->binary.kind) {
                 case LILY_CHECKED_EXPR_BINARY_KIND_AND: {
+                    // NOTE: expected this signature: fun `and`(Bool, Bool) Bool
+
                     // => cond and cond
                     //
                     // ; ...
@@ -116,7 +119,7 @@ generate_cond__LilyMir(LilyMirModule *module,
                     // improve performance)
                     LilyMirInstructionVal *current_virtual_variable =
                       virtual_variable
-                        ? virtual_variable
+                        ? ref__LilyMirInstructionVal(virtual_variable)
                         : LilyMirBuildVirtualVariable(
                             module, NEW(LilyMirDt, LILY_MIR_DT_KIND_I1));
                     LilyMirInstruction *assign0_block =
@@ -207,6 +210,8 @@ generate_cond__LilyMir(LilyMirModule *module,
                       LilyMirInstruction, val, current_virtual_variable);
                 }
                 case LILY_CHECKED_EXPR_BINARY_KIND_OR: {
+                    // NOTE: expected this signature: fun `or`(Bool, Bool) Bool
+
                     // => cond or cond
                     //
                     // ; ...
@@ -233,7 +238,7 @@ generate_cond__LilyMir(LilyMirModule *module,
                     // improve performance)
                     LilyMirInstructionVal *current_virtual_variable =
                       virtual_variable
-                        ? virtual_variable
+                        ? ref__LilyMirInstructionVal(virtual_variable)
                         : LilyMirBuildVirtualVariable(
                             module, NEW(LilyMirDt, LILY_MIR_DT_KIND_I1));
                     LilyMirInstruction *assign0_block =

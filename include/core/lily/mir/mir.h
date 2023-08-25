@@ -44,32 +44,6 @@
 
 #define MAX_CURRENT_INST 8192
 
-typedef struct LilyMirNameManager
-{
-    Vec *names; // Vec<char*>*
-    Usize count;
-    const char *base_name;
-} LilyMirNameManager;
-
-/**
- *
- * @brief Construct LilyMirNameManager type.
- */
-inline CONSTRUCTOR(LilyMirNameManager,
-                   LilyMirNameManager,
-                   const char *base_name)
-{
-    return (LilyMirNameManager){ .names = NEW(Vec),
-                                 .count = 0,
-                                 .base_name = base_name };
-}
-
-/**
- *
- * @brief Free LilyMirNameManager type.
- */
-DESTRUCTOR(LilyMirNameManager, const LilyMirNameManager *self);
-
 enum LilyMirCurrentKind
 {
     LILY_MIR_CURRENT_KIND_CONST,
@@ -77,44 +51,10 @@ enum LilyMirCurrentKind
     LILY_MIR_CURRENT_KIND_STRUCT,
 };
 
-typedef struct LilyMirCurrentFun
-{
-    LilyMirInstruction *fun;
-    LilyMirNameManager block_manager;
-    LilyMirNameManager reg_manager;
-    LilyMirNameManager virtual_variable_manager;
-} LilyMirCurrentFun;
-
-/**
- *
- * @brief Construct LilyMirCurrentFun type.
- */
-inline CONSTRUCTOR(LilyMirCurrentFun,
-                   LilyMirCurrentFun,
-                   LilyMirInstruction *fun)
-{
-    return (LilyMirCurrentFun){ .fun = fun,
-                                .block_manager = NEW(LilyMirNameManager, "bb"),
-                                .reg_manager = NEW(LilyMirNameManager, "r."),
-                                .virtual_variable_manager =
-                                  NEW(LilyMirNameManager, ".") };
-}
-
-/**
- *
- * @brief Free LilyMirCurrentFun type.
- */
-DESTRUCTOR(LilyMirCurrentFun, const LilyMirCurrentFun *self);
-
 typedef struct LilyMirCurrent
 {
     enum LilyMirCurrentKind kind;
-    union
-    {
-        LilyMirInstruction *const_;
-        LilyMirCurrentFun fun;
-        LilyMirInstruction *struct_;
-    };
+    LilyMirInstruction *inst; // LilyMirInstruction* (&)
 } LilyMirCurrent;
 
 /**
@@ -133,7 +73,7 @@ VARIANT_CONSTRUCTOR(LilyMirCurrent *,
 VARIANT_CONSTRUCTOR(LilyMirCurrent *,
                     LilyMirCurrent,
                     fun,
-                    LilyMirCurrentFun fun);
+                    LilyMirInstruction *fun);
 
 /**
  *
@@ -148,7 +88,10 @@ VARIANT_CONSTRUCTOR(LilyMirCurrent *,
  *
  * @brief Free LilyMirCurrent type.
  */
-DESTRUCTOR(LilyMirCurrent, LilyMirCurrent *self);
+inline DESTRUCTOR(LilyMirCurrent, LilyMirCurrent *self)
+{
+    lily_free(self);
+}
 
 typedef struct LilyMirModule
 {
@@ -301,7 +244,7 @@ LilyMirNextBlock(LilyMirModule *Module)
     ASSERT(CAST(LilyMirCurrent *, Module->current->top)->kind ==
            LILY_MIR_CURRENT_KIND_FUN);
     pop__Stack(
-      CAST(LilyMirCurrent *, Module->current->top)->fun.fun->fun.block_stack);
+      CAST(LilyMirCurrent *, Module->current->top)->inst->fun.block_stack);
 }
 
 void
@@ -335,18 +278,18 @@ LilyMirDisposeBuilder(LilyMirModule *Module);
 char *
 LilyMirGenerateName(LilyMirNameManager *NameManager);
 
-inline char *
+inline const char *
 LilyMirGetLastRegName(LilyMirModule *Module)
 {
-    return last__Vec(
-      CAST(LilyMirCurrent *, Module->current->top)->fun.reg_manager.names);
+    return last__Vec(CAST(LilyMirCurrent *, Module->current->top)
+                       ->inst->fun.reg_manager.names);
 }
 
 LilyMirInstruction *
 LilyMirBuildReg(LilyMirModule *Module, LilyMirInstruction *Inst);
 
 inline LilyMirInstructionVal *
-LilyMirBuildRegVal(LilyMirModule *Module, LilyMirDt *dt, String *name)
+LilyMirBuildRegVal(LilyMirModule *Module, LilyMirDt *dt, const char *name)
 {
     return NEW_VARIANT(LilyMirInstructionVal, reg, dt, name);
 }
@@ -361,8 +304,7 @@ LilyMirBuildAlloc(LilyMirModule *Module, LilyMirDt *dt)
 inline Usize
 LilyMirGetBlockId(LilyMirModule *Module)
 {
-    return CAST(LilyMirCurrent *, Module->current->top)
-      ->fun.fun->fun.block_count;
+    return CAST(LilyMirCurrent *, Module->current->top)->inst->fun.block_count;
 }
 
 LilyMirInstruction *

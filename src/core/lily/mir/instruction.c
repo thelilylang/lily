@@ -263,6 +263,7 @@ CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = kind;
     self->dt = dt;
+    self->ref_count = 0;
 
     return self;
 }
@@ -277,6 +278,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY;
     self->dt = dt;
+    self->ref_count = 0;
     self->array = array;
 
     return self;
@@ -292,6 +294,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_BYTES;
     self->dt = dt;
+    self->ref_count = 0;
     self->bytes = bytes;
 
     return self;
@@ -308,6 +311,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION;
     self->dt = dt;
+    self->ref_count = 0;
     self->exception[0] = ok;
     self->exception[1] = err;
 
@@ -324,6 +328,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_FLOAT;
     self->dt = dt;
+    self->ref_count = 0;
     self->float_ = float_;
 
     return self;
@@ -339,6 +344,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_INT;
     self->dt = dt;
+    self->ref_count = 0;
     self->int_ = int_;
 
     return self;
@@ -354,6 +360,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_LIST;
     self->dt = dt;
+    self->ref_count = 0;
     self->list = list;
 
     return self;
@@ -369,6 +376,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_PARAM;
     self->dt = dt;
+    self->ref_count = 0;
     self->param = param;
 
     return self;
@@ -378,12 +386,13 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
                     reg,
                     LilyMirDt *dt,
-                    String *reg)
+                    const char *reg)
 {
     LilyMirInstructionVal *self = lily_malloc(sizeof(LilyMirInstructionVal));
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_REG;
     self->dt = dt;
+    self->ref_count = 0;
     self->reg = reg;
 
     return self;
@@ -399,6 +408,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_SLICE;
     self->dt = dt;
+    self->ref_count = 0;
     self->slice = slice;
 
     return self;
@@ -414,6 +424,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_STR;
     self->dt = dt;
+    self->ref_count = 0;
     self->str = str;
 
     return self;
@@ -429,6 +440,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_STRUCT;
     self->dt = dt;
+    self->ref_count = 0;
     self->struct_ = struct_;
 
     return self;
@@ -444,6 +456,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_TRACE;
     self->dt = dt;
+    self->ref_count = 0;
     self->trace = trace;
 
     return self;
@@ -459,6 +472,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_TUPLE;
     self->dt = dt;
+    self->ref_count = 0;
     self->tuple = tuple;
 
     return self;
@@ -474,6 +488,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_UINT;
     self->dt = dt;
+    self->ref_count = 0;
     self->uint = uint;
 
     return self;
@@ -489,6 +504,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_VAR;
     self->dt = NEW_VARIANT(LilyMirDt, ptr, dt);
+    self->ref_count = 0;
     self->var = var;
 
     return self;
@@ -582,7 +598,7 @@ IMPL_FOR_DEBUG(to_string,
             return res;
         }
         case LILY_MIR_INSTRUCTION_VAL_KIND_REG: {
-            char *s = format("\x1b[33m%{S}\x1b[0m", self->reg);
+            char *s = format("\x1b[33m%{s}\x1b[0m", self->reg);
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -704,7 +720,6 @@ VARIANT_DESTRUCTOR(LilyMirInstructionVal,
 VARIANT_DESTRUCTOR(LilyMirInstructionVal, reg, LilyMirInstructionVal *self)
 {
     FREE(LilyMirDt, self->dt);
-    FREE(String, self->reg);
     lily_free(self);
 }
 
@@ -728,6 +743,11 @@ VARIANT_DESTRUCTOR(LilyMirInstructionVal, tuple, LilyMirInstructionVal *self)
 
 DESTRUCTOR(LilyMirInstructionVal, LilyMirInstructionVal *self)
 {
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
     switch (self->kind) {
         case LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY:
             FREE_VARIANT(LilyMirInstructionVal, array, self);
@@ -823,7 +843,7 @@ IMPL_FOR_DEBUG(to_string,
                LilyMirInstructionBlock,
                const LilyMirInstructionBlock *self)
 {
-    String *res = format__String("{S}:\n", self->name);
+    String *res = format__String("{s}:\n", self->name);
 
     ++tab_count;
 
@@ -852,7 +872,6 @@ DESTRUCTOR(LilyMirInstructionBlock, const LilyMirInstructionBlock *self)
     FREE_BUFFER_ITEMS(
       self->insts->buffer, self->insts->len, LilyMirInstruction);
     FREE(Vec, self->insts);
-    FREE(String, self->name);
 }
 
 #ifdef ENV_DEBUG
@@ -932,24 +951,29 @@ CONSTRUCTOR(LilyMirInstructionFun,
     Stack *block_stack = NEW(Stack, 1024);
     Vec *insts = NEW(Vec);
 
-    LilyMirInstruction *block = NEW_VARIANT(
-      LilyMirInstruction,
-      block,
-      NEW(LilyMirInstructionBlock, from__String("entry"), limit, 0));
+    LilyMirInstruction *block =
+      NEW_VARIANT(LilyMirInstruction,
+                  block,
+                  NEW(LilyMirInstructionBlock, "entry", limit, 0));
 
     push__Vec(insts, block);
     push__Stack(block_stack, &block->block);
 
-    return (LilyMirInstructionFun){ .linkage = linkage,
-                                    .name = name,
-                                    .base_name = base_name,
-                                    .args = args,
-                                    .generic_params = generic_params,
-                                    .insts = insts,
-                                    .block_stack = block_stack,
-                                    .return_data_type = return_data_type,
-                                    .scope = NEW(LilyMirScope, NULL),
-                                    .block_count = 1 };
+    return (LilyMirInstructionFun){
+        .linkage = linkage,
+        .name = name,
+        .base_name = base_name,
+        .args = args,
+        .generic_params = generic_params,
+        .insts = insts,
+        .block_stack = block_stack,
+        .return_data_type = return_data_type,
+        .reg_manager = NEW(LilyMirNameManager, "r."),
+        .block_manager = NEW(LilyMirNameManager, "bb"),
+        .virtual_variable_manager = NEW(LilyMirNameManager, "."),
+        .scope = NEW(LilyMirScope, NULL),
+        .block_count = 1
+    };
 }
 
 #ifdef ENV_DEBUG
@@ -1014,6 +1038,9 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
     FREE(Vec, self->insts);
     FREE(LilyMirScope, &self->scope);
     FREE(Stack, self->block_stack);
+    FREE(LilyMirNameManager, &self->reg_manager);
+    FREE(LilyMirNameManager, &self->block_manager);
+    FREE(LilyMirNameManager, &self->virtual_variable_manager);
     FREE(LilyMirDt, self->return_data_type);
 }
 
@@ -1109,8 +1136,8 @@ IMPL_FOR_DEBUG(to_string,
                const LilyMirInstructionJmpCond *self)
 {
     return format__String(
-      "\x1b[34mjmpcond\x1b[0m {Sr} then \x1b[33mblock\x1b[0m {S} else "
-      "\x1b[33mblock\x1b[0m {S}",
+      "\x1b[34mjmpcond\x1b[0m {Sr} then \x1b[33mblock\x1b[0m {s} else "
+      "\x1b[33mblock\x1b[0m {s}",
       to_string__Debug__LilyMirInstructionVal(self->cond),
       self->then_block->name,
       self->else_block->name);
@@ -1123,7 +1150,7 @@ IMPL_FOR_DEBUG(to_string,
                LilyMirInstructionReg,
                const LilyMirInstructionReg *self)
 {
-    return format__String("%{S} = {Sr}",
+    return format__String("%{s} = {Sr}",
                           self->name,
                           to_string__Debug__LilyMirInstruction(self->inst));
 }
@@ -1132,7 +1159,6 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyMirInstructionReg, const LilyMirInstructionReg *self)
 {
     FREE(LilyMirInstruction, self->inst);
-    FREE(String, self->name);
 }
 
 #ifdef ENV_DEBUG
@@ -2544,7 +2570,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
               to_string__Debug__LilyMirInstructionDestSrc(&self->isub));
             break;
         case LILY_MIR_INSTRUCTION_KIND_JMP:
-            res = format__String("\x1b[34mjmp\x1b[34m \x1b[33mblock\x1b[0m {S}",
+            res = format__String("\x1b[34mjmp\x1b[34m \x1b[33mblock\x1b[0m {s}",
                                  self->jmp->name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_JMPCOND:

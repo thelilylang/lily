@@ -35,6 +35,7 @@
 #include <core/lily/mir/debug_info.h>
 #include <core/lily/mir/dt.h>
 #include <core/lily/mir/linkage.h>
+#include <core/lily/mir/name_manager.h>
 #include <core/lily/mir/scope.h>
 
 enum LilyMirInstructionKind
@@ -145,6 +146,7 @@ typedef struct LilyMirInstructionVal
 {
     enum LilyMirInstructionValKind kind;
     LilyMirDt *dt;
+    Usize ref_count;
     union
     {
         Vec *array;         // Vec<LilyMirInstructionVal*>*
@@ -154,7 +156,7 @@ typedef struct LilyMirInstructionVal
         Int64 int_;
         Vec *list;   // Vec<LilyMirInstructionVal*>*
         Usize param; // id of the param
-        String *reg;
+        const char *reg;
         Vec *slice;   // Vec<LilyMirInstructionVal*>*
         String *str;  // String* (&)
         Vec *struct_; // Vec<LilyMirInstructionVal*>*
@@ -261,7 +263,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
                     reg,
                     LilyMirDt *dt,
-                    String *reg);
+                    const char *reg);
 
 /**
  *
@@ -339,6 +341,19 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     var,
                     LilyMirDt *dt,
                     char *var);
+
+/**
+ *
+ * @brief Pass to ref a pointer of `LilyMirInstructionVal` and increment
+ * the `ref_count`.
+ * @return LilyMirInstructionVal* (&)
+ */
+inline LilyMirInstructionVal *
+ref__LilyMirInstructionVal(LilyMirInstructionVal *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *
@@ -620,7 +635,7 @@ inline DESTRUCTOR(LilyMirInstructionValDt, const LilyMirInstructionValDt *self)
 
 typedef struct LilyMirInstructionBlock
 {
-    String *name;
+    const char *name;
     LilyMirBlockLimit *limit;
     Vec *insts; // Vec<LilyMirInstruction*>*
     Usize id;
@@ -632,7 +647,7 @@ typedef struct LilyMirInstructionBlock
  */
 inline CONSTRUCTOR(LilyMirInstructionBlock,
                    LilyMirInstructionBlock,
-                   String *name,
+                   const char *name,
                    LilyMirBlockLimit *limit,
                    Usize id)
 {
@@ -780,6 +795,9 @@ typedef struct LilyMirInstructionFun
     Stack *block_stack;      // Stack<LilyMirInstructionBlock*>*
     HashMap *generic_params; // HashMap<LilyCheckedDataType*>* (&)
     LilyMirDt *return_data_type;
+    LilyMirNameManager reg_manager;
+    LilyMirNameManager block_manager;
+    LilyMirNameManager virtual_variable_manager;
     LilyMirScope scope;
     Usize block_count;
 } LilyMirInstructionFun;
@@ -979,7 +997,7 @@ inline DESTRUCTOR(LilyMirInstructionJmpCond,
 
 typedef struct LilyMirInstructionReg
 {
-    String *name;
+    const char *name;
     LilyMirInstruction *inst;
 } LilyMirInstructionReg;
 
@@ -989,7 +1007,7 @@ typedef struct LilyMirInstructionReg
  */
 inline CONSTRUCTOR(LilyMirInstructionReg,
                    LilyMirInstructionReg,
-                   String *name,
+                   const char *name,
                    LilyMirInstruction *inst)
 {
     return (LilyMirInstructionReg){ .name = name, .inst = inst };
