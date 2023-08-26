@@ -3408,8 +3408,45 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN: {
             LilyCheckedExpr *left = check_expr__LilyAnalysis(
               self, expr->binary.left, scope, safety_mode, true, NULL);
-            LilyCheckedExpr *right = check_expr__LilyAnalysis(
-              self, expr->binary.right, scope, safety_mode, false, NULL);
+            LilyCheckedExpr *right =
+              check_expr__LilyAnalysis(self,
+                                       expr->binary.right,
+                                       scope,
+                                       safety_mode,
+                                       false,
+                                       left->data_type);
+
+            if (expr->binary.kind == LILY_AST_EXPR_BINARY_KIND_ASSIGN) {
+                LilyCheckedDataType *assign_data_type = NULL;
+
+                // TODO: maybe add support for compiler defined data type
+                if (defined_data_type) {
+                    switch (defined_data_type->kind) {
+                        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+                        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+                            assign_data_type =
+                              ref__LilyCheckedDataType(defined_data_type);
+
+                            break;
+                        default:
+                            FAILED("expected unit or cvoid");
+                    }
+                } else {
+                    assign_data_type = NEW(LilyCheckedDataType,
+                                           LILY_CHECKED_DATA_TYPE_KIND_UNIT,
+                                           &expr->location);
+                }
+
+                return NEW_VARIANT(LilyCheckedExpr,
+                                   binary,
+                                   &expr->location,
+                                   assign_data_type,
+                                   expr,
+                                   NEW(LilyCheckedExprBinary,
+                                       LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN,
+                                       left,
+                                       right));
+            }
 
             return typecheck_binary_expr__LilyAnalysis(
               self,
