@@ -25,54 +25,54 @@
 #include <core/lily/mir/generator/expr.h>
 #include <core/lily/mir/generator/expr/cond.h>
 
-#define GENERATE_ASSIGN0_BLOCK()                                              \
-    /* Generate assign to 0 block */                                          \
-    /* assign0: */                                                            \
-    LilyMirAddBlock(module, assign0_block);                                   \
-    LilyMirSetBlockLimit(assign0_block->block.limit,                          \
-                         assign0_block->block.limit->id);                     \
-                                                                              \
-    /* store val(i1) %.0, val(i1) 0 */                                        \
-    LilyMirAddInst(                                                           \
-      module,                                                                 \
-      NEW_VARIANT(LilyMirInstruction,                                         \
-                  store,                                                      \
-                  NEW(LilyMirInstructionDestSrc,                              \
-                      current_virtual_variable,                               \
-                      NEW_VARIANT(LilyMirInstructionVal,                      \
-                                  int,                                        \
-                                  NEW(LilyMirDt, LILY_MIR_DT_KIND_I1),        \
-                                  0))));                                      \
-                                                                              \
-    /* jmp exit_block */                                                      \
-    LilyMirAddInst(module,                                                    \
-                   NEW_VARIANT(LilyMirInstruction, jmp, &exit_block->block)); \
-                                                                              \
+#define GENERATE_ASSIGN0_BLOCK()                                               \
+    /* Generate assign to 0 block */                                           \
+    /* assign0: */                                                             \
+    LilyMirAddBlock(module, assign0_block);                                    \
+    LilyMirSetBlockLimit(assign0_block->block.limit, assign0_block->block.id); \
+                                                                               \
+    /* store val(i1) %.0, val(i1) 0 */                                         \
+    LilyMirAddInst(                                                            \
+      module,                                                                  \
+      NEW_VARIANT(LilyMirInstruction,                                          \
+                  store,                                                       \
+                  NEW(LilyMirInstructionDestSrc,                               \
+                      ref__LilyMirInstructionVal(current_virtual_variable),    \
+                      NEW_VARIANT(LilyMirInstructionVal,                       \
+                                  int,                                         \
+                                  NEW(LilyMirDt, LILY_MIR_DT_KIND_I1),         \
+                                  0))));                                       \
+                                                                               \
+    /* jmp exit_block */                                                       \
+    LilyMirAddInst(                                                            \
+      module,                                                                  \
+      NEW_VARIANT(LilyMirInstruction, jmp, &current_exit_block->block));       \
+                                                                               \
     LilyMirPopBlock(module);
 
-#define GENERATE_ASSIGN1_BLOCK()                                              \
-    /* Generate assign to 1 block */                                          \
-    /* assign1: */                                                            \
-    LilyMirAddBlock(module, assign1_block);                                   \
-    LilyMirSetBlockLimit(assign1_block->block.limit,                          \
-                         assign1_block->block.limit->id);                     \
-                                                                              \
-    /* store val(i1) %.0, val(i1) 1 */                                        \
-    LilyMirAddInst(                                                           \
-      module,                                                                 \
-      NEW_VARIANT(LilyMirInstruction,                                         \
-                  store,                                                      \
-                  NEW(LilyMirInstructionDestSrc,                              \
-                      current_virtual_variable,                               \
-                      NEW_VARIANT(LilyMirInstructionVal,                      \
-                                  int,                                        \
-                                  NEW(LilyMirDt, LILY_MIR_DT_KIND_I1),        \
-                                  1))));                                      \
-                                                                              \
-    /* jmp exit_block */                                                      \
-    LilyMirAddInst(module,                                                    \
-                   NEW_VARIANT(LilyMirInstruction, jmp, &exit_block->block)); \
-                                                                              \
+#define GENERATE_ASSIGN1_BLOCK()                                               \
+    /* Generate assign to 1 block */                                           \
+    /* assign1: */                                                             \
+    LilyMirAddBlock(module, assign1_block);                                    \
+    LilyMirSetBlockLimit(assign1_block->block.limit, assign1_block->block.id); \
+                                                                               \
+    /* store val(i1) %.0, val(i1) 1 */                                         \
+    LilyMirAddInst(                                                            \
+      module,                                                                  \
+      NEW_VARIANT(LilyMirInstruction,                                          \
+                  store,                                                       \
+                  NEW(LilyMirInstructionDestSrc,                               \
+                      ref__LilyMirInstructionVal(current_virtual_variable),    \
+                      NEW_VARIANT(LilyMirInstructionVal,                       \
+                                  int,                                         \
+                                  NEW(LilyMirDt, LILY_MIR_DT_KIND_I1),         \
+                                  1))));                                       \
+                                                                               \
+    /* jmp exit_block */                                                       \
+    LilyMirAddInst(                                                            \
+      module,                                                                  \
+      NEW_VARIANT(LilyMirInstruction, jmp, &current_exit_block->block));       \
+                                                                               \
     LilyMirPopBlock(module);
 
 LilyMirInstruction *
@@ -122,6 +122,12 @@ generate_cond__LilyMir(LilyMirModule *module,
                         ? ref__LilyMirInstructionVal(virtual_variable)
                         : LilyMirBuildVirtualVariable(
                             module, NEW(LilyMirDt, LILY_MIR_DT_KIND_I1));
+                    LilyMirInstruction *current_exit_block =
+                      exit_block ? exit_block
+                                 : LilyMirBuildBlock(
+                                     module,
+                                     ref__LilyMirBlockLimit(
+                                       LilyMirGetInsertBlock(module)->limit));
                     LilyMirInstruction *assign0_block =
                       LilyMirBuildBlock(module, NEW(LilyMirBlockLimit));
                     LilyMirInstruction *assign1_block =
@@ -138,9 +144,6 @@ generate_cond__LilyMir(LilyMirModule *module,
                                                &first_cond_block->block));
 
                     LilyMirPopBlock(module);
-
-                    GENERATE_ASSIGN0_BLOCK();
-                    GENERATE_ASSIGN1_BLOCK();
 
                     // Generate first condition block
                     // first_cond:
@@ -201,7 +204,10 @@ generate_cond__LilyMir(LilyMirModule *module,
                                          LilyMirGetInsertBlock(module)->id);
                     LilyMirPopBlock(module);
 
-                    LilyMirAddBlock(module, exit_block);
+                    GENERATE_ASSIGN0_BLOCK();
+                    GENERATE_ASSIGN1_BLOCK();
+
+                    LilyMirAddBlock(module, current_exit_block);
 
                     lily_free(first_cond);
                     lily_free(second_cond);
@@ -241,6 +247,12 @@ generate_cond__LilyMir(LilyMirModule *module,
                         ? ref__LilyMirInstructionVal(virtual_variable)
                         : LilyMirBuildVirtualVariable(
                             module, NEW(LilyMirDt, LILY_MIR_DT_KIND_I1));
+                    LilyMirInstruction *current_exit_block =
+                      exit_block ? exit_block
+                                 : LilyMirBuildBlock(
+                                     module,
+                                     ref__LilyMirBlockLimit(
+                                       LilyMirGetInsertBlock(module)->limit));
                     LilyMirInstruction *assign0_block =
                       LilyMirBuildBlock(module, NEW(LilyMirBlockLimit));
                     LilyMirInstruction *assign1_block =
@@ -258,9 +270,6 @@ generate_cond__LilyMir(LilyMirModule *module,
 
                     LilyMirPopBlock(module);
 
-                    GENERATE_ASSIGN0_BLOCK();
-                    GENERATE_ASSIGN1_BLOCK();
-
                     // Generate first condition block
                     // first_cond:
                     LilyMirAddBlock(module, first_cond_block);
@@ -274,10 +283,11 @@ generate_cond__LilyMir(LilyMirModule *module,
                                              current_virtual_variable,
                                              assign0_block);
 
+                    ASSERT(first_cond);
                     ASSERT(first_cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
                     ASSERT(!LilyMirHasFinalInstruction(module));
 
-                    // jmpcond val(i1) %r.1, second_cond, assign0
+                    // jmpcond val(i1) %r.1, assign1, second_cond
                     LilyMirAddInst(module,
                                    NEW_VARIANT(LilyMirInstruction,
                                                jmpcond,
@@ -302,6 +312,7 @@ generate_cond__LilyMir(LilyMirModule *module,
                                              current_virtual_variable,
                                              assign1_block);
 
+                    ASSERT(second_cond);
                     ASSERT(second_cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
                     ASSERT(!LilyMirHasFinalInstruction(module));
 
@@ -318,7 +329,10 @@ generate_cond__LilyMir(LilyMirModule *module,
                                          LilyMirGetInsertBlock(module)->id);
                     LilyMirPopBlock(module);
 
-                    LilyMirAddBlock(module, exit_block);
+                    GENERATE_ASSIGN0_BLOCK();
+                    GENERATE_ASSIGN1_BLOCK();
+
+                    LilyMirAddBlock(module, current_exit_block);
 
                     lily_free(first_cond);
                     lily_free(second_cond);

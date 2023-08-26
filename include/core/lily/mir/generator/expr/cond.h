@@ -33,6 +33,8 @@
  *
  * @brief Generate condition in Lily MIR.
  * @param fun_signature LilyCheckedSignatureFun*? (&)
+ * @param virtual_variable LilyMirInstructionVal*? (&)
+ * @param exit_block LilyMirInstruction*? (&)
  * @return LilyMirInstruction*?
  */
 LilyMirInstruction *
