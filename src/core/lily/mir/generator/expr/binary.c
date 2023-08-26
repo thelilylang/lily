@@ -170,12 +170,7 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
             case LILY_CHECKED_EXPR_BINARY_KIND_AND:
             case LILY_CHECKED_EXPR_BINARY_KIND_OR:
                 return generate_cond__LilyMir(
-                  module,
-                  fun_signature,
-                  scope,
-                  expr,
-                  NULL,
-                  LilyMirBuildBlock(module, NEW(LilyMirBlockLimit)));
+                  module, fun_signature, scope, expr, NULL, NULL);
             default:
                 break;
         }
