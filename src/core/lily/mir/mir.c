@@ -569,10 +569,11 @@ LilyMirBuildVirtualVariable(LilyMirModule *Module, LilyMirDt *dt)
     // used anywhere and only used by the compiler.
     LilyMirAddInst(
       Module,
-      NEW_VARIANT(
-        LilyMirInstruction,
-        var,
-        NEW(LilyMirInstructionVar, name, LilyMirBuildAlloc(Module, dt))));
+      NEW_VARIANT(LilyMirInstruction,
+                  var,
+                  NEW(LilyMirInstructionVar,
+                      name,
+                      LilyMirBuildAlloc(Module, clone__LilyMirDt(dt)))));
 
     return NEW_VARIANT(LilyMirInstructionVal, var, dt, name);
 }
