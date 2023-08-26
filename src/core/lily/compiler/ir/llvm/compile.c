@@ -101,6 +101,8 @@ compile__LilyCompilerIrLlvm(const LilyPackage *package)
             LLVMDisposeMessage(error);
             exit(1);
         }
+
+        LLVMDisposeMessage(error);
     }
 
     if (LilyLLVMOptimize(&package->ir.llvm, lily_opt_level, &error_msg, path)) {
