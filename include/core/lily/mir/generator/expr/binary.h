@@ -38,6 +38,7 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                               LilyCheckedSignatureFun *fun_signature,
                               LilyMirScope *scope,
                               LilyCheckedExpr *expr,
+                              LilyMirInstructionVal *ptr_val,
                               bool in_return);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_EXPR_BINARY_H

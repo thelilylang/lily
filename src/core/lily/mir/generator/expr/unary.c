@@ -31,6 +31,7 @@ generate_unary_expr__LilyMir(LilyMirModule *module,
                              LilyCheckedSignatureFun *fun_signature,
                              LilyMirScope *scope,
                              LilyCheckedExpr *expr,
+                             LilyMirInstructionVal *ptr_val,
                              bool in_return)
 {
     ASSERT(expr->kind == LILY_CHECKED_EXPR_KIND_UNARY);
@@ -39,7 +40,7 @@ generate_unary_expr__LilyMir(LilyMirModule *module,
       LilyMirGetCheckedDtFromExpr(module, scope, expr->unary.right);
 
     LilyMirInstruction *right_inst = generate_expr__LilyMir(
-      module, fun_signature, scope, expr->unary.right, in_return);
+      module, fun_signature, scope, expr->unary.right, ptr_val, in_return);
 
     ASSERT(right_inst);
     ASSERT(right_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);

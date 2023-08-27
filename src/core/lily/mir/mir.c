@@ -264,26 +264,51 @@ LilyMirBuildLoad(LilyMirModule *Module,
     return NEW_VARIANT(LilyMirInstructionVal, reg, dt, name);
 }
 
-LilyMirInstruction *
+void
 LilyMirBuildVar(LilyMirModule *Module,
                 char *name,
                 LilyMirDt *dt,
-                LilyMirInstruction *inst)
+                LilyMirInstruction *inst,
+                bool allow_alloc)
 {
-    LilyMirAddInst(
-      Module,
-      NEW_VARIANT(
-        LilyMirInstruction,
-        var,
-        NEW(LilyMirInstructionVar, name, LilyMirBuildAlloc(Module, dt))));
+    ASSERT(inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
 
-    LilyMirInstruction *var = LilyMirBuildStore(
+    if (allow_alloc) {
+        LilyMirAddInst(
+          Module,
+          NEW_VARIANT(
+            LilyMirInstruction,
+            var,
+            NEW(LilyMirInstructionVar, name, LilyMirBuildAlloc(Module, dt))));
+    }
+
+    LilyMirInstruction *var_store = LilyMirBuildStore(
       NEW_VARIANT(LilyMirInstructionVal, var, clone__LilyMirDt(dt), name),
       inst->val);
 
-    lily_free(inst);
+    if (var_store) {
+        LilyMirAddInst(Module, var_store);
+    }
 
-    return var;
+    lily_free(inst);
+}
+
+LilyMirInstruction *
+LilyMirBuildStore(LilyMirInstructionVal *dest, LilyMirInstructionVal *src)
+{
+    // NOTE: itself assigments are normally detected and rejected by the
+    // analysis, but in some situations in the MIR generation we can get itself
+    // assignement, so to avoid unused instruction we will compare (equal) both
+    // value to solve this problem.
+    if (!eq__LilyMirInstructionVal(dest, src)) {
+        return NEW_VARIANT(
+          LilyMirInstruction, store, NEW(LilyMirInstructionDestSrc, dest, src));
+    }
+
+    FREE(LilyMirInstructionVal, dest);
+    FREE(LilyMirInstructionVal, src);
+
+    return NULL;
 }
 
 LilyMirInstruction *
@@ -866,7 +891,7 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     }
 
     LilyMirInstruction *cond = generate_expr__LilyMir(
-      Module, fun_signature, scope, if_branch->cond, false);
+      Module, fun_signature, scope, if_branch->cond, NULL, false);
 
     ASSERT(cond);
 
@@ -904,7 +929,7 @@ LilyMirBuildElifBranch(LilyMirModule *Module,
     LilyMirAddBlock(Module, current_block);
 
     LilyMirInstruction *cond = generate_expr__LilyMir(
-      Module, fun_signature, scope, elif_branch->cond, false);
+      Module, fun_signature, scope, elif_branch->cond, NULL, false);
 
     ASSERT(cond);
 
@@ -1048,7 +1073,7 @@ LilyMirBuildWhile(LilyMirModule *Module,
     }
 
     LilyMirInstruction *cond = generate_expr__LilyMir(
-      Module, fun_signature, scope, while_stmt->cond, false);
+      Module, fun_signature, scope, while_stmt->cond, NULL, false);
 
     ASSERT(cond);
 
@@ -1200,7 +1225,7 @@ LilyMirBuildSwitch(LilyMirModule *Module,
     LilyMirInstruction *exit_block =
       LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(parent_block_limit));
     LilyMirInstruction *switched_inst = generate_expr__LilyMir(
-      Module, fun_signature, scope, switch_stmt->switched_expr, false);
+      Module, fun_signature, scope, switch_stmt->switched_expr, NULL, false);
 
     ASSERT(switched_inst);
 
@@ -1243,7 +1268,7 @@ LilyMirBuildSwitch(LilyMirModule *Module,
                 LilyMirInstruction *next_block =
                   LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
                 LilyMirInstruction *cond_inst = generate_expr__LilyMir(
-                  Module, fun_signature, scope, sub_case->cond, false);
+                  Module, fun_signature, scope, sub_case->cond, NULL, false);
 
                 LilyMirAddInst(Module,
                                LilyMirBuildJmpCond(

@@ -341,11 +341,15 @@ generate_cond__LilyMir(LilyMirModule *module,
                       LilyMirInstruction, val, current_virtual_variable);
                 }
                 default:
-                    return generate_expr__LilyMir(
-                      module, fun_signature, scope, expr, false);
+                    return generate_expr__LilyMir(module,
+                                                  fun_signature,
+                                                  scope,
+                                                  expr,
+                                                  virtual_variable,
+                                                  false);
             }
         default:
             return generate_expr__LilyMir(
-              module, fun_signature, scope, expr, false);
+              module, fun_signature, scope, expr, virtual_variable, false);
     }
 }

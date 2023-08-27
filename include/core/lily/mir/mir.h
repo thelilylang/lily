@@ -344,11 +344,23 @@ LilyMirBuildLoad(LilyMirModule *Module,
                  LilyMirDt *dt,
                  String *value_name);
 
-LilyMirInstruction *
+inline void
+LilyMirBuildVarAlloc(LilyMirModule *Module, char *name, LilyMirDt *dt)
+{
+    LilyMirAddInst(
+      Module,
+      NEW_VARIANT(
+        LilyMirInstruction,
+        var,
+        NEW(LilyMirInstructionVar, name, LilyMirBuildAlloc(Module, dt))));
+}
+
+void
 LilyMirBuildVar(LilyMirModule *Module,
                 char *name,
                 LilyMirDt *dt,
-                LilyMirInstruction *inst);
+                LilyMirInstruction *inst,
+                bool allow_alloc);
 
 inline LilyMirInstructionVal *
 LilyMirBuildStruct(LilyMirModule *Module, LilyMirDt *dt, Vec *struct_)
@@ -356,12 +368,15 @@ LilyMirBuildStruct(LilyMirModule *Module, LilyMirDt *dt, Vec *struct_)
     return NEW_VARIANT(LilyMirInstructionVal, struct, dt, struct_);
 }
 
-inline LilyMirInstruction *
-LilyMirBuildStore(LilyMirInstructionVal *dest, LilyMirInstructionVal *src)
-{
-    return NEW_VARIANT(
-      LilyMirInstruction, store, NEW(LilyMirInstructionDestSrc, dest, src));
-}
+/**
+ *
+ * @note dest and src params could be free in this function.
+ * @param dest LilyMirInstructionVal*
+ * @param src LilyMirInstructionVal*
+ * @return LilyMirInstruction*?
+ */
+LilyMirInstruction *
+LilyMirBuildStore(LilyMirInstructionVal *dest, LilyMirInstructionVal *src);
 
 LilyMirInstruction *
 LilyMirBuildCall(LilyMirModule *Module,

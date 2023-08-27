@@ -38,12 +38,18 @@
         lily_free(left_inst);                                                  \
         lily_free(right_inst);                                                 \
                                                                                \
-        return LilyMirBuildStore(                                              \
+        LilyMirInstruction *store_inst = LilyMirBuildStore(                    \
           generate_assignable_expr__LilyMir(                                   \
             module, fun_signature, scope, expr->binary.left),                  \
           LilyMirBuildRegVal(module,                                           \
                              generate_dt__LilyMir(module, right_data_type),    \
                              LilyMirGetLastRegName(module)));                  \
+                                                                               \
+        /* NOTE: `store_inst` cannot be NULL, because itself assignment is     \
+         * rejected by the analysis. */                                        \
+        ASSERT(store_inst);                                                    \
+                                                                               \
+        return store_inst;                                                     \
     }
 
 LilyMirInstruction *
@@ -51,6 +57,7 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                               LilyCheckedSignatureFun *fun_signature,
                               LilyMirScope *scope,
                               LilyCheckedExpr *expr,
+                              LilyMirInstructionVal *ptr_val,
                               bool in_return)
 {
     ASSERT(expr->kind == LILY_CHECKED_EXPR_KIND_BINARY);
@@ -170,16 +177,16 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
             case LILY_CHECKED_EXPR_BINARY_KIND_AND:
             case LILY_CHECKED_EXPR_BINARY_KIND_OR:
                 return generate_cond__LilyMir(
-                  module, fun_signature, scope, expr, NULL, NULL);
+                  module, fun_signature, scope, expr, ptr_val, NULL);
             default:
                 break;
         }
     }
 
     LilyMirInstruction *left_inst = generate_expr__LilyMir(
-      module, fun_signature, scope, expr->binary.left, in_return);
+      module, fun_signature, scope, expr->binary.left, ptr_val, in_return);
     LilyMirInstruction *right_inst = generate_expr__LilyMir(
-      module, fun_signature, scope, expr->binary.right, in_return);
+      module, fun_signature, scope, expr->binary.right, ptr_val, in_return);
 
     ASSERT(left_inst);
     ASSERT(right_inst);

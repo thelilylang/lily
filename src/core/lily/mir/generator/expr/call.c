@@ -33,7 +33,8 @@ LilyMirInstruction *
 generate_call_expr__LilyMir(LilyMirModule *module,
                             LilyCheckedSignatureFun *fun_signature,
                             LilyMirScope *scope,
-                            LilyCheckedExpr *expr)
+                            LilyCheckedExpr *expr,
+                            LilyMirInstructionVal *ptr_val)
 {
     switch (expr->call.kind) {
         case LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE:
@@ -57,8 +58,13 @@ generate_call_expr__LilyMir(LilyMirModule *module,
                     LilyCheckedExprCallFunParam *param =
                       get__Vec(expr->call.fun.params, i);
 
-                    LilyMirInstruction *inst = generate_expr__LilyMir(
-                      module, fun_signature, scope, param->value, false);
+                    LilyMirInstruction *inst =
+                      generate_expr__LilyMir(module,
+                                             fun_signature,
+                                             scope,
+                                             param->value,
+                                             ptr_val,
+                                             false);
 
                     ASSERT(inst);
                     ASSERT(inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
@@ -132,6 +138,7 @@ generate_call_expr__LilyMir(LilyMirModule *module,
                       CAST(LilyCheckedExprCallRecordParam *,
                            get__Vec(expr->call.record.params, i))
                         ->value,
+                      ptr_val,
                       false);
 
                     ASSERT(val);

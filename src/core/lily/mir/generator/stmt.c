@@ -68,11 +68,14 @@ generate_stmt__LilyMir(LilyMirModule *module,
             TODO("generate raise stmt");
         case LILY_CHECKED_STMT_KIND_RETURN:
             if (stmt->return_.expr) {
-                return NEW_VARIANT(
-                  LilyMirInstruction,
-                  ret,
-                  generate_expr__LilyMir(
-                    module, fun_signature, scope, stmt->return_.expr, true));
+                return NEW_VARIANT(LilyMirInstruction,
+                                   ret,
+                                   generate_expr__LilyMir(module,
+                                                          fun_signature,
+                                                          scope,
+                                                          stmt->return_.expr,
+                                                          NULL,
+                                                          true));
             } else {
                 return NEW_VARIANT(
                   LilyMirInstruction,
@@ -96,17 +99,38 @@ generate_stmt__LilyMir(LilyMirModule *module,
 
             return NULL;
         case LILY_CHECKED_STMT_KIND_VARIABLE: {
+            // TODO: add ref count for LilyMirDt
+
             LilyCheckedDataType *var_data_type =
               LilyMirGetCheckedDtFromExpr(module, scope, stmt->variable.expr);
-            LilyMirInstruction *inst = generate_expr__LilyMir(
-              module, fun_signature, scope, stmt->variable.expr, false);
 
             LilyMirAddVar(scope, stmt->variable.name, var_data_type);
+            LilyMirBuildVarAlloc(module,
+                                 stmt->variable.name->buffer,
+                                 generate_dt__LilyMir(module, var_data_type));
 
-            return LilyMirBuildVar(module,
-                                   stmt->variable.name->buffer,
-                                   generate_dt__LilyMir(module, var_data_type),
-                                   inst);
+            LilyMirInstructionVal *var_val =
+              NEW_VARIANT(LilyMirInstructionVal,
+                          var,
+                          generate_dt__LilyMir(module, var_data_type),
+                          stmt->variable.name->buffer);
+            LilyMirInstruction *inst =
+              generate_expr__LilyMir(module,
+                                     fun_signature,
+                                     scope,
+                                     stmt->variable.expr,
+                                     var_val,
+                                     false);
+
+            FREE(LilyMirInstructionVal, var_val);
+
+            LilyMirBuildVar(module,
+                            stmt->variable.name->buffer,
+                            generate_dt__LilyMir(module, var_data_type),
+                            inst,
+                            false);
+
+            return NULL;
         }
         case LILY_CHECKED_STMT_KIND_WHILE:
             LilyMirBuildWhile(

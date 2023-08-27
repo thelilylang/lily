@@ -33,6 +33,7 @@ LilyMirInstruction *
 generate_call_expr__LilyMir(LilyMirModule *module,
                             LilyCheckedSignatureFun *fun_signature,
                             LilyMirScope *scope,
-                            LilyCheckedExpr *expr);
+                            LilyCheckedExpr *expr,
+                            LilyMirInstructionVal *ptr_val);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_EXPR_CALL_H
