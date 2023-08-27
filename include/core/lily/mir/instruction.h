@@ -123,7 +123,10 @@ enum LilyMirInstructionValKind
 {
     LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY,
     LILY_MIR_INSTRUCTION_VAL_KIND_BYTES,
-    LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION,
+    LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION, // TODO:
+                                             // LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION
+                                             // ->
+                                             // LILY_MIR_INSTRUCTION_VAL_KIND_RESULT
     LILY_MIR_INSTRUCTION_VAL_KIND_FLOAT,
     LILY_MIR_INSTRUCTION_VAL_KIND_INT,
     LILY_MIR_INSTRUCTION_VAL_KIND_LIST,
@@ -354,6 +357,14 @@ ref__LilyMirInstructionVal(LilyMirInstructionVal *self)
     ++self->ref_count;
     return self;
 }
+
+/**
+ *
+ * @brief Return true if the both vals are equal otherwise return false.
+ */
+bool
+eq__LilyMirInstructionVal(const LilyMirInstructionVal *self,
+                          const LilyMirInstructionVal *other);
 
 /**
  *

@@ -510,6 +510,119 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
     return self;
 }
 
+bool
+eq__LilyMirInstructionVal(const LilyMirInstructionVal *self,
+                          const LilyMirInstructionVal *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY: {
+            if (self->array->len != other->array->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->array->len; ++i) {
+                if (!eq__LilyMirInstructionVal(get__Vec(self->array, i),
+                                               get__Vec(other->array, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        case LILY_MIR_INSTRUCTION_VAL_KIND_BYTES:
+            return !strcmp((const char *)self->bytes,
+                           (const char *)other->bytes);
+        case LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION:
+            if (self->exception[0] && other->exception[0]) {
+                return eq__LilyMirInstructionVal(self->exception[0],
+                                                 other->exception[0]);
+            } else if (self->exception[1] && other->exception[1]) {
+                return eq__LilyMirInstructionVal(self->exception[1],
+                                                 other->exception[1]);
+            }
+
+            return false;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_FLOAT:
+            return self->float_ == other->float_;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_INT:
+            return self->int_ == other->int_;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_LIST:
+            if (self->list->len != other->list->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->list->len; ++i) {
+                if (!eq__LilyMirInstructionVal(get__Vec(self->list, i),
+                                               get__Vec(other->list, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_NIL:
+        case LILY_MIR_INSTRUCTION_VAL_KIND_UNDEF:
+        case LILY_MIR_INSTRUCTION_VAL_KIND_UNIT:
+            return true;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_PARAM:
+            return self->param == other->param;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_REG:
+            return !strcmp(self->reg, other->reg);
+        case LILY_MIR_INSTRUCTION_VAL_KIND_SLICE:
+            if (self->slice->len != other->slice->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->slice->len; ++i) {
+                if (!eq__LilyMirInstructionVal(get__Vec(self->slice, i),
+                                               get__Vec(other->slice, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_STR:
+            return !strcmp(self->str->buffer, other->str->buffer);
+        case LILY_MIR_INSTRUCTION_VAL_KIND_STRUCT:
+            if (self->struct_->len != other->struct_->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->struct_->len; ++i) {
+                if (!eq__LilyMirInstructionVal(get__Vec(self->struct_, i),
+                                               get__Vec(other->struct_, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_TRACE:
+            return eq__LilyMirInstructionVal(self->trace, other->trace);
+        case LILY_MIR_INSTRUCTION_VAL_KIND_TUPLE:
+            if (self->tuple->len != other->tuple->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->tuple->len; ++i) {
+                if (!eq__LilyMirInstructionVal(get__Vec(self->tuple, i),
+                                               get__Vec(other->tuple, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_UINT:
+            return self->uint == other->uint;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
+            return !strcmp(self->var, other->var);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
