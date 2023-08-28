@@ -514,7 +514,7 @@ bool
 eq__LilyMirInstructionVal(const LilyMirInstructionVal *self,
                           const LilyMirInstructionVal *other)
 {
-    if (self->kind != other->kind) {
+    if (self->kind != other->kind || !eq__LilyMirDt(self->dt, other->dt)) {
         return false;
     }
 
