@@ -213,13 +213,15 @@ LilyMirBuildJmpCond(LilyMirModule *Module,
                     LilyMirInstruction *ThenBlock,
                     LilyMirInstruction *ElseBlock)
 {
-	ASSERT(Cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+    ASSERT(Cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
     ASSERT(Cond->val->dt->kind == LILY_MIR_DT_KIND_I1);
 
-    return NEW_VARIANT(
-      LilyMirInstruction,
-      jmpcond,
-      NEW(LilyMirInstructionJmpCond, Cond->val, &ThenBlock->block, &ElseBlock->block));
+    return NEW_VARIANT(LilyMirInstruction,
+                       jmpcond,
+                       NEW(LilyMirInstructionJmpCond,
+                           Cond->val,
+                           &ThenBlock->block,
+                           &ElseBlock->block));
 }
 
 LilyMirInstructionVal *
