@@ -163,13 +163,10 @@ generate_cond__LilyMir(LilyMirModule *module,
                     ASSERT(!LilyMirHasFinalInstruction(module));
 
                     // jmpcond val(i1) %r.1, second_cond, assign0
-                    LilyMirAddInst(module,
-                                   NEW_VARIANT(LilyMirInstruction,
-                                               jmpcond,
-                                               NEW(LilyMirInstructionJmpCond,
-                                                   first_cond->val,
-                                                   &second_cond_block->block,
-                                                   &assign0_block->block)));
+                    LilyMirAddInst(
+                      module,
+                      LilyMirBuildJmpCond(
+                        module, first_cond, second_cond_block, assign0_block));
                     LilyMirSetBlockLimit(first_cond_block->block.limit,
                                          LilyMirGetInsertBlock(module)->id);
                     LilyMirPopBlock(module);
@@ -192,13 +189,10 @@ generate_cond__LilyMir(LilyMirModule *module,
                     ASSERT(!LilyMirHasFinalInstruction(module));
 
                     // jmpcond val(i1) %r.1, assign1, assign0
-                    LilyMirAddInst(module,
-                                   NEW_VARIANT(LilyMirInstruction,
-                                               jmpcond,
-                                               NEW(LilyMirInstructionJmpCond,
-                                                   second_cond->val,
-                                                   &assign1_block->block,
-                                                   &assign0_block->block)));
+                    LilyMirAddInst(
+                      module,
+                      LilyMirBuildJmpCond(
+                        module, second_cond, assign1_block, assign0_block));
 
                     LilyMirSetBlockLimit(second_cond_block->block.limit,
                                          LilyMirGetInsertBlock(module)->id);
@@ -288,13 +282,10 @@ generate_cond__LilyMir(LilyMirModule *module,
                     ASSERT(!LilyMirHasFinalInstruction(module));
 
                     // jmpcond val(i1) %r.1, assign1, second_cond
-                    LilyMirAddInst(module,
-                                   NEW_VARIANT(LilyMirInstruction,
-                                               jmpcond,
-                                               NEW(LilyMirInstructionJmpCond,
-                                                   first_cond->val,
-                                                   &assign1_block->block,
-                                                   &second_cond_block->block)));
+                    LilyMirAddInst(
+                      module,
+                      LilyMirBuildJmpCond(
+                        module, first_cond, assign1_block, second_cond_block));
                     LilyMirSetBlockLimit(first_cond_block->block.limit,
                                          LilyMirGetInsertBlock(module)->id);
                     LilyMirPopBlock(module);
@@ -317,13 +308,10 @@ generate_cond__LilyMir(LilyMirModule *module,
                     ASSERT(!LilyMirHasFinalInstruction(module));
 
                     // jmpcond val(i1) %r.1, assign1, assign0
-                    LilyMirAddInst(module,
-                                   NEW_VARIANT(LilyMirInstruction,
-                                               jmpcond,
-                                               NEW(LilyMirInstructionJmpCond,
-                                                   second_cond->val,
-                                                   &assign1_block->block,
-                                                   &assign0_block->block)));
+                    LilyMirAddInst(
+                      module,
+                      LilyMirBuildJmpCond(
+                        module, second_cond, assign1_block, assign0_block));
 
                     LilyMirSetBlockLimit(second_cond_block->block.limit,
                                          LilyMirGetInsertBlock(module)->id);
