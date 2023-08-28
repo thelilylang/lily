@@ -207,6 +207,21 @@ LilyMirBuildReg(LilyMirModule *Module, LilyMirInstruction *Inst)
       LilyMirInstruction, reg, NEW(LilyMirInstructionReg, name, Inst));
 }
 
+LilyMirInstruction *
+LilyMirBuildJmpCond(LilyMirModule *Module,
+                    LilyMirInstruction *Cond,
+                    LilyMirInstruction *ThenBlock,
+                    LilyMirInstruction *ElseBlock)
+{
+	ASSERT(Cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+    ASSERT(Cond->val->dt->kind == LILY_MIR_DT_KIND_I1);
+
+    return NEW_VARIANT(
+      LilyMirInstruction,
+      jmpcond,
+      NEW(LilyMirInstructionJmpCond, Cond->val, &ThenBlock->block, &ElseBlock->block));
+}
+
 LilyMirInstructionVal *
 LilyMirBuildLoad(LilyMirModule *Module,
                  LilyMirInstructionVal *src,
