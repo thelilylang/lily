@@ -85,7 +85,9 @@ generate_val__LilyMir(LilyMirModule *module,
                           LilyMirGetCheckedDtFromExpr(module, scope, expr)),
                         expr->call.global_name->buffer),
                       generate_dt__LilyMir(module, expr->data_type),
-                      expr->call.global_name);
+                      NEW_VARIANT(LilyMirInstructionFunLoadName,
+                                  var,
+                                  expr->call.global_name->buffer));
                 }
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
                     ASSERT(fun_signature);
