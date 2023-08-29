@@ -72,7 +72,7 @@ generate_call_expr__LilyMir(LilyMirModule *module,
                     push__Vec(params, inst->val);
                     types[i] = inst->val->dt;
 
-                    lily_free(inst);
+                    partial_free__LilyMirInstruction(inst);
                 }
             }
 
@@ -131,7 +131,7 @@ generate_call_expr__LilyMir(LilyMirModule *module,
 
             if (expr->call.record.params) {
                 for (Usize i = 0; i < expr->call.record.params->len; ++i) {
-                    LilyMirInstruction *val = generate_expr__LilyMir(
+                    LilyMirInstruction *inst_val = generate_expr__LilyMir(
                       module,
                       fun_signature,
                       scope,
@@ -141,11 +141,11 @@ generate_call_expr__LilyMir(LilyMirModule *module,
                       ptr_val,
                       false);
 
-                    ASSERT(val);
-                    ASSERT(val->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+                    ASSERT(inst_val);
+                    ASSERT(inst_val->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
 
-                    push__Vec(struct_, val->val);
-                    lily_free(val);
+                    push__Vec(struct_, inst_val->val);
+                    partial_free__LilyMirInstruction(inst_val);
                 }
             }
 
