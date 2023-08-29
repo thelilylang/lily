@@ -152,6 +152,20 @@ LilyMirAddParam(LilyMirScope *Scope, LilyCheckedDataType *data_type)
     push__Vec(Scope->params, NEW(LilyMirScopeParam, data_type));
 }
 
+LilyMirInstructionFunLoad *
+search_load__LilyMirScope(const LilyMirScope *self,
+                          LilyMirInstructionFunLoadName name);
+
+void
+remove_load__LilyMirScope(const LilyMirScope *self,
+                          LilyMirInstructionFunLoadName name);
+
+LilyMirInstructionFunLoad *
+LilyMirSearchLoad(LilyMirModule *Module, LilyMirInstructionFunLoadName name);
+
+void
+LilyMirRemoveLoad(LilyMirModule *Module, LilyMirInstructionFunLoadName name);
+
 LilyMirDebugInfo *
 LilyMirBuildDIFile(LilyMirModule *Module, String *filename, String *directory);
 
@@ -327,13 +341,22 @@ LilyMirBuildJmpCond(LilyMirModule *Module,
 
 /**
  *
+ * @param inst LilyMirInstruction*
+ * @note The pointer `inst` is free.
+ */
+LilyMirInstruction *
+LilyMirLoadFromVal(LilyMirModule *Module, LilyMirInstruction *inst);
+
+/**
+ *
+ * @param dt LilyMirDt*
  * @param value_nam e.g. name of the variable.
  */
 LilyMirInstructionVal *
 LilyMirBuildLoad(LilyMirModule *Module,
                  LilyMirInstructionVal *src,
                  LilyMirDt *dt,
-                 String *value_name);
+                 LilyMirInstructionFunLoadName value_name);
 
 inline void
 LilyMirBuildVarAlloc(LilyMirModule *Module, char *name, LilyMirDt *dt)
@@ -367,7 +390,9 @@ LilyMirBuildStruct(LilyMirModule *Module, LilyMirDt *dt, Vec *struct_)
  * @return LilyMirInstruction*?
  */
 LilyMirInstruction *
-LilyMirBuildStore(LilyMirInstructionVal *dest, LilyMirInstructionVal *src);
+LilyMirBuildStore(LilyMirModule *Module,
+                  LilyMirInstructionVal *dest,
+                  LilyMirInstructionVal *src);
 
 LilyMirInstruction *
 LilyMirBuildCall(LilyMirModule *Module,
