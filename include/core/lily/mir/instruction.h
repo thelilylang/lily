@@ -768,10 +768,101 @@ inline DESTRUCTOR(LilyMirInstructionConst, const LilyMirInstructionConst *self)
     FREE(LilyMirInstructionVal, self->val);
 }
 
+// typedef struct LilyMirInstructionFunLoadNameField
+// {
+//     const char *instance_name;
+//     Vec *indexes; // Vec<LilyMirInstructionVal*>* (&)
+// } LilyMirInstructionFunLoadNameField;
+//
+// /**
+//  *
+//  * @brief Construct LilyMirInstructionFunLoadNameField type.
+//  */
+// inline CONSTRUCTOR(LilyMirInstructionFunLoadNameField,
+//                    LilyMirInstructionFunLoadNameField,
+//                    const char *instance_name,
+//                    Vec *indexes)
+// {
+//     return (LilyMirInstructionFunLoadNameField){ .instance_name =
+//     instance_name,
+//                                                  .indexes = indexes };
+// }
+
+enum LilyMirInstructionFunLoadNameKind
+{
+    LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_PARAM,
+    LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_REG,
+    LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_VAR,
+};
+
+typedef struct LilyMirInstructionFunLoadName
+{
+    enum LilyMirInstructionFunLoadNameKind kind;
+    union
+    {
+        Usize param;
+        const char *reg;
+        const char *var;
+    };
+} LilyMirInstructionFunLoadName;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionFunLoadName type
+ * (LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_PARAM).
+ */
+inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
+                           LilyMirInstructionFunLoadName,
+                           param,
+                           Usize param)
+{
+    return (LilyMirInstructionFunLoadName){
+        .kind = LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_PARAM, .param = param
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyMirInstructionFunLoadName type
+ * (LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_REG).
+ */
+inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
+                           LilyMirInstructionFunLoadName,
+                           reg,
+                           const char *reg)
+{
+    return (LilyMirInstructionFunLoadName){
+        .kind = LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_REG, .reg = reg
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyMirInstructionFunLoadName type
+ * (LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_VAR).
+ */
+inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
+                           LilyMirInstructionFunLoadName,
+                           var,
+                           const char *var)
+{
+    return (LilyMirInstructionFunLoadName){
+        .kind = LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_VAR, .var = var
+    };
+}
+
+/**
+ *
+ * @brief Check if both names are equal.
+ */
+bool
+eq__LilyMirInstructionFunLoadName(const LilyMirInstructionFunLoadName *self,
+                                  const LilyMirInstructionFunLoadName *other);
+
 typedef struct LilyMirInstructionFunLoad
 {
     // %<reg> = load ... <value_name> ...
-    String *value_name;       // String* (&)
+    LilyMirInstructionFunLoadName value_name;
     LilyMirInstruction *inst; // LilyMirInstruction* (&)
     Usize block_id;
 } LilyMirInstructionFunLoad;
@@ -782,7 +873,7 @@ typedef struct LilyMirInstructionFunLoad
  */
 CONSTRUCTOR(LilyMirInstructionFunLoad *,
             LilyMirInstructionFunLoad,
-            String *value_name,
+            LilyMirInstructionFunLoadName value_name,
             LilyMirInstruction *inst,
             Usize block_id);
 

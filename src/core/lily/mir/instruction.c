@@ -1035,9 +1035,29 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+bool
+eq__LilyMirInstructionFunLoadName(const LilyMirInstructionFunLoadName *self,
+                                  const LilyMirInstructionFunLoadName *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_PARAM:
+            return self->param == other->param;
+        case LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_REG:
+            return !strcmp(self->reg, other->reg);
+        case LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_VAR:
+            return !strcmp(self->var, other->var);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 CONSTRUCTOR(LilyMirInstructionFunLoad *,
             LilyMirInstructionFunLoad,
-            String *value_name,
+            LilyMirInstructionFunLoadName value_name,
             LilyMirInstruction *inst,
             Usize block_id)
 {
