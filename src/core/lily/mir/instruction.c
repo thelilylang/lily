@@ -2447,6 +2447,16 @@ get_arg__LilyMirInstruction(const LilyMirInstruction *self)
     }
 }
 
+void
+partial_free__LilyMirInstruction(LilyMirInstruction *self)
+{
+    if (self->debug_info) {
+        FREE(LilyMirDebugInfo, self->debug_info);
+    }
+
+    lily_free(self);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)

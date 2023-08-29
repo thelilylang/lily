@@ -2042,6 +2042,13 @@ get_arg__LilyMirInstruction(const LilyMirInstruction *self);
 
 /**
  *
+ * @brief Free `self` ptr and `self->debug_info` ptr.
+ */
+void
+partial_free__LilyMirInstruction(LilyMirInstruction *self);
+
+/**
+ *
  * @brief Convert LilyMirInstruction in String.
  * @note This function is only used to debug.
  */
