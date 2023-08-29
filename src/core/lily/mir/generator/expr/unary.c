@@ -121,7 +121,7 @@ generate_unary_expr__LilyMir(LilyMirModule *module,
                 UNREACHABLE("unknown variant");
         }
 
-        lily_free(right_inst);
+        partial_free__LilyMirInstruction(right_inst);
 
         LilyMirAddInst(module, LilyMirBuildReg(module, op_inst));
 
