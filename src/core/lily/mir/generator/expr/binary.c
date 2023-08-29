@@ -35,12 +35,15 @@
           LilyMirBuildReg(module,                                              \
                           NEW_VARIANT(LilyMirInstruction, inst_name, value))); \
                                                                                \
-        lily_free(left_inst);                                                  \
-        lily_free(right_inst);                                                 \
+        partial_free__LilyMirInstruction(left_inst);                           \
+        partial_free__LilyMirInstruction(right_inst);                          \
+                                                                               \
+        LilyMirInstruction *assignable = generate_assignable_expr__LilyMir(    \
+          module, fun_signature, scope, expr->binary.left);                    \
                                                                                \
         LilyMirInstruction *store_inst = LilyMirBuildStore(                    \
-          generate_assignable_expr__LilyMir(                                   \
-            module, fun_signature, scope, expr->binary.left),                  \
+          module,                                                              \
+          assignable->val,                                                     \
           LilyMirBuildRegVal(module,                                           \
                              generate_dt__LilyMir(module, right_data_type),    \
                              LilyMirGetLastRegName(module)));                  \
@@ -48,6 +51,8 @@
         /* NOTE: `store_inst` cannot be NULL, because itself assignment is     \
          * rejected by the analysis. */                                        \
         ASSERT(store_inst);                                                    \
+                                                                               \
+        partial_free__LilyMirInstruction(assignable);                          \
                                                                                \
         return store_inst;                                                     \
     }
@@ -183,8 +188,16 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
         }
     }
 
-    LilyMirInstruction *left_inst = generate_expr__LilyMir(
-      module, fun_signature, scope, expr->binary.left, ptr_val, in_return);
+    LilyMirInstruction *left_inst =
+      expr->binary.kind == LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN
+        ? generate_assignable_expr__LilyMir(
+            module, fun_signature, scope, expr->binary.left)
+        : generate_expr__LilyMir(module,
+                                 fun_signature,
+                                 scope,
+                                 expr->binary.left,
+                                 ptr_val,
+                                 in_return);
     LilyMirInstruction *right_inst = generate_expr__LilyMir(
       module, fun_signature, scope, expr->binary.right, ptr_val, in_return);
 
@@ -309,8 +322,15 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                                        NEW(LilyMirInstructionDestSrc,
                                            left_inst->val,
                                            right_inst->val));
-            case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN:
-                return LilyMirBuildStore(left_inst->val, right_inst->val);
+            case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN: {
+                LilyMirInstructionVal *left_inst_val = left_inst->val;
+                LilyMirInstructionVal *right_inst_val = right_inst->val;
+
+                partial_free__LilyMirInstruction(left_inst);
+                partial_free__LilyMirInstruction(right_inst);
+
+                return LilyMirBuildStore(module, left_inst_val, right_inst_val);
+            }
             case LILY_CHECKED_EXPR_BINARY_KIND_BIT_AND:
                 op_inst = NEW_VARIANT(LilyMirInstruction,
                                         bitand,
@@ -546,8 +566,8 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                 UNREACHABLE("unknown variant");
         }
 
-        lily_free(left_inst);
-        lily_free(right_inst);
+        partial_free__LilyMirInstruction(left_inst);
+        partial_free__LilyMirInstruction(right_inst);
 
         LilyMirAddInst(module, LilyMirBuildReg(module, op_inst));
 
