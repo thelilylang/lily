@@ -23,10 +23,13 @@
  */
 
 #include <base/new.h>
+#include <base/print.h>
 #include <base/test.h>
 
 #include <stdio.h>
 #include <time.h>
+
+// TODO: Replace all `printf` by `PRINT` (later...)
 
 // Free TestItem type (TEST_ITEM_KIND_SIMPLE).
 static inline VARIANT_DESTRUCTOR(TestItem, simple, TestItem *self);
@@ -324,28 +327,28 @@ run__Test(const Test *self)
         display_pass_test_output__Test(self->name);
     }
 
-    printf("\n\x1b[30mSuite:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu "
-           "failed,\x1b[0m "
-           "\x1b[30m%zu total\n\x1b[0m",
-           n_suite - n_suite_failed,
-           n_suite_failed,
-           n_suite);
+    PRINT("\n\x1b[30mSuite:\x1b[0m \x1b[32m{zu} passed,\x1b[0m \x1b[31m{zu} "
+          "failed,\x1b[0m "
+          "\x1b[30m{zu} total\n\x1b[0m",
+          n_suite - n_suite_failed,
+          n_suite_failed,
+          n_suite);
 
-    printf("\x1b[30mSimple:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu "
-           "failed,\x1b[0m \x1b[33m%zu skipped,\x1b[0m "
-           "\x1b[30m%zu total\n\x1b[0m",
-           n_simple - n_simple_failed - n_simple_skipped,
-           n_simple_failed,
-           n_simple_skipped,
-           n_simple);
+    PRINT("\x1b[30mSimple:\x1b[0m \x1b[32m{zu} passed,\x1b[0m \x1b[31m{zu} "
+          "failed,\x1b[0m \x1b[33m{zu} skipped,\x1b[0m "
+          "\x1b[30m{zu} total\n\x1b[0m",
+          n_simple - n_simple_failed - n_simple_skipped,
+          n_simple_failed,
+          n_simple_skipped,
+          n_simple);
 
-    printf("\x1b[30mCase:\x1b[0m \x1b[32m%zu passed,\x1b[0m \x1b[31m%zu "
-           "failed,\x1b[0m \x1b[33m%zu skipped,\x1b[0m "
-           "\x1b[30m%zu total\n\x1b[0m",
-           n_case - n_case_failed - n_case_skipped,
-           n_case_failed,
-           n_case_skipped,
-           n_case);
+    PRINT("\x1b[30mCase:\x1b[0m \x1b[32m{zu} passed,\x1b[0m \x1b[31m{zu} "
+          "failed,\x1b[0m \x1b[33m{zu} skipped,\x1b[0m "
+          "\x1b[30m{zu} total\n\x1b[0m",
+          n_case - n_case_failed - n_case_skipped,
+          n_case_failed,
+          n_case_skipped,
+          n_case);
 
     printf("\x1b[30mTime: %.2fs\n\x1b[0m",
            (double)(clock() - start) / CLOCKS_PER_SEC);
