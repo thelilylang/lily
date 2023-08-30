@@ -9,13 +9,18 @@
 #ifndef LLD_WASM_CONFIG_H
 #define LLD_WASM_CONFIG_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/BinaryFormat/Wasm.h"
 #include "llvm/Support/CachePruning.h"
+#include <optional>
 
 namespace lld {
 namespace wasm {
+
+class InputFile;
+class Symbol;
 
 // For --unresolved-symbols.
 enum class UnresolvedPolicy { ReportError, Warn, Ignore, ImportDynamic };
@@ -38,11 +43,12 @@ struct Configuration {
   bool extendedConst;
   bool growableTable;
   bool gcSections;
-  bool importMemory;
+  std::optional<std::pair<llvm::StringRef, llvm::StringRef>> memoryImport;
+  std::optional<llvm::StringRef> memoryExport;
   bool sharedMemory;
   bool importTable;
   bool importUndefined;
-  llvm::Optional<bool> is64;
+  std::optional<bool> is64;
   bool mergeDataSegments;
   bool pie;
   bool printGcSections;
@@ -52,6 +58,7 @@ struct Configuration {
   bool stripAll;
   bool stripDebug;
   bool stackFirst;
+  bool isStatic = false;
   bool trace;
   uint64_t globalBase;
   uint64_t initialMemory;
@@ -68,16 +75,19 @@ struct Configuration {
   llvm::StringRef mapFile;
   llvm::StringRef outputFile;
   llvm::StringRef thinLTOCacheDir;
+  llvm::StringRef whyExtract;
 
   llvm::StringSet<> allowUndefinedSymbols;
   llvm::StringSet<> exportedSymbols;
   std::vector<llvm::StringRef> requiredExports;
-  std::vector<llvm::StringRef> searchPaths;
+  llvm::SmallVector<llvm::StringRef, 0> searchPaths;
   llvm::CachePruningPolicy thinLTOCachePolicy;
-  llvm::Optional<std::vector<std::string>> features;
+  std::optional<std::vector<std::string>> features;
+  std::optional<std::vector<std::string>> extraFeatures;
 
   // The following config options do not directly correspond to any
-  // particular command line options.
+  // particular command line options, and should probably be moved to seperate
+  // Ctx struct as in ELF/Config.h
 
   // True if we are creating position-independent code.
   bool isPic;
@@ -95,6 +105,11 @@ struct Configuration {
   // Will be set to true if bss data segments should be emitted. In most cases
   // this is not necessary.
   bool emitBssSegments = false;
+
+  // A tuple of (reference, extractedFile, sym). Used by --why-extract=.
+  llvm::SmallVector<std::tuple<std::string, const InputFile *, const Symbol &>,
+                    0>
+      whyExtractRecords;
 };
 
 // The only instance of Configuration struct.
