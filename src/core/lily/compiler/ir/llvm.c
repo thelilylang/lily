@@ -193,11 +193,9 @@ LilyLLVMInit()
     LLVMInitializeCore(pass_reg);
     LLVMInitializeTransformUtils(pass_reg);
     LLVMInitializeScalarOpts(pass_reg);
-    LLVMInitializeObjCARCOpts(pass_reg);
     LLVMInitializeVectorization(pass_reg);
     LLVMInitializeInstCombine(pass_reg);
     LLVMInitializeIPO(pass_reg);
-    LLVMInitializeInstrumentation(pass_reg);
     LLVMInitializeAnalysis(pass_reg);
     LLVMInitializeIPA(pass_reg);
     LLVMInitializeCodeGen(pass_reg);
