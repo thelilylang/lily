@@ -34,6 +34,9 @@
  * @brief Generate condition in Lily MIR.
  * @param fun_signature LilyCheckedSignatureFun*? (&)
  * @param virtual_variable LilyMirInstructionVal*? (&)
+ * @param assign0_block LilyMirInstruction*? (&)
+ * @param assign1_block LilyMirInstruction*? (&)
+ * @param next_block LilyMirInstruction*? (&)
  * @param exit_block LilyMirInstruction*? (&)
  * @return LilyMirInstruction*?
  */
@@ -43,6 +46,9 @@ generate_cond__LilyMir(LilyMirModule *module,
                        LilyMirScope *scope,
                        LilyCheckedExpr *expr,
                        LilyMirInstructionVal *virtual_variable,
+                       LilyMirInstruction *assign0_block,
+                       LilyMirInstruction *assign1_block,
+                       LilyMirInstruction *next_block,
                        LilyMirInstruction *exit_block);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_COND_H
