@@ -32,7 +32,7 @@ if(UNIX AND NOT APPLE)
   set(LILY_LINUX 1)
 endif()
 
-find_package(LLVM 15 CONFIG REQUIRED)
+find_package(LLVM 16 CONFIG REQUIRED)
 message(STATUS "Found LLVM v${LLVM_PACKAGE_VERSION}")
 
 # find_package(clang 15 CONFIG REQUIRED) find_package(lld 15 CONFIG REQUIRED)
