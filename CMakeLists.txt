@@ -41,7 +41,9 @@ set(LILY_LLD_LIBS lily_lld_common lily_lld_coff lily_lld_elf lily_lld_mach_o
                   lily_lld_mingw lily_lld_wasm)
 
 find_library(ZLIB NAMES libz.a libz.so zlib libz z)
-list(APPEND LILY_LLVM_LIBS "${ZLIB};ZLIB::ZLIB;zstd::libzstd_shared")
+find_library(ZSTD NAMES libzstd.a libzstdstatic.a zstd NAMES_PER_DIR)
+
+list(APPEND LILY_LLVM_LIBS "${ZLIB};${ZSTD}")
 
 set(LILY_INCLUDE include lib/local/include)
 
