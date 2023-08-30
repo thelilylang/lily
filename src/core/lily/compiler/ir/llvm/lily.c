@@ -173,6 +173,7 @@ LilyLLVMBuildBlock(const LilyIrLlvm *Self,
     LLVMBasicBlockRef block = LilyLLVMCreateBasicBlock(Self, Pending, Name);
 
     LLVMPositionBuilderAtEnd(Self->builder, block);
+    add_block__LilyIrLlvmPending(Pending, Name, block);
     add_scope_item__LilyIrLlvmScope(Scope, limit_block_id);
 
     for (Usize i = 0; i < Insts->len; ++i) {
