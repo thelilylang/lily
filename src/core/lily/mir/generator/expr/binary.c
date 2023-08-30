@@ -181,8 +181,15 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
         switch (expr->binary.kind) {
             case LILY_CHECKED_EXPR_BINARY_KIND_AND:
             case LILY_CHECKED_EXPR_BINARY_KIND_OR:
-                return generate_cond__LilyMir(
-                  module, fun_signature, scope, expr, ptr_val, NULL);
+                return generate_cond__LilyMir(module,
+                                              fun_signature,
+                                              scope,
+                                              expr,
+                                              ptr_val,
+                                              NULL,
+                                              NULL,
+                                              NULL,
+                                              NULL);
             default:
                 break;
         }
