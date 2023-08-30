@@ -41,14 +41,14 @@ set(LILY_LLD_LIBS lily_lld_common lily_lld_coff lily_lld_elf lily_lld_mach_o
                   lily_lld_mingw lily_lld_wasm)
 
 find_library(ZLIB NAMES libz.a libz.so zlib libz z)
-list(APPEND LILY_LLVM_LIBS "${ZLIB}")
+list(APPEND LILY_LLVM_LIBS "${ZLIB};ZLIB::ZLIB;zstd::libzstd_shared")
 
 set(LILY_INCLUDE include lib/local/include)
 
 if(MSVC)
-  set(LILY_LLD_COMPILE_FLAGS "-std=c++14")
+  set(LILY_LLD_COMPILE_FLAGS "-std=c++17")
 else()
-  set(LILY_LLD_COMPILE_FLAGS "-std=c++14")
+  set(LILY_LLD_COMPILE_FLAGS "-std=c++17")
 endif()
 
 # lily_lld_common
