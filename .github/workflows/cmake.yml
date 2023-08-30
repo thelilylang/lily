@@ -22,7 +22,7 @@ jobs:
 
     - name: Download & Install LLVM
       # Install LLVM with `apt` package manager
-      run: sudo apt-get update && sudo apt-get install libllvm-15-ocaml-dev libllvm15 llvm-15 llvm-15-dev llvm-15-doc llvm-15-examples llvm-15-runtime
+      run: sudo apt-get update && sudo apt-get install libllvm-16-ocaml-dev libllvm16 llvm-16 llvm-16-dev llvm-16-doc llvm-16-examples llvm-16-runtime
 
     - name: Download & Install python requirements
       run: cd ${{github.workspace}} && pip install -r requirements.txt
@@ -49,7 +49,7 @@ jobs:
         python-version: '3.10'
 
     - name: Download & Install LLVM
-      run: brew install llvm@15
+      run: brew install llvm@16
 
     - name: Download & Install ZLib
       run: brew install zlib
@@ -59,8 +59,8 @@ jobs:
 
     - name: Setup LLVM & Configure CMake
       run: |
-        export LLVM_DIR=$(brew --prefix llvm@15)
-        cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=$(brew --prefix llvm@15)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@15)/bin/clang++
+        export LLVM_DIR=$(brew --prefix llvm@16)
+        cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=$(brew --prefix llvm@16)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@16)/bin/clang++
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build/Debug
