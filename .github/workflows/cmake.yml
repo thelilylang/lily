@@ -21,8 +21,11 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Download & Install LLVM
-      # Install LLVM with `apt` package manager
-      run: sudo apt-get update && sudo apt-get install libllvm-16-ocaml-dev libllvm16 llvm-16 llvm-16-dev llvm-16-doc llvm-16-examples llvm-16-runtime
+      run: |
+        sudo apt-get update
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 16 all
 
     - name: Download & Install python requirements
       run: cd ${{github.workspace}} && pip install -r requirements.txt
@@ -30,7 +33,7 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build/Debug' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+      run: cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=clang-16 -DCMAKE_CXX_COMPILER=clang++-16
 
     - name: Build
       # Build your program with the given configuration
