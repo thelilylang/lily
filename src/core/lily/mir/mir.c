@@ -943,6 +943,8 @@ LilyMirHasFinalInstruction(LilyMirModule *Module)
 
     LilyMirInstructionBlock *current_block = top->inst->fun.block_stack->top;
 
+    ASSERT(current_block);
+
     if (current_block->insts->len == 0) {
         return false;
     }
