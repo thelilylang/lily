@@ -13,7 +13,7 @@ namespace llvm {
 namespace Intrinsic {
 enum AMDGCNIntrinsics : unsigned {
 // Enum values for intrinsics
-    amdgcn_alignbyte = 1321,                          // llvm.amdgcn.alignbyte
+    amdgcn_alignbyte = 1489,                          // llvm.amdgcn.alignbyte
     amdgcn_atomic_dec,                         // llvm.amdgcn.atomic.dec
     amdgcn_atomic_inc,                         // llvm.amdgcn.atomic.inc
     amdgcn_ballot,                             // llvm.amdgcn.ballot
@@ -65,6 +65,7 @@ enum AMDGCNIntrinsics : unsigned {
     amdgcn_ds_add_gs_reg_rtn,                  // llvm.amdgcn.ds.add.gs.reg.rtn
     amdgcn_ds_append,                          // llvm.amdgcn.ds.append
     amdgcn_ds_bpermute,                        // llvm.amdgcn.ds.bpermute
+    amdgcn_ds_bvh_stack_rtn,                   // llvm.amdgcn.ds.bvh.stack.rtn
     amdgcn_ds_consume,                         // llvm.amdgcn.ds.consume
     amdgcn_ds_fadd,                            // llvm.amdgcn.ds.fadd
     amdgcn_ds_fadd_v2bf16,                     // llvm.amdgcn.ds.fadd.v2bf16
@@ -114,6 +115,7 @@ enum AMDGCNIntrinsics : unsigned {
     amdgcn_icmp,                               // llvm.amdgcn.icmp
     amdgcn_if,                                 // llvm.amdgcn.if
     amdgcn_if_break,                           // llvm.amdgcn.if.break
+    amdgcn_iglp_opt,                           // llvm.amdgcn.iglp.opt
     amdgcn_image_atomic_add_1d,                // llvm.amdgcn.image.atomic.add.1d
     amdgcn_image_atomic_add_1darray,           // llvm.amdgcn.image.atomic.add.1darray
     amdgcn_image_atomic_add_2d,                // llvm.amdgcn.image.atomic.add.2d
@@ -726,12 +728,14 @@ enum AMDGCNIntrinsics : unsigned {
     amdgcn_s_setprio,                          // llvm.amdgcn.s.setprio
     amdgcn_s_setreg,                           // llvm.amdgcn.s.setreg
     amdgcn_s_sleep,                            // llvm.amdgcn.s.sleep
+    amdgcn_s_wait_event_export_ready,          // llvm.amdgcn.s.wait.event.export.ready
     amdgcn_s_waitcnt,                          // llvm.amdgcn.s.waitcnt
     amdgcn_sad_hi_u8,                          // llvm.amdgcn.sad.hi.u8
     amdgcn_sad_u16,                            // llvm.amdgcn.sad.u16
     amdgcn_sad_u8,                             // llvm.amdgcn.sad.u8
     amdgcn_sbfe,                               // llvm.amdgcn.sbfe
     amdgcn_sched_barrier,                      // llvm.amdgcn.sched.barrier
+    amdgcn_sched_group_barrier,                // llvm.amdgcn.sched.group.barrier
     amdgcn_sdot2,                              // llvm.amdgcn.sdot2
     amdgcn_sdot4,                              // llvm.amdgcn.sdot4
     amdgcn_sdot8,                              // llvm.amdgcn.sdot8

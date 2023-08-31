@@ -105,9 +105,9 @@ hash_sip(const void *key, Usize key_len, const Usize k0, const Usize k1)
 #endif
     };
 
-    const Uint8 *key_bytes = (const uint8_t *)key;
+    const Uint8 *key_bytes = (const Uint8 *)key;
     const Uint8 *end = key_bytes + key_len - (key_len % sizeof(uint64_t));
-    const Uint64 *blocks = (const uint64_t *)key_bytes;
+    const Uint64 *blocks = (const Uint64 *)key_bytes;
 
     while (key_bytes < end) {
         state.v3 ^= *blocks;

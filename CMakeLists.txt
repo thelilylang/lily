@@ -32,7 +32,7 @@ if(UNIX AND NOT APPLE)
   set(LILY_LINUX 1)
 endif()
 
-find_package(LLVM 15 CONFIG REQUIRED)
+find_package(LLVM 16 CONFIG REQUIRED)
 message(STATUS "Found LLVM v${LLVM_PACKAGE_VERSION}")
 
 # find_package(clang 15 CONFIG REQUIRED) find_package(lld 15 CONFIG REQUIRED)
@@ -41,14 +41,16 @@ set(LILY_LLD_LIBS lily_lld_common lily_lld_coff lily_lld_elf lily_lld_mach_o
                   lily_lld_mingw lily_lld_wasm)
 
 find_library(ZLIB NAMES libz.a libz.so zlib libz z)
-list(APPEND LILY_LLVM_LIBS "${ZLIB}")
+find_library(ZSTD NAMES libzstd.a libzstdstatic.a zstd NAMES_PER_DIR)
+
+list(APPEND LILY_LLVM_LIBS "${ZLIB};${ZSTD}")
 
 set(LILY_INCLUDE include lib/local/include)
 
 if(MSVC)
-  set(LILY_LLD_COMPILE_FLAGS "-std=c++14")
+  set(LILY_LLD_COMPILE_FLAGS "-std=c++17")
 else()
-  set(LILY_LLD_COMPILE_FLAGS "-std=c++14")
+  set(LILY_LLD_COMPILE_FLAGS "-std=c++17")
 endif()
 
 # lily_lld_common

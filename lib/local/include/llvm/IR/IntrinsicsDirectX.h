@@ -13,7 +13,8 @@ namespace llvm {
 namespace Intrinsic {
 enum DXIntrinsics : unsigned {
 // Enum values for intrinsics
-    dx_flattened_thread_id_in_group = 2618,           // llvm.dx.flattened.thread.id.in.group
+    dx_create_handle = 2790,                          // llvm.dx.create.handle
+    dx_flattened_thread_id_in_group,           // llvm.dx.flattened.thread.id.in.group
     dx_group_id,                               // llvm.dx.group.id
     dx_thread_id,                              // llvm.dx.thread.id
     dx_thread_id_in_group,                     // llvm.dx.thread.id.in.group

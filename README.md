@@ -64,8 +64,8 @@ end
 ## Dependencies
 
 - CMake >= 3.20
-- Clang >= 15.0
-- LLVM 15
+- Clang >= 16.0
+- LLVM 16
 
 ## Contribute
 

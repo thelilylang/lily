@@ -51,6 +51,7 @@ LilyLLVMOptimize(const LilyIrLlvm *self,
 
     auto &module = *unwrap(self->module);
     auto &machine = *reinterpret_cast<TargetMachine *>(self->machine);
+    auto &context = *unwrap(self->context);
 
     PipelineTuningOptions pipeline_opts;
 
@@ -61,10 +62,10 @@ LilyLLVMOptimize(const LilyIrLlvm *self,
     pipeline_opts.MergeFunctions = !lily_opt_level;
 
     PassInstrumentationCallbacks instr_callbacks;
-    StandardInstrumentations std_instrumentations(false);
+    StandardInstrumentations std_instrumentations(context, false);
     std_instrumentations.registerCallbacks(instr_callbacks);
 
-    Optional<PGOOptions> opt_pgo_options = {};
+    std::optional<PGOOptions> opt_pgo_options = {};
     auto pb =
       PassBuilder(&machine, pipeline_opts, opt_pgo_options, &instr_callbacks);
 
