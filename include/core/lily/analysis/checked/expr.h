@@ -273,6 +273,19 @@ ref__LilyCheckedExpr(LilyCheckedExpr *self)
 
 /**
  *
+ * @brief Check if the expression is a node (e.g. binary expression, unary
+ * expression).
+ */
+inline bool
+is_node__LilyCheckedExpr(const LilyCheckedExpr *self)
+{
+    return self->kind == LILY_CHECKED_EXPR_KIND_BINARY ||
+           self->kind == LILY_CHECKED_EXPR_KIND_GROUPING ||
+           self->kind == LILY_CHECKED_EXPR_KIND_UNARY;
+}
+
+/**
+ *
  * @brief Convert LilyCheckedExprKind in string.
  * @note This function is only used to debug.
  */
