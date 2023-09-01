@@ -390,6 +390,16 @@ generate_cond__LilyMir(LilyMirModule *module,
                                                   virtual_variable,
                                                   false);
             }
+        case LILY_CHECKED_EXPR_KIND_GROUPING:
+            return generate_cond__LilyMir(module,
+                                          fun_signature,
+                                          scope,
+                                          expr->grouping,
+                                          virtual_variable,
+                                          assign0_block,
+                                          assign1_block,
+                                          next_block,
+                                          exit_block);
         default:
             return generate_expr__LilyMir(
               module, fun_signature, scope, expr, virtual_variable, false);
