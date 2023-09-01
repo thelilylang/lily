@@ -189,7 +189,8 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                                               NULL,
                                               NULL,
                                               NULL,
-                                              NULL);
+                                              NULL,
+                                              false);
             default:
                 break;
         }
