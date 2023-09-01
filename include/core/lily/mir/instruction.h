@@ -1427,7 +1427,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
  */
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
-                    and,
+                      and,
                     LilyMirInstructionDestSrc and);
 
 /**
