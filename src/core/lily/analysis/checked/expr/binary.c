@@ -221,6 +221,15 @@ is_assign__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind)
     }
 }
 
+bool
+eq__LilyCheckedExprBinary(const LilyCheckedExprBinary *self,
+                          const LilyCheckedExprBinary *other)
+{
+    return self->kind == other->kind &&
+           eq__LilyCheckedExpr(self->left, other->left) &&
+           eq__LilyCheckedExpr(self->right, other->right);
+}
+
 DESTRUCTOR(LilyCheckedExprBinary, const LilyCheckedExprBinary *self)
 {
     FREE(LilyCheckedExpr, self->left);

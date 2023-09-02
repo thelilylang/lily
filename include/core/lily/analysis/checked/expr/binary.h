@@ -139,6 +139,14 @@ is_assign__LilyCheckedExprBinaryKind(enum LilyCheckedExprBinaryKind kind);
 
 /**
  *
+ * @brief Check if the both binaries expression are equal.
+ */
+bool
+eq__LilyCheckedExprBinary(const LilyCheckedExprBinary *self,
+                          const LilyCheckedExprBinary *other);
+
+/**
+ *
  * @brief Free LilyCheckedExprBinary type.
  */
 DESTRUCTOR(LilyCheckedExprBinary, const LilyCheckedExprBinary *self);
