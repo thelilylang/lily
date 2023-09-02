@@ -68,6 +68,14 @@ inline CONSTRUCTOR(LilyCheckedExprAccessHook,
 
 /**
  *
+ * @brief Check if the both accceses hook are equal.
+ */
+bool
+eq__LilyCheckedExprAccessHook(const LilyCheckedExprAccessHook *self,
+                              const LilyCheckedExprAccessHook *other);
+
+/**
+ *
  * @brief Convert LilyCheckedExprAccessHook in string.
  * @note This function is only used to debug.
  */
@@ -102,6 +110,14 @@ inline CONSTRUCTOR(LilyCheckedExprAccessTuple,
 {
     return (LilyCheckedExprAccessTuple){ .left = left, .n = n };
 }
+
+/**
+ *
+ * @brief Check if the both accceses tuple are equal.
+ */
+bool
+eq__LilyCheckedExprAccessTuple(const LilyCheckedExprAccessTuple *self,
+                               const LilyCheckedExprAccessTuple *other);
 
 /**
  *
@@ -158,6 +174,14 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedExprAccess,
     return (LilyCheckedExprAccess){ .kind = LILY_CHECKED_EXPR_ACCESS_KIND_TUPLE,
                                     .tuple = tuple };
 }
+
+/**
+ *
+ * @brief Check if the both accesses are equal.
+ */
+bool
+eq__LilyCheckedExprAccess(const LilyCheckedExprAccess *self,
+                          const LilyCheckedExprAccess *other);
 
 /**
  *

@@ -55,6 +55,14 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+bool
+eq__LilyCheckedExprAccessHook(const LilyCheckedExprAccessHook *self,
+                              const LilyCheckedExprAccessHook *other)
+{
+    return eq__LilyCheckedExpr(self->index, other->index) &&
+           eq__LilyCheckedExpr(self->left, other->left);
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -73,6 +81,14 @@ DESTRUCTOR(LilyCheckedExprAccessHook, const LilyCheckedExprAccessHook *self)
     FREE(LilyCheckedExpr, self->index);
 }
 
+bool
+eq__LilyCheckedExprAccessTuple(const LilyCheckedExprAccessTuple *self,
+                               const LilyCheckedExprAccessTuple *other)
+{
+    return eq__LilyCheckedExpr(self->left, other->left) &&
+           eq__LilyCheckedExpr(self->n, other->n);
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -89,6 +105,24 @@ DESTRUCTOR(LilyCheckedExprAccessTuple, const LilyCheckedExprAccessTuple *self)
 {
     FREE(LilyCheckedExpr, self->left);
     FREE(LilyCheckedExpr, self->n);
+}
+
+bool
+eq__LilyCheckedExprAccess(const LilyCheckedExprAccess *self,
+                          const LilyCheckedExprAccess *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_ACCESS_KIND_HOOK:
+            return eq__LilyCheckedExprAccessHook(&self->hook, &other->hook);
+        case LILY_CHECKED_EXPR_ACCESS_KIND_TUPLE:
+            return eq__LilyCheckedExprAccessTuple(&self->tuple, &other->tuple);
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 #ifdef ENV_DEBUG
