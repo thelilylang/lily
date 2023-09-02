@@ -43,6 +43,8 @@
 
 #include <core/shared/location.h>
 
+// TODO: Maybe delete lambda expression
+
 enum LilyCheckedExprKind
 {
     LILY_CHECKED_EXPR_KIND_ACCESS,
@@ -280,6 +282,7 @@ inline bool
 is_node__LilyCheckedExpr(const LilyCheckedExpr *self)
 {
     return self->kind == LILY_CHECKED_EXPR_KIND_BINARY ||
+           self->kind == LILY_CHECKED_EXPR_KIND_CAST ||
            self->kind == LILY_CHECKED_EXPR_KIND_GROUPING ||
            self->kind == LILY_CHECKED_EXPR_KIND_UNARY;
 }

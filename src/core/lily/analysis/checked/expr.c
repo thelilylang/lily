@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 
 #include <core/lily/analysis/checked/expr.h>
 
@@ -387,13 +388,74 @@ CONSTRUCTOR(LilyCheckedExpr *,
 bool
 eq__LilyCheckedExpr(const LilyCheckedExpr *self, const LilyCheckedExpr *other)
 {
-    if (self->kind != other->kind) {
+    ASSERT(self->data_type && other->data_type);
+
+    if (self->kind != other->kind ||
+        !eq__LilyCheckedDataType(self->data_type, other->data_type)) {
         return false;
     }
 
     switch (self->kind) {
+        case LILY_CHECKED_EXPR_KIND_ACCESS:
+            return eq__LilyCheckedExprAccess(&self->access, &other->access);
         case LILY_CHECKED_EXPR_KIND_ARRAY:
-            break;
+            if (self->array.items->len != other->array.items->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->array.items->len; ++i) {
+                if (!eq__LilyCheckedExpr(get__Vec(self->array.items, i),
+                                         get__Vec(other->array.items, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_EXPR_KIND_BINARY:
+            return eq__LilyCheckedExprBinary(&self->binary, &other->binary);
+        case LILY_CHECKED_EXPR_KIND_CALL:
+            return eq__LilyCheckedExprCall(&self->call, &other->call);
+        case LILY_CHECKED_EXPR_KIND_CAST:
+            return eq__LilyCheckedExprCast(&self->cast, &other->cast);
+        case LILY_CHECKED_EXPR_KIND_COMPILER_FUN:
+            TODO("eq compiler fun");
+        case LILY_CHECKED_EXPR_KIND_GROUPING:
+            return eq__LilyCheckedExpr(self->grouping, other->grouping);
+        case LILY_CHECKED_EXPR_KIND_LAMBDA:
+            TODO("eq lambda");
+        case LILY_CHECKED_EXPR_KIND_LIST:
+            if (self->list.items->len != other->list.items->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->list.items->len; ++i) {
+                if (!eq__LilyCheckedExpr(get__Vec(self->list.items, i),
+                                         get__Vec(other->list.items, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_EXPR_KIND_LITERAL:
+            return eq__LilyCheckedExprLiteral(&self->literal, &other->literal);
+        case LILY_CHECKED_EXPR_KIND_TUPLE:
+            if (self->tuple.items->len != other->tuple.items->len) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->tuple.items->len; ++i) {
+                if (!eq__LilyCheckedExpr(get__Vec(self->tuple.items, i),
+                                         get__Vec(other->tuple.items, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_EXPR_KIND_UNARY:
+            return eq__LilyCheckedExprUnary(&self->unary, &other->unary);
+        case LILY_CHECKED_EXPR_KIND_SELF:
+        case LILY_CHECKED_EXPR_KIND_UNKNOWN:
+            return true;
         default:
             UNREACHABLE("unknown variant");
     }
