@@ -95,6 +95,14 @@ to_string__LilyCheckedExprUnaryKind(enum LilyCheckedExprUnaryKind kind);
 
 /**
  *
+ * @brief Check if the both unaries are equal.
+ */
+bool
+eq__LilyCheckedExprUnary(const LilyCheckedExprUnary *self,
+                         const LilyCheckedExprUnary *other);
+
+/**
+ *
  * @brief Free LilyCheckedExprUnary type.
  */
 DESTRUCTOR(LilyCheckedExprUnary, const LilyCheckedExprUnary *self);
