@@ -64,6 +64,13 @@ get_sys__LilySys(LilySysFun *syss, const char *name);
 
 /**
  *
+ * @brief Check if both sys funs are equal.
+ */
+bool
+eq__LilySys(const LilySysFun *self, const LilySysFun *other);
+
+/**
+ *
  * @brief Convert LilySysFun in String.
  * @note This function is only used to debug.
  */
