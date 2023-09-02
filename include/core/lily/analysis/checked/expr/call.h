@@ -167,6 +167,14 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
 
 /**
  *
+ * @brief Check if the both fun params are equal.
+ */
+bool
+eq__LilyCheckedExprCallFunParam(const LilyCheckedExprCallFunParam *self,
+                                const LilyCheckedExprCallFunParam *other);
+
+/**
+ *
  * @brief Convert LilyCheckedExprCallFunParam in String.
  * @note This function is only used to debug.
  */
@@ -371,6 +379,14 @@ CONSTRUCTOR(LilyCheckedExprCallMethodParam *,
 
 /**
  *
+ * @brief Check if the both method params are equal.
+ */
+bool
+eq__LilyCheckedExprCallMethodParam(const LilyCheckedExprCallMethodParam *self,
+                                   const LilyCheckedExprCallMethodParam *other);
+
+/**
+ *
  * @brief Convert LilyCheckedExprCallMethodParam in String.
  * @note This function is only used to debug.
  */
@@ -425,6 +441,14 @@ CONSTRUCTOR(LilyCheckedExprCallRecordParam *,
             String *name,
             LilyCheckedExpr *value,
             Usize field_index);
+
+/**
+ *
+ * @brief Check if the both record params are equal.
+ */
+bool
+eq__LilyCheckedExprCallRecordParam(const LilyCheckedExprCallRecordParam *self,
+                                   const LilyCheckedExprCallRecordParam *other);
 
 /**
  *
@@ -499,6 +523,15 @@ inline CONSTRUCTOR(LilyCheckedExprCallRecordFieldSingle,
 
 /**
  *
+ * @brief Check if the both record fields are equal.
+ */
+bool
+eq__LilyCheckedExprCallRecordFieldSingle(
+  const LilyCheckedExprCallRecordFieldSingle *self,
+  const LilyCheckedExprCallRecordFieldSingle *other);
+
+/**
+ *
  * @brief Convert LilyCheckedExprCallRecordFieldSingle in String.
  * @note This function is only used to debug.
  */
@@ -525,6 +558,15 @@ inline CONSTRUCTOR(LilyCheckedExprCallRecordFieldAccess,
 {
     return (LilyCheckedExprCallRecordFieldAccess){ .accesses = accesses };
 }
+
+/**
+ *
+ * @brief Check if the both field accesses are equal.
+ */
+bool
+eq__LilyCheckedExprCallRecordFieldAccess(
+  const LilyCheckedExprCallRecordFieldAccess *self,
+  const LilyCheckedExprCallRecordFieldAccess *other);
 
 /**
  *
@@ -560,6 +602,14 @@ inline CONSTRUCTOR(LilyCheckedExprCallVariant,
 {
     return (LilyCheckedExprCallVariant){ .value = value };
 }
+
+/**
+ *
+ * @brief Check if the both variants are equal.
+ */
+bool
+eq__LilyCheckedExprCallVariant(const LilyCheckedExprCallVariant *self,
+                               const LilyCheckedExprCallVariant *other);
 
 /**
  *
@@ -862,6 +912,14 @@ inline CONSTRUCTOR(LilyCheckedExprCall,
                                   .scope = scope,
                                   .global_name = global_name };
 }
+
+/**
+ *
+ * @brief Check if the both calls are equal.
+ */
+bool
+eq__LilyCheckedExprCall(const LilyCheckedExprCall *self,
+                        const LilyCheckedExprCall *other);
 
 /**
  *
