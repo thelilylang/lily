@@ -98,6 +98,13 @@ get_builtin__LilyBuiltin(LilyBuiltinFun *builtins,
 
 /**
  *
+ * @brief Check if both builtin funs are equal.
+ */
+bool
+eq__LilyBuiltin(const LilyBuiltinFun *self, const LilyBuiltinFun *other);
+
+/**
+ *
  * @brief Convert LilyBuiltinFun in String.
  * @note This function is only used to debug.
  */
