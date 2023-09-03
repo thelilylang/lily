@@ -27,11 +27,13 @@
 
 #include <core/lily/analysis/checked/data_type.h>
 #include <core/lily/analysis/checked/pattern/array.h>
+#include <core/lily/analysis/checked/pattern/as.h>
 #include <core/lily/analysis/checked/pattern/error.h>
 #include <core/lily/analysis/checked/pattern/list.h>
 #include <core/lily/analysis/checked/pattern/list_head.h>
 #include <core/lily/analysis/checked/pattern/list_tail.h>
 #include <core/lily/analysis/checked/pattern/literal.h>
+#include <core/lily/analysis/checked/pattern/name.h>
 #include <core/lily/analysis/checked/pattern/range.h>
 #include <core/lily/analysis/checked/pattern/record_call.h>
 #include <core/lily/analysis/checked/pattern/tuple.h>
@@ -46,13 +48,19 @@ typedef struct LilyAnalysis LilyAnalysis;
 enum LilyCheckedPatternKind
 {
     LILY_CHECKED_PATTERN_KIND_ARRAY,
+    // NOTE: only used when `use_switch` is false
+    LILY_CHECKED_PATTERN_KIND_AS,
+    // NOTE: only used when `use_switch` is false
+    LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE,
     LILY_CHECKED_PATTERN_KIND_ELSE,
     LILY_CHECKED_PATTERN_KIND_ERROR,
     LILY_CHECKED_PATTERN_KIND_LIST,
     LILY_CHECKED_PATTERN_KIND_LIST_HEAD,
     LILY_CHECKED_PATTERN_KIND_LIST_TAIL,
     LILY_CHECKED_PATTERN_KIND_LITERAL,
-    LILY_CHECKED_PATTERN_KIND_NONE,
+    // NOTE: only used when `use_switch` is false
+    LILY_CHECKED_PATTERN_KIND_NAME,
+    LILY_CHECKED_PATTERN_KIND_NONE, // TODO: remove this variant
     LILY_CHECKED_PATTERN_KIND_RANGE,
     LILY_CHECKED_PATTERN_KIND_RECORD_CALL,
     LILY_CHECKED_PATTERN_KIND_TUPLE,
@@ -82,11 +90,13 @@ typedef struct LilyCheckedPattern
     union
     {
         LilyCheckedPatternArray array;
+        LilyCheckedPatternAs as;
         LilyCheckedPatternError error;
         LilyCheckedPatternList list;
         LilyCheckedPatternListHead list_head;
         LilyCheckedPatternListTail list_tail;
         LilyCheckedPatternLiteral literal;
+        LilyCheckedPatternName name;
         LilyCheckedPatternRange range;
         LilyCheckedPatternRecordCall record_call;
         LilyCheckedPatternTuple tuple;
@@ -105,6 +115,18 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedDataType *data_type,
                     const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternArray array);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_AS).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    as,
+                    const Location *location,
+                    LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
+                    LilyCheckedPatternAs as);
 
 /**
  *
@@ -168,6 +190,18 @@ VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
                     LilyCheckedDataType *data_type,
                     const LilyAstPattern *ast_pattern,
                     LilyCheckedPatternLiteral literal);
+
+/**
+ *
+ * @brief Construct LilyCheckedPattern type (LILY_CHECKED_PATTERN_KIND_NAME).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedPattern *,
+                    LilyCheckedPattern,
+                    name,
+                    const Location *location,
+                    LilyCheckedDataType *data_type,
+                    const LilyAstPattern *ast_pattern,
+                    LilyCheckedPatternName name);
 
 /**
  *
