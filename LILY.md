@@ -1236,6 +1236,8 @@ x <~ 30
 ## List of at keywords
 
 ```
+@cc
+@cpp
 @sys
 @builtin
 @hide
