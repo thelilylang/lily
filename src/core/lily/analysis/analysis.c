@@ -7927,6 +7927,10 @@ check_for_stmt__LilyAnalysis(LilyAnalysis *self,
     checked_body_item->stmt.for_.expr = check_expr__LilyAnalysis(
       self, stmt->for_.expr_right, scope, safety_mode, false, NULL);
 
+    if (stmt->for_.capture) {
+        TODO("check capture");
+    }
+
     // Check for captured variables
     // TODO: add check on value (iter, ...)
     switch (stmt->for_.expr_left->kind) {
@@ -8018,6 +8022,10 @@ check_if_stmt__LilyAnalysis(LilyAnalysis *self,
 
     EXPECTED_BOOL_EXPR(if_cond);
 
+    if (stmt->if_.if_capture) {
+        TODO("check if capture");
+    }
+
     Vec *if_body = NEW(Vec);
     LilyCheckedScope *if_scope =
       NEW(LilyCheckedScope,
@@ -8033,6 +8041,7 @@ check_if_stmt__LilyAnalysis(LilyAnalysis *self,
         elifs = NEW(Vec);
 
         for (Usize k = 0; k < stmt->if_.elif_exprs->len; ++k) {
+            LilyAstCapture *capture = get__Vec(stmt->if_.elif_captures, k);
             LilyCheckedExpr *elif_cond =
               check_expr__LilyAnalysis(self,
                                        get__Vec(stmt->if_.elif_exprs, k),
@@ -8042,6 +8051,10 @@ check_if_stmt__LilyAnalysis(LilyAnalysis *self,
                                        NULL);
 
             EXPECTED_BOOL_EXPR(elif_cond);
+
+            if (capture) {
+                TODO("check elif capture");
+            }
 
             Vec *elif_body = NEW(Vec);
             LilyCheckedScope *elif_scope =
