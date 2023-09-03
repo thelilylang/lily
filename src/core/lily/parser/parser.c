@@ -153,6 +153,10 @@ parse_postfix_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr);
 static LilyAstExpr *
 parse_expr__LilyParseBlock(LilyParseBlock *self);
 
+// Parse capture.
+static LilyAstCapture *
+parse_capture__LilyParseBlock(LilyParseBlock *self);
+
 // Parse asm statement.
 static LilyAstBodyFunItem *
 parse_asm_stmt__LilyParser(LilyParser *self,
@@ -3693,6 +3697,95 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
             return parse_binary_expr__LilyParseBlock(self, expr);
         default:
             return expr;
+    }
+}
+
+LilyAstCapture *
+parse_capture__LilyParseBlock(LilyParseBlock *self)
+{
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_L_HOOK: {
+            Vec *multiple = NEW(Vec); // Vec<LilyAstCapture*?>*
+
+            next_token__LilyParseBlock(self); // skip `[`
+
+            while (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
+                LilyAstExpr *single = parse_expr__LilyParseBlock(self);
+
+				if (!single) {
+                    for (Usize i = 0; i < multiple->len; ++i) {
+                        LilyAstCapture *capture = get__Vec(multiple, i);
+
+                        if (capture) {
+                            FREE(LilyAstCapture, capture);
+                        }
+                    }
+
+                    FREE(Vec, multiple);
+
+                    return NULL;
+				}
+
+				push__Vec(multiple, single);
+
+                if (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
+                    switch (self->current->kind) {
+                        case LILY_TOKEN_KIND_COMMA:
+                            next_token__LilyParseBlock(self);
+                            break;
+                        default:
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                &self->parser->package->file,
+                                &self->current->location,
+                                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),
+                                NULL,
+                                NULL,
+                                from__String("expected `,`")),
+                              &self->parser->package->count_error);
+                    }
+                }
+            }
+
+            next_token__LilyParseBlock(self); // skip `]`
+
+            if (!HAS_REACHED_THE_END((*self))) {
+                emit__Diagnostic(
+                  NEW_VARIANT(Diagnostic,
+                              simple_lily_error,
+                              &self->parser->package->file,
+                              &self->current->location,
+                              NEW(LilyError,
+                                  LILY_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION),
+                              NULL,
+                              NULL,
+                              from__String("expected `do`")),
+                  &self->parser->package->count_error);
+            }
+
+			switch (multiple->len) {
+				case 1:
+					FAILED("warning: unused multiple capture");
+				case 0:
+					FREE(Vec, multiple);
+
+					FAILED("warning: unused capture");
+					
+					// return NULL;
+				default:
+					return NEW_VARIANT(LilyAstCapture, multiple, multiple);
+			}
+        }
+        default: {
+            LilyAstExpr *single = parse_expr__LilyParseBlock(self);
+
+            CHECK_EXPR(
+              single, (*self), NULL, "expected `do`", { return NULL; });
+
+            return NEW_VARIANT(LilyAstCapture, single, single);
+        }
     }
 }
 
