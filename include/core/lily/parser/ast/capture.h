@@ -22,48 +22,69 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PARSER_AST_STMT_FOR_H
-#define LILY_CORE_LILY_PARSER_AST_STMT_FOR_H
+#ifndef LILY_CORE_LILY_PARSER_AST_CAPTURE_H
+#define LILY_CORE_LILY_PARSER_AST_CAPTURE_H
 
-#include <core/lily/parser/ast/capture.h>
+#include <base/vec.h>
+
 #include <core/lily/parser/ast/expr.h>
 
-// for <expr_left> in <expr_right> :> <capture> do
-//   <body>
-// end
-typedef struct LilyAstStmtFor
+enum LilyAstCaptureKind
 {
-    LilyAstExpr *expr_left;
-    LilyAstExpr *expr_right;
-    LilyAstCapture *capture; // LilyAstCapture*?
-    Vec *body;               // Vec<LilyAstBodyFunItem*>*
-} LilyAstStmtFor;
+    LILY_AST_CAPTURE_KIND_SINGLE,
+    LILY_AST_CAPTURE_KIND_MULTIPLE
+};
 
 /**
  *
- * @brief Construct LilyAstStmtFor type.
+ * @brief Convert LilyAstCaptureKind in string.
+ * @note This function is only used to debug.
  */
-CONSTRUCTOR(LilyAstStmtFor,
-            LilyAstStmtFor,
-            LilyAstExpr *expr_left,
-            LilyAstExpr *expr_right,
-            LilyAstCapture *capture,
-            Vec *body);
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, LilyAstCaptureKind, enum LilyAstCaptureKind self);
+#endif
+
+typedef struct LilyAstCapture
+{
+    enum LilyAstCaptureKind kind;
+    union
+    {
+        // NOTE: all expressions are identifiers
+        LilyAstExpr *single;
+        Vec *multiple; // Vec<LilyAstExpr*>*
+    };
+} LilyAstCapture;
 
 /**
  *
- * @brief Convert LilyAstStmtFor in String.
+ * @brief Construct LilyAstCapture type (LILY_AST_CAPTURE_KIND_SINGLE).
+ */
+VARIANT_CONSTRUCTOR(LilyAstCapture *,
+                    LilyAstCapture,
+                    single,
+                    LilyAstExpr *single);
+
+/**
+ *
+ * @brief Construct LilyAstCapture type (LILY_AST_CAPTURE_KIND_MULTIPLE).
+ */
+VARIANT_CONSTRUCTOR(LilyAstCapture *, LilyAstCapture, multiple, Vec *multiple);
+
+/**
+ *
+ * @brief Convert LilyAstCapture in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyAstStmtFor, const LilyAstStmtFor *self);
+IMPL_FOR_DEBUG(to_string, LilyAstCapture, const LilyAstCapture *self);
 #endif
 
 /**
  *
- * @brief Free LilyAstStmtFor type.
+ * @brief Free LilyAstCapture type.
  */
-DESTRUCTOR(LilyAstStmtFor, const LilyAstStmtFor *self);
+DESTRUCTOR(LilyAstCapture, LilyAstCapture *self);
 
-#endif // LILY_CORE_LILY_PARSER_AST_STMT_FOR_H
+#endif // LILY_CORE_LILY_PARSER_AST_CAPTURE_H

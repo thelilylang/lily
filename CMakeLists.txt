@@ -734,6 +734,7 @@ set(LILY_CORE_LILY_PARSER_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/stmt/unsafe.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/stmt/variable.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/stmt/while.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/capture.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/data_type.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/expr.c

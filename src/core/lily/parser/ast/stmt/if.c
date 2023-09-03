@@ -29,8 +29,11 @@
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtIf, const LilyAstStmtIf *self)
 {
-    String *res = format__String("LilyAstStmtIf{{ if_expr = {Sr}, if_body =",
-                                 to_string__Debug__LilyAstExpr(self->if_expr));
+    String *res = format__String(
+      "LilyAstStmtIf{{ if_expr = {Sr}, if_capture = {Sr}, if_body =",
+      to_string__Debug__LilyAstExpr(self->if_expr),
+      self->if_capture ? to_string__Debug__LilyAstCapture(self->if_capture)
+                       : from__String("NULL"));
 
     DEBUG_VEC_STRING(self->if_body, res, LilyAstBodyFunItem);
     push_str__String(res, " }");
@@ -39,7 +42,28 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtIf, const LilyAstStmtIf *self)
         push_str__String(res, ", elif_exprs =");
         DEBUG_VEC_STRING(self->elif_exprs, res, LilyAstExpr);
 
-        push_str__String(res, " }, elif_body =");
+        push_str__String(res, ", elif_captures ={");
+
+        for (Usize i = 0; i < self->elif_captures->len; ++i) {
+            LilyAstCapture *capture = get__Vec(self->elif_captures, i);
+
+            if (capture) {
+                String *s = to_string__Debug__LilyAstCapture(capture);
+
+                APPEND_AND_FREE(res, s);
+            } else {
+                push_str__String(res, " NULL");
+            }
+
+            if (i + 1 != self->elif_captures->len) {
+                push_str__String(res, ", ");
+                continue;
+            }
+
+            push_str__String(res, " }");
+        }
+
+        push_str__String(res, ", elif_body =");
         DEBUG_VEC_STRING_2(self->elif_bodies, res, LilyAstBodyFunItem);
         push_str__String(res, " }");
     }
@@ -60,6 +84,10 @@ DESTRUCTOR(LilyAstStmtIf, const LilyAstStmtIf *self)
 {
     FREE(LilyAstExpr, self->if_expr);
 
+    if (self->if_capture) {
+        FREE(LilyAstCapture, self->if_capture);
+    }
+
     FREE_BUFFER_ITEMS(
       self->if_body->buffer, self->if_body->len, LilyAstBodyFunItem);
     FREE(Vec, self->if_body);
@@ -68,6 +96,16 @@ DESTRUCTOR(LilyAstStmtIf, const LilyAstStmtIf *self)
         FREE_BUFFER_ITEMS(
           self->elif_exprs->buffer, self->elif_exprs->len, LilyAstExpr);
         FREE(Vec, self->elif_exprs);
+
+        for (Usize i = 0; i < self->elif_captures->len; ++i) {
+            LilyAstCapture *capture = get__Vec(self->elif_captures, i);
+
+            if (capture) {
+                FREE(LilyAstCapture, capture);
+            }
+        }
+
+        FREE(Vec, self->elif_captures);
 
         FREE_BUFFER_ITEMS_2(self->elif_bodies->buffer,
                             self->elif_bodies->len,

@@ -163,6 +163,7 @@ static inline DESTRUCTOR(LilyPreparserFunBodyItemStmtDrop,
 static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtFor,
                           LilyPreparserFunBodyItemStmtFor,
                           Vec *expr,
+                          Vec *capture,
                           Vec *block);
 
 // Free LilyPreparserFunBodyItemStmtFor type.
@@ -173,8 +174,10 @@ static DESTRUCTOR(LilyPreparserFunBodyItemStmtFor,
 static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtIf,
                           LilyPreparserFunBodyItemStmtIf,
                           Vec *if_expr,
+                          Vec *if_capture,
                           Vec *if_block,
                           Vec *elif_exprs,
+                          Vec *elif_captures,
                           Vec *elif_blocks,
                           Vec *else_block);
 
@@ -2265,9 +2268,12 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtDrop,
 CONSTRUCTOR(LilyPreparserFunBodyItemStmtFor,
             LilyPreparserFunBodyItemStmtFor,
             Vec *expr,
+            Vec *capture,
             Vec *block)
 {
-    return (LilyPreparserFunBodyItemStmtFor){ .expr = expr, .block = block };
+    return (LilyPreparserFunBodyItemStmtFor){ .expr = expr,
+                                              .capture = capture,
+                                              .block = block };
 }
 
 #ifdef ENV_DEBUG
@@ -2282,6 +2288,15 @@ IMPL_FOR_DEBUG(to_string,
     push_str__String(res, ", block =");
 
     DEBUG_VEC_STR(self->block, res, LilyToken);
+
+    push_str__String(res, ", capture =");
+
+    if (self->capture) {
+        DEBUG_VEC_STR(self->capture, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     push_str__String(res, " }");
 
     return res;
@@ -2292,6 +2307,11 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtFor,
            const LilyPreparserFunBodyItemStmtFor *self)
 {
     FREE(Vec, self->expr);
+
+    if (self->capture) {
+        FREE(Vec, self->capture);
+    }
+
     FREE_BUFFER_ITEMS(
       self->block->buffer, self->block->len, LilyPreparserFunBodyItem);
     FREE(Vec, self->block);
@@ -2300,14 +2320,18 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtFor,
 CONSTRUCTOR(LilyPreparserFunBodyItemStmtIf,
             LilyPreparserFunBodyItemStmtIf,
             Vec *if_expr,
+            Vec *if_capture,
             Vec *if_block,
             Vec *elif_exprs,
+            Vec *elif_captures,
             Vec *elif_blocks,
             Vec *else_block)
 {
     return (LilyPreparserFunBodyItemStmtIf){ .if_expr = if_expr,
+                                             .if_capture = if_capture,
                                              .if_block = if_block,
                                              .elif_exprs = elif_exprs,
+                                             .elif_captures = elif_captures,
                                              .elif_blocks = elif_blocks,
                                              .else_block = else_block };
 }
@@ -2325,6 +2349,14 @@ IMPL_FOR_DEBUG(to_string,
 
     DEBUG_VEC_STR(self->if_block, res, LilyToken);
 
+    push_str__String(res, ", if_capture =");
+
+    if (self->if_capture) {
+        DEBUG_VEC_STR(self->if_capture, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     if (self->elif_exprs) {
         push_str__String(res, ", elif_exprs =");
         DEBUG_VEC_STR_2(self->elif_exprs, res, LilyToken);
@@ -2336,6 +2368,32 @@ IMPL_FOR_DEBUG(to_string,
 
         push_str__String(res, ", elif_blocks =");
         DEBUG_VEC_STRING_2(self->elif_blocks, res, LilyPreparserFunBodyItem);
+    }
+
+    push_str__String(res, ", elif_captures =");
+
+    if (self->elif_captures) {
+        push_str__String(res, "{");
+
+        for (Usize i = 0; i < self->elif_captures->len; ++i) {
+            Vec *elif_capture =
+              get__Vec(self->elif_captures, i); // Vec<LilyToken* (&)>* (&)
+
+            if (elif_capture) {
+                DEBUG_VEC_STR(elif_capture, res, LilyToken);
+            } else {
+                push_str__String(res, "NULL");
+            }
+
+            if (i + 1 != self->elif_captures->len) {
+                push_str__String(res, ", ");
+                continue;
+            }
+
+            push_str__String(res, " }");
+        }
+    } else {
+        push_str__String(res, " NULL");
     }
 
     if (self->else_block) {
@@ -2354,6 +2412,10 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtIf,
 {
     FREE(Vec, self->if_expr);
 
+    if (self->if_capture) {
+        FREE(Vec, self->if_capture);
+    }
+
     FREE_BUFFER_ITEMS(
       self->if_block->buffer, self->if_block->len, LilyPreparserFunBodyItem);
     FREE(Vec, self->if_block);
@@ -2361,6 +2423,12 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtIf,
     if (self->elif_exprs) {
         FREE_BUFFER_ITEMS(self->elif_exprs->buffer, self->elif_exprs->len, Vec);
         FREE(Vec, self->elif_exprs);
+    }
+
+    if (self->elif_captures) {
+        FREE_BUFFER_ITEMS(
+          self->elif_captures->buffer, self->elif_captures->len, Vec);
+        FREE(Vec, self->elif_captures);
     }
 
     if (self->elif_blocks) {
@@ -7930,6 +7998,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
 {
     Location location = location_fun_body_item;
     Vec *if_expr = NEW(Vec); // Vec<LilyToken* (&)>*
+    Vec *if_capture = NULL;  // Vec<LilyToken* (&)>*?
     Vec *if_block = NULL;
 
     next_token__LilyPreparser(self); // skip `if` keyword
@@ -7937,28 +8006,58 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
     // 1. Preparse `if` expression
     PREPARSE_UNTIL(if_expr,
                    self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
+                     self->current->kind != LILY_TOKEN_KIND_COLON_R_SHIFT &&
                      self->current->kind != LILY_TOKEN_KIND_EOF);
 
-    if (self->current->kind == LILY_TOKEN_KIND_EOF) {
-        emit__Diagnostic(
-          NEW_VARIANT(
-            Diagnostic,
-            simple_lily_error,
-            self->file,
-            &self->current->location,
-            NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
-            NULL,
-            NULL,
-            from__String(
-              "expected `do` keyword after `if` statement expression")),
-          &self->count_error);
+    switch (self->current->kind) {
+        case LILY_TOKEN_KIND_EOF:
+        if_expected_do : {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                NULL,
+                NULL,
+                from__String(
+                  "expected `do` keyword after `if` statement expression")),
+              &self->count_error);
 
-        FREE(Vec, if_expr);
+            FREE(Vec, if_expr);
 
-        return NULL;
+            if (if_capture) {
+                FREE(Vec, if_capture);
+            }
+
+            return NULL;
+        }
+        case LILY_TOKEN_KIND_COLON_R_SHIFT:
+            // Preparse if capture (optional)
+            if_capture = NEW(Vec);
+
+            next_token__LilyPreparser(self); // skip `:>`
+
+            PREPARSE_UNTIL(if_capture,
+                           self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
+                             self->current->kind != LILY_TOKEN_KIND_EOF);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_KEYWORD_DO:
+                    goto if_do;
+                default:
+                    goto if_expected_do;
+            }
+        case LILY_TOKEN_KIND_KEYWORD_DO:
+        if_do : {
+            next_token__LilyPreparser(self);
+
+            break;
+        }
+        default:
+            UNREACHABLE("this situation is impossible");
     }
-
-    next_token__LilyPreparser(self);
 
     // 2. Preparse `if` block
     if_block =
@@ -7975,7 +8074,8 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
             // 3(A). Preparse `elif` statement. Similar process than `if`
             // statement preparsing.
 
-            Vec *elif_exprs = NEW(Vec); // Vec<Vec<LilyToken* (&)>*>*
+            Vec *elif_exprs = NEW(Vec);    // Vec<Vec<LilyToken* (&)>*>*
+            Vec *elif_captures = NEW(Vec); // Vec<Vec<LilyToken* (&)>*?>*
             Vec *elif_blocks =
               NEW(Vec); // Vec<Vec<LilyPreparserFunBodyItem*>*>*
 
@@ -7983,34 +8083,62 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                    self->current->kind != LILY_TOKEN_KIND_KEYWORD_ELSE &&
                    self->current->kind != LILY_TOKEN_KIND_EOF) {
                 Vec *elif_expr = NEW(Vec); // Vec<LilyToken* (&)>*
+                Vec *elif_capture = NULL;  // Vec<LilyToken* (&)>*?
                 Vec *elif_block = NULL;    // Vec<LilyPreparserFunBodyItem*>*
 
                 next_token__LilyPreparser(self); // skip `elif` keyword
 
                 // 3(1A). Preparse `elif` expression.
-                PREPARSE_UNTIL(elif_expr,
-                               self->current->kind !=
-                                   LILY_TOKEN_KIND_KEYWORD_DO &&
-                                 self->current->kind != LILY_TOKEN_KIND_EOF);
+                PREPARSE_UNTIL(
+                  elif_expr,
+                  self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
+                    self->current->kind != LILY_TOKEN_KIND_COLON_R_SHIFT &&
+                    self->current->kind != LILY_TOKEN_KIND_EOF);
 
-                if (self->current->kind == LILY_TOKEN_KIND_EOF) {
-                    emit__Diagnostic(
-                      NEW_VARIANT(
-                        Diagnostic,
-                        simple_lily_error,
-                        self->file,
-                        &self->current->location,
-                        NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
-                        NULL,
-                        NULL,
-                        from__String("expected `do` keyword after `elif` "
-                                     "statement expression")),
-                      &self->count_error);
+                switch (self->current->kind) {
+                    case LILY_TOKEN_KIND_EOF:
+                    elif_expected_do : {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->file,
+                            &self->current->location,
+                            NEW(LilyError, LILY_ERROR_KIND_EOF_NOT_EXPECTED),
+                            NULL,
+                            NULL,
+                            from__String("expected `do` keyword after `elif` "
+                                         "statement expression")),
+                          &self->count_error);
 
-                    goto clean_up_elif;
+                        goto clean_up_elif;
+                    }
+                    case LILY_TOKEN_KIND_COLON_R_SHIFT:
+                        // Preparse elif capture (optional)
+                        elif_capture = NEW(Vec);
+
+                        next_token__LilyPreparser(self); // skip `:>`
+
+                        PREPARSE_UNTIL(
+                          elif_capture,
+                          self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
+                            self->current->kind != LILY_TOKEN_KIND_EOF);
+
+                        switch (self->current->kind) {
+                            case LILY_TOKEN_KIND_KEYWORD_DO:
+                                goto elif_do;
+                            default:
+                                goto elif_expected_do;
+                        }
+                    case LILY_TOKEN_KIND_KEYWORD_DO:
+                    elif_do : {
+                        next_token__LilyPreparser(self);
+
+                        break;
+                    }
+                    default:
+                        UNREACHABLE("this situation is impossible");
                 }
-
-                next_token__LilyPreparser(self);
 
                 // 3(2A). Preparse `elif` block.
                 elif_block = preparse_body__LilyPreparser(
@@ -8040,6 +8168,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                 }
 
                 push__Vec(elif_exprs, elif_expr);
+                push__Vec(elif_captures, elif_capture);
                 push__Vec(elif_blocks, elif_block);
             }
 
@@ -8068,8 +8197,10 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                               stmt_if,
                               NEW(LilyPreparserFunBodyItemStmtIf,
                                   if_expr,
+                                  if_capture,
                                   if_block,
                                   elif_exprs,
+                                  elif_captures,
                                   elif_blocks,
                                   else_block),
                               location);
@@ -8090,8 +8221,10 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                                        stmt_if,
                                        NEW(LilyPreparserFunBodyItemStmtIf,
                                            if_expr,
+                                           if_capture,
                                            if_block,
                                            elif_exprs,
+                                           elif_captures,
                                            elif_blocks,
                                            NULL),
                                        location);
@@ -8177,7 +8310,9 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                                stmt_if,
                                NEW(LilyPreparserFunBodyItemStmtIf,
                                    if_expr,
+                                   if_capture,
                                    if_block,
+                                   NULL,
                                    NULL,
                                    NULL,
                                    else_block),
@@ -8192,7 +8327,9 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                                stmt_if,
                                NEW(LilyPreparserFunBodyItemStmtIf,
                                    if_expr,
+                                   if_capture,
                                    if_block,
+                                   NULL,
                                    NULL,
                                    NULL,
                                    NULL),
@@ -8236,13 +8373,16 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
 
     // 1. Preparse for expression.
     Vec *expr = NEW(Vec); // Vec<LilyToken* (&)>*
+    Vec *capture = NULL;  // Vec<LilyToken* (&)>*?
 
     PREPARSE_UNTIL(expr,
                    self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
+                     self->current->kind != LILY_TOKEN_KIND_COLON_R_SHIFT &&
                      self->current->kind != LILY_TOKEN_KIND_EOF);
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_EOF:
+        for_expected_do : {
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
@@ -8257,10 +8397,35 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
 
             FREE(Vec, expr);
 
-            return NULL;
+            if (capture) {
+                FREE(Vec, capture);
+            }
 
-        default:
+            return NULL;
+        }
+        case LILY_TOKEN_KIND_COLON_R_SHIFT:
+            capture = NEW(Vec);
+
+            next_token__LilyPreparser(self); // skip `:>`
+
+            PREPARSE_UNTIL(capture,
+                           self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
+                             self->current->kind != LILY_TOKEN_KIND_EOF);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_KEYWORD_DO:
+                    goto for_do;
+                default:
+                    goto for_expected_do;
+            }
+        case LILY_TOKEN_KIND_KEYWORD_DO:
+        for_do : {
             next_token__LilyPreparser(self);
+
+            break;
+        }
+        default:
+            UNREACHABLE("this situation is impossible");
     }
 
     // 2. Preparse `for` block
@@ -8276,10 +8441,11 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
     END_LOCATION(&location, self->current->location);
     next_token__LilyPreparser(self); // skip `end` keyword
 
-    return NEW_VARIANT(LilyPreparserFunBodyItem,
-                       stmt_for,
-                       NEW(LilyPreparserFunBodyItemStmtFor, expr, block),
-                       location);
+    return NEW_VARIANT(
+      LilyPreparserFunBodyItem,
+      stmt_for,
+      NEW(LilyPreparserFunBodyItemStmtFor, expr, capture, block),
+      location);
 }
 
 LilyPreparserFunBodyItem *

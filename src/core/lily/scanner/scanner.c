@@ -861,6 +861,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_COLON_COLON:
         case LILY_TOKEN_KIND_COLON_DOLLAR:
         case LILY_TOKEN_KIND_COLON_EQ:
+		case LILY_TOKEN_KIND_COLON_R_SHIFT:
         case LILY_TOKEN_KIND_DOT_DOT:
         case LILY_TOKEN_KIND_DOT_INTERROGATION:
         case LILY_TOKEN_KIND_DOT_STAR:
@@ -1831,7 +1832,7 @@ get_token__LilyScanner(LilyScanner *self)
             return NEW(
               LilyToken, LILY_TOKEN_KIND_BAR, clone__Location(&self->location));
 
-        // :: :$ := :
+        // :: :$ := :> :
         case ':':
             if (c1 == (char *)':') {
                 return NEW(LilyToken,
@@ -1845,7 +1846,11 @@ get_token__LilyScanner(LilyScanner *self)
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_COLON_EQ,
                            clone__Location(&self->location));
-            }
+            } else if (c1 == (char*)'>') {
+				return NEW(LilyToken,
+                           LILY_TOKEN_KIND_COLON_R_SHIFT,
+                           clone__Location(&self->location));
+			}
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_COLON,

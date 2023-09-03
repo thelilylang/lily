@@ -25,15 +25,18 @@
 #ifndef LILY_CORE_LILY_PARSER_AST_STMT_IF_H
 #define LILY_CORE_LILY_PARSER_AST_STMT_IF_H
 
+#include <core/lily/parser/ast/capture.h>
 #include <core/lily/parser/ast/expr.h>
 
 typedef struct LilyAstStmtIf
 {
     LilyAstExpr *if_expr;
-    Vec *if_body;     // Vec<LilyAstBodyFunItem*>*
-    Vec *elif_exprs;  // Vec<LilyAstExpr*>*?
-    Vec *elif_bodies; // Vec<Vec<LilyAstBodyFunItem*>*>*?
-    Vec *else_body;   // Vec<LilyAstBodyFunItem*>*?
+    LilyAstCapture *if_capture; // LilyAstCapture*?
+    Vec *if_body;               // Vec<LilyAstBodyFunItem*>*
+    Vec *elif_exprs;            // Vec<LilyAstExpr*>*?
+    Vec *elif_captures;         // Vec<LilyAstCapture*?>*?
+    Vec *elif_bodies;           // Vec<Vec<LilyAstBodyFunItem*>*>*?
+    Vec *else_body;             // Vec<LilyAstBodyFunItem*>*?
 } LilyAstStmtIf;
 
 /**
@@ -43,14 +46,18 @@ typedef struct LilyAstStmtIf
 inline CONSTRUCTOR(LilyAstStmtIf,
                    LilyAstStmtIf,
                    LilyAstExpr *if_expr,
+                   LilyAstCapture *if_capture,
                    Vec *if_body,
                    Vec *elif_exprs,
+                   Vec *elif_captures,
                    Vec *elif_bodies,
                    Vec *else_body)
 {
     return (LilyAstStmtIf){ .if_expr = if_expr,
+                            .if_capture = if_capture,
                             .if_body = if_body,
                             .elif_exprs = elif_exprs,
+                            .elif_captures = elif_captures,
                             .elif_bodies = elif_bodies,
                             .else_body = else_body };
 }
