@@ -602,6 +602,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String(":$");
         case LILY_TOKEN_KIND_COLON_EQ:
             return from__String(":=");
+		case LILY_TOKEN_KIND_COLON_R_SHIFT:
+			return from__String(":>");
         case LILY_TOKEN_KIND_COLON:
             return from__String(":");
         case LILY_TOKEN_KIND_COMMA:
@@ -964,6 +966,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_COLON_DOLLAR";
         case LILY_TOKEN_KIND_COLON_EQ:
             return "LILY_TOKEN_KIND_COLON_EQ";
+		case LILY_TOKEN_KIND_COLON_R_SHIFT:
+			return "LILY_TOKEN_KIND_COLON_R_SHIFT";
         case LILY_TOKEN_KIND_COLON:
             return "LILY_TOKEN_KIND_COLON";
         case LILY_TOKEN_KIND_COMMA:
