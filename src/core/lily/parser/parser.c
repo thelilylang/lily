@@ -3918,6 +3918,10 @@ parse_if_stmt__LilyParser(LilyParser *self,
 
     FREE(LilyParseBlock, &if_expr_block);
 
+    if (!if_expr) {
+        return NULL;
+    }
+
     // 2. Parse if block
     Vec *if_body = parse_fun_body__LilyParser(self, item->stmt_if.if_block);
 
