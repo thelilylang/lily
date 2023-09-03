@@ -86,4 +86,6 @@ typedef unsigned int Uint;
 typedef unsigned long Ulong;
 typedef unsigned long long Ulonglong;
 
+typedef void *Anyptr;
+
 #endif // LILY_BASE_TYPES_H
