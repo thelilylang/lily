@@ -8166,12 +8166,13 @@ check_as_pattern__LilyAnalysis(LilyAnalysis *self,
         FAILED("expected name pattern");
     }
 
-    check_pattern__LilyAnalysis(self,
-                                pattern->as.pattern,
-                                scope,
-                                safety_mode,
-                                defined_data_type,
-                                captured_variables);
+    LilyCheckedPattern *as_pattern =
+      check_pattern__LilyAnalysis(self,
+                                  pattern->as.pattern,
+                                  scope,
+                                  safety_mode,
+                                  defined_data_type,
+                                  captured_variables);
 
     int res = add_captured_variable__LilyCheckedScope(
       scope,
@@ -8190,7 +8191,15 @@ check_as_pattern__LilyAnalysis(LilyAnalysis *self,
                                    defined_data_type));
     }
 
-    return NULL;
+    return self->use_switch
+             ? NULL
+             : NEW_VARIANT(
+                 LilyCheckedPattern,
+                 as,
+                 &pattern->location,
+                 defined_data_type,
+                 pattern,
+                 NEW(LilyCheckedPatternAs, as_pattern, pattern->as.name));
 }
 
 LilyCheckedPattern *
@@ -9329,7 +9338,14 @@ check_name_pattern__LilyAnalysis(LilyAnalysis *self,
               ref__LilyCheckedDataType(defined_data_type)));
     }
 
-    return NULL;
+    return self->use_switch
+             ? NULL
+             : NEW_VARIANT(LilyCheckedPattern,
+                           name,
+                           &pattern->location,
+                           ref__LilyCheckedDataType(defined_data_type),
+                           pattern,
+                           NEW(LilyCheckedPatternName, pattern->name.name));
 }
 
 LilyCheckedPattern *
@@ -9661,8 +9677,21 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                                                   defined_data_type,
                                                   captured_variables);
         case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
+            return self->use_switch
+                     ? NULL
+                     : NEW(LilyCheckedPattern,
+                           LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE,
+                           &pattern->location,
+                           ref__LilyCheckedDataType(defined_data_type),
+                           pattern);
         case LILY_AST_PATTERN_KIND_WILDCARD:
-            return NULL;
+            return self->use_switch
+                     ? NULL
+                     : NEW(LilyCheckedPattern,
+                           LILY_CHECKED_PATTERN_KIND_ELSE,
+                           &pattern->location,
+                           ref__LilyCheckedDataType(defined_data_type),
+                           pattern);
         case LILY_AST_PATTERN_KIND_ERROR:
             return check_error_pattern__LilyAnalysis(self,
                                                      pattern,
@@ -10041,6 +10070,7 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
         match = NEW(LilyCheckedStmtMatch, expr, cases);
     }
 
+    // TODO: maybe optimize that
     for (Usize i = 0; i < stmt->match.cases->len; ++i) {
         LilyAstStmtMatchCase *ast_case = get__Vec(stmt->match.cases, i);
         bool is_final_else = false;
