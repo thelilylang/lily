@@ -399,11 +399,13 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/tuple.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/unary.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/array.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/as.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/error.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/list_head.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/list_tail.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/list.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/literal.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/name.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/range.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/record_call.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/table.c
