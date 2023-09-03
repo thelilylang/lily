@@ -205,6 +205,27 @@ get_sys__LilySys(LilySysFun *syss, const char *name)
     UNREACHABLE("the sys function you are looking for does not exist");
 }
 
+bool
+eq__LilySys(const LilySysFun *self, const LilySysFun *other)
+{
+    if (!(self->params->len == other->params->len &&
+          !strcmp(self->name, other->name) &&
+          !strcmp(self->real_name->buffer, other->real_name->buffer) &&
+          eq__LilyCheckedDataType(self->return_data_type,
+                                  other->return_data_type))) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self->params->len; ++i) {
+        if (!eq__LilyCheckedDataType(get__Vec(self->params, i),
+                                     get__Vec(other->params, i))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilySysFun, const LilySysFun *self)

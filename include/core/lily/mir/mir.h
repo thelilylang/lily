@@ -44,30 +44,6 @@
 
 #define MAX_CURRENT_INST 8192
 
-typedef struct LilyMirNameManager
-{
-    Vec *names; // Vec<char*>*
-    Usize count;
-    char *base_name;
-} LilyMirNameManager;
-
-/**
- *
- * @brief Construct LilyMirNameManager type.
- */
-inline CONSTRUCTOR(LilyMirNameManager, LilyMirNameManager, char *base_name)
-{
-    return (LilyMirNameManager){ .names = NEW(Vec),
-                                 .count = 0,
-                                 .base_name = base_name };
-}
-
-/**
- *
- * @brief Free LilyMirNameManager type.
- */
-DESTRUCTOR(LilyMirNameManager, const LilyMirNameManager *self);
-
 enum LilyMirCurrentKind
 {
     LILY_MIR_CURRENT_KIND_CONST,
@@ -75,41 +51,10 @@ enum LilyMirCurrentKind
     LILY_MIR_CURRENT_KIND_STRUCT,
 };
 
-typedef struct LilyMirCurrentFun
-{
-    LilyMirInstruction *fun;
-    LilyMirNameManager block_manager;
-    LilyMirNameManager reg_manager;
-} LilyMirCurrentFun;
-
-/**
- *
- * @brief Construct LilyMirCurrentFun type.
- */
-inline CONSTRUCTOR(LilyMirCurrentFun,
-                   LilyMirCurrentFun,
-                   LilyMirInstruction *fun)
-{
-    return (LilyMirCurrentFun){ .fun = fun,
-                                .block_manager = NEW(LilyMirNameManager, "bb"),
-                                .reg_manager = NEW(LilyMirNameManager, "r") };
-}
-
-/**
- *
- * @brief Free LilyMirCurrentFun type.
- */
-DESTRUCTOR(LilyMirCurrentFun, const LilyMirCurrentFun *self);
-
 typedef struct LilyMirCurrent
 {
     enum LilyMirCurrentKind kind;
-    union
-    {
-        LilyMirInstruction *const_;
-        LilyMirCurrentFun fun;
-        LilyMirInstruction *struct_;
-    };
+    LilyMirInstruction *inst; // LilyMirInstruction* (&)
 } LilyMirCurrent;
 
 /**
@@ -128,7 +73,7 @@ VARIANT_CONSTRUCTOR(LilyMirCurrent *,
 VARIANT_CONSTRUCTOR(LilyMirCurrent *,
                     LilyMirCurrent,
                     fun,
-                    LilyMirCurrentFun fun);
+                    LilyMirInstruction *fun);
 
 /**
  *
@@ -143,7 +88,10 @@ VARIANT_CONSTRUCTOR(LilyMirCurrent *,
  *
  * @brief Free LilyMirCurrent type.
  */
-DESTRUCTOR(LilyMirCurrent, LilyMirCurrent *self);
+inline DESTRUCTOR(LilyMirCurrent, LilyMirCurrent *self)
+{
+    lily_free(self);
+}
 
 typedef struct LilyMirModule
 {
@@ -203,6 +151,20 @@ LilyMirAddParam(LilyMirScope *Scope, LilyCheckedDataType *data_type)
 {
     push__Vec(Scope->params, NEW(LilyMirScopeParam, data_type));
 }
+
+LilyMirInstructionFunLoad *
+search_load__LilyMirScope(const LilyMirScope *self,
+                          LilyMirInstructionFunLoadName name);
+
+void
+remove_load__LilyMirScope(const LilyMirScope *self,
+                          LilyMirInstructionFunLoadName name);
+
+LilyMirInstructionFunLoad *
+LilyMirSearchLoad(LilyMirModule *Module, LilyMirInstructionFunLoadName name);
+
+void
+LilyMirRemoveLoad(LilyMirModule *Module, LilyMirInstructionFunLoadName name);
 
 LilyMirDebugInfo *
 LilyMirBuildDIFile(LilyMirModule *Module, String *filename, String *directory);
@@ -281,6 +243,9 @@ LilyMirBuildDICompositeType(LilyMirModule *Module,
 LilyMirDebugInfo *
 LilyMirBuildDIElements(LilyMirModule *Module, Vec *items);
 
+LilyMirInstructionVal *
+LilyMirBuildVirtualVariable(LilyMirModule *Module, LilyMirDt *dt);
+
 #define LILY_MIR_SET_DI(inst, build_di, ...) \
     inst->debug_info = build_di(__VA_ARGS__)
 
@@ -293,7 +258,7 @@ LilyMirNextBlock(LilyMirModule *Module)
     ASSERT(CAST(LilyMirCurrent *, Module->current->top)->kind ==
            LILY_MIR_CURRENT_KIND_FUN);
     pop__Stack(
-      CAST(LilyMirCurrent *, Module->current->top)->fun.fun->fun.block_stack);
+      CAST(LilyMirCurrent *, Module->current->top)->inst->fun.block_stack);
 }
 
 void
@@ -327,18 +292,18 @@ LilyMirDisposeBuilder(LilyMirModule *Module);
 char *
 LilyMirGenerateName(LilyMirNameManager *NameManager);
 
-inline char *
+inline const char *
 LilyMirGetLastRegName(LilyMirModule *Module)
 {
-    return last__Vec(
-      CAST(LilyMirCurrent *, Module->current->top)->fun.reg_manager.names);
+    return last__Vec(CAST(LilyMirCurrent *, Module->current->top)
+                       ->inst->fun.reg_manager.names);
 }
 
 LilyMirInstruction *
 LilyMirBuildReg(LilyMirModule *Module, LilyMirInstruction *Inst);
 
 inline LilyMirInstructionVal *
-LilyMirBuildRegVal(LilyMirModule *Module, LilyMirDt *dt, String *name)
+LilyMirBuildRegVal(LilyMirModule *Module, LilyMirDt *dt, const char *name)
 {
     return NEW_VARIANT(LilyMirInstructionVal, reg, dt, name);
 }
@@ -353,8 +318,7 @@ LilyMirBuildAlloc(LilyMirModule *Module, LilyMirDt *dt)
 inline Usize
 LilyMirGetBlockId(LilyMirModule *Module)
 {
-    return CAST(LilyMirCurrent *, Module->current->top)
-      ->fun.fun->fun.block_count;
+    return CAST(LilyMirCurrent *, Module->current->top)->inst->fun.block_count;
 }
 
 LilyMirInstruction *
@@ -369,36 +333,48 @@ LilyMirBuildJmp(LilyMirModule *Module, LilyMirInstruction *block)
     return NEW_VARIANT(LilyMirInstruction, jmp, &block->block);
 }
 
-inline LilyMirInstruction *
+LilyMirInstruction *
 LilyMirBuildJmpCond(LilyMirModule *Module,
                     LilyMirInstruction *Cond,
                     LilyMirInstruction *ThenBlock,
-                    LilyMirInstruction *ElseBlock)
-{
-    ASSERT(Cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
-    return NEW_VARIANT(LilyMirInstruction,
-                       jmpcond,
-                       NEW(LilyMirInstructionJmpCond,
-                           Cond->val,
-                           &ThenBlock->block,
-                           &ElseBlock->block));
-}
+                    LilyMirInstruction *ElseBlock);
 
 /**
  *
+ * @param inst LilyMirInstruction*
+ * @note The pointer `inst` is free.
+ */
+LilyMirInstruction *
+LilyMirLoadFromVal(LilyMirModule *Module, LilyMirInstruction *inst);
+
+/**
+ *
+ * @param dt LilyMirDt*
  * @param value_nam e.g. name of the variable.
  */
 LilyMirInstructionVal *
 LilyMirBuildLoad(LilyMirModule *Module,
                  LilyMirInstructionVal *src,
                  LilyMirDt *dt,
-                 String *value_name);
+                 LilyMirInstructionFunLoadName value_name);
 
-LilyMirInstruction *
+inline void
+LilyMirBuildVarAlloc(LilyMirModule *Module, char *name, LilyMirDt *dt)
+{
+    LilyMirAddInst(
+      Module,
+      NEW_VARIANT(
+        LilyMirInstruction,
+        var,
+        NEW(LilyMirInstructionVar, name, LilyMirBuildAlloc(Module, dt))));
+}
+
+void
 LilyMirBuildVar(LilyMirModule *Module,
                 char *name,
                 LilyMirDt *dt,
-                LilyMirInstruction *inst);
+                LilyMirInstruction *inst,
+                bool allow_alloc);
 
 inline LilyMirInstructionVal *
 LilyMirBuildStruct(LilyMirModule *Module, LilyMirDt *dt, Vec *struct_)
@@ -406,12 +382,17 @@ LilyMirBuildStruct(LilyMirModule *Module, LilyMirDt *dt, Vec *struct_)
     return NEW_VARIANT(LilyMirInstructionVal, struct, dt, struct_);
 }
 
-inline LilyMirInstruction *
-LilyMirBuildStore(LilyMirInstructionVal *dest, LilyMirInstructionVal *src)
-{
-    return NEW_VARIANT(
-      LilyMirInstruction, store, NEW(LilyMirInstructionDestSrc, dest, src));
-}
+/**
+ *
+ * @note dest and src params could be free in this function.
+ * @param dest LilyMirInstructionVal*
+ * @param src LilyMirInstructionVal*
+ * @return LilyMirInstruction*?
+ */
+LilyMirInstruction *
+LilyMirBuildStore(LilyMirModule *Module,
+                  LilyMirInstructionVal *dest,
+                  LilyMirInstructionVal *src);
 
 LilyMirInstruction *
 LilyMirBuildCall(LilyMirModule *Module,
@@ -447,6 +428,9 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
 void
 LilyMirAddFinalInstruction(LilyMirModule *Module,
                            LilyMirInstruction *exit_block);
+
+bool
+LilyMirHasFinalInstruction(LilyMirModule *Module);
 
 bool
 LilyMirHasRetInstruction(LilyMirModule *Module);
@@ -523,11 +507,11 @@ LilyMirBuildUnsafe(LilyMirModule *Module,
                    const LilyCheckedStmtUnsafe *unsafe_stmt);
 
 void
-LilyMirBuildMatch(LilyMirModule *Module,
-                  LilyCheckedSignatureFun *fun_signature,
-                  LilyMirScope *scope,
-                  LilyMirBlockLimit *parent_block_limit,
-                  const LilyCheckedStmtMatch *match_stmt);
+LilyMirBuildSwitch(LilyMirModule *Module,
+                   LilyCheckedSignatureFun *fun_signature,
+                   LilyMirScope *scope,
+                   LilyMirBlockLimit *parent_block_limit,
+                   const LilyCheckedStmtSwitch *switch_stmt);
 
 inline LilyMirCurrent *
 LilyMirGetCurrentOnTop(LilyMirModule *Module)

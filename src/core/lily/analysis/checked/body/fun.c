@@ -25,6 +25,7 @@
 #include <base/alloc.h>
 
 #include <core/lily/analysis/checked/body/fun.h>
+#include <core/lily/analysis/checked/parent.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +39,90 @@ static VARIANT_DESTRUCTOR(LilyCheckedBodyFunItem,
 static VARIANT_DESTRUCTOR(LilyCheckedBodyFunItem,
                           stmt,
                           LilyCheckedBodyFunItem *self);
+
+LilyCheckedBodyFunInfo
+wrap_item_in_body__LilyCheckedBodyFunItem(LilyCheckedBodyFunItem *self,
+                                          LilyCheckedScope *parent)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
+            switch (self->stmt.kind) {
+                case LILY_CHECKED_STMT_KIND_ASM:
+                case LILY_CHECKED_STMT_KIND_AWAIT:
+                case LILY_CHECKED_STMT_KIND_BREAK:
+                case LILY_CHECKED_STMT_KIND_DROP:
+                case LILY_CHECKED_STMT_KIND_FOR:
+                case LILY_CHECKED_STMT_KIND_IF:
+                case LILY_CHECKED_STMT_KIND_MATCH:
+                case LILY_CHECKED_STMT_KIND_NEXT:
+                case LILY_CHECKED_STMT_KIND_RAISE:
+                case LILY_CHECKED_STMT_KIND_RETURN:
+                case LILY_CHECKED_STMT_KIND_TRY:
+                case LILY_CHECKED_STMT_KIND_UNSAFE:
+                case LILY_CHECKED_STMT_KIND_VARIABLE:
+                case LILY_CHECKED_STMT_KIND_WHILE:
+                    goto simple_wrap;
+                case LILY_CHECKED_STMT_KIND_BLOCK: {
+                    Vec *body = self->stmt.block.body;
+                    LilyCheckedScope *scope = self->stmt.block.scope;
+
+                    lily_free(self);
+
+                    return NEW(LilyCheckedBodyFunInfo, body, scope);
+                }
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR: {
+        simple_wrap : {
+            Vec *body = init__Vec(1, self);
+
+            switch (parent->decls.kind) {
+                case LILY_CHECKED_SCOPE_DECLS_KIND_DECL:
+                    return NEW(
+                      LilyCheckedBodyFunInfo,
+                      body,
+                      NEW(
+                        LilyCheckedScope,
+                        NEW_VARIANT(
+                          LilyCheckedParent, decl, parent, parent->decls.decl),
+                        NEW_VARIANT(LilyCheckedScopeDecls, scope, body)));
+                case LILY_CHECKED_SCOPE_DECLS_KIND_SCOPE:
+                    return NEW(
+                      LilyCheckedBodyFunInfo,
+                      body,
+                      NEW(LilyCheckedScope,
+                          NEW_VARIANT(LilyCheckedParent,
+                                      scope,
+                                      parent,
+                                      parent->decls.scope),
+                          NEW_VARIANT(LilyCheckedScopeDecls, scope, body)));
+                case LILY_CHECKED_SCOPE_DECLS_KIND_STMT:
+                    return NEW(
+                      LilyCheckedBodyFunInfo,
+                      body,
+                      NEW(
+                        LilyCheckedScope,
+                        NEW_VARIANT(
+                          LilyCheckedParent, stmt, parent, parent->decls.stmt),
+                        NEW_VARIANT(LilyCheckedScopeDecls, scope, body)));
+                case LILY_CHECKED_SCOPE_DECLS_KIND_MODULE:
+                    return NEW(
+                      LilyCheckedBodyFunInfo,
+                      body,
+                      NEW(LilyCheckedScope,
+                          NEW_VARIANT(LilyCheckedParent,
+                                      module,
+                                      parent,
+                                      parent->decls.module),
+                          NEW_VARIANT(LilyCheckedScopeDecls, scope, body)));
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        }
+        }
+    }
+}
 
 #ifdef ENV_DEBUG
 char *
@@ -64,7 +149,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyFunItem *,
     LilyCheckedBodyFunItem *self = lily_malloc(sizeof(LilyCheckedBodyFunItem));
 
     self->kind = LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR;
-	self->ref_count = 0;
+    self->ref_count = 0;
     self->expr = expr;
 
     return self;
@@ -78,7 +163,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyFunItem *,
     LilyCheckedBodyFunItem *self = lily_malloc(sizeof(LilyCheckedBodyFunItem));
 
     self->kind = LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT;
-	self->ref_count = 0;
+    self->ref_count = 0;
     self->stmt = stmt;
 
     return self;
@@ -115,11 +200,11 @@ VARIANT_DESTRUCTOR(LilyCheckedBodyFunItem, stmt, LilyCheckedBodyFunItem *self)
 
 DESTRUCTOR(LilyCheckedBodyFunItem, LilyCheckedBodyFunItem *self)
 {
-	if (self->ref_count > 0) {
-		--self->ref_count;
+    if (self->ref_count > 0) {
+        --self->ref_count;
 
-		return;
-	}
+        return;
+    }
 
     switch (self->kind) {
         case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:

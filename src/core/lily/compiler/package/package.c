@@ -121,7 +121,8 @@ CONSTRUCTOR(LilyPackage *,
 
     if (root) {
         self->parser = NEW(LilyParser, self, root, NULL);
-        self->analysis = NEW(LilyAnalysis, self, root, &self->parser);
+        self->analysis = NEW(
+          LilyAnalysis, self, root, &self->parser, root->analysis.use_switch);
         self->mir_module = LilyMirCreateModule();
         self->builtins = NULL;
         self->syss = NULL;
@@ -135,7 +136,7 @@ CONSTRUCTOR(LilyPackage *,
         }
     } else {
         self->parser = NEW(LilyParser, self, self, NULL);
-        self->analysis = NEW(LilyAnalysis, self, self, &self->parser);
+        self->analysis = NEW(LilyAnalysis, self, self, &self->parser, false);
     }
 #endif
 
@@ -170,6 +171,12 @@ build__LilyPackage(const LilycConfig *config,
                             NULL);
     LilyPackageConfig pkg_config =
       from_CompileConfig__LilyPackageConfig(config);
+
+    // Set `use_switch` on true for CC IR, CPP IR, JS IR or LLVM IR.
+    if (pkg_config.cc_ir || pkg_config.cpp_ir || pkg_config.js_ir ||
+        pkg_config.llvm_ir) {
+        self->analysis.use_switch = true;
+    }
 
     self->config = &pkg_config;
 

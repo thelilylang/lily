@@ -868,7 +868,7 @@ fun main =
         val y *Int32 := Ptr.new(100);
         drop y // drop at this point
         // after this point the compiler shadows the reference of y in this scope
-        drop y <- Ptr.new(200) // reassign a drop ptr value
+        drop y <~ Ptr.new(200) // reassign a drop ptr value
         // after this pointer the compiler enable the reference of y in this scope and drop the pointer at the end of this scope
     end
 
@@ -1128,6 +1128,24 @@ xor
 @len({1, 2, 3})
 ```
 
+## @hide, @hideout
+
+> This is used to add more security at analysis time for dropping the pointer. For example, when we use the drop operator, the pointer variable is `@hideout`, so the variable is removed from scope, so analysis will report an error because it's not found in scope (this is to add more security to memory at compile-time like the borrow checker (cheaper), but it's optional). 
+
+ms: Memory security
+options e.g. --ms-0, --ms-1, --ms-2, ...
+
+```lily
+val x := 30;
+// we can use @hideout for use hide outsite of the scope of the function (for ref or ptr).
+@hideout(x)
+// by default that's a local hide
+@hide(x)
+
+// relaod variable, at level 0, this is technically an assignment 
+x <~ 30
+```
+
 ## Garbage collector (interpreter)
 
 - Concurrent
@@ -1209,6 +1227,16 @@ xor
 - Optional
 - Never
 
+## List of at keywords
+
+```
+@sys
+@builtin
+@hide
+@hideout
+@len
+```
+
 ## List of keywords
 
 ```
@@ -1266,6 +1294,7 @@ Self
 self
 set
 test
+threadlocal
 trace
 trait
 true

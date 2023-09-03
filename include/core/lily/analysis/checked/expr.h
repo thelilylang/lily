@@ -28,10 +28,12 @@
 #include <base/string.h>
 
 #include <core/lily/analysis/checked/data_type.h>
+#include <core/lily/analysis/checked/expr/access.h>
 #include <core/lily/analysis/checked/expr/array.h>
 #include <core/lily/analysis/checked/expr/binary.h>
 #include <core/lily/analysis/checked/expr/call.h>
 #include <core/lily/analysis/checked/expr/cast.h>
+#include <core/lily/analysis/checked/expr/compiler_fun.h>
 #include <core/lily/analysis/checked/expr/lambda.h>
 #include <core/lily/analysis/checked/expr/list.h>
 #include <core/lily/analysis/checked/expr/literal.h>
@@ -41,12 +43,16 @@
 
 #include <core/shared/location.h>
 
+// TODO: Maybe delete lambda expression
+
 enum LilyCheckedExprKind
 {
+    LILY_CHECKED_EXPR_KIND_ACCESS,
     LILY_CHECKED_EXPR_KIND_ARRAY,
     LILY_CHECKED_EXPR_KIND_BINARY,
     LILY_CHECKED_EXPR_KIND_CALL,
     LILY_CHECKED_EXPR_KIND_CAST,
+    LILY_CHECKED_EXPR_KIND_COMPILER_FUN, // only usable by the compiler
     LILY_CHECKED_EXPR_KIND_GROUPING,
     LILY_CHECKED_EXPR_KIND_LAMBDA,
     LILY_CHECKED_EXPR_KIND_LIST,
@@ -64,12 +70,15 @@ typedef struct LilyCheckedExpr
                               // This is the result data type of the expression.
     LilyCheckedDataType *data_type; // LilyCheckedDataType*
     const LilyAstExpr *ast_expr;    // const LilyAstExpr*? (&)
+    Usize ref_count;
     union
     {
+        LilyCheckedExprAccess access;
         LilyCheckedExprArray array;
         LilyCheckedExprBinary binary;
         LilyCheckedExprCall call;
         LilyCheckedExprCast cast;
+        LilyCheckedExprCompilerFun compiler_fun;
         LilyCheckedExpr *grouping;
         LilyCheckedExprLambda lambda;
         LilyCheckedExprList list;
@@ -78,6 +87,18 @@ typedef struct LilyCheckedExpr
         LilyCheckedExprUnary unary;
     };
 } LilyCheckedExpr;
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_ACCESS).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    access,
+                    const Location *location,
+                    LilyCheckedDataType *data_type,
+                    const LilyAstExpr *ast_expr,
+                    LilyCheckedExprAccess access);
 
 /**
  *
@@ -126,6 +147,18 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprCast cast);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_COMPILER_FUN).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    compiler_fun,
+                    const Location *location,
+                    LilyCheckedDataType *data_type,
+                    const LilyAstExpr *ast_expr,
+                    LilyCheckedExprCompilerFun compiler_fun);
 
 /**
  *
@@ -219,6 +252,40 @@ CONSTRUCTOR(LilyCheckedExpr *,
             LilyCheckedDataType *data_type,
             const LilyAstExpr *ast_expr,
             enum LilyCheckedExprKind kind);
+
+/**
+ *
+ * @brief Check if the both expressions are equal.
+ */
+bool
+eq__LilyCheckedExpr(const LilyCheckedExpr *self, const LilyCheckedExpr *other);
+
+/**
+ *
+ * @brief Pass to ref a pointer of `LilyCheckedExpr` and increment
+ * the `ref_count`.
+ * @return LilyCheckedExpr* (&)
+ */
+inline LilyCheckedExpr *
+ref__LilyCheckedExpr(LilyCheckedExpr *self)
+{
+    ++self->ref_count;
+    return self;
+}
+
+/**
+ *
+ * @brief Check if the expression is a node (e.g. binary expression, unary
+ * expression).
+ */
+inline bool
+is_node__LilyCheckedExpr(const LilyCheckedExpr *self)
+{
+    return self->kind == LILY_CHECKED_EXPR_KIND_BINARY ||
+           self->kind == LILY_CHECKED_EXPR_KIND_CAST ||
+           self->kind == LILY_CHECKED_EXPR_KIND_GROUPING ||
+           self->kind == LILY_CHECKED_EXPR_KIND_UNARY;
+}
 
 /**
  *

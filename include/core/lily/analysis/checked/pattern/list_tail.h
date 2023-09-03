@@ -32,8 +32,8 @@ typedef struct LilyCheckedPattern LilyCheckedPattern;
 
 typedef struct LilyCheckedPatternListTail
 {
-    LilyCheckedPattern *left;
-    LilyCheckedPattern *right;
+    LilyCheckedPattern *left;  // LilyCheckedPattern*?
+    LilyCheckedPattern *right; // LilyCheckedPattern*?
 } LilyCheckedPatternListTail;
 
 /**

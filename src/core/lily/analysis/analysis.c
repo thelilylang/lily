@@ -31,6 +31,8 @@
 #include <core/lily/analysis/checked/history.h>
 #include <core/lily/analysis/checked/limits.h>
 #include <core/lily/analysis/checked/parent.h>
+#include <core/lily/analysis/checked/pattern.h>
+#include <core/lily/analysis/checked/pattern/table.h>
 #include <core/lily/analysis/checked/safety_mode.h>
 #include <core/lily/analysis/checked/scope_stmt.h>
 #include <core/lily/analysis/checked/signature.h>
@@ -482,13 +484,6 @@ check_as_pattern__LilyAnalysis(LilyAnalysis *self,
                                OrderedHashMap *captured_variables);
 
 /// @param defined_data_type LilyCheckedDataType* (&)
-static inline LilyCheckedPattern *
-check_auto_complete_pattern__LilyAnalysis(
-  LilyAnalysis *self,
-  const LilyAstPattern *pattern,
-  LilyCheckedDataType *defined_data_type);
-
-/// @param defined_data_type LilyCheckedDataType* (&)
 static LilyCheckedPattern *
 check_error_pattern__LilyAnalysis(LilyAnalysis *self,
                                   const LilyAstPattern *pattern,
@@ -579,12 +574,6 @@ check_variant_call_pattern__LilyAnalysis(LilyAnalysis *self,
                                          OrderedHashMap *captured_variables);
 
 /// @param defined_data_type LilyCheckedDataType* (&)
-static inline LilyCheckedPattern *
-check_wildcard_pattern__LilyAnalysis(LilyAnalysis *self,
-                                     const LilyAstPattern *pattern,
-                                     LilyCheckedDataType *defined_data_type);
-
-/// @param defined_data_type LilyCheckedDataType* (&)
 static LilyCheckedPattern *
 check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
@@ -598,6 +587,36 @@ count_total_cases__LilyAnalysis(LilyAnalysis *self,
                                 LilyCheckedScope *scope,
                                 enum LilyCheckedSafetyMode safety_mode,
                                 LilyCheckedDataType *dt);
+
+static void
+check_match_stmt_case_for_match__LilyAnalysis(
+  LilyAnalysis *self,
+  const LilyAstStmtMatchCase *ast_case,
+  LilyCheckedExpr *match_expr,
+  LilyCheckedScope *scope,
+  bool in_loop,
+  bool *is_final_else,
+  Usize *nb_cases,
+  const Usize *total_cases,
+  enum LilyCheckedSafetyMode safety_mode,
+  LilyCheckedBodyFunItem **body_item,
+  LilyCheckedExpr **cond,
+  LilyCheckedPattern **pattern);
+
+static void
+check_match_stmt_case_for_switch__LilyAnalysis(
+  LilyAnalysis *self,
+  const LilyAstStmtMatchCase *ast_case,
+  LilyCheckedExpr *match_expr,
+  LilyCheckedScope *scope,
+  bool in_loop,
+  bool *is_final_else,
+  Usize *nb_cases,
+  const Usize *total_cases,
+  enum LilyCheckedSafetyMode safety_mode,
+  LilyCheckedBodyFunItem **body_item,
+  LilyCheckedExpr **cond,
+  LilyCheckedStmtSwitchCaseValue **case_value);
 
 static LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
@@ -954,6 +973,855 @@ static threadlocal LilyCheckedDeclAlias *alias_decl = NULL;
           NULL,                                                      \
           from__String("the boolean type is not guaranteed"));       \
     }
+
+/// defined from `include/core/lily/analysis/checked/pattern.h`
+LilyCheckedExpr *
+to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
+                            LilyAnalysis *analysis,
+                            const Location *location,
+                            LilyCheckedScope *scope,
+                            LilyCheckedExpr *current_expr)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY: {
+            ASSERT(is_contains_kind__LilyCheckedDataType(
+              current_expr->data_type, LILY_CHECKED_DATA_TYPE_KIND_ARRAY));
+
+            LilyCheckedDataType *dt = NEW(
+              LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_BOOL, location);
+            LilyCheckedExpr *left =
+              NEW_VARIANT(LilyCheckedExpr,
+                          binary,
+                          location,
+                          dt,
+                          NULL,
+                          NEW(LilyCheckedExprBinary,
+                              self->array.must_eq
+                                ? LILY_CHECKED_EXPR_BINARY_KIND_EQ
+                                : LILY_CHECKED_EXPR_BINARY_KIND_GREATER_EQ,
+                              ref__LilyCheckedExpr(current_expr),
+                              NEW_VARIANT(LilyCheckedExpr,
+                                          literal,
+                                          location,
+                                          NEW(LilyCheckedDataType,
+                                              LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                              location),
+                                          NULL,
+                                          NEW_VARIANT(LilyCheckedExprLiteral,
+                                                      suffix_usize,
+                                                      self->array.len))));
+
+            for (Usize i = 0; i < self->array.table->len; ++i) {
+                LilyCheckedPatternTableItem *item =
+                  get__Vec(self->array.table, i);
+                LilyCheckedExpr *new_current_expr = NEW_VARIANT(
+                  LilyCheckedExpr,
+                  access,
+                  location,
+                  ref__LilyCheckedDataType(item->value->data_type),
+                  NULL,
+                  NEW_VARIANT(
+                    LilyCheckedExprAccess,
+                    hook,
+                    NEW(LilyCheckedExprAccessHook,
+                        ref__LilyCheckedExpr(current_expr),
+                        NEW_VARIANT(LilyCheckedExpr,
+                                    literal,
+                                    location,
+                                    NEW(LilyCheckedDataType,
+                                        LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                        location),
+                                    NULL,
+                                    NEW_VARIANT(LilyCheckedExprLiteral,
+                                                suffix_usize,
+                                                item->id)))));
+                LilyCheckedExpr *right = to_expr__LilyCheckedPattern(
+                  item->value, analysis, location, scope, new_current_expr);
+
+                if (right) {
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      binary,
+                      location,
+                      ref__LilyCheckedDataType(dt),
+                      NULL,
+                      NEW(
+                        LilyCheckedExprBinary,
+                        LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                        left,
+                        NEW_VARIANT(LilyCheckedExpr,
+                                    binary,
+                                    location,
+                                    ref__LilyCheckedDataType(dt),
+                                    NULL,
+                                    NEW(LilyCheckedExprBinary,
+                                        LILY_CHECKED_EXPR_BINARY_KIND_EQ,
+                                        ref__LilyCheckedExpr(new_current_expr),
+                                        right))));
+                }
+
+                FREE(LilyCheckedExpr, new_current_expr);
+            }
+
+            return left;
+        }
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
+            TODO("convert error in expression");
+        case LILY_CHECKED_PATTERN_KIND_LIST: {
+            ASSERT(is_contains_kind__LilyCheckedDataType(
+              current_expr->data_type, LILY_CHECKED_DATA_TYPE_KIND_LIST));
+
+            LilyCheckedDataType *dt = NEW(
+              LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_BOOL, location);
+            LilyCheckedExpr *left = NEW_VARIANT(
+              LilyCheckedExpr,
+              binary,
+              location,
+              dt,
+              NULL,
+              NEW(LilyCheckedExprBinary,
+                  self->list.must_eq ? LILY_CHECKED_EXPR_BINARY_KIND_EQ
+                                     : LILY_CHECKED_EXPR_BINARY_KIND_GREATER_EQ,
+                  ref__LilyCheckedExpr(current_expr),
+                  NEW_VARIANT(LilyCheckedExpr,
+                              literal,
+                              location,
+                              NEW(LilyCheckedDataType,
+                                  LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                  location),
+                              NULL,
+                              NEW_VARIANT(LilyCheckedExprLiteral,
+                                          suffix_usize,
+                                          self->list.len))));
+
+            for (Usize i = 0; i < self->list.table->len; ++i) {
+                LilyCheckedPatternTableItem *item =
+                  get__Vec(self->list.table, i);
+                LilyCheckedExpr *new_current_expr = NEW_VARIANT(
+                  LilyCheckedExpr,
+                  access,
+                  location,
+                  ref__LilyCheckedDataType(item->value->data_type),
+                  NULL,
+                  NEW_VARIANT(
+                    LilyCheckedExprAccess,
+                    hook,
+                    NEW(LilyCheckedExprAccessHook,
+                        ref__LilyCheckedExpr(current_expr),
+                        NEW_VARIANT(LilyCheckedExpr,
+                                    literal,
+                                    location,
+                                    NEW(LilyCheckedDataType,
+                                        LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                        location),
+                                    NULL,
+                                    NEW_VARIANT(LilyCheckedExprLiteral,
+                                                suffix_usize,
+                                                item->id)))));
+                LilyCheckedExpr *right = to_expr__LilyCheckedPattern(
+                  item->value, analysis, location, scope, new_current_expr);
+
+                if (right) {
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      binary,
+                      location,
+                      ref__LilyCheckedDataType(dt),
+                      NULL,
+                      NEW(
+                        LilyCheckedExprBinary,
+                        LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                        left,
+                        NEW_VARIANT(LilyCheckedExpr,
+                                    binary,
+                                    location,
+                                    ref__LilyCheckedDataType(dt),
+                                    NULL,
+                                    NEW(LilyCheckedExprBinary,
+                                        LILY_CHECKED_EXPR_BINARY_KIND_EQ,
+                                        ref__LilyCheckedExpr(new_current_expr),
+                                        right))));
+                }
+
+                FREE(LilyCheckedExpr, new_current_expr);
+            }
+
+            return left;
+        }
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD: {
+            // TODO: set start index
+            LilyCheckedExpr *left =
+              self->list_head.left
+                ? to_expr__LilyCheckedPattern(
+                    self, analysis, location, scope, current_expr)
+                : NULL;
+            LilyCheckedExpr *right =
+              self->list_head.right
+                ? to_expr__LilyCheckedPattern(
+                    self, analysis, location, scope, current_expr)
+                : NULL;
+
+            if (left && right) {
+                return NEW_VARIANT(LilyCheckedExpr,
+                                   binary,
+                                   location,
+                                   NEW(LilyCheckedDataType,
+                                       LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                                       location),
+                                   NULL,
+                                   NEW(LilyCheckedExprBinary,
+                                       LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                                       left,
+                                       right));
+            } else if (left) {
+                return left;
+            } else if (right) {
+                return right;
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedExpr,
+              literal,
+              location,
+              NEW(LilyCheckedDataType,
+                  LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                  location),
+              NULL,
+              NEW_VARIANT(LilyCheckedExprLiteral, bool_, true));
+        }
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL: {
+            // TODO: set start index
+            LilyCheckedExpr *left =
+              self->list_tail.left
+                ? to_expr__LilyCheckedPattern(
+                    self, analysis, location, scope, current_expr)
+                : NULL;
+            LilyCheckedExpr *right =
+              self->list_tail.right
+                ? to_expr__LilyCheckedPattern(
+                    self, analysis, location, scope, current_expr)
+                : NULL;
+
+            if (left && right) {
+                return NEW_VARIANT(LilyCheckedExpr,
+                                   binary,
+                                   location,
+                                   NEW(LilyCheckedDataType,
+                                       LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                                       location),
+                                   NULL,
+                                   NEW(LilyCheckedExprBinary,
+                                       LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                                       left,
+                                       right));
+            } else if (left) {
+                return left;
+            } else if (right) {
+                return right;
+            }
+
+            return NEW_VARIANT(
+              LilyCheckedExpr,
+              literal,
+              location,
+              NEW(LilyCheckedDataType,
+                  LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                  location),
+              NULL,
+              NEW_VARIANT(LilyCheckedExprLiteral, bool_, true));
+        }
+        case LILY_CHECKED_PATTERN_KIND_LITERAL: {
+            LilyCheckedExpr *left = NULL;
+
+            switch (self->literal.kind) {
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BOOL:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_BOOL));
+
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      literal,
+                      location,
+                      ref__LilyCheckedDataType(self->data_type),
+                      NULL,
+                      NEW_VARIANT(
+                        LilyCheckedExprLiteral, bool_, self->literal.bool_));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTE:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_BYTE));
+
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      literal,
+                      location,
+                      ref__LilyCheckedDataType(self->data_type),
+                      NULL,
+                      NEW_VARIANT(
+                        LilyCheckedExprLiteral, byte, self->literal.byte));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTES:
+                    TODO("convert bytes in expression");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_CHAR:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_CHAR));
+
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      literal,
+                      location,
+                      ref__LilyCheckedDataType(self->data_type),
+                      NULL,
+                      NEW_VARIANT(
+                        LilyCheckedExprLiteral, char, self->literal.char_));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_CSTR:
+                    TODO("convert cstr in expression");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT32:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_FLOAT32));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              float32,
+                                              self->literal.float32));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT64:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_FLOAT64));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              float64,
+                                              self->literal.float64));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_INT32:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT32));
+
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      literal,
+                      location,
+                      ref__LilyCheckedDataType(self->data_type),
+                      NULL,
+                      NEW_VARIANT(
+                        LilyCheckedExprLiteral, int32, self->literal.int32));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_INT64:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT64));
+
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      literal,
+                      location,
+                      ref__LilyCheckedDataType(self->data_type),
+                      NULL,
+                      NEW_VARIANT(
+                        LilyCheckedExprLiteral, int64, self->literal.int64));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_NIL:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                             current_expr->data_type,
+                             LILY_CHECKED_DATA_TYPE_KIND_PTR) ||
+                           is_contains_kind__LilyCheckedDataType(
+                             current_expr->data_type,
+                             LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW(LilyCheckedExprLiteral,
+                                      LILY_CHECKED_EXPR_LITERAL_KIND_NIL));
+
+                    break;
+                case LILY_CHECKED_EXPR_LITERAL_KIND_NONE:
+                    TODO("convert none in expression");
+                case LILY_CHECKED_EXPR_LITERAL_KIND_STR:
+                    TODO("convert str in expression");
+                case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT32:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_FLOAT32));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_float32,
+                                              self->literal.suffix_float32));
+
+                    break;
+                case LILY_CHECKED_EXPR_LITERAL_KIND_SUFFIX_FLOAT64:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_FLOAT64));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_float64,
+                                              self->literal.suffix_float64));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT8:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT8));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_int8,
+                                              self->literal.suffix_int8));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT16:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT16));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_int16,
+                                              self->literal.suffix_int16));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT32:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT32));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_int32,
+                                              self->literal.suffix_int32));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT64:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_INT64));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_int64,
+                                              self->literal.suffix_int64));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_ISIZE:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_ISIZE));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_isize,
+                                              self->literal.suffix_isize));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT8:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT8));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_uint8,
+                                              self->literal.suffix_uint8));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT16:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT16));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_uint16,
+                                              self->literal.suffix_uint16));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT32:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT32));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_uint32,
+                                              self->literal.suffix_uint32));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT64:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT64));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_uint64,
+                                              self->literal.suffix_uint64));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_USIZE:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_USIZE));
+
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW_VARIANT(LilyCheckedExprLiteral,
+                                              suffix_usize,
+                                              self->literal.suffix_usize));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UINT32:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT32));
+
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      literal,
+                      location,
+                      ref__LilyCheckedDataType(self->data_type),
+                      NULL,
+                      NEW_VARIANT(
+                        LilyCheckedExprLiteral, uint32, self->literal.uint32));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UINT64:
+                    ASSERT(is_contains_kind__LilyCheckedDataType(
+                      current_expr->data_type,
+                      LILY_CHECKED_DATA_TYPE_KIND_UINT64));
+
+                    left = NEW_VARIANT(
+                      LilyCheckedExpr,
+                      literal,
+                      location,
+                      ref__LilyCheckedDataType(self->data_type),
+                      NULL,
+                      NEW_VARIANT(
+                        LilyCheckedExprLiteral, uint64, self->literal.uint64));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UNDEF:
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW(LilyCheckedExprLiteral,
+                                      LILY_CHECKED_EXPR_LITERAL_KIND_UNDEF));
+
+                    break;
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UNIT:
+                    // NOTE: this case is technically impossible
+                    left =
+                      NEW_VARIANT(LilyCheckedExpr,
+                                  literal,
+                                  location,
+                                  ref__LilyCheckedDataType(self->data_type),
+                                  NULL,
+                                  NEW(LilyCheckedExprLiteral,
+                                      LILY_CHECKED_EXPR_LITERAL_KIND_UNIT));
+
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+
+            return NEW_VARIANT(LilyCheckedExpr,
+                               binary,
+                               location,
+                               NEW(LilyCheckedDataType,
+                                   LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                                   location),
+                               NULL,
+                               NEW(LilyCheckedExprBinary,
+                                   LILY_CHECKED_EXPR_BINARY_KIND_EQ,
+                                   left,
+                                   ref__LilyCheckedExpr(current_expr)));
+        }
+        case LILY_CHECKED_PATTERN_KIND_RANGE:
+            TODO("convert range in expression");
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL: {
+            // TODO: add support for record object
+            String *name =
+              get_last_name__LilyAstExpr(self->record_call.id->ast_expr);
+
+            ASSERT(name);
+
+            LilyCheckedScopeResponse scope_res =
+              search_from_scope_id__LilyCheckedScope(
+                scope,
+                self->record_call.id->call.scope.id,
+                name,
+                LILY_CHECKED_SCOPE_RESPONSE_KIND_RECORD);
+
+            ASSERT(scope_res.kind !=
+                   LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND);
+
+            LilyCheckedExpr *left = NULL;
+
+            for (Usize i = 0; i < self->record_call.fields->len; ++i) {
+                LilyCheckedPatternRecordField *field =
+                  get__Vec(self->record_call.fields, i);
+                Usize id = get_id_from_field_name__LilyCheckedDeclRecord(
+                  scope_res.record, field->name);
+                LilyCheckedDataType *field_data_type = NULL;
+
+                if (field->name) {
+                    field_data_type =
+                      get_data_type_from_field_name__LilyCheckedDeclRecord(
+                        scope_res.record, field->name);
+                } else {
+                    const LilyAstPattern *name_pattern =
+                      get_name__LilyAstPattern(field->pattern->ast_pattern);
+
+                    field_data_type =
+                      get_data_type_from_field_name__LilyCheckedDeclRecord(
+                        scope_res.record, name_pattern->name.name);
+                }
+
+                LilyCheckedExpr *new_current_expr = EXPR_COMPILER_GET_FIELD(
+                  location,
+                  ref__LilyCheckedDataType(field_data_type),
+                  current_expr,
+                  id);
+
+                if (left) {
+                    LilyCheckedExpr *right = to_expr__LilyCheckedPattern(
+                      field->pattern,
+                      analysis,
+                      location,
+                      scope,
+                      ref__LilyCheckedExpr(new_current_expr));
+
+                    if (right) {
+                        left = NEW_VARIANT(
+                          LilyCheckedExpr,
+                          binary,
+                          location,
+                          NEW(LilyCheckedDataType,
+                              LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                              location),
+                          NULL,
+                          NEW(LilyCheckedExprBinary,
+                              LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                              left,
+                              NEW_VARIANT(LilyCheckedExpr,
+                                          binary,
+                                          location,
+                                          NEW(LilyCheckedDataType,
+                                              LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                                              location),
+                                          NULL,
+                                          NEW(LilyCheckedExprBinary,
+                                              LILY_CHECKED_EXPR_BINARY_KIND_EQ,
+                                              new_current_expr,
+                                              right))));
+                    }
+                } else {
+                    LilyCheckedExpr *right = to_expr__LilyCheckedPattern(
+                      field->pattern,
+                      analysis,
+                      location,
+                      scope,
+                      ref__LilyCheckedExpr(new_current_expr));
+
+                    if (right) {
+                        left = NEW_VARIANT(LilyCheckedExpr,
+                                           binary,
+                                           location,
+                                           NEW(LilyCheckedDataType,
+                                               LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                                               location),
+                                           NULL,
+                                           NEW(LilyCheckedExprBinary,
+                                               LILY_CHECKED_EXPR_BINARY_KIND_EQ,
+                                               right,
+                                               new_current_expr));
+                    }
+                }
+
+                FREE(LilyCheckedExpr, new_current_expr);
+            }
+
+            return left;
+        }
+        case LILY_CHECKED_PATTERN_KIND_TUPLE: {
+            ASSERT(is_contains_kind__LilyCheckedDataType(
+              current_expr->data_type, LILY_CHECKED_DATA_TYPE_KIND_TUPLE));
+
+            LilyCheckedDataType *dt = NEW(
+              LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_BOOL, location);
+            LilyCheckedExpr *left = NULL;
+
+            for (Usize i = 0; i < self->tuple.table->len; ++i) {
+                LilyCheckedPatternTableItem *item =
+                  get__Vec(self->tuple.table, i);
+
+                LilyCheckedExpr *new_current_expr = NEW_VARIANT(
+                  LilyCheckedExpr,
+                  access,
+                  location,
+                  ref__LilyCheckedDataType(item->value->data_type),
+                  NULL,
+                  NEW_VARIANT(
+                    LilyCheckedExprAccess,
+                    tuple,
+                    NEW(LilyCheckedExprAccessTuple,
+                        ref__LilyCheckedExpr(current_expr),
+                        NEW_VARIANT(LilyCheckedExpr,
+                                    literal,
+                                    location,
+                                    NEW(LilyCheckedDataType,
+                                        LILY_CHECKED_DATA_TYPE_KIND_USIZE,
+                                        location),
+                                    NULL,
+                                    NEW_VARIANT(LilyCheckedExprLiteral,
+                                                suffix_usize,
+                                                item->id)))));
+                LilyCheckedExpr *right = to_expr__LilyCheckedPattern(
+                  item->value, analysis, location, scope, new_current_expr);
+
+                if (left) {
+                    if (right) {
+                        left = NEW_VARIANT(
+                          LilyCheckedExpr,
+                          binary,
+                          location,
+                          ref__LilyCheckedDataType(dt),
+                          NULL,
+                          NEW(LilyCheckedExprBinary,
+                              LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                              left,
+                              NEW_VARIANT(
+                                LilyCheckedExpr,
+                                binary,
+                                location,
+                                ref__LilyCheckedDataType(dt),
+                                NULL,
+                                NEW(LilyCheckedExprBinary,
+                                    LILY_CHECKED_EXPR_BINARY_KIND_EQ,
+                                    ref__LilyCheckedExpr(new_current_expr),
+                                    right))));
+                    }
+
+                    FREE(LilyCheckedExpr, new_current_expr);
+                } else {
+                    left = right;
+                }
+            }
+
+            return left;
+        }
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
+            return NEW_VARIANT(
+              LilyCheckedExpr,
+              literal,
+              location,
+              NEW(LilyCheckedDataType,
+                  LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                  location),
+              NULL,
+              NEW_VARIANT(LilyCheckedExprLiteral, bool_, false));
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
+            return to_expr__LilyCheckedPattern(self->variant_call.pattern,
+                                               analysis,
+                                               location,
+                                               scope,
+                                               current_expr);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
 
 void
 push_constant__LilyAnalysis(LilyAnalysis *self,
@@ -2540,8 +3408,45 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN: {
             LilyCheckedExpr *left = check_expr__LilyAnalysis(
               self, expr->binary.left, scope, safety_mode, true, NULL);
-            LilyCheckedExpr *right = check_expr__LilyAnalysis(
-              self, expr->binary.right, scope, safety_mode, false, NULL);
+            LilyCheckedExpr *right =
+              check_expr__LilyAnalysis(self,
+                                       expr->binary.right,
+                                       scope,
+                                       safety_mode,
+                                       false,
+                                       left->data_type);
+
+            if (expr->binary.kind == LILY_AST_EXPR_BINARY_KIND_ASSIGN) {
+                LilyCheckedDataType *assign_data_type = NULL;
+
+                // TODO: maybe add support for compiler defined data type
+                if (defined_data_type) {
+                    switch (defined_data_type->kind) {
+                        case LILY_CHECKED_DATA_TYPE_KIND_CVOID:
+                        case LILY_CHECKED_DATA_TYPE_KIND_UNIT:
+                            assign_data_type =
+                              ref__LilyCheckedDataType(defined_data_type);
+
+                            break;
+                        default:
+                            FAILED("expected unit or cvoid");
+                    }
+                } else {
+                    assign_data_type = NEW(LilyCheckedDataType,
+                                           LILY_CHECKED_DATA_TYPE_KIND_UNIT,
+                                           &expr->location);
+                }
+
+                return NEW_VARIANT(LilyCheckedExpr,
+                                   binary,
+                                   &expr->location,
+                                   assign_data_type,
+                                   expr,
+                                   NEW(LilyCheckedExprBinary,
+                                       LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN,
+                                       left,
+                                       right));
+            }
 
             return typecheck_binary_expr__LilyAnalysis(
               self,
@@ -2973,37 +3878,45 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
 
             break;
         }
-        case LILY_CHECKED_STMT_KIND_MATCH: {
+        case LILY_CHECKED_STMT_KIND_MATCH:
             for (Usize i = 0; i < stmt->match.cases->len; ++i) {
                 LilyCheckedStmtMatchCase *case_ =
                   get__Vec(stmt->match.cases, i);
-                LilyCheckedVirtualScope *case_virtual_scope =
-                  NEW(LilyCheckedVirtualScope, virtual_scope);
 
-                switch (case_->body_item->kind) {
-                    case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
-                        reanalyze_expr__LilyAnalysis(self,
-                                                     signature,
-                                                     case_->body_item->expr,
-                                                     case_virtual_scope,
-                                                     return_data_type);
-                        break;
-                    case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
-                        reanalyze_stmt__LilyAnalysis(self,
-                                                     signature,
-                                                     &case_->body_item->stmt,
-                                                     case_virtual_scope,
-                                                     return_data_type);
-                        break;
-                    default:
-                        UNREACHABLE("unknown variant");
+                for (Usize j = 0; j < case_->sub_cases->len; ++j) {
+                    LilyCheckedStmtMatchSubCase *sub_case =
+                      get__Vec(case_->sub_cases, j);
+                    LilyCheckedVirtualScope *case_virtual_scope =
+                      NEW(LilyCheckedVirtualScope, virtual_scope);
+
+                    switch (sub_case->body_item->kind) {
+                        case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
+                            reanalyze_expr__LilyAnalysis(
+                              self,
+                              signature,
+                              sub_case->body_item->expr,
+                              case_virtual_scope,
+                              return_data_type);
+
+                            break;
+                        case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
+                            reanalyze_stmt__LilyAnalysis(
+                              self,
+                              signature,
+                              &sub_case->body_item->stmt,
+                              case_virtual_scope,
+                              return_data_type);
+
+                            break;
+                        default:
+                            UNREACHABLE("unknown variant");
+                    }
+
+                    FREE(LilyCheckedVirtualScope, case_virtual_scope);
                 }
-
-                FREE(LilyCheckedVirtualScope, case_virtual_scope);
             }
 
             break;
-        }
         case LILY_CHECKED_STMT_KIND_RETURN: {
             LilyCheckedDataType *expr_data_type =
               reanalyze_expr__LilyAnalysis(self,
@@ -3021,6 +3934,45 @@ reanalyze_stmt__LilyAnalysis(LilyAnalysis *self,
 
             break;
         }
+        case LILY_CHECKED_STMT_KIND_SWITCH:
+            for (Usize i = 0; i < stmt->switch_.cases->len; ++i) {
+                LilyCheckedStmtSwitchCase *case_ =
+                  get__Vec(stmt->switch_.cases, i);
+
+                for (Usize j = 0; j < case_->sub_cases->len; ++j) {
+                    LilyCheckedStmtSwitchSubCase *sub_case =
+                      get__Vec(case_->sub_cases, j);
+                    LilyCheckedVirtualScope *case_virtual_scope =
+                      NEW(LilyCheckedVirtualScope, virtual_scope);
+
+                    switch (sub_case->body_item->kind) {
+                        case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR:
+                            reanalyze_expr__LilyAnalysis(
+                              self,
+                              signature,
+                              sub_case->body_item->expr,
+                              case_virtual_scope,
+                              return_data_type);
+
+                            break;
+                        case LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT:
+                            reanalyze_stmt__LilyAnalysis(
+                              self,
+                              signature,
+                              &sub_case->body_item->stmt,
+                              case_virtual_scope,
+                              return_data_type);
+
+                            break;
+                        default:
+                            UNREACHABLE("unknown variant");
+                    }
+
+                    FREE(LilyCheckedVirtualScope, case_virtual_scope);
+                }
+            }
+
+            break;
         case LILY_CHECKED_STMT_KIND_TRY: {
             LilyCheckedVirtualScope *try_virtual_scope =
               NEW(LilyCheckedVirtualScope, virtual_scope);
@@ -7165,25 +8117,41 @@ check_array_pattern__LilyAnalysis(LilyAnalysis *self,
                    "expression");
     }
 
-    Vec *array = NEW(Vec);
+    LilyCheckedPatternTable table = NEW(Vec);
+    bool must_eq = true;
 
     for (Usize i = 0; i < pattern->array.patterns->len; ++i) {
-        push__Vec(
-          array,
+        LilyAstPattern *ast_pattern = get__Vec(pattern->array.patterns, i);
+        LilyCheckedPattern *check_pattern =
           check_pattern__LilyAnalysis(self,
-                                      get__Vec(pattern->array.patterns, i),
+                                      ast_pattern,
                                       scope,
                                       safety_mode,
                                       defined_data_type->array.data_type,
-                                      captured_variables));
+                                      captured_variables);
+
+        switch (ast_pattern->kind) {
+            case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
+                must_eq = false;
+                break;
+            default:
+                break;
+        }
+
+        if (check_pattern) {
+            add__LilyCheckedPatternTable(
+              table, NEW(LilyCheckedPatternTableItem, i, check_pattern));
+        }
     }
 
-    return NEW_VARIANT(LilyCheckedPattern,
-                       array,
-                       &pattern->location,
-                       ref__LilyCheckedDataType(defined_data_type),
-                       pattern,
-                       NEW(LilyCheckedPatternArray, array));
+    return NEW_VARIANT(
+      LilyCheckedPattern,
+      array,
+      &pattern->location,
+      ref__LilyCheckedDataType(defined_data_type),
+      pattern,
+      NEW(
+        LilyCheckedPatternArray, pattern->array.patterns->len, must_eq, table));
 }
 
 LilyCheckedPattern *
@@ -7194,6 +8162,10 @@ check_as_pattern__LilyAnalysis(LilyAnalysis *self,
                                LilyCheckedDataType *defined_data_type,
                                OrderedHashMap *captured_variables)
 {
+    if (pattern->as.pattern->kind != LILY_AST_PATTERN_KIND_AUTO_COMPLETE) {
+        FAILED("expected name pattern");
+    }
+
     LilyCheckedPattern *as_pattern =
       check_pattern__LilyAnalysis(self,
                                   pattern->as.pattern,
@@ -7219,25 +8191,15 @@ check_as_pattern__LilyAnalysis(LilyAnalysis *self,
                                    defined_data_type));
     }
 
-    return NEW_VARIANT(LilyCheckedPattern,
-                       as,
-                       &pattern->location,
-                       defined_data_type,
-                       pattern,
-                       NEW(LilyCheckedPatternAs, as_pattern, pattern->as.name));
-}
-
-LilyCheckedPattern *
-check_auto_complete_pattern__LilyAnalysis(
-  LilyAnalysis *self,
-  const LilyAstPattern *pattern,
-  LilyCheckedDataType *defined_data_type)
-{
-    return NEW(LilyCheckedPattern,
-               LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE,
-               &pattern->location,
-               ref__LilyCheckedDataType(defined_data_type),
-               pattern);
+    return self->use_switch
+             ? NULL
+             : NEW_VARIANT(
+                 LilyCheckedPattern,
+                 as,
+                 &pattern->location,
+                 defined_data_type,
+                 pattern,
+                 NEW(LilyCheckedPatternAs, as_pattern, pattern->as.name));
 }
 
 LilyCheckedPattern *
@@ -7389,25 +8351,40 @@ check_list_pattern__LilyAnalysis(LilyAnalysis *self,
             FAILED("expected list");
     }
 
-    Vec *list = NEW(Vec); // Vec<LilyCheckedPattern*>*
+    LilyCheckedPatternTable table = NEW(Vec);
+    bool must_eq = true;
 
     for (Usize i = 0; i < pattern->list.patterns->len; ++i) {
-        push__Vec(
-          list,
+        LilyAstPattern *ast_pattern = get__Vec(pattern->list.patterns, i);
+        LilyCheckedPattern *check_pattern =
           check_pattern__LilyAnalysis(self,
-                                      get__Vec(pattern->list.patterns, i),
+                                      ast_pattern,
                                       scope,
                                       safety_mode,
                                       defined_data_type->list,
-                                      captured_variables));
+                                      captured_variables);
+
+        switch (ast_pattern->kind) {
+            case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
+                must_eq = false;
+                break;
+            default:
+                break;
+        }
+
+        if (check_pattern) {
+            add__LilyCheckedPatternTable(
+              table, NEW(LilyCheckedPatternTableItem, i, check_pattern));
+        }
     }
 
-    return NEW_VARIANT(LilyCheckedPattern,
-                       list,
-                       &pattern->location,
-                       ref__LilyCheckedDataType(defined_data_type),
-                       pattern,
-                       NEW(LilyCheckedPatternList, list));
+    return NEW_VARIANT(
+      LilyCheckedPattern,
+      list,
+      &pattern->location,
+      ref__LilyCheckedDataType(defined_data_type),
+      pattern,
+      NEW(LilyCheckedPatternList, pattern->list.patterns->len, must_eq, table));
 }
 
 LilyCheckedPattern *
@@ -8361,12 +9338,14 @@ check_name_pattern__LilyAnalysis(LilyAnalysis *self,
               ref__LilyCheckedDataType(defined_data_type)));
     }
 
-    return NEW_VARIANT(LilyCheckedPattern,
-                       name,
-                       &pattern->location,
-                       ref__LilyCheckedDataType(defined_data_type),
-                       pattern,
-                       NEW(LilyCheckedPatternName, pattern->name.name));
+    return self->use_switch
+             ? NULL
+             : NEW_VARIANT(LilyCheckedPattern,
+                           name,
+                           &pattern->location,
+                           ref__LilyCheckedDataType(defined_data_type),
+                           pattern,
+                           NEW(LilyCheckedPatternName, pattern->name.name));
 }
 
 LilyCheckedPattern *
@@ -8460,26 +9439,81 @@ check_record_call_pattern__LilyAnalysis(LilyAnalysis *self,
             FAILED("expected record");
     }
 
-    Vec *fields = NEW(Vec); // Vec<LilyCheckedPattern*>*
+    Vec *fields = NEW(Vec); // Vec<LilyCheckedPatternRecordField*>*
 
     for (Usize i = 0; i < pattern->record_call.fields->len; ++i) {
-        LilyCheckedPattern *item =
+        LilyAstPatternRecordField *field =
+          get__Vec(pattern->record_call.fields, i);
+        LilyCheckedPattern *field_pattern =
           check_pattern__LilyAnalysis(self,
-                                      get__Vec(pattern->record_call.fields, i),
+                                      field->pattern,
                                       scope,
                                       safety_mode,
                                       get__Vec(response_id.record->fields, i),
                                       captured_variables);
-        const LilyCheckedPattern *name = get_name__LilyCheckedPattern(item);
 
-        if (name) {
+        if (field->name) {
             if (!field_exists__LilyCheckedDeclRecord(response_id.record,
-                                                     name->name.name)) {
+                                                     field->name)) {
                 FAILED("the field doesn't exist");
+            } else if (!field_pattern) {
+                if (add_captured_variable__LilyCheckedScope(
+                      scope,
+                      NEW(LilyCheckedScopeContainerCapturedVariable,
+                          field->name,
+                          captured_variables->len))) {
+                    FAILED("duplicate captured variable");
+                } else {
+                    insert__OrderedHashMap(
+                      captured_variables,
+                      field->name->buffer,
+                      NEW(
+                        LilyCheckedCapturedVariable,
+                        field->name,
+                        &pattern->location,
+                        ref__LilyCheckedDataType(
+                          get_data_type_from_field_name__LilyCheckedDeclRecord(
+                            response_id.record, field->name))));
+                }
+            }
+        } else {
+            const LilyAstPattern *name_pattern =
+              get_name__LilyAstPattern(field->pattern);
+
+            if (!name_pattern) {
+                FAILED("expected name pattern");
+            }
+
+            if (!field_exists__LilyCheckedDeclRecord(response_id.record,
+                                                     name_pattern->name.name)) {
+                FAILED("the field doesn't exist");
+            } else {
+                if (add_captured_variable__LilyCheckedScope(
+                      scope,
+                      NEW(LilyCheckedScopeContainerCapturedVariable,
+                          name_pattern->name.name,
+                          captured_variables->len))) {
+                    FAILED("duplicate captured variable");
+                } else {
+                    insert__OrderedHashMap(
+                      captured_variables,
+                      field->name->buffer,
+                      NEW(
+                        LilyCheckedCapturedVariable,
+                        field->name,
+                        &pattern->location,
+                        ref__LilyCheckedDataType(
+                          get_data_type_from_field_name__LilyCheckedDeclRecord(
+                            response_id.record, field->name))));
+                }
             }
         }
 
-        push__Vec(fields, item);
+        if (field_pattern) {
+            push__Vec(
+              fields,
+              NEW(LilyCheckedPatternRecordField, field->name, field_pattern));
+        }
     }
 
     LilyCheckedExpr *record_call_id =
@@ -8512,8 +9546,6 @@ check_tuple_pattern__LilyAnalysis(LilyAnalysis *self,
                                   LilyCheckedDataType *defined_data_type,
                                   OrderedHashMap *captured_variables)
 {
-    Vec *patterns = NEW(Vec);
-
     switch (defined_data_type->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_TUPLE:
             if (pattern->tuple.patterns->len > defined_data_type->tuple->len) {
@@ -8525,15 +9557,21 @@ check_tuple_pattern__LilyAnalysis(LilyAnalysis *self,
             FAILED("expected tuple");
     }
 
+    LilyCheckedPatternTable table = NEW(Vec);
+
     for (Usize i = 0; i < pattern->tuple.patterns->len; ++i) {
-        push__Vec(
-          patterns,
+        LilyCheckedPattern *tuple_item =
           check_pattern__LilyAnalysis(self,
                                       get__Vec(pattern->tuple.patterns, i),
                                       scope,
                                       safety_mode,
                                       get__Vec(defined_data_type->tuple, i),
-                                      captured_variables));
+                                      captured_variables);
+
+        if (tuple_item) {
+            add__LilyCheckedPatternTable(
+              table, NEW(LilyCheckedPatternTableItem, i, tuple_item));
+        }
     }
 
     return NEW_VARIANT(LilyCheckedPattern,
@@ -8541,7 +9579,7 @@ check_tuple_pattern__LilyAnalysis(LilyAnalysis *self,
                        &pattern->location,
                        ref__LilyCheckedDataType(defined_data_type),
                        pattern,
-                       NEW(LilyCheckedPatternTuple, patterns));
+                       NEW(LilyCheckedPatternTuple, table));
 }
 
 LilyCheckedPattern *
@@ -8614,18 +9652,6 @@ check_variant_call_pattern__LilyAnalysis(LilyAnalysis *self,
 }
 
 LilyCheckedPattern *
-check_wildcard_pattern__LilyAnalysis(LilyAnalysis *self,
-                                     const LilyAstPattern *pattern,
-                                     LilyCheckedDataType *defined_data_type)
-{
-    return NEW(LilyCheckedPattern,
-               LILY_CHECKED_PATTERN_KIND_WILDCARD,
-               &pattern->location,
-               ref__LilyCheckedDataType(defined_data_type),
-               pattern);
-}
-
-LilyCheckedPattern *
 check_pattern__LilyAnalysis(LilyAnalysis *self,
                             const LilyAstPattern *pattern,
                             LilyCheckedScope *scope,
@@ -8651,8 +9677,21 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                                                   defined_data_type,
                                                   captured_variables);
         case LILY_AST_PATTERN_KIND_AUTO_COMPLETE:
-            return check_auto_complete_pattern__LilyAnalysis(
-              self, pattern, defined_data_type);
+            return self->use_switch
+                     ? NULL
+                     : NEW(LilyCheckedPattern,
+                           LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE,
+                           &pattern->location,
+                           ref__LilyCheckedDataType(defined_data_type),
+                           pattern);
+        case LILY_AST_PATTERN_KIND_WILDCARD:
+            return self->use_switch
+                     ? NULL
+                     : NEW(LilyCheckedPattern,
+                           LILY_CHECKED_PATTERN_KIND_ELSE,
+                           &pattern->location,
+                           ref__LilyCheckedDataType(defined_data_type),
+                           pattern);
         case LILY_AST_PATTERN_KIND_ERROR:
             return check_error_pattern__LilyAnalysis(self,
                                                      pattern,
@@ -8723,9 +9762,6 @@ check_pattern__LilyAnalysis(LilyAnalysis *self,
                                                             safety_mode,
                                                             defined_data_type,
                                                             captured_variables);
-        case LILY_AST_PATTERN_KIND_WILDCARD:
-            return check_wildcard_pattern__LilyAnalysis(
-              self, pattern, defined_data_type);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -8845,6 +9881,106 @@ count_total_cases__LilyAnalysis(LilyAnalysis *self,
     }
 }
 
+void
+check_match_stmt_case_for_match__LilyAnalysis(
+  LilyAnalysis *self,
+  const LilyAstStmtMatchCase *ast_case,
+  LilyCheckedExpr *match_expr,
+  LilyCheckedScope *scope,
+  bool in_loop,
+  bool *is_final_else,
+  Usize *nb_cases,
+  const Usize *total_cases,
+  enum LilyCheckedSafetyMode safety_mode,
+  LilyCheckedBodyFunItem **body_item,
+  LilyCheckedExpr **cond,
+  LilyCheckedPattern **pattern)
+{
+    // TODO: remove captured variables, because that's unused (re-add Name
+    // pattern, ...).
+    OrderedHashMap *captured_variables = NEW(OrderedHashMap);
+    *is_final_else = is_final_else_pattern__LilyAstPattern(ast_case->pattern);
+
+    if (ast_case->cond) {
+    } else {
+    }
+
+    TODO("check match statement case for match");
+}
+
+void
+check_match_stmt_case_for_switch__LilyAnalysis(
+  LilyAnalysis *self,
+  const LilyAstStmtMatchCase *ast_case,
+  LilyCheckedExpr *match_expr,
+  LilyCheckedScope *scope,
+  bool in_loop,
+  bool *is_final_else,
+  Usize *nb_cases,
+  const Usize *total_cases,
+  enum LilyCheckedSafetyMode safety_mode,
+  LilyCheckedBodyFunItem **body_item,
+  LilyCheckedExpr **cond,
+  LilyCheckedStmtSwitchCaseValue **case_value)
+{
+    // TODO: remove captured variables, because we will generate that by the
+    // compiler
+    OrderedHashMap *captured_variables = NEW(OrderedHashMap);
+    LilyCheckedPattern *check_pattern =
+      check_pattern__LilyAnalysis(self,
+                                  ast_case->pattern,
+                                  scope,
+                                  safety_mode,
+                                  match_expr->data_type,
+                                  captured_variables);
+    LilyCheckedStmtSwitchCaseValue *switch_case_value =
+      to_switch_case_value__LilyCheckedPattern(check_pattern, scope);
+    LilyCheckedExpr *check_pattern_cond = to_expr__LilyCheckedPattern(
+      check_pattern, self, check_pattern->location, scope, match_expr);
+    // TODO: improve location precision of <left> and <right> expression.
+    LilyCheckedExpr *check_cond =
+      ast_case->cond
+        ? check_pattern_cond
+            ? NEW_VARIANT(
+                LilyCheckedExpr,
+                binary,
+                check_pattern_cond->location,
+                NEW(LilyCheckedDataType,
+                    LILY_CHECKED_DATA_TYPE_KIND_BOOL,
+                    check_pattern_cond->location),
+                NULL,
+                NEW(LilyCheckedExprBinary,
+                    LILY_CHECKED_EXPR_BINARY_KIND_AND,
+                    check_pattern_cond,
+                    check_expr__LilyAnalysis(
+                      self, ast_case->cond, scope, safety_mode, false, NULL)))
+            : check_expr__LilyAnalysis(
+                self, ast_case->cond, scope, safety_mode, false, NULL)
+        : check_pattern_cond;
+    *is_final_else = is_final_else_pattern__LilyAstPattern(ast_case->pattern);
+
+    if (check_cond) {
+        EXPECTED_BOOL_EXPR(check_cond);
+    } else if (is_else_pattern__LilyAstPattern(ast_case->pattern)) {
+        if (*is_final_else) {
+            *nb_cases = *total_cases;
+        } else {
+            ++(*nb_cases);
+        }
+    }
+
+    LilyCheckedBodyFunItem *check_item = check_fun_item__LilyAnalysis(
+      self, ast_case->body_item, scope, 0, in_loop, safety_mode, NULL, NULL);
+
+    ASSERT(check_item);
+
+    FREE(LilyCheckedPattern, check_pattern);
+
+    *case_value = switch_case_value;
+    *cond = check_cond;
+    *body_item = check_item;
+}
+
 LilyCheckedBodyFunItem *
 check_match_stmt__LilyAnalysis(LilyAnalysis *self,
                                const LilyAstStmt *stmt,
@@ -8855,8 +9991,8 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
 {
     LilyCheckedExpr *expr = check_expr__LilyAnalysis(
       self, stmt->match.expr, scope, safety_mode, false, NULL);
-    bool use_switch = false;
     bool has_else = false;
+    bool use_switch = false;
     Usize total_cases = count_total_cases__LilyAnalysis(
       self, scope, safety_mode, expr->data_type);
     Usize nb_cases = 0;
@@ -8923,80 +10059,100 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
             break;
     }
 
-    Vec *cases = NEW(Vec); // Vec<LilyCheckedStmtMatchCase*>*
+    Vec *cases = NEW(Vec); // Vec<LilyCheckedStmtMatchCase*>* |
+                           // Vec<LilyCheckedStmtSwitchCase*>*
+    LilyCheckedStmtMatch match;
+    LilyCheckedStmtSwitch switch_;
 
+    if (self->use_switch) {
+        switch_ = NEW(LilyCheckedStmtSwitch, expr, cases);
+    } else {
+        match = NEW(LilyCheckedStmtMatch, expr, cases);
+    }
+
+    // TODO: maybe optimize that
     for (Usize i = 0; i < stmt->match.cases->len; ++i) {
         LilyAstStmtMatchCase *ast_case = get__Vec(stmt->match.cases, i);
+        bool is_final_else = false;
 
         if (nb_cases == total_cases) {
             FAILED("warning: this case is unused");
             continue;
         }
 
-        OrderedHashMap *captured_variables = NEW(OrderedHashMap);
-        LilyCheckedPattern *check_pattern =
-          check_pattern__LilyAnalysis(self,
-                                      ast_case->pattern,
-                                      scope,
-                                      safety_mode,
-                                      expr->data_type,
-                                      captured_variables);
-        LilyCheckedExpr *check_cond =
-          ast_case->cond
-            ? check_expr__LilyAnalysis(
-                self, ast_case->cond, scope, safety_mode, false, NULL)
-            : NULL;
-        bool is_final_else =
-          is_final_else_pattern__LilyCheckedPattern(check_pattern);
+        if (self->use_switch) {
+            if (use_switch) {
+                LilyCheckedBodyFunItem *body_item = NULL;
+                LilyCheckedExpr *cond = NULL;
+                LilyCheckedStmtSwitchCaseValue *case_value = NULL;
 
-        if (check_cond) {
-            use_switch = false;
-            EXPECTED_BOOL_EXPR(check_cond);
-        }
+                check_match_stmt_case_for_switch__LilyAnalysis(self,
+                                                               ast_case,
+                                                               expr,
+                                                               scope,
+                                                               in_loop,
+                                                               &is_final_else,
+                                                               &nb_cases,
+                                                               &total_cases,
+                                                               safety_mode,
+                                                               &body_item,
+                                                               &cond,
+                                                               &case_value);
 
-        if (!check_cond && is_else_pattern__LilyCheckedPattern(check_pattern)) {
-            if (is_final_else) {
-                nb_cases = total_cases;
+                int err = look_for_case_error__LilyCheckedStmtSwitch(
+                  &switch_, case_value, cond);
+
+                switch (err) {
+                    case 0:
+                        add_case__LilyCheckedStmtSwitch(
+                          &switch_, case_value, cond, body_item);
+
+                        break;
+                    case 1:
+                        FAILED("warning: unused case");
+                    case 2:
+                        FAILED("duplicate case");
+                    default:
+                        UNREACHABLE("unknown error code");
+                }
             } else {
-                ++nb_cases;
+                TODO("use if condition");
+            }
+        } else {
+            LilyCheckedBodyFunItem *body_item = NULL;
+            LilyCheckedExpr *cond = NULL;
+            LilyCheckedPattern *pattern = NULL;
+
+            check_match_stmt_case_for_match__LilyAnalysis(self,
+                                                          ast_case,
+                                                          expr,
+                                                          scope,
+                                                          in_loop,
+                                                          &is_final_else,
+                                                          &nb_cases,
+                                                          &total_cases,
+                                                          safety_mode,
+                                                          &body_item,
+                                                          &cond,
+                                                          &pattern);
+
+            int err =
+              look_for_case_error__LilyCheckedStmtMatch(&match, pattern, cond);
+
+            switch (err) {
+                case 0:
+                    add_case__LilyCheckedStmtMatch(
+                      &match, pattern, cond, body_item);
+
+                    break;
+                case 1:
+                    FAILED("warning: unused case");
+                case 2:
+                    FAILED("duplicate case");
+                default:
+                    UNREACHABLE("unknown error code");
             }
         }
-
-        LilyCheckedBodyFunItem *check_item =
-          check_fun_item__LilyAnalysis(self,
-                                       ast_case->body_item,
-                                       scope,
-                                       0,
-                                       in_loop,
-                                       safety_mode,
-                                       NULL,
-                                       NULL);
-
-        ASSERT(check_item);
-
-        // Check if we have no duplicate case
-        for (Usize j = 0; j < cases->len; ++j) {
-            LilyCheckedStmtMatchCase *case_ = get__Vec(cases, j);
-
-            if (case_->cond) {
-                continue;
-            }
-
-            bool is_eq = eq__LilyCheckedPattern(case_->pattern, check_pattern);
-
-            if (is_eq && check_cond) {
-                FAILED("warning: unused case");
-            } else if (is_eq) {
-                FAILED("warning: duplicate case");
-            }
-        }
-
-        push__Vec(cases,
-                  NEW(LilyCheckedStmtMatchCase,
-                      captured_variables,
-                      check_pattern,
-                      check_cond,
-                      check_item));
 
         if (is_final_else) {
             has_else = true;
@@ -9010,15 +10166,21 @@ check_match_stmt__LilyAnalysis(LilyAnalysis *self,
         FAILED("non-exhaustive patterns");
     }
 
+    if (self->use_switch) {
+        switch_.has_else = has_else;
+
+        return NEW_VARIANT(
+          LilyCheckedBodyFunItem,
+          stmt,
+          NEW_VARIANT(LilyCheckedStmt, switch, &stmt->location, stmt, switch_));
+    }
+
+    match.has_else = has_else;
+
     return NEW_VARIANT(
       LilyCheckedBodyFunItem,
       stmt,
-      NEW_VARIANT(
-        LilyCheckedStmt,
-        match,
-        &stmt->location,
-        stmt,
-        NEW(LilyCheckedStmtMatch, expr, cases, use_switch, has_else)));
+      NEW_VARIANT(LilyCheckedStmt, match, &stmt->location, stmt, match));
 }
 
 LilyCheckedBodyFunItem *
@@ -10398,6 +11560,8 @@ check_enum_variants__LilyAnalysis(LilyAnalysis *self,
             FREE(LilyCheckedScopeContainerVariable, sc_variable);
         }
 
+        // TODO: With enum variant with pre-set value add it instead of `i`
+        // value
         push__Vec(check_variants,
                   NEW(LilyCheckedVariant,
                       ast_variant->name,
@@ -10406,7 +11570,8 @@ check_enum_variants__LilyAnalysis(LilyAnalysis *self,
                                      ast_variant->name),
                       data_type,
                       &ast_variant->location,
-                      enum_));
+                      enum_,
+                      i));
     }
 
     enum_->type.enum_.variants = check_variants;

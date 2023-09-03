@@ -41,6 +41,7 @@ typedef struct LilyAnalysis
     LilyAstDecl *current;
     const LilyParser *parser;
     Usize position;
+    bool use_switch;
 } LilyAnalysis;
 
 /**
@@ -51,7 +52,8 @@ inline CONSTRUCTOR(LilyAnalysis,
                    LilyAnalysis,
                    LilyPackage *package,
                    LilyPackage *root_package,
-                   const LilyParser *parser)
+                   const LilyParser *parser,
+                   bool use_switch)
 {
     return (LilyAnalysis){ .module = NEW(LilyCheckedDeclModule,
                                          from__String("global"),
@@ -63,7 +65,8 @@ inline CONSTRUCTOR(LilyAnalysis,
                            .root_package = root_package,
                            .current = NULL,
                            .parser = parser,
-                           .position = 0 };
+                           .position = 0,
+                           .use_switch = use_switch };
 }
 
 /**

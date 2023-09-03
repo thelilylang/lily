@@ -103,6 +103,14 @@ is_llvm_sext__LilyCheckedExprCast(const LilyCheckedExprCast *self);
 
 /**
  *
+ * @brief Check if the both casts are equal.
+ */
+bool
+eq__LilyCheckedExprCast(const LilyCheckedExprCast *self,
+                        const LilyCheckedExprCast *other);
+
+/**
+ *
  * @brief Free LilyCheckedExprCast type.
  */
 DESTRUCTOR(LilyCheckedExprCast, const LilyCheckedExprCast *self);

@@ -220,6 +220,27 @@ CONSTRUCTOR(LilyAstPattern *,
 
 /**
  *
+ * @brief Get name from pattern.
+ */
+const LilyAstPattern *
+get_name__LilyAstPattern(const LilyAstPattern *self);
+
+/**
+ *
+ * @brief Is else pattern.
+ */
+bool
+is_else_pattern__LilyAstPattern(const LilyAstPattern *self);
+
+/**
+ *
+ * @brief Is the last else pattern.
+ */
+bool
+is_final_else_pattern__LilyAstPattern(const LilyAstPattern *self);
+
+/**
+ *
  * @brief Convert LilyAstPattern in String.
  * @note This function is only used to debug.
  */

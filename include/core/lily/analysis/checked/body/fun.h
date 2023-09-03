@@ -49,7 +49,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct LilyCheckedBodyFunItem
 {
     enum LilyCheckedBodyFunItemKind kind;
-	Usize ref_count;
+    Usize ref_count;
     union
     {
         LilyCheckedStmt stmt;
@@ -59,7 +59,8 @@ typedef struct LilyCheckedBodyFunItem
 
 /**
  *
- * @brief Construct LilyCheckedBodyFunItem type (LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR).
+ * @brief Construct LilyCheckedBodyFunItem type
+ * (LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR).
  */
 VARIANT_CONSTRUCTOR(LilyCheckedBodyFunItem *,
                     LilyCheckedBodyFunItem,
@@ -68,7 +69,8 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyFunItem *,
 
 /**
  *
- * @brief Construct LilyCheckedBodyFunItem type (LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT).
+ * @brief Construct LilyCheckedBodyFunItem type
+ * (LILY_CHECKED_BODY_FUN_ITEM_KIND_STMT).
  */
 VARIANT_CONSTRUCTOR(LilyCheckedBodyFunItem *,
                     LilyCheckedBodyFunItem,
@@ -83,9 +85,36 @@ VARIANT_CONSTRUCTOR(LilyCheckedBodyFunItem *,
 inline LilyCheckedBodyFunItem *
 ref__LilyCheckedBodyFunItem(LilyCheckedBodyFunItem *self)
 {
-	++self->ref_count;
-	return self;
+    ++self->ref_count;
+    return self;
 }
+
+typedef struct LilyCheckedBodyFunInfo
+{
+    Vec *body; // Vec<LilyCheckedBodyFunItem*>*
+    LilyCheckedScope *scope;
+} LilyCheckedBodyFunInfo;
+
+/**
+ *
+ * @brief Construct LilyCheckedBodyFunInfo type.
+ */
+inline CONSTRUCTOR(LilyCheckedBodyFunInfo,
+                   LilyCheckedBodyFunInfo,
+                   Vec *body,
+                   LilyCheckedScope *scope)
+{
+    return (LilyCheckedBodyFunInfo){ .body = body, .scope = scope };
+}
+
+/**
+ *
+ * @brief Wrap item in body (Vec).
+ * @note In some cases this function free somethings.
+ */
+LilyCheckedBodyFunInfo
+wrap_item_in_body__LilyCheckedBodyFunItem(LilyCheckedBodyFunItem *self,
+                                          LilyCheckedScope *parent);
 
 /**
  *
@@ -94,7 +123,9 @@ ref__LilyCheckedBodyFunItem(LilyCheckedBodyFunItem *self)
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedBodyFunItem, const LilyCheckedBodyFunItem *self);
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedBodyFunItem,
+               const LilyCheckedBodyFunItem *self);
 #endif
 
 /**

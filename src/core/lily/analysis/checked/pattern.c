@@ -26,7 +26,11 @@
 #include <base/assert.h>
 #include <base/macros.h>
 
+#include <core/lily/analysis/checked/decl/enum.h>
+#include <core/lily/analysis/checked/decl/enum_object.h>
 #include <core/lily/analysis/checked/pattern.h>
+#include <core/lily/analysis/checked/scope.h>
+#include <core/lily/analysis/checked/stmt/variable.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,12 +94,10 @@ IMPL_FOR_DEBUG(to_string,
     switch (self) {
         case LILY_CHECKED_PATTERN_KIND_ARRAY:
             return "LILY_CHECKED_PATTERN_KIND_ARRAY";
-        case LILY_CHECKED_PATTERN_KIND_AS:
-            return "LILY_CHECKED_PATTERN_KIND_AS";
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-            return "LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE";
         case LILY_CHECKED_PATTERN_KIND_ERROR:
             return "LILY_CHECKED_PATTERN_KIND_ERROR";
+        case LILY_CHECKED_PATTERN_KIND_ELSE:
+            return "LILY_CHECKED_PATTERN_KIND_ELSE";
         case LILY_CHECKED_PATTERN_KIND_LIST:
             return "LILY_CHECKED_PATTERN_KIND_LIST";
         case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
@@ -104,8 +106,6 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_PATTERN_KIND_LIST_TAIL";
         case LILY_CHECKED_PATTERN_KIND_LITERAL:
             return "LILY_CHECKED_PATTERN_KIND_LITERAL";
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-            return "LILY_CHECKED_PATTERN_KIND_NAME";
         case LILY_CHECKED_PATTERN_KIND_NONE:
             return "LILY_CHECKED_PATTERN_KIND_NONE";
         case LILY_CHECKED_PATTERN_KIND_RANGE:
@@ -118,8 +118,6 @@ IMPL_FOR_DEBUG(to_string,
             return "LILY_CHECKED_PATTERN_KIND_UNKNOWN";
         case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
             return "LILY_CHECKED_PATTERN_KIND_VARIANT_CALL";
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
-            return "LILY_CHECKED_PATTERN_KIND_WILDCARD";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -388,118 +386,6 @@ CONSTRUCTOR(LilyCheckedPattern *,
     return self;
 }
 
-const LilyCheckedPattern *
-get_name__LilyCheckedPattern(const LilyCheckedPattern *self)
-{
-    switch (self->kind) {
-        case LILY_CHECKED_PATTERN_KIND_ARRAY:
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-        case LILY_CHECKED_PATTERN_KIND_ERROR:
-        case LILY_CHECKED_PATTERN_KIND_LIST:
-        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
-        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
-        case LILY_CHECKED_PATTERN_KIND_LITERAL:
-        case LILY_CHECKED_PATTERN_KIND_NONE:
-        case LILY_CHECKED_PATTERN_KIND_RANGE:
-        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
-        case LILY_CHECKED_PATTERN_KIND_TUPLE:
-        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
-        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
-            return NULL;
-        case LILY_CHECKED_PATTERN_KIND_AS:
-            return get_name__LilyCheckedPattern(self->as.pattern);
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-            return self;
-    }
-}
-
-bool
-is_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
-{
-    ASSERT(self);
-
-    switch (self->kind) {
-        case LILY_CHECKED_PATTERN_KIND_ARRAY:
-            for (Usize i = 0; i < self->array.patterns->len; ++i) {
-                if (!is_else_pattern__LilyCheckedPattern(
-                      get__Vec(self->array.patterns, i))) {
-                    return false;
-                }
-            }
-
-            return true;
-        case LILY_CHECKED_PATTERN_KIND_AS:
-            return is_else_pattern__LilyCheckedPattern(self->as.pattern);
-        case LILY_CHECKED_PATTERN_KIND_ERROR:
-        case LILY_CHECKED_PATTERN_KIND_LITERAL:
-            return false;
-        case LILY_CHECKED_PATTERN_KIND_LIST:
-            for (Usize i = 0; i < self->list.patterns->len; ++i) {
-                if (!is_else_pattern__LilyCheckedPattern(
-                      get__Vec(self->list.patterns, i))) {
-                    return false;
-                }
-            }
-
-            return true;
-        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
-            return is_else_pattern__LilyCheckedPattern(self->list_head.left) &&
-                   is_else_pattern__LilyCheckedPattern(self->list_head.right);
-        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
-            return is_else_pattern__LilyCheckedPattern(self->list_tail.left) &&
-                   is_else_pattern__LilyCheckedPattern(self->list_tail.right);
-        case LILY_CHECKED_PATTERN_KIND_RANGE:
-            return is_else_pattern__LilyCheckedPattern(self->range.left) &&
-                   is_else_pattern__LilyCheckedPattern(self->range.right);
-        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
-            for (Usize i = 0; i < self->record_call.fields->len; ++i) {
-                LilyCheckedPatternRecordField *field =
-                  get__Vec(self->record_call.fields, i);
-
-                if (!is_else_pattern__LilyCheckedPattern(field->pattern)) {
-                    return false;
-                }
-            }
-
-            return true;
-        case LILY_CHECKED_PATTERN_KIND_TUPLE:
-            for (Usize i = 0; i < self->tuple.patterns->len; ++i) {
-                if (!is_else_pattern__LilyCheckedPattern(
-                      get__Vec(self->tuple.patterns, i))) {
-                    return false;
-                }
-            }
-
-            return true;
-        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
-            return self->variant_call.pattern
-                     ? is_else_pattern__LilyCheckedPattern(
-                         self->variant_call.pattern)
-                     : true;
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-        case LILY_CHECKED_PATTERN_KIND_NONE:
-        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
-            return true;
-    }
-}
-
-bool
-is_final_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self)
-{
-    ASSERT(self);
-
-    switch (self->kind) {
-        case LILY_CHECKED_PATTERN_KIND_NAME:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
-            return true;
-        default:
-            return false;
-    }
-}
-
 bool
 eq__LilyCheckedPattern(const LilyCheckedPattern *self,
                        const LilyCheckedPattern *other)
@@ -531,7 +417,6 @@ eq__LilyCheckedPattern(const LilyCheckedPattern *self,
         case LILY_CHECKED_PATTERN_KIND_NAME:
             return eq__LilyCheckedPatternName(&self->name, &other->name);
         case LILY_CHECKED_PATTERN_KIND_NONE:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
             return true;
         case LILY_CHECKED_PATTERN_KIND_RANGE:
             return eq__LilyCheckedPatternRange(&self->range, &other->range);
@@ -545,6 +430,225 @@ eq__LilyCheckedPattern(const LilyCheckedPattern *self,
         case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
             return eq__LilyCheckedPatternVariantCall(&self->variant_call,
                                                      &other->variant_call);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+bool
+lazy_eq__LilyCheckedPattern(const LilyCheckedPattern *self,
+                            const LilyCheckedPattern *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_AS:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_LITERAL:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_NAME:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_RANGE:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_TUPLE:
+            break;
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
+            return false;
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL:
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    return false;
+}
+
+LilyCheckedStmtSwitchCaseValue *
+to_switch_case_value__LilyCheckedPattern(const LilyCheckedPattern *self,
+                                         LilyCheckedScope *scope)
+{
+    switch (self->kind) {
+        case LILY_CHECKED_PATTERN_KIND_ARRAY:
+            UNREACHABLE("impossible to convert array in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_AS:
+            UNREACHABLE(
+              "as pattern is not expected to convert in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
+            UNREACHABLE("auto complete pattern is not expected to convert in "
+                        "switch case value");
+        case LILY_CHECKED_PATTERN_KIND_ERROR:
+            TODO("convert error in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_LIST:
+            UNREACHABLE("impossible to convert list in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_LIST_HEAD:
+            UNREACHABLE("impossible to convert list head in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_LIST_TAIL:
+            UNREACHABLE("impossible to convert list tail in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_LITERAL:
+            switch (self->literal.kind) {
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BOOL:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       bool,
+                                       self->literal.bool_);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTE:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint8,
+                                       self->literal.byte);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_BYTES:
+                    UNREACHABLE(
+                      "impossible to convert bytes in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_CHAR:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint8,
+                                       self->literal.char_);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_CSTR:
+                    UNREACHABLE(
+                      "impossible to convert cstr in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       float32,
+                                       self->literal.float32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_FLOAT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       float64,
+                                       self->literal.float64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_INT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int32,
+                                       self->literal.int32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_INT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int64,
+                                       self->literal.int64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_NIL:
+                    UNREACHABLE(
+                      "impossible to convert nil in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_NONE:
+                    UNREACHABLE(
+                      "impossible to convert none in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_STR:
+                    UNREACHABLE(
+                      "impossible to convert str in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_FLOAT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       float32,
+                                       self->literal.suffix_float32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_FLOAT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       float64,
+                                       self->literal.suffix_float64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT8:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int8,
+                                       self->literal.suffix_int8);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT16:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int16,
+                                       self->literal.suffix_int16);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int32,
+                                       self->literal.suffix_int32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_INT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       int64,
+                                       self->literal.suffix_int64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_ISIZE:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       isize,
+                                       self->literal.suffix_isize);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT8:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint8,
+                                       self->literal.suffix_uint8);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT16:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint16,
+                                       self->literal.suffix_uint16);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint32,
+                                       self->literal.suffix_uint32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_UINT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint64,
+                                       self->literal.suffix_uint64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_SUFFIX_USIZE:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       usize,
+                                       self->literal.suffix_usize);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UINT32:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint32,
+                                       self->literal.uint32);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UINT64:
+                    return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue,
+                                       uint64,
+                                       self->literal.uint64);
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UNDEF:
+                    UNREACHABLE(
+                      "impossible to convert undef in switch case value");
+                case LILY_CHECKED_PATTERN_LITERAL_KIND_UNIT:
+                    UNREACHABLE(
+                      "impossible to convert unit in switch case value");
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case LILY_CHECKED_PATTERN_KIND_NAME:
+            UNREACHABLE(
+              "name pattern is not expected to convert in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_RANGE:
+            // NOTE: for the moment we can only use range with integer typing
+            // pattern.
+            TODO("convert range in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_RECORD_CALL:
+            UNREACHABLE(
+              "impossible to convert record call in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_TUPLE:
+            UNREACHABLE("impossible to convert tuple in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
+            UNREACHABLE("impossible to convert unknown in switch case value");
+        case LILY_CHECKED_PATTERN_KIND_VARIANT_CALL: {
+            ASSERT(self->variant_call.id->kind == LILY_CHECKED_EXPR_KIND_CALL);
+
+            String *name =
+              get_last_name__LilyAstExpr(self->variant_call.id->ast_expr);
+
+            ASSERT(name);
+
+            // TODO: add support for enum object variant
+            LilyCheckedScopeResponse response =
+              search_from_scope_id__LilyCheckedScope(
+                scope,
+                self->variant_call.id->call.scope.id,
+                name,
+                LILY_CHECKED_SCOPE_RESPONSE_KIND_ENUM_VARIANT);
+
+            ASSERT(response.kind != LILY_CHECKED_SCOPE_RESPONSE_KIND_NOT_FOUND);
+
+            // TODO: use the uint switch case value if applicable (in the case
+            // of a preset value of the enum variant).
+            return NEW_VARIANT(
+              LilyCheckedStmtSwitchCaseValue, uint8, response.enum_variant->id);
+        }
+        case LILY_CHECKED_PATTERN_KIND_ELSE:
+            return NEW_VARIANT(LilyCheckedStmtSwitchCaseValue, else);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -581,7 +685,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPattern, const LilyCheckedPattern *self)
             break;
         }
         case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
+        case LILY_CHECKED_PATTERN_KIND_ELSE:
         case LILY_CHECKED_PATTERN_KIND_NONE:
         case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
             push_str__String(res, " }");
@@ -773,9 +877,8 @@ DESTRUCTOR(LilyCheckedPattern, LilyCheckedPattern *self)
         case LILY_CHECKED_PATTERN_KIND_AS:
             FREE_VARIANT(LilyCheckedPattern, as, self);
             break;
-        case LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE:
-        case LILY_CHECKED_PATTERN_KIND_WILDCARD:
         case LILY_CHECKED_PATTERN_KIND_NONE:
+        case LILY_CHECKED_PATTERN_KIND_UNKNOWN:
             FREE(LilyCheckedDataType, self->data_type);
             lily_free(self);
             break;

@@ -106,13 +106,13 @@ generate_dt__LilyMir(LilyMirModule *module, LilyCheckedDataType *data_type)
                         case LILY_MIR_CURRENT_KIND_FUN:
                             return generate_dt__LilyMir(
                               module,
-                              get__HashMap(top->fun.fun->fun.generic_params,
+                              get__HashMap(top->inst->fun.generic_params,
                                            data_type->custom.name->buffer));
                         case LILY_MIR_CURRENT_KIND_STRUCT:
                             return generate_dt__LilyMir(
                               module,
                               get__OrderedHashMap(
-                                top->struct_->struct_.generic_params,
+                                top->inst->struct_.generic_params,
                                 data_type->custom.name->buffer));
                         default:
                             UNREACHABLE("unknown variant");

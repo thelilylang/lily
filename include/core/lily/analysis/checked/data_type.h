@@ -977,6 +977,14 @@ can_update__LilyCheckedDataType(LilyCheckedDataType *self);
 
 /**
  *
+ * @brief Check if is contains the right data type kind.
+ */
+bool
+is_contains_kind__LilyCheckedDataType(LilyCheckedDataType *self,
+                                      enum LilyCheckedDataTypeKind kind);
+
+/**
+ *
  * @brief Convert LilyCheckedDataTypeKind in string.
  * @note This function is only used to debug.
  */

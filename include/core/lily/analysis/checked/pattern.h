@@ -38,28 +38,34 @@
 #include <core/lily/analysis/checked/pattern/record_call.h>
 #include <core/lily/analysis/checked/pattern/tuple.h>
 #include <core/lily/analysis/checked/pattern/variant_call.h>
+#include <core/lily/analysis/checked/stmt/switch.h>
 #include <core/lily/parser/ast/pattern.h>
 
 #include <core/shared/location.h>
 
+typedef struct LilyAnalysis LilyAnalysis;
+
 enum LilyCheckedPatternKind
 {
     LILY_CHECKED_PATTERN_KIND_ARRAY,
+    // NOTE: only used when `use_switch` is false
     LILY_CHECKED_PATTERN_KIND_AS,
+    // NOTE: only used when `use_switch` is false
     LILY_CHECKED_PATTERN_KIND_AUTO_COMPLETE,
+    LILY_CHECKED_PATTERN_KIND_ELSE,
     LILY_CHECKED_PATTERN_KIND_ERROR,
     LILY_CHECKED_PATTERN_KIND_LIST,
     LILY_CHECKED_PATTERN_KIND_LIST_HEAD,
     LILY_CHECKED_PATTERN_KIND_LIST_TAIL,
     LILY_CHECKED_PATTERN_KIND_LITERAL,
+    // NOTE: only used when `use_switch` is false
     LILY_CHECKED_PATTERN_KIND_NAME,
-    LILY_CHECKED_PATTERN_KIND_NONE,
+    LILY_CHECKED_PATTERN_KIND_NONE, // TODO: remove this variant
     LILY_CHECKED_PATTERN_KIND_RANGE,
     LILY_CHECKED_PATTERN_KIND_RECORD_CALL,
     LILY_CHECKED_PATTERN_KIND_TUPLE,
     LILY_CHECKED_PATTERN_KIND_UNKNOWN,
     LILY_CHECKED_PATTERN_KIND_VARIANT_CALL,
-    LILY_CHECKED_PATTERN_KIND_WILDCARD
 };
 
 /**
@@ -270,32 +276,39 @@ CONSTRUCTOR(LilyCheckedPattern *,
 
 /**
  *
- * @brief Get name from pattern.
- */
-const LilyCheckedPattern *
-get_name__LilyCheckedPattern(const LilyCheckedPattern *self);
-
-/**
- *
- * @brief Is else pattern.
- */
-bool
-is_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self);
-
-/**
- *
- * @brief Is the last else pattern.
- */
-bool
-is_final_else_pattern__LilyCheckedPattern(const LilyCheckedPattern *self);
-
-/**
- *
  * @brief Check if the both pattern are equal.
  */
 bool
 eq__LilyCheckedPattern(const LilyCheckedPattern *self,
                        const LilyCheckedPattern *other);
+
+/**
+ *
+ * @brief Check if the body pattern are equal (lazy).
+ */
+bool
+lazy_eq__LilyCheckedPattern(const LilyCheckedPattern *self,
+                            const LilyCheckedPattern *other);
+
+/**
+ *
+ * @brief Convert a pattern to an expression.
+ * @param variable_name Name of a variable or a virtual variable.
+ */
+LilyCheckedExpr *
+to_expr__LilyCheckedPattern(const LilyCheckedPattern *self,
+                            LilyAnalysis *analysis,
+                            const Location *location,
+                            LilyCheckedScope *scope,
+                            LilyCheckedExpr *current_expr);
+
+/**
+ *
+ * @brief Convert pattern in switch case value.
+ */
+LilyCheckedStmtSwitchCaseValue *
+to_switch_case_value__LilyCheckedPattern(const LilyCheckedPattern *self,
+                                         LilyCheckedScope *scope);
 
 /**
  *

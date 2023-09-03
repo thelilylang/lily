@@ -28,17 +28,45 @@
 #include <core/lily/analysis/checked/expr.h>
 #include <core/lily/analysis/checked/pattern.h>
 
-#include <base/ordered_hash_map.h>
-
 typedef struct LilyCheckedBodyFunItem LilyCheckedBodyFunItem;
+
+typedef struct LilyCheckedStmtMatchSubCase
+{
+    LilyCheckedExpr *cond; // LilyCheckedExpr*?
+    LilyCheckedBodyFunItem *body_item;
+} LilyCheckedStmtMatchSubCase;
+
+/**
+ *
+ * @brief Construct LilyCheckedStmtMatchSubCase type.
+ */
+CONSTRUCTOR(LilyCheckedStmtMatchSubCase *,
+            LilyCheckedStmtMatchSubCase,
+            LilyCheckedExpr *cond,
+            LilyCheckedBodyFunItem *body_item);
+
+/**
+ *
+ * @brief Convert LilyCheckedStmtMatchSubCase in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedStmtMatchSubCase,
+               const LilyCheckedStmtMatchSubCase *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyCheckedStmtMatchSubCase type.
+ */
+DESTRUCTOR(LilyCheckedStmtMatchSubCase, LilyCheckedStmtMatchSubCase *self);
 
 typedef struct LilyCheckedStmtMatchCase
 {
-    OrderedHashMap
-      *captured_variables; // OrderedHashMap<LilyCheckedCapturedVariable*>*
     LilyCheckedPattern *pattern;
-    LilyCheckedExpr *cond; // LilyCheckedExpr*?
-    LilyCheckedBodyFunItem *body_item;
+    Vec *sub_cases; // Vec<LilyCheckedStmtMatchSubCase*>*
 } LilyCheckedStmtMatchCase;
 
 /**
@@ -47,7 +75,6 @@ typedef struct LilyCheckedStmtMatchCase
  */
 CONSTRUCTOR(LilyCheckedStmtMatchCase *,
             LilyCheckedStmtMatchCase,
-            OrderedHashMap *captured_variables,
             LilyCheckedPattern *pattern,
             LilyCheckedExpr *cond,
             LilyCheckedBodyFunItem *body_item);
@@ -74,7 +101,6 @@ typedef struct LilyCheckedStmtMatch
 {
     LilyCheckedExpr *expr;
     Vec *cases; // Vec<LilyCheckedStmtMatchCase*>*
-    bool use_switch;
     bool has_else;
 } LilyCheckedStmtMatch;
 
@@ -85,15 +111,32 @@ typedef struct LilyCheckedStmtMatch
 inline CONSTRUCTOR(LilyCheckedStmtMatch,
                    LilyCheckedStmtMatch,
                    LilyCheckedExpr *expr,
-                   Vec *cases,
-                   bool use_switch,
-                   bool has_else)
+                   Vec *cases)
 {
-    return (LilyCheckedStmtMatch){ .expr = expr,
-                                   .cases = cases,
-                                   .use_switch = use_switch,
-                                   .has_else = has_else };
+    return (
+      LilyCheckedStmtMatch){ .expr = expr, .cases = cases, .has_else = false };
 }
+
+/**
+ *
+ * @brief Add case to match statement.
+ */
+void
+add_case__LilyCheckedStmtMatch(const LilyCheckedStmtMatch *self,
+                               LilyCheckedPattern *pattern,
+                               LilyCheckedExpr *cond,
+                               LilyCheckedBodyFunItem *body_item);
+
+/**
+ *
+ * @return 0 Ok.
+ * @return 1 Unused case.
+ * @return 2 duplicate case.
+ */
+int
+look_for_case_error__LilyCheckedStmtMatch(const LilyCheckedStmtMatch *self,
+                                          LilyCheckedPattern *pattern,
+                                          LilyCheckedExpr *cond);
 
 /**
  *

@@ -27,27 +27,12 @@
 
 #include <core/lily/analysis/checked/body/fun.h>
 #include <core/lily/mir/generator/body.h>
+#include <core/lily/mir/generator/case_value.h>
 #include <core/lily/mir/generator/expr.h>
-#include <core/lily/mir/generator/pattern.h>
 #include <core/lily/mir/generator/stmt.h>
 #include <core/lily/mir/mir.h>
 
 #include <string.h>
-
-DESTRUCTOR(LilyMirNameManager, const LilyMirNameManager *self)
-{
-    for (Usize i = 0; i < self->names->len; ++i) {
-        lily_free(get__Vec(self->names, i));
-    }
-
-    FREE(Vec, self->names);
-}
-
-DESTRUCTOR(LilyMirCurrentFun, const LilyMirCurrentFun *self)
-{
-    FREE(LilyMirNameManager, &self->block_manager);
-    FREE(LilyMirNameManager, &self->reg_manager);
-}
 
 void
 LilyMirAddInst(LilyMirModule *Module, LilyMirInstruction *Inst)
@@ -58,9 +43,8 @@ LilyMirAddInst(LilyMirModule *Module, LilyMirInstruction *Inst)
                         NEW_VARIANT(LilyMirCurrent, const, Inst));
             break;
         case LILY_MIR_INSTRUCTION_KIND_FUN:
-            push__Stack(
-              Module->current,
-              NEW_VARIANT(LilyMirCurrent, fun, NEW(LilyMirCurrentFun, Inst)));
+            push__Stack(Module->current,
+                        NEW_VARIANT(LilyMirCurrent, fun, Inst));
             break;
         case LILY_MIR_INSTRUCTION_KIND_STRUCT:
             push__Stack(Module->current,
@@ -76,7 +60,7 @@ LilyMirAddInst(LilyMirModule *Module, LilyMirInstruction *Inst)
             switch (current->kind) {
                 case LILY_MIR_CURRENT_KIND_FUN: {
                     LilyMirInstructionBlock *block =
-                      current->fun.fun->fun.block_stack->top;
+                      current->inst->fun.block_stack->top;
 
                     ASSERT(block);
 
@@ -99,7 +83,7 @@ VARIANT_CONSTRUCTOR(LilyMirCurrent *,
     LilyMirCurrent *self = lily_malloc(sizeof(LilyMirCurrent));
 
     self->kind = LILY_MIR_CURRENT_KIND_CONST;
-    self->const_ = const_;
+    self->inst = const_;
 
     return self;
 }
@@ -107,12 +91,12 @@ VARIANT_CONSTRUCTOR(LilyMirCurrent *,
 VARIANT_CONSTRUCTOR(LilyMirCurrent *,
                     LilyMirCurrent,
                     fun,
-                    LilyMirCurrentFun fun)
+                    LilyMirInstruction *fun)
 {
     LilyMirCurrent *self = lily_malloc(sizeof(LilyMirCurrent));
 
     self->kind = LILY_MIR_CURRENT_KIND_FUN;
-    self->fun = fun;
+    self->inst = fun;
 
     return self;
 }
@@ -125,21 +109,9 @@ VARIANT_CONSTRUCTOR(LilyMirCurrent *,
     LilyMirCurrent *self = lily_malloc(sizeof(LilyMirCurrent));
 
     self->kind = LILY_MIR_CURRENT_KIND_STRUCT;
-    self->struct_ = struct_;
+    self->inst = struct_;
 
     return self;
-}
-
-DESTRUCTOR(LilyMirCurrent, LilyMirCurrent *self)
-{
-    switch (self->kind) {
-        case LILY_MIR_CURRENT_KIND_FUN:
-            FREE(LilyMirCurrentFun, &self->fun);
-            lily_free(self);
-            break;
-        default:
-            lily_free(self);
-    }
 }
 
 void
@@ -153,19 +125,17 @@ LilyMirPopCurrent(LilyMirModule *Module)
 
     switch (current->kind) {
         case LILY_MIR_CURRENT_KIND_CONST:
-            insert__OrderedHashMap(Module->insts,
-                                   (char *)current->const_->const_.name,
-                                   current->const_);
+            insert__OrderedHashMap(
+              Module->insts, (char *)current->inst->const_.name, current->inst);
             break;
         case LILY_MIR_CURRENT_KIND_FUN:
-            insert__OrderedHashMap(Module->insts,
-                                   (char *)current->fun.fun->fun.name,
-                                   current->fun.fun);
+            insert__OrderedHashMap(
+              Module->insts, (char *)current->inst->fun.name, current->inst);
             break;
         case LILY_MIR_CURRENT_KIND_STRUCT:
             insert__OrderedHashMap(Module->insts,
-                                   (char *)current->struct_->struct_.name,
-                                   current->struct_);
+                                   (char *)current->inst->struct_.name,
+                                   current->inst);
             break;
         default:
             UNREACHABLE("unknown variant");
@@ -199,7 +169,7 @@ LilyMirScopeGetParam(const LilyMirModule *Module, Usize id)
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    return get__Vec(current->fun.fun->fun.scope.params, id);
+    return get__Vec(current->inst->fun.scope.params, id);
 }
 
 LilyCheckedDataType *
@@ -224,6 +194,58 @@ LilyMirGetCheckedDtFromExpr(const LilyMirModule *Module,
     }
 }
 
+LilyMirInstructionFunLoad *
+search_load__LilyMirScope(const LilyMirScope *self,
+                          LilyMirInstructionFunLoadName name)
+{
+    for (Usize i = 0; i < self->loads->len; ++i) {
+        LilyMirInstructionFunLoad *load = get__Vec(self->loads, i);
+
+        if (eq__LilyMirInstructionFunLoadName(&load->value_name, &name)) {
+            return load;
+        }
+    }
+
+    return NULL;
+}
+
+void
+remove_load__LilyMirScope(const LilyMirScope *self,
+                          LilyMirInstructionFunLoadName name)
+{
+    for (Usize i = 0; i < self->loads->len; ++i) {
+        LilyMirInstructionFunLoad *load = get__Vec(self->loads, i);
+
+        if (eq__LilyMirInstructionFunLoadName(&load->value_name, &name)) {
+            FREE(LilyMirInstructionFunLoad, remove__Vec(self->loads, i));
+
+            return;
+        }
+    }
+}
+
+LilyMirInstructionFunLoad *
+LilyMirSearchLoad(LilyMirModule *Module, LilyMirInstructionFunLoadName name)
+{
+    LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
+
+    ASSERT(current);
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+
+    return search_load__LilyMirScope(&current->inst->fun.scope, name);
+}
+
+void
+LilyMirRemoveLoad(LilyMirModule *Module, LilyMirInstructionFunLoadName name)
+{
+    LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
+
+    ASSERT(current);
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+
+    return remove_load__LilyMirScope(&current->inst->fun.scope, name);
+}
+
 LilyMirInstruction *
 LilyMirBuildReg(LilyMirModule *Module, LilyMirInstruction *Inst)
 {
@@ -231,33 +253,78 @@ LilyMirBuildReg(LilyMirModule *Module, LilyMirInstruction *Inst)
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    char *name = LilyMirGenerateName(&current->fun.reg_manager);
+    char *name = LilyMirGenerateName(&current->inst->fun.reg_manager);
+
+    return NEW_VARIANT(
+      LilyMirInstruction, reg, NEW(LilyMirInstructionReg, name, Inst));
+}
+
+LilyMirInstruction *
+LilyMirBuildJmpCond(LilyMirModule *Module,
+                    LilyMirInstruction *Cond,
+                    LilyMirInstruction *ThenBlock,
+                    LilyMirInstruction *ElseBlock)
+{
+    ASSERT(Cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+    ASSERT(Cond->val->dt->kind == LILY_MIR_DT_KIND_I1);
 
     return NEW_VARIANT(LilyMirInstruction,
-                       reg,
-                       NEW(LilyMirInstructionReg, from__String(name), Inst));
+                       jmpcond,
+                       NEW(LilyMirInstructionJmpCond,
+                           Cond->val,
+                           &ThenBlock->block,
+                           &ElseBlock->block));
+}
+
+LilyMirInstruction *
+LilyMirLoadFromVal(LilyMirModule *Module, LilyMirInstruction *inst)
+{
+    ASSERT(inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+
+    LilyMirInstructionVal *val = inst->val;
+
+    partial_free__LilyMirInstruction(inst);
+
+    switch (inst->val->kind) {
+        case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
+            ASSERT(val->dt->kind == LILY_MIR_DT_KIND_PTR);
+
+            return NEW_VARIANT(
+              LilyMirInstruction,
+              val,
+              LilyMirBuildLoad(
+                Module,
+                val,
+                clone__LilyMirDt(val->dt->ptr),
+                NEW_VARIANT(LilyMirInstructionFunLoadName, var, val->var)));
+        case LILY_MIR_INSTRUCTION_VAL_KIND_PARAM:
+            ASSERT(val->dt->kind == LILY_MIR_DT_KIND_PTR);
+
+            return NEW_VARIANT(
+              LilyMirInstruction,
+              val,
+              LilyMirBuildLoad(
+                Module,
+                val,
+                clone__LilyMirDt(val->dt->ptr),
+                NEW_VARIANT(LilyMirInstructionFunLoadName, param, val->param)));
+        default:
+            return NEW_VARIANT(LilyMirInstruction, val, val);
+    }
 }
 
 LilyMirInstructionVal *
 LilyMirBuildLoad(LilyMirModule *Module,
                  LilyMirInstructionVal *src,
                  LilyMirDt *dt,
-                 String *value_name)
+                 LilyMirInstructionFunLoadName value_name)
 {
     LilyMirCurrent *current = Module->current->top;
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    LilyMirInstructionFunLoad *matched_load = NULL;
-
-    for (Usize i = 0; i < current->fun.fun->fun.scope.loads->len; ++i) {
-        LilyMirInstructionFunLoad *load =
-          get__Vec(current->fun.fun->fun.scope.loads, i);
-
-        if (!strcmp(load->value_name->buffer, value_name->buffer)) {
-            matched_load = load;
-        }
-    }
+    LilyMirInstructionFunLoad *matched_load =
+      LilyMirSearchLoad(Module, value_name);
 
     if (matched_load) {
         // assume: %<name> = <val_inst>
@@ -268,23 +335,23 @@ LilyMirBuildLoad(LilyMirModule *Module,
           LilyMirInstructionVal,
           reg,
           clone__LilyMirDt(matched_load->inst->reg.inst->load.dt),
-          clone__String(matched_load->inst->reg.name));
+          matched_load->inst->reg.name);
     }
 
-    char *name = LilyMirGenerateName(&current->fun.reg_manager);
+    char *name = LilyMirGenerateName(&current->inst->fun.reg_manager);
 
     LilyMirInstruction *load_inst =
       NEW_VARIANT(LilyMirInstruction,
                   reg,
                   NEW(LilyMirInstructionReg,
-                      from__String(name),
+                      name,
                       NEW_VARIANT(LilyMirInstruction,
                                   load,
                                   NEW(LilyMirInstructionLoad,
                                       NEW(LilyMirInstructionSrc, src),
                                       clone__LilyMirDt(dt)))));
 
-    push__Vec(current->fun.fun->fun.scope.loads,
+    push__Vec(current->inst->fun.scope.loads,
               NEW(LilyMirInstructionFunLoad,
                   value_name,
                   load_inst,
@@ -292,29 +359,82 @@ LilyMirBuildLoad(LilyMirModule *Module,
 
     LilyMirAddInst(Module, load_inst);
 
-    return NEW_VARIANT(LilyMirInstructionVal, reg, dt, from__String(name));
+    return NEW_VARIANT(LilyMirInstructionVal, reg, dt, name);
 }
 
-LilyMirInstruction *
+void
 LilyMirBuildVar(LilyMirModule *Module,
                 char *name,
                 LilyMirDt *dt,
-                LilyMirInstruction *inst)
+                LilyMirInstruction *inst,
+                bool allow_alloc)
 {
-    LilyMirAddInst(
-      Module,
-      NEW_VARIANT(
-        LilyMirInstruction,
-        var,
-        NEW(LilyMirInstructionVar, name, LilyMirBuildAlloc(Module, dt))));
+    ASSERT(inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
 
-    LilyMirInstruction *var = LilyMirBuildStore(
-      NEW_VARIANT(LilyMirInstructionVal, var, clone__LilyMirDt(dt), name),
-      inst->val);
+    if (allow_alloc) {
+        LilyMirAddInst(
+          Module,
+          NEW_VARIANT(LilyMirInstruction,
+                      var,
+                      NEW(LilyMirInstructionVar,
+                          name,
+                          LilyMirBuildAlloc(Module, clone__LilyMirDt(dt)))));
+    }
 
-    lily_free(inst);
+    LilyMirInstruction *var_store = LilyMirBuildStore(
+      Module, NEW_VARIANT(LilyMirInstructionVal, var, dt, name), inst->val);
 
-    return var;
+    if (var_store) {
+        LilyMirAddInst(Module, var_store);
+    }
+
+    partial_free__LilyMirInstruction(inst);
+}
+
+LilyMirInstruction *
+LilyMirBuildStore(LilyMirModule *Module,
+                  LilyMirInstructionVal *dest,
+                  LilyMirInstructionVal *src)
+{
+    // NOTE: itself assigments are normally detected and rejected by the
+    // analysis, but in some situations in the MIR generation we can get itself
+    // assignement, so to avoid unused instruction we will compare (equal) both
+    // value to solve this problem.
+    if (!eq__LilyMirInstructionVal(dest, src)) {
+        // Remove load from the scope to avoid no-updating value when you
+        // re-store a value
+        switch (dest->kind) {
+            case LILY_MIR_INSTRUCTION_VAL_KIND_REG:
+                LilyMirRemoveLoad(
+                  Module,
+                  NEW_VARIANT(LilyMirInstructionFunLoadName, reg, dest->reg));
+
+                break;
+            case LILY_MIR_INSTRUCTION_VAL_KIND_PARAM:
+                LilyMirRemoveLoad(Module,
+                                  NEW_VARIANT(LilyMirInstructionFunLoadName,
+                                              param,
+                                              dest->param));
+
+                break;
+            case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
+                LilyMirRemoveLoad(
+                  Module,
+                  NEW_VARIANT(LilyMirInstructionFunLoadName, var, dest->var));
+
+                break;
+            default:
+                break;
+        }
+
+        return NEW_VARIANT(
+          LilyMirInstruction, store, NEW(LilyMirInstructionDestSrc, dest, src));
+    }
+
+    FREE(LilyMirInstructionVal, dest);
+    FREE(LilyMirInstructionVal, src);
+
+    return NULL;
 }
 
 LilyMirInstruction *
@@ -335,13 +455,13 @@ LilyMirBuildCall(LilyMirModule *Module,
             LilyMirInstructionCall, clone__LilyMirDt(ReturnDt), Name, Params));
     }
 
-    char *name = LilyMirGenerateName(&current->fun.reg_manager);
+    char *name = LilyMirGenerateName(&current->inst->fun.reg_manager);
 
     LilyMirInstruction *inst =
       NEW_VARIANT(LilyMirInstruction,
                   reg,
                   NEW(LilyMirInstructionReg,
-                      from__String(name),
+                      name,
                       NEW_VARIANT(LilyMirInstruction,
                                   call,
                                   NEW(LilyMirInstructionCall,
@@ -351,10 +471,9 @@ LilyMirBuildCall(LilyMirModule *Module,
 
     LilyMirAddInst(Module, inst);
 
-    return NEW_VARIANT(
-      LilyMirInstruction,
-      val,
-      NEW_VARIANT(LilyMirInstructionVal, reg, ReturnDt, from__String(name)));
+    return NEW_VARIANT(LilyMirInstruction,
+                       val,
+                       NEW_VARIANT(LilyMirInstructionVal, reg, ReturnDt, name));
 }
 
 LilyMirDebugInfo *
@@ -586,6 +705,30 @@ LilyMirBuildDIElements(LilyMirModule *Module, Vec *items)
                                         elements_debug_info);
 }
 
+LilyMirInstructionVal *
+LilyMirBuildVirtualVariable(LilyMirModule *Module, LilyMirDt *dt)
+{
+    LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
+
+    ASSERT(current);
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+
+    char *name =
+      LilyMirGenerateName(&current->inst->fun.virtual_variable_manager);
+
+    // NOTE: We don't push virtual variable in the scope, because that's not
+    // used anywhere and only used by the compiler.
+    LilyMirAddInst(
+      Module,
+      NEW_VARIANT(LilyMirInstruction,
+                  var,
+                  NEW(LilyMirInstructionVar,
+                      name,
+                      LilyMirBuildAlloc(Module, clone__LilyMirDt(dt)))));
+
+    return NEW_VARIANT(LilyMirInstructionVal, var, dt, name);
+}
+
 void
 LilyMirDisposeModule(const LilyMirModule *Module)
 {
@@ -608,7 +751,7 @@ LilyMirNextBlockAndClearScope(LilyMirModule *Module, LilyMirScope *Scope)
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    pop__Stack(current->fun.fun->fun.block_stack);
+    pop__Stack(current->inst->fun.block_stack);
 
     FREE(LilyMirScope, Scope);
 }
@@ -620,14 +763,14 @@ LilyMirBuildBlock(LilyMirModule *Module, LilyMirBlockLimit *limit)
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    char *name = LilyMirGenerateName(&current->fun.block_manager);
+    char *name = LilyMirGenerateName(&current->inst->fun.block_manager);
 
     return NEW_VARIANT(LilyMirInstruction,
                        block,
                        NEW(LilyMirInstructionBlock,
-                           from__String(name),
+                           name,
                            limit,
-                           current->fun.fun->fun.block_count++));
+                           current->inst->fun.block_count++));
 }
 
 void
@@ -637,8 +780,8 @@ LilyMirAddBlock(LilyMirModule *Module, LilyMirInstruction *Block)
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    push__Vec(current->fun.fun->fun.insts, Block);
-    push__Stack(current->fun.fun->fun.block_stack, &Block->block);
+    push__Vec(current->inst->fun.insts, Block);
+    push__Stack(current->inst->fun.block_stack, &Block->block);
 }
 
 LilyMirInstructionBlock *
@@ -647,9 +790,9 @@ LilyMirPopBlock(LilyMirModule *Module)
     LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
-    ASSERT(current->fun.fun->fun.block_stack->len > 0);
+    ASSERT(current->inst->fun.block_stack->len > 0);
 
-    return pop__Stack(current->fun.fun->fun.block_stack);
+    return pop__Stack(current->inst->fun.block_stack);
 }
 
 LilyMirInstructionBlock *
@@ -658,9 +801,9 @@ LilyMirGetInsertBlock(LilyMirModule *Module)
     LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
-    ASSERT(current->fun.fun->fun.block_stack->len > 0);
+    ASSERT(current->inst->fun.block_stack->len > 0);
 
-    return current->fun.fun->fun.block_stack->top;
+    return current->inst->fun.block_stack->top;
 }
 
 bool
@@ -669,17 +812,16 @@ LilyMirEmptyBlock(LilyMirModule *Module)
     LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
-    ASSERT(current->fun.fun->fun.block_stack->len > 0);
+    ASSERT(current->inst->fun.block_stack->len > 0);
 
-    return CAST(LilyMirInstructionBlock *,
-                current->fun.fun->fun.block_stack->top)
+    return CAST(LilyMirInstructionBlock *, current->inst->fun.block_stack->top)
              ->insts->len == 0;
 }
 
 char *
 LilyMirGenerateName(LilyMirNameManager *NameManager)
 {
-    char *name = format("{s}{d}", NameManager->base_name, NameManager->count);
+    char *name = format("{s}{zu}", NameManager->base_name, NameManager->count);
 
     push__Vec(NameManager->names, name);
 
@@ -745,9 +887,9 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
         if (top) {
             ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-            if (!strcmp(BaseName, top->fun.fun->fun.base_name) &&
-                LilyMirValidTypesOfFun(&top->fun.fun->fun, Types, Len)) {
-                return top->fun.fun->fun.name;
+            if (!strcmp(BaseName, top->inst->fun.base_name) &&
+                LilyMirValidTypesOfFun(&top->inst->fun, Types, Len)) {
+                return top->inst->fun.name;
             }
         }
 
@@ -756,9 +898,9 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
 
             ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-            if (!strcmp(BaseName, current->fun.fun->fun.base_name) &&
-                LilyMirValidTypesOfFun(&current->fun.fun->fun, Types, Len)) {
-                return current->fun.fun->fun.name;
+            if (!strcmp(BaseName, current->inst->fun.base_name) &&
+                LilyMirValidTypesOfFun(&current->inst->fun, Types, Len)) {
+                return current->inst->fun.name;
             }
         }
     }
@@ -773,9 +915,9 @@ LilyMirAddFinalInstruction(LilyMirModule *Module,
     LilyMirCurrent *top = Module->current->top;
 
     ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);
-    ASSERT(top->fun.fun->fun.insts->len > 0);
+    ASSERT(top->inst->fun.insts->len > 0);
 
-    LilyMirInstructionBlock *current_block = top->fun.fun->fun.block_stack->top;
+    LilyMirInstructionBlock *current_block = top->inst->fun.block_stack->top;
 
     if (current_block->insts->len == 0) {
         return LilyMirAddInst(Module, LilyMirBuildJmp(Module, exit_block));
@@ -785,9 +927,38 @@ LilyMirAddFinalInstruction(LilyMirModule *Module,
 
     if (last_inst->kind != LILY_MIR_INSTRUCTION_KIND_RET &&
         last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMP &&
-        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMPCOND) {
+        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMPCOND &&
+        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_UNREACHABLE) {
         return LilyMirAddInst(Module, LilyMirBuildJmp(Module, exit_block));
     }
+}
+
+bool
+LilyMirHasFinalInstruction(LilyMirModule *Module)
+{
+    LilyMirCurrent *top = Module->current->top;
+
+    ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(top->inst->fun.insts->len > 0);
+
+    LilyMirInstructionBlock *current_block = top->inst->fun.block_stack->top;
+
+    ASSERT(current_block);
+
+    if (current_block->insts->len == 0) {
+        return false;
+    }
+
+    LilyMirInstruction *last_inst = last__Vec(current_block->insts);
+
+    if (last_inst->kind != LILY_MIR_INSTRUCTION_KIND_RET &&
+        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMP &&
+        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMPCOND &&
+        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_UNREACHABLE) {
+        return false;
+    }
+
+    return true;
 }
 
 bool
@@ -796,9 +967,9 @@ LilyMirHasRetInstruction(LilyMirModule *Module)
     LilyMirCurrent *top = Module->current->top;
 
     ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);
-    ASSERT(top->fun.fun->fun.insts->len > 0);
+    ASSERT(top->inst->fun.insts->len > 0);
 
-    LilyMirInstructionBlock *current_block = top->fun.fun->fun.block_stack->top;
+    LilyMirInstructionBlock *current_block = top->inst->fun.block_stack->top;
 
     if (current_block->insts->len == 0) {
         return false;
@@ -848,7 +1019,7 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     }
 
     LilyMirInstruction *cond = generate_expr__LilyMir(
-      Module, fun_signature, scope, if_branch->cond, false);
+      Module, fun_signature, scope, if_branch->cond, NULL, false);
 
     ASSERT(cond);
 
@@ -870,7 +1041,7 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     LilyMirSetBlockLimit(block_limit, LilyMirGetInsertBlock(Module)->id);
     LilyMirAddFinalInstruction(Module, exit_block);
 
-    lily_free(cond);
+    partial_free__LilyMirInstruction(cond);
 }
 
 void
@@ -886,7 +1057,7 @@ LilyMirBuildElifBranch(LilyMirModule *Module,
     LilyMirAddBlock(Module, current_block);
 
     LilyMirInstruction *cond = generate_expr__LilyMir(
-      Module, fun_signature, scope, elif_branch->cond, false);
+      Module, fun_signature, scope, elif_branch->cond, NULL, false);
 
     ASSERT(cond);
 
@@ -914,7 +1085,7 @@ LilyMirBuildElifBranch(LilyMirModule *Module,
                          LilyMirGetInsertBlock(Module)->id);
     LilyMirAddFinalInstruction(Module, exit_block);
 
-    lily_free(cond);
+    partial_free__LilyMirInstruction(cond);
 }
 
 void
@@ -1030,7 +1201,7 @@ LilyMirBuildWhile(LilyMirModule *Module,
     }
 
     LilyMirInstruction *cond = generate_expr__LilyMir(
-      Module, fun_signature, scope, while_stmt->cond, false);
+      Module, fun_signature, scope, while_stmt->cond, NULL, false);
 
     ASSERT(cond);
 
@@ -1057,7 +1228,7 @@ LilyMirBuildWhile(LilyMirModule *Module,
     LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, exit_block);
 
-    lily_free(cond);
+    partial_free__LilyMirInstruction(cond);
 }
 
 void
@@ -1161,101 +1332,231 @@ LilyMirBuildUnsafe(LilyMirModule *Module,
 }
 
 void
-LilyMirBuildMatch(LilyMirModule *Module,
-                  LilyCheckedSignatureFun *fun_signature,
-                  LilyMirScope *scope,
-                  LilyMirBlockLimit *parent_block_limit,
-                  const LilyCheckedStmtMatch *match_stmt)
+LilyMirBuildSwitch(LilyMirModule *Module,
+                   LilyCheckedSignatureFun *fun_signature,
+                   LilyMirScope *scope,
+                   LilyMirBlockLimit *parent_block_limit,
+                   const LilyCheckedStmtSwitch *switch_stmt)
 {
+    // ; ...
+    // switch <val>, block default {
+    //   case val(i64) 0, block bb0
+    //   case val(i64) 1, block bb1
+    // }
+    // bb0:
+    //   ; ...
+    // bb1:
+    //   ; ...
+    // default:
+    //   ; ...
+
     LilyMirInstruction *exit_block =
       LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(parent_block_limit));
+    LilyMirInstruction *switched_inst = generate_expr__LilyMir(
+      Module, fun_signature, scope, switch_stmt->switched_expr, NULL, false);
 
-    if (match_stmt->use_switch) {
-        LilyMirInstruction *switched_inst = generate_expr__LilyMir(
-          Module, fun_signature, scope, match_stmt->expr, false);
+    ASSERT(switched_inst);
 
-        ASSERT(switched_inst);
+    LilyMirInstructionVal *switched_val = switched_inst->val;
+    Vec *cases = NEW(Vec); // Vec<LilyMirInstructionSwitchCase*>*
+    LilyMirInstruction *default_block =
+      LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+    LilyMirInstruction *switch_inst = NEW_VARIANT(
+      LilyMirInstruction,
+      switch,
+      NEW(
+        LilyMirInstructionSwitch, switched_val, &default_block->block, cases));
 
-        LilyMirInstructionVal *switched_val = switched_inst->val;
-        Vec *cases = NEW(Vec); // Vec<LilyMirInstructionSwitchCase*>*
+    LilyMirAddInst(Module, switch_inst);
 
-        LilyMirInstruction *default_block =
+    for (Usize i = 0; i < switch_stmt->cases->len; ++i) {
+        if (i + 1 == switch_stmt->cases->len && switch_stmt->has_else) {
+            break;
+        }
+
+        LilyCheckedStmtSwitchCase *case_ = get__Vec(switch_stmt->cases, i);
+        LilyMirInstruction *case_block =
           LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
-        LilyMirInstruction *switch_inst =
-          NEW_VARIANT(LilyMirInstruction,
-                      switch,
-                      NEW(LilyMirInstructionSwitch,
-                          switched_val,
-                          &default_block->block,
-                          cases));
+        Vec *case_values = generate_case_value__LilyMir(
+          Module,
+          fun_signature,
+          scope,
+          case_->case_value); // Vec<LilyMirInstructionVal*?>*
 
-        LilyMirAddInst(Module, switch_inst);
-
-        for (Usize i = 0; i < match_stmt->cases->len; ++i) {
-            if (i + 1 == match_stmt->cases->len && match_stmt->has_else) {
-                break;
-            }
-
-            LilyCheckedStmtMatchCase *case_ = get__Vec(match_stmt->cases, i);
-            LilyMirInstructionVal *case_pattern = generate_pattern__LilyMir(
-              Module, fun_signature, scope, case_->pattern);
-            LilyMirInstruction *block =
+        for (Usize j = 0; j < case_->sub_cases->len; ++j) {
+            LilyCheckedStmtSwitchSubCase *sub_case =
+              get__Vec(case_->sub_cases, j);
+            LilyMirInstruction *sub_case_block =
               LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
 
-            if (case_->cond) {
-                TODO("generate cond...");
-            }
-
             LilyMirPopBlock(Module);
-            LilyMirAddBlock(Module, block);
+            LilyMirAddBlock(Module, sub_case_block);
 
-            GENERATE_BODY_ITEM(Module,
-                               fun_signature,
-                               scope,
-                               block->block.limit,
-                               NULL,
-                               NULL,
-                               case_->body_item);
+            if (sub_case->cond) {
+                LilyMirInstruction *next_block =
+                  LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+                LilyMirInstruction *cond_inst = generate_expr__LilyMir(
+                  Module, fun_signature, scope, sub_case->cond, NULL, false);
 
-            LilyMirSetBlockLimit(block->block.limit,
-                                 LilyMirGetInsertBlock(Module)->id);
-            LilyMirAddFinalInstruction(Module, exit_block);
+                LilyMirAddInst(Module,
+                               LilyMirBuildJmpCond(
+                                 Module, cond_inst, next_block, exit_block));
 
-            push__Vec(
-              cases,
-              NEW(LilyMirInstructionSwitchCase, case_pattern, &block->block));
+                LilyMirPopBlock(Module);
+                LilyMirAddBlock(Module, next_block);
+
+                GENERATE_BODY_ITEM(Module,
+                                   fun_signature,
+                                   scope,
+                                   next_block->block.limit,
+                                   exit_block,
+                                   NULL,
+                                   sub_case->body_item);
+
+                LilyMirAddFinalInstruction(Module, exit_block);
+                LilyMirSetBlockLimit(next_block->block.limit,
+                                     LilyMirGetInsertBlock(Module)->id);
+            } else {
+                GENERATE_BODY_ITEM(Module,
+                                   fun_signature,
+                                   scope,
+                                   sub_case_block->block.limit,
+                                   exit_block,
+                                   NULL,
+                                   sub_case->body_item);
+
+                LilyMirAddFinalInstruction(Module, exit_block);
+                LilyMirSetBlockLimit(sub_case_block->block.limit,
+                                     LilyMirGetInsertBlock(Module)->id);
+            }
         }
 
         LilyMirPopBlock(Module);
-        LilyMirAddBlock(Module, default_block);
+        LilyMirAddBlock(Module, case_block);
 
-        if (match_stmt->has_else) {
-            LilyCheckedStmtMatchCase *default_case =
-              last__Vec(match_stmt->cases);
+        for (Usize j = 0; j < case_values->len; ++j) {
+            LilyMirInstructionVal *case_value = get__Vec(case_values, j);
 
-            GENERATE_BODY_ITEM(Module,
-                               fun_signature,
-                               scope,
-                               default_block->block.limit,
-                               exit_block,
-                               NULL,
-                               default_case->body_item);
+            // NOTE: else case value is not expected at this time
+            ASSERT(case_value);
 
-            LilyMirSetBlockLimit(default_block->block.limit,
-                                 LilyMirGetInsertBlock(Module)->id);
-            LilyMirAddFinalInstruction(Module, exit_block);
-        } else {
-            LilyMirAddInst(Module,
-                           NEW_VARIANT(LilyMirInstruction, unreachable));
-            LilyMirSetBlockLimit(default_block->block.limit,
-                                 LilyMirGetInsertBlock(Module)->id);
+            push__Vec(cases,
+                      NEW(LilyMirInstructionSwitchCase,
+                          case_value,
+                          &case_block->block));
         }
 
-        lily_free(switched_inst);
-    } else {
-        TODO("generate match stmt");
+        LilyMirSetBlockLimit(case_block->block.limit,
+                             LilyMirGetInsertBlock(Module)->id);
+
+        FREE(Vec, case_values);
+    }
+
+    if (switch_stmt->has_else) {
+        LilyCheckedStmtSwitchCase *last_case = last__Vec(switch_stmt->cases);
     }
 
     LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, exit_block);
 }
+
+// void
+// LilyMirBuildMatch(LilyMirModule *Module,
+//                   LilyCheckedSignatureFun *fun_signature,
+//                   LilyMirScope *scope,
+//                   LilyMirBlockLimit *parent_block_limit,
+//                   const LilyCheckedStmtMatch *match_stmt)
+// {
+//     LilyMirInstruction *exit_block =
+//       LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(parent_block_limit));
+//
+//     if (match_stmt->use_switch) {
+//         LilyMirInstruction *switched_inst = generate_expr__LilyMir(
+//           Module, fun_signature, scope, match_stmt->expr, false);
+//
+//         ASSERT(switched_inst);
+//
+//         LilyMirInstructionVal *switched_val = switched_inst->val;
+//         Vec *cases = NEW(Vec); // Vec<LilyMirInstructionSwitchCase*>*
+//
+//         LilyMirInstruction *default_block =
+//           LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+//         LilyMirInstruction *switch_inst =
+//           NEW_VARIANT(LilyMirInstruction,
+//                       switch,
+//                       NEW(LilyMirInstructionSwitch,
+//                           switched_val,
+//                           &default_block->block,
+//                           cases));
+//
+//         LilyMirAddInst(Module, switch_inst);
+//
+//         for (Usize i = 0; i < match_stmt->cases->len; ++i) {
+//             if (i + 1 == match_stmt->cases->len && match_stmt->has_else) {
+//                 break;
+//             }
+//
+//             LilyCheckedStmtMatchCase *case_ = get__Vec(match_stmt->cases, i);
+//             LilyMirInstructionVal *case_pattern = generate_pattern__LilyMir(
+//               Module, fun_signature, scope, case_->pattern);
+//             LilyMirInstruction *block =
+//               LilyMirBuildBlock(Module, NEW(LilyMirBlockLimit));
+//
+//             if (case_->conds) {
+//                 TODO("generate cond...");
+//             }
+//
+//             LilyMirPopBlock(Module);
+//             LilyMirAddBlock(Module, block);
+//
+//             GENERATE_BODY_ITEM(Module,
+//                                fun_signature,
+//                                scope,
+//                                block->block.limit,
+//                                NULL,
+//                                NULL,
+//                                case_->body_item);
+//
+//             LilyMirSetBlockLimit(block->block.limit,
+//                                  LilyMirGetInsertBlock(Module)->id);
+//             LilyMirAddFinalInstruction(Module, exit_block);
+//
+//             push__Vec(
+//               cases,
+//               NEW(LilyMirInstructionSwitchCase, case_pattern,
+//               &block->block));
+//         }
+//
+//         LilyMirPopBlock(Module);
+//         LilyMirAddBlock(Module, default_block);
+//
+//         if (match_stmt->has_else) {
+//             LilyCheckedStmtMatchCase *default_case =
+//               last__Vec(match_stmt->cases);
+//
+//             GENERATE_BODY_ITEM(Module,
+//                                fun_signature,
+//                                scope,
+//                                default_block->block.limit,
+//                                exit_block,
+//                                NULL,
+//                                default_case->body_item);
+//
+//             LilyMirSetBlockLimit(default_block->block.limit,
+//                                  LilyMirGetInsertBlock(Module)->id);
+//             LilyMirAddFinalInstruction(Module, exit_block);
+//         } else {
+//             LilyMirAddInst(Module,
+//                            NEW_VARIANT(LilyMirInstruction, unreachable));
+//             LilyMirSetBlockLimit(default_block->block.limit,
+//                                  LilyMirGetInsertBlock(Module)->id);
+//         }
+//
+//         partial_free__LilyMirInstruction(switched_inst);
+//     } else {
+//         TODO("generate match stmt");
+//     }
+//
+//     LilyMirPopBlock(Module);
+//     LilyMirAddBlock(Module, exit_block);
+// }

@@ -113,6 +113,15 @@ is_llvm_sext__LilyCheckedExprCast(const LilyCheckedExprCast *self)
              : 0;
 }
 
+bool
+eq__LilyCheckedExprCast(const LilyCheckedExprCast *self,
+                        const LilyCheckedExprCast *other)
+{
+    return self->kind == other->kind &&
+           eq__LilyCheckedExpr(self->expr, other->expr) &&
+           eq__LilyCheckedDataType(self->dest_data_type, other->dest_data_type);
+}
+
 DESTRUCTOR(LilyCheckedExprCast, const LilyCheckedExprCast *self)
 {
     FREE(LilyCheckedExpr, self->expr);

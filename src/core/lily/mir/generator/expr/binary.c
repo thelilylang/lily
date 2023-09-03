@@ -26,6 +26,7 @@
 #include <core/lily/mir/generator/expr.h>
 #include <core/lily/mir/generator/expr/assignable.h>
 #include <core/lily/mir/generator/expr/binary.h>
+#include <core/lily/mir/generator/expr/cond.h>
 
 #define GENERATE_ASSIGN_BINARY(inst_name, value)                               \
     {                                                                          \
@@ -34,15 +35,26 @@
           LilyMirBuildReg(module,                                              \
                           NEW_VARIANT(LilyMirInstruction, inst_name, value))); \
                                                                                \
-        lily_free(left_inst);                                                  \
-        lily_free(right_inst);                                                 \
+        partial_free__LilyMirInstruction(left_inst);                           \
+        partial_free__LilyMirInstruction(right_inst);                          \
                                                                                \
-        return LilyMirBuildStore(                                              \
-          generate_assignable_expr__LilyMir(                                   \
-            module, fun_signature, scope, expr->binary.left),                  \
+        LilyMirInstruction *assignable = generate_assignable_expr__LilyMir(    \
+          module, fun_signature, scope, expr->binary.left);                    \
+                                                                               \
+        LilyMirInstruction *store_inst = LilyMirBuildStore(                    \
+          module,                                                              \
+          assignable->val,                                                     \
           LilyMirBuildRegVal(module,                                           \
                              generate_dt__LilyMir(module, right_data_type),    \
-                             from__String(LilyMirGetLastRegName(module))));    \
+                             LilyMirGetLastRegName(module)));                  \
+                                                                               \
+        /* NOTE: `store_inst` cannot be NULL, because itself assignment is     \
+         * rejected by the analysis. */                                        \
+        ASSERT(store_inst);                                                    \
+                                                                               \
+        partial_free__LilyMirInstruction(assignable);                          \
+                                                                               \
+        return store_inst;                                                     \
     }
 
 LilyMirInstruction *
@@ -50,6 +62,7 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                               LilyCheckedSignatureFun *fun_signature,
                               LilyMirScope *scope,
                               LilyCheckedExpr *expr,
+                              LilyMirInstructionVal *ptr_val,
                               bool in_return)
 {
     ASSERT(expr->kind == LILY_CHECKED_EXPR_KIND_BINARY);
@@ -58,24 +71,38 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
       LilyMirGetCheckedDtFromExpr(module, scope, expr->binary.left);
     LilyCheckedDataType *right_data_type =
       LilyMirGetCheckedDtFromExpr(module, scope, expr->binary.right);
-
-    LilyMirInstruction *left_inst = generate_expr__LilyMir(
-      module, fun_signature, scope, expr->binary.left, in_return);
-    LilyMirInstruction *right_inst = generate_expr__LilyMir(
-      module, fun_signature, scope, expr->binary.right, in_return);
-
-    ASSERT(left_inst);
-    ASSERT(right_inst);
-    ASSERT(left_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL &&
-           right_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
-
+    LilyCheckedDataType *return_data_type = NULL;
+    LilyMirInstruction *op_inst = NULL;
     bool operator_is_builtin = false;
 
+    // Resolve return data type
+    switch (expr->data_type->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {
+            Vec *cond = init__Vec(2, left_data_type, right_data_type);
+
+            return_data_type =
+              get_return_data_type_of_conditional_compiler_choice(
+                expr->data_type, cond);
+
+            ASSERT(return_data_type);
+
+            FREE(Vec, cond);
+
+            break;
+        }
+        default:
+            return_data_type = expr->data_type;
+    }
+
+    // Check if the operator is builtin
+    // IMPROVE: maybe later we will add a value on binary operator to check if
+    // the operator is builtin (is_builtin).
     switch (expr->binary.kind) {
         case LILY_CHECKED_EXPR_BINARY_KIND_AND:
         case LILY_CHECKED_EXPR_BINARY_KIND_OR:
             if (left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL &&
-                right_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL) {
+                left_data_type->kind == right_data_type->kind &&
+                left_data_type->kind == return_data_type->kind) {
                 operator_is_builtin = true;
             }
 
@@ -93,7 +120,8 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
             if ((is_integer_data_type__LilyCheckedDataType(left_data_type) ||
                  left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL ||
                  left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE) &&
-                left_data_type->kind == right_data_type->kind) {
+                left_data_type->kind == right_data_type->kind &&
+                left_data_type->kind == return_data_type->kind) {
                 operator_is_builtin = true;
             }
 
@@ -113,7 +141,8 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
             if ((is_integer_data_type__LilyCheckedDataType(left_data_type) ||
                  is_float_data_type__LilyCheckedDataType(left_data_type) ||
                  left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE) &&
-                left_data_type->kind == right_data_type->kind) {
+                left_data_type->kind == right_data_type->kind &&
+                left_data_type->kind == return_data_type->kind) {
                 operator_is_builtin = true;
             }
 
@@ -133,7 +162,8 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                  left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE ||
                  left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL ||
                  left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_CHAR) &&
-                left_data_type->kind == right_data_type->kind) {
+                left_data_type->kind == right_data_type->kind &&
+                left_data_type->kind == return_data_type->kind) {
                 operator_is_builtin = true;
             }
 
@@ -148,8 +178,43 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
     }
 
     if (operator_is_builtin) {
-        LilyMirInstruction *op_inst = NULL;
+        switch (expr->binary.kind) {
+            case LILY_CHECKED_EXPR_BINARY_KIND_AND:
+            case LILY_CHECKED_EXPR_BINARY_KIND_OR:
+                return generate_cond__LilyMir(module,
+                                              fun_signature,
+                                              scope,
+                                              expr,
+                                              ptr_val,
+                                              NULL,
+                                              NULL,
+                                              NULL,
+                                              NULL,
+                                              false);
+            default:
+                break;
+        }
+    }
 
+    LilyMirInstruction *left_inst =
+      expr->binary.kind == LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN
+        ? generate_assignable_expr__LilyMir(
+            module, fun_signature, scope, expr->binary.left)
+        : generate_expr__LilyMir(module,
+                                 fun_signature,
+                                 scope,
+                                 expr->binary.left,
+                                 ptr_val,
+                                 in_return);
+    LilyMirInstruction *right_inst = generate_expr__LilyMir(
+      module, fun_signature, scope, expr->binary.right, ptr_val, in_return);
+
+    ASSERT(left_inst);
+    ASSERT(right_inst);
+    ASSERT(left_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL &&
+           right_inst->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
+
+    if (operator_is_builtin) {
         switch (expr->binary.kind) {
             case LILY_CHECKED_EXPR_BINARY_KIND_ADD:
                 if (is_integer_data_type__LilyCheckedDataType(left_data_type) ||
@@ -169,13 +234,7 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
 
                 break;
             case LILY_CHECKED_EXPR_BINARY_KIND_AND:
-                op_inst = NEW_VARIANT(LilyMirInstruction,
-                                      and,
-                                      NEW(LilyMirInstructionDestSrc,
-                                          left_inst->val,
-                                          right_inst->val));
-
-                break;
+                UNREACHABLE("and is not expected in this context");
             case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_ADD:
                 if (is_integer_data_type__LilyCheckedDataType(left_data_type) ||
                     left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE) {
@@ -271,8 +330,15 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                                        NEW(LilyMirInstructionDestSrc,
                                            left_inst->val,
                                            right_inst->val));
-            case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN:
-                return LilyMirBuildStore(left_inst->val, right_inst->val);
+            case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN: {
+                LilyMirInstructionVal *left_inst_val = left_inst->val;
+                LilyMirInstructionVal *right_inst_val = right_inst->val;
+
+                partial_free__LilyMirInstruction(left_inst);
+                partial_free__LilyMirInstruction(right_inst);
+
+                return LilyMirBuildStore(module, left_inst_val, right_inst_val);
+            }
             case LILY_CHECKED_EXPR_BINARY_KIND_BIT_AND:
                 op_inst = NEW_VARIANT(LilyMirInstruction,
                                         bitand,
@@ -464,14 +530,7 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
 
                 break;
             case LILY_CHECKED_EXPR_BINARY_KIND_OR:
-                op_inst = NEW_VARIANT(LilyMirInstruction,
-                                      or
-                                      ,
-                                      NEW(LilyMirInstructionDestSrc,
-                                          left_inst->val,
-                                          right_inst->val));
-
-                break;
+                UNREACHABLE("or is not expected in this context");
             case LILY_CHECKED_EXPR_BINARY_KIND_BIT_R_SHIFT:
                 op_inst = NEW_VARIANT(LilyMirInstruction,
                                       shr,
@@ -515,30 +574,10 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                 UNREACHABLE("unknown variant");
         }
 
-        lily_free(left_inst);
-        lily_free(right_inst);
+        partial_free__LilyMirInstruction(left_inst);
+        partial_free__LilyMirInstruction(right_inst);
 
         LilyMirAddInst(module, LilyMirBuildReg(module, op_inst));
-
-        LilyCheckedDataType *return_data_type = NULL;
-
-        switch (expr->data_type->kind) {
-            case LILY_CHECKED_DATA_TYPE_KIND_CONDITIONAL_COMPILER_CHOICE: {
-                Vec *cond = init__Vec(2, left_data_type, right_data_type);
-
-                return_data_type =
-                  get_return_data_type_of_conditional_compiler_choice(
-                    expr->data_type, cond);
-
-                ASSERT(return_data_type);
-
-                FREE(Vec, cond);
-
-                break;
-            }
-            default:
-                return_data_type = expr->data_type;
-        }
 
         return NEW_VARIANT(
           LilyMirInstruction,
@@ -546,7 +585,7 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
           NEW_VARIANT(LilyMirInstructionVal,
                       reg,
                       generate_dt__LilyMir(module, return_data_type),
-                      from__String(LilyMirGetLastRegName(module))));
+                      LilyMirGetLastRegName(module)));
     } else {
         TODO("generate for user defined binary operator");
     }

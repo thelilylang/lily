@@ -29,7 +29,7 @@
 #include <core/lily/analysis/checked/signature.h>
 #include <core/lily/mir/mir.h>
 
-LilyMirInstructionVal *
+LilyMirInstruction *
 generate_assignable_expr__LilyMir(LilyMirModule *module,
                                   LilyCheckedSignatureFun *fun_signature,
                                   LilyMirScope *scope,

@@ -35,8 +35,10 @@ eq__LilyCheckedPatternVariantCall(const LilyCheckedPatternVariantCall *self,
     // TODO: improve
     // TODO: cmp id
 
-    return self->pattern ? eq__LilyCheckedPattern(self->pattern, other->pattern)
-                         : false;
+    return self->pattern && other->pattern
+             ? eq__LilyCheckedPattern(self->pattern, other->pattern)
+           : !self->pattern && !other->pattern ? true
+                                               : false;
 }
 
 #ifdef ENV_DEBUG

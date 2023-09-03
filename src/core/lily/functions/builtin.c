@@ -429,6 +429,27 @@ get_builtin__LilyBuiltin(LilyBuiltinFun *builtins,
     return NULL;
 }
 
+bool
+eq__LilyBuiltin(const LilyBuiltinFun *self, const LilyBuiltinFun *other)
+{
+    if (!(self->params->len == other->params->len &&
+          !strcmp(self->name, other->name) &&
+          !strcmp(self->real_name->buffer, other->real_name->buffer) &&
+          eq__LilyCheckedDataType(self->return_data_type,
+                                  other->return_data_type))) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self->params->len; ++i) {
+        if (!eq__LilyCheckedDataType(get__Vec(self->params, i),
+                                     get__Vec(other->params, i))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyBuiltinFun, const LilyBuiltinFun *self)

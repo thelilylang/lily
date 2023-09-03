@@ -47,6 +47,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/parser/ast/stmt/*.h
 	${CLANG_FORMAT} ./include/core/lily/parser/*.h
 	${CLANG_FORMAT} ./include/core/lily/analysis/checked/*.h
+	${CLANG_FORMAT} ./include/core/lily/analysis/checked/body/*.h
 	${CLANG_FORMAT} ./include/core/lily/analysis/checked/decl/*.h
 	${CLANG_FORMAT} ./include/core/lily/analysis/checked/expr/*.h
 	${CLANG_FORMAT} ./include/core/lily/analysis/checked/pattern/*.h
@@ -66,6 +67,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/compiler/linker/*.h
 	${CLANG_FORMAT} ./include/core/lily/compiler/output/*.h
 	${CLANG_FORMAT} ./include/core/lily/diagnostic/*.h
+	${CLANG_FORMAT} ./include/core/lily/functions/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/expr/*.h
@@ -110,6 +112,7 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/parser/ast/stmt/*.c
 	${CLANG_FORMAT} ./src/core/lily/parser/*.c
 	${CLANG_FORMAT} ./src/core/lily/analysis/checked/*.c
+	${CLANG_FORMAT} ./src/core/lily/analysis/checked/body/*.c
 	${CLANG_FORMAT} ./src/core/lily/analysis/checked/decl/*.c
 	${CLANG_FORMAT} ./src/core/lily/analysis/checked/expr/*.c
 	${CLANG_FORMAT} ./src/core/lily/analysis/checked/pattern/*.c
@@ -131,6 +134,7 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/compiler/linker/*.cpp
 	${CLANG_FORMAT} ./src/core/lily/compiler/output/*.c
 	${CLANG_FORMAT} ./src/core/lily/diagnostic/*.c
+	${CLANG_FORMAT} ./src/core/lily/functions/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/expr/*.c

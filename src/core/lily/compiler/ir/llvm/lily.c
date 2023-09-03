@@ -173,6 +173,7 @@ LilyLLVMBuildBlock(const LilyIrLlvm *Self,
     LLVMBasicBlockRef block = LilyLLVMCreateBasicBlock(Self, Pending, Name);
 
     LLVMPositionBuilderAtEnd(Self->builder, block);
+    add_block__LilyIrLlvmPending(Pending, Name, block);
     add_scope_item__LilyIrLlvmScope(Scope, limit_block_id);
 
     for (Usize i = 0; i < Insts->len; ++i) {
@@ -744,22 +745,22 @@ LilyLLVMBuildSwitch(const LilyIrLlvm *Self,
 {
     LLVMValueRef SwitchVal = LilyLLVMBuildVal(Self, Scope, Pending, Val);
     LLVMBasicBlockRef Else =
-      LilyLLVMCreateBasicBlock(Self, Pending, DefaultBlock->name->buffer);
+      LilyLLVMCreateBasicBlock(Self, Pending, DefaultBlock->name);
     LLVMValueRef Switch =
       LLVMBuildSwitch(Self->builder, SwitchVal, Else, Cases->len);
 
-    add_block__LilyIrLlvmPending(Pending, DefaultBlock->name->buffer, Else);
+    add_block__LilyIrLlvmPending(Pending, DefaultBlock->name, Else);
 
     for (Usize i = 0; i < Cases->len; ++i) {
         LilyMirInstructionSwitchCase *case_ = get__Vec(Cases, i);
         LLVMValueRef CaseVal =
           LilyLLVMBuildVal(Self, Scope, Pending, case_->val);
-        LLVMBasicBlockRef CaseBlock = LilyLLVMCreateBasicBlock(
-          Self, Pending, case_->block_dest->name->buffer);
+        LLVMBasicBlockRef CaseBlock =
+          LilyLLVMCreateBasicBlock(Self, Pending, case_->block_dest->name);
 
         LLVMAddCase(Switch, CaseVal, CaseBlock);
         add_block__LilyIrLlvmPending(
-          Pending, case_->block_dest->name->buffer, CaseBlock);
+          Pending, case_->block_dest->name, CaseBlock);
     }
 
     return Switch;
@@ -936,7 +937,7 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
 
             return LLVMGetParam(Pending->current_fun, Val->param);
         case LILY_MIR_INSTRUCTION_VAL_KIND_REG: {
-            LLVMValueRef value = get__LilyIrLlvmScope(Scope, Val->reg->buffer);
+            LLVMValueRef value = get__LilyIrLlvmScope(Scope, (char *)Val->reg);
 
             ASSERT(value);
 
@@ -1041,7 +1042,7 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                Inst->block.insts,
                                Inst->block.limit->id,
                                Inst->block.id,
-                               Inst->block.name->buffer);
+                               Inst->block.name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_BUILTIN_CALL:
             res = LilyLLVMBuildBuiltinCall(Self,
@@ -1448,15 +1449,15 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
                                    Name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_JMP:
-            res = LilyLLVMBuildJmp(Self, Pending, Inst->jmp->name->buffer);
+            res = LilyLLVMBuildJmp(Self, Pending, Inst->jmp->name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_JMPCOND:
             res = LilyLLVMBuildJmpCond(Self,
                                        Scope,
                                        Pending,
                                        Inst->jmpcond.cond,
-                                       Inst->jmpcond.then_block->name->buffer,
-                                       Inst->jmpcond.else_block->name->buffer);
+                                       Inst->jmpcond.then_block->name,
+                                       Inst->jmpcond.else_block->name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_LEN:
             res = LilyLLVMBuildLen(Self, Scope, Pending, Inst->len.src, Name);
@@ -1482,7 +1483,7 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
             TODO("ref ptr");
         case LILY_MIR_INSTRUCTION_KIND_REG:
             res = LilyLLVMBuildReg(
-              Self, Scope, Pending, Inst->reg.inst, Inst->reg.name->buffer);
+              Self, Scope, Pending, Inst->reg.inst, Inst->reg.name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_RET:
             res = LilyLLVMBuildRet(Self, Scope, Pending, Inst->ret);

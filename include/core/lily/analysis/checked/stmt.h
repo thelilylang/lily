@@ -38,6 +38,7 @@
 #include <core/lily/analysis/checked/stmt/next.h>
 #include <core/lily/analysis/checked/stmt/raise.h>
 #include <core/lily/analysis/checked/stmt/return.h>
+#include <core/lily/analysis/checked/stmt/switch.h>
 #include <core/lily/analysis/checked/stmt/try.h>
 #include <core/lily/analysis/checked/stmt/unsafe.h>
 #include <core/lily/analysis/checked/stmt/variable.h>
@@ -61,6 +62,7 @@ enum LilyCheckedStmtKind
     LILY_CHECKED_STMT_KIND_NEXT,
     LILY_CHECKED_STMT_KIND_RAISE,
     LILY_CHECKED_STMT_KIND_RETURN,
+    LILY_CHECKED_STMT_KIND_SWITCH, // only usable by the compiler
     LILY_CHECKED_STMT_KIND_TRY,
     LILY_CHECKED_STMT_KIND_UNSAFE,
     LILY_CHECKED_STMT_KIND_VARIABLE,
@@ -82,7 +84,7 @@ typedef struct LilyCheckedStmt
     enum LilyCheckedStmtKind kind;
     const Location *location;    // const Location* (&)
     const LilyAstStmt *ast_stmt; // const LilyAstStmt*? (&) e.g. optional in
-                                 // the case of implicit return
+                                 // the case of implicit return, ...
     union
     {
         LilyCheckedStmtAsm asm_;
@@ -96,6 +98,7 @@ typedef struct LilyCheckedStmt
         LilyCheckedStmtNext next;
         LilyCheckedStmtRaise raise;
         LilyCheckedStmtReturn return_;
+        LilyCheckedStmtSwitch switch_;
         LilyCheckedStmtTry try;
         LilyCheckedStmtUnsafe unsafe;
         LilyCheckedStmtVariable variable;
@@ -288,6 +291,23 @@ inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
                               .ast_stmt = ast_stmt,
                               .location = location,
                               .return_ = return_ };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedStmt type (LILY_CHECKED_STMT_KIND_SWITCH).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedStmt,
+                           LilyCheckedStmt,
+                           switch,
+                           const Location *location,
+                           const LilyAstStmt *ast_stmt,
+                           LilyCheckedStmtSwitch switch_)
+{
+    return (LilyCheckedStmt){ .kind = LILY_CHECKED_STMT_KIND_SWITCH,
+                              .ast_stmt = ast_stmt,
+                              .location = location,
+                              .switch_ = switch_ };
 }
 
 /**

@@ -35,6 +35,7 @@
 #include <core/lily/mir/debug_info.h>
 #include <core/lily/mir/dt.h>
 #include <core/lily/mir/linkage.h>
+#include <core/lily/mir/name_manager.h>
 #include <core/lily/mir/scope.h>
 
 enum LilyMirInstructionKind
@@ -122,7 +123,10 @@ enum LilyMirInstructionValKind
 {
     LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY,
     LILY_MIR_INSTRUCTION_VAL_KIND_BYTES,
-    LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION,
+    LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION, // TODO:
+                                             // LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION
+                                             // ->
+                                             // LILY_MIR_INSTRUCTION_VAL_KIND_RESULT
     LILY_MIR_INSTRUCTION_VAL_KIND_FLOAT,
     LILY_MIR_INSTRUCTION_VAL_KIND_INT,
     LILY_MIR_INSTRUCTION_VAL_KIND_LIST,
@@ -145,6 +149,7 @@ typedef struct LilyMirInstructionVal
 {
     enum LilyMirInstructionValKind kind;
     LilyMirDt *dt;
+    Usize ref_count;
     union
     {
         Vec *array;         // Vec<LilyMirInstructionVal*>*
@@ -154,7 +159,7 @@ typedef struct LilyMirInstructionVal
         Int64 int_;
         Vec *list;   // Vec<LilyMirInstructionVal*>*
         Usize param; // id of the param
-        String *reg;
+        const char *reg;
         Vec *slice;   // Vec<LilyMirInstructionVal*>*
         String *str;  // String* (&)
         Vec *struct_; // Vec<LilyMirInstructionVal*>*
@@ -261,7 +266,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
                     reg,
                     LilyMirDt *dt,
-                    String *reg);
+                    const char *reg);
 
 /**
  *
@@ -339,6 +344,27 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     var,
                     LilyMirDt *dt,
                     char *var);
+
+/**
+ *
+ * @brief Pass to ref a pointer of `LilyMirInstructionVal` and increment
+ * the `ref_count`.
+ * @return LilyMirInstructionVal* (&)
+ */
+inline LilyMirInstructionVal *
+ref__LilyMirInstructionVal(LilyMirInstructionVal *self)
+{
+    ++self->ref_count;
+    return self;
+}
+
+/**
+ *
+ * @brief Return true if the both vals are equal otherwise return false.
+ */
+bool
+eq__LilyMirInstructionVal(const LilyMirInstructionVal *self,
+                          const LilyMirInstructionVal *other);
 
 /**
  *
@@ -620,7 +646,7 @@ inline DESTRUCTOR(LilyMirInstructionValDt, const LilyMirInstructionValDt *self)
 
 typedef struct LilyMirInstructionBlock
 {
-    String *name;
+    const char *name;
     LilyMirBlockLimit *limit;
     Vec *insts; // Vec<LilyMirInstruction*>*
     Usize id;
@@ -632,7 +658,7 @@ typedef struct LilyMirInstructionBlock
  */
 inline CONSTRUCTOR(LilyMirInstructionBlock,
                    LilyMirInstructionBlock,
-                   String *name,
+                   const char *name,
                    LilyMirBlockLimit *limit,
                    Usize id)
 {
@@ -742,10 +768,101 @@ inline DESTRUCTOR(LilyMirInstructionConst, const LilyMirInstructionConst *self)
     FREE(LilyMirInstructionVal, self->val);
 }
 
+// typedef struct LilyMirInstructionFunLoadNameField
+// {
+//     const char *instance_name;
+//     Vec *indexes; // Vec<LilyMirInstructionVal*>* (&)
+// } LilyMirInstructionFunLoadNameField;
+//
+// /**
+//  *
+//  * @brief Construct LilyMirInstructionFunLoadNameField type.
+//  */
+// inline CONSTRUCTOR(LilyMirInstructionFunLoadNameField,
+//                    LilyMirInstructionFunLoadNameField,
+//                    const char *instance_name,
+//                    Vec *indexes)
+// {
+//     return (LilyMirInstructionFunLoadNameField){ .instance_name =
+//     instance_name,
+//                                                  .indexes = indexes };
+// }
+
+enum LilyMirInstructionFunLoadNameKind
+{
+    LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_PARAM,
+    LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_REG,
+    LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_VAR,
+};
+
+typedef struct LilyMirInstructionFunLoadName
+{
+    enum LilyMirInstructionFunLoadNameKind kind;
+    union
+    {
+        Usize param;
+        const char *reg;
+        const char *var;
+    };
+} LilyMirInstructionFunLoadName;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionFunLoadName type
+ * (LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_PARAM).
+ */
+inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
+                           LilyMirInstructionFunLoadName,
+                           param,
+                           Usize param)
+{
+    return (LilyMirInstructionFunLoadName){
+        .kind = LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_PARAM, .param = param
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyMirInstructionFunLoadName type
+ * (LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_REG).
+ */
+inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
+                           LilyMirInstructionFunLoadName,
+                           reg,
+                           const char *reg)
+{
+    return (LilyMirInstructionFunLoadName){
+        .kind = LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_REG, .reg = reg
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyMirInstructionFunLoadName type
+ * (LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_VAR).
+ */
+inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
+                           LilyMirInstructionFunLoadName,
+                           var,
+                           const char *var)
+{
+    return (LilyMirInstructionFunLoadName){
+        .kind = LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_VAR, .var = var
+    };
+}
+
+/**
+ *
+ * @brief Check if both names are equal.
+ */
+bool
+eq__LilyMirInstructionFunLoadName(const LilyMirInstructionFunLoadName *self,
+                                  const LilyMirInstructionFunLoadName *other);
+
 typedef struct LilyMirInstructionFunLoad
 {
     // %<reg> = load ... <value_name> ...
-    String *value_name;       // String* (&)
+    LilyMirInstructionFunLoadName value_name;
     LilyMirInstruction *inst; // LilyMirInstruction* (&)
     Usize block_id;
 } LilyMirInstructionFunLoad;
@@ -756,7 +873,7 @@ typedef struct LilyMirInstructionFunLoad
  */
 CONSTRUCTOR(LilyMirInstructionFunLoad *,
             LilyMirInstructionFunLoad,
-            String *value_name,
+            LilyMirInstructionFunLoadName value_name,
             LilyMirInstruction *inst,
             Usize block_id);
 
@@ -780,6 +897,9 @@ typedef struct LilyMirInstructionFun
     Stack *block_stack;      // Stack<LilyMirInstructionBlock*>*
     HashMap *generic_params; // HashMap<LilyCheckedDataType*>* (&)
     LilyMirDt *return_data_type;
+    LilyMirNameManager reg_manager;
+    LilyMirNameManager block_manager;
+    LilyMirNameManager virtual_variable_manager;
     LilyMirScope scope;
     Usize block_count;
 } LilyMirInstructionFun;
@@ -979,7 +1099,7 @@ inline DESTRUCTOR(LilyMirInstructionJmpCond,
 
 typedef struct LilyMirInstructionReg
 {
-    String *name;
+    const char *name;
     LilyMirInstruction *inst;
 } LilyMirInstructionReg;
 
@@ -989,7 +1109,7 @@ typedef struct LilyMirInstructionReg
  */
 inline CONSTRUCTOR(LilyMirInstructionReg,
                    LilyMirInstructionReg,
-                   String *name,
+                   const char *name,
                    LilyMirInstruction *inst)
 {
     return (LilyMirInstructionReg){ .name = name, .inst = inst };
@@ -1307,7 +1427,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
  */
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
-                    and,
+                      and,
                     LilyMirInstructionDestSrc and);
 
 /**
@@ -2010,6 +2130,13 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
  */
 const LilyMirInstruction *
 get_arg__LilyMirInstruction(const LilyMirInstruction *self);
+
+/**
+ *
+ * @brief Free `self` ptr and `self->debug_info` ptr.
+ */
+void
+partial_free__LilyMirInstruction(LilyMirInstruction *self);
 
 /**
  *

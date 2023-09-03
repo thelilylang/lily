@@ -33,6 +33,7 @@
  *
  * @brief Generate expression in Lily MIR.
  * @param fun_signature LilyCheckedSignatureFun*? (&)
+ * @param ptr_val LilyMirInstructionVal*? (&)
  * @return LilyMirInstruction*?
  */
 LilyMirInstruction *
@@ -40,6 +41,7 @@ generate_expr__LilyMir(LilyMirModule *module,
                        LilyCheckedSignatureFun *fun_signature,
                        LilyMirScope *scope,
                        LilyCheckedExpr *expr,
+                       LilyMirInstructionVal *ptr_val,
                        bool in_return);
 
 #endif // LILY_CORE_LILY_MIR_GENERATOR_EXPR_H

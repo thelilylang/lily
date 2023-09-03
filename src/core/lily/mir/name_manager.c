@@ -22,22 +22,15 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_MIR_GENERATOR_PATTERN_H
-#define LILY_CORE_LILY_MIR_GENERATOR_PATTERN_H
+#include <base/alloc.h>
 
-#include <core/lily/analysis/checked/pattern.h>
-#include <core/lily/analysis/checked/signature.h>
-#include <core/lily/mir/mir.h>
+#include <core/lily/mir/name_manager.h>
 
-/**
- *
- * @brief Generate pattern in Lily MIR.
- * @param fun_signature LilyCheckedSignatureFun*? (&)
- */
-LilyMirInstructionVal *
-generate_pattern__LilyMir(LilyMirModule *module,
-                          LilyCheckedSignatureFun *fun_signature,
-                          LilyMirScope *scope,
-                          LilyCheckedPattern *pattern);
+DESTRUCTOR(LilyMirNameManager, const LilyMirNameManager *self)
+{
+    for (Usize i = 0; i < self->names->len; ++i) {
+        lily_free(get__Vec(self->names, i));
+    }
 
-#endif // LILY_CORE_LILY_MIR_GENERATOR_PATTERN_H
+    FREE(Vec, self->names);
+}

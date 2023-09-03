@@ -30,7 +30,7 @@
     switch (item->kind) {                                                   \
         case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR: {                        \
             LilyMirInstruction *expr = generate_expr__LilyMir(              \
-              module, signature, scope, item->expr, false);                 \
+              module, signature, scope, item->expr, NULL, false);           \
                                                                             \
             if (expr) {                                                     \
                 LilyMirAddInst(module, expr);                               \

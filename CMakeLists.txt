@@ -387,10 +387,12 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/decl/record_object.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/decl/trait.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/decl/type.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/access.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/array.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/binary.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/call.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/cast.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/compiler_fun.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/lambda.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/list.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/expr/literal.c
@@ -406,6 +408,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/name.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/range.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/record_call.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/table.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/tuple.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern/variant_call.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/asm.c
@@ -419,6 +422,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/next.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/raise.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/return.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/switch.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/try.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/unsafe.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/variable.c
@@ -450,6 +454,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/variant.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/virtual_scope.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/virtual_variable_manager.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/analysis.c)
 
 add_library(lily_core_lily_analysis STATIC ${LILY_CORE_LILY_ANALYSIS_SRC})
@@ -636,16 +641,17 @@ target_include_directories(lily_core_lily_functions PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_mir
 set(LILY_CORE_LILY_MIR_SRC
+    ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/case_value.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/constant.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/dt.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/enum.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/expr/assignable.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/expr/binary.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/expr/call.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/expr/cond.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/expr/unary.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/expr.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/fun.c
-    ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/pattern.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/record.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/stmt.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator/val.c
@@ -657,6 +663,7 @@ set(LILY_CORE_LILY_MIR_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/linkage.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/generator.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/mir.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/mir/name_manager.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/mir/scope.c)
 
 add_library(lily_core_lily_mir STATIC ${LILY_CORE_LILY_MIR_SRC})

@@ -2811,6 +2811,37 @@ can_update__LilyCheckedDataType(LilyCheckedDataType *self)
     }
 }
 
+bool
+is_contains_kind__LilyCheckedDataType(LilyCheckedDataType *self,
+                                      enum LilyCheckedDataTypeKind kind)
+{
+    if (self->kind == kind) {
+        return true;
+    }
+
+    // Look for traversable types.
+    switch (self->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_MUT:
+            return is_contains_kind__LilyCheckedDataType(self->mut, kind);
+        case LILY_CHECKED_DATA_TYPE_KIND_OPTIONAL:
+            return is_contains_kind__LilyCheckedDataType(self->optional, kind);
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR:
+            return is_contains_kind__LilyCheckedDataType(self->ptr, kind);
+        case LILY_CHECKED_DATA_TYPE_KIND_PTR_MUT:
+            return is_contains_kind__LilyCheckedDataType(self->ptr_mut, kind);
+        case LILY_CHECKED_DATA_TYPE_KIND_REF:
+            return is_contains_kind__LilyCheckedDataType(self->ref, kind);
+        case LILY_CHECKED_DATA_TYPE_KIND_REF_MUT:
+            return is_contains_kind__LilyCheckedDataType(self->ref_mut, kind);
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
+            return is_contains_kind__LilyCheckedDataType(self->trace, kind);
+        case LILY_CHECKED_DATA_TYPE_KIND_TRACE_MUT:
+            return is_contains_kind__LilyCheckedDataType(self->trace_mut, kind);
+        default:
+            return false;
+    }
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,

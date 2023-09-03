@@ -35,13 +35,20 @@ IMPL_FOR_DEBUG(to_string,
 {
     return format__String(
       "LilyAstPatternListHead{{ left = {Sr}, right = {Sr} }",
-      to_string__Debug__LilyAstPattern(self->left),
-      to_string__Debug__LilyAstPattern(self->right));
+      self->left ? to_string__Debug__LilyAstPattern(self->left)
+                 : from__String("NULL"),
+      self->right ? to_string__Debug__LilyAstPattern(self->right)
+                  : from__String("NULL"));
 }
 #endif
 
 DESTRUCTOR(LilyAstPatternListHead, const LilyAstPatternListHead *self)
 {
-    FREE(LilyAstPattern, self->left);
-    FREE(LilyAstPattern, self->right);
+    if (self->left) {
+        FREE(LilyAstPattern, self->left);
+    }
+
+    if (self->right) {
+        FREE(LilyAstPattern, self->right);
+    }
 }

@@ -40,12 +40,13 @@ generate_expr__LilyMir(LilyMirModule *module,
                        LilyCheckedSignatureFun *fun_signature,
                        LilyMirScope *scope,
                        LilyCheckedExpr *expr,
+                       LilyMirInstructionVal *ptr_val,
                        bool in_return)
 {
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_BINARY:
             return generate_binary_expr__LilyMir(
-              module, fun_signature, scope, expr, in_return);
+              module, fun_signature, scope, expr, ptr_val, in_return);
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
@@ -59,18 +60,18 @@ generate_expr__LilyMir(LilyMirModule *module,
                         module, fun_signature, scope, expr, in_return));
                 default:
                     return generate_call_expr__LilyMir(
-                      module, fun_signature, scope, expr);
+                      module, fun_signature, scope, expr, ptr_val);
             }
         case LILY_CHECKED_EXPR_KIND_CAST:
             TODO("cast");
         case LILY_CHECKED_EXPR_KIND_GROUPING:
             return generate_expr__LilyMir(
-              module, fun_signature, scope, expr->grouping, in_return);
+              module, fun_signature, scope, expr->grouping, ptr_val, in_return);
         case LILY_CHECKED_EXPR_KIND_LAMBDA:
             TODO("lambda");
         case LILY_CHECKED_EXPR_KIND_UNARY:
             return generate_unary_expr__LilyMir(
-              module, fun_signature, scope, expr, in_return);
+              module, fun_signature, scope, expr, ptr_val, in_return);
         default: {
             LilyMirInstructionVal *val = generate_val__LilyMir(
               module, fun_signature, scope, expr, in_return);

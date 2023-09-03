@@ -91,6 +91,14 @@ to_string__LilyCheckedExprUnaryKind(enum LilyCheckedExprUnaryKind kind)
     }
 }
 
+bool
+eq__LilyCheckedExprUnary(const LilyCheckedExprUnary *self,
+                         const LilyCheckedExprUnary *other)
+{
+    return self->kind == other->kind &&
+           eq__LilyCheckedExpr(self->right, other->right);
+}
+
 DESTRUCTOR(LilyCheckedExprUnary, const LilyCheckedExprUnary *self)
 {
     FREE(LilyCheckedExpr, self->right);

@@ -302,6 +302,23 @@ VARIANT_CONSTRUCTOR(LilyCheckedExprCallFunParam *,
     return self;
 }
 
+bool
+eq__LilyCheckedExprCallFunParam(const LilyCheckedExprCallFunParam *self,
+                                const LilyCheckedExprCallFunParam *other)
+{
+    if (self->kind != other->kind ||
+        !eq__LilyCheckedExpr(self->value, other->value)) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT:
+            return !strcmp(self->default_->buffer, other->default_->buffer);
+        default:
+            return true;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -566,6 +583,23 @@ CONSTRUCTOR(LilyCheckedExprCallMethodParam *,
     return self;
 }
 
+bool
+eq__LilyCheckedExprCallMethodParam(const LilyCheckedExprCallMethodParam *self,
+                                   const LilyCheckedExprCallMethodParam *other)
+{
+    if (self->kind != other->kind ||
+        !eq__LilyCheckedExpr(self->value, other->value)) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_CALL_FUN_PARAM_KIND_DEFAULT:
+            return !strcmp(self->default_->buffer, other->default_->buffer);
+        default:
+            return true;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -700,6 +734,15 @@ CONSTRUCTOR(LilyCheckedExprCallRecordParam *,
     return self;
 }
 
+bool
+eq__LilyCheckedExprCallRecordParam(const LilyCheckedExprCallRecordParam *self,
+                                   const LilyCheckedExprCallRecordParam *other)
+{
+    return !strcmp(self->name->buffer, other->name->buffer) &&
+           eq__LilyCheckedExpr(self->value, other->value) &&
+           self->field_index == other->field_index;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -750,6 +793,17 @@ DESTRUCTOR(LilyCheckedExprCallRecord, const LilyCheckedExprCallRecord *self)
     }
 }
 
+bool
+eq__LilyCheckedExprCallRecordFieldSingle(
+  const LilyCheckedExprCallRecordFieldSingle *self,
+  const LilyCheckedExprCallRecordFieldSingle *other)
+{
+    return self->record_access.id == other->record_access.id &&
+           self->index == other->index &&
+           !strcmp(self->record_global_name->buffer,
+                   other->record_global_name->buffer);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -765,6 +819,25 @@ IMPL_FOR_DEBUG(to_string,
       self->index);
 }
 #endif
+
+bool
+eq__LilyCheckedExprCallRecordFieldAccess(
+  const LilyCheckedExprCallRecordFieldAccess *self,
+  const LilyCheckedExprCallRecordFieldAccess *other)
+{
+    if (self->accesses->len != other->accesses->len) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self->accesses->len; ++i) {
+        if (!eq__LilyCheckedExpr(get__Vec(self->accesses, i),
+                                 get__Vec(other->accesses, i))) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 #ifdef ENV_DEBUG
 String *
@@ -791,6 +864,13 @@ DESTRUCTOR(LilyCheckedExprCallRecordFieldAccess,
     FREE(Vec, self->accesses);
 }
 
+bool
+eq__LilyCheckedExprCallVariant(const LilyCheckedExprCallVariant *self,
+                               const LilyCheckedExprCallVariant *other)
+{
+    return eq__LilyCheckedExpr(self->value, other->value);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -810,6 +890,161 @@ DESTRUCTOR(LilyCheckedExprCallVariant, const LilyCheckedExprCallVariant *self)
 {
     if (self->value) {
         FREE(LilyCheckedExpr, self->value);
+    }
+}
+
+bool
+eq__LilyCheckedExprCall(const LilyCheckedExprCall *self,
+                        const LilyCheckedExprCall *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE:
+        case LILY_CHECKED_EXPR_CALL_KIND_CLASS:
+        case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
+        case LILY_CHECKED_EXPR_CALL_KIND_ENUM:
+        case LILY_CHECKED_EXPR_CALL_KIND_MODULE:
+        case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
+            return self->scope.id == other->scope.id &&
+                   !strcmp(self->global_name->buffer,
+                           other->global_name->buffer);
+        case LILY_CHECKED_EXPR_CALL_KIND_CATCH_VARIABLE:
+            TODO("catch variable");
+        case LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN:
+            return eq__LilyCheckedExpr(self->cstr_len, other->cstr_len);
+        case LILY_CHECKED_EXPR_CALL_KIND_ERROR:
+            if (self->error.params && other->error.params) {
+                if (!(self->error.params->len == other->error.params->len &&
+                      self->scope.id == other->scope.id &&
+                      !strcmp(self->global_name->buffer,
+                              other->global_name->buffer))) {
+                    return false;
+                }
+
+                for (Usize i = 0; i < self->error.params->len; ++i) {
+                    if (!eq__LilyCheckedExpr(
+                          get__Vec(self->error.params, i),
+                          get__Vec(other->error.params, i))) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN:
+            // NOTE: make attention to default parametter
+            if (!(self->fun.params->len == other->fun.params->len &&
+                  self->scope.id == other->scope.id &&
+                  !strcmp(self->global_name->buffer,
+                          other->global_name->buffer))) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->fun.params->len; ++i) {
+                if (!eq__LilyCheckedExprCallFunParam(
+                      get__Vec(self->fun.params, i),
+                      get__Vec(other->fun.params, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
+            if (self->fun_sys.params && other->fun_sys.params &&
+                eq__LilySys(self->fun_sys.sys_fun_signature,
+                            other->fun_sys.sys_fun_signature)) {
+                for (Usize i = 0; i < self->fun_sys.params->len; ++i) {
+                    if (!eq__LilyCheckedExprCallFunParam(
+                          get__Vec(self->fun_sys.params, i),
+                          get__Vec(other->fun_sys.params, i))) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
+            if (self->fun_builtin.params && other->fun_builtin.params &&
+                eq__LilyBuiltin(self->fun_builtin.builtin_fun_signature,
+                                other->fun_builtin.builtin_fun_signature)) {
+                for (Usize i = 0; i < self->fun_builtin.params->len; ++i) {
+                    if (!eq__LilyCheckedExprCallFunParam(
+                          get__Vec(self->fun_builtin.params, i),
+                          get__Vec(other->fun_builtin.params, i))) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
+            return self->fun_param == other->fun_param &&
+                   self->scope.id == other->scope.id &&
+                   !strcmp(self->global_name->buffer,
+                           other->global_name->buffer);
+        case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
+            // NOTE: make attention to default parametter
+            if (!(self->method.params->len == other->method.params->len &&
+                  self->scope.id == other->scope.id &&
+                  !strcmp(self->global_name->buffer,
+                          other->global_name->buffer))) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->method.params->len; ++i) {
+                if (!eq__LilyCheckedExprCallMethodParam(
+                      get__Vec(self->method.params, i),
+                      get__Vec(other->method.params, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_EXPR_CALL_KIND_RECORD:
+            if (!(self->record.params->len == other->record.params->len &&
+                  self->scope.id == other->scope.id &&
+                  !strcmp(self->global_name->buffer,
+                          other->global_name->buffer))) {
+                return false;
+            }
+
+            for (Usize i = 0; i < self->record.params->len; ++i) {
+                if (!eq__LilyCheckedExprCallRecordParam(
+                      get__Vec(self->record.params, i),
+                      get__Vec(other->record.params, i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
+            return self->scope.id == other->scope.id &&
+                   !strcmp(self->global_name->buffer,
+                           other->global_name->buffer) &&
+                   eq__LilyCheckedExprCallRecordFieldSingle(
+                     &self->record_field_single, &other->record_field_single);
+        case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
+            return self->scope.id == other->scope.id &&
+                   !strcmp(self->global_name->buffer,
+                           other->global_name->buffer) &&
+                   eq__LilyCheckedExprCallRecordFieldAccess(
+                     &self->record_field_access, &other->record_field_access);
+        case LILY_CHECKED_EXPR_CALL_KIND_STR_LEN:
+            return eq__LilyCheckedExpr(self->str_len, other->str_len);
+        case LILY_CHECKED_EXPR_CALL_KIND_UNKNOWN:
+            return true;
+        case LILY_CHECKED_EXPR_CALL_KIND_VARIANT:
+            return eq__LilyCheckedExprCallVariant(&self->variant,
+                                                  &other->variant);
+        default:
+            UNREACHABLE("unknown variant");
     }
 }
 

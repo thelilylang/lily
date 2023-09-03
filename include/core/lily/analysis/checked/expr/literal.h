@@ -490,6 +490,14 @@ inline CONSTRUCTOR(LilyCheckedExprLiteral,
 
 /**
  *
+ * @brief Check if the both literals are equal.
+ */
+bool
+eq__LilyCheckedExprLiteral(const LilyCheckedExprLiteral *self,
+                           const LilyCheckedExprLiteral *other);
+
+/**
+ *
  * @brief Convert LilyCheckedExprLiteral in String.
  * @note This function is only used to debug.
  */

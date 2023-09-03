@@ -27,13 +27,18 @@
 #include <core/lily/analysis/checked/signature.h>
 #include <core/lily/analysis/checked/variant.h>
 
+#ifdef ENV_DEBUG
+#include <base/format.h>
+#endif
+
 CONSTRUCTOR(LilyCheckedVariant *,
             LilyCheckedVariant,
             String *name,
             String *global_name,
             LilyCheckedDataType *data_type,
             const Location *location,
-            const LilyCheckedDecl *enum_)
+            const LilyCheckedDecl *enum_,
+            Usize id)
 {
     LilyCheckedVariant *self = lily_malloc(sizeof(LilyCheckedVariant));
 
@@ -43,6 +48,7 @@ CONSTRUCTOR(LilyCheckedVariant *,
     self->location = location;
     self->signatures = NEW(Vec);
     self->enum_ = enum_;
+    self->id = id;
 
     return self;
 }
@@ -63,7 +69,11 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedVariant, const LilyCheckedVariant *self)
 
         DEBUG_VEC_STRING(self->signatures, res, LilyCheckedSignatureVariant);
 
-        push_str__String(res, ", enum_ = {...} }");
+        {
+            char *s = format(", enum_ = {{...}, id = {zu} }", self->id);
+
+            PUSH_STR_AND_FREE(res, s);
+        }
 
         return res;
     }
@@ -77,7 +87,11 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedVariant, const LilyCheckedVariant *self)
 
     DEBUG_VEC_STRING(self->signatures, res, LilyCheckedSignatureVariant);
 
-    push_str__String(res, ", enum_ = {...} }");
+    {
+        char *s = format(", enum_ = {{...}, id = {zu} }", self->id);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
