@@ -60,27 +60,16 @@ typedef struct LilyAstCapture
  *
  * @brief Construct LilyAstCapture type (LILY_AST_CAPTURE_KIND_SINGLE).
  */
-inline VARIANT_CONSTRUCTOR(LilyAstCapture,
-                           LilyAstCapture,
-                           single,
-                           LilyAstExpr *single)
-{
-    return (LilyAstCapture){ .kind = LILY_AST_CAPTURE_KIND_SINGLE,
-                             .single = single };
-}
+VARIANT_CONSTRUCTOR(LilyAstCapture *,
+                    LilyAstCapture,
+                    single,
+                    LilyAstExpr *single);
 
 /**
  *
  * @brief Construct LilyAstCapture type (LILY_AST_CAPTURE_KIND_MULTIPLE).
  */
-inline VARIANT_CONSTRUCTOR(LilyAstCapture,
-                           LilyAstCapture,
-                           multiple,
-                           Vec *multiple)
-{
-    return (LilyAstCapture){ .kind = LILY_AST_CAPTURE_KIND_MULTIPLE,
-                             .multiple = multiple };
-}
+VARIANT_CONSTRUCTOR(LilyAstCapture *, LilyAstCapture, multiple, Vec *multiple);
 
 /**
  *
@@ -96,6 +85,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstCapture, const LilyAstCapture *self);
  *
  * @brief Free LilyAstCapture type.
  */
-DESTRUCTOR(LilyAstCapture, const LilyAstCapture *self);
+DESTRUCTOR(LilyAstCapture, LilyAstCapture *self);
 
 #endif // LILY_CORE_LILY_PARSER_AST_CAPTURE_H

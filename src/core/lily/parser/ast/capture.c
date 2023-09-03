@@ -34,12 +34,33 @@
 #endif
 
 // Free LilyAstCapture type (LILY_AST_CAPTURE_KIND_SINGLE).
-static inline VARIANT_DESTRUCTOR(LilyAstCapture,
-                                 single,
-                                 const LilyAstCapture *self);
+static VARIANT_DESTRUCTOR(LilyAstCapture, single, LilyAstCapture *self);
 
 // Free LilyAstCapture type (LILY_AST_CAPTURE_KIND_MULTIPLE).
-static VARIANT_DESTRUCTOR(LilyAstCapture, multiple, const LilyAstCapture *self);
+static VARIANT_DESTRUCTOR(LilyAstCapture, multiple, LilyAstCapture *self);
+
+VARIANT_CONSTRUCTOR(LilyAstCapture *,
+                    LilyAstCapture,
+                    single,
+                    LilyAstExpr *single)
+{
+    LilyAstCapture *self = lily_malloc(sizeof(LilyAstCapture));
+
+    self->kind = LILY_AST_CAPTURE_KIND_SINGLE;
+    self->single = single;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyAstCapture *, LilyAstCapture, multiple, Vec *multiple)
+{
+    LilyAstCapture *self = lily_malloc(sizeof(LilyAstCapture));
+
+    self->kind = LILY_AST_CAPTURE_KIND_MULTIPLE;
+    self->multiple = multiple;
+
+    return self;
+}
 
 #ifdef ENV_DEBUG
 char *
@@ -89,18 +110,20 @@ IMPL_FOR_DEBUG(to_string, LilyAstCapture, const LilyAstCapture *self)
 }
 #endif
 
-VARIANT_DESTRUCTOR(LilyAstCapture, single, const LilyAstCapture *self)
+VARIANT_DESTRUCTOR(LilyAstCapture, single, LilyAstCapture *self)
 {
     FREE(LilyAstExpr, self->single);
+    lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyAstCapture, multiple, const LilyAstCapture *self)
+VARIANT_DESTRUCTOR(LilyAstCapture, multiple, LilyAstCapture *self)
 {
     FREE_BUFFER_ITEMS(self->multiple->buffer, self->multiple->len, LilyAstExpr);
     FREE(Vec, self->multiple);
+    lily_free(self);
 }
 
-DESTRUCTOR(LilyAstCapture, const LilyAstCapture *self)
+DESTRUCTOR(LilyAstCapture, LilyAstCapture *self)
 {
     switch (self->kind) {
         case LILY_AST_CAPTURE_KIND_SINGLE:
