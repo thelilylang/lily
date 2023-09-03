@@ -163,6 +163,7 @@ static inline DESTRUCTOR(LilyPreparserFunBodyItemStmtDrop,
 static inline CONSTRUCTOR(LilyPreparserFunBodyItemStmtFor,
                           LilyPreparserFunBodyItemStmtFor,
                           Vec *expr,
+                          Vec *capture,
                           Vec *block);
 
 // Free LilyPreparserFunBodyItemStmtFor type.
@@ -2267,9 +2268,12 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtDrop,
 CONSTRUCTOR(LilyPreparserFunBodyItemStmtFor,
             LilyPreparserFunBodyItemStmtFor,
             Vec *expr,
+            Vec *capture,
             Vec *block)
 {
-    return (LilyPreparserFunBodyItemStmtFor){ .expr = expr, .block = block };
+    return (LilyPreparserFunBodyItemStmtFor){ .expr = expr,
+                                              .capture = capture,
+                                              .block = block };
 }
 
 #ifdef ENV_DEBUG
@@ -2284,6 +2288,15 @@ IMPL_FOR_DEBUG(to_string,
     push_str__String(res, ", block =");
 
     DEBUG_VEC_STR(self->block, res, LilyToken);
+
+    push_str__String(res, ", capture =");
+
+    if (self->capture) {
+        DEBUG_VEC_STR(self->capture, res, LilyToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     push_str__String(res, " }");
 
     return res;
@@ -2294,6 +2307,11 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtFor,
            const LilyPreparserFunBodyItemStmtFor *self)
 {
     FREE(Vec, self->expr);
+
+    if (self->capture) {
+        FREE(Vec, self->capture);
+    }
+
     FREE_BUFFER_ITEMS(
       self->block->buffer, self->block->len, LilyPreparserFunBodyItem);
     FREE(Vec, self->block);
@@ -8355,13 +8373,16 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
 
     // 1. Preparse for expression.
     Vec *expr = NEW(Vec); // Vec<LilyToken* (&)>*
+    Vec *capture = NULL;  // Vec<LilyToken* (&)>*?
 
     PREPARSE_UNTIL(expr,
                    self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
+                     self->current->kind != LILY_TOKEN_KIND_COLON_R_SHIFT &&
                      self->current->kind != LILY_TOKEN_KIND_EOF);
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_EOF:
+        for_expected_do : {
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
@@ -8376,10 +8397,35 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
 
             FREE(Vec, expr);
 
-            return NULL;
+            if (capture) {
+                FREE(Vec, capture);
+            }
 
-        default:
+            return NULL;
+        }
+        case LILY_TOKEN_KIND_COLON_R_SHIFT:
+            capture = NEW(Vec);
+
+            next_token__LilyPreparser(self); // skip `:>`
+
+            PREPARSE_UNTIL(capture,
+                           self->current->kind != LILY_TOKEN_KIND_KEYWORD_DO &&
+                             self->current->kind != LILY_TOKEN_KIND_EOF);
+
+            switch (self->current->kind) {
+                case LILY_TOKEN_KIND_KEYWORD_DO:
+                    goto for_do;
+                default:
+                    goto for_expected_do;
+            }
+        case LILY_TOKEN_KIND_KEYWORD_DO:
+        for_do : {
             next_token__LilyPreparser(self);
+
+            break;
+        }
+        default:
+            UNREACHABLE("this situation is impossible");
     }
 
     // 2. Preparse `for` block
@@ -8395,10 +8441,11 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
     END_LOCATION(&location, self->current->location);
     next_token__LilyPreparser(self); // skip `end` keyword
 
-    return NEW_VARIANT(LilyPreparserFunBodyItem,
-                       stmt_for,
-                       NEW(LilyPreparserFunBodyItemStmtFor, expr, block),
-                       location);
+    return NEW_VARIANT(
+      LilyPreparserFunBodyItem,
+      stmt_for,
+      NEW(LilyPreparserFunBodyItemStmtFor, expr, capture, block),
+      location);
 }
 
 LilyPreparserFunBodyItem *
