@@ -1132,8 +1132,10 @@ xor
 
 > This is used to add more security at analysis time for dropping the pointer. For example, when we use the drop operator, the pointer variable is `@hideout`, so the variable is removed from scope, so analysis will report an error because it's not found in scope (this is to add more security to memory at compile-time like the borrow checker (cheaper), but it's optional). 
 
+```
 ms: Memory security
 options e.g. --ms-0, --ms-1, --ms-2, ...
+```
 
 ```lily
 val x := 30;
