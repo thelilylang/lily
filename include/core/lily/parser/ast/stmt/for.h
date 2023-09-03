@@ -25,16 +25,18 @@
 #ifndef LILY_CORE_LILY_PARSER_AST_STMT_FOR_H
 #define LILY_CORE_LILY_PARSER_AST_STMT_FOR_H
 
+#include <core/lily/parser/ast/capture.h>
 #include <core/lily/parser/ast/expr.h>
 
-// for <expr_left> in <expr_right> do
+// for <expr_left> in <expr_right> :> <capture> do
 //   <body>
 // end
 typedef struct LilyAstStmtFor
 {
     LilyAstExpr *expr_left;
     LilyAstExpr *expr_right;
-    Vec *body; // Vec<LilyAstBodyFunItem*>*
+    LilyAstCapture *capture; // LilyAstCapture*?
+    Vec *body;               // Vec<LilyAstBodyFunItem*>*
 } LilyAstStmtFor;
 
 /**
@@ -45,6 +47,7 @@ CONSTRUCTOR(LilyAstStmtFor,
             LilyAstStmtFor,
             LilyAstExpr *expr_left,
             LilyAstExpr *expr_right,
+            LilyAstCapture *capture,
             Vec *body);
 
 /**
