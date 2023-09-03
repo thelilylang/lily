@@ -378,11 +378,13 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyPreparserFunBodyItemStmtIf
 {
-    Vec *if_expr;     // Vec<LilyToken* (&)>*
-    Vec *if_block;    // Vec<LilyPreparserFunBodyItem*>*
-    Vec *elif_exprs;  // Vec<Vec<LilyToken* (&)>*?
-    Vec *elif_blocks; // Vec<Vec<LilyPreparserFunBodyItem*>*>*?
-    Vec *else_block;  // Vec<LilyPreparserFunBodyItem>*?
+    Vec *if_expr;       // Vec<LilyToken* (&)>*
+    Vec *if_capture;    // Vec<LilyToken* (&)>*?
+    Vec *if_block;      // Vec<LilyPreparserFunBodyItem*>*
+    Vec *elif_exprs;    // Vec<Vec<LilyToken* (&)>*?
+    Vec *elif_captures; // Vec<Vec<LilyToken* (&)>*?>*?
+    Vec *elif_blocks;   // Vec<Vec<LilyPreparserFunBodyItem*>*>*?
+    Vec *else_block;    // Vec<LilyPreparserFunBodyItem>*?
 } LilyPreparserFunBodyItemStmtIf;
 
 /**
