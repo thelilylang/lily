@@ -3712,7 +3712,7 @@ parse_capture__LilyParseBlock(LilyParseBlock *self)
             while (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
                 LilyAstExpr *single = parse_expr__LilyParseBlock(self);
 
-				if (!single) {
+                if (!single) {
                     for (Usize i = 0; i < multiple->len; ++i) {
                         LilyAstCapture *capture = get__Vec(multiple, i);
 
@@ -3724,9 +3724,9 @@ parse_capture__LilyParseBlock(LilyParseBlock *self)
                     FREE(Vec, multiple);
 
                     return NULL;
-				}
+                }
 
-				push__Vec(multiple, single);
+                push__Vec(multiple, single);
 
                 if (self->current->kind != LILY_TOKEN_KIND_R_HOOK) {
                     switch (self->current->kind) {
@@ -3765,18 +3765,18 @@ parse_capture__LilyParseBlock(LilyParseBlock *self)
                   &self->parser->package->count_error);
             }
 
-			switch (multiple->len) {
-				case 1:
-					FAILED("warning: unused multiple capture");
-				case 0:
-					FREE(Vec, multiple);
+            switch (multiple->len) {
+                case 1:
+                    FAILED("warning: unused multiple capture");
+                case 0:
+                    FREE(Vec, multiple);
 
-					FAILED("warning: unused capture");
-					
-					// return NULL;
-				default:
-					return NEW_VARIANT(LilyAstCapture, multiple, multiple);
-			}
+                    FAILED("warning: unused capture");
+
+                    // return NULL;
+                default:
+                    return NEW_VARIANT(LilyAstCapture, multiple, multiple);
+            }
         }
         default: {
             LilyAstExpr *single = parse_expr__LilyParseBlock(self);
@@ -3955,6 +3955,7 @@ parse_for_stmt__LilyParser(LilyParser *self,
     LilyParseBlock expr_block = NEW(LilyParseBlock, self, item->stmt_for.expr);
     LilyAstExpr *expr_left =
       parse_primary_expr__LilyParseBlock(&expr_block, false);
+    LilyAstCapture *capture = NULL; // LilyAstCapture*?
 
     if (!expr_left) {
         return NULL;
@@ -3991,11 +3992,20 @@ parse_for_stmt__LilyParser(LilyParser *self,
 
     FREE(LilyParseBlock, &expr_block);
 
+    if (item->stmt_for.capture) {
+        LilyParseBlock capture_block =
+          NEW(LilyParseBlock, self, item->stmt_for.capture);
+
+        capture = parse_capture__LilyParseBlock(&capture_block);
+
+        FREE(LilyParseBlock, &capture_block);
+    }
+
     return NEW_VARIANT(
       LilyAstBodyFunItem,
       stmt,
       NEW_VARIANT(
-        LilyAstStmt, for, item->location, NEW(LilyAstStmtFor, expr_left, expr_right, parse_fun_body__LilyParser(self, item->stmt_for.block))));
+        LilyAstStmt, for, item->location, NEW(LilyAstStmtFor, expr_left, expr_right, capture, parse_fun_body__LilyParser(self, item->stmt_for.block))));
 }
 
 LilyAstBodyFunItem *
@@ -4006,6 +4016,7 @@ parse_if_stmt__LilyParser(LilyParser *self,
     LilyParseBlock if_expr_block =
       NEW(LilyParseBlock, self, item->stmt_if.if_expr);
     LilyAstExpr *if_expr = parse_expr__LilyParseBlock(&if_expr_block);
+    LilyAstCapture *if_capture = NULL; // LilyAstCapture*?
 
     CHECK_EXPR(if_expr, if_expr_block, NULL, "expected `do` keyword", {});
 
@@ -4015,14 +4026,25 @@ parse_if_stmt__LilyParser(LilyParser *self,
         return NULL;
     }
 
-    // 2. Parse if block
+    // 2. Parse if capture
+    if (item->stmt_if.if_capture) {
+        LilyParseBlock if_capture_block =
+          NEW(LilyParseBlock, self, item->stmt_if.if_capture);
+
+        if_capture = parse_capture__LilyParseBlock(&if_capture_block);
+
+        FREE(LilyParseBlock, &if_capture_block);
+    }
+
+    // 3. Parse if block
     Vec *if_body = parse_fun_body__LilyParser(self, item->stmt_if.if_block);
 
-    Vec *elif_exprs = NULL;  // Vec<LilyAstExpr*>*
-    Vec *elif_bodies = NULL; // Vec<Vec<LilyAstBodyFunItem*>*>*
+    Vec *elif_exprs = NULL;    // Vec<LilyAstExpr*>*?
+    Vec *elif_captures = NULL; // Vec<LilyAstCapture*?>*?
+    Vec *elif_bodies = NULL;   // Vec<Vec<LilyAstBodyFunItem*>*>*?
 
     if (item->stmt_if.elif_exprs) {
-        // 3. Parse elif expressions
+        // 4. Parse elif expressions
         elif_exprs = NEW(Vec); // Vec<LilyAstExpr*>*
 
         for (Usize i = 0; i < item->stmt_if.elif_exprs->len; ++i) {
@@ -4040,7 +4062,26 @@ parse_if_stmt__LilyParser(LilyParser *self,
             }
         }
 
-        // 4. Parse elif blocks
+        // 5. Parse elif captures
+        elif_captures = NEW(Vec); // Vec<LilyAstCapture*?>*
+
+        for (Usize i = 0; i < item->stmt_if.elif_captures->len; ++i) {
+            Vec *elif_capture = get__Vec(item->stmt_if.elif_captures, i);
+
+            if (elif_capture) {
+                LilyParseBlock elif_capture_block =
+                  NEW(LilyParseBlock, self, elif_capture);
+
+                push__Vec(elif_captures,
+                          parse_capture__LilyParseBlock(&elif_capture_block));
+
+                FREE(LilyParseBlock, &elif_capture_block);
+            } else {
+                push__Vec(elif_captures, NULL);
+            }
+        }
+
+        // 6. Parse elif blocks
         elif_bodies = NEW(Vec); // Vec<Vec<LilyAstBodyFunItem*>*>*
 
         for (Usize i = 0; i < item->stmt_if.elif_blocks->len; ++i) {
@@ -4053,7 +4094,7 @@ parse_if_stmt__LilyParser(LilyParser *self,
     Vec *else_body = NULL;
 
     if (item->stmt_if.else_block) {
-        // 4. Parse else block
+        // 7. Parse else block
         else_body = parse_fun_body__LilyParser(self, item->stmt_if.else_block);
     }
 
@@ -4064,8 +4105,10 @@ parse_if_stmt__LilyParser(LilyParser *self,
                                    item->location,
                                    NEW(LilyAstStmtIf,
                                        if_expr,
+                                       if_capture,
                                        if_body,
                                        elif_exprs,
+                                       elif_captures,
                                        elif_bodies,
                                        else_body)));
 }
