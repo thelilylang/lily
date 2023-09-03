@@ -1119,6 +1119,10 @@ xor
 
 ## @builtin
 
+```lily
+@builtin.max(2, 30)
+```
+
 ## @len
 
 ```lily
