@@ -57,6 +57,7 @@ inline IMPL_FOR_EQ(Usize, Usize, return self == other;);
 inline IMPL_FOR_EQ(Float32, Float32, return self == other;);
 inline IMPL_FOR_EQ(Float64, Float64, return self == other;);
 
+inline IMPL_FOR_EQ(Bool, Bool, return self == other;);
 inline IMPL_FOR_EQ(Char, Char, return self == other;);
 inline IMPL_FOR_EQ(Short, Short, return self == other;);
 inline IMPL_FOR_EQ(Int, Int, return self == other;);
