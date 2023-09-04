@@ -26,7 +26,10 @@
 #define LILY_BASE_REF_H
 
 #include <base/assert.h>
+#include <base/eq.h>
+#include <base/macros.h>
 #include <base/ptr.h>
+#include <base/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +40,6 @@
     {                                                  \
         Ptr(T) v; /* const T* (&) */                   \
     } Ref__##T;                                        \
-                                                       \
     /**                                                \
      *                                                 \
      * @brief Construct Ref type.                      \
@@ -52,11 +54,50 @@
      *                                                 \
      * @brief Unwrap the pointer of the reference.     \
      */                                                \
-    inline Ptr(T) unwrap__Ref__##T(Ref(Ref__##T) self) \
+    inline Ptr(T) unwrap__Ref__##T(Ptr(Ref__##T) self) \
     {                                                  \
+        ASSERT(self);                                  \
         return self->v;                                \
-    }
+    }                                                  \
+                                                       \
+    /**                                                \
+     *                                                 \
+     * @brief Implement Eq trait.                      \
+     */                                                \
+    inline IMPL_FOR_EQ(                                \
+      Ptr(Ref__##T), Ref__##T, return EQ(T, *self->v, *other->v););
 
 #define REF(T, v) NEW(Ref__##T, v)
+
+Ref(Int8);
+Ref(Int16);
+Ref(Int32);
+Ref(Int64);
+
+Ref(Uint8);
+Ref(Uint16);
+Ref(Uint32);
+Ref(Uint64);
+
+Ref(Isize);
+Ref(Usize);
+
+Ref(Float32);
+Ref(Float64);
+
+Ref(Uptr);
+
+Ref(Bool);
+Ref(Char);
+Ref(Short);
+Ref(Int);
+Ref(Long);
+Ref(Longlong);
+
+Ref(Uchar);
+Ref(Ushort);
+Ref(Uint);
+Ref(Ulong);
+Ref(Ulonglong);
 
 #endif // LILY_BASE_REF_H
