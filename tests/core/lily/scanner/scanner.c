@@ -1,3 +1,4 @@
+#include "at_keyword.c"
 #include "comment_doc.c"
 #include "identifier_dollar.c"
 #include "identifier_macro.c"
@@ -34,6 +35,7 @@ int
 main()
 {
     NEW_TEST("scanner");
+    ADD_SIMPLE(at_keyword);
     ADD_SIMPLE(comment_doc);
     ADD_SIMPLE(identifier_dollar);
     ADD_SIMPLE(identifier_macro);
