@@ -29,7 +29,7 @@
 #include <base/types.h>
 
 /* Ptr<T> */
-#define Ptr(T) const T *
+#define Ptr(T) Ptr__##T
 
 #define DEF_PTR(T) typedef const T *Ptr__##T
 #define AS_PTR_MUT(T, r) ((T *)r)
@@ -66,34 +66,34 @@ DEF_PTR(Ulong);
 DEF_PTR(Ulonglong);
 
 // Impl Eq
-inline IMPL_FOR_EQ(Ptr__Int8, Ptr__Int8, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Int16, Ptr__Int16, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Int32, Ptr__Int32, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Int64, Ptr__Int64, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Isize, Ptr__Isize, return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Int8), Ptr(Int8), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Int16), Ptr(Int16), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Int32), Ptr(Int32), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Int64), Ptr(Int64), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Isize), Ptr(Isize), return *self == *other;);
 
-inline IMPL_FOR_EQ(Ptr__Uint8, Ptr__Uint8, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Uint16, Ptr__Uint16, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Uint32, Ptr__Uint32, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Uint64, Ptr__Uint64, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Usize, Ptr__Usize, return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Uint8), Ptr(Uint8), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Uint16), Ptr(Uint16), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Uint32), Ptr(Uint32), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Uint64), Ptr(Uint64), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Usize), Ptr(Usize), return *self == *other;);
 
-inline IMPL_FOR_EQ(Ptr__Float32, Ptr__Float32, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Float64, Ptr__Float64, return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Float32), Ptr(Float32), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Float64), Ptr(Float64), return *self == *other;);
 
-inline IMPL_FOR_EQ(Ptr__Bool, Ptr__Bool, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Char, Ptr__Char, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Short, Ptr__Short, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Int, Ptr__Int, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Long, Ptr__Long, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Longlong, Ptr__Longlong, return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Bool), Ptr(Bool), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Char), Ptr(Char), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Short), Ptr(Short), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Int), Ptr(Int), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Long), Ptr(Long), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Longlong), Ptr(Longlong), return *self == *other;);
 
-inline IMPL_FOR_EQ(Ptr__Uchar, Ptr__Uchar, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Ushort, Ptr__Ushort, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Uint, Ptr__Uint, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Ulong, Ptr__Ulong, return *self == *other;);
-inline IMPL_FOR_EQ(Ptr__Ulonglong, Ptr__Ulonglong, return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Uchar), Ptr(Uchar), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Ushort), Ptr(Ushort), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Uint), Ptr(Uint), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Ulong), Ptr(Ulong), return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Ulonglong), Ptr(Ulonglong), return *self == *other;);
 
-inline IMPL_FOR_EQ(Ptr__Uptr, Ptr__Uptr, return *self == *other;);
+inline IMPL_FOR_EQ(Ptr(Uptr), Ptr(Uptr), return *self == *other;);
 
 #endif // LILY_BASE_PTR_H

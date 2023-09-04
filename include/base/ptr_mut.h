@@ -29,7 +29,7 @@
 #include <base/types.h>
 
 /* PtrMut<T> */
-#define PtrMut(T) T *
+#define PtrMut(T) PtrMut__##T
 
 #define DEF_PTR_MUT(T) typedef T *PtrMut__##T
 #define AS_PTR(T, r) ((const T *)r)
@@ -66,17 +66,17 @@ DEF_PTR_MUT(Ulong);
 DEF_PTR_MUT(Ulonglong);
 
 // Impl Eq
-inline IMPL_FOR_EQ(PtrMut__Int8, PtrMut__Int8, return *self == *other;);
-inline IMPL_FOR_EQ(PtrMut__Int16, PtrMut__Int16, return *self == *other;);
-inline IMPL_FOR_EQ(PtrMut__Int32, PtrMut__Int32, return *self == *other;);
-inline IMPL_FOR_EQ(PtrMut__Int64, PtrMut__Int64, return *self == *other;);
-inline IMPL_FOR_EQ(PtrMut__Isize, PtrMut__Isize, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut(Int8), PtrMut(Int8), return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut(Int16), PtrMut(Int16), return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut(Int32), PtrMut(Int32), return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut(Int64), PtrMut(Int64), return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut(Isize), PtrMut(Isize), return *self == *other;);
 
-inline IMPL_FOR_EQ(PtrMut__Uint8, PtrMut__Uint8, return *self == *other;);
-inline IMPL_FOR_EQ(PtrMut__Uint16, PtrMut__Uint16, return *self == *other;);
-inline IMPL_FOR_EQ(PtrMut__Uint32, PtrMut__Uint32, return *self == *other;);
-inline IMPL_FOR_EQ(PtrMut__Uint64, PtrMut__Uint64, return *self == *other;);
-inline IMPL_FOR_EQ(PtrMut__Usize, PtrMut__Usize, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut(Uint8), PtrMut(Uint8), return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut(Uint16), PtrMut(Uint16), return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut(Uint32), PtrMut(Uint32), return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut(Uint64), PtrMut(Uint64), return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut(Usize), PtrMut(Usize), return *self == *other;);
 
 inline IMPL_FOR_EQ(PtrMut__Float32, PtrMut__Float32, return *self == *other;);
 inline IMPL_FOR_EQ(PtrMut__Float64, PtrMut__Float64, return *self == *other;);
