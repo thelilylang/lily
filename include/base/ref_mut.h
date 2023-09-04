@@ -68,7 +68,7 @@
     inline IMPL_FOR_EQ(                                         \
       Ptr(RefMut__##T), RefMut__##T, return EQ(T, *self->v, *other->v););
 
-#define REF_MUT(T, v) NEW(RefMut__##T, v)
+#define MAKE_REF_MUT(T, v) NEW(RefMut__##T, v)
 
 RefMut(Int8);
 RefMut(Int16);

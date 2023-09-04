@@ -67,7 +67,7 @@
     inline IMPL_FOR_EQ(                                \
       Ptr(Ref__##T), Ref__##T, return EQ(T, *self->v, *other->v););
 
-#define REF(T, v) NEW(Ref__##T, v)
+#define MAKE_REF(T, v) NEW(Ref__##T, v)
 
 Ref(Int8);
 Ref(Int16);
