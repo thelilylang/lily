@@ -25,7 +25,12 @@
 #ifndef LILY_BASE_BOOL_H
 #define LILY_BASE_BOOL_H
 
-#define bool int
+#if __clang_major__ > 15
+#define bool _BitInt(2)
+#else
+#define bool _BitInt(2)
+#endif
+
 #define true 1
 #define false 0
 
