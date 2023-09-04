@@ -688,6 +688,14 @@ to_string__LilyToken(LilyToken *self)
             return from__String("async");
         case LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN:
             return from__String("@builtin");
+		case LILY_TOKEN_KIND_KEYWORD_AT_CC:
+			return from__String("@cc");
+		case LILY_TOKEN_KIND_KEYWORD_AT_CPP:
+			return from__String("@cpp");
+		case LILY_TOKEN_KIND_KEYWORD_AT_HIDE:
+			return from__String("@hide");
+		case LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT:
+			return from__String("@hideout");
         case LILY_TOKEN_KIND_KEYWORD_AT_LEN:
             return from__String("@len");
         case LILY_TOKEN_KIND_KEYWORD_AT_SYS:
@@ -1034,6 +1042,14 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_KEYWORD_ASYNC";
         case LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN:
             return "LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN";
+		case LILY_TOKEN_KIND_KEYWORD_AT_CC:
+			return "LILY_TOKEN_KIND_KEYWORD_AT_CC";
+		case LILY_TOKEN_KIND_KEYWORD_AT_CPP:
+			return "LILY_TOKEN_KIND_KEYWORD_AT_CPP";
+		case LILY_TOKEN_KIND_KEYWORD_AT_HIDE:
+			return "LILY_TOKEN_KIND_KEYWORD_AT_HIDE";
+		case LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT:
+			return "LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT";
         case LILY_TOKEN_KIND_KEYWORD_AT_LEN:
             return "LILY_TOKEN_KIND_KEYWORD_AT_LEN";
         case LILY_TOKEN_KIND_KEYWORD_AT_SYS:
