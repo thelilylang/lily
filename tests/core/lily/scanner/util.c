@@ -5,6 +5,7 @@
 
 #include <core/lily/scanner/scanner.h>
 
+#define FILE_AT_KEYWORD "./tests/core/lily/scanner/input/at_keyword.lily"
 #define FILE_COMMENT_DOC "./tests/core/lily/scanner/input/comment_doc.lily"
 #define FILE_IDENTIFIER_DOLLAR \
     "./tests/core/lily/scanner/input/identifier_dollar.lily"
