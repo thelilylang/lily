@@ -1495,7 +1495,7 @@ scan_bin__LilyScanner(LilyScanner *self)
     SCAN_LITERAL_SUFFIX(res->buffer, 2, true);
 
     return NEW_VARIANT(
-      LilyToken, literal_int_16, clone__Location(&self->location), res);
+      LilyToken, literal_int_2, clone__Location(&self->location), res);
 }
 
 LilyToken *
