@@ -29,41 +29,63 @@
 #include <base/macros.h>
 #include <base/ptr_mut.h>
 #include <base/ref.h>
+#include <base/ref_mut.h>
+#include <base/trace.h>
+#include <base/trace_mut.h>
 #include <base/types.h>
 
 #define Box(T) Box__##T
 
-#define DEF_BOX(T)                                               \
-    /* Box<T> */                                                 \
-    typedef struct Box(T)                                        \
-    {                                                            \
-        PtrMut(T) ptr;                                           \
-    }                                                            \
-    Box(T);                                                      \
-                                                                 \
-    /**                                                          \
-     *                                                           \
-     * @brief Construct Box type.                                \
-     */                                                          \
-    CONSTRUCTOR(Box__##T, Box__##T, T v);                        \
-                                                                 \
-    /**                                                          \
-     *                                                           \
-     * @brief Implement Eq trait.                                \
-     */                                                          \
-    inline IMPL_FOR_EQ(                                          \
-      Box__##T, Box__##T, return EQ(T, *self.ptr, *other.ptr);); \
-                                                                 \
-    /**                                                          \
-     *                                                           \
-     * @brief Implement Ref wrapper for Box(T).                  \
-     */                                                          \
-    DEF_REF(Box__##T);                                           \
-                                                                 \
-    /**                                                          \
-     *                                                           \
-     * @brief Free Box type.                                     \
-     */                                                          \
+#define DEF_BOX(T)                                                 \
+    /* Box<T> */                                                   \
+    typedef struct Box(T)                                          \
+    {                                                              \
+        PtrMut(T) ptr;                                             \
+    }                                                              \
+    Box(T);                                                        \
+                                                                   \
+    /**                                                            \
+     *                                                             \
+     * @brief Construct Box type.                                  \
+     */                                                            \
+    CONSTRUCTOR(Box__##T, Box__##T, T v);                          \
+                                                                   \
+    /**                                                            \
+     *                                                             \
+     * @brief Implement Eq trait.                                  \
+     */                                                            \
+    inline IMPL_FOR_EQ(                                            \
+      Box__##T, Box__##T, return EQ(T, *self.ptr, *other.ptr););   \
+                                                                   \
+    /**                                                            \
+     *                                                             \
+     * @brief Implement Ref and RefMut wrapper for Box(T).         \
+     */                                                            \
+    DEF_REF(Box__##T);                                             \
+    DEF_REF_MUT(Box__##T);                                         \
+                                                                   \
+    /**                                                            \
+     *                                                             \
+     * @brief Get the pointer and trace it as mutable.             \
+     */                                                            \
+    inline TraceMut(T) unwrap_mut__Box__##T(RefMut(Box__##T) self) \
+    {                                                              \
+        return MAKE_TRACE_MUT(T, &self->ptr);                      \
+    }                                                              \
+                                                                   \
+    /**                                                            \
+     *                                                             \
+     * @brief Get the pointer and trace it.                        \
+     */                                                            \
+    inline Trace(T) unwrap__Box__##T(Ref(Box__##T) self)           \
+    {                                                              \
+        return MAKE_TRACE(T, (const T **)&self->ptr);              \
+    }                                                              \
+                                                                   \
+    /**                                                            \
+     *                                                             \
+     * @brief Free Box type.                                       \
+     */                                                            \
     DESTRUCTOR(Box__##T, Ref(Box__##T) self);
 
 #define IMPL_BOX(T)                             \
