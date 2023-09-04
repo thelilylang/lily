@@ -34,37 +34,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define Ref(T)                                         \
-    /* Ref<T> */                                       \
-    typedef struct Ref__##T                            \
-    {                                                  \
-        Ptr(T) v; /* const T* (&) */                   \
-    } Ref__##T;                                        \
-    /**                                                \
-     *                                                 \
-     * @brief Construct Ref type.                      \
-     */                                                \
-    inline CONSTRUCTOR(Ref__##T, Ref__##T, Ptr(T) v)   \
-    {                                                  \
-        ASSERT(v);                                     \
-        return (Ref__##T){ .v = v };                   \
-    }                                                  \
-                                                       \
-    /**                                                \
-     *                                                 \
-     * @brief Unwrap the pointer of the reference.     \
-     */                                                \
-    inline Ptr(T) unwrap__Ref__##T(Ptr(Ref__##T) self) \
-    {                                                  \
-        ASSERT(self);                                  \
-        return self->v;                                \
-    }                                                  \
-                                                       \
-    /**                                                \
-     *                                                 \
-     * @brief Implement Eq trait.                      \
-     */                                                \
-    inline IMPL_FOR_EQ(                                \
+#define Ref(T)                                                 \
+    /* Ref<T> */                                               \
+    typedef struct Ref__##T                                    \
+    {                                                          \
+        const T *const v; /* const T *const (&) */             \
+    } Ref__##T;                                                \
+                                                               \
+    /**                                                        \
+     *                                                         \
+     * @brief Construct Ref type.                              \
+     */                                                        \
+    inline CONSTRUCTOR(Ref__##T, Ref__##T, const T *const v)   \
+    {                                                          \
+        ASSERT(v);                                             \
+        return (Ref__##T){ .v = v };                           \
+    }                                                          \
+                                                               \
+    /**                                                        \
+     *                                                         \
+     * @brief Unwrap the pointer of the reference.             \
+     */                                                        \
+    inline const T *const unwrap__Ref__##T(Ptr(Ref__##T) self) \
+    {                                                          \
+        ASSERT(self);                                          \
+        return self->v;                                        \
+    }                                                          \
+                                                               \
+    /**                                                        \
+     *                                                         \
+     * @brief Implement Eq trait.                              \
+     */                                                        \
+    inline IMPL_FOR_EQ(                                        \
       Ptr(Ref__##T), Ref__##T, return EQ(T, *self->v, *other->v););
 
 #define MAKE_REF(T, v) NEW(Ref__##T, v)
