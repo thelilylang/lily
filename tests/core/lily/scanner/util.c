@@ -31,6 +31,8 @@
     "./tests/core/lily/scanner/input/literal_suffix_float32.lily"
 #define FILE_LITERAL_SUFFIX_FLOAT64 \
     "./tests/core/lily/scanner/input/literal_suffix_float64.lily"
+#define FILE_LITERAL_SUFFIX_INT16 \
+    "./tests/core/lily/scanner/input/literal_suffix_int16.lily"
 #define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
 #define FILE_OPERATOR "./tests/core/lily/scanner/input/operator.lily"
 
