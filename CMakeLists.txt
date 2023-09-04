@@ -257,7 +257,6 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/binary_heap.c
     ${CMAKE_SOURCE_DIR}/src/base/binary_search.c
     ${CMAKE_SOURCE_DIR}/src/base/bitmap.c
-    ${CMAKE_SOURCE_DIR}/src/base/buffer.c
     ${CMAKE_SOURCE_DIR}/src/base/char.c
     ${CMAKE_SOURCE_DIR}/src/base/cli/command.c
     ${CMAKE_SOURCE_DIR}/src/base/cli/default_action.c
@@ -311,7 +310,8 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/string.c
     ${CMAKE_SOURCE_DIR}/src/base/test.c
     ${CMAKE_SOURCE_DIR}/src/base/tree.c
-    ${CMAKE_SOURCE_DIR}/src/base/tree_map.c)
+    ${CMAKE_SOURCE_DIR}/src/base/tree_map.c
+    ${CMAKE_SOURCE_DIR}/src/base/vec.c)
 
 add_library(lily_base STATIC ${BASE_SRC})
 target_link_libraries(lily_base PUBLIC lily_builtin)
