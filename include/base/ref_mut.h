@@ -22,22 +22,25 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BASE_REF_MUT_NON_NULL_H
-#define LILY_BASE_REF_MUT_NON_NULL_H
+#ifndef LILY_BASE_REF_MUT_H
+#define LILY_BASE_REF_MUT_H
 
 #include <base/assert.h>
+#include <base/eq.h>
+#include <base/macros.h>
+#include <base/ptr.h>
 #include <base/ptr_mut.h>
+#include <base/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#define Ref(T)                                                  \
+#define RefMut(T)                                               \
     /* RefMut<T> */                                             \
     typedef struct RefMut__##T                                  \
     {                                                           \
         PtrMut(T) v; /* T* (&) */                               \
     } RefMut__##T;                                              \
-                                                                \
     /**                                                         \
      *                                                          \
      * @brief Construct RefMut type.                            \
@@ -50,14 +53,52 @@
                                                                 \
     /**                                                         \
      *                                                          \
-     * @brief Unwrap the pointer of the mutable reference.      \
+     * @brief Unwrap the pointer of the reference.              \
      */                                                         \
-    inline PtrMut(T) unwrap__RefMut__##T(Ref(RefMut__##T) self) \
+    inline PtrMut(T) unwrap__RefMut__##T(Ptr(RefMut__##T) self) \
     {                                                           \
         ASSERT(self);                                           \
         return self->v;                                         \
-    }
+    }                                                           \
+                                                                \
+    /**                                                         \
+     *                                                          \
+     * @brief Implement Eq trait.                               \
+     */                                                         \
+    inline IMPL_FOR_EQ(                                         \
+      Ptr(RefMut__##T), RefMut__##T, return EQ(T, *self->v, *other->v););
 
 #define REF_MUT(T, v) NEW(RefMut__##T, v)
 
-#endif // LILY_BASE_REF_MUT_NON_NULL_H
+RefMut(Int8);
+RefMut(Int16);
+RefMut(Int32);
+RefMut(Int64);
+
+RefMut(Uint8);
+RefMut(Uint16);
+RefMut(Uint32);
+RefMut(Uint64);
+
+RefMut(Isize);
+RefMut(Usize);
+
+RefMut(Float32);
+RefMut(Float64);
+
+RefMut(Uptr);
+
+RefMut(Bool);
+RefMut(Char);
+RefMut(Short);
+RefMut(Int);
+RefMut(Long);
+RefMut(Longlong);
+
+RefMut(Uchar);
+RefMut(Ushort);
+RefMut(Uint);
+RefMut(Ulong);
+RefMut(Ulonglong);
+
+#endif // LILY_BASE_REF_MUT_H
