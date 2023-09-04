@@ -1361,7 +1361,7 @@ IMPL_FOR_DEBUG(to_string, LilyToken, const LilyToken *self)
 
         case LILY_TOKEN_KIND_LITERAL_BYTE:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
-                          "literal_byte = b'{s}' }",
+                          "literal_byte = b'{c}' }",
                           CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_byte);
