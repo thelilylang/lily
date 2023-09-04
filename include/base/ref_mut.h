@@ -35,37 +35,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define RefMut(T)                                               \
-    /* RefMut<T> */                                             \
-    typedef struct RefMut__##T                                  \
-    {                                                           \
-        PtrMut(T) v; /* T* (&) */                               \
-    } RefMut__##T;                                              \
-    /**                                                         \
-     *                                                          \
-     * @brief Construct RefMut type.                            \
-     */                                                         \
-    inline CONSTRUCTOR(RefMut__##T, RefMut__##T, PtrMut(T) v)   \
-    {                                                           \
-        ASSERT(v);                                              \
-        return (RefMut__##T){ .v = v };                         \
-    }                                                           \
-                                                                \
-    /**                                                         \
-     *                                                          \
-     * @brief Unwrap the pointer of the reference.              \
-     */                                                         \
-    inline PtrMut(T) unwrap__RefMut__##T(Ptr(RefMut__##T) self) \
-    {                                                           \
-        ASSERT(self);                                           \
-        return self->v;                                         \
-    }                                                           \
-                                                                \
-    /**                                                         \
-     *                                                          \
-     * @brief Implement Eq trait.                               \
-     */                                                         \
-    inline IMPL_FOR_EQ(                                         \
+#define RefMut(T)                                              \
+    /* RefMut<T> */                                            \
+    typedef struct RefMut__##T                                 \
+    {                                                          \
+        T *const v; /* T *const (&) */                         \
+    } RefMut__##T;                                             \
+                                                               \
+    /**                                                        \
+     *                                                         \
+     * @brief Construct RefMut type.                           \
+     */                                                        \
+    inline CONSTRUCTOR(RefMut__##T, RefMut__##T, T *const v)   \
+    {                                                          \
+        ASSERT(v);                                             \
+        return (RefMut__##T){ .v = v };                        \
+    }                                                          \
+                                                               \
+    /**                                                        \
+     *                                                         \
+     * @brief Unwrap the pointer of the reference.             \
+     */                                                        \
+    inline T *const unwrap__RefMut__##T(Ptr(RefMut__##T) self) \
+    {                                                          \
+        ASSERT(self);                                          \
+        return self->v;                                        \
+    }                                                          \
+                                                               \
+    /**                                                        \
+     *                                                         \
+     * @brief Implement Eq trait.                              \
+     */                                                        \
+    inline IMPL_FOR_EQ(                                        \
       Ptr(RefMut__##T), RefMut__##T, return EQ(T, *self->v, *other->v););
 
 #define MAKE_REF_MUT(T, v) NEW(RefMut__##T, v)
