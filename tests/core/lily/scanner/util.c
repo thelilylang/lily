@@ -21,6 +21,8 @@
 #define FILE_LITERAL_CHAR "./tests/core/lily/scanner/input/literal_char.lily"
 #define FILE_LITERAL_INT_10 \
     "./tests/core/lily/scanner/input/literal_int_10.lily"
+#define FILE_LITERAL_INT_16 \
+    "./tests/core/lily/scanner/input/literal_int_16.lily"
 #define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
 #define FILE_OPERATOR "./tests/core/lily/scanner/input/operator.lily"
 
