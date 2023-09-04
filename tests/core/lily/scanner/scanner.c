@@ -5,6 +5,7 @@
 #include "identifier_normal.c"
 #include "identifier_operator.c"
 #include "keyword.c"
+#include "literal.c"
 #include "literal_byte.c"
 #include "literal_bytes.c"
 #include "literal_char.c"
@@ -44,5 +45,6 @@ main()
     ADD_SIMPLE(keyword);
     ADD_SIMPLE(separator);
     ADD_SIMPLE(operator);
+    ADD_SUITE(1, literal, CALL_CASE(literal_byte));
     RUN_TEST();
 }
