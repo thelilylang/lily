@@ -45,6 +45,11 @@ main()
     ADD_SIMPLE(keyword);
     ADD_SIMPLE(separator);
     ADD_SIMPLE(operator);
-    ADD_SUITE(3, literal, CALL_CASE(literal_byte), CALL_CASE(literal_bytes), CALL_CASE(literal_char));
+    ADD_SUITE(4,
+              literal,
+              CALL_CASE(literal_byte),
+              CALL_CASE(literal_bytes),
+              CALL_CASE(literal_char),
+              CALL_CASE(literal_int_10));
     RUN_TEST();
 }
