@@ -766,6 +766,9 @@ static void
 check_error__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *error);
 
 static void
+check_module__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *module);
+
+static void
 check_class__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *class);
 
 static void
@@ -782,7 +785,8 @@ check_trait__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *trait);
 static void
 check_decls__LilyAnalysis(LilyAnalysis *self,
                           Vec *decls,
-                          LilyCheckedScope *scope);
+                          LilyCheckedScope *scope,
+                          bool in_module);
 
 // Apply import.
 static void
@@ -11677,6 +11681,18 @@ check_error__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *error)
 }
 
 void
+check_module__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *module)
+{
+    // Check declarations in the module
+    check_decls__LilyAnalysis(
+      self, module->module.decls, module->module.scope, true);
+
+    FREE(LilyCheckedHistory, &history);
+
+    module->module.is_checked = true;
+}
+
+void
 check_class__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *class)
 {
     TODO("class");
@@ -11705,11 +11721,17 @@ check_trait__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *trait)
 void
 check_decls__LilyAnalysis(LilyAnalysis *self,
                           Vec *decls,
-                          LilyCheckedScope *scope)
+                          LilyCheckedScope *scope,
+                          bool in_module)
 {
     for (Usize i = 0; i < decls->len; ++i) {
         LilyCheckedDecl *decl = get__Vec(decls, i);
-        history = NEW(LilyCheckedHistory);
+
+        if (in_module) {
+            ASSERT(history);
+        } else {
+            history = NEW(LilyCheckedHistory);
+        }
 
         add__LilyCheckedHistory(history, decl);
 
@@ -11724,6 +11746,10 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
                 break;
             case LILY_CHECKED_DECL_KIND_ERROR:
                 check_error__LilyAnalysis(self, decl);
+
+                break;
+            case LILY_CHECKED_DECL_KIND_MODULE:
+                check_module__LilyAnalysis(self, decl);
 
                 break;
             case LILY_CHECKED_DECL_KIND_OBJECT:
@@ -11772,7 +11798,9 @@ check_decls__LilyAnalysis(LilyAnalysis *self,
                 TODO("analysis declaration");
         }
 
-        FREE(LilyCheckedHistory, &history);
+        if (!in_module) {
+            FREE(LilyCheckedHistory, &history);
+        }
     }
 }
 
@@ -11790,7 +11818,8 @@ run_step1__LilyAnalysis(LilyAnalysis *self)
 void
 run_step2__LilyAnalysis(LilyAnalysis *self)
 {
-    check_decls__LilyAnalysis(self, self->module.decls, self->module.scope);
+    check_decls__LilyAnalysis(
+      self, self->module.decls, self->module.scope, false);
 }
 
 void
