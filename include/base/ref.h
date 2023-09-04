@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// NOTE: You cannot free a Ref
 #define Ref(T)                                                 \
     /* Ref<T> */                                               \
     typedef struct Ref__##T                                    \

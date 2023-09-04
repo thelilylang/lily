@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// NOTE: You cannot free a RefMut
 #define RefMut(T)                                              \
     /* RefMut<T> */                                            \
     typedef struct RefMut__##T                                 \
