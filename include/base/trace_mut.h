@@ -28,78 +28,60 @@
 #include <base/assert.h>
 #include <base/eq.h>
 #include <base/macros.h>
-#include <base/ptr.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 /* NOTE: You cannot free a trace mut pointer. */
-#define TraceMut(T)                                         \
-    /* TraceMutMut<T> */                                    \
-    typedef struct TraceMut__##T                            \
-    {                                                       \
-        T **v; /* T** (&) */                                \
-    } TraceMut__##T;                                        \
-                                                            \
-    /**                                                     \
-     *                                                      \
-     * @brief Construct TraceMutMut type.                   \
-     */                                                     \
-    inline CONSTRUCTOR(TraceMut__##T, TraceMut__##T, T **v) \
-    {                                                       \
-        ASSERT(v);                                          \
-        return (TraceMut__##T){ .v = v };                   \
-    }                                                       \
-                                                            \
-    /**                                                     \
-     *                                                      \
-     * @brief Get the mut traced pointer.                   \
-     */                                                     \
-    inline T *get__TraceMut__##T(Ptr(TraceMut__##T) self)   \
-    {                                                       \
-        ASSERT(self);                                       \
-        return *self->v;                                    \
-    }                                                       \
-                                                            \
-    /**                                                     \
-     *                                                      \
-     * @brief Implement Eq trait.                           \
-     */                                                     \
-    inline IMPL_FOR_EQ(Ptr(TraceMut__##T),                  \
-                       TraceMut__##T,                       \
-                       return EQ(T, **self->v, **other->v););
+#define TraceMut(T) TraceMut__##T
 
-#define MAKE_TRACE_MUT(T, v) NEW(TraceMut__##T, v)
+#define DEF_TRACE_MUT(T)                                  \
+    /* TraceMut<T> */                                     \
+    typedef T **TraceMut(T);                              \
+                                                          \
+    inline TraceMut(T) make__TraceMut__##T(TraceMut(T) v) \
+    {                                                     \
+        return v;                                         \
+    }                                                     \
+                                                          \
+    /**                                                   \
+     *                                                    \
+     * @brief Implement Eq trait.                         \
+     */                                                   \
+    inline IMPL_FOR_EQ(                                   \
+      TraceMut(T), TraceMut(T), return EQ(T, **self, **other););
 
-TraceMut(Int8);
-TraceMut(Int16);
-TraceMut(Int32);
-TraceMut(Int64);
+#define MAKE_TRACE_MUT(T, v) make__TraceMut__##T(v)
 
-TraceMut(Uint8);
-TraceMut(Uint16);
-TraceMut(Uint32);
-TraceMut(Uint64);
+DEF_TRACE_MUT(Int8);
+DEF_TRACE_MUT(Int16);
+DEF_TRACE_MUT(Int32);
+DEF_TRACE_MUT(Int64);
 
-TraceMut(Isize);
-TraceMut(Usize);
+DEF_TRACE_MUT(Uint8);
+DEF_TRACE_MUT(Uint16);
+DEF_TRACE_MUT(Uint32);
+DEF_TRACE_MUT(Uint64);
 
-TraceMut(Float32);
-TraceMut(Float64);
+DEF_TRACE_MUT(Isize);
+DEF_TRACE_MUT(Usize);
 
-TraceMut(Uptr);
+DEF_TRACE_MUT(Float32);
+DEF_TRACE_MUT(Float64);
 
-TraceMut(Bool);
-TraceMut(Char);
-TraceMut(Short);
-TraceMut(Int);
-TraceMut(Long);
-TraceMut(Longlong);
+DEF_TRACE_MUT(Uptr);
 
-TraceMut(Uchar);
-TraceMut(Ushort);
-TraceMut(Uint);
-TraceMut(Ulong);
-TraceMut(Ulonglong);
+DEF_TRACE_MUT(Bool);
+DEF_TRACE_MUT(Char);
+DEF_TRACE_MUT(Short);
+DEF_TRACE_MUT(Int);
+DEF_TRACE_MUT(Long);
+DEF_TRACE_MUT(Longlong);
+
+DEF_TRACE_MUT(Uchar);
+DEF_TRACE_MUT(Ushort);
+DEF_TRACE_MUT(Uint);
+DEF_TRACE_MUT(Ulong);
+DEF_TRACE_MUT(Ulonglong);
 
 #endif // LILY_BASE_TRACE_MUT_H

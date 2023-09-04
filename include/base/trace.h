@@ -28,77 +28,59 @@
 #include <base/assert.h>
 #include <base/eq.h>
 #include <base/macros.h>
-#include <base/ptr.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 // NOTE: You cannot free a trace pointer.
-#define Trace(T)                                            \
-    /* Trace<T> */                                          \
-    typedef struct Trace__##T                               \
-    {                                                       \
-        const T **v; /* const T** (&) */                    \
-    } Trace__##T;                                           \
-                                                            \
-    /**                                                     \
-     *                                                      \
-     * @brief Construct Trace type.                         \
-     */                                                     \
-    inline CONSTRUCTOR(Trace__##T, Trace__##T, const T **v) \
-    {                                                       \
-        ASSERT(v);                                          \
-        return (Trace__##T){ .v = v };                      \
-    }                                                       \
-                                                            \
-    /**                                                     \
-     *                                                      \
-     * @brief Get the traced pointer.                       \
-     */                                                     \
-    inline const T *get__Trace__##T(Ptr(Trace__##T) self)   \
-    {                                                       \
-        ASSERT(self);                                       \
-        return *self->v;                                    \
-    }                                                       \
-                                                            \
-    /**                                                     \
-     *                                                      \
-     * @brief Implement Eq trait.                           \
-     */                                                     \
-    inline IMPL_FOR_EQ(                                     \
-      Ptr(Trace__##T), Trace__##T, return EQ(T, **self->v, **other->v););
+#define Trace(T) Trace__##T
 
-#define MAKE_TRACE(T, v) NEW(Trace__##T, v)
+#define DEF_TRACE(T)                             \
+    /* Trace<T> */                               \
+    typedef const T **Trace(T);                  \
+                                                 \
+    inline Trace(T) make__Trace__##T(Trace(T) v) \
+    {                                            \
+        return v;                                \
+    }                                            \
+                                                 \
+    /**                                          \
+     *                                           \
+     * @brief Implement Eq trait.                \
+     */                                          \
+    inline IMPL_FOR_EQ(Trace(T), Trace(T), return EQ(T, **self, **other););
 
-Trace(Int8);
-Trace(Int16);
-Trace(Int32);
-Trace(Int64);
+#define MAKE_TRACE(T, v) make__Trace__##T(v)
 
-Trace(Uint8);
-Trace(Uint16);
-Trace(Uint32);
-Trace(Uint64);
+DEF_TRACE(Int8);
+DEF_TRACE(Int16);
+DEF_TRACE(Int32);
+DEF_TRACE(Int64);
 
-Trace(Isize);
-Trace(Usize);
+DEF_TRACE(Uint8);
+DEF_TRACE(Uint16);
+DEF_TRACE(Uint32);
+DEF_TRACE(Uint64);
 
-Trace(Float32);
-Trace(Float64);
+DEF_TRACE(Isize);
+DEF_TRACE(Usize);
 
-Trace(Uptr);
+DEF_TRACE(Float32);
+DEF_TRACE(Float64);
 
-Trace(Bool);
-Trace(Char);
-Trace(Short);
-Trace(Int);
-Trace(Long);
-Trace(Longlong);
+DEF_TRACE(Uptr);
 
-Trace(Uchar);
-Trace(Ushort);
-Trace(Uint);
-Trace(Ulong);
-Trace(Ulonglong);
+DEF_TRACE(Bool);
+DEF_TRACE(Char);
+DEF_TRACE(Short);
+DEF_TRACE(Int);
+DEF_TRACE(Long);
+DEF_TRACE(Longlong);
+
+DEF_TRACE(Uchar);
+DEF_TRACE(Ushort);
+DEF_TRACE(Uint);
+DEF_TRACE(Ulong);
+DEF_TRACE(Ulonglong);
 
 #endif // LILY_BASE_TRACE_H
