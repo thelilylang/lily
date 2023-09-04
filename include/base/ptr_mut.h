@@ -22,11 +22,80 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BASE_REF_MUT_H
-#define LILY_BASE_REF_MUT_H
+#ifndef LILY_BASE_PTR_MUT_H
+#define LILY_BASE_PTR_MUT_H
 
-#define RefMut(T) T *
+#include <base/eq.h>
+#include <base/types.h>
 
-#define AS_REF(T, r) ((const T *)r)
+/* PtrMut<T> */
+#define PtrMut(T) T *
 
-#endif // LILY_BASE_REF_MUT_H
+#define DEF_PTR_MUT(T) typedef T *PtrMut__##T
+#define AS_PTR(T, r) ((const T *)r)
+
+DEF_PTR_MUT(Int8);
+DEF_PTR_MUT(Int16);
+DEF_PTR_MUT(Int32);
+DEF_PTR_MUT(Int64);
+
+DEF_PTR_MUT(Uint8);
+DEF_PTR_MUT(Uint16);
+DEF_PTR_MUT(Uint32);
+DEF_PTR_MUT(Uint64);
+
+DEF_PTR_MUT(Isize);
+DEF_PTR_MUT(Usize);
+
+DEF_PTR_MUT(Float32);
+DEF_PTR_MUT(Float64);
+
+DEF_PTR_MUT(Uptr);
+
+DEF_PTR_MUT(Bool);
+DEF_PTR_MUT(Char);
+DEF_PTR_MUT(Short);
+DEF_PTR_MUT(Int);
+DEF_PTR_MUT(Long);
+DEF_PTR_MUT(Longlong);
+
+DEF_PTR_MUT(Uchar);
+DEF_PTR_MUT(Ushort);
+DEF_PTR_MUT(Uint);
+DEF_PTR_MUT(Ulong);
+DEF_PTR_MUT(Ulonglong);
+
+// Impl Eq
+inline IMPL_FOR_EQ(PtrMut__Int8, PtrMut__Int8, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Int16, PtrMut__Int16, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Int32, PtrMut__Int32, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Int64, PtrMut__Int64, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Isize, PtrMut__Isize, return *self == *other;);
+
+inline IMPL_FOR_EQ(PtrMut__Uint8, PtrMut__Uint8, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Uint16, PtrMut__Uint16, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Uint32, PtrMut__Uint32, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Uint64, PtrMut__Uint64, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Usize, PtrMut__Usize, return *self == *other;);
+
+inline IMPL_FOR_EQ(PtrMut__Float32, PtrMut__Float32, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Float64, PtrMut__Float64, return *self == *other;);
+
+inline IMPL_FOR_EQ(PtrMut__Bool, PtrMut__Bool, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Char, PtrMut__Char, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Short, PtrMut__Short, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Int, PtrMut__Int, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Long, PtrMut__Long, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Longlong, PtrMut__Longlong, return *self == *other;);
+
+inline IMPL_FOR_EQ(PtrMut__Uchar, PtrMut__Uchar, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Ushort, PtrMut__Ushort, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Uint, PtrMut__Uint, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Ulong, PtrMut__Ulong, return *self == *other;);
+inline IMPL_FOR_EQ(PtrMut__Ulonglong,
+                   PtrMut__Ulonglong,
+                   return *self == *other;);
+
+inline IMPL_FOR_EQ(PtrMut__Uptr, PtrMut__Uptr, return *self == *other;);
+
+#endif // LILY_BASE_PTR_MUT_H
