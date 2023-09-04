@@ -35,72 +35,60 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// NOTE: You cannot free a RefMut
-#define RefMut(T)                                              \
-    /* RefMut<T> */                                            \
-    typedef struct RefMut__##T                                 \
-    {                                                          \
-        T *const v; /* T *const (&) */                         \
-    } RefMut__##T;                                             \
-                                                               \
-    /**                                                        \
-     *                                                         \
-     * @brief Construct RefMut type.                           \
-     */                                                        \
-    inline CONSTRUCTOR(RefMut__##T, RefMut__##T, T *const v)   \
-    {                                                          \
-        ASSERT(v);                                             \
-        return (RefMut__##T){ .v = v };                        \
-    }                                                          \
-                                                               \
-    /**                                                        \
-     *                                                         \
-     * @brief Unwrap the pointer of the reference.             \
-     */                                                        \
-    inline T *const unwrap__RefMut__##T(Ptr(RefMut__##T) self) \
-    {                                                          \
-        ASSERT(self);                                          \
-        return self->v;                                        \
-    }                                                          \
-                                                               \
-    /**                                                        \
-     *                                                         \
-     * @brief Implement Eq trait.                              \
-     */                                                        \
-    inline IMPL_FOR_EQ(                                        \
-      Ptr(RefMut__##T), RefMut__##T, return EQ(T, *self->v, *other->v););
+// NOTE: You cannot free a RefMutMut
+#define RefMut(T) RefMut__##T
 
-#define MAKE_REF_MUT(T, v) NEW(RefMut__##T, v)
+#define DEF_REF_MUT(T)                              \
+    /* RefMut<T> */                                 \
+    typedef T *const RefMut(T);                     \
+                                                    \
+    /**                                             \
+     *                                              \
+     * @brief Check if the pointer is not NULL.     \
+     */                                             \
+    inline RefMut(T) make__RefMut__##T(RefMut(T) v) \
+    {                                               \
+        ASSERT(v);                                  \
+        return v;                                   \
+    }                                               \
+                                                    \
+    /**                                             \
+     *                                              \
+     * @brief Implement Eq trait.                   \
+     */                                             \
+    inline IMPL_FOR_EQ(RefMut(T), RefMut(T), return EQ(T, *self, *other););
 
-RefMut(Int8);
-RefMut(Int16);
-RefMut(Int32);
-RefMut(Int64);
+#define MAKE_REF_MUT(T, v) make__RefMut__##T(v)
 
-RefMut(Uint8);
-RefMut(Uint16);
-RefMut(Uint32);
-RefMut(Uint64);
+DEF_REF_MUT(Int8);
+DEF_REF_MUT(Int16);
+DEF_REF_MUT(Int32);
+DEF_REF_MUT(Int64);
 
-RefMut(Isize);
-RefMut(Usize);
+DEF_REF_MUT(Uint8);
+DEF_REF_MUT(Uint16);
+DEF_REF_MUT(Uint32);
+DEF_REF_MUT(Uint64);
 
-RefMut(Float32);
-RefMut(Float64);
+DEF_REF_MUT(Isize);
+DEF_REF_MUT(Usize);
 
-RefMut(Uptr);
+DEF_REF_MUT(Float32);
+DEF_REF_MUT(Float64);
 
-RefMut(Bool);
-RefMut(Char);
-RefMut(Short);
-RefMut(Int);
-RefMut(Long);
-RefMut(Longlong);
+DEF_REF_MUT(Uptr);
 
-RefMut(Uchar);
-RefMut(Ushort);
-RefMut(Uint);
-RefMut(Ulong);
-RefMut(Ulonglong);
+DEF_REF_MUT(Bool);
+DEF_REF_MUT(Char);
+DEF_REF_MUT(Short);
+DEF_REF_MUT(Int);
+DEF_REF_MUT(Long);
+DEF_REF_MUT(Longlong);
+
+DEF_REF_MUT(Uchar);
+DEF_REF_MUT(Ushort);
+DEF_REF_MUT(Uint);
+DEF_REF_MUT(Ulong);
+DEF_REF_MUT(Ulonglong);
 
 #endif // LILY_BASE_REF_MUT_H

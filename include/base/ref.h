@@ -35,71 +35,59 @@
 #include <stdlib.h>
 
 // NOTE: You cannot free a Ref
-#define Ref(T)                                                 \
-    /* Ref<T> */                                               \
-    typedef struct Ref__##T                                    \
-    {                                                          \
-        const T *const v; /* const T *const (&) */             \
-    } Ref__##T;                                                \
-                                                               \
-    /**                                                        \
-     *                                                         \
-     * @brief Construct Ref type.                              \
-     */                                                        \
-    inline CONSTRUCTOR(Ref__##T, Ref__##T, const T *const v)   \
-    {                                                          \
-        ASSERT(v);                                             \
-        return (Ref__##T){ .v = v };                           \
-    }                                                          \
-                                                               \
-    /**                                                        \
-     *                                                         \
-     * @brief Unwrap the pointer of the reference.             \
-     */                                                        \
-    inline const T *const unwrap__Ref__##T(Ptr(Ref__##T) self) \
-    {                                                          \
-        ASSERT(self);                                          \
-        return self->v;                                        \
-    }                                                          \
-                                                               \
-    /**                                                        \
-     *                                                         \
-     * @brief Implement Eq trait.                              \
-     */                                                        \
-    inline IMPL_FOR_EQ(                                        \
-      Ptr(Ref__##T), Ref__##T, return EQ(T, *self->v, *other->v););
+#define Ref(T) Ref__##T
 
-#define MAKE_REF(T, v) NEW(Ref__##T, v)
+#define DEF_REF(T)                              \
+    /* Ref<T> */                                \
+    typedef const T *const Ref(T);              \
+                                                \
+    /**                                         \
+     *                                          \
+     * @brief Check if the pointer is not NULL. \
+     */                                         \
+    inline Ref(T) make__Ref__##T(Ref(T) v)      \
+    {                                           \
+        ASSERT(v);                              \
+        return v;                               \
+    }                                           \
+                                                \
+    /**                                         \
+     *                                          \
+     * @brief Implement Eq trait.               \
+     */                                         \
+    inline IMPL_FOR_EQ(Ref(T), Ref(T), return EQ(T, *self, *other););
 
-Ref(Int8);
-Ref(Int16);
-Ref(Int32);
-Ref(Int64);
+#define MAKE_REF(T, v) make__Ref__##T(v)
 
-Ref(Uint8);
-Ref(Uint16);
-Ref(Uint32);
-Ref(Uint64);
+DEF_REF(Int8);
+DEF_REF(Int16);
+DEF_REF(Int32);
+DEF_REF(Int64);
 
-Ref(Isize);
-Ref(Usize);
+DEF_REF(Uint8);
+DEF_REF(Uint16);
+DEF_REF(Uint32);
+DEF_REF(Uint64);
 
-Ref(Float32);
-Ref(Float64);
+DEF_REF(Isize);
+DEF_REF(Usize);
 
-Ref(Uptr);
+DEF_REF(Float32);
+DEF_REF(Float64);
 
-Ref(Bool);
-Ref(Char);
-Ref(Short);
-Ref(Int);
-Ref(Long);
-Ref(Longlong);
+DEF_REF(Uptr);
 
-Ref(Uchar);
-Ref(Ushort);
-Ref(Uint);
-Ref(Ulong);
-Ref(Ulonglong);
+DEF_REF(Bool);
+DEF_REF(Char);
+DEF_REF(Short);
+DEF_REF(Int);
+DEF_REF(Long);
+DEF_REF(Longlong);
+
+DEF_REF(Uchar);
+DEF_REF(Ushort);
+DEF_REF(Uint);
+DEF_REF(Ulong);
+DEF_REF(Ulonglong);
 
 #endif // LILY_BASE_REF_H
