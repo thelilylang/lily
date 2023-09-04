@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_VEC_H
 #define LILY_BASE_VEC_H
 
+#include <base/impl_types.h>
 #include <base/macros.h>
 #include <base/types.h>
 
@@ -100,6 +101,90 @@
 #endif
 
 typedef struct String String;
+
+#define Vec(T) Vec__##T
+
+#define DEF_VEC(T)                                                         \
+    /* Vec<T> */                                                           \
+    typedef struct Vec__##T                                                \
+    {                                                                      \
+        PtrMut(T) buffer; /* T*? */                                        \
+        Usize len;                                                         \
+        Usize capacity;                                                    \
+        Usize default_capacity;                                            \
+    } Vec__##T;                                                            \
+                                                                           \
+    IMPL_TYPES(Vec__##T);                                                  \
+                                                                           \
+    /**                                                                    \
+     *                                                                     \
+     * @brief Construct Vec type.                                          \
+     */                                                                    \
+    inline CONSTRUCTOR(Vec__##T, Vec__##T)                                 \
+    {                                                                      \
+        return (Vec__##T){                                                 \
+            .buffer = NULL, .len = 0, .capacity = 0, .default_capacity = 4 \
+        };                                                                 \
+    }                                                                      \
+                                                                           \
+    /**                                                                    \
+     *                                                                     \
+     * @brief Append to the buffer an other vector.                        \
+     */                                                                    \
+    void append__Vec__##T(Vec__##T *self, const Vec__##T *other);          \
+                                                                           \
+    /**                                                                    \
+     *                                                                     \
+     * @brief Return true if the Vec contains an element with the given    \
+     * String.                                                             \
+     * @param self Vec<String*>*                                           \
+     */                                                                    \
+    bool contains__Vec__##T(const Vec__##T *self, const String *s);        \
+                                                                           \
+    /**                                                                    \
+     *                                                                     \
+     * @brief Construct Vec type with default buffer items.                \
+     */                                                                    \
+    Vec__##T from__Vec__##T(T *buffer, Usize len);                         \
+                                                                           \
+    /**                                                                    \
+     *                                                                     \
+     * @brief Get item from Vec.                                           \
+     */                                                                    \
+    T get__Vec__##T(const Vec__##T *self, Usize index);                    \
+                                                                           \
+    /**                                                                    \
+     *                                                                     \
+     * @brief Grow Vec buffer.                                             \
+     * @param new_capacity New buffer capacity.                            \
+     */                                                                    \
+    void grow__Vec__##T(Vec__##T *self, Usize new_capacity);               \
+                                                                           \
+    /**                                                                    \
+     *                                                                     \
+     * @brief Initialize Vec with `...` parameter.                         \
+     */                                                                    \
+    Vec__##T init__Vec__##T(Usize len, ...);                               \
+                                                                           \
+    /**                                                                    \
+     *                                                                     \
+     * @brief Insert an item at n index.                                   \
+     */                                                                    \
+    void insert__Vec__##T(Vec__##T *self, T item, Usize index);            \
+                                                                           \
+    /**                                                                    \
+     *                                                                     \
+     * @brief Insert an item at n + 1 index.                               \
+     */                                                                    \
+    void insert_after__Vec__##T(Vec__##T *self, T item, Usize index);      \
+                                                                           \
+    /**                                                                    \
+     *                                                                     \
+     * @brief Get the last item of the Vec.                                \
+     */                                                                    \
+    T last__Vec__##T(const Vec__##T *self);
+
+#define IMPL_VEC(T)
 
 typedef struct Vec
 {
