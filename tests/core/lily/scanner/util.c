@@ -18,6 +18,7 @@
 #define FILE_KEYWORD "./tests/core/lily/scanner/input/keyword.lily"
 #define FILE_LITERAL_BYTE "./tests/core/lily/scanner/input/literal_byte.lily"
 #define FILE_LITERAL_BYTES "./tests/core/lily/scanner/input/literal_bytes.lily"
+#define FILE_LITERAL_CHAR "./tests/core/lily/scanner/input/literal_char.lily"
 #define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
 #define FILE_OPERATOR "./tests/core/lily/scanner/input/operator.lily"
 
