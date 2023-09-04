@@ -1788,7 +1788,31 @@ get_token__LilyScanner(LilyScanner *self)
                     return NEW(LilyToken,
                                LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN,
                                clone__Location(&self->location));
-                } else if (!strcmp(at_keyword->buffer, "len")) {
+                } else if (!strcmp(at_keyword->buffer, "cc")) {
+					FREE(String, at_keyword);
+
+					jump__LilyScanner(self, 2);
+
+					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_CC, clone__Location(&self->location));
+				} else if (!strcmp(at_keyword->buffer, "cpp")) {
+					FREE(String, at_keyword);
+
+					jump__LilyScanner(self, 3);
+
+					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_CPP, clone__Location(&self->location));
+				} else if (!strcmp(at_keyword->buffer, "hide")) {
+					FREE(String, at_keyword);
+
+					jump__LilyScanner(self, 4);
+
+					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_HIDE, clone__Location(&self->location));
+				} else if (!strcmp(at_keyword->buffer, "hideout")) {
+					FREE(String, at_keyword);
+
+					jump__LilyScanner(self, 7);
+
+					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT, clone__Location(&self->location));
+				} else if (!strcmp(at_keyword->buffer, "len")) {
                     FREE(String, at_keyword);
 
                     jump__LilyScanner(self, 3);
