@@ -41,6 +41,10 @@
     "./tests/core/lily/scanner/input/literal_suffix_int8.lily"
 #define FILE_LITERAL_SUFFIX_ISIZE \
     "./tests/core/lily/scanner/input/literal_suffix_isize.lily"
+#define FILE_LITERAL_SUFFIX_UINT16 \
+    "./tests/core/lily/scanner/input/literal_suffix_uint16.lily"
+#define FILE_LITERAL_SUFFIX_UINT32 \
+    "./tests/core/lily/scanner/input/literal_suffix_uint32.lily"
 #define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
 #define FILE_OPERATOR "./tests/core/lily/scanner/input/operator.lily"
 
