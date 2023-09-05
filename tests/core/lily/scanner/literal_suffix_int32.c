@@ -7,13 +7,13 @@ CASE(literal_suffix_int32, {
     SCANNER_ITERATOR();
 
     TEST_ASSERT_EQ(CURRENT()->kind, LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32);
-    TEST_ASSERT_EQ(NEXT()->literal_suffix_int16, 32300);
+    TEST_ASSERT_EQ(NEXT()->literal_suffix_int32, 32300);
     TEST_ASSERT_EQ(CURRENT()->kind, LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32);
-    TEST_ASSERT_EQ(NEXT()->literal_suffix_int16, 4095);
+    TEST_ASSERT_EQ(NEXT()->literal_suffix_int32, 4095);
     TEST_ASSERT_EQ(CURRENT()->kind, LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32);
-    TEST_ASSERT_EQ(NEXT()->literal_suffix_int16, 14);
+    TEST_ASSERT_EQ(NEXT()->literal_suffix_int32, 14);
     TEST_ASSERT_EQ(CURRENT()->kind, LILY_TOKEN_KIND_LITERAL_SUFFIX_INT32);
-    TEST_ASSERT_EQ(NEXT()->literal_suffix_int16, 19);
+    TEST_ASSERT_EQ(NEXT()->literal_suffix_int32, 19);
 
     FREE_SCANNER();
 });
