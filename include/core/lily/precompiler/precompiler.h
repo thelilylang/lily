@@ -142,7 +142,7 @@ typedef struct LilyImport
 {
     Vec *values; // Vec<LilyImportValue*>*
     Location location;
-    String *as; // String*?
+    String *as; // String*? (&)
 } LilyImport;
 
 /**

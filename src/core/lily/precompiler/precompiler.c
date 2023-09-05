@@ -412,10 +412,6 @@ DESTRUCTOR(LilyImport, LilyImport *self)
     FREE_BUFFER_ITEMS(self->values->buffer, self->values->len, LilyImportValue);
     FREE(Vec, self->values);
 
-    if (self->as) {
-        FREE(String, self->as);
-    }
-
     lily_free(self);
 }
 

@@ -1718,11 +1718,9 @@ DESTRUCTOR(LilyPreparserImport, LilyPreparserImport *self)
 {
     FREE(String, self->value);
 
-#ifdef RUN_UNTIL_PREPARSER
     if (self->as) {
         FREE(String, self->as);
     }
-#endif
 
     lily_free(self);
 }
