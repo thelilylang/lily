@@ -47,6 +47,8 @@
     "./tests/core/lily/scanner/input/literal_suffix_uint32.lily"
 #define FILE_LITERAL_SUFFIX_UINT64 \
     "./tests/core/lily/scanner/input/literal_suffix_uint64.lily"
+#define FILE_LITERAL_SUFFIX_UINT8 \
+    "./tests/core/lily/scanner/input/literal_suffix_uint8.lily"
 #define FILE_SEPARATOR "./tests/core/lily/scanner/input/separator.lily"
 #define FILE_OPERATOR "./tests/core/lily/scanner/input/operator.lily"
 
