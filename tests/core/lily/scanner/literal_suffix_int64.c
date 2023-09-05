@@ -1,0 +1,19 @@
+#include "util.c"
+
+#include <base/test.h>
+
+CASE(literal_suffix_int64, {
+    RUN_SCANNER(FILE_LITERAL_SUFFIX_INT64);
+    SCANNER_ITERATOR();
+
+    TEST_ASSERT_EQ(CURRENT()->kind, LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64);
+    TEST_ASSERT_EQ(NEXT()->literal_suffix_int64, 30);
+    TEST_ASSERT_EQ(CURRENT()->kind, LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64);
+    TEST_ASSERT_EQ(NEXT()->literal_suffix_int64, 1048575);
+    TEST_ASSERT_EQ(CURRENT()->kind, LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64);
+    TEST_ASSERT_EQ(NEXT()->literal_suffix_int64, 32);
+    TEST_ASSERT_EQ(CURRENT()->kind, LILY_TOKEN_KIND_LITERAL_SUFFIX_INT64);
+    TEST_ASSERT_EQ(NEXT()->literal_suffix_int64, 2084);
+
+    FREE_SCANNER();
+});
