@@ -28,7 +28,7 @@ Work in progress...
 - Precompiler: 80% finished
 - Parser: 90% finished
 - Analysis: 60% finished
-- MIR: 50% finished
+- MIR: 55% finished
 - Code generator (LLVM): 60% finished
 - Code generator (C): 0% finished
 - Code generator (C++): 0% finished
