@@ -28,6 +28,16 @@
 #include <assert.h>
 #include <base/allocator.h>
 
+// #define Buffer(T) Buffer__##T
+//
+// #define DEF_BUFFER(T)        \
+//     /* Buffer<T> */          \
+//     typedef struct Buffer(T) \
+//     {                        \
+//         RefMut(Allocator) allocator; \
+//     }                        \
+//     Buffer(T);
+
 #define Buffer(T)               \
     struct                      \
     {                           \
