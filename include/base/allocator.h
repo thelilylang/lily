@@ -25,9 +25,13 @@
 #ifndef LILY_BASE_ALLOCATOR_H
 #define LILY_BASE_ALLOCATOR_H
 
+#include <base/eq.h>
 #include <base/memory/arena.h>
 #include <base/memory/global.h>
 #include <base/memory/page.h>
+#include <base/ref.h>
+#include <base/ref_mut.h>
+#include <base/types.h>
 
 #define ARENA_ALLOCATOR(capacity) NEW_VARIANT(Allocator, arena, capacity)
 
@@ -51,6 +55,19 @@ typedef struct Allocator
         MemoryPage page;
     };
 } Allocator;
+
+/**
+ *
+ * @brief Impl Eq trait.
+ */
+inline IMPL_FOR_EQ(Allocator, Allocator, return self.kind == other.kind);
+
+/**
+ *
+ * @brief Impl Ref and RefMut wrapper for Allocator type.
+ */
+DEF_REF(Allocator);
+DEF_REF_MUT(Allocator);
 
 /**
  *
@@ -82,7 +99,7 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, page)
 
 #define A_ALLOC(T, a, n)                                     \
     ({                                                       \
-        void *_mem = NULL;                                   \
+        Anyptr _mem = NULL;                                  \
                                                              \
         switch ((a).kind) {                                  \
             case ALLOCATOR_KIND_ARENA:                       \
@@ -148,14 +165,12 @@ inline VARIANT_CONSTRUCTOR(Allocator, Allocator, page)
  *
  * @brief Destroy Allocator type.
  */
-void
-destroy__Allocator(Allocator *self);
+void destroy__Allocator(RefMut(Allocator) self);
 
 /**
  *
  * @brief Reset Allocator.
  */
-void
-reset__Allocator(Allocator *self);
+void reset__Allocator(RefMut(Allocator) self);
 
 #endif // LILY_BASE_ALLOCATOR_H

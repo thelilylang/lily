@@ -48,6 +48,7 @@
      *                                                    \
      * @brief Implement Eq trait.                         \
      */                                                   \
+    inline DEF_FOR_EQ(TraceMut(T), TraceMut(T));          \
     inline IMPL_FOR_EQ(                                   \
       TraceMut(T), TraceMut(T), return EQ(T, **self, **other););
 

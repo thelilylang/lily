@@ -55,6 +55,7 @@
      *                                          \
      * @brief Implement Eq trait.               \
      */                                         \
+    inline DEF_FOR_EQ(Ref(T), Ref(T));          \
     inline IMPL_FOR_EQ(Ref(T), Ref(T), return EQ(T, *self, *other););
 
 #define MAKE_REF(T, v) make__Ref__##T(v)

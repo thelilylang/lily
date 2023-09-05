@@ -66,34 +66,76 @@ DEF_PTR(Ulong);
 DEF_PTR(Ulonglong);
 
 // Impl Eq
+inline DEF_FOR_EQ(Ptr(Int8), Ptr(Int8));
 inline IMPL_FOR_EQ(Ptr(Int8), Ptr(Int8), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Int16), Ptr(Int16));
 inline IMPL_FOR_EQ(Ptr(Int16), Ptr(Int16), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Int32), Ptr(Int32));
 inline IMPL_FOR_EQ(Ptr(Int32), Ptr(Int32), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Int64), Ptr(Int64));
 inline IMPL_FOR_EQ(Ptr(Int64), Ptr(Int64), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Isize), Ptr(Isize));
 inline IMPL_FOR_EQ(Ptr(Isize), Ptr(Isize), return *self == *other;);
 
+inline DEF_FOR_EQ(Ptr(Uint8), Ptr(Uint8));
 inline IMPL_FOR_EQ(Ptr(Uint8), Ptr(Uint8), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Uint16), Ptr(Uint16));
 inline IMPL_FOR_EQ(Ptr(Uint16), Ptr(Uint16), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Uint32), Ptr(Uint32));
 inline IMPL_FOR_EQ(Ptr(Uint32), Ptr(Uint32), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Uint64), Ptr(Uint64));
 inline IMPL_FOR_EQ(Ptr(Uint64), Ptr(Uint64), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Usize), Ptr(Usize));
 inline IMPL_FOR_EQ(Ptr(Usize), Ptr(Usize), return *self == *other;);
 
+inline DEF_FOR_EQ(Ptr(Float32), Ptr(Float32));
 inline IMPL_FOR_EQ(Ptr(Float32), Ptr(Float32), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Float64), Ptr(Float64));
 inline IMPL_FOR_EQ(Ptr(Float64), Ptr(Float64), return *self == *other;);
 
+inline DEF_FOR_EQ(Ptr(Bool), Ptr(Bool));
 inline IMPL_FOR_EQ(Ptr(Bool), Ptr(Bool), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Char), Ptr(Char));
 inline IMPL_FOR_EQ(Ptr(Char), Ptr(Char), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Short), Ptr(Short));
 inline IMPL_FOR_EQ(Ptr(Short), Ptr(Short), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Int), Ptr(Int));
 inline IMPL_FOR_EQ(Ptr(Int), Ptr(Int), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Long), Ptr(Long));
 inline IMPL_FOR_EQ(Ptr(Long), Ptr(Long), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Longlong), Ptr(Longlong));
 inline IMPL_FOR_EQ(Ptr(Longlong), Ptr(Longlong), return *self == *other;);
 
+inline DEF_FOR_EQ(Ptr(Uchar), Ptr(Uchar));
 inline IMPL_FOR_EQ(Ptr(Uchar), Ptr(Uchar), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Ushort), Ptr(Ushort));
 inline IMPL_FOR_EQ(Ptr(Ushort), Ptr(Ushort), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Uint), Ptr(Uint));
 inline IMPL_FOR_EQ(Ptr(Uint), Ptr(Uint), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Ulong), Ptr(Ulong));
 inline IMPL_FOR_EQ(Ptr(Ulong), Ptr(Ulong), return *self == *other;);
+
+inline DEF_FOR_EQ(Ptr(Ulonglong), Ptr(Ulonglong));
 inline IMPL_FOR_EQ(Ptr(Ulonglong), Ptr(Ulonglong), return *self == *other;);
 
+inline DEF_FOR_EQ(Ptr(Uptr), Ptr(Uptr));
 inline IMPL_FOR_EQ(Ptr(Uptr), Ptr(Uptr), return *self == *other;);
 
 #endif // LILY_BASE_PTR_H

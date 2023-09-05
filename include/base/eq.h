@@ -29,6 +29,10 @@
 #include <base/macros.h>
 #include <base/types.h>
 
+#define DEF_FOR_EQ(T, struct_name)                        \
+    IMPL_FOR(bool, eq, Eq, struct_name, T self, T other); \
+    inline IMPL_FOR(bool, ne, Eq, struct_name, T self, T other);
+
 #define IMPL_FOR_EQ(T, struct_name, body)                       \
     IMPL_FOR(bool, eq, Eq, struct_name, T self, T other)        \
     {                                                           \
@@ -42,34 +46,77 @@
 #define EQ(struct_name, ...) CALL_IMPL(eq, Eq, struct_name, __VA_ARGS__)
 #define NE(struct_name, ...) CALL_IMPL(ne, Eq, struct_name, __VA_ARGS__)
 
+// Impl Eq
+inline DEF_FOR_EQ(Int8, Int8);
 inline IMPL_FOR_EQ(Int8, Int8, return self == other;);
+
+inline DEF_FOR_EQ(Int16, Int16);
 inline IMPL_FOR_EQ(Int16, Int16, return self == other;);
+
+inline DEF_FOR_EQ(Int32, Int32);
 inline IMPL_FOR_EQ(Int32, Int32, return self == other;);
+
+inline DEF_FOR_EQ(Int64, Int64);
 inline IMPL_FOR_EQ(Int64, Int64, return self == other;);
+
+inline DEF_FOR_EQ(Isize, Isize);
 inline IMPL_FOR_EQ(Isize, Isize, return self == other;);
 
+inline DEF_FOR_EQ(Uint8, Uint8);
 inline IMPL_FOR_EQ(Uint8, Uint8, return self == other;);
+
+inline DEF_FOR_EQ(Uint16, Uint16);
 inline IMPL_FOR_EQ(Uint16, Uint16, return self == other;);
+
+inline DEF_FOR_EQ(Uint32, Uint32);
 inline IMPL_FOR_EQ(Uint32, Uint32, return self == other;);
+
+inline DEF_FOR_EQ(Uint64, Uint64);
 inline IMPL_FOR_EQ(Uint64, Uint64, return self == other;);
+
+inline DEF_FOR_EQ(Usize, Usize);
 inline IMPL_FOR_EQ(Usize, Usize, return self == other;);
 
+inline DEF_FOR_EQ(Float32, Float32);
 inline IMPL_FOR_EQ(Float32, Float32, return self == other;);
+
+inline DEF_FOR_EQ(Float64, Float64);
 inline IMPL_FOR_EQ(Float64, Float64, return self == other;);
 
+inline DEF_FOR_EQ(Bool, Bool);
 inline IMPL_FOR_EQ(Bool, Bool, return self == other;);
+
+inline DEF_FOR_EQ(Char, Char);
 inline IMPL_FOR_EQ(Char, Char, return self == other;);
+
+inline DEF_FOR_EQ(Short, Short);
 inline IMPL_FOR_EQ(Short, Short, return self == other;);
+
+inline DEF_FOR_EQ(Int, Int);
 inline IMPL_FOR_EQ(Int, Int, return self == other;);
+
+inline DEF_FOR_EQ(Long, Long);
 inline IMPL_FOR_EQ(Long, Long, return self == other;);
+
+inline DEF_FOR_EQ(Longlong, Longlong);
 inline IMPL_FOR_EQ(Longlong, Longlong, return self == other;);
 
+inline DEF_FOR_EQ(Uchar, Uchar);
 inline IMPL_FOR_EQ(Uchar, Uchar, return self == other;);
+
+inline DEF_FOR_EQ(Ushort, Ushort);
 inline IMPL_FOR_EQ(Ushort, Ushort, return self == other;);
+
+inline DEF_FOR_EQ(Uint, Uint);
 inline IMPL_FOR_EQ(Uint, Uint, return self == other;);
+
+inline DEF_FOR_EQ(Ulong, Ulong);
 inline IMPL_FOR_EQ(Ulong, Ulong, return self == other;);
+
+inline DEF_FOR_EQ(Ulonglong, Ulonglong);
 inline IMPL_FOR_EQ(Ulonglong, Ulonglong, return self == other;);
 
+inline DEF_FOR_EQ(Uptr, Uptr);
 inline IMPL_FOR_EQ(Uptr, Uptr, return self == other;);
 
 #endif // LILY_BASE_EQ_H

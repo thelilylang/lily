@@ -56,6 +56,7 @@
      *                                              \
      * @brief Implement Eq trait.                   \
      */                                             \
+    inline DEF_FOR_EQ(RefMut(T), RefMut(T));        \
     inline IMPL_FOR_EQ(RefMut(T), RefMut(T), return EQ(T, *self, *other););
 
 #define MAKE_REF_MUT(T, v) make__RefMut__##T(v)

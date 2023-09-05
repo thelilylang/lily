@@ -48,6 +48,7 @@
      *                                           \
      * @brief Implement Eq trait.                \
      */                                          \
+    inline DEF_FOR_EQ(Trace(T), Trace(T));       \
     inline IMPL_FOR_EQ(Trace(T), Trace(T), return EQ(T, **self, **other););
 
 #define MAKE_TRACE(T, v) make__Trace__##T(v)
