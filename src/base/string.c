@@ -84,19 +84,25 @@ format__String(char *fmt, ...)
 String *
 from__String(char *buffer)
 {
-    String *self = lily_malloc(sizeof(String));
+    Usize len = strlen(buffer);
 
-    self->capacity = strlen(buffer) * 2;
-    self->buffer = lily_malloc(self->capacity);
-    self->len = strlen(buffer);
+    if (len > 0) {
+        String *self = lily_malloc(sizeof(String));
 
-    for (Usize i = 0; i < self->len; ++i) {
-        self->buffer[i] = buffer[i];
+        self->capacity = len * 2;
+        self->buffer = lily_malloc(self->capacity);
+        self->len = len;
+
+        for (Usize i = 0; i < self->len; ++i) {
+            self->buffer[i] = buffer[i];
+        }
+
+        self->buffer[self->len] = '\0';
+
+        return self;
     }
 
-    self->buffer[self->len] = '\0';
-
-    return self;
+    return NEW(String);
 }
 
 char
