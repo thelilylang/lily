@@ -12,6 +12,8 @@ CASE(literal_string, {
     TEST_ASSERT(!strcmp(NEXT()->literal_str->buffer, "Hi"));
     TEST_ASSERT_EQ(CURRENT()->kind, LILY_TOKEN_KIND_LITERAL_STR);
     TEST_ASSERT(!strcmp(NEXT()->literal_str->buffer, "H"));
+    TEST_ASSERT_EQ(CURRENT()->kind, LILY_TOKEN_KIND_LITERAL_STR);
+    TEST_ASSERT(!strcmp(NEXT()->literal_str->buffer, "Hello\\nWorld"));
 
     FREE_SCANNER();
 });
