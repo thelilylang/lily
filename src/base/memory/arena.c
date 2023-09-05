@@ -32,13 +32,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-void *
-alloc__MemoryArena(MemoryArena *self, Usize size, Usize align)
+Anyptr
+alloc__MemoryArena(RefMut(MemoryArena) self, Usize size, Usize align)
 {
     ASSERT(!self->is_destroy);
 
     if (self->total_size + size < self->capacity) {
-        void *mem = (void *)ALIGN(self->arena + self->total_size, align);
+        Anyptr mem = (Anyptr)ALIGN(self->arena + self->total_size, align);
 
         self->total_size += size;
 
@@ -49,8 +49,11 @@ alloc__MemoryArena(MemoryArena *self, Usize size, Usize align)
     }
 }
 
-void *
-resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size, Usize align)
+Anyptr
+resize__MemoryArena(RefMut(MemoryArena) self,
+                    Anyptr mem,
+                    Usize new_size,
+                    Usize align)
 {
     ASSERT(!self->is_destroy);
 
@@ -60,7 +63,7 @@ resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size, Usize align)
         return NULL;
     }
 
-    void *new_mem = alloc__MemoryArena(self, new_size, align);
+    Anyptr new_mem = alloc__MemoryArena(self, new_size, align);
 
     memcpy(new_mem, mem, new_size);
 
@@ -68,14 +71,14 @@ resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size, Usize align)
 }
 
 void
-destroy__MemoryArena(MemoryArena *self)
+destroy__MemoryArena(RefMut(MemoryArena) self)
 {
     free__MemoryGlobal(self->arena);
     self->is_destroy = true;
 }
 
 void
-reset__MemoryArena(MemoryArena *self)
+reset__MemoryArena(RefMut(MemoryArena) self)
 {
     destroy__MemoryArena(self);
 
@@ -85,7 +88,7 @@ reset__MemoryArena(MemoryArena *self)
 }
 
 void
-print_stat__MemoryArena(const MemoryArena *self)
+print_stat__MemoryArena(Ref(MemoryArena) self)
 {
     Float32 mib_total_size = self->total_size / MiB;
     Float32 mib_capacity = self->capacity / MiB;

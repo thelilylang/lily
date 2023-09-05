@@ -25,10 +25,14 @@
 #ifndef LILY_BASE_MEMORY_ARENA_H
 #define LILY_BASE_MEMORY_ARENA_H
 
+#include <base/eq.h>
 #include <base/memory/api.h>
 #include <base/memory/block.h>
 #include <base/memory/global.h>
 #include <base/new.h>
+#include <base/ref.h>
+#include <base/ref_mut.h>
+#include <base/types.h>
 
 #define MEMORY_ARENA_ALLOC(T, self, n) \
     alloc__MemoryArena(self, sizeof(T) * n, alignof(T) * ALIGNMENT_COEFF)
@@ -39,10 +43,10 @@
 
 typedef struct MemoryArena
 {
-    void *arena;
+    Anyptr arena;
     Usize total_size;
     Usize capacity;
-    bool is_destroy;
+    Bool is_destroy;
 } MemoryArena;
 
 /**
@@ -61,38 +65,57 @@ inline CONSTRUCTOR(MemoryArena, MemoryArena, Usize capacity)
 
 /**
  *
+ * @brief Impl Eq trait.
+ */
+inline DEF_FOR_EQ(MemoryArena, MemoryArena);
+inline IMPL_FOR_EQ(MemoryArena,
+                   MemoryArena,
+                   return self.arena == other.arena &&
+                          self.total_size == other.total_size &&
+                          self.capacity == other.capacity &&
+                          self.is_destroy == other.is_destroy);
+
+/**
+ *
+ * @brief Impl Ref and RefMut wrapper for MemoryArena type.
+ */
+DEF_REF(MemoryArena);
+DEF_REF_MUT(MemoryArena);
+
+/**
+ *
  * @brief Reserve region of the Arena.
  */
-void *
-alloc__MemoryArena(MemoryArena *self, Usize size, Usize align);
+Anyptr
+alloc__MemoryArena(RefMut(MemoryArena) self, Usize size, Usize align);
 
 /**
  *
  * @brief Resize region of the Arena.
  */
-void *
-resize__MemoryArena(MemoryArena *self, void *mem, Usize new_size, Usize align);
+Anyptr
+resize__MemoryArena(RefMut(MemoryArena) self,
+                    Anyptr mem,
+                    Usize new_size,
+                    Usize align);
 
 /**
  *
  * @brief Free all allocated memory by the arena Allocator.
  */
-void
-destroy__MemoryArena(MemoryArena *self);
+void destroy__MemoryArena(RefMut(MemoryArena) self);
 
 /**
  *
  * @brief Free all allocated memory by the arena Allocator and reset the
  * allocator.
  */
-void
-reset__MemoryArena(MemoryArena *self);
+void reset__MemoryArena(RefMut(MemoryArena) self);
 
 /**
  *
  * @brief Print the stats of the arena Allocator.
  */
-void
-print_stat__MemoryArena(const MemoryArena *self);
+void print_stat__MemoryArena(Ref(MemoryArena) self);
 
 #endif // LILY_BASE_MEMORY_ARENA_H

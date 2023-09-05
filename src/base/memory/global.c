@@ -40,6 +40,7 @@
 #endif
 #endif
 
+// TODO: update pthread_mutex_t type with the future pthread base type.
 [[maybe_unused]] static MemoryApi api = { .align = __align__,
                                           .alloc = __alloc__,
                                           .resize = __resize__,
@@ -48,17 +49,17 @@ static Usize total_size = 0;
 static Usize total_block = 0;
 static Usize total_block_free = 0;
 static Usize total_size_free = 0;
-[[maybe_unused]] static MemoryBlock *top = NULL;
-[[maybe_unused]] static MemoryBlock *last = NULL;
+[[maybe_unused]] static PtrMut(MemoryBlock) top = NULL;
+[[maybe_unused]] static PtrMut(MemoryBlock) last = NULL;
 [[maybe_unused]] static Usize capacity = 0;
 [[maybe_unused]] static pthread_mutex_t global_mutex =
   PTHREAD_MUTEX_INITIALIZER;
 
-void *
+Anyptr
 alloc__MemoryGlobal(Usize size, Usize align)
 {
 #ifdef USE_C_MEMORY_API
-    void *mem = malloc(size);
+    Anyptr mem = malloc(size);
 
     if (mem) {
         ++total_block;
@@ -84,13 +85,13 @@ alloc__MemoryGlobal(Usize size, Usize align)
     }
 #endif
 
-    void *mem = api.alloc(alloc_size, align);
+    Anyptr mem = api.alloc(alloc_size, align);
 
     total_size += size;
     ++total_block;
 
     if (!top) {
-        top = (MemoryBlock *)mem;
+        top = (PtrMut(MemoryBlock))mem;
         last = top;
         top->prev = NULL;
     } else {
@@ -98,7 +99,8 @@ alloc__MemoryGlobal(Usize size, Usize align)
         Usize remaining_size = last->size - alloc_size;
 
         if (remaining_size >= sizeof(MemoryBlock)) {
-            MemoryBlock *new_block = (MemoryBlock *)((char *)last + alloc_size);
+            PtrMut(MemoryBlock) new_block =
+              (PtrMut(MemoryBlock))((char *)last + alloc_size);
 
             new_block->size = remaining_size - sizeof(MemoryBlock);
             new_block->align = last->align;
@@ -121,12 +123,12 @@ alloc__MemoryGlobal(Usize size, Usize align)
 
     pthread_mutex_unlock(&global_mutex);
 
-    return (void *)((char *)mem + sizeof(MemoryBlock));
+    return (Anyptr)((char *)mem + sizeof(MemoryBlock));
 #endif
 }
 
-void *
-resize__MemoryGlobal(void *mem, Usize new_size)
+Anyptr
+resize__MemoryGlobal(Anyptr mem, Usize new_size)
 {
 #ifdef USE_C_MEMORY_API
 #if defined(LILY_APPLE_OS)
@@ -135,7 +137,7 @@ resize__MemoryGlobal(void *mem, Usize new_size)
     Usize old_size = malloc_usable_size(mem);
 #endif
 
-    void *new_mem = realloc(mem, new_size);
+    Anyptr new_mem = realloc(mem, new_size);
 
     if (new_mem) {
         total_size += new_size;
@@ -159,10 +161,11 @@ resize__MemoryGlobal(void *mem, Usize new_size)
 
     pthread_mutex_lock(&global_mutex);
 
-    MemoryBlock *block = (MemoryBlock *)((char *)mem - sizeof(MemoryBlock));
+    PtrMut(MemoryBlock) block =
+      (PtrMut(MemoryBlock))((char *)mem - sizeof(MemoryBlock));
     Usize old_size = block->size;
     Usize align = block->align;
-    void *resized_mem = mem;
+    Anyptr resized_mem = mem;
 
 #ifdef ENV_SAFE
     {
@@ -195,17 +198,18 @@ resize__MemoryGlobal(void *mem, Usize new_size)
 
         resized_mem = NULL;
     } else if (new_size != old_size) {
-        MemoryBlock *resized_block = api.resize(block,
-                                                old_size + sizeof(MemoryBlock),
-                                                new_size + sizeof(MemoryBlock),
-                                                align);
+        PtrMut(MemoryBlock) resized_block =
+          api.resize(block,
+                     old_size + sizeof(MemoryBlock),
+                     new_size + sizeof(MemoryBlock),
+                     align);
 
         if (resized_block) {
             // FIXME: leak here. You should probably use api.alloc instead of
             // api.resize. Plus you'd probably have to add a new block to the
             // linked list and remove the old one and free it.
             resized_block->size = new_size;
-            resized_mem = (void *)((char *)resized_block + sizeof(MemoryBlock));
+            resized_mem = (Anyptr)((char *)resized_block + sizeof(MemoryBlock));
             ++total_block;
             total_size +=
               new_size < old_size ? old_size - new_size : new_size - old_size;
@@ -219,7 +223,7 @@ resize__MemoryGlobal(void *mem, Usize new_size)
 }
 
 void
-free__MemoryGlobal(void *mem)
+free__MemoryGlobal(Anyptr mem)
 {
 #ifdef USE_C_MEMORY_API
 #if defined(LILY_APPLE_OS)
@@ -239,7 +243,8 @@ free__MemoryGlobal(void *mem)
 
     pthread_mutex_lock(&global_mutex);
 
-    MemoryBlock *block = (MemoryBlock *)((void *)mem - sizeof(MemoryBlock));
+    PtrMut(MemoryBlock) block =
+      (PtrMut(MemoryBlock))((Anyptr)mem - sizeof(MemoryBlock));
 
     if (block->size == 0 || block->next != NULL) {
         ++total_block_free;
@@ -252,7 +257,7 @@ free__MemoryGlobal(void *mem)
     if (block == top) {
         top = block->next;
     } else {
-        MemoryBlock *prev = block->prev;
+        PtrMut(MemoryBlock) prev = block->prev;
 
         prev->next = block->next;
     }
@@ -265,7 +270,7 @@ free__MemoryGlobal(void *mem)
     Usize size = block->size;
     Usize align = block->align;
 
-    api.free((void **)&block, sizeof(MemoryBlock) + size, align);
+    api.free((Anyptr *)&block, sizeof(MemoryBlock) + size, align);
 
     total_size_free += size;
     ++total_block_free;

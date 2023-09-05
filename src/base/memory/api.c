@@ -26,13 +26,13 @@
 
 #include <stddef.h>
 
-void *
-__align__(void *mem, Usize align)
+Anyptr
+__align__(Anyptr mem, Usize align)
 {
     return __align__$Alloc(mem, align);
 }
 
-void *
+Anyptr
 __alloc__(Usize size, Usize align)
 {
 #ifdef USE_C_MEMORY_API
@@ -42,8 +42,8 @@ __alloc__(Usize size, Usize align)
 #endif
 }
 
-void *
-__resize__(void *old_mem, Usize old_size, Usize new_size, Usize align)
+Anyptr
+__resize__(Anyptr old_mem, Usize old_size, Usize new_size, Usize align)
 {
 #ifdef USE_C_MEMORY_API
     return realloc(old_mem, new_size);
@@ -53,7 +53,7 @@ __resize__(void *old_mem, Usize old_size, Usize new_size, Usize align)
 }
 
 void
-__free__(void **mem, Usize size, Usize align)
+__free__(Anyptr *mem, Usize size, Usize align)
 {
 #ifdef USE_C_MEMORY_API
     return free(*mem);

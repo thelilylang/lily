@@ -47,22 +47,22 @@
  *
  * @brief Create a new cell for a new allocation.
  */
-void *
+Anyptr
 alloc__MemoryGlobal(Usize size, Usize align);
 
 /**
  *
  * @brief Resize a previous allocated mem.
  */
-void *
-resize__MemoryGlobal(void *mem, Usize new_size);
+Anyptr
+resize__MemoryGlobal(Anyptr mem, Usize new_size);
 
 /**
  *
  * @brief Free a block of memory.
  */
 void
-free__MemoryGlobal(void *mem);
+free__MemoryGlobal(Anyptr mem);
 
 /**
  *

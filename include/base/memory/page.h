@@ -25,9 +25,12 @@
 #ifndef LILY_BASE_MEMORY_PAGE_H
 #define LILY_BASE_MEMORY_PAGE_H
 
+#include <base/eq.h>
 #include <base/memory/api.h>
 #include <base/memory/block.h>
 #include <base/new.h>
+#include <base/ref_mut.h>
+#include <base/types.h>
 
 #define MEMORY_PAGE_ALLOC(T, self, n) \
     alloc__MemoryPage(self, sizeof(T) * n, alignof(T) * ALIGNMENT_COEFF)
@@ -38,9 +41,26 @@
 
 typedef struct MemoryPage
 {
-    void *mem; // undef
-    bool is_undef;
+    Anyptr mem; // undef
+    Bool is_undef;
 } MemoryPage;
+
+/**
+ *
+ * @brief Impl Eq trait for MemoryPage type.
+ */
+inline DEF_FOR_EQ(MemoryPage, MemoryPage);
+inline IMPL_FOR_EQ(MemoryPage,
+                   MemoryPage,
+                   return self.is_undef && other.is_undef
+                            ? true
+                            : self.mem == other.mem;);
+
+/**
+ *
+ * @brief Impl RefMut wrapper for MemoryPage type.
+ */
+DEF_REF_MUT(MemoryPage);
 
 /**
  *
@@ -55,21 +75,20 @@ inline CONSTRUCTOR(MemoryPage, MemoryPage)
  *
  * @brief Create a new allocation.
  */
-void *
-alloc__MemoryPage(MemoryPage *self, Usize size, Usize align);
+Anyptr
+alloc__MemoryPage(RefMut(MemoryPage) self, Usize size, Usize align);
 
 /**
  *
  * @brief Resize a block of memory.
  */
-void *
-resize__MemoryPage(MemoryPage *self, Usize new_size);
+Anyptr
+resize__MemoryPage(RefMut(MemoryPage) self, Usize new_size);
 
 /**
  *
  * @brief Destroy Page allocator.
  */
-void
-free__MemoryPage(MemoryPage *self);
+void free__MemoryPage(RefMut(MemoryPage) self);
 
 #endif // LILY_BASE_MEMORY_PAGE_H

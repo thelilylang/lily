@@ -31,7 +31,9 @@
 // #undef USE_C_MEMORY_API
 
 #include <base/macros.h>
+#include <base/ref.h>
 #include <base/types.h>
+
 #include <builtin/alloc.h>
 
 #ifdef USE_C_MEMORY_API
@@ -42,14 +44,14 @@
  *
  * @brief Align pointer with the given size alignment.
  */
-void *
-__align__(void *mem, Usize align);
+Anyptr
+__align__(Anyptr mem, Usize align);
 
 /**
  *
  * @brief Alloc to a pointer with the given size + align the allocated pointer.
  */
-void *
+Anyptr
 __alloc__(Usize size, Usize align);
 
 /**
@@ -57,8 +59,8 @@ __alloc__(Usize size, Usize align);
  * @brief Resize the given pointer with the new_size + align the resized
  * pointer.
  */
-void *
-__resize__(void *old_mem, Usize old_size, Usize new_size, Usize align);
+Anyptr
+__resize__(Anyptr old_mem, Usize old_size, Usize new_size, Usize align);
 
 /**
  *
@@ -66,14 +68,14 @@ __resize__(void *old_mem, Usize old_size, Usize new_size, Usize align);
  * @note The given freed pointer is assigned to NULL at the end.
  */
 void
-__free__(void **mem, Usize size, Usize align);
+__free__(Anyptr *mem, Usize size, Usize align);
 
 typedef struct MemoryApi
 {
-    void *(*align)(void *, Usize);
-    void *(*alloc)(Usize, Usize);
-    void *(*resize)(void *, Usize, Usize, Usize);
-    void (*free)(void **, Usize, Usize);
+    Anyptr (*align)(Anyptr, Usize);
+    Anyptr (*alloc)(Usize, Usize);
+    Anyptr (*resize)(Anyptr, Usize, Usize, Usize);
+    void (*free)(Anyptr *, Usize, Usize);
 } MemoryApi;
 
 /**
@@ -87,5 +89,18 @@ inline CONSTRUCTOR(MemoryApi, MemoryApi)
                         .resize = &__resize__,
                         .free = &__free__ };
 }
+
+/**
+ *
+ * @brief Impl Eq trait for MemoryApi type.
+ */
+inline DEF_FOR_EQ(MemoryApi, MemoryApi);
+inline IMPL_FOR_EQ(MemoryApi, MemoryApi, return true);
+
+/**
+ *
+ * @brief Impl Ref wrapper for MemoryApi type.
+ */
+DEF_REF(MemoryApi);
 
 #endif // LILY_BASE_MEMORY_API_H

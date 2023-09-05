@@ -26,16 +26,23 @@
 #define LILY_BASE_MEMORY_BLOCK_H
 
 #include <base/memory/api.h>
+#include <base/ptr_mut.h>
 
-#include <stdbool.h>
+typedef struct MemoryBlock MemoryBlock;
 
-typedef struct MemoryBlock
+/**
+ *
+ * @brief Impl PtrMut wrapper for MemoryBlock type.
+ */
+DEF_PTR_MUT(MemoryBlock);
+
+struct MemoryBlock
 {
     Usize size;
     Usize align;
-    struct MemoryBlock *next; // struct MemoryBlock*?
-    struct MemoryBlock *prev; // struct MemoryBlock*?
-} MemoryBlock;
+    PtrMut(MemoryBlock) next; // MemoryBlock*?
+    PtrMut(MemoryBlock) prev; // MemoryBlock*?
+};
 
 /**
  *
@@ -43,9 +50,9 @@ typedef struct MemoryBlock
  */
 CONSTRUCTOR(MemoryBlock *,
             MemoryBlock,
-            MemoryApi *api,
+            Ref(MemoryApi) api,
             Usize size,
             Usize align,
-            MemoryBlock *prev);
+            PtrMut(MemoryBlock) prev);
 
 #endif // LILY_BASE_MEMORY_BLOCK_H
