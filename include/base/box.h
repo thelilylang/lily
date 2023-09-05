@@ -26,6 +26,7 @@
 #define LILY_BASE_BOX_H
 
 #include <base/alloc.h>
+#include <base/allocator.h>
 #include <base/macros.h>
 #include <base/ptr_mut.h>
 #include <base/ref.h>
@@ -36,73 +37,73 @@
 
 #define Box(T) Box__##T
 
-#define DEF_BOX(T)                                                 \
-    /* Box<T> */                                                   \
-    typedef struct Box(T)                                          \
-    {                                                              \
-        PtrMut(T) ptr;                                             \
-    }                                                              \
-    Box(T);                                                        \
-                                                                   \
-    /**                                                            \
-     *                                                             \
-     * @brief Construct Box type.                                  \
-     */                                                            \
-    CONSTRUCTOR(Box__##T, Box__##T, T v);                          \
-                                                                   \
-    /**                                                            \
-     *                                                             \
-     * @brief Implement Eq trait.                                  \
-     */                                                            \
-    inline IMPL_FOR_EQ(                                            \
-      Box__##T, Box__##T, return EQ(T, *self.ptr, *other.ptr););   \
-                                                                   \
-    /**                                                            \
-     *                                                             \
-     * @brief Implement Ref and RefMut wrapper for Box(T).         \
-     */                                                            \
-    DEF_REF(Box__##T);                                             \
-    DEF_REF_MUT(Box__##T);                                         \
-                                                                   \
-    /**                                                            \
-     *                                                             \
-     * @brief Get the pointer and trace it as mutable.             \
-     */                                                            \
-    inline TraceMut(T) unwrap_mut__Box__##T(RefMut(Box__##T) self) \
-    {                                                              \
-        return MAKE_TRACE_MUT(T, &self->ptr);                      \
-    }                                                              \
-                                                                   \
-    /**                                                            \
-     *                                                             \
-     * @brief Get the pointer and trace it.                        \
-     */                                                            \
-    inline Trace(T) unwrap__Box__##T(Ref(Box__##T) self)           \
-    {                                                              \
-        return MAKE_TRACE(T, (const T **)&self->ptr);              \
-    }                                                              \
-                                                                   \
-    /**                                                            \
-     *                                                             \
-     * @brief Free Box type.                                       \
-     */                                                            \
+#define DEF_BOX(T)                                                     \
+    /* Box<T> */                                                       \
+    typedef struct Box(T)                                              \
+    {                                                                  \
+        PtrMut(T) ptr;                                                 \
+    }                                                                  \
+    Box(T);                                                            \
+                                                                       \
+    /**                                                                \
+     *                                                                 \
+     * @brief Construct Box type.                                      \
+     */                                                                \
+    CONSTRUCTOR(Box__##T, Box__##T, RefMut(Allocator) allocator, T v); \
+                                                                       \
+    /**                                                                \
+     *                                                                 \
+     * @brief Implement Eq trait.                                      \
+     */                                                                \
+    inline IMPL_FOR_EQ(                                                \
+      Box__##T, Box__##T, return EQ(T, *self.ptr, *other.ptr););       \
+                                                                       \
+    /**                                                                \
+     *                                                                 \
+     * @brief Implement Ref and RefMut wrapper for Box(T).             \
+     */                                                                \
+    DEF_REF(Box__##T);                                                 \
+    DEF_REF_MUT(Box__##T);                                             \
+                                                                       \
+    /**                                                                \
+     *                                                                 \
+     * @brief Get the pointer and trace it as mutable.                 \
+     */                                                                \
+    inline TraceMut(T) unwrap_mut__Box__##T(RefMut(Box__##T) self)     \
+    {                                                                  \
+        return MAKE_TRACE_MUT(T, &self->ptr);                          \
+    }                                                                  \
+                                                                       \
+    /**                                                                \
+     *                                                                 \
+     * @brief Get the pointer and trace it.                            \
+     */                                                                \
+    inline Trace(T) unwrap__Box__##T(Ref(Box__##T) self)               \
+    {                                                                  \
+        return MAKE_TRACE(T, (const T **)&self->ptr);                  \
+    }                                                                  \
+                                                                       \
+    /**                                                                \
+     *                                                                 \
+     * @brief Free Box type.                                           \
+     */                                                                \
     DESTRUCTOR(Box__##T, Ref(Box__##T) self);
 
-#define IMPL_BOX(T)                             \
-    CONSTRUCTOR(Box__##T, Box__##T, T v)        \
-    {                                           \
-        PtrMut(T) ptr = lily_malloc(sizeof(T)); \
-                                                \
-        ASSERT(ptr);                            \
-        *ptr = v;                               \
-                                                \
-        return (Box(T)){ .ptr = ptr };          \
-    }                                           \
-                                                \
-    DESTRUCTOR(Box__##T, Ref(Box__##T) self)    \
-    {                                           \
-        FREE(T, *self->ptr);                    \
-        lily_free(self->ptr);                   \
+#define IMPL_BOX(T)                                                   \
+    CONSTRUCTOR(Box__##T, Box__##T, RefMut(Allocator) allocator, T v) \
+    {                                                                 \
+        PtrMut(T) ptr = A_ALLOC(T, (*allocator), 1);                  \
+                                                                      \
+        ASSERT(ptr);                                                  \
+        *ptr = v;                                                     \
+                                                                      \
+        return (Box(T)){ .ptr = ptr };                                \
+    }                                                                 \
+                                                                      \
+    DESTRUCTOR(Box__##T, Ref(Box__##T) self)                          \
+    {                                                                 \
+        FREE(T, *self->ptr);                                          \
+        lily_free(self->ptr);                                         \
     }
 
 DEF_BOX(Int8);
