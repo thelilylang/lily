@@ -1305,9 +1305,7 @@ scan_line : {
         peek_char__LilyScanner(self, 1) == (char *)'\\') {
         push_str__String(res, "\\n");
         goto scan_line;
-    } else {
-        push_str__String(res, "\\n");
-    }
+    } 
 
     previous_char__Source(&self->source);
 
