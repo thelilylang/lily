@@ -9,6 +9,7 @@
 #include "literal_byte.c"
 #include "literal_bytes.c"
 #include "literal_char.c"
+#include "literal_cstr.c"
 #include "literal_int_10.c"
 #include "literal_int_16.c"
 #include "literal_int_2.c"
@@ -45,7 +46,7 @@ main()
     ADD_SIMPLE(keyword);
     ADD_SIMPLE(separator);
     ADD_SIMPLE(operator);
-    ADD_SUITE(20,
+    ADD_SUITE(21,
               literal,
               CALL_CASE(literal_byte),
               CALL_CASE(literal_bytes),
@@ -66,6 +67,7 @@ main()
               CALL_CASE(literal_suffix_uint32),
               CALL_CASE(literal_suffix_uint64),
               CALL_CASE(literal_suffix_uint8),
-              CALL_CASE(literal_suffix_usize));
+              CALL_CASE(literal_suffix_usize),
+              CALL_CASE(literal_cstr));
     RUN_TEST();
 }
