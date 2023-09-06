@@ -33,7 +33,7 @@
  */
 inline void
 compile__LilyCompilerOutputObj(const LilyPackageDependencyTree *tree,
-                               void (*compile)(const LilyPackage *package))
+                               void (*compile)(LilyPackage *package))
 {
     return compile(tree->package);
 }
