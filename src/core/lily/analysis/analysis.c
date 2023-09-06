@@ -11324,6 +11324,8 @@ check_constant__LilyAnalysis(LilyAnalysis *self,
           NULL);
     }
 
+    FREE(LilyCheckedHistory, &history);
+
     constant->constant.is_checked = true;
 }
 
