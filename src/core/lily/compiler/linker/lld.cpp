@@ -77,6 +77,9 @@ LilyLLDLink(enum LilyCompilerLinkerObjectFormat obj_format,
         case LILY_COMPILER_LINKER_OBJECT_FORMAT_MACHO:
             return lld::macho::link(
               array_ref_args, stdout_os, stderr_os, true, false);
+        case LILY_COMPILER_LINKER_OBJECT_FORMAT_MINGW:
+            return lld::mingw::link(
+              array_ref_args, stdout_os, stderr_os, true, false);
         case LILY_COMPILER_LINKER_OBJECT_FORMAT_UNKNOWN:
             UNREACHABLE("unknown object format");
         case LILY_COMPILER_LINKER_OBJECT_FORMAT_WASM:
