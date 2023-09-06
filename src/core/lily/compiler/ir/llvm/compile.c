@@ -41,7 +41,7 @@
 #endif
 
 void
-compile__LilyCompilerIrLlvm(const LilyPackage *package)
+compile__LilyCompilerIrLlvm(LilyPackage *package)
 {
 #ifdef PLATFORM_64
     char *path = format("{s}{S}{zu}{zu}{s}",
@@ -124,5 +124,5 @@ compile__LilyCompilerIrLlvm(const LilyPackage *package)
     dump__LilyIrLlvm(&package->ir.llvm);
 #endif
 
-    lily_free(path);
+    package->output_path = path;
 }

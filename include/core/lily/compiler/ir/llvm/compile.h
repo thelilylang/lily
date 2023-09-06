@@ -32,6 +32,6 @@
  * @brief Compile LLVM IR to object file.
  */
 void
-compile__LilyCompilerIrLlvm(const LilyPackage *package);
+compile__LilyCompilerIrLlvm(LilyPackage *package);
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_COMPILE_H
