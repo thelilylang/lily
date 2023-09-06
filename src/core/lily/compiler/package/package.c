@@ -78,6 +78,7 @@ CONSTRUCTOR(LilyPackage *,
 
     self->name = name;
     self->global_name = global_name;
+    self->output_path = NULL;
 
     self->private_macros = NEW(Vec);
 
@@ -297,7 +298,7 @@ run__LilyPackage(void *self)
     compile__LilyCompilerOutputObj(tree, &compile__LilyCompilerIrLlvm);
 
     if (tree->package->status == LILY_PACKAGE_STATUS_MAIN) {
-        // run__LilyLinker(tree->package);
+        run__LilyLinker(tree->package);
     }
 
     tree->is_done = true;
@@ -453,6 +454,10 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE_BUFFER_ITEMS(
       self->private_imports->buffer, self->private_imports->len, LilyImport);
     FREE(Vec, self->private_imports);
+
+    if (self->output_path) {
+        lily_free(self->output_path);
+    }
 
     FREE_BUFFER_ITEMS(
       self->sub_packages->buffer, self->sub_packages->len, LilyPackage);

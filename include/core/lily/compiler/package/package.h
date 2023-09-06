@@ -67,6 +67,7 @@ typedef struct LilyPackage
     Vec *package_dependencies;       // Vec<LilyPackage* (&)>*
     Vec *lib_dependencies;           // Vec<LilyLibrary*>*
     const LilyPackageConfig *config; // LilyPackageConfig* (&)
+    char *output_path; // char*? e.g. Object file, ASM file, LLVM IR file, ...
     File file;
     LilyScanner scanner;     // LilyScanner
     LilyPreparser preparser; // LilyPreparser
