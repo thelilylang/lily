@@ -67,10 +67,16 @@ LilyLLVMEmit(const LilyIrLlvm *self,
             return 1;
         }
 
-        machine.addPassesToEmitFile(
-          code_gen_passes, *out_asm, nullptr, llvm::CGFT_ObjectFile);
+        if (machine.addPassesToEmitFile(
+              code_gen_passes, *out_asm, nullptr, llvm::CGFT_AssemblyFile)) {
+            *error_msg = strdup((const char *)"Can't emit file");
+
+            return 1;
+        }
+
         code_gen_passes.run(module);
         out_asm->flush();
+        out_asm->close();
     } else if (emit_obj) {
         auto *out_obj =
           new (std::nothrow) raw_fd_ostream(filename, ec, sys::fs::OF_None);
@@ -82,10 +88,16 @@ LilyLLVMEmit(const LilyIrLlvm *self,
             return 1;
         }
 
-        machine.addPassesToEmitFile(
-          code_gen_passes, *out_obj, nullptr, llvm::CGFT_AssemblyFile);
+        if (machine.addPassesToEmitFile(
+              code_gen_passes, *out_obj, nullptr, llvm::CGFT_ObjectFile)) {
+            *error_msg = strdup((const char *)"Can't emit file");
+
+            return 1;
+        }
+
         code_gen_passes.run(module);
         out_obj->flush();
+        out_obj->close();
     } else if (emit_bitcode) {
         auto *out_bc =
           new (std::nothrow) raw_fd_ostream(filename, ec, sys::fs::OF_None);
@@ -100,6 +112,7 @@ LilyLLVMEmit(const LilyIrLlvm *self,
         WriteBitcodeToFile(module, *out_bc);
         code_gen_passes.run(module);
         out_bc->flush();
+        out_bc->close();
     }
 
     return 0;
