@@ -45,10 +45,17 @@ inline CONSTRUCTOR(LilyIrLlvmLinker, LilyIrLlvmLinker, const LilyIrLlvm *llvm)
 
 /**
  *
- * @brief Run the linker to compile the LLVM IR.
+ * @brief Run the linker to compile the object files (in executable).
  */
 void
-run__LilyIrLlvmLinker(LilyPackage *self);
+compile_exe__LilyIrLlvmLinker(LilyPackage *self);
+
+/**
+ *
+ * @brief Run the linker to compile the object files (in library).
+ */
+void
+compile_lib__LilyIrLlvmLinker(LilyPackage *self);
 
 /**
  *
