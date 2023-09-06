@@ -65,13 +65,6 @@ get_current_scope__LilyIrLlvm(LLVMValueRef inst);
 
 /**
  *
- * @brief Get filename from the path
- */
-String *
-get_filename_from_path(const char *path);
-
-/**
- *
  * @brief Free LilyIrLlvm type.
  */
 DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self);

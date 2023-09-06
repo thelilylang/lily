@@ -81,33 +81,6 @@ lily_fatal_error(const char *reason)
     printf("Lily(Fatal): LLVM error: %s\n", reason);
 }
 
-String *
-get_filename_from_path(const char *path)
-{
-    Usize path_len = strlen(path);
-    String *filename = NEW(String);
-
-    for (Usize i = path_len - 1; i > 0; --i) {
-#ifdef LILY_WINDOWS_OS
-        if (path[i] != '\\') {
-            push__String(filename, path[i]);
-        } else {
-            break;
-        }
-#else
-        if (path[i] != '/') {
-            push__String(filename, path[i]);
-        } else {
-            break;
-        }
-#endif
-    }
-
-    reverse__String(filename);
-
-    return filename;
-}
-
 CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
 {
     // TODO: Check whether we need to initialize LLVM for each LLVM module
