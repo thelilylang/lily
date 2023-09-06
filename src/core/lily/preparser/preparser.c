@@ -14411,8 +14411,24 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                         break;
                     }
 
-                    default:
-                        FAILED("unexpected keyword after `pub`");
+                    default: {
+                        String *current_s = to_string__LilyToken(self->current);
+
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->file,
+                            &self->current->location,
+                            NEW_VARIANT(
+                              LilyError, unexpected_token, current_s->buffer),
+                            NULL,
+                            NULL,
+                            from__String("unexpected token after `pub`")),
+                          &self->count_error);
+
+                        goto exit_preparser;
+                    }
                 }
 
                 visibility_decl = LILY_VISIBILITY_PRIVATE;
