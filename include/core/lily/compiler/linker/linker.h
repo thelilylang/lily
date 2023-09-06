@@ -56,10 +56,10 @@ inline VARIANT_CONSTRUCTOR(LilyLinker, LilyLinker, llvm, LilyIrLlvmLinker llvm)
 
 /**
  *
- * @brief Run the linker.
+ * @brief Compile to an executable.
  */
 void
-run__LilyLinker(LilyPackage *self);
+compile_exe__LilyLinker(LilyPackage *self);
 
 /**
  *

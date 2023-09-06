@@ -298,7 +298,7 @@ run__LilyPackage(void *self)
     compile__LilyCompilerOutputObj(tree, &compile__LilyCompilerIrLlvm);
 
     if (tree->package->status == LILY_PACKAGE_STATUS_MAIN) {
-        run__LilyLinker(tree->package);
+        compile_exe__LilyLinker(tree->package);
     }
 
     tree->is_done = true;

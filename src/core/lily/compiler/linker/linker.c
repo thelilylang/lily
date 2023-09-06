@@ -30,7 +30,7 @@
 #include <stdlib.h>
 
 void
-run__LilyLinker(LilyPackage *self)
+compile_exe__LilyLinker(LilyPackage *self)
 {
     switch (self->linker.kind) {
         case LILY_LINKER_KIND_CC:
@@ -38,7 +38,7 @@ run__LilyLinker(LilyPackage *self)
         case LILY_LINKER_KIND_CPP:
             break;
         case LILY_LINKER_KIND_LLVM:
-            run__LilyIrLlvmLinker(self);
+            compile_exe__LilyIrLlvmLinker(self);
 
             break;
         default:
