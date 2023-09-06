@@ -27,6 +27,7 @@
 
 #include <stdbool.h>
 
+#include <base/string.h>
 #include <base/types.h>
 
 /**
@@ -35,6 +36,13 @@
  */
 char *
 get_extension__File(const char *path);
+
+/**
+ *
+ * @brief Get filename of the path.
+ */
+String *
+get_filename__File(const char *path);
 
 /**
  *

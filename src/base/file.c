@@ -27,6 +27,7 @@
 #include <base/dir.h>
 #include <base/file.h>
 #include <base/macros.h>
+#include <base/new.h>
 #include <base/platform.h>
 #include <base/sys.h>
 #include <base/types.h>
@@ -62,6 +63,29 @@ get_extension__File(const char *path)
     }
 
     return extension;
+}
+
+String *
+get_filename__File(const char *path)
+{
+    // Extract the filename
+#ifdef LILY_WINDOWS_OS
+    const char *filename_with_ext = strrchr(path, '\\');
+#else
+    const char *filename_with_ext = strrchr(path, '/');
+#endif
+
+    if (filename_with_ext) {
+        ++filename_with_ext;
+    }
+
+    String *filename = NEW(String);
+
+    while (*filename_with_ext != '.') {
+        push__String(filename, *(filename_with_ext++));
+    }
+
+    return filename;
 }
 
 Usize
