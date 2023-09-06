@@ -31,10 +31,6 @@
 #include <core/lily/compiler/linker/lld.h>
 #include <core/lily/compiler/package.h>
 
-#define EXTENSION ".lily"
-#undef EXTENSION
-#define EXTENSION_LEN 5
-
 #ifdef ENV_LOCAL
 #define LIB_DIR_BUILD "build"
 #define LIB_DIR_BUILD_DEBUG "build/Debug"
@@ -46,7 +42,6 @@
 void
 compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 {
-    // Remove `.lily` from the path of the original filename.
     String *output_name = get_filename__File(self->file.name);
     String *path_base = get_filename__File(self->output_path);
 
