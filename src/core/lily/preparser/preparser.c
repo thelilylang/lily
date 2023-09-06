@@ -1253,7 +1253,7 @@ static VARIANT_DESTRUCTOR(LilyPreparserDecl, type, LilyPreparserDecl *self);
 static DESTRUCTOR(LilyPreparserDecl, LilyPreparserDecl *self);
 
 // Advance to the one position and update the current.
-static void
+static inline void
 next_token__LilyPreparser(LilyPreparser *self);
 
 // Advance to n position and update the current.
@@ -1618,6 +1618,7 @@ preparse_when_condition__LilyPreparser(LilyPreparser *self);
 
 #define GET_NAME(self, detail)                                                 \
     String *name = NULL;                                                       \
+                                                                               \
     switch (self->current->kind) {                                             \
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:                                \
             name = clone__String(self->current->identifier_normal);            \
@@ -1648,6 +1649,7 @@ preparse_when_condition__LilyPreparser(LilyPreparser *self);
 #define PREPARSE_UNTIL(v, until)                  \
     {                                             \
         int count = 0;                            \
+                                                  \
         while (until ? 1 : count > 0) {           \
             switch (self->current->kind) {        \
                 case LILY_TOKEN_KIND_L_BRACE:     \
@@ -1670,9 +1672,10 @@ preparse_when_condition__LilyPreparser(LilyPreparser *self);
         }                                         \
     }
 
-static enum LilyVisibility visibility_decl = LILY_VISIBILITY_PRIVATE;
-static Location location_decl;
-static Location location_fun_body_item;
+static threadlocal enum LilyVisibility visibility_decl =
+  LILY_VISIBILITY_PRIVATE;
+static threadlocal Location location_decl;
+static threadlocal Location location_fun_body_item;
 
 CONSTRUCTOR(LilyPreparserImport *,
             LilyPreparserImport,
@@ -5290,16 +5293,16 @@ DESTRUCTOR(LilyPreparserObject, const LilyPreparserObject *self)
 {
     switch (self->kind) {
         case LILY_PREPARSER_OBJECT_KIND_CLASS:
-            FREE(LilyPreparserClass, &self->class);
+            FREE_VARIANT(LilyPreparserObject, class, self);
             break;
         case LILY_PREPARSER_OBJECT_KIND_ENUM:
-            FREE(LilyPreparserEnumObject, &self->enum_);
+            FREE_VARIANT(LilyPreparserObject, enum_, self);
             break;
         case LILY_PREPARSER_OBJECT_KIND_RECORD:
-            FREE(LilyPreparserRecordObject, &self->record);
+            FREE_VARIANT(LilyPreparserObject, record, self);
             break;
         case LILY_PREPARSER_OBJECT_KIND_TRAIT:
-            FREE(LilyPreparserTrait, &self->trait);
+            FREE_VARIANT(LilyPreparserObject, trait, self);
             break;
         default:
             UNREACHABLE("unknown variant");
@@ -5830,13 +5833,13 @@ DESTRUCTOR(LilyPreparserType, const LilyPreparserType *self)
 {
     switch (self->kind) {
         case LILY_PREPARSER_TYPE_KIND_ALIAS:
-            FREE(LilyPreparserAlias, &self->alias);
+            FREE_VARIANT(LilyPreparserType, alias, self);
             break;
         case LILY_PREPARSER_TYPE_KIND_ENUM:
-            FREE(LilyPreparserEnum, &self->enum_);
+            FREE_VARIANT(LilyPreparserType, enum_, self);
             break;
         case LILY_PREPARSER_TYPE_KIND_RECORD:
-            FREE(LilyPreparserRecord, &self->record);
+            FREE_VARIANT(LilyPreparserType, record, self);
             break;
         default:
             UNREACHABLE("unknown variant");
@@ -6572,6 +6575,10 @@ DESTRUCTOR(LilyPreparserDecl, LilyPreparserDecl *self)
             FREE_VARIANT(LilyPreparserDecl, fun, self);
             break;
 
+        case LILY_PREPARSER_DECL_KIND_LIB:
+            FREE_VARIANT(LilyPreparserDecl, lib, self);
+            break;
+
         case LILY_PREPARSER_DECL_KIND_MACRO_EXPAND:
             FREE_VARIANT(LilyPreparserDecl, macro_expand, self);
             break;
@@ -6596,10 +6603,9 @@ DESTRUCTOR(LilyPreparserDecl, LilyPreparserDecl *self)
 void
 next_token__LilyPreparser(LilyPreparser *self)
 {
-    if (self->position + 1 < self->tokens->len) {
-        ++self->position;
-        self->current = get__Vec(self->tokens, self->position);
-    }
+    self->current = self->position + 1 < self->tokens->len
+                      ? get__Vec(self->tokens, ++self->position)
+                      : self->current;
 }
 
 void
@@ -6655,6 +6661,11 @@ is_start_a_new_block__LilyPreparser(const LilyPreparser *self)
 void
 leave_block_finish_by_end__LilyPreparser(LilyPreparser *self)
 {
+    // begin .. end
+    // if .. end
+    // match .. end
+    // while .. end
+    // for .. end
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
         switch (self->current->kind) {
@@ -6687,6 +6698,7 @@ leave_block_finish_by_end__LilyPreparser(LilyPreparser *self)
 void
 leave_brace_block__LilyPreparser(LilyPreparser *self)
 {
+    // @{ .. }
     while (!must_close_basic_brace_block__LilyPreparser(self)) {
         switch (self->current->kind) {
             case LILY_TOKEN_KIND_KEYWORD_BEGIN:
@@ -6746,6 +6758,9 @@ preparse_brace_with_comma_sep__Lilypreparser(LilyPreparser *self)
 LilyPreparserImport *
 preparse_import__LilyPreparser(LilyPreparser *self)
 {
+    // import <import_value> [as <as_value>] ;
+    // <import_value> = <literal_str>
+    // <as_value> = <identifier_normal>
     String *import_value = NULL;
     String *as_value = NULL;
 
@@ -6833,6 +6848,11 @@ preparse_import__LilyPreparser(LilyPreparser *self)
 LilyPreparserMacro *
 preparse_macro__LilyPreparser(LilyPreparser *self)
 {
+    // macro <name> [ ( <params> ) ] = { <tokens> } ;
+    // <name> = <identifier_normal>
+    // <param> = <token> [ <token> ]*
+    // <params> = <param> [ , <param> ]*
+    // <tokens> = <token> [ <token> ]*
     next_token__LilyPreparser(self);
 
     // 1. Get name of the macro.
@@ -7019,8 +7039,14 @@ get_tokens : {
 int
 preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 {
-    next_token__LilyPreparser(self);
+    // package [ <name> ] = <package_content> end
+    // <name> = <identifier_normal>
+    // <package_content> = <sub_pkg> [ <sub_pkg> ]*
+    // <sub_pkg> = [ <pub> ] .<sub_pkg_name> ;
+    // <sub_pkg_name> = <identifier_string> | <identifier_normal>
+    next_token__LilyPreparser(self); // skip `package` keyword
 
+    // 1. Get package name.
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
             if (info->package->name) {
@@ -7073,6 +7099,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
         }
     }
 
+    // 2. Get package content.
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
 
@@ -7308,7 +7335,11 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 LilyPreparserDecl *
 preparse_module_body__LilyPreparser(LilyPreparser *self)
 {
-    location_decl = clone__Location(&self->current->location);
+    // <module_body> = <module_decl> [ <module_body> ]*
+    // <module_decl> = <constant_decl> | <error_decl> | <fun_decl> |
+    //                 <module_decl> | <object_decl> | <type_decl>
+    location_decl = clone__Location(&self->current->location); // Save location.
+    visibility_decl = LILY_VISIBILITY_PRIVATE; // Default visibility is private.
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_PUB:
@@ -7362,10 +7393,6 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
                     return NULL;
                 }
             }
-
-            visibility_decl = LILY_VISIBILITY_PRIVATE;
-
-            break;
         case LILY_TOKEN_KIND_KEYWORD_CLOSE:
             next_token__LilyPreparser(self);
 
@@ -7429,7 +7456,12 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
 LilyPreparserDecl *
 preparse_module__LilyPreparser(LilyPreparser *self)
 {
-    next_token__LilyPreparser(self);
+    // module <name> = <module_body> end
+    // <name> = <identifier_normal> [ . <identifier_normal> ]*
+    // <module_body> = <module_decl> [ <module_body> ]*
+    // <module_decl> = <constant_decl> | <error_decl> | <fun_decl> |
+    //                 <module_decl> | <object_decl> | <type_decl>
+    next_token__LilyPreparser(self); // skip `module` keyword
 
     String *name = NULL;
     Vec *body = NEW(Vec);
@@ -7549,6 +7581,7 @@ parse_module_name : {
 void
 preparse_test__LilyPreparser(LilyPreparser *self)
 {
+    TODO("preparse test");
 }
 
 bool
@@ -7680,6 +7713,8 @@ must_close_fun_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_macro_expand_for_fun__LilyPreparser(LilyPreparser *self)
 {
+    // <macro_expand> = <identifier_normal> ! [ (<macro_expand_args>) ] ;
+    // <macro_expand_args> = <macro_expand_arg> [ , <macro_expand_arg> ]*
     LilyPreparserDecl *decl = preparse_macro_expand__LilyPreparser(self);
 
     if (decl) {
@@ -7700,6 +7735,7 @@ preparse_macro_expand_for_fun__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_asm_block__LilyPreparser(LilyPreparser *self)
 {
+    // asm ( <asm_block> ) ;
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `asm` keyword
@@ -7756,6 +7792,9 @@ preparse_asm_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_await_block__LilyPreparser(LilyPreparser *self)
 {
+    // await <await_block> ;
+    // <await_block> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `await` keyword
@@ -7812,6 +7851,7 @@ preparse_await_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_break_block__LilyPreparser(LilyPreparser *self)
 {
+    // break [ <identifier_normal> ] ;
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `break` keyword
@@ -7866,6 +7906,9 @@ preparse_break_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_defer_block__LilyPreparser(LilyPreparser *self)
 {
+    // defer <block> ;
+    // <block> = <exprs> | <lambda> | <stmt_for> | <stmt_match> | <stmt_if> |
+    //           <stmt_try> | <stmt_unsafe> | <stmt_while> | <stmt_block>
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `defer` keyword
@@ -7949,6 +7992,8 @@ preparse_defer_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_drop_block__LilyPreparser(LilyPreparser *self)
 {
+    // drop <tokens> ;
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `drop` keyword
@@ -7994,6 +8039,15 @@ preparse_drop_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_if_block__LilyPreparser(LilyPreparser *self)
 {
+    // if <if_expr> [ :> <if_capture> ] do <if_block> [ <elif_block> ]* [ else
+    // <else_block> ] end <if_expr> = <tokens> <if_capture> = <tokens>
+    // <if_block> = <tokens>
+    // <elif_block> = elif <elif_expr> [ :> <elif_capture> ] do <elif_block>
+    // <elif_expr> = <tokens>
+    // <elif_capture> = <tokens>
+    // <elif_block> = <tokens>
+    // <else_block> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
     Vec *if_expr = NEW(Vec); // Vec<LilyToken* (&)>*
     Vec *if_capture = NULL;  // Vec<LilyToken* (&)>*?
@@ -8347,6 +8401,8 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                 from__String("expected `end` keyword to close the `if` block")),
               &self->count_error);
 
+            // Clean up allocations
+
             FREE(Vec, if_expr);
 
             FREE_BUFFER_ITEMS(
@@ -8365,6 +8421,11 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_for_block__LilyPreparser(LilyPreparser *self)
 {
+    // for <for_expr> [ :> <for_capture> ] do <for_block> end
+    // <for_expr> = <tokens>
+    // <for_capture> = <tokens>
+    // <for_block> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `for` keyword
@@ -8402,6 +8463,7 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
             return NULL;
         }
         case LILY_TOKEN_KIND_COLON_R_SHIFT:
+            // Preparse for capture (optional)
             capture = NEW(Vec);
 
             next_token__LilyPreparser(self); // skip `:>`
@@ -8449,9 +8511,17 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_lambda__LilyPreparser(LilyPreparser *self)
 {
+    // <lambda> <lambda_name> [ (<lambda_params>) ] [ <lambda_return_data_type>
+    // ] -> <lambda_body> ; [ \( <lambda_params_call>) ; ]
+    // <lambda_name> = <identifier_normal> | <identifier_string>
+    // <lambda_params> = <tokens> [ , <tokens> ]*
+    // <lambda_return_data_type> = <tokens>
+    // <lambda_body> = <tokens>
+    // <lambda_params_call> = <tokens> [ , <tokens> ]*
+    // <tokens> = <token> [ <token> ]*
     Location location = clone__Location(&self->current->location);
 
-    next_token__LilyPreparser(self);
+    next_token__LilyPreparser(self); // skip `lambda` keyword
 
     // 1. Get the name of the lambda.
     String *name = NULL;
@@ -8651,6 +8721,10 @@ preparse_lambda__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_while_block__LilyPreparser(LilyPreparser *self)
 {
+    // while <while_expr> do <while_block> end
+    // <while_expr> = <tokens>
+    // <while_block> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `while` keyword
@@ -8706,6 +8780,9 @@ preparse_while_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_raise_block__LilyPreparser(LilyPreparser *self)
 {
+    // raise <raise_expr> ;
+    // <raise_expr> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `raise` keyword
@@ -8748,6 +8825,9 @@ preparse_raise_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_return_block__LilyPreparser(LilyPreparser *self)
 {
+    // return [ <return_expr> ] ;
+    // <return_expr> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `return` keyword
@@ -8807,6 +8887,11 @@ preparse_return_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_try_block__LilyPreparser(LilyPreparser *self)
 {
+    // try do <try_block> [ catch <catch_expr> do <catch_block> ] end
+    // <try_block> = <tokens>
+    // <catch_expr> = <tokens>
+    // <catch_block> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
 
     jump__LilyPreparser(self, 2); // skip `try` and `do` keyword
@@ -8933,6 +9018,10 @@ preparse_try_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_match_block__LilyPreparser(LilyPreparser *self)
 {
+    // match <match_expr> do <match_block> end
+    // <match_expr> = <tokens>
+    // <match_block> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location_match = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `match` keyword
@@ -9151,6 +9240,8 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_next_block__LilyPreparser(LilyPreparser *self)
 {
+    // next [ <next_name> ] ;
+    // <next_name> = <identifier_normal>
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `next` keyword
@@ -9205,6 +9296,9 @@ preparse_next_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_basic_block__LilyPreparser(LilyPreparser *self)
 {
+    // begin <basic_block_body> end
+    // <basic_block_body> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
 
     next_token__LilyPreparser(self); // skip `begin` keyword
@@ -9224,6 +9318,9 @@ preparse_basic_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_basic_brace_block__LilyPreparser(LilyPreparser *self)
 {
+    // @{ <basic_brace_block_body> }
+    // <basic_brace_block_body> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
     Vec *body = NEW(Vec); // Vec<LilyPreparserFunBodyItem*>*
 
@@ -9248,9 +9345,13 @@ preparse_basic_brace_block__LilyPreparser(LilyPreparser *self)
 LilyPreparserFunBodyItem *
 preparse_unsafe_block__LilyPreparser(LilyPreparser *self)
 {
+    // unsafe <unsafe_block_body> end
+    // <unsafe_block_body> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = location_fun_body_item;
     Vec *body = NEW(Vec); // Vec<LilyPreparserFunBodyItem*>*
 
+    // 1. Preparse unsafe block body
     while (!must_close_unsafe_block__LilyPreparser(self)) {
         LilyPreparserFunBodyItem *item = preparse_block__LilyPreparser(
           self, &must_close_unsafe_block__LilyPreparser, true);
@@ -9276,6 +9377,18 @@ preparse_variable_block__LilyPreparser(LilyPreparser *self,
                                        bool is_ref,
                                        bool is_drop)
 {
+    // val <variable_name> [ <variable_data_type> ] := <variable_expr> ;
+    // mut <variable_name> [ <variable_data_type> ] := <variable_expr> ;
+    // drop: val <variable_name> [ <variable_data_type> ] := <variable_expr> ;
+    // drop: mut <variable_name> [ <variable_data_type> ] := <variable_expr> ;
+    // ref: val <variable_name> [ <variable_data_type> ] := <variable_expr> ;
+    // ref: mut <variable_name> [ <variable_data_type> ] := <variable_expr> ;
+    // trace: val <variable_name> [ <variable_data_type> ] := <variable_expr> ;
+    // trace: mut <variable_name> [ <variable_data_type> ] := <variable_expr> ;
+    // <variable_name> = <identifier_normal>
+    // <variable_data_type> = <tokens>
+    // <variable_expr> = <tokens>
+    // <tokens> = <token> [ <token> ]*
     Location location = clone__Location(&self->current->location);
     Vec *data_type = NULL; // Vec<LilyToken* (&)>*?
 
@@ -9918,6 +10031,21 @@ preparse_body__LilyPreparser(LilyPreparser *self,
 LilyPreparserDecl *
 preparse_fun__LilyPreparser(LilyPreparser *self)
 {
+    // fun [<object_impl>][<name>][<generic_params>][<params>][<when>][<req>]
+    // [<return_data_type>] = <body> end
+    // <object_impl> = @<identifier_normal> [ . <identifier_normal> ]*
+    // <name> = <identifier_normal> | <identifier_operator>
+    // <generic_params> = <hook_with_comma_sep>
+    // <params> = <paren_with_comma_sep>
+    // <when> = when <expr> [ , <expr> ]*
+    // <req> = req <expr> [ , <expr> ]*
+    // <return_data_type> = <tokens>
+    // <body> = <block>
+    // <tokens> = <token> [ <token> ]*
+    // <block> = <token> [ <token> ]*
+    // <paren_with_comma_sep> = ( <tokens> [ , <tokens> ]* )
+    // <hook_with_comma_sep> = [ <tokens> [ , <tokens> ]* ]
+    // <expr> = <tokens>
     next_token__LilyPreparser(self); // skip `fun` keyword
 
     Location location = clone__Location(&location_decl);
@@ -9946,12 +10074,12 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
                         push_str__String(
                           object_impl,
                           self->current->identifier_normal->buffer);
-                        next_token__LilyPreparser(self);
                     } else {
                         object_impl =
                           clone__String(self->current->identifier_normal);
-                        next_token__LilyPreparser(self);
                     }
+
+                    next_token__LilyPreparser(self);
 
                     switch (self->current->kind) {
                         case LILY_TOKEN_KIND_DOT:
@@ -10228,6 +10356,8 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
 LilyPreparserDecl *
 preparse_constant__LilyPreparser(LilyPreparser *self)
 {
+    // val <name> [data_type] := <expr>;
+    // val (<name> [data_type], ...) := (<expr>,...);
     next_token__LilyPreparser(self); // skip `val` keyword
 
     switch (self->current->kind) {
@@ -10329,6 +10459,7 @@ preparse_constant__LilyPreparser(LilyPreparser *self)
 LilyPreparserDecl *
 preparse_constant_multiple__LilyPreparser(LilyPreparser *self)
 {
+    // val (<name> [data_type], ...) := (<expr>,...);
     enum LilyVisibility visibility = visibility_decl;
     Location location = clone__Location(&location_decl);
 
@@ -10565,6 +10696,7 @@ LilyPreparserClassBodyItem *
 preparse_attribute_for_class__LilyPreparser(LilyPreparser *self,
                                             Location location)
 {
+    // val <name> [data_type] [:= <expr>] [:: get | [,] set] ;
     next_token__LilyPreparser(self); // skip `val` keyword
 
     // 1. Get attribute's name
@@ -11218,6 +11350,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
 LilyPreparserTraitBodyItem *
 preparse_prototype__LilyPreparser(LilyPreparser *self)
 {
+    // fun <name> [generic_params] (params) [return_data_type] ;
     Location location = clone__Location(&self->current->location);
 
     next_token__LilyPreparser(self); // skip `fun` keyword
@@ -11600,6 +11733,7 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
                               Vec *generic_params,
                               bool is_close)
 {
+    // trait <name> [generic_params] [inherits] [body] end
     Location location = clone__Location(&location_decl);
     enum LilyVisibility visibility = visibility_decl;
 
@@ -11731,6 +11865,12 @@ preparse_constant_for_record__LilyPreparser(LilyPreparser *self)
 Vec *
 preparse_record_object_body__LilyPreparser(LilyPreparser *self)
 {
+    // <field> = <name> <data_type> ;
+    // <fun> = fun ...
+    // <const> = val ...
+    // <macro_expand> = <name> ! [ <params> ] ;
+    // <item> = <field> | <fun> | <const> | <macro_expand>
+    // <body> = <item> [ <item> ]*
     Vec *body = NEW(Vec); // Vec<LilyPreparserRecordObjectBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
@@ -11959,6 +12099,7 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                                       Vec *impls,
                                       Vec *generic_params)
 {
+    // object <name> [generic_params] record [impls] [body] end
     enum LilyVisibility visibility = visibility_decl;
     Location location = clone__Location(&location_decl);
 
@@ -12089,6 +12230,12 @@ preparse_method_for_enum__LilyPreparser(LilyPreparser *self)
 Vec *
 preparse_enum_object_body__LilyPreparser(LilyPreparser *self)
 {
+    // <variant> = <name> [ : <data_type> ] ;
+    // <fun> = fun ...
+    // <const> = val ...
+    // <macro_expand> = <name> ! [ <params> ] ;
+    // <item> = <variant> | <fun> | <const> | <macro_expand>
+    // <body> = <item> [ <item> ]*
     Vec *body = NEW(Vec); // Vec<LilyPreparserEnumObjectBodyItem*>*
 
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
@@ -12229,6 +12376,7 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
                                     Vec *impls,
                                     Vec *generic_params)
 {
+    // object <name> [generic_params] enum [impls] [body] end
     enum LilyVisibility visibility = visibility_decl;
     Location location = clone__Location(&location_decl);
 
@@ -12779,6 +12927,7 @@ preparse_type__LilyPreparser(LilyPreparser *self)
 LilyPreparserRecordField *
 preparse_record_field__LilyPreparser(LilyPreparser *self, bool is_mut)
 {
+    // [ <pub> ] <name> <data_type> [ := <expr> ] ;
     String *name = NULL;
     Vec *data_type = NEW(Vec); // Vec<LilyToken* (&)>*
     Vec *optional_expr = NULL; // Vec<LilyToken* (&)>*?
@@ -13065,6 +13214,9 @@ preparse_record__LilyPreparser(LilyPreparser *self,
                                String *name,
                                Vec *generic_params)
 {
+    // type <name> [ <generic_params> ] record = <body> end
+
+    // 1. Get visibility
     enum LilyVisibility visibility = visibility_decl;
     Location location = clone__Location(&location_decl);
 
@@ -13121,6 +13273,8 @@ preparse_record__LilyPreparser(LilyPreparser *self,
 static LilyPreparserEnumVariant *
 preparse_enum_variant__LilyPreparser(LilyPreparser *self)
 {
+    // <name> [ : <data_type> ] [ ; ]
+
     // 1. Get variant's name
     String *name = NULL;
 
@@ -13388,6 +13542,7 @@ preparse_alias__LilyPreparser(LilyPreparser *self,
                               String *name,
                               Vec *generic_params)
 {
+    // type <name> [ <generic_params> ] alias = <data_type> [ ; ]
     Vec *data_type = NEW(Vec); // Vec<LilyToken* (&)>*
 
     PREPARSE_UNTIL(data_type,
@@ -13437,6 +13592,7 @@ preparse_alias__LilyPreparser(LilyPreparser *self,
 LilyPreparserDecl *
 preparse_error__LilyPreparser(LilyPreparser *self)
 {
+    // error <name> [ <generic_params> ] [ : <data_type> ] ;
     Location location = clone__Location(&location_decl);
 
     next_token__LilyPreparser(self); // skip `error`
@@ -13535,6 +13691,7 @@ preparse_error__LilyPreparser(LilyPreparser *self)
 LilyPreparserDecl *
 preparse_macro_expand__LilyPreparser(LilyPreparser *self)
 {
+    // <name> ! [ ( <params> ) ] ;
     ASSERT(self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_NORMAL ||
            self->current->kind == LILY_TOKEN_KIND_IDENTIFIER_STRING);
 
@@ -14254,8 +14411,24 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                         break;
                     }
 
-                    default:
-                        FAILED("unexpected keyword after `pub`");
+                    default: {
+                        String *current_s = to_string__LilyToken(self->current);
+
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->file,
+                            &self->current->location,
+                            NEW_VARIANT(
+                              LilyError, unexpected_token, current_s->buffer),
+                            NULL,
+                            NULL,
+                            from__String("unexpected token after `pub`")),
+                          &self->count_error);
+
+                        goto exit_preparser;
+                    }
                 }
 
                 visibility_decl = LILY_VISIBILITY_PRIVATE;
