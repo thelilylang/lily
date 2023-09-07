@@ -131,7 +131,6 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/compiler/ir/llvm/*.cpp
 	${CLANG_FORMAT} ./src/core/lily/compiler/ir/*.c
 	${CLANG_FORMAT} ./src/core/lily/compiler/linker/*.c
-	${CLANG_FORMAT} ./src/core/lily/compiler/linker/*.cpp
 	${CLANG_FORMAT} ./src/core/lily/compiler/output/*.c
 	${CLANG_FORMAT} ./src/core/lily/diagnostic/*.c
 	${CLANG_FORMAT} ./src/core/lily/functions/*.c

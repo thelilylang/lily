@@ -468,6 +468,18 @@ target_include_directories(lily_core_lily_analysis PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_compiler add_library(LilyCoreLilyCompiler STATIC)
 
+# lily_core_lily_compiler_driver
+set(LILY_CORE_LILY_COMPILER_DRIVER
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/driver/lld.cpp
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/driver/llvm-ar.cpp)
+
+add_library(lily_core_lily_compiler_driver STATIC
+            ${LILY_CORE_LILY_COMPILER_DRIVER})
+target_link_libraries(lily_core_lily_compiler_driver lily_base
+                      ${LILY_LLVM_LIBS} ${LILY_LLD_LIBS})
+target_include_directories(lily_core_lily_compiler_driver
+                           PRIVATE ${LILY_INCLUDE})
+
 # lily_core_lily_compiler_ir
 set(LILY_CORE_LILY_COMPILER_IR_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/cc.c
@@ -560,13 +572,13 @@ set(LILY_CORE_LILY_COMPILER_IR_LLVM_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/pending.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/scope.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/utils.cpp
-    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/linker/lld.cpp
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/linker/object_format.c)
 
 add_library(lily_core_lily_compiler_ir_llvm STATIC
             ${LILY_CORE_LILY_COMPILER_IR_LLVM_SRC})
-target_link_libraries(lily_core_lily_compiler_ir_llvm lily_base
-                      lily_core_lily_mir ${LILY_LLVM_LIBS} ${LILY_LLD_LIBS})
+target_link_libraries(
+  lily_core_lily_compiler_ir_llvm lily_base lily_core_lily_mir
+  lily_core_lily_compiler_driver ${LILY_LLVM_LIBS} ${LILY_LLD_LIBS})
 target_include_directories(lily_core_lily_compiler_ir_llvm
                            PRIVATE ${LILY_INCLUDE})
 
