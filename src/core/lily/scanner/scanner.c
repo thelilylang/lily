@@ -1978,7 +1978,7 @@ get_token__LilyScanner(LilyScanner *self)
 
             switch (match) {
                 case '{':
-                    if (c1 == (char *)'{') {
+                    if (c1 == (char *)'|') {
                         jump__LilyScanner(self, 2);
                         skip_space__LilyScanner(self);
 
@@ -1987,7 +1987,7 @@ get_token__LilyScanner(LilyScanner *self)
                         next_char__Source(&self->source);
                         skip_space__LilyScanner(self);
 
-                        if (self->source.cursor.current == '}' &&
+                        if (self->source.cursor.current == '|' &&
                             peek_char__LilyScanner(self, 1) == (char *)'}') {
                             next_char__Source(&self->source);
 

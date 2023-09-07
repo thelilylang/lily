@@ -1,5 +1,5 @@
 macro fn($i id, $v expr) = {
-	fun {{i}} = {{v}} end 
+	fun {|i|} = {|v|} end 
 };
 
 fn!(zero, 0);

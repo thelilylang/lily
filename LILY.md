@@ -368,7 +368,7 @@ end
 
 ```lily
 pub macro create_a_function($name id, $d dt) = {
-    pub fun {{name}}(x {{d}}) = x;
+    pub fun {|name|}(x {|d|}) = x;
 };
 
 create_a_function!(add1, Int32)

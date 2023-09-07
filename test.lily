@@ -2,11 +2,11 @@ error Fail: Str;
 error FileNotFound: Str;
 
 macro field($i id, $t dt) = {
-	{{i}} {{t}};
+	{|i|} {|t|};
 };
 
 macro fn($i id, $param tks, $x expr) = {
-	fun {{i}}({{param}}) = {{x}} end
+	fun {|i|}({|param|}) = {|x|} end
 };
 
 fn!(add, ${x, y}, x + y); // fun add(x, y) = x + y end
@@ -21,7 +21,7 @@ type Person record =
 end
 
 macro variant($i id, $t dt) = {
-	{{i}}:{{t}};
+	{|i|}:{|t|};
 };
 
 type Color enum =
@@ -42,7 +42,7 @@ object Color enum =
 end
 
 macro prototype($i id, $params tks, $ret dt) = {
-	fun {{i}}({{params}}) {{ret}};
+	fun {|i|}({|params|}) {|ret|};
 };
 
 object Clone trait =

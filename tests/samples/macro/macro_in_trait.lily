@@ -1,5 +1,5 @@
 macro prototype($i id, $params tks, $ret dt) = {
-	fun {{i}}({{params}}) {{ret}};
+	fun {|i|}({|params|}) {|ret|};
 };
 
 object Clone trait =
