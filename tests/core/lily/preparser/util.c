@@ -7,6 +7,7 @@
 
 #define FILE_IMPORT "./tests/core/lily/preparser/input/import.lily"
 #define FILE_MACRO "./tests/core/lily/preparser/input/macro.lily"
+#define FILE_PACKAGE "./tests/core/lily/preparser/input/package.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)
