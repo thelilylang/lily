@@ -665,7 +665,7 @@ to_string__LilyToken(LilyToken *self)
         case LILY_TOKEN_KIND_IDENTIFIER_DOLLAR:
             return format__String("${S}", self->identifier_dollar);
         case LILY_TOKEN_KIND_IDENTIFIER_MACRO:
-            return format__String("{{{{{S}}}", self->identifier_macro);
+            return format__String("{{|{S}|}", self->identifier_macro);
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
             return format__String("{S}", self->identifier_normal);
         case LILY_TOKEN_KIND_IDENTIFIER_OPERATOR:
