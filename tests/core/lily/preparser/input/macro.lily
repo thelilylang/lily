@@ -1,0 +1,7 @@
+macro write($s expr) = {
+	@sys.write(1, {{s}}, @len({{s}}));
+};
+
+pub macro add($x expr, $y expr) = {
+	add({{s}}, {{y}});
+};
