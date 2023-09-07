@@ -21,7 +21,10 @@ set(LILY_VERSION
 message(STATUS "Build lily v${LILY_VERSION}")
 
 if(NOT WIN32)
-  add_compile_options(-Wall -O3 -fdiagnostics-color=always)
+	# NOTE: On WSL you must to disable `-fdiagnostics-color=always`
+	add_compile_options(-Wall -O3 -fdiagnostics-color=always)
+else()
+	add_compile_options(-Wall -O3)
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
