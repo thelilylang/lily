@@ -1,3 +1,4 @@
+#include "asm.c"
 #include "import.c"
 #include "macro.c"
 #include "macro_expand.c"
@@ -15,5 +16,6 @@ main()
     ADD_SIMPLE(package);
     ADD_SIMPLE(module);
     ADD_SIMPLE(macro_expand);
+    ADD_SIMPLE(asm);
     RUN_TEST();
 }
