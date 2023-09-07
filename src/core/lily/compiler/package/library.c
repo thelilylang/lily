@@ -41,6 +41,7 @@ CONSTRUCTOR(LilyLibrary *,
     self->version = version;
     self->url = url;
     self->path = path;
+    self->output_path = NULL;
     self->package = package;
 
     return self;

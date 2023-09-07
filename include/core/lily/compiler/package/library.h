@@ -34,8 +34,9 @@ typedef struct LilyLibrary
 {
     String *name;
     String *version;
-    String *url;  // String*?; URL to download the library
-    String *path; // path (in the PC) to find the library
+    String *url;       // String*?; URL to download the library
+    String *path;      // path (in the PC) to find the library
+    char *output_path; // char*? e.g. *.a, *.lib, ...
     LilyPackage *package;
 } LilyLibrary;
 
