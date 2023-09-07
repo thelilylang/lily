@@ -32,7 +32,7 @@ Work in progress...
 - Code generator (LLVM): 60% finished
 - Code generator (C): 0% finished
 - Code generator (C++): 0% finished
-- Linker (LLVM) 5% finished
+- Linker (LLVM) 10% finished
 - Linker (C) 0% finished
 - Linker (C++) 0% finished
 
