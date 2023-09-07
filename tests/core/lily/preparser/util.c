@@ -9,6 +9,7 @@
 #define FILE_MACRO "./tests/core/lily/preparser/input/macro.lily"
 #define FILE_PACKAGE "./tests/core/lily/preparser/input/package.lily"
 #define FILE_MODULE "./tests/core/lily/preparser/input/module.lily"
+#define FILE_MACRO_EXPAND "./tests/core/lily/preparser/input/macro_expand.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)

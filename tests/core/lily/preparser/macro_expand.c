@@ -1,0 +1,14 @@
+#include "util.c"
+
+#include <base/test.h>
+
+SIMPLE(macro_expand, {
+    RUN_PREPARSER(FILE_MACRO_EXPAND);
+
+    DECLS_ITERATOR();
+
+    TEST_ASSERT_EQ(NEXT_DECL()->kind, LILY_PREPARSER_DECL_KIND_MACRO_EXPAND);
+    TEST_ASSERT_EQ(NEXT_DECL()->kind, LILY_PREPARSER_DECL_KIND_MACRO_EXPAND);
+
+    FREE_PREPARSER();
+});
