@@ -26,9 +26,9 @@
 #include <base/macros.h>
 
 #include <cli/emit.h>
+#include <core/lily/compiler/driver/lld.h>
 #include <core/lily/compiler/ir/llvm/dump.h>
 #include <core/lily/compiler/ir/llvm/linker.h>
-#include <core/lily/compiler/linker/lld.h>
 #include <core/lily/compiler/package.h>
 
 #ifdef ENV_LOCAL
