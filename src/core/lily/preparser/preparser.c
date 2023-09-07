@@ -1941,10 +1941,7 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserModule, const LilyPreparserModule *self)
 
 DESTRUCTOR(LilyPreparserModule, const LilyPreparserModule *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
-
     FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyPreparserDecl);
     FREE(Vec, self->body);
 }

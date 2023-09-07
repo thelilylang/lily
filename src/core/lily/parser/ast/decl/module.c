@@ -43,7 +43,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclModule, const LilyAstDeclModule *self)
 
 DESTRUCTOR(LilyAstDeclModule, const LilyAstDeclModule *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
     FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, LilyAstDecl);
     FREE(Vec, self->decls);
 }
