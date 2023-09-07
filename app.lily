@@ -1,28 +1,32 @@
+package App =
+	.a;
+end
+
 // import "@sys";
 // import "@builtin";
 // 
 // macro write($s expr) = {
-// 	@sys.write(1, {{s}}, @len({{s}}))	
+// 	@sys.write(1, {|s|}, @len({|s|}))
 // };
 
-type Person record =
-	name Str;
-	age Uint8;
-end
-
-type MyType record =
-	color Color;
-end
-
-type Color enum =
-	Hex:Uint8;
-	Rgb:(Uint8, Uint8, Uint8);
-	R;
-end
-
-type MyValue[T] record =
-	value T;
-end
+// type Person record =
+// 	name Str;
+// 	age Uint8;
+// end
+// 
+// type MyType record =
+// 	color Color;
+// end
+// 
+// type Color enum =
+// 	Hex:Uint8;
+// 	Rgb:(Uint8, Uint8, Uint8);
+// 	R;
+// end
+// 
+// type MyValue[T] record =
+// 	value T;
+// end
 
 // type Letter enum =
 // 	A;
@@ -46,11 +50,11 @@ end
 
 // fun add(x Int32, y Int32) Int32 = return x + y; end
 
-fun add[T](x T) T = return x; end
-fun add2[T](x T) T = return add::[T](x); end
-fun add3[T](x T) T = return add2::[T](x); end
+// fun add[T](x T) T = return x; end
+// fun add2[T](x T) T = return add::[T](x); end
+// fun add3[T](x T) T = return add2::[T](x); end
 
-error Invalid;
+// error Invalid;
 
 // fun get_err(n Int32) =
 // 	if n == 0 do
@@ -60,12 +64,38 @@ error Invalid;
 // 	return n;
 // end
 
+module Operation =
+	fun add(x, y) = x + y end
+end
+
+type MyInt alias = Int32;
+type MyInt2 alias = MyInt;
+
+val (A Int32, B Int32) := (10, 40);
+
 fun main =
-	val x := global.add3::[Int32](34);
-	val y := global.add3::[Int64](34);
-	val z := global.add3::[Int64](y);
-	val d := MyValue { value := 40 };
-	val e := MyValue { value := "Hello" };
+	// val x := global.add3::[Int32](34);
+	// val y := global.add3::[Int64](34);
+	// val z := global.add3::[Int64](y);
+	// val u MyInt2 := 30;
+	// val d := MyValue { value := 40 };
+	// val e := MyValue { value := "Hello" };
+
+	// val a := 30;
+	// val c := add(2, 4);
+	// mut d := true or false and true or true or false;
+	// mut e := d;
+	// d = false;
+	// mut f := d;
+	val a := Operation.add(2, 3);
+	val b := Operation.add(40, 10);
+
+	// match a do
+	// 	1 ? c == 0 => ();
+	// 	2 => ();
+	// 	3 => ();
+	// 	_ => ();
+	// end
 
 	// try do
 	// 	get_err(404);
