@@ -1,5 +1,5 @@
 macro make_simple_fun($name id, $ret expr) = {
-	fun {{name}}(x, y) = {{ret}} end
+	fun {|name|}(x, y) = {|ret|} end
 };
 
 make_simple_fun!(add, x + y);

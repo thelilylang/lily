@@ -1,5 +1,5 @@
 macro field($i id, $t dt) = {
-    {{i}} {{t}};
+    {|i|} {|t|};
 };
 
 type Person record =

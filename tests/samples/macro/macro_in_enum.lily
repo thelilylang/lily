@@ -1,5 +1,5 @@
 macro variant($i id) = {
-    {{i}};
+    {|i|};
 };
 
 type Letter enum =
