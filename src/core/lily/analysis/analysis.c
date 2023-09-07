@@ -5622,8 +5622,11 @@ check_fun_call_expr__LilyAnalysis(LilyAnalysis *self,
                         checked_params,
                         signature->generic_params)));
 
-                FREE_HASHMAP_VALUES(generic_params, LilyCheckedDataType);
-                FREE(HashMap, generic_params);
+                if (generic_params) {
+                    FREE_HASHMAP_VALUES(generic_params, LilyCheckedDataType);
+                    FREE(HashMap, generic_params);
+                }
+
                 FREE(LilyCheckedDataType, last__Vec(fun_types));
                 FREE(Vec, fun_types);
             } else {
