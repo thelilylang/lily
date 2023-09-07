@@ -1,0 +1,5 @@
+module X =
+end
+
+module X.Y =
+end
