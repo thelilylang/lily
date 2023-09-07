@@ -188,6 +188,9 @@ build__LilyPackage(const LilycConfig *config,
     FREE(LilyScanner, &self->scanner);
     FREE(LilyPreparserInfo, &self->preparser_info);
     FREE(File, &self->file);
+    FREE_BUFFER_ITEMS(
+      self->private_macros->buffer, self->private_macros->len, LilyMacro);
+    FREE(Vec, self->private_macros);
     lily_free(self);
 
     return NULL;
@@ -434,9 +437,6 @@ add_builtin_fun_to_builtin_usage__LilyPackage(LilyPackage *self,
 
 DESTRUCTOR(LilyPackage, LilyPackage *self)
 {
-    FREE(String, self->name);
-    FREE(String, self->global_name);
-
     if (self->public_macros) {
         FREE_BUFFER_ITEMS(
           self->public_macros->buffer, self->public_macros->len, LilyMacro);
@@ -466,12 +466,18 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(Vec, self->lib_dependencies);
 
     switch (self->status) {
+        case LILY_PACKAGE_STATUS_MAIN:
+            FREE(String, self->name);
+            FREE(String, self->global_name);
+
+            break;
         case LILY_PACKAGE_STATUS_NORMAL:
         case LILY_PACKAGE_STATUS_SUB_MAIN:
             lily_free(self->file.name);
+
             break;
         default:
-            break;
+            UNREACHABLE("unknown variant");
     }
 
     FREE(File, &self->file);

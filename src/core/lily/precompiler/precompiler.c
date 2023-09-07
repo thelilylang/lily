@@ -531,16 +531,11 @@ IMPL_FOR_DEBUG(debug, LilyMacro, const LilyMacro *self)
 
 DESTRUCTOR(LilyMacro, LilyMacro *self)
 {
-    FREE(String, self->name);
-
     if (self->params) {
         FREE_BUFFER_ITEMS(
           self->params->buffer, self->params->len, LilyMacroParam);
         FREE(Vec, self->params);
     }
-
-    FREE(LilyToken, pop__Vec(self->tokens));
-    FREE(Vec, self->tokens);
 
     lily_free(self);
 }

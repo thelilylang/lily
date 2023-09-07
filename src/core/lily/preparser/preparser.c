@@ -1780,19 +1780,15 @@ IMPL_FOR_DEBUG(debug, LilyPreparserMacro, const LilyPreparserMacro *self)
 
 DESTRUCTOR(LilyPreparserMacro, LilyPreparserMacro *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->params) {
         FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, Vec);
         FREE(Vec, self->params);
     }
 
-#ifdef RUN_UNTIL_PREPARSER
     FREE(LilyToken, pop__Vec(self->tokens));
     FREE(Vec, self->tokens);
-#endif
 
     lily_free(self);
 }
@@ -1848,10 +1844,8 @@ IMPL_FOR_DEBUG(debug,
 
 DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
     FREE(String, self->global_name);
-#endif
 
     lily_free(self);
 }
@@ -1899,6 +1893,8 @@ IMPL_FOR_DEBUG(debug, LilyPreparserPackage, const LilyPreparserPackage *self)
 
 DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self)
 {
+    // NOTE: Normally the name is free into the package, except when
+    // RUN_UNTIL_PREPARSER is defined.
 #ifdef RUN_UNTIL_PREPARSER
     if (self->name) {
         FREE(String, self->name);
@@ -7102,7 +7098,6 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
     // 2. Get package content.
     while (self->current->kind != LILY_TOKEN_KIND_KEYWORD_END &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
-
         String *sub_pkg_name = NULL;
         String *sub_pkg_global_name = NULL;
         enum LilyVisibility visibility = LILY_VISIBILITY_PRIVATE;
@@ -7120,7 +7115,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                 }
 
                 break;
-            case LILY_TOKEN_KIND_DOT: {
+            case LILY_TOKEN_KIND_DOT:
             get_pkg_name : {
                 next_token__LilyPreparser(self);
 
@@ -7144,6 +7139,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                               &self->count_error);
                         }
 
+                        // Check the validity of the identifier string
                         for (Usize i = 0;
                              i < self->current->identifier_string->len;
                              ++i) {
@@ -7206,9 +7202,9 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                         if (self->default_package_access) {
                             sub_pkg_name =
                               clone__String(self->current->identifier_normal);
-
                             sub_pkg_global_name = from__String(
                               (char *)self->default_package_access);
+
                             push__String(sub_pkg_global_name, '.');
                             append__String(sub_pkg_global_name,
                                            self->current->identifier_normal);
@@ -7296,8 +7292,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 
                 break;
             }
-            }
-            default: {
+            default:
             expected_dot : {
                 String *current_s = to_string__LilyToken(self->current);
 
@@ -7316,7 +7311,6 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                 FREE(String, current_s);
 
                 return 0;
-            }
             }
         }
 
