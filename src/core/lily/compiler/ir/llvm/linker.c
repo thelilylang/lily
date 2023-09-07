@@ -92,27 +92,52 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 
     // Add output option
     // TODO: Check there is passed `-o` option
+#ifdef LILY_WINDOWS_OS
+    push__Vec(self->linker.llvm.args,
+              format("/out:{s}{Sr}", BIN_DIR_PATH, output_name));
+#else
     push__Vec(self->linker.llvm.args, strdup("-o"));
     push__Vec(self->linker.llvm.args,
               format("{s}{Sr}", BIN_DIR_PATH, output_name));
+#endif
 
     // Add optimization options
     if (self->config->o3) {
+#ifdef LILY_WINDOWS_OS
+        push__Vec(self->linker.llvm.args, strdup("/opt:3"));
+#else
         push__Vec(self->linker.llvm.args, strdup("-O3"));
         push__Vec(self->linker.llvm.args, strdup("--lto-O3"));
+#endif
     } else if (self->config->o2) {
+#ifdef LILY_WINDOWS_OS
+        push__Vec(self->linker.llvm.args, strdup("/opt:2"));
+#else
         push__Vec(self->linker.llvm.args, strdup("-O2"));
         push__Vec(self->linker.llvm.args, strdup("--lto-O2"));
+#endif
     } else if (self->config->o1) {
+#ifdef LILY_WINDOWS_OS
+        push__Vec(self->linker.llvm.args, strdup("/opt:1"));
+#else
         push__Vec(self->linker.llvm.args, strdup("-O1"));
         push__Vec(self->linker.llvm.args, strdup("--lto-O1"));
+#endif
     } else if (self->config->o0) {
+#ifdef LILY_WINDOWS_OS
+        push__Vec(self->linker.llvm.args, strdup("/opt:0"));
+#else
         push__Vec(self->linker.llvm.args, strdup("-O0"));
         push__Vec(self->linker.llvm.args, strdup("--lto-O0"));
+#endif
     }
 
     if (self->config->oz) {
+#ifdef LILY_WINDOWS_OS
+        TODO("optimize size");
+#else
         push__Vec(self->linker.llvm.args, strdup("-Oz"));
+#endif
     }
 
 #ifdef ENV_DEBUG
