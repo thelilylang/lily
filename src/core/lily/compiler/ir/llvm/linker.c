@@ -50,16 +50,30 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     push__Vec(self->linker.llvm.args, strdup("-llily_sys"));
     push__Vec(self->linker.llvm.args, strdup("-llily_builtin"));
 
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
     // Link crt1, crti, crtn and libc
     push__Vec(self->linker.llvm.args, strdup("/usr/lib/crt1.o"));
     push__Vec(self->linker.llvm.args, strdup("/usr/lib/crti.o"));
     push__Vec(self->linker.llvm.args, strdup("/usr/lib/crtn.o"));
-    push__Vec(self->linker.llvm.args, strdup("/usr/lib/libc.so.6"));
-    push__Vec(self->linker.llvm.args, strdup("-pie"));
+    push__Vec(self->linker.llvm.args, strdup("/usr/lib/libc.so"));
 
     // Add dynamic linker option
     push__Vec(self->linker.llvm.args, strdup("-dynamic-linker"));
     push__Vec(self->linker.llvm.args, strdup("/lib64/ld-linux-x86-64.so.2"));
+#elifdef LILY_APPLE_OS
+    // Link libc
+    push__Vec(self->linker.llvm.args, strdup("/usr/lib/libc.so"));
+
+    // Add dynamic linker option
+    push__Vec(self->linker.llvm.args, strdup("-dynamic-linker"));
+    push__Vec(self->linker.llvm.args, strdup("/usr/lib/dylib"));
+#elifdef LILY_WINDOWS_OS
+    TODO("link for windows");
+#else
+#error "unknown OS"
+#endif
+
+    push__Vec(self->linker.llvm.args, strdup("-pie"));
 
 #ifdef ENV_LOCAL
     push__Vec(self->linker.llvm.args, strdup("-L" LIB_DIR_BUILD));
@@ -85,12 +99,16 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     // Add optimization options
     if (self->config->o3) {
         push__Vec(self->linker.llvm.args, strdup("-O3"));
+        push__Vec(self->linker.llvm.args, strdup("--lto-O3"));
     } else if (self->config->o2) {
         push__Vec(self->linker.llvm.args, strdup("-O2"));
+        push__Vec(self->linker.llvm.args, strdup("--lto-O2"));
     } else if (self->config->o1) {
         push__Vec(self->linker.llvm.args, strdup("-O1"));
+        push__Vec(self->linker.llvm.args, strdup("--lto-O1"));
     } else if (self->config->o0) {
         push__Vec(self->linker.llvm.args, strdup("-O0"));
+        push__Vec(self->linker.llvm.args, strdup("--lto-O0"));
     }
 
     if (self->config->oz) {
