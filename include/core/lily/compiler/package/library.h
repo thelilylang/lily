@@ -49,7 +49,6 @@ typedef struct LilyLibrary
  */
 CONSTRUCTOR(LilyLibrary *,
             LilyLibrary,
-            String *name,
             String *version,
             String *url,
             String *path,

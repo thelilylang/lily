@@ -29,7 +29,6 @@
 
 CONSTRUCTOR(LilyLibrary *,
             LilyLibrary,
-            String *name,
             String *version,
             String *url,
             String *path,
@@ -37,7 +36,7 @@ CONSTRUCTOR(LilyLibrary *,
 {
     LilyLibrary *self = lily_malloc(sizeof(LilyLibrary));
 
-    self->name = name;
+    self->name = package->name;
     self->version = version;
     self->url = url;
     self->path = path;
