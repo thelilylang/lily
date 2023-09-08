@@ -58,6 +58,8 @@
 #include "llvm/Support/Windows/WindowsSupport.h"
 #endif
 
+extern "C" int run__LlvmAr(int argc, char **argv);
+
 using namespace llvm;
 using namespace llvm::object;
 
@@ -1482,4 +1484,10 @@ int llvm_ar_main(int argc, char **argv) {
     return ar_main(argc, argv);
 
   fail("not ranlib, ar, lib or dlltool");
+}
+
+int
+run__LlvmAr(int argc, char **argv)
+{
+	return llvm_ar_main(argc, argv);
 }
