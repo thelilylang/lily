@@ -22,10 +22,28 @@
  * SOFTWARE.
  */
 
+#include <base/macros.h>
+
 #include <core/lily/compiler/ar/ar.h>
 #include <core/lily/compiler/ir/llvm/ar.h>
+#include <core/lily/compiler/package/library.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 void
 compile_lib__LilyLinker(LilyLibrary *self)
 {
+    switch (self->ar) {
+        case LILY_AR_KIND_CC:
+            // TODO: add cpp archiver
+            break;
+        case LILY_AR_KIND_CPP:
+            // TODO: add cc archiver
+            break;
+        case LILY_AR_KIND_LLVM:
+            return compile_lib__LilyIrLlvmAr(self);
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
