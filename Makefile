@@ -75,6 +75,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/compiler/package/*.h
 	${CLANG_FORMAT} ./include/core/lily/preparser/*.h
 	${CLANG_FORMAT} ./include/core/lily/preparser/preprocess/*.h
+	${CLANG_FORMAT} ./include/core/lily/precompiler/*.h
 	${CLANG_FORMAT} ./include/core/lsp/*.h
 	${CLANG_FORMAT} ./include/core/shared/*.h
 	${CLANG_FORMAT} ./include/core/shared/target/*.h
@@ -141,6 +142,7 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/compiler/package/*.c
 	${CLANG_FORMAT} ./src/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./src/core/lily/preparser/preprocess/*.c
+	${CLANG_FORMAT} ./src/core/lily/precompiler/*.c
 	${CLANG_FORMAT} ./src/core/shared/*.c
 	${CLANG_FORMAT} ./src/core/shared/target/*.c
 	${CLANG_FORMAT} ./benchmarks/base/*.c
