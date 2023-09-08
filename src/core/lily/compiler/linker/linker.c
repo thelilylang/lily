@@ -32,29 +32,13 @@
 void
 compile_exe__LilyLinker(LilyPackage *self)
 {
-    switch (self->linker.kind) {
+    switch (self->linker) {
         case LILY_LINKER_KIND_CC:
             break;
         case LILY_LINKER_KIND_CPP:
             break;
         case LILY_LINKER_KIND_LLVM:
             compile_exe__LilyIrLlvmLinker(self);
-
-            break;
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-
-DESTRUCTOR(LilyLinker, const LilyLinker *self)
-{
-    switch (self->kind) {
-        case LILY_LINKER_KIND_CC:
-            break;
-        case LILY_LINKER_KIND_CPP:
-            break;
-        case LILY_LINKER_KIND_LLVM:
-            FREE(LilyIrLlvmLinker, &self->llvm);
 
             break;
         default:

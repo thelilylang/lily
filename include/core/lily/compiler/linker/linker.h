@@ -36,35 +36,11 @@ enum LilyLinkerKind
     LILY_LINKER_KIND_LLVM
 };
 
-typedef struct LilyLinker
-{
-    enum LilyLinkerKind kind;
-    union
-    {
-        LilyIrLlvmLinker llvm;
-    };
-} LilyLinker;
-
-/**
- *
- * @brief Construct LilyLinker type (LILY_LINKER_KIND_LLVM).
- */
-inline VARIANT_CONSTRUCTOR(LilyLinker, LilyLinker, llvm, LilyIrLlvmLinker llvm)
-{
-    return (LilyLinker){ .kind = LILY_LINKER_KIND_LLVM, .llvm = llvm };
-}
-
 /**
  *
  * @brief Compile to an executable.
  */
 void
 compile_exe__LilyLinker(LilyPackage *self);
-
-/**
- *
- * @brief Free LilyLinker type.
- */
-DESTRUCTOR(LilyLinker, const LilyLinker *self);
 
 #endif // LILY_CORE_LILY_COMPILER_LINKER_H
