@@ -28,15 +28,18 @@
 #include <base/macros.h>
 #include <base/string.h>
 
+#include <core/lily/compiler/ar/ar.h>
+
 typedef struct LilyPackage LilyPackage;
 
 typedef struct LilyLibrary
 {
-    String *name;
-    String *version;
+    String *name;      // String* (&)
+    String *version;   // String*?
     String *url;       // String*?; URL to download the library
-    String *path;      // path (in the PC) to find the library
+    String *path;      // String*? path (in the PC) to find the library
     char *output_path; // char*? e.g. *.a, *.lib, ...
+    enum LilyArKind ar;
     LilyPackage *package;
 } LilyLibrary;
 

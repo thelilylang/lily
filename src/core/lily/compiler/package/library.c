@@ -42,6 +42,7 @@ CONSTRUCTOR(LilyLibrary *,
     self->url = url;
     self->path = path;
     self->output_path = NULL;
+    self->ar = (enum LilyArKind)package->linker;
     self->package = package;
 
     return self;
@@ -49,14 +50,22 @@ CONSTRUCTOR(LilyLibrary *,
 
 DESTRUCTOR(LilyLibrary, LilyLibrary *self)
 {
-    FREE(String, self->name);
-    FREE(String, self->version);
+    if (self->version) {
+        FREE(String, self->version);
+    }
+
+    if (self->output_path) {
+        lily_free(self->output_path);
+    }
 
     if (self->url) {
         FREE(String, self->url);
     }
 
-    FREE(String, self->path);
+    if (self->path) {
+        FREE(String, self->path);
+    }
+
     FREE(LilyPackage, self->package);
 
     lily_free(self);
