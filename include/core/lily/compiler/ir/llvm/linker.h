@@ -32,35 +32,11 @@
 
 typedef struct LilyPackage LilyPackage;
 
-typedef struct LilyIrLlvmLinker
-{
-    const LilyIrLlvm *llvm;
-    Vec *args; // Vec<char*>*
-} LilyIrLlvmLinker;
-
-inline CONSTRUCTOR(LilyIrLlvmLinker, LilyIrLlvmLinker, const LilyIrLlvm *llvm)
-{
-    return (LilyIrLlvmLinker){ .llvm = llvm, .args = NEW(Vec) };
-}
-
 /**
  *
- * @brief Run the linker to compile the object files (in executable).
+ * @brief Run the linker to compile the object files in executable.
  */
 void
 compile_exe__LilyIrLlvmLinker(LilyPackage *self);
-
-/**
- *
- * @brief Run the linker to compile the object files (in library).
- */
-void
-compile_lib__LilyIrLlvmLinker(LilyPackage *self);
-
-/**
- *
- * @brief Free LilyIrLlvmLinker type.
- */
-DESTRUCTOR(LilyIrLlvmLinker, const LilyIrLlvmLinker *self);
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_LINKER_H

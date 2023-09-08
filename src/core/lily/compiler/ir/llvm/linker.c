@@ -27,6 +27,7 @@
 
 #include <cli/emit.h>
 #include <core/lily/compiler/driver/lld.h>
+#include <core/lily/compiler/driver/llvm-ar.h>
 #include <core/lily/compiler/ir/llvm/dump.h>
 #include <core/lily/compiler/ir/llvm/linker.h>
 #include <core/lily/compiler/package.h>
@@ -42,50 +43,61 @@
 void
 compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 {
+    Vec *args = NEW(Vec); // Vec<char*>*
+
     String *output_name = get_filename__File(self->file.name);
     String *path_base = get_filename__File(self->output_path);
 
     // Default library link.
     // Link @sys and @builtin library.
-    push__Vec(self->linker.llvm.args, strdup("-llily_sys"));
-    push__Vec(self->linker.llvm.args, strdup("-llily_builtin"));
+    if (self->sys_is_loaded) {
+        push__Vec(args, strdup("-llily_sys"));
+    }
+
+    if (self->builtin_is_loaded) {
+        push__Vec(args, strdup("-llily_builtin"));
+    }
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
     // Link crt1, crti, crtn and libc
-    push__Vec(self->linker.llvm.args, strdup("/usr/lib/crt1.o"));
-    push__Vec(self->linker.llvm.args, strdup("/usr/lib/crti.o"));
-    push__Vec(self->linker.llvm.args, strdup("/usr/lib/crtn.o"));
-    push__Vec(self->linker.llvm.args, strdup("/usr/lib/libc.so"));
+    push__Vec(args, strdup("/usr/lib/crt1.o"));
+    push__Vec(args, strdup("/usr/lib/crti.o"));
+    push__Vec(args, strdup("/usr/lib/crtn.o"));
+    push__Vec(args, strdup("/usr/lib/libc.so"));
 
     // Add dynamic linker option
-    push__Vec(self->linker.llvm.args, strdup("-dynamic-linker"));
-    push__Vec(self->linker.llvm.args, strdup("/lib64/ld-linux-x86-64.so.2"));
+    push__Vec(args, strdup("-dynamic-linker"));
+    push__Vec(args, strdup("/lib64/ld-linux-x86-64.so.2"));
 #elifdef LILY_APPLE_OS
     // Link libc
-    push__Vec(self->linker.llvm.args, strdup("/usr/lib/libc.so"));
+    push__Vec(args, strdup("/usr/lib/libc.so"));
 
     // Add dynamic linker option
-    push__Vec(self->linker.llvm.args, strdup("-dynamic-linker"));
-    push__Vec(self->linker.llvm.args, strdup("/usr/lib/dylib"));
+    push__Vec(args, strdup("-dynamic-linker"));
+    push__Vec(args, strdup("/usr/lib/dylib"));
 #elifdef LILY_WINDOWS_OS
-    TODO("link for windows");
+    push__Vec(args, strdup("/entry:__start"));
+    push__Vec(args, strdup("/subsystem:console"));
+    push__Vec(args, strdup("/defaultlib:libc.lib"));
+    push__Vec(args, strdup("/dynamicbase"));
+    push__Vec(args, strdup("/nxcompat"));
 #else
 #error "unknown OS"
 #endif
 
-    push__Vec(self->linker.llvm.args, strdup("-pie"));
+    push__Vec(args, strdup("-pie"));
 
 #ifdef ENV_LOCAL
-    push__Vec(self->linker.llvm.args, strdup("-L" LIB_DIR_BUILD));
-    push__Vec(self->linker.llvm.args, strdup("-L" LIB_DIR_BUILD_DEBUG));
+    if (self->builtin_is_loaded || self->sys_is_loaded) {
+        push__Vec(args, strdup("-L" LIB_DIR_BUILD));
+        push__Vec(args, strdup("-L" LIB_DIR_BUILD_DEBUG));
+    }
 #endif
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
-    push__Vec(self->linker.llvm.args,
-              format("{s}{Sr}.o", OBJ_DIR_PATH, path_base));
+    push__Vec(args, format("{s}{Sr}.o", OBJ_DIR_PATH, path_base));
 #elifdef LILY_WINDOWS_OS
-    push__Vec(self->linker.llvm.args,
-              format("{s}{Sr}.obj", OBJ_DIR_PATH, path_base));
+    push__Vec(args, format("{s}{Sr}.obj", OBJ_DIR_PATH, path_base));
 #else
 #error "unknown OS"
 #endif
@@ -93,42 +105,40 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     // Add output option
     // TODO: Check there is passed `-o` option
 #ifdef LILY_WINDOWS_OS
-    push__Vec(self->linker.llvm.args,
-              format("/out:{s}{Sr}", BIN_DIR_PATH, output_name));
+    push__Vec(args, format("/out:{s}{Sr}", BIN_DIR_PATH, output_name));
 #else
-    push__Vec(self->linker.llvm.args, strdup("-o"));
-    push__Vec(self->linker.llvm.args,
-              format("{s}{Sr}", BIN_DIR_PATH, output_name));
+    push__Vec(args, strdup("-o"));
+    push__Vec(args, format("{s}{Sr}", BIN_DIR_PATH, output_name));
 #endif
 
     // Add optimization options
     if (self->config->o3) {
 #ifdef LILY_WINDOWS_OS
-        push__Vec(self->linker.llvm.args, strdup("/opt:3"));
+        push__Vec(args, strdup("/opt:3"));
 #else
-        push__Vec(self->linker.llvm.args, strdup("-O3"));
-        push__Vec(self->linker.llvm.args, strdup("--lto-O3"));
+        push__Vec(args, strdup("-O3"));
+        push__Vec(args, strdup("--lto-O3"));
 #endif
     } else if (self->config->o2) {
 #ifdef LILY_WINDOWS_OS
-        push__Vec(self->linker.llvm.args, strdup("/opt:2"));
+        push__Vec(args, strdup("/opt:2"));
 #else
-        push__Vec(self->linker.llvm.args, strdup("-O2"));
-        push__Vec(self->linker.llvm.args, strdup("--lto-O2"));
+        push__Vec(args, strdup("-O2"));
+        push__Vec(args, strdup("--lto-O2"));
 #endif
     } else if (self->config->o1) {
 #ifdef LILY_WINDOWS_OS
-        push__Vec(self->linker.llvm.args, strdup("/opt:1"));
+        push__Vec(args, strdup("/opt:1"));
 #else
-        push__Vec(self->linker.llvm.args, strdup("-O1"));
-        push__Vec(self->linker.llvm.args, strdup("--lto-O1"));
+        push__Vec(args, strdup("-O1"));
+        push__Vec(args, strdup("--lto-O1"));
 #endif
     } else if (self->config->o0) {
 #ifdef LILY_WINDOWS_OS
-        push__Vec(self->linker.llvm.args, strdup("/opt:0"));
+        push__Vec(args, strdup("/opt:0"));
 #else
-        push__Vec(self->linker.llvm.args, strdup("-O0"));
-        push__Vec(self->linker.llvm.args, strdup("--lto-O0"));
+        push__Vec(args, strdup("-O0"));
+        push__Vec(args, strdup("--lto-O0"));
 #endif
     }
 
@@ -136,7 +146,7 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #ifdef LILY_WINDOWS_OS
         TODO("optimize size");
 #else
-        push__Vec(self->linker.llvm.args, strdup("-Oz"));
+        push__Vec(args, strdup("-Oz"));
 #endif
     }
 
@@ -153,10 +163,10 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #error "unknown OS"
 #endif
 
-    for (Usize i = 0; i < self->linker.llvm.args->len; ++i) {
-        printf("%s", (char *)get__Vec(self->linker.llvm.args, i));
+    for (Usize i = 0; i < args->len; ++i) {
+        printf("%s", (char *)get__Vec(args, i));
 
-        if (i + 1 != self->linker.llvm.args->len) {
+        if (i + 1 != args->len) {
             printf(" ");
         }
     }
@@ -177,24 +187,16 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #error "unknown OS"
 #endif
 
-    if (!LilyLLDLink(obj_format,
-                     (const char **)self->linker.llvm.args->buffer,
-                     self->linker.llvm.args->len)) {
+    if (!LilyLLDLink(obj_format, (const char **)args->buffer, args->len)) {
         EMIT_ERROR("link error");
         exit(1);
     }
-}
 
-void
-compile_lib__LilyIrLlvmLinker(LilyPackage *self)
-{
-}
+    // Clean up
 
-DESTRUCTOR(LilyIrLlvmLinker, const LilyIrLlvmLinker *self)
-{
-    for (Usize i = 0; i < self->args->len; ++i) {
-        lily_free(get__Vec(self->args, i));
+    for (Usize i = 0; i < args->len; ++i) {
+        lily_free(get__Vec(args, i));
     }
 
-    FREE(Vec, self->args);
+    FREE(Vec, args);
 }
