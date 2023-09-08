@@ -71,6 +71,10 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     }
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
+    push__Vec(args, strdup("--build-id=sha1"));
+#endif
+
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
     // Link crt1, crti, crtn and libc
     push__Vec(args, strdup("/usr/lib/crt1.o"));
     push__Vec(args, strdup("/usr/lib/crti.o"));
