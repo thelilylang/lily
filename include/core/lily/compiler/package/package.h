@@ -77,7 +77,7 @@ typedef struct LilyPackage
     LilyAnalysis analysis;
     LilyMirModule mir_module;
     LilyIr ir;
-    LilyLinker linker;
+    enum LilyLinkerKind linker;
     // NOTE: builtins and syss fields are NULL when the status of the package is
     // not equal to LILY_PACKAGE_STATUS_MAIN
     LilyBuiltinFun *builtins; // LilyBuiltinFun*? (&)
@@ -107,6 +107,8 @@ typedef struct LilyPackage
 
     // NOTE: only defined in the main package
     enum LilyProgramKind program_kind; // LilyProgramKind | undef
+
+    LilyLibrary *lib; // LilyLibrary*? (&)
 } LilyPackage;
 
 /**

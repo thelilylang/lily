@@ -149,6 +149,8 @@ CONSTRUCTOR(LilyPackage *,
     self->is_exe = false;
     self->is_lib = false;
 
+    self->lib = NULL;
+
     lily_free(file_ext);
 
     return self;
@@ -217,8 +219,13 @@ build__LilyPackage(const LilycConfig *config,
         case LILY_PROGRAM_KIND_EXE:
             self->is_exe = true;
             break;
-        default:
+        case LILY_PROGRAM_KIND_STATIC_LIB:
+        case LILY_PROGRAM_KIND_DYNAMIC_LIB:
             self->is_lib = true;
+            // TODO: assign self->lib
+            break;
+        default:
+            UNREACHABLE("unknown variant");
     }
 
     if (self->preparser_info.package->name) {
@@ -234,16 +241,17 @@ build__LilyPackage(const LilycConfig *config,
     if (config->cc_ir) {
         // TODO: add a linker for CC
         self->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));
+        self->linker = LILY_LINKER_KIND_CC;
     } else if (config->cpp_ir) {
         // TODO: add a linker for CPP
         self->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));
+        self->linker = LILY_LINKER_KIND_CPP;
     } else if (config->js_ir) {
         self->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));
     } else {
         self->ir =
           NEW_VARIANT(LilyIr, llvm, NEW(LilyIrLlvm, self->global_name->buffer));
-        self->linker =
-          NEW_VARIANT(LilyLinker, llvm, NEW(LilyIrLlvmLinker, &self->ir.llvm));
+        self->linker = LILY_LINKER_KIND_LLVM;
     }
 
     run__LilyPrecompile(&self->precompile, self, false);
@@ -301,7 +309,14 @@ run__LilyPackage(void *self)
     compile__LilyCompilerOutputObj(tree, &compile__LilyCompilerIrLlvm);
 
     if (tree->package->status == LILY_PACKAGE_STATUS_MAIN) {
-        compile_exe__LilyLinker(tree->package);
+        if (tree->package->is_exe) {
+            compile_exe__LilyLinker(tree->package);
+        } else if (tree->package->is_lib) {
+            ASSERT(tree->package->lib);
+            compile_lib__LilyLinker(tree->package->lib);
+        } else {
+            UNREACHABLE("is_lib must be true or is_exe must be true");
+        }
     }
 
     tree->is_done = true;
@@ -489,7 +504,6 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
     FREE(LilyAnalysis, &self->analysis);
     LilyMirDisposeModule(&self->mir_module);
     FREE(LilyIr, &self->ir);
-    FREE(LilyLinker, &self->linker);
 
     FREE(Vec, self->builtin_usage);
     FREE(Vec, self->sys_usage);
