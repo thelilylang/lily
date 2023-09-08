@@ -34,8 +34,10 @@ compile_exe__LilyLinker(LilyPackage *self)
 {
     switch (self->linker) {
         case LILY_LINKER_KIND_CC:
+            // TODO: add cc linker
             break;
         case LILY_LINKER_KIND_CPP:
+            // TODO: add cpp linker
             break;
         case LILY_LINKER_KIND_LLVM:
             compile_exe__LilyIrLlvmLinker(self);
