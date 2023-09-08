@@ -51,11 +51,23 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     // Default library link.
     // Link @sys and @builtin library.
     if (self->sys_is_loaded) {
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
         push__Vec(args, strdup("-llily_sys"));
+#elifdef LILY_WINDOWS_OS
+        push__Vec(args, strdup("/defaultlib:lily_sys.lib"));
+#else
+#error "unknown OS"
+#endif
     }
 
     if (self->builtin_is_loaded) {
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
         push__Vec(args, strdup("-llily_builtin"));
+#elifdef LILY_WINDOWS_OS
+        push__Vec(args, strdup("/defaultlib:lily_builtin.lib"));
+#else
+#error "unknown OS"
+#endif
     }
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
@@ -76,7 +88,6 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     push__Vec(args, strdup("-dynamic-linker"));
     push__Vec(args, strdup("/usr/lib/dylib"));
 #elifdef LILY_WINDOWS_OS
-    push__Vec(args, strdup("/entry:__start"));
     push__Vec(args, strdup("/subsystem:console"));
     push__Vec(args, strdup("/defaultlib:libc.lib"));
     push__Vec(args, strdup("/dynamicbase"));
@@ -91,8 +102,15 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 
 #ifdef ENV_LOCAL
     if (self->builtin_is_loaded || self->sys_is_loaded) {
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
         push__Vec(args, strdup("-L" LIB_DIR_BUILD));
         push__Vec(args, strdup("-L" LIB_DIR_BUILD_DEBUG));
+#elifdef LILY_WINDOWS_OS
+        push__Vec(args, strdup("/libpath:" LIB_DIR_BUILD));
+        push__Vec(args, strdup("/libpath:" LIB_DIR_BUILD_DEBUG));
+#else
+#error "unknown OS"
+#endif
     }
 #endif
 
