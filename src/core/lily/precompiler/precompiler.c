@@ -1078,10 +1078,12 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
         case LILY_IR_KIND_CC:                                           \
             /* TODO: add a linker for CC */                             \
             res->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));           \
+            res->linker = LILY_LINKER_KIND_CC;                          \
             break;                                                      \
         case LILY_IR_KIND_CPP:                                          \
             /* TODO: add a linker for CPP */                            \
             res->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));         \
+            res->linker = LILY_LINKER_KIND_CPP;                         \
             break;                                                      \
         case LILY_IR_KIND_JS:                                           \
             res->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));           \
@@ -1089,8 +1091,7 @@ precompile_sub_package__LilyPrecompile(const LilyPrecompile *self,
         case LILY_IR_KIND_LLVM:                                         \
             res->ir = NEW_VARIANT(                                      \
               LilyIr, llvm, NEW(LilyIrLlvm, res->global_name->buffer)); \
-            res->linker = NEW_VARIANT(                                  \
-              LilyLinker, llvm, NEW(LilyIrLlvmLinker, &res->ir.llvm));  \
+            res->linker = LILY_LINKER_KIND_LLVM;                        \
             break;                                                      \
     }
 
