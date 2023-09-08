@@ -36,8 +36,57 @@
 #define LIB_DIR_BUILD_DEBUG "build/Debug"
 #endif
 
-#define OBJ_DIR_PATH "out.lily/obj/"
 #define BIN_DIR_PATH "out.lily/bin/"
+#define LIB_DIR_PATH "out.lily/lib/"
+#define OBJ_DIR_PATH "out.lily/obj/"
+
+// Link all library dependencies
+static void
+link_dependencies_lib__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
+
+// Link all package dependencies
+static void
+link_dependencies_package__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
+
+void
+link_dependencies_lib__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
+{
+    for (Usize i = 0; i < self->lib_dependencies->len; ++i) {
+        LilyLibrary *lib = get__Vec(self->lib_dependencies, i);
+
+        ASSERT(lib->output_path);
+
+        // Link direct library dependencies.
+#ifdef LILY_WINDOWS_OS
+        push__Vec(args, format("/defaultlib:{s}", lib->output_path));
+#else
+        push__Vec(args, strdup(lib->output_path));
+#endif
+    }
+
+    // Link indirect library dependencies.
+    for (Usize i = 0; i < self->package_dependencies->len; ++i) {
+        link_dependencies_lib__LilyIrLlvmLinker(
+          get__Vec(self->package_dependencies, i), args);
+    }
+}
+
+void
+link_dependencies_package__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
+{
+    for (Usize i = 0; i < self->package_dependencies->len; ++i) {
+        LilyPackage *package_dependency =
+          get__Vec(self->package_dependencies, i);
+
+        ASSERT(package_dependency->output_path);
+
+        // Link direct package dependencies.
+        push__Vec(args, strdup(package_dependency->output_path));
+
+        // Link indirect package dependencies.
+        link_dependencies_package__LilyIrLlvmLinker(package_dependency, args);
+    }
+}
 
 void
 compile_exe__LilyIrLlvmLinker(LilyPackage *self)
@@ -68,6 +117,8 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #error "unknown OS"
 #endif
     }
+
+    link_dependencies_lib__LilyIrLlvmLinker(self, args);
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
     push__Vec(args, strdup("--build-id=sha1"));
@@ -116,6 +167,8 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #endif
     }
 #endif
+
+    link_dependencies_package__LilyIrLlvmLinker(self, args);
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
     push__Vec(args, format("{s}{Sr}.o", OBJ_DIR_PATH, path_base));
