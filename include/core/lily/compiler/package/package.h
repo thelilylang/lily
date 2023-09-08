@@ -141,6 +141,21 @@ build__LilyPackage(const LilycConfig *config,
 
 /**
  *
+ * @brief Build all packages of the library.
+ * @return LilyLibrary*?
+ */
+LilyLibrary *
+build_lib__LilyPackage(const LilycConfig *config,
+                       enum LilyVisibility visibility,
+                       enum LilyPackageStatus status,
+                       const char *default_path,
+                       const LilyProgram *program,
+                       String *version,
+                       String *url,
+                       String *path);
+
+/**
+ *
  * @brief Compile package.
  * @note Begin by the main package.
  * @return LilyPackage*?

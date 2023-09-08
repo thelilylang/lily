@@ -286,6 +286,26 @@ build__LilyPackage(const LilycConfig *config,
     return self;
 }
 
+LilyLibrary *
+build_lib__LilyPackage(const LilycConfig *config,
+                       enum LilyVisibility visibility,
+                       enum LilyPackageStatus status,
+                       const char *default_path,
+                       const LilyProgram *program,
+                       String *version,
+                       String *url,
+                       String *path)
+{
+    LilyPackage *package =
+      build__LilyPackage(config, visibility, status, default_path, program);
+
+    if (package) {
+        return NEW(LilyLibrary, version, url, path, package);
+    }
+
+    return NULL;
+}
+
 static void *
 run__LilyPackage(void *self)
 {
