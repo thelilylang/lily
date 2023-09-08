@@ -566,6 +566,7 @@ target_include_directories(lily_core_lily_compiler_ir_cpp
 
 # lily_core_lily_compiler_ir_llvm
 set(LILY_CORE_LILY_COMPILER_IR_LLVM_SRC
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/ar.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/compile.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/emit.cpp
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/generator.c
