@@ -471,6 +471,15 @@ target_include_directories(lily_core_lily_analysis PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_compiler add_library(LilyCoreLilyCompiler STATIC)
 
+# lily_core_lily_compiler_ar
+set(LILY_CORE_LILY_COMPILER_AR_SRC
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ar/ar.c)
+
+add_library(lily_core_lily_compiler_ar STATIC ${LILY_CORE_LILY_COMPILER_AR_SRC})
+target_link_libraries(lily_core_lily_compiler_ar
+                      PUBLIC lily_core_lily_compiler_package)
+target_include_directories(lily_core_lily_compiler_ar PRIVATE ${LILY_INCLUDE})
+
 # lily_core_lily_compiler_driver
 set(LILY_CORE_LILY_COMPILER_DRIVER
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/driver/lld.cpp
@@ -625,6 +634,7 @@ add_library(lily_core_lily_compiler_package STATIC
             ${LILY_CORE_LILY_COMPILER_PACKAGE_SRC})
 target_link_libraries(
   lily_core_lily_compiler_package
+  lily_core_lily_compiler_ar
   lily_core_lily_compiler_ir
   lily_core_lily_compiler_linker
   lily_core_lily_mir
