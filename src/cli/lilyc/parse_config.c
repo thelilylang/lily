@@ -59,6 +59,8 @@
 #define O2_OPTION 30
 #define O3_OPTION 31
 #define OZ_OPTION 32
+#define O_OPTION 33
+#define OUTPUT_OPTION 34
 
 LilycConfig
 run__LilycParseConfig(const Vec *results)
@@ -74,6 +76,7 @@ run__LilycParseConfig(const Vec *results)
          wasm_ir = false;
     bool o0 = false, o1 = false, o2 = false, o3 = false, oz = false;
     const char *target = NULL;
+    const char *output = NULL;
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
 
@@ -171,6 +174,10 @@ run__LilycParseConfig(const Vec *results)
                     case O2_OPTION:
                         o2 = true;
                         break;
+                    case O_OPTION:
+                    case OUTPUT_OPTION:
+                        output = current->option->value->single;
+                        break;
                     default:
                         UNREACHABLE("unknown option");
                 }
@@ -184,6 +191,7 @@ run__LilycParseConfig(const Vec *results)
     return NEW(LilycConfig,
                filename,
                target,
+               output,
                build,
                run_scanner,
                run_parser,

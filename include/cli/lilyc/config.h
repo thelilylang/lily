@@ -33,6 +33,7 @@ typedef struct LilycConfig
 {
     const char *filename;
     const char *target; // const char*?
+    const char *output; // const char*?
     bool build;
     bool run_scanner;
     bool run_parser;
@@ -66,6 +67,7 @@ inline CONSTRUCTOR(LilycConfig,
                    LilycConfig,
                    const char *filename,
                    const char *target,
+                   const char *output,
                    bool build,
                    bool run_scanner,
                    bool run_parser,
@@ -92,6 +94,7 @@ inline CONSTRUCTOR(LilycConfig,
 {
     return (LilycConfig){ .filename = filename,
                           .target = target,
+                          .output = output,
                           .build = build,
                           .run_scanner = run_scanner,
                           .run_parser = run_parser,
