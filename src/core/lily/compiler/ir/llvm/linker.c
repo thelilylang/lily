@@ -105,7 +105,9 @@ void
 compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 {
     Vec *args = NEW(Vec); // Vec<char*>*
-    String *output_name = get_filename__File(self->file.name);
+    String *output_name = self->config->output
+                            ? from__String((char *)self->config->output)
+                            : get_filename__File(self->file.name);
 
     // Default library link.
     // Link @sys and @builtin library.
