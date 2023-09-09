@@ -36,12 +36,16 @@ CONSTRUCTOR(LilyLibrary *,
 {
     LilyLibrary *self = lily_malloc(sizeof(LilyLibrary));
 
-    self->name = package->name;
     self->version = version;
     self->url = url;
     self->path = path;
     self->output_path = NULL;
-    self->ar = (enum LilyArKind)package->linker;
+
+    if (package) {
+        self->name = package->name;
+        self->ar = (enum LilyArKind)package->linker;
+    }
+
     self->package = package;
 
     return self;

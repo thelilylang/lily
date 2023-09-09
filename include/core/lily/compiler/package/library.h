@@ -56,6 +56,18 @@ CONSTRUCTOR(LilyLibrary *,
 
 /**
  *
+ * @brief Finish to set all values (name and ar).
+ * @param name String* (&)
+ */
+inline void
+finish_set__LilyLibrary(LilyLibrary *self, String *name, enum LilyArKind ar)
+{
+    self->name = name;
+    self->ar = ar;
+}
+
+/**
+ *
  * @brief Free LilyLibrary type.
  */
 DESTRUCTOR(LilyLibrary, LilyLibrary *self);
