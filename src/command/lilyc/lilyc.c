@@ -40,7 +40,12 @@ run__Lilyc(const LilycConfig *config)
     // Get the default path
     char *default_path = generate_default_path((char *)config->filename);
 
-    LilyProgram program = NEW(LilyProgram, LILY_PROGRAM_KIND_EXE);
+    LilyProgram program =
+      NEW(LilyProgram,
+          config->lib ? config->static_   ? LILY_PROGRAM_KIND_STATIC_LIB
+                        : config->dynamic ? LILY_PROGRAM_KIND_DYNAMIC_LIB
+                                          : LILY_PROGRAM_KIND_STATIC_LIB
+                      : LILY_PROGRAM_KIND_EXE);
 
     LilyPackage *pkg = compile__LilyPackage(config,
                                             LILY_VISIBILITY_PUBLIC,
