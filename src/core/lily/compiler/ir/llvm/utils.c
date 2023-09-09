@@ -24,6 +24,16 @@
 
 #include <core/lily/compiler/ir/llvm/utils.h>
 
-#include <llvm/IR/ModuleSummaryIndex.h>
+#include <string.h>
 
-using namespace llvm;
+bool
+is_unique_arg__LilyCompilerIrLlvmUtils(Vec *args, char *arg)
+{
+    for (Usize i = 0; i < args->len; ++i) {
+        if (!strcmp(get__Vec(args, i), arg)) {
+            return false;
+        }
+    }
+
+    return true;
+}

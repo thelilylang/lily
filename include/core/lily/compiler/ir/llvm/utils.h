@@ -26,15 +26,16 @@
 #define LILY_CORE_LILY_COMPILER_IR_LLVM_UTILS_H
 
 #include <base/types.h>
+#include <base/vec.h>
 
 #include <core/lily/compiler/ir/llvm.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-#ifdef __cplusplus
-};
-#endif
+/**
+ *
+ * @brief Check if the arg is unique.
+ * @param args Vec<char*>*
+ */
+bool
+is_unique_arg__LilyCompilerIrLlvmUtils(Vec *args, char *arg);
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_UTILS_H
