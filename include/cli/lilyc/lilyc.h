@@ -29,6 +29,7 @@
 #include <base/cli.h>
 
 #define LILYC_OPTIONS(self)                                                   \
+    CliOption *build = NEW(CliOption, "--build");                             \
     CliOption *dump_scanner = NEW(CliOption, "--dump-scanner");               \
     CliOption *dump_parser = NEW(CliOption, "--dump-parser");                 \
     CliOption *dump_tc = NEW(CliOption, "--dump-tc");                         \
@@ -38,6 +39,9 @@
     CliOption *run_parser = NEW(CliOption, "--run-parser");                   \
     CliOption *run_tc = NEW(CliOption, "--run-tc");                           \
     CliOption *run_ir = NEW(CliOption, "--run-ir");                           \
+    CliOption *lib = NEW(CliOption, "--lib");                                 \
+    CliOption *static_ = NEW(CliOption, "--static");                          \
+    CliOption *dynamic = NEW(CliOption, "--dynamic");                         \
     CliOption *llvm_ir = NEW(CliOption, "--llvm-ir");                         \
     CliOption *cc_ir = NEW(CliOption, "--cc-ir");                             \
     CliOption *cpp_ir = NEW(CliOption, "--cpp-ir");                           \
@@ -53,6 +57,8 @@
     CliOption *O3 = NEW(CliOption, "-O3");                                    \
     CliOption *Oz = NEW(CliOption, "-Oz");                                    \
                                                                               \
+    build->$help(build, "Build a package (exe, lib, ...)")                    \
+      ->$short_name(build, "-b");                                             \
     dump_scanner->$help(dump_scanner, "Dump scanner output");                 \
     dump_parser->$help(dump_parser, "Dump parser output");                    \
     dump_tc->$help(dump_tc, "Dump typecheck output");                         \
@@ -62,6 +68,9 @@
     run_parser->$help(run_parser, "Run until the parser");                    \
     run_tc->$help(run_tc, "Run until the typecheck");                         \
     run_ir->$help(run_ir, "Run until the IR");                                \
+    lib->$help(lib, "Compile a library")->$short_name(lib, "-l");             \
+    static_->$help(static_, "Force to compile a static library");             \
+    dynamic->$help(dynamic, "Force to compile a dynamic library");            \
     llvm_ir->$help(llvm_ir, "Run LLVM as IR (by default)");                   \
     cc_ir->$help(cc_ir, "Use C as IR");                                       \
     cpp_ir->$help(cpp_ir, "Use C++ as IR");                                   \
@@ -80,7 +89,8 @@
     O3->$help(O3, "Level 3 of optimization (Release)");                       \
     Oz->$help(Oz, "Size optimization");                                       \
                                                                               \
-    self->$option(self, dump_scanner)                                         \
+    self->$option(self, build)                                                \
+      ->$option(self, dump_scanner)                                           \
       ->$option(self, dump_parser)                                            \
       ->$option(self, dump_tc)                                                \
       ->$option(self, dump_mir)                                               \
@@ -89,6 +99,9 @@
       ->$option(self, run_parser)                                             \
       ->$option(self, run_tc)                                                 \
       ->$option(self, run_ir)                                                 \
+      ->$option(self, lib)                                                    \
+      ->$option(self, static_)                                                \
+      ->$option(self, dynamic)                                                \
       ->$option(self, llvm_ir)                                                \
       ->$option(self, cc_ir)                                                  \
       ->$option(self, cpp_ir)                                                 \

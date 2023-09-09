@@ -30,38 +30,46 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DUMP_SCANNER_OPTION 4
-#define DUMP_PARSER_OPTION 5
-#define DUMP_TYPECHECK_OPTION 6
-#define DUMP_MIR_OPTION 7
-#define DUMP_IR_OPTION 8
-#define RUN_SCANNER_OPTION 9
-#define RUN_PARSER_OPTION 10
-#define RUN_TYPECHECK_OPTION 11
-#define RUN_IR_OPTION 12
-#define LLVM_IR_OPTION 13
-#define CC_IR_OPTION 14
-#define CPP_IR_OPTION 15
-#define JS_IR_OPTION 16
-#define WASM_IR_OPTION 17
-#define TARGET_OPTION 18
-#define ODEBUG_OPTION 19
-#define ORELEASE_OPTION 20
-#define OSIZE_OPTION 21
-#define O0_OPTION 22
-#define O1_OPTION 23
-#define O2_OPTION 24
-#define O3_OPTION 25
-#define OZ_OPTION 26
+#define B_OPTION 4
+#define BUILD_OPTION 5
+#define DUMP_SCANNER_OPTION 6
+#define DUMP_PARSER_OPTION 7
+#define DUMP_TYPECHECK_OPTION 8
+#define DUMP_MIR_OPTION 9
+#define DUMP_IR_OPTION 10
+#define RUN_SCANNER_OPTION 11
+#define RUN_PARSER_OPTION 12
+#define RUN_TYPECHECK_OPTION 13
+#define RUN_IR_OPTION 14
+#define L_OPTION 15
+#define LIB_OPTION 16
+#define STATIC_OPTION 17
+#define DYNAMIC_OPTION 18
+#define LLVM_IR_OPTION 19
+#define CC_IR_OPTION 20
+#define CPP_IR_OPTION 21
+#define JS_IR_OPTION 22
+#define WASM_IR_OPTION 23
+#define TARGET_OPTION 24
+#define ODEBUG_OPTION 25
+#define ORELEASE_OPTION 26
+#define OSIZE_OPTION 27
+#define O0_OPTION 28
+#define O1_OPTION 29
+#define O2_OPTION 30
+#define O3_OPTION 31
+#define OZ_OPTION 32
 
 LilycConfig
 run__LilycParseConfig(const Vec *results)
 {
     char *filename = NULL;
+    bool build = false;
     bool dump_scanner = false, dump_parser = false, dump_typecheck = false,
          dump_mir = false, dump_ir = false;
     bool run_scanner = false, run_parser = false, run_typecheck = false,
          run_ir = false;
+    bool lib = false, static_ = false, dynamic = false;
     bool cc_ir = false, cpp_ir = false, js_ir = false, llvm_ir = false,
          wasm_ir = false;
     bool o0 = false, o1 = false, o2 = false, o3 = false, oz = false;
@@ -81,6 +89,10 @@ run__LilycParseConfig(const Vec *results)
             case CLI_RESULT_KIND_OPTION:
                 switch (current->option->id) {
                     // 0, 1, 2 and 3 id are used by help and version option
+                    case B_OPTION:
+                    case BUILD_OPTION:
+                        build = true;
+                        break;
                     case DUMP_SCANNER_OPTION:
                         dump_scanner = true;
                         break;
@@ -107,6 +119,16 @@ run__LilycParseConfig(const Vec *results)
                         break;
                     case RUN_IR_OPTION:
                         run_ir = true;
+                        break;
+                    case L_OPTION:
+                    case LIB_OPTION:
+                        lib = true;
+                        break;
+                    case STATIC_OPTION:
+                        static_ = true;
+                        break;
+                    case DYNAMIC_OPTION:
+                        dynamic = true;
                         break;
                     case LLVM_IR_OPTION:
                         llvm_ir = true;
@@ -162,10 +184,14 @@ run__LilycParseConfig(const Vec *results)
     return NEW(LilycConfig,
                filename,
                target,
+               build,
                run_scanner,
                run_parser,
                run_typecheck,
                run_ir,
+               lib,
+               static_,
+               dynamic,
                dump_scanner,
                dump_parser,
                dump_typecheck,
