@@ -29,6 +29,8 @@
 #include <core/lily/compiler/driver/lld.h>
 #include <core/lily/compiler/ir/llvm/dump.h>
 #include <core/lily/compiler/ir/llvm/linker.h>
+#include <core/lily/compiler/ir/llvm/utils.h>
+#include <core/lily/compiler/output/cache.h>
 #include <core/lily/compiler/package.h>
 
 #ifdef ENV_LOCAL
@@ -36,21 +38,16 @@
 #define LIB_DIR_BUILD_DEBUG "build/Debug"
 #endif
 
-#define BIN_DIR_PATH "out.lily/bin/"
-#define LIB_DIR_PATH "out.lily/lib/"
-#define OBJ_DIR_PATH "out.lily/obj/"
-
 // Link all library dependencies
 static void
-link_dependencies_lib__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
+link_lib_dependencies__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
 
 // Link all package dependencies
 static void
-link_dependencies_package__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
+link_package_dependencies__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
 
-// TODO: add a system to avoid duplicate lib dependencies
 void
-link_dependencies_lib__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
+link_lib_dependencies__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
 {
     for (Usize i = 0; i < self->lib_dependencies->len; ++i) {
         LilyLibrary *lib = get__Vec(self->lib_dependencies, i);
@@ -59,22 +56,30 @@ link_dependencies_lib__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
 
         // Link direct library dependencies.
 #ifdef LILY_WINDOWS_OS
-        push__Vec(args, format("/defaultlib:{s}", lib->output_path));
+        char *arg = format("/defaultlib:{s}", lib->output_path);
 #else
-        push__Vec(args, strdup(lib->output_path));
+        char *arg = strdup(lib->output_path);
 #endif
+
+        if (is_unique_arg__LilyCompilerIrLlvmUtils(args, arg)) {
+            push__Vec(args, arg);
+        } else {
+            lily_free(arg);
+        }
+
+        // Link indirect library dependencies.
+        link_lib_dependencies__LilyIrLlvmLinker(lib->package, args);
     }
 
     // Link indirect library dependencies.
     for (Usize i = 0; i < self->package_dependencies->len; ++i) {
-        link_dependencies_lib__LilyIrLlvmLinker(
+        link_lib_dependencies__LilyIrLlvmLinker(
           get__Vec(self->package_dependencies, i), args);
     }
 }
 
-// TODO: add a system to avoid duplicate package dependencies
 void
-link_dependencies_package__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
+link_package_dependencies__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
 {
     for (Usize i = 0; i < self->package_dependencies->len; ++i) {
         LilyPackage *package_dependency =
@@ -83,10 +88,16 @@ link_dependencies_package__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
         ASSERT(package_dependency->output_path);
 
         // Link direct package dependencies.
-        push__Vec(args, strdup(package_dependency->output_path));
+        char *arg = strdup(package_dependency->output_path);
+
+        if (is_unique_arg__LilyCompilerIrLlvmUtils(args, arg)) {
+            push__Vec(args, arg);
+        } else {
+            lily_free(arg);
+        }
 
         // Link indirect package dependencies.
-        link_dependencies_package__LilyIrLlvmLinker(package_dependency, args);
+        link_package_dependencies__LilyIrLlvmLinker(package_dependency, args);
     }
 }
 
@@ -118,7 +129,15 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #endif
     }
 
-    link_dependencies_lib__LilyIrLlvmLinker(self, args);
+    // Link all lib dependencies
+    {
+        Vec *lib_dependencies = NEW(Vec); // Vec<char*>*
+
+        link_lib_dependencies__LilyIrLlvmLinker(self, lib_dependencies);
+        append__Vec(args, lib_dependencies);
+
+        FREE(Vec, lib_dependencies);
+    }
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
     push__Vec(args, strdup("--build-id=sha1"));
@@ -168,7 +187,15 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     }
 #endif
 
-    link_dependencies_package__LilyIrLlvmLinker(self, args);
+    // Link all package dependencies
+    {
+        Vec *package_dependencies = NEW(Vec); // Vec<char*>*
+
+        link_package_dependencies__LilyIrLlvmLinker(self, package_dependencies);
+        append__Vec(args, package_dependencies);
+
+        FREE(Vec, package_dependencies);
+    }
 
     push__Vec(args, strdup(self->output_path));
 
@@ -178,7 +205,7 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     push__Vec(args, format("/out:{s}{Sr}", BIN_DIR_PATH, output_name));
 #else
     push__Vec(args, strdup("-o"));
-    push__Vec(args, format("{s}{Sr}", BIN_DIR_PATH, output_name));
+    push__Vec(args, format("{s}{Sr}", DIR_CACHE_BIN, output_name));
 #endif
 
     // Add optimization options
