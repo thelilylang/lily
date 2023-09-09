@@ -127,6 +127,7 @@ CONSTRUCTOR(LilyPackage *,
         self->mir_module = LilyMirCreateModule();
         self->builtins = NULL;
         self->syss = NULL;
+        self->config = root->config;
 
         // Push default operators pushed in the operator register of root
         // package.
@@ -148,6 +149,8 @@ CONSTRUCTOR(LilyPackage *,
     self->main_is_found = false;
     self->is_exe = false;
     self->is_lib = false;
+    self->is_static_lib = false;
+    self->is_dynamic_lib = false;
 
     self->lib = NULL;
 
@@ -161,7 +164,8 @@ build__LilyPackage(const LilycConfig *config,
                    enum LilyVisibility visibility,
                    enum LilyPackageStatus status,
                    const char *default_path,
-                   const LilyProgram *program)
+                   const LilyProgram *program,
+                   LilyLibrary *lib)
 {
     LilyPackage *self = NEW(LilyPackage,
                             NULL,
@@ -213,16 +217,37 @@ build__LilyPackage(const LilycConfig *config,
           ref__LilyCheckedOperator(&program->ressources.default_operators[i]));
     }
 
+    // Set the kind of program (static lib, dynamic lib, exe, ...)
     self->program_kind = program->kind;
 
     switch (self->program_kind) {
         case LILY_PROGRAM_KIND_EXE:
             self->is_exe = true;
+
             break;
         case LILY_PROGRAM_KIND_STATIC_LIB:
-        case LILY_PROGRAM_KIND_DYNAMIC_LIB:
+            ASSERT(lib);
+
+            finish_set__LilyLibrary(
+              lib, self->name, (enum LilyArKind)self->linker);
+
             self->is_lib = true;
-            // TODO: assign self->lib
+            self->is_static_lib = true;
+            lib->package = self;
+            self->lib = lib;
+
+            break;
+        case LILY_PROGRAM_KIND_DYNAMIC_LIB:
+            ASSERT(lib);
+
+            finish_set__LilyLibrary(
+              lib, self->name, (enum LilyArKind)self->linker);
+
+            self->is_lib = true;
+            self->is_dynamic_lib = true;
+            lib->package = self;
+            self->lib = lib;
+
             break;
         default:
             UNREACHABLE("unknown variant");
@@ -296,8 +321,9 @@ build_lib__LilyPackage(const LilycConfig *config,
                        String *url,
                        String *path)
 {
-    LilyPackage *package =
-      build__LilyPackage(config, visibility, status, default_path, program);
+    LilyLibrary *lib = NEW(LilyLibrary, version, url, path, NULL);
+    LilyPackage *package = build__LilyPackage(
+      config, visibility, status, default_path, program, lib);
 
     if (package) {
         return NEW(LilyLibrary, version, url, path, package);
@@ -380,7 +406,7 @@ compile__LilyPackage(const LilycConfig *config,
                      const LilyProgram *program)
 {
     return build__LilyPackage(
-      config, visibility, status, default_path, program);
+      config, visibility, status, default_path, program, NULL);
 }
 
 LilyLibrary *

@@ -99,6 +99,8 @@ typedef struct LilyPackage
     // package the value is false by default.
     bool is_lib;
     bool is_exe;
+    bool is_dynamic_lib;
+    bool is_static_lib;
 
     Vec *builtin_usage; // Vec<LilyBuiltinFun* (&)>*
     Vec *sys_usage;     // Vec<LilySysFun* (&)>*
@@ -130,6 +132,7 @@ CONSTRUCTOR(LilyPackage *,
 /**
  *
  * @brief Build all packages.
+ * @param lib LilyLibrary*?
  * @return LilyPackage*?
  */
 LilyPackage *
@@ -137,7 +140,8 @@ build__LilyPackage(const LilycConfig *config,
                    enum LilyVisibility visibility,
                    enum LilyPackageStatus status,
                    const char *default_path,
-                   const LilyProgram *program);
+                   const LilyProgram *program,
+                   LilyLibrary *lib);
 
 /**
  *
