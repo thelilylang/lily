@@ -25,10 +25,31 @@
 #ifndef LILY_CORE_LILY_COMPILER_IR_LLVM_UTILS_H
 #define LILY_CORE_LILY_COMPILER_IR_LLVM_UTILS_H
 
+#include <base/platform.h>
 #include <base/types.h>
 #include <base/vec.h>
 
 #include <core/lily/compiler/ir/llvm.h>
+
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
+#define OBJ_FORMAT LILY_COMPILER_LINKER_OBJECT_FORMAT_ELF
+#elifdef LILY_APPLE_OS
+#define OBJ_FORMAT LILY_COMPILER_LINKER_OBJECT_FORMAT_MACHO
+#elifdef LILY_WINDOWS_OS
+#define OBJ_FORMAT LILY_COMPILER_LINKER_OBJECT_FORMAT_COFF
+#else
+#error "unknown OS"
+#endif
+
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
+#define LINKER_CMD "ld.lld"
+#elifdef LILY_APPLE_OS
+#define LINKER_CMD "ld64.lld"
+#elifdef LILY_WINDOWS_OS
+#define LINKER_CMD "lld-link"
+#else
+#error "unknown OS"
+#endif
 
 /**
  *
@@ -37,5 +58,13 @@
  */
 bool
 is_unique_arg__LilyCompilerIrLlvmUtils(Vec *args, char *arg);
+
+/**
+ *
+ * @brief Print command arguments.
+ * @param args Vec<char*>*
+ */
+void
+print_cmd_args__LilyCompilerIrLlvmUtils(const char *cmd, Vec *args);
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_UTILS_H

@@ -24,6 +24,7 @@
 
 #include <core/lily/compiler/ir/llvm/utils.h>
 
+#include <stdio.h>
 #include <string.h>
 
 bool
@@ -36,4 +37,20 @@ is_unique_arg__LilyCompilerIrLlvmUtils(Vec *args, char *arg)
     }
 
     return true;
+}
+
+void
+print_cmd_args__LilyCompilerIrLlvmUtils(const char *cmd, Vec *args)
+{
+    printf("%s ", cmd);
+
+    for (Usize i = 0; i < args->len; ++i) {
+        printf("%s", (char *)get__Vec(args, i));
+
+        if (i + 1 != args->len) {
+            printf(" ");
+        }
+    }
+
+    puts("");
 }
