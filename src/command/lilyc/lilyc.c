@@ -47,20 +47,32 @@ run__Lilyc(const LilycConfig *config)
                                           : LILY_PROGRAM_KIND_STATIC_LIB
                       : LILY_PROGRAM_KIND_EXE);
 
-    LilyPackage *pkg = compile__LilyPackage(config,
-                                            LILY_VISIBILITY_PUBLIC,
-                                            LILY_PACKAGE_STATUS_MAIN,
-                                            default_path,
-                                            &program);
+    if (config->lib) {
+        LilyLibrary *lib = compile_lib__LilyPackage(config,
+                                                    LILY_VISIBILITY_PUBLIC,
+                                                    LILY_PACKAGE_STATUS_MAIN,
+                                                    default_path,
+                                                    &program);
+
+#if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILE)
+        FREE(LilyLibrary, lib);
+#endif
+    } else {
+        LilyPackage *pkg = compile__LilyPackage(config,
+                                                LILY_VISIBILITY_PUBLIC,
+                                                LILY_PACKAGE_STATUS_MAIN,
+                                                default_path,
+                                                &program);
+
+#if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILE)
+        FREE(LilyPackage, pkg);
+#endif
+    }
 
     lily_free(default_path);
 
-#if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILE)
-    FREE(LilyPackage, pkg);
-#endif
-
     // NOTE: Do not move this `free` otherwise it could cause double free. In
     // short, always free the program pointer after the package
-    // pointer.
+    // pointer or library pointer.
     FREE(LilyProgram, &program);
 }
