@@ -42,9 +42,9 @@
 static void
 link_lib_dependencies__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
 
-// Link all package dependencies
+// Link all sub-packages
 static void
-link_package_dependencies__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
+link_sub_packages__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
 
 void
 link_lib_dependencies__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
@@ -79,25 +79,21 @@ link_lib_dependencies__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
 }
 
 void
-link_package_dependencies__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
+link_sub_packages__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
 {
-    for (Usize i = 0; i < self->package_dependencies->len; ++i) {
-        LilyPackage *package_dependency =
-          get__Vec(self->package_dependencies, i);
+    for (Usize i = 0; i < self->sub_packages->len; ++i) {
+        LilyPackage *sub_package = get__Vec(self->sub_packages, i);
 
-        ASSERT(package_dependency->output_path);
+        ASSERT(sub_package->output_path);
 
         // Link direct package dependencies.
-        char *arg = strdup(package_dependency->output_path);
+        char *arg = strdup(sub_package->output_path);
 
-        if (is_unique_arg__LilyCompilerIrLlvmUtils(args, arg)) {
-            push__Vec(args, arg);
-        } else {
-            lily_free(arg);
-        }
+        ASSERT(is_unique_arg__LilyCompilerIrLlvmUtils(args, arg));
+        push__Vec(args, arg);
 
-        // Link indirect package dependencies.
-        link_package_dependencies__LilyIrLlvmLinker(package_dependency, args);
+        // Link indirect sub-packages.
+        link_sub_packages__LilyIrLlvmLinker(sub_package, args);
     }
 }
 
@@ -189,11 +185,11 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     }
 #endif
 
-    // Link all package dependencies
+    // Link all sub-packages
     {
         Vec *package_dependencies = NEW(Vec); // Vec<char*>*
 
-        link_package_dependencies__LilyIrLlvmLinker(self, package_dependencies);
+        link_sub_packages__LilyIrLlvmLinker(self, package_dependencies);
         append__Vec(args, package_dependencies);
 
         FREE(Vec, package_dependencies);
@@ -251,42 +247,10 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 
 #ifdef ENV_DEBUG
     printf("====Link(%s)====\n", self->name->buffer);
-
-#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
-    printf("ld.lld ");
-#elifdef LILY_APPLE_OS
-    printf("ld64.lld ");
-#elifdef LILY_WINDOWS_OS
-    printf("lld-link ");
-#else
-#error "unknown OS"
+    print_cmd_args__LilyCompilerIrLlvmUtils(LINKER_CMD, args);
 #endif
 
-    for (Usize i = 0; i < args->len; ++i) {
-        printf("%s", (char *)get__Vec(args, i));
-
-        if (i + 1 != args->len) {
-            printf(" ");
-        }
-    }
-
-    puts("");
-#endif
-
-#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
-    enum LilyCompilerLinkerObjectFormat obj_format =
-      LILY_COMPILER_LINKER_OBJECT_FORMAT_ELF;
-#elifdef LILY_APPLE_OS
-    enum LilyCompilerLinkerObjectFormat obj_format =
-      LILY_COMPILER_LINKER_OBJECT_FORMAT_MACHO;
-#elifdef LILY_WINDOWS_OS
-    enum LilyCompilerLinkerObjectFormat obj_format =
-      LILY_COMPILER_LINKER_OBJECT_FORMAT_COFF;
-#else
-#error "unknown OS"
-#endif
-
-    if (!LilyLLDLink(obj_format, (const char **)args->buffer, args->len)) {
+    if (!LilyLLDLink(OBJ_FORMAT, (const char **)args->buffer, args->len)) {
         EMIT_ERROR("link error");
         exit(1);
     }
