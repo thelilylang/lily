@@ -11844,7 +11844,8 @@ run__LilyAnalysis(LilyAnalysis *self)
 
     // TODO: add a support to only build a library.
     if (!self->package->main_is_found &&
-        self->package->status == LILY_PACKAGE_STATUS_MAIN) {
+        self->package->status == LILY_PACKAGE_STATUS_MAIN &&
+        self->package->is_exe) {
         Location location_error =
           NEW(Location, self->package->file.name, 1, 1, 1, 1, 0, 0);
 
