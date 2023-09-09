@@ -169,6 +169,19 @@ compile__LilyPackage(const LilycConfig *config,
 
 /**
  *
+ * @brief Compile library.
+ * @note Begin by the main package.
+ * @return LilyLibrary*?
+ */
+LilyLibrary *
+compile_lib__LilyPackage(const LilycConfig *config,
+                         enum LilyVisibility visibility,
+                         enum LilyPackageStatus status,
+                         const char *default_path,
+                         const LilyProgram *program);
+
+/**
+ *
  * @brief Look for the name of the file among all the packages and return the
  * File.
  */

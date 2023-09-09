@@ -383,6 +383,17 @@ compile__LilyPackage(const LilycConfig *config,
       config, visibility, status, default_path, program);
 }
 
+LilyLibrary *
+compile_lib__LilyPackage(const LilycConfig *config,
+                         enum LilyVisibility visibility,
+                         enum LilyPackageStatus status,
+                         const char *default_path,
+                         const LilyProgram *program)
+{
+    return build_lib__LilyPackage(
+      config, visibility, status, default_path, program, NULL, NULL, NULL);
+}
+
 const File *
 get_file_from_filename__LilyPackage(const LilyPackage *self,
                                     const char *filename)
