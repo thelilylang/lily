@@ -27,6 +27,8 @@
 CONSTRUCTOR(LilyPackageConfig,
             LilyPackageConfig,
             const char *target,
+            const char *output,
+            bool build,
             bool dump_scanner,
             bool dump_parser,
             bool dump_tc,
@@ -74,7 +76,9 @@ CONSTRUCTOR(LilyPackageConfig,
         }
     }
 
-    return (LilyPackageConfig){ .dump_scanner = dump_scanner,
+    return (LilyPackageConfig){ .output = output,
+                                .build = build,
+                                .dump_scanner = dump_scanner,
                                 .dump_parser = dump_parser,
                                 .dump_tc = dump_tc,
                                 .dump_ir = dump_ir,

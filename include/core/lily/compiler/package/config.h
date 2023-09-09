@@ -43,6 +43,8 @@
 
 typedef struct LilyPackageConfig
 {
+    const char *output; // const char*?
+    bool build;
     bool dump_scanner;
     bool dump_parser;
     bool dump_tc; // Dump typecheck
@@ -72,6 +74,8 @@ typedef struct LilyPackageConfig
 CONSTRUCTOR(LilyPackageConfig,
             LilyPackageConfig,
             const char *target,
+            const char *output,
+            bool build,
             bool dump_scanner,
             bool dump_parser,
             bool dump_tc,
@@ -100,6 +104,8 @@ from_CompileConfig__LilyPackageConfig(const LilycConfig *lilyc_config)
 {
     return NEW(LilyPackageConfig,
                lilyc_config->target,
+               lilyc_config->output,
+               lilyc_config->build,
                lilyc_config->dump_scanner,
                lilyc_config->dump_parser,
                lilyc_config->dump_typecheck,
