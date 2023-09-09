@@ -584,7 +584,7 @@ set(LILY_CORE_LILY_COMPILER_IR_LLVM_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/optimize.cpp
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/pending.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/scope.c
-    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/utils.cpp
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir/llvm/utils.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/linker/object_format.c)
 
 add_library(lily_core_lily_compiler_ir_llvm STATIC
