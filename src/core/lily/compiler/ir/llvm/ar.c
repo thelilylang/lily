@@ -27,6 +27,8 @@
 
 #include <core/lily/compiler/driver/llvm-ar.h>
 #include <core/lily/compiler/ir/llvm/ar.h>
+#include <core/lily/compiler/ir/llvm/utils.h>
+#include <core/lily/compiler/output/cache.h>
 #include <core/lily/compiler/package/library.h>
 #include <core/lily/compiler/package/package.h>
 
@@ -38,7 +40,6 @@
 void
 add_object_files__LilyIrLlvmAr(LilyPackage *self, Vec *args);
 
-// TODO: add a system to avoid duplicate object files.
 void
 add_object_files__LilyIrLlvmAr(LilyPackage *self, Vec *args)
 {
@@ -47,8 +48,14 @@ add_object_files__LilyIrLlvmAr(LilyPackage *self, Vec *args)
     for (Usize i = 0; i < self->package_dependencies->len; ++i) {
         LilyPackage *package_dependency =
           get__Vec(self->package_dependencies, i);
+        char *arg = strdup(package_dependency->output_path);
 
-        push__Vec(args, strdup(package_dependency->output_path));
+        if (is_unique_arg__LilyCompilerIrLlvmUtils(args, arg)) {
+            push__Vec(args, arg);
+        } else {
+            lily_free(arg);
+        }
+
         add_object_files__LilyIrLlvmAr(package_dependency, args);
     }
 }
@@ -58,18 +65,26 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 {
     Vec *args = NEW(Vec); // Vec<char*>*
 
-    push__Vec(args, strdup("--format=default"));
-    push__Vec(args, strdup("rcs"));
     // TODO: generate shared library
-#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
-    push__Vec(args, format("lib{S}.a", self->name));
-#elifdef LILY_WINDOWS_OS
-    push__Vec(args, format("{S}.lib", self->name));
+#ifdef LILY_WINDOWS_OS
+    self->output_path = format("{s}{S}.lib", DIR_CACHE_LIB, self->name);
 #else
-#error "unknown OS"
+    self->output_path = format("{s}lib{S}.a", DIR_CACHE_LIB, self->name);
 #endif
 
-    add_object_files__LilyIrLlvmAr(self->package, args);
+    push__Vec(args, strdup("--format=default"));
+    push__Vec(args, strdup("rcs"));
+    push__Vec(args, strdup(self->output_path));
+
+    // Add object files
+    {
+        Vec *objs = NEW(Vec); // Vec<char*>*
+
+        add_object_files__LilyIrLlvmAr(self->package, objs);
+        append__Vec(args, objs);
+
+        FREE(Vec, objs);
+    }
 
 #ifdef ENV_DEBUG
     printf("====LLVM-Ar(%s)====\n", self->name->buffer);
