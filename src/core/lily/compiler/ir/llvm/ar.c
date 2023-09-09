@@ -25,6 +25,7 @@
 #include <base/alloc.h>
 #include <base/file.h>
 
+#include <core/lily/compiler/driver/lld.h>
 #include <core/lily/compiler/driver/llvm-ar.h>
 #include <core/lily/compiler/ir/llvm/ar.h>
 #include <core/lily/compiler/ir/llvm/utils.h>
@@ -62,16 +63,17 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 {
     Vec *args = NEW(Vec); // Vec<char*>*
 
-    // TODO: generate shared library
 #ifdef LILY_WINDOWS_OS
-    self->output_path = format("{s}{S}.lib", DIR_CACHE_LIB, self->name);
+    char *static_lib_output_path =
+      format("{s}{S}.lib", DIR_CACHE_LIB, self->name);
 #else
-    self->output_path = format("{s}lib{S}.a", DIR_CACHE_LIB, self->name);
+    char *static_lib_output_path =
+      format("{s}lib{S}.a", DIR_CACHE_LIB, self->name);
 #endif
 
     push__Vec(args, strdup("--format=default"));
     push__Vec(args, strdup("rcs"));
-    push__Vec(args, strdup(self->output_path));
+    push__Vec(args, strdup(static_lib_output_path));
 
     // Add object files
     {
@@ -85,23 +87,65 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 
 #ifdef ENV_DEBUG
     printf("====LLVM-Ar(%s)====\n", self->name->buffer);
-
     printf("llvm-ar");
-
-    for (Usize i = 0; i < args->len; ++i) {
-        printf("%s", (char *)get__Vec(args, i));
-
-        if (i + 1 != args->len) {
-            printf(" ");
-        }
-    }
-
-    puts("");
+    print_cmd_args__LilyCompilerIrLlvmUtils("llvm-ar", args);
 #endif
 
     if (run__LlvmAr(args->len, (char **)args->buffer)) {
         EMIT_ERROR("ar error");
         exit(1);
+    }
+
+    // We generate a dynamic library
+    if (self->package->is_dynamic_lib) {
+        Vec *linker_args = init__Vec(1, strdup("--shared")); // Vec<char*>*
+
+#ifdef LILY_WINDOWS_OS
+        char *dynamic_lib_output_path =
+          format("{s}{S}.dll", DIR_CACHE_LIB, self->name);
+#elif defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
+        char *dynamic_lib_output_path =
+          format("{s}lib{S}.so", DIR_CACHE_LIB, self->name);
+#elifdef LILY_APPLE_OS
+        char *dynamic_lib_output_path =
+          format("{s}lib{S}.dylib", DIR_CACHE_LIB, self->name);
+#else
+#error "unknown OS"
+#endif
+
+#ifdef LILY_WINDOWS_OS
+        push__Vec(linker_args, format("/out:{s}", dynamic_lib_output_path));
+#else
+        push__Vec(linker_args, strdup("-o"));
+        push__Vec(linker_args, strdup(dynamic_lib_output_path));
+#endif
+
+        // NOTE: Do not free `static_lib_output_path`
+        push__Vec(linker_args, static_lib_output_path);
+
+#ifdef ENV_DEBUG
+        printf("====Link Dynamic Library(%s)====\n", self->name->buffer);
+        print_cmd_args__LilyCompilerIrLlvmUtils(LINKER_CMD, linker_args);
+#endif
+
+        if (!LilyLLDLink(OBJ_FORMAT,
+                         (const char **)linker_args->buffer,
+                         linker_args->len)) {
+            EMIT_ERROR("link error");
+            exit(1);
+        }
+
+        // Clean up
+
+        for (Usize i = 0; i < linker_args->len; ++i) {
+            lily_free(get__Vec(linker_args, i));
+        }
+
+        FREE(Vec, linker_args);
+
+        self->output_path = dynamic_lib_output_path;
+    } else {
+        self->output_path = static_lib_output_path;
     }
 
     // Clean up
