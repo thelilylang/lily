@@ -43,12 +43,9 @@ add_object_files__LilyIrLlvmAr(LilyPackage *self, Vec *args);
 void
 add_object_files__LilyIrLlvmAr(LilyPackage *self, Vec *args)
 {
-    // TODO: add option to add all object files (for unused package case). e.g.
-    // `--full-lib`
-    for (Usize i = 0; i < self->package_dependencies->len; ++i) {
-        LilyPackage *package_dependency =
-          get__Vec(self->package_dependencies, i);
-        char *arg = strdup(package_dependency->output_path);
+    for (Usize i = 0; i < self->sub_packages->len; ++i) {
+        LilyPackage *sub_package = get__Vec(self->sub_packages, i);
+        char *arg = strdup(sub_package->output_path);
 
         if (is_unique_arg__LilyCompilerIrLlvmUtils(args, arg)) {
             push__Vec(args, arg);
@@ -56,7 +53,7 @@ add_object_files__LilyIrLlvmAr(LilyPackage *self, Vec *args)
             lily_free(arg);
         }
 
-        add_object_files__LilyIrLlvmAr(package_dependency, args);
+        add_object_files__LilyIrLlvmAr(sub_package, args);
     }
 }
 
