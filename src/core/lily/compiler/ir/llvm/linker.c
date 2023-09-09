@@ -48,6 +48,7 @@ link_dependencies_lib__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
 static void
 link_dependencies_package__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
 
+// TODO: add a system to avoid duplicate lib dependencies
 void
 link_dependencies_lib__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
 {
@@ -71,6 +72,7 @@ link_dependencies_lib__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
     }
 }
 
+// TODO: add a system to avoid duplicate package dependencies
 void
 link_dependencies_package__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
 {
@@ -92,9 +94,7 @@ void
 compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 {
     Vec *args = NEW(Vec); // Vec<char*>*
-
     String *output_name = get_filename__File(self->file.name);
-    String *path_base = get_filename__File(self->output_path);
 
     // Default library link.
     // Link @sys and @builtin library.
@@ -170,13 +170,7 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 
     link_dependencies_package__LilyIrLlvmLinker(self, args);
 
-#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
-    push__Vec(args, format("{s}{Sr}.o", OBJ_DIR_PATH, path_base));
-#elifdef LILY_WINDOWS_OS
-    push__Vec(args, format("{s}{Sr}.obj", OBJ_DIR_PATH, path_base));
-#else
-#error "unknown OS"
-#endif
+    push__Vec(args, strdup(self->output_path));
 
     // Add output option
     // TODO: Check there is passed `-o` option
