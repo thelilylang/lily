@@ -50,9 +50,11 @@
 
 enum LilyPackageStatus
 {
-    LILY_PACKAGE_STATUS_MAIN, // Can contain the main function
+    LILY_PACKAGE_STATUS_LIB_MAIN,
+    LILY_PACKAGE_STATUS_MAIN, // Must contain the main function
     LILY_PACKAGE_STATUS_NORMAL,
     LILY_PACKAGE_STATUS_SUB_MAIN,
+    LILY_PACKAGE_STATUS_IND // Independent package e.g. a single file
 };
 
 typedef struct LilyPackage
@@ -65,7 +67,7 @@ typedef struct LilyPackage
     Vec *private_imports;            // Vec<LilyImport*>*
     Vec *sub_packages;               // Vec<LilyPackage*>*
     Vec *package_dependencies;       // Vec<LilyPackage* (&)>*
-    Vec *lib_dependencies;           // Vec<LilyLibrary*>*
+    Vec *lib_dependencies;           // Vec<LilyLibrary* (&)>*
     const LilyPackageConfig *config; // LilyPackageConfig* (&)
     char *output_path; // char*? e.g. Object file, ASM file, LLVM IR file, ...
     File file;
@@ -107,8 +109,7 @@ typedef struct LilyPackage
 
     LilyCheckedOperatorRegister operator_register;
 
-    // NOTE: only defined in the main package
-    enum LilyProgramKind program_kind; // LilyProgramKind | undef
+    const LilyProgram *program;
 
     LilyLibrary *lib; // LilyLibrary*? (&)
 } LilyPackage;

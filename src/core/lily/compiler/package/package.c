@@ -121,6 +121,7 @@ CONSTRUCTOR(LilyPackage *,
     self->operator_register = NEW(LilyCheckedOperatorRegister);
 
     if (root) {
+        self->program = root->program;
         self->parser = NEW(LilyParser, self, root, NULL);
         self->analysis = NEW(
           LilyAnalysis, self, root, &self->parser, root->analysis.use_switch);
@@ -218,9 +219,9 @@ build__LilyPackage(const LilycConfig *config,
     }
 
     // Set the kind of program (static lib, dynamic lib, exe, ...)
-    self->program_kind = program->kind;
+    self->program = program;
 
-    switch (self->program_kind) {
+    switch (self->program->kind) {
         case LILY_PROGRAM_KIND_EXE:
             self->is_exe = true;
 
