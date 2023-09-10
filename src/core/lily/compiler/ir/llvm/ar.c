@@ -104,7 +104,15 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 
     // We generate a dynamic library
     if (self->package->is_dynamic_lib) {
-        Vec *linker_args = NEW(Vec); // Vec<char*>*
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
+        Vec *linker_args = init__Vec(1, strdup("ld.lld")); // Vec<char*>*
+#elifdef LILY_APPLE_OS
+        Vec *linker_args = init__Vec(1, strdup("ld64.lld")); // Vec<char*>*
+#elif defined(LILY_WINDOWS_OS)
+        Vec *linker_args = init__Vec(1, strdup("lld-link")); // Vec<char*>*
+#else
+#error "unknown OS"
+#endif
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
         push__Vec(linker_args, strdup("--shared"));
@@ -158,12 +166,7 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
         print_cmd_args__LilyCompilerIrLlvmUtils(LINKER_CMD, linker_args);
 #endif
 
-        if (!LilyLLDLink(OBJ_FORMAT,
-                         (const char **)linker_args->buffer,
-                         linker_args->len)) {
-            EMIT_ERROR("link error");
-            exit(1);
-        }
+        run__LilyLLD((int)linker_args->len, (const char **)linker_args->buffer);
 
         // Clean up
 
