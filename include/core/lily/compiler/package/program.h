@@ -34,12 +34,14 @@
 
 typedef struct LilyPackage LilyPackage;
 
-// This types is used to load the basic ressources of the program
+// This types is used to load the basic ressources of the program.
+// e.g. default operator, builtins, syss, analysed library, ...
 typedef struct LilyProgramRessources
 {
     LilyBuiltinFun *builtins;
     LilySysFun *syss;
     LilyCheckedOperator *default_operators;
+    Vec *libs; // Vec<LilyLibrary*>*
 } LilyProgramRessources;
 
 /**
@@ -51,7 +53,8 @@ inline CONSTRUCTOR(LilyProgramRessources, LilyProgramRessources)
     return (LilyProgramRessources){
         .builtins = load_builtins__LilyBuiltin(),
         .syss = load_syss__LilySys(),
-        .default_operators = load_default_operators__LilyCheckedOperator()
+        .default_operators = load_default_operators__LilyCheckedOperator(),
+        .libs = NEW(Vec)
     };
 }
 

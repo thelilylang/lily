@@ -24,6 +24,7 @@
 
 #include <base/assert.h>
 
+#include <core/lily/compiler/package/library.h>
 #include <core/lily/compiler/package/program.h>
 
 #include <stdio.h>
@@ -52,6 +53,9 @@ DESTRUCTOR(LilyProgramRessources, const LilyProgramRessources *self)
                           LilyCheckedDataType);
         FREE(Vec, self->default_operators[i].signature);
     }
+
+    FREE_BUFFER_ITEMS(self->libs->buffer, self->libs->len, LilyLibrary);
+    FREE(Vec, self->libs);
 
     lily_free(self->default_operators);
 }
