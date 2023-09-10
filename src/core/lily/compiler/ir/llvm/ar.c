@@ -77,7 +77,7 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
       format("{s}lib{S}.a", DIR_CACHE_LIB, self->name);
 #endif
 
-    // push__Vec(args, strdup("--format=default"));
+    push__Vec(args, strdup("--format=default"));
     push__Vec(args, strdup("rcs"));
     push__Vec(args, strdup(static_lib_output_path));
     push__Vec(args, strdup(self->package->output_path));
@@ -104,7 +104,16 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 
     // We generate a dynamic library
     if (self->package->is_dynamic_lib) {
-        Vec *linker_args = init__Vec(1, strdup("--shared")); // Vec<char*>*
+        Vec *linker_args = NEW(Vec); // Vec<char*>*
+
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
+        push__Vec(linker_args, strdup("--shared"));
+        push__Vec(linker_args, strdup("--no-pie"));
+#elif defined(LILY_APPLE_OS)
+        push__Vec(linker_args, strdup("-dylib"));
+#elif defined(LILY_WINDOWS_OS)
+        push__Vec(linker_args, strdup("/dll"));
+#endif
 
 #ifdef LILY_WINDOWS_OS
         char *dynamic_lib_output_path =
@@ -135,10 +144,6 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
         push__Vec(linker_args, strdup("--build-id=sha1"));
-#endif
-
-#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
-        push__Vec(linker_args, strdup("-pie"));
 #endif
 
 #ifdef LILY_WINDOWS_OS
