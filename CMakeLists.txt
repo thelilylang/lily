@@ -487,8 +487,8 @@ set(LILY_CORE_LILY_COMPILER_DRIVER
 
 add_library(lily_core_lily_compiler_driver STATIC
             ${LILY_CORE_LILY_COMPILER_DRIVER})
-target_link_libraries(lily_core_lily_compiler_driver lily_base
-                      ${LILY_LLVM_LIBS} ${LILY_LLD_LIBS})
+target_link_libraries(lily_core_lily_compiler_driver
+                      PRIVATE lily_base ${LILY_LLVM_LIBS} ${LILY_LLD_LIBS})
 target_include_directories(lily_core_lily_compiler_driver
                            PRIVATE ${LILY_INCLUDE})
 
@@ -590,8 +590,9 @@ set(LILY_CORE_LILY_COMPILER_IR_LLVM_SRC
 add_library(lily_core_lily_compiler_ir_llvm STATIC
             ${LILY_CORE_LILY_COMPILER_IR_LLVM_SRC})
 target_link_libraries(
-  lily_core_lily_compiler_ir_llvm lily_base lily_core_lily_mir
-  lily_core_lily_compiler_driver ${LILY_LLVM_LIBS} ${LILY_LLD_LIBS})
+  lily_core_lily_compiler_ir_llvm
+  PRIVATE lily_base lily_core_lily_mir lily_core_lily_compiler_driver
+          ${LILY_LLVM_LIBS} ${LILY_LLD_LIBS})
 target_include_directories(lily_core_lily_compiler_ir_llvm
                            PRIVATE ${LILY_INCLUDE})
 
@@ -631,13 +632,13 @@ add_library(lily_core_lily_compiler_package STATIC
             ${LILY_CORE_LILY_COMPILER_PACKAGE_SRC})
 target_link_libraries(
   lily_core_lily_compiler_package
-  lily_core_lily_compiler_ar
-  lily_core_lily_compiler_ir
-  lily_core_lily_compiler_linker
-  lily_core_lily_mir
-  lily_core_lily_parser
-  lily_core_lily_precompiler
-  lily_core_lily_compiler_output)
+  PRIVATE lily_core_lily_compiler_ar
+          lily_core_lily_compiler_ir
+          lily_core_lily_compiler_linker
+          lily_core_lily_mir
+          lily_core_lily_parser
+          lily_core_lily_precompiler
+          lily_core_lily_compiler_output)
 target_include_directories(lily_core_lily_compiler_package
                            PRIVATE ${LILY_INCLUDE})
 
@@ -829,17 +830,18 @@ set(LILY_CORE_SHARED
     ${CMAKE_SOURCE_DIR}/src/core/shared/source.c)
 
 add_library(lily_core_shared STATIC ${LILY_CORE_SHARED})
-target_link_libraries(lily_core_shared lily_base lily_core_lily_diagnostic
-                      lily_core_cc_diagnostic lily_core_cpp_diagnostic)
+target_link_libraries(
+  lily_core_shared PRIVATE lily_base lily_core_lily_diagnostic
+                           lily_core_cc_diagnostic lily_core_cpp_diagnostic)
 target_include_directories(lily_core_shared PRIVATE ${LILY_INCLUDE})
 
 add_executable(lily ${CMAKE_SOURCE_DIR}/src/bin/lily/main.c)
-target_link_libraries(lily lily_cli lily_command)
+target_link_libraries(lily PRIVATE lily_cli lily_command)
 target_include_directories(lily PRIVATE ${LILY_INCLUDE})
 
 add_executable(lilyc ${CMAKE_SOURCE_DIR}/src/bin/lilyc/main.c)
-target_link_libraries(lilyc lilyc_cli lilyc_command ${LILY_LLD_LIBS}
-                      ${LILY_LLVM_LIBS})
+target_link_libraries(lilyc PRIVATE lilyc_cli lilyc_command ${LILY_LLD_LIBS}
+                                    ${LILY_LLVM_LIBS})
 target_include_directories(lilyc PRIVATE ${LILY_INCLUDE})
 
 # lily_builtin
