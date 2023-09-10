@@ -218,6 +218,32 @@ build__LilyPackage(const LilycConfig *config,
           ref__LilyCheckedOperator(&program->ressources.default_operators[i]));
     }
 
+    if (self->preparser_info.package->name) {
+        self->name = self->preparser_info.package->name;
+        self->global_name = clone__String(self->name);
+    } else {
+        self->name = from__String("main");
+        self->global_name = from__String("main");
+    }
+
+    self->mir_module = LilyMirCreateModule();
+
+    if (config->cc_ir) {
+        // TODO: add a linker for CC
+        self->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));
+        self->linker = LILY_LINKER_KIND_CC;
+    } else if (config->cpp_ir) {
+        // TODO: add a linker for CPP
+        self->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));
+        self->linker = LILY_LINKER_KIND_CPP;
+    } else if (config->js_ir) {
+        self->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));
+    } else {
+        self->ir =
+          NEW_VARIANT(LilyIr, llvm, NEW(LilyIrLlvm, self->global_name->buffer));
+        self->linker = LILY_LINKER_KIND_LLVM;
+    }
+
     // Set the kind of program (static lib, dynamic lib, exe, ...)
     self->program = program;
 
@@ -252,32 +278,6 @@ build__LilyPackage(const LilycConfig *config,
             break;
         default:
             UNREACHABLE("unknown variant");
-    }
-
-    if (self->preparser_info.package->name) {
-        self->name = self->preparser_info.package->name;
-        self->global_name = clone__String(self->name);
-    } else {
-        self->name = from__String("main");
-        self->global_name = from__String("main");
-    }
-
-    self->mir_module = LilyMirCreateModule();
-
-    if (config->cc_ir) {
-        // TODO: add a linker for CC
-        self->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));
-        self->linker = LILY_LINKER_KIND_CC;
-    } else if (config->cpp_ir) {
-        // TODO: add a linker for CPP
-        self->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));
-        self->linker = LILY_LINKER_KIND_CPP;
-    } else if (config->js_ir) {
-        self->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));
-    } else {
-        self->ir =
-          NEW_VARIANT(LilyIr, llvm, NEW(LilyIrLlvm, self->global_name->buffer));
-        self->linker = LILY_LINKER_KIND_LLVM;
     }
 
     run__LilyPrecompile(&self->precompile, self, false);
