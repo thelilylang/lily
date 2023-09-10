@@ -214,7 +214,8 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     print_cmd_args__LilyCompilerIrLlvmUtils(LINKER_CMD, args);
 #endif
 
-    if (!LilyLLDLink(OBJ_FORMAT, (const char **)args->buffer, args->len)) {
+    if (!link_exe__LilyLLD(
+          OBJ_FORMAT, (const char **)args->buffer, args->len)) {
         EMIT_ERROR("link error");
         exit(1);
     }
