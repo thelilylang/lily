@@ -113,15 +113,34 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 #error "unknown OS"
 #endif
 
+        // NOTE: Do not free `static_lib_output_path`
+        push__Vec(linker_args, static_lib_output_path);
+
+        // Link all lib dependencies
+        {
+            Vec *lib_dependencies = NEW(Vec); // Vec<char*>*
+
+            link_lib_dependencies__LilyCompilerIrLlvmUtils(self->package,
+                                                           lib_dependencies);
+            append__Vec(linker_args, lib_dependencies);
+
+            FREE(Vec, lib_dependencies);
+        }
+
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
+        push__Vec(linker_args, strdup("--build-id=sha1"));
+#endif
+
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
+        push__Vec(linker_args, strdup("-pie"));
+#endif
+
 #ifdef LILY_WINDOWS_OS
         push__Vec(linker_args, format("/out:{s}", dynamic_lib_output_path));
 #else
         push__Vec(linker_args, strdup("-o"));
         push__Vec(linker_args, strdup(dynamic_lib_output_path));
 #endif
-
-        // NOTE: Do not free `static_lib_output_path`
-        push__Vec(linker_args, static_lib_output_path);
 
 #ifdef ENV_DEBUG
         printf("====Link Dynamic Library(%s)====\n", self->name->buffer);
