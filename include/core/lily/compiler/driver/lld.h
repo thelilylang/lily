@@ -25,21 +25,24 @@
 #ifndef LILY_CORE_LILY_COMPILER_DRIVER_LLD_H
 #define LILY_CORE_LILY_COMPILER_DRIVER_LLD_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 #include <core/lily/compiler/linker/object_format.h>
 
 #include <base/types.h>
 
-    bool LilyLLDLink(enum LilyCompilerLinkerObjectFormat obj_format,
-                     const char **args,
-                     Usize arg_len);
+/**
+ *
+ * @brief Run LLD to only link an exe.
+ */
+bool
+link_exe__LilyLLD(enum LilyCompilerLinkerObjectFormat obj_format,
+                  const char **args,
+                  Usize arg_len);
 
-#ifdef __cplusplus
-}
-#endif
+/**
+ *
+ * @brief Run LLD to the main entry point.
+ */
+void
+run__LilyLLD(int argc, const char **argv);
 
 #endif // LILY_CORE_LILY_COMPILER_DRIVER_LLD_H
