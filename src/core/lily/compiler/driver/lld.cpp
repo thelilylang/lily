@@ -25,8 +25,6 @@
 extern "C"
 {
 #include <base/macros.h>
-#include <base/new.h>
-#include <base/string.h>
 
 #include <core/lily/compiler/driver/lld.h>
 }
@@ -35,56 +33,31 @@ extern "C"
 
 using namespace llvm;
 
-class LilyOSStream : public raw_ostream
-{
-  public:
-    explicit LilyOSStream(String *buffer)
-      : raw_ostream(true)
-      , m_buffer(buffer)
-    {
-    }
-    ~LilyOSStream() { FREE(String, m_buffer); }
-
-    auto write_impl(const char *s, size_t len) -> void override
-    {
-        push_str_with_len__String(m_buffer, s, len);
-    }
-
-    auto current_pos() const -> uint64_t override { return m_buffer->len; }
-
-  private:
-    String *m_buffer;
-};
-
 bool
 LilyLLDLink(enum LilyCompilerLinkerObjectFormat obj_format,
             const char **args,
             Usize arg_len)
 {
     ArrayRef<const char *> array_ref_args(args, arg_len);
-    String *stdout_buffer = NEW(String);
-    String *stderr_buffer = NEW(String);
-    LilyOSStream stdout_os{ stdout_buffer };
-    LilyOSStream stderr_os{ stderr_buffer };
 
     switch (obj_format) {
         case LILY_COMPILER_LINKER_OBJECT_FORMAT_COFF:
             return lld::coff::link(
-              array_ref_args, stdout_os, stderr_os, true, false);
+              array_ref_args, llvm::outs(), llvm::errs(), true, false);
         case LILY_COMPILER_LINKER_OBJECT_FORMAT_ELF:
             return lld::elf::link(
-              array_ref_args, stdout_os, stderr_os, true, false);
+              array_ref_args, llvm::outs(), llvm::errs(), true, false);
         case LILY_COMPILER_LINKER_OBJECT_FORMAT_MACHO:
             return lld::macho::link(
-              array_ref_args, stdout_os, stderr_os, true, false);
+              array_ref_args, llvm::outs(), llvm::errs(), true, false);
         case LILY_COMPILER_LINKER_OBJECT_FORMAT_MINGW:
             return lld::mingw::link(
-              array_ref_args, stdout_os, stderr_os, true, false);
+              array_ref_args, llvm::outs(), llvm::errs(), true, false);
         case LILY_COMPILER_LINKER_OBJECT_FORMAT_UNKNOWN:
             UNREACHABLE("unknown object format");
         case LILY_COMPILER_LINKER_OBJECT_FORMAT_WASM:
             return lld::wasm::link(
-              array_ref_args, stdout_os, stderr_os, true, false);
+              array_ref_args, llvm::outs(), llvm::errs(), true, false);
         default:
             UNREACHABLE("unknown variant");
     }
