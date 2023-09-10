@@ -52,6 +52,48 @@
 #error "unknown OS"
 #endif
 
+// NOTE: As a minimum we use ld version 2.x.x
+#define LD_MAJOR_VERSION "2"
+
+#ifdef LILY_LINUX_OS
+#ifdef LILY_X86_ARCH
+#define DYNAMIC_LINKER "/lib/ld-linux.so." LD_MAJOR_VERSION
+#elifdef LILY_X86_64_ARCH
+#define DYNAMIC_LINKER "/lib64/ld-linux-x86-64.so." LD_MAJOR_VERSION
+#elifdef LILY_ARM64_ARCH
+#define DYNAMIC_LINKER "/lib64/ld-linux-aarch64.so." LD_MAJOR_VERSION
+#elifdef LILY_ARM_ARCH
+#define DYNAMIC_LINKER "/lib/ld-linux-armhd.so." LD_MAJOR_VERSION
+#elifdef LILY_PPC64_ARCH
+#define DYNAMIC_LINKER "/lib64/ld64.so." LD_MAJOR_VERSION
+#elifdef LILY_PPC_ARCH
+#define DYNAMIC_LINKER "/lib/ld.so." LD_MAJOR_VERSION
+#elifdef LILY_MIPS_ARCH
+#define DYNAMIC_LINKER "/lib/ld.so." LD_MAJOR_VERSION
+#else
+#error "this Linux arch is not yet supported"
+#endif
+#elifdef LILY_BSD_OS
+#ifdef LILY_FREE_BSD_OS
+#define DYNAMIC_LINKER "/libexec/ld-elf.so." LD_MAJOR_VERSION
+#elifdef LILY_NET_BSD_OS
+#define DYNAMIC_LINKER "/libexec/ld.elf_so"
+#elifdef LILY_OPEN_BSD_OS
+#define DYNAMIC_LINKER "/usr/libexec/ld.so"
+#elifdef LILY_DRAGONFLY_OS
+#define DYNAMIC_LINKER "/libexec/ld-elf.so." LD_MAJOR_VERSION
+#elifdef LILY_BSDI_OS
+#error "add your dynamic linker"
+#else
+#error "unknown BSD"
+#endif
+#elifdef LILY_APPLE_OS
+#define DYNAMIC_LINKER "/usr/lib/dyld"
+#elifdef LILY_WINDOWS_OS
+#else
+#error "unknown OS"
+#endif
+
 /**
  *
  * @brief Check if the arg is unique.
