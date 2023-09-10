@@ -124,7 +124,6 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/analysis/checked/stmt/*.c
 	${CLANG_FORMAT} ./src/core/lily/analysis/*.c
 	${CLANG_FORMAT} ./src/core/lily/compiler/ar/*.c
-	${CLANG_FORMAT} ./src/core/lily/compiler/driver/lld.cpp
 	${CLANG_FORMAT} ./src/core/lily/compiler/ir/cc/*.c
 	${CLANG_FORMAT} ./src/core/lily/compiler/ir/cc/builder/*.c
 	${CLANG_FORMAT} ./src/core/lily/compiler/ir/cc/builder/function/*.c
