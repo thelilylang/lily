@@ -26,7 +26,7 @@
 #define LILY_BASE_PLATFORM_H
 
 #if defined(__x86_64__) || defined(_WIN64) || defined(__arm64__) || \
-  defined(__ppc64_)
+  defined(__ppc64__)
 #define PLATFORM_64
 #else
 #define PLATFORM_32
@@ -39,6 +39,24 @@
   defined(__bsdi__) || defined(__DragonFly__)
 #define OS_NAME "BSD"
 #define LILY_BSD_OS
+#ifdef __FreeBSD__
+#define BSD_NAME "Free"
+#define LILY_FREE_BSD_OS
+#elif defined(__NetBSD__)
+#define BSD_NAME "Net"
+#define LILY_NET_BSD_OS
+#elif defined(__OpenBSD__)
+#define BSD_NAME "Open"
+#define LILY_OPEN_BSD_OS
+#elif defined(__bsdi__)
+#define BSD_NAME "BSDI"
+#define LILY_BSDI_OS
+#elif defined(__DragonFly__)
+#define BSD_NAME "DragonFly"
+#define LILY_DRAGONFLY_OS
+#else
+#error "unreachable: unknown BSD"
+#endif
 #elif defined(__APPLE__) && defined(__MACH__)
 #define OS_NAME "macos"
 #define LILY_APPLE_OS
@@ -56,9 +74,18 @@
 #elif defined(__i386__)
 #define ARCH_NAME "x86"
 #define LILY_X86_ARCH
+#elif defined(__arm64__)
+#define ARCH_NAME "arm64"
+#define LILY_ARM64_ARCH
 #elif defined(__arm__)
 #define ARCH_NAME "arm"
 #define LILY_ARM_ARCH
+#elif defined(__ppc64_)
+#define ARCH_NAME "ppc64"
+#define LILY_PPC64_ARCH
+#elif defined(__ppc__)
+#define ARCH_NAME "ppc"
+#define LILY_PPC_ARCH
 #elif defined(__mips__)
 #define ARCH_NAME "mips"
 #define LILY_MIPS_ARCH
