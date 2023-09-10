@@ -61,7 +61,13 @@ add_object_files__LilyIrLlvmAr(LilyPackage *self, Vec *args)
 void
 compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 {
-    Vec *args = NEW(Vec); // Vec<char*>*
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
+    Vec *args = init__Vec(1, strdup("ar")); // Vec<char*>*
+#elif defined(LILY_WINDOWS_OS)
+    Vec *args = init__Vec(1, strdup("dlltool")); // Vec<char*>*
+#else
+#error "unknown OS"
+#endif
 
 #ifdef LILY_WINDOWS_OS
     char *static_lib_output_path =
@@ -71,9 +77,10 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
       format("{s}lib{S}.a", DIR_CACHE_LIB, self->name);
 #endif
 
-    push__Vec(args, strdup("--format=default"));
+    // push__Vec(args, strdup("--format=default"));
     push__Vec(args, strdup("rcs"));
     push__Vec(args, strdup(static_lib_output_path));
+    push__Vec(args, strdup(self->package->output_path));
 
     // Add object files
     {
@@ -87,7 +94,6 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 
 #ifdef ENV_DEBUG
     printf("====LLVM-Ar(%s)====\n", self->name->buffer);
-    printf("llvm-ar");
     print_cmd_args__LilyCompilerIrLlvmUtils("llvm-ar", args);
 #endif
 
