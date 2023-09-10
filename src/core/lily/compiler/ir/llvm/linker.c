@@ -114,14 +114,14 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 
     // Add dynamic linker option
     push__Vec(args, strdup("-dynamic-linker"));
-    push__Vec(args, strdup("/lib64/ld-linux-x86-64.so.2"));
+    push__Vec(args, strdup(DYNAMIC_LINKER));
 #elifdef LILY_APPLE_OS
     // Link libc
     push__Vec(args, strdup("/usr/lib/libc.so"));
 
     // Add dynamic linker option
     push__Vec(args, strdup("-dynamic-linker"));
-    push__Vec(args, strdup("/usr/lib/dylib"));
+    push__Vec(args, strdup(DYNAMIC_LINKER));
 #elifdef LILY_WINDOWS_OS
     push__Vec(args, strdup("/subsystem:console"));
     push__Vec(args, strdup("/defaultlib:libc.lib"));
