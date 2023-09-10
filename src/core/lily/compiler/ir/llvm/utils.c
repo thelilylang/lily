@@ -54,3 +54,35 @@ print_cmd_args__LilyCompilerIrLlvmUtils(const char *cmd, Vec *args)
 
     puts("");
 }
+
+void
+link_lib_dependencies__LilyCompilerIrLlvmUtils(LilyPackage *self, Vec *args)
+{
+    for (Usize i = 0; i < self->lib_dependencies->len; ++i) {
+        LilyLibrary *lib = get__Vec(self->lib_dependencies, i);
+
+        ASSERT(lib->output_path);
+
+        // Link direct library dependencies.
+#ifdef LILY_WINDOWS_OS
+        char *arg = format("/defaultlib:{s}", lib->output_path);
+#else
+        char *arg = strdup(lib->output_path);
+#endif
+
+        if (is_unique_arg__LilyCompilerIrLlvmUtils(args, arg)) {
+            push__Vec(args, arg);
+        } else {
+            lily_free(arg);
+        }
+
+        // Link indirect library dependencies.
+        link_lib_dependencies__LilyCompilerIrLlvmUtils(lib->package, args);
+    }
+
+    // Link indirect library dependencies.
+    for (Usize i = 0; i < self->package_dependencies->len; ++i) {
+        link_lib_dependencies__LilyCompilerIrLlvmUtils(
+          get__Vec(self->package_dependencies, i), args);
+    }
+}

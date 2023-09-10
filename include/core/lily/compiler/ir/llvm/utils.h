@@ -30,6 +30,7 @@
 #include <base/vec.h>
 
 #include <core/lily/compiler/ir/llvm.h>
+#include <core/lily/compiler/package/package.h>
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
 #define OBJ_FORMAT LILY_COMPILER_LINKER_OBJECT_FORMAT_ELF
@@ -66,5 +67,12 @@ is_unique_arg__LilyCompilerIrLlvmUtils(Vec *args, char *arg);
  */
 void
 print_cmd_args__LilyCompilerIrLlvmUtils(const char *cmd, Vec *args);
+
+/**
+ *
+ * @brief Link all library dependencies.
+ */
+void
+link_lib_dependencies__LilyCompilerIrLlvmUtils(LilyPackage *self, Vec *args);
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_UTILS_H
