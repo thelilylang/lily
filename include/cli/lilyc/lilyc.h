@@ -69,7 +69,8 @@
     run_parser->$help(run_parser, "Run until the parser");                     \
     run_tc->$help(run_tc, "Run until the typecheck");                          \
     run_ir->$help(run_ir, "Run until the IR");                                 \
-    lib->$help(lib, "Compile a library")->$short_name(lib, "-l");              \
+    lib->$help(lib, "Compile a library (static library by default)")           \
+      ->$short_name(lib, "-l");                                                \
     static_->$help(static_, "Force to compile a static library");              \
     dynamic->$help(dynamic, "Force to compile a dynamic library");             \
     llvm_ir->$help(llvm_ir, "Run LLVM as IR (by default)");                    \
