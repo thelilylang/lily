@@ -154,7 +154,7 @@ format:
 	${CLANG_FORMAT} ./tests/base/*.c
 	${CLANG_FORMAT} ./tests/base/memory/*.c
 	${CLANG_FORMAT} ./tests/core/lily/parser/*.c
-	${CLANG_FORMAT} ./tests/core/lily/precompile/*.c
+	${CLANG_FORMAT} ./tests/core/lily/precompiler/*.c
 	${CLANG_FORMAT} ./tests/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/scanner/*.c
 	${CMAKE_FORMAT} ./CMakeLists.txt
