@@ -61,6 +61,8 @@
 #define OZ_OPTION 32
 #define O_OPTION 33
 #define OUTPUT_OPTION 34
+#define V_OPTION 35
+#define VERBOSE_OPTION 36
 
 LilycConfig
 run__LilycParseConfig(const Vec *results)
@@ -75,6 +77,7 @@ run__LilycParseConfig(const Vec *results)
     bool cc_ir = false, cpp_ir = false, js_ir = false, llvm_ir = false,
          wasm_ir = false;
     bool o0 = false, o1 = false, o2 = false, o3 = false, oz = false;
+    bool verbose = false;
     const char *target = NULL;
     const char *output = NULL;
     VecIter iter = NEW(VecIter, results);
@@ -178,6 +181,10 @@ run__LilycParseConfig(const Vec *results)
                     case OUTPUT_OPTION:
                         output = current->option->value->single;
                         break;
+                    case V_OPTION:
+                    case VERBOSE_OPTION:
+                        verbose = true;
+                        break;
                     default:
                         UNREACHABLE("unknown option");
                 }
@@ -214,5 +221,6 @@ run__LilycParseConfig(const Vec *results)
                o1,
                o2,
                o3,
-               oz);
+               oz,
+               verbose);
 }

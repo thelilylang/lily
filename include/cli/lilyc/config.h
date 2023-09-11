@@ -57,6 +57,7 @@ typedef struct LilycConfig
     bool o2;
     bool o3; // Include -ORelease
     bool oz; // Include -OSize
+    bool verbose;
 } LilycConfig;
 
 /**
@@ -90,7 +91,8 @@ inline CONSTRUCTOR(LilycConfig,
                    bool o1,
                    bool o2,
                    bool o3,
-                   bool oz)
+                   bool oz,
+                   bool verbose)
 {
     return (LilycConfig){ .filename = filename,
                           .target = target,
@@ -117,7 +119,8 @@ inline CONSTRUCTOR(LilycConfig,
                           .o1 = o1,
                           .o2 = o2,
                           .o3 = o3,
-                          .oz = oz };
+                          .oz = oz,
+                          .verbose = verbose };
 }
 
 #endif // LILY_CLI_LILYC_CONFIG_H

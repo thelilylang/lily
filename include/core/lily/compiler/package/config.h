@@ -65,6 +65,7 @@ typedef struct LilyPackageConfig
     bool o2;
     bool o3;
     bool oz;
+    bool verbose;
 } LilyPackageConfig;
 
 /**
@@ -93,7 +94,8 @@ CONSTRUCTOR(LilyPackageConfig,
             bool o1,
             bool o2,
             bool o3,
-            bool oz);
+            bool oz,
+            bool verbose);
 
 /**
  *
@@ -123,7 +125,8 @@ from_CompileConfig__LilyPackageConfig(const LilycConfig *lilyc_config)
                lilyc_config->o1,
                lilyc_config->o2,
                lilyc_config->o3,
-               lilyc_config->oz);
+               lilyc_config->oz,
+               lilyc_config->verbose);
 }
 
 #endif // LILY_CORE_LILY_COMPILER_PACKAGE_CONFIG

@@ -46,7 +46,8 @@ CONSTRUCTOR(LilyPackageConfig,
             bool o1,
             bool o2,
             bool o3,
-            bool oz)
+            bool oz,
+            bool verbose)
 {
     enum Os os = -1;
     enum Arch arch = -1;
@@ -97,5 +98,6 @@ CONSTRUCTOR(LilyPackageConfig,
                                 .o1 = o1,
                                 .o2 = o2,
                                 .o3 = o3,
-                                .oz = oz };
+                                .oz = oz,
+                                .verbose = verbose };
 }
