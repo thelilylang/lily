@@ -45,7 +45,20 @@
 
 // TODO: add support for Windows.
 static threadlocal pthread_t *package_threads;
-static threadlocal pthread_mutex_t package_thread_mutex;
+static pthread_mutex_t package_thread_mutex;
+
+#define LOG_VERBOSE(package, msg)                                  \
+    if (package->config->verbose) {                                \
+        printf("+ %s package %s\n",                                \
+               package->global_name ? package->global_name->buffer \
+                                    : "(not defined)",             \
+               msg);                                               \
+    }
+
+#define LOG_VERBOSE_SUCCESSFUL_COMPILATION(package)        \
+    if (package->config->verbose) {                        \
+        printf("\x1b[32msuccessful compilation\x1b[0m\n"); \
+    }
 
 /**
  *
@@ -177,18 +190,26 @@ build__LilyPackage(const LilycConfig *config,
                             default_path,
                             NULL,
                             NULL);
+
     LilyPackageConfig pkg_config =
       from_CompileConfig__LilyPackageConfig(config);
 
+    self->config = &pkg_config;
+
+    LOG_VERBOSE(self, "running");
+
     // Set `use_switch` on true for CC IR, CPP IR, JS IR or LLVM IR.
-    if (pkg_config.cc_ir || pkg_config.cpp_ir || pkg_config.js_ir ||
-        pkg_config.llvm_ir) {
+    if (self->config->cc_ir || self->config->cpp_ir || self->config->js_ir ||
+        self->config->llvm_ir) {
         self->analysis.use_switch = true;
     }
 
-    self->config = &pkg_config;
+    LOG_VERBOSE(self, "running scanner");
 
     run__LilyScanner(&self->scanner, pkg_config.dump_scanner);
+
+    LOG_VERBOSE(self, "running preparser");
+
     run__LilyPreparser(&self->preparser, &self->preparser_info);
 
 #ifdef RUN_UNTIL_PREPARSER
@@ -280,6 +301,8 @@ build__LilyPackage(const LilycConfig *config,
             UNREACHABLE("unknown variant");
     }
 
+    LOG_VERBOSE(self, "running precompiler");
+
     run__LilyPrecompile(&self->precompile, self, false);
 
 #ifdef RUN_UNTIL_PRECOMPILE
@@ -287,8 +310,12 @@ build__LilyPackage(const LilycConfig *config,
     exit(0);
 #endif
 
+    LOG_VERBOSE(self, "create cache");
+
     // Create `out.lily` cache
     create_cache__LilyCompilerOutputCache();
+
+    LOG_VERBOSE(self, "creation of threads");
 
     package_threads =
       lily_malloc(sizeof(pthread_t) * self->precompile.dependency_trees->len);
@@ -309,6 +336,23 @@ build__LilyPackage(const LilycConfig *config,
     lily_free(package_threads);
     pthread_mutex_destroy(&package_thread_mutex);
 
+    if (self->status == LILY_PACKAGE_STATUS_MAIN) {
+        if (self->is_exe) {
+            LOG_VERBOSE(self, "running compile exe");
+
+            compile_exe__LilyLinker(self);
+        } else if (self->is_lib) {
+            LOG_VERBOSE(self, "running compile lib");
+
+            ASSERT(self->lib);
+            compile_lib__LilyLinker(self->lib);
+        } else {
+            UNREACHABLE("is_lib must be true or is_exe must be true");
+        }
+    }
+
+    LOG_VERBOSE_SUCCESSFUL_COMPILATION(self);
+
     return self;
 }
 
@@ -327,7 +371,7 @@ build_lib__LilyPackage(const LilycConfig *config,
       config, visibility, status, default_path, program, lib);
 
     if (package) {
-        return NEW(LilyLibrary, version, url, path, package);
+        return lib;
     }
 
     return NULL;
@@ -336,9 +380,9 @@ build_lib__LilyPackage(const LilycConfig *config,
 static void *
 run__LilyPackage(void *self)
 {
-    pthread_mutex_lock(&package_thread_mutex);
-
     LilyPackageDependencyTree *tree = self;
+
+    pthread_mutex_lock(&package_thread_mutex);
 
     if (tree->dependencies) {
         for (Usize i = 0; i < tree->dependencies->len; ++i) {
@@ -349,22 +393,27 @@ run__LilyPackage(void *self)
         }
     }
 
+    LOG_VERBOSE(tree->package, "running parser");
+
     run__LilyParser(&tree->package->parser, false);
+
+    LOG_VERBOSE(tree->package, "running analysis");
+
     run__LilyAnalysis(&tree->package->analysis);
+
+    LOG_VERBOSE(tree->package, "running mir");
+
     run__LilyMir(tree->package);
+
+    LOG_VERBOSE(tree->package, "running ir");
+
     run__LilyIr(tree->package);
+
+    LOG_VERBOSE(tree->package, "running compile output object");
+
     compile__LilyCompilerOutputObj(tree, &compile__LilyCompilerIrLlvm);
 
-    if (tree->package->status == LILY_PACKAGE_STATUS_MAIN) {
-        if (tree->package->is_exe) {
-            compile_exe__LilyLinker(tree->package);
-        } else if (tree->package->is_lib) {
-            ASSERT(tree->package->lib);
-            compile_lib__LilyLinker(tree->package->lib);
-        } else {
-            UNREACHABLE("is_lib must be true or is_exe must be true");
-        }
-    }
+    LOG_VERBOSE(tree->package, "running package done");
 
     tree->is_done = true;
 
@@ -372,27 +421,28 @@ run__LilyPackage(void *self)
 
     // Run children of the tree
     if (tree->children->len > 0) {
-        pthread_t *children_threads =
-          lily_malloc(sizeof(pthread_t) * tree->children->len);
+        LOG_VERBOSE(tree->package, "running children package");
+
+        package_threads = lily_malloc(sizeof(pthread_t) * tree->children->len);
         pthread_mutex_t children_thread_lock;
 
         ASSERT(!pthread_mutex_init(&children_thread_lock, NULL));
         pthread_mutex_lock(&children_thread_lock);
 
         for (Usize i = 0; i < tree->children->len; ++i) {
-            ASSERT(!pthread_create(&children_threads[i],
+            ASSERT(!pthread_create(&package_threads[i],
                                    NULL,
                                    &run__LilyPackage,
                                    get__Vec(tree->children, i)));
         }
 
         for (Usize i = 0; i < tree->children->len; ++i) {
-            pthread_join(children_threads[i], NULL);
+            pthread_join(package_threads[i], NULL);
         }
 
         pthread_mutex_unlock(&children_thread_lock);
 
-        lily_free(children_threads);
+        lily_free(package_threads);
         pthread_mutex_destroy(&children_thread_lock);
     }
 
