@@ -7946,9 +7946,6 @@ must_close_macro_expand__LilyPreparser(LilyPreparser *self)
     return self->current->kind == LILY_TOKEN_KIND_EOF;
 }
 
-#include <base/print.h>
-#include <stdio.h>
-
 void
 apply_macro_expansion_in_fun__LilyParser(LilyParser *self,
                                          LilyPreparserFunBodyItem *item,
