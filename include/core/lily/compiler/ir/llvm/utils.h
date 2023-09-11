@@ -112,9 +112,16 @@ print_cmd_args__LilyCompilerIrLlvmUtils(const char *cmd, Vec *args);
 
 /**
  *
- * @brief Link all library dependencies.
+ * @brief Add all library dependencies.
  */
 void
-link_lib_dependencies__LilyCompilerIrLlvmUtils(LilyPackage *self, Vec *args);
+add_lib_dependencies__LilyCompilerIrLlvmUtils(LilyPackage *self, Vec *args);
+
+/**
+ *
+ * @brief Add all object files.
+ */
+void
+add_object_files__LilyCompilerIrLlvmUtils(LilyPackage *self, Vec *args);
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_UTILS_H
