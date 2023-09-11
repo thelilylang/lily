@@ -39,26 +39,6 @@
 #include <string.h>
 
 void
-add_object_files__LilyIrLlvmAr(LilyPackage *self, Vec *args);
-
-void
-add_object_files__LilyIrLlvmAr(LilyPackage *self, Vec *args)
-{
-    for (Usize i = 0; i < self->sub_packages->len; ++i) {
-        LilyPackage *sub_package = get__Vec(self->sub_packages, i);
-        char *arg = strdup(sub_package->output_path);
-
-        if (is_unique_arg__LilyCompilerIrLlvmUtils(args, arg)) {
-            push__Vec(args, arg);
-        } else {
-            lily_free(arg);
-        }
-
-        add_object_files__LilyIrLlvmAr(sub_package, args);
-    }
-}
-
-void
 compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 {
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
@@ -86,7 +66,7 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
     {
         Vec *objs = NEW(Vec); // Vec<char*>*
 
-        add_object_files__LilyIrLlvmAr(self->package, objs);
+        add_object_files__LilyCompilerIrLlvmUtils(self->package, objs);
         append__Vec(args, objs);
 
         FREE(Vec, objs);
@@ -143,8 +123,8 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
         {
             Vec *lib_dependencies = NEW(Vec); // Vec<char*>*
 
-            link_lib_dependencies__LilyCompilerIrLlvmUtils(self->package,
-                                                           lib_dependencies);
+            add_lib_dependencies__LilyCompilerIrLlvmUtils(self->package,
+                                                          lib_dependencies);
             append__Vec(linker_args, lib_dependencies);
 
             FREE(Vec, lib_dependencies);
