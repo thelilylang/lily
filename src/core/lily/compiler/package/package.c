@@ -127,8 +127,8 @@ CONSTRUCTOR(LilyPackage *,
     self->count_warning = 0;
 
 #ifndef RUN_UNTIL_PREPARSER
-    self->precompile = NEW(
-      LilyPrecompile, &self->preparser_info, &self->file, self, default_path);
+    self->precompiler = NEW(
+      LilyPrecompiler, &self->preparser_info, &self->file, self, default_path);
     self->builtin_usage = NEW(Vec);
     self->sys_usage = NEW(Vec);
     self->operator_register = NEW(LilyCheckedOperatorRegister);
@@ -303,7 +303,7 @@ build__LilyPackage(const LilycConfig *config,
 
     LOG_VERBOSE(self, "running precompiler");
 
-    run__LilyPrecompile(&self->precompile, self, false);
+    run__LilyPrecompiler(&self->precompiler, self, false);
 
 #ifdef RUN_UNTIL_PRECOMPILE
     FREE(LilyPackage, self);
@@ -318,18 +318,19 @@ build__LilyPackage(const LilycConfig *config,
     LOG_VERBOSE(self, "creation of threads");
 
     package_threads =
-      lily_malloc(sizeof(pthread_t) * self->precompile.dependency_trees->len);
+      lily_malloc(sizeof(pthread_t) * self->precompiler.dependency_trees->len);
 
     ASSERT(!pthread_mutex_init(&package_thread_mutex, NULL));
 
-    for (Usize i = 0; i < self->precompile.dependency_trees->len; ++i) {
-        ASSERT(!pthread_create(&package_threads[i],
-                               NULL,
-                               &run__LilyPackage,
-                               get__Vec(self->precompile.dependency_trees, i)));
+    for (Usize i = 0; i < self->precompiler.dependency_trees->len; ++i) {
+        ASSERT(
+          !pthread_create(&package_threads[i],
+                          NULL,
+                          &run__LilyPackage,
+                          get__Vec(self->precompiler.dependency_trees, i)));
     }
 
-    for (Usize i = 0; i < self->precompile.dependency_trees->len; ++i) {
+    for (Usize i = 0; i < self->precompiler.dependency_trees->len; ++i) {
         pthread_join(package_threads[i], NULL);
     }
 
@@ -607,7 +608,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
 
     FREE(LilyScanner, &self->scanner);
     FREE(LilyPreparserInfo, &self->preparser_info);
-    FREE(LilyPrecompile, &self->precompile);
+    FREE(LilyPrecompiler, &self->precompiler);
     FREE(LilyParser, &self->parser);
     FREE(LilyAnalysis, &self->analysis);
     LilyMirDisposeModule(&self->mir_module);

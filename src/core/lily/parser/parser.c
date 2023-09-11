@@ -8006,7 +8006,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 {
     CHECK_MACRO(decl);
 
-    // 3. Prepare, precompile and parse the content of the macro, then expand
+    // 3. Prepare, precompiler and parse the content of the macro, then expand
     // it.
     {
         const File *file = get_file_from_filename__LilyPackage(
@@ -8017,13 +8017,14 @@ apply_macro_expansion__LilyParser(LilyParser *self,
 
         run__LilyPreparser(&preparse_macro_expand, &preparser_info);
 
-        LilyPrecompile precompile = NEW(LilyPrecompile,
-                                        &preparser_info,
-                                        &self->package->file,
-                                        self->package,
-                                        self->package->precompile.default_path);
+        LilyPrecompiler precompiler =
+          NEW(LilyPrecompiler,
+              &preparser_info,
+              &self->package->file,
+              self->package,
+              self->package->precompiler.default_path);
 
-        run__LilyPrecompile(&precompile, self->root_package, true);
+        run__LilyPrecompiler(&precompiler, self->root_package, true);
 
         LilyPackage *package = search_package_from_filename__LilyPackage(
           self->root_package, file->name);

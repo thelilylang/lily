@@ -896,13 +896,13 @@ if(LILY_DEBUG)
 
   add_test(NAME test_core_preparser COMMAND test_core_preparser)
 
-  add_executable(test_core_precompile
-                 ${CMAKE_SOURCE_DIR}/tests/core/lily/precompile/precompile.c)
-  target_link_libraries(test_core_precompile lily_base
+  add_executable(test_core_precompiler
+                 ${CMAKE_SOURCE_DIR}/tests/core/lily/precompiler/precompiler.c)
+  target_link_libraries(test_core_precompiler lily_base
                         lily_core_lily_precompiler)
-  target_include_directories(test_core_precompile PRIVATE include)
+  target_include_directories(test_core_precompiler PRIVATE include)
 
-  add_test(NAME test_core_precompile COMMAND test_core_precompile)
+  add_test(NAME test_core_precompiler COMMAND test_core_precompiler)
 
   add_executable(test_core_parser
                  ${CMAKE_SOURCE_DIR}/tests/core/lily/parser/parser.c)

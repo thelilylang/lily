@@ -283,7 +283,7 @@ IMPL_FOR_DEBUG(debug, LilyMacro, const LilyMacro *self);
  */
 DESTRUCTOR(LilyMacro, LilyMacro *self);
 
-typedef struct LilyPrecompile
+typedef struct LilyPrecompiler
 {
     LilyPreparserInfo *info;
     Vec *dependency_trees; // Vec<LilyPackageDependencyTree*>*?
@@ -291,25 +291,25 @@ typedef struct LilyPrecompile
     LilyPackage *package;
     Usize count_error;
     const char *default_path;
-} LilyPrecompile;
+} LilyPrecompiler;
 
 /**
  *
- * @brief Construct LilyPrecompile type.
+ * @brief Construct LilyPrecompiler type.
  */
-inline CONSTRUCTOR(LilyPrecompile,
-                   LilyPrecompile,
+inline CONSTRUCTOR(LilyPrecompiler,
+                   LilyPrecompiler,
                    LilyPreparserInfo *info,
                    const File *file,
                    LilyPackage *package,
                    const char *default_path)
 {
-    return (LilyPrecompile){ .info = info,
-                             .dependency_trees = NULL,
-                             .file = file,
-                             .package = package,
-                             .count_error = 0,
-                             .default_path = default_path };
+    return (LilyPrecompiler){ .info = info,
+                              .dependency_trees = NULL,
+                              .file = file,
+                              .package = package,
+                              .count_error = 0,
+                              .default_path = default_path };
 }
 
 /**
@@ -317,14 +317,14 @@ inline CONSTRUCTOR(LilyPrecompile,
  * @brief Run the pre-compiler.
  */
 void
-run__LilyPrecompile(LilyPrecompile *self,
-                    LilyPackage *root_package,
-                    bool precompile_macro_expand);
+run__LilyPrecompiler(LilyPrecompiler *self,
+                     LilyPackage *root_package,
+                     bool precompiler_macro_expand);
 
 /**
  *
- * @brief Free LilyPrecompile type.
+ * @brief Free LilyPrecompiler type.
  */
-DESTRUCTOR(LilyPrecompile, const LilyPrecompile *self);
+DESTRUCTOR(LilyPrecompiler, const LilyPrecompiler *self);
 
 #endif // LILY_CORE_LILY_PRECOMPILE_H

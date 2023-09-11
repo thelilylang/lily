@@ -74,7 +74,7 @@ typedef struct LilyPackage
     LilyScanner scanner;     // LilyScanner
     LilyPreparser preparser; // LilyPreparser
     LilyPreparserInfo preparser_info;
-    LilyPrecompile precompile; // LilyPrecompile
+    LilyPrecompiler precompiler; // LilyPrecompiler
     LilyParser parser;
     LilyAnalysis analysis;
     LilyMirModule mir_module;

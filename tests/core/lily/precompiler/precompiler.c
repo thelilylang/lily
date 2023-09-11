@@ -3,6 +3,6 @@
 int
 main()
 {
-    NEW_TEST("preparser");
+    NEW_TEST("precompiler");
     RUN_TEST();
 }
