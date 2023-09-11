@@ -103,23 +103,23 @@ build_dependency_tree__LilyPrecompiler(LilyPrecompiler *self,
 
 /// @return Vec<LilyImportValue>
 static Vec *
-precompiler_import_access__LilyPrecompiler(LilyPrecompiler *self,
-                                           const String *import_value,
-                                           const Location *location,
-                                           Usize *position);
+precompile_import_access__LilyPrecompiler(LilyPrecompiler *self,
+                                          const String *import_value,
+                                          const Location *location,
+                                          Usize *position);
 
 static LilyImport *
-precompiler_import__LilyPrecompiler(LilyPrecompiler *self,
-                                    const LilyPreparserImport *import);
+precompile_import__LilyPrecompiler(LilyPrecompiler *self,
+                                   const LilyPreparserImport *import);
 
 static LilyPackage *
-precompiler_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
-                                         const LilyPreparserSubPackage *sub_pkg,
-                                         LilyPackage *root_package);
+precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
+                                        const LilyPreparserSubPackage *sub_pkg,
+                                        LilyPackage *root_package);
 
 static LilyMacro *
-precompiler_macro__LilyPrecompiler(LilyPrecompiler *self,
-                                   const LilyPreparserMacro *macro);
+precompile_macro__LilyPrecompiler(LilyPrecompiler *self,
+                                  const LilyPreparserMacro *macro);
 
 // Add the public macros in the root package and see if the names are not
 // duplicated. Plus it does the same process for private macros.
@@ -759,10 +759,10 @@ build_dependency_tree__LilyPrecompiler(LilyPrecompiler *self,
 }
 
 Vec *
-precompiler_import_access__LilyPrecompiler(LilyPrecompiler *self,
-                                           const String *import_value,
-                                           const Location *location,
-                                           Usize *position)
+precompile_import_access__LilyPrecompiler(LilyPrecompiler *self,
+                                          const String *import_value,
+                                          const Location *location,
+                                          Usize *position)
 {
     Vec *values = NEW(Vec);
 
@@ -806,7 +806,7 @@ precompiler_import_access__LilyPrecompiler(LilyPrecompiler *self,
                     *position += 1;
                 }
 
-                Vec *selector_item = precompiler_import_access__LilyPrecompiler(
+                Vec *selector_item = precompile_import_access__LilyPrecompiler(
                   self, selector_value, location, &selector_position);
 
                 if (selector_item && selector_item->len > 0) {
@@ -891,8 +891,8 @@ precompiler_import_access__LilyPrecompiler(LilyPrecompiler *self,
 }
 
 LilyImport *
-precompiler_import__LilyPrecompiler(LilyPrecompiler *self,
-                                    const LilyPreparserImport *import)
+precompile_import__LilyPrecompiler(LilyPrecompiler *self,
+                                   const LilyPreparserImport *import)
 {
     Vec *values = NEW(Vec);
     Usize position = 0;
@@ -1051,7 +1051,7 @@ precompiler_import__LilyPrecompiler(LilyPrecompiler *self,
         String *rest_import_value = take_slice__String(import->value, position);
         Usize position = 0;
 
-        Vec *access = precompiler_import_access__LilyPrecompiler(
+        Vec *access = precompile_import_access__LilyPrecompiler(
           self, rest_import_value, &import->location, &position);
 
         if (access) {
@@ -1071,9 +1071,9 @@ precompiler_import__LilyPrecompiler(LilyPrecompiler *self,
 }
 
 LilyPackage *
-precompiler_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
-                                         const LilyPreparserSubPackage *sub_pkg,
-                                         LilyPackage *root_package)
+precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
+                                        const LilyPreparserSubPackage *sub_pkg,
+                                        LilyPackage *root_package)
 {
 #define INIT_IR()                                                       \
     switch (root_package->ir.kind) {                                    \
@@ -1181,8 +1181,8 @@ precompiler_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
 }
 
 LilyMacro *
-precompiler_macro__LilyPrecompiler(LilyPrecompiler *self,
-                                   const LilyPreparserMacro *macro)
+precompile_macro__LilyPrecompiler(LilyPrecompiler *self,
+                                  const LilyPreparserMacro *macro)
 {
     // 1. Parse params of macro.
     Vec *params = NULL; // Vec<LilyMacroParam*>*?
@@ -1424,7 +1424,7 @@ check_macros__LilyPrecompiler(LilyPrecompiler *self, LilyPackage *root_package)
     // root_package.
     for (Usize i = 0; i < self->info->public_macros->len; ++i) {
         push__Vec(root_package->public_macros,
-                  precompiler_macro__LilyPrecompiler(
+                  precompile_macro__LilyPrecompiler(
                     self, get__Vec(self->info->public_macros, i)));
     }
 
@@ -1432,7 +1432,7 @@ check_macros__LilyPrecompiler(LilyPrecompiler *self, LilyPackage *root_package)
     // current package.
     for (Usize i = 0; i < self->info->private_macros->len; ++i) {
         push__Vec(self->package->private_macros,
-                  precompiler_macro__LilyPrecompiler(
+                  precompile_macro__LilyPrecompiler(
                     self, get__Vec(self->info->private_macros, i)));
     }
 
@@ -1556,11 +1556,11 @@ check_macros__LilyPrecompiler(LilyPrecompiler *self, LilyPackage *root_package)
 void
 run__LilyPrecompiler(LilyPrecompiler *self,
                      LilyPackage *root_package,
-                     bool precompiler_macro_expand)
+                     bool precompile_macro_expand)
 {
     // 1. Precompiler all imports
     for (Usize i = 0; i < self->info->public_imports->len; ++i) {
-        LilyImport *import = precompiler_import__LilyPrecompiler(
+        LilyImport *import = precompile_import__LilyPrecompiler(
           self, get__Vec(self->info->public_imports, i));
 
         if (import) {
@@ -1569,7 +1569,7 @@ run__LilyPrecompiler(LilyPrecompiler *self,
     }
 
     for (Usize i = 0; i < self->info->private_imports->len; ++i) {
-        LilyImport *import = precompiler_import__LilyPrecompiler(
+        LilyImport *import = precompile_import__LilyPrecompiler(
           self, get__Vec(self->info->private_imports, i));
 
         if (import) {
@@ -1583,7 +1583,7 @@ run__LilyPrecompiler(LilyPrecompiler *self,
     // 4. Precompiler all packages
     for (Usize i = 0; i < self->info->package->sub_packages->len; ++i) {
         push__Vec(self->package->sub_packages,
-                  precompiler_sub_package__LilyPrecompiler(
+                  precompile_sub_package__LilyPrecompiler(
                     self,
                     get__Vec(self->info->package->sub_packages, i),
                     root_package));
@@ -1591,7 +1591,7 @@ run__LilyPrecompiler(LilyPrecompiler *self,
 
     // 5. Init dependency tree.
     if (!strcmp(self->package->name->buffer, root_package->name->buffer) &&
-        !precompiler_macro_expand) {
+        !precompile_macro_expand) {
         self->dependency_trees = NEW(Vec);
 
         build_dependency_tree__LilyPrecompiler(
