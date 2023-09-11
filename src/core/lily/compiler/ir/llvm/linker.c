@@ -38,29 +38,6 @@
 #define LIB_DIR_BUILD_DEBUG "build/Debug"
 #endif
 
-// Link all sub-packages
-static void
-link_sub_packages__LilyIrLlvmLinker(LilyPackage *self, Vec *args);
-
-void
-link_sub_packages__LilyIrLlvmLinker(LilyPackage *self, Vec *args)
-{
-    for (Usize i = 0; i < self->sub_packages->len; ++i) {
-        LilyPackage *sub_package = get__Vec(self->sub_packages, i);
-
-        ASSERT(sub_package->output_path);
-
-        // Link direct package dependencies.
-        char *arg = strdup(sub_package->output_path);
-
-        ASSERT(is_unique_arg__LilyCompilerIrLlvmUtils(args, arg));
-        push__Vec(args, arg);
-
-        // Link indirect sub-packages.
-        link_sub_packages__LilyIrLlvmLinker(sub_package, args);
-    }
-}
-
 void
 compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 {
@@ -95,7 +72,7 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     {
         Vec *lib_dependencies = NEW(Vec); // Vec<char*>*
 
-        link_lib_dependencies__LilyCompilerIrLlvmUtils(self, lib_dependencies);
+        add_lib_dependencies__LilyCompilerIrLlvmUtils(self, lib_dependencies);
         append__Vec(args, lib_dependencies);
 
         FREE(Vec, lib_dependencies);
@@ -153,7 +130,7 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     {
         Vec *package_dependencies = NEW(Vec); // Vec<char*>*
 
-        link_sub_packages__LilyIrLlvmLinker(self, package_dependencies);
+        add_object_files__LilyCompilerIrLlvmUtils(self, package_dependencies);
         append__Vec(args, package_dependencies);
 
         FREE(Vec, package_dependencies);
