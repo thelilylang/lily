@@ -4,7 +4,7 @@ N=100
 
 ninja -C build/Debug
 
-for i in {0..100}
+for i in $( seq 0 $N )
 do
 	./build/Debug/lilyc --verbose ./mypkg/main.lily 2> /dev/null
 
