@@ -40,7 +40,7 @@ typedef struct LilyProgramRessources
 {
     LilyBuiltinFun *builtins;
     LilySysFun *syss;
-    LilyCheckedOperator *default_operators;
+    LilyCheckedOperator **default_operators;
     Vec *libs; // Vec<LilyLibrary*>*
 } LilyProgramRessources;
 
