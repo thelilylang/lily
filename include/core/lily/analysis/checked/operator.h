@@ -38,6 +38,7 @@ typedef struct LilyCheckedOperator
     String *name;   // String* (&)
                     // [params, return_data_type]
     Vec *signature; // Vec<LilyCheckedDataType* (&)>* (&)
+    bool is_default;
     Usize ref_count;
 } LilyCheckedOperator;
 
@@ -48,7 +49,8 @@ typedef struct LilyCheckedOperator
 CONSTRUCTOR(LilyCheckedOperator *,
             LilyCheckedOperator,
             String *name,
-            Vec *signature);
+            Vec *signature,
+            bool is_default);
 
 /**
  *
@@ -72,7 +74,7 @@ valid_operator__LilyCheckedOperator(String *name);
  *
  * @brief Load default operators.
  */
-LilyCheckedOperator *
+LilyCheckedOperator **
 load_default_operators__LilyCheckedOperator();
 
 /**
@@ -89,15 +91,6 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedOperator, const LilyCheckedOperator *self);
  *
  * @brief Free LilyCheckedOperator type.
  */
-inline DESTRUCTOR(LilyCheckedOperator, LilyCheckedOperator *self)
-{
-    if (self->ref_count > 0) {
-        --self->ref_count;
-
-        return;
-    }
-
-    lily_free(self);
-}
+DESTRUCTOR(LilyCheckedOperator, LilyCheckedOperator *self);
 
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_OPERATOR_H
