@@ -166,7 +166,9 @@ precompile_macro__LilyPrecompiler(LilyPrecompiler *self,
 static void
 check_macros__LilyPrecompiler(LilyPrecompiler *self, LilyPackage *root_package);
 
+#ifdef PRECOMPILER_USE_MULTITHREAD
 static threadlocal pthread_mutex_t sub_package_thread_mutex;
+#endif
 
 #ifdef PRECOMPILER_USE_MULTITHREAD
 CONSTRUCTOR(LilyPrecompilerSubPackageWrapper *,
