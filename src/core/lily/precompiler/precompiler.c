@@ -41,6 +41,11 @@
 #include <base/print.h>
 #endif
 
+// NOTE: This define will be deleted when all thread operations are safe.
+#define PRECOMPILER_USE_MULTITHREAD
+#undef PRECOMPILER_USE_MULTITHREAD
+
+#ifdef PRECOMPILER_USE_MULTITHREAD
 typedef struct LilyPrecompilerSubPackageWrapper
 {
     const LilyPrecompiler *self; // const LilyPrecompiler* (&)
@@ -62,6 +67,7 @@ static CONSTRUCTOR(LilyPrecompilerSubPackageWrapper *,
 // Free LilyPrecompilerSubPackageWrapper type.
 static DESTRUCTOR(LilyPrecompilerSubPackageWrapper,
                   LilyPrecompilerSubPackageWrapper *self);
+#endif
 
 // Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_ACCESS).
 static VARIANT_DESTRUCTOR(LilyImportValue, access, LilyImportValue *self);
@@ -135,13 +141,21 @@ static LilyImport *
 precompile_import__LilyPrecompiler(LilyPrecompiler *self,
                                    const LilyPreparserImport *import);
 
+#ifdef PRECOMPILER_USE_MULTITHREAD
 static void
 configure_sub_package__LilyPrecompiler(
   LilyPrecompilerSubPackageWrapper *wrapper);
 
-/// @return LilyPackage*
+/// @return NULL
 static void *
 precompile_sub_package__LilyPrecompiler(void *w);
+#else
+/// @return LilyPackage*
+static LilyPackage *
+precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
+                                        const LilyPreparserSubPackage *sub_pkg,
+                                        LilyPackage *root_package);
+#endif
 
 static LilyMacro *
 precompile_macro__LilyPrecompiler(LilyPrecompiler *self,
@@ -154,6 +168,7 @@ check_macros__LilyPrecompiler(LilyPrecompiler *self, LilyPackage *root_package);
 
 static threadlocal pthread_mutex_t sub_package_thread_mutex;
 
+#ifdef PRECOMPILER_USE_MULTITHREAD
 CONSTRUCTOR(LilyPrecompilerSubPackageWrapper *,
             LilyPrecompilerSubPackageWrapper,
             LilyPrecompiler *self,
@@ -182,6 +197,7 @@ DESTRUCTOR(LilyPrecompilerSubPackageWrapper,
     lily_free(self->pkg_filename);
     lily_free(self);
 }
+#endif
 
 CONSTRUCTOR(LilyImportValue *, LilyImportValue, enum LilyImportValueKind kind)
 {
@@ -1127,6 +1143,7 @@ precompile_import__LilyPrecompiler(LilyPrecompiler *self,
     return NEW(LilyImport, values, import->location, import->as);
 }
 
+#ifdef PRECOMPILER_USE_MULTITHREAD
 void
 configure_sub_package__LilyPrecompiler(
   LilyPrecompilerSubPackageWrapper *wrapper)
@@ -1253,6 +1270,117 @@ precompile_sub_package__LilyPrecompiler(void *w)
 
     return NULL;
 }
+#else
+LilyPackage *
+precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
+                                        const LilyPreparserSubPackage *sub_pkg,
+                                        LilyPackage *root_package)
+{
+#define INIT_IR()                                                       \
+    switch (root_package->ir.kind) {                                    \
+        case LILY_IR_KIND_CC:                                           \
+            /* TODO: add a linker for CC */                             \
+            res->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));           \
+            res->linker = LILY_LINKER_KIND_CC;                          \
+            break;                                                      \
+        case LILY_IR_KIND_CPP:                                          \
+            /* TODO: add a linker for CPP */                            \
+            res->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));         \
+            res->linker = LILY_LINKER_KIND_CPP;                         \
+            break;                                                      \
+        case LILY_IR_KIND_JS:                                           \
+            res->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));           \
+            break;                                                      \
+        case LILY_IR_KIND_LLVM:                                         \
+            res->ir = NEW_VARIANT(                                      \
+              LilyIr, llvm, NEW(LilyIrLlvm, res->global_name->buffer)); \
+            res->linker = LILY_LINKER_KIND_LLVM;                        \
+            break;                                                      \
+    }
+
+    Vec *split_pkg_name = split__String(sub_pkg->name, '.');
+
+#ifdef LILY_WINDOWS_OS
+    String *pkg_filename_join = join__Vec(split_pkg_name, '\\');
+#else
+    String *pkg_filename_join = join__Vec(split_pkg_name, '/');
+#endif
+
+    String *pkg_filename = NEW(String);
+
+    push_str__String(pkg_filename, (char *)self->default_path);
+
+#ifdef LILY_WINDOWS_OS
+    push_str__String(pkg_filename, "\\");
+#else
+    push_str__String(pkg_filename, "/");
+#endif
+
+    APPEND_AND_FREE(pkg_filename, pkg_filename_join);
+
+    // If it's a directory. Check if there is `pkg.lily` in the directory.
+    if (is__Dir(pkg_filename->buffer)) {
+#ifdef LILY_WINDOWS_OS
+        push_str__String(pkg_filename, "\\pkg.lily");
+#else
+        push_str__String(pkg_filename, "/pkg.lily");
+#endif
+
+        char *default_path = generate_default_path(pkg_filename->buffer);
+
+        LilyPackage *res = NEW(LilyPackage,
+                               sub_pkg->name,
+                               sub_pkg->global_name,
+                               sub_pkg->visibility,
+                               pkg_filename->buffer,
+                               LILY_PACKAGE_STATUS_SUB_MAIN,
+                               default_path,
+                               sub_pkg->global_name->buffer,
+                               root_package);
+
+        res->config = root_package->config;
+
+        INIT_IR();
+
+        run__LilyScanner(&res->scanner, res->config->dump_scanner);
+        run__LilyPreparser(&res->preparser, &res->preparser_info);
+        run__LilyPrecompiler(&res->precompiler, root_package, false);
+
+        FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
+        FREE(Vec, split_pkg_name);
+        lily_free(pkg_filename);
+        lily_free(default_path);
+
+        return res;
+    } else {
+        push_str__String(pkg_filename, ".lily");
+
+        LilyPackage *res = NEW(LilyPackage,
+                               sub_pkg->name,
+                               sub_pkg->global_name,
+                               sub_pkg->visibility,
+                               pkg_filename->buffer,
+                               LILY_PACKAGE_STATUS_NORMAL,
+                               self->default_path,
+                               self->package->global_name->buffer,
+                               root_package);
+
+        res->config = root_package->config;
+
+        INIT_IR();
+
+        run__LilyScanner(&res->scanner, res->config->dump_scanner);
+        run__LilyPreparser(&res->preparser, &res->preparser_info);
+        run__LilyPrecompiler(&res->precompiler, root_package, false);
+
+        FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
+        FREE(Vec, split_pkg_name);
+        lily_free(pkg_filename);
+
+        return res;
+    }
+}
+#endif
 
 LilyMacro *
 precompile_macro__LilyPrecompiler(LilyPrecompiler *self,
@@ -1655,6 +1783,7 @@ run__LilyPrecompiler(LilyPrecompiler *self,
     check_macros__LilyPrecompiler(self, root_package);
 
     // 4. Precompiler all sub packages
+#ifdef PRECOMPILER_USE_MULTITHREAD
     {
         Vec *wrappers = NEW(Vec); // Vec<LilyPrecompilerSubPackageWrapper*>*
         pthread_t *sub_package_threads = lily_malloc(
@@ -1693,6 +1822,15 @@ run__LilyPrecompiler(LilyPrecompiler *self,
         lily_free(sub_package_threads);
         pthread_mutex_destroy(&sub_package_thread_mutex);
     }
+#else
+    for (Usize i = 0; i < self->info->package->sub_packages->len; ++i) {
+        push__Vec(self->package->sub_packages,
+                  precompile_sub_package__LilyPrecompiler(
+                    self,
+                    get__Vec(self->info->package->sub_packages, i),
+                    root_package));
+    }
+#endif
 
     // 5. Init dependency tree.
     if (!strcmp(self->package->name->buffer, root_package->name->buffer) &&
