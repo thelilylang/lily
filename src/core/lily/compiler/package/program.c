@@ -44,18 +44,17 @@ DESTRUCTOR(LilyProgramRessources, const LilyProgramRessources *self)
 
     lily_free(self->syss);
 
-    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
-        ASSERT(self->default_operators[i].ref_count == 0);
+    // FIXME: sometimes that's crash, caused by the add of the the
+    // multi-threading in the precompiler
 
-        FREE(String, self->default_operators[i].name);
-        FREE_BUFFER_ITEMS(self->default_operators[i].signature->buffer,
-                          self->default_operators[i].signature->len,
-                          LilyCheckedDataType);
-        FREE(Vec, self->default_operators[i].signature);
+    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
+        ASSERT(self->default_operators[i]->ref_count == 0);
+
+        FREE(LilyCheckedOperator, self->default_operators[i]);
     }
+
+    lily_free(self->default_operators);
 
     FREE_BUFFER_ITEMS(self->libs->buffer, self->libs->len, LilyLibrary);
     FREE(Vec, self->libs);
-
-    lily_free(self->default_operators);
 }

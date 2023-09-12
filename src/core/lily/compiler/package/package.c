@@ -47,14 +47,6 @@
 static threadlocal pthread_t *package_threads;
 static pthread_mutex_t package_thread_mutex;
 
-#define LOG_VERBOSE(package, msg)                                  \
-    if (package->config->verbose) {                                \
-        printf("+ %s package %s\n",                                \
-               package->global_name ? package->global_name->buffer \
-                                    : "(not defined)",             \
-               msg);                                               \
-    }
-
 #define LOG_VERBOSE_SUCCESSFUL_COMPILATION(package)        \
     if (package->config->verbose) {                        \
         printf("\x1b[32msuccessful compilation\x1b[0m\n"); \
@@ -143,12 +135,11 @@ CONSTRUCTOR(LilyPackage *,
         self->syss = NULL;
         self->config = root->config;
 
-        // Push default operators pushed in the operator register of root
-        // package.
-        for (Usize i = 0; i < root->operator_register.operators->len; ++i) {
+        // Push default operators contains in program ressources.
+        for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
             push__Vec(self->operator_register.operators,
                       ref__LilyCheckedOperator(
-                        get__Vec(root->operator_register.operators, i)));
+                        self->program->ressources.default_operators[i]));
         }
     } else {
         self->parser = NEW(LilyParser, self, self, NULL);
@@ -224,21 +215,6 @@ build__LilyPackage(const LilycConfig *config,
     return NULL;
 #endif
 
-    // Load builtins and syss
-    self->builtins = program->ressources.builtins;
-    self->syss = program->ressources.syss;
-
-    // Load default operators in operator register
-    // In a normal case where we wanted to add an operator to the register, we'd
-    // use `add_operator__LilyCheckedOperatorRegister`, but in this case it's
-    // guaranteed that no operator repeats itself, so to increase loading speed
-    // we'll add it directly to the vector without checking.
-    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
-        push__Vec(
-          self->operator_register.operators,
-          ref__LilyCheckedOperator(&program->ressources.default_operators[i]));
-    }
-
     if (self->preparser_info.package->name) {
         self->name = self->preparser_info.package->name;
         self->global_name = clone__String(self->name);
@@ -299,6 +275,21 @@ build__LilyPackage(const LilycConfig *config,
             break;
         default:
             UNREACHABLE("unknown variant");
+    }
+
+    // Load builtins and syss
+    self->builtins = program->ressources.builtins;
+    self->syss = program->ressources.syss;
+
+    // Load default operators in operator register
+    // In a normal case where we wanted to add an operator to the register, we'd
+    // use `add_operator__LilyCheckedOperatorRegister`, but in this case it's
+    // guaranteed that no operator repeats itself, so to increase loading speed
+    // we'll add it directly to the vector without checking.
+    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
+        push__Vec(self->operator_register.operators,
+                  ref__LilyCheckedOperator(
+                    self->program->ressources.default_operators[i]));
     }
 
     LOG_VERBOSE(self, "running precompiler");
@@ -381,9 +372,9 @@ build_lib__LilyPackage(const LilycConfig *config,
 static void *
 run__LilyPackage(void *self)
 {
-    LilyPackageDependencyTree *tree = self;
-
     pthread_mutex_lock(&package_thread_mutex);
+
+    LilyPackageDependencyTree *tree = self;
 
     if (tree->dependencies) {
         for (Usize i = 0; i < tree->dependencies->len; ++i) {
@@ -418,8 +409,6 @@ run__LilyPackage(void *self)
 
     tree->is_done = true;
 
-    pthread_mutex_unlock(&package_thread_mutex);
-
     // Run children of the tree
     if (tree->children->len > 0) {
         LOG_VERBOSE(tree->package, "running children package");
@@ -446,6 +435,8 @@ run__LilyPackage(void *self)
         lily_free(package_threads);
         pthread_mutex_destroy(&children_thread_lock);
     }
+
+    pthread_mutex_unlock(&package_thread_mutex);
 
     return NULL;
 }
