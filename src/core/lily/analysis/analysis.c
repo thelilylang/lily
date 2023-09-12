@@ -11265,7 +11265,8 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
               fun->fun.name,
               /* Get signature [params, return_data_type] from fun signatures */
               CAST(LilyCheckedSignatureFun *, get__Vec(fun->fun.signatures, 0))
-                ->types);
+                ->types,
+              false);
 
         if (add_operator__LilyCheckedOperatorRegister(
               &self->package->operator_register, operator)) {
