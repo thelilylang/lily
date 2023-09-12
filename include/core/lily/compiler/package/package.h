@@ -48,6 +48,14 @@
 #include <core/lily/scanner/scanner.h>
 #include <core/lily/shared/visibility.h>
 
+#define LOG_VERBOSE(package, msg)                                  \
+    if (package->config->verbose) {                                \
+        printf("+ %s package %s\n",                                \
+               package->global_name ? package->global_name->buffer \
+                                    : "(not defined)",             \
+               msg);                                               \
+    }
+
 enum LilyPackageStatus
 {
     LILY_PACKAGE_STATUS_LIB_MAIN,
