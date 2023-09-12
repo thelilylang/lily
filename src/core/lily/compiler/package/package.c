@@ -139,7 +139,7 @@ CONSTRUCTOR(LilyPackage *,
         for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
             push__Vec(self->operator_register.operators,
                       ref__LilyCheckedOperator(
-                        root->program->ressources.default_operators[i]));
+                        self->program->ressources.default_operators[i]));
         }
     } else {
         self->parser = NEW(LilyParser, self, self, NULL);
@@ -215,21 +215,6 @@ build__LilyPackage(const LilycConfig *config,
     return NULL;
 #endif
 
-    // Load builtins and syss
-    self->builtins = program->ressources.builtins;
-    self->syss = program->ressources.syss;
-
-    // Load default operators in operator register
-    // In a normal case where we wanted to add an operator to the register, we'd
-    // use `add_operator__LilyCheckedOperatorRegister`, but in this case it's
-    // guaranteed that no operator repeats itself, so to increase loading speed
-    // we'll add it directly to the vector without checking.
-    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
-        push__Vec(
-          self->operator_register.operators,
-          ref__LilyCheckedOperator(program->ressources.default_operators[i]));
-    }
-
     if (self->preparser_info.package->name) {
         self->name = self->preparser_info.package->name;
         self->global_name = clone__String(self->name);
@@ -290,6 +275,21 @@ build__LilyPackage(const LilycConfig *config,
             break;
         default:
             UNREACHABLE("unknown variant");
+    }
+
+    // Load builtins and syss
+    self->builtins = program->ressources.builtins;
+    self->syss = program->ressources.syss;
+
+    // Load default operators in operator register
+    // In a normal case where we wanted to add an operator to the register, we'd
+    // use `add_operator__LilyCheckedOperatorRegister`, but in this case it's
+    // guaranteed that no operator repeats itself, so to increase loading speed
+    // we'll add it directly to the vector without checking.
+    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
+        push__Vec(self->operator_register.operators,
+                  ref__LilyCheckedOperator(
+                    self->program->ressources.default_operators[i]));
     }
 
     LOG_VERBOSE(self, "running precompiler");
