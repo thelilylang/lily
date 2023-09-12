@@ -29,7 +29,7 @@
 
 typedef struct LilyCheckedOperatorRegister
 {
-    Vec *operators; // Vec<LilyCheckedOperator* (&) | LilyCheckedOperator*>*
+    Vec *operators; // Vec<LilyCheckedOperator*>*
 } LilyCheckedOperatorRegister;
 
 /**
