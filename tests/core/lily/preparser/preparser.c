@@ -1,6 +1,7 @@
 #include "asm.c"
 #include "await.c"
 #include "break.c"
+#include "defer.c"
 #include "import.c"
 #include "macro.c"
 #include "macro_expand.c"
@@ -21,5 +22,6 @@ main()
     ADD_SIMPLE(asm);
     ADD_SIMPLE(await);
     ADD_SIMPLE(break);
+    ADD_SIMPLE(defer);
     RUN_TEST();
 }

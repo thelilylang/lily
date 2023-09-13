@@ -13,6 +13,7 @@
 #define FILE_ASM "./tests/core/lily/preparser/input/asm.lily"
 #define FILE_AWAIT "./tests/core/lily/preparser/input/await.lily"
 #define FILE_BREAK "./tests/core/lily/preparser/input/break.lily"
+#define FILE_DEFER "./tests/core/lily/preparser/input/defer.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)

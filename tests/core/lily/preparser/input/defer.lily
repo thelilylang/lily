@@ -1,0 +1,7 @@
+fun main =
+	defer f();
+	defer @{
+		val x := 0;
+		g(x)
+	};
+end
