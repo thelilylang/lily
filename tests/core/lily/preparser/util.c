@@ -12,6 +12,7 @@
 #define FILE_MACRO_EXPAND "./tests/core/lily/preparser/input/macro_expand.lily"
 #define FILE_ASM "./tests/core/lily/preparser/input/asm.lily"
 #define FILE_AWAIT "./tests/core/lily/preparser/input/await.lily"
+#define FILE_BREAK "./tests/core/lily/preparser/input/break.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)
