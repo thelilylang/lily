@@ -2755,9 +2755,7 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyPreparserFunBodyItemStmtVariable,
            const LilyPreparserFunBodyItemStmtVariable *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->data_type) {
         FREE(Vec, self->data_type);
@@ -3671,13 +3669,11 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserFun, const LilyPreparserFun *self)
 
 DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
 
     if (self->object_impl) {
         FREE(String, self->object_impl);
     }
-#endif
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(

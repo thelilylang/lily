@@ -249,8 +249,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclFun, const LilyAstDeclFun *self)
 
 DESTRUCTOR(LilyAstDeclFun, const LilyAstDeclFun *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
-
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
                           self->generic_params->len,
@@ -262,7 +260,6 @@ DESTRUCTOR(LilyAstDeclFun, const LilyAstDeclFun *self)
         FREE_BUFFER_ITEMS(
           self->params->buffer, self->params->len, LilyAstDeclMethodParam);
         FREE(Vec, self->params);
-        FREE_MOVE(self->object_impl, FREE(String, self->object_impl));
     } else if (self->params && !self->object_impl) {
         FREE_BUFFER_ITEMS(
           self->params->buffer, self->params->len, LilyAstDeclFunParam);
