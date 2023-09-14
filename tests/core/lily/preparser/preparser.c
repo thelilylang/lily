@@ -11,6 +11,7 @@
 #include "module.c"
 #include "package.c"
 #include "raise.c"
+#include "return.c"
 #include "while.c"
 
 #include <base/test.h>
@@ -33,5 +34,6 @@ main()
     ADD_SIMPLE(for);
     ADD_SIMPLE(while);
     ADD_SIMPLE(raise);
+    ADD_SIMPLE(return);
     RUN_TEST();
 }

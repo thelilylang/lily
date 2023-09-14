@@ -1,0 +1,5 @@
+fun add(x, y) = return x + y; end
+
+fun main =
+	val a := add(2, 4);
+end
