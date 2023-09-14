@@ -35,7 +35,7 @@
 
 typedef struct LilyAstDeclRecordObject
 {
-    String *name;
+    String *name;        // String* (&)
     Vec *generic_params; // Vec<LilyAstGenericParam*>*?
     Vec *impl_params;    // Vec<LilyAstImplParam*>*?
     Vec *body;           // Vec<LilyAstBodyRecordObjectItem*>*

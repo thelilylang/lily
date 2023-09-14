@@ -33,7 +33,7 @@
 
 typedef struct LilyAstDeclRecord
 {
-    String *name;
+    String *name;        // String* (&)
     Vec *generic_params; // Vec<LilyAstGenericParam*>*?
     Vec *fields;         // Vec<LilyAstField*>*
     enum LilyVisibility visibility;

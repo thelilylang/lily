@@ -4502,10 +4502,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserRecordField, const LilyPreparserRecordField *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
-
     FREE(Vec, self->data_type);
 
     if (self->optional_expr) {
@@ -4776,9 +4773,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -4833,9 +4828,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserEnumVariant, const LilyPreparserEnumVariant *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->data_type) {
         FREE(Vec, self->data_type);
@@ -5026,9 +5019,7 @@ VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
                    variant,
                    LilyPreparserEnumObjectBodyItem *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->variant.name);
-#endif
 
     if (self->variant.data_type) {
         FREE(Vec, self->variant.data_type);
@@ -5116,9 +5107,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserEnumObject, const LilyPreparserEnumObject *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -5445,9 +5434,7 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserAlias, const LilyPreparserAlias *self)
 
 DESTRUCTOR(LilyPreparserAlias, const LilyPreparserAlias *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -5628,9 +5615,7 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserEnum, const LilyPreparserEnum *self)
 
 DESTRUCTOR(LilyPreparserEnum, const LilyPreparserEnum *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -5685,9 +5670,7 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserRecord, const LilyPreparserRecord *self)
 
 DESTRUCTOR(LilyPreparserRecord, const LilyPreparserRecord *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -6199,9 +6182,7 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserError, const LilyPreparserError *self)
 
 DESTRUCTOR(LilyPreparserError, const LilyPreparserError *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->data_type) {
         FREE(Vec, self->data_type);

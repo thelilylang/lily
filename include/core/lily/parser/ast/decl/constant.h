@@ -34,7 +34,7 @@
 
 typedef struct LilyAstDeclConstant
 {
-    String *name;
+    String *name; // String* (&)
     LilyAstDataType *data_type;
     LilyAstExpr *expr;
     enum LilyVisibility visibility;

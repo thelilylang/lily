@@ -32,7 +32,7 @@
 
 typedef struct LilyAstVariant
 {
-    String *name;
+    String *name;               // String* (&)
     LilyAstDataType *data_type; // LilyAstDataType*?
     Location location;
 } LilyAstVariant;

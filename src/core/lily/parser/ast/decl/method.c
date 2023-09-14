@@ -298,9 +298,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclMethod, const LilyAstDeclMethod *self)
 
 DESTRUCTOR(LilyAstDeclMethod, const LilyAstDeclMethod *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
-    FREE_MOVE(self->object_impl, FREE(String, self->object_impl));
-
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
                           self->generic_params->len,

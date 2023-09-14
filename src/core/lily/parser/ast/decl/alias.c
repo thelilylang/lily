@@ -56,8 +56,6 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclAlias, const LilyAstDeclAlias *self)
 
 DESTRUCTOR(LilyAstDeclAlias, const LilyAstDeclAlias *self)
 {
-    FREE_MOVE(self->name, FREE(String, self->name));
-
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
                           self->generic_params->len,
