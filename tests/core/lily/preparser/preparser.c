@@ -16,6 +16,7 @@
 #include "raise.c"
 #include "return.c"
 #include "try.c"
+#include "variable.c"
 #include "while.c"
 
 #include <base/test.h>
@@ -43,5 +44,6 @@ main()
     ADD_SIMPLE(match);
     ADD_SIMPLE(next);
     ADD_SIMPLE(block);
+    ADD_SIMPLE(variable);
     RUN_TEST();
 }

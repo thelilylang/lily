@@ -1,0 +1,8 @@
+fun main =
+	val x := 0;
+	ref: val y := x;
+	drop: val z := Ptr.new::[Int32]();
+
+	mut i := 0;
+	trace: val j := i;
+end
