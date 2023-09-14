@@ -1,0 +1,6 @@
+val X Int32 := 30;
+val Y Str := "Hello";
+val (A Int32, B Int32, C Int32) := (0, 1, 2);
+
+fun main =
+end

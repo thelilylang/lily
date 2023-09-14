@@ -26,6 +26,7 @@
 #define FILE_BLOCK "./tests/core/lily/preparser/input/block.lily"
 #define FILE_VARIABLE "./tests/core/lily/preparser/input/variable.lily"
 #define FILE_FUN "./tests/core/lily/preparser/input/fun.lily"
+#define FILE_CONSTANT "./tests/core/lily/preparser/input/constant.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)
