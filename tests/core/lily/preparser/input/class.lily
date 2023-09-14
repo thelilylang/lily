@@ -1,0 +1,7 @@
+object Person class =
+	val name Str :: get, set;
+	val age Uint8 :: get, set;
+end
+
+fun main =
+end

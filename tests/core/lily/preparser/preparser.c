@@ -2,6 +2,7 @@
 #include "await.c"
 #include "block.c"
 #include "break.c"
+#include "class.c"
 #include "constant.c"
 #include "defer.c"
 #include "drop.c"
@@ -49,5 +50,6 @@ main()
     ADD_SIMPLE(variable);
     ADD_SIMPLE(fun);
     ADD_SIMPLE(constant);
+    ADD_SIMPLE(class);
     RUN_TEST();
 }
