@@ -16,6 +16,7 @@
 #define FILE_DEFER "./tests/core/lily/preparser/input/defer.lily"
 #define FILE_DROP "./tests/core/lily/preparser/input/drop.lily"
 #define FILE_IF "./tests/core/lily/preparser/input/if.lily"
+#define FILE_FOR "./tests/core/lily/preparser/input/for.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)
