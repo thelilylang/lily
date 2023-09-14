@@ -8,6 +8,7 @@
 #include "import.c"
 #include "macro.c"
 #include "macro_expand.c"
+#include "match.c"
 #include "module.c"
 #include "package.c"
 #include "raise.c"
@@ -37,5 +38,6 @@ main()
     ADD_SIMPLE(raise);
     ADD_SIMPLE(return);
     ADD_SIMPLE(try);
+    ADD_SIMPLE(match);
     RUN_TEST();
 }

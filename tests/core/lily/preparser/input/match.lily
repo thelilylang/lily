@@ -1,0 +1,8 @@
+fun main =
+	val n := 340;
+
+	match n do
+		340 => ();
+		_ => ();
+	end
+end
