@@ -1,0 +1,9 @@
+fun main =
+	val x := 40;
+
+	if x == 40 do
+		some_print("Hello, World!");
+	else
+		some_print("Bye");
+	end
+end

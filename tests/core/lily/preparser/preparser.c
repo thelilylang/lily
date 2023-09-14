@@ -3,6 +3,7 @@
 #include "break.c"
 #include "defer.c"
 #include "drop.c"
+#include "if.c"
 #include "import.c"
 #include "macro.c"
 #include "macro_expand.c"
@@ -25,5 +26,6 @@ main()
     ADD_SIMPLE(break);
     ADD_SIMPLE(defer);
     ADD_SIMPLE(drop);
+    ADD_SIMPLE(if);
     RUN_TEST();
 }
