@@ -1,0 +1,13 @@
+object Animal enum =
+	Cat;
+	Dog;
+	Wolf;
+
+	fun get_id(ref self) Int32 =
+		match self do
+			Cat:$ => 0;
+			Dog:$ => 1;
+			Wolf:$ => 2;
+		end
+	end
+end
