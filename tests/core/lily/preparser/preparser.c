@@ -5,6 +5,7 @@
 #include "defer.c"
 #include "drop.c"
 #include "for.c"
+#include "fun.c"
 #include "if.c"
 #include "import.c"
 #include "macro.c"
@@ -45,5 +46,6 @@ main()
     ADD_SIMPLE(next);
     ADD_SIMPLE(block);
     ADD_SIMPLE(variable);
+    ADD_SIMPLE(fun);
     RUN_TEST();
 }

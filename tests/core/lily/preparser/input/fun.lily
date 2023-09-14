@@ -1,0 +1,8 @@
+fun add(x, y) = x + y end
+
+fun sub[T](x T, y T) = x - y end
+
+fun@SomeImpl add(x) = x end
+
+fun main =
+end
