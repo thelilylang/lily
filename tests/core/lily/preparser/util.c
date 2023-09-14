@@ -32,6 +32,7 @@
 #define FILE_RECORD_OBJECT \
     "./tests/core/lily/preparser/input/record_object.lily"
 #define FILE_ENUM_OBJECT "./tests/core/lily/preparser/input/enum_object.lily"
+#define FILE_RECORD "./tests/core/lily/preparser/input/record.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)

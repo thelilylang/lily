@@ -18,6 +18,7 @@
 #include "next.c"
 #include "package.c"
 #include "raise.c"
+#include "record.c"
 #include "record_object.c"
 #include "return.c"
 #include "trait.c"
@@ -57,5 +58,6 @@ main()
     ADD_SIMPLE(trait);
     ADD_SIMPLE(record_object);
     ADD_SIMPLE(enum_object);
+    ADD_SIMPLE(record);
     RUN_TEST();
 }
