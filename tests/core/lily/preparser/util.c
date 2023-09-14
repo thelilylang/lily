@@ -14,6 +14,7 @@
 #define FILE_AWAIT "./tests/core/lily/preparser/input/await.lily"
 #define FILE_BREAK "./tests/core/lily/preparser/input/break.lily"
 #define FILE_DEFER "./tests/core/lily/preparser/input/defer.lily"
+#define FILE_DROP "./tests/core/lily/preparser/input/drop.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)

@@ -1,0 +1,4 @@
+fun main =
+	val x := some_alloc();
+	drop x;
+end
