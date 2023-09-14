@@ -35,6 +35,7 @@
 #define FILE_RECORD "./tests/core/lily/preparser/input/record.lily"
 #define FILE_ENUM "./tests/core/lily/preparser/input/enum.lily"
 #define FILE_ALIAS "./tests/core/lily/preparser/input/alias.lily"
+#define FILE_ERROR "./tests/core/lily/preparser/input/error.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)

@@ -1,0 +1,4 @@
+error MyRaise:Str;
+
+fun main =
+end

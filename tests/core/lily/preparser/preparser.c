@@ -9,6 +9,7 @@
 #include "drop.c"
 #include "enum.c"
 #include "enum_object.c"
+#include "error.c"
 #include "for.c"
 #include "fun.c"
 #include "if.c"
@@ -63,5 +64,6 @@ main()
     ADD_SIMPLE(record);
     ADD_SIMPLE(enum);
     ADD_SIMPLE(alias);
+    ADD_SIMPLE(error);
     RUN_TEST();
 }
