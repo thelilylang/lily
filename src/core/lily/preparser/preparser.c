@@ -4219,9 +4219,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserPrototype, const LilyPreparserPrototype *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -4433,9 +4431,7 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserTrait, const LilyPreparserTrait *self)
 
 DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
     FREE(String, self->name);
-#endif
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
