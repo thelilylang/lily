@@ -6,6 +6,7 @@
 #include "constant.c"
 #include "defer.c"
 #include "drop.c"
+#include "enum.c"
 #include "enum_object.c"
 #include "for.c"
 #include "fun.c"
@@ -59,5 +60,6 @@ main()
     ADD_SIMPLE(record_object);
     ADD_SIMPLE(enum_object);
     ADD_SIMPLE(record);
+    ADD_SIMPLE(enum);
     RUN_TEST();
 }

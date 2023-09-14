@@ -1,0 +1,5 @@
+type Animal enum =
+	Cat;
+	Dog;
+	Wolf;
+end
