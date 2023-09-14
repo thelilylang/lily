@@ -1,0 +1,7 @@
+fun main =
+	try do
+		some_stuff()
+	catch e do
+		some_sutff2()
+	end
+end

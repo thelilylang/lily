@@ -12,6 +12,7 @@
 #include "package.c"
 #include "raise.c"
 #include "return.c"
+#include "try.c"
 #include "while.c"
 
 #include <base/test.h>
@@ -35,5 +36,6 @@ main()
     ADD_SIMPLE(while);
     ADD_SIMPLE(raise);
     ADD_SIMPLE(return);
+    ADD_SIMPLE(try);
     RUN_TEST();
 }
