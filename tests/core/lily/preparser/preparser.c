@@ -10,6 +10,7 @@
 #include "macro_expand.c"
 #include "module.c"
 #include "package.c"
+#include "raise.c"
 #include "while.c"
 
 #include <base/test.h>
@@ -31,5 +32,6 @@ main()
     ADD_SIMPLE(if);
     ADD_SIMPLE(for);
     ADD_SIMPLE(while);
+    ADD_SIMPLE(raise);
     RUN_TEST();
 }

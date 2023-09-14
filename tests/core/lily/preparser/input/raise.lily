@@ -1,0 +1,7 @@
+fun some_raise =
+	raise Something;
+end
+
+fun main =
+	some_raise();
+end
