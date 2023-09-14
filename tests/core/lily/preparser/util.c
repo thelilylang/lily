@@ -22,6 +22,8 @@
 #define FILE_RETURN "./tests/core/lily/preparser/input/return.lily"
 #define FILE_TRY "./tests/core/lily/preparser/input/try.lily"
 #define FILE_MATCH "./tests/core/lily/preparser/input/match.lily"
+#define FILE_NEXT "./tests/core/lily/preparser/input/next.lily"
+#define FILE_BLOCK "./tests/core/lily/preparser/input/block.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)

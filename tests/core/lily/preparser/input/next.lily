@@ -1,0 +1,5 @@
+fun main =
+	while true do
+		next;
+	end
+end

@@ -1,5 +1,6 @@
 #include "asm.c"
 #include "await.c"
+#include "block.c"
 #include "break.c"
 #include "defer.c"
 #include "drop.c"
@@ -10,6 +11,7 @@
 #include "macro_expand.c"
 #include "match.c"
 #include "module.c"
+#include "next.c"
 #include "package.c"
 #include "raise.c"
 #include "return.c"
@@ -39,5 +41,7 @@ main()
     ADD_SIMPLE(return);
     ADD_SIMPLE(try);
     ADD_SIMPLE(match);
+    ADD_SIMPLE(next);
+    ADD_SIMPLE(block);
     RUN_TEST();
 }

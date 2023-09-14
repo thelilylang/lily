@@ -1,0 +1,9 @@
+fun main =
+	@{
+		do_something();
+	}
+	
+	begin =
+		do_something();
+	end
+end
