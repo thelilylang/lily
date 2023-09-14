@@ -1,0 +1,7 @@
+object Eq[T] trait =
+	fun eq(self, other T);
+	fun ne(self, other T);
+end
+
+fun main =
+end

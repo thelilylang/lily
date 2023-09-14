@@ -28,6 +28,7 @@
 #define FILE_FUN "./tests/core/lily/preparser/input/fun.lily"
 #define FILE_CONSTANT "./tests/core/lily/preparser/input/constant.lily"
 #define FILE_CLASS "./tests/core/lily/preparser/input/class.lily"
+#define FILE_TRAIT "./tests/core/lily/preparser/input/trait.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)

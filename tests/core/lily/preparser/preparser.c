@@ -18,6 +18,7 @@
 #include "package.c"
 #include "raise.c"
 #include "return.c"
+#include "trait.c"
 #include "try.c"
 #include "variable.c"
 #include "while.c"
@@ -51,5 +52,6 @@ main()
     ADD_SIMPLE(fun);
     ADD_SIMPLE(constant);
     ADD_SIMPLE(class);
+    ADD_SIMPLE(trait);
     RUN_TEST();
 }
