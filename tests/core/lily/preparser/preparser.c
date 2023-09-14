@@ -1,3 +1,4 @@
+#include "alias.c"
 #include "asm.c"
 #include "await.c"
 #include "block.c"
@@ -61,5 +62,6 @@ main()
     ADD_SIMPLE(enum_object);
     ADD_SIMPLE(record);
     ADD_SIMPLE(enum);
+    ADD_SIMPLE(alias);
     RUN_TEST();
 }
