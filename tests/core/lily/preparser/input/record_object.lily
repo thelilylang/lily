@@ -1,0 +1,9 @@
+object Person record =
+	name Str;
+	age Uint8;
+
+	fun get_name(self) = self.name end
+end
+
+fun main =
+end

@@ -17,6 +17,7 @@
 #include "next.c"
 #include "package.c"
 #include "raise.c"
+#include "record_object.c"
 #include "return.c"
 #include "trait.c"
 #include "try.c"
@@ -53,5 +54,6 @@ main()
     ADD_SIMPLE(constant);
     ADD_SIMPLE(class);
     ADD_SIMPLE(trait);
+    ADD_SIMPLE(record_object);
     RUN_TEST();
 }

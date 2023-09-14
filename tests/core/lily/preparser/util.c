@@ -29,6 +29,7 @@
 #define FILE_CONSTANT "./tests/core/lily/preparser/input/constant.lily"
 #define FILE_CLASS "./tests/core/lily/preparser/input/class.lily"
 #define FILE_TRAIT "./tests/core/lily/preparser/input/trait.lily"
+#define FILE_RECORD_OBJECT "./tests/core/lily/preparser/input/record_object.lily"
 
 LilyPreparserInfo
 run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)
