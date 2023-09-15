@@ -64,6 +64,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyAstDeclAttribute, const LilyAstDeclAttribute *self)
 {
+    FREE(String, self->name);
     FREE(LilyAstDataType, self->data_type);
 
     if (self->optional_expr) {

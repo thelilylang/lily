@@ -36,7 +36,7 @@
 
 typedef struct LilyAstDeclEnumObject
 {
-    String *name;        // String* (&)
+    String *name;
     Vec *generic_params; // Vec<LilyAstGenericParam*>*?
     Vec *impl_params;    // Vec<LilyAstImplParam*>*?
     Vec *body;           // Vec<LilyAstBodyEnumObjectItem*>*

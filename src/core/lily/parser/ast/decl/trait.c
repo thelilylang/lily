@@ -67,6 +67,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclTrait, const LilyAstDeclTrait *self)
 
 DESTRUCTOR(LilyAstDeclTrait, const LilyAstDeclTrait *self)
 {
+    FREE(String, self->name);
+
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
                           self->generic_params->len,

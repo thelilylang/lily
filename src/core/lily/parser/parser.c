@@ -3611,8 +3611,8 @@ parse_expr__LilyParseBlock(LilyParseBlock *self)
                             remove__Vec(self->tokens, position_r_paren);
                         }
 
-                        LilyPreparser preparser =
-                          NEW(LilyPreparser, self->file, self->tokens, NULL);
+                        LilyPreparser preparser = NEW(
+                          LilyPreparser, self->file, self->tokens, NULL, false);
 
                         preparser.position = self->position;
                         preparser.current =
@@ -7684,7 +7684,7 @@ apply_macro_expansion_in_record__LilyParser(LilyParser *self,
         const File *file = get_file_from_filename__LilyPackage(
           self->root_package, macro->location.filename);
         LilyPreparser preparse_macro_expand =
-          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL, false);
 
         preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
 
@@ -7731,7 +7731,7 @@ apply_macro_expansion_in_enum__LilyParser(LilyParser *self,
         const File *file = get_file_from_filename__LilyPackage(
           self->root_package, macro->location.filename);
         LilyPreparser preparse_macro_expand =
-          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL, false);
 
         preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
 
@@ -7777,7 +7777,7 @@ apply_macro_expansion_in_class__LilyParser(LilyParser *self,
         const File *file = get_file_from_filename__LilyPackage(
           self->root_package, macro->location.filename);
         LilyPreparser preparse_macro_expand =
-          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL, false);
 
         preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
 
@@ -7821,7 +7821,7 @@ apply_macro_expansion_in_record_object__LilyParser(
         const File *file = get_file_from_filename__LilyPackage(
           self->root_package, macro->location.filename);
         LilyPreparser preparse_macro_expand =
-          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL, false);
 
         preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
 
@@ -7866,7 +7866,7 @@ apply_macro_expansion_in_enum_object__LilyParser(
         const File *file = get_file_from_filename__LilyPackage(
           self->root_package, macro->location.filename);
         LilyPreparser preparse_macro_expand =
-          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL, false);
 
         preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
 
@@ -7910,7 +7910,7 @@ apply_macro_expansion_in_trait__LilyParser(LilyParser *self,
         const File *file = get_file_from_filename__LilyPackage(
           self->root_package, macro->location.filename);
         LilyPreparser preparse_macro_expand =
-          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL, false);
 
         preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
 
@@ -7959,7 +7959,7 @@ apply_macro_expansion_in_fun__LilyParser(LilyParser *self,
         const File *file = get_file_from_filename__LilyPackage(
           self->root_package, macro->location.filename);
         LilyPreparser preparse_macro_expand =
-          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL, false);
 
         preparse_macro_expand.current = get__Vec(&macro_tokens_copy, 0);
 
@@ -8010,7 +8010,7 @@ apply_macro_expansion__LilyParser(LilyParser *self,
           self->root_package, macro->location.filename);
         LilyPreparserInfo preparser_info = NEW(LilyPreparserInfo, NULL);
         LilyPreparser preparse_macro_expand =
-          NEW(LilyPreparser, file, &macro_tokens_copy, NULL);
+          NEW(LilyPreparser, file, &macro_tokens_copy, NULL, false);
 
         run__LilyPreparser(&preparse_macro_expand, &preparser_info);
 

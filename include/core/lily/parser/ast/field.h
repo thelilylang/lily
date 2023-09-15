@@ -34,7 +34,7 @@
 
 typedef struct LilyAstField
 {
-    String *name; // String* (&)
+    String *name;
     LilyAstDataType *data_type;
     LilyAstExpr *optional_expr; // LilyAstExpr*?
     bool is_mut;

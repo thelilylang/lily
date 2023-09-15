@@ -39,6 +39,7 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclConstant, const LilyAstDeclConstant *self)
 
 DESTRUCTOR(LilyAstDeclConstant, const LilyAstDeclConstant *self)
 {
+    FREE(String, self->name);
     FREE(LilyAstDataType, self->data_type);
     FREE(LilyAstExpr, self->expr);
 }

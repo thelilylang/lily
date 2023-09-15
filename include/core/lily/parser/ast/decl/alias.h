@@ -34,7 +34,7 @@
 
 typedef struct LilyAstDeclAlias
 {
-    String *name;        // String* (&)
+    String *name;
     Vec *generic_params; // Vec<LilyAstGenericParam*>*?
     LilyAstDataType *data_type;
     enum LilyVisibility visibility;

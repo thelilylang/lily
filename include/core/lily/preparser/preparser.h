@@ -1564,6 +1564,10 @@ typedef struct LilyPreparser
     Usize count_error;
     Usize count_warning;
     const char *default_package_access; // const char*?
+    bool destroy_all; // It's true when run until preparser or run until
+                      // precompiler is enable (or in the preparser or
+                      // precompiler test). NOTE: These are just a few examples,
+                      // you can apply it in other cases if necessary.
 } LilyPreparser;
 
 /**
@@ -1574,7 +1578,8 @@ CONSTRUCTOR(LilyPreparser,
             LilyPreparser,
             const File *file,
             const Vec *tokens,
-            const char *default_package_access);
+            const char *default_package_access,
+            bool destroy_all);
 
 /**
  *

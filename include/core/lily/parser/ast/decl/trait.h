@@ -36,7 +36,7 @@
 
 typedef struct LilyAstDeclTrait
 {
-    String *name;        // String* (&)
+    String *name;
     Vec *generic_params; // Vec<LilyAstGenericParam*>*?
     Vec *inherit_params; // Vec<LilyAstInheritParam*>*?
     Vec *body;           // Vec<LilyAstBodyTraitItem*>*

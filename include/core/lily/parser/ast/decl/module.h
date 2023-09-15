@@ -33,8 +33,8 @@
 
 typedef struct LilyAstDeclModule
 {
-    String *name; // String* (&)
-    Vec *decls;   // Vec<LilyAstDecl*>*
+    String *name;
+    Vec *decls; // Vec<LilyAstDecl*>*
     enum LilyVisibility visibility;
 } LilyAstDeclModule;
 

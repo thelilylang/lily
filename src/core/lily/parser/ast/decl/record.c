@@ -51,6 +51,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclRecord, const LilyAstDeclRecord *self)
 
 DESTRUCTOR(LilyAstDeclRecord, const LilyAstDeclRecord *self)
 {
+    FREE(String, self->name);
+
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(self->generic_params->buffer,
                           self->generic_params->len,

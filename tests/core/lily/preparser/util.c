@@ -49,19 +49,19 @@ run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)
     return preparser_info;
 }
 
-#define RUN_PREPARSER(filename)                                              \
-    char *content = read_file__File(filename);                               \
-    File file = NEW(File, filename, content);                                \
-    LilyScanner scanner =                                                    \
-      NEW(LilyScanner, NEW(Source, NEW(Cursor, file.content), &file));       \
-    LilyPreparser preparser = NEW(LilyPreparser, &file, scanner.tokens, ""); \
-    LilyPreparserInfo preparser_info =                                       \
+#define RUN_PREPARSER(filename)                                        \
+    char *content = read_file__File(filename);                         \
+    File file = NEW(File, filename, content);                          \
+    LilyScanner scanner =                                              \
+      NEW(LilyScanner, NEW(Source, NEW(Cursor, file.content), &file)); \
+    LilyPreparser preparser =                                          \
+      NEW(LilyPreparser, &file, scanner.tokens, "", true);             \
+    LilyPreparserInfo preparser_info =                                 \
       run_preparser(&file, &scanner, &preparser);
 
-#define FREE_PREPARSER()                        \
-    FREE(File, &file);                          \
-    FREE(LilyScanner, &scanner);                \
-    FREE(String, preparser_info.package->name); \
+#define FREE_PREPARSER()         \
+    FREE(File, &file);           \
+    FREE(LilyScanner, &scanner); \
     FREE(LilyPreparserInfo, &preparser_info);
 
 #define GET_PUBLIC_IMPORT(idx) \

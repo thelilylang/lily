@@ -110,8 +110,19 @@ CONSTRUCTOR(LilyPackage *,
     self->file = NEW(File, filename, content);
     self->scanner =
       NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &self->file));
-    self->preparser = NEW(
-      LilyPreparser, &self->file, self->scanner.tokens, default_package_access);
+#if defined(RUN_UNTIL_PREPARSER) || defined(RUN_UNTIL_PRECOMPILE)
+    self->preparser = NEW(LilyPreparser,
+                          &self->file,
+                          self->scanner.tokens,
+                          default_package_access,
+                          true);
+#else
+    self->preparser = NEW(LilyPreparser,
+                          &self->file,
+                          self->scanner.tokens,
+                          default_package_access,
+                          false);
+#endif
     self->preparser_info = NEW(LilyPreparserInfo, self->name);
     self->visibility = visibility;
     self->status = status;

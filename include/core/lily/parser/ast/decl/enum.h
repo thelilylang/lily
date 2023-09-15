@@ -33,7 +33,7 @@
 
 typedef struct LilyAstDeclEnum
 {
-    String *name;        // String* (&)
+    String *name;
     Vec *generic_params; // Vec<LilyAstGenericParam*>*
     Vec *variants;       // Vec<LilyAstVariant*>*
     enum LilyVisibility visibility;

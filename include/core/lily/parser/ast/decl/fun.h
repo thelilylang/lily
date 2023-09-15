@@ -108,8 +108,8 @@ DESTRUCTOR(LilyAstDeclFunParam, LilyAstDeclFunParam *self);
 
 typedef struct LilyAstDeclFun
 {
-    String *name;        // String* (&)
-    String *object_impl; // String*? (&)
+    String *name;
+    String *object_impl; // String*?
     Vec *generic_params; // Vec<LilyAstGenericParam>*?
     Vec *params;         // Vec<LilyAstDeclFunParam*|LilyAstDeclMethodParam*>*?
     LilyAstDataType *return_data_type; // LilyAstDataType*?

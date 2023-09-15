@@ -55,6 +55,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtVariable, const LilyAstStmtVariable *self)
 
 DESTRUCTOR(LilyAstStmtVariable, const LilyAstStmtVariable *self)
 {
+    FREE(String, self->name);
+
     if (self->data_type) {
         FREE(LilyAstDataType, self->data_type);
     }

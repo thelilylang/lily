@@ -33,7 +33,7 @@
 
 typedef struct LilyAstStmtVariable
 {
-    String *name;               // String* (&)
+    String *name;
     LilyAstDataType *data_type; // LilyAstDataType*?
     LilyAstExpr *expr;          // LilyAstExpr*
     bool is_mut;

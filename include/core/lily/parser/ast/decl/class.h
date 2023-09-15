@@ -37,7 +37,7 @@
 
 typedef struct LilyAstDeclClass
 {
-    String *name;        // String* (&)
+    String *name;
     Vec *generic_params; // Vec<LilyAstGenericParam*>*?
     Vec *inherit_params; // Vec<LilyAstInheritParam*>*?
     Vec *impl_params;    // Vec<LilyAstImplParam*>*?

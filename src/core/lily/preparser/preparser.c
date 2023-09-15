@@ -1676,6 +1676,7 @@ static threadlocal enum LilyVisibility visibility_decl =
   LILY_VISIBILITY_PRIVATE;
 static threadlocal Location location_decl;
 static threadlocal Location location_fun_body_item;
+static threadlocal bool destroy_all = false;
 
 CONSTRUCTOR(LilyPreparserImport *,
             LilyPreparserImport,
@@ -1894,12 +1895,10 @@ IMPL_FOR_DEBUG(debug, LilyPreparserPackage, const LilyPreparserPackage *self)
 DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self)
 {
     // NOTE: Normally the name is free into the package, except when
-    // RUN_UNTIL_PREPARSER is defined.
-#ifdef RUN_UNTIL_PREPARSER
-    if (self->name) {
+    // RUN_UNTIL_PREPARSER (destroy_all is true) is defined.
+    if (self->name && destroy_all) {
         FREE(String, self->name);
     }
-#endif
 
     FREE_BUFFER_ITEMS(self->sub_packages->buffer,
                       self->sub_packages->len,
@@ -1941,7 +1940,10 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserModule, const LilyPreparserModule *self)
 
 DESTRUCTOR(LilyPreparserModule, const LilyPreparserModule *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
+
     FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, LilyPreparserDecl);
     FREE(Vec, self->body);
 }
@@ -1956,9 +1958,9 @@ CONSTRUCTOR(LilyPreparserTest, LilyPreparserTest, String *name, Vec *body)
 
 DESTRUCTOR(LilyPreparserTest, const LilyPreparserTest *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
-    FREE(String, self->name);
-#endif
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     FREE(Vec, self->body);
 }
@@ -2063,11 +2065,9 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyPreparserFunBodyItemLambda,
            const LilyPreparserFunBodyItemLambda *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
-    if (self->name) {
+    if (self->name && destroy_all) {
         FREE(String, self->name);
     }
-#endif
 
     if (self->params) {
         FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, Vec);
@@ -2201,7 +2201,7 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyPreparserFunBodyItemStmtBreak,
            const LilyPreparserFunBodyItemStmtBreak *self)
 {
-    if (self->name) {
+    if (self->name && destroy_all) {
         FREE(String, self->name);
     }
 }
@@ -2542,7 +2542,7 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyPreparserFunBodyItemStmtNext,
            const LilyPreparserFunBodyItemStmtNext *self)
 {
-    if (self->name) {
+    if (self->name && destroy_all) {
         FREE(String, self->name);
     }
 }
@@ -2755,7 +2755,9 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyPreparserFunBodyItemStmtVariable,
            const LilyPreparserFunBodyItemStmtVariable *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->data_type) {
         FREE(Vec, self->data_type);
@@ -3669,10 +3671,12 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserFun, const LilyPreparserFun *self)
 
 DESTRUCTOR(LilyPreparserFun, const LilyPreparserFun *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
 
-    if (self->object_impl) {
-        FREE(String, self->object_impl);
+        if (self->object_impl) {
+            FREE(String, self->object_impl);
+        }
     }
 
     if (self->generic_params) {
@@ -3745,7 +3749,10 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserConstantInfo, LilyPreparserConstantInfo *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
+
     FREE(Vec, self->expr);
     FREE(Vec, self->data_type);
     lily_free(self);
@@ -3916,7 +3923,10 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserAttribute, const LilyPreparserAttribute *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
+
     FREE(Vec, self->data_type);
 
     if (self->default_expr) {
@@ -4125,7 +4135,9 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserClass, const LilyPreparserClass *self)
 
 DESTRUCTOR(LilyPreparserClass, const LilyPreparserClass *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -4219,7 +4231,9 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserPrototype, const LilyPreparserPrototype *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -4431,7 +4445,9 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserTrait, const LilyPreparserTrait *self)
 
 DESTRUCTOR(LilyPreparserTrait, const LilyPreparserTrait *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -4502,7 +4518,10 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserRecordField, const LilyPreparserRecordField *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
+
     FREE(Vec, self->data_type);
 
     if (self->optional_expr) {
@@ -4773,7 +4792,9 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserRecordObject, const LilyPreparserRecordObject *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -4828,7 +4849,9 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserEnumVariant, const LilyPreparserEnumVariant *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->data_type) {
         FREE(Vec, self->data_type);
@@ -5019,7 +5042,9 @@ VARIANT_DESTRUCTOR(LilyPreparserEnumObjectBodyItem,
                    variant,
                    LilyPreparserEnumObjectBodyItem *self)
 {
-    FREE(String, self->variant.name);
+    if (destroy_all) {
+        FREE(String, self->variant.name);
+    }
 
     if (self->variant.data_type) {
         FREE(Vec, self->variant.data_type);
@@ -5107,7 +5132,9 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(LilyPreparserEnumObject, const LilyPreparserEnumObject *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -5434,7 +5461,9 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserAlias, const LilyPreparserAlias *self)
 
 DESTRUCTOR(LilyPreparserAlias, const LilyPreparserAlias *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -5615,7 +5644,9 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserEnum, const LilyPreparserEnum *self)
 
 DESTRUCTOR(LilyPreparserEnum, const LilyPreparserEnum *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -5670,7 +5701,9 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserRecord, const LilyPreparserRecord *self)
 
 DESTRUCTOR(LilyPreparserRecord, const LilyPreparserRecord *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->generic_params) {
         FREE_BUFFER_ITEMS(
@@ -5835,9 +5868,9 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyPreparserLibConstantPrototype,
            const LilyPreparserLibConstantPrototype *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
-    FREE(String, self->name);
-#endif
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     FREE(Vec, self->data_type);
 }
@@ -5890,13 +5923,13 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(LilyPreparserLibFunPrototype,
            const LilyPreparserLibFunPrototype *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
 
-    if (self->new_name) {
-        FREE(String, self->new_name);
+        if (self->new_name) {
+            FREE(String, self->new_name);
+        }
     }
-#endif
 
     if (self->params) {
         FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, Vec);
@@ -6124,11 +6157,9 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserLib, const LilyPreparserLib *self)
 
 DESTRUCTOR(LilyPreparserLib, const LilyPreparserLib *self)
 {
-#ifdef RUN_UNTIL_PREPARSER
-    if (self->name) {
+    if (self->name && destroy_all) {
         FREE(String, self->name);
     }
-#endif
 
     FREE_BUFFER_ITEMS(
       self->body->buffer, self->body->len, LilyPreparserLibBodyItem);
@@ -6182,7 +6213,9 @@ IMPL_FOR_DEBUG(to_string, LilyPreparserError, const LilyPreparserError *self)
 
 DESTRUCTOR(LilyPreparserError, const LilyPreparserError *self)
 {
-    FREE(String, self->name);
+    if (destroy_all) {
+        FREE(String, self->name);
+    }
 
     if (self->data_type) {
         FREE(Vec, self->data_type);
@@ -14158,7 +14191,8 @@ CONSTRUCTOR(LilyPreparser,
             LilyPreparser,
             const File *file,
             const Vec *tokens,
-            const char *default_package_access)
+            const char *default_package_access,
+            bool destroy_all)
 {
     return (LilyPreparser){ .file = file,
                             .tokens = tokens,
@@ -14166,12 +14200,15 @@ CONSTRUCTOR(LilyPreparser,
                             .position = 0,
                             .count_error = 0,
                             .count_warning = 0,
-                            .default_package_access = default_package_access };
+                            .default_package_access = default_package_access,
+                            .destroy_all = destroy_all };
 }
 
 void
 run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 {
+    destroy_all = self->destroy_all;
+
     self->current = get__Vec(self->tokens, 0);
 
     bool package_is_preparse = false;

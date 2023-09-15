@@ -35,7 +35,7 @@
 
 typedef struct LilyAstDeclError
 {
-    String *name;               // String* (&)
+    String *name;
     Vec *generic_params;        // Vec<LilyAstGenericParam*>*?
     LilyAstDataType *data_type; // LilyAstDataType*?
     enum LilyVisibility visibility;
