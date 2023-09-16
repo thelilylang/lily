@@ -84,6 +84,7 @@ static VARIANT_DESTRUCTOR(LilyImportValue, package, LilyImportValue *self);
 // Free LilyImportValue type (LILY_IMPORT_VALUE_KIND_SELECT).
 static VARIANT_DESTRUCTOR(LilyImportValue, select, LilyImportValue *self);
 
+// Check for some errors in the import (e.g. recursive import).
 static void
 check_import_to_build_dependency_tree__LilyPrecompiler(
   LilyPrecompiler *self,
@@ -130,6 +131,7 @@ build_dependency_tree__LilyPrecompiler(LilyPrecompiler *self,
                                        LilyPackage *package,
                                        LilyPackage *root_package);
 
+// Transform the import access value (String) to LilyImportValue.
 /// @return Vec<LilyImportValue>
 static Vec *
 precompile_import_access__LilyPrecompiler(LilyPrecompiler *self,
@@ -137,6 +139,7 @@ precompile_import_access__LilyPrecompiler(LilyPrecompiler *self,
                                           const Location *location,
                                           Usize *position);
 
+// Check import value (syntax of import value).
 static LilyImport *
 precompile_import__LilyPrecompiler(LilyPrecompiler *self,
                                    const LilyPreparserImport *import);
@@ -157,6 +160,7 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
                                         LilyPackage *root_package);
 #endif
 
+// Parse and check the parameters of the macros.
 static LilyMacro *
 precompile_macro__LilyPrecompiler(LilyPrecompiler *self,
                                   const LilyPreparserMacro *macro);
@@ -630,9 +634,18 @@ check_import_to_build_dependency_tree__LilyPrecompiler(
             case LILY_IMPORT_VALUE_KIND_PACKAGE: {
                 // Check for self import.
                 if (!strcmp(value->package->buffer, package->name->buffer)) {
-                    // TODO: add error with diagnostic
-                    EMIT_ERROR("self import");
-                    exit(1);
+                    emit__Diagnostic(
+                      NEW_VARIANT(Diagnostic,
+                                  simple_lily_error,
+                                  (&package->file),
+                                  &import->location,
+                                  NEW(LilyError, LILY_ERROR_KIND_SELF_IMPORT),
+                                  NULL,
+                                  NULL,
+                                  NULL),
+                      &self->count_error);
+
+                    return;
                 }
 
                 LilyPackage *pkg = search_package_from_name__LilyPackage(
@@ -678,9 +691,20 @@ void
 check_deps__LilyPrecompiler(LilyPackage *package, String *rejected_package_name)
 {
     if (!strcmp(package->name->buffer, rejected_package_name->buffer)) {
-        // TODO: add error with diagnostic
-        EMIT_ERROR("resursive import is occured");
-        exit(1);
+        Location diagnostic_location = default__Location(package->file.name);
+
+        emit__Diagnostic(
+          NEW_VARIANT(Diagnostic,
+                      simple_lily_error,
+                      (&package->file),
+                      &diagnostic_location,
+                      NEW(LilyError, LILY_ERROR_KIND_RECURSIVE_IMPORT),
+                      NULL,
+                      NULL,
+                      NULL),
+          &package->count_error);
+
+        return;
     }
 
     for (Usize i = 0; i < package->package_dependencies->len; ++i) {
@@ -757,7 +781,7 @@ build_tree__LilyPrecompiler(LilyPrecompiler *self, LilyPackage *package)
 // 2. Collect all packages dependencies.
 // 3. Check for recursive import.
 // 4. Calculate dependencies.
-// 5. Add package with less dependencies.
+// 5. Add package with fewer dependencies.
 void
 build_dependency_tree__LilyPrecompiler(LilyPrecompiler *self,
                                        LilyPackage *package,
@@ -1034,9 +1058,9 @@ precompile_import__LilyPrecompiler(LilyPrecompiler *self,
             }
 
             push__Vec(values, NEW(LilyImportValue, LILY_IMPORT_VALUE_KIND_SYS));
-        } else if (strcmp(name->buffer, "file") &&
-                   strcmp(name->buffer, "library") &&
-                   strcmp(name->buffer, "package")) {
+        } else if (strcmp(name->buffer, "file") != 0 &&
+                   strcmp(name->buffer, "library") != 0 &&
+                   strcmp(name->buffer, "package") != 0) {
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
@@ -1124,10 +1148,10 @@ precompile_import__LilyPrecompiler(LilyPrecompiler *self,
 
     if (position < import->value->len) {
         String *rest_import_value = take_slice__String(import->value, position);
-        Usize position = 0;
+        Usize position_import_access = 0;
 
         Vec *access = precompile_import_access__LilyPrecompiler(
-          self, rest_import_value, &import->location, &position);
+          self, rest_import_value, &import->location, &position_import_access);
 
         if (access) {
             append__Vec(values, access);
@@ -1398,7 +1422,6 @@ precompile_macro__LilyPrecompiler(LilyPrecompiler *self,
             Vec *param = get__Vec(macro->params, i);
             Usize position = 0;
             LilyToken *current = param->len > 0 ? get__Vec(param, 0) : NULL;
-
             String *name = NULL;
             enum LilyMacroParamKind kind = -1;
             Location location;
@@ -1472,6 +1495,7 @@ precompile_macro__LilyPrecompiler(LilyPrecompiler *self,
 
                 continue;
             } else {
+                // Check the macro data type of the parameter.
                 switch (current->kind) {
                     case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
                         if (!strcmp(current->identifier_normal->buffer, "id")) {
