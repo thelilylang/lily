@@ -326,6 +326,10 @@ to_msg__LilyError(const LilyError *self)
             return "expected fun call";
         case LILY_ERROR_KIND_UNEXPECTED_CLOSE:
             return "unexpected close";
+        case LILY_ERROR_KIND_SELF_IMPORT:
+            return "self import";
+        case LILY_ERROR_KIND_RECURSIVE_IMPORT:
+            return "recursive import";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -569,58 +573,66 @@ to_code__LilyError(const LilyError *self)
             return "0116";
         case LILY_ERROR_KIND_NUMBER_OF_PARAMS_MISMATCHED:
             return "0117";
-        case LILY_ERROR_KIND_DEFAULT_PARAM_IS_NOT_EXPECTED:
+        case LILY_ERROR_KIND_TOO_MANY_PARAMS:
             return "0118";
-        case LILY_ERROR_KIND_THERE_IS_NO_FIELD_IN_TRAIT:
+        case LILY_ERROR_KIND_DEFAULT_PARAM_IS_NOT_EXPECTED:
             return "0119";
-        case LILY_ERROR_KIND_EXPECTED_CUSTOM_DATA_TYPE:
+        case LILY_ERROR_KIND_THERE_IS_NO_FIELD_IN_TRAIT:
             return "0120";
-        case LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT:
+        case LILY_ERROR_KIND_EXPECTED_CUSTOM_DATA_TYPE:
             return "0121";
-        case LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT:
+        case LILY_ERROR_KIND_EXPECTED_OBJECT_DECL_AS_PARENT:
             return "0122";
-        case LILY_ERROR_KIND_THIS_KIND_OF_DATA_TYPE_IS_NOT_EXPECTED:
+        case LILY_ERROR_KIND_EXPECTED_METHOD_AS_PARENT:
             return "0123";
-        case LILY_ERROR_KIND_MAIN_FUNCTION_IS_NOT_CALLABLE:
+        case LILY_ERROR_KIND_THIS_KIND_OF_DATA_TYPE_IS_NOT_EXPECTED:
             return "0124";
-        case LILY_ERROR_KIND_IMPOSSIBLE_TO_GET_RETURN_DATA_TYPE:
+        case LILY_ERROR_KIND_MAIN_FUNCTION_IS_NOT_CALLABLE:
             return "0125";
-        case LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW:
+        case LILY_ERROR_KIND_IMPOSSIBLE_TO_GET_RETURN_DATA_TYPE:
             return "0126";
-        case LILY_ERROR_KIND_THIS_DATA_TYPE_CANNOT_BE_DROPPED:
+        case LILY_ERROR_KIND_COMPTIME_CAST_OVERFLOW:
             return "0127";
-        case LILY_ERROR_KIND_VALUE_HAS_BEEN_DROPPED:
+        case LILY_ERROR_KIND_THIS_DATA_TYPE_CANNOT_BE_DROPPED:
             return "0128";
-        case LILY_ERROR_KIND_THIS_KIND_OF_VALUE_IS_NOT_ALLOWED_TO_BE_DROP:
+        case LILY_ERROR_KIND_VALUE_HAS_BEEN_DROPPED:
             return "0129";
-        case LILY_ERROR_KIND_THIS_KIND_OF_EXPR_IS_NOT_ALLOWED_TO_BE_DROP:
+        case LILY_ERROR_KIND_THIS_KIND_OF_VALUE_IS_NOT_ALLOWED_TO_BE_DROP:
             return "0130";
-        case LILY_ERROR_KIND_ERROR_DECL_NOT_FOUND:
+        case LILY_ERROR_KIND_THIS_KIND_OF_EXPR_IS_NOT_ALLOWED_TO_BE_DROP:
             return "0131";
-        case LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH_WITH_INFER_DATA_TYPE:
+        case LILY_ERROR_KIND_ERROR_DECL_NOT_FOUND:
             return "0132";
-        case LILY_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_EXPECTED_IN_MAIN_FUNCTION:
+        case LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH_WITH_INFER_DATA_TYPE:
             return "0133";
-        case LILY_ERROR_KIND_NO_EXPLICIT_PARAMS_ARE_EXPECTED_IN_MAIN_FUNCTION:
+        case LILY_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_EXPECTED_IN_MAIN_FUNCTION:
             return "0134";
-        case LILY_ERROR_KIND_OPERATOR_CANNOT_HAVE_COMPILER_DEFINED_DATA_TYPE_AS_PARAMETER:
+        case LILY_ERROR_KIND_NO_EXPLICIT_PARAMS_ARE_EXPECTED_IN_MAIN_FUNCTION:
             return "0135";
-        case LILY_ERROR_KIND_THIS_RETURN_DATA_TYPE_IS_NOT_EXPECTED_FOR_A_MAIN_FUNCTION:
+        case LILY_ERROR_KIND_OPERATOR_CANNOT_HAVE_COMPILER_DEFINED_DATA_TYPE_AS_PARAMETER:
             return "0136";
-        case LILY_ERROR_KIND_OPERATOR_MUST_HAVE_RETURN_DATA_TYPE:
+        case LILY_ERROR_KIND_THIS_RETURN_DATA_TYPE_IS_NOT_EXPECTED_FOR_A_MAIN_FUNCTION:
             return "0137";
-        case LILY_ERROR_KIND_MAIN_FUNCTION_CANNOT_BE_RECURSIVE:
+        case LILY_ERROR_KIND_OPERATOR_MUST_HAVE_RETURN_DATA_TYPE:
             return "0138";
-        case LILY_ERROR_KIND_DUPLICATE_OPERATOR:
+        case LILY_ERROR_KIND_MAIN_FUNCTION_CANNOT_BE_RECURSIVE:
             return "0139";
-        case LILY_ERROR_KIND_INFINITE_DATA_TYPE:
+        case LILY_ERROR_KIND_OPERATOR_IS_NOT_VALID:
             return "0140";
-        case LILY_ERROR_KIND_TUPLES_HAVE_NOT_SAME_SIZE:
+        case LILY_ERROR_KIND_DUPLICATE_OPERATOR:
             return "0141";
-        case LILY_ERROR_KIND_EXPECTED_FUN_CALL:
+        case LILY_ERROR_KIND_INFINITE_DATA_TYPE:
             return "0142";
-        case LILY_ERROR_KIND_UNEXPECTED_CLOSE:
+        case LILY_ERROR_KIND_TUPLES_HAVE_NOT_SAME_SIZE:
             return "0143";
+        case LILY_ERROR_KIND_EXPECTED_FUN_CALL:
+            return "0144";
+        case LILY_ERROR_KIND_UNEXPECTED_CLOSE:
+            return "0145";
+        case LILY_ERROR_KIND_SELF_IMPORT:
+            return "0146";
+        case LILY_ERROR_KIND_RECURSIVE_IMPORT:
+            return "0147";
         default:
             UNREACHABLE("unknown variant");
     }
