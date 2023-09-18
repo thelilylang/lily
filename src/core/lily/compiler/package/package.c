@@ -578,7 +578,22 @@ run_scanner__LilyPackage(const LilycConfig *config)
 void
 run_preparser__LilyPackage(const LilycConfig *config)
 {
-    TODO("--run-preparser");
+    char *content = read_file__File(config->filename);
+    File file = NEW(File, (char *)config->filename, content);
+    LilyScanner scanner =
+      NEW(LilyScanner, NEW(Source, NEW(Cursor, file.content), &file));
+    LilyPreparser preparser =
+      NEW(LilyPreparser, &file, scanner.tokens, NULL, true);
+    LilyPreparserInfo preparser_info = NEW(LilyPreparserInfo, NULL);
+
+    run__LilyScanner(&scanner, config->dump_scanner);
+    run__LilyPreparser(&preparser, &preparser_info);
+
+    // Clean up
+
+    FREE(File, &file);
+    FREE(LilyScanner, &scanner);
+    FREE(LilyPreparserInfo, &preparser_info);
 }
 
 void
