@@ -1294,6 +1294,8 @@ precompile_sub_package__LilyPrecompiler(void *w)
 
     RUN_PRECOMPILER();
 
+    init_module__LilyAnalysis(&wrapper->self->analysis);
+
     return NULL;
 }
 #else
@@ -1372,6 +1374,8 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
         run__LilyPreparser(&res->preparser, &res->preparser_info);
         run__LilyPrecompiler(&res->precompiler, root_package, false);
 
+        init_module__LilyAnalysis(&res->analysis);
+
         FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
         FREE(Vec, split_pkg_name);
         lily_free(pkg_filename);
@@ -1398,6 +1402,8 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
         run__LilyScanner(&res->scanner, res->config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
         run__LilyPrecompiler(&res->precompiler, root_package, false);
+
+        init_module__LilyAnalysis(&res->analysis);
 
         FREE_BUFFER_ITEMS(split_pkg_name->buffer, split_pkg_name->len, String);
         FREE(Vec, split_pkg_name);
