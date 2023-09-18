@@ -11829,7 +11829,7 @@ run_step2__LilyAnalysis(LilyAnalysis *self)
 }
 
 void
-run__LilyAnalysis(LilyAnalysis *self)
+init_module__LilyAnalysis(LilyAnalysis *self)
 {
     self->module.global_name =
       format__String("{S}.global", self->package->global_name);
@@ -11838,7 +11838,11 @@ run__LilyAnalysis(LilyAnalysis *self)
       NEW(LilyCheckedScope,
           NULL,
           NEW_VARIANT(LilyCheckedScopeDecls, module, &self->module));
+}
 
+void
+run__LilyAnalysis(LilyAnalysis *self)
+{
     run_step0__LilyAnalysis(self);
     run_step1__LilyAnalysis(self);
     run_step2__LilyAnalysis(self);

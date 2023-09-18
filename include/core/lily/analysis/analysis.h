@@ -71,6 +71,13 @@ inline CONSTRUCTOR(LilyAnalysis,
 
 /**
  *
+ * @brief Init the module of the analysis.
+ */
+void
+init_module__LilyAnalysis(LilyAnalysis *self);
+
+/**
+ *
  * @brief Run the analysis.
  */
 void

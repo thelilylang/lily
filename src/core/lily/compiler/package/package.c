@@ -47,6 +47,92 @@
 static threadlocal pthread_t *package_threads;
 static pthread_mutex_t package_thread_mutex;
 
+#define SET_ROOT_PACKAGE_NAME(root_package)                              \
+    if (root_package->preparser_info.package->name) {                    \
+        root_package->name = root_package->preparser_info.package->name; \
+        root_package->global_name = clone__String(root_package->name);   \
+    } else {                                                             \
+        root_package->name = from__String("main");                       \
+        root_package->global_name = from__String("main");                \
+    }
+
+#define SET_ROOT_PACKAGE_IR(config, root_package)                            \
+    if (config->cc_ir) {                                                     \
+        /* TODO: add a linker for CC */                                      \
+        root_package->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));           \
+        root_package->linker = LILY_LINKER_KIND_CC;                          \
+    } else if (config->cpp_ir) {                                             \
+        /* TODO: add a linker for CPP */                                     \
+        root_package->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));         \
+        root_package->linker = LILY_LINKER_KIND_CPP;                         \
+    } else if (config->js_ir) {                                              \
+        self->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));                   \
+    } else {                                                                 \
+        root_package->ir = NEW_VARIANT(                                      \
+          LilyIr, llvm, NEW(LilyIrLlvm, root_package->global_name->buffer)); \
+        root_package->linker = LILY_LINKER_KIND_LLVM;                        \
+    }
+
+#define SET_ROOT_PACKAGE_PROGRAM(root_package, program, lib)                   \
+    /* Set the kind of program (static lib, dynamic lib, exe, ...) */          \
+    root_package->program = program;                                           \
+                                                                               \
+    switch (root_package->program->kind) {                                     \
+        case LILY_PROGRAM_KIND_EXE:                                            \
+            root_package->is_exe = true;                                       \
+                                                                               \
+            break;                                                             \
+        case LILY_PROGRAM_KIND_STATIC_LIB:                                     \
+            ASSERT(lib);                                                       \
+                                                                               \
+            finish_set__LilyLibrary(                                           \
+              lib, root_package->name, (enum LilyArKind)root_package->linker); \
+                                                                               \
+            root_package->is_lib = true;                                       \
+            root_package->is_static_lib = true;                                \
+            lib->package = root_package;                                       \
+            root_package->lib = lib;                                           \
+                                                                               \
+            break;                                                             \
+        case LILY_PROGRAM_KIND_DYNAMIC_LIB:                                    \
+            ASSERT(lib);                                                       \
+                                                                               \
+            finish_set__LilyLibrary(                                           \
+              lib, root_package->name, (enum LilyArKind)root_package->linker); \
+                                                                               \
+            root_package->is_lib = true;                                       \
+            root_package->is_dynamic_lib = true;                               \
+            lib->package = root_package;                                       \
+            root_package->lib = lib;                                           \
+                                                                               \
+            break;                                                             \
+        default:                                                               \
+            UNREACHABLE("unknown variant");                                    \
+    }
+
+#define LOAD_ROOT_PACKAGE_RESSOURCES(root_package, program)                   \
+    /* Load builtins and syss */                                              \
+    root_package->builtins = program->ressources.builtins;                    \
+    root_package->syss = program->ressources.syss;                            \
+                                                                              \
+    /* Load default operators in operator register                            \
+    In a normal case where we wanted to add an operator to the register, we'd \
+    use `add_operator__LilyCheckedOperatorRegister`, but in this case it's    \
+    guaranteed that no operator repeats itself, so to increase loading speed  \
+    we'll add it directly to the vector without checking. */                  \
+    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {                     \
+        push__Vec(root_package->operator_register.operators,                  \
+                  ref__LilyCheckedOperator(                                   \
+                    root_package->program->ressources.default_operators[i])); \
+    }
+
+#define SET_ROOT_PACKAGE_USE_SWITCH(root_package)                       \
+    /* Set `use_switch` on true for CC IR, CPP IR, JS IR or LLVM IR. */ \
+    if (root_package->config->cc_ir || root_package->config->cpp_ir ||  \
+        root_package->config->js_ir || root_package->config->llvm_ir) { \
+        root_package->analysis.use_switch = true;                       \
+    }
+
 #define LOG_VERBOSE_SUCCESSFUL_COMPILATION(package)        \
     if (package->config->verbose) {                        \
         printf("\x1b[32msuccessful compilation\x1b[0m\n"); \
@@ -199,16 +285,9 @@ build__LilyPackage(const LilycConfig *config,
     self->config = &pkg_config;
 
     LOG_VERBOSE(self, "running");
-
-    // Set `use_switch` on true for CC IR, CPP IR, JS IR or LLVM IR.
-    if (self->config->cc_ir || self->config->cpp_ir || self->config->js_ir ||
-        self->config->llvm_ir) {
-        self->analysis.use_switch = true;
-    }
-
     LOG_VERBOSE(self, "running scanner");
 
-    run__LilyScanner(&self->scanner, pkg_config.dump_scanner);
+    run__LilyScanner(&self->scanner, self->config->dump_scanner);
 
     LOG_VERBOSE(self, "running preparser");
 
@@ -226,86 +305,20 @@ build__LilyPackage(const LilycConfig *config,
     return NULL;
 #endif
 
-    if (self->preparser_info.package->name) {
-        self->name = self->preparser_info.package->name;
-        self->global_name = clone__String(self->name);
-    } else {
-        self->name = from__String("main");
-        self->global_name = from__String("main");
-    }
-
-    if (config->cc_ir) {
-        // TODO: add a linker for CC
-        self->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));
-        self->linker = LILY_LINKER_KIND_CC;
-    } else if (config->cpp_ir) {
-        // TODO: add a linker for CPP
-        self->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));
-        self->linker = LILY_LINKER_KIND_CPP;
-    } else if (config->js_ir) {
-        self->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));
-    } else {
-        self->ir =
-          NEW_VARIANT(LilyIr, llvm, NEW(LilyIrLlvm, self->global_name->buffer));
-        self->linker = LILY_LINKER_KIND_LLVM;
-    }
-
-    // Set the kind of program (static lib, dynamic lib, exe, ...)
-    self->program = program;
-
-    switch (self->program->kind) {
-        case LILY_PROGRAM_KIND_EXE:
-            self->is_exe = true;
-
-            break;
-        case LILY_PROGRAM_KIND_STATIC_LIB:
-            ASSERT(lib);
-
-            finish_set__LilyLibrary(
-              lib, self->name, (enum LilyArKind)self->linker);
-
-            self->is_lib = true;
-            self->is_static_lib = true;
-            lib->package = self;
-            self->lib = lib;
-
-            break;
-        case LILY_PROGRAM_KIND_DYNAMIC_LIB:
-            ASSERT(lib);
-
-            finish_set__LilyLibrary(
-              lib, self->name, (enum LilyArKind)self->linker);
-
-            self->is_lib = true;
-            self->is_dynamic_lib = true;
-            lib->package = self;
-            self->lib = lib;
-
-            break;
-        default:
-            UNREACHABLE("unknown variant");
-    }
-
-    // Load builtins and syss
-    self->builtins = program->ressources.builtins;
-    self->syss = program->ressources.syss;
-
-    // Load default operators in operator register
-    // In a normal case where we wanted to add an operator to the register, we'd
-    // use `add_operator__LilyCheckedOperatorRegister`, but in this case it's
-    // guaranteed that no operator repeats itself, so to increase loading speed
-    // we'll add it directly to the vector without checking.
-    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
-        push__Vec(self->operator_register.operators,
-                  ref__LilyCheckedOperator(
-                    self->program->ressources.default_operators[i]));
-    }
+    SET_ROOT_PACKAGE_NAME(self);
+    SET_ROOT_PACKAGE_IR(config, self);
+    SET_ROOT_PACKAGE_PROGRAM(self, program, lib);
+    SET_ROOT_PACKAGE_USE_SWITCH(self);
+    LOAD_ROOT_PACKAGE_RESSOURCES(self, program);
 
     LOG_VERBOSE(self, "running precompiler");
 
     run__LilyPrecompiler(&self->precompiler, self, false);
 
 #ifdef RUN_UNTIL_PRECOMPILE
+    // NOTE: This line is only used to avoid to get an unreachable result.
+    init_module__LilyAnalysis(&self->analysis);
+
     FREE(LilyPackage, self);
     exit(0);
 #endif
@@ -400,6 +413,7 @@ run__LilyPackage(void *self)
 
     LOG_VERBOSE(tree->package, "running analysis");
 
+    init_module__LilyAnalysis(&tree->package->analysis);
     run__LilyAnalysis(&tree->package->analysis);
 
     LOG_VERBOSE(tree->package, "running mir");
@@ -599,7 +613,50 @@ run_preparser__LilyPackage(const LilycConfig *config)
 void
 run_precompiler__LilyPackage(const LilycConfig *config)
 {
-    TODO("--run-precompiler");
+    char *default_path = generate_default_path((char *)config->filename);
+    LilyPackage *self = NEW(LilyPackage,
+                            NULL,
+                            NULL,
+                            LILY_VISIBILITY_PUBLIC,
+                            (char *)config->filename,
+                            LILY_PACKAGE_STATUS_MAIN,
+                            default_path,
+                            NULL,
+                            NULL);
+
+    LilyPackageConfig pkg_config =
+      from_CompileConfig__LilyPackageConfig(config);
+
+    self->config = &pkg_config;
+
+    LOG_VERBOSE(self, "running");
+    LOG_VERBOSE(self, "running scanner");
+
+    run__LilyScanner(&self->scanner, self->config->dump_scanner);
+
+    LOG_VERBOSE(self, "running preparser");
+
+    // NOTE: Set `destroy_all` on true to free all.
+    // NOTE: If we run the program after the analysis, we will set `destroy_all`
+    // to false.
+    self->preparser.destroy_all = true;
+
+    run__LilyPreparser(&self->preparser, &self->preparser_info);
+
+    SET_ROOT_PACKAGE_NAME(self);
+    SET_ROOT_PACKAGE_IR(config, self);
+
+    LOG_VERBOSE(self, "running precompiler");
+
+    run__LilyPrecompiler(&self->precompiler, self, false);
+
+    // NOTE: This line is only used to avoid to get an unreachable result.
+    init_module__LilyAnalysis(&self->analysis);
+
+    // Clean up
+
+    FREE(LilyPackage, self);
+    lily_free(default_path);
 }
 
 void
