@@ -81,11 +81,7 @@ typedef struct LilyProgram
  *
  * @brief Construct LilyProgram type.
  */
-inline CONSTRUCTOR(LilyProgram, LilyProgram, enum LilyProgramKind kind)
-{
-    return (LilyProgram){ .kind = kind,
-                          .ressources = NEW(LilyProgramRessources) };
-}
+CONSTRUCTOR(LilyProgram, LilyProgram, enum LilyProgramKind kind);
 
 /**
  *

@@ -30,6 +30,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+CONSTRUCTOR(LilyProgram, LilyProgram, enum LilyProgramKind kind)
+{
+    return (LilyProgram){ .kind = kind,
+                          .ressources = NEW(LilyProgramRessources) };
+}
+
 DESTRUCTOR(LilyProgramRessources, const LilyProgramRessources *self)
 {
     for (Usize i = 0; i < BUILTINS_COUNT; ++i) {
