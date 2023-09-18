@@ -1,14 +1,14 @@
 # Lily
 
-![Code size](https://img.shields.io/github/languages/code-size/ArthurPV/lily?style=for-the-badge)
+![Code size](https://img.shields.io/github/languages/code-size/thelilylang/lily?style=for-the-badge)
 ![Codacy code quality](https://img.shields.io/codacy/grade/7f4284cccba541ca9ec576272fa88134?style=for-the-badge)
-![Build state](https://img.shields.io/github/actions/workflow/status/ArthurPV/lily/cmake.yml?branch=main&style=for-the-badge)
-![Issues](https://img.shields.io/github/issues/ArthurPV/lily?style=for-the-badge)
-![Pull requests](https://img.shields.io/github/issues-pr/ArthurPV/lily?style=for-the-badge)
-![Lines of code](https://img.shields.io/tokei/lines/github/ArthurPV/lily?style=for-the-badge&category=code)
-![Commit activity](https://img.shields.io/github/commit-activity/w/ArthurPV/lily?style=for-the-badge)
-![Last commit](https://img.shields.io/github/last-commit/ArthurPV/lily?style=for-the-badge)
-![License](https://img.shields.io/github/license/ArthurPV/lily?style=for-the-badge)
+![Build state](https://img.shields.io/github/actions/workflow/status/thelilylang/lily/cmake.yml?branch=main&style=for-the-badge)
+![Issues](https://img.shields.io/github/issues/thelilylang/lily?style=for-the-badge)
+![Pull requests](https://img.shields.io/github/issues-pr/thelilylang/lily?style=for-the-badge)
+![Lines of code](https://img.shields.io/tokei/lines/github/thelilylang/lily?style=for-the-badge&category=code)
+![Commit activity](https://img.shields.io/github/commit-activity/w/thelilylang/lily?style=for-the-badge)
+![Last commit](https://img.shields.io/github/last-commit/thelilylang/lily?style=for-the-badge)
+![License](https://img.shields.io/github/license/thelilylang/lily?style=for-the-badge)
 
 Work in progress...
 
