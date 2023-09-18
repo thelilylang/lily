@@ -77,7 +77,7 @@ run__Lilyc(const LilycConfig *config)
                                                     default_path,
                                                     &program);
 
-#if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILE)
+#if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILER)
         FREE(LilyLibrary, lib);
 #endif
     } else {
@@ -87,7 +87,7 @@ run__Lilyc(const LilycConfig *config)
                                                 default_path,
                                                 &program);
 
-#if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILE)
+#if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILER)
         FREE(LilyPackage, pkg);
 #endif
     }

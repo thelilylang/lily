@@ -81,7 +81,7 @@
 #undef RUN_UNTIL_PREPARSER
 
 // This is a macro used to stop the compiler process after the precompiler.
-#define RUN_UNTIL_PRECOMPILE
-#undef RUN_UNTIL_PRECOMPILE
+#define RUN_UNTIL_PRECOMPILER
+#undef RUN_UNTIL_PRECOMPILER
 
 #endif // LILY_CORE_LILY_H

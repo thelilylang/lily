@@ -196,7 +196,7 @@ CONSTRUCTOR(LilyPackage *,
     self->file = NEW(File, filename, content);
     self->scanner =
       NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &self->file));
-#if defined(RUN_UNTIL_PREPARSER) || defined(RUN_UNTIL_PRECOMPILE)
+#if defined(RUN_UNTIL_PREPARSER) || defined(RUN_UNTIL_PRECOMPILER)
     self->preparser = NEW(LilyPreparser,
                           &self->file,
                           self->scanner.tokens,
@@ -315,7 +315,7 @@ build__LilyPackage(const LilycConfig *config,
 
     run__LilyPrecompiler(&self->precompiler, self, false);
 
-#ifdef RUN_UNTIL_PRECOMPILE
+#ifdef RUN_UNTIL_PRECOMPILER
     // NOTE: This line is only used to avoid to get an unreachable result.
     init_module__LilyAnalysis(&self->analysis);
 
