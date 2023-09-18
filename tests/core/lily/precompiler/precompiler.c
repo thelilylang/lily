@@ -9,5 +9,6 @@ main()
 {
     NEW_TEST("precompiler");
     ADD_SIMPLE(import);
+    ADD_SIMPLE(macro);
     RUN_TEST();
 }
