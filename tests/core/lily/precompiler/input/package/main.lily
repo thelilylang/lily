@@ -1,0 +1,8 @@
+package =
+	.a;
+	.b;
+	.c;
+end
+
+fun main =
+end
