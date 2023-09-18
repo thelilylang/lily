@@ -1845,7 +1845,6 @@ IMPL_FOR_DEBUG(debug,
 
 DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self)
 {
-    FREE(String, self->name);
     FREE(String, self->global_name);
 
     lily_free(self);
