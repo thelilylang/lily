@@ -1,0 +1,8 @@
+package =
+	.@"macro";
+end
+
+import "@package(macro)";
+
+fun main =
+end

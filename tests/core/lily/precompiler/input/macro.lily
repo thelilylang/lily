@@ -1,0 +1,3 @@
+macro op($l expr, $op tk, $r expr) = {
+	{|l|} {|op|} {|r|}
+};
