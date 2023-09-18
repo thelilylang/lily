@@ -24,29 +24,33 @@
 
 #include <base/assert.h>
 #include <base/cli/help.h>
+#include <base/format.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #define MAX_SPACE 30
 
-#define GENERATE_USAGE(options, value)                                       \
-    {                                                                        \
-        String *usage = format__String(                                      \
-          "Usage: {s}{s}", cli->name, options->len > 0 ? " [options]" : ""); \
-                                                                             \
-        if (value) {                                                         \
-            push_str__String(usage, " [");                                   \
-            push_str__String(usage, (char *)value->name);                    \
-            push__String(usage, ']');                                        \
-                                                                             \
-            if (value->kind == CLI_VALUE_KIND_MULTIPLE) {                    \
-                push_str__String(usage, "...");                              \
-            }                                                                \
-        }                                                                    \
-                                                                             \
-        APPEND_AND_FREE(res, usage);                                         \
-        push_str__String(res, "\n\n");                                       \
+#define GENERATE_USAGE(options, cmd, cmd_value)                        \
+    {                                                                  \
+        String *usage =                                                \
+          format__String("Usage: {s}{sa}{s}",                          \
+                         cli->name,                                    \
+                         cmd ? format(" {s}", cmd->name) : format(""), \
+                         options->len > 0 ? " [options]" : "");        \
+                                                                       \
+        if (cmd_value) {                                               \
+            push_str__String(usage, " [");                             \
+            push_str__String(usage, (char *)cmd_value->name);          \
+            push__String(usage, ']');                                  \
+                                                                       \
+            if (cmd_value->kind == CLI_VALUE_KIND_MULTIPLE) {          \
+                push_str__String(usage, "...");                        \
+            }                                                          \
+        }                                                              \
+                                                                       \
+        APPEND_AND_FREE(res, usage);                                   \
+        push_str__String(res, "\n\n");                                 \
     }
 
 #define GENERATE_OPTIONS(ops)                                            \
@@ -98,10 +102,10 @@ generate_help__CliHelp(const Cli *cli, const CliCommand *cmd)
     String *res = NEW(String);
 
     if (cmd) {
-        GENERATE_USAGE(cmd->options, cmd->value);
+        GENERATE_USAGE(cmd->options, cmd, cmd->value);
         GENERATE_OPTIONS(cmd->options);
     } else {
-        GENERATE_USAGE(cli->options, cli->value);
+        GENERATE_USAGE(cli->options, cmd, cli->value);
 
         if (cli->subcommands->len > 0) {
             String *subcommands = from__String("Commands:\n\n");
