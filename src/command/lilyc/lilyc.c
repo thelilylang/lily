@@ -37,6 +37,29 @@
 void
 run__Lilyc(const LilycConfig *config)
 {
+    if (config->run_scanner) {
+        run_scanner__LilyPackage(config);
+        return;
+    } else if (config->run_preparser) {
+        run_preparser__LilyPackage(config);
+        return;
+    } else if (config->run_precompiler) {
+        run_precompiler__LilyPackage(config);
+        return;
+    } else if (config->run_parser) {
+        run_parser__LilyPackage(config);
+        return;
+    } else if (config->run_analysis) {
+        run_analysis__LilyPackage(config);
+        return;
+    } else if (config->run_mir) {
+        run_mir__LilyPackage(config);
+        return;
+    } else if (config->run_ir) {
+        run_ir__LilyPackage(config);
+        return;
+    }
+
     // Get the default path
     char *default_path = generate_default_path((char *)config->filename);
 

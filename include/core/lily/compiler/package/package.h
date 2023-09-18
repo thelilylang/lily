@@ -243,6 +243,55 @@ add_sys_fun_to_sys_usage__LilyPackage(LilyPackage *self, LilySysFun *fun_sys);
 
 /**
  *
+ * @brief Run until the scanner.
+ */
+void
+run_scanner__LilyPackage(const LilycConfig *config);
+
+/**
+ *
+ * @brief Run until the preparser.
+ */
+void
+run_preparser__LilyPackage(const LilycConfig *config);
+
+/**
+ *
+ * @brief Run until the precompiler.
+ */
+void
+run_precompiler__LilyPackage(const LilycConfig *config);
+
+/**
+ *
+ * @brief Run until the parser.
+ */
+void
+run_parser__LilyPackage(const LilycConfig *config);
+
+/**
+ *
+ * @brief Run until the analysis.
+ */
+void
+run_analysis__LilyPackage(const LilycConfig *config);
+
+/**
+ *
+ * @brief Run until the MIR.
+ */
+void
+run_mir__LilyPackage(const LilycConfig *config);
+
+/**
+ *
+ * @brief Run until the IR.
+ */
+void
+run_ir__LilyPackage(const LilycConfig *config);
+
+/**
+ *
  * @brief Free LilyPackage type.
  */
 DESTRUCTOR(LilyPackage, LilyPackage *self);

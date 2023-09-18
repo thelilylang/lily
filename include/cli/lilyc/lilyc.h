@@ -31,13 +31,18 @@
 #define LILYC_OPTIONS(self)                                                    \
     CliOption *build = NEW(CliOption, "--build");                              \
     CliOption *dump_scanner = NEW(CliOption, "--dump-scanner");                \
+    CliOption *dump_preparser = NEW(CliOption, "--dump-preparser");            \
+    CliOption *dump_precompiler = NEW(CliOption, "--dump-precompiler");        \
     CliOption *dump_parser = NEW(CliOption, "--dump-parser");                  \
-    CliOption *dump_tc = NEW(CliOption, "--dump-tc");                          \
+    CliOption *dump_analysis = NEW(CliOption, "--dump-analysis");              \
     CliOption *dump_mir = NEW(CliOption, "--dump-mir");                        \
     CliOption *dump_ir = NEW(CliOption, "--dump-ir");                          \
     CliOption *run_scanner = NEW(CliOption, "--run-scanner");                  \
+    CliOption *run_preparser = NEW(CliOption, "--run-preparser");              \
+    CliOption *run_precompiler = NEW(CliOption, "--run-precompiler");          \
     CliOption *run_parser = NEW(CliOption, "--run-parser");                    \
-    CliOption *run_tc = NEW(CliOption, "--run-tc");                            \
+    CliOption *run_analysis = NEW(CliOption, "--run-analysis");                \
+    CliOption *run_mir = NEW(CliOption, "--run-mir");                          \
     CliOption *run_ir = NEW(CliOption, "--run-ir");                            \
     CliOption *lib = NEW(CliOption, "--lib");                                  \
     CliOption *static_ = NEW(CliOption, "--static");                           \
@@ -62,13 +67,18 @@
     build->$help(build, "Build a package (exe, lib, ...)")                     \
       ->$short_name(build, "-b");                                              \
     dump_scanner->$help(dump_scanner, "Dump scanner output");                  \
+    dump_preparser->$help(dump_preparser, "Dump preparser output");            \
+    dump_precompiler->$help(dump_precompiler, "Dump precompiler output");      \
     dump_parser->$help(dump_parser, "Dump parser output");                     \
-    dump_tc->$help(dump_tc, "Dump typecheck output");                          \
+    dump_analysis->$help(dump_analysis, "Dump analysis output");               \
     dump_mir->$help(dump_mir, "Dump MIR output");                              \
     dump_ir->$help(dump_ir, "Dump IR output");                                 \
     run_scanner->$help(run_scanner, "Run until the scanner");                  \
+    run_preparser->$help(run_preparser, "Run until the preparser");            \
+    run_precompiler->$help(run_precompiler, "Run until the precompiler");      \
     run_parser->$help(run_parser, "Run until the parser");                     \
-    run_tc->$help(run_tc, "Run until the typecheck");                          \
+    run_analysis->$help(run_analysis, "Run until the analysis");               \
+    run_mir->$help(run_mir, "Run until the MIR");                              \
     run_ir->$help(run_ir, "Run until the IR");                                 \
     lib->$help(lib, "Compile a library (static library by default)")           \
       ->$short_name(lib, "-l");                                                \
@@ -100,13 +110,18 @@
                                                                                \
     self->$option(self, build)                                                 \
       ->$option(self, dump_scanner)                                            \
+      ->$option(self, dump_preparser)                                          \
+      ->$option(self, dump_precompiler)                                        \
       ->$option(self, dump_parser)                                             \
-      ->$option(self, dump_tc)                                                 \
+      ->$option(self, dump_analysis)                                           \
       ->$option(self, dump_mir)                                                \
       ->$option(self, dump_ir)                                                 \
       ->$option(self, run_scanner)                                             \
+      ->$option(self, run_preparser)                                           \
+      ->$option(self, run_precompiler)                                         \
       ->$option(self, run_parser)                                              \
-      ->$option(self, run_tc)                                                  \
+      ->$option(self, run_analysis)                                            \
+      ->$option(self, run_mir)                                                 \
       ->$option(self, run_ir)                                                  \
       ->$option(self, lib)                                                     \
       ->$option(self, static_)                                                 \

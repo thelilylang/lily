@@ -135,13 +135,13 @@ CONSTRUCTOR(LilyPackage *,
     self->builtin_usage = NEW(Vec);
     self->sys_usage = NEW(Vec);
     self->operator_register = NEW(LilyCheckedOperatorRegister);
+    self->mir_module = LilyMirCreateModule();
 
     if (root) {
         self->program = root->program;
         self->parser = NEW(LilyParser, self, root, NULL);
         self->analysis = NEW(
           LilyAnalysis, self, root, &self->parser, root->analysis.use_switch);
-        self->mir_module = LilyMirCreateModule();
         self->builtins = NULL;
         self->syss = NULL;
         self->config = root->config;
@@ -233,8 +233,6 @@ build__LilyPackage(const LilycConfig *config,
         self->name = from__String("main");
         self->global_name = from__String("main");
     }
-
-    self->mir_module = LilyMirCreateModule();
 
     if (config->cc_ir) {
         // TODO: add a linker for CC
@@ -559,6 +557,58 @@ add_builtin_fun_to_builtin_usage__LilyPackage(LilyPackage *self,
     }
 
     push__Vec(self->builtin_usage, fun_builtin);
+}
+
+void
+run_scanner__LilyPackage(const LilycConfig *config)
+{
+    char *content = read_file__File(config->filename);
+    File file = NEW(File, (char *)config->filename, content);
+    LilyScanner scanner =
+      NEW(LilyScanner, NEW(Source, NEW(Cursor, file.content), &file));
+
+    run__LilyScanner(&scanner, config->dump_scanner);
+
+    // Clean up
+
+    FREE(File, &file);
+    FREE(LilyScanner, &scanner);
+}
+
+void
+run_preparser__LilyPackage(const LilycConfig *config)
+{
+    TODO("--run-preparser");
+}
+
+void
+run_precompiler__LilyPackage(const LilycConfig *config)
+{
+    TODO("--run-precompiler");
+}
+
+void
+run_parser__LilyPackage(const LilycConfig *config)
+{
+    TODO("--run-parser");
+}
+
+void
+run_analysis__LilyPackage(const LilycConfig *config)
+{
+    TODO("--run-analysis");
+}
+
+void
+run_mir__LilyPackage(const LilycConfig *config)
+{
+    TODO("--run-mir");
+}
+
+void
+run_ir__LilyPackage(const LilycConfig *config)
+{
+    TODO("--run-ir");
 }
 
 DESTRUCTOR(LilyPackage, LilyPackage *self)

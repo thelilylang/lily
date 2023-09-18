@@ -33,45 +33,52 @@
 #define B_OPTION 4
 #define BUILD_OPTION 5
 #define DUMP_SCANNER_OPTION 6
-#define DUMP_PARSER_OPTION 7
-#define DUMP_TYPECHECK_OPTION 8
-#define DUMP_MIR_OPTION 9
-#define DUMP_IR_OPTION 10
-#define RUN_SCANNER_OPTION 11
-#define RUN_PARSER_OPTION 12
-#define RUN_TYPECHECK_OPTION 13
-#define RUN_IR_OPTION 14
-#define L_OPTION 15
-#define LIB_OPTION 16
-#define STATIC_OPTION 17
-#define DYNAMIC_OPTION 18
-#define LLVM_IR_OPTION 19
-#define CC_IR_OPTION 20
-#define CPP_IR_OPTION 21
-#define JS_IR_OPTION 22
-#define WASM_IR_OPTION 23
-#define TARGET_OPTION 24
-#define ODEBUG_OPTION 25
-#define ORELEASE_OPTION 26
-#define OSIZE_OPTION 27
-#define O0_OPTION 28
-#define O1_OPTION 29
-#define O2_OPTION 30
-#define O3_OPTION 31
-#define OZ_OPTION 32
-#define O_OPTION 33
-#define OUTPUT_OPTION 34
-#define V_OPTION 35
-#define VERBOSE_OPTION 36
+#define DUMP_PREPARSER_OPTION 7
+#define DUMP_PRECOMPILER_OPTION 8
+#define DUMP_PARSER_OPTION 9
+#define DUMP_ANALYSIS_OPTION 10
+#define DUMP_MIR_OPTION 11
+#define DUMP_IR_OPTION 12
+#define RUN_SCANNER_OPTION 13
+#define RUN_PREPARSER_OPTION 14
+#define RUN_PRECOMPILER_OPTION 15
+#define RUN_PARSER_OPTION 16
+#define RUN_ANALYSIS_OPTION 17
+#define RUN_MIR_OPTION 18
+#define RUN_IR_OPTION 19
+#define L_OPTION 20
+#define LIB_OPTION 21
+#define STATIC_OPTION 22
+#define DYNAMIC_OPTION 23
+#define LLVM_IR_OPTION 24
+#define CC_IR_OPTION 25
+#define CPP_IR_OPTION 26
+#define JS_IR_OPTION 27
+#define WASM_IR_OPTION 28
+#define TARGET_OPTION 29
+#define ODEBUG_OPTION 30
+#define ORELEASE_OPTION 31
+#define OSIZE_OPTION 32
+#define O0_OPTION 33
+#define O1_OPTION 34
+#define O2_OPTION 35
+#define O3_OPTION 36
+#define OZ_OPTION 37
+#define O_OPTION 38
+#define OUTPUT_OPTION 39
+#define V_OPTION 40
+#define VERBOSE_OPTION 41
 
 LilycConfig
 run__LilycParseConfig(const Vec *results)
 {
     char *filename = NULL;
     bool build = false;
-    bool dump_scanner = false, dump_parser = false, dump_typecheck = false,
-         dump_mir = false, dump_ir = false;
-    bool run_scanner = false, run_parser = false, run_typecheck = false,
+    bool dump_scanner = false, dump_preparser = false, dump_precompiler = false,
+         dump_parser = false, dump_analysis = false, dump_mir = false,
+         dump_ir = false;
+    bool run_scanner = false, run_preparser = false, run_precompiler = false,
+         run_parser = false, run_analysis = false, run_mir = false,
          run_ir = false;
     bool lib = false, static_ = false, dynamic = false;
     bool cc_ir = false, cpp_ir = false, js_ir = false, llvm_ir = false,
@@ -102,11 +109,17 @@ run__LilycParseConfig(const Vec *results)
                     case DUMP_SCANNER_OPTION:
                         dump_scanner = true;
                         break;
+                    case DUMP_PREPARSER_OPTION:
+                        dump_preparser = true;
+                        break;
+                    case DUMP_PRECOMPILER_OPTION:
+                        dump_precompiler = true;
+                        break;
                     case DUMP_PARSER_OPTION:
                         dump_parser = true;
                         break;
-                    case DUMP_TYPECHECK_OPTION:
-                        dump_typecheck = true;
+                    case DUMP_ANALYSIS_OPTION:
+                        dump_analysis = true;
                         break;
                     case DUMP_MIR_OPTION:
                         dump_mir = true;
@@ -117,11 +130,20 @@ run__LilycParseConfig(const Vec *results)
                     case RUN_SCANNER_OPTION:
                         run_scanner = true;
                         break;
+                    case RUN_PREPARSER_OPTION:
+                        run_preparser = true;
+                        break;
+                    case RUN_PRECOMPILER_OPTION:
+                        run_precompiler = true;
+                        break;
                     case RUN_PARSER_OPTION:
                         run_parser = true;
                         break;
-                    case RUN_TYPECHECK_OPTION:
-                        run_typecheck = true;
+                    case RUN_ANALYSIS_OPTION:
+                        run_analysis = true;
+                        break;
+                    case RUN_MIR_OPTION:
+                        run_mir = true;
                         break;
                     case RUN_IR_OPTION:
                         run_ir = true;
@@ -201,15 +223,20 @@ run__LilycParseConfig(const Vec *results)
                output,
                build,
                run_scanner,
+               run_preparser,
+               run_precompiler,
                run_parser,
-               run_typecheck,
+               run_analysis,
+               run_mir,
                run_ir,
                lib,
                static_,
                dynamic,
                dump_scanner,
+               dump_preparser,
+               dump_precompiler,
                dump_parser,
-               dump_typecheck,
+               dump_analysis,
                dump_mir,
                dump_ir,
                cc_ir,

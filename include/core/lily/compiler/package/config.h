@@ -46,12 +46,18 @@ typedef struct LilyPackageConfig
     const char *output; // const char*?
     bool build;
     bool dump_scanner;
+    bool dump_preparser;
+    bool dump_precompiler;
     bool dump_parser;
-    bool dump_tc; // Dump typecheck
+    bool dump_analysis;
+    bool dump_mir;
     bool dump_ir; // Dump IR (Intermediate Representation)
     bool run_scanner;
+    bool run_preparser;
+    bool run_precompiler;
     bool run_parser;
-    bool run_tc; // Run typecheck
+    bool run_analysis;
+    bool run_mir;
     bool run_ir; // Run IR (Intermediate Representation)
     bool cc_ir;  // Use CC IR instead of LLVM IR.
     bool cpp_ir; // Use CPP IR instead of LLVM IR.
@@ -71,6 +77,7 @@ typedef struct LilyPackageConfig
 /**
  *
  * @brief Construct LilyPackageConfig type.
+ * @param target const char*?
  */
 CONSTRUCTOR(LilyPackageConfig,
             LilyPackageConfig,
@@ -78,12 +85,18 @@ CONSTRUCTOR(LilyPackageConfig,
             const char *output,
             bool build,
             bool dump_scanner,
+            bool dump_preparser,
+            bool dump_precompiler,
             bool dump_parser,
-            bool dump_tc,
+            bool dump_analysis,
+            bool dump_mir,
             bool dump_ir,
             bool run_scanner,
+            bool run_preparser,
+            bool run_precompiler,
             bool run_parser,
-            bool run_tc,
+            bool run_analysis,
+            bool run_mir,
             bool run_ir,
             bool cc_ir,
             bool cpp_ir,
@@ -99,6 +112,44 @@ CONSTRUCTOR(LilyPackageConfig,
 
 /**
  *
+ * @brief Construct LilyPackageConfig type with default value.
+ */
+inline LilyPackageConfig
+default__LilyPackageConfig()
+{
+    return (LilyPackageConfig){ .output = NULL,
+                                .build = false,
+                                .dump_scanner = false,
+                                .dump_preparser = false,
+                                .dump_precompiler = false,
+                                .dump_parser = false,
+                                .dump_analysis = false,
+                                .dump_mir = false,
+                                .dump_ir = false,
+                                .run_scanner = false,
+                                .run_preparser = false,
+                                .run_precompiler = false,
+                                .run_parser = false,
+                                .run_analysis = false,
+                                .run_mir = false,
+                                .run_ir = false,
+                                .cc_ir = false,
+                                .cpp_ir = false,
+                                .js_ir = false,
+                                .llvm_ir = false,
+                                .wasm_ir = false,
+                                .arch_target = ARCH_UNKNOWN,
+                                .os_target = OS_UNKNOWN,
+                                .o0 = false,
+                                .o1 = false,
+                                .o2 = false,
+                                .o3 = false,
+                                .oz = false,
+                                .verbose = false };
+}
+
+/**
+ *
  * @brief Construct LilyPackageConfig type from LilycConfig type.
  */
 inline LilyPackageConfig
@@ -109,12 +160,18 @@ from_CompileConfig__LilyPackageConfig(const LilycConfig *lilyc_config)
                lilyc_config->output,
                lilyc_config->build,
                lilyc_config->dump_scanner,
+               lilyc_config->dump_preparser,
+               lilyc_config->dump_precompiler,
                lilyc_config->dump_parser,
-               lilyc_config->dump_typecheck,
+               lilyc_config->dump_analysis,
+               lilyc_config->dump_mir,
                lilyc_config->dump_ir,
                lilyc_config->run_scanner,
+               lilyc_config->run_preparser,
+               lilyc_config->run_precompiler,
                lilyc_config->run_parser,
-               lilyc_config->run_typecheck,
+               lilyc_config->run_analysis,
+               lilyc_config->run_mir,
                lilyc_config->run_ir,
                lilyc_config->cc_ir,
                lilyc_config->cpp_ir,

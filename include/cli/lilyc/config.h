@@ -36,15 +36,20 @@ typedef struct LilycConfig
     const char *output; // const char*?
     bool build;
     bool run_scanner;
+    bool run_preparser;
+    bool run_precompiler;
     bool run_parser;
-    bool run_typecheck;
+    bool run_analysis;
+    bool run_mir;
     bool run_ir;
     bool lib;
     bool static_;
     bool dynamic;
     bool dump_scanner;
+    bool dump_preparser;
+    bool dump_precompiler;
     bool dump_parser;
-    bool dump_typecheck;
+    bool dump_analysis;
     bool dump_mir;
     bool dump_ir;
     bool cc_ir;
@@ -71,15 +76,20 @@ inline CONSTRUCTOR(LilycConfig,
                    const char *output,
                    bool build,
                    bool run_scanner,
+                   bool run_preparser,
+                   bool run_precompiler,
                    bool run_parser,
-                   bool run_typecheck,
+                   bool run_analysis,
+                   bool run_mir,
                    bool run_ir,
                    bool lib,
                    bool static_,
                    bool dynamic,
                    bool dump_scanner,
+                   bool dump_preparser,
+                   bool dump_precompiler,
                    bool dump_parser,
-                   bool dump_typecheck,
+                   bool dump_analysis,
                    bool dump_mir,
                    bool dump_ir,
                    bool cc_ir,
@@ -99,15 +109,20 @@ inline CONSTRUCTOR(LilycConfig,
                           .output = output,
                           .build = build,
                           .run_scanner = run_scanner,
+                          .run_preparser = run_preparser,
+                          .run_precompiler = run_precompiler,
                           .run_parser = run_parser,
-                          .run_typecheck = run_typecheck,
+                          .run_analysis = run_analysis,
+                          .run_mir = run_mir,
                           .run_ir = run_ir,
                           .lib = lib,
                           .static_ = static_,
                           .dynamic = dynamic,
                           .dump_scanner = dump_scanner,
+                          .dump_preparser = dump_preparser,
+                          .dump_precompiler = dump_precompiler,
                           .dump_parser = dump_parser,
-                          .dump_typecheck = dump_typecheck,
+                          .dump_analysis = dump_analysis,
                           .dump_mir = dump_mir,
                           .dump_ir = dump_ir,
                           .cc_ir = cc_ir,
