@@ -1,7 +1,0 @@
-package =
-	.a;
-	.b;
-end
-
-fun main =
-end
