@@ -12,7 +12,7 @@ CASE(expr_array, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_array2, {
+CASE(expr_array2, {
     RUN_PARSE_EXPR(FILE_EXPR_ARRAY_2);
 
     TEST_ASSERT(expr);
@@ -20,7 +20,7 @@ SKIP_CASE(expr_array2, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_array3, {
+CASE(expr_array3, {
     RUN_PARSE_EXPR(FILE_EXPR_ARRAY_3);
 
     TEST_ASSERT(expr);
@@ -28,7 +28,7 @@ SKIP_CASE(expr_array3, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_array4, {
+CASE(expr_array4, {
     RUN_PARSE_EXPR(FILE_EXPR_ARRAY_4);
 
     TEST_ASSERT(expr);

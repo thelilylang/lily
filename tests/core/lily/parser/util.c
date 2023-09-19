@@ -47,8 +47,6 @@
 #define FILE_EXPR_CALL_5 "./tests/core/lily/parser/input/access/call5.lily"
 #define FILE_EXPR_CAST "./tests/core/lily/parser/input/cast.lily"
 #define FILE_EXPR_IDENTIFIER "./tests/core/lily/parser/input/identifier.lily"
-#define FILE_EXPR_LAMBDA "./tests/core/lily/parser/input/lambda/lambda.lily"
-#define FILE_EXPR_LAMBDA_2 "./tests/core/lily/parser/input/lambda/lambda2.lily"
 #define FILE_EXPR_LITERAL "./tests/core/lily/parser/input/literal/literal.lily"
 #define FILE_EXPR_LITERAL_2 \
     "./tests/core/lily/parser/input/literal/literal2.lily"

@@ -4,7 +4,7 @@
 
 #include <core/lily/parser/parser.h>
 
-SKIP_CASE(expr_call, {
+CASE(expr_call, {
     RUN_PARSE_EXPR(FILE_EXPR_ACCESS);
 
     TEST_ASSERT(expr);
@@ -12,7 +12,7 @@ SKIP_CASE(expr_call, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_call2, {
+CASE(expr_call2, {
     RUN_PARSE_EXPR(FILE_EXPR_ACCESS_2);
 
     TEST_ASSERT(expr);
@@ -20,7 +20,7 @@ SKIP_CASE(expr_call2, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_call3, {
+CASE(expr_call3, {
     RUN_PARSE_EXPR(FILE_EXPR_ACCESS_3);
 
     TEST_ASSERT(expr);
@@ -28,7 +28,7 @@ SKIP_CASE(expr_call3, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_call4, {
+CASE(expr_call4, {
     RUN_PARSE_EXPR(FILE_EXPR_ACCESS_3);
 
     TEST_ASSERT(expr);
@@ -36,7 +36,7 @@ SKIP_CASE(expr_call4, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_call5, {
+CASE(expr_call5, {
     RUN_PARSE_EXPR(FILE_EXPR_ACCESS_3);
 
     TEST_ASSERT(expr);
