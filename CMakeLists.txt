@@ -877,14 +877,14 @@ if(LILY_DEBUG)
 
   add_executable(test_base ${CMAKE_SOURCE_DIR}/tests/base/base.c)
   target_link_libraries(test_base lily_base)
-  target_include_directories(test_base PRIVATE include)
+  target_include_directories(test_base PRIVATE ${LILY_INCLUDE})
 
   add_test(NAME test_base COMMAND test_base)
 
   add_executable(test_core_scanner
                  ${CMAKE_SOURCE_DIR}/tests/core/lily/scanner/scanner.c)
   target_link_libraries(test_core_scanner lily_base lily_core_lily_scanner)
-  target_include_directories(test_core_scanner PRIVATE include)
+  target_include_directories(test_core_scanner PRIVATE ${LILY_INCLUDE})
 
   add_test(NAME test_core_scanner COMMAND test_core_scanner)
 
@@ -892,7 +892,7 @@ if(LILY_DEBUG)
                  ${CMAKE_SOURCE_DIR}/tests/core/lily/preparser/preparser.c)
   target_link_libraries(test_core_preparser lily_base lily_core_lily_preparser
                         lily_core_lily_shared)
-  target_include_directories(test_core_preparser PRIVATE include)
+  target_include_directories(test_core_preparser PRIVATE ${LILY_INCLUDE})
 
   add_test(NAME test_core_preparser COMMAND test_core_preparser)
 
@@ -900,7 +900,7 @@ if(LILY_DEBUG)
                  ${CMAKE_SOURCE_DIR}/tests/core/lily/precompiler/precompiler.c)
   target_link_libraries(test_core_precompiler lily_base
                         lily_core_lily_precompiler)
-  target_include_directories(test_core_precompiler PRIVATE include)
+  target_include_directories(test_core_precompiler PRIVATE ${LILY_INCLUDE})
 
   add_test(NAME test_core_precompiler COMMAND test_core_precompiler)
 
@@ -909,33 +909,33 @@ if(LILY_DEBUG)
   target_link_libraries(
     test_core_parser lily_base lily_core_lily_parser lily_core_lily_preparser
     lily_core_lily_compiler_package)
-  target_include_directories(test_core_parser PRIVATE include)
+  target_include_directories(test_core_parser PRIVATE ${LILY_INCLUDE})
 
   add_test(NAME test_core_parser COMMAND test_core_parser)
 
   add_executable(bench_buffer ${CMAKE_SOURCE_DIR}/benchmarks/base/buffer.c)
   target_link_libraries(bench_buffer lily_base)
-  target_include_directories(bench_buffer PRIVATE include)
+  target_include_directories(bench_buffer PRIVATE ${LILY_INCLUDE})
 
   add_executable(bench_vec ${CMAKE_SOURCE_DIR}/benchmarks/base/vec.c)
   target_link_libraries(bench_vec lily_base)
-  target_include_directories(bench_vec PRIVATE include)
+  target_include_directories(bench_vec PRIVATE ${LILY_INCLUDE})
 
   add_executable(bench_string ${CMAKE_SOURCE_DIR}/benchmarks/base/string.c)
   target_link_libraries(bench_string lily_base)
-  target_include_directories(bench_string PRIVATE include)
+  target_include_directories(bench_string PRIVATE ${LILY_INCLUDE})
 
   add_executable(bench_hash_map ${CMAKE_SOURCE_DIR}/benchmarks/base/hash_map.c)
   target_link_libraries(bench_hash_map lily_base)
-  target_include_directories(bench_hash_map PRIVATE include)
+  target_include_directories(bench_hash_map PRIVATE ${LILY_INCLUDE})
 
   add_executable(bench_global_allocator
                  ${CMAKE_SOURCE_DIR}/benchmarks/base/memory/global.c)
   target_link_libraries(bench_global_allocator lily_base)
-  target_include_directories(bench_global_allocator PRIVATE include)
+  target_include_directories(bench_global_allocator PRIVATE ${LILY_INCLUDE})
 
   add_executable(bench_page_allocator
                  ${CMAKE_SOURCE_DIR}/benchmarks/base/memory/page.c)
   target_link_libraries(bench_page_allocator lily_base)
-  target_include_directories(bench_page_allocator PRIVATE include)
+  target_include_directories(bench_page_allocator PRIVATE ${LILY_INCLUDE})
 endif()
