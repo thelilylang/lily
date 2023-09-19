@@ -4,7 +4,7 @@
 
 #include <core/lily/parser/parser.h>
 
-SKIP_CASE(expr_cast, {
+CASE(expr_cast, {
     RUN_PARSE_EXPR(FILE_EXPR_CAST);
 
     TEST_ASSERT(expr);

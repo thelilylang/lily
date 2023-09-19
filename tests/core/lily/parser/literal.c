@@ -4,7 +4,7 @@
 
 #include <core/lily/parser/parser.h>
 
-SKIP_CASE(expr_literal, {
+CASE(expr_literal, {
     RUN_PARSE_EXPR(FILE_EXPR_LITERAL);
 
     TEST_ASSERT(expr);
@@ -12,7 +12,7 @@ SKIP_CASE(expr_literal, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_literal2, {
+CASE(expr_literal2, {
     RUN_PARSE_EXPR(FILE_EXPR_LITERAL_2);
 
     TEST_ASSERT(expr);
@@ -20,7 +20,7 @@ SKIP_CASE(expr_literal2, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_literal3, {
+CASE(expr_literal3, {
     RUN_PARSE_EXPR(FILE_EXPR_LITERAL_3);
 
     TEST_ASSERT(expr);
@@ -28,7 +28,7 @@ SKIP_CASE(expr_literal3, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_literal4, {
+CASE(expr_literal4, {
     RUN_PARSE_EXPR(FILE_EXPR_LITERAL_4);
 
     TEST_ASSERT(expr);
@@ -36,7 +36,7 @@ SKIP_CASE(expr_literal4, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_literal5, {
+CASE(expr_literal5, {
     RUN_PARSE_EXPR(FILE_EXPR_LITERAL_5);
 
     TEST_ASSERT(expr);
@@ -44,7 +44,7 @@ SKIP_CASE(expr_literal5, {
     FREE_RUN_PARSE_EXPR();
 });
 
-SKIP_CASE(expr_literal6, {
+CASE(expr_literal6, {
     RUN_PARSE_EXPR(FILE_EXPR_LITERAL_6);
 
     TEST_ASSERT(expr);

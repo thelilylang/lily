@@ -6,7 +6,6 @@
 #include "data_type.c"
 #include "expr.c"
 #include "identifier.c"
-#include "lambda.c"
 #include "literal.c"
 #include "tuple.c"
 #include "unary.c"
@@ -30,7 +29,9 @@ main()
               CALL_CASE(data_type_lambda),
               CALL_CASE(data_type_tuple),
               CALL_CASE(data_type_custom));
-    ADD_SUITE(32,
+    // NOTE: For the moment, we're not trying to test the lambda (already tested
+    // in the sample).
+    ADD_SUITE(30,
               expr,
               CALL_CASE(expr_array),
               CALL_CASE(expr_array2),
@@ -51,8 +52,6 @@ main()
               CALL_CASE(expr_call5),
               CALL_CASE(expr_cast),
               CALL_CASE(expr_identifier),
-              CALL_CASE(expr_lambda),
-              CALL_CASE(expr_lambda2),
               CALL_CASE(expr_literal),
               CALL_CASE(expr_literal2),
               CALL_CASE(expr_literal3),
