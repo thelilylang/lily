@@ -42,6 +42,10 @@ to_msg__LilyWarning(const LilyWarning *self)
             return "unused macro parameter";
         case LILY_WARNING_KIND_UNREACHABLE_CODE:
             return "unreachable code";
+        case LILY_WARNING_KIND_UNUSED_MULTIPLE_CAPTURE:
+            return "unused multiple capture";
+        case LILY_WARNING_KIND_UNUSED_CAPTURE:
+            return "unused capture";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -59,6 +63,10 @@ to_code__LilyWarning(const LilyWarning *self)
             return "0003";
         case LILY_WARNING_KIND_UNREACHABLE_CODE:
             return "0004";
+        case LILY_WARNING_KIND_UNUSED_MULTIPLE_CAPTURE:
+            return "0005";
+        case LILY_WARNING_KIND_UNUSED_CAPTURE:
+            return "0006";
         default:
             UNREACHABLE("unknown variant");
     }

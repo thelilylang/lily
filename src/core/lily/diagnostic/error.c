@@ -330,6 +330,16 @@ to_msg__LilyError(const LilyError *self)
             return "self import";
         case LILY_ERROR_KIND_RECURSIVE_IMPORT:
             return "recursive import";
+        case LILY_ERROR_KIND_EXPECTED_ERROR_DATA_TYPE:
+            return "expected error data type";
+        case LILY_ERROR_KIND_UNEXPECTED_CALL_EXPR:
+            return "unexpected call expression";
+        case LILY_ERROR_KIND_UNEXPECTED_WILDCARD:
+            return "unexpected wildcard";
+        case LILY_ERROR_KIND_UNEXPECTED_PATH:
+            return "unexpected path";
+        case LILY_ERROR_KIND_EXPECTED_PATH:
+            return "expected path";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -633,6 +643,16 @@ to_code__LilyError(const LilyError *self)
             return "0146";
         case LILY_ERROR_KIND_RECURSIVE_IMPORT:
             return "0147";
+        case LILY_ERROR_KIND_EXPECTED_ERROR_DATA_TYPE:
+            return "0148";
+        case LILY_ERROR_KIND_UNEXPECTED_CALL_EXPR:
+            return "0149";
+        case LILY_ERROR_KIND_UNEXPECTED_WILDCARD:
+            return "0150";
+        case LILY_ERROR_KIND_UNEXPECTED_PATH:
+            return "0151";
+        case LILY_ERROR_KIND_EXPECTED_PATH:
+            return "0152";
         default:
             UNREACHABLE("unknown variant");
     }

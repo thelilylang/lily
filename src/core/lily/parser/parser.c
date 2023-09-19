@@ -697,6 +697,7 @@ CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
                     location_eof.end_column,
                     location_eof.end_position);
 
+    // This token is used to check if the parser has reached the end.
     push__Vec(tokens,
               NEW(LilyToken, LILY_TOKEN_KIND_EOF, location_eof)); // Add EOF.
 
@@ -744,6 +745,8 @@ jump__LilyParseBlock(LilyParseBlock *self, Usize n)
         self->position += n;
         self->current = get__Vec(self->tokens, self->position);
     }
+
+    UNREACHABLE("cannot jump outside of the length of tokens");
 }
 
 LilyToken *
@@ -759,6 +762,8 @@ peek_token__LilyParseBlock(LilyParseBlock *self, Usize n)
 #define IS_DATA_TYPE(token)                     \
     switch (token) {                            \
         case LILY_TOKEN_KIND_BANG:              \
+        case LILY_TOKEN_KIND_STAR:              \
+        case LILY_TOKEN_KIND_INTERROGATION:     \
         case LILY_TOKEN_KIND_KEYWORD_FUN:       \
         case LILY_TOKEN_KIND_KEYWORD_MUT:       \
         case LILY_TOKEN_KIND_KEYWORD_OBJECT:    \
@@ -1255,6 +1260,7 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
 
             while (self->current->kind != LILY_TOKEN_KIND_R_SHIFT &&
                    self->current->kind != LILY_TOKEN_KIND_EOF) {
+                Location *location_error = &self->current->location;
                 LilyAstDataType *dt = parse_data_type__LilyParseBlock(self);
 
                 if (dt) {
@@ -1263,13 +1269,38 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
                             push__Vec(errs, dt);
                             break;
                         default:
-                            FAILED("expected error data type");
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->file,
+                                location_error,
+                                NEW(LilyError,
+                                    LILY_ERROR_KIND_EXPECTED_ERROR_DATA_TYPE),
+                                NULL,
+                                NULL,
+                                NULL),
+                              self->count_error);
                     }
                 }
             }
 
             if (self->current->kind == LILY_TOKEN_KIND_EOF) {
-                FAILED("expected `>`");
+                String *token_s = to_string__LilyToken(self->current);
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &self->current->location,
+                    NEW_VARIANT(LilyError, unexpected_token, token_s->buffer),
+                    NULL,
+                    NULL,
+                    from__String("expected `>`")),
+                  self->count_error);
+
+                FREE(String, token_s);
             } else {
                 next_token__LilyParseBlock(self); // skip `>`
             }
@@ -1277,7 +1308,21 @@ parse_data_type__LilyParseBlock(LilyParseBlock *self)
             if (self->current->kind == LILY_TOKEN_KIND_BANG) {
                 next_token__LilyParseBlock(self); // skip `!`
             } else {
-                FAILED("expected `!`");
+                String *token_s = to_string__LilyToken(self->current);
+
+                emit__Diagnostic(
+                  NEW_VARIANT(
+                    Diagnostic,
+                    simple_lily_error,
+                    self->file,
+                    &self->current->location,
+                    NEW_VARIANT(LilyError, unexpected_token, token_s->buffer),
+                    NULL,
+                    NULL,
+                    from__String("expected `!`")),
+                  self->count_error);
+
+                FREE(String, token_s);
             }
 
             LilyAstDataType *ok = parse_data_type__LilyParseBlock(self);
@@ -1641,7 +1686,16 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
         }
 
         if (add_item_to_path__LilyAstExprAccess(&current_access, &first_expr)) {
-            FAILED("unexpected call");
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &first_expr->location,
+                          NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_CALL_EXPR),
+                          NULL,
+                          NULL,
+                          NULL),
+              self->count_error);
         }
 
         if (self->current->kind != LILY_TOKEN_KIND_DOT) {
@@ -1679,7 +1733,16 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
         }
 
         if (add_item_to_path__LilyAstExprAccess(&current_access, &expr)) {
-            FAILED("unexpected call");
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->file,
+                          &expr->location,
+                          NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_CALL_EXPR),
+                          NULL,
+                          NULL,
+                          NULL),
+              self->count_error);
         }
     }
 
@@ -1837,8 +1900,26 @@ parse_only_access_expr__LilyParseBlock(LilyParseBlock *self)
         case LILY_TOKEN_KIND_KEYWORD_self:
         case LILY_TOKEN_KIND_AT:
             return parse_access_expr__LilyParseBlock(self);
-        default:
-            FAILED("error");
+        default: {
+            String *token_s = to_string__LilyToken(self->current);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->file,
+                &self->current->location,
+                NEW_VARIANT(LilyError, unexpected_token, token_s->buffer),
+                NULL,
+                NULL,
+                from__String("expected identifier normal, identifier string, "
+                             "`global`, `object`, `Self`, `self` or `@`")),
+              self->count_error);
+
+            FREE(String, token_s);
+
+            return NULL;
+        }
     }
 }
 
@@ -1919,6 +2000,7 @@ parse_tuple_expr__LilyParseBlock(LilyParseBlock *self)
 LilyAstExpr *
 parse_binary_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr)
 {
+    // TODO: maybe use Stack instead of Vec.
     Vec *stack = NEW(Vec); // Vec<LilyAstExpr* | enum LilyAstExprBinaryKind*>*
     Usize last_precedence = MAX_LILY_AST_EXPR_BINARY_PRECEDENCE + 1;
 
@@ -1978,20 +2060,20 @@ parse_binary_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr)
         }
 
         while (precedence <= last_precedence && stack->len > 1) {
-            LilyAstExpr *right = pop__Vec(stack);
-            enum LilyAstExprBinaryKind op =
+            LilyAstExpr *top_right = pop__Vec(stack);
+            enum LilyAstExprBinaryKind top_op =
               (enum LilyAstExprBinaryKind)(Uptr)pop__Vec(stack);
 
-            last_precedence = to_precedence__LilyAstExprBinaryKind(op);
+            last_precedence = to_precedence__LilyAstExprBinaryKind(top_op);
 
             if (last_precedence < precedence) {
-                push__Vec(stack, (int *)op);
-                push__Vec(stack, right);
+                push__Vec(stack, (int *)top_op);
+                push__Vec(stack, top_right);
 
                 break;
             }
 
-            LilyAstExpr *left = pop__Vec(stack);
+            LilyAstExpr *top_left = pop__Vec(stack);
 
             push__Vec(
               stack,
@@ -1999,11 +2081,11 @@ parse_binary_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr)
                 LilyAstExpr,
                 binary,
                 (Location){ .filename = self->current->location.filename,
-                            .start_line = left->location.start_line,
-                            .end_line = right->location.end_line,
-                            .start_column = left->location.start_column,
-                            .end_column = right->location.end_column },
-                NEW(LilyAstExprBinary, op, left, right)));
+                            .start_line = top_left->location.start_line,
+                            .end_line = top_right->location.end_line,
+                            .start_column = top_left->location.start_column,
+                            .end_column = top_right->location.end_column },
+                NEW(LilyAstExprBinary, top_op, top_left, top_right)));
         }
 
         push__Vec(stack, (int *)op);
@@ -2425,6 +2507,7 @@ parse_lambda_params_call__LilyParser(LilyParser *self,
 {
     Vec *params = NEW(Vec);
 
+    // 1. Parse params call.
     for (Usize i = 0; i < pre_params_call->len; ++i) {
         LilyParseBlock block =
           NEW(LilyParseBlock, self, get__Vec(pre_params_call, i));
@@ -2728,47 +2811,66 @@ parse_literal_expr__LilyParseBlock(LilyParseBlock *self)
 LilyAstExpr *
 parse_only_identifier_expr__LilyParseBlock(LilyParseBlock *self)
 {
-#define PARSE_ONLY_IDENTIFIER(token_kind)                             \
-    {                                                                 \
-        Location *prev_location = &self->previous->location;          \
-        String *prev_id = self->previous->token_kind;                 \
-                                                                      \
-        if (!strcmp(prev_id->buffer, "_")) {                          \
-            FAILED("`_` is not expected");                            \
-        }                                                             \
-                                                                      \
-        if (self->current->kind == LILY_TOKEN_KIND_COLON_COLON) {     \
-            Vec *generic_params = NULL; /* Vec<LilyAstDataType*>*? */ \
-                                                                      \
-            next_token__LilyParseBlock(self); /* skip `::` */         \
-                                                                      \
-            switch (self->current->kind) {                            \
-                case LILY_TOKEN_KIND_L_HOOK:                          \
-                    generic_params = NEW(Vec);                        \
-                                                                      \
-                    next_token__LilyParseBlock(self); /* skip `[` */  \
-                                                                      \
-                    DATA_TYPE_PARSE_CLOSING(                          \
-                      generic_params, LILY_TOKEN_KIND_R_HOOK, NULL);  \
-                                                                      \
-                    break;                                            \
-                default:                                              \
-                    FAILED("expected `[`");                           \
-            }                                                         \
-                                                                      \
-            return NEW_VARIANT(LilyAstExpr,                           \
-                               identifier,                            \
-                               clone__Location(prev_location),        \
-                               NEW(LilyAstExprIdentifier,             \
-                                   clone__String(prev_id),            \
-                                   generic_params));                  \
-        }                                                             \
-                                                                      \
-        return NEW_VARIANT(                                           \
-          LilyAstExpr,                                                \
-          identifier,                                                 \
-          clone__Location(prev_location),                             \
-          NEW(LilyAstExprIdentifier, clone__String(prev_id), NULL));  \
+#define PARSE_ONLY_IDENTIFIER(token_kind)                                      \
+    {                                                                          \
+        Location *prev_location = &self->previous->location;                   \
+        String *prev_id = self->previous->token_kind;                          \
+                                                                               \
+        if (!strcmp(prev_id->buffer, "_")) {                                   \
+            emit__Diagnostic(                                                  \
+              NEW_VARIANT(Diagnostic,                                          \
+                          simple_lily_error,                                   \
+                          self->file,                                          \
+                          prev_location,                                       \
+                          NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_WILDCARD), \
+                          NULL,                                                \
+                          NULL,                                                \
+                          from__String("expected identifier")),                \
+              self->count_error);                                              \
+        }                                                                      \
+                                                                               \
+        if (self->current->kind == LILY_TOKEN_KIND_COLON_COLON) {              \
+            Vec *generic_params = NULL; /* Vec<LilyAstDataType*>*? */          \
+                                                                               \
+            next_token__LilyParseBlock(self); /* skip `::` */                  \
+                                                                               \
+            switch (self->current->kind) {                                     \
+                case LILY_TOKEN_KIND_L_HOOK:                                   \
+                    generic_params = NEW(Vec);                                 \
+                                                                               \
+                    next_token__LilyParseBlock(self); /* skip `[` */           \
+                                                                               \
+                    DATA_TYPE_PARSE_CLOSING(                                   \
+                      generic_params, LILY_TOKEN_KIND_R_HOOK, NULL);           \
+                                                                               \
+                    break;                                                     \
+                default:                                                       \
+                    emit__Diagnostic(                                          \
+                      NEW_VARIANT(                                             \
+                        Diagnostic,                                            \
+                        simple_lily_error,                                     \
+                        self->file,                                            \
+                        &self->current->location,                              \
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),        \
+                        NULL,                                                  \
+                        NULL,                                                  \
+                        from__String("expected `[`, after `::`")),             \
+                      self->count_error);                                      \
+            }                                                                  \
+                                                                               \
+            return NEW_VARIANT(LilyAstExpr,                                    \
+                               identifier,                                     \
+                               clone__Location(prev_location),                 \
+                               NEW(LilyAstExprIdentifier,                      \
+                                   clone__String(prev_id),                     \
+                                   generic_params));                           \
+        }                                                                      \
+                                                                               \
+        return NEW_VARIANT(                                                    \
+          LilyAstExpr,                                                         \
+          identifier,                                                          \
+          clone__Location(prev_location),                                      \
+          NEW(LilyAstExprIdentifier, clone__String(prev_id), NULL));           \
     }
 
     next_token__LilyParseBlock(self);
@@ -3005,7 +3107,18 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
             }
 
             if (not_parse_access) {
-                FAILED("error path is not expected in this context");
+                emit__Diagnostic(
+                  NEW_VARIANT(Diagnostic,
+                              simple_lily_error,
+                              self->file,
+                              &self->current->location,
+                              NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_PATH),
+                              NULL,
+                              NULL,
+                              NULL),
+                  self->count_error);
+
+                return NULL;
             }
 
             if (self->previous->kind == LILY_TOKEN_KIND_AT &&
@@ -3218,7 +3331,17 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
                                                                                \
                     break;                                                     \
                 default:                                                       \
-                    FAILED("expected `[`");                                    \
+                    emit__Diagnostic(                                          \
+                      NEW_VARIANT(                                             \
+                        Diagnostic,                                            \
+                        simple_lily_error,                                     \
+                        self->file,                                            \
+                        &self->current->location,                              \
+                        NEW(LilyError, LILY_ERROR_KIND_EXPECTED_TOKEN),        \
+                        NULL,                                                  \
+                        NULL,                                                  \
+                        from__String("expected `[`, after `::`")),             \
+                      self->count_error);                                      \
             }                                                                  \
                                                                                \
             LilyAstExpr *id = NEW_VARIANT(LilyAstExpr,                         \
@@ -3383,10 +3506,24 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
                                 case LILY_AST_EXPR_ACCESS_KIND_self_PATH:
                                     break;
                                 default:
-                                    FAILED("expected path");
+                                    goto expected_path;
                             }
+
+                            break;
                         default:
-                            FAILED("expected path");
+                        expected_path : {
+                            emit__Diagnostic(
+                              NEW_VARIANT(
+                                Diagnostic,
+                                simple_lily_error,
+                                self->file,
+                                &path->location,
+                                NEW(LilyError, LILY_ERROR_KIND_EXPECTED_PATH),
+                                NULL,
+                                NULL,
+                                NULL),
+                              self->count_error);
+                        }
                     }
 
                     return path;
@@ -3767,13 +3904,36 @@ parse_capture__LilyParseBlock(LilyParseBlock *self)
 
             switch (multiple->len) {
                 case 1:
-                    FAILED("warning: unused multiple capture");
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_warning,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyWarning,
+                            LILY_WARNING_KIND_UNUSED_MULTIPLE_CAPTURE),
+                        NULL,
+                        NULL,
+                        NULL),
+                      self->count_warning);
+
+                    return NULL;
                 case 0:
                     FREE(Vec, multiple);
 
-                    FAILED("warning: unused capture");
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_lily_warning,
+                        self->file,
+                        &self->current->location,
+                        NEW(LilyWarning, LILY_WARNING_KIND_UNUSED_CAPTURE),
+                        NULL,
+                        NULL,
+                        NULL),
+                      self->count_warning);
 
-                    // return NULL;
+                    return NULL;
                 default:
                     return NEW_VARIANT(LilyAstCapture, multiple, multiple);
             }
