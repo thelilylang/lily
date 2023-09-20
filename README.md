@@ -15,10 +15,12 @@ Work in progress...
 ## Summary
 
 * [Progression](#progression)
+* [Release Schedule](#release-schedule)
 * [Examples](#examples)
 * [Dependencies](#dependencies)
 * [Contribute](#contribute)
 * [Build](#build)
+* [Compatibility](#compatibility)
 * [License](#license)
 
 ## Progression
@@ -138,6 +140,16 @@ or
 ```bash
 ./build/lilyc ./tests/mypkg/main.lily
 ```
+
+## Compatibility
+
+| OS        | Support (Yes/No) |
+|-----------|------------------|
+| Windows   | No               |
+| MacOS     | No               |
+| ArchLinux | Yes              |
+| Ubuntu    | No               |
+| Linux     | No               |
 
 ## License
 
