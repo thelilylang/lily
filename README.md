@@ -150,6 +150,7 @@ or
 | ArchLinux | Yes              |
 | Ubuntu    | No               |
 | Linux     | No               |
+| BSD       | No               |
 
 ## License
 
