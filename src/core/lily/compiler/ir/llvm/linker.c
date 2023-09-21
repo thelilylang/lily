@@ -95,10 +95,6 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #elifdef LILY_APPLE_OS
     // Link libc
     push__Vec(args, strdup("/usr/lib/libc.so"));
-
-    // Add dynamic linker option
-    push__Vec(args, strdup("-dynamic-linker"));
-    push__Vec(args, strdup(DYNAMIC_LINKER));
 #elifdef LILY_WINDOWS_OS
     push__Vec(args, strdup("/subsystem:console"));
     push__Vec(args, strdup("/defaultlib:libc.lib"));
@@ -137,6 +133,30 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     }
 
     push__Vec(args, strdup(self->output_path));
+
+#ifdef LILY_APPLE_OS
+    push__Vec(args, strdup("-e"));
+    push__Vec(args, strdup("main"));
+
+    // Add arch
+    push__Vec(args, strdup("-arch"));
+
+#ifdef LILY_X86_ARCH
+    push__Vec(args, strdup("i386"));
+#elifdef LILY_X86_64_ARCH
+    push__Vec(args, strdup("x86_64"));
+#elifdef LILY_ARM64_ARCH
+    push__Vec(args, strdup("arm64"));
+#else
+#error "unknown arch to MacOS"
+#endif
+
+    // Add platform version
+    push__Vec(args, strdup("-platform_version"));
+    push__Vec(args, strdup("macOS"));
+    push__Vec(args, strdup(MIN_MACOS_VERSION));
+    push__Vec(args, strdup(MACOS_SDK_VERSION));
+#endif
 
     // Add output option
     // TODO: Check there is passed `-o` option
