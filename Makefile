@@ -3,6 +3,7 @@ CMAKE_FORMAT = @cmake-format -i
 RUSTFMT = @rustfmt
 
 setup:
+	./scripts/enable_local.sh
 	cd .git/hooks && ln -s ../../scripts/git/pre-commit .
 
 build:

@@ -25,6 +25,10 @@
 #ifndef LILY_BASE_PLATFORM_H
 #define LILY_BASE_PLATFORM_H
 
+#define MACOS_SDK_VERSION "15"
+#define MIN_MACOS_VERSION \
+    "12" // NOTE: maybe upgrade/downgrade the minimum required version of MacOS
+
 #if defined(__x86_64__) || defined(_WIN64) || defined(__arm64__) || \
   defined(__ppc64__)
 #define PLATFORM_64

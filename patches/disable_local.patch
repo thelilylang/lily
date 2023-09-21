@@ -1,0 +1,11 @@
+--- ../include/base/macros.h	2023-09-21 00:45:18.249538576 -0400
++++ macros.h	2023-09-21 00:45:00.915994334 -0400
+@@ -32,7 +32,7 @@
+ #undef ENV_INSTALL
+ 
+ #define ENV_LOCAL
+-// #undef ENV_LOCAL
++#undef ENV_LOCAL
+ 
+ #define ENV_SAFE
+ #undef ENV_SAFE

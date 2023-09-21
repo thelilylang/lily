@@ -34,11 +34,13 @@ function print_commands {
 	echo "  da: Debug analyzer"
 	echo "  dd: Disable debug"
 	echo "  dir: Debug IR"
+	echo "  dl: Disable local"
 	echo "  dp: Debug parser"
 	echo "  dpc: Debug precompiler"
 	echo "  dpp: Debug preparser"
 	echo "  ds: Debug scanner"
 	echo "  ed: Enable debug"
+	echo "  el: Enable local"
 	echo "  #e: Exit to the REPL"
 	echo "  file: Set a new value to the file"
 	echo "  git: Git command"
@@ -89,6 +91,9 @@ do
 		"dir")
 			do_nothing
 			;;
+		"dl")
+			cd patches && patch ../include/base/macros.h disable_local.patch && cd ..
+			;;
 		"dp")
 			do_nothing
 			;;
@@ -103,6 +108,9 @@ do
 			;;
 		"ed")
 			cd patches && patch ../include/base/macros.h enable_debug.patch && cd ..
+			;;
+		"el")
+			cd patches && patch ../include/base/macros.h enable_local.patch && cd ..
 			;;
 		"#e")
 			break
