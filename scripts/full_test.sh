@@ -14,4 +14,7 @@ echo
 ./build/Debug/test_core_parser
 
 echo 
-python ./scripts/test_samples.py
+python ./scripts/test_samples.py --no-exit
+
+echo
+./scripts/run_bins.sh
