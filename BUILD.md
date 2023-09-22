@@ -1,6 +1,6 @@
 # Build
 
-If you only want to use `Lily` locally to try it out, run:
+If you only want to use `Lily` locally to try it out, run:<br>
 NOTE: Currently there is no script to install Lily on the machine.
 
 ```bash
@@ -31,7 +31,7 @@ Then, the build:
 ninja -C build -j <n_jobs>
 ```
 
-Launch `lilyc`:
+Launch `lilyc`:<br>
 NOTE: This is the command to use the Lily compiler.
 
 ```bash
@@ -39,7 +39,7 @@ NOTE: This is the command to use the Lily compiler.
 lilyc -h # installed version
 ```
 
-Launch `lily`:
+Launch `lily`:<br>
 NOTE: This is the command to use some utility tools for the Lily language (build, init, new, ...).
 
 ```bash
@@ -83,7 +83,7 @@ Then, the build:
 ninja -C build -j <n_jobs>
 ```
 
-Launch `lilyc`:
+Launch `lilyc`:<br>
 NOTE: This is the command to use the Lily compiler.
 
 ```bash
@@ -91,7 +91,7 @@ NOTE: This is the command to use the Lily compiler.
 lilyc -h # installed version
 ```
 
-Launch `lily`:
+Launch `lily`:<br>
 NOTE: This is the command to use some utility tools for the Lily language (build, init, new, ...).
 
 ```bash
