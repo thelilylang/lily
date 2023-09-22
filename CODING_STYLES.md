@@ -40,7 +40,7 @@ Usize
 len__Str(const char *s);
 ```
 
-NOTE: The prefix must be unique, to avoid any conflicting function name.
+NOTE: The prefix must be unique, to avoid function name conflicts.
 
 #### Parametter
 
@@ -73,6 +73,35 @@ All macros must be defined in uppercase.
 For most includes we use the one with angle brackets (`#include <header>`), but sometimes (e.g. in tests) we use the version with double quotes (`#include "header"`).
 
 ### Enum
+
+The name of the enumeration must be written in `PascalCase`. Additionally, if the enumeration is used with a structure (to be used with a union), you must add `Kind` to the end of the enumeration name.<br>
+
+The items in the enumeration must be written in `UpperCase` and each item name must begin with the name of the enum (in `UpperCase`).<br>
+
+Here is a small example of using an enumeration with the rules previously listed:
+
+```c
+enum AnimalKind {
+    ANIMAL_KIND_CAT,
+    ANIMAL_KIND_DOG,
+};
+
+typedef struct Cat {
+  // ...
+} Cat;
+
+typedef struct Dog {
+  // ...
+} Dog;
+
+typedef struct Animal {
+    enum AnimalKind kind;
+    union {
+        Cat cat;
+        Dog dog;
+    };
+} Animal;
+```
 
 ### Struct
 
