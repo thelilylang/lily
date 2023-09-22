@@ -1,17 +1,29 @@
 #!/bin/sh
 
+STATUS_CODE=0
+
+function update_status_code {
+	local current_status_code=$?
+
+	if [ $STATUS_CODE == 0 ]
+	then
+		STATUS_CODE=$current_status_code
+	fi
+}
+
+function run_test {
+	$@
+	update_status_code
+	echo
+}
+
 cmake --build build/Debug > /dev/null
 
-./build/Debug/test_core_scanner
+run_test ./build/Debug/test_core_scanner
+run_test ./build/Debug/test_core_preparser
+run_test ./build/Debug/test_core_precompiler
+run_test ./build/Debug/test_core_parser
+run_test python ./scripts/test_samples.py
+run_test ./scripts/run_bins.sh
 
-echo
-./build/Debug/test_core_preparser
-
-echo
-./build/Debug/test_core_precompiler
-
-echo
-./build/Debug/test_core_parser
-
-echo 
-python ./scripts/test_samples.py
+exit $STATUS_CODE
