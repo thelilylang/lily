@@ -13,8 +13,12 @@ echo
 echo
 ./build/Debug/test_core_parser
 
-echo 
-python ./scripts/test_samples.py --no-exit
+echo
+python ./scripts/test_samples.py
+
+let test_samples_status=$?
 
 echo
 ./scripts/run_bins.sh
+
+exit $test_samples_status
