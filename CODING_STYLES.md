@@ -48,9 +48,29 @@ If the function is associated to a type, the first parametter, must be named `se
 
 ### Global variable
 
+You must be define global variable with `static` keyword.
+
+### Constant
+
+All constants must be defined in uppercase.
+
+```c
+const int a = 340; // bad
+const int A = 340; // ok
+```
+
 ### Macro
 
+All macros must be defined in uppercase.
+
+```c
+#define hello(s) "Hello "s // bad
+#define HELLO(s) "Hello "s // ok
+```
+
 ### Include
+
+For most includes we use the one with angle brackets (`#include <header>`), but sometimes (e.g. in tests) we use the version with double quotes (`#include "header"`).
 
 ### Enum
 
