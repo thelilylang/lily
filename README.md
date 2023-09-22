@@ -86,67 +86,23 @@ end
 - CMake >= 3.20
 - Clang >= 16.0
 - LLVM 16
+- Zlib
+- Zstd
 
 ## Contribute
 
-### Build
-
-```bash
-make debug
-ninja -C build/Debug
-```
-
-### Test
-
-> You can run `test.sh` to test with the `ctest` utility.
-
-NOTE: Using `test.sh` the `make clean` command will be run then the scripts will recompile the whole project and finally run `ctest`. 
-
-```bash
-./scripts/test.sh
-```
-
-> However, using `test.sh` it is not possible to see exactly which test fails for example, so in this case use `full_test.sh`.
-
-```bash
-./scripts/full_test.sh
-```
-
-### Debug
-
-> To see the output of the program you can run the command:
-
-```bash
-./scripts/enable_debug.sh
-```
-
-And then re-compile the project and you can now see the output of the program when you compile a file.
+See [CONTRIBUTING.md](https://github.com/thelilylang/lily/blob/main/CONTRIBUTING.md).
 
 ## Build
 
-```bash
-make configure
-ninja -C build
-```
-
-You can test the compiler with the command:
-
-```bash
-./build/lily compile ./tests/mypkg/main.lily
-```
-
-or
-
-```bash
-./build/lilyc ./tests/mypkg/main.lily
-```
+See [BUILD.md](https://github.com/thelilylang/lily/blob/main/BUILD.md).
 
 ## Compatibility
 
 | OS        | Support (Yes/No) |
 |-----------|------------------|
 | Windows   | No               |
-| MacOS     | No               |
+| MacOS     | Yes              |
 | ArchLinux | Yes              |
 | Ubuntu    | No               |
 | Linux     | No               |
