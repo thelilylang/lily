@@ -61,17 +61,17 @@ export CC=clang
 export CXX=clang++ 
 ```
 
+After launching the CMake configuration:
+
+```bash
+make configure # We use Ninja
+```
+
 If LLVM is not found by CMake run:
 
 ```bash
 # Brew installation
 export LLVM_DIR=$(brew --prefix llvm@16)
-```
-
-After launching the CMake configuration:
-
-```bash
-make configure # We use Ninja
 ```
 
 Then, the build:
