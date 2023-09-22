@@ -345,6 +345,8 @@ run__LilyPackage(void *self)
 
     tree->is_done = true;
 
+    pthread_mutex_unlock(&package_thread_mutex);
+
     // Run children of the tree
     if (tree->children->len > 0) {
         LOG_VERBOSE(tree->package, "running children package");
@@ -371,8 +373,6 @@ run__LilyPackage(void *self)
         lily_free(package_threads);
         pthread_mutex_destroy(&children_thread_lock);
     }
-
-    pthread_mutex_unlock(&package_thread_mutex);
 
     return NULL;
 }
