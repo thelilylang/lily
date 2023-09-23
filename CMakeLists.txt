@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(
   lily
   VERSION 0.0.2
-  HOMEPAGE_URL "https://github.com/ArthurPV/lily"
+  HOMEPAGE_URL "https://github.com/thelilylang/lily"
   LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 23)
