@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(
   lily
-  VERSION 0.0.1
+  VERSION 0.0.2
   HOMEPAGE_URL "https://github.com/ArthurPV/lily"
   LANGUAGES C CXX)
 
@@ -15,7 +15,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(LILY_VERSION_MAJOR 0)
 set(LILY_VERSION_MINOR 0)
-set(LILY_VERSION_PATCH 1)
+set(LILY_VERSION_PATCH 2)
 set(LILY_VERSION
     "${LILY_VERSION_MAJOR}.${LILY_VERSION_MINOR}.${LILY_VERSION_PATCH}")
 message(STATUS "Build lily v${LILY_VERSION}")
