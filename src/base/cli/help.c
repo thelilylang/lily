@@ -31,26 +31,28 @@
 
 #define MAX_SPACE 30
 
-#define GENERATE_USAGE(options, cmd, cmd_value)                        \
-    {                                                                  \
-        String *usage =                                                \
-          format__String("Usage: {s}{sa}{s}",                          \
-                         cli->name,                                    \
-                         cmd ? format(" {s}", cmd->name) : format(""), \
-                         options->len > 0 ? " [options]" : "");        \
-                                                                       \
-        if (cmd_value) {                                               \
-            push_str__String(usage, " [");                             \
-            push_str__String(usage, (char *)cmd_value->name);          \
-            push__String(usage, ']');                                  \
-                                                                       \
-            if (cmd_value->kind == CLI_VALUE_KIND_MULTIPLE) {          \
-                push_str__String(usage, "...");                        \
-            }                                                          \
-        }                                                              \
-                                                                       \
-        APPEND_AND_FREE(res, usage);                                   \
-        push_str__String(res, "\n\n");                                 \
+#define GENERATE_USAGE(options, cmd, cmd_value)                                  \
+    {                                                                            \
+        String *usage =                                                          \
+          format__String("Usage: {s}{sa}{s}",                                    \
+                         cli->name,                                              \
+                         cmd                         ? format(" {s}", cmd->name) \
+                         : cli->subcommands->len > 0 ? format(" [command]")      \
+                                                     : format(""),               \
+                         options->len > 0 ? " [options]" : "");                  \
+                                                                                 \
+        if (cmd_value) {                                                         \
+            push_str__String(usage, " [");                                       \
+            push_str__String(usage, (char *)cmd_value->name);                    \
+            push__String(usage, ']');                                            \
+                                                                                 \
+            if (cmd_value->kind == CLI_VALUE_KIND_MULTIPLE) {                    \
+                push_str__String(usage, "...");                                  \
+            }                                                                    \
+        }                                                                        \
+                                                                                 \
+        APPEND_AND_FREE(res, usage);                                             \
+        push_str__String(res, "\n\n");                                           \
     }
 
 #define GENERATE_OPTIONS(ops)                                            \
