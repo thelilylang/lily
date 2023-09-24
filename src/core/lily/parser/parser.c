@@ -4165,7 +4165,7 @@ parse_for_stmt__LilyParser(LilyParser *self,
       LilyAstBodyFunItem,
       stmt,
       NEW_VARIANT(
-        LilyAstStmt, for, item->location, NEW(LilyAstStmtFor, expr_left, expr_right, capture, parse_fun_body__LilyParser(self, item->stmt_for.block))));
+        LilyAstStmt, for, item->location, NEW(LilyAstStmtFor, item->stmt_for.name, expr_left, expr_right, capture, parse_fun_body__LilyParser(self, item->stmt_for.block))));
 }
 
 LilyAstBodyFunItem *
