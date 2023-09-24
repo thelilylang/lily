@@ -340,6 +340,8 @@ to_msg__LilyError(const LilyError *self)
             return "unexpected path";
         case LILY_ERROR_KIND_EXPECTED_PATH:
             return "expected path";
+        case LILY_ERROR_KIND_RESTRICTED_CHARACTER_ON_IDENTIFIER_STRING:
+            return "restricted character on identifier string";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -653,6 +655,8 @@ to_code__LilyError(const LilyError *self)
             return "0151";
         case LILY_ERROR_KIND_EXPECTED_PATH:
             return "0152";
+        case LILY_ERROR_KIND_RESTRICTED_CHARACTER_ON_IDENTIFIER_STRING:
+            return "0153";
         default:
             UNREACHABLE("unknown variant");
     }
