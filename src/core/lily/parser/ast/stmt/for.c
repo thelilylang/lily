@@ -27,12 +27,14 @@
 
 CONSTRUCTOR(LilyAstStmtFor,
             LilyAstStmtFor,
+            String *name,
             LilyAstExpr *expr_left,
             LilyAstExpr *expr_right,
             LilyAstCapture *capture,
             Vec *body)
 {
-    return (LilyAstStmtFor){ .expr_left = expr_left,
+    return (LilyAstStmtFor){ .name = name,
+                             .expr_left = expr_left,
                              .expr_right = expr_right,
                              .capture = capture,
                              .body = body };
@@ -42,13 +44,28 @@ CONSTRUCTOR(LilyAstStmtFor,
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstStmtFor, const LilyAstStmtFor *self)
 {
-    String *res = format__String(
-      "LilyAstStmtFor{{ expr_left = {Sr}, expr_right = {Sr}, capture = {Sr}, "
-      "body =",
-      to_string__Debug__LilyAstExpr(self->expr_left),
-      to_string__Debug__LilyAstExpr(self->expr_right),
-      self->capture ? to_string__Debug__LilyAstCapture(self->capture)
-                    : from__String("NULL"));
+    String *res = NULL;
+
+    if (self->name) {
+        res = format__String("LilyAstStmtFor{{ name = {S}, expr_left = {Sr}, "
+                             "expr_right = {Sr}, capture = {Sr}, "
+                             "body =",
+                             self->name,
+                             to_string__Debug__LilyAstExpr(self->expr_left),
+                             to_string__Debug__LilyAstExpr(self->expr_right),
+                             self->capture
+                               ? to_string__Debug__LilyAstCapture(self->capture)
+                               : from__String("NULL"));
+    } else {
+        res = format__String("LilyAstStmtFor{{ name = NULL, expr_left = {Sr}, "
+                             "expr_right = {Sr}, capture = {Sr}, "
+                             "body =",
+                             to_string__Debug__LilyAstExpr(self->expr_left),
+                             to_string__Debug__LilyAstExpr(self->expr_right),
+                             self->capture
+                               ? to_string__Debug__LilyAstCapture(self->capture)
+                               : from__String("NULL"));
+    }
 
     DEBUG_VEC_STRING(self->body, res, LilyAstBodyFunItem);
 
@@ -60,6 +77,10 @@ IMPL_FOR_DEBUG(to_string, LilyAstStmtFor, const LilyAstStmtFor *self)
 
 DESTRUCTOR(LilyAstStmtFor, const LilyAstStmtFor *self)
 {
+    if (self->name) {
+        FREE(String, self->name);
+    }
+
     FREE(LilyAstExpr, self->expr_left);
     FREE(LilyAstExpr, self->expr_right);
 
