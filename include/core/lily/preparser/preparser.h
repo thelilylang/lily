@@ -360,6 +360,7 @@ IMPL_FOR_DEBUG(to_string,
 
 typedef struct LilyPreparserFunBodyItemStmtFor
 {
+    String *name; // String*?
     Vec *expr;    // Vec<LilyToken* (&)>*
     Vec *capture; // Vec<LilyToken* (&)>*?
     Vec *block;   // Vec<LilyPreparserFunBodyItem*>*
