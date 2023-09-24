@@ -91,11 +91,11 @@ end
 
 ## Contribute
 
-See [CONTRIBUTING.md](https://github.com/thelilylang/lily/blob/main/CONTRIBUTING.md).
+Please, see [CONTRIBUTING.md](https://github.com/thelilylang/lily/blob/main/CONTRIBUTING.md).
 
 ## Build
 
-See [BUILD.md](https://github.com/thelilylang/lily/blob/main/BUILD.md).
+Please, see [BUILD.md](https://github.com/thelilylang/lily/blob/main/BUILD.md).
 
 ## Compatibility
 
