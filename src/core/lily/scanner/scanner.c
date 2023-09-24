@@ -225,6 +225,10 @@ skip_and_verify__LilyScanner(LilyScanner *self, char target);
 static LilyToken *
 get_closing__LilyScanner(LilyScanner *self, char target);
 
+/// @brief Verify if there are not restricted character (like '$', '.' and no ascii character).
+static void
+verify_identifier_string__LilyScanner(LilyScanner *self, const Location *location_identifier_string, const String *identifier_string);
+
 static LilyToken *
 get_token__LilyScanner(LilyScanner *self);
 
@@ -1729,6 +1733,32 @@ get_closing__LilyScanner(LilyScanner *self, char target)
     }
 }
 
+void
+verify_identifier_string__LilyScanner(LilyScanner *self, const Location *location_identifier_string, const String *identifier_string)
+{
+	for (Usize i = 0; i < identifier_string->len; ++i) {
+		char c = get__String(identifier_string, i);
+
+		if (c == '.' || c == '$' || (Uint64)c > 255) {
+			Usize start_column = location_identifier_string->start_column + i + 2;
+			Usize start_position = location_identifier_string->start_position + i + 2;
+			Location location_error = NEW(Location, location_identifier_string->filename, location_identifier_string->start_line, location_identifier_string->end_line, start_column, start_column, start_position, start_position);
+
+			emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->source.file,
+                &location_error,
+                NEW(LilyError, LILY_ERROR_KIND_RESTRICTED_CHARACTER_ON_IDENTIFIER_STRING),
+                NULL,
+                NULL,
+                from__String("`.`, `$` and all non-ascii characters (more than 255) are forbidden")),
+              &self->count_error);
+		}
+	}
+}
+
 LilyToken *
 get_token__LilyScanner(LilyScanner *self)
 {
@@ -1761,9 +1791,13 @@ get_token__LilyScanner(LilyScanner *self)
                 String *res = scan_string__LilyScanner(self);
 
                 if (res) {
+					Location location = clone__Location(&self->location);
+
+					verify_identifier_string__LilyScanner(self, &location, res);
+
                     return NEW_VARIANT(LilyToken,
                                        identifier_string,
-                                       clone__Location(&self->location),
+                                       location,
                                        res);
                 }
 
