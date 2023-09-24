@@ -28,11 +28,12 @@
 #include <core/lily/parser/ast/capture.h>
 #include <core/lily/parser/ast/expr.h>
 
-// for <expr_left> in <expr_right> :> <capture> do
+// for(name) <expr_left> in <expr_right> :> <capture> do
 //   <body>
 // end
 typedef struct LilyAstStmtFor
 {
+    String *name; // String*?
     LilyAstExpr *expr_left;
     LilyAstExpr *expr_right;
     LilyAstCapture *capture; // LilyAstCapture*?
@@ -45,6 +46,7 @@ typedef struct LilyAstStmtFor
  */
 CONSTRUCTOR(LilyAstStmtFor,
             LilyAstStmtFor,
+            String *name,
             LilyAstExpr *expr_left,
             LilyAstExpr *expr_right,
             LilyAstCapture *capture,
