@@ -1473,6 +1473,21 @@ String *
 IMPL_FOR_DEBUG(to_string, LilyPreparserError, const LilyPreparserError *self);
 #endif
 
+typedef struct LilyPreparserUse
+{
+    Vec *path; // Vec<LilyToken* (&)>*
+} LilyPreparserUse;
+
+/**
+ *
+ * @brief Convert LilyPreparserUse in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserUse, const LilyPreparserUse *self);
+#endif
+
 enum LilyPreparserDeclKind
 {
     LILY_PREPARSER_DECL_KIND_CONSTANT,
@@ -1483,6 +1498,7 @@ enum LilyPreparserDeclKind
     LILY_PREPARSER_DECL_KIND_MODULE,
     LILY_PREPARSER_DECL_KIND_OBJECT,
     LILY_PREPARSER_DECL_KIND_TYPE,
+    LILY_PREPARSER_DECL_KIND_USE
 };
 
 /**
@@ -1511,6 +1527,7 @@ typedef struct LilyPreparserDecl
         LilyPreparserModule module;
         LilyPreparserObject object;
         LilyPreparserType type;
+        LilyPreparserUse use;
     };
 } LilyPreparserDecl;
 
