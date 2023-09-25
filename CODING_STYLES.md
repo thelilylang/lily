@@ -78,32 +78,42 @@ The name of the enumeration must be written in `PascalCase`. Additionally, if th
 
 The items in the enumeration must be written in `UpperCase` and each item name must begin with the name of the enum (in `UpperCase`).<br>
 
+Finally, in most cases, you should add `Lily` in front of the enumeration name (with a few exceptions).<br>
+
+EXCEPTION(S): `lily_base`.<br>
+
 Here is a small example of using an enumeration with the rules previously listed:
 
 ```c
-enum AnimalKind {
-    ANIMAL_KIND_CAT,
-    ANIMAL_KIND_DOG,
+enum LilyAnimalKind {
+    LILY_ANIMAL_KIND_CAT,
+    LILY_ANIMAL_KIND_DOG,
 };
 
-typedef struct Cat {
+typedef struct LilyCat {
   // ...
-} Cat;
+} LilyCat;
 
-typedef struct Dog {
+typedef struct LilyDog {
   // ...
-} Dog;
+} LilyDog;
 
-typedef struct Animal {
-    enum AnimalKind kind;
+typedef struct LilyAnimal {
+    enum LilyAnimalKind kind;
     union {
-        Cat cat;
-        Dog dog;
+        LilyCat cat;
+        LilyDog dog;
     };
-} Animal;
+} LilyAnimal;
 ```
 
 ### Struct
+
+The name of the structure must be written in `PascalCase`.<br>
+
+As in enumerations, you must add `Lily` in front of the structure name (with exceptions).<br>
+
+EXCEPTION(S): `lily_base`.<br>
 
 ## C++
 
