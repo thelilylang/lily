@@ -718,6 +718,7 @@ set(LILY_CORE_LILY_PARSER_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/record_object.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/trait.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/type.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/use.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/expr/access.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/expr/array.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/expr/binary.c
