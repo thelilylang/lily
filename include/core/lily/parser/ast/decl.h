@@ -33,6 +33,7 @@
 #include <core/lily/parser/ast/decl/module.h>
 #include <core/lily/parser/ast/decl/object.h>
 #include <core/lily/parser/ast/decl/type.h>
+#include <core/lily/parser/ast/decl/use.h>
 
 enum LilyAstDeclKind
 {
@@ -42,7 +43,8 @@ enum LilyAstDeclKind
     LILY_AST_DECL_KIND_METHOD,
     LILY_AST_DECL_KIND_MODULE,
     LILY_AST_DECL_KIND_OBJECT,
-    LILY_AST_DECL_KIND_TYPE
+    LILY_AST_DECL_KIND_TYPE,
+    LILY_AST_DECL_KIND_USE
 };
 
 /**
@@ -68,6 +70,7 @@ typedef struct LilyAstDecl
         LilyAstDeclModule module;
         LilyAstDeclObject object;
         LilyAstDeclType type;
+        LilyAstDeclUse use;
     };
 } LilyAstDecl;
 
@@ -140,6 +143,16 @@ VARIANT_CONSTRUCTOR(LilyAstDecl *,
                     type,
                     Location location,
                     LilyAstDeclType type);
+
+/**
+ *
+ * @brief Construct LilyAstDecl type (LILY_AST_DECL_KIND_USE).
+ */
+VARIANT_CONSTRUCTOR(LilyAstDecl *,
+                    LilyAstDecl,
+                    use,
+                    Location location,
+                    LilyAstDeclUse use);
 
 /**
  *
