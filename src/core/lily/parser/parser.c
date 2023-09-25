@@ -417,6 +417,10 @@ parse_error_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 static LilyAstDecl *
 parse_use_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
+// Parse include declaration.
+static LilyAstDecl *
+parse_include_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
 static LilyAstDeclFunParam *
 parse_fun_param__LilyParseBlock(LilyParseBlock *self);
 
@@ -6069,6 +6073,27 @@ parse_use_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
 
     return NEW_VARIANT(
       LilyAstDecl, use, decl->location, NEW(LilyAstDeclUse, access));
+}
+
+LilyAstDecl *
+parse_include_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    LilyParseBlock access_block = NEW(LilyParseBlock, self, decl->include.path);
+    LilyAstExpr *access = parse_only_access_expr__LilyParseBlock(&access_block);
+
+    if (!access) {
+        return NULL;
+    } else {
+        access = parse_postfix_expr__LilyParseBlock(&access_block, access);
+
+        CHECK_EXPR(access, access_block, NULL, "", {
+            FREE(LilyParseBlock, &access_block);
+            FREE(LilyAstExpr, access);
+        });
+    }
+
+    return NEW_VARIANT(
+      LilyAstDecl, include, decl->location, NEW(LilyAstDeclInclude, access));
 }
 
 LilyAstDeclFunParam *
