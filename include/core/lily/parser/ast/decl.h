@@ -29,6 +29,7 @@
 
 #include <core/lily/parser/ast/decl/error.h>
 #include <core/lily/parser/ast/decl/fun.h>
+#include <core/lily/parser/ast/decl/include.h>
 #include <core/lily/parser/ast/decl/method.h>
 #include <core/lily/parser/ast/decl/module.h>
 #include <core/lily/parser/ast/decl/object.h>
@@ -40,6 +41,7 @@ enum LilyAstDeclKind
     LILY_AST_DECL_KIND_CONSTANT,
     LILY_AST_DECL_KIND_ERROR,
     LILY_AST_DECL_KIND_FUN,
+    LILY_AST_DECL_KIND_INCLUDE,
     LILY_AST_DECL_KIND_METHOD,
     LILY_AST_DECL_KIND_MODULE,
     LILY_AST_DECL_KIND_OBJECT,
@@ -66,6 +68,7 @@ typedef struct LilyAstDecl
         LilyAstDeclConstant constant;
         LilyAstDeclError error;
         LilyAstDeclFun fun;
+        LilyAstDeclInclude include;
         LilyAstDeclMethod method;
         LilyAstDeclModule module;
         LilyAstDeclObject object;
@@ -103,6 +106,16 @@ VARIANT_CONSTRUCTOR(LilyAstDecl *,
                     fun,
                     Location location,
                     LilyAstDeclFun fun);
+
+/**
+ *
+ * @brief Construct LilyAstDecl type (LILY_AST_DECL_KIND_INCLUDE).
+ */
+VARIANT_CONSTRUCTOR(LilyAstDecl *,
+                    LilyAstDecl,
+                    include,
+                    Location location,
+                    LilyAstDeclInclude include);
 
 /**
  *
