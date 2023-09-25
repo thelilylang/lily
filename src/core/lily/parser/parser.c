@@ -413,6 +413,10 @@ parse_enum_object_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 static LilyAstDecl *
 parse_error_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
 
+// Parse use declaration.
+static LilyAstDecl *
+parse_use_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl);
+
 static LilyAstDeclFunParam *
 parse_fun_param__LilyParseBlock(LilyParseBlock *self);
 
@@ -6046,6 +6050,27 @@ parse_error_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
                            decl->error.visibility));
 }
 
+LilyAstDecl *
+parse_use_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
+{
+    LilyParseBlock access_block = NEW(LilyParseBlock, self, decl->use.path);
+    LilyAstExpr *access = parse_only_access_expr__LilyParseBlock(&access_block);
+
+    if (!access) {
+        return NULL;
+    } else {
+        access = parse_postfix_expr__LilyParseBlock(&access_block, access);
+
+        CHECK_EXPR(access, access_block, NULL, "", {
+            FREE(LilyParseBlock, &access_block);
+            FREE(LilyAstExpr, access);
+        });
+    }
+
+    return NEW_VARIANT(
+      LilyAstDecl, use, decl->location, NEW(LilyAstDeclUse, access));
+}
+
 LilyAstDeclFunParam *
 parse_fun_param__LilyParseBlock(LilyParseBlock *self)
 {
@@ -8248,6 +8273,8 @@ parse_decl__LilyParser(LilyParser *self, LilyPreparserDecl *decl)
             return parse_object_decl__LilyParser(self, decl);
         case LILY_PREPARSER_DECL_KIND_TYPE:
             return parse_type_decl__LilyParser(self, decl);
+        case LILY_PREPARSER_DECL_KIND_USE:
+            return parse_use_decl__LilyParser(self, decl);
         default:
             UNREACHABLE("unknown variant");
     }

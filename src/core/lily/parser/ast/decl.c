@@ -73,6 +73,8 @@ IMPL_FOR_DEBUG(to_string, LilyAstDeclKind, enum LilyAstDeclKind self)
             return "LILY_AST_DECL_KIND_OBJECT";
         case LILY_AST_DECL_KIND_TYPE:
             return "LILY_AST_DECL_KIND_TYPE";
+        case LILY_AST_DECL_KIND_USE:
+            return "LILY_AST_DECL_KIND_USE";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -184,6 +186,21 @@ VARIANT_CONSTRUCTOR(LilyAstDecl *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(LilyAstDecl *,
+                    LilyAstDecl,
+                    use,
+                    Location location,
+                    LilyAstDeclUse use)
+{
+    LilyAstDecl *self = lily_malloc(sizeof(LilyAstDecl));
+
+    self->kind = LILY_AST_DECL_KIND_USE;
+    self->location = location;
+    self->use = use;
+
+    return self;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, LilyAstDecl, const LilyAstDecl *self)
@@ -231,6 +248,12 @@ IMPL_FOR_DEBUG(to_string, LilyAstDecl, const LilyAstDecl *self)
               to_string__Debug__LilyAstDeclKind(self->kind),
               to_string__Debug__Location(&self->location),
               to_string__Debug__LilyAstDeclType(&self->type));
+        case LILY_AST_DECL_KIND_USE:
+            return format__String(
+              "LilyAstDecl{{ kind = {s}, location = {sa}, use = {Sr} }",
+              to_string__Debug__LilyAstDeclKind(self->kind),
+              to_string__Debug__Location(&self->location),
+              to_string__Debug__LilyAstDeclUse(&self->use));
         default:
             UNREACHABLE("unknown variant");
     }
@@ -285,6 +308,12 @@ VARIANT_DESTRUCTOR(LilyAstDecl, type, LilyAstDecl *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyAstDecl, use, LilyAstDecl *self)
+{
+    FREE(LilyAstDeclUse, &self->use);
+    lily_free(self);
+}
+
 DESTRUCTOR(LilyAstDecl, LilyAstDecl *self)
 {
     switch (self->kind) {
@@ -308,6 +337,9 @@ DESTRUCTOR(LilyAstDecl, LilyAstDecl *self)
             break;
         case LILY_AST_DECL_KIND_TYPE:
             FREE_VARIANT(LilyAstDecl, type, self);
+            break;
+        case LILY_AST_DECL_KIND_USE:
+            FREE_VARIANT(LilyAstDecl, use, self);
             break;
         default:
             UNREACHABLE("unknown variant");
