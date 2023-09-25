@@ -710,6 +710,7 @@ set(LILY_CORE_LILY_PARSER_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/enum_object.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/error.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/fun.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/include.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/method.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/module.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/parser/ast/decl/object.c
