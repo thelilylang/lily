@@ -91,22 +91,23 @@ end
 
 ## Contribute
 
-Please, see [CONTRIBUTING.md](https://github.com/thelilylang/lily/blob/main/CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/thelilylang/lily/blob/main/CONTRIBUTING.md).
 
 ## Build
 
-Please, see [BUILD.md](https://github.com/thelilylang/lily/blob/main/BUILD.md).
+See [BUILD.md](https://github.com/thelilylang/lily/blob/main/BUILD.md).
 
 ## Compatibility
 
-| OS        | Support (Yes/No) |
-|-----------|------------------|
-| Windows   | No               |
-| MacOS     | Yes              |
-| ArchLinux | Yes              |
-| Ubuntu    | No               |
-| Linux     | No               |
-| BSD       | No               |
+| OS              | Support (Yes/No) |
+|-----------------|------------------|
+| Windows         | No               |
+| MacOS Intel     | Yes              |
+| MacOS Arm       | No               |
+| ArchLinux       | Yes              |
+| Ubuntu          | No               |
+| Linux           | No               |
+| BSD             | No               |
 
 ## License
 
