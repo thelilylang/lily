@@ -104,10 +104,6 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #error "unknown OS"
 #endif
 
-#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
-    push__Vec(args, strdup("-pie"));
-#endif
-
 #ifdef ENV_LOCAL
     if (self->builtin_is_loaded || self->sys_is_loaded) {
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
