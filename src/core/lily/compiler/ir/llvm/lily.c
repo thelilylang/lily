@@ -767,6 +767,35 @@ LilyLLVMBuildSwitch(const LilyIrLlvm *Self,
 }
 
 LLVMValueRef
+LilyLLVMBuildSys(const LilyIrLlvm *Self,
+                 const Vec *Params,
+                 const LilyMirDt *ReturnDT,
+                 const char *SysName)
+{
+    LLVMTypeRef FnSysParams[MAX_FUN_PARAMS] = { 0 };
+
+    for (Usize i = 0; i < Params->len; ++i) {
+        FnSysParams[i] = LilyLLVMGetType(
+          Self, CAST(LilyMirInstructionVal *, get__Vec(Params, i))->dt);
+    }
+
+    if (!strcmp(SysName, "__sys__$read")) {
+        ASSERT(Params->len == 3);
+    } else if (!strcmp(SysName, "__sys__$write")) {
+        ASSERT(Params->len == 3);
+	} else {
+        UNREACHABLE("the name of the sys function is not expected");
+    }
+
+    LLVMTypeRef FnSysType = LLVMFunctionType(
+      LilyLLVMGetType(Self, ReturnDT), FnSysParams, Params->len, false);
+    LLVMValueRef FnSys = LLVMAddFunction(Self->module, SysName, FnSysType);
+	LLVMSetLinkage(FnSys, LLVMExternalLinkage);
+
+    return FnSys;
+}
+
+LLVMValueRef
 LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
                      LilyIrLlvmScope *Scope,
                      const LilyIrLlvmPending *Pending,
@@ -775,7 +804,13 @@ LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
                      const char *SysName,
                      const char *Name)
 {
-    LLVMValueRef Fn = LLVMGetNamedFunction(Self->module, SysName);
+    LLVMValueRef SysFn = LLVMGetNamedFunction(Self->module, SysName);
+
+    // Def sys function
+    if (!SysFn) {
+        SysFn = LilyLLVMBuildSys(Self, Params, ReturnDT, SysName);
+    }
+
     LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
     LLVMTypeRef ParamTypes[MAX_FUN_PARAMS] = { 0 };
     LLVMTypeRef ReturnType = LilyLLVMGetType(Self, ReturnDT);
@@ -795,7 +830,7 @@ LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
     return LLVMBuildCall2(
       Self->builder,
       LLVMFunctionType(ReturnType, ParamTypes, Params->len, false),
-      Fn,
+      SysFn,
       Args,
       Params->len,
       Name);
@@ -896,8 +931,8 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
               global_bytes,
               LLVMConstStringInContext(Self->context,
                                        (const char *)Val->bytes,
-                                       bytes_buffer_len,
-                                       false));
+                                       bytes_buffer_len + 1,
+                                       true));
             LLVMSetUnnamedAddr(global_bytes, true);
             LilyLLVMSetLinkage(global_bytes, LILY_MIR_LINKAGE_PRIVATE);
 
@@ -923,6 +958,29 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
               "local.bytes.len");
 
             return bytes_ptr;
+        }
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CSTR: {
+            // [i8 x n]
+            Usize cstr_buffer_len = strlen(Val->cstr);
+            LLVMTypeRef cstr_buffer_type =
+              LLVMArrayType(i8__LilyIrLlvm(Self), cstr_buffer_len + 1);
+            LLVMValueRef global_cstr =
+              LLVMAddGlobal(Self->module, cstr_buffer_type, "cstr");
+
+            LLVMSetInitializer(
+              global_cstr,
+              LLVMConstStringInContext(
+                Self->context, Val->cstr, cstr_buffer_len + 1, true));
+            LLVMSetUnnamedAddr(global_cstr, true);
+            LilyLLVMSetLinkage(global_cstr, LILY_MIR_LINKAGE_PRIVATE);
+
+            if (CurrentPtr) {
+                LLVMBuildStore(Self->builder, global_cstr, CurrentPtr);
+
+                return CurrentPtr;
+            }
+
+            return global_cstr;
         }
         case LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION:
             TODO("Exception");
@@ -1605,6 +1663,8 @@ LilyLLVMGetType(const LilyIrLlvm *Self, const LilyMirDt *DT)
                                intptr__LilyIrLlvm(Self) },
               2,
               false);
+		case LILY_MIR_DT_KIND_CSTR:
+			return ptr__LilyIrLlvm(Self, i8__LilyIrLlvm(Self));
         case LILY_MIR_DT_KIND_RESULT: {
             LLVMTypeRef ok = LilyLLVMGetType(Self, DT->result.ok);
             LLVMTypeRef err = LilyLLVMGetType(Self, DT->result.err);
