@@ -80,6 +80,9 @@ LilyLLVMSetLinkage(LLVMValueRef Global, const enum LilyMirLinkage Linkage)
         case LILY_MIR_LINKAGE_PRIVATE:
             LLVMSetLinkage(Global, LLVMLinkerPrivateLinkage);
             break;
+        case LILY_MIR_LINKAGE_EXTERNAL:
+            LLVMSetLinkage(Global, LLVMExternalLinkage);
+            break;
         case LILY_MIR_LINKAGE_PUBLIC:
             break;
         default:
@@ -770,27 +773,19 @@ LLVMValueRef
 LilyLLVMBuildSys(const LilyIrLlvm *Self,
                  const Vec *Params,
                  const LilyMirDt *ReturnDT,
-                 const char *SysName)
+                 const char *SysName,
+                 enum LilyMirLinkage Linkage)
 {
     LLVMTypeRef FnSysParams[MAX_FUN_PARAMS] = { 0 };
 
     for (Usize i = 0; i < Params->len; ++i) {
-        FnSysParams[i] = LilyLLVMGetType(
-          Self, CAST(LilyMirInstructionVal *, get__Vec(Params, i))->dt);
-    }
-
-    if (!strcmp(SysName, "__sys__$read")) {
-        ASSERT(Params->len == 3);
-    } else if (!strcmp(SysName, "__sys__$write")) {
-        ASSERT(Params->len == 3);
-	} else {
-        UNREACHABLE("the name of the sys function is not expected");
+        FnSysParams[i] = LilyLLVMGetType(Self, get__Vec(Params, i));
     }
 
     LLVMTypeRef FnSysType = LLVMFunctionType(
       LilyLLVMGetType(Self, ReturnDT), FnSysParams, Params->len, false);
     LLVMValueRef FnSys = LLVMAddFunction(Self->module, SysName, FnSysType);
-	LLVMSetLinkage(FnSys, LLVMExternalLinkage);
+    LilyLLVMSetLinkage(FnSys, Linkage);
 
     return FnSys;
 }
@@ -806,10 +801,7 @@ LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
 {
     LLVMValueRef SysFn = LLVMGetNamedFunction(Self->module, SysName);
 
-    // Def sys function
-    if (!SysFn) {
-        SysFn = LilyLLVMBuildSys(Self, Params, ReturnDT, SysName);
-    }
+    ASSERT(SysFn);
 
     LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
     LLVMTypeRef ParamTypes[MAX_FUN_PARAMS] = { 0 };
@@ -1663,8 +1655,8 @@ LilyLLVMGetType(const LilyIrLlvm *Self, const LilyMirDt *DT)
                                intptr__LilyIrLlvm(Self) },
               2,
               false);
-		case LILY_MIR_DT_KIND_CSTR:
-			return ptr__LilyIrLlvm(Self, i8__LilyIrLlvm(Self));
+        case LILY_MIR_DT_KIND_CSTR:
+            return ptr__LilyIrLlvm(Self, i8__LilyIrLlvm(Self));
         case LILY_MIR_DT_KIND_RESULT: {
             LLVMTypeRef ok = LilyLLVMGetType(Self, DT->result.ok);
             LLVMTypeRef err = LilyLLVMGetType(Self, DT->result.err);
@@ -1890,6 +1882,13 @@ LilyLLVMPrepareModule(const LilyIrLlvm *Self, OrderedHashMap *Insts)
                                         Inst->fun.return_data_type,
                                         Inst->fun.name);
                 break;
+            case LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE:
+                LilyLLVMBuildSys(Self,
+                                 Inst->fun_prototype.params,
+                                 Inst->fun_prototype.return_data_type,
+                                 Inst->fun_prototype.name,
+                                 Inst->fun_prototype.linkage);
+                break;
             case LILY_MIR_INSTRUCTION_KIND_STRUCT:
                 LilyLLVMPrepareStruct(Self, Inst->struct_.name);
                 break;
@@ -2004,6 +2003,8 @@ LilyLLVMRunModule(const LilyIrLlvm *Self, OrderedHashMap *Insts)
 
                 break;
             }
+            case LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE:
+                continue;
             case LILY_MIR_INSTRUCTION_KIND_STRUCT: {
                 LLVMTypeRef Struct =
                   LLVMGetTypeByName2(Self->context, Inst->struct_.name);

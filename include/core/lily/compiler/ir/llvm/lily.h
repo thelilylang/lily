@@ -313,7 +313,8 @@ LLVMValueRef
 LilyLLVMBuildSys(const LilyIrLlvm *Self,
                  const Vec *Params,
                  const LilyMirDt *ReturnDT,
-                 const char *SysName);
+                 const char *SysName,
+                 enum LilyMirLinkage Linkage);
 
 LLVMValueRef
 LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
