@@ -64,7 +64,9 @@ jobs:
       run: cd ${{github.workspace}} && pip install -r requirements.txt
 
     - name: Setup for Local
-      run: cd ${{github.workspace}} && ./scripts/enable_local.sh
+      run: |
+        brew install gpatch
+        cd ${{github.workspace}} && ./scripts/enable_local.sh
 
     - name: Setup LLVM & Configure CMake
       run: |
