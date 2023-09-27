@@ -310,11 +310,11 @@ LilyLLVMBuildSwitch(const LilyIrLlvm *Self,
                     const LilyMirInstructionBlock *DefaultBlock);
 
 LLVMValueRef
-LilyLLVMBuildSys(const LilyIrLlvm *Self,
-                 const Vec *Params,
-                 const LilyMirDt *ReturnDT,
-                 const char *SysName,
-                 enum LilyMirLinkage Linkage);
+LilyLLVMBuildFunPrototype(const LilyIrLlvm *Self,
+                          const Vec *Params,
+                          const LilyMirDt *ReturnDT,
+                          const char *SysName,
+                          enum LilyMirLinkage Linkage);
 
 LLVMValueRef
 LilyLLVMBuildSysCall(const LilyIrLlvm *Self,

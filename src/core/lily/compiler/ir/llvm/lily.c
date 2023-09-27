@@ -199,7 +199,10 @@ LilyLLVMBuildBuiltinCall(const LilyIrLlvm *Self,
                          const char *BuiltinName,
                          const char *Name)
 {
-    LLVMValueRef Fn = LLVMGetNamedFunction(Self->module, BuiltinName);
+    LLVMValueRef BuiltinFn = LLVMGetNamedFunction(Self->module, BuiltinName);
+
+    ASSERT(BuiltinFn);
+
     LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
     LLVMTypeRef ParamTypes[MAX_FUN_PARAMS] = { 0 };
     LLVMTypeRef ReturnType = LilyLLVMGetType(Self, ReturnDT);
@@ -219,7 +222,7 @@ LilyLLVMBuildBuiltinCall(const LilyIrLlvm *Self,
     return LLVMBuildCall2(
       Self->builder,
       LLVMFunctionType(ReturnType, ParamTypes, Params->len, false),
-      Fn,
+      BuiltinFn,
       Args,
       Params->len,
       Name);
@@ -770,11 +773,11 @@ LilyLLVMBuildSwitch(const LilyIrLlvm *Self,
 }
 
 LLVMValueRef
-LilyLLVMBuildSys(const LilyIrLlvm *Self,
-                 const Vec *Params,
-                 const LilyMirDt *ReturnDT,
-                 const char *SysName,
-                 enum LilyMirLinkage Linkage)
+LilyLLVMBuildFunPrototype(const LilyIrLlvm *Self,
+                          const Vec *Params,
+                          const LilyMirDt *ReturnDT,
+                          const char *SysName,
+                          enum LilyMirLinkage Linkage)
 {
     LLVMTypeRef FnSysParams[MAX_FUN_PARAMS] = { 0 };
 
@@ -1883,11 +1886,11 @@ LilyLLVMPrepareModule(const LilyIrLlvm *Self, OrderedHashMap *Insts)
                                         Inst->fun.name);
                 break;
             case LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE:
-                LilyLLVMBuildSys(Self,
-                                 Inst->fun_prototype.params,
-                                 Inst->fun_prototype.return_data_type,
-                                 Inst->fun_prototype.name,
-                                 Inst->fun_prototype.linkage);
+                LilyLLVMBuildFunPrototype(Self,
+                                          Inst->fun_prototype.params,
+                                          Inst->fun_prototype.return_data_type,
+                                          Inst->fun_prototype.name,
+                                          Inst->fun_prototype.linkage);
                 break;
             case LILY_MIR_INSTRUCTION_KIND_STRUCT:
                 LilyLLVMPrepareStruct(Self, Inst->struct_.name);
