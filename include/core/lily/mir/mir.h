@@ -406,6 +406,12 @@ LilyMirBuildSysCall(LilyMirModule *Module,
                     const char *Name,
                     Vec *Params);
 
+LilyMirInstruction *
+LilyMirBuildBuiltinCall(LilyMirModule *Module,
+                        LilyMirDt *ReturnDt,
+                        const char *Name,
+                        Vec *Params);
+
 inline LilyMirInstruction *
 LilyMirBuildGetField(LilyMirModule *Module,
                      LilyMirDt *dt,
