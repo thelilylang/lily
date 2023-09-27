@@ -49,10 +49,11 @@ generate_dt__LilyMir(LilyMirModule *module, LilyCheckedDataType *data_type)
                     return NEW_VARIANT(
                       LilyMirDt,
                       array,
-                      NEW(LilyMirDtArray,
-                          data_type->array.sized,
-                          generate_dt__LilyMir(module,
-                                               data_type->array.data_type)));
+                      NEW(
+                        LilyMirDtArray,
+                        NEW_VARIANT(LilyMirDtLen, def, data_type->array.sized),
+                        generate_dt__LilyMir(module,
+                                             data_type->array.data_type)));
                 case LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNDETERMINED:
                     return NEW(LilyMirDt, LILY_MIR_DT_KIND_C_VA_ARG);
                 default:
@@ -199,7 +200,7 @@ generate_dt__LilyMir(LilyMirModule *module, LilyCheckedDataType *data_type)
               LilyMirDt, ref, generate_dt__LilyMir(module, data_type->ref_mut));
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
             return NEW_VARIANT(
-              LilyMirDt, str, data_type->str == -1 ? 0 : data_type->str);
+              LilyMirDt, str, from_check_len__LilyMirDtLen(&data_type->str));
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return NEW_VARIANT(
               LilyMirDt, trace, generate_dt__LilyMir(module, data_type->trace));

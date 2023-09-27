@@ -47,28 +47,15 @@
                                int,                                        \
                                generate_dt__LilyMir(module, v->data_type), \
                                v->literal.char_);                          \
-        case LILY_CHECKED_##name_u##_LITERAL_KIND_CSTR: {                  \
-            Vec *cstr = NEW(Vec);                                          \
-            Usize cstr_size = strlen(v->literal.cstr);                     \
-                                                                           \
-            for (Usize i = 0; i < cstr_size; ++i) {                        \
-                push__Vec(cstr,                                            \
-                          NEW_VARIANT(LilyMirInstructionVal,               \
-                                      int,                                 \
-                                      NEW(LilyMirDt, LILY_MIR_DT_KIND_U8), \
-                                      v->literal.cstr[i]));                \
-            }                                                              \
-                                                                           \
+        case LILY_CHECKED_##name_u##_LITERAL_KIND_CSTR:                    \
             return NEW_VARIANT(                                            \
               LilyMirInstructionVal,                                       \
-              array,                                                       \
-              NEW_VARIANT(LilyMirDt,                                       \
-                          array,                                           \
-                          NEW(LilyMirDtArray,                              \
-                              cstr_size,                                   \
-                              NEW(LilyMirDt, LILY_MIR_DT_KIND_U8))),       \
-              cstr);                                                       \
-        }                                                                  \
+              cstr,                                                        \
+              NEW_VARIANT(                                                 \
+                LilyMirDt,                                                 \
+                cstr,                                                      \
+                NEW_VARIANT(LilyMirDtLen, def, strlen(v->literal.cstr))),  \
+              v->literal.cstr);                                            \
         case LILY_CHECKED_##name_u##_LITERAL_KIND_FLOAT32:                 \
             return NEW_VARIANT(LilyMirInstructionVal,                      \
                                float,                                      \

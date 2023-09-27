@@ -117,8 +117,36 @@ generate_call_expr__LilyMir(LilyMirModule *module,
                 types_len),
               params);
         }
-        case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS:
-            TODO("fun sys");
+        case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS: {
+            LilyMirDt *return_dt =
+              generate_dt__LilyMir(module, expr->data_type);
+            Vec *params = NEW(Vec); // Vec<LilyMirInstructionVal*>*
+
+            if (expr->call.fun_sys.params) {
+                for (Usize i = 0; i < expr->call.fun_sys.params->len; ++i) {
+                    LilyMirInstruction *param = generate_expr__LilyMir(
+                      module,
+                      fun_signature,
+                      scope,
+                      CAST(LilyCheckedExprCallFunParam *,
+                           get__Vec(expr->call.fun_sys.params, i))
+                        ->value,
+                      NULL,
+                      false);
+
+                    if (param) {
+                        push__Vec(params, param->val);
+                        partial_free__LilyMirInstruction(param);
+                    }
+                }
+            }
+
+            return LilyMirBuildSysCall(
+              module,
+              return_dt,
+              expr->call.fun_sys.sys_fun_signature->real_name->buffer,
+              params);
+        }
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_BUILTIN:
             TODO("fun builtin");
         case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
