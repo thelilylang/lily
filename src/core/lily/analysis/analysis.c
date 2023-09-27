@@ -2543,8 +2543,10 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
                        LILY_CHECKED_DATA_TYPE_KIND_BYTE,
                        &data_type->location);
         case LILY_AST_DATA_TYPE_KIND_BYTES:
-            return NEW_VARIANT(
-              LilyCheckedDataType, bytes, &data_type->location, -1);
+            return NEW_VARIANT(LilyCheckedDataType,
+                               bytes,
+                               &data_type->location,
+                               NEW_VARIANT(LilyCheckedDataTypeLen, undef));
         case LILY_AST_DATA_TYPE_KIND_CHAR:
             return NEW(LilyCheckedDataType,
                        LILY_CHECKED_DATA_TYPE_KIND_CHAR,
@@ -2965,8 +2967,10 @@ check_data_type__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_DATA_TYPE_KIND_SELF:
             TODO("Check Self data type");
         case LILY_AST_DATA_TYPE_KIND_STR:
-            return NEW_VARIANT(
-              LilyCheckedDataType, str, &data_type->location, -1);
+            return NEW_VARIANT(LilyCheckedDataType,
+                               str,
+                               &data_type->location,
+                               NEW_VARIANT(LilyCheckedDataTypeLen, undef));
         case LILY_AST_DATA_TYPE_KIND_TRACE:
             switch (data_type->trace->kind) {
                 case LILY_CHECKED_DATA_TYPE_KIND_MUT:
@@ -6579,7 +6583,9 @@ check_literal_expr__LilyAnalysis(LilyAnalysis *self,
               NEW_VARIANT(LilyCheckedDataType,
                           bytes,
                           &expr->location,
-                          strlen((char *)expr->literal.bytes)),
+                          NEW_VARIANT(LilyCheckedDataTypeLen,
+                                      def,
+                                      strlen((char *)expr->literal.bytes))),
               expr,
               NEW_VARIANT(LilyCheckedExprLiteral, bytes, expr->literal.bytes));
         case LILY_AST_EXPR_LITERAL_KIND_CHAR:
@@ -7148,7 +7154,9 @@ check_literal_expr__LilyAnalysis(LilyAnalysis *self,
               NEW_VARIANT(LilyCheckedDataType,
                           str,
                           &expr->location,
-                          expr->literal.str->len),
+                          NEW_VARIANT(LilyCheckedDataTypeLen,
+                                      def,
+                                      expr->literal.str->len)),
               expr,
               NEW_VARIANT(LilyCheckedExprLiteral, str, expr->literal.str));
         case LILY_AST_EXPR_LITERAL_KIND_SUFFIX_FLOAT32:
@@ -8530,7 +8538,9 @@ check_literal_pattern__LilyAnalysis(LilyAnalysis *self,
               NEW_VARIANT(LilyCheckedDataType,
                           bytes,
                           &pattern->location,
-                          strlen((char *)pattern->literal.bytes)),
+                          NEW_VARIANT(LilyCheckedDataTypeLen,
+                                      def,
+                                      strlen((char *)pattern->literal.bytes))),
               pattern,
               NEW_VARIANT(
                 LilyCheckedPatternLiteral, bytes, pattern->literal.bytes));
@@ -9104,17 +9114,19 @@ check_literal_pattern__LilyAnalysis(LilyAnalysis *self,
 
             break;
         case LILY_AST_PATTERN_LITERAL_KIND_STR:
-            res = NEW_VARIANT(LilyCheckedPattern,
-                              literal,
-                              &pattern->location,
-                              NEW_VARIANT(LilyCheckedDataType,
-                                          str,
-                                          &pattern->location,
-                                          pattern->literal.str->len),
-                              pattern,
-                              NEW_VARIANT(LilyCheckedPatternLiteral,
-                                          str,
-                                          pattern->literal.str));
+            res = NEW_VARIANT(
+              LilyCheckedPattern,
+              literal,
+              &pattern->location,
+              NEW_VARIANT(LilyCheckedDataType,
+                          str,
+                          &pattern->location,
+                          NEW_VARIANT(LilyCheckedDataTypeLen,
+                                      def,
+                                      pattern->literal.str->len)),
+              pattern,
+              NEW_VARIANT(
+                LilyCheckedPatternLiteral, str, pattern->literal.str));
 
             break;
         case LILY_AST_PATTERN_LITERAL_KIND_SUFFIX_FLOAT32:
