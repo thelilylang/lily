@@ -302,6 +302,22 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
 VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
+                    cstr,
+                    LilyMirDt *dt,
+                    const char *cstr)
+{
+    LilyMirInstructionVal *self = lily_malloc(sizeof(LilyMirInstructionVal));
+
+    self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_CSTR;
+    self->dt = dt;
+    self->ref_count = 0;
+    self->cstr = cstr;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
                     exception,
                     LilyMirDt *dt,
                     struct LilyMirInstructionVal *ok,
@@ -536,6 +552,8 @@ eq__LilyMirInstructionVal(const LilyMirInstructionVal *self,
         case LILY_MIR_INSTRUCTION_VAL_KIND_BYTES:
             return !strcmp((const char *)self->bytes,
                            (const char *)other->bytes);
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CSTR:
+            return !strcmp(self->cstr, other->cstr);
         case LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION:
             if (self->exception[0] && other->exception[0]) {
                 return eq__LilyMirInstructionVal(self->exception[0],
@@ -649,6 +667,12 @@ IMPL_FOR_DEBUG(to_string,
         case LILY_MIR_INSTRUCTION_VAL_KIND_BYTES:
             push_str__String(res, "b\"");
             push_str__String(res, (char *)self->bytes);
+            push_str__String(res, "\"");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CSTR:
+            push_str__String(res, "c\"");
+            push_str__String(res, (char *)self->cstr);
             push_str__String(res, "\"");
 
             return res;
