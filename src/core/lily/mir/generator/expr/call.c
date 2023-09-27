@@ -118,6 +118,38 @@ generate_call_expr__LilyMir(LilyMirModule *module,
               params);
         }
         case LILY_CHECKED_EXPR_CALL_KIND_FUN_SYS: {
+            if (LilyMirKeyIsUnique(
+                  module,
+                  expr->call.fun_sys.sys_fun_signature->real_name->buffer)) {
+                Vec *params = NEW(Vec); // Vec<LilyMirDt*>*
+
+                for (Usize i = 0;
+                     i < expr->call.fun_sys.sys_fun_signature->params->len;
+                     ++i) {
+                    push__Vec(
+                      params,
+                      generate_dt__LilyMir(
+                        module,
+                        get__Vec(expr->call.fun_sys.sys_fun_signature->params,
+                                 i)));
+                }
+
+                insert__OrderedHashMap(
+                  module->insts,
+                  expr->call.fun_sys.sys_fun_signature->real_name->buffer,
+                  NEW_VARIANT(
+                    LilyMirInstruction,
+                    fun_prototype,
+                    NEW(
+                      LilyMirInstructionFunPrototype,
+                      expr->call.fun_sys.sys_fun_signature->real_name->buffer,
+                      params,
+                      generate_dt__LilyMir(
+                        module,
+                        expr->call.fun_sys.sys_fun_signature->return_data_type),
+                      LILY_MIR_LINKAGE_EXTERNAL)));
+            }
+
             LilyMirDt *return_dt =
               generate_dt__LilyMir(module, expr->data_type);
             Vec *params = NEW(Vec); // Vec<LilyMirInstructionVal*>*
