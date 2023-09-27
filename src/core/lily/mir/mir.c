@@ -476,6 +476,45 @@ LilyMirBuildCall(LilyMirModule *Module,
                        NEW_VARIANT(LilyMirInstructionVal, reg, ReturnDt, name));
 }
 
+LilyMirInstruction *
+LilyMirBuildSysCall(LilyMirModule *Module,
+                    LilyMirDt *ReturnDt,
+                    const char *Name,
+                    Vec *Params)
+{
+    LilyMirCurrent *current = Module->current->top;
+
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+
+    if (ReturnDt->kind == LILY_MIR_DT_KIND_UNIT) {
+        return NEW_VARIANT(
+          LilyMirInstruction,
+          call,
+          NEW(
+            LilyMirInstructionCall, clone__LilyMirDt(ReturnDt), Name, Params));
+    }
+
+    char *name = LilyMirGenerateName(&current->inst->fun.reg_manager);
+
+    LilyMirInstruction *inst =
+      NEW_VARIANT(LilyMirInstruction,
+                  reg,
+                  NEW(LilyMirInstructionReg,
+                      name,
+                      NEW_VARIANT(LilyMirInstruction,
+                                  sys_call,
+                                  NEW(LilyMirInstructionCall,
+                                      clone__LilyMirDt(ReturnDt),
+                                      Name,
+                                      Params))));
+
+    LilyMirAddInst(Module, inst);
+
+    return NEW_VARIANT(LilyMirInstruction,
+                       val,
+                       NEW_VARIANT(LilyMirInstructionVal, reg, ReturnDt, name));
+}
+
 LilyMirDebugInfo *
 LilyMirBuildDIFile(LilyMirModule *Module, String *filename, String *directory)
 {

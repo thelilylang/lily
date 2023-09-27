@@ -46,28 +46,6 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
                             ? from__String((char *)self->config->output)
                             : get_filename__File(self->file.name);
 
-    // Default library link.
-    // Link @sys and @builtin library.
-    if (self->sys_is_loaded) {
-#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
-        push__Vec(args, strdup("-llily_sys"));
-#elifdef LILY_WINDOWS_OS
-        push__Vec(args, strdup("/defaultlib:lily_sys.lib"));
-#else
-#error "unknown OS"
-#endif
-    }
-
-    if (self->builtin_is_loaded) {
-#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
-        push__Vec(args, strdup("-llily_builtin"));
-#elifdef LILY_WINDOWS_OS
-        push__Vec(args, strdup("/defaultlib:lily_builtin.lib"));
-#else
-#error "unknown OS"
-#endif
-    }
-
     // Link all lib dependencies
     {
         Vec *lib_dependencies = NEW(Vec); // Vec<char*>*
@@ -104,10 +82,6 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #error "unknown OS"
 #endif
 
-#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
-    push__Vec(args, strdup("-pie"));
-#endif
-
 #ifdef ENV_LOCAL
     if (self->builtin_is_loaded || self->sys_is_loaded) {
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
@@ -133,6 +107,29 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     }
 
     push__Vec(args, strdup(self->output_path));
+
+    // Default library link.
+    // Link @sys.
+    if (self->sys_is_loaded) {
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
+        push__Vec(args, strdup("-llily_sys"));
+#elifdef LILY_WINDOWS_OS
+        push__Vec(args, strdup("/defaultlib:lily_sys.lib"));
+#else
+#error "unknown OS"
+#endif
+    }
+
+    // Link @builtin.
+    if (self->builtin_is_loaded) {
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
+        push__Vec(args, strdup("-llily_builtin"));
+#elifdef LILY_WINDOWS_OS
+        push__Vec(args, strdup("/defaultlib:lily_builtin.lib"));
+#else
+#error "unknown OS"
+#endif
+    }
 
 #ifdef LILY_APPLE_OS
     push__Vec(args, strdup("-e"));

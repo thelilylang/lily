@@ -80,6 +80,9 @@ LilyLLVMSetLinkage(LLVMValueRef Global, const enum LilyMirLinkage Linkage)
         case LILY_MIR_LINKAGE_PRIVATE:
             LLVMSetLinkage(Global, LLVMLinkerPrivateLinkage);
             break;
+        case LILY_MIR_LINKAGE_EXTERNAL:
+            LLVMSetLinkage(Global, LLVMExternalLinkage);
+            break;
         case LILY_MIR_LINKAGE_PUBLIC:
             break;
         default:
@@ -767,6 +770,27 @@ LilyLLVMBuildSwitch(const LilyIrLlvm *Self,
 }
 
 LLVMValueRef
+LilyLLVMBuildSys(const LilyIrLlvm *Self,
+                 const Vec *Params,
+                 const LilyMirDt *ReturnDT,
+                 const char *SysName,
+                 enum LilyMirLinkage Linkage)
+{
+    LLVMTypeRef FnSysParams[MAX_FUN_PARAMS] = { 0 };
+
+    for (Usize i = 0; i < Params->len; ++i) {
+        FnSysParams[i] = LilyLLVMGetType(Self, get__Vec(Params, i));
+    }
+
+    LLVMTypeRef FnSysType = LLVMFunctionType(
+      LilyLLVMGetType(Self, ReturnDT), FnSysParams, Params->len, false);
+    LLVMValueRef FnSys = LLVMAddFunction(Self->module, SysName, FnSysType);
+    LilyLLVMSetLinkage(FnSys, Linkage);
+
+    return FnSys;
+}
+
+LLVMValueRef
 LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
                      LilyIrLlvmScope *Scope,
                      const LilyIrLlvmPending *Pending,
@@ -775,7 +799,10 @@ LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
                      const char *SysName,
                      const char *Name)
 {
-    LLVMValueRef Fn = LLVMGetNamedFunction(Self->module, SysName);
+    LLVMValueRef SysFn = LLVMGetNamedFunction(Self->module, SysName);
+
+    ASSERT(SysFn);
+
     LLVMValueRef Args[MAX_FUN_PARAMS] = { 0 };
     LLVMTypeRef ParamTypes[MAX_FUN_PARAMS] = { 0 };
     LLVMTypeRef ReturnType = LilyLLVMGetType(Self, ReturnDT);
@@ -795,7 +822,7 @@ LilyLLVMBuildSysCall(const LilyIrLlvm *Self,
     return LLVMBuildCall2(
       Self->builder,
       LLVMFunctionType(ReturnType, ParamTypes, Params->len, false),
-      Fn,
+      SysFn,
       Args,
       Params->len,
       Name);
@@ -892,11 +919,14 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
             LLVMValueRef global_bytes =
               LLVMAddGlobal(Self->module, bytes_buffer_type, "bytes");
 
-            LLVMSetInitializer(global_bytes,
-                               LLVMConstString((const char *)Val->bytes,
-                                               bytes_buffer_len,
-                                               false));
+            LLVMSetInitializer(
+              global_bytes,
+              LLVMConstStringInContext(Self->context,
+                                       (const char *)Val->bytes,
+                                       bytes_buffer_len + 1,
+                                       true));
             LLVMSetUnnamedAddr(global_bytes, true);
+            LilyLLVMSetLinkage(global_bytes, LILY_MIR_LINKAGE_PRIVATE);
 
             // Construct { i8*, iptr }
             LLVMTypeRef bytes_type = LilyLLVMGetType(Self, Val->dt);
@@ -920,6 +950,29 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
               "local.bytes.len");
 
             return bytes_ptr;
+        }
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CSTR: {
+            // [i8 x n]
+            Usize cstr_buffer_len = strlen(Val->cstr);
+            LLVMTypeRef cstr_buffer_type =
+              LLVMArrayType(i8__LilyIrLlvm(Self), cstr_buffer_len + 1);
+            LLVMValueRef global_cstr =
+              LLVMAddGlobal(Self->module, cstr_buffer_type, "cstr");
+
+            LLVMSetInitializer(
+              global_cstr,
+              LLVMConstStringInContext(
+                Self->context, Val->cstr, cstr_buffer_len + 1, true));
+            LLVMSetUnnamedAddr(global_cstr, true);
+            LilyLLVMSetLinkage(global_cstr, LILY_MIR_LINKAGE_PRIVATE);
+
+            if (CurrentPtr) {
+                LLVMBuildStore(Self->builder, global_cstr, CurrentPtr);
+
+                return CurrentPtr;
+            }
+
+            return global_cstr;
         }
         case LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION:
             TODO("Exception");
@@ -946,34 +999,51 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
         case LILY_MIR_INSTRUCTION_VAL_KIND_SLICE:
             TODO("slice");
         case LILY_MIR_INSTRUCTION_VAL_KIND_STR: {
-            // [i32 x n]
+            // [i8 x n]
             LLVMTypeRef str_buffer_type =
-              LLVMArrayType(i32__LilyIrLlvm(Self), Val->str->len + 1);
+              LLVMArrayType(i8__LilyIrLlvm(Self), Val->str->len + 1);
             LLVMValueRef global_str =
               LLVMAddGlobal(Self->module, str_buffer_type, "str");
 
             LLVMSetInitializer(
               global_str,
-              LLVMConstString(Val->str->buffer, Val->str->len, false));
+              LLVMConstStringInContext(
+                Self->context, Val->str->buffer, Val->str->len + 1, true));
             LLVMSetUnnamedAddr(global_str, true);
+            LilyLLVMSetLinkage(global_str, LILY_MIR_LINKAGE_PRIVATE);
+            LLVMSetGlobalConstant(global_str, true);
 
-            // Construct { i32*, iptr }
+            // Construct { i8*, iptr }
             LLVMTypeRef str_type = LilyLLVMGetType(Self, Val->dt);
             LLVMValueRef str_ptr =
               CurrentPtr
                 ? CurrentPtr
                 : LLVMBuildAlloca(Self->builder, str_type, "local.str");
-            LLVMValueRef str_ptr_value = LLVMBuildLoad2(
-              Self->builder, str_type, str_ptr, "local.str.load");
-
-            LLVMBuildInsertValue(
-              Self->builder, str_ptr_value, global_str, 0, "local.str.buffer");
-            LLVMBuildInsertValue(
+            LLVMValueRef str_buffer_ptr = LLVMBuildGEP2(
               Self->builder,
-              str_ptr_value,
-              LLVMConstInt(intptr__LilyIrLlvm(Self), Val->str->len, true),
-              1,
+              str_type,
+              str_ptr,
+              (LLVMValueRef[]){ LLVMConstInt(i32__LilyIrLlvm(Self), 0, false),
+                                LLVMConstInt(i32__LilyIrLlvm(Self), 0, false) },
+              2,
+              "local.str.buffer");
+            LLVMValueRef str_len_ptr = LLVMBuildGEP2(
+              Self->builder,
+              str_type,
+              str_ptr,
+              (LLVMValueRef[]){ LLVMConstInt(i32__LilyIrLlvm(Self), 0, false),
+                                LLVMConstInt(i32__LilyIrLlvm(Self), 1, false) },
+              2,
               "local.str.len");
+
+            LLVMSetIsInBounds(str_buffer_ptr, true);
+            LLVMSetIsInBounds(str_len_ptr, true);
+
+            LLVMBuildStore(Self->builder, global_str, str_buffer_ptr);
+            LLVMBuildStore(
+              Self->builder,
+              LLVMConstInt(intptr__LilyIrLlvm(Self), Val->str->len, true),
+              str_len_ptr);
 
             return str_ptr;
         }
@@ -1565,8 +1635,16 @@ LilyLLVMGetType(const LilyIrLlvm *Self, const LilyMirDt *DT)
 
             ASSERT(ElementType);
 
+            if (DT->array.len.is_undef) {
+                return LLVMStructType(
+                  (LLVMTypeRef[]){ ptr__LilyIrLlvm(Self, ElementType),
+                                   intptr__LilyIrLlvm(Self) },
+                  2,
+                  false);
+            }
+
             return LLVMStructType(
-              (LLVMTypeRef[]){ LLVMArrayType(ElementType, DT->array.len),
+              (LLVMTypeRef[]){ LLVMArrayType(ElementType, DT->array.len.len),
                                intptr__LilyIrLlvm(Self) },
               2,
               false);
@@ -1577,6 +1655,8 @@ LilyLLVMGetType(const LilyIrLlvm *Self, const LilyMirDt *DT)
                                intptr__LilyIrLlvm(Self) },
               2,
               false);
+        case LILY_MIR_DT_KIND_CSTR:
+            return ptr__LilyIrLlvm(Self, i8__LilyIrLlvm(Self));
         case LILY_MIR_DT_KIND_RESULT: {
             LLVMTypeRef ok = LilyLLVMGetType(Self, DT->result.ok);
             LLVMTypeRef err = LilyLLVMGetType(Self, DT->result.err);
@@ -1625,7 +1705,7 @@ LilyLLVMGetType(const LilyIrLlvm *Self, const LilyMirDt *DT)
         }
         case LILY_MIR_DT_KIND_STR:
             return LLVMStructType(
-              (LLVMTypeRef[]){ ptr__LilyIrLlvm(Self, i32__LilyIrLlvm(Self)),
+              (LLVMTypeRef[]){ ptr__LilyIrLlvm(Self, i8__LilyIrLlvm(Self)),
                                intptr__LilyIrLlvm(Self) },
               2,
               false);
@@ -1802,6 +1882,13 @@ LilyLLVMPrepareModule(const LilyIrLlvm *Self, OrderedHashMap *Insts)
                                         Inst->fun.return_data_type,
                                         Inst->fun.name);
                 break;
+            case LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE:
+                LilyLLVMBuildSys(Self,
+                                 Inst->fun_prototype.params,
+                                 Inst->fun_prototype.return_data_type,
+                                 Inst->fun_prototype.name,
+                                 Inst->fun_prototype.linkage);
+                break;
             case LILY_MIR_INSTRUCTION_KIND_STRUCT:
                 LilyLLVMPrepareStruct(Self, Inst->struct_.name);
                 break;
@@ -1916,6 +2003,8 @@ LilyLLVMRunModule(const LilyIrLlvm *Self, OrderedHashMap *Insts)
 
                 break;
             }
+            case LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE:
+                continue;
             case LILY_MIR_INSTRUCTION_KIND_STRUCT: {
                 LLVMTypeRef Struct =
                   LLVMGetTypeByName2(Self->context, Inst->struct_.name);

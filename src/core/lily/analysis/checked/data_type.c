@@ -471,6 +471,22 @@ DESTRUCTOR(LilyCheckedDataTypeResult, LilyCheckedDataTypeResult *self)
     lily_free(self);
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeLen,
+               const LilyCheckedDataTypeLen *self)
+{
+    if (self->is_undef) {
+        return format(
+          "LilyCheckedDataTypeLen{{ len = undef, is_undef = true }");
+    }
+
+    return format("LilyCheckedDataTypeLen{{ len = {zu}, is_undef = false }",
+                  self->len);
+}
+#endif
+
 CONSTRUCTOR(LilyCheckedDataType *,
             LilyCheckedDataType,
             enum LilyCheckedDataTypeKind kind,
@@ -507,7 +523,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     bytes,
                     const Location *location,
-                    Isize bytes)
+                    LilyCheckedDataTypeLen bytes)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
 
@@ -694,7 +710,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     str,
                     const Location *location,
-                    Isize str)
+                    LilyCheckedDataTypeLen str)
 {
     LilyCheckedDataType *self = lily_malloc(sizeof(LilyCheckedDataType));
 
@@ -1276,8 +1292,10 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                           clone__LilyCheckedDataType(self->array.data_type)));
             }
         case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
-            return NEW_VARIANT(
-              LilyCheckedDataType, bytes, self->location, self->bytes);
+            return NEW_VARIANT(LilyCheckedDataType,
+                               bytes,
+                               self->location,
+                               clone__LilyCheckedDataTypeLen(&self->bytes));
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
             Vec *generics = NULL;
 
@@ -1358,8 +1376,10 @@ clone__LilyCheckedDataType(LilyCheckedDataType *self)
                                self->location,
                                clone__LilyCheckedDataType(self->ref_mut));
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
-            return NEW_VARIANT(
-              LilyCheckedDataType, str, self->location, self->str);
+            return NEW_VARIANT(LilyCheckedDataType,
+                               str,
+                               self->location,
+                               clone__LilyCheckedDataTypeLen(&self->str));
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
             return NEW_VARIANT(LilyCheckedDataType,
                                trace,
@@ -1664,7 +1684,7 @@ update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
         case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_BYTES:
-            self->bytes = other->bytes;
+            self->bytes = NEW_VARIANT(LilyCheckedDataTypeLen, undef);
 
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_CUSTOM: {
@@ -1740,7 +1760,7 @@ update_data_type__LilyCheckedDataType(LilyCheckedDataType *self,
 
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_STR:
-            self->str = other->str;
+            self->str = NEW_VARIANT(LilyCheckedDataTypeLen, undef);
 
             break;
         case LILY_CHECKED_DATA_TYPE_KIND_TRACE:
@@ -2983,7 +3003,9 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
             break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_BYTES: {
-            char *s = format(", bytes = {d} }", self->bytes);
+            char *s =
+              format(", bytes = {sa} }",
+                     to_string__Debug__LilyCheckedDataTypeLen(&self->bytes));
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -3076,7 +3098,9 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
             break;
         }
         case LILY_CHECKED_DATA_TYPE_KIND_STR: {
-            char *s = format(", str = {d} }", self->str);
+            char *s =
+              format(", str = {sa} }",
+                     to_string__Debug__LilyCheckedDataTypeLen(&self->str));
 
             PUSH_STR_AND_FREE(res, s);
 

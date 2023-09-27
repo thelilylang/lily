@@ -46,6 +46,8 @@ char *
 IMPL_FOR_DEBUG(to_string, LilyMirLinkage, enum LilyMirLinkage self)
 {
     switch (self) {
+        case LILY_MIR_LINKAGE_EXTERNAL:
+            return "\x1b[31mext\x1b[0m";
         case LILY_MIR_LINKAGE_PRIVATE:
             return "\x1b[31mpriv\x1b[0m";
         case LILY_MIR_LINKAGE_PUBLIC:

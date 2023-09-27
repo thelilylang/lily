@@ -33,6 +33,8 @@
 #include <base/string.h>
 #endif
 
+#include <core/lily/analysis/checked/data_type.h>
+
 // TODO: add lambda data type
 // TODO: add ref count
 
@@ -43,6 +45,7 @@ enum LilyMirDtKind
     LILY_MIR_DT_KIND_ANY,
     LILY_MIR_DT_KIND_ARRAY,
     LILY_MIR_DT_KIND_BYTES,
+    LILY_MIR_DT_KIND_CSTR,
     LILY_MIR_DT_KIND_RESULT,
     LILY_MIR_DT_KIND_I1,
     LILY_MIR_DT_KIND_I8,
@@ -69,9 +72,67 @@ enum LilyMirDtKind
     LILY_MIR_DT_KIND_C_VA_ARG
 };
 
+typedef struct LilyMirDtLen
+{
+    Usize len; // can be undef
+    bool is_undef;
+} LilyMirDtLen;
+
+/**
+ *
+ * @brief Construct LilyMirDtLen type (undef variant).
+ */
+inline VARIANT_CONSTRUCTOR(LilyMirDtLen, LilyMirDtLen, undef)
+{
+    return (LilyMirDtLen){
+        .is_undef = true,
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyMirDtLen type (def variant).
+ */
+inline VARIANT_CONSTRUCTOR(LilyMirDtLen, LilyMirDtLen, def, Usize len)
+{
+    return (LilyMirDtLen){ .is_undef = false, .len = len };
+}
+
+/**
+ *
+ * @brief Clone LilyMirDtLen type.
+ */
+inline LilyMirDtLen
+clone__LilyMirDtLen(const LilyMirDtLen *self)
+{
+    return self->is_undef ? NEW_VARIANT(LilyMirDtLen, undef)
+                          : NEW_VARIANT(LilyMirDtLen, def, self->len);
+}
+
+/**
+ *
+ * @brief Check if the both LilyMirDtLen are equal.
+ */
+inline bool
+eq__LilyMirDtLen(const LilyMirDtLen *self, const LilyMirDtLen *other)
+{
+    return self->is_undef == other->is_undef ? true : self->len == other->len;
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedDataTypeLen to LilyMirDtLen type.
+ */
+inline LilyMirDtLen
+from_check_len__LilyMirDtLen(const LilyCheckedDataTypeLen *self)
+{
+    return self->is_undef ? NEW_VARIANT(LilyMirDtLen, undef)
+                          : NEW_VARIANT(LilyMirDtLen, def, self->len);
+}
+
 typedef struct LilyMirDtArray
 {
-    Usize len;
+    LilyMirDtLen len;
     LilyMirDt *dt;
 } LilyMirDtArray;
 
@@ -81,7 +142,10 @@ DESTRUCTOR(LilyMirDt, LilyMirDt *self);
  *
  * @brief Construct LilyMirDtArray type.
  */
-inline CONSTRUCTOR(LilyMirDtArray, LilyMirDtArray, Usize len, LilyMirDt *dt)
+inline CONSTRUCTOR(LilyMirDtArray,
+                   LilyMirDtArray,
+                   LilyMirDtLen len,
+                   LilyMirDt *dt)
 {
     return (LilyMirDtArray){ .len = len, .dt = dt };
 }
@@ -129,12 +193,13 @@ typedef struct LilyMirDt
     union
     {
         LilyMirDtArray array;
-        Usize bytes;
+        LilyMirDtLen bytes;
+        LilyMirDtLen cstr;
         LilyMirDt *list;
         LilyMirDt *ptr;
         LilyMirDt *ref;
         LilyMirDtResult result;
-        Usize str;
+        LilyMirDtLen str;
         Vec *struct_;            // Vec<LilyMirDt*>*
         const char *struct_name; // const char* (&)
         LilyMirDt *trace;
@@ -158,7 +223,13 @@ VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, array, LilyMirDtArray array);
  *
  * @brief Construct LilyMirDt type (LILY_MIR_DT_KIND_BYTES).
  */
-VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, bytes, Usize bytes);
+VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, bytes, LilyMirDtLen bytes);
+
+/**
+ *
+ * @brief Construct LilyMirDt type (LILY_MIR_DT_KIND_CSTR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, cstr, LilyMirDtLen cstr);
 
 /**
  *
@@ -188,7 +259,7 @@ VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, result, LilyMirDtResult result);
  *
  * @brief Construct LilyMirDt type (LILY_MIR_DT_KIND_STR).
  */
-VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, str, Usize str);
+VARIANT_CONSTRUCTOR(LilyMirDt *, LilyMirDt, str, LilyMirDtLen str);
 
 /**
  *

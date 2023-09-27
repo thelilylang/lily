@@ -31,6 +31,8 @@
 
 #define SYSS_COUNT 14
 
+// TODO: add ID on each sys function
+
 typedef struct LilySysFun
 {
     const char *name;

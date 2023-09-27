@@ -67,6 +67,7 @@ enum LilyMirInstructionKind
     LILY_MIR_INSTRUCTION_KIND_FREM,
     LILY_MIR_INSTRUCTION_KIND_FSUB,
     LILY_MIR_INSTRUCTION_KIND_FUN,
+    LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE,
     LILY_MIR_INSTRUCTION_KIND_GETARG,
     LILY_MIR_INSTRUCTION_KIND_GETARRAY,
     LILY_MIR_INSTRUCTION_KIND_GETLIST,
@@ -123,6 +124,7 @@ enum LilyMirInstructionValKind
 {
     LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY,
     LILY_MIR_INSTRUCTION_VAL_KIND_BYTES,
+    LILY_MIR_INSTRUCTION_VAL_KIND_CSTR,
     LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION, // TODO:
                                              // LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION
                                              // ->
@@ -154,6 +156,7 @@ typedef struct LilyMirInstructionVal
     {
         Vec *array;         // Vec<LilyMirInstructionVal*>*
         const Uint8 *bytes; // const Uint8* (&)
+        const char *cstr;   // const char* (&)
         struct LilyMirInstructionVal *exception[2]; // [ok?, err?]
         Float64 float_;
         Int64 int_;
@@ -200,6 +203,17 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     bytes,
                     LilyMirDt *dt,
                     const Uint8 *bytes);
+
+/**
+ *
+ * @brief Construct LilyMirInstructionVal type
+ * (LILY_MIR_INSTRUCTION_VAL_KIND_CSTR).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
+                    cstr,
+                    LilyMirDt *dt,
+                    const char *cstr);
 
 /**
  *
@@ -936,6 +950,51 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self);
 
+typedef struct LilyMirInstructionFunPrototype
+{
+    const char *name; // const char* (&)
+    Vec *params;      // Vec<LilyMirDt*>*
+    LilyMirDt *return_data_type;
+    enum LilyMirLinkage linkage;
+} LilyMirInstructionFunPrototype;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionFunPrototype type.
+ */
+inline CONSTRUCTOR(LilyMirInstructionFunPrototype,
+                   LilyMirInstructionFunPrototype,
+                   const char *name,
+                   Vec *params,
+                   LilyMirDt *return_data_type,
+                   enum LilyMirLinkage linkage)
+{
+    return (LilyMirInstructionFunPrototype){ .name = name,
+                                             .params = params,
+                                             .return_data_type =
+                                               return_data_type,
+                                             .linkage = linkage };
+}
+
+/**
+ *
+ * @brief Convert LilyMirInstructionFunPrototype in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionFunPrototype,
+               const LilyMirInstructionFunPrototype *self);
+#endif
+
+/**
+ *
+ * @brief Free LilyMirInstructionFunPrototype type.
+ */
+DESTRUCTOR(LilyMirInstructionFunPrototype,
+           const LilyMirInstructionFunPrototype *self);
+
 typedef struct LilyMirInstructionGetArray
 {
     LilyMirDt *dt;              // data type of the final item
@@ -1364,6 +1423,7 @@ typedef struct LilyMirInstruction
         LilyMirInstructionDestSrc frem;
         LilyMirInstructionDestSrc fsub;
         LilyMirInstructionFun fun;
+        LilyMirInstructionFunPrototype fun_prototype;
         LilyMirInstructionGetArray getarray;
         LilyMirInstructionSrc getarg;
         LilyMirInstructionGetField getfield;
@@ -1656,6 +1716,16 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     fun,
                     LilyMirInstructionFun fun);
+
+/**
+ *
+ * @brief Construct LilyMirInstruction type
+ * (LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fun_prototype,
+                    LilyMirInstructionFunPrototype fun_prototype);
 
 /**
  *

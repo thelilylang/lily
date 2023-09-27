@@ -459,6 +459,71 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyCheckedDataTypeResult, LilyCheckedDataTypeResult *self);
 
+typedef struct LilyCheckedDataTypeLen
+{
+    Usize len; // can be undef
+    bool is_undef;
+} LilyCheckedDataTypeLen;
+
+/**
+ *
+ * @brief Construct LilyCheckedDataTypeLen type (undef variant).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedDataTypeLen,
+                           LilyCheckedDataTypeLen,
+                           undef)
+{
+    return (LilyCheckedDataTypeLen){
+        .is_undef = true,
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedDataTypeLen type (def variant).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedDataTypeLen,
+                           LilyCheckedDataTypeLen,
+                           def,
+                           Usize len)
+{
+    return (LilyCheckedDataTypeLen){ .is_undef = false, .len = len };
+}
+
+/**
+ *
+ * @brief Clone LilyCheckedDataTypeLen type.
+ */
+inline LilyCheckedDataTypeLen
+clone__LilyCheckedDataTypeLen(const LilyCheckedDataTypeLen *self)
+{
+    return self->is_undef ? NEW_VARIANT(LilyCheckedDataTypeLen, undef)
+                          : NEW_VARIANT(LilyCheckedDataTypeLen, def, self->len);
+}
+
+/**
+ *
+ * @brief Check if the both LilyCheckedDataTypeLen are equal.
+ */
+inline bool
+eq__LilyCheckedDataTypeLen(const LilyCheckedDataTypeLen *self,
+                           const LilyCheckedDataTypeLen *other)
+{
+    return self->is_undef == other->is_undef ? true : self->len == other->len;
+}
+
+/**
+ *
+ * @brief Convert LilyCheckedDataTypeLen in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               LilyCheckedDataTypeLen,
+               const LilyCheckedDataTypeLen *self);
+#endif
+
 struct LilyCheckedDataType
 {
     enum LilyCheckedDataTypeKind kind;
@@ -477,7 +542,7 @@ struct LilyCheckedDataType
     union
     {
         LilyCheckedDataTypeArray array;
-        Isize bytes; // size of Bytes
+        LilyCheckedDataTypeLen bytes;
         LilyCheckedDataTypeCustom custom;
         LilyCheckedDataTypeLambda lambda;
         LilyCheckedDataType *list;
@@ -488,7 +553,7 @@ struct LilyCheckedDataType
         LilyCheckedDataType *ref;
         LilyCheckedDataType *ref_mut;
         LilyCheckedDataTypeResult *result;
-        Isize str; // size of Str
+        LilyCheckedDataTypeLen str;
         LilyCheckedDataType *trace;
         LilyCheckedDataType *trace_mut;
         Vec *tuple; // Vec<LilyCheckedDataType*>*
@@ -528,7 +593,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     bytes,
                     const Location *location,
-                    Isize bytes);
+                    LilyCheckedDataTypeLen bytes);
 
 /**
  *
@@ -645,7 +710,7 @@ VARIANT_CONSTRUCTOR(LilyCheckedDataType *,
                     LilyCheckedDataType,
                     str,
                     const Location *location,
-                    Isize str);
+                    LilyCheckedDataTypeLen str);
 
 /**
  *

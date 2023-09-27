@@ -121,6 +121,10 @@ static VARIANT_DESTRUCTOR(LilyMirInstruction, fsub, LilyMirInstruction *self);
 static VARIANT_DESTRUCTOR(LilyMirInstruction, fun, LilyMirInstruction *self);
 
 static VARIANT_DESTRUCTOR(LilyMirInstruction,
+                          fun_prototype,
+                          LilyMirInstruction *self);
+
+static VARIANT_DESTRUCTOR(LilyMirInstruction,
                           getarray,
                           LilyMirInstruction *self);
 
@@ -296,6 +300,22 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
     self->dt = dt;
     self->ref_count = 0;
     self->bytes = bytes;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
+                    cstr,
+                    LilyMirDt *dt,
+                    const char *cstr)
+{
+    LilyMirInstructionVal *self = lily_malloc(sizeof(LilyMirInstructionVal));
+
+    self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_CSTR;
+    self->dt = dt;
+    self->ref_count = 0;
+    self->cstr = cstr;
 
     return self;
 }
@@ -536,6 +556,8 @@ eq__LilyMirInstructionVal(const LilyMirInstructionVal *self,
         case LILY_MIR_INSTRUCTION_VAL_KIND_BYTES:
             return !strcmp((const char *)self->bytes,
                            (const char *)other->bytes);
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CSTR:
+            return !strcmp(self->cstr, other->cstr);
         case LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION:
             if (self->exception[0] && other->exception[0]) {
                 return eq__LilyMirInstructionVal(self->exception[0],
@@ -649,6 +671,12 @@ IMPL_FOR_DEBUG(to_string,
         case LILY_MIR_INSTRUCTION_VAL_KIND_BYTES:
             push_str__String(res, "b\"");
             push_str__String(res, (char *)self->bytes);
+            push_str__String(res, "\"");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CSTR:
+            push_str__String(res, "c\"");
+            push_str__String(res, (char *)self->cstr);
             push_str__String(res, "\"");
 
             return res;
@@ -1174,6 +1202,46 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
     FREE(LilyMirNameManager, &self->reg_manager);
     FREE(LilyMirNameManager, &self->block_manager);
     FREE(LilyMirNameManager, &self->virtual_variable_manager);
+    FREE(LilyMirDt, self->return_data_type);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyMirInstructionFunPrototype,
+               const LilyMirInstructionFunPrototype *self)
+{
+    String *res =
+      format__String("{s} \x1b[36mfun\x1b[0m {s}(",
+                     to_string__Debug__LilyMirLinkage(self->linkage),
+                     self->name);
+
+    for (Usize i = 0; i < self->params->len; ++i) {
+        String *param = to_string__Debug__LilyMirDt(get__Vec(self->params, i));
+
+        APPEND_AND_FREE(res, param);
+
+        if (i + 1 != self->params->len) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    {
+        char *s =
+          format(") {Sr}", to_string__Debug__LilyMirDt(self->return_data_type));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(LilyMirInstructionFunPrototype,
+           const LilyMirInstructionFunPrototype *self)
+{
+    FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, LilyMirDt);
+    FREE(Vec, self->params);
     FREE(LilyMirDt, self->return_data_type);
 }
 
@@ -1809,6 +1877,20 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
     self->kind = LILY_MIR_INSTRUCTION_KIND_FUN;
     self->debug_info = NULL;
     self->fun = fun;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirInstruction *,
+                    LilyMirInstruction,
+                    fun_prototype,
+                    LilyMirInstructionFunPrototype fun_prototype)
+{
+    LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
+
+    self->kind = LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE;
+    self->debug_info = NULL;
+    self->fun_prototype = fun_prototype;
 
     return self;
 }
@@ -2611,6 +2693,12 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
             res = format__String(
               "\n{Sr}", to_string__Debug__LilyMirInstructionFun(&self->fun));
             break;
+        case LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE:
+            res =
+              format__String("\n{Sr}",
+                             to_string__Debug__LilyMirInstructionFunPrototype(
+                               &self->fun_prototype));
+            break;
         case LILY_MIR_INSTRUCTION_KIND_GETARG:
             res = format__String(
               "\x1b[34mgetarg\x1b[0m {Sr}",
@@ -3026,6 +3114,13 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, fun, LilyMirInstruction *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyMirInstruction, fun_prototype, LilyMirInstruction *self)
+{
+    FREE_DEBUG_INFO(self);
+    FREE(LilyMirInstructionFunPrototype, &self->fun_prototype);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(LilyMirInstruction, getarray, LilyMirInstruction *self)
 {
     FREE_DEBUG_INFO(self);
@@ -3429,6 +3524,9 @@ DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self)
             break;
         case LILY_MIR_INSTRUCTION_KIND_FUN:
             FREE_VARIANT(LilyMirInstruction, fun, self);
+            break;
+        case LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE:
+            FREE_VARIANT(LilyMirInstruction, fun_prototype, self);
             break;
         case LILY_MIR_INSTRUCTION_KIND_GETARG:
             FREE_VARIANT(LilyMirInstruction, getarg, self);
