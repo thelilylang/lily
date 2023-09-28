@@ -1,8 +1,6 @@
 import "@sys";
 
 fun main Int32 =
-	val msg := "Hello\n";
-	@sys.write(1, msg cast CStr, @len(msg))
-
+	_ = @sys.write(1, c"Hello, World!\n", 14);
 	return 0;
 end
