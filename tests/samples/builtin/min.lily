@@ -3,5 +3,5 @@ import "@builtin";
 fun main =
     val a := 2;
     val b := 3;
-    val res := @builtin.min(2, 3);
+    val res := @builtin.min(a, b);
 end

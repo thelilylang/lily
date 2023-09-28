@@ -351,6 +351,8 @@ check_call_expr__LilyAnalysis(LilyAnalysis *self,
                               bool must_mut,
                               LilyCheckedDataType *defined_data_type);
 
+// @return LilyCheckedExpr*?
+// Return NULL only when we pass wildcard expression to the function.
 static LilyCheckedExpr *
 check_assignable_expr__LilyAnalysis(LilyAnalysis *self,
                                     LilyAstExpr *expr,
@@ -3414,15 +3416,19 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_SUB:
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN_XOR:
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN: {
-            LilyCheckedExpr *left = check_expr__LilyAnalysis(
-              self, expr->binary.left, scope, safety_mode, true, NULL);
-            LilyCheckedExpr *right =
-              check_expr__LilyAnalysis(self,
-                                       expr->binary.right,
-                                       scope,
-                                       safety_mode,
-                                       false,
-                                       left->data_type);
+            LilyCheckedExpr *left = check_assignable_expr__LilyAnalysis(
+              self, expr->binary.left, scope, safety_mode, NULL);
+            LilyCheckedExpr *right = check_expr__LilyAnalysis(
+              self, expr->binary.right, scope, safety_mode, false, NULL);
+
+            if (!left &&
+                expr->binary.left->kind == LILY_AST_EXPR_KIND_WILDCARD &&
+                expr->binary.kind == LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN) {
+                return NEW_VARIANT(LilyCheckedExpr, uniter, expr, right);
+            } else if (!left &&
+                       expr->binary.left->kind == LILY_AST_EXPR_KIND_WILDCARD) {
+                FAILED("expected `=` operator");
+            }
 
             if (expr->binary.kind == LILY_AST_EXPR_BINARY_KIND_ASSIGN) {
                 LilyCheckedDataType *assign_data_type = NULL;
@@ -3678,15 +3684,7 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
                              LilyCheckedVirtualScope *virtual_scope,
                              LilyCheckedDataType *return_data_type)
 {
-    switch (expr->data_type->kind) {
-        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
-        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
-            FAILED("compiler generic data type or unknown data type is not "
-                   "expected at this point, please give a known data type to "
-                   "skip this error");
-        default:
-            break;
-    }
+    LilyCheckedDataType *virtual_data_type = NULL;
 
     switch (expr->kind) {
         case LILY_CHECKED_EXPR_KIND_CALL:
@@ -3793,13 +3791,19 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
                     }
                 }
                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
-                    return search_variable__LilyCheckedVirtualScope(
-                             virtual_scope, expr->call.global_name)
-                      ->virtual_data_type;
+                    virtual_data_type =
+                      search_variable__LilyCheckedVirtualScope(
+                        virtual_scope, expr->call.global_name)
+                        ->virtual_data_type;
+
+                    break;
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
-                    return search_fun_param__LilyCheckedVirtualScope(
-                             virtual_scope, expr->call.global_name)
-                      ->virtual_data_type;
+                    virtual_data_type =
+                      search_fun_param__LilyCheckedVirtualScope(
+                        virtual_scope, expr->call.global_name)
+                        ->virtual_data_type;
+
+                    break;
                 default:
                     return expr->data_type;
             }
@@ -3807,6 +3811,18 @@ reanalyze_expr__LilyAnalysis(LilyAnalysis *self,
             break;
         default:
             return expr->data_type;
+    }
+
+    ASSERT(virtual_data_type);
+
+    switch (virtual_data_type->kind) {
+        case LILY_CHECKED_DATA_TYPE_KIND_COMPILER_GENERIC:
+        case LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN:
+            FAILED("compiler generic data type or unknown data type is not "
+                   "expected at this point, please give a known data type to "
+                   "skip this error");
+        default:
+            return virtual_data_type;
     }
 }
 
@@ -4408,11 +4424,13 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
     if (!params_call) {
         bool is_ok = true;
 
-        for (Usize i = 0; i < params->len; ++i) {
-            if (CAST(LilyCheckedDeclFunParam *, get__Vec(params, i))->kind !=
-                LILY_CHECKED_DECL_FUN_PARAM_KIND_DEFAULT) {
-                is_ok = false;
-                FAILED("miss some parametters");
+        if (params) {
+            for (Usize i = 0; i < params->len; ++i) {
+                if (CAST(LilyCheckedDeclFunParam *, get__Vec(params, i))
+                      ->kind != LILY_CHECKED_DECL_FUN_PARAM_KIND_DEFAULT) {
+                    is_ok = false;
+                    FAILED("miss some parametters");
+                }
             }
         }
 
@@ -4707,7 +4725,7 @@ check_sys_fun_params_call__LilyAnalysis(LilyAnalysis *self,
             ANALYSIS_EMIT_DIAGNOSTIC(
               self,
               simple_lily_error,
-              param_data_type->location,
+              value->data_type->location,
               NEW(LilyError, LILY_ERROR_KIND_DATA_TYPE_DONT_MATCH),
               NULL,
               NULL,
@@ -6406,25 +6424,38 @@ check_assignable_expr__LilyAnalysis(LilyAnalysis *self,
 {
     switch (expr->kind) {
         case LILY_AST_EXPR_KIND_IDENTIFIER:
-        case LILY_AST_EXPR_KIND_ACCESS: {
+        case LILY_AST_EXPR_KIND_ACCESS:
+        case LILY_AST_EXPR_KIND_UNARY: {
             LilyCheckedExpr *checked_expr = check_expr__LilyAnalysis(
               self, expr, scope, safety_mode, true, defined_data_type);
 
-            ASSERT(checked_expr->kind == LILY_CHECKED_EXPR_KIND_CALL);
-
-            switch (checked_expr->call.kind) {
-                case LILY_CHECKED_EXPR_CALL_KIND_FUN:
-                case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
-                case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
-                case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
-                case LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE:
-                case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
-                case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
-                    return checked_expr;
+            switch (checked_expr->kind) {
+                case LILY_CHECKED_EXPR_KIND_UNARY:
+                    switch (checked_expr->unary.kind) {
+                        case LILY_CHECKED_EXPR_UNARY_KIND_DEREFERENCE:
+                            return checked_expr;
+                        default:
+                            FAILED("expected assignable unary expression");
+                    }
+                case LILY_CHECKED_EXPR_KIND_CALL:
+                    switch (checked_expr->call.kind) {
+                        case LILY_CHECKED_EXPR_CALL_KIND_FUN:
+                        case LILY_CHECKED_EXPR_CALL_KIND_METHOD:
+                        case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
+                        case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
+                        case LILY_CHECKED_EXPR_CALL_KIND_ATTRIBUTE:
+                        case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:
+                        case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_SINGLE:
+                            return checked_expr;
+                        default:
+                            FAILED("expected assignable call expression");
+                    }
                 default:
                     FAILED("expected assignable expression");
             }
         }
+        case LILY_AST_EXPR_KIND_WILDCARD:
+            return NULL;
         default:
             FAILED("expected assignable expression");
     }
