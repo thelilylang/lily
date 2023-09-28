@@ -25,7 +25,7 @@
 #include <builtin/cstr.h>
 
 Usize
-__len__$CStr(const char *s)
+_len__$CStr(const char *s)
 {
     Usize len = 0;
 

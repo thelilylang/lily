@@ -28,11 +28,7 @@
 
 #include <string.h>
 
-#ifdef LILY_APPLE_OS
-#define GET_REAL_NAME(name) from__String("_"name)
-#else
-#define GET_REAL_NAME(name) from__String(name)
-#endif
+#define REAL_NAME(name) from__String(name)
 
 LilyBuiltinFun *
 load_builtins__LilyBuiltin()
@@ -42,7 +38,7 @@ load_builtins__LilyBuiltin()
 
     builtins[0] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Int8"),
+        .real_name = REAL_NAME("_max__$Int8"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT8, NULL),
         .params = init__Vec(
@@ -53,7 +49,7 @@ load_builtins__LilyBuiltin()
 
     builtins[1] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Int16"),
+        .real_name = REAL_NAME("_max__$Int16"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT16, NULL),
         .params = init__Vec(
@@ -64,7 +60,7 @@ load_builtins__LilyBuiltin()
 
     builtins[2] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Int32"),
+        .real_name = REAL_NAME("_max__$Int32"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
         .params = init__Vec(
@@ -75,7 +71,7 @@ load_builtins__LilyBuiltin()
 
     builtins[3] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Int64"),
+        .real_name = REAL_NAME("_max__$Int64"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT64, NULL),
         .params = init__Vec(
@@ -86,7 +82,7 @@ load_builtins__LilyBuiltin()
 
     builtins[4] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Isize"),
+        .real_name = REAL_NAME("_max__$Isize"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ISIZE, NULL),
         .params = init__Vec(
@@ -97,7 +93,7 @@ load_builtins__LilyBuiltin()
 
     builtins[5] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Uint8"),
+        .real_name = REAL_NAME("_max__$Uint8"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT8, NULL),
         .params = init__Vec(
@@ -108,7 +104,7 @@ load_builtins__LilyBuiltin()
 
     builtins[6] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Uint16"),
+        .real_name = REAL_NAME("_max__$Uint16"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT16, NULL),
         .params = init__Vec(
@@ -119,7 +115,7 @@ load_builtins__LilyBuiltin()
 
     builtins[7] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Uint32"),
+        .real_name = REAL_NAME("_max__$Uint32"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT32, NULL),
         .params = init__Vec(
@@ -130,7 +126,7 @@ load_builtins__LilyBuiltin()
 
     builtins[8] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Uint64"),
+        .real_name = REAL_NAME("_max__$Uint64"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT64, NULL),
         .params = init__Vec(
@@ -141,7 +137,7 @@ load_builtins__LilyBuiltin()
 
     builtins[9] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Usize"),
+        .real_name = REAL_NAME("_max__$Usize"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
         .params = init__Vec(
@@ -152,7 +148,7 @@ load_builtins__LilyBuiltin()
 
     builtins[10] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Float32"),
+        .real_name = REAL_NAME("_max__$Float32"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_FLOAT32, NULL),
         .params = init__Vec(
@@ -163,7 +159,7 @@ load_builtins__LilyBuiltin()
 
     builtins[11] = (LilyBuiltinFun){
         .name = "max",
-        .real_name = GET_REAL_NAME("__max__$Float64"),
+        .real_name = REAL_NAME("_max__$Float64"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_FLOAT64, NULL),
         .params = init__Vec(
@@ -174,7 +170,7 @@ load_builtins__LilyBuiltin()
 
     builtins[12] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Int8"),
+        .real_name = REAL_NAME("_min__$Int8"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT8, NULL),
         .params = init__Vec(
@@ -185,7 +181,7 @@ load_builtins__LilyBuiltin()
 
     builtins[13] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Int16"),
+        .real_name = REAL_NAME("_min__$Int16"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT16, NULL),
         .params = init__Vec(
@@ -196,7 +192,7 @@ load_builtins__LilyBuiltin()
 
     builtins[14] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Int32"),
+        .real_name = REAL_NAME("_min__$Int32"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT32, NULL),
         .params = init__Vec(
@@ -207,7 +203,7 @@ load_builtins__LilyBuiltin()
 
     builtins[15] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Int64"),
+        .real_name = REAL_NAME("_min__$Int64"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_INT64, NULL),
         .params = init__Vec(
@@ -218,7 +214,7 @@ load_builtins__LilyBuiltin()
 
     builtins[16] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Isize"),
+        .real_name = REAL_NAME("_min__$Isize"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_ISIZE, NULL),
         .params = init__Vec(
@@ -229,7 +225,7 @@ load_builtins__LilyBuiltin()
 
     builtins[17] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Uint8"),
+        .real_name = REAL_NAME("_min__$Uint8"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT8, NULL),
         .params = init__Vec(
@@ -240,7 +236,7 @@ load_builtins__LilyBuiltin()
 
     builtins[18] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Uint16"),
+        .real_name = REAL_NAME("_min__$Uint16"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT16, NULL),
         .params = init__Vec(
@@ -251,7 +247,7 @@ load_builtins__LilyBuiltin()
 
     builtins[19] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Uint32"),
+        .real_name = REAL_NAME("_min__$Uint32"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT32, NULL),
         .params = init__Vec(
@@ -262,7 +258,7 @@ load_builtins__LilyBuiltin()
 
     builtins[20] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Uint64"),
+        .real_name = REAL_NAME("_min__$Uint64"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UINT64, NULL),
         .params = init__Vec(
@@ -273,7 +269,7 @@ load_builtins__LilyBuiltin()
 
     builtins[21] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Usize"),
+        .real_name = REAL_NAME("_min__$Usize"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
         .params = init__Vec(
@@ -284,7 +280,7 @@ load_builtins__LilyBuiltin()
 
     builtins[22] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Float32"),
+        .real_name = REAL_NAME("_min__$Float32"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_FLOAT32, NULL),
         .params = init__Vec(
@@ -295,7 +291,7 @@ load_builtins__LilyBuiltin()
 
     builtins[23] = (LilyBuiltinFun){
         .name = "min",
-        .real_name = GET_REAL_NAME("__min__$Float64"),
+        .real_name = REAL_NAME("_min__$Float64"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_FLOAT64, NULL),
         .params = init__Vec(
@@ -306,7 +302,7 @@ load_builtins__LilyBuiltin()
 
     builtins[24] = (LilyBuiltinFun){
         .name = "len",
-        .real_name = GET_REAL_NAME("__len__$CStr"),
+        .real_name = REAL_NAME("_len__$CStr"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_USIZE, NULL),
         .params = init__Vec(
@@ -315,7 +311,7 @@ load_builtins__LilyBuiltin()
 
     builtins[25] = (LilyBuiltinFun){
         .name = "align",
-        .real_name = GET_REAL_NAME("__align__$Alloc"),
+        .real_name = REAL_NAME("_align__$Alloc"),
         .return_data_type = NEW_VARIANT(
           LilyCheckedDataType,
           ptr,
@@ -333,7 +329,7 @@ load_builtins__LilyBuiltin()
 
     builtins[26] = (LilyBuiltinFun){
         .name = "alloc",
-        .real_name = GET_REAL_NAME("__alloc__$Alloc"),
+        .real_name = REAL_NAME("_alloc__$Alloc"),
         .return_data_type = NEW_VARIANT(
           LilyCheckedDataType,
           ptr,
@@ -347,7 +343,7 @@ load_builtins__LilyBuiltin()
 
     builtins[27] = (LilyBuiltinFun){
         .name = "resize",
-        .real_name = GET_REAL_NAME("__resize__$Alloc"),
+        .real_name = REAL_NAME("_resize__$Alloc"),
         .return_data_type = NEW_VARIANT(
           LilyCheckedDataType,
           ptr,
@@ -367,7 +363,7 @@ load_builtins__LilyBuiltin()
 
     builtins[28] = (LilyBuiltinFun){
         .name = "free",
-        .real_name = GET_REAL_NAME("__free__$Alloc"),
+        .real_name = REAL_NAME("_free__$Alloc"),
         .return_data_type =
           NEW(LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNIT, NULL),
         .params = init__Vec(

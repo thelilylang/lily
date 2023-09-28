@@ -43,13 +43,13 @@ struct stat st;
 
 #ifdef LILY_WINDOWS_OS
 Usize
-__sys__$read(Int32 fd, void *buf, Usize n)
+_sys__$read(Int32 fd, void *buf, Usize n)
 {
     return (Usize)_read(fd, buf, n);
 }
 #else
 Usize
-__sys__$read(Int32 fd, void *buf, Usize n)
+_sys__$read(Int32 fd, void *buf, Usize n)
 {
     return read(fd, buf, n);
 }
@@ -57,13 +57,13 @@ __sys__$read(Int32 fd, void *buf, Usize n)
 
 #ifdef LILY_WINDOWS_OS
 Usize
-__sys__$write(Int32 fd, const char *buf, Usize n)
+_sys__$write(Int32 fd, const char *buf, Usize n)
 {
     return (Usize)_write(fd, buf, n);
 }
 #else
 Usize
-__sys__$write(Int32 fd, const char *buf, Usize n)
+_sys__$write(Int32 fd, const char *buf, Usize n)
 {
     return write(fd, buf, n);
 }
@@ -71,13 +71,13 @@ __sys__$write(Int32 fd, const char *buf, Usize n)
 
 #ifdef LILY_WINDOWS_OS
 Int32
-__sys__$open(const char *pathname, Int32 flags, Int32 mode)
+_sys__$open(const char *pathname, Int32 flags, Int32 mode)
 {
     return _open(pathname, flags, mode);
 }
 #else
 Int32
-__sys__$open(const char *pathname, Int32 flags, Int32 mode)
+_sys__$open(const char *pathname, Int32 flags, Int32 mode)
 {
     return open(pathname, flags, mode);
 }
@@ -85,13 +85,13 @@ __sys__$open(const char *pathname, Int32 flags, Int32 mode)
 
 #ifdef LILY_WINDOWS_OS
 Int32
-__sys__$close(Int32 fd)
+_sys__$close(Int32 fd)
 {
     return _close(fd);
 }
 #else
 Int32
-__sys__$close(Int32 fd)
+_sys__$close(Int32 fd)
 {
     return close(fd);
 }
@@ -99,140 +99,140 @@ __sys__$close(Int32 fd)
 
 #ifdef LILY_WINDOWS_OS
 Int32
-__sys__$stat_mode(const char *pathname)
+_sys__$stat_mode(const char *pathname)
 {
     _stat(pathname, &st);
     return st.st_mode;
 }
 
 Uint32
-__sys__$stat_ino(const char *pathname)
+_sys__$stat_ino(const char *pathname)
 {
     _stat(pathname, &st);
     return st.st_ino;
 }
 
 Uint32
-__sys__$stat_dev(const char *pathname)
+_sys__$stat_dev(const char *pathname)
 {
     _stat(pathname, &st);
     return st.st_dev;
 }
 
 Uint32
-__sys__$stat_nlink(const char *pathname)
+_sys__$stat_nlink(const char *pathname)
 {
     _stat(pathname, &st);
     return st.st_nlink;
 }
 
 Uint64
-__sys__$stat_uid(const char *pathname)
+_sys__$stat_uid(const char *pathname)
 {
     _stat(pathname, &st);
     return st.st_uid;
 }
 
 Uint64
-__sys__$stat_gid(const char *pathname)
+_sys__$stat_gid(const char *pathname)
 {
     _stat(pathname, &st);
     return st.st_gid;
 }
 
 Int32
-__sys__$stat_size(const char *pathname)
+_sys__$stat_size(const char *pathname)
 {
     _stat(pathname, &st);
     return st.st_size;
 }
 
 Int32
-__sys__$stat_atime(const char *pathname)
+_sys__$stat_atime(const char *pathname)
 {
     _stat(pathname, &st);
     return st.st_atime;
 }
 
 Int32
-__sys__$stat_mtime(const char *pathname)
+_sys__$stat_mtime(const char *pathname)
 {
     _stat(pathname, &st);
     return st.st_mtime;
 }
 
 Int32
-__sys__$stat_ctime(const char *pathname)
+_sys__$stat_ctime(const char *pathname)
 {
     _stat(pathname, &st);
     return st.st_ctime;
 }
 #else
 Int32
-__sys__$stat_mode(const char *pathname)
+_sys__$stat_mode(const char *pathname)
 {
     stat(pathname, &st);
     return (Int32)st.st_mode;
 }
 
 Uint32
-__sys__$stat_ino(const char *pathname)
+_sys__$stat_ino(const char *pathname)
 {
     stat(pathname, &st);
     return st.st_ino;
 }
 
 Uint32
-__sys__$stat_dev(const char *pathname)
+_sys__$stat_dev(const char *pathname)
 {
     stat(pathname, &st);
     return st.st_dev;
 }
 
 Uint32
-__sys__$stat_nlink(const char *pathname)
+_sys__$stat_nlink(const char *pathname)
 {
     stat(pathname, &st);
     return st.st_nlink;
 }
 
 Uint64
-__sys__$stat_uid(const char *pathname)
+_sys__$stat_uid(const char *pathname)
 {
     stat(pathname, &st);
     return st.st_uid;
 }
 
 Uint64
-__sys__$stat_gid(const char *pathname)
+_sys__$stat_gid(const char *pathname)
 {
     stat(pathname, &st);
     return st.st_gid;
 }
 
 Int32
-__sys__$stat_size(const char *pathname)
+_sys__$stat_size(const char *pathname)
 {
     stat(pathname, &st);
     return st.st_size;
 }
 
 Int32
-__sys__$stat_atime(const char *pathname)
+_sys__$stat_atime(const char *pathname)
 {
     stat(pathname, &st);
     return st.st_atime;
 }
 
 Int32
-__sys__$stat_mtime(const char *pathname)
+_sys__$stat_mtime(const char *pathname)
 {
     stat(pathname, &st);
     return st.st_mtime;
 }
 
 Int32
-__sys__$stat_ctime(const char *pathname)
+_sys__$stat_ctime(const char *pathname)
 {
     stat(pathname, &st);
     return st.st_ctime;

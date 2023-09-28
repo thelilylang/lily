@@ -34,7 +34,7 @@ extern "C"
 {
 #endif
 
-    LILY_API Usize __len__$CStr(const char *s);
+    LILY_API Usize _len__$CStr(const char *s);
 
 #if defined(__cplusplus)
 }

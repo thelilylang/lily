@@ -34,18 +34,18 @@ extern "C"
 {
 #endif
 
-    LILY_API Usize __max_capacity__$Alloc();
+    LILY_API Usize _max_capacity__$Alloc();
 
-    LILY_API void *__align__$Alloc(void *mem, Usize align);
+    LILY_API void *_align__$Alloc(void *mem, Usize align);
 
-    LILY_API void *__alloc__$Alloc(Usize size, Usize align);
+    LILY_API void *_alloc__$Alloc(Usize size, Usize align);
 
-    LILY_API void *__resize__$Alloc(void *old_mem,
+    LILY_API void *_resize__$Alloc(void *old_mem,
                                     Usize old_size,
                                     Usize new_size,
                                     Usize align);
 
-    LILY_API void __free__$Alloc(void **mem, Usize size, Usize align);
+    LILY_API void _free__$Alloc(void **mem, Usize size, Usize align);
 
 #if defined(__cplusplus)
 }
