@@ -29,7 +29,7 @@
 void *
 __align__(void *mem, Usize align)
 {
-    return __align__$Alloc(mem, align);
+    return _align__$Alloc(mem, align);
 }
 
 void *
@@ -38,7 +38,7 @@ __alloc__(Usize size, Usize align)
 #ifdef USE_C_MEMORY_API
     return malloc(size);
 #else
-    return __alloc__$Alloc(size, align);
+    return _alloc__$Alloc(size, align);
 #endif
 }
 
@@ -48,7 +48,7 @@ __resize__(void *old_mem, Usize old_size, Usize new_size, Usize align)
 #ifdef USE_C_MEMORY_API
     return realloc(old_mem, new_size);
 #else
-    return __resize__$Alloc(old_mem, old_size, new_size, align);
+    return _resize__$Alloc(old_mem, old_size, new_size, align);
 #endif
 }
 
@@ -58,6 +58,6 @@ __free__(void **mem, Usize size, Usize align)
 #ifdef USE_C_MEMORY_API
     return free(*mem);
 #else
-    return __free__$Alloc(mem, size, align);
+    return _free__$Alloc(mem, size, align);
 #endif
 }
