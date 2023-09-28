@@ -140,17 +140,22 @@ generate_cond__LilyMir(LilyMirModule *module,
                       assign1_block
                         ? assign1_block
                         : LilyMirBuildBlock(module, NEW(LilyMirBlockLimit));
-                    LilyMirInstruction *second_cond = generate_cond__LilyMir(
-                      module,
-                      fun_signature,
-                      scope,
-                      expr->binary.right,
-                      current_virtual_variable,
-                      current_assign0_block,
-                      current_assign1_block,
-                      next_block ? next_block : current_exit_block,
-                      current_exit_block,
-                      true);
+
+                    if (!next_block) {
+                        next_block = current_assign0_block;
+                    }
+
+                    LilyMirInstruction *second_cond =
+                      generate_cond__LilyMir(module,
+                                             fun_signature,
+                                             scope,
+                                             expr->binary.right,
+                                             current_virtual_variable,
+                                             current_assign0_block,
+                                             current_assign1_block,
+                                             next_block,
+                                             current_exit_block,
+                                             true);
                     LilyMirInstruction *second_cond_block =
                       second_cond->kind == LILY_MIR_INSTRUCTION_KIND_BLOCK
                         ? second_cond
@@ -287,6 +292,7 @@ generate_cond__LilyMir(LilyMirModule *module,
                                      module,
                                      ref__LilyMirBlockLimit(
                                        LilyMirGetInsertBlock(module)->limit));
+
                     LilyMirInstruction *current_assign0_block =
                       assign0_block
                         ? assign0_block
@@ -295,17 +301,22 @@ generate_cond__LilyMir(LilyMirModule *module,
                       assign1_block
                         ? assign1_block
                         : LilyMirBuildBlock(module, NEW(LilyMirBlockLimit));
-                    LilyMirInstruction *second_cond = generate_cond__LilyMir(
-                      module,
-                      fun_signature,
-                      scope,
-                      expr->binary.right,
-                      current_virtual_variable,
-                      current_assign0_block,
-                      current_assign1_block,
-                      next_block ? next_block : current_exit_block,
-                      current_exit_block,
-                      true);
+
+                    if (!next_block) {
+                        next_block = current_assign0_block;
+                    }
+
+                    LilyMirInstruction *second_cond =
+                      generate_cond__LilyMir(module,
+                                             fun_signature,
+                                             scope,
+                                             expr->binary.right,
+                                             current_virtual_variable,
+                                             current_assign0_block,
+                                             current_assign1_block,
+                                             next_block,
+                                             current_exit_block,
+                                             true);
                     LilyMirInstruction *second_cond_block =
                       second_cond->kind == LILY_MIR_INSTRUCTION_KIND_BLOCK
                         ? second_cond
