@@ -72,6 +72,9 @@ generate_expr__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_EXPR_KIND_UNARY:
             return generate_unary_expr__LilyMir(
               module, fun_signature, scope, expr, ptr_val, in_return);
+        case LILY_CHECKED_EXPR_KIND_UNITER:
+            return generate_expr__LilyMir(
+              module, fun_signature, scope, expr->uniter, ptr_val, in_return);
         default: {
             LilyMirInstructionVal *val = generate_val__LilyMir(
               module, fun_signature, scope, expr, in_return);
