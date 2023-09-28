@@ -70,6 +70,9 @@ static VARIANT_DESTRUCTOR(LilyCheckedExpr, tuple, LilyCheckedExpr *self);
 // Free LilyCheckedExpr type (LILY_AST_EXPR_KIND_UNARY).
 static VARIANT_DESTRUCTOR(LilyCheckedExpr, unary, LilyCheckedExpr *self);
 
+// Free LilyCheckedExpr type (LILY_AST_EXPR_KIND_UNITER).
+static VARIANT_DESTRUCTOR(LilyCheckedExpr, uniter, LilyCheckedExpr *self);
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self)
@@ -87,6 +90,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self)
             return "LILY_CHECKED_EXPR_KIND_CAST";
         case LILY_CHECKED_EXPR_KIND_COMPILER_FUN:
             return "LILY_CHECKED_EXPR_KIND_COMPILER_FUN";
+        case LILY_CHECKED_EXPR_KIND_GROUPING:
+            return "LILY_CHECKED_EXPR_KIND_GROUPING";
         case LILY_CHECKED_EXPR_KIND_LAMBDA:
             return "LILY_CHECKED_EXPR_KIND_LAMBDA";
         case LILY_CHECKED_EXPR_KIND_LIST:
@@ -99,8 +104,8 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExprKind, enum LilyCheckedExprKind self)
             return "LILY_CHECKED_EXPR_KIND_TUPLE";
         case LILY_CHECKED_EXPR_KIND_UNARY:
             return "LILY_CHECKED_EXPR_KIND_UNARY";
-        case LILY_CHECKED_EXPR_KIND_GROUPING:
-            return "LILY_CHECKED_EXPR_KIND_GROUPING";
+        case LILY_CHECKED_EXPR_KIND_UNITER:
+            return "LILY_CHECKED_EXPR_KIND_UNITER";
         case LILY_CHECKED_EXPR_KIND_UNKNOWN:
             return "LILY_CHECKED_EXPR_KIND_UNKNOWN";
         default:
@@ -351,6 +356,25 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
 
 VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedExpr,
+                    uniter,
+                    const LilyAstExpr *ast_expr,
+                    LilyCheckedExpr *uniter)
+{
+    LilyCheckedExpr *self = lily_malloc(sizeof(LilyCheckedExpr));
+
+    self->kind = LILY_CHECKED_EXPR_KIND_UNITER;
+    self->location = uniter->location;
+    self->data_type = NEW(
+      LilyCheckedDataType, LILY_CHECKED_DATA_TYPE_KIND_UNIT, uniter->location);
+    self->ast_expr = ast_expr;
+    self->ref_count = 0;
+    self->uniter = uniter;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
                     unknown,
                     const Location *location,
                     const LilyAstExpr *ast_expr)
@@ -453,6 +477,8 @@ eq__LilyCheckedExpr(const LilyCheckedExpr *self, const LilyCheckedExpr *other)
             return true;
         case LILY_CHECKED_EXPR_KIND_UNARY:
             return eq__LilyCheckedExprUnary(&self->unary, &other->unary);
+        case LILY_CHECKED_EXPR_KIND_UNITER:
+            return eq__LilyCheckedExpr(self->uniter, other->uniter);
         case LILY_CHECKED_EXPR_KIND_SELF:
         case LILY_CHECKED_EXPR_KIND_UNKNOWN:
             return true;
@@ -596,6 +622,14 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedExpr, const LilyCheckedExpr *self)
 
             break;
         }
+        case LILY_CHECKED_EXPR_KIND_UNITER: {
+            char *s = format(", uniter = {Sr} }",
+                             to_string__Debug__LilyCheckedExpr(self->uniter));
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case LILY_CHECKED_EXPR_KIND_SELF:
         case LILY_CHECKED_EXPR_KIND_UNKNOWN:
             push_str__String(res, " }");
@@ -691,6 +725,13 @@ VARIANT_DESTRUCTOR(LilyCheckedExpr, unary, LilyCheckedExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(LilyCheckedExpr, uniter, LilyCheckedExpr *self)
+{
+    FREE(LilyCheckedExpr, self->uniter);
+    FREE(LilyCheckedDataType, self->data_type);
+    lily_free(self);
+}
+
 DESTRUCTOR(LilyCheckedExpr, LilyCheckedExpr *self)
 {
     if (self->ref_count > 0) {
@@ -734,6 +775,9 @@ DESTRUCTOR(LilyCheckedExpr, LilyCheckedExpr *self)
             break;
         case LILY_CHECKED_EXPR_KIND_UNARY:
             FREE_VARIANT(LilyCheckedExpr, unary, self);
+            break;
+        case LILY_CHECKED_EXPR_KIND_UNITER:
+            FREE_VARIANT(LilyCheckedExpr, uniter, self);
             break;
         case LILY_CHECKED_EXPR_KIND_SELF:
         case LILY_CHECKED_EXPR_KIND_UNKNOWN:

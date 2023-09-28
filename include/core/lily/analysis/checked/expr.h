@@ -60,6 +60,7 @@ enum LilyCheckedExprKind
     LILY_CHECKED_EXPR_KIND_SELF,
     LILY_CHECKED_EXPR_KIND_TUPLE,
     LILY_CHECKED_EXPR_KIND_UNARY,
+    LILY_CHECKED_EXPR_KIND_UNITER,
     LILY_CHECKED_EXPR_KIND_UNKNOWN
 };
 
@@ -85,6 +86,7 @@ typedef struct LilyCheckedExpr
         LilyCheckedExprLiteral literal;
         LilyCheckedExprTuple tuple;
         LilyCheckedExprUnary unary;
+        LilyCheckedExpr *uniter;
     };
 } LilyCheckedExpr;
 
@@ -231,6 +233,16 @@ VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
                     LilyCheckedDataType *data_type,
                     const LilyAstExpr *ast_expr,
                     LilyCheckedExprUnary unary);
+
+/**
+ *
+ * @brief Construct LilyCheckedExpr type (LILY_CHECKED_EXPR_KIND_UNITER).
+ */
+VARIANT_CONSTRUCTOR(LilyCheckedExpr *,
+                    LilyCheckedExpr,
+                    uniter,
+                    const LilyAstExpr *ast_expr,
+                    LilyCheckedExpr *uniter);
 
 /**
  *
