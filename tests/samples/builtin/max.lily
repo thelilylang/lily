@@ -3,5 +3,5 @@ import "@builtin";
 fun main =
     val a := 2;
     val b := 3;
-    val res := @builtin.max(2, 3);
+    val res := @builtin.max(a, b);
 end

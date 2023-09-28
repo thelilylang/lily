@@ -4,5 +4,5 @@ end
 
 fun main =
     val a := 20;
-    _ = get_ptr(a) // `a` pointer is moved here, you cannot use `a` after this point
+    _ = get_ptr(ref a) 
 end

@@ -1,5 +1,5 @@
 fun main =
     unsafe =
-        val a := nil;
+        val a *Int32 := nil;
     end
 end
