@@ -112,6 +112,15 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
         case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_BIT_R_SHIFT:
         case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_XOR:
+            if ((is_integer_data_type__LilyCheckedDataType(left_data_type) ||
+                 left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL ||
+                 left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE) &&
+                left_data_type->kind == right_data_type->kind &&
+                return_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNIT) {
+                operator_is_builtin = true;
+            }
+
+            break;
         case LILY_CHECKED_EXPR_BINARY_KIND_BIT_AND:
         case LILY_CHECKED_EXPR_BINARY_KIND_BIT_L_SHIFT:
         case LILY_CHECKED_EXPR_BINARY_KIND_BIT_OR:
@@ -132,6 +141,15 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
         case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MOD:
         case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_MUL:
         case LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN_SUB:
+            if ((is_integer_data_type__LilyCheckedDataType(left_data_type) ||
+                 is_float_data_type__LilyCheckedDataType(left_data_type) ||
+                 left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BYTE) &&
+                left_data_type->kind == right_data_type->kind &&
+                return_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_UNIT) {
+                operator_is_builtin = true;
+            }
+
+            break;
         case LILY_CHECKED_EXPR_BINARY_KIND_ADD:
         case LILY_CHECKED_EXPR_BINARY_KIND_DIV:
         case LILY_CHECKED_EXPR_BINARY_KIND_EXP:
@@ -163,7 +181,7 @@ generate_binary_expr__LilyMir(LilyMirModule *module,
                  left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL ||
                  left_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_CHAR) &&
                 left_data_type->kind == right_data_type->kind &&
-                left_data_type->kind == return_data_type->kind) {
+                return_data_type->kind == LILY_CHECKED_DATA_TYPE_KIND_BOOL) {
                 operator_is_builtin = true;
             }
 
