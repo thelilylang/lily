@@ -60,9 +60,9 @@ extern "C"
      * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/open-wopen?view=msvc-170
      */
     LILY_API inline Int32 _sys__$open(const char *pathname,
-                                       Int32 flags,
-                                       Int32 mode)
-      __attribute__((always_inline)) __attribute__((hot));
+                                      Int32 flags,
+                                      Int32 mode) __attribute__((always_inline))
+    __attribute__((hot));
 
     /**
      *
