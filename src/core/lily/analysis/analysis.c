@@ -3418,19 +3418,37 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
         case LILY_AST_EXPR_BINARY_KIND_ASSIGN: {
             LilyCheckedExpr *left = check_assignable_expr__LilyAnalysis(
               self, expr->binary.left, scope, safety_mode, NULL);
-            LilyCheckedExpr *right = check_expr__LilyAnalysis(
-              self, expr->binary.right, scope, safety_mode, false, NULL);
 
             if (!left &&
                 expr->binary.left->kind == LILY_AST_EXPR_KIND_WILDCARD &&
                 expr->binary.kind == LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN) {
-                return NEW_VARIANT(LilyCheckedExpr, uniter, expr, right);
+                return NEW_VARIANT(
+                  LilyCheckedExpr,
+                  uniter,
+                  expr,
+                  check_expr__LilyAnalysis(
+                    self, expr->binary.right, scope, safety_mode, false, NULL));
             } else if (!left &&
                        expr->binary.left->kind == LILY_AST_EXPR_KIND_WILDCARD) {
                 FAILED("expected `=` operator");
             }
 
+            LilyCheckedExpr *right = check_expr__LilyAnalysis(
+              self,
+              expr->binary.right,
+              scope,
+              safety_mode,
+              false,
+              expr->binary.kind == LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN
+                ? left->data_type
+                : NULL);
+
             if (expr->binary.kind == LILY_AST_EXPR_BINARY_KIND_ASSIGN) {
+                if (!eq__LilyCheckedDataType(left->data_type,
+                                             right->data_type)) {
+                    FAILED("expected same data type");
+                }
+
                 LilyCheckedDataType *assign_data_type = NULL;
 
                 // TODO: maybe add support for compiler defined data type
