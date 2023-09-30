@@ -266,14 +266,31 @@ LilyMirBuildJmpCond(LilyMirModule *Module,
                     LilyMirInstruction *ElseBlock)
 {
     ASSERT(Cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
-    ASSERT(Cond->val->dt->kind == LILY_MIR_DT_KIND_I1);
 
-    return NEW_VARIANT(LilyMirInstruction,
-                       jmpcond,
-                       NEW(LilyMirInstructionJmpCond,
-                           Cond->val,
-                           &ThenBlock->block,
-                           &ElseBlock->block));
+    if (Cond->val->dt->kind == LILY_MIR_DT_KIND_I1) {
+        return NEW_VARIANT(LilyMirInstruction,
+                           jmpcond,
+                           NEW(LilyMirInstructionJmpCond,
+                               Cond->val,
+                               &ThenBlock->block,
+                               &ElseBlock->block));
+    } else if (Cond->val->dt->kind == LILY_MIR_DT_KIND_PTR &&
+               Cond->val->dt->ptr->kind == LILY_MIR_DT_KIND_I1) {
+        return NEW_VARIANT(
+          LilyMirInstruction,
+          jmpcond,
+          NEW(
+            LilyMirInstructionJmpCond,
+            LilyMirBuildLoad(
+              Module,
+              Cond->val,
+              clone__LilyMirDt(Cond->val->dt->ptr),
+              NEW_VARIANT(LilyMirInstructionFunLoadName, var, Cond->val->var)),
+            &ThenBlock->block,
+            &ElseBlock->block));
+    }
+
+    UNREACHABLE("expected i1 or *i1");
 }
 
 LilyMirInstruction *
@@ -1101,8 +1118,10 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
 
     ASSERT(cond);
 
-    LilyMirInstruction *if_block =
-      LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(block_limit));
+    LilyMirInstruction *if_block = LilyMirBuildBlock(
+      Module,
+      LilyMirEmptyBlock(Module) ? block_limit
+                                : ref__LilyMirBlockLimit(block_limit));
 
     // 3. Add conditional jmp
     LilyMirAddInst(Module,

@@ -2474,8 +2474,14 @@ DESTRUCTOR(LilyPreparserFunBodyItemStmtIf,
     }
 
     if (self->elif_captures) {
-        FREE_BUFFER_ITEMS(
-          self->elif_captures->buffer, self->elif_captures->len, Vec);
+        for (Usize i = 0; i < self->elif_captures->len; ++i) {
+            Vec *elif_capture = get__Vec(self->elif_captures, i);
+
+            if (elif_capture) {
+                FREE(Vec, elif_capture);
+            }
+        }
+
         FREE(Vec, self->elif_captures);
     }
 

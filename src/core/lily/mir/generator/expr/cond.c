@@ -73,6 +73,52 @@
                                                                             \
     LilyMirPopBlock(module);
 
+#define IS_LAST_EXPR()                                              \
+    expr->kind == LILY_CHECKED_EXPR_KIND_BINARY                     \
+      ? !is_node__LilyCheckedExpr(expr->binary.right)               \
+          ? is_second || !exit_block                                \
+        : expr->binary.right->kind == LILY_CHECKED_EXPR_KIND_BINARY \
+          ? (expr->binary.right->binary.kind !=                     \
+               LILY_CHECKED_EXPR_BINARY_KIND_AND &&                 \
+             expr->binary.right->binary.kind !=                     \
+               LILY_CHECKED_EXPR_BINARY_KIND_OR) &&                 \
+              (is_second || !exit_block)                            \
+          : is_second || !exit_block                                \
+      : is_second || !exit_block
+
+#define GENERATE_COND_BLOCK()                                              \
+    {                                                                      \
+        bool is_last_expr = IS_LAST_EXPR();                                \
+        LilyMirInstruction *cond_block =                                   \
+          LilyMirBuildBlock(module, NEW(LilyMirBlockLimit));               \
+                                                                           \
+        LilyMirAddBlock(module, cond_block);                               \
+                                                                           \
+        LilyMirInstruction *cond = generate_expr__LilyMir(                 \
+          module, fun_signature, scope, expr, virtual_variable, false);    \
+                                                                           \
+        ASSERT(cond);                                                      \
+        ASSERT(cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);               \
+        ASSERT((is_last_expr && assign0_block) ||                          \
+               (!is_last_expr && next_block));                             \
+        ASSERT(!LilyMirHasFinalInstruction(module));                       \
+                                                                           \
+        /* jmpcond val(i1) %r.1, assign1, assign0 */                       \
+        LilyMirAddInst(                                                    \
+          module,                                                          \
+          LilyMirBuildJmpCond(module,                                      \
+                              cond,                                        \
+                              assign1_block,                               \
+                              is_last_expr ? assign0_block : next_block)); \
+                                                                           \
+        LilyMirSetBlockLimit(cond_block->block.limit,                      \
+                             LilyMirGetInsertBlock(module)->id);           \
+        LilyMirPopBlock(module);                                           \
+        partial_free__LilyMirInstruction(cond);                            \
+                                                                           \
+        return cond_block;                                                 \
+    }
+
 LilyMirInstruction *
 generate_cond__LilyMir(LilyMirModule *module,
                        LilyCheckedSignatureFun *fun_signature,
@@ -170,9 +216,7 @@ generate_cond__LilyMir(LilyMirModule *module,
                       first_cond->kind == LILY_MIR_INSTRUCTION_KIND_BLOCK
                         ? first_cond
                         : LilyMirBuildBlock(module, NEW(LilyMirBlockLimit));
-                    bool is_last_expr =
-                      !is_node__LilyCheckedExpr(expr->binary.right) &&
-                      (is_second || !exit_block);
+                    bool is_last_expr = IS_LAST_EXPR();
 
                     ASSERT(first_cond);
                     ASSERT(second_cond);
@@ -186,57 +230,6 @@ generate_cond__LilyMir(LilyMirModule *module,
                         LilyMirAddInst(
                           module, LilyMirBuildJmp(module, first_cond_block));
                         LilyMirPopBlock(module);
-                    }
-
-                    // Generate first condition block
-                    // first_cond:
-                    // %r.0 = <cond>
-                    if (first_cond->kind != LILY_MIR_INSTRUCTION_KIND_BLOCK) {
-                        LilyMirAddBlock(module, first_cond_block);
-
-                        ASSERT(first_cond->kind ==
-                               LILY_MIR_INSTRUCTION_KIND_VAL);
-                        ASSERT(!LilyMirHasFinalInstruction(module));
-
-                        // jmpcond val(i1) %r.1, second_cond, assign0
-                        LilyMirAddInst(
-                          module,
-                          LilyMirBuildJmpCond(module,
-                                              first_cond,
-                                              second_cond_block,
-                                              current_assign0_block));
-                        LilyMirSetBlockLimit(first_cond_block->block.limit,
-                                             LilyMirGetInsertBlock(module)->id);
-                        LilyMirPopBlock(module);
-                        partial_free__LilyMirInstruction(first_cond);
-                    }
-
-                    // Generate second condition block
-                    // second_cond:
-                    // %r.1 = <cond>
-                    if (second_cond->kind != LILY_MIR_INSTRUCTION_KIND_BLOCK) {
-                        LilyMirAddBlock(module, second_cond_block);
-
-                        ASSERT(second_cond);
-                        ASSERT(second_cond->kind ==
-                               LILY_MIR_INSTRUCTION_KIND_VAL);
-                        ASSERT((is_last_expr && current_assign1_block) ||
-                               (!is_last_expr && next_block));
-                        ASSERT(!LilyMirHasFinalInstruction(module));
-
-                        // jmpcond val(i1) %r.1, assign1, assign0
-                        LilyMirAddInst(
-                          module,
-                          LilyMirBuildJmpCond(
-                            module,
-                            second_cond,
-                            is_last_expr ? current_assign1_block : next_block,
-                            current_assign0_block));
-
-                        LilyMirSetBlockLimit(second_cond_block->block.limit,
-                                             LilyMirGetInsertBlock(module)->id);
-                        LilyMirPopBlock(module);
-                        partial_free__LilyMirInstruction(second_cond);
                     }
 
                     if (!exit_block) {
@@ -325,9 +318,7 @@ generate_cond__LilyMir(LilyMirModule *module,
                       first_cond->kind == LILY_MIR_INSTRUCTION_KIND_BLOCK
                         ? first_cond
                         : LilyMirBuildBlock(module, NEW(LilyMirBlockLimit));
-                    bool is_last_expr =
-                      !is_node__LilyCheckedExpr(expr->binary.right) &&
-                      (is_second || !exit_block);
+                    bool is_last_expr = IS_LAST_EXPR();
 
                     ASSERT(first_cond);
                     ASSERT(second_cond);
@@ -343,57 +334,6 @@ generate_cond__LilyMir(LilyMirModule *module,
                         LilyMirPopBlock(module);
                     }
 
-                    // Generate first condition block
-                    // first_cond:
-                    // %r.0 = <cond>
-                    if (first_cond->kind != LILY_MIR_INSTRUCTION_KIND_BLOCK) {
-                        LilyMirAddBlock(module, first_cond_block);
-
-                        ASSERT(first_cond->kind ==
-                               LILY_MIR_INSTRUCTION_KIND_VAL);
-                        ASSERT(!LilyMirHasFinalInstruction(module));
-
-                        // jmpcond val(i1) %r.1, assign1, second_cond
-                        LilyMirAddInst(
-                          module,
-                          LilyMirBuildJmpCond(module,
-                                              first_cond,
-                                              current_assign1_block,
-                                              second_cond_block));
-                        LilyMirSetBlockLimit(first_cond_block->block.limit,
-                                             LilyMirGetInsertBlock(module)->id);
-                        LilyMirPopBlock(module);
-                        partial_free__LilyMirInstruction(first_cond);
-                    }
-
-                    // Generate second condition block
-                    // second_cond:
-                    // %r.1 = <cond>
-                    if (second_cond->kind != LILY_MIR_INSTRUCTION_KIND_BLOCK) {
-                        LilyMirAddBlock(module, second_cond_block);
-
-                        ASSERT(second_cond);
-                        ASSERT(second_cond->kind ==
-                               LILY_MIR_INSTRUCTION_KIND_VAL);
-                        ASSERT((is_last_expr && current_assign0_block) ||
-                               (!is_last_expr && next_block));
-                        ASSERT(!LilyMirHasFinalInstruction(module));
-
-                        // jmpcond val(i1) %r.1, assign1, assign0
-                        LilyMirAddInst(
-                          module,
-                          LilyMirBuildJmpCond(
-                            module,
-                            second_cond,
-                            current_assign1_block,
-                            is_last_expr ? current_assign0_block : next_block));
-
-                        LilyMirSetBlockLimit(second_cond_block->block.limit,
-                                             LilyMirGetInsertBlock(module)->id);
-                        LilyMirPopBlock(module);
-                        partial_free__LilyMirInstruction(second_cond);
-                    }
-
                     if (!exit_block) {
                         GENERATE_ASSIGN0_BLOCK();
                         GENERATE_ASSIGN1_BLOCK();
@@ -406,12 +346,7 @@ generate_cond__LilyMir(LilyMirModule *module,
                                        : first_cond_block;
                 }
                 default:
-                    return generate_expr__LilyMir(module,
-                                                  fun_signature,
-                                                  scope,
-                                                  expr,
-                                                  virtual_variable,
-                                                  false);
+                    GENERATE_COND_BLOCK();
             }
         case LILY_CHECKED_EXPR_KIND_GROUPING:
             return generate_cond__LilyMir(module,
@@ -425,7 +360,6 @@ generate_cond__LilyMir(LilyMirModule *module,
                                           exit_block,
                                           is_second);
         default:
-            return generate_expr__LilyMir(
-              module, fun_signature, scope, expr, virtual_variable, false);
+            GENERATE_COND_BLOCK();
     }
 }

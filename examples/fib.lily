@@ -1,5 +1,8 @@
 import "@sys";
 
+val FIB_30 Int32 := 832040;
+val FIB_40 Int32 := 102334155;
+
 fun fib(n Int32) Int32 =
 	if n < 0 do
 		return -1;
@@ -13,9 +16,16 @@ fun fib(n Int32) Int32 =
 end
 
 fun main Int32 =
-	val res := fib(40);
+	val res_fib_30 := fib(30);
+	val res_fib_40 := fib(40);
 
-	@sys.write(1, "Sucess!!\n" cast CStr, 9)
+	if res_fib_30 == FIB_30 do
+		_ = @sys.write(1, c"Sucess!!\n", 9);
+	end
+
+	if res_fib_40 == FIB_40 do
+		_ = @sys.write(1, c"Sucess!!\n", 9);
+	end
 
 	return 0;
 end
