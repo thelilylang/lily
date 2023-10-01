@@ -71,6 +71,21 @@ get__LilyIrLlvmScope(const LilyIrLlvmScope *self, char *name)
     UNREACHABLE("impossible to found the value with the given name");
 }
 
+LLVMValueRef
+safe_get__LilyIrLlvmScope(const LilyIrLlvmScope *self, char *name)
+{
+    for (Usize i = self->items->len; i--;) {
+        LLVMValueRef value =
+          get__LilyIrLlvmScopeItem(get__Vec(self->items, i), name);
+
+        if (value) {
+            return value;
+        }
+    }
+
+    return NULL;
+}
+
 void
 add__LilyIrLlvmScope(const LilyIrLlvmScope *self,
                      char *name,
