@@ -72,6 +72,12 @@ generate_val__LilyMir(LilyMirModule *module,
         }
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
+                case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
+                    return NEW_VARIANT(
+                      LilyMirInstructionVal,
+                      const,
+                      generate_dt__LilyMir(module, expr->data_type),
+                      expr->call.global_name->buffer);
                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
                     ASSERT(scope);
 

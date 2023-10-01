@@ -49,6 +49,7 @@ generate_expr__LilyMir(LilyMirModule *module,
               module, fun_signature, scope, expr, ptr_val, in_return);
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
+                case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE:
                 case LILY_CHECKED_EXPR_CALL_KIND_FUN_PARAM:
                 case LILY_CHECKED_EXPR_CALL_KIND_RECORD_FIELD_ACCESS:

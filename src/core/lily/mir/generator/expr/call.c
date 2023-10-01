@@ -41,8 +41,6 @@ generate_call_expr__LilyMir(LilyMirModule *module,
             TODO("attribute");
         case LILY_CHECKED_EXPR_CALL_KIND_CLASS:
             TODO("class");
-        case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
-            TODO("constant");
         case LILY_CHECKED_EXPR_CALL_KIND_CSTR_LEN:
             TODO("cstr_len");
         case LILY_CHECKED_EXPR_CALL_KIND_ERROR:
