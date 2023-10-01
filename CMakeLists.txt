@@ -464,10 +464,15 @@ add_library(lily_core_lily_analysis STATIC ${LILY_CORE_LILY_ANALYSIS_SRC})
 target_link_libraries(lily_core_lily_analysis PUBLIC lily_core_lily_functions)
 target_include_directories(lily_core_lily_analysis PRIVATE ${LILY_INCLUDE})
 
-# lily_core_lily_bytecode set(LILY_CORE_LILY_BYTECODE_SRC)
+# lily_core_lily_interpreter
+set(LILY_CORE_LILY_INTERPRETER_SRC
+	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/opcode.c
+	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/mir.c
+	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm.c)
 
-# add_library(lily_core_lily_bytecode STATIC ${ LILY_CORE_LILY_BYTECODE_SRC })
-# target_include_directories(lily_core_lily_bytecode PRIVATE include)
+add_library(lily_core_lily_interpreter STATIC ${LILY_CORE_LILY_INTERPRETER_SRC})
+target_link_libraries(lily_core_lily_interpreter PUBLIC lily_base)
+target_include_directories(lily_core_lily_interpreter PRIVATE include)
 
 # lily_core_lily_compiler add_library(LilyCoreLilyCompiler STATIC)
 
