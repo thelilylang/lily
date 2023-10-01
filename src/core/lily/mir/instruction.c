@@ -306,6 +306,22 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
 
 VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     LilyMirInstructionVal,
+                    const,
+                    LilyMirDt *dt,
+                    const char *const_)
+{
+    LilyMirInstructionVal *self = lily_malloc(sizeof(LilyMirInstructionVal));
+
+    self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_CONST;
+    self->dt = dt;
+    self->ref_count = 0;
+    self->const_ = const_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
                     cstr,
                     LilyMirDt *dt,
                     const char *cstr)
@@ -556,6 +572,8 @@ eq__LilyMirInstructionVal(const LilyMirInstructionVal *self,
         case LILY_MIR_INSTRUCTION_VAL_KIND_BYTES:
             return !strcmp((const char *)self->bytes,
                            (const char *)other->bytes);
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CONST:
+            return !strcmp(self->const_, other->const_);
         case LILY_MIR_INSTRUCTION_VAL_KIND_CSTR:
             return !strcmp(self->cstr, other->cstr);
         case LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION:
@@ -672,6 +690,11 @@ IMPL_FOR_DEBUG(to_string,
             push_str__String(res, "b\"");
             push_str__String(res, (char *)self->bytes);
             push_str__String(res, "\"");
+
+            return res;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CONST:
+            push__String(res, '@');
+            push_str__String(res, (char *)self->const_);
 
             return res;
         case LILY_MIR_INSTRUCTION_VAL_KIND_CSTR:
