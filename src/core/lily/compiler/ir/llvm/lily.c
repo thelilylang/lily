@@ -1157,10 +1157,6 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
         case LILY_MIR_INSTRUCTION_KIND_ALLOC:
             res = LilyLLVMBuildAlloc(Self, Inst->alloc.dt, Name);
             break;
-        case LILY_MIR_INSTRUCTION_KIND_AND:
-            res = LilyLLVMBuildAnd(
-              Self, Scope, Pending, Inst->and.dest, Inst->and.src, Name);
-            break;
         case LILY_MIR_INSTRUCTION_KIND_BITCAST:
             res = LilyLLVMBuildBitCast(
               Self, Scope, Pending, Inst->bitcast.val, Inst->bitcast.dt, Name);
@@ -1616,10 +1612,6 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
             TODO("non nil");
         case LILY_MIR_INSTRUCTION_KIND_NOT:
             res = LilyLLVMBuildNot(Self, Scope, Pending, Inst->not .src, Name);
-            break;
-        case LILY_MIR_INSTRUCTION_KIND_OR:
-            res = LilyLLVMBuildOr(
-              Self, Scope, Pending, Inst->or.dest, Inst->or.src, Name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_REF_PTR:
             TODO("ref ptr");

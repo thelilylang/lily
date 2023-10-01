@@ -52,8 +52,6 @@ static VARIANT_DESTRUCTOR(LilyMirInstructionVal,
 
 static VARIANT_DESTRUCTOR(LilyMirInstruction, alloc, LilyMirInstruction *self);
 
-static VARIANT_DESTRUCTOR(LilyMirInstruction, and, LilyMirInstruction *self);
-
 static VARIANT_DESTRUCTOR(LilyMirInstruction, arg, LilyMirInstruction *self);
 
 static VARIANT_DESTRUCTOR(LilyMirInstruction, asm, LilyMirInstruction *self);
@@ -211,8 +209,6 @@ static VARIANT_DESTRUCTOR(LilyMirInstruction,
                           LilyMirInstruction *self);
 
 static VARIANT_DESTRUCTOR(LilyMirInstruction, not, LilyMirInstruction *self);
-
-static VARIANT_DESTRUCTOR(LilyMirInstruction, or, LilyMirInstruction *self);
 
 static VARIANT_DESTRUCTOR(LilyMirInstruction, reg, LilyMirInstruction *self);
 
@@ -1541,20 +1537,6 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
-                      and,
-                    LilyMirInstructionDestSrc and)
-{
-    LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
-
-    self->kind = LILY_MIR_INSTRUCTION_KIND_AND;
-    self->debug_info = NULL;
-    self->and = and;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyMirInstruction *,
-                    LilyMirInstruction,
                     arg,
                     LilyMirInstructionArg arg)
 {
@@ -2326,21 +2308,6 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
-                    or
-                    ,
-                    LilyMirInstructionDestSrc or)
-{
-    LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
-
-    self->kind = LILY_MIR_INSTRUCTION_KIND_OR;
-    self->debug_info = NULL;
-    self->or = or ;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(LilyMirInstruction *,
-                    LilyMirInstruction,
                     reg,
                     LilyMirInstructionReg reg)
 {
@@ -2592,11 +2559,6 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_ALLOC:
             res = format__String(
               "{Sr}", to_string__Debug__LilyMirInstructionAlloc(&self->alloc));
-            break;
-        case LILY_MIR_INSTRUCTION_KIND_AND:
-            res = format__String(
-              "\x1b[34mand\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionDestSrc(&self->and));
             break;
         case LILY_MIR_INSTRUCTION_KIND_ARG:
             res = format__String(
@@ -2860,11 +2822,6 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
               "\x1b[34mnot\x1b[0m {Sr}",
               to_string__Debug__LilyMirInstructionSrc(&self->not ));
             break;
-        case LILY_MIR_INSTRUCTION_KIND_OR:
-            res = format__String(
-              "\x1b[34mor\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionDestSrc(&self->or));
-            break;
         case LILY_MIR_INSTRUCTION_KIND_REF_PTR:
             res = format__String(
               "\x1b[34mref_ptr\x1b[0m {Sr}",
@@ -2953,13 +2910,6 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, alloc, LilyMirInstruction *self)
 {
     FREE_DEBUG_INFO(self);
     FREE(LilyMirInstructionAlloc, &self->alloc);
-    lily_free(self);
-}
-
-VARIANT_DESTRUCTOR(LilyMirInstruction, and, LilyMirInstruction *self)
-{
-    FREE_DEBUG_INFO(self);
-    FREE(LilyMirInstructionDestSrc, &self->and);
     lily_free(self);
 }
 
@@ -3346,13 +3296,6 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, not, LilyMirInstruction *self)
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(LilyMirInstruction, or, LilyMirInstruction *self)
-{
-    FREE_DEBUG_INFO(self);
-    FREE(LilyMirInstructionDestSrc, &self->or);
-    lily_free(self);
-}
-
 VARIANT_DESTRUCTOR(LilyMirInstruction, reg, LilyMirInstruction *self)
 {
     FREE_DEBUG_INFO(self);
@@ -3469,9 +3412,6 @@ DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self)
     switch (self->kind) {
         case LILY_MIR_INSTRUCTION_KIND_ALLOC:
             FREE_VARIANT(LilyMirInstruction, alloc, self);
-            break;
-        case LILY_MIR_INSTRUCTION_KIND_AND:
-            FREE_VARIANT(LilyMirInstruction, and, self);
             break;
         case LILY_MIR_INSTRUCTION_KIND_ARG:
             FREE_VARIANT(LilyMirInstruction, arg, self);
@@ -3637,9 +3577,6 @@ DESTRUCTOR(LilyMirInstruction, LilyMirInstruction *self)
             break;
         case LILY_MIR_INSTRUCTION_KIND_NOT:
             FREE_VARIANT(LilyMirInstruction, not, self);
-            break;
-        case LILY_MIR_INSTRUCTION_KIND_OR:
-            FREE_VARIANT(LilyMirInstruction, or, self);
             break;
         case LILY_MIR_INSTRUCTION_KIND_REF_PTR:
             FREE_VARIANT(LilyMirInstruction, ref_ptr, self);

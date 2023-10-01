@@ -41,7 +41,6 @@
 enum LilyMirInstructionKind
 {
     LILY_MIR_INSTRUCTION_KIND_ALLOC,
-    LILY_MIR_INSTRUCTION_KIND_AND,
     LILY_MIR_INSTRUCTION_KIND_ARG,
     LILY_MIR_INSTRUCTION_KIND_ASM,
     LILY_MIR_INSTRUCTION_KIND_BITCAST,
@@ -97,7 +96,6 @@ enum LilyMirInstructionKind
     LILY_MIR_INSTRUCTION_KIND_MAKEOPT,
     LILY_MIR_INSTRUCTION_KIND_NON_NIL,
     LILY_MIR_INSTRUCTION_KIND_NOT,
-    LILY_MIR_INSTRUCTION_KIND_OR,
     LILY_MIR_INSTRUCTION_KIND_REF_PTR,
     LILY_MIR_INSTRUCTION_KIND_REG,
     LILY_MIR_INSTRUCTION_KIND_RET,
@@ -411,7 +409,6 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(LilyMirInstructionVal, LilyMirInstructionVal *self);
 
-// and <val>, <val>
 // bitand <val>, <val>
 // bitnot <val>, <val>
 // bitor <val>, <val>
@@ -1410,7 +1407,6 @@ typedef struct LilyMirInstruction
     union
     {
         LilyMirInstructionAlloc alloc;
-        LilyMirInstructionDestSrc and;
         LilyMirInstructionArg arg;
         LilyMirInstructionAsm asm;
         LilyMirInstructionValDt bitcast;
@@ -1466,7 +1462,6 @@ typedef struct LilyMirInstruction
         LilyMirInstructionSrc makeopt;
         LilyMirInstruction *non_nil;
         LilyMirInstructionSrc not ;
-        LilyMirInstructionDestSrc or ;
         LilyMirInstructionReg reg;
         LilyMirInstructionSrc ref_ptr;
         LilyMirInstruction *ret;
@@ -1493,15 +1488,6 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     alloc,
                     LilyMirInstructionAlloc alloc);
-
-/**
- *
- * @brief Construct LilyMirInstruction type (LILY_MIR_INSTRUCTION_KIND_AND).
- */
-VARIANT_CONSTRUCTOR(LilyMirInstruction *,
-                    LilyMirInstruction,
-                      and,
-                    LilyMirInstructionDestSrc and);
 
 /**
  *
@@ -2038,17 +2024,6 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     not,
                     LilyMirInstructionSrc not );
-
-/**
- *
- * @brief Construct LilyMirInstruction type
- * (LILY_MIR_INSTRUCTION_KIND_OR).
- */
-VARIANT_CONSTRUCTOR(LilyMirInstruction *,
-                    LilyMirInstruction,
-                    or
-                    ,
-                    LilyMirInstructionDestSrc or);
 
 /**
  *
