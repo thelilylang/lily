@@ -90,6 +90,14 @@ get__LilyIrLlvmScope(const LilyIrLlvmScope *self, char *name);
 
 /**
  *
+ * @brief Get value from the scope, but doesn't emit unreachable.
+ * @return LLVMValueRef?
+ */
+LLVMValueRef
+safe_get__LilyIrLlvmScope(const LilyIrLlvmScope *self, char *name);
+
+/**
+ *
  * @brief Add a new scope item to the scope.
  */
 inline void

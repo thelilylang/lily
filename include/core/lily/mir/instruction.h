@@ -124,6 +124,7 @@ enum LilyMirInstructionValKind
 {
     LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY,
     LILY_MIR_INSTRUCTION_VAL_KIND_BYTES,
+    LILY_MIR_INSTRUCTION_VAL_KIND_CONST,
     LILY_MIR_INSTRUCTION_VAL_KIND_CSTR,
     LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION, // TODO:
                                              // LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION
@@ -156,6 +157,7 @@ typedef struct LilyMirInstructionVal
     {
         Vec *array;         // Vec<LilyMirInstructionVal*>*
         const Uint8 *bytes; // const Uint8* (&)
+        const char *const_; // const char* (&)
         const char *cstr;   // const char* (&)
         struct LilyMirInstructionVal *exception[2]; // [ok?, err?]
         Float64 float_;
@@ -203,6 +205,17 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
                     bytes,
                     LilyMirDt *dt,
                     const Uint8 *bytes);
+
+/**
+ *
+ * @brief Construct LilyMirInstructionVal type
+ * (LILY_MIR_INSTRUCTION_VAL_KIND_CONST).
+ */
+VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
+                    LilyMirInstructionVal,
+                    const,
+                    LilyMirDt *dt,
+                    const char *const_);
 
 /**
  *

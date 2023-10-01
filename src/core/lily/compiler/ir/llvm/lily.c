@@ -954,6 +954,75 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
 
             return bytes_ptr;
         }
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CONST: {
+            if (Scope) {
+                LLVMValueRef loaded_const_value =
+                  safe_get__LilyIrLlvmScope(Scope, (char *)Val->const_);
+
+                if (!loaded_const_value) {
+                    LLVMValueRef const_value =
+                      LLVMGetNamedGlobal(Self->module, Val->const_);
+
+                    ASSERT(const_value);
+
+                    loaded_const_value =
+                      LLVMBuildLoad2(Self->builder,
+                                     LilyLLVMGetType(Self, Val->dt),
+                                     const_value,
+                                     "local.load.const");
+                    add__LilyIrLlvmScope(
+                      Scope, (char *)Val->const_, loaded_const_value);
+                }
+
+                return loaded_const_value;
+            }
+
+            LLVMValueRef global_const =
+              LLVMGetNamedGlobal(Self->module, Val->const_);
+
+            ASSERT(global_const);
+
+            LLVMValueRef const_value = LLVMGetInitializer(global_const);
+
+            ASSERT(const_value);
+
+            switch (Val->dt->kind) {
+                case LILY_MIR_DT_KIND_I1:
+                case LILY_MIR_DT_KIND_I8:
+                case LILY_MIR_DT_KIND_I16:
+                case LILY_MIR_DT_KIND_I32:
+                case LILY_MIR_DT_KIND_I64:
+                case LILY_MIR_DT_KIND_ISIZE: {
+                    Int64 i = LLVMConstIntGetSExtValue(const_value);
+
+                    return LLVMConstInt(
+                      LilyLLVMGetType(Self, Val->dt), i, false);
+                }
+                case LILY_MIR_DT_KIND_U8:
+                case LILY_MIR_DT_KIND_U16:
+                case LILY_MIR_DT_KIND_U32:
+                case LILY_MIR_DT_KIND_U64:
+                case LILY_MIR_DT_KIND_USIZE: {
+                    Uint64 u = LLVMConstIntGetZExtValue(const_value);
+
+                    return LLVMConstInt(
+                      LilyLLVMGetType(Self, Val->dt), u, true);
+                }
+                case LILY_MIR_DT_KIND_F32:
+                case LILY_MIR_DT_KIND_F64: {
+                    LLVMBool loses_info = 0;
+                    Float64 f =
+                      LLVMConstRealGetDouble(const_value, &loses_info);
+
+                    return LLVMConstReal(LilyLLVMGetType(Self, Val->dt), f);
+                }
+                case LILY_MIR_DT_KIND_PTR:
+                    return LLVMConstNull(LilyLLVMGetType(Self, Val->dt));
+                default:
+                    UNREACHABLE("impossible to get this value at comptime or "
+                                "is not yet implemented");
+            }
+        }
         case LILY_MIR_INSTRUCTION_VAL_KIND_CSTR: {
             // [i8 x n]
             Usize cstr_buffer_len = strlen(Val->cstr);
