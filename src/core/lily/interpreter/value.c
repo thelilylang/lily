@@ -27,6 +27,28 @@
 
 #include <core/lily/interpreter/value.h>
 
+CONSTRUCTOR(LilyInterpreterValueStruct,
+            LilyInterpreterValueStruct,
+            LilyInterpreterValue **values,
+            Usize len)
+{
+    LilyInterpreterValueStruct self =
+      (LilyInterpreterValueStruct){ .values = { 0 }, .len = len };
+
+    for (Usize i = 0; i < len; ++i) {
+        self.values[i] = values[i];
+    }
+
+    return self;
+}
+
+DESTRUCTOR(LilyInterpreterValueStruct, const LilyInterpreterValueStruct *self)
+{
+    for (Usize i = 0; i < self->len; ++i) {
+        lily_free(self->values[i]);
+    }
+}
+
 DESTRUCTOR(LilyInterpreterValueObject, LilyInterpreterValueObject *self)
 {
     // TODO: finish to free

@@ -30,6 +30,8 @@
 
 #include <core/lily/analysis/checked/limits.h>
 
+#include <stddef.h>
+
 typedef struct LilyInterpreterValue LilyInterpreterValue;
 
 // TODO: Remove all objects definitions, when we have pseudo generic support to
@@ -39,8 +41,20 @@ typedef struct LilyInterpreterValueDynamicArray
 {
     LilyInterpreterValue *buffer;
     Usize len;
-    Usize capacity;
 } LilyInterpreterValueDynamicArray;
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueDynamicArray type.
+ */
+inline CONSTRUCTOR(LilyInterpreterValueDynamicArray,
+                   LilyInterpreterValueDynamicArray)
+{
+    return (LilyInterpreterValueDynamicArray){
+        .buffer = NULL,
+        .len = 0,
+    };
+}
 
 typedef struct LilyInterpreterValueMultiPointersArray
 {
@@ -48,11 +62,33 @@ typedef struct LilyInterpreterValueMultiPointersArray
     Usize len;
 } LilyInterpreterValueMultiPointersArray;
 
+/**
+ *
+ * @brief Construct LilyInterpreterValueMultiPointersArray type.
+ */
+inline CONSTRUCTOR(LilyInterpreterValueMultiPointersArray,
+                   LilyInterpreterValueMultiPointersArray)
+{
+    return (LilyInterpreterValueMultiPointersArray){ .buffer = NULL, .len = 0 };
+}
+
 typedef struct LilyInterpreterValueSizedArray
 {
     const LilyInterpreterValue *buffer;
     Usize len;
 } LilyInterpreterValueSizedArray;
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueSizedArray type.
+ */
+inline CONSTRUCTOR(LilyInterpreterValueSizedArray,
+                   LilyInterpreterValueSizedArray,
+                   const LilyInterpreterValue *buffer,
+                   Usize len)
+{
+    return (LilyInterpreterValueSizedArray){ .buffer = buffer, .len = len };
+}
 
 typedef struct LilyInterpreterValueBytes
 {
@@ -60,18 +96,70 @@ typedef struct LilyInterpreterValueBytes
     Usize len;
 } LilyInterpreterValueBytes;
 
+/**
+ *
+ * @brief Construct LilyInterpreterValueBytes type.
+ */
+inline CONSTRUCTOR(LilyInterpreterValueBytes,
+                   LilyInterpreterValueBytes,
+                   Uint8 *buffer,
+                   Usize len)
+{
+    return (LilyInterpreterValueBytes){ .buffer = buffer, .len = len };
+}
+
 typedef struct LilyInterpreterValueInstance
 {
     const char *name; // const char* (&)
     struct LilyInterpreterValue *value;
 } LilyInterpreterValueInstance;
 
-typedef struct LilyInterpreterValueList
+/**
+ *
+ * @brief Construct LilyInterpreterValueInstance type.
+ */
+inline CONSTRUCTOR(LilyInterpreterValueInstance,
+                   LilyInterpreterValueInstance,
+                   const char *name,
+                   struct LilyInterpreterValue *value)
+{
+    return (LilyInterpreterValueInstance){ .name = name, .value = value };
+}
+
+typedef struct LilyInterpreterValueListNode
 {
     LilyInterpreterValue *value;
-    struct LilyInterpreterValueList *next;
-    struct LilyInterpreterValueList *last;
+    struct LilyInterpreterValueListNode *next;
+} LilyInterpreterValueListNode;
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueListNode type.
+ */
+inline CONSTRUCTOR(LilyInterpreterValueListNode,
+                   LilyInterpreterValueListNode,
+                   LilyInterpreterValue *value,
+                   struct LilyInterpreterValueListNode *next)
+{
+    return (LilyInterpreterValueListNode){ .value = value, .next = next };
+}
+
+typedef struct LilyInterpreterValueList
+{
+    LilyInterpreterValueListNode *first;
+    struct LilyInterpreterValueListNode *last;
 } LilyInterpreterValueList;
+
+inline CONSTRUCTOR(LilyInterpreterValueList,
+                   LilyInterpreterValueList,
+                   LilyInterpreterValueListNode *first,
+                   LilyInterpreterValueListNode *last)
+{
+    return (LilyInterpreterValueList){
+        .first = first,
+        .last = last,
+    };
+}
 
 enum LilyInterpreterValueResultKind
 {
@@ -89,17 +177,74 @@ typedef struct LilyInterpreterValueResult
     };
 } LilyInterpreterValueResult;
 
+/**
+ *
+ * @brief Construct LilyInterpreterValueResult type
+ * (LILY_INTERPRETER_VALUE_RESULT_KIND_OK variant).
+ */
+VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
+                    LilyInterpreterValueResult,
+                    ok,
+                    LilyInterpreterValue *ok)
+{
+    return (LilyInterpreterValueResult){
+        .kind = LILY_INTERPRETER_VALUE_RESULT_KIND_OK, .ok = ok
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueResult type
+ * (LILY_INTERPRETER_VALUE_RESULT_KIND_ERR variant).
+ */
+VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
+                    LilyInterpreterValueResult,
+                    err,
+                    LilyInterpreterValue *err)
+{
+    return (LilyInterpreterValueResult){
+        .kind = LILY_INTERPRETER_VALUE_RESULT_KIND_ERR, .err = err
+    };
+}
+
 typedef struct LilyInterpreterValueStr
 {
     char *s;
     Usize len;
 } LilyInterpreterValueStr;
 
+/**
+ *
+ * @brief Construct LilyInterpreterValueStr type
+ */
+CONSTRUCTOR(LilyInterpreterValueStr,
+            LilyInterpreterValueStr,
+            char *s,
+            Usize len)
+{
+    return (LilyInterpreterValueStr){ .s = s, .len = len };
+}
+
 typedef struct LilyInterpreterValueStruct
 {
     LilyInterpreterValue *values[MAX_RECORD_FIELDS];
     Usize len;
 } LilyInterpreterValueStruct;
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueStruct type.
+ */
+CONSTRUCTOR(LilyInterpreterValueStruct,
+            LilyInterpreterValueStruct,
+            LilyInterpreterValue **values,
+            Usize len);
+
+/**
+ *
+ * @brief Free LilyInterpreterValueStruct type.
+ */
+DESTRUCTOR(LilyInterpreterValueStruct, const LilyInterpreterValueStruct *self);
 
 enum LilyInterpreterValueObjectKind
 {
