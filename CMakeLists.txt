@@ -466,9 +466,11 @@ target_include_directories(lily_core_lily_analysis PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_interpreter
 set(LILY_CORE_LILY_INTERPRETER_SRC
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/opcode.c
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/mir.c
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm.c)
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/memory.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/mir.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/runtime.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/value.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm.c)
 
 add_library(lily_core_lily_interpreter STATIC ${LILY_CORE_LILY_INTERPRETER_SRC})
 target_link_libraries(lily_core_lily_interpreter PUBLIC lily_base)
