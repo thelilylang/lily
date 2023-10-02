@@ -28,19 +28,102 @@
 #include <base/alloc.h>
 #include <base/macros.h>
 #include <base/new.h>
+#include <base/units.h>
 
 #include <core/lily/interpreter/memory.h>
 #include <core/lily/interpreter/value.h>
 #include <core/lily/mir/mir.h>
 
-#define DEFAULT_MAX_STACK_CAPACITY 1024 * 1024
+#define DEFAULT_MAX_STACK_CAPACITY MiB // ~1 MB
 #define DEFAULT_STACK_CAPACITY 8
 #define DEFAULT_STACK_COEFF_INC 2
+
+enum LilyInterpreterVMStackFrameReturnKind
+{
+    LILY_INTERPRETER_VM_STACK_FRAME_RETURN_KIND_NORMAL,
+    LILY_INTERPRETER_VM_STACK_FRAME_RETURN_KIND_RAISE
+};
+
+typedef struct LilyInterpreterVMStackFrameReturn
+{
+    enum LilyInterpreterVMStackFrameReturnKind kind;
+    LilyInterpreterValue value;
+} LilyInterpreterVMStackFrameReturn;
+
+/**
+ *
+ * @brief Construct LilyInterpreterVMStackFrameReturn type
+ * (LILY_INTERPRETER_VM_STACK_FRAME_RETURN_KIND_NORMAL).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
+                           LilyInterpreterVMStackFrameReturn,
+                           normal,
+                           LilyInterpreterValue value)
+{
+    return (LilyInterpreterVMStackFrameReturn){
+        .kind = LILY_INTERPRETER_VM_STACK_FRAME_RETURN_KIND_NORMAL,
+        .value = value
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterVMStackFrameReturn type
+ * (LILY_INTERPRETER_VM_STACK_FRAME_RETURN_KIND_RAISE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
+                           LilyInterpreterVMStackFrameReturn,
+                           raise,
+                           LilyInterpreterValue value)
+{
+    return (LilyInterpreterVMStackFrameReturn){
+        .kind = LILY_INTERPRETER_VM_STACK_FRAME_RETURN_KIND_RAISE,
+        .value = value
+    };
+}
+
+/**
+ *
+ * @brief Free LilyInterpreterVMStackFrameReturn type.
+ */
+inline DESTRUCTOR(LilyInterpreterVMStackFrameReturn,
+                  const LilyInterpreterVMStackFrameReturn *self)
+{
+    FREE(LilyInterpreterValue, &self->value);
+}
+
+typedef struct LilyInterpreterVMStackFrame
+{
+    const char *name; // const char* (&)
+    LilyInterpreterValue *params;
+    Usize params_len;
+    LilyInterpreterVMStackFrameReturn return_;
+    Usize begin; // index of the begin of the stack frame on the stack buffer
+    struct LilyInterpreterVMStackFrame *next; // LilyInterpreterVMStackFrame*?
+} LilyInterpreterVMStackFrame;
+
+/**
+ *
+ * @brief Construct LilyInterpreterVMStackFrame type.
+ */
+CONSTRUCTOR(LilyInterpreterVMStackFrame *,
+            LilyInterpreterVMStackFrame,
+            const char *name,
+            LilyInterpreterValue *params,
+            Usize params_len,
+            Usize begin);
+
+/**
+ *
+ * @brief Free LilyInterpreterVMStackFrame type.
+ */
+DESTRUCTOR(LilyInterpreterVMStackFrame, LilyInterpreterVMStackFrame **self);
 
 typedef struct LilyInterpreterVMStack
 {
     LilyInterpreterValue *top; // LilyInterpreterValue* (&)
     LilyInterpreterValue *buffer;
+    LilyInterpreterVMStackFrame *current_frame; // LilyInterpreterVMStackFrame*?
     Usize len;
     Usize capacity;
     Usize max_capacity;
@@ -58,6 +141,7 @@ inline CONSTRUCTOR(LilyInterpreterVMStack,
                                      .buffer = lily_calloc(
                                        DEFAULT_STACK_CAPACITY,
                                        sizeof(LilyInterpreterValue)),
+                                     .current_frame = NULL,
                                      .capacity = DEFAULT_STACK_CAPACITY,
                                      .max_capacity = max_capacity,
                                      .len = 0 };
@@ -80,6 +164,29 @@ pop__LilyInterpreterVMStack(LilyInterpreterVMStack *self);
 
 /**
  *
+ * @brief Set frame on the stack.
+ */
+void
+set_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
+                                  LilyInterpreterVMStackFrame *frame);
+
+/**
+ *
+ * @brief Clean frame on the stack, and return `frame return`.
+ */
+LilyInterpreterVMStackFrameReturn
+clean_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self);
+
+/**
+ *
+ * @brief Load const from the stack.
+ */
+LilyInterpreterValue *
+load_const__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
+                                   const char *name);
+
+/**
+ *
  * @brief Free LilyInterpreterVMStack type.
  */
 DESTRUCTOR(LilyInterpreterVMStack, const LilyInterpreterVMStack *self);
@@ -87,7 +194,6 @@ DESTRUCTOR(LilyInterpreterVMStack, const LilyInterpreterVMStack *self);
 typedef struct LilyInterpreterVM
 {
     LilyInterpreterMemory memory;
-    LilyInterpreterVMStack stack;
     const LilyMirModule *module;           // const LilyMirModule* (&)
     const LilyMirInstruction *entry_point; // const LilyMirInstruction* (&)
                                            // main function

@@ -33,6 +33,42 @@
 
 static threadlocal LilyMirInstructionBlock *current_block = NULL;
 static threadlocal LilyMirInstruction *current_inst = NULL;
+static threadlocal LilyInterpreterVMStack local_stack;
+static threadlocal LilyInterpreterVMStackFrame *current_frame = NULL;
+
+CONSTRUCTOR(LilyInterpreterVMStackFrame *,
+            LilyInterpreterVMStackFrame,
+            const char *name,
+            LilyInterpreterValue *params,
+            Usize params_len,
+            Usize begin)
+{
+    LilyInterpreterVMStackFrame *self =
+      lily_malloc(sizeof(LilyInterpreterVMStackFrame));
+
+    self->name = name;
+    self->params = params;
+    self->params_len = params_len;
+    self->begin = begin;
+    self->next = NULL;
+
+    return self;
+}
+
+DESTRUCTOR(LilyInterpreterVMStackFrame, LilyInterpreterVMStackFrame **self)
+{
+    // NOTE: Frame return mustn't be free at this point.
+    ASSERT(!(*self)->next);
+
+    for (Usize i = 0; i < (*self)->params_len; ++i) {
+        FREE(LilyInterpreterValue, &(*self)->params[i]);
+    }
+
+    lily_free((*self)->params);
+    lily_free(*self);
+
+    *self = NULL;
+}
 
 void
 push__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
@@ -78,6 +114,27 @@ pop__LilyInterpreterVMStack(LilyInterpreterVMStack *self)
     return top_value;
 }
 
+void
+set_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
+                                  LilyInterpreterVMStackFrame *frame)
+{
+    ASSERT(!self->current_frame);
+    self->current_frame = frame;
+}
+
+LilyInterpreterVMStackFrameReturn
+clean_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self)
+{
+    ASSERT(self->current_frame);
+
+    LilyInterpreterVMStackFrameReturn return_ = self->current_frame->return_;
+
+    FREE(LilyInterpreterVMStackFrame, &self->current_frame);
+    self->current_frame = NULL;
+
+    return return_;
+}
+
 DESTRUCTOR(LilyInterpreterVMStack, const LilyInterpreterVMStack *self)
 {
     lily_free(self->buffer);
@@ -93,9 +150,6 @@ CONSTRUCTOR(LilyInterpreterVM,
       heap_capacity
         ? NEW_VARIANT(LilyInterpreterMemory, capacity, heap_capacity)
         : NEW(LilyInterpreterMemory);
-    LilyInterpreterVMStack stack =
-      stack_capacity ? NEW(LilyInterpreterVMStack, stack_capacity)
-                     : NEW(LilyInterpreterVMStack, DEFAULT_MAX_STACK_CAPACITY);
     LilyMirInstruction *entry_point =
       get__OrderedHashMap(module->insts, "main");
 
@@ -103,25 +157,43 @@ CONSTRUCTOR(LilyInterpreterVM,
     ASSERT(entry_point->kind == LILY_MIR_INSTRUCTION_KIND_FUN);
     ASSERT(entry_point->fun.insts->len >= 1);
 
-	current_block =
-      &CAST(LilyMirInstruction *, get__Vec(entry_point->fun.insts, 0))
-         ->block;
-	current_inst = get__Vec(current_block->insts, 0);
+    current_block =
+      &CAST(LilyMirInstruction *, get__Vec(entry_point->fun.insts, 0))->block;
+    current_inst = get__Vec(current_block->insts, 0);
+    local_stack = stack_capacity
+                    ? NEW(LilyInterpreterVMStack, stack_capacity)
+                    : NEW(LilyInterpreterVMStack, DEFAULT_MAX_STACK_CAPACITY);
 
-	ASSERT(current_block);
-	ASSERT(current_inst);
+    ASSERT(current_block);
+    ASSERT(current_inst);
 
     return (LilyInterpreterVM){ .memory = memory,
-                                .stack = stack,
                                 .module = module,
                                 .entry_point = entry_point };
+}
+
+LilyInterpreterValue *
+load_const__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
+                                   const char *name)
+{
+	Usize begin = self->current_frame ? self->current_frame->begin : self->len;
+
+	for (Usize i = 0; i < self->current_frame->begin; ++i) {
+		LilyInterpreterValue *current_value = &self->buffer[i];
+
+		if (current_value->kind == LILY_INTERPRETER_VALUE_KIND_OBJ && current_value->object->kind == LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE && !strcmp(current_value->object->instance.name, name)) {
+			// LilyInterpreterValue value = 
+
+			// return current_value->object->instance.value;
+		}
+	}
 }
 
 void
 run__LilyInterpreterVM(LilyInterpreterVM *self)
 {
 run_vm : {
-	switch (current_inst->kind) {
-	}
+    switch (current_inst->kind) {
+    }
 }
 }
