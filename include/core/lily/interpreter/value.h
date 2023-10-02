@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_LILY_INTERPRETER_VALUE_H
 #define LILY_CORE_LILY_INTERPRETER_VALUE_H
 
+#include <base/macros.h>
 #include <base/types.h>
 
 #include <core/lily/analysis/checked/limits.h>
@@ -58,6 +59,12 @@ typedef struct LilyInterpreterValueBytes
     Uint8 *buffer;
     Usize len;
 } LilyInterpreterValueBytes;
+
+typedef struct LilyInterpreterValueInstance
+{
+    const char *name; // const char* (&)
+    struct LilyInterpreterValue *value;
+} LilyInterpreterValueInstance;
 
 typedef struct LilyInterpreterValueList
 {
@@ -103,8 +110,6 @@ enum LilyInterpreterValueObjectKind
     LILY_INTERPRETER_VALUE_OBJECT_KIND_CSTR,
     LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE,
     LILY_INTERPRETER_VALUE_OBJECT_KIND_LIST,
-    LILY_INTERPRETER_VALUE_OBJECT_KIND_PTR,
-    LILY_INTERPRETER_VALUE_OBJECT_KIND_REF,
     LILY_INTERPRETER_VALUE_OBJECT_KIND_RESULT,
     LILY_INTERPRETER_VALUE_OBJECT_KIND_STR,
     LILY_INTERPRETER_VALUE_OBJECT_KIND_STRUCT,
@@ -120,21 +125,26 @@ typedef struct LilyInterpreterValueObject
         LilyInterpreterValueSizedArray sized_array;
         LilyInterpreterValueBytes bytes;
         char *cstr;
-        struct LilyInterpreterValueObject *instance;
+        struct LilyInterpreterValueInstance instance;
         LilyInterpreterValueList list;
-        struct LilyInterpreterValue *ptr;
-        struct LilyInterpreterValue *ref; // struct LilyInterpreterValue* (&)
         LilyInterpreterValueResult result;
         LilyInterpreterValueStr str;
         LilyInterpreterValueStruct struct_;
     };
 } LilyInterpreterValueObject;
 
+/**
+ *
+ * @brief Free LilyInterpreterValueObject type.
+ */
+DESTRUCTOR(LilyInterpreterValueObject, LilyInterpreterValueObject *self);
+
 enum LilyInterpreterValueKind
 {
     LILY_INTERPRETER_VALUE_KIND_INT,
     LILY_INTERPRETER_VALUE_KIND_FALSE,
     LILY_INTERPRETER_VALUE_KIND_FLOAT,
+    LILY_INTERPRETER_VALUE_KIND_LOAD,
     LILY_INTERPRETER_VALUE_KIND_NIL,
     LILY_INTERPRETER_VALUE_KIND_OBJ,
     LILY_INTERPRETER_VALUE_KIND_TRUE,
@@ -150,9 +160,16 @@ struct LilyInterpreterValue
     {
         Int64 int_;
         Float64 float_;
+        LilyInterpreterValue *load; // LilyInterpreterValue* (&)
         LilyInterpreterValueObject *object;
         Uint64 uint;
     };
 };
+
+/**
+ *
+ * @brief Free LilyInterpreterValue type.
+ */
+DESTRUCTOR(LilyInterpreterValue, const LilyInterpreterValue *self);
 
 #endif // LILY_CORE_LILY_INTERPRETER_VALUE_H
