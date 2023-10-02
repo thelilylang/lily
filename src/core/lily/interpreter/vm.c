@@ -50,9 +50,25 @@ CONSTRUCTOR(LilyInterpreterVMStackFrame *,
     self->params = params;
     self->params_len = params_len;
     self->begin = begin;
+    self->end = 0;
     self->next = NULL;
 
     return self;
+}
+
+LilyInterpreterVMStackFrame *
+attach_stack_frame__LilyInterpreterVMStackFrame(
+  LilyInterpreterVMStackFrame *self,
+  const char *name,
+  LilyInterpreterValue *params,
+  Usize params_len,
+  Usize begin)
+{
+    self->end = begin;
+    self->next =
+      NEW(LilyInterpreterVMStackFrame, name, params, params_len, begin);
+
+    return self->next;
 }
 
 DESTRUCTOR(LilyInterpreterVMStackFrame, LilyInterpreterVMStackFrame **self)
@@ -176,17 +192,18 @@ LilyInterpreterValue *
 load_const__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
                                    const char *name)
 {
-	Usize begin = self->current_frame ? self->current_frame->begin : self->len;
+    Usize begin = self->current_frame ? self->current_frame->begin : self->len;
 
-	for (Usize i = 0; i < self->current_frame->begin; ++i) {
-		LilyInterpreterValue *current_value = &self->buffer[i];
+    for (Usize i = 0; i < self->current_frame->begin; ++i) {
+        LilyInterpreterValue *current_value = &self->buffer[i];
 
-		if (current_value->kind == LILY_INTERPRETER_VALUE_KIND_OBJ && current_value->object->kind == LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE && !strcmp(current_value->object->instance.name, name)) {
-			// LilyInterpreterValue value = 
-
-			// return current_value->object->instance.value;
-		}
-	}
+        if (current_value->kind == LILY_INTERPRETER_VALUE_KIND_OBJ &&
+            current_value->object->kind ==
+              LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE &&
+            !strcmp(current_value->object->instance.name, name)) {
+            LilyInterpreterValue *value = current_value->object->instance.value;
+        }
+    }
 }
 
 void

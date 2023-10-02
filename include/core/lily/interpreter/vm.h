@@ -99,6 +99,8 @@ typedef struct LilyInterpreterVMStackFrame
     Usize params_len;
     LilyInterpreterVMStackFrameReturn return_;
     Usize begin; // index of the begin of the stack frame on the stack buffer
+    Usize end;   // index of the end of the stack frame on the stack buffer, 0
+                 // mean no next stack frame
     struct LilyInterpreterVMStackFrame *next; // LilyInterpreterVMStackFrame*?
 } LilyInterpreterVMStackFrame;
 
@@ -112,6 +114,18 @@ CONSTRUCTOR(LilyInterpreterVMStackFrame *,
             LilyInterpreterValue *params,
             Usize params_len,
             Usize begin);
+
+/**
+ *
+ * @breif Attache a new stack frame to an other stack frame.
+ */
+LilyInterpreterVMStackFrame *
+attach_stack_frame__LilyInterpreterVMStackFrame(
+  LilyInterpreterVMStackFrame *self,
+  const char *name,
+  LilyInterpreterValue *params,
+  Usize params_len,
+  Usize begin);
 
 /**
  *
