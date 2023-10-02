@@ -122,3 +122,8 @@ We using [C++20](https://en.cppreference.com/w/cpp/20) standard.
 ## Lily
 
 ## Abreviations
+
+- ptr: pointer
+- ast, AST: Abstract Syntax Tree
+- ref: reference
+- vm: virtual machine
