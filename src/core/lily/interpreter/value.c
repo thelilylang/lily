@@ -23,9 +23,81 @@
  */
 
 #include <base/alloc.h>
-#include <base/new.h>
 
 #include <core/lily/interpreter/value.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+
+// Free LilyInterpreterValueObject type
+// (LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE).
+static inline VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
+                                 instance,
+                                 const LilyInterpreterValueObject *self);
+
+// Free LilyInterpreterValueObject type
+// (LILY_INTERPRETER_VALUE_OBJECT_KIND_LIST).
+static inline VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
+                                 list,
+                                 const LilyInterpreterValueObject *self);
+
+// Free LilyInterpreterValueObject type
+// (LILY_INTERPRETER_VALUE_OBJECT_KIND_RESULT).
+static inline VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
+                                 result,
+                                 const LilyInterpreterValueObject *self);
+
+// Free LilyInterpreterValueObject type
+// (LILY_INTERPRETER_VALUE_OBJECT_KIND_STRUCT).
+static inline VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
+                                 struct,
+                                 const LilyInterpreterValueObject *self);
+
+DESTRUCTOR(LilyInterpreterValueInstance,
+           const LilyInterpreterValueInstance *self)
+{
+    FREE(LilyInterpreterValue, self->value);
+    lily_free(self->value);
+}
+
+CONSTRUCTOR(LilyInterpreterValueListNode *,
+            LilyInterpreterValueListNode,
+            LilyInterpreterValue *value,
+            struct LilyInterpreterValueListNode *next)
+{
+    LilyInterpreterValueListNode *self =
+      lily_malloc(sizeof(LilyInterpreterValueListNode));
+
+    self->value = value;
+    self->next = next;
+
+    return self;
+}
+
+DESTRUCTOR(LilyInterpreterValueListNode, LilyInterpreterValueListNode *self)
+{
+    FREE(LilyInterpreterValue, self->value);
+    lily_free(self->value);
+
+    LilyInterpreterValueListNode *current = self->next;
+
+    while (current) {
+        FREE(LilyInterpreterValue, current->value);
+        lily_free(current->value);
+    }
+}
+
+DESTRUCTOR(LilyInterpreterValueResult, const LilyInterpreterValueResult *self)
+{
+    switch (self->kind) {
+        case LILY_INTERPRETER_VALUE_RESULT_KIND_OK:
+            return lily_free(self->ok);
+        case LILY_INTERPRETER_VALUE_RESULT_KIND_ERR:
+            return lily_free(self->err);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
 
 CONSTRUCTOR(LilyInterpreterValueStruct,
             LilyInterpreterValueStruct,
@@ -49,17 +121,55 @@ DESTRUCTOR(LilyInterpreterValueStruct, const LilyInterpreterValueStruct *self)
     }
 }
 
-DESTRUCTOR(LilyInterpreterValueObject, LilyInterpreterValueObject *self)
+VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
+                   instance,
+                   const LilyInterpreterValueObject *self)
 {
-    // TODO: finish to free
-    lily_free(self);
+    FREE(LilyInterpreterValueInstance, &self->instance);
+}
+
+VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
+                   list,
+                   const LilyInterpreterValueObject *self)
+{
+    FREE(LilyInterpreterValueList, &self->list);
+}
+
+VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
+                   result,
+                   const LilyInterpreterValueObject *self)
+{
+    FREE(LilyInterpreterValueResult, &self->result);
+}
+
+VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
+                   struct,
+                   const LilyInterpreterValueObject *self)
+{
+    FREE(LilyInterpreterValueStruct, &self->struct_);
+}
+
+DESTRUCTOR(LilyInterpreterValueObject, const LilyInterpreterValueObject *self)
+{
+    switch (self->kind) {
+        case LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE:
+            return FREE_VARIANT(LilyInterpreterValueObject, instance, self);
+        case LILY_INTERPRETER_VALUE_OBJECT_KIND_LIST:
+            return FREE_VARIANT(LilyInterpreterValueObject, list, self);
+        case LILY_INTERPRETER_VALUE_OBJECT_KIND_RESULT:
+            return FREE_VARIANT(LilyInterpreterValueObject, result, self);
+        case LILY_INTERPRETER_VALUE_OBJECT_KIND_STRUCT:
+            return FREE_VARIANT(LilyInterpreterValueObject, struct, self);
+        default:
+            return;
+    }
 }
 
 DESTRUCTOR(LilyInterpreterValue, const LilyInterpreterValue *self)
 {
     switch (self->kind) {
         case LILY_INTERPRETER_VALUE_KIND_OBJ:
-            FREE(LilyInterpreterValueObject, self->object);
+            FREE(LilyInterpreterValueObject, &self->object);
             return;
         default:
             return;

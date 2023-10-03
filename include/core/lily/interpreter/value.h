@@ -26,6 +26,7 @@
 #define LILY_CORE_LILY_INTERPRETER_VALUE_H
 
 #include <base/macros.h>
+#include <base/new.h>
 #include <base/types.h>
 
 #include <core/lily/analysis/checked/limits.h>
@@ -126,6 +127,13 @@ inline CONSTRUCTOR(LilyInterpreterValueInstance,
     return (LilyInterpreterValueInstance){ .name = name, .value = value };
 }
 
+/**
+ *
+ * @brief Free LilyInterpreterValueInstance type.
+ */
+DESTRUCTOR(LilyInterpreterValueInstance,
+           const LilyInterpreterValueInstance *self);
+
 typedef struct LilyInterpreterValueListNode
 {
     LilyInterpreterValue *value;
@@ -136,13 +144,16 @@ typedef struct LilyInterpreterValueListNode
  *
  * @brief Construct LilyInterpreterValueListNode type.
  */
-inline CONSTRUCTOR(LilyInterpreterValueListNode,
-                   LilyInterpreterValueListNode,
-                   LilyInterpreterValue *value,
-                   struct LilyInterpreterValueListNode *next)
-{
-    return (LilyInterpreterValueListNode){ .value = value, .next = next };
-}
+CONSTRUCTOR(LilyInterpreterValueListNode *,
+            LilyInterpreterValueListNode,
+            LilyInterpreterValue *value,
+            struct LilyInterpreterValueListNode *next);
+
+/**
+ *
+ * @brief Free LilyInterpreterValueListNode type.
+ */
+DESTRUCTOR(LilyInterpreterValueListNode, LilyInterpreterValueListNode *self);
 
 typedef struct LilyInterpreterValueList
 {
@@ -150,6 +161,10 @@ typedef struct LilyInterpreterValueList
     struct LilyInterpreterValueListNode *last;
 } LilyInterpreterValueList;
 
+/**
+ *
+ * @brief Construct LilyInterpreterValueList type.
+ */
 inline CONSTRUCTOR(LilyInterpreterValueList,
                    LilyInterpreterValueList,
                    LilyInterpreterValueListNode *first,
@@ -159,6 +174,16 @@ inline CONSTRUCTOR(LilyInterpreterValueList,
         .first = first,
         .last = last,
     };
+}
+
+/**
+ *
+ * @brief Free LilyInterpreterValueList type.
+ */
+inline DESTRUCTOR(LilyInterpreterValueList,
+                  const LilyInterpreterValueList *self)
+{
+    FREE(LilyInterpreterValueListNode, self->first);
 }
 
 enum LilyInterpreterValueResultKind
@@ -180,7 +205,7 @@ typedef struct LilyInterpreterValueResult
 /**
  *
  * @brief Construct LilyInterpreterValueResult type
- * (LILY_INTERPRETER_VALUE_RESULT_KIND_OK variant).
+ * (LILY_INTERPRETER_VALUE_RESULT_KIND_OK).
  */
 VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
                     LilyInterpreterValueResult,
@@ -195,7 +220,7 @@ VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
 /**
  *
  * @brief Construct LilyInterpreterValueResult type
- * (LILY_INTERPRETER_VALUE_RESULT_KIND_ERR variant).
+ * (LILY_INTERPRETER_VALUE_RESULT_KIND_ERR).
  */
 VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
                     LilyInterpreterValueResult,
@@ -206,6 +231,12 @@ VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
         .kind = LILY_INTERPRETER_VALUE_RESULT_KIND_ERR, .err = err
     };
 }
+
+/**
+ *
+ * @brief Free LilyInterpreterValueResult type.
+ */
+DESTRUCTOR(LilyInterpreterValueResult, const LilyInterpreterValueResult *self);
 
 typedef struct LilyInterpreterValueStr
 {
@@ -270,7 +301,7 @@ typedef struct LilyInterpreterValueObject
         LilyInterpreterValueSizedArray sized_array;
         LilyInterpreterValueBytes bytes;
         char *cstr;
-        struct LilyInterpreterValueInstance instance;
+        LilyInterpreterValueInstance instance;
         LilyInterpreterValueList list;
         LilyInterpreterValueResult result;
         LilyInterpreterValueStr str;
@@ -280,9 +311,164 @@ typedef struct LilyInterpreterValueObject
 
 /**
  *
+ * @brief Construct LilyInterpreterValueObject type
+ * (LILY_INTERPRETER_VALUE_OBJECT_KIND_DYNAMIC_ARRAY).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueObject,
+                           LilyInterpreterValueObject,
+                           dynamic_array,
+                           LilyInterpreterValueDynamicArray dynamic_array)
+{
+    return (LilyInterpreterValueObject){
+        .kind = LILY_INTERPRETER_VALUE_OBJECT_KIND_DYNAMIC_ARRAY,
+        .dynamic_array = dynamic_array
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueObject type
+ * (LILY_INTERPRETER_VALUE_OBJECT_KIND_MULTI_POINTERS_ARRAY).
+ */
+inline VARIANT_CONSTRUCTOR(
+  LilyInterpreterValueObject,
+  LilyInterpreterValueObject,
+  multi_pointers_array,
+  LilyInterpreterValueMultiPointersArray multi_pointers_array)
+{
+    return (LilyInterpreterValueObject){
+        .kind = LILY_INTERPRETER_VALUE_OBJECT_KIND_MULTI_POINTERS_ARRAY,
+        .multi_pointers_array = multi_pointers_array
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueObject type
+ * (LILY_INTERPRETER_VALUE_OBJECT_KIND_SIZED_ARRAY).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueObject,
+                           LilyInterpreterValueObject,
+                           sized_array,
+                           LilyInterpreterValueSizedArray sized_array)
+{
+    return (LilyInterpreterValueObject){
+        .kind = LILY_INTERPRETER_VALUE_OBJECT_KIND_SIZED_ARRAY,
+        .sized_array = sized_array
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueObject type
+ * (LILY_INTERPRETER_VALUE_OBJECT_KIND_BYTES).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueObject,
+                           LilyInterpreterValueObject,
+                           bytes,
+                           LilyInterpreterValueBytes bytes)
+{
+    return (LilyInterpreterValueObject){
+        .kind = LILY_INTERPRETER_VALUE_OBJECT_KIND_BYTES, .bytes = bytes
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueObject type
+ * (LILY_INTERPRETER_VALUE_OBJECT_KIND_CSTR).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueObject,
+                           LilyInterpreterValueObject,
+                           cstr,
+                           char *cstr)
+{
+    return (LilyInterpreterValueObject){
+        .kind = LILY_INTERPRETER_VALUE_OBJECT_KIND_CSTR, .cstr = cstr
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueObject type
+ * (LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueObject,
+                           LilyInterpreterValueObject,
+                           instance,
+                           LilyInterpreterValueInstance instance)
+{
+    return (LilyInterpreterValueObject){
+        .kind = LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE,
+        .instance = instance
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueObject type
+ * (LILY_INTERPRETER_VALUE_OBJECT_KIND_LIST).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueObject,
+                           LilyInterpreterValueObject,
+                           list,
+                           LilyInterpreterValueList list)
+{
+    return (LilyInterpreterValueObject){
+        .kind = LILY_INTERPRETER_VALUE_OBJECT_KIND_LIST, .list = list
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueObject type
+ * (LILY_INTERPRETER_VALUE_OBJECT_KIND_RESULT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueObject,
+                           LilyInterpreterValueObject,
+                           result,
+                           LilyInterpreterValueResult result)
+{
+    return (LilyInterpreterValueObject){
+        .kind = LILY_INTERPRETER_VALUE_OBJECT_KIND_RESULT, .result = result
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueObject type
+ * (LILY_INTERPRETER_VALUE_OBJECT_KIND_STR).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueObject,
+                           LilyInterpreterValueObject,
+                           str,
+                           LilyInterpreterValueStr str)
+{
+    return (LilyInterpreterValueObject){
+        .kind = LILY_INTERPRETER_VALUE_OBJECT_KIND_STR, .str = str
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyInterpreterValueObject type
+ * (LILY_INTERPRETER_VALUE_OBJECT_KIND_STRUCT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueObject,
+                           LilyInterpreterValueObject,
+                           struct,
+                           LilyInterpreterValueStruct struct_)
+{
+    return (LilyInterpreterValueObject){
+        .kind = LILY_INTERPRETER_VALUE_OBJECT_KIND_STRUCT, .struct_ = struct_
+    };
+}
+
+/**
+ *
  * @brief Free LilyInterpreterValueObject type.
  */
-DESTRUCTOR(LilyInterpreterValueObject, LilyInterpreterValueObject *self);
+DESTRUCTOR(LilyInterpreterValueObject, const LilyInterpreterValueObject *self);
 
 enum LilyInterpreterValueKind
 {
@@ -306,10 +492,22 @@ struct LilyInterpreterValue
         Int64 int_;
         Float64 float_;
         LilyInterpreterValue *load; // LilyInterpreterValue* (&)
-        LilyInterpreterValueObject *object;
+        LilyInterpreterValueObject object;
         Uint64 uint;
     };
 };
+
+/**
+ *
+ * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_INT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValue, LilyInterpreterValue, int, Int64 int_)
+{
+	return (LilyInterpreterValue){
+		.kind = LILY_INTERPRETER_VALUE_KIND_INT,
+		.int_ = int_
+	};
+}
 
 /**
  *
