@@ -198,10 +198,10 @@ load_const__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
         LilyInterpreterValue *current_value = &self->buffer[i];
 
         if (current_value->kind == LILY_INTERPRETER_VALUE_KIND_OBJ &&
-            current_value->object->kind ==
+            current_value->object.kind ==
               LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE &&
-            !strcmp(current_value->object->instance.name, name)) {
-            LilyInterpreterValue *value = current_value->object->instance.value;
+            !strcmp(current_value->object.instance.name, name)) {
+            LilyInterpreterValue *value = current_value->object.instance.value;
         }
     }
 }
