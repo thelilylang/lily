@@ -168,7 +168,7 @@ DESTRUCTOR(LilyInterpreterValueObject, const LilyInterpreterValueObject *self)
 DESTRUCTOR(LilyInterpreterValue, const LilyInterpreterValue *self)
 {
     switch (self->kind) {
-        case LILY_INTERPRETER_VALUE_KIND_OBJ:
+        case LILY_INTERPRETER_VALUE_KIND_OBJECT:
             FREE(LilyInterpreterValueObject, &self->object);
             return;
         default:
