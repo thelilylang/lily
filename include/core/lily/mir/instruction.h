@@ -814,6 +814,7 @@ inline DESTRUCTOR(LilyMirInstructionConst, const LilyMirInstructionConst *self)
 
 enum LilyMirInstructionFunLoadNameKind
 {
+    LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_CONST,
     LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_PARAM,
     LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_REG,
     LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_VAR,
@@ -824,11 +825,27 @@ typedef struct LilyMirInstructionFunLoadName
     enum LilyMirInstructionFunLoadNameKind kind;
     union
     {
+        const char *const_;
         Usize param;
         const char *reg;
         const char *var;
     };
 } LilyMirInstructionFunLoadName;
+
+/**
+ *
+ * @brief Construct LilyMirInstructionFunLoadName type
+ * (LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_CONST).
+ */
+inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
+                           LilyMirInstructionFunLoadName,
+                           const,
+                           const char *const_)
+{
+    return (LilyMirInstructionFunLoadName){
+        .kind = LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_CONST, .const_ = const_
+    };
+}
 
 /**
  *
@@ -924,7 +941,8 @@ typedef struct LilyMirInstructionFun
     LilyMirNameManager reg_manager;
     LilyMirNameManager block_manager;
     LilyMirNameManager virtual_variable_manager;
-    LilyMirScope scope;
+    LilyMirScope *root_scope; // LilyMirScope* (&)
+    LilyMirScope *scope;
     Usize block_count;
 } LilyMirInstructionFun;
 

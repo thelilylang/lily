@@ -168,8 +168,9 @@ LilyMirScopeGetParam(const LilyMirModule *Module, Usize id)
     LilyMirCurrent *current = Module->current->top;
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(current->inst->fun.root_scope->kind == LILY_MIR_SCOPE_KIND_ROOT);
 
-    return get__Vec(current->inst->fun.scope.params, id);
+    return get__Vec(current->inst->fun.root_scope->params, id);
 }
 
 LilyCheckedDataType *
@@ -192,6 +193,22 @@ LilyMirGetCheckedDtFromExpr(const LilyMirModule *Module,
         default:
             return Expr->data_type;
     }
+}
+
+void
+add_scope__LilyMirScope(LilyMirScope **self, LilyMirBlockLimit *limit)
+{
+    *self = NEW(LilyMirScope, LILY_MIR_SCOPE_KIND_NORMAL, limit, *self);
+}
+
+void
+remove_scope__LilyMirScope(LilyMirScope **self)
+{
+    LilyMirScope *parent = (*self)->parent;
+
+    FREE(LilyMirScope, *self);
+
+    *self = parent;
 }
 
 LilyMirInstructionFunLoad *
@@ -224,6 +241,30 @@ remove_load__LilyMirScope(const LilyMirScope *self,
     }
 }
 
+void
+LilyMirRemoveScopeByLimit(LilyMirModule *Module, const LilyMirBlockLimit *limit)
+{
+    LilyMirCurrent *current = Module->current->top;
+
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+
+    LilyMirScope **current_scope = &current->inst->fun.scope;
+    LilyMirScope *prev_scope = NULL;
+
+    while (*current_scope) {
+        if ((*current_scope)->limit == limit) {
+            remove_scope__LilyMirScope(current_scope);
+
+            if (prev_scope && *current_scope) {
+                prev_scope->parent = *current_scope;
+            }
+        } else {
+            prev_scope = *current_scope;
+            current_scope = &(*current_scope)->parent;
+        }
+    }
+}
+
 LilyMirInstructionFunLoad *
 LilyMirSearchLoad(LilyMirModule *Module, LilyMirInstructionFunLoadName name)
 {
@@ -232,7 +273,7 @@ LilyMirSearchLoad(LilyMirModule *Module, LilyMirInstructionFunLoadName name)
     ASSERT(current);
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    return search_load__LilyMirScope(&current->inst->fun.scope, name);
+    return search_load__LilyMirScope(current->inst->fun.scope, name);
 }
 
 void
@@ -243,7 +284,7 @@ LilyMirRemoveLoad(LilyMirModule *Module, LilyMirInstructionFunLoadName name)
     ASSERT(current);
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-    return remove_load__LilyMirScope(&current->inst->fun.scope, name);
+    return remove_load__LilyMirScope(current->inst->fun.scope, name);
 }
 
 LilyMirInstruction *
@@ -368,7 +409,7 @@ LilyMirBuildLoad(LilyMirModule *Module,
                                       NEW(LilyMirInstructionSrc, src),
                                       clone__LilyMirDt(dt)))));
 
-    push__Vec(current->inst->fun.scope.loads,
+    push__Vec(current->inst->fun.scope->loads,
               NEW(LilyMirInstructionFunLoad,
                   value_name,
                   load_inst,
@@ -858,6 +899,13 @@ LilyMirBuildBlock(LilyMirModule *Module, LilyMirBlockLimit *limit)
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
+    // if (current->inst->fun.scope->limit->is_set) {
+    //     // Remove all scopes with this limit.
+    //     LilyMirRemoveScopeByLimit(Module, current->inst->fun.scope->limit);
+    // }
+
+    add_scope__LilyMirScope(&current->inst->fun.scope, limit);
+
     char *name = LilyMirGenerateName(&current->inst->fun.block_manager);
 
     return NEW_VARIANT(LilyMirInstruction,
@@ -887,7 +935,14 @@ LilyMirPopBlock(LilyMirModule *Module)
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
     ASSERT(current->inst->fun.block_stack->len > 0);
 
-    return pop__Stack(current->inst->fun.block_stack);
+    LilyMirInstructionBlock *block = pop__Stack(current->inst->fun.block_stack);
+
+    if (block->limit->is_set) {
+        // Remove all scopes with this limit.
+        LilyMirRemoveScopeByLimit(Module, current->inst->fun.scope->limit);
+    }
+
+    return block;
 }
 
 LilyMirInstructionBlock *
@@ -1101,9 +1156,12 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     //   ; ...
 
     // If the previous block is empty, no condition block will be created.
-    LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
     LilyMirInstruction *cond_block =
-      LilyMirEmptyBlock(Module) ? NULL : LilyMirBuildBlock(Module, block_limit);
+      LilyMirEmptyBlock(Module)
+        ? NULL
+        : LilyMirBuildBlock(
+            Module,
+            ref__LilyMirBlockLimit(LilyMirGetInsertBlock(Module)->limit));
 
     // 1. Add jmp cond
     // 2. Add cond block
@@ -1118,10 +1176,8 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
 
     ASSERT(cond);
 
-    LilyMirInstruction *if_block = LilyMirBuildBlock(
-      Module,
-      LilyMirEmptyBlock(Module) ? block_limit
-                                : ref__LilyMirBlockLimit(block_limit));
+    LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
+    LilyMirInstruction *if_block = LilyMirBuildBlock(Module, block_limit);
 
     // 3. Add conditional jmp
     LilyMirAddInst(Module,
@@ -1280,11 +1336,13 @@ LilyMirBuildWhile(LilyMirModule *Module,
     // exit:
     //   ; ...
 
-    LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
     LilyMirInstruction *cond_block =
       LilyMirEmptyBlock(Module)
         ? NULL
-        : LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(block_limit));
+        : LilyMirBuildBlock(
+            Module,
+            ref__LilyMirBlockLimit(LilyMirGetInsertBlock(Module)->limit));
+    LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
     LilyMirInstruction *while_block = LilyMirBuildBlock(Module, block_limit);
     LilyMirInstruction *exit_block =
       LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(parent_block_limit));

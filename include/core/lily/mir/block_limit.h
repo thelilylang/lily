@@ -32,8 +32,10 @@ typedef struct LilyMirBlockLimit
 {
     Usize ref_count;
     // This is the id of the last block of the parent.
-    // This limit will be use in the LLVM IR.
+    // This limit will be use in the MIR and the LLVM IR.
     Usize id;
+    // Check if the id is set.
+    bool is_set;
 } LilyMirBlockLimit;
 
 /**

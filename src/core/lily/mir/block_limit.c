@@ -33,6 +33,7 @@ CONSTRUCTOR(LilyMirBlockLimit *, LilyMirBlockLimit)
 
     self->ref_count = 0;
     self->id = 0;
+    self->is_set = false;
 
     return self;
 }
@@ -41,9 +42,11 @@ CONSTRUCTOR(LilyMirBlockLimit *, LilyMirBlockLimit)
 char *
 IMPL_FOR_DEBUG(to_string, LilyMirBlockLimit, const LilyMirBlockLimit *self)
 {
-    return format("LilyMirBlockLimit {{ ref_count = {zu}, id = {zu} }",
-                  self->ref_count,
-                  self->id);
+    return format(
+      "LilyMirBlockLimit {{ ref_count = {zu}, id = {zu}, is_set = {b} }",
+      self->ref_count,
+      self->id,
+      self->is_set);
 }
 #endif
 

@@ -26,6 +26,7 @@
 #include <base/string.h>
 
 #include <core/lily/mir/instruction.h>
+#include <core/lily/mir/mir.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -309,7 +310,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstructionVal *,
     LilyMirInstructionVal *self = lily_malloc(sizeof(LilyMirInstructionVal));
 
     self->kind = LILY_MIR_INSTRUCTION_VAL_KIND_CONST;
-    self->dt = dt;
+    self->dt = NEW_VARIANT(LilyMirDt, ptr, dt);
     self->ref_count = 0;
     self->const_ = const_;
 
@@ -1091,6 +1092,8 @@ eq__LilyMirInstructionFunLoadName(const LilyMirInstructionFunLoadName *self,
     }
 
     switch (self->kind) {
+        case LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_CONST:
+            return !strcmp(self->const_, other->const_);
         case LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_PARAM:
             return self->param == other->param;
         case LILY_MIR_INSTRUCTION_FUN_LOAD_NAME_KIND_REG:
@@ -1139,6 +1142,9 @@ CONSTRUCTOR(LilyMirInstructionFun,
     push__Vec(insts, block);
     push__Stack(block_stack, &block->block);
 
+    LilyMirScope *scope =
+      NEW(LilyMirScope, LILY_MIR_SCOPE_KIND_ROOT, limit, NULL);
+
     return (LilyMirInstructionFun){
         .linkage = linkage,
         .name = name,
@@ -1151,7 +1157,8 @@ CONSTRUCTOR(LilyMirInstructionFun,
         .reg_manager = NEW(LilyMirNameManager, "r."),
         .block_manager = NEW(LilyMirNameManager, "bb"),
         .virtual_variable_manager = NEW(LilyMirNameManager, "."),
-        .scope = NEW(LilyMirScope, NULL),
+        .scope = scope,
+        .root_scope = scope,
         .block_count = 1
     };
 }
@@ -1216,7 +1223,19 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
     FREE_BUFFER_ITEMS(
       self->insts->buffer, self->insts->len, LilyMirInstruction);
     FREE(Vec, self->insts);
-    FREE(LilyMirScope, &self->scope);
+
+    {
+        LilyMirScope *current_scope = self->scope;
+
+        while (current_scope) {
+            LilyMirScope *parent = current_scope->parent;
+
+            FREE(LilyMirScope, current_scope);
+
+            current_scope = parent;
+        }
+    }
+
     FREE(Stack, self->block_stack);
     FREE(LilyMirNameManager, &self->reg_manager);
     FREE(LilyMirNameManager, &self->block_manager);

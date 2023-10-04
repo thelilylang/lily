@@ -152,6 +152,12 @@ LilyMirAddParam(LilyMirScope *Scope, LilyCheckedDataType *data_type)
     push__Vec(Scope->params, NEW(LilyMirScopeParam, data_type));
 }
 
+void
+add_scope__LilyMirScope(LilyMirScope **self, LilyMirBlockLimit *limit);
+
+void
+remove_scope__LilyMirScope(LilyMirScope **self);
+
 LilyMirInstructionFunLoad *
 search_load__LilyMirScope(const LilyMirScope *self,
                           LilyMirInstructionFunLoadName name);
@@ -159,6 +165,10 @@ search_load__LilyMirScope(const LilyMirScope *self,
 void
 remove_load__LilyMirScope(const LilyMirScope *self,
                           LilyMirInstructionFunLoadName name);
+
+void
+LilyMirRemoveScopeByLimit(LilyMirModule *Module,
+                          const LilyMirBlockLimit *limit);
 
 LilyMirInstructionFunLoad *
 LilyMirSearchLoad(LilyMirModule *Module, LilyMirInstructionFunLoadName name);
@@ -451,6 +461,7 @@ inline void
 LilyMirSetBlockLimit(LilyMirBlockLimit *block_limit, Usize id)
 {
     block_limit->id = id;
+    block_limit->is_set = true;
 }
 
 /// @param signature LilyCheckedSignatureFun*? (&)

@@ -28,6 +28,7 @@
 #include <base/vec.h>
 
 #include <core/lily/analysis/checked/data_type.h>
+#include <core/lily/mir/block_limit.h>
 
 typedef struct LilyMirScopeParam
 {
@@ -156,32 +157,37 @@ VARIANT_CONSTRUCTOR(LilyMirScopeInstance *,
  */
 DESTRUCTOR(LilyMirScopeInstance, LilyMirScopeInstance *self);
 
+enum LilyMirScopeKind
+{
+    LILY_MIR_SCOPE_KIND_NORMAL,
+    LILY_MIR_SCOPE_KIND_ROOT
+};
+
 typedef struct LilyMirScope
 {
-    Vec *loads;     // Vec<LilyMirInstructionFunLoad*>*
-    Vec *params;    // Vec<LilyMirScopeParam*>*
-    Vec *vars;      // Vec<LilyMirScopeVar*>*
-    Vec *instances; // Vec<LilyMirScopeInstance*>*
-    struct LilyMirScope *parent;
+    enum LilyMirScopeKind kind;
+    Vec *loads;                     // Vec<LilyMirInstructionFunLoad*>*
+    Vec *params;                    // Vec<LilyMirScopeParam*>*?
+    Vec *vars;                      // Vec<LilyMirScopeVar*>*
+    Vec *instances;                 // Vec<LilyMirScopeInstance*>*
+    const LilyMirBlockLimit *limit; // const LilyMirBlockLimit* (&)
+    struct LilyMirScope *parent;    // LilyMirScope*? (&)
 } LilyMirScope;
 
 /**
  *
  * @brief Construct LilyMirScope type.
  */
-inline CONSTRUCTOR(LilyMirScope, LilyMirScope, LilyMirScope *parent)
-{
-    return (LilyMirScope){ .loads = NEW(Vec),
-                           .params = NEW(Vec),
-                           .vars = NEW(Vec),
-                           .instances = NEW(Vec),
-                           .parent = parent };
-}
+CONSTRUCTOR(LilyMirScope *,
+            LilyMirScope,
+            enum LilyMirScopeKind kind,
+            LilyMirBlockLimit *limit,
+            LilyMirScope *parent);
 
 /**
  *
  * @brief Free LilyMirScope type.
  */
-DESTRUCTOR(LilyMirScope, const LilyMirScope *self);
+DESTRUCTOR(LilyMirScope, LilyMirScope *self);
 
 #endif // LILY_CORE_LILY_MIR_SCOPE_H
