@@ -87,7 +87,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
         for (Usize i = 0; i < signature->types->len - 1; ++i) {
             LilyCheckedDataType *type = get__Vec(signature->types, i);
 
-            LilyMirAddParam(&inst->fun.scope, type);
+            LilyMirAddParam(inst->fun.scope, type);
 
             push__Vec(inst->fun.args,
                       NEW_VARIANT(LilyMirInstruction,
@@ -99,7 +99,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
 
         GENERATE_BODY(module,
                       signature,
-                      (&inst->fun.scope),
+                      inst->fun.scope,
                       block_limit,
                       NULL,
                       NULL,
