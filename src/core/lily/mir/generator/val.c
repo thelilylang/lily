@@ -72,12 +72,51 @@ generate_val__LilyMir(LilyMirModule *module,
         }
         case LILY_CHECKED_EXPR_KIND_CALL:
             switch (expr->call.kind) {
-                case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT:
-                    return NEW_VARIANT(
-                      LilyMirInstructionVal,
-                      const,
-                      generate_dt__LilyMir(module, expr->data_type),
-                      expr->call.global_name->buffer);
+                case LILY_CHECKED_EXPR_CALL_KIND_CONSTANT: {
+                    if (scope) {
+                        return LilyMirBuildLoad(
+                          module,
+                          NEW_VARIANT(
+                            LilyMirInstructionVal,
+                            const,
+                            generate_dt__LilyMir(module, expr->data_type),
+                            expr->call.global_name->buffer),
+                          generate_dt__LilyMir(module, expr->data_type),
+                          NEW_VARIANT(LilyMirInstructionFunLoadName,
+                                      var,
+                                      expr->call.global_name->buffer));
+                    }
+
+                    LilyMirInstruction *const_inst = get__OrderedHashMap(
+                      module->insts, expr->call.global_name->buffer);
+
+                    ASSERT(const_inst);
+
+                    switch (const_inst->const_.val->dt->kind) {
+                        case LILY_MIR_DT_KIND_I1:
+                        case LILY_MIR_DT_KIND_I8:
+                        case LILY_MIR_DT_KIND_I16:
+                        case LILY_MIR_DT_KIND_I32:
+                        case LILY_MIR_DT_KIND_I64:
+                        case LILY_MIR_DT_KIND_ISIZE:
+                        case LILY_MIR_DT_KIND_U8:
+                        case LILY_MIR_DT_KIND_U16:
+                        case LILY_MIR_DT_KIND_U32:
+                        case LILY_MIR_DT_KIND_U64:
+                        case LILY_MIR_DT_KIND_USIZE:
+                        case LILY_MIR_DT_KIND_F32:
+                        case LILY_MIR_DT_KIND_F64:
+                        case LILY_MIR_DT_KIND_PTR:
+                            // TODO: maybe clone instead of ref count in this
+                            // case.
+                            return ref__LilyMirInstructionVal(
+                              const_inst->const_.val);
+                        default:
+                            UNREACHABLE(
+                              "impossible to get this value at comptime or "
+                              "is not yet implemented");
+                    }
+                }
                 case LILY_CHECKED_EXPR_CALL_KIND_VARIABLE: {
                     ASSERT(scope);
 
