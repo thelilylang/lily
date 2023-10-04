@@ -157,20 +157,21 @@ VARIANT_CONSTRUCTOR(LilyMirScopeInstance *,
  */
 DESTRUCTOR(LilyMirScopeInstance, LilyMirScopeInstance *self);
 
-enum LilyMirScopeKind {
-	LILY_MIR_SCOPE_KIND_NORMAL,
-	LILY_MIR_SCOPE_KIND_ROOT
+enum LilyMirScopeKind
+{
+    LILY_MIR_SCOPE_KIND_NORMAL,
+    LILY_MIR_SCOPE_KIND_ROOT
 };
 
 typedef struct LilyMirScope
 {
-	enum LilyMirScopeKind kind;
+    enum LilyMirScopeKind kind;
     Vec *loads;                     // Vec<LilyMirInstructionFunLoad*>*
     Vec *params;                    // Vec<LilyMirScopeParam*>*?
     Vec *vars;                      // Vec<LilyMirScopeVar*>*
     Vec *instances;                 // Vec<LilyMirScopeInstance*>*
     const LilyMirBlockLimit *limit; // const LilyMirBlockLimit* (&)
-    struct LilyMirScope *parent;
+    struct LilyMirScope *parent;    // LilyMirScope*? (&)
 } LilyMirScope;
 
 /**
@@ -179,7 +180,7 @@ typedef struct LilyMirScope
  */
 CONSTRUCTOR(LilyMirScope *,
             LilyMirScope,
-			enum LilyMirScopeKind kind,
+            enum LilyMirScopeKind kind,
             LilyMirBlockLimit *limit,
             LilyMirScope *parent);
 
