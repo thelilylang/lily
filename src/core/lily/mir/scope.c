@@ -171,17 +171,41 @@ DESTRUCTOR(LilyMirScopeInstance, LilyMirScopeInstance *self)
     }
 }
 
-DESTRUCTOR(LilyMirScope, const LilyMirScope *self)
+CONSTRUCTOR(LilyMirScope *,
+            LilyMirScope,
+			enum LilyMirScopeKind kind,
+            LilyMirBlockLimit *limit,
+            LilyMirScope *parent)
+{
+    LilyMirScope *self = lily_malloc(sizeof(LilyMirScope));
+
+	self->kind = kind;
+    self->loads = NEW(Vec);
+    self->params = self->kind == LILY_MIR_SCOPE_KIND_ROOT ? NEW(Vec) : NULL;
+    self->vars = NEW(Vec);
+    self->instances = NEW(Vec);
+    self->limit = limit;
+    self->parent = parent;
+
+    return self;
+}
+
+DESTRUCTOR(LilyMirScope, LilyMirScope *self)
 {
     FREE_BUFFER_ITEMS(
       self->loads->buffer, self->loads->len, LilyMirInstructionFunLoad);
     FREE(Vec, self->loads);
-    FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, LilyMirScopeParam);
-    FREE(Vec, self->params);
+
+	if (self->params) {
+		FREE_BUFFER_ITEMS(
+		  self->params->buffer, self->params->len, LilyMirScopeParam);
+		FREE(Vec, self->params);
+	}
+
     FREE_BUFFER_ITEMS(self->vars->buffer, self->vars->len, LilyMirScopeVar);
     FREE(Vec, self->vars);
     FREE_BUFFER_ITEMS(
       self->instances->buffer, self->instances->len, LilyMirScopeInstance);
     FREE(Vec, self->instances);
+    lily_free(self);
 }
