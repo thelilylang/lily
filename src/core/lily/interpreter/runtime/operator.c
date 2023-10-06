@@ -29,5 +29,5 @@
 Float64
 mod__Float64(Float64 lhs, Float64 rhs)
 {
-	return lhs - floor(lhs / rhs) * rhs;
+    return lhs - floor(lhs / rhs) * rhs;
 }
