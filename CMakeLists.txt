@@ -468,7 +468,10 @@ target_include_directories(lily_core_lily_analysis PRIVATE ${LILY_INCLUDE})
 set(LILY_CORE_LILY_INTERPRETER_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/memory.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/mir.c
-    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/runtime.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/runtime/builtin.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/runtime/error.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/runtime/operator.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/runtime/sys.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/value.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm.c)
 
