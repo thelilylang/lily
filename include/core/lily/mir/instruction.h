@@ -38,7 +38,7 @@
 #include <core/lily/mir/name_manager.h>
 #include <core/lily/mir/scope.h>
 
-enum LilyMirInstructionKind
+enum LilyMirInstructionKind : Uint8
 {
     LILY_MIR_INSTRUCTION_KIND_ALLOC,
     LILY_MIR_INSTRUCTION_KIND_ARG,
