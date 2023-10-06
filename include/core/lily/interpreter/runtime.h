@@ -25,10 +25,15 @@
 #ifndef LILY_CORE_LILY_INTERPRETER_RUNTIME_H
 #define LILY_CORE_LILY_INTERPRETER_RUNTIME_H
 
-#include <stdlib.h>
-
 #include <base/format.h>
 #include <base/print.h>
+
+#include <core/lily/interpreter/runtime/builtin.h>
+#include <core/lily/interpreter/runtime/error.h>
+#include <core/lily/interpreter/runtime/operator.h>
+#include <core/lily/interpreter/runtime/sys.h>
+
+#include <stdlib.h>
 
 #define RUNTIME_ERROR(...)              \
     {                                   \
