@@ -73,6 +73,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/diagnostic/*.h
 	${CLANG_FORMAT} ./include/core/lily/functions/*.h
 	${CLANG_FORMAT} ./include/core/lily/interpreter/*.h
+	${CLANG_FORMAT} ./include/core/lily/interpreter/runtime/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/expr/*.h
@@ -143,6 +144,7 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/diagnostic/*.c
 	${CLANG_FORMAT} ./src/core/lily/functions/*.c
 	${CLANG_FORMAT} ./src/core/lily/interpreter/*.c
+	${CLANG_FORMAT} ./src/core/lily/interpreter/runtime/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/expr/*.c
