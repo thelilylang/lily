@@ -135,6 +135,8 @@ DESTRUCTOR(LilyInterpreterVMStackFrame, LilyInterpreterVMStackFrame **self);
 
 typedef struct LilyInterpreterVMStack
 {
+    // The bottom of the stack (before the first call frame) is used to store
+    // constant value.
     LilyInterpreterValue *top; // LilyInterpreterValue* (&)
     LilyInterpreterValue *buffer;
     LilyInterpreterVMStackFrame *current_frame; // LilyInterpreterVMStackFrame*?
@@ -196,8 +198,8 @@ clean_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self);
  * @brief Load const from the stack.
  */
 LilyInterpreterValue *
-load_const__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
-                                   const char *name);
+load_const_value__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
+                                         const char *name);
 
 /**
  *
@@ -205,12 +207,18 @@ load_const__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
  */
 DESTRUCTOR(LilyInterpreterVMStack, const LilyInterpreterVMStack *self);
 
+typedef struct LilyInterpreterVMRessources
+{
+    Vec *args; // Vec<char*>* (&)
+} LilyInterpreterVMRessources;
+
 typedef struct LilyInterpreterVM
 {
     LilyInterpreterMemory memory;
     const LilyMirModule *module;           // const LilyMirModule* (&)
     const LilyMirInstruction *entry_point; // const LilyMirInstruction* (&)
                                            // main function
+    LilyInterpreterVMRessources ressources;
 } LilyInterpreterVM;
 
 /**
@@ -223,7 +231,8 @@ CONSTRUCTOR(LilyInterpreterVM,
             LilyInterpreterVM,
             Usize heap_capacity,
             Usize stack_capacity,
-            const LilyMirModule *module);
+            const LilyMirModule *module,
+            LilyInterpreterVMRessources ressources);
 
 /**
  *
