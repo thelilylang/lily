@@ -141,7 +141,7 @@ push__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
                              LilyInterpreterValue value)
 {
     if (self->len > self->max_capacity) {
-        RUNTIME_ERROR("Stack overflow");
+        RUNTIME_ERROR_STACK_OVERFLOW();
     }
 
     if (self->len == self->capacity) {
@@ -159,7 +159,7 @@ LilyInterpreterValue
 pop__LilyInterpreterVMStack(LilyInterpreterVMStack *self)
 {
     if (self->len == 0) {
-        RUNTIME_ERROR("Empty stack");
+        RUNTIME_ERROR_STACK_EMPTY();
     }
 
     LilyInterpreterValue top_value = self->buffer[--self->len];
@@ -546,9 +546,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 #ifdef LILY_FULL_ASSERT_VM
 #define SET_NEXT_LABEL(l) \
     ASSERT(!next_label);  \
-    next_label = l
+    next_label = &&l
 #else
-#define SET_NEXT_LABEL(l) next_label = l
+#define SET_NEXT_LABEL(l) next_label = &&l
 #endif
 
 #define EAT_NEXT_LABEL()        \
@@ -700,7 +700,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_FLOAT);
 #endif
 
-        VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.float_ / rhs.float_));
+        VM_PUSH(
+          stack,
+          NEW_VARIANT(LilyInterpreterValue, float, lhs.float_ / rhs.float_));
         EAT_NEXT_LABEL();
     }
 
@@ -714,7 +716,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_FLOAT);
 #endif
 
-        VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.float_ * rhs.float_));
+        VM_PUSH(
+          stack,
+          NEW_VARIANT(LilyInterpreterValue, float, lhs.float_ *rhs.float_));
         EAT_NEXT_LABEL();
     }
 
@@ -726,7 +730,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_FLOAT);
 #endif
 
-        VM_PUSH(stack, NEW(LilyInterpreterValue, -rhs.float_));
+        VM_PUSH(stack, NEW_VARIANT(LilyInterpreterValue, float, -rhs.float_));
         EAT_NEXT_LABEL();
     }
 
@@ -740,9 +744,10 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_FLOAT);
 #endif
 
-        VM_PUSH(
-          stack,
-          NEW(LilyInterpreterValue, mod__Float64(lhs.float_, rhs.float_)));
+        VM_PUSH(stack,
+                NEW_VARIANT(LilyInterpreterValue,
+                            float,
+                            mod__Float64(lhs.float_, rhs.float_)));
         EAT_NEXT_LABEL();
     }
 
@@ -756,7 +761,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_FLOAT);
 #endif
 
-        VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.float_ - rhs.float_));
+        VM_PUSH(
+          stack,
+          NEW_VARIANT(LilyInterpreterValue, float, lhs.float_ - rhs.float_));
         EAT_NEXT_LABEL();
     }
 
@@ -776,27 +783,246 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_GETPTR) {}
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_IADD) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_IADD)
+    {
+        LilyInterpreterValue lhs = VM_POP(stack);
+        LilyInterpreterValue rhs = VM_POP(stack);
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_EQ) {}
+        if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_INT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_NE) {}
+            VM_PUSH(
+              stack,
+              NEW_VARIANT(LilyInterpreterValue, uint, lhs.int_ + rhs.int_));
+            EAT_NEXT_LABEL();
+        } else if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT);
+#endif
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_LE) {}
+            VM_PUSH(
+              stack,
+              NEW_VARIANT(LilyInterpreterValue, uint, lhs.uint + rhs.uint));
+            EAT_NEXT_LABEL();
+        }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_LT) {}
+        RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_GE) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_EQ)
+    {
+        LilyInterpreterValue lhs = VM_POP(stack);
+        LilyInterpreterValue rhs = VM_POP(stack);
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_GT) {}
+        if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_INT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_IDIV) {}
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.int_ == rhs.int_));
+            EAT_NEXT_LABEL();
+        } else if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT);
+#endif
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_IMUL) {}
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.uint == rhs.uint));
+            EAT_NEXT_LABEL();
+        }
+
+        RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
+    }
+
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_NE)
+    {
+        LilyInterpreterValue lhs = VM_POP(stack);
+        LilyInterpreterValue rhs = VM_POP(stack);
+
+        if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_INT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
+
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.int_ != rhs.int_));
+            EAT_NEXT_LABEL();
+        } else if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT);
+#endif
+
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.uint != rhs.uint));
+            EAT_NEXT_LABEL();
+        }
+
+        RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
+    }
+
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_LE)
+    {
+        LilyInterpreterValue lhs = VM_POP(stack);
+        LilyInterpreterValue rhs = VM_POP(stack);
+
+        if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_INT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
+
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.int_ <= rhs.int_));
+            EAT_NEXT_LABEL();
+        } else if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT);
+#endif
+
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.uint <= rhs.uint));
+            EAT_NEXT_LABEL();
+        }
+
+        RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
+    }
+
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_LT)
+    {
+        LilyInterpreterValue lhs = VM_POP(stack);
+        LilyInterpreterValue rhs = VM_POP(stack);
+
+        if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_INT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
+
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.int_ < rhs.int_));
+            EAT_NEXT_LABEL();
+        } else if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT);
+#endif
+
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.uint < rhs.uint));
+            EAT_NEXT_LABEL();
+        }
+
+        RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
+    }
+
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_GE)
+    {
+        LilyInterpreterValue lhs = VM_POP(stack);
+        LilyInterpreterValue rhs = VM_POP(stack);
+
+        if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_INT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
+
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.int_ >= rhs.int_));
+            EAT_NEXT_LABEL();
+        } else if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT);
+#endif
+
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.uint >= rhs.uint));
+            EAT_NEXT_LABEL();
+        }
+
+        RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
+    }
+
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_GT)
+    {
+        LilyInterpreterValue lhs = VM_POP(stack);
+        LilyInterpreterValue rhs = VM_POP(stack);
+
+        if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_INT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
+
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.int_ > rhs.int_));
+            EAT_NEXT_LABEL();
+        } else if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT);
+#endif
+
+            VM_PUSH(stack, NEW(LilyInterpreterValue, lhs.uint > rhs.uint));
+            EAT_NEXT_LABEL();
+        }
+
+        RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
+    }
+
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_IDIV)
+    {
+        LilyInterpreterValue lhs = VM_POP(stack);
+        LilyInterpreterValue rhs = VM_POP(stack);
+
+        if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_INT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
+
+            VM_PUSH(
+              stack,
+              NEW_VARIANT(LilyInterpreterValue, int, lhs.int_ / rhs.int_));
+            EAT_NEXT_LABEL();
+        } else if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT);
+#endif
+
+            VM_PUSH(
+              stack,
+              NEW_VARIANT(LilyInterpreterValue, uint, lhs.uint / rhs.uint));
+            EAT_NEXT_LABEL();
+        }
+
+        RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
+    }
+
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_IMUL)
+    {
+        LilyInterpreterValue lhs = VM_POP(stack);
+        LilyInterpreterValue rhs = VM_POP(stack);
+
+        if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_INT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
+
+            VM_PUSH(stack,
+                    NEW_VARIANT(LilyInterpreterValue, int, lhs.int_ *rhs.int_));
+            EAT_NEXT_LABEL();
+        } else if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT);
+#endif
+
+            VM_PUSH(
+              stack,
+              NEW_VARIANT(LilyInterpreterValue, uint, lhs.uint * rhs.uint));
+            EAT_NEXT_LABEL();
+        }
+
+        RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_INCTRACE) {}
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_INEG) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_INEG)
+    {
+        LilyInterpreterValue rhs = VM_POP(stack);
+
+#ifdef LILY_FULL_ASSERT_VM
+        ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
+
+        VM_PUSH(stack, NEW_VARIANT(LilyInterpreterValue, int, -rhs.int_));
+        EAT_NEXT_LABEL();
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_IREM) {}
 
