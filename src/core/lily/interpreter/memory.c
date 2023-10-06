@@ -42,6 +42,6 @@ free__LilyInterpreterMemory(LilyInterpreterMemory *self,
         lily_free(*obj);
         *obj = NULL;
     } else {
-        RUNTIME_ERROR("Bad free, the object is NULL");
+        RUNTIME_ERROR_UNREACHABLE("bad free, the object is NULL");
     }
 }
