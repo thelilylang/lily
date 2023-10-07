@@ -121,6 +121,186 @@ add_with_overflow__Usize(Usize lhs, Usize rhs);
 
 /**
  *
+ * @brief Divide two Int8 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Int8
+div_with_overflow__Int8(Int8 lhs, Int8 rhs);
+
+/**
+ *
+ * @brief Divide two Int16 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Int16
+div_with_overflow__Int16(Int16 lhs, Int16 rhs);
+
+/**
+ *
+ * @brief Divide two Int32 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Int32
+div_with_overflow__Int32(Int32 lhs, Int32 rhs);
+
+/**
+ *
+ * @brief Divide two Int64 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Int64
+div_with_overflow__Int64(Int64 lhs, Int64 rhs);
+
+/**
+ *
+ * @brief Divide two Isize integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Isize
+div_with_overflow__Isize(Isize lhs, Isize rhs);
+
+/**
+ *
+ * @brief Divide two Uint8 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint8
+div_with_overflow__Uint8(Uint8 lhs, Uint8 rhs);
+
+/**
+ *
+ * @brief Divide two Uint16 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint16
+div_with_overflow__Uint16(Uint16 lhs, Uint16 rhs);
+
+/**
+ *
+ * @brief Divide two Uint32 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint32
+div_with_overflow__Uint32(Uint32 lhs, Uint32 rhs);
+
+/**
+ *
+ * @brief Divide two Uint64 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint64
+div_with_overflow__Uint64(Uint64 lhs, Uint64 rhs);
+
+/**
+ *
+ * @brief Divide two Usize integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Usize
+div_with_overflow__Usize(Usize lhs, Usize rhs);
+
+/**
+ *
+ * @brief Multiply two Int8 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Int8
+mul_with_overflow__Int8(Int8 lhs, Int8 rhs);
+
+/**
+ *
+ * @brief Multiply two Int16 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Int16
+mul_with_overflow__Int16(Int16 lhs, Int16 rhs);
+
+/**
+ *
+ * @brief Multiply two Int32 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Int32
+mul_with_overflow__Int32(Int32 lhs, Int32 rhs);
+
+/**
+ *
+ * @brief Multiply two Int64 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Int64
+mul_with_overflow__Int64(Int64 lhs, Int64 rhs);
+
+/**
+ *
+ * @brief Multiply two Isize integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Isize
+mul_with_overflow__Isize(Isize lhs, Isize rhs);
+
+/**
+ *
+ * @brief Multiply two Uint8 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint8
+mul_with_overflow__Uint8(Uint8 lhs, Uint8 rhs);
+
+/**
+ *
+ * @brief Multiply two Uint16 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint16
+mul_with_overflow__Uint16(Uint16 lhs, Uint16 rhs);
+
+/**
+ *
+ * @brief Multiply two Uint32 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint32
+mul_with_overflow__Uint32(Uint32 lhs, Uint32 rhs);
+
+/**
+ *
+ * @brief Multiply two Uint64 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint64
+mul_with_overflow__Uint64(Uint64 lhs, Uint64 rhs);
+
+/**
+ *
+ * @brief Multiply two Usize integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Usize
+mul_with_overflow__Usize(Usize lhs, Usize rhs);
+
+/**
+ *
  * @brief Modulo operation on Float64.
  */
 inline Float64
