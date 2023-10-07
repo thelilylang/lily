@@ -67,6 +67,15 @@ add_with_overflow__Int64(Int64 lhs, Int64 rhs);
 
 /**
  *
+ * @brief Add two Isize integers and check whether the operation is an overflow.
+ * If the operation overflows, execution is crash (this function is only used in
+ * debug mode, not in release mode).
+ */
+Isize
+add_with_overflow__Isize(Isize lhs, Isize rhs);
+
+/**
+ *
  * @brief Add two Uint8 integers and check whether the operation is an overflow.
  * If the operation overflows, execution is crash (this function is only used in
  * debug mode, not in release mode).
@@ -103,12 +112,21 @@ add_with_overflow__Uint64(Uint64 lhs, Uint64 rhs);
 
 /**
  *
+ * @brief Add two Usize integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Usize
+add_with_overflow__Usize(Usize lhs, Usize rhs);
+
+/**
+ *
  * @brief Modulo operation on Float64.
  */
 inline Float64
 mod__Float64(Float64 lhs, Float64 rhs)
 {
-	return fmod(lhs, rhs);
+    return fmod(lhs, rhs);
 }
 
 #endif // LILY_CORE_LILY_INTERPRETER_RUNTIME_OPERATOR_H

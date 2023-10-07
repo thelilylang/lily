@@ -81,6 +81,24 @@ add_with_overflow__Int64(Int64 lhs, Int64 rhs)
     return res;
 }
 
+Isize
+add_with_overflow__Isize(Isize lhs, Isize rhs)
+{
+    Isize res = lhs + rhs;
+
+#ifdef PLATFORM_64
+    if ((lhs ^ res) & (rhs ^ res) & INT64_MIN) {
+        RUNTIME_ERROR_COMMON("Isize overflow during an addition operation");
+    }
+#else
+    if ((lhs ^ res) & (rhs ^ res) & INT32_MIN) {
+        RUNTIME_ERROR_COMMON("Isize overflow during an addition operation");
+    }
+#endif
+
+    return res;
+}
+
 Uint8
 add_with_overflow__Uint8(Uint8 lhs, Uint8 rhs)
 {
@@ -128,6 +146,18 @@ add_with_overflow__Uint64(Uint64 lhs, Uint64 rhs)
     if (res < lhs || res > rhs) {
         // TODO: add line and column to improve the message.
         RUNTIME_ERROR_COMMON("Uint64 overflow during an addition operation");
+    }
+
+    return res;
+}
+
+Usize
+add_with_overflow__Usize(Usize lhs, Usize rhs)
+{
+    Usize res = lhs + rhs;
+
+    if (res < lhs || res > rhs) {
+        RUNTIME_ERROR_COMMON("Usize overflow during an addition operation");
     }
 
     return res;
