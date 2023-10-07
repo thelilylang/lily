@@ -27,7 +27,88 @@
 
 #include <base/types.h>
 
-Float64
-mod__Float64(Float64 lhs, Float64 rhs);
+#include <math.h>
+
+/**
+ *
+ * @brief Add two Int8 integers and check whether the operation is an overflow.
+ * If the operation overflows, execution is crash (this function is only used in
+ * debug mode, not in release mode).
+ */
+Int8
+add_with_overflow__Int8(Int8 lhs, Int8 rhs);
+
+/**
+ *
+ * @brief Add two Int16 integers and check whether the operation is an overflow.
+ * If the operation overflows, execution is crash (this function is only used in
+ * debug mode, not in release mode).
+ */
+Int16
+add_with_overflow__Int16(Int16 lhs, Int16 rhs);
+
+/**
+ *
+ * @brief Add two Int32 integers and check whether the operation is an overflow.
+ * If the operation overflows, execution is crash (this function is only used in
+ * debug mode, not in release mode).
+ */
+Int32
+add_with_overflow__Int32(Int32 lhs, Int32 rhs);
+
+/**
+ *
+ * @brief Add two Int64 integers and check whether the operation is an overflow.
+ * If the operation overflows, execution is crash (this function is only used in
+ * debug mode, not in release mode).
+ */
+Int64
+add_with_overflow__Int64(Int64 lhs, Int64 rhs);
+
+/**
+ *
+ * @brief Add two Uint8 integers and check whether the operation is an overflow.
+ * If the operation overflows, execution is crash (this function is only used in
+ * debug mode, not in release mode).
+ */
+Uint8
+add_with_overflow__Uint8(Uint8 lhs, Uint8 rhs);
+
+/**
+ *
+ * @brief Add two Uint16 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint16
+add_with_overflow__Uint16(Uint16 lhs, Uint16 rhs);
+
+/**
+ *
+ * @brief Add two Uint32 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint32
+add_with_overflow__Uint32(Uint32 lhs, Uint32 rhs);
+
+/**
+ *
+ * @brief Add two Uint64 integers and check whether the operation is an
+ * overflow. If the operation overflows, execution is crash (this function is
+ * only used in debug mode, not in release mode).
+ */
+Uint64
+add_with_overflow__Uint64(Uint64 lhs, Uint64 rhs);
+
+/**
+ *
+ * @brief Modulo operation on Float64.
+ */
+inline Float64
+mod__Float64(Float64 lhs, Float64 rhs)
+{
+	return fmod(lhs, rhs);
+}
 
 #endif // LILY_CORE_LILY_INTERPRETER_RUNTIME_OPERATOR_H
