@@ -1056,7 +1056,33 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_ISERR) {}
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ISUB) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ISUB)
+    {
+        LilyInterpreterValue rhs = VM_POP(stack);
+        LilyInterpreterValue lhs = VM_POP(stack);
+
+        if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_INT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_INT);
+#endif
+
+            VM_PUSH(
+              stack,
+              NEW_VARIANT(LilyInterpreterValue, int, lhs.int_ - rhs.int_));
+            EAT_NEXT_LABEL();
+        } else if (lhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT) {
+#ifdef LILY_FULL_ASSERT_VM
+            ASSERT(rhs.kind == LILY_INTERPRETER_VALUE_KIND_UINT);
+#endif
+
+            VM_PUSH(
+              stack,
+              NEW_VARIANT(LilyInterpreterValue, uint, lhs.uint - rhs.uint));
+            EAT_NEXT_LABEL();
+        }
+
+        RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_JMP) {}
 
@@ -1167,7 +1193,8 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_VAR) {}
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_XOR) {
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_XOR)
+    {
         LilyInterpreterValue rhs = VM_POP(stack);
         LilyInterpreterValue lhs = VM_POP(stack);
 
@@ -1192,7 +1219,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         }
 
         RUNTIME_ERROR_UNREACHABLE("expected Int... or Uint...");
-	}
+    }
 
     VM_DEFAULT()
     {
