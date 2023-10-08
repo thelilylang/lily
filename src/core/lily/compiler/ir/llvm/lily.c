@@ -1913,14 +1913,14 @@ LilyLLVMFinishFunction(const LilyIrLlvm *Self,
 
     Pending.current_fun = Fn;
 
-	{
-		OrderedHashMapIter iter = NEW(OrderedHashMapIter, Insts);
-		LilyMirInstruction *Inst = NULL;
+    {
+        OrderedHashMapIter iter = NEW(OrderedHashMapIter, Insts);
+        LilyMirInstruction *Inst = NULL;
 
-		while ((Inst = next__OrderedHashMapIter(&iter))) {
-			LilyLLVMBuildInst(Self, &Scope, &Pending, Inst, NULL);
-		}
-	}
+        while ((Inst = next__OrderedHashMapIter(&iter))) {
+            LilyLLVMBuildInst(Self, &Scope, &Pending, Inst, NULL);
+        }
+    }
 
     FREE(LilyIrLlvmPending, &Pending);
     FREE(LilyIrLlvmScope, &Scope);

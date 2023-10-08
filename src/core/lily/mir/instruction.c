@@ -1139,7 +1139,7 @@ CONSTRUCTOR(LilyMirInstructionFun,
                   block,
                   NEW(LilyMirInstructionBlock, "entry", limit, 0));
 
-    insert__OrderedHashMap(insts, (char*)block->block.name, block);
+    insert__OrderedHashMap(insts, (char *)block->block.name, block);
     push__Stack(block_stack, &block->block);
 
     LilyMirScope *scope =
@@ -1196,18 +1196,17 @@ IMPL_FOR_DEBUG(to_string,
 
     ++tab_count;
 
-	{
-		OrderedHashMapIter iter = NEW(OrderedHashMapIter, self->insts);
-		LilyMirInstruction *inst = NULL;
+    {
+        OrderedHashMapIter iter = NEW(OrderedHashMapIter, self->insts);
+        LilyMirInstruction *inst = NULL;
 
-		while ((inst = next__OrderedHashMapIter(&iter))) {
-			String *item = format__String(
-			  "{Sr}\n",
-			  to_string__Debug__LilyMirInstruction(inst));
+        while ((inst = next__OrderedHashMapIter(&iter))) {
+            String *item = format__String(
+              "{Sr}\n", to_string__Debug__LilyMirInstruction(inst));
 
-			APPEND_AND_FREE(res, item);
-		}
-	}
+            APPEND_AND_FREE(res, item);
+        }
+    }
 
     pop__String(res);
 
@@ -1225,7 +1224,7 @@ DESTRUCTOR(LilyMirInstructionFun, const LilyMirInstructionFun *self)
 {
     FREE_BUFFER_ITEMS(self->args->buffer, self->args->len, LilyMirInstruction);
     FREE(Vec, self->args);
-	FREE_ORD_HASHMAP_VALUES(self->insts, LilyMirInstruction);
+    FREE_ORD_HASHMAP_VALUES(self->insts, LilyMirInstruction);
     FREE(OrderedHashMap, self->insts);
 
     {

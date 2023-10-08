@@ -247,9 +247,9 @@ insert__OrderedHashMap(OrderedHashMap *self, char *key, void *value)
 void *
 last__OrderedHashMap(OrderedHashMap *self)
 {
-	ASSERT(self->len > 0);
+    ASSERT(self->len > 0);
 
-	return get_from_id__OrderedHashMap(self, self->len - 1);
+    return get_from_id__OrderedHashMap(self, self->len - 1);
 }
 
 DESTRUCTOR(OrderedHashMap, OrderedHashMap *self)

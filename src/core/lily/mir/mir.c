@@ -923,7 +923,8 @@ LilyMirAddBlock(LilyMirModule *Module, LilyMirInstruction *Block)
 
     ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
 
-	insert__OrderedHashMap(current->inst->fun.insts, (char*)Block->block.name, Block);
+    insert__OrderedHashMap(
+      current->inst->fun.insts, (char *)Block->block.name, Block);
     push__Stack(current->inst->fun.block_stack, &Block->block);
 }
 
