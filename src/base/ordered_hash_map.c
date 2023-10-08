@@ -244,6 +244,14 @@ insert__OrderedHashMap(OrderedHashMap *self, char *key, void *value)
     return NULL;
 }
 
+void *
+last__OrderedHashMap(OrderedHashMap *self)
+{
+	ASSERT(self->len > 0);
+
+	return get_from_id__OrderedHashMap(self, self->len - 1);
+}
+
 DESTRUCTOR(OrderedHashMap, OrderedHashMap *self)
 {
     if (self->buckets) {

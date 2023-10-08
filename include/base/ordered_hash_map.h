@@ -217,6 +217,13 @@ insert__OrderedHashMap(OrderedHashMap *self, char *key, void *value);
 
 /**
  *
+ * @brief Get the last item from the OrderedHashMap.
+ */
+void *
+last__OrderedHashMap(OrderedHashMap *self);
+
+/**
+ *
  * @brief Free OrderedHashMap type.
  */
 DESTRUCTOR(OrderedHashMap, OrderedHashMap *self);
