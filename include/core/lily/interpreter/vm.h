@@ -92,6 +92,43 @@ inline DESTRUCTOR(LilyInterpreterVMStackFrameReturn,
     FREE(LilyInterpreterValue, &self->value);
 }
 
+typedef struct LilyInterpreterVMStackBlockFrame
+{
+    Vec *names;  // Vec<char* (&)>*
+    Usize begin; // index of the begin of the stack frame on the stack buffer
+    Usize end;   // index of the end of the stack frame on the stack buffer, 0
+                 // mean no next stack frame
+} LilyInterpreterVMStackBlockFrame;
+
+/**
+ *
+ * @brief Construct LilyInterpreterVMStackBlockFrame type.
+ */
+CONSTRUCTOR(LilyInterpreterVMStackBlockFrame *,
+            LilyInterpreterVMStackBlockFrame,
+            char *name,
+            Usize begin,
+            Usize end);
+
+/**
+ *
+ * @brief Add name to names Vec.
+ */
+inline void
+add_name__LilyInterpreterVMStackBlockFrame(
+  const LilyInterpreterVMStackBlockFrame *self,
+  char *name)
+{
+    return push__Vec(self->names, name);
+}
+
+/**
+ *
+ * @brief Free LilyInterpreterVMStackBlockFrame type.
+ */
+DESTRUCTOR(LilyInterpreterVMStackBlockFrame,
+           LilyInterpreterVMStackBlockFrame **self);
+
 typedef struct LilyInterpreterVMStackFrame
 {
     const char *name; // const char* (&)
@@ -101,6 +138,9 @@ typedef struct LilyInterpreterVMStackFrame
     Usize begin; // index of the begin of the stack frame on the stack buffer
     Usize end;   // index of the end of the stack frame on the stack buffer, 0
                  // mean no next stack frame
+    Usize current_block_frame_limit_id;
+    Usize block_frames_len;
+    LilyInterpreterVMStackBlockFrame **block_frames;
     struct LilyInterpreterVMStackFrame *next; // LilyInterpreterVMStackFrame*?
 } LilyInterpreterVMStackFrame;
 
@@ -113,7 +153,9 @@ CONSTRUCTOR(LilyInterpreterVMStackFrame *,
             const char *name,
             LilyInterpreterValue *params,
             Usize params_len,
-            Usize begin);
+            Usize begin,
+            Usize current_block_frame_limit_id,
+            Usize block_frames_len);
 
 /**
  *
@@ -125,7 +167,19 @@ attach_stack_frame__LilyInterpreterVMStackFrame(
   const char *name,
   LilyInterpreterValue *params,
   Usize params_len,
-  Usize begin);
+  Usize begin,
+  Usize current_block_frame_limit_id,
+  Usize block_frames_len);
+
+/**
+ *
+ * @brief Add block frame to `block_frames` field.
+ */
+void
+add_block_frame__LilyInterpreterVMStackFrame(LilyInterpreterVMStackFrame *self,
+                                             Usize current_block_frame_limit_id,
+                                             char *name,
+                                             Usize begin);
 
 /**
  *
