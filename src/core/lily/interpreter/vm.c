@@ -61,7 +61,7 @@
         VM_NEXT();                                                         \
     } else {                                                               \
         {                                                                  \
-            LilyMirInstruction *inst = next__VecIter(&current_block_iter); \
+            LilyMirInstruction *inst = next__OrderedHashMapIter(&current_block_iter); \
                                                                            \
             if (inst) {                                                    \
                 current_block = &inst->block;                              \
@@ -86,7 +86,7 @@ set_return__LilyInterpreterVMStackFrame(
 static void
 run_inst__LilyInterpreterVM(LilyInterpreterVM *self);
 
-static threadlocal VecIter current_block_iter;
+static threadlocal OrderedHashMapIter current_block_iter;
 static threadlocal LilyMirInstructionBlock *current_block = NULL;
 static threadlocal VecIter current_block_inst_iter;
 static threadlocal LilyMirInstruction *current_block_inst = NULL;
@@ -240,10 +240,10 @@ CONSTRUCTOR(LilyInterpreterVM,
     ASSERT(entry_point->kind == LILY_MIR_INSTRUCTION_KIND_FUN);
     ASSERT(entry_point->fun.insts->len >= 1);
 
-    current_block_iter = NEW(VecIter, entry_point->fun.insts);
+    current_block_iter = NEW(OrderedHashMapIter, entry_point->fun.insts);
 
     {
-        LilyMirInstruction *inst = next__VecIter(&current_block_iter);
+        LilyMirInstruction *inst = next__OrderedHashMapIter(&current_block_iter);
 
         ASSERT(inst);
 

@@ -110,7 +110,7 @@ generate_fun__LilyMir(LilyMirModule *module, LilyCheckedDecl *fun)
         // the LLVM part, because LLVM expects a ret instruction at the end of
         // the function for all return types.
         if (inst->fun.return_data_type->kind == LILY_MIR_DT_KIND_UNIT) {
-            LilyMirInstruction *last_block = last__Vec(inst->fun.insts);
+            LilyMirInstruction *last_block = last__OrderedHashMap(inst->fun.insts);
 
             ASSERT(last_block->kind == LILY_MIR_INSTRUCTION_KIND_BLOCK);
 

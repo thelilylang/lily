@@ -934,7 +934,7 @@ typedef struct LilyMirInstructionFun
     // without serialization
     const char *base_name;   // const char* (&)
     Vec *args;               // Vec<LilyMirInstruction*>*
-    Vec *insts;              // Vec<LilyMirInstruction*>*
+    OrderedHashMap *insts;   // OrderedHashMap<LilyMirInstruction*>*
     Stack *block_stack;      // Stack<LilyMirInstructionBlock*>*
     HashMap *generic_params; // HashMap<LilyCheckedDataType*>* (&)
     LilyMirDt *return_data_type;

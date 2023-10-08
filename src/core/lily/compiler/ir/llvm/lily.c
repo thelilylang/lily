@@ -1906,16 +1906,21 @@ LilyLLVMPrepareModule(const LilyIrLlvm *Self, OrderedHashMap *Insts)
 void
 LilyLLVMFinishFunction(const LilyIrLlvm *Self,
                        LLVMValueRef Fn,
-                       const Vec *Insts)
+                       OrderedHashMap *Insts)
 {
     LilyIrLlvmPending Pending = NEW(LilyIrLlvmPending);
     LilyIrLlvmScope Scope = NEW(LilyIrLlvmScope);
 
     Pending.current_fun = Fn;
 
-    for (Usize i = 0; i < Insts->len; ++i) {
-        LilyLLVMBuildInst(Self, &Scope, &Pending, get__Vec(Insts, i), NULL);
-    }
+	{
+		OrderedHashMapIter iter = NEW(OrderedHashMapIter, Insts);
+		LilyMirInstruction *Inst = NULL;
+
+		while ((Inst = next__OrderedHashMapIter(&iter))) {
+			LilyLLVMBuildInst(Self, &Scope, &Pending, Inst, NULL);
+		}
+	}
 
     FREE(LilyIrLlvmPending, &Pending);
     FREE(LilyIrLlvmScope, &Scope);

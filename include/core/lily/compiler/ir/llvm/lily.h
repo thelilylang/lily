@@ -411,7 +411,7 @@ LilyLLVMFinishConst(const LilyIrLlvm *Self,
 void
 LilyLLVMFinishFunction(const LilyIrLlvm *Self,
                        LLVMValueRef Fn,
-                       const Vec *Insts);
+                       OrderedHashMap *Insts);
 
 void
 LilyLLVMFinishStruct(const LilyIrLlvm *Self,
