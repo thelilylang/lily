@@ -97,7 +97,7 @@ typedef struct LilyInterpreterVMStackBlockFrame
     Vec *names;  // Vec<char* (&)>*
     Usize begin; // index of the begin of the stack frame on the stack buffer
     Usize end;   // index of the end of the stack frame on the stack buffer, 0
-                 // mean no next stack frame
+                 // mean no next block stack frame
 } LilyInterpreterVMStackBlockFrame;
 
 /**
@@ -239,6 +239,13 @@ pop__LilyInterpreterVMStack(LilyInterpreterVMStack *self);
 void
 set_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
                                   LilyInterpreterVMStackFrame *frame);
+
+/**
+ *
+ * @brief Clean stack of the current block.
+ */
+void
+clean_block_stack__LilyInterpreterVMStack(LilyInterpreterVMStack *self);
 
 /**
  *

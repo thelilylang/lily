@@ -56,12 +56,12 @@
 #define VM_SET_CURRENT_BLOCK_INST_ITER(iter) current_block_inst_iter = iter;
 #define VM_SET_CURRENT_BLOCK_INST(new_inst) current_block_inst = new_inst;
 #define VM_GOTO_INST(inst) goto *inst_lookup[inst->kind];
-#define VM_NEXT() goto run_vm
-#define VM_EXIT() goto exit_vm
+#define VM_NEXT(run) goto run
+#define VM_EXIT(exit) goto exit
 #define VM_END() }
-#define VM_NEXT_INST()                                                    \
+#define VM_NEXT_INST(run, exit)                                           \
     if ((current_block_inst = next__VecIter(&current_block_inst_iter))) { \
-        VM_NEXT();                                                        \
+        VM_NEXT(run);                                                     \
     } else {                                                              \
         {                                                                 \
             LilyMirInstruction *inst =                                    \
@@ -70,7 +70,7 @@
             if (inst) {                                                   \
                 current_block = &inst->block;                             \
             } else {                                                      \
-                VM_EXIT();                                                \
+                VM_EXIT(exit);                                            \
             }                                                             \
         }                                                                 \
                                                                           \
@@ -79,7 +79,18 @@
                                                                           \
         ASSERT(current_block_inst);                                       \
                                                                           \
-        VM_NEXT();                                                        \
+        VM_NEXT(run);                                                     \
+    }
+
+#define CLEAN_BLOCK_STACK(is_ret)                                             \
+    /* Clean stack of the last block. */                                      \
+    if (current_block->limit->id ==                                           \
+          current_frame->current_block_frame_limit_id ||                      \
+        is_ret) {                                                             \
+        clean_block_stack__LilyInterpreterVMStack(&local_stack);              \
+        FREE(LilyInterpreterVMStackBlockFrame,                                \
+             &current_frame                                                   \
+                ->block_frames[current_frame->current_block_frame_limit_id]); \
     }
 
 static inline void
@@ -89,6 +100,9 @@ set_return__LilyInterpreterVMStackFrame(
 
 static void
 run_inst__LilyInterpreterVM(LilyInterpreterVM *self);
+
+static void
+run_insts__LilyInterpreterVM(LilyInterpreterVM *self);
 
 static threadlocal OrderedHashMapIter current_block_iter;
 static threadlocal LilyMirInstructionBlock *current_block = NULL;
@@ -273,6 +287,24 @@ set_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
 {
     ASSERT(!self->current_frame);
     self->current_frame = frame;
+}
+
+void
+clean_block_stack__LilyInterpreterVMStack(LilyInterpreterVMStack *self)
+{
+    LilyInterpreterVMStackBlockFrame *current_block_frame =
+      current_frame->block_frames[current_frame->current_block_frame_limit_id];
+
+    // NOTE: No block frame in front of it is expected.
+#ifdef LILY_FULL_ASSERT_VM
+    ASSERT(current_block_frame->end == 0);
+#endif
+
+    while (self->len >= current_block_frame->begin - 1) {
+        LilyInterpreterValue value = VM_POP(self);
+
+        FREE(LilyInterpreterValue, &value);
+    }
 }
 
 LilyInterpreterVMStackFrameReturn
@@ -2490,6 +2522,8 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_JMP)
     {
+        CLEAN_BLOCK_STACK(false);
+
         LilyMirInstruction *block_inst =
           get__OrderedHashMap(current_block_iter.ordered_hash_map,
                               (char *)current_block_inst->jmp->name);
@@ -2497,21 +2531,32 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         VM_SET_CURRENT_BLOCK(&block_inst->block);
         VM_SET_CURRENT_BLOCK_INST_ITER(NEW(VecIter, block_inst->block.insts));
 
+#ifdef LILY_FULL_ASSERT_VM
         ASSERT(block_inst->block.insts->len > 0);
+#endif
 
         VM_SET_CURRENT_BLOCK_INST(next__VecIter(&current_block_inst_iter));
 
+#ifdef LILY_FULL_ASSERT_VM
         ASSERT(current_block_inst);
+        ASSERT(current_frame);
+#endif
+        add_block_frame__LilyInterpreterVMStackFrame(
+          current_frame,
+          block_inst->block.limit->id,
+          (char *)block_inst->block.name,
+          stack->len);
 
-        // TODO: Clean stack of the block.
-
-        return run_inst__LilyInterpreterVM(self);
+        return run_insts__LilyInterpreterVM(self);
     }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_JMP_COND)
     {
+        CLEAN_BLOCK_STACK(false);
+
         // Push value
         LilyInterpreterValue cond = VM_POP(stack);
+        LilyMirInstruction *block_inst = NULL;
 
 #ifdef LILY_FULL_ASSERT_VM
         ASSERT(cond.kind == LILY_INTERPRETER_VALUE_KIND_TRUE ||
@@ -2519,8 +2564,36 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 #endif
 
         if (cond.kind) {
+            block_inst = get__OrderedHashMap(
+              current_block_iter.ordered_hash_map,
+              (char *)current_block_inst->jmpcond.then_block->name);
         } else {
+            block_inst = get__OrderedHashMap(
+              current_block_iter.ordered_hash_map,
+              (char *)current_block_inst->jmpcond.else_block->name);
         }
+
+        VM_SET_CURRENT_BLOCK(&block_inst->block);
+        VM_SET_CURRENT_BLOCK_INST_ITER(NEW(VecIter, block_inst->block.insts));
+
+#ifdef LILY_FULL_ASSERT_VM
+        ASSERT(block_inst->block.insts->len > 0);
+#endif
+
+        VM_SET_CURRENT_BLOCK_INST(next__VecIter(&current_block_inst_iter));
+
+#ifdef LILY_FULL_ASSERT_VM
+        ASSERT(current_block_inst);
+        ASSERT(current_frame);
+#endif
+
+        add_block_frame__LilyInterpreterVMStackFrame(
+          current_frame,
+          block_inst->block.limit->id,
+          (char *)block_inst->block.name,
+          stack->len);
+
+        return run_insts__LilyInterpreterVM(self);
     }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_LEN) {}
@@ -2575,6 +2648,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
           current_frame,
           NEW_VARIANT(LilyInterpreterVMStackFrameReturn, normal, ret_value));
 
+        CLEAN_BLOCK_STACK(true);
         EAT_NEXT_LABEL();
     }
     }
@@ -2614,11 +2688,24 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 }
 
 void
+run_insts__LilyInterpreterVM(LilyInterpreterVM *self)
+{
+run : {
+    run_inst__LilyInterpreterVM(self);
+    VM_NEXT_INST(run, exit);
+}
+
+exit : {
+    return;
+}
+}
+
+void
 run__LilyInterpreterVM(LilyInterpreterVM *self)
 {
 run_vm : {
     run_inst__LilyInterpreterVM(self);
-    VM_NEXT_INST();
+    VM_NEXT_INST(run_vm, exit_vm);
 }
 
 exit_vm : {
