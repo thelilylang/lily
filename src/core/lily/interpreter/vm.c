@@ -99,6 +99,10 @@ set_return__LilyInterpreterVMStackFrame(
   LilyInterpreterVMStackFrameReturn return_);
 
 static void
+push_value__LilyInterpreterVM(LilyInterpreterVM *self,
+                              const LilyMirInstructionVal *val);
+
+static void
 run_inst__LilyInterpreterVM(LilyInterpreterVM *self);
 
 static void
@@ -402,6 +406,96 @@ load_const_value__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
     }
 
     UNREACHABLE("impossible to load const value");
+}
+
+void
+push_value__LilyInterpreterVM(LilyInterpreterVM *self,
+                              const LilyMirInstructionVal *val)
+{
+    switch (val->kind) {
+        case LILY_MIR_INSTRUCTION_VAL_KIND_ARRAY:
+            TODO("push array");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_BYTES:
+            TODO("push bytes");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CONST:
+            TODO("push const");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_CSTR:
+            TODO("push cstr");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_EXCEPTION:
+            TODO("push exception");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_FLOAT:
+			return VM_PUSH(&local_stack, NEW_VARIANT(LilyInterpreterValue, float, val->float_));
+        case LILY_MIR_INSTRUCTION_VAL_KIND_INT:
+            switch (val->dt->kind) {
+                case LILY_MIR_DT_KIND_I1:
+                    return VM_PUSH(&local_stack, NEW(LilyInterpreterValue, val->int_));
+                case LILY_MIR_DT_KIND_I8:
+                    return VM_PUSH(
+                      &local_stack,
+                      NEW_VARIANT(LilyInterpreterValue, int8, (Int8)val->int_));
+                case LILY_MIR_DT_KIND_I16:
+                    return VM_PUSH(&local_stack,
+                            NEW_VARIANT(
+                              LilyInterpreterValue, int16, (Int16)val->int_));
+                case LILY_MIR_DT_KIND_I32:
+                    return VM_PUSH(&local_stack,
+                            NEW_VARIANT(
+                              LilyInterpreterValue, int32, (Int32)val->int_));
+                case LILY_MIR_DT_KIND_I64:
+                    return VM_PUSH(
+                      &local_stack,
+                      NEW_VARIANT(LilyInterpreterValue, int64, val->int_));
+                case LILY_MIR_DT_KIND_ISIZE:
+                    return VM_PUSH(&local_stack,
+                            NEW_VARIANT(
+                              LilyInterpreterValue, isize, (Isize)val->int_));
+                default:
+                    UNREACHABLE("this situation is impossible");
+            }
+        case LILY_MIR_INSTRUCTION_VAL_KIND_LIST:
+            TODO("push list");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_NIL:
+            TODO("push nil");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_PARAM:
+            TODO("push param");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_REG:
+            TODO("push reg");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_SLICE:
+            TODO("push slice");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_STR:
+            TODO("push str");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_STRUCT:
+            TODO("push struct");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_TRACE:
+            TODO("push trace");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_TUPLE:
+            TODO("push tuple");
+        case LILY_MIR_INSTRUCTION_VAL_KIND_UINT:
+			switch (val->dt->kind) {
+				case LILY_MIR_DT_KIND_U8:
+					return VM_PUSH(&local_stack, NEW_VARIANT(LilyInterpreterValue, uint8, (Uint8)val->uint));
+				case LILY_MIR_DT_KIND_U16:
+					return VM_PUSH(&local_stack, NEW_VARIANT(LilyInterpreterValue, uint16, (Uint16)val->uint));
+				case LILY_MIR_DT_KIND_U32:
+					return VM_PUSH(&local_stack, NEW_VARIANT(LilyInterpreterValue, uint32, (Uint32)val->uint));
+				case LILY_MIR_DT_KIND_U64:
+					return VM_PUSH(&local_stack, NEW_VARIANT(LilyInterpreterValue, uint64, (Uint64)val->uint));
+				case LILY_MIR_DT_KIND_USIZE:
+					return VM_PUSH(&local_stack, NEW_VARIANT(LilyInterpreterValue, usize, (Usize)val->uint));
+				default:
+                    UNREACHABLE("this situation is impossible");
+			}
+        case LILY_MIR_INSTRUCTION_VAL_KIND_UNDEF:
+			VM_PUSH(&local_stack, NEW(LilyInterpreterValue, LILY_INTERPRETER_VALUE_KIND_UNDEF));
+			return;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_UNIT:
+			VM_PUSH(&local_stack, NEW(LilyInterpreterValue, LILY_INTERPRETER_VALUE_KIND_UNIT));
+			return;
+        case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
+            TODO("push var");
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 void
@@ -2552,11 +2646,12 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_JMP_COND)
     {
-        CLEAN_BLOCK_STACK(false);
+        push_value__LilyInterpreterVM(self, current_block_inst->jmpcond.cond);
 
-        // Push value
         LilyInterpreterValue cond = VM_POP(stack);
         LilyMirInstruction *block_inst = NULL;
+
+        CLEAN_BLOCK_STACK(false);
 
 #ifdef LILY_FULL_ASSERT_VM
         ASSERT(cond.kind == LILY_INTERPRETER_VALUE_KIND_TRUE ||
@@ -2673,7 +2768,11 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_UNREACHABLE) {}
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_VAL) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_VAL)
+    {
+        push_value__LilyInterpreterVM(self, current_block_inst->val);
+        EAT_NEXT_LABEL();
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_VAR) {}
 
