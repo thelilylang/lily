@@ -51,6 +51,8 @@
 #define VM_DEFAULT() default:
 #endif
 
+#define VM_SET_CURRENT_BLOCK_INST(new_inst) current_block_inst = new_inst;
+#define VM_GOTO_INST(inst) goto *inst_lookup[inst->kind];
 #define VM_NEXT() goto run_vm
 #define VM_EXIT() goto exit_vm
 #define VM_END() }
@@ -75,6 +77,11 @@
                                                                            \
         VM_NEXT();                                                         \
     }
+
+static inline void
+set_return__LilyInterpreterVMStackFrame(
+  LilyInterpreterVMStackFrame *self,
+  LilyInterpreterVMStackFrameReturn return_);
 
 static void
 run_inst__LilyInterpreterVM(LilyInterpreterVM *self);
@@ -104,6 +111,14 @@ CONSTRUCTOR(LilyInterpreterVMStackFrame *,
     self->next = NULL;
 
     return self;
+}
+
+void
+set_return__LilyInterpreterVMStackFrame(
+  LilyInterpreterVMStackFrame *self,
+  LilyInterpreterVMStackFrameReturn return_)
+{
+    self->return_ = return_;
 }
 
 LilyInterpreterVMStackFrame *
@@ -2427,9 +2442,36 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_REF_PTR) {}
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_REG) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_REG)
+    {
+        SET_NEXT_LABEL(reg_finish);
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_RET) {}
+        VM_SET_CURRENT_BLOCK_INST(current_block_inst->reg.inst);
+        VM_GOTO_INST(current_block_inst);
+
+    reg_finish : {
+        EAT_NEXT_LABEL();
+    }
+    }
+
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_RET)
+    {
+        SET_NEXT_LABEL(ret_finish);
+
+        VM_SET_CURRENT_BLOCK_INST(current_block_inst->ret);
+        VM_GOTO_INST(current_block_inst);
+
+    ret_finish : {
+        LilyInterpreterValue ret_value = VM_POP(stack);
+
+        ASSERT(current_frame);
+        set_return__LilyInterpreterVMStackFrame(
+          current_frame,
+          NEW_VARIANT(LilyInterpreterVMStackFrameReturn, normal, ret_value));
+
+        EAT_NEXT_LABEL();
+    }
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_SHL) {}
 
