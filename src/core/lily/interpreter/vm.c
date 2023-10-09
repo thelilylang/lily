@@ -944,6 +944,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FADD)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fadd.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->fadd.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -962,6 +965,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FCMP_EQ)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_eq.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_eq.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -978,6 +984,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FCMP_NE)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_ne.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_ne.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -994,6 +1003,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FCMP_LE)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_le.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_le.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -1010,6 +1022,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FCMP_LT)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_lt.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_lt.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -1029,6 +1044,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FCMP_GE)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_ge.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_ge.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -1048,6 +1066,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FCMP_GT)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_gt.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->fcmp_gt.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -1064,6 +1085,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FDIV)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fdiv.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->fdiv.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -1082,6 +1106,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FMUL)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fmul.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->fmul.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -1100,6 +1127,8 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FNEG)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fneg.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
 
 #ifdef LILY_FULL_ASSERT_VM
@@ -1114,6 +1143,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FREM)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->frem.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->frem.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -1133,6 +1165,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FSUB)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->fsub.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->fsub.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -1168,6 +1203,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     VM_INST(LILY_MIR_INSTRUCTION_KIND_IADD)
     {
         INT_INST_LOOKUP(add);
+
+        push_value__LilyInterpreterVM(self, current_block_inst->iadd.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->iadd.src);
 
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
@@ -1365,6 +1403,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     {
         INT_INST_LOOKUP(cmp_eq);
 
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_eq.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_eq.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -1504,6 +1545,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_NE)
     {
         INT_INST_LOOKUP(cmp_ne);
+
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_ne.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_ne.src);
 
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
@@ -1645,6 +1689,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     {
         INT_INST_LOOKUP(cmp_le);
 
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_le.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_le.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -1782,6 +1829,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     VM_INST(LILY_MIR_INSTRUCTION_KIND_ICMP_LT)
     {
         INT_INST_LOOKUP(cmp_lt);
+
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_lt.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_lt.src);
 
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
@@ -1923,6 +1973,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     {
         INT_INST_LOOKUP(cmp_ge);
 
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_ge.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_ge.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -2063,6 +2116,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     {
         INT_INST_LOOKUP(cmp_gt);
 
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_gt.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->icmp_gt.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
 
@@ -2202,6 +2258,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     VM_INST(LILY_MIR_INSTRUCTION_KIND_IDIV)
     {
         INT_INST_LOOKUP(div);
+
+        push_value__LilyInterpreterVM(self, current_block_inst->idiv.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->idiv.src);
 
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
@@ -2398,6 +2457,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     VM_INST(LILY_MIR_INSTRUCTION_KIND_IMUL)
     {
         INT_INST_LOOKUP(mul);
+
+        push_value__LilyInterpreterVM(self, current_block_inst->imul.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->imul.src);
 
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
@@ -2597,6 +2659,8 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     {
         INT_INST_LOOKUP(neg);
 
+        push_value__LilyInterpreterVM(self, current_block_inst->ineg.src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
 
         INT_INST_START(neg, rhs->kind);
@@ -2681,6 +2745,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     VM_INST(LILY_MIR_INSTRUCTION_KIND_IREM)
     {
         INT_INST_LOOKUP(rem);
+
+        push_value__LilyInterpreterVM(self, current_block_inst->irem.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->irem.src);
 
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
@@ -2842,6 +2909,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     VM_INST(LILY_MIR_INSTRUCTION_KIND_ISUB)
     {
         INT_INST_LOOKUP(sub);
+
+        push_value__LilyInterpreterVM(self, current_block_inst->isub.dest);
+        push_value__LilyInterpreterVM(self, current_block_inst->isub.src);
 
         LilyInterpreterValue *rhs = VM_POP(stack);
         LilyInterpreterValue *lhs = VM_POP(stack);
@@ -3085,6 +3155,8 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_NOT)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->not .src);
+
         LilyInterpreterValue *rhs = VM_POP(stack);
 
 #ifdef LILY_FULL_ASSERT_VM
