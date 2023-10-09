@@ -47,7 +47,7 @@ enum LilyInterpreterVMStackFrameReturnKind
 typedef struct LilyInterpreterVMStackFrameReturn
 {
     enum LilyInterpreterVMStackFrameReturnKind kind;
-    LilyInterpreterValue value;
+    LilyInterpreterValue *value;
 } LilyInterpreterVMStackFrameReturn;
 
 /**
@@ -58,7 +58,7 @@ typedef struct LilyInterpreterVMStackFrameReturn
 inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
                            LilyInterpreterVMStackFrameReturn,
                            normal,
-                           LilyInterpreterValue value)
+                           LilyInterpreterValue *value)
 {
     return (LilyInterpreterVMStackFrameReturn){
         .kind = LILY_INTERPRETER_VM_STACK_FRAME_RETURN_KIND_NORMAL,
@@ -74,7 +74,7 @@ inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
 inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
                            LilyInterpreterVMStackFrameReturn,
                            raise,
-                           LilyInterpreterValue value)
+                           LilyInterpreterValue *value)
 {
     return (LilyInterpreterVMStackFrameReturn){
         .kind = LILY_INTERPRETER_VM_STACK_FRAME_RETURN_KIND_RAISE,
@@ -87,17 +87,20 @@ inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
  * @brief Free LilyInterpreterVMStackFrameReturn type.
  */
 inline DESTRUCTOR(LilyInterpreterVMStackFrameReturn,
-                  const LilyInterpreterVMStackFrameReturn *self)
+                  LilyInterpreterVMStackFrameReturn *self)
 {
     FREE(LilyInterpreterValue, &self->value);
 }
 
 typedef struct LilyInterpreterVMStackBlockFrame
 {
-    Vec *names;  // Vec<char* (&)>*
-    Usize begin; // index of the begin of the stack frame on the stack buffer
-    Usize end;   // index of the end of the stack frame on the stack buffer, 0
-                 // mean no next block stack frame
+    Vec *names;         // Vec<char* (&)>*
+    HashMap *variables; // HashMap<char* (&), LilyInterpreterValue* (&)>*
+    // TODO: maybe use a Key-Value pair instead of HashMap for `regs`
+    HashMap *regs; // HashMap<char* (&), LilyInterpreterValue* (&)>*
+    Usize begin;   // index of the begin of the stack frame on the stack buffer
+    Usize end;     // index of the end of the stack frame on the stack buffer, 0
+                   // mean no next block stack frame
 } LilyInterpreterVMStackBlockFrame;
 
 /**
@@ -124,6 +127,24 @@ add_name__LilyInterpreterVMStackBlockFrame(
 
 /**
  *
+ * @brief Search reg and return the associated value.
+ */
+LilyInterpreterValue *
+search_reg__LilyInterpreterVMStackBlockFrame(
+  const LilyInterpreterVMStackBlockFrame *self,
+  char *name);
+
+/**
+ *
+ * @brief Search variable and return the associated value.
+ */
+LilyInterpreterValue *
+search_variable__LilyInterpreterVMStackBlockFrame(
+  const LilyInterpreterVMStackBlockFrame *self,
+  char *name);
+
+/**
+ *
  * @brief Free LilyInterpreterVMStackBlockFrame type.
  */
 DESTRUCTOR(LilyInterpreterVMStackBlockFrame,
@@ -132,7 +153,7 @@ DESTRUCTOR(LilyInterpreterVMStackBlockFrame,
 typedef struct LilyInterpreterVMStackFrame
 {
     const char *name; // const char* (&)
-    LilyInterpreterValue *params;
+    LilyInterpreterValue **params;
     Usize params_len;
     LilyInterpreterVMStackFrameReturn return_;
     Usize begin; // index of the begin of the stack frame on the stack buffer
@@ -151,7 +172,7 @@ typedef struct LilyInterpreterVMStackFrame
 CONSTRUCTOR(LilyInterpreterVMStackFrame *,
             LilyInterpreterVMStackFrame,
             const char *name,
-            LilyInterpreterValue *params,
+            LilyInterpreterValue **params,
             Usize params_len,
             Usize begin,
             Usize current_block_frame_limit_id,
@@ -165,7 +186,7 @@ LilyInterpreterVMStackFrame *
 attach_stack_frame__LilyInterpreterVMStackFrame(
   LilyInterpreterVMStackFrame *self,
   const char *name,
-  LilyInterpreterValue *params,
+  LilyInterpreterValue **params,
   Usize params_len,
   Usize begin,
   Usize current_block_frame_limit_id,
@@ -192,7 +213,7 @@ typedef struct LilyInterpreterVMStack
     // The bottom of the stack (before the first call frame) is used to store
     // constant value.
     LilyInterpreterValue *top; // LilyInterpreterValue* (&)
-    LilyInterpreterValue *buffer;
+    LilyInterpreterValue **buffer;
     LilyInterpreterVMStackFrame *current_frame; // LilyInterpreterVMStackFrame*?
     Usize len;
     Usize capacity;
@@ -209,8 +230,7 @@ inline CONSTRUCTOR(LilyInterpreterVMStack,
 {
     return (LilyInterpreterVMStack){ .top = NULL,
                                      .buffer = lily_calloc(
-                                       DEFAULT_STACK_CAPACITY,
-                                       sizeof(LilyInterpreterValue)),
+                                       DEFAULT_STACK_CAPACITY, PTR_SIZE),
                                      .current_frame = NULL,
                                      .capacity = DEFAULT_STACK_CAPACITY,
                                      .max_capacity = max_capacity,
@@ -223,14 +243,21 @@ inline CONSTRUCTOR(LilyInterpreterVMStack,
  */
 void
 push__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
-                             LilyInterpreterValue value);
+                             LilyInterpreterValue *value);
 
 /**
  *
  * @brief Remove and return the value on the top.
  */
-LilyInterpreterValue
+LilyInterpreterValue *
 pop__LilyInterpreterVMStack(LilyInterpreterVMStack *self);
+
+/**
+ *
+ * @brief Return the value on the top.
+ */
+LilyInterpreterValue *
+peek__LilyInterpreterVMStack(LilyInterpreterVMStack *self);
 
 /**
  *

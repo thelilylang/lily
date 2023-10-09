@@ -131,8 +131,7 @@ inline CONSTRUCTOR(LilyInterpreterValueInstance,
  *
  * @brief Free LilyInterpreterValueInstance type.
  */
-DESTRUCTOR(LilyInterpreterValueInstance,
-           const LilyInterpreterValueInstance *self);
+DESTRUCTOR(LilyInterpreterValueInstance, LilyInterpreterValueInstance *self);
 
 typedef struct LilyInterpreterValueListNode
 {
@@ -468,7 +467,7 @@ inline VARIANT_CONSTRUCTOR(LilyInterpreterValueObject,
  *
  * @brief Free LilyInterpreterValueObject type.
  */
-DESTRUCTOR(LilyInterpreterValueObject, const LilyInterpreterValueObject *self);
+DESTRUCTOR(LilyInterpreterValueObject, LilyInterpreterValueObject *self);
 
 enum LilyInterpreterValueKind
 {
@@ -494,6 +493,7 @@ enum LilyInterpreterValueKind
 struct LilyInterpreterValue
 {
     enum LilyInterpreterValueKind kind;
+    Usize ref_count;
     union
     {
         Int8 int8;
@@ -515,175 +515,136 @@ struct LilyInterpreterValue
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_INT8).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           int8,
-                           Int8 int8)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_INT8,
-                                   .int8 = int8 };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    int8,
+                    Int8 int8);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_INT16).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           int16,
-                           Int16 int16)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_INT16,
-                                   .int16 = int16 };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    int16,
+                    Int16 int16);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_INT32).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           int32,
-                           Int32 int32)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_INT32,
-                                   .int32 = int32 };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    int32,
+                    Int32 int32);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_INT64).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           int64,
-                           Int64 int64)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_INT64,
-                                   .int64 = int64 };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    int64,
+                    Int64 int64);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_ISIZE).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           isize,
-                           Isize isize)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_ISIZE,
-                                   .isize = isize };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    isize,
+                    Isize isize);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_FLOAT).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           float,
-                           Float64 float_)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_FLOAT,
-                                   .float_ = float_ };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    float,
+                    Float64 float_);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_OBJECT).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           object,
-                           LilyInterpreterValueObject object)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_OBJECT,
-                                   .object = object };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    object,
+                    LilyInterpreterValueObject object);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_UINT8).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           uint8,
-                           Uint8 uint8)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_UINT8,
-                                   .uint8 = uint8 };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    uint8,
+                    Uint8 uint8);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_UINT16).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           uint16,
-                           Uint16 uint16)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_UINT16,
-                                   .uint16 = uint16 };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    uint16,
+                    Uint16 uint16);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_UINT32).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           uint32,
-                           Uint32 uint32)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_UINT32,
-                                   .uint32 = uint32 };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    uint32,
+                    Uint32 uint32);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_UINT64).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           uint64,
-                           Uint64 uint64)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_UINT64,
-                                   .uint64 = uint64 };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    uint64,
+                    Uint64 uint64);
 
 /**
  *
  * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_USIZE).
  */
-inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           usize,
-                           Usize usize)
-{
-    return (LilyInterpreterValue){ .kind = LILY_INTERPRETER_VALUE_KIND_USIZE,
-                                   .usize = usize };
-}
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    usize,
+                    Usize usize);
 
 /**
  *
  * @brief Construct LilyInterpreterValue.
  */
-inline CONSTRUCTOR(LilyInterpreterValue,
-                   LilyInterpreterValue,
-                   enum LilyInterpreterValueKind kind)
+CONSTRUCTOR(LilyInterpreterValue *,
+            LilyInterpreterValue,
+            enum LilyInterpreterValueKind kind);
+
+/**
+ *
+ *
+ * @brief Pass to ref a pointer of `LilyInterpreterValue` and increment
+ * the `ref_count`.
+ * @return LilyInterpreterValue* (&)
+ */
+inline LilyInterpreterValue *
+ref__LilyInterpreterValue(LilyInterpreterValue *self)
 {
-    return (LilyInterpreterValue){
-        .kind = kind,
-    };
+    ++self->ref_count;
+    return self;
 }
 
 /**
  *
  * @brief Free LilyInterpreterValue type.
  */
-DESTRUCTOR(LilyInterpreterValue, const LilyInterpreterValue *self);
+DESTRUCTOR(LilyInterpreterValue, LilyInterpreterValue **self);
 
 #endif // LILY_CORE_LILY_INTERPRETER_VALUE_H

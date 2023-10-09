@@ -33,7 +33,7 @@
 // (LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE).
 static inline VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
                                  instance,
-                                 const LilyInterpreterValueObject *self);
+                                 LilyInterpreterValueObject *self);
 
 // Free LilyInterpreterValueObject type
 // (LILY_INTERPRETER_VALUE_OBJECT_KIND_LIST).
@@ -53,10 +53,9 @@ static inline VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
                                  struct,
                                  const LilyInterpreterValueObject *self);
 
-DESTRUCTOR(LilyInterpreterValueInstance,
-           const LilyInterpreterValueInstance *self)
+DESTRUCTOR(LilyInterpreterValueInstance, LilyInterpreterValueInstance *self)
 {
-    FREE(LilyInterpreterValue, self->value);
+    FREE(LilyInterpreterValue, &self->value);
     lily_free(self->value);
 }
 
@@ -76,13 +75,13 @@ CONSTRUCTOR(LilyInterpreterValueListNode *,
 
 DESTRUCTOR(LilyInterpreterValueListNode, LilyInterpreterValueListNode *self)
 {
-    FREE(LilyInterpreterValue, self->value);
+    FREE(LilyInterpreterValue, &self->value);
     lily_free(self->value);
 
     LilyInterpreterValueListNode *current = self->next;
 
     while (current) {
-        FREE(LilyInterpreterValue, current->value);
+        FREE(LilyInterpreterValue, &current->value);
         lily_free(current->value);
     }
 }
@@ -123,7 +122,7 @@ DESTRUCTOR(LilyInterpreterValueStruct, const LilyInterpreterValueStruct *self)
 
 VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
                    instance,
-                   const LilyInterpreterValueObject *self)
+                   LilyInterpreterValueObject *self)
 {
     FREE(LilyInterpreterValueInstance, &self->instance);
 }
@@ -149,7 +148,7 @@ VARIANT_DESTRUCTOR(LilyInterpreterValueObject,
     FREE(LilyInterpreterValueStruct, &self->struct_);
 }
 
-DESTRUCTOR(LilyInterpreterValueObject, const LilyInterpreterValueObject *self)
+DESTRUCTOR(LilyInterpreterValueObject, LilyInterpreterValueObject *self)
 {
     switch (self->kind) {
         case LILY_INTERPRETER_VALUE_OBJECT_KIND_INSTANCE:
@@ -165,13 +164,202 @@ DESTRUCTOR(LilyInterpreterValueObject, const LilyInterpreterValueObject *self)
     }
 }
 
-DESTRUCTOR(LilyInterpreterValue, const LilyInterpreterValue *self)
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    int8,
+                    Int8 int8)
 {
-    switch (self->kind) {
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_INT8;
+    self->ref_count = 0;
+    self->int8 = int8;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    int16,
+                    Int16 int16)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_INT16;
+    self->ref_count = 0;
+    self->int16 = int16;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    int32,
+                    Int32 int32)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_INT32;
+    self->ref_count = 0;
+    self->int32 = int32;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    int64,
+                    Int64 int64)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_INT64;
+    self->ref_count = 0;
+    self->int64 = int64;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    isize,
+                    Isize isize)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_ISIZE;
+    self->ref_count = 0;
+    self->isize = isize;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    float,
+                    Float64 float_)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_FLOAT;
+    self->ref_count = 0;
+    self->float_ = float_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    object,
+                    LilyInterpreterValueObject object)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_OBJECT;
+    self->ref_count = 0;
+    self->object = object;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    uint8,
+                    Uint8 uint8)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_UINT8;
+    self->ref_count = 0;
+    self->uint8 = uint8;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    uint16,
+                    Uint16 uint16)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_UINT16;
+    self->ref_count = 0;
+    self->uint16 = uint16;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    uint32,
+                    Uint32 uint32)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_UINT32;
+    self->ref_count = 0;
+    self->uint32 = uint32;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    uint64,
+                    Uint64 uint64)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_UINT64;
+    self->ref_count = 0;
+    self->uint64 = uint64;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    usize,
+                    Usize usize)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_USIZE;
+    self->ref_count = 0;
+    self->usize = usize;
+
+    return self;
+}
+
+CONSTRUCTOR(LilyInterpreterValue *,
+            LilyInterpreterValue,
+            enum LilyInterpreterValueKind kind)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = kind;
+    self->ref_count = 0;
+
+    return self;
+}
+
+DESTRUCTOR(LilyInterpreterValue, LilyInterpreterValue **self)
+{
+    if ((*self)->ref_count > 0) {
+        --(*self)->ref_count;
+        return;
+    }
+
+    switch ((*self)->kind) {
         case LILY_INTERPRETER_VALUE_KIND_OBJECT:
-            FREE(LilyInterpreterValueObject, &self->object);
+            FREE(LilyInterpreterValueObject, &(*self)->object);
+            lily_free(*self);
+            *self = NULL;
             return;
         default:
+            lily_free(*self);
+            *self = NULL;
             return;
     }
 }
