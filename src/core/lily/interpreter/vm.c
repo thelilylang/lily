@@ -113,6 +113,7 @@ static threadlocal LilyMirInstructionBlock *current_block = NULL;
 static threadlocal VecIter current_block_inst_iter;
 static threadlocal LilyMirInstruction *current_block_inst = NULL;
 static threadlocal LilyInterpreterVMStack local_stack;
+static threadlocal LilyInterpreterVMStackBlockFrame *current_block_frame = NULL;
 static threadlocal LilyInterpreterVMStackFrame *current_frame = NULL;
 
 CONSTRUCTOR(LilyInterpreterVMStackBlockFrame *,
@@ -138,7 +139,7 @@ search_reg__LilyInterpreterVMStackBlockFrame(
   const LilyInterpreterVMStackBlockFrame *self,
   char *name)
 {
-    LilyInterpreterValue *reg_value = get__HashMap(self->regs, name);
+    LilyInterpreterValue *reg_value = remove__HashMap(self->regs, name);
     LilyInterpreterValue *poped_value = VM_POP(&local_stack);
 
 #ifdef LILY_FULL_ASSERT_VM
@@ -522,7 +523,10 @@ push_value__LilyInterpreterVM(LilyInterpreterVM *self,
         case LILY_MIR_INSTRUCTION_VAL_KIND_PARAM:
             TODO("push param");
         case LILY_MIR_INSTRUCTION_VAL_KIND_REG:
-            TODO("push reg");
+            VM_PUSH(&local_stack,
+                    search_reg__LilyInterpreterVMStackBlockFrame(
+                      current_block_frame, (char *)val->reg));
+            return;
         case LILY_MIR_INSTRUCTION_VAL_KIND_SLICE:
             TODO("push slice");
         case LILY_MIR_INSTRUCTION_VAL_KIND_STR:
@@ -574,7 +578,11 @@ push_value__LilyInterpreterVM(LilyInterpreterVM *self,
               NEW(LilyInterpreterValue, LILY_INTERPRETER_VALUE_KIND_UNIT));
             return;
         case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
-            TODO("push var");
+            // Bring and back to the front the var value.
+            VM_PUSH(&local_stack,
+                    search_variable__LilyInterpreterVMStackBlockFrame(
+                      current_block_frame, (char *)val->var));
+            return;
         default:
             UNREACHABLE("unknown variant");
     }
