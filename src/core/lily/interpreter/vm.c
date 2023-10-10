@@ -519,7 +519,9 @@ push_value__LilyInterpreterVM(LilyInterpreterVM *self,
         case LILY_MIR_INSTRUCTION_VAL_KIND_LIST:
             TODO("push list");
         case LILY_MIR_INSTRUCTION_VAL_KIND_NIL:
-            TODO("push nil");
+            VM_PUSH(&local_stack,
+                    NEW(LilyInterpreterValue, LILY_INTERPRETER_VALUE_KIND_NIL));
+            return;
         case LILY_MIR_INSTRUCTION_VAL_KIND_PARAM:
             TODO("push param");
         case LILY_MIR_INSTRUCTION_VAL_KIND_REG:
@@ -530,7 +532,15 @@ push_value__LilyInterpreterVM(LilyInterpreterVM *self,
         case LILY_MIR_INSTRUCTION_VAL_KIND_SLICE:
             TODO("push slice");
         case LILY_MIR_INSTRUCTION_VAL_KIND_STR:
-            TODO("push str");
+            VM_PUSH(&local_stack,
+                    NEW_VARIANT(LilyInterpreterValue,
+                                object,
+                                NEW_VARIANT(LilyInterpreterValueObject,
+                                            str,
+                                            NEW(LilyInterpreterValueStr,
+                                                val->str->buffer,
+                                                val->str->len))));
+            return;
         case LILY_MIR_INSTRUCTION_VAL_KIND_STRUCT:
             TODO("push struct");
         case LILY_MIR_INSTRUCTION_VAL_KIND_TRACE:
