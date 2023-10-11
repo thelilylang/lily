@@ -79,6 +79,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/expr/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/stmt/*.h 
 	${CLANG_FORMAT} ./include/core/lily/compiler/package/*.h
+	${CLANG_FORMAT} ./include/core/lily/package/*.h
 	${CLANG_FORMAT} ./include/core/lily/preparser/*.h
 	${CLANG_FORMAT} ./include/core/lily/preparser/preprocess/*.h
 	${CLANG_FORMAT} ./include/core/lily/precompiler/*.h
