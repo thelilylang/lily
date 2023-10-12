@@ -44,8 +44,8 @@ enum LilyPackageStatus
         Vec *private_macros;             /* Vec<LilyMacro*>* */                \
         Vec *public_imports;             /* Vec<LilyImport*>* */               \
         Vec *private_imports;            /* Vec<LilyImport*>* */               \
-        Vec *sub_packages;               /* Vec<LilyPackage*>* */              \
-        Vec *package_dependencies;       /* Vec<LilyPackage* (&)>* */          \
+        Vec *sub_packages;               /* Vec<LilyPackage<T>*>* */              \
+        Vec *package_dependencies;       /* Vec<LilyPackage<T>* (&)>* */          \
         Vec *lib_dependencies;           /* Vec<LilyLibrary* (&)>* */          \
         const LilyPackageConfig *config; /* LilyPackageConfig* (&) */          \
                                                                                \
@@ -191,7 +191,7 @@ enum LilyPackageStatus
         }                                                                    \
                                                                              \
         for (Usize i = 0; i < self->sub_packages->len; i++) {                \
-            LilyPackage *pkg = search_package_from_name__LilyPackage(        \
+            LilyPackage__##T *pkg = search_package_from_name__LilyPackage__##T(        \
               get__Vec(self->sub_packages, i), name);                        \
                                                                              \
             if (pkg) {                                                       \
