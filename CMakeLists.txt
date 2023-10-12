@@ -466,23 +466,28 @@ target_include_directories(lily_core_lily_analysis PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_interpreter_package
 set(LILY_CORE_LILY_INTERPRETER_PACKAGE_SRC
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/package/package.c)
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/package/package.c)
 
-add_library(lily_core_lily_interpreter_package STATIC ${LILY_CORE_LILY_INTERPRETER_PACKAGE_SRC})
-target_link_libraries(lily_core_lily_interpreter_package PRIVATE lily_core_lily_mir lily_core_lily_parser lily_core_lily_precompiler)
-target_include_directories(lily_core_lily_interpreter_package PRIVATE ${LILY_INCLUDE})
+add_library(lily_core_lily_interpreter_package STATIC
+            ${LILY_CORE_LILY_INTERPRETER_PACKAGE_SRC})
+target_link_libraries(
+  lily_core_lily_interpreter_package
+  PRIVATE lily_core_lily_mir lily_core_lily_parser lily_core_lily_precompiler)
+target_include_directories(lily_core_lily_interpreter_package
+                           PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_interpreter_vm
 set(LILY_CORE_LILY_INTERPRETER_VM_SRC
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/builtin.c
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/error.c
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/operator.c
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/sys.c
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/memory.c
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/value.c
-	${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/vm.c)
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/builtin.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/error.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/operator.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/sys.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/memory.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/value.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/vm.c)
 
-add_library(lily_core_lily_interpreter_vm STATIC ${LILY_CORE_LILY_INTERPRETER_VM_SRC})
+add_library(lily_core_lily_interpreter_vm STATIC
+            ${LILY_CORE_LILY_INTERPRETER_VM_SRC})
 target_link_libraries(lily_core_lily_interpreter_vm PUBLIC lily_base)
 target_include_directories(lily_core_lily_interpreter_vm PRIVATE include)
 
