@@ -25,7 +25,7 @@
 #include <base/macros.h>
 #include <base/print.h>
 
-#include <core/lily/interpreter/runtime/error.h>
+#include <core/lily/interpreter/vm/runtime/error.h>
 
 #include <stdio.h>
 #include <stdlib.h>

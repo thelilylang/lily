@@ -24,7 +24,7 @@
 
 #include <base/alloc.h>
 
-#include <core/lily/interpreter/value.h>
+#include <core/lily/interpreter/vm/value.h>
 
 #include <stdio.h>
 #include <stdlib.h>

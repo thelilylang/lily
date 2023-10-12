@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include <core/lily/interpreter/runtime.h>
-#include <core/lily/interpreter/vm.h>
+#include <core/lily/interpreter/vm/runtime.h>
+#include <core/lily/interpreter/vm/vm.h>
 
 // Stack-based VM
 

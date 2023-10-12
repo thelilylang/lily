@@ -30,7 +30,7 @@
 
 #include <builtin/alloc.h>
 
-#include <core/lily/interpreter/value.h>
+#include <core/lily/interpreter/vm/value.h>
 
 typedef struct LilyInterpreterMemory
 {

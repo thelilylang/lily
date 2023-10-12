@@ -30,8 +30,8 @@
 #include <base/new.h>
 #include <base/units.h>
 
-#include <core/lily/interpreter/memory.h>
-#include <core/lily/interpreter/value.h>
+#include <core/lily/interpreter/vm/memory.h>
+#include <core/lily/interpreter/vm/value.h>
 #include <core/lily/mir/mir.h>
 
 #define DEFAULT_MAX_STACK_CAPACITY MiB // ~1 MB

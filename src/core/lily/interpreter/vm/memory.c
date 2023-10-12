@@ -22,12 +22,26 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_INTERPRETER_RUNTIME_H
-#define LILY_CORE_LILY_INTERPRETER_RUNTIME_H
+#include <base/alloc.h>
 
-#include <core/lily/interpreter/runtime/builtin.h>
-#include <core/lily/interpreter/runtime/error.h>
-#include <core/lily/interpreter/runtime/operator.h>
-#include <core/lily/interpreter/runtime/sys.h>
+#include <core/lily/interpreter/vm/memory.h>
+#include <core/lily/interpreter/vm/runtime.h>
 
-#endif // LILY_CORE_LILY_INTERPRETER_RUNTIME_H
+#include <stddef.h>
+
+LilyInterpreterValueObject *
+alloc__LilyInterpreterMemory(LilyInterpreterMemory *self, Usize size)
+{
+}
+
+void
+free__LilyInterpreterMemory(LilyInterpreterMemory *self,
+                            LilyInterpreterValueObject **obj)
+{
+    if (obj && *obj) {
+        lily_free(*obj);
+        *obj = NULL;
+    } else {
+        RUNTIME_ERROR_UNREACHABLE("bad free, the object is NULL");
+    }
+}

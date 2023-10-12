@@ -24,8 +24,8 @@
 
 #include <base/types.h>
 
-#include <core/lily/interpreter/runtime/error.h>
-#include <core/lily/interpreter/runtime/operator.h>
+#include <core/lily/interpreter/vm/runtime/error.h>
+#include <core/lily/interpreter/vm/runtime/operator.h>
 
 #include <stdint.h>
 
