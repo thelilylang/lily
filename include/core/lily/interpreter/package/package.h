@@ -35,19 +35,20 @@
 #include <core/lily/compiler/package/program.h>
 #include <core/lily/functions/builtin.h>
 #include <core/lily/functions/sys.h>
+#include <core/lily/interpreter/vm/vm.h>
 #include <core/lily/mir/mir.h>
+#include <core/lily/package/package.h>
 #include <core/lily/parser/parser.h>
 #include <core/lily/precompiler/precompiler.h>
 #include <core/lily/preparser/preparser.h>
 #include <core/lily/scanner/scanner.h>
 #include <core/lily/shared/visibility.h>
-#include <core/lily/package/package.h>
-#include <core/lily/interpreter/vm/vm.h>
 
-typedef struct LilyInterpreterAdapter {
+typedef struct LilyInterpreterAdapter
+{
     LilyInterpreterVM vm;
 } LilyInterpreterAdapter;
 
-LilyPackage(LilyInterpreterAdapter);
+LilyPackageAdapter(LilyInterpreterAdapter);
 
 #endif // LILY_CORE_LILY_INTERPRETER_PACKAGE_H

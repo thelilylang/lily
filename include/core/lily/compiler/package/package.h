@@ -221,7 +221,7 @@ CONSTRUCTOR(LilyPackage *,
             char *filename,
             enum LilyPackageStatus status,
             const char *default_path,
-            const char *default_package_acccess,
+            const char *default_package_access,
             LilyPackage *root);
 
 /**

@@ -25,6 +25,51 @@
 #ifndef LILY_CORE_LILY_PACKAGE_H
 #define LILY_CORE_LILY_PACKAGE_H
 
+#include <base/macros.h>
+
+enum LilyPackageKind
+{
+    LILY_PACKAGE_KIND_COMPILER,
+    LILY_PACKAGE_KIND_INTERPRETER,
+    LILY_PACKAGE_KIND_JIT,
+};
+
+// It's a wrapper to all packages adapters.
+typedef struct LilyPackage
+{
+    enum LilyPackageKind kind;
+    void *pkg; // LilyPackage__LilyInterpreterAdapter* (&) |
+               // LilyPackage__LilyCompilerAdapter* (&) |
+               // LilyPackage__LilyJitAdapter* (&)
+} LilyPackage;
+
+/**
+ *
+ * @brief Construct LilyPackage type (LILY_PACKAGE_KIND_COMPILER).
+ */
+inline VARIANT_CONSTRUCTOR(LilyPackage, LilyPackage, compiler, void *pkg)
+{
+    return (LilyPackage){ .kind = LILY_PACKAGE_KIND_COMPILER, .pkg = pkg };
+}
+
+/**
+ *
+ * @brief Construct LilyPackage type (LILY_PACKAGE_KIND_INTERPRETER).
+ */
+inline VARIANT_CONSTRUCTOR(LilyPackage, LilyPackage, interpreter, void *pkg)
+{
+    return (LilyPackage){ .kind = LILY_PACKAGE_KIND_INTERPRETER, .pkg = pkg };
+}
+
+/**
+ *
+ * @brief Construct LilyPackage type (LILY_PACKAGE_KIND_JIT).
+ */
+inline VARIANT_CONSTRUCTOR(LilyPackage, LilyPackage, jit, void *pkg)
+{
+    return (LilyPackage){ .kind = LILY_PACKAGE_KIND_JIT, .pkg = pkg };
+}
+
 enum LilyPackageStatus
 {
     LILY_PACKAGE_STATUS_LIB_MAIN,
@@ -34,19 +79,19 @@ enum LilyPackageStatus
     LILY_PACKAGE_STATUS_IND // Independent package e.g. a single file
 };
 
-/* LilyPackage<T> */
-#define LilyPackage(T)                                                         \
+/* LilyPackageAdapter<T> */
+#define LilyPackageAdapter(T)                                                  \
     typedef struct LilyPackage__##T                                            \
     {                                                                          \
-        String *name;                    /* String* | String* (&) */           \
-        String *global_name;             /* String* | String* (&) */           \
-        Vec *public_macros;              /* Vec<LilyMacro*>*? */               \
-        Vec *private_macros;             /* Vec<LilyMacro*>* */                \
-        Vec *public_imports;             /* Vec<LilyImport*>* */               \
-        Vec *private_imports;            /* Vec<LilyImport*>* */               \
-        Vec *sub_packages;               /* Vec<LilyPackage<T>*>* */              \
-        Vec *package_dependencies;       /* Vec<LilyPackage<T>* (&)>* */          \
-        Vec *lib_dependencies;           /* Vec<LilyLibrary* (&)>* */          \
+        String *name;              /* String* | String* (&) */                 \
+        String *global_name;       /* String* | String* (&) */                 \
+        Vec *public_macros;        /* Vec<LilyMacro*>*? */                     \
+        Vec *private_macros;       /* Vec<LilyMacro*>* */                      \
+        Vec *public_imports;       /* Vec<LilyImport*>* */                     \
+        Vec *private_imports;      /* Vec<LilyImport*>* */                     \
+        Vec *sub_packages;         /* Vec<LilyPackageAdapter<T>*>* */          \
+        Vec *package_dependencies; /* Vec<LilyPackageAdapter<T>* (&)>* */      \
+        Vec *lib_dependencies;     /* Vec<LilyLibrary* (&)>* */                \
         const LilyPackageConfig *config; /* LilyPackageConfig* (&) */          \
                                                                                \
         File file;                                                             \
@@ -143,7 +188,7 @@ enum LilyPackageStatus
     void add_sys_fun_to_sys_usage__LilyPackage__##T(LilyPackage__##T *self,    \
                                                     LilySysFun *fun_sys);
 
-#define IMPL_LilyPackage(T)                                                  \
+#define IMPL_LilyPackageAdapter(T)                                           \
     const File *get_file_from_filename__LilyPackage__##T(                    \
       const LilyPackage__##T *self, const char *filename)                    \
     {                                                                        \
@@ -191,8 +236,9 @@ enum LilyPackageStatus
         }                                                                    \
                                                                              \
         for (Usize i = 0; i < self->sub_packages->len; i++) {                \
-            LilyPackage__##T *pkg = search_package_from_name__LilyPackage__##T(        \
-              get__Vec(self->sub_packages, i), name);                        \
+            LilyPackage__##T *pkg =                                          \
+              search_package_from_name__LilyPackage__##T(                    \
+                get__Vec(self->sub_packages, i), name);                      \
                                                                              \
             if (pkg) {                                                       \
                 return pkg;                                                  \
