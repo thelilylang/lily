@@ -27,6 +27,13 @@
 
 #include <base/macros.h>
 
+#define CAST_COMPILER__LilyPackage(package) \
+    CAST(LilyPackage__LilyCompilerAdapter *, package->pkg)
+#define CAST_INTERPRETER__LilyPackage(package) \
+    CAST(LilyPackage__LilyInterpreterAdapter *, package->pkg)
+#define CAST_JIT__LilyPackage(package) \
+    CAST(LilyPackage__LilyJitAdapter *, package->pkg)
+
 enum LilyPackageKind
 {
     LILY_PACKAGE_KIND_COMPILER,
@@ -34,12 +41,12 @@ enum LilyPackageKind
     LILY_PACKAGE_KIND_JIT,
 };
 
-// It's a wrapper to all packages adapters.
+// It's a wrapper for all packages adapters.
 typedef struct LilyPackage
 {
     enum LilyPackageKind kind;
-    void *pkg; // LilyPackage__LilyInterpreterAdapter* (&) |
-               // LilyPackage__LilyCompilerAdapter* (&) |
+    void *pkg; // LilyPackage__LilyCompilerAdapter* (&) |
+               // LilyPackage__LilyInterpreterAdapter* (&) |
                // LilyPackage__LilyJitAdapter* (&)
 } LilyPackage;
 
