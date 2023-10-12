@@ -128,12 +128,6 @@ CONSTRUCTOR(LilyPackage__LilyInterpreterAdapter *,
     self->core_is_loaded = false;
     self->builtin_is_loaded = false;
     self->main_is_found = false;
-    self->is_exe = false;
-    self->is_lib = false;
-    self->is_static_lib = false;
-    self->is_dynamic_lib = false;
-
-    self->lib = NULL;
 
     lily_free(file_ext);
 
