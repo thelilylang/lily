@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <core/lily/compiler/package/config.h>
+#include <core/lily/package/config.h>
 
 CONSTRUCTOR(LilyPackageConfig,
             LilyPackageConfig,

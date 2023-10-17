@@ -26,7 +26,7 @@
 
 #include <core/lily/compiler/ar/ar.h>
 #include <core/lily/compiler/ir/llvm/ar.h>
-#include <core/lily/compiler/package/library.h>
+#include <core/lily/package/library.h>
 
 #include <stdio.h>
 #include <stdlib.h>

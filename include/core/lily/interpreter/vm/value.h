@@ -206,7 +206,7 @@ typedef struct LilyInterpreterValueResult
  * @brief Construct LilyInterpreterValueResult type
  * (LILY_INTERPRETER_VALUE_RESULT_KIND_OK).
  */
-VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
                     LilyInterpreterValueResult,
                     ok,
                     LilyInterpreterValue *ok)
@@ -221,7 +221,7 @@ VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
  * @brief Construct LilyInterpreterValueResult type
  * (LILY_INTERPRETER_VALUE_RESULT_KIND_ERR).
  */
-VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
+inline VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
                     LilyInterpreterValueResult,
                     err,
                     LilyInterpreterValue *err)
@@ -247,7 +247,7 @@ typedef struct LilyInterpreterValueStr
  *
  * @brief Construct LilyInterpreterValueStr type
  */
-CONSTRUCTOR(LilyInterpreterValueStr,
+inline CONSTRUCTOR(LilyInterpreterValueStr,
             LilyInterpreterValueStr,
             char *s,
             Usize len)

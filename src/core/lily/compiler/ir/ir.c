@@ -26,7 +26,7 @@
 
 #include <core/lily/compiler/ir.h>
 #include <core/lily/compiler/ir/llvm/generator.h>
-#include <core/lily/compiler/package.h>
+#include <core/lily/package/package.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +34,9 @@
 void
 run__LilyIr(LilyPackage *self)
 {
-    switch (self->ir.kind) {
+    ASSERT(self->kind == LILY_PACKAGE_KIND_COMPILER);
+
+    switch (self->compiler.ir.kind) {
         case LILY_IR_KIND_CC:
             break;
         case LILY_IR_KIND_CPP:

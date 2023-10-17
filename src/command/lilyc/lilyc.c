@@ -29,8 +29,10 @@
 #include <command/lilyc/lilyc.h>
 
 #include <core/lily/compiler/package.h>
-#include <core/lily/compiler/package/program.h>
 #include <core/lily/lily.h>
+#include <core/lily/package/default_path.h>
+#include <core/lily/package/package.h>
+#include <core/lily/package/program.h>
 
 #include <stdlib.h>
 

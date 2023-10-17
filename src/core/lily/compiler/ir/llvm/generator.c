@@ -27,25 +27,28 @@
 #include <core/lily/compiler/ir/llvm/dump.h>
 #include <core/lily/compiler/ir/llvm/generator.h>
 #include <core/lily/compiler/ir/llvm/lily.h>
-#include <core/lily/compiler/package.h>
 #include <core/lily/lily.h>
+#include <core/lily/package/package.h>
 
 #include <llvm-c/DebugInfo.h>
 
 void
 run__LilyIrLlvmGenerator(LilyPackage *self)
 {
+    ASSERT(self->kind == LILY_PACKAGE_KIND_COMPILER);
+
     // Init file (LLVMMetadataRef)
     // TODO: improve that later
-    self->ir.llvm.file = LLVMDIBuilderCreateFile(self->ir.llvm.di_builder,
-                                                 self->file.name,
-                                                 strlen(self->file.name),
-                                                 "",
-                                                 0);
-    self->ir.llvm.compile_unit = LLVMDIBuilderCreateCompileUnit(
-      self->ir.llvm.di_builder,
+    self->compiler.ir.llvm.file =
+      LLVMDIBuilderCreateFile(self->compiler.ir.llvm.di_builder,
+                              self->file.name,
+                              strlen(self->file.name),
+                              "",
+                              0);
+    self->compiler.ir.llvm.compile_unit = LLVMDIBuilderCreateCompileUnit(
+      self->compiler.ir.llvm.di_builder,
       LLVMDWARFSourceLanguageC, // Source language (e.g., C, C++, etc.)
-      self->ir.llvm.file,
+      self->compiler.ir.llvm.file,
       "lily-" VERSION, // Compiler version string
       strlen("lily-" VERSION),
       self->config->o0 ? false : true,
@@ -63,12 +66,12 @@ run__LilyIrLlvmGenerator(LilyPackage *self)
       "",
       0);
 
-    LilyLLVMPrepareModule(&self->ir.llvm, self->mir_module.insts);
-    LilyLLVMRunModule(&self->ir.llvm, self->mir_module.insts);
+    LilyLLVMPrepareModule(&self->compiler.ir.llvm, self->mir_module.insts);
+    LilyLLVMRunModule(&self->compiler.ir.llvm, self->mir_module.insts);
 
 #ifdef DEBUG_MIR
     printf("====LLVM IR Generator(%s)====\n", self->global_name->buffer);
 
-    dump__LilyIrLlvm(&self->ir.llvm);
+    dump__LilyIrLlvm(&self->compiler.ir.llvm);
 #endif
 }

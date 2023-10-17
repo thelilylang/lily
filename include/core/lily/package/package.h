@@ -26,56 +26,14 @@
 #define LILY_CORE_LILY_PACKAGE_H
 
 #include <base/macros.h>
+#include <base/string.h>
+#include <base/vec.h>
 
-#define CAST_COMPILER__LilyPackage(package) \
-    CAST(LilyPackage__LilyCompilerAdapter *, package->pkg)
-#define CAST_INTERPRETER__LilyPackage(package) \
-    CAST(LilyPackage__LilyInterpreterAdapter *, package->pkg)
-#define CAST_JIT__LilyPackage(package) \
-    CAST(LilyPackage__LilyJitAdapter *, package->pkg)
-
-enum LilyPackageKind
-{
-    LILY_PACKAGE_KIND_COMPILER,
-    LILY_PACKAGE_KIND_INTERPRETER,
-    LILY_PACKAGE_KIND_JIT,
-};
-
-// It's a wrapper for all packages adapters.
-typedef struct LilyPackage
-{
-    enum LilyPackageKind kind;
-    void *pkg; // LilyPackage__LilyCompilerAdapter* (&) |
-               // LilyPackage__LilyInterpreterAdapter* (&) |
-               // LilyPackage__LilyJitAdapter* (&)
-} LilyPackage;
-
-/**
- *
- * @brief Construct LilyPackage type (LILY_PACKAGE_KIND_COMPILER).
- */
-inline VARIANT_CONSTRUCTOR(LilyPackage, LilyPackage, compiler, void *pkg)
-{
-    return (LilyPackage){ .kind = LILY_PACKAGE_KIND_COMPILER, .pkg = pkg };
-}
-
-/**
- *
- * @brief Construct LilyPackage type (LILY_PACKAGE_KIND_INTERPRETER).
- */
-inline VARIANT_CONSTRUCTOR(LilyPackage, LilyPackage, interpreter, void *pkg)
-{
-    return (LilyPackage){ .kind = LILY_PACKAGE_KIND_INTERPRETER, .pkg = pkg };
-}
-
-/**
- *
- * @brief Construct LilyPackage type (LILY_PACKAGE_KIND_JIT).
- */
-inline VARIANT_CONSTRUCTOR(LilyPackage, LilyPackage, jit, void *pkg)
-{
-    return (LilyPackage){ .kind = LILY_PACKAGE_KIND_JIT, .pkg = pkg };
-}
+#include <core/lily/compiler/package/package.h>
+#include <core/lily/interpreter/package/package.h>
+#include <core/lily/package/config.h>
+#include <core/lily/package/program.h>
+#include <core/lily/precompiler/precompiler.h>
 
 enum LilyPackageStatus
 {
@@ -86,201 +44,175 @@ enum LilyPackageStatus
     LILY_PACKAGE_STATUS_IND // Independent package e.g. a single file
 };
 
-/* LilyPackageAdapter<T> */
-#define LilyPackageAdapter(T)                                                  \
-    typedef struct LilyPackage__##T                                            \
-    {                                                                          \
-        String *name;              /* String* | String* (&) */                 \
-        String *global_name;       /* String* | String* (&) */                 \
-        Vec *public_macros;        /* Vec<LilyMacro*>*? */                     \
-        Vec *private_macros;       /* Vec<LilyMacro*>* */                      \
-        Vec *public_imports;       /* Vec<LilyImport*>* */                     \
-        Vec *private_imports;      /* Vec<LilyImport*>* */                     \
-        Vec *sub_packages;         /* Vec<LilyPackageAdapter<T>*>* */          \
-        Vec *package_dependencies; /* Vec<LilyPackageAdapter<T>* (&)>* */      \
-        Vec *lib_dependencies;     /* Vec<LilyLibrary* (&)>* */                \
-        const LilyPackageConfig *config; /* LilyPackageConfig* (&) */          \
-                                                                               \
-        File file;                                                             \
-        LilyScanner scanner;     /* LilyScanner */                             \
-        LilyPreparser preparser; /* LilyPreparser */                           \
-        LilyPreparserInfo preparser_info;                                      \
-        LilyPrecompiler precompiler; /* LilyPrecompiler */                     \
-        LilyParser parser;                                                     \
-        LilyAnalysis analysis;                                                 \
-        LilyMirModule mir_module;                                              \
-        LilyBuiltinFun *builtins; /* LilyBuiltinFun*? (&) */                   \
-        LilySysFun *syss;         /* LilySysFun*? (&) */                       \
-        Usize count_error;                                                     \
-        Usize count_warning;                                                   \
-        /* count all errors and warnings after the precompiler step */         \
-        enum LilyVisibility visibility;                                        \
-        enum LilyPackageStatus status;                                         \
-                                                                               \
-        bool sys_is_loaded;                                                    \
-        bool std_is_loaded;                                                    \
-        bool core_is_loaded;                                                   \
-        bool builtin_is_loaded;                                                \
-                                                                               \
-        bool main_is_found;                                                    \
-                                                                               \
-        Vec *builtin_usage; /* Vec<LilyBuiltinFun* (&)>* */                    \
-        Vec *sys_usage;     /* Vec<LilySysFun* (&)>* */                        \
-                                                                               \
-        LilyCheckedOperatorRegister operator_register;                         \
-                                                                               \
-        const LilyProgram *program;                                            \
-                                                                               \
-        T adapter;                                                             \
-    } LilyPackage__##T;                                                        \
-                                                                               \
-    /**                                                                        \
-     *                                                                         \
-     * @brief Construct LilyPackage<T> type.                                   \
-     * @param root LilyPackage<T>*?                                            \
-     */                                                                        \
-    CONSTRUCTOR(LilyPackage__##T *,                                            \
-                LilyPackage__##T,                                              \
-                String *name,                                                  \
-                String *global_name,                                           \
-                enum LilyVisibility visibility,                                \
-                char *filename,                                                \
-                enum LilyPackageStatus status,                                 \
-                const char *default_path,                                      \
-                const char *default_package_acccess,                           \
-                LilyPackage__##T *root);                                       \
-                                                                               \
-    /**                                                                        \
-     *                                                                         \
-     * @brief Look for the name of the file among all the packages and return  \
-     * the File.                                                               \
-     */                                                                        \
-    const File *get_file_from_filename__LilyPackage__##T(                      \
-      const LilyPackage__##T *self, const char *filename);                     \
-                                                                               \
-    /**                                                                        \
-     *                                                                         \
-     * @brief Look for the name of the file among all the packages and return  \
-     * the LilyPackage<T>.                                                     \
-     */                                                                        \
-    LilyPackage__##T *search_package_from_filename__LilyPackage__##T(          \
-      LilyPackage__##T *self, const char *filename);                           \
-                                                                               \
-    /**                                                                        \
-     *                                                                         \
-     * @brief Search for the package from the name and return LilyPackage<T>   \
-     * if found otherwise return NULL.                                         \
-     * @return LilyPackage<T>*?                                                \
-     */                                                                        \
-    LilyPackage__##T *search_package_from_name__LilyPackage__##T(              \
-      LilyPackage__##T *self, String *name);                                   \
-                                                                               \
-    /**                                                                        \
-     *                                                                         \
-     * @brief Try to add a used builtin function to the register of uses of    \
-     * builtin functions.                                                      \
-     * @note There is no duplication of builtin functions in the function      \
-     * register of the system used.                                            \
-     */                                                                        \
-    void add_builtin_fun_to_builtin_usage__LilyPackage__##T(                   \
-      LilyPackage__##T *self, LilyBuiltinFun *fun_builtin);                    \
-                                                                               \
-    /**                                                                        \
-     *                                                                         \
-     * @brief Try to add a used sys function to the register of uses of system \
-     * functions.                                                              \
-     * @note There is no duplication of system functions in the function       \
-     * register of the system used.                                            \
-     */                                                                        \
-    void add_sys_fun_to_sys_usage__LilyPackage__##T(LilyPackage__##T *self,    \
-                                                    LilySysFun *fun_sys);
+enum LilyPackageKind
+{
+    LILY_PACKAGE_KIND_COMPILER,
+    LILY_PACKAGE_KIND_INTERPRETER,
+    LILY_PACKAGE_KIND_JIT,
+};
 
-#define IMPL_LilyPackageAdapter(T)                                           \
-    const File *get_file_from_filename__LilyPackage__##T(                    \
-      const LilyPackage__##T *self, const char *filename)                    \
-    {                                                                        \
-        if (!strcmp(filename, self->file.name)) {                            \
-            return &self->file;                                              \
-        }                                                                    \
-                                                                             \
-        for (Usize i = 0; i < self->sub_packages->len; i++) {                \
-            const File *f = get_file_from_filename__LilyPackage__##T(        \
-              get__Vec(self->sub_packages, i), filename);                    \
-                                                                             \
-            if (f) {                                                         \
-                return f;                                                    \
-            }                                                                \
-        }                                                                    \
-                                                                             \
-        return NULL;                                                         \
-    }                                                                        \
-                                                                             \
-    LilyPackage__##T *search_package_from_filename__LilyPackage__##T(        \
-      LilyPackage__##T *self, const char *filename)                          \
-    {                                                                        \
-        if (!strcmp(filename, self->file.name)) {                            \
-            return self;                                                     \
-        }                                                                    \
-                                                                             \
-        for (Usize i = 0; i < self->sub_packages->len; i++) {                \
-            LilyPackage__##T *pkg =                                          \
-              search_package_from_filename__LilyPackage__##T(                \
-                get__Vec(self->sub_packages, i), filename);                  \
-                                                                             \
-            if (pkg) {                                                       \
-                return pkg;                                                  \
-            }                                                                \
-        }                                                                    \
-                                                                             \
-        return NULL;                                                         \
-    }                                                                        \
-                                                                             \
-    LilyPackage__##T *search_package_from_name__LilyPackage__##T(            \
-      LilyPackage__##T *self, String *name)                                  \
-    {                                                                        \
-        if (!strcmp(name->buffer, self->name->buffer)) {                     \
-            return self;                                                     \
-        }                                                                    \
-                                                                             \
-        for (Usize i = 0; i < self->sub_packages->len; i++) {                \
-            LilyPackage__##T *pkg =                                          \
-              search_package_from_name__LilyPackage__##T(                    \
-                get__Vec(self->sub_packages, i), name);                      \
-                                                                             \
-            if (pkg) {                                                       \
-                return pkg;                                                  \
-            }                                                                \
-        }                                                                    \
-                                                                             \
-        return NULL;                                                         \
-    }                                                                        \
-                                                                             \
-    void add_builtin_fun_to_builtin_usage__LilyPackage__##T(                 \
-      LilyPackage__##T *self, LilyBuiltinFun *fun_builtin)                   \
-    {                                                                        \
-        for (Usize i = 0; i < self->builtin_usage->len; ++i) {               \
-            if (!strcmp(CAST(LilySysFun *, get__Vec(self->builtin_usage, i)) \
-                          ->real_name->buffer,                               \
-                        fun_builtin->real_name->buffer)) {                   \
-                return;                                                      \
-            }                                                                \
-        }                                                                    \
-                                                                             \
-        push__Vec(self->builtin_usage, fun_builtin);                         \
-    }                                                                        \
-                                                                             \
-    void add_sys_fun_to_sys_usage__LilyPackage__##T(LilyPackage__##T *self,  \
-                                                    LilySysFun *fun_sys)     \
-    {                                                                        \
-        for (Usize i = 0; i < self->sys_usage->len; ++i) {                   \
-            if (!strcmp(                                                     \
-                  CAST(LilySysFun *, get__Vec(self->sys_usage, i))->name,    \
-                  fun_sys->name)) {                                          \
-                return;                                                      \
-            }                                                                \
-        }                                                                    \
-                                                                             \
-        push__Vec(self->sys_usage, fun_sys);                                 \
-    }
+typedef struct LilyPackage
+{
+    String *name;                    // String* | String* (&)
+    String *global_name;             // String* | String* (&)
+    Vec *public_macros;              // Vec<LilyMacro*>*?
+    Vec *private_macros;             // Vec<LilyMacro*>*
+    Vec *public_imports;             // Vec<LilyImport*>*
+    Vec *private_imports;            // Vec<LilyImport*>*
+    Vec *sub_packages;               // Vec<LilyPackage*>*
+    Vec *package_dependencies;       // Vec<LilyPackage* (&)>*
+    Vec *lib_dependencies;           // Vec<LilyLibrary* (&)>*
+    const LilyPackageConfig *config; // LilyPackageConfig* (&)
+
+    File file;
+    LilyScanner scanner;
+    LilyPreparser preparser;
+    LilyPreparserInfo preparser_info;
+    LilyPrecompiler precompiler;
+    LilyParser parser;
+    LilyAnalysis analysis;
+    LilyMirModule mir_module;
+
+    // NOTE: builtins and syss fields are NULL when the status of the package is
+    // not equal to LILY_PACKAGE_STATUS_MAIN
+    LilyBuiltinFun *builtins; // LilyBuiltinFun*? (&)
+    LilySysFun *syss;         // LilySysFun*? (&)
+
+    // count all errors and warnings after the precompiler step
+    Usize count_error;
+    Usize count_warning;
+
+    enum LilyVisibility visibility;
+    enum LilyPackageStatus status;
+
+    bool sys_is_loaded;
+    bool std_is_loaded;
+    bool core_is_loaded;
+    bool builtin_is_loaded;
+
+    bool main_is_found;
+
+    // NOTE: The real value are only defined in the main package. In the other
+    // package the value is false by default.
+    bool is_lib;
+    bool is_exe;
+    bool is_dynamic_lib;
+    bool is_static_lib;
+
+    Vec *builtin_usage; // Vec<LilyBuiltinFun* (&)>*
+    Vec *sys_usage;     // Vec<LilySysFun* (&)>*
+
+    LilyCheckedOperatorRegister operator_register;
+
+    const LilyProgram *program; // const LilyProgram* (&)
+
+    enum LilyPackageKind kind;
+    union
+    {
+        LilyCompilerAdapter compiler;
+        LilyInterpreterAdapter interpreter;
+        //        LilyJitAdapter jit;
+    };
+} LilyPackage;
+
+/**
+ *
+ * @brief Construct LilyPackage type (LILY_PACKAGE_KIND_COMPILER).
+ */
+VARIANT_CONSTRUCTOR(LilyPackage *,
+                    LilyPackage,
+                    compiler,
+                    String *name,
+                    String *global_name,
+                    enum LilyVisibility visibility,
+                    char *filename,
+                    enum LilyPackageStatus status,
+                    const char *default_path,
+                    const char *default_package_access,
+                    LilyPackage *root);
+
+/**
+ *
+ * @brief Construct LilyPackage type (LILY_PACKAGE_KIND_INTERPRETER).
+ */
+VARIANT_CONSTRUCTOR(LilyPackage *,
+                    LilyPackage,
+                    interpreter,
+                    String *name,
+                    String *global_name,
+                    enum LilyVisibility visibility,
+                    char *filename,
+                    enum LilyPackageStatus status,
+                    const char *default_path,
+                    const char *default_package_access,
+                    LilyPackage *root);
+
+/**
+ *
+ * @brief Construct LilyPackage type (LILY_PACKAGE_KIND_JIT).
+ */
+// VARIANT_CONSTRUCTOR(LilyPackage *, LilyPackage, jit,
+//                     String *name,
+//                     String *global_name,
+//                     enum LilyVisibility visibility,
+//                     char *filename,
+//                     enum LilyPackageStatus status,
+//                     const char *default_path,
+//                     const char *default_package_access,
+//                     LilyPackage *root);
+
+/**
+ *
+ * @brief Look for the name of the file among all the packages and return the
+ * File.
+ */
+const File *
+get_file_from_filename__LilyPackage(const LilyPackage *self,
+                                    const char *filename);
+
+/**
+ *
+ * @brief Look for the name of the file among all the packages and return the
+ * LilyPackage.
+ */
+LilyPackage *
+search_package_from_filename__LilyPackage(LilyPackage *self,
+                                          const char *filename);
+
+/**
+ *
+ * @brief Search for the package from the name and return LilyPackage if found
+ * otherwise return NULL.
+ * @return LilyPackage*?
+ */
+LilyPackage *
+search_package_from_name__LilyPackage(LilyPackage *self, String *name);
+
+/**
+ *
+ * @brief Try to add a used builtin function to the register of uses of builtin
+ * functions.
+ * @note There is no duplication of builtin functions in the function register
+ * of the system used.
+ */
+void
+add_builtin_fun_to_builtin_usage__LilyPackage(LilyPackage *self,
+                                              LilyBuiltinFun *fun_builtin);
+
+/**
+ *
+ * @brief Try to add a used sys function to the register of uses of system
+ * functions.
+ * @note There is no duplication of system functions in the function register of
+ * the system used.
+ */
+void
+add_sys_fun_to_sys_usage__LilyPackage(LilyPackage *self, LilySysFun *fun_sys);
+
+/**
+ *
+ * @brief Free LilyPackage type. 
+ */
+DESTRUCTOR(LilyPackage, LilyPackage *self);
 
 #endif // LILY_CORE_LILY_PACKAGE_H

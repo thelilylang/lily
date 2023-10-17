@@ -36,17 +36,20 @@
 #include <core/lily/analysis/checked/operator_register.h>
 #include <core/lily/compiler/ir.h>
 #include <core/lily/compiler/linker/linker.h>
-#include <core/lily/compiler/package/config.h>
-#include <core/lily/compiler/package/library.h>
-#include <core/lily/compiler/package/program.h>
 #include <core/lily/functions/builtin.h>
 #include <core/lily/functions/sys.h>
 #include <core/lily/mir/mir.h>
+#include <core/lily/package/config.h>
+#include <core/lily/package/library.h>
+#include <core/lily/package/program.h>
 #include <core/lily/parser/parser.h>
 #include <core/lily/precompiler/precompiler.h>
 #include <core/lily/preparser/preparser.h>
 #include <core/lily/scanner/scanner.h>
 #include <core/lily/shared/visibility.h>
+
+typedef struct LilyPackage LilyPackage;
+enum LilyPackageStatus;
 
 #define LOG_VERBOSE(package, msg)                                  \
     if (package->config->verbose) {                                \
@@ -65,58 +68,62 @@
         root_package->global_name = from__String("main");                \
     }
 
-#define SET_ROOT_PACKAGE_IR(config, root_package)                            \
-    if (config->cc_ir) {                                                     \
-        /* TODO: add a linker for CC */                                      \
-        root_package->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));           \
-        root_package->linker = LILY_LINKER_KIND_CC;                          \
-    } else if (config->cpp_ir) {                                             \
-        /* TODO: add a linker for CPP */                                     \
-        root_package->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));         \
-        root_package->linker = LILY_LINKER_KIND_CPP;                         \
-    } else if (config->js_ir) {                                              \
-        self->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));                   \
-    } else {                                                                 \
-        root_package->ir = NEW_VARIANT(                                      \
-          LilyIr, llvm, NEW(LilyIrLlvm, root_package->global_name->buffer)); \
-        root_package->linker = LILY_LINKER_KIND_LLVM;                        \
+#define SET_ROOT_PACKAGE_IR(config, root_package)                             \
+    if (config->cc_ir) {                                                      \
+        /* TODO: add a linker for CC */                                       \
+        root_package->compiler.ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));   \
+        root_package->compiler.linker = LILY_LINKER_KIND_CC;                  \
+    } else if (config->cpp_ir) {                                              \
+        /* TODO: add a linker for CPP */                                      \
+        root_package->compiler.ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp)); \
+        root_package->compiler.linker = LILY_LINKER_KIND_CPP;                 \
+    } else if (config->js_ir) {                                               \
+        self->compiler.ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));           \
+    } else {                                                                  \
+        root_package->compiler.ir = NEW_VARIANT(                              \
+          LilyIr, llvm, NEW(LilyIrLlvm, root_package->global_name->buffer));  \
+        root_package->compiler.linker = LILY_LINKER_KIND_LLVM;                \
     }
 
-#define SET_ROOT_PACKAGE_PROGRAM(root_package, p, lib)                         \
-    /* Set the kind of program (static lib, dynamic lib, exe, ...) */          \
-    root_package->program = p;                                                 \
-                                                                               \
-    switch (root_package->program->kind) {                                     \
-        case LILY_PROGRAM_KIND_EXE:                                            \
-            root_package->is_exe = true;                                       \
-                                                                               \
-            break;                                                             \
-        case LILY_PROGRAM_KIND_STATIC_LIB:                                     \
-            ASSERT(lib);                                                       \
-                                                                               \
-            finish_set__LilyLibrary(                                           \
-              lib, root_package->name, (enum LilyArKind)root_package->linker); \
-                                                                               \
-            root_package->is_lib = true;                                       \
-            root_package->is_static_lib = true;                                \
-            lib->package = root_package;                                       \
-            root_package->lib = lib;                                           \
-                                                                               \
-            break;                                                             \
-        case LILY_PROGRAM_KIND_DYNAMIC_LIB:                                    \
-            ASSERT(lib);                                                       \
-                                                                               \
-            finish_set__LilyLibrary(                                           \
-              lib, root_package->name, (enum LilyArKind)root_package->linker); \
-                                                                               \
-            root_package->is_lib = true;                                       \
-            root_package->is_dynamic_lib = true;                               \
-            lib->package = root_package;                                       \
-            root_package->lib = lib;                                           \
-                                                                               \
-            break;                                                             \
-        default:                                                               \
-            UNREACHABLE("unknown variant");                                    \
+#define SET_ROOT_PACKAGE_PROGRAM(root_package, p, lib)                \
+    /* Set the kind of program (static lib, dynamic lib, exe, ...) */ \
+    root_package->program = p;                                        \
+                                                                      \
+    switch (root_package->program->kind) {                            \
+        case LILY_PROGRAM_KIND_EXE:                                   \
+            root_package->is_exe = true;                              \
+                                                                      \
+            break;                                                    \
+        case LILY_PROGRAM_KIND_STATIC_LIB:                            \
+            ASSERT(lib);                                              \
+                                                                      \
+            finish_set__LilyLibrary(                                  \
+              lib,                                                    \
+              root_package->name,                                     \
+              (enum LilyArKind)root_package->compiler.linker);        \
+                                                                      \
+            root_package->is_lib = true;                              \
+            root_package->is_static_lib = true;                       \
+            lib->package = root_package;                              \
+            root_package->compiler.lib = lib;                         \
+                                                                      \
+            break;                                                    \
+        case LILY_PROGRAM_KIND_DYNAMIC_LIB:                           \
+            ASSERT(lib);                                              \
+                                                                      \
+            finish_set__LilyLibrary(                                  \
+              lib,                                                    \
+              root_package->name,                                     \
+              (enum LilyArKind)root_package->compiler.linker);        \
+                                                                      \
+            root_package->is_lib = true;                              \
+            root_package->is_dynamic_lib = true;                      \
+            lib->package = root_package;                              \
+            root_package->compiler.lib = lib;                         \
+                                                                      \
+            break;                                                    \
+        default:                                                      \
+            UNREACHABLE("unknown variant");                           \
     }
 
 #define LOAD_ROOT_PACKAGE_RESSOURCES(root_package, p)                         \
@@ -142,87 +149,31 @@
         root_package->analysis.use_switch = true;                       \
     }
 
-enum LilyPackageStatus
+typedef struct LilyCompilerAdapter
 {
-    LILY_PACKAGE_STATUS_LIB_MAIN,
-    LILY_PACKAGE_STATUS_MAIN, // Must contain the main function
-    LILY_PACKAGE_STATUS_NORMAL,
-    LILY_PACKAGE_STATUS_SUB_MAIN,
-    LILY_PACKAGE_STATUS_IND // Independent package e.g. a single file
-};
-
-typedef struct LilyPackage
-{
-    String *name;                    // String* | String* (&)
-    String *global_name;             // String* | String* (&)
-    Vec *public_macros;              // Vec<LilyMacro*>*?
-    Vec *private_macros;             // Vec<LilyMacro*>*
-    Vec *public_imports;             // Vec<LilyImport*>*
-    Vec *private_imports;            // Vec<LilyImport*>*
-    Vec *sub_packages;               // Vec<LilyPackage*>*
-    Vec *package_dependencies;       // Vec<LilyPackage* (&)>*
-    Vec *lib_dependencies;           // Vec<LilyLibrary* (&)>*
-    const LilyPackageConfig *config; // LilyPackageConfig* (&)
-    char *output_path; // char*? e.g. Object file, ASM file, LLVM IR file, ...
-    File file;
-    LilyScanner scanner;     // LilyScanner
-    LilyPreparser preparser; // LilyPreparser
-    LilyPreparserInfo preparser_info;
-    LilyPrecompiler precompiler; // LilyPrecompiler
-    LilyParser parser;
-    LilyAnalysis analysis;
-    LilyMirModule mir_module;
+    char *output_path;
     LilyIr ir;
     enum LilyLinkerKind linker;
-    // NOTE: builtins and syss fields are NULL when the status of the package is
-    // not equal to LILY_PACKAGE_STATUS_MAIN
-    LilyBuiltinFun *builtins; // LilyBuiltinFun*? (&)
-    LilySysFun *syss;         // LilySysFun*? (&)
-    Usize count_error;
-    Usize count_warning;
-    // count all errors and warnings after the precompiler step
-    enum LilyVisibility visibility;
-    enum LilyPackageStatus status;
-
-    bool sys_is_loaded;
-    bool std_is_loaded;
-    bool core_is_loaded;
-    bool builtin_is_loaded;
-
-    bool main_is_found;
-
-    // NOTE: The real value are only defined in the main package. In the other
-    // package the value is false by default.
-    bool is_lib;
-    bool is_exe;
-    bool is_dynamic_lib;
-    bool is_static_lib;
-
-    Vec *builtin_usage; // Vec<LilyBuiltinFun* (&)>*
-    Vec *sys_usage;     // Vec<LilySysFun* (&)>*
-
-    LilyCheckedOperatorRegister operator_register;
-
-    const LilyProgram *program;
-
     LilyLibrary *lib; // LilyLibrary*? (&)
-} LilyPackage;
+} LilyCompilerAdapter;
 
 /**
  *
- * @brief Construct LilyPackage type.
- * @param root LilyPackage*?
+ * @brief Construct LilyCompilerAdapter type.
  */
-CONSTRUCTOR(LilyPackage *,
-            LilyPackage,
-            String *name,
-            String *global_name,
-            enum LilyVisibility visibility,
-            char *filename,
-            enum LilyPackageStatus status,
-            const char *default_path,
-            const char *default_package_access,
-            LilyPackage *root);
+inline CONSTRUCTOR(LilyCompilerAdapter, LilyCompilerAdapter)
+{
+    return (LilyCompilerAdapter){
+        .output_path = NULL,
+        .lib = NULL,
+    };
+}
+
+/**
+ *
+ * @brief Free LilyCompilerAdapter type.
+ */
+DESTRUCTOR(LilyCompilerAdapter, const LilyCompilerAdapter *self);
 
 /**
  *
@@ -278,54 +229,6 @@ compile_lib__LilyPackage(const LilycConfig *config,
                          enum LilyPackageStatus status,
                          const char *default_path,
                          const LilyProgram *program);
-
-/**
- *
- * @brief Look for the name of the file among all the packages and return the
- * File.
- */
-const File *
-get_file_from_filename__LilyPackage(const LilyPackage *self,
-                                    const char *filename);
-
-/**
- *
- * @brief Look for the name of the file among all the packages and return the
- * LilyPackage.
- */
-LilyPackage *
-search_package_from_filename__LilyPackage(LilyPackage *self,
-                                          const char *filename);
-
-/**
- *
- * @brief Search for the package from the name and return LilyPackage if found
- * otherwise return NULL.
- * @return LilyPackage*?
- */
-LilyPackage *
-search_package_from_name__LilyPackage(LilyPackage *self, String *name);
-
-/**
- *
- * @brief Try to add a used builtin function to the register of uses of builtin
- * functions.
- * @note There is no duplication of builtin functions in the function register
- * of the system used.
- */
-void
-add_builtin_fun_to_builtin_usage__LilyPackage(LilyPackage *self,
-                                              LilyBuiltinFun *fun_builtin);
-
-/**
- *
- * @brief Try to add a used sys function to the register of uses of system
- * functions.
- * @note There is no duplication of system functions in the function register of
- * the system used.
- */
-void
-add_sys_fun_to_sys_usage__LilyPackage(LilyPackage *self, LilySysFun *fun_sys);
 
 /**
  *

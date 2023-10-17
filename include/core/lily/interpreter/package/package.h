@@ -32,23 +32,53 @@
 #include <core/lily/analysis/analysis.h>
 #include <core/lily/analysis/checked/operator.h>
 #include <core/lily/analysis/checked/operator_register.h>
-#include <core/lily/compiler/package/program.h>
 #include <core/lily/functions/builtin.h>
 #include <core/lily/functions/sys.h>
 #include <core/lily/interpreter/vm/vm.h>
 #include <core/lily/mir/mir.h>
-#include <core/lily/package/package.h>
+#include <core/lily/package/program.h>
 #include <core/lily/parser/parser.h>
 #include <core/lily/precompiler/precompiler.h>
 #include <core/lily/preparser/preparser.h>
 #include <core/lily/scanner/scanner.h>
 #include <core/lily/shared/visibility.h>
 
+typedef struct LilyPackage LilyPackage;
+
 typedef struct LilyInterpreterAdapter
 {
     LilyInterpreterVM vm;
 } LilyInterpreterAdapter;
 
-LilyPackageAdapter(LilyInterpreterAdapter);
+/**
+ *
+ * @brief Construct LilyInterpreterAdapter type.
+ */
+inline CONSTRUCTOR(LilyInterpreterAdapter,
+                   LilyInterpreterAdapter,
+                   Usize heap_capacity,
+                   Usize statck_capacity,
+                   const LilyMirModule *module,
+                   LilyInterpreterVMRessources resources,
+                   bool check_overflow)
+{
+    return (LilyInterpreterAdapter){ .vm = NEW(LilyInterpreterVM,
+                                               heap_capacity,
+                                               statck_capacity,
+                                               module,
+                                               resources,
+                                               check_overflow) };
+}
+
+/**
+ *
+ * @brief Free LilyInterpreterAdapter type.
+ */
+inline DESTRUCTOR(LilyInterpreterAdapter, const LilyInterpreterAdapter *self)
+{
+    //    FREE(LilyInterpreterVM, &self->vm);
+}
+
+// LilyPackageAdapter(LilyInterpreterAdapter);
 
 #endif // LILY_CORE_LILY_INTERPRETER_PACKAGE_H

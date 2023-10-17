@@ -22,54 +22,45 @@
  * SOFTWARE.
  */
 
-#include <base/alloc.h>
+#include <base/assert.h>
 
-#include <core/lily/compiler/package/library.h>
-#include <core/lily/compiler/package/package.h>
+#include <core/lily/package/library.h>
+#include <core/lily/package/program.h>
 
-CONSTRUCTOR(LilyLibrary *,
-            LilyLibrary,
-            String *version,
-            String *url,
-            String *path,
-            LilyPackage *package)
+#include <stdio.h>
+#include <stdlib.h>
+
+CONSTRUCTOR(LilyProgram, LilyProgram, enum LilyProgramKind kind)
 {
-    LilyLibrary *self = lily_malloc(sizeof(LilyLibrary));
-
-    self->version = version;
-    self->url = url;
-    self->path = path;
-    self->output_path = NULL;
-
-    if (package) {
-        self->name = package->name;
-        self->ar = (enum LilyArKind)package->linker;
-    }
-
-    self->package = package;
-
-    return self;
+    return (LilyProgram){ .kind = kind,
+                          .ressources = NEW(LilyProgramRessources) };
 }
 
-DESTRUCTOR(LilyLibrary, LilyLibrary *self)
+DESTRUCTOR(LilyProgramRessources, const LilyProgramRessources *self)
 {
-    if (self->version) {
-        FREE(String, self->version);
+    for (Usize i = 0; i < BUILTINS_COUNT; ++i) {
+        FREE(LilyBuiltinFun, &self->builtins[i]);
     }
 
-    if (self->output_path) {
-        lily_free(self->output_path);
+    lily_free(self->builtins);
+
+    for (Usize i = 0; i < SYSS_COUNT; ++i) {
+        FREE(LilySysFun, &self->syss[i]);
     }
 
-    if (self->url) {
-        FREE(String, self->url);
+    lily_free(self->syss);
+
+    // FIXME: sometimes that's crash, caused by the add of the the
+    // multi-threading in the precompiler
+
+    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
+        ASSERT(self->default_operators[i]->ref_count == 0);
+
+        FREE(LilyCheckedOperator, self->default_operators[i]);
     }
 
-    if (self->path) {
-        FREE(String, self->path);
-    }
+    lily_free(self->default_operators);
 
-    FREE(LilyPackage, self->package);
-
-    lily_free(self);
+    FREE_BUFFER_ITEMS(self->libs->buffer, self->libs->len, LilyLibrary);
+    FREE(Vec, self->libs);
 }

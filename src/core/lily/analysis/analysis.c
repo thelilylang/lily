@@ -37,8 +37,8 @@
 #include <core/lily/analysis/checked/scope_stmt.h>
 #include <core/lily/analysis/checked/signature.h>
 #include <core/lily/analysis/checked/virtual_scope.h>
-#include <core/lily/compiler/package.h>
 #include <core/lily/lily.h>
+#include <core/lily/package/package.h>
 #include <core/lily/parser/ast.h>
 
 #include <core/shared/diagnostic.h>

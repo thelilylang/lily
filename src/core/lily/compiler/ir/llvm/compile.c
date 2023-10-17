@@ -30,6 +30,7 @@
 #include <core/lily/compiler/ir/llvm/emit.h>
 #include <core/lily/compiler/ir/llvm/optimize.h>
 #include <core/lily/compiler/output/cache.h>
+#include <core/lily/package/package.h>
 
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Core.h>
@@ -43,6 +44,8 @@
 void
 compile__LilyCompilerIrLlvm(LilyPackage *package)
 {
+    ASSERT(package->kind == LILY_PACKAGE_KIND_COMPILER);
+
 #ifdef PLATFORM_64
     char *path = format("{s}{S}{zu}{zu}{s}",
                         DIR_CACHE_OBJ,
@@ -95,8 +98,9 @@ compile__LilyCompilerIrLlvm(LilyPackage *package)
     {
         char *error = NULL;
 
-        if (LLVMVerifyModule(
-              package->ir.llvm.module, LLVMReturnStatusAction, &error)) {
+        if (LLVMVerifyModule(package->compiler.ir.llvm.module,
+                             LLVMReturnStatusAction,
+                             &error)) {
             EMIT_ERROR(error);
             LLVMDisposeMessage(error);
             exit(1);
@@ -105,14 +109,20 @@ compile__LilyCompilerIrLlvm(LilyPackage *package)
         LLVMDisposeMessage(error);
     }
 
-    if (LilyLLVMOptimize(&package->ir.llvm, lily_opt_level, &error_msg, path)) {
+    if (LilyLLVMOptimize(
+          &package->compiler.ir.llvm, lily_opt_level, &error_msg, path)) {
         EMIT_ERROR(error_msg);
         LLVMDisposeMessage(error_msg);
         exit(1);
     }
 
-    if (LilyLLVMEmit(
-          &package->ir.llvm, &error_msg, path, true, false, false, false)) {
+    if (LilyLLVMEmit(&package->compiler.ir.llvm,
+                     &error_msg,
+                     path,
+                     true,
+                     false,
+                     false,
+                     false)) {
         EMIT_ERROR(error_msg);
         LLVMDisposeMessage(error_msg);
         exit(1);
@@ -121,8 +131,8 @@ compile__LilyCompilerIrLlvm(LilyPackage *package)
 #ifdef ENV_DEBUG
     printf("====Optimized LLVM IR(%s)====\n", package->global_name->buffer);
 
-    dump__LilyIrLlvm(&package->ir.llvm);
+    dump__LilyIrLlvm(&package->compiler.ir.llvm);
 #endif
 
-    package->output_path = path;
+    package->compiler.output_path = path;
 }

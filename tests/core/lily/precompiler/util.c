@@ -3,9 +3,10 @@
 
 #include <base/file.h>
 
-#include <core/lily/compiler/package/default_path.h>
 #include <core/lily/compiler/package/package.h>
-#include <core/lily/compiler/package/program.h>
+#include <core/lily/package/package.h>
+#include <core/lily/package/default_path.h>
+#include <core/lily/package/program.h>
 #include <core/lily/precompiler/precompiler.h>
 
 #define FILE_IMPORT "./tests/core/lily/precompiler/input/import.lily"
@@ -16,7 +17,7 @@
     LilyLibrary *lib = NULL;                                       \
     LilyProgram program = NEW(LilyProgram, LILY_PROGRAM_KIND_EXE); \
     char *default_path = generate_default_path(filename);          \
-    LilyPackage *self = NEW(LilyPackage,                           \
+    LilyPackage *self = NEW_VARIANT(LilyPackage, compiler,                           \
                             NULL,                                  \
                             NULL,                                  \
                             LILY_VISIBILITY_PUBLIC,                \
