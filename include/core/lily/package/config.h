@@ -52,16 +52,9 @@ typedef struct LilyPackageConfig
     bool dump_analysis;
     bool dump_mir;
     bool dump_ir; // Dump IR (Intermediate Representation)
-    bool run_scanner;
-    bool run_preparser;
-    bool run_precompiler;
-    bool run_parser;
-    bool run_analysis;
-    bool run_mir;
-    bool run_ir; // Run IR (Intermediate Representation)
-    bool cc_ir;  // Use CC IR instead of LLVM IR.
-    bool cpp_ir; // Use CPP IR instead of LLVM IR.
-    bool js_ir;  // Use JS IR instead of LLVM IR.
+    bool cc_ir;   // Use CC IR instead of LLVM IR.
+    bool cpp_ir;  // Use CPP IR instead of LLVM IR.
+    bool js_ir;   // Use JS IR instead of LLVM IR.
     bool llvm_ir;
     bool wasm_ir; // Use WASM IR instead of LLVM IR.
     enum Arch arch_target;
@@ -91,13 +84,6 @@ CONSTRUCTOR(LilyPackageConfig,
             bool dump_analysis,
             bool dump_mir,
             bool dump_ir,
-            bool run_scanner,
-            bool run_preparser,
-            bool run_precompiler,
-            bool run_parser,
-            bool run_analysis,
-            bool run_mir,
-            bool run_ir,
             bool cc_ir,
             bool cpp_ir,
             bool js_ir,
@@ -126,13 +112,6 @@ default__LilyPackageConfig()
                                 .dump_analysis = false,
                                 .dump_mir = false,
                                 .dump_ir = false,
-                                .run_scanner = false,
-                                .run_preparser = false,
-                                .run_precompiler = false,
-                                .run_parser = false,
-                                .run_analysis = false,
-                                .run_mir = false,
-                                .run_ir = false,
                                 .cc_ir = false,
                                 .cpp_ir = false,
                                 .js_ir = false,
@@ -166,13 +145,6 @@ from_CompileConfig__LilyPackageConfig(const LilycConfig *lilyc_config)
                lilyc_config->dump_analysis,
                lilyc_config->dump_mir,
                lilyc_config->dump_ir,
-               lilyc_config->run_scanner,
-               lilyc_config->run_preparser,
-               lilyc_config->run_precompiler,
-               lilyc_config->run_parser,
-               lilyc_config->run_analysis,
-               lilyc_config->run_mir,
-               lilyc_config->run_ir,
                lilyc_config->cc_ir,
                lilyc_config->cpp_ir,
                lilyc_config->js_ir,
