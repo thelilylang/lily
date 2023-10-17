@@ -40,26 +40,19 @@ void
 run__Lilyc(const LilycConfig *config)
 {
     if (config->run_scanner) {
-        run_scanner__LilyPackage(config);
-        return;
+        return run_scanner__LilyPackage(config);
     } else if (config->run_preparser) {
-        run_preparser__LilyPackage(config);
-        return;
+        return run_preparser__LilyPackage(config);
     } else if (config->run_precompiler) {
-        run_precompiler__LilyPackage(config);
-        return;
+        return run_precompiler__LilyPackage(config);
     } else if (config->run_parser) {
-        run_parser__LilyPackage(config);
-        return;
+        return run_parser__LilyPackage(config);
     } else if (config->run_analysis) {
-        run_analysis__LilyPackage(config);
-        return;
+        return run_analysis__LilyPackage(config);
     } else if (config->run_mir) {
-        run_mir__LilyPackage(config);
-        return;
+        return run_mir__LilyPackage(config);
     } else if (config->run_ir) {
-        run_ir__LilyPackage(config);
-        return;
+        return run_ir__LilyPackage(config);
     }
 
     // Get the default path
@@ -88,6 +81,18 @@ run__Lilyc(const LilycConfig *config)
                                                 LILY_PACKAGE_STATUS_MAIN,
                                                 default_path,
                                                 &program);
+
+        // Run exe
+        if (config->run) {
+#ifdef LILY_WINDOWS_OS
+            char *command = format(".\\{s}", pkg->compiler.output_exe_path);
+#else
+            char *command = format("./{s}", pkg->compiler.output_exe_path);
+#endif
+
+            system(command);
+            lily_free(command);
+        }
 
 #if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILER)
         FREE(LilyPackage, pkg);

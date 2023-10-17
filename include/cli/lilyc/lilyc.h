@@ -63,6 +63,7 @@
     CliOption *Oz = NEW(CliOption, "-Oz");                                     \
     CliOption *output = NEW(CliOption, "--output");                            \
     CliOption *verbose = NEW(CliOption, "--verbose");                          \
+    CliOption *run = NEW(CliOption, "--run");                                  \
                                                                                \
     build->$help(build, "Build a package (exe, lib, ...)")                     \
       ->$short_name(build, "-b");                                              \
@@ -107,6 +108,7 @@
       ->$value(output,                                                         \
                NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILENAME", true));        \
     verbose->$help(verbose, "Enable log step of the compiler");                \
+    run->$short_name(run, "-r")->$help(run, "Run the compiled file");          \
                                                                                \
     self->$option(self, build)                                                 \
       ->$option(self, dump_scanner)                                            \
@@ -141,7 +143,8 @@
       ->$option(self, O3)                                                      \
       ->$option(self, Oz)                                                      \
       ->$option(self, output)                                                  \
-      ->$option(self, verbose);
+      ->$option(self, verbose)                                                 \
+      ->$option(self, run);
 
 Cli
 build__CliLilyc(Vec *args);
