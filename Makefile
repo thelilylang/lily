@@ -153,6 +153,7 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/expr/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/stmt/*.c
 	${CLANG_FORMAT} ./src/core/lily/compiler/package/*.c
+	${CLANG_FORMAT} ./src/core/lily/package/*.c
 	${CLANG_FORMAT} ./src/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./src/core/lily/preparser/preprocess/*.c
 	${CLANG_FORMAT} ./src/core/lily/precompiler/*.c
