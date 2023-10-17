@@ -26,11 +26,19 @@
 #define LILY_CORE_LILY_COMPILER_OUTPUT_CACHE_H
 
 #include <base/macros.h>
+#include <base/platform.h>
 
+#ifdef LILY_WINDOWS_OS
+#define DIR_CACHE_NAME "out.lily\\"
+#define DIR_CACHE_BIN DIR_CACHE_NAME "bin\\"
+#define DIR_CACHE_LIB DIR_CACHE_NAME "lib\\"
+#define DIR_CACHE_OBJ DIR_CACHE_NAME "obj\\"
+#else
 #define DIR_CACHE_NAME "out.lily/"
 #define DIR_CACHE_BIN DIR_CACHE_NAME "bin/"
 #define DIR_CACHE_LIB DIR_CACHE_NAME "lib/"
 #define DIR_CACHE_OBJ DIR_CACHE_NAME "obj/"
+#endif
 
 /**
  *

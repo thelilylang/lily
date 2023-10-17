@@ -67,6 +67,10 @@ DESTRUCTOR(LilyCompilerAdapter, const LilyCompilerAdapter *self)
         lily_free(self->output_path);
     }
 
+    if (self->output_exe_path) {
+        lily_free(self->output_exe_path);
+    }
+
     FREE(LilyIr, &self->ir);
 }
 

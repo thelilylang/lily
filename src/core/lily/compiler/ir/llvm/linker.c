@@ -159,11 +159,14 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 
     // Add output option
     // TODO: Check there is passed `-o` option
+    self->compiler.output_exe_path =
+      format("{s}{Sr}", DIR_CACHE_BIN, output_name);
+
 #ifdef LILY_WINDOWS_OS
-    push__Vec(args, format("/out:{s}{Sr}", BIN_DIR_PATH, output_name));
+    push__Vec(args, format("/out:{s}", self->compiler.output_exe_path));
 #else
     push__Vec(args, strdup("-o"));
-    push__Vec(args, format("{s}{Sr}", DIR_CACHE_BIN, output_name));
+    push__Vec(args, strdup(self->compiler.output_exe_path));
 #endif
 
     // Add optimization options

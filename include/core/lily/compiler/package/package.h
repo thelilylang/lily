@@ -151,7 +151,12 @@ enum LilyPackageStatus;
 
 typedef struct LilyCompilerAdapter
 {
-    char *output_path;
+    char *output_path; // char*? - Normally the output path cannot be NULL at
+                       // the end of the compilation, except if the compilation
+                       // is stopped before the end.
+    char *output_exe_path; // char*? - The output exe path is NULL if the
+                           // compilation is stopped before the end or the
+                           // package status is not LILY_PACKAGE_STATUS_MAIN.
     LilyIr ir;
     enum LilyLinkerKind linker;
     LilyLibrary *lib; // LilyLibrary*? (&)
@@ -165,6 +170,7 @@ inline CONSTRUCTOR(LilyCompilerAdapter, LilyCompilerAdapter)
 {
     return (LilyCompilerAdapter){
         .output_path = NULL,
+        .output_exe_path = NULL,
         .lib = NULL,
     };
 }
