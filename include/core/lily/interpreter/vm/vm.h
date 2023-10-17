@@ -295,10 +295,10 @@ load_const_value__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
  */
 DESTRUCTOR(LilyInterpreterVMStack, const LilyInterpreterVMStack *self);
 
-typedef struct LilyInterpreterVMRessources
+typedef struct LilyInterpreterVMResources
 {
     Vec *args; // Vec<char*>* (&)
-} LilyInterpreterVMRessources;
+} LilyInterpreterVMResources;
 
 typedef struct LilyInterpreterVM
 {
@@ -306,7 +306,7 @@ typedef struct LilyInterpreterVM
     const LilyMirModule *module;           // const LilyMirModule* (&)
     const LilyMirInstruction *entry_point; // const LilyMirInstruction* (&)
                                            // main function
-    LilyInterpreterVMRessources ressources;
+    LilyInterpreterVMResources resources;
     // TODO: Maybe add VM config type
     bool check_overflow; // also check underflow
 } LilyInterpreterVM;
@@ -322,7 +322,7 @@ CONSTRUCTOR(LilyInterpreterVM,
             Usize heap_capacity,
             Usize stack_capacity,
             const LilyMirModule *module,
-            LilyInterpreterVMRessources ressources,
+            LilyInterpreterVMResources resources,
             bool check_overflow);
 
 /**

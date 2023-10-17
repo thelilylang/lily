@@ -125,7 +125,7 @@ CONSTRUCTOR(LilyPackage *, LilyPackage,
         for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
             push__Vec(self->operator_register.operators,
                       ref__LilyCheckedOperator(
-                        self->program->ressources.default_operators[i]));
+                        self->program->resources.default_operators[i]));
         }
     } else {
         self->parser = NEW(LilyParser, self, self, NULL);

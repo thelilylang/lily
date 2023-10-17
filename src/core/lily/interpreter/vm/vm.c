@@ -379,7 +379,7 @@ CONSTRUCTOR(LilyInterpreterVM,
             Usize heap_capacity,
             Usize stack_capacity,
             const LilyMirModule *module,
-            LilyInterpreterVMRessources ressources,
+            LilyInterpreterVMResources resources,
             bool check_overflow)
 {
     LilyInterpreterMemory memory =
@@ -427,7 +427,7 @@ CONSTRUCTOR(LilyInterpreterVM,
     return (LilyInterpreterVM){ .memory = memory,
                                 .module = module,
                                 .entry_point = entry_point,
-                                .ressources = ressources,
+                                .resources = resources,
                                 .check_overflow = check_overflow };
 }
 

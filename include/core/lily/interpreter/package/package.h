@@ -59,7 +59,7 @@ inline CONSTRUCTOR(LilyInterpreterAdapter,
                    Usize heap_capacity,
                    Usize statck_capacity,
                    const LilyMirModule *module,
-                   LilyInterpreterVMRessources resources,
+                   LilyInterpreterVMResources resources,
                    bool check_overflow)
 {
     return (LilyInterpreterAdapter){ .vm = NEW(LilyInterpreterVM,

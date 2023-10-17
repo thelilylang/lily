@@ -119,7 +119,7 @@ build__LilyPackage(const LilycConfig *config,
     SET_ROOT_PACKAGE_IR(self->config, self);
     SET_ROOT_PACKAGE_PROGRAM(self, program, lib);
     SET_ROOT_PACKAGE_USE_SWITCH(self);
-    LOAD_ROOT_PACKAGE_RESSOURCES(self, program);
+    LOAD_ROOT_PACKAGE_RESOURCES(self, program);
 
     init_module__LilyAnalysis(&self->analysis);
 
@@ -371,7 +371,7 @@ run_precompiler__LilyPackage(const LilycConfig *config)
     SET_ROOT_PACKAGE_NAME(self);
     SET_ROOT_PACKAGE_IR(self->config, self);
     SET_ROOT_PACKAGE_PROGRAM(self, (&program), lib);
-    LOAD_ROOT_PACKAGE_RESSOURCES(self, (&program));
+    LOAD_ROOT_PACKAGE_RESOURCES(self, (&program));
 
     LOG_VERBOSE(self, "running precompiler");
 

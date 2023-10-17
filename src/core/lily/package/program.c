@@ -33,10 +33,10 @@
 CONSTRUCTOR(LilyProgram, LilyProgram, enum LilyProgramKind kind)
 {
     return (LilyProgram){ .kind = kind,
-                          .ressources = NEW(LilyProgramRessources) };
+                          .resources = NEW(LilyProgramResources) };
 }
 
-DESTRUCTOR(LilyProgramRessources, const LilyProgramRessources *self)
+DESTRUCTOR(LilyProgramResources, const LilyProgramResources *self)
 {
     for (Usize i = 0; i < BUILTINS_COUNT; ++i) {
         FREE(LilyBuiltinFun, &self->builtins[i]);
