@@ -25,10 +25,6 @@
 #ifndef LILY_CORE_LILY_COMPILER_PACKAGE_H
 #define LILY_CORE_LILY_COMPILER_PACKAGE_H
 
-#include <core/lily/compiler/package/config.h>
-#include <core/lily/compiler/package/default_path.h>
-#include <core/lily/compiler/package/dependency_tree.h>
-#include <core/lily/compiler/package/library.h>
 #include <core/lily/compiler/package/package.h>
 
 #endif // LILY_CORE_LILY_COMPILER_PACKAGE_H

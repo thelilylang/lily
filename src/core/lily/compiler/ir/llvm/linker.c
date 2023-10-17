@@ -31,7 +31,7 @@
 #include <core/lily/compiler/ir/llvm/linker.h>
 #include <core/lily/compiler/ir/llvm/utils.h>
 #include <core/lily/compiler/output/cache.h>
-#include <core/lily/compiler/package.h>
+#include <core/lily/package/package.h>
 
 #ifdef ENV_LOCAL
 #define LIB_DIR_BUILD "build"
@@ -41,6 +41,8 @@
 void
 compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 {
+    ASSERT(self->kind == LILY_PACKAGE_KIND_COMPILER);
+
     Vec *args = NEW(Vec); // Vec<char*>*
     String *output_name = self->config->output
                             ? from__String((char *)self->config->output)
@@ -106,7 +108,7 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
         FREE(Vec, package_dependencies);
     }
 
-    push__Vec(args, strdup(self->output_path));
+    push__Vec(args, strdup(self->compiler.output_path));
 
     // Default library link.
     // Link @sys.
@@ -157,11 +159,14 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 
     // Add output option
     // TODO: Check there is passed `-o` option
+    self->compiler.output_exe_path =
+      format("{s}{Sr}", DIR_CACHE_BIN, output_name);
+
 #ifdef LILY_WINDOWS_OS
-    push__Vec(args, format("/out:{s}{Sr}", BIN_DIR_PATH, output_name));
+    push__Vec(args, format("/out:{s}", self->compiler.output_exe_path));
 #else
     push__Vec(args, strdup("-o"));
-    push__Vec(args, format("{s}{Sr}", DIR_CACHE_BIN, output_name));
+    push__Vec(args, strdup(self->compiler.output_exe_path));
 #endif
 
     // Add optimization options

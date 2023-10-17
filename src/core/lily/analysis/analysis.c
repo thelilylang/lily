@@ -37,8 +37,8 @@
 #include <core/lily/analysis/checked/scope_stmt.h>
 #include <core/lily/analysis/checked/signature.h>
 #include <core/lily/analysis/checked/virtual_scope.h>
-#include <core/lily/compiler/package.h>
 #include <core/lily/lily.h>
+#include <core/lily/package/package.h>
 #include <core/lily/parser/ast.h>
 
 #include <core/shared/diagnostic.h>
@@ -6038,7 +6038,7 @@ check_call_expr__LilyAnalysis(LilyAnalysis *self,
                       NEW_VARIANT(LilyCheckedExprCall, str_len, len_expr));
                 case LILY_CHECKED_DATA_TYPE_KIND_CSTR: {
                     LilyBuiltinFun *len_cstr_fun =
-                      &self->root_package->builtins[__len__$CStr];
+                      &self->root_package->builtins[builtin__len__$CStr];
 
                     add_builtin_fun_to_builtin_usage__LilyPackage(self->package,
                                                                   len_cstr_fun);

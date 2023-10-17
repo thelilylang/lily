@@ -30,8 +30,8 @@
 #include <core/lily/compiler/ir/llvm/ar.h>
 #include <core/lily/compiler/ir/llvm/utils.h>
 #include <core/lily/compiler/output/cache.h>
-#include <core/lily/compiler/package/library.h>
-#include <core/lily/compiler/package/package.h>
+#include <core/lily/package/library.h>
+#include <core/lily/package/package.h>
 
 #include <cli/emit.h>
 
@@ -41,6 +41,8 @@
 void
 compile_lib__LilyIrLlvmAr(LilyLibrary *self)
 {
+    ASSERT(self->package->kind == LILY_PACKAGE_KIND_COMPILER);
+
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || defined(LILY_APPLE_OS)
     Vec *args = init__Vec(1, strdup("ar")); // Vec<char*>*
 #elif defined(LILY_WINDOWS_OS)
@@ -60,7 +62,7 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
     push__Vec(args, strdup("--format=default"));
     push__Vec(args, strdup("rcs"));
     push__Vec(args, strdup(static_lib_output_path));
-    push__Vec(args, strdup(self->package->output_path));
+    push__Vec(args, strdup(self->package->compiler.output_path));
 
     // Add object files
     {

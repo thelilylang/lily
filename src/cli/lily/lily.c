@@ -155,7 +155,7 @@ run_command__CliLily()
 {
     CliCommand *cmd = NEW(CliCommand, "run");
 
-    cmd->$help(cmd, "Run file")
+    cmd->$help(cmd, "Run file (interpreter)")
       ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
       ->$defer(cmd, &run_options__CliLily);
 

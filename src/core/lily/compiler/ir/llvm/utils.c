@@ -23,6 +23,7 @@
  */
 
 #include <core/lily/compiler/ir/llvm/utils.h>
+#include <core/lily/package/package.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -92,14 +93,17 @@ add_lib_dependencies__LilyCompilerIrLlvmUtils(LilyPackage *self, Vec *args)
 void
 add_object_files__LilyCompilerIrLlvmUtils(LilyPackage *self, Vec *args)
 {
+    ASSERT(self->kind == LILY_PACKAGE_KIND_COMPILER);
+
     for (Usize i = 0; i < self->sub_packages->len; ++i) {
         LilyPackage *sub_package = get__Vec(self->sub_packages, i);
 
         // NOTE: In this case we not wait for thread finish, because the thread
         // is finish before the begin of this current thread.
-        ASSERT(sub_package->output_path);
+        ASSERT(sub_package->kind == LILY_PACKAGE_KIND_COMPILER);
+        ASSERT(sub_package->compiler.output_path);
 
-        char *arg = strdup(sub_package->output_path);
+        char *arg = strdup(sub_package->compiler.output_path);
 
         ASSERT(is_unique_arg__LilyCompilerIrLlvmUtils(args, arg));
         push__Vec(args, arg);

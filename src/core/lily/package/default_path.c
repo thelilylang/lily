@@ -28,7 +28,7 @@
 #include <base/string.h>
 #include <base/vec.h>
 
-#include <core/lily/compiler/package/default_path.h>
+#include <core/lily/package/default_path.h>
 
 #include <stdio.h>
 #include <stdlib.h>

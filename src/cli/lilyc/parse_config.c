@@ -25,6 +25,7 @@
 #include <base/assert.h>
 #include <base/cli/result.h>
 
+#include <cli/emit.h>
 #include <cli/lilyc/parse_config.h>
 
 #include <stdio.h>
@@ -66,8 +67,9 @@
 #define OZ_OPTION 37
 #define O_OPTION 38
 #define OUTPUT_OPTION 39
-#define V_OPTION 40
-#define VERBOSE_OPTION 41
+#define VERBOSE_OPTION 40
+#define R_OPTION 41
+#define RUN_OPTION 42
 
 LilycConfig
 run__LilycParseConfig(const Vec *results)
@@ -85,6 +87,7 @@ run__LilycParseConfig(const Vec *results)
          wasm_ir = false;
     bool o0 = false, o1 = false, o2 = false, o3 = false, oz = false;
     bool verbose = false;
+    bool run = false;
     const char *target = NULL;
     const char *output = NULL;
     VecIter iter = NEW(VecIter, results);
@@ -203,9 +206,12 @@ run__LilycParseConfig(const Vec *results)
                     case OUTPUT_OPTION:
                         output = current->option->value->single;
                         break;
-                    case V_OPTION:
                     case VERBOSE_OPTION:
                         verbose = true;
+                        break;
+                    case R_OPTION:
+                    case RUN_OPTION:
+                        run = true;
                         break;
                     default:
                         UNREACHABLE("unknown option");
@@ -215,6 +221,14 @@ run__LilycParseConfig(const Vec *results)
             default:
                 UNREACHABLE("not expected in this context");
         }
+    }
+
+    // Check if some options are incompatible.
+
+    if (run && lib) {
+        EMIT_ERROR(
+          "you cannot use `-r` or `--run` option with `-l` or `--lib` option");
+        exit(1);
     }
 
     return NEW(LilycConfig,
@@ -249,5 +263,6 @@ run__LilycParseConfig(const Vec *results)
                o2,
                o3,
                oz,
-               verbose);
+               verbose,
+               run);
 }

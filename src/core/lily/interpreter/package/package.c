@@ -22,45 +22,4 @@
  * SOFTWARE.
  */
 
-#include <base/assert.h>
-
-#include <core/lily/compiler/package/library.h>
-#include <core/lily/compiler/package/program.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-
-CONSTRUCTOR(LilyProgram, LilyProgram, enum LilyProgramKind kind)
-{
-    return (LilyProgram){ .kind = kind,
-                          .ressources = NEW(LilyProgramRessources) };
-}
-
-DESTRUCTOR(LilyProgramRessources, const LilyProgramRessources *self)
-{
-    for (Usize i = 0; i < BUILTINS_COUNT; ++i) {
-        FREE(LilyBuiltinFun, &self->builtins[i]);
-    }
-
-    lily_free(self->builtins);
-
-    for (Usize i = 0; i < SYSS_COUNT; ++i) {
-        FREE(LilySysFun, &self->syss[i]);
-    }
-
-    lily_free(self->syss);
-
-    // FIXME: sometimes that's crash, caused by the add of the the
-    // multi-threading in the precompiler
-
-    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
-        ASSERT(self->default_operators[i]->ref_count == 0);
-
-        FREE(LilyCheckedOperator, self->default_operators[i]);
-    }
-
-    lily_free(self->default_operators);
-
-    FREE_BUFFER_ITEMS(self->libs->buffer, self->libs->len, LilyLibrary);
-    FREE(Vec, self->libs);
-}
+#include <core/lily/interpreter/package/package.h>

@@ -24,7 +24,7 @@
 
 #include <core/lily/compiler/ir/llvm/linker.h>
 #include <core/lily/compiler/linker/linker.h>
-#include <core/lily/compiler/package.h>
+#include <core/lily/package/package.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +32,9 @@
 void
 compile_exe__LilyLinker(LilyPackage *self)
 {
-    switch (self->linker) {
+    ASSERT(self->kind == LILY_PACKAGE_KIND_COMPILER);
+
+    switch (self->compiler.linker) {
         case LILY_LINKER_KIND_CC:
             // TODO: add cc linker
             break;

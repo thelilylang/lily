@@ -48,7 +48,7 @@ find_library(ZSTD NAMES libzstd.a libzstdstatic.a zstd NAMES_PER_DIR)
 
 list(APPEND LILY_LLVM_LIBS "${ZLIB};${ZSTD}")
 
-set(LILY_INCLUDE include lib/local/include)
+set(LILY_INCLUDE include lib/local/include lib)
 
 if(MSVC)
   set(LILY_LLD_COMPILE_FLAGS "-std=c++17")
@@ -464,10 +464,34 @@ add_library(lily_core_lily_analysis STATIC ${LILY_CORE_LILY_ANALYSIS_SRC})
 target_link_libraries(lily_core_lily_analysis PUBLIC lily_core_lily_functions)
 target_include_directories(lily_core_lily_analysis PRIVATE ${LILY_INCLUDE})
 
-# lily_core_lily_bytecode set(LILY_CORE_LILY_BYTECODE_SRC)
+# lily_core_lily_interpreter_package
+set(LILY_CORE_LILY_INTERPRETER_PACKAGE_SRC
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/package/package.c)
 
-# add_library(lily_core_lily_bytecode STATIC ${ LILY_CORE_LILY_BYTECODE_SRC })
-# target_include_directories(lily_core_lily_bytecode PRIVATE include)
+add_library(lily_core_lily_interpreter_package STATIC
+            ${LILY_CORE_LILY_INTERPRETER_PACKAGE_SRC})
+target_link_libraries(
+  lily_core_lily_interpreter_package
+  PRIVATE lily_core_lily_mir lily_core_lily_parser lily_core_lily_precompiler
+          lily_core_lily_interpreter_vm)
+target_include_directories(lily_core_lily_interpreter_package
+                           PRIVATE ${LILY_INCLUDE})
+
+# lily_core_lily_interpreter_vm
+set(LILY_CORE_LILY_INTERPRETER_VM_SRC
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/builtin.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/error.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/operator.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/runtime/sys.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/memory.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/value.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/interpreter/vm/vm.c)
+
+add_library(lily_core_lily_interpreter_vm STATIC
+            ${LILY_CORE_LILY_INTERPRETER_VM_SRC})
+target_link_libraries(lily_core_lily_interpreter_vm PUBLIC lily_base)
+target_include_directories(lily_core_lily_interpreter_vm
+                           PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_compiler add_library(LilyCoreLilyCompiler STATIC)
 
@@ -621,12 +645,7 @@ target_include_directories(lily_core_lily_compiler_output
 
 # lily_core_lily_compiler_package
 set(LILY_CORE_LILY_COMPILER_PACKAGE_SRC
-    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/package/config.c
-    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/package/default_path.c
-    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/package/dependency_tree.c
-    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/package/library.c
-    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/package/package.c
-    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/package/program.c)
+    ${CMAKE_SOURCE_DIR}/src/core/lily/compiler/package/package.c)
 
 add_library(lily_core_lily_compiler_package STATIC
             ${LILY_CORE_LILY_COMPILER_PACKAGE_SRC})
@@ -694,6 +713,23 @@ add_library(lily_core_lily_mir STATIC ${LILY_CORE_LILY_MIR_SRC})
 target_link_libraries(lily_core_lily_mir PUBLIC lily_base
                                                 lily_core_lily_analysis)
 target_include_directories(lily_core_lily_mir PRIVATE ${LILY_INCLUDE})
+
+# lily_core_lily_package
+set(LILY_CORE_LILY_PACKAGE_SRC
+    ${CMAKE_SOURCE_DIR}/src/core/lily/package/config.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/package/default_path.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/package/dependency_tree.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/package/library.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/package/package.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/package/program.c)
+
+add_library(lily_core_lily_package STATIC ${LILY_CORE_LILY_PACKAGE_SRC})
+target_link_libraries(
+  lily_core_lily_package
+  PRIVATE lily_base lily_core_lily_mir lily_core_lily_parser
+          lily_core_lily_precompiler lily_core_lily_compiler_package
+          lily_core_lily_interpreter_package)
+target_include_directories(lily_core_lily_package PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_parser
 set(LILY_CORE_LILY_PARSER_SRC
@@ -784,8 +820,8 @@ set(LILY_CORE_LILY_PRECOMPILER_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/precompiler/precompiler.c)
 
 add_library(lily_core_lily_precompiler STATIC ${LILY_CORE_LILY_PRECOMPILER_SRC})
-target_link_libraries(lily_core_lily_precompiler
-                      PUBLIC lily_core_lily_compiler_package)
+target_link_libraries(lily_core_lily_precompiler PUBLIC lily_core_lily_package
+                                                        lily_base)
 target_include_directories(lily_core_lily_precompiler PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_preparser
@@ -901,16 +937,15 @@ if(LILY_DEBUG)
   add_executable(test_core_precompiler
                  ${CMAKE_SOURCE_DIR}/tests/core/lily/precompiler/precompiler.c)
   target_link_libraries(test_core_precompiler lily_base
-                        lily_core_lily_precompiler)
+                        lily_core_lily_precompiler lily_core_lily_package)
   target_include_directories(test_core_precompiler PRIVATE ${LILY_INCLUDE})
 
   add_test(NAME test_core_precompiler COMMAND test_core_precompiler)
 
   add_executable(test_core_parser
                  ${CMAKE_SOURCE_DIR}/tests/core/lily/parser/parser.c)
-  target_link_libraries(
-    test_core_parser lily_base lily_core_lily_parser lily_core_lily_preparser
-    lily_core_lily_compiler_package)
+  target_link_libraries(test_core_parser lily_base lily_core_lily_parser
+                        lily_core_lily_preparser lily_core_lily_package)
   target_include_directories(test_core_parser PRIVATE ${LILY_INCLUDE})
 
   add_test(NAME test_core_parser COMMAND test_core_parser)

@@ -26,13 +26,12 @@
 
 #include <cli/emit.h>
 
-#include <core/lily/compiler/package/default_path.h>
-#include <core/lily/compiler/package/package.h>
 #include <core/lily/lily.h>
+#include <core/lily/package/default_path.h>
+#include <core/lily/package/package.h>
 #include <core/lily/precompiler/precompiler.h>
 
 #include <ctype.h>
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,6 +45,8 @@
 #undef PRECOMPILER_USE_MULTITHREAD
 
 #ifdef PRECOMPILER_USE_MULTITHREAD
+#include <pthread.h>
+
 typedef struct LilyPrecompilerSubPackageWrapper
 {
     const LilyPrecompiler *self; // const LilyPrecompiler* (&)
@@ -1174,26 +1175,26 @@ void
 configure_sub_package__LilyPrecompiler(
   LilyPrecompilerSubPackageWrapper *wrapper)
 {
-#define INIT_IR()                                                       \
-    switch (wrapper->root_package->ir.kind) {                           \
-        case LILY_IR_KIND_CC:                                           \
-            /* TODO: add a linker for CC */                             \
-            res->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));           \
-            res->linker = LILY_LINKER_KIND_CC;                          \
-            break;                                                      \
-        case LILY_IR_KIND_CPP:                                          \
-            /* TODO: add a linker for CPP */                            \
-            res->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));         \
-            res->linker = LILY_LINKER_KIND_CPP;                         \
-            break;                                                      \
-        case LILY_IR_KIND_JS:                                           \
-            res->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));           \
-            break;                                                      \
-        case LILY_IR_KIND_LLVM:                                         \
-            res->ir = NEW_VARIANT(                                      \
-              LilyIr, llvm, NEW(LilyIrLlvm, res->global_name->buffer)); \
-            res->linker = LILY_LINKER_KIND_LLVM;                        \
-            break;                                                      \
+#define INIT_IR()                                                        \
+    switch (wrapper->root_package->compiler.ir.kind) {                   \
+        case LILY_IR_KIND_CC:                                            \
+            /* TODO: add a linker for CC */                              \
+            res->compiler.ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));   \
+            res->compiler.linker = LILY_LINKER_KIND_CC;                  \
+            break;                                                       \
+        case LILY_IR_KIND_CPP:                                           \
+            /* TODO: add a linker for CPP */                             \
+            res->compiler.ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp)); \
+            res->compiler.linker = LILY_LINKER_KIND_CPP;                 \
+            break;                                                       \
+        case LILY_IR_KIND_JS:                                            \
+            res->compiler.ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));   \
+            break;                                                       \
+        case LILY_IR_KIND_LLVM:                                          \
+            res->compiler.ir = NEW_VARIANT(                              \
+              LilyIr, llvm, NEW(LilyIrLlvm, res->global_name->buffer));  \
+            res->compiler.linker = LILY_LINKER_KIND_LLVM;                \
+            break;                                                       \
     }
 
     Vec *split_pkg_name = split__String(wrapper->sub_package->name, '.');
@@ -1227,17 +1228,41 @@ configure_sub_package__LilyPrecompiler(
 
         char *default_path = generate_default_path(pkg_filename->buffer);
 
-        res = NEW(LilyPackage,
-                  wrapper->sub_package->name,
-                  wrapper->sub_package->global_name,
-                  wrapper->sub_package->visibility,
-                  pkg_filename->buffer,
-                  LILY_PACKAGE_STATUS_SUB_MAIN,
-                  default_path,
-                  wrapper->sub_package->global_name->buffer,
-                  wrapper->root_package);
+        switch (wrapper->root_package->kind) {
+            case LILY_PACKAGE_KIND_COMPILER:
+                res = NEW_VARIANT(LilyPackage,
+                                  compiler,
+                                  wrapper->sub_package->name,
+                                  wrapper->sub_package->global_name,
+                                  wrapper->sub_package->visibility,
+                                  pkg_filename->buffer,
+                                  LILY_PACKAGE_STATUS_SUB_MAIN,
+                                  default_path,
+                                  wrapper->sub_package->global_name->buffer,
+                                  wrapper->root_package);
 
-        INIT_IR();
+                INIT_IR();
+
+                break;
+            case LILY_PACKAGE_KIND_INTERPRETER:
+                res = NEW_VARIANT(LilyPackage,
+                                  interpreter,
+                                  wrapper->sub_package->name,
+                                  wrapper->sub_package->global_name,
+                                  wrapper->sub_package->visibility,
+                                  pkg_filename->buffer,
+                                  LILY_PACKAGE_STATUS_SUB_MAIN,
+                                  default_path,
+                                  wrapper->sub_package->global_name->buffer,
+                                  wrapper->root_package);
+                break;
+            case LILY_PACKAGE_KIND_JIT:
+                TODO("JIT");
+            default:
+                UNREACHABLE("unknown variant");
+        }
+
+        res->config = root_package->config;
 
         LOG_VERBOSE(res, "running");
 
@@ -1245,17 +1270,40 @@ configure_sub_package__LilyPrecompiler(
     } else {
         push_str__String(pkg_filename, ".lily");
 
-        res = NEW(LilyPackage,
-                  wrapper->sub_package->name,
-                  wrapper->sub_package->global_name,
-                  wrapper->sub_package->visibility,
-                  pkg_filename->buffer,
-                  LILY_PACKAGE_STATUS_NORMAL,
-                  wrapper->self->default_path,
-                  wrapper->self->package->global_name->buffer,
-                  wrapper->root_package);
+        switch (wrapper->root_package->kind) {
+            case LILY_PACKAGE_KIND_COMPILER:
+                res = NEW_VARIANT(LilyPackage,
+                                  compiler,
+                                  wrapper->sub_package->name,
+                                  wrapper->sub_package->global_name,
+                                  wrapper->sub_package->visibility,
+                                  pkg_filename->buffer,
+                                  LILY_PACKAGE_STATUS_NORMAL,
+                                  default_path,
+                                  wrapper->sub_package->global_name->buffer,
+                                  wrapper->root_package);
 
-        INIT_IR();
+                INIT_IR();
+
+                break;
+            case LILY_PACKAGE_KIND_INTERPRETER:
+                res = NEW_VARIANT(LilyPackage,
+                                  interpreter,
+                                  wrapper->sub_package->name,
+                                  wrapper->sub_package->global_name,
+                                  wrapper->sub_package->visibility,
+                                  pkg_filename->buffer,
+                                  LILY_PACKAGE_STATUS_NORMAL,
+                                  default_path,
+                                  wrapper->sub_package->global_name->buffer,
+                                  wrapper->root_package);
+
+                break;
+            case LILY_PACKAGE_KIND_JIT:
+                TODO("JIT");
+            default:
+                UNREACHABLE("unknown variant");
+        }
 
         LOG_VERBOSE(res, "running");
     }
@@ -1304,26 +1352,26 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
                                         const LilyPreparserSubPackage *sub_pkg,
                                         LilyPackage *root_package)
 {
-#define INIT_IR()                                                       \
-    switch (root_package->ir.kind) {                                    \
-        case LILY_IR_KIND_CC:                                           \
-            /* TODO: add a linker for CC */                             \
-            res->ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));           \
-            res->linker = LILY_LINKER_KIND_CC;                          \
-            break;                                                      \
-        case LILY_IR_KIND_CPP:                                          \
-            /* TODO: add a linker for CPP */                            \
-            res->ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp));         \
-            res->linker = LILY_LINKER_KIND_CPP;                         \
-            break;                                                      \
-        case LILY_IR_KIND_JS:                                           \
-            res->ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));           \
-            break;                                                      \
-        case LILY_IR_KIND_LLVM:                                         \
-            res->ir = NEW_VARIANT(                                      \
-              LilyIr, llvm, NEW(LilyIrLlvm, res->global_name->buffer)); \
-            res->linker = LILY_LINKER_KIND_LLVM;                        \
-            break;                                                      \
+#define INIT_IR()                                                        \
+    switch (root_package->compiler.ir.kind) {                            \
+        case LILY_IR_KIND_CC:                                            \
+            /* TODO: add a linker for CC */                              \
+            res->compiler.ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));   \
+            res->compiler.linker = LILY_LINKER_KIND_CC;                  \
+            break;                                                       \
+        case LILY_IR_KIND_CPP:                                           \
+            /* TODO: add a linker for CPP */                             \
+            res->compiler.ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp)); \
+            res->compiler.linker = LILY_LINKER_KIND_CPP;                 \
+            break;                                                       \
+        case LILY_IR_KIND_JS:                                            \
+            res->compiler.ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));   \
+            break;                                                       \
+        case LILY_IR_KIND_LLVM:                                          \
+            res->compiler.ir = NEW_VARIANT(                              \
+              LilyIr, llvm, NEW(LilyIrLlvm, res->global_name->buffer));  \
+            res->compiler.linker = LILY_LINKER_KIND_LLVM;                \
+            break;                                                       \
     }
 
     Vec *split_pkg_name = split__String(sub_pkg->name, '.');
@@ -1355,20 +1403,44 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
 #endif
 
         char *default_path = generate_default_path(pkg_filename->buffer);
+        LilyPackage *res = NULL;
 
-        LilyPackage *res = NEW(LilyPackage,
-                               sub_pkg->name,
-                               sub_pkg->global_name,
-                               sub_pkg->visibility,
-                               pkg_filename->buffer,
-                               LILY_PACKAGE_STATUS_SUB_MAIN,
-                               default_path,
-                               sub_pkg->global_name->buffer,
-                               root_package);
+        switch (root_package->kind) {
+            case LILY_PACKAGE_KIND_COMPILER:
+                NEW_VARIANT(LilyPackage,
+                            compiler,
+                            sub_pkg->name,
+                            sub_pkg->global_name,
+                            sub_pkg->visibility,
+                            pkg_filename->buffer,
+                            LILY_PACKAGE_STATUS_SUB_MAIN,
+                            default_path,
+                            sub_pkg->global_name->buffer,
+                            root_package);
+
+                INIT_IR();
+
+                break;
+            case LILY_PACKAGE_KIND_INTERPRETER:
+                NEW_VARIANT(LilyPackage,
+                            interpreter,
+                            sub_pkg->name,
+                            sub_pkg->global_name,
+                            sub_pkg->visibility,
+                            pkg_filename->buffer,
+                            LILY_PACKAGE_STATUS_SUB_MAIN,
+                            default_path,
+                            sub_pkg->global_name->buffer,
+                            root_package);
+
+                break;
+            case LILY_PACKAGE_KIND_JIT:
+                TODO("JIT");
+            default:
+                UNREACHABLE("unknown variant");
+        }
 
         res->config = root_package->config;
-
-        INIT_IR();
 
         run__LilyScanner(&res->scanner, res->config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
@@ -1385,19 +1457,42 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
     } else {
         push_str__String(pkg_filename, ".lily");
 
-        LilyPackage *res = NEW(LilyPackage,
-                               sub_pkg->name,
-                               sub_pkg->global_name,
-                               sub_pkg->visibility,
-                               pkg_filename->buffer,
-                               LILY_PACKAGE_STATUS_NORMAL,
-                               self->default_path,
-                               self->package->global_name->buffer,
-                               root_package);
+        LilyPackage *res = NULL;
+
+        switch (root_package->kind) {
+            case LILY_PACKAGE_KIND_COMPILER:
+                res = NEW_VARIANT(LilyPackage,
+                                  compiler,
+                                  sub_pkg->name,
+                                  sub_pkg->global_name,
+                                  sub_pkg->visibility,
+                                  pkg_filename->buffer,
+                                  LILY_PACKAGE_STATUS_NORMAL,
+                                  self->default_path,
+                                  self->package->global_name->buffer,
+                                  root_package);
+
+                INIT_IR();
+
+                break;
+            case LILY_PACKAGE_KIND_INTERPRETER:
+                res = NEW_VARIANT(LilyPackage,
+                                  interpreter,
+                                  sub_pkg->name,
+                                  sub_pkg->global_name,
+                                  sub_pkg->visibility,
+                                  pkg_filename->buffer,
+                                  LILY_PACKAGE_STATUS_NORMAL,
+                                  self->default_path,
+                                  self->package->global_name->buffer,
+                                  root_package);
+            case LILY_PACKAGE_KIND_JIT:
+                TODO("JIT");
+            default:
+                UNREACHABLE("unknown variant");
+        }
 
         res->config = root_package->config;
-
-        INIT_IR();
 
         run__LilyScanner(&res->scanner, res->config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);

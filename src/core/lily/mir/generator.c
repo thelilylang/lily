@@ -24,13 +24,13 @@
 
 #include <base/print.h>
 
-#include <core/lily/compiler/package/package.h>
 #include <core/lily/lily.h>
 #include <core/lily/mir/generator.h>
 #include <core/lily/mir/generator/constant.h>
 #include <core/lily/mir/generator/enum.h>
 #include <core/lily/mir/generator/fun.h>
 #include <core/lily/mir/generator/record.h>
+#include <core/lily/package/package.h>
 
 #define RESOLVE_TYPE_DEPS(decl_kind)                                      \
     for (Usize i = 0; i < type->decl_kind.deps->len; ++i) {               \

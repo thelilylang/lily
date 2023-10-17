@@ -72,11 +72,15 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/compiler/output/*.h
 	${CLANG_FORMAT} ./include/core/lily/diagnostic/*.h
 	${CLANG_FORMAT} ./include/core/lily/functions/*.h
+	${CLANG_FORMAT} ./include/core/lily/interpreter/package/*.h
+	${CLANG_FORMAT} ./include/core/lily/interpreter/vm/*.h
+	${CLANG_FORMAT} ./include/core/lily/interpreter/vm/runtime/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/expr/*.h
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/stmt/*.h 
 	${CLANG_FORMAT} ./include/core/lily/compiler/package/*.h
+	${CLANG_FORMAT} ./include/core/lily/package/*.h
 	${CLANG_FORMAT} ./include/core/lily/preparser/*.h
 	${CLANG_FORMAT} ./include/core/lily/preparser/preprocess/*.h
 	${CLANG_FORMAT} ./include/core/lily/precompiler/*.h
@@ -141,11 +145,15 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/compiler/output/*.c
 	${CLANG_FORMAT} ./src/core/lily/diagnostic/*.c
 	${CLANG_FORMAT} ./src/core/lily/functions/*.c
+	${CLANG_FORMAT} ./src/core/lily/interpreter/package/*.c
+	${CLANG_FORMAT} ./src/core/lily/interpreter/vm/*.c
+	${CLANG_FORMAT} ./src/core/lily/interpreter/vm/runtime/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/expr/*.c
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/stmt/*.c
 	${CLANG_FORMAT} ./src/core/lily/compiler/package/*.c
+	${CLANG_FORMAT} ./src/core/lily/package/*.c
 	${CLANG_FORMAT} ./src/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./src/core/lily/preparser/preprocess/*.c
 	${CLANG_FORMAT} ./src/core/lily/precompiler/*.c

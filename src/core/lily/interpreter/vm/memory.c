@@ -24,52 +24,24 @@
 
 #include <base/alloc.h>
 
-#include <core/lily/compiler/package/library.h>
-#include <core/lily/compiler/package/package.h>
+#include <core/lily/interpreter/vm/memory.h>
+#include <core/lily/interpreter/vm/runtime.h>
 
-CONSTRUCTOR(LilyLibrary *,
-            LilyLibrary,
-            String *version,
-            String *url,
-            String *path,
-            LilyPackage *package)
+#include <stddef.h>
+
+LilyInterpreterValueObject *
+alloc__LilyInterpreterMemory(LilyInterpreterMemory *self, Usize size)
 {
-    LilyLibrary *self = lily_malloc(sizeof(LilyLibrary));
-
-    self->version = version;
-    self->url = url;
-    self->path = path;
-    self->output_path = NULL;
-
-    if (package) {
-        self->name = package->name;
-        self->ar = (enum LilyArKind)package->linker;
-    }
-
-    self->package = package;
-
-    return self;
 }
 
-DESTRUCTOR(LilyLibrary, LilyLibrary *self)
+void
+free__LilyInterpreterMemory(LilyInterpreterMemory *self,
+                            LilyInterpreterValueObject **obj)
 {
-    if (self->version) {
-        FREE(String, self->version);
+    if (obj && *obj) {
+        lily_free(*obj);
+        *obj = NULL;
+    } else {
+        RUNTIME_ERROR_UNREACHABLE("bad free, the object is NULL");
     }
-
-    if (self->output_path) {
-        lily_free(self->output_path);
-    }
-
-    if (self->url) {
-        FREE(String, self->url);
-    }
-
-    if (self->path) {
-        FREE(String, self->path);
-    }
-
-    FREE(LilyPackage, self->package);
-
-    lily_free(self);
 }

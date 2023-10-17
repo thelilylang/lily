@@ -25,8 +25,8 @@
 #include <base/macros.h>
 #include <base/print.h>
 
-#include <core/lily/compiler/package/dependency_tree.h>
-#include <core/lily/compiler/package/package.h>
+#include <core/lily/package/dependency_tree.h>
+#include <core/lily/package/package.h>
 
 #include <stdio.h>
 #include <string.h>

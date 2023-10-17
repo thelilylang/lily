@@ -34,23 +34,23 @@
 
 typedef struct LilyPackage LilyPackage;
 
-// This types is used to load the basic ressources of the program.
+// This types is used to load the basic resources of the program.
 // e.g. default operator, builtins, syss, analysed library, ...
-typedef struct LilyProgramRessources
+typedef struct LilyProgramResources
 {
     LilyBuiltinFun *builtins;
     LilySysFun *syss;
     LilyCheckedOperator **default_operators;
     Vec *libs; // Vec<LilyLibrary*>*
-} LilyProgramRessources;
+} LilyProgramResources;
 
 /**
  *
  * @brief Construct LilyProgram type.
  */
-inline CONSTRUCTOR(LilyProgramRessources, LilyProgramRessources)
+inline CONSTRUCTOR(LilyProgramResources, LilyProgramResources)
 {
-    return (LilyProgramRessources){
+    return (LilyProgramResources){
         .builtins = load_builtins__LilyBuiltin(),
         .syss = load_syss__LilySys(),
         .default_operators = load_default_operators__LilyCheckedOperator(),
@@ -62,7 +62,7 @@ inline CONSTRUCTOR(LilyProgramRessources, LilyProgramRessources)
  *
  * @brief Free LilyProgram type.
  */
-DESTRUCTOR(LilyProgramRessources, const LilyProgramRessources *self);
+DESTRUCTOR(LilyProgramResources, const LilyProgramResources *self);
 
 enum LilyProgramKind
 {
@@ -74,7 +74,7 @@ enum LilyProgramKind
 typedef struct LilyProgram
 {
     enum LilyProgramKind kind;
-    LilyProgramRessources ressources;
+    LilyProgramResources resources;
 } LilyProgram;
 
 /**
@@ -89,7 +89,7 @@ CONSTRUCTOR(LilyProgram, LilyProgram, enum LilyProgramKind kind);
  */
 inline DESTRUCTOR(LilyProgram, const LilyProgram *self)
 {
-    FREE(LilyProgramRessources, &self->ressources);
+    FREE(LilyProgramResources, &self->resources);
 }
 
 #endif // LILY_CORE_LILY_PROGRAM_H
