@@ -43,6 +43,8 @@ compile_lib__LilyLinker(LilyLibrary *self)
             break;
         case LILY_AR_KIND_LLVM:
             return compile_lib__LilyIrLlvmAr(self);
+        case LILY_AR_KIND_UNKNOWN:
+            UNREACHABLE("unknown ar kind, maybe you are using the interpreter");
         default:
             UNREACHABLE("unknown variant");
     }

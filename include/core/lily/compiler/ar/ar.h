@@ -31,7 +31,8 @@ enum LilyArKind
 {
     LILY_AR_KIND_CC,
     LILY_AR_KIND_CPP,
-    LILY_AR_KIND_LLVM
+    LILY_AR_KIND_LLVM,
+    LILY_AR_KIND_UNKNOWN
 };
 
 /**
