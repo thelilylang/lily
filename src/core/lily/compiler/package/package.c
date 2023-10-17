@@ -55,11 +55,11 @@ static pthread_mutex_t package_thread_mutex;
 
 /**
  *
- * @brief Run all packages.
+ * @brief Run parser, analysis, mir, ir and compile output object (...).
  * @param self LilyPackageDependencyTree*
  */
 static void *
-run__LilyPackage(void *self);
+run_threads__LilyPackage(void *self);
 
 DESTRUCTOR(LilyCompilerAdapter, const LilyCompilerAdapter *self)
 {
@@ -152,7 +152,7 @@ build__LilyCompilerPackage(const LilycConfig *config,
         ASSERT(
           !pthread_create(&package_threads[i],
                           NULL,
-                          &run__LilyPackage,
+                          &run_threads__LilyPackage,
                           get__Vec(self->precompiler.dependency_trees, i)));
     }
 
@@ -184,7 +184,7 @@ build_lib__LilyCompilerPackage(const LilycConfig *config,
 }
 
 static void *
-run__LilyPackage(void *self)
+run_threads__LilyPackage(void *self)
 {
     pthread_mutex_lock(&package_thread_mutex);
 
@@ -238,7 +238,7 @@ run__LilyPackage(void *self)
         for (Usize i = 0; i < tree->children->len; ++i) {
             ASSERT(!pthread_create(&package_threads[i],
                                    NULL,
-                                   &run__LilyPackage,
+                                   &run_threads__LilyPackage,
                                    get__Vec(tree->children, i)));
         }
 
