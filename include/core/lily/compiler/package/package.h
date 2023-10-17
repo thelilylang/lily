@@ -126,10 +126,10 @@ enum LilyPackageStatus;
             UNREACHABLE("unknown variant");                           \
     }
 
-#define LOAD_ROOT_PACKAGE_RESOURCES(root_package, p)                         \
+#define LOAD_ROOT_PACKAGE_RESOURCES(root_package, p)                          \
     /* Load builtins and syss */                                              \
-    root_package->builtins = p->resources.builtins;                          \
-    root_package->syss = p->resources.syss;                                  \
+    root_package->builtins = p->resources.builtins;                           \
+    root_package->syss = p->resources.syss;                                   \
                                                                               \
     /* Load default operators in operator register                            \
     In a normal case where we wanted to add an operator to the register, we'd \
@@ -139,7 +139,7 @@ enum LilyPackageStatus;
     for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {                     \
         push__Vec(root_package->operator_register.operators,                  \
                   ref__LilyCheckedOperator(                                   \
-                    root_package->program->resources.default_operators[i])); \
+                    root_package->program->resources.default_operators[i]));  \
     }
 
 #define SET_ROOT_PACKAGE_USE_SWITCH(root_package)                       \

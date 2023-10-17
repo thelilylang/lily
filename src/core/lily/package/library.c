@@ -44,9 +44,9 @@ CONSTRUCTOR(LilyLibrary *,
     if (package) {
         self->name = package->name;
 
-		if (package->kind == LILY_PACKAGE_KIND_COMPILER) {
-			self->ar = (enum LilyArKind)package->compiler.linker;
-		}
+        if (package->kind == LILY_PACKAGE_KIND_COMPILER) {
+            self->ar = (enum LilyArKind)package->compiler.linker;
+        }
     }
 
     self->package = package;

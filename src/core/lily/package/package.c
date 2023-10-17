@@ -1,31 +1,32 @@
 /*
-* MIT License
-*
-* Copyright (c) 2022-2023 ArthurPV
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in
-* all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-* SOFTWARE.
-*/
+ * MIT License
+ *
+ * Copyright (c) 2022-2023 ArthurPV
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
-#include <core/lily/package/package.h>
 #include <core/lily/lily.h>
+#include <core/lily/package/package.h>
 
-static CONSTRUCTOR(LilyPackage *, LilyPackage,
+static CONSTRUCTOR(LilyPackage *,
+                   LilyPackage,
                    String *name,
                    String *global_name,
                    enum LilyVisibility visibility,
@@ -35,16 +36,16 @@ static CONSTRUCTOR(LilyPackage *, LilyPackage,
                    const char *default_package_access,
                    LilyPackage *root);
 
-
-CONSTRUCTOR(LilyPackage *, LilyPackage,
-                   String *name,
-                   String *global_name,
-                   enum LilyVisibility visibility,
-                   char *filename,
-                   enum LilyPackageStatus status,
-                   const char *default_path,
-                   const char *default_package_access,
-                   LilyPackage *root)
+CONSTRUCTOR(LilyPackage *,
+            LilyPackage,
+            String *name,
+            String *global_name,
+            enum LilyVisibility visibility,
+            char *filename,
+            enum LilyPackageStatus status,
+            const char *default_path,
+            const char *default_package_access,
+            LilyPackage *root)
 {
     char *content = read_file__File(filename);
     char *file_ext = get_extension__File(filename);
@@ -148,7 +149,9 @@ CONSTRUCTOR(LilyPackage *, LilyPackage,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(LilyPackage *, LilyPackage, compiler,
+VARIANT_CONSTRUCTOR(LilyPackage *,
+                    LilyPackage,
+                    compiler,
                     String *name,
                     String *global_name,
                     enum LilyVisibility visibility,
@@ -158,7 +161,15 @@ VARIANT_CONSTRUCTOR(LilyPackage *, LilyPackage, compiler,
                     const char *default_package_access,
                     LilyPackage *root)
 {
-    LilyPackage *self = NEW(LilyPackage, name, global_name, visibility, filename, status, default_path, default_package_access, root);
+    LilyPackage *self = NEW(LilyPackage,
+                            name,
+                            global_name,
+                            visibility,
+                            filename,
+                            status,
+                            default_path,
+                            default_package_access,
+                            root);
 
     self->kind = LILY_PACKAGE_KIND_COMPILER;
     self->compiler = NEW(LilyCompilerAdapter);
@@ -166,7 +177,9 @@ VARIANT_CONSTRUCTOR(LilyPackage *, LilyPackage, compiler,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(LilyPackage *, LilyPackage, interpreter,
+VARIANT_CONSTRUCTOR(LilyPackage *,
+                    LilyPackage,
+                    interpreter,
                     String *name,
                     String *global_name,
                     enum LilyVisibility visibility,
@@ -176,10 +189,18 @@ VARIANT_CONSTRUCTOR(LilyPackage *, LilyPackage, interpreter,
                     const char *default_package_access,
                     LilyPackage *root)
 {
-    LilyPackage *self = NEW(LilyPackage, name, global_name, visibility, filename, status, default_path, default_package_access, root);
+    LilyPackage *self = NEW(LilyPackage,
+                            name,
+                            global_name,
+                            visibility,
+                            filename,
+                            status,
+                            default_path,
+                            default_package_access,
+                            root);
 
     self->kind = LILY_PACKAGE_KIND_INTERPRETER;
-//    self->interpreter = NEW(LilyInterpreterAdapter);
+    //    self->interpreter = NEW(LilyInterpreterAdapter);
 
     return self;
 }
@@ -223,7 +244,6 @@ search_package_from_filename__LilyPackage(LilyPackage *self,
 
     return NULL;
 }
-
 
 LilyPackage *
 search_package_from_name__LilyPackage(LilyPackage *self, String *name)
@@ -327,18 +347,18 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
 
     FREE(LilyCheckedOperatorRegister, &self->operator_register);
 
-	switch (self->kind) {
-		case LILY_PACKAGE_KIND_COMPILER:
-			FREE(LilyCompilerAdapter, &self->compiler);
-			break;
-		case LILY_PACKAGE_KIND_INTERPRETER:
-			FREE(LilyInterpreterAdapter, &self->interpreter);
-			break;
-		case LILY_PACKAGE_KIND_JIT:
-			TODO("JIT");
-		default:
-			UNREACHABLE("unknown variant");
-	}
+    switch (self->kind) {
+        case LILY_PACKAGE_KIND_COMPILER:
+            FREE(LilyCompilerAdapter, &self->compiler);
+            break;
+        case LILY_PACKAGE_KIND_INTERPRETER:
+            FREE(LilyInterpreterAdapter, &self->interpreter);
+            break;
+        case LILY_PACKAGE_KIND_JIT:
+            TODO("JIT");
+        default:
+            UNREACHABLE("unknown variant");
+    }
 
     lily_free(self);
 }
