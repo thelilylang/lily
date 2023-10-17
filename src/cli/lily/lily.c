@@ -231,7 +231,12 @@ new_options__CliLily(CliCommand *cmd)
 CliCommand *
 run_options__CliLily(CliCommand *cmd)
 {
-    return cmd;
+    CliOption *verbose = NEW(CliOption, "--verbose");
+
+    verbose->$short_name(verbose, "-v")
+      ->$help(verbose, "Enable log step of the interpreter");
+
+    return cmd->$option(cmd, verbose);
 }
 
 CliCommand *

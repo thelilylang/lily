@@ -31,6 +31,7 @@
 #include <cli/lily/parse_config.h>
 
 #include <command/lily/compile.h>
+#include <command/lily/run.h>
 
 #include <stdio.h>
 
@@ -66,6 +67,7 @@ main(int argc, char **argv)
         case LILY_CONFIG_KIND_NEW:
             break;
         case LILY_CONFIG_KIND_RUN:
+            run__LilyRun(&config);
             break;
         case LILY_CONFIG_KIND_TEST:
             break;

@@ -45,6 +45,9 @@
 
 #define BUILD_VERBOSE_OPTION 2
 
+#define RUN_V_OPTION 2
+#define RUN_VERBOSE_OPTION 3
+
 #define TO_CC_OPTION 2
 #define TO_CPP_OPTION 3
 #define TO_JS_OPTION 4
@@ -237,6 +240,7 @@ parse_new__LilyParseConfig(const Vec *results)
 LilyConfig
 parse_run__LilyParseConfig(const Vec *results)
 {
+    bool verbose = false;
     char *filename = NULL;
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
@@ -253,6 +257,10 @@ parse_run__LilyParseConfig(const Vec *results)
                 break;
             case CLI_RESULT_KIND_OPTION:
                 switch (current->option->id) {
+                    case RUN_V_OPTION:
+                    case RUN_VERBOSE_OPTION:
+                        verbose = true;
+                        break;
                     default:
                         UNREACHABLE("unknown option");
                 }
@@ -263,7 +271,7 @@ parse_run__LilyParseConfig(const Vec *results)
         }
     }
 
-    return NEW_VARIANT(LilyConfig, run, NEW(LilyConfigRun, filename));
+    return NEW_VARIANT(LilyConfig, run, NEW(LilyConfigRun, filename, verbose));
 }
 
 LilyConfig

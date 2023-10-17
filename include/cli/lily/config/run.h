@@ -30,15 +30,19 @@
 typedef struct LilyConfigRun
 {
     const char *filename;
+    bool verbose;
 } LilyConfigRun;
 
 /**
  *
  * @brief Construct LilyConfigRun type.
  */
-inline CONSTRUCTOR(LilyConfigRun, LilyConfigRun, const char *filename)
+inline CONSTRUCTOR(LilyConfigRun,
+                   LilyConfigRun,
+                   const char *filename,
+                   bool verbose)
 {
-    return (LilyConfigRun){ .filename = filename };
+    return (LilyConfigRun){ .filename = filename, .verbose = verbose };
 }
 
 #endif // LILY_CLI_LILY_CONFIG_RUN_H
