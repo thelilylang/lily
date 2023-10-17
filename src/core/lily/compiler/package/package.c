@@ -163,23 +163,6 @@ build__LilyPackage(const LilycConfig *config,
     lily_free(package_threads);
     pthread_mutex_destroy(&package_thread_mutex);
 
-    if (self->status == LILY_PACKAGE_STATUS_MAIN) {
-        if (self->is_exe) {
-            LOG_VERBOSE(self, "running compile exe");
-
-            compile_exe__LilyLinker(self);
-        } else if (self->is_lib) {
-            LOG_VERBOSE(self, "running compile lib");
-
-            ASSERT(self->compiler.lib);
-            compile_lib__LilyLinker(self->compiler.lib);
-        } else {
-            UNREACHABLE("is_lib must be true or is_exe must be true");
-        }
-    }
-
-    LOG_VERBOSE_SUCCESSFUL_COMPILATION(self);
-
     return self;
 }
 
@@ -194,14 +177,10 @@ build_lib__LilyPackage(const LilycConfig *config,
                        String *path)
 {
     LilyLibrary *lib = NEW(LilyLibrary, version, url, path, NULL);
-    LilyPackage *package = build__LilyPackage(
-      config, visibility, status, default_path, program, lib);
 
-    if (package) {
-        return lib;
-    }
-
-    return NULL;
+    return build__LilyPackage(
+             config, visibility, status, default_path, program, lib)
+      ->compiler.lib;
 }
 
 static void *
@@ -283,8 +262,18 @@ compile__LilyPackage(const LilycConfig *config,
                      const char *default_path,
                      const LilyProgram *program)
 {
-    return build__LilyPackage(
+    LilyPackage *package = build__LilyPackage(
       config, visibility, status, default_path, program, NULL);
+
+    ASSERT(package->status == LILY_PACKAGE_STATUS_MAIN && package->is_exe);
+
+    LOG_VERBOSE(package, "running compile exe");
+
+    compile_exe__LilyLinker(package);
+
+    LOG_VERBOSE_SUCCESSFUL_COMPILATION(package);
+
+    return package;
 }
 
 LilyLibrary *
@@ -294,8 +283,19 @@ compile_lib__LilyPackage(const LilycConfig *config,
                          const char *default_path,
                          const LilyProgram *program)
 {
-    return build_lib__LilyPackage(
+    LilyLibrary *lib = build_lib__LilyPackage(
       config, visibility, status, default_path, program, NULL, NULL, NULL);
+
+    ASSERT(lib->package->status == LILY_PACKAGE_STATUS_LIB_MAIN &&
+           lib->package->is_lib);
+
+    LOG_VERBOSE(lib->package, "running compile lib");
+
+    compile_lib__LilyLinker(lib);
+
+    LOG_VERBOSE_SUCCESSFUL_COMPILATION(lib->package);
+
+    return lib;
 }
 
 void
