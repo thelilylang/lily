@@ -36,6 +36,7 @@
 #include <core/lily/functions/sys.h>
 #include <core/lily/interpreter/vm/vm.h>
 #include <core/lily/mir/mir.h>
+#include <core/lily/package/library.h>
 #include <core/lily/package/program.h>
 #include <core/lily/parser/parser.h>
 #include <core/lily/precompiler/precompiler.h>
@@ -47,6 +48,7 @@ typedef struct LilyPackage LilyPackage;
 
 typedef struct LilyInterpreterAdapter
 {
+    LilyLibrary *lib; // LilyLibrary*? (&)
     LilyInterpreterVM vm;
 } LilyInterpreterAdapter;
 
@@ -62,7 +64,8 @@ inline CONSTRUCTOR(LilyInterpreterAdapter,
                    LilyInterpreterVMResources resources,
                    bool check_overflow)
 {
-    return (LilyInterpreterAdapter){ .vm = NEW(LilyInterpreterVM,
+    return (LilyInterpreterAdapter){ .lib = NULL,
+                                     .vm = NEW(LilyInterpreterVM,
                                                heap_capacity,
                                                statck_capacity,
                                                module,
@@ -79,6 +82,7 @@ inline DESTRUCTOR(LilyInterpreterAdapter, const LilyInterpreterAdapter *self)
     //    FREE(LilyInterpreterVM, &self->vm);
 }
 
-// LilyPackageAdapter(LilyInterpreterAdapter);
+// LilyPackage *
+// build__LilyPackage();
 
 #endif // LILY_CORE_LILY_INTERPRETER_PACKAGE_H

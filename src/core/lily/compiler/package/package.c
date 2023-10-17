@@ -75,12 +75,12 @@ DESTRUCTOR(LilyCompilerAdapter, const LilyCompilerAdapter *self)
 }
 
 LilyPackage *
-build__LilyPackage(const LilycConfig *config,
-                   enum LilyVisibility visibility,
-                   enum LilyPackageStatus status,
-                   const char *default_path,
-                   const LilyProgram *program,
-                   LilyLibrary *lib)
+build__LilyCompilerPackage(const LilycConfig *config,
+                           enum LilyVisibility visibility,
+                           enum LilyPackageStatus status,
+                           const char *default_path,
+                           const LilyProgram *program,
+                           LilyLibrary *lib)
 {
     LilyPackage *self = NEW_VARIANT(LilyPackage,
                                     compiler,
@@ -167,18 +167,18 @@ build__LilyPackage(const LilycConfig *config,
 }
 
 LilyLibrary *
-build_lib__LilyPackage(const LilycConfig *config,
-                       enum LilyVisibility visibility,
-                       enum LilyPackageStatus status,
-                       const char *default_path,
-                       const LilyProgram *program,
-                       String *version,
-                       String *url,
-                       String *path)
+build_lib__LilyCompilerPackage(const LilycConfig *config,
+                               enum LilyVisibility visibility,
+                               enum LilyPackageStatus status,
+                               const char *default_path,
+                               const LilyProgram *program,
+                               String *version,
+                               String *url,
+                               String *path)
 {
     LilyLibrary *lib = NEW(LilyLibrary, version, url, path, NULL);
 
-    return build__LilyPackage(
+    return build__LilyCompilerPackage(
              config, visibility, status, default_path, program, lib)
       ->compiler.lib;
 }
@@ -256,13 +256,13 @@ run__LilyPackage(void *self)
 }
 
 LilyPackage *
-compile__LilyPackage(const LilycConfig *config,
-                     enum LilyVisibility visibility,
-                     enum LilyPackageStatus status,
-                     const char *default_path,
-                     const LilyProgram *program)
+compile__LilyCompilerPackage(const LilycConfig *config,
+                             enum LilyVisibility visibility,
+                             enum LilyPackageStatus status,
+                             const char *default_path,
+                             const LilyProgram *program)
 {
-    LilyPackage *package = build__LilyPackage(
+    LilyPackage *package = build__LilyCompilerPackage(
       config, visibility, status, default_path, program, NULL);
 
     ASSERT(package->status == LILY_PACKAGE_STATUS_MAIN && package->is_exe);
@@ -277,13 +277,13 @@ compile__LilyPackage(const LilycConfig *config,
 }
 
 LilyLibrary *
-compile_lib__LilyPackage(const LilycConfig *config,
-                         enum LilyVisibility visibility,
-                         enum LilyPackageStatus status,
-                         const char *default_path,
-                         const LilyProgram *program)
+compile_lib__LilyCompilerPackage(const LilycConfig *config,
+                                 enum LilyVisibility visibility,
+                                 enum LilyPackageStatus status,
+                                 const char *default_path,
+                                 const LilyProgram *program)
 {
-    LilyLibrary *lib = build_lib__LilyPackage(
+    LilyLibrary *lib = build_lib__LilyCompilerPackage(
       config, visibility, status, default_path, program, NULL, NULL, NULL);
 
     ASSERT(lib->package->status == LILY_PACKAGE_STATUS_LIB_MAIN &&
@@ -299,7 +299,7 @@ compile_lib__LilyPackage(const LilycConfig *config,
 }
 
 void
-run_scanner__LilyPackage(const LilycConfig *config)
+run_scanner__LilyCompilerPackage(const LilycConfig *config)
 {
     char *content = read_file__File(config->filename);
     File file = NEW(File, (char *)config->filename, content);
@@ -315,7 +315,7 @@ run_scanner__LilyPackage(const LilycConfig *config)
 }
 
 void
-run_preparser__LilyPackage(const LilycConfig *config)
+run_preparser__LilyCompilerPackage(const LilycConfig *config)
 {
     char *content = read_file__File(config->filename);
     File file = NEW(File, (char *)config->filename, content);
@@ -336,7 +336,7 @@ run_preparser__LilyPackage(const LilycConfig *config)
 }
 
 void
-run_precompiler__LilyPackage(const LilycConfig *config)
+run_precompiler__LilyCompilerPackage(const LilycConfig *config)
 {
     // NOTE: We don't care about the kind of program at this point.
     LilyLibrary *lib = NULL;
@@ -392,25 +392,25 @@ run_precompiler__LilyPackage(const LilycConfig *config)
 }
 
 void
-run_parser__LilyPackage(const LilycConfig *config)
+run_parser__LilyCompilerPackage(const LilycConfig *config)
 {
     TODO("--run-parser");
 }
 
 void
-run_analysis__LilyPackage(const LilycConfig *config)
+run_analysis__LilyCompilerPackage(const LilycConfig *config)
 {
     TODO("--run-analysis");
 }
 
 void
-run_mir__LilyPackage(const LilycConfig *config)
+run_mir__LilyCompilerPackage(const LilycConfig *config)
 {
     TODO("--run-mir");
 }
 
 void
-run_ir__LilyPackage(const LilycConfig *config)
+run_ir__LilyCompilerPackage(const LilycConfig *config)
 {
     TODO("--run-ir");
 }

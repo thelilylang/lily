@@ -40,19 +40,19 @@ void
 run__Lilyc(const LilycConfig *config)
 {
     if (config->run_scanner) {
-        return run_scanner__LilyPackage(config);
+        return run_scanner__LilyCompilerPackage(config);
     } else if (config->run_preparser) {
-        return run_preparser__LilyPackage(config);
+        return run_preparser__LilyCompilerPackage(config);
     } else if (config->run_precompiler) {
-        return run_precompiler__LilyPackage(config);
+        return run_precompiler__LilyCompilerPackage(config);
     } else if (config->run_parser) {
-        return run_parser__LilyPackage(config);
+        return run_parser__LilyCompilerPackage(config);
     } else if (config->run_analysis) {
-        return run_analysis__LilyPackage(config);
+        return run_analysis__LilyCompilerPackage(config);
     } else if (config->run_mir) {
-        return run_mir__LilyPackage(config);
+        return run_mir__LilyCompilerPackage(config);
     } else if (config->run_ir) {
-        return run_ir__LilyPackage(config);
+        return run_ir__LilyCompilerPackage(config);
     }
 
     // Get the default path
@@ -66,21 +66,23 @@ run__Lilyc(const LilycConfig *config)
                       : LILY_PROGRAM_KIND_EXE);
 
     if (config->lib) {
-        LilyLibrary *lib = compile_lib__LilyPackage(config,
-                                                    LILY_VISIBILITY_PUBLIC,
-                                                    LILY_PACKAGE_STATUS_MAIN,
-                                                    default_path,
-                                                    &program);
+        LilyLibrary *lib =
+          compile_lib__LilyCompilerPackage(config,
+                                           LILY_VISIBILITY_PUBLIC,
+                                           LILY_PACKAGE_STATUS_MAIN,
+                                           default_path,
+                                           &program);
 
 #if !defined(RUN_UNTIL_PREPARSER) && !defined(RUN_UNTIL_PRECOMPILER)
         FREE(LilyLibrary, lib);
 #endif
     } else {
-        LilyPackage *pkg = compile__LilyPackage(config,
-                                                LILY_VISIBILITY_PUBLIC,
-                                                LILY_PACKAGE_STATUS_MAIN,
-                                                default_path,
-                                                &program);
+        LilyPackage *pkg =
+          compile__LilyCompilerPackage(config,
+                                       LILY_VISIBILITY_PUBLIC,
+                                       LILY_PACKAGE_STATUS_MAIN,
+                                       default_path,
+                                       &program);
 
         // Run exe
         if (config->run) {

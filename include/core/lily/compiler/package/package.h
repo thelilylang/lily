@@ -188,12 +188,12 @@ DESTRUCTOR(LilyCompilerAdapter, const LilyCompilerAdapter *self);
  * @return LilyPackage*?
  */
 LilyPackage *
-build__LilyPackage(const LilycConfig *config,
-                   enum LilyVisibility visibility,
-                   enum LilyPackageStatus status,
-                   const char *default_path,
-                   const LilyProgram *program,
-                   LilyLibrary *lib);
+build__LilyCompilerPackage(const LilycConfig *config,
+                           enum LilyVisibility visibility,
+                           enum LilyPackageStatus status,
+                           const char *default_path,
+                           const LilyProgram *program,
+                           LilyLibrary *lib);
 
 /**
  *
@@ -201,14 +201,14 @@ build__LilyPackage(const LilycConfig *config,
  * @return LilyLibrary*?
  */
 LilyLibrary *
-build_lib__LilyPackage(const LilycConfig *config,
-                       enum LilyVisibility visibility,
-                       enum LilyPackageStatus status,
-                       const char *default_path,
-                       const LilyProgram *program,
-                       String *version,
-                       String *url,
-                       String *path);
+build_lib__LilyCompilerPackage(const LilycConfig *config,
+                               enum LilyVisibility visibility,
+                               enum LilyPackageStatus status,
+                               const char *default_path,
+                               const LilyProgram *program,
+                               String *version,
+                               String *url,
+                               String *path);
 
 /**
  *
@@ -217,11 +217,11 @@ build_lib__LilyPackage(const LilycConfig *config,
  * @return LilyPackage*?
  */
 LilyPackage *
-compile__LilyPackage(const LilycConfig *config,
-                     enum LilyVisibility visibility,
-                     enum LilyPackageStatus status,
-                     const char *default_path,
-                     const LilyProgram *program);
+compile__LilyCompilerPackage(const LilycConfig *config,
+                             enum LilyVisibility visibility,
+                             enum LilyPackageStatus status,
+                             const char *default_path,
+                             const LilyProgram *program);
 
 /**
  *
@@ -230,65 +230,59 @@ compile__LilyPackage(const LilycConfig *config,
  * @return LilyLibrary*?
  */
 LilyLibrary *
-compile_lib__LilyPackage(const LilycConfig *config,
-                         enum LilyVisibility visibility,
-                         enum LilyPackageStatus status,
-                         const char *default_path,
-                         const LilyProgram *program);
+compile_lib__LilyCompilerPackage(const LilycConfig *config,
+                                 enum LilyVisibility visibility,
+                                 enum LilyPackageStatus status,
+                                 const char *default_path,
+                                 const LilyProgram *program);
 
 /**
  *
  * @brief Run until the scanner.
  */
 void
-run_scanner__LilyPackage(const LilycConfig *config);
+run_scanner__LilyCompilerPackage(const LilycConfig *config);
 
 /**
  *
  * @brief Run until the preparser.
  */
 void
-run_preparser__LilyPackage(const LilycConfig *config);
+run_preparser__LilyCompilerPackage(const LilycConfig *config);
 
 /**
  *
  * @brief Run until the precompiler.
  */
 void
-run_precompiler__LilyPackage(const LilycConfig *config);
+run_precompiler__LilyCompilerPackage(const LilycConfig *config);
 
 /**
  *
  * @brief Run until the parser.
  */
 void
-run_parser__LilyPackage(const LilycConfig *config);
+run_parser__LilyCompilerPackage(const LilycConfig *config);
 
 /**
  *
  * @brief Run until the analysis.
  */
 void
-run_analysis__LilyPackage(const LilycConfig *config);
+run_analysis__LilyCompilerPackage(const LilycConfig *config);
 
 /**
  *
  * @brief Run until the MIR.
  */
 void
-run_mir__LilyPackage(const LilycConfig *config);
+run_mir__LilyCompilerPackage(const LilycConfig *config);
 
 /**
  *
  * @brief Run until the IR.
  */
 void
-run_ir__LilyPackage(const LilycConfig *config);
-
-/**
- *
- * @brief Free LilyPackage type.
- */
-DESTRUCTOR(LilyPackage, LilyPackage *self);
+run_ir__LilyCompilerPackage(const LilycConfig *config);
 
 #endif // LILY_CORE_LILY_COMPILER_PACKAGE_PACKAGE_H
