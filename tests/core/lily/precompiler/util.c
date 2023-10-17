@@ -4,8 +4,8 @@
 #include <base/file.h>
 
 #include <core/lily/compiler/package/package.h>
-#include <core/lily/package/package.h>
 #include <core/lily/package/default_path.h>
+#include <core/lily/package/package.h>
 #include <core/lily/package/program.h>
 #include <core/lily/precompiler/precompiler.h>
 
@@ -17,15 +17,16 @@
     LilyLibrary *lib = NULL;                                       \
     LilyProgram program = NEW(LilyProgram, LILY_PROGRAM_KIND_EXE); \
     char *default_path = generate_default_path(filename);          \
-    LilyPackage *self = NEW_VARIANT(LilyPackage, compiler,                           \
-                            NULL,                                  \
-                            NULL,                                  \
-                            LILY_VISIBILITY_PUBLIC,                \
-                            filename,                              \
-                            LILY_PACKAGE_STATUS_MAIN,              \
-                            default_path,                          \
-                            NULL,                                  \
-                            NULL);                                 \
+    LilyPackage *self = NEW_VARIANT(LilyPackage,                   \
+                                    compiler,                      \
+                                    NULL,                          \
+                                    NULL,                          \
+                                    LILY_VISIBILITY_PUBLIC,        \
+                                    filename,                      \
+                                    LILY_PACKAGE_STATUS_MAIN,      \
+                                    default_path,                  \
+                                    NULL,                          \
+                                    NULL);                         \
                                                                    \
     LilyPackageConfig pkg_config = default__LilyPackageConfig();   \
                                                                    \

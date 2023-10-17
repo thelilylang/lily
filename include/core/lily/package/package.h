@@ -211,7 +211,7 @@ add_sys_fun_to_sys_usage__LilyPackage(LilyPackage *self, LilySysFun *fun_sys);
 
 /**
  *
- * @brief Free LilyPackage type. 
+ * @brief Free LilyPackage type.
  */
 DESTRUCTOR(LilyPackage, LilyPackage *self);
 

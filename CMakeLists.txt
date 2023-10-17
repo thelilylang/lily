@@ -472,7 +472,8 @@ add_library(lily_core_lily_interpreter_package STATIC
             ${LILY_CORE_LILY_INTERPRETER_PACKAGE_SRC})
 target_link_libraries(
   lily_core_lily_interpreter_package
-  PRIVATE lily_core_lily_mir lily_core_lily_parser lily_core_lily_precompiler lily_core_lily_interpreter_vm)
+  PRIVATE lily_core_lily_mir lily_core_lily_parser lily_core_lily_precompiler
+          lily_core_lily_interpreter_vm)
 target_include_directories(lily_core_lily_interpreter_package
                            PRIVATE ${LILY_INCLUDE})
 
@@ -723,11 +724,11 @@ set(LILY_CORE_LILY_PACKAGE_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/package/program.c)
 
 add_library(lily_core_lily_package STATIC ${LILY_CORE_LILY_PACKAGE_SRC})
-target_link_libraries(lily_core_lily_package PRIVATE lily_base lily_core_lily_mir
-          lily_core_lily_parser
-          lily_core_lily_precompiler
-	  	  lily_core_lily_compiler_package
-	  	  lily_core_lily_interpreter_package)
+target_link_libraries(
+  lily_core_lily_package
+  PRIVATE lily_base lily_core_lily_mir lily_core_lily_parser
+          lily_core_lily_precompiler lily_core_lily_compiler_package
+          lily_core_lily_interpreter_package)
 target_include_directories(lily_core_lily_package PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_parser
@@ -819,8 +820,8 @@ set(LILY_CORE_LILY_PRECOMPILER_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/precompiler/precompiler.c)
 
 add_library(lily_core_lily_precompiler STATIC ${LILY_CORE_LILY_PRECOMPILER_SRC})
-target_link_libraries(lily_core_lily_precompiler
-                      PUBLIC lily_core_lily_package lily_base)
+target_link_libraries(lily_core_lily_precompiler PUBLIC lily_core_lily_package
+                                                        lily_base)
 target_include_directories(lily_core_lily_precompiler PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_preparser
@@ -943,9 +944,8 @@ if(LILY_DEBUG)
 
   add_executable(test_core_parser
                  ${CMAKE_SOURCE_DIR}/tests/core/lily/parser/parser.c)
-  target_link_libraries(
-    test_core_parser lily_base lily_core_lily_parser lily_core_lily_preparser
-    lily_core_lily_package)
+  target_link_libraries(test_core_parser lily_base lily_core_lily_parser
+                        lily_core_lily_preparser lily_core_lily_package)
   target_include_directories(test_core_parser PRIVATE ${LILY_INCLUDE})
 
   add_test(NAME test_core_parser COMMAND test_core_parser)

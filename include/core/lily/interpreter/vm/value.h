@@ -207,9 +207,9 @@ typedef struct LilyInterpreterValueResult
  * (LILY_INTERPRETER_VALUE_RESULT_KIND_OK).
  */
 inline VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
-                    LilyInterpreterValueResult,
-                    ok,
-                    LilyInterpreterValue *ok)
+                           LilyInterpreterValueResult,
+                           ok,
+                           LilyInterpreterValue *ok)
 {
     return (LilyInterpreterValueResult){
         .kind = LILY_INTERPRETER_VALUE_RESULT_KIND_OK, .ok = ok
@@ -222,9 +222,9 @@ inline VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
  * (LILY_INTERPRETER_VALUE_RESULT_KIND_ERR).
  */
 inline VARIANT_CONSTRUCTOR(LilyInterpreterValueResult,
-                    LilyInterpreterValueResult,
-                    err,
-                    LilyInterpreterValue *err)
+                           LilyInterpreterValueResult,
+                           err,
+                           LilyInterpreterValue *err)
 {
     return (LilyInterpreterValueResult){
         .kind = LILY_INTERPRETER_VALUE_RESULT_KIND_ERR, .err = err
@@ -248,9 +248,9 @@ typedef struct LilyInterpreterValueStr
  * @brief Construct LilyInterpreterValueStr type
  */
 inline CONSTRUCTOR(LilyInterpreterValueStr,
-            LilyInterpreterValueStr,
-            char *s,
-            Usize len)
+                   LilyInterpreterValueStr,
+                   char *s,
+                   Usize len)
 {
     return (LilyInterpreterValueStr){ .s = s, .len = len };
 }
