@@ -34,10 +34,10 @@
 #include <core/lily/compiler/ir/llvm/generator.h>
 #include <core/lily/compiler/output/cache.h>
 #include <core/lily/compiler/output/obj.h>
-#include <core/lily/package/default_path.h>
-#include <core/lily/package/package.h>
 #include <core/lily/lily.h>
 #include <core/lily/mir/generator.h>
+#include <core/lily/package/default_path.h>
+#include <core/lily/package/package.h>
 
 #include <pthread.h>
 #include <stdio.h>
@@ -66,6 +66,8 @@ DESTRUCTOR(LilyCompilerAdapter, const LilyCompilerAdapter *self)
     if (self->output_path) {
         lily_free(self->output_path);
     }
+
+    FREE(LilyIr, &self->ir);
 }
 
 LilyPackage *
@@ -336,15 +338,16 @@ run_precompiler__LilyPackage(const LilycConfig *config)
     LilyLibrary *lib = NULL;
     LilyProgram program = NEW(LilyProgram, LILY_PROGRAM_KIND_EXE);
     char *default_path = generate_default_path((char *)config->filename);
-    LilyPackage *self = NEW_VARIANT(LilyPackage, compiler,
-                            NULL,
-                            NULL,
-                            LILY_VISIBILITY_PUBLIC,
-                            (char *)config->filename,
-                            LILY_PACKAGE_STATUS_MAIN,
-                            default_path,
-                            NULL,
-                            NULL);
+    LilyPackage *self = NEW_VARIANT(LilyPackage,
+                                    compiler,
+                                    NULL,
+                                    NULL,
+                                    LILY_VISIBILITY_PUBLIC,
+                                    (char *)config->filename,
+                                    LILY_PACKAGE_STATUS_MAIN,
+                                    default_path,
+                                    NULL,
+                                    NULL);
 
     LilyPackageConfig pkg_config =
       from_CompileConfig__LilyPackageConfig(config);
