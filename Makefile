@@ -81,6 +81,7 @@ format:
 	${CLANG_FORMAT} ./include/core/lily/mir/generator/stmt/*.h 
 	${CLANG_FORMAT} ./include/core/lily/compiler/package/*.h
 	${CLANG_FORMAT} ./include/core/lily/package/*.h
+	${CLANG_FORMAT} ./include/core/lily/package/interpreter/*.h
 	${CLANG_FORMAT} ./include/core/lily/preparser/*.h
 	${CLANG_FORMAT} ./include/core/lily/preparser/preprocess/*.h
 	${CLANG_FORMAT} ./include/core/lily/precompiler/*.h
@@ -154,6 +155,7 @@ format:
 	${CLANG_FORMAT} ./src/core/lily/mir/generator/stmt/*.c
 	${CLANG_FORMAT} ./src/core/lily/compiler/package/*.c
 	${CLANG_FORMAT} ./src/core/lily/package/*.c
+	${CLANG_FORMAT} ./src/core/lily/package/interpreter/*.c
 	${CLANG_FORMAT} ./src/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./src/core/lily/preparser/preprocess/*.c
 	${CLANG_FORMAT} ./src/core/lily/precompiler/*.c
