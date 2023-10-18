@@ -716,7 +716,7 @@ target_include_directories(lily_core_lily_mir PRIVATE ${LILY_INCLUDE})
 
 # lily_core_lily_package
 set(LILY_CORE_LILY_PACKAGE_SRC
-    ${CMAKE_SOURCE_DIR}/src/core/lily/package/config.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/package/compiler/config.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/package/default_path.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/package/dependency_tree.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/package/interpreter/config.c
