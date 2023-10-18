@@ -6,10 +6,13 @@ mod parser;
 mod scanner;
 mod token;
 
+use std::cell::RefCell;
 use std::env;
 use std::process::exit;
+use std::rc::Rc;
 
 use generator::Generator;
+use parser::Parser;
 use scanner::{Scanner, Source};
 
 fn main() {
@@ -22,11 +25,13 @@ fn main() {
         for filename in &args[1..] {
             let filename = filename.as_str();
             let source = Source::new(filename, Source::read(filename));
-            let mut scanner = Scanner::new(&source);
+            let scanner = Rc::new(RefCell::new(Scanner::new(&source)));
+            let mut parser = Parser::new(Rc::clone(&scanner));
 
-            scanner.run();
+            scanner.borrow_mut().run();
+            parser.run();
 
-            let mut generator = Generator::new(&source, &scanner);
+            let mut generator = Generator::new(&source, Rc::clone(&scanner), &parser);
 
             generator.run();
         }
