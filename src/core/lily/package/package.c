@@ -120,7 +120,6 @@ CONSTRUCTOR(LilyPackage *,
           LilyAnalysis, self, root, &self->parser, root->analysis.use_switch);
         self->builtins = NULL;
         self->syss = NULL;
-        self->config = root->config;
 
         // Push default operators contains in program resources.
         for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {
@@ -172,7 +171,8 @@ VARIANT_CONSTRUCTOR(LilyPackage *,
                             root);
 
     self->kind = LILY_PACKAGE_KIND_COMPILER;
-    self->compiler = NEW(LilyCompilerAdapter);
+    self->compiler =
+      NEW(LilyCompilerAdapter, root ? root->compiler.config : NULL);
 
     return self;
 }

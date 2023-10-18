@@ -22,10 +22,10 @@
  * SOFTWARE.
  */
 
-#include <core/lily/package/config.h>
+#include <core/lily/package/compiler/config.h>
 
-CONSTRUCTOR(LilyPackageConfig,
-            LilyPackageConfig,
+CONSTRUCTOR(LilyPackageCompilerConfig,
+            LilyPackageCompilerConfig,
             const char *target,
             const char *output,
             bool build,
@@ -76,26 +76,26 @@ CONSTRUCTOR(LilyPackageConfig,
         }
     }
 
-    return (LilyPackageConfig){ .output = output,
-                                .build = build,
-                                .dump_scanner = dump_scanner,
-                                .dump_preparser = dump_preparser,
-                                .dump_precompiler = dump_precompiler,
-                                .dump_parser = dump_parser,
-                                .dump_analysis = dump_analysis,
-                                .dump_mir = dump_mir,
-                                .dump_ir = dump_ir,
-                                .cc_ir = cc_ir,
-                                .cpp_ir = cpp_ir,
-                                .js_ir = js_ir,
-                                .llvm_ir = llvm_ir,
-                                .wasm_ir = wasm_ir,
-                                .arch_target = arch,
-                                .os_target = os,
-                                .o0 = o0,
-                                .o1 = o1,
-                                .o2 = o2,
-                                .o3 = o3,
-                                .oz = oz,
-                                .verbose = verbose };
+    return (LilyPackageCompilerConfig){ .output = output,
+                                        .build = build,
+                                        .dump_scanner = dump_scanner,
+                                        .dump_preparser = dump_preparser,
+                                        .dump_precompiler = dump_precompiler,
+                                        .dump_parser = dump_parser,
+                                        .dump_analysis = dump_analysis,
+                                        .dump_mir = dump_mir,
+                                        .dump_ir = dump_ir,
+                                        .cc_ir = cc_ir,
+                                        .cpp_ir = cpp_ir,
+                                        .js_ir = js_ir,
+                                        .llvm_ir = llvm_ir,
+                                        .wasm_ir = wasm_ir,
+                                        .arch_target = arch,
+                                        .os_target = os,
+                                        .o0 = o0,
+                                        .o1 = o1,
+                                        .o2 = o2,
+                                        .o3 = o3,
+                                        .oz = oz,
+                                        .verbose = verbose };
 }

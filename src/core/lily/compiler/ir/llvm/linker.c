@@ -44,9 +44,10 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
     ASSERT(self->kind == LILY_PACKAGE_KIND_COMPILER);
 
     Vec *args = NEW(Vec); // Vec<char*>*
-    String *output_name = self->config->output
-                            ? from__String((char *)self->config->output)
-                            : get_filename__File(self->file.name);
+    String *output_name =
+      self->compiler.config->output
+        ? from__String((char *)self->compiler.config->output)
+        : get_filename__File(self->file.name);
 
     // Link all lib dependencies
     {
@@ -170,28 +171,28 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #endif
 
     // Add optimization options
-    if (self->config->o3) {
+    if (self->compiler.config->o3) {
 #ifdef LILY_WINDOWS_OS
         push__Vec(args, strdup("/opt:3"));
 #else
         push__Vec(args, strdup("-O3"));
         push__Vec(args, strdup("--lto-O3"));
 #endif
-    } else if (self->config->o2) {
+    } else if (self->compiler.config->o2) {
 #ifdef LILY_WINDOWS_OS
         push__Vec(args, strdup("/opt:2"));
 #else
         push__Vec(args, strdup("-O2"));
         push__Vec(args, strdup("--lto-O2"));
 #endif
-    } else if (self->config->o1) {
+    } else if (self->compiler.config->o1) {
 #ifdef LILY_WINDOWS_OS
         push__Vec(args, strdup("/opt:1"));
 #else
         push__Vec(args, strdup("-O1"));
         push__Vec(args, strdup("--lto-O1"));
 #endif
-    } else if (self->config->o0) {
+    } else if (self->compiler.config->o0) {
 #ifdef LILY_WINDOWS_OS
         push__Vec(args, strdup("/opt:0"));
 #else
@@ -200,7 +201,7 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 #endif
     }
 
-    if (self->config->oz) {
+    if (self->compiler.config->oz) {
 #ifdef LILY_WINDOWS_OS
         TODO("optimize size");
 #else

@@ -8367,8 +8367,19 @@ run__LilyParser(LilyParser *self, bool parse_for_macro_expand)
         }
 #endif
 
-        if (self->package->config->dump_parser) {
-            TODO("dump parser");
+        switch (self->package->kind) {
+            case LILY_PACKAGE_KIND_COMPILER:
+                if (self->package->compiler.config->dump_parser) {
+                    TODO("dump parser");
+                }
+
+                break;
+            case LILY_PACKAGE_KIND_INTERPRETER:
+                TODO("interpreter: maybe dump parser");
+            case LILY_PACKAGE_KIND_JIT:
+                TODO("interpreter: maybe dump jit");
+            default:
+                UNREACHABLE("unknown variant");
         }
     }
 

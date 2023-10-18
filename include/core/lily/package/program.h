@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PROGRAM_H
-#define LILY_CORE_LILY_PROGRAM_H
+#ifndef LILY_CORE_LILY_PACKAGE_PROGRAM_H
+#define LILY_CORE_LILY_PACKAGE_PROGRAM_H
 
 #include <base/macros.h>
 #include <base/vec.h>
@@ -92,4 +92,4 @@ inline DESTRUCTOR(LilyProgram, const LilyProgram *self)
     FREE(LilyProgramResources, &self->resources);
 }
 
-#endif // LILY_CORE_LILY_PROGRAM_H
+#endif // LILY_CORE_LILY_PACKAGE_PROGRAM_H

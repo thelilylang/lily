@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_FILE_H
-#define LILY_CORE_LILY_FILE_H
+#ifndef LILY_CORE_LILY_PACKAGE_FILE_H
+#define LILY_CORE_LILY_PACKAGE_FILE_H
 
 typedef struct LilyFile
 {
 } LilyFile;
 
-#endif // LILY_CORE_LILY_FILE_H
+#endif // LILY_CORE_LILY_PACKAGE_FILE_H

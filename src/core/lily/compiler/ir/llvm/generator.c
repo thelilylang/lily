@@ -51,7 +51,7 @@ run__LilyIrLlvmGenerator(LilyPackage *self)
       self->compiler.ir.llvm.file,
       "lily-" VERSION, // Compiler version string
       strlen("lily-" VERSION),
-      self->config->o0 ? false : true,
+      self->compiler.config->o0 ? false : true,
       "",
       0,
       0,

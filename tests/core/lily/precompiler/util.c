@@ -13,39 +13,40 @@
 #define FILE_MACRO "./tests/core/lily/precompiler/input/macro.lily"
 #define FILE_PACKAGE "./tests/core/lily/precompiler/input/package/main.lily"
 
-#define RUN_PRECOMPILER(filename)                                  \
-    LilyLibrary *lib = NULL;                                       \
-    LilyProgram program = NEW(LilyProgram, LILY_PROGRAM_KIND_EXE); \
-    char *default_path = generate_default_path(filename);          \
-    LilyPackage *self = NEW_VARIANT(LilyPackage,                   \
-                                    compiler,                      \
-                                    NULL,                          \
-                                    NULL,                          \
-                                    LILY_VISIBILITY_PUBLIC,        \
-                                    filename,                      \
-                                    LILY_PACKAGE_STATUS_MAIN,      \
-                                    default_path,                  \
-                                    NULL,                          \
-                                    NULL);                         \
-                                                                   \
-    LilyPackageConfig pkg_config = default__LilyPackageConfig();   \
-                                                                   \
-    self->config = &pkg_config;                                    \
-                                                                   \
-    run__LilyScanner(&self->scanner, self->config->dump_scanner);  \
-                                                                   \
-    /* NOTE: Set `destroy_all` on true to free all. */             \
-    /* NOTE: If we run the program after the analysis, we will set \
-    `destroy_all` to false. */                                     \
-    self->preparser.destroy_all = true;                            \
-                                                                   \
-    run__LilyPreparser(&self->preparser, &self->preparser_info);   \
-                                                                   \
-    SET_ROOT_PACKAGE_NAME(self);                                   \
-    SET_ROOT_PACKAGE_IR(self->config, self);                       \
-    SET_ROOT_PACKAGE_PROGRAM(self, (&program), lib);               \
-    LOAD_ROOT_PACKAGE_RESOURCES(self, (&program));                 \
-                                                                   \
+#define RUN_PRECOMPILER(filename)                                          \
+    LilyLibrary *lib = NULL;                                               \
+    LilyProgram program = NEW(LilyProgram, LILY_PROGRAM_KIND_EXE);         \
+    char *default_path = generate_default_path(filename);                  \
+    LilyPackage *self = NEW_VARIANT(LilyPackage,                           \
+                                    compiler,                              \
+                                    NULL,                                  \
+                                    NULL,                                  \
+                                    LILY_VISIBILITY_PUBLIC,                \
+                                    filename,                              \
+                                    LILY_PACKAGE_STATUS_MAIN,              \
+                                    default_path,                          \
+                                    NULL,                                  \
+                                    NULL);                                 \
+                                                                           \
+    LilyPackageCompilerConfig pkg_config =                                 \
+      default__LilyPackageCompilerConfig();                                \
+                                                                           \
+    self->compiler.config = &pkg_config;                                   \
+                                                                           \
+    run__LilyScanner(&self->scanner, self->compiler.config->dump_scanner); \
+                                                                           \
+    /* NOTE: Set `destroy_all` on true to free all. */                     \
+    /* NOTE: If we run the program after the analysis, we will set         \
+    `destroy_all` to false. */                                             \
+    self->preparser.destroy_all = true;                                    \
+                                                                           \
+    run__LilyPreparser(&self->preparser, &self->preparser_info);           \
+                                                                           \
+    SET_ROOT_PACKAGE_NAME(self);                                           \
+    SET_ROOT_PACKAGE_IR(self->compiler.config, self);                      \
+    SET_ROOT_PACKAGE_PROGRAM(self, (&program), lib);                       \
+    LOAD_ROOT_PACKAGE_RESOURCES(self, (&program));                         \
+                                                                           \
     run__LilyPrecompiler(&self->precompiler, self, false);
 
 #define FREE_PRECOMPILER()                      \

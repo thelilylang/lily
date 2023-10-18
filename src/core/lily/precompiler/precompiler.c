@@ -1440,9 +1440,9 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
                 UNREACHABLE("unknown variant");
         }
 
-        res->config = root_package->config;
+        res->compiler.config = root_package->compiler.config;
 
-        run__LilyScanner(&res->scanner, res->config->dump_scanner);
+        run__LilyScanner(&res->scanner, res->compiler.config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
         run__LilyPrecompiler(&res->precompiler, root_package, false);
 
@@ -1492,9 +1492,9 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
                 UNREACHABLE("unknown variant");
         }
 
-        res->config = root_package->config;
+        res->compiler.config = root_package->compiler.config;
 
-        run__LilyScanner(&res->scanner, res->config->dump_scanner);
+        run__LilyScanner(&res->scanner, res->compiler.config->dump_scanner);
         run__LilyPreparser(&res->preparser, &res->preparser_info);
         run__LilyPrecompiler(&res->precompiler, root_package, false);
 

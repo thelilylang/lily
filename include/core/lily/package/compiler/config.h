@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_COMPILER_PACKAGE_CONFIG_H
-#define LILY_CORE_LILY_COMPILER_PACKAGE_CONFIG_H
+#ifndef LILY_CORE_LILY_PACKAGE_COMPILER_CONFIG_H
+#define LILY_CORE_LILY_PACKAGE_COMPILER_CONFIG_H
 
 #include <base/alloc.h>
 #include <base/macros.h>
@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct LilyPackageConfig
+typedef struct LilyPackageCompilerConfig
 {
     const char *output; // const char*?
     bool build;
@@ -65,15 +65,15 @@ typedef struct LilyPackageConfig
     bool o3;
     bool oz;
     bool verbose;
-} LilyPackageConfig;
+} LilyPackageCompilerConfig;
 
 /**
  *
- * @brief Construct LilyPackageConfig type.
+ * @brief Construct LilyPackageCompilerConfig type.
  * @param target const char*?
  */
-CONSTRUCTOR(LilyPackageConfig,
-            LilyPackageConfig,
+CONSTRUCTOR(LilyPackageCompilerConfig,
+            LilyPackageCompilerConfig,
             const char *target,
             const char *output,
             bool build,
@@ -98,43 +98,43 @@ CONSTRUCTOR(LilyPackageConfig,
 
 /**
  *
- * @brief Construct LilyPackageConfig type with default value.
+ * @brief Construct LilyPackageCompilerConfig type with default value.
  */
-inline LilyPackageConfig
-default__LilyPackageConfig()
+inline LilyPackageCompilerConfig
+default__LilyPackageCompilerConfig()
 {
-    return (LilyPackageConfig){ .output = NULL,
-                                .build = false,
-                                .dump_scanner = false,
-                                .dump_preparser = false,
-                                .dump_precompiler = false,
-                                .dump_parser = false,
-                                .dump_analysis = false,
-                                .dump_mir = false,
-                                .dump_ir = false,
-                                .cc_ir = false,
-                                .cpp_ir = false,
-                                .js_ir = false,
-                                .llvm_ir = false,
-                                .wasm_ir = false,
-                                .arch_target = ARCH_UNKNOWN,
-                                .os_target = OS_UNKNOWN,
-                                .o0 = false,
-                                .o1 = false,
-                                .o2 = false,
-                                .o3 = false,
-                                .oz = false,
-                                .verbose = false };
+    return (LilyPackageCompilerConfig){ .output = NULL,
+                                        .build = false,
+                                        .dump_scanner = false,
+                                        .dump_preparser = false,
+                                        .dump_precompiler = false,
+                                        .dump_parser = false,
+                                        .dump_analysis = false,
+                                        .dump_mir = false,
+                                        .dump_ir = false,
+                                        .cc_ir = false,
+                                        .cpp_ir = false,
+                                        .js_ir = false,
+                                        .llvm_ir = false,
+                                        .wasm_ir = false,
+                                        .arch_target = ARCH_UNKNOWN,
+                                        .os_target = OS_UNKNOWN,
+                                        .o0 = false,
+                                        .o1 = false,
+                                        .o2 = false,
+                                        .o3 = false,
+                                        .oz = false,
+                                        .verbose = false };
 }
 
 /**
  *
- * @brief Construct LilyPackageConfig type from LilycConfig type.
+ * @brief Construct LilyPackageCompilerConfig type from LilycConfig type.
  */
-inline LilyPackageConfig
-from_CompileConfig__LilyPackageConfig(const LilycConfig *lilyc_config)
+inline LilyPackageCompilerConfig
+from_CompileConfig__LilyPackageCompilerConfig(const LilycConfig *lilyc_config)
 {
-    return NEW(LilyPackageConfig,
+    return NEW(LilyPackageCompilerConfig,
                lilyc_config->target,
                lilyc_config->output,
                lilyc_config->build,
@@ -158,4 +158,4 @@ from_CompileConfig__LilyPackageConfig(const LilycConfig *lilyc_config)
                lilyc_config->verbose);
 }
 
-#endif // LILY_CORE_LILY_COMPILER_PACKAGE_CONFIG_H
+#endif // LILY_CORE_LILY_PACKAGE_COMPILER_CONFIG_H

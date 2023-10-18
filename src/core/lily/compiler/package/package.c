@@ -49,7 +49,7 @@ static threadlocal pthread_t *package_threads;
 static pthread_mutex_t package_thread_mutex;
 
 #define LOG_VERBOSE_SUCCESSFUL_COMPILATION(package)        \
-    if (package->config->verbose) {                        \
+    if (package->compiler.config->verbose) {               \
         printf("\x1b[32msuccessful compilation\x1b[0m\n"); \
     }
 
@@ -93,15 +93,15 @@ build__LilyCompilerPackage(const LilycConfig *config,
                                     NULL,
                                     NULL);
 
-    LilyPackageConfig pkg_config =
-      from_CompileConfig__LilyPackageConfig(config);
+    LilyPackageCompilerConfig pkg_config =
+      from_CompileConfig__LilyPackageCompilerConfig(config);
 
-    self->config = &pkg_config;
+    self->compiler.config = &pkg_config;
 
     LOG_VERBOSE(self, "running");
     LOG_VERBOSE(self, "running scanner");
 
-    run__LilyScanner(&self->scanner, self->config->dump_scanner);
+    run__LilyScanner(&self->scanner, self->compiler.config->dump_scanner);
 
     LOG_VERBOSE(self, "running preparser");
 
@@ -120,7 +120,7 @@ build__LilyCompilerPackage(const LilycConfig *config,
 #endif
 
     SET_ROOT_PACKAGE_NAME(self);
-    SET_ROOT_PACKAGE_IR(self->config, self);
+    SET_ROOT_PACKAGE_IR(self->compiler.config, self);
     SET_ROOT_PACKAGE_PROGRAM(self, program, lib);
     SET_ROOT_PACKAGE_USE_SWITCH(self);
     LOAD_ROOT_PACKAGE_RESOURCES(self, program);
@@ -353,15 +353,15 @@ run_precompiler__LilyCompilerPackage(const LilycConfig *config)
                                     NULL,
                                     NULL);
 
-    LilyPackageConfig pkg_config =
-      from_CompileConfig__LilyPackageConfig(config);
+    LilyPackageCompilerConfig pkg_config =
+      from_CompileConfig__LilyPackageCompilerConfig(config);
 
-    self->config = &pkg_config;
+    self->compiler.config = &pkg_config;
 
     LOG_VERBOSE(self, "running");
     LOG_VERBOSE(self, "running scanner");
 
-    run__LilyScanner(&self->scanner, self->config->dump_scanner);
+    run__LilyScanner(&self->scanner, self->compiler.config->dump_scanner);
 
     LOG_VERBOSE(self, "running preparser");
 
@@ -373,7 +373,7 @@ run_precompiler__LilyCompilerPackage(const LilycConfig *config)
     run__LilyPreparser(&self->preparser, &self->preparser_info);
 
     SET_ROOT_PACKAGE_NAME(self);
-    SET_ROOT_PACKAGE_IR(self->config, self);
+    SET_ROOT_PACKAGE_IR(self->compiler.config, self);
     SET_ROOT_PACKAGE_PROGRAM(self, (&program), lib);
     LOAD_ROOT_PACKAGE_RESOURCES(self, (&program));
 

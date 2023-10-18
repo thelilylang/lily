@@ -78,19 +78,19 @@ compile__LilyCompilerIrLlvm(LilyPackage *package)
 
     // TODO: -Oz
 
-    if (package->config->o0) {
+    if (package->compiler.config->o0) {
         lily_opt_level = LILY_OPT_LEVEL_O0;
     }
 
-    if (package->config->o1) {
+    if (package->compiler.config->o1) {
         lily_opt_level = LILY_OPT_LEVEL_O1;
     }
 
-    if (package->config->o2) {
+    if (package->compiler.config->o2) {
         lily_opt_level = LILY_OPT_LEVEL_O2;
     }
 
-    if (package->config->o3) {
+    if (package->compiler.config->o3) {
         lily_opt_level = LILY_OPT_LEVEL_O3;
     }
 

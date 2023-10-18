@@ -31,7 +31,6 @@
 
 #include <core/lily/compiler/package/package.h>
 #include <core/lily/interpreter/package/package.h>
-#include <core/lily/package/config.h>
 #include <core/lily/package/program.h>
 #include <core/lily/precompiler/precompiler.h>
 
@@ -53,16 +52,15 @@ enum LilyPackageKind
 
 typedef struct LilyPackage
 {
-    String *name;                    // String* | String* (&)
-    String *global_name;             // String* | String* (&)
-    Vec *public_macros;              // Vec<LilyMacro*>*?
-    Vec *private_macros;             // Vec<LilyMacro*>*
-    Vec *public_imports;             // Vec<LilyImport*>*
-    Vec *private_imports;            // Vec<LilyImport*>*
-    Vec *sub_packages;               // Vec<LilyPackage*>*
-    Vec *package_dependencies;       // Vec<LilyPackage* (&)>*
-    Vec *lib_dependencies;           // Vec<LilyLibrary* (&)>*
-    const LilyPackageConfig *config; // LilyPackageConfig* (&)
+    String *name;              // String* | String* (&)
+    String *global_name;       // String* | String* (&)
+    Vec *public_macros;        // Vec<LilyMacro*>*?
+    Vec *private_macros;       // Vec<LilyMacro*>*
+    Vec *public_imports;       // Vec<LilyImport*>*
+    Vec *private_imports;      // Vec<LilyImport*>*
+    Vec *sub_packages;         // Vec<LilyPackage*>*
+    Vec *package_dependencies; // Vec<LilyPackage* (&)>*
+    Vec *lib_dependencies;     // Vec<LilyLibrary* (&)>*
 
     File file;
     LilyScanner scanner;

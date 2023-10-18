@@ -39,7 +39,7 @@
 #include <core/lily/functions/builtin.h>
 #include <core/lily/functions/sys.h>
 #include <core/lily/mir/mir.h>
-#include <core/lily/package/config.h>
+#include <core/lily/package/compiler/config.h>
 #include <core/lily/package/library.h>
 #include <core/lily/package/program.h>
 #include <core/lily/parser/parser.h>
@@ -52,7 +52,7 @@ typedef struct LilyPackage LilyPackage;
 enum LilyPackageStatus;
 
 #define LOG_VERBOSE(package, msg)                                  \
-    if (package->config->verbose) {                                \
+    if (package->compiler.config->verbose) {                       \
         printf("+ %s package %s\n",                                \
                package->global_name ? package->global_name->buffer \
                                     : "(not defined)",             \
@@ -144,8 +144,10 @@ enum LilyPackageStatus;
 
 #define SET_ROOT_PACKAGE_USE_SWITCH(root_package)                       \
     /* Set `use_switch` on true for CC IR, CPP IR, JS IR or LLVM IR. */ \
-    if (root_package->config->cc_ir || root_package->config->cpp_ir ||  \
-        root_package->config->js_ir || root_package->config->llvm_ir) { \
+    if (root_package->compiler.config->cc_ir ||                         \
+        root_package->compiler.config->cpp_ir ||                        \
+        root_package->compiler.config->js_ir ||                         \
+        root_package->compiler.config->llvm_ir) {                       \
         root_package->analysis.use_switch = true;                       \
     }
 
@@ -157,6 +159,8 @@ typedef struct LilyCompilerAdapter
     char *output_exe_path; // char*? - The output exe path is NULL if the
                            // compilation is stopped before the end or the
                            // package status is not LILY_PACKAGE_STATUS_MAIN.
+    const LilyPackageCompilerConfig
+      *config; // const LilyPackageCompilerConfig* (&)
     LilyIr ir;
     enum LilyLinkerKind linker;
     LilyLibrary *lib; // LilyLibrary*? (&)
@@ -166,11 +170,14 @@ typedef struct LilyCompilerAdapter
  *
  * @brief Construct LilyCompilerAdapter type.
  */
-inline CONSTRUCTOR(LilyCompilerAdapter, LilyCompilerAdapter)
+inline CONSTRUCTOR(LilyCompilerAdapter,
+                   LilyCompilerAdapter,
+                   const LilyPackageCompilerConfig *config)
 {
     return (LilyCompilerAdapter){
         .output_path = NULL,
         .output_exe_path = NULL,
+        .config = config,
         .lib = NULL,
     };
 }
