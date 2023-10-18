@@ -719,6 +719,7 @@ set(LILY_CORE_LILY_PACKAGE_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/package/config.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/package/default_path.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/package/dependency_tree.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/package/interpreter/config.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/package/library.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/package/package.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/package/program.c)
