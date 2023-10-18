@@ -225,7 +225,7 @@ impl<'a> Scanner<'a> {
     fn scan_id(&mut self) -> Token<'a> {
         let mut id = String::new();
 
-        while self.cursor.current.is_alphanumeric() {
+        while self.is_ident() {
             id.push(self.cursor.current);
             self.next();
         }
