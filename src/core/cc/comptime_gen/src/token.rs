@@ -122,6 +122,7 @@ impl ToString for Comment {
 pub enum TokenKind {
     Keyword(Keyword),
     LiteralConstant(LiteralConstant),
+    Eof,
     LHook,
     RHook,
     LParen,
@@ -178,6 +179,7 @@ impl ToString for TokenKind {
         match &self {
             Self::Keyword(k) => k.to_string(),
             Self::LiteralConstant(l) => l.to_string(),
+            Self::Eof => "Eof".to_string(),
             Self::LHook => "[".to_string(),
             Self::RHook => "]".to_string(),
             Self::LParen => "(".to_string(),

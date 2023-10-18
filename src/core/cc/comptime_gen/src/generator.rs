@@ -1,23 +1,17 @@
 use crate::parser::Parser;
 use crate::scanner::{Scanner, Source};
 
-use std::cell::RefCell;
 use std::process::exit;
-use std::rc::Rc;
 use std::{fs, io, path::Path};
 
 pub struct Generator<'a> {
     source: &'a Source<'a>,
-    scanner: Rc<RefCell<Scanner<'a>>>,
+    scanner: &'a Scanner<'a>,
     parser: &'a Parser<'a>,
 }
 
 impl<'a> Generator<'a> {
-    pub fn new(
-        source: &'a Source<'a>,
-        scanner: Rc<RefCell<Scanner<'a>>>,
-        parser: &'a Parser<'a>,
-    ) -> Self {
+    pub fn new(source: &'a Source<'a>, scanner: &'a Scanner<'a>, parser: &'a Parser<'a>) -> Self {
         Self {
             source,
             scanner,
