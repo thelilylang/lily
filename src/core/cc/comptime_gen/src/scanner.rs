@@ -379,7 +379,7 @@ impl<'a> Scanner<'a> {
         while self.is_num() {
             if self.cursor.current == '.' && !is_float {
                 is_float = true;
-            } else if self.cursor.current  == '.' && is_float {
+            } else if self.cursor.current == '.' && is_float {
                 unreachable!("in a float literal it is forbiden to add more than one `.`")
             }
 
@@ -399,10 +399,16 @@ impl<'a> Scanner<'a> {
         self.previous();
 
         if is_float || is_scientific {
-            return Token::new(TokenKind::LiteralConstant(LiteralConstant::Float(s)), self.location.clone())
+            return Token::new(
+                TokenKind::LiteralConstant(LiteralConstant::Float(s)),
+                self.location.clone(),
+            );
         }
 
-        Token::new(TokenKind::LiteralConstant(LiteralConstant::Int(s)), self.location.clone())
+        Token::new(
+            TokenKind::LiteralConstant(LiteralConstant::Int(s)),
+            self.location.clone(),
+        )
     }
 
     fn get_num(&mut self) -> Token<'a> {
