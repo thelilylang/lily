@@ -3,6 +3,7 @@ use crate::location::Location;
 use crate::token::{Comment, Keyword, LiteralConstant, Token, TokenKind};
 
 use std::fs;
+use std::rc::Rc;
 
 pub struct Cursor {
     pub position: usize,
@@ -44,7 +45,7 @@ impl<'a> Source<'a> {
 }
 
 pub struct Scanner<'a> {
-    pub tokens: Vec<Token<'a>>,
+    pub tokens: Vec<Rc<Token<'a>>>,
     cursor: Cursor,
     source: &'a Source<'a>,
     location: Location<'a>,
@@ -106,6 +107,47 @@ impl<'a> Scanner<'a> {
     #[inline]
     fn peek(&self, n: usize) -> Option<char> {
         self.source.content.chars().nth(self.cursor.position + n)
+    }
+
+    #[inline]
+    fn is_digit(&self) -> bool {
+        self.cursor.current >= '0' && self.cursor.current <= '9'
+    }
+
+    #[inline]
+    fn is_ident(&self) -> bool {
+        self.is_digit()
+            || (self.cursor.current >= 'a' && self.cursor.current <= 'z')
+            || (self.cursor.current >= 'A' && self.cursor.current <= 'Z')
+            || self.cursor.current == '_'
+            || self.cursor.current == '$'
+    }
+
+    #[inline]
+    fn is_hex(&self) -> bool {
+        self.is_digit()
+            || (self.cursor.current >= 'a' && self.cursor.current <= 'f')
+            || (self.cursor.current >= 'A' && self.cursor.current <= 'F')
+            || self.cursor.current == '_'
+    }
+
+    #[inline]
+    fn is_oct(&self) -> bool {
+        (self.cursor.current >= '0' && self.cursor.current <= '7') || self.cursor.current == '_'
+    }
+
+    #[inline]
+    fn is_bin(&self) -> bool {
+        (self.cursor.current >= '0' && self.cursor.current <= '1') || self.cursor.current == '_'
+    }
+
+    #[inline]
+    fn is_num(&self) -> bool {
+        self.is_digit()
+            || (self.cursor.current == '.' && self.peek(1) != Some('.'))
+            || self.cursor.current == 'e'
+            || self.cursor.current == 'E'
+            || self.cursor.current == '_'
     }
 
     fn skip_space(&mut self) {
@@ -230,6 +272,148 @@ impl<'a> Scanner<'a> {
         Token::new(TokenKind::Comment(Comment::Line(s)), self.location.clone())
     }
 
+    fn scan_hex(&mut self) -> Token<'a> {
+        let mut s = String::new();
+
+        if self.cursor.current == '0' {
+            while self.cursor.current == '0' {
+                self.next();
+            }
+
+            if !self.is_hex() {
+                s.push('0');
+            }
+        }
+
+        while self.is_hex() {
+            if self.cursor.current != '_' {
+                s.push(self.cursor.current);
+            }
+
+            self.next();
+        }
+
+        if s.is_empty() {
+            unreachable!("add a digit 0 to 9 or a letter a (A) to f (F)");
+        }
+
+        self.previous();
+
+        Token::new(
+            TokenKind::LiteralConstant(LiteralConstant::Hex(s)),
+            self.location.clone(),
+        )
+    }
+
+    fn scan_oct(&mut self) -> Token<'a> {
+        let mut s = String::new();
+
+        if self.cursor.current == '0' {
+            while self.cursor.current == '0' {
+                self.next();
+            }
+
+            if !self.is_oct() {
+                s.push('0');
+            }
+        }
+
+        while self.is_oct() {
+            if self.cursor.current != '_' {
+                s.push(self.cursor.current);
+            }
+
+            self.next();
+        }
+
+        if s.is_empty() {
+            unreachable!("add a digit 0 to 7");
+        }
+
+        self.previous();
+
+        Token::new(
+            TokenKind::LiteralConstant(LiteralConstant::Octal(s)),
+            self.location.clone(),
+        )
+    }
+
+    fn scan_bin(&mut self) -> Token<'a> {
+        let mut s = String::new();
+
+        if self.cursor.current == '0' {
+            while self.cursor.current == '0' {
+                self.next();
+            }
+
+            if !self.is_bin() {
+                s.push('0');
+            }
+        }
+
+        while self.is_bin() {
+            if self.cursor.current != '_' {
+                s.push(self.cursor.current);
+            }
+
+            self.next();
+        }
+
+        if s.is_empty() {
+            unreachable!("add a digit 0 to 1");
+        }
+
+        self.previous();
+
+        Token::new(
+            TokenKind::LiteralConstant(LiteralConstant::Bin(s)),
+            self.location.clone(),
+        )
+    }
+
+    fn scan_num(&mut self) -> Token<'a> {
+        let mut s = String::new();
+        let mut is_float = false;
+        let mut is_scientific = false;
+
+        while self.is_num() {
+            if self.cursor.current == '.' && !is_float {
+                is_float = true;
+            } else if self.cursor.current  == '.' && is_float {
+                unreachable!("in a float literal it is forbiden to add more than one `.`")
+            }
+
+            if (self.cursor.current == 'e' || self.cursor.current == 'E') && !is_scientific {
+                is_scientific = true;
+            } else if (self.cursor.current == 'e' || self.cursor.current == 'E') && is_scientific {
+                unreachable!("in a float literal it is forbiden to add more than one `e` or `E`")
+            }
+
+            if self.cursor.current != '_' {
+                s.push(self.cursor.current);
+            }
+
+            self.next();
+        }
+
+        self.previous();
+
+        if is_float || is_scientific {
+            return Token::new(TokenKind::LiteralConstant(LiteralConstant::Float(s)), self.location.clone())
+        }
+
+        Token::new(TokenKind::LiteralConstant(LiteralConstant::Int(s)), self.location.clone())
+    }
+
+    fn get_num(&mut self) -> Token<'a> {
+        match (self.cursor.current, self.peek(1)) {
+            ('0', Some('x')) => self.scan_hex(),
+            ('0', Some('o')) => self.scan_oct(),
+            ('0', Some('b')) => self.scan_bin(),
+            _ => self.scan_num(),
+        }
+    }
+
     fn get_token(&mut self) -> Token<'a> {
         self.location.start(self.line, self.column);
 
@@ -287,8 +471,8 @@ impl<'a> Scanner<'a> {
             ('~', Some('='), _) => Token::new(TokenKind::WaveEq, self.location.clone()),
             ('~', _, _) => Token::new(TokenKind::Wave, self.location.clone()),
             ('a'..='z', _, _) | ('A'..='Z', _, _) | ('_', _, _) => self.scan_id(),
-            ('0', _, _) => todo!("hex, oct, bin, float, int"),
-            ('1'..='9', _, _) => todo!("int, float"),
+            ('0', _, _) => self.get_num(),
+            ('1'..='9', _, _) => self.scan_num(),
             ('\"', _, _) => self.scan_string(),
             ('\'', _, _) => {
                 self.next();
@@ -324,7 +508,7 @@ impl<'a> Scanner<'a> {
                 token.end_token(self.location.end_line, self.location.end_column);
 
                 self.next();
-                self.tokens.push(token);
+                self.tokens.push(Rc::new(token));
 
                 if self.cursor.position >= self.source.content.len() - 1 {
                     break;
