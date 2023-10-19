@@ -17,7 +17,7 @@ See the [Coding Styles](https://github.com/thelilylang/lily/blob/main/CODING_STY
 To install hook on your local repository run:
 
 ```
-make setup
+make hooks
 ```
 
 ## Issue
