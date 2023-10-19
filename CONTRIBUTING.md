@@ -12,13 +12,19 @@ See [C++ Coding Styles](https://github.com/thelilylang/lily/blob/add_contributin
 
 See the [Coding Styles](https://github.com/thelilylang/lily/blob/main/CODING_STYLES.md).
 
-## Commit Hooks
+## Commit
+
+## Hooks
 
 To install hook on your local repository run:
 
 ```
 make hooks
 ```
+
+## Good practices
+
+Also, to see good practices on this repository for writing commit messages, go to [GIT.md](https://github.com/thelilylang/lily/blob/main/GIT.md).
 
 ## Issue
 
