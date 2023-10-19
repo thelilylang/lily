@@ -1,0 +1,4 @@
+#!/bin/sh
+ 
+# Check the commit message.
+./scripts/check_commit_msg.sh "$(git show -s --pretty=format:"%B" HEAD)"
