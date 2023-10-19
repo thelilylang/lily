@@ -11,7 +11,8 @@ ninja -C build/Debug
 make format
 
 # Run all samples
-./scripts/test_samples.py
+# NOTE: If you can't run `./scripts/test_samples.sh`, replace with `./scripts/test_samples.py`.
+./scripts/test_samples.sh
 
 # Revert to patch modification
 if [ patch_status == 0 ]

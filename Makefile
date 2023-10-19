@@ -2,9 +2,9 @@ CLANG_FORMAT = @clang-format -i
 CMAKE_FORMAT = @cmake-format -i
 RUSTFMT = @rustfmt
 
-setup:
+hooks:
 	./scripts/enable_local.sh
-	cd .git/hooks && ln -s ../../scripts/git/pre-commit .
+	cd .git/hooks && ln -s ../../scripts/git/pre-commit . && ln -s ../../scripts/git/post-commit .
 
 build:
 	ninja -C build
