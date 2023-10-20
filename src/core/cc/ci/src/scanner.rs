@@ -218,11 +218,11 @@ impl<'a> Scanner<'a> {
             "void" => keyword!(Void),
             "volatile" => keyword!(Volatile),
             "while" => keyword!(While),
-            _ => TokenKind::Identifier(id),
+            _ => TokenKind::Identifier(Rc::new(id)),
         }
     }
 
-    fn scan_id(&mut self) -> Token<'a> {
+    fn scan_id(&mut self) -> String {
         let mut id = String::new();
 
         while self.is_ident() {
@@ -232,7 +232,7 @@ impl<'a> Scanner<'a> {
 
         self.previous();
 
-        Token::new(TokenKind::Identifier(id), self.location.clone())
+        id
     }
 
     fn scan_string(&mut self) -> Token<'a> {
@@ -250,7 +250,7 @@ impl<'a> Scanner<'a> {
         }
 
         Token::new(
-            TokenKind::LiteralConstant(LiteralConstant::String(string)),
+            TokenKind::LiteralConstant(LiteralConstant::String(Rc::new(string))),
             self.location.clone(),
         )
     }
@@ -476,7 +476,10 @@ impl<'a> Scanner<'a> {
             (':', _, _) => Token::new(TokenKind::Colon, self.location.clone()),
             ('~', Some('='), _) => Token::new(TokenKind::WaveEq, self.location.clone()),
             ('~', _, _) => Token::new(TokenKind::Wave, self.location.clone()),
-            ('a'..='z', _, _) | ('A'..='Z', _, _) | ('_', _, _) => self.scan_id(),
+            ('a'..='z', _, _) | ('A'..='Z', _, _) | ('_', _, _) => Token::new(
+                Scanner::convert_id_to_token(self.scan_id()),
+                self.location.clone(),
+            ),
             ('0', _, _) => self.get_num(),
             ('1'..='9', _, _) => self.scan_num(),
             ('\"', _, _) => self.scan_string(),
@@ -490,7 +493,7 @@ impl<'a> Scanner<'a> {
                 }
 
                 Token::new(
-                    TokenKind::LiteralConstant(LiteralConstant::Character(c)),
+                    TokenKind::LiteralConstant(LiteralConstant::Character(Rc::new(c))),
                     self.location.clone(),
                 )
             }

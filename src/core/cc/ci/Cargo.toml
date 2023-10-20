@@ -1,5 +1,5 @@
 [package]
-name = "c_comptime_gen"
+name = "ci"
 version = "0.0.0"
 edition = "2021"
 

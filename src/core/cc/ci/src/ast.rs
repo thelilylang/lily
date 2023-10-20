@@ -1,5 +1,7 @@
 use crate::location::Location;
 
+use std::rc::Rc;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum DataTypeKind<'a> {
     UnsignedChar,
@@ -22,9 +24,9 @@ pub enum DataTypeKind<'a> {
     Void,
     Const(Box<DataType<'a>>),
     Pointer(Box<DataType<'a>>),
-    Struct(String),
-    Enum(String),
-    Union(String),
+    Struct(Rc<String>),
+    Enum(Rc<String>),
+    Union(Rc<String>),
     Function(Box<DataType<'a>>, Vec<DataType<'a>>),
 }
 
@@ -124,7 +126,7 @@ pub enum Literal {
     Int(i64),
     Float(f64),
     Character(char),
-    String(String),
+    String(Rc<String>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -151,8 +153,8 @@ pub enum ExprKind<'a> {
         access: Box<Expr<'a>>,
         index: Box<Expr<'a>>,
     },
-    DotAccess(Vec<String>),
-    ArrowAccess(Vec<String>),
+    DotAccess(Vec<Rc<String>>),
+    ArrowAccess(Vec<Rc<String>>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -245,7 +247,7 @@ pub struct For<'a> {
 pub struct Variable<'a> {
     visibility: Visibility,
     location: Location<'a>,
-    name: String,
+    name: Rc<String>,
     data_type: DataType<'a>,
     expr: Expr<'a>,
 }
@@ -254,7 +256,7 @@ impl<'a> Variable<'a> {
     pub fn new(
         visibility: Visibility,
         location: Location<'a>,
-        name: String,
+        name: Rc<String>,
         data_type: DataType<'a>,
         expr: Expr<'a>,
     ) -> Self {
@@ -271,7 +273,7 @@ impl<'a> Variable<'a> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Constant<'a> {
     visibility: Visibility,
-    name: String,
+    name: Rc<String>,
     data_type: DataType<'a>,
     expr: Expr<'a>,
 }
@@ -279,7 +281,7 @@ pub struct Constant<'a> {
 impl<'a> Constant<'a> {
     pub fn new(
         visibility: Visibility,
-        name: String,
+        name: Rc<String>,
         data_type: DataType<'a>,
         expr: Expr<'a>,
     ) -> Self {
@@ -316,7 +318,7 @@ pub enum Stmt<'a> {
     Break,
     Continue,
     DoWhile(DoWhile<'a>),
-    Goto(String),
+    Goto(Rc<String>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -346,72 +348,90 @@ impl<'a> FunctionBodyItem<'a> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Typedef<'a> {
-    Struct(String, Struct<'a>),
-    Enum(String, Enum<'a>),
+    Struct(Rc<String>, Struct<'a>),
+    Enum(Rc<String>, Enum<'a>),
     Alias,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructField<'a> {
-    name: String,
+    name: Rc<String>,
     data_type: DataType<'a>,
 }
 
 impl<'a> StructField<'a> {
-    pub fn new(name: String, data_type: DataType<'a>) -> Self {
+    pub fn new(name: Rc<String>, data_type: DataType<'a>) -> Self {
         Self { name, data_type }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Struct<'a> {
-    name: String,
+    name: Rc<String>,
     fields: Vec<StructField<'a>>,
     unions: Vec<Union<'a>>,
     structs: Vec<Struct<'a>>,
     enums: Vec<Enum<'a>>,
 }
 
+impl<'a> Struct<'a> {
+    pub fn new(
+        name: Rc<String>,
+        fields: Vec<StructField<'a>>,
+        unions: Vec<Union<'a>>,
+        structs: Vec<Struct<'a>>,
+        enums: Vec<Enum<'a>>,
+    ) -> Self {
+        Self {
+            name,
+            fields,
+            unions,
+            structs,
+            enums,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumVariant<'a> {
-    name: String,
+    name: Rc<String>,
     value: Option<Expr<'a>>,
 }
 
 impl<'a> EnumVariant<'a> {
-    pub fn new(name: String, value: Option<Expr<'a>>) -> Self {
+    pub fn new(name: Rc<String>, value: Option<Expr<'a>>) -> Self {
         Self { name, value }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Enum<'a> {
-    name: String,
+    name: Rc<String>,
     variants: Vec<EnumVariant<'a>>,
 }
 
 impl<'a> Enum<'a> {
-    pub fn new(name: String, variants: Vec<EnumVariant<'a>>) -> Self {
+    pub fn new(name: Rc<String>, variants: Vec<EnumVariant<'a>>) -> Self {
         Self { name, variants }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Union<'a> {
-    name: String,
+    name: Rc<String>,
     fields: Vec<StructField<'a>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionParam<'a> {
-    name: String,
+    name: Rc<String>,
     data_type: DataType<'a>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function<'a> {
     visibility: Visibility,
-    name: String,
+    name: Rc<String>,
     params: Vec<FunctionParam<'a>>,
     return_data_type: DataType<'a>,
     body: Vec<FunctionBodyItem<'a>>,
@@ -447,4 +467,10 @@ pub enum DeclKind<'a> {
 pub struct Decl<'a> {
     kind: DeclKind<'a>,
     location: Location<'a>,
+}
+
+impl<'a> Decl<'a> {
+    pub fn new(kind: DeclKind<'a>, location: Location<'a>) -> Self {
+        Self { kind, location }
+    }
 }

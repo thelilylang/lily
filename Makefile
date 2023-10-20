@@ -171,7 +171,7 @@ format:
 	${CLANG_FORMAT} ./tests/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/scanner/*.c
 	${CMAKE_FORMAT} ./CMakeLists.txt
-	${RUSTFMT} ./src/core/cc/comptime_gen/src/*.rs
+	${RUSTFMT} ./src/core/cc/ci/src/*.rs
 	
 
 # TODO: try to port -pg on CMake config

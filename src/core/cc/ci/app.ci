@@ -1,0 +1,21 @@
+struct Vec<T> {
+	T *buffer;
+	Usize len;
+};
+
+void
+push<T>(const Vec<T> *self, T item)
+{
+}
+
+int main() {
+	Vec<int> v = (Vec<int>){ .buffer = malloc(...), .len = 0 }
+
+	push(&v, 10);
+	push(&v, 20);
+	push(&v, 30);
+	push(&v, 40);
+	push(&v, 50);
+	push(&v, 60);
+	push(&v, 70);
+}

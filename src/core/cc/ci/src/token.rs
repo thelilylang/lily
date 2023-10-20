@@ -1,5 +1,7 @@
 use crate::location::Location;
 
+use std::rc::Rc;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Keyword {
     Auto,
@@ -83,20 +85,18 @@ pub enum LiteralConstant {
     Octal(String),
     Hex(String),
     Bin(String),
-    Character(char),
-    String(String),
+    Character(Rc<char>),
+    String(Rc<String>),
 }
 
 impl ToString for LiteralConstant {
     fn to_string(&self) -> String {
         match &self {
-            Self::Int(s)
-            | Self::Float(s)
-            | Self::Octal(s)
-            | Self::Hex(s)
-            | Self::Bin(s)
-            | Self::String(s) => s.clone(),
-            Self::Character(c) => format!("{}", c),
+            Self::Int(s) | Self::Float(s) | Self::Octal(s) | Self::Hex(s) | Self::Bin(s) => {
+                s.clone()
+            }
+            Self::String(s) => (**s).clone(),
+            Self::Character(c) => format!("{}", **c),
         }
     }
 }
@@ -170,7 +170,7 @@ pub enum TokenKind {
     BarEq,
     Wave,
     WaveEq,
-    Identifier(String),
+    Identifier(Rc<String>),
     Comment(Comment),
 }
 
@@ -227,7 +227,7 @@ impl ToString for TokenKind {
             Self::BarEq => "|=".to_string(),
             Self::Wave => "~".to_string(),
             Self::WaveEq => "~=".to_string(),
-            Self::Identifier(s) => s.clone(),
+            Self::Identifier(s) => (**s).clone(),
             Self::Comment(comment) => comment.to_string(),
         }
     }

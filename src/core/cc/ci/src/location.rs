@@ -24,6 +24,13 @@ impl<'a> Location<'a> {
         }
     }
 
+    pub fn default_with_filename(filename: &'a str) -> Self {
+        Self {
+            filename,
+            ..Default::default()
+        }
+    }
+
     #[inline]
     pub fn start(&mut self, line: usize, column: usize) {
         self.start_line = line;
