@@ -51,6 +51,7 @@ command/lily
 command/lilyc
 
 cc
+cc/ci
 
 cpp
 
