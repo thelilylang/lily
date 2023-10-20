@@ -524,5 +524,12 @@ impl<'a> Scanner<'a> {
                 }
             }
         }
+
+        let location_eof = self.location.clone();
+
+        self.location
+            .start(location_eof.end_line, location_eof.end_column);
+        self.tokens
+            .push(Rc::new(Token::new(TokenKind::Eof, location_eof)));
     }
 }
