@@ -3,11 +3,12 @@ use crate::keyword;
 use crate::scanner::Scanner;
 use crate::token::{Keyword, Token, TokenKind};
 
+use std::iter::Peekable;
 use std::rc::Rc;
 use std::slice::Iter;
 
 struct Cursor<'a> {
-    iter: Iter<'a, Rc<Token<'a>>>,
+    iter: Peekable<Iter<'a, Rc<Token<'a>>>>,
     previous: Option<&'a Rc<Token<'a>>>,
     current: Option<&'a Rc<Token<'a>>>,
 }
@@ -15,7 +16,7 @@ struct Cursor<'a> {
 impl<'a> Cursor<'a> {
     fn new(scanner: &'a Scanner<'a>) -> Self {
         Self {
-            iter: scanner.tokens.iter(),
+            iter: scanner.tokens.iter().peekable(),
             previous: None,
             current: None,
         }
@@ -28,6 +29,10 @@ impl<'a> Cursor<'a> {
     fn next(&mut self) {
         self.previous = self.current;
         self.current = self.iter.next();
+    }
+
+    fn peek(&mut self) -> Option<&&'a Rc<Token<'a>>> {
+        self.iter.peek()
     }
 }
 
@@ -63,7 +68,87 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_data_type(&mut self) -> DataType<'a> {
-        todo!("parse data type");
+        let current = self.current();
+        let res = match &current.kind {
+            keyword!(Char) => todo!("char"),
+            keyword!(Const) => {
+                self.cursor.next();
+
+                let mut location_const = current.location.clone();
+                let const_data_type = self.parse_data_type();
+                let previous = self.previous();
+
+                location_const.end(previous.location.end_line, previous.location.end_line);
+
+                return DataType::new(
+                    DataTypeKind::Const(Box::new(const_data_type)),
+                    location_const,
+                );
+            }
+            keyword!(Double) => DataType::new(DataTypeKind::Double, current.location.clone()),
+            keyword!(Enum) => todo!("enum"),
+            keyword!(Float) => DataType::new(DataTypeKind::Float, current.location.clone()),
+            keyword!(Int) => DataType::new(DataTypeKind::Int, current.location.clone()),
+            keyword!(Long) => {
+                self.cursor.next();
+
+                let current = self.current();
+                let mut long_data_type = match &current.kind {
+                    keyword!(Double) => {
+                        DataType::new(DataTypeKind::LongDouble, current.location.clone())
+                    }
+                    keyword!(Long) => {
+                        match &self.cursor.peek() {
+                            Some(token_ptr) => match &****token_ptr {
+                                Token {
+                                    kind: keyword!(Int),
+                                    ..
+                                } => self.cursor.next(),
+                                _ => (),
+                            },
+                            None => (),
+                        }
+
+                        DataType::new(DataTypeKind::LongLongInt, current.location.clone())
+                    }
+                    keyword!(Int) | _ => {
+                        DataType::new(DataTypeKind::LongInt, current.location.clone())
+                    }
+                };
+                let current = self.current();
+
+                long_data_type
+                    .location
+                    .end(current.location.end_line, current.location.end_column);
+
+                long_data_type
+            }
+            keyword!(Short) => todo!("short"),
+            keyword!(Signed) => todo!("signed"),
+            keyword!(Struct) => todo!("struct"),
+            keyword!(Union) => todo!("union"),
+            keyword!(Unsigned) => todo!("unsigned"),
+            keyword!(Void) => DataType::new(DataTypeKind::Void, current.location.clone()),
+            TokenKind::Identifier(_) => todo!("custom data type"),
+            k => unreachable!("unexpected token: {:?}", k),
+        };
+
+        self.cursor.next();
+
+        let current = self.current();
+
+        match &current.kind {
+            TokenKind::LParen => todo!("function"),
+            TokenKind::Star => {
+                let mut location_pointer = res.location.clone();
+
+                location_pointer.end(current.location.end_line, current.location.end_column);
+                self.cursor.next();
+
+                DataType::new(DataTypeKind::Pointer(Box::new(res)), location_pointer)
+            }
+            _ => res,
+        }
     }
 
     fn parse_struct(&mut self) -> Struct<'a> {
@@ -129,12 +214,13 @@ impl<'a> Parser<'a> {
 
             fields.push(StructField::new(name, data_type));
 
+            self.expect(TokenKind::Semicolon);
+
             match &self.current().kind {
                 TokenKind::RBrace => {
                     self.cursor.next();
                     break;
                 }
-                TokenKind::Comma => self.cursor.next(),
                 _ => unreachable!("unexpected character"),
             }
         }

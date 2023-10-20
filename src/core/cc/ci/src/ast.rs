@@ -27,13 +27,14 @@ pub enum DataTypeKind<'a> {
     Struct(Rc<String>),
     Enum(Rc<String>),
     Union(Rc<String>),
+    Custom(Rc<String>),
     Function(Box<DataType<'a>>, Vec<DataType<'a>>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataType<'a> {
-    kind: DataTypeKind<'a>,
-    location: Location<'a>,
+    pub kind: DataTypeKind<'a>,
+    pub location: Location<'a>,
 }
 
 impl<'a> DataType<'a> {
