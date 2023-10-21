@@ -228,13 +228,15 @@ inline CONSTRUCTOR(LilyInterpreterVMStack,
                    LilyInterpreterVMStack,
                    Usize max_capacity)
 {
-    return (LilyInterpreterVMStack){ .top = NULL,
-                                     .buffer = lily_calloc(
-                                       DEFAULT_STACK_CAPACITY, PTR_SIZE),
-                                     .current_frame = NULL,
-                                     .capacity = DEFAULT_STACK_CAPACITY,
-                                     .max_capacity = max_capacity,
-                                     .len = 0 };
+    return (LilyInterpreterVMStack){
+        .top = NULL,
+        .buffer = lily_calloc(DEFAULT_STACK_CAPACITY, PTR_SIZE),
+        .current_frame = NULL,
+        .capacity = DEFAULT_STACK_CAPACITY,
+        .max_capacity =
+          max_capacity == 0 ? DEFAULT_MAX_STACK_CAPACITY : max_capacity,
+        .len = 0
+    };
 }
 
 /**
@@ -300,6 +302,17 @@ typedef struct LilyInterpreterVMResources
     Vec *args; // Vec<char*>* (&)
 } LilyInterpreterVMResources;
 
+/**
+ *
+ * @brief Construct LilyInterpreterVMResources type.
+ */
+inline CONSTRUCTOR(LilyInterpreterVMResources,
+                   LilyInterpreterVMResources,
+                   Vec *args)
+{
+    return (LilyInterpreterVMResources){ .args = args };
+}
+
 typedef struct LilyInterpreterVM
 {
     LilyInterpreterMemory memory;
@@ -324,6 +337,23 @@ CONSTRUCTOR(LilyInterpreterVM,
             const LilyMirModule *module,
             LilyInterpreterVMResources resources,
             bool check_overflow);
+
+/**
+ *
+ * @brief Set max stack capacity.
+ */
+void
+set_max_stack__LilyInterpreterVM(Usize max_stack);
+
+/**
+ *
+ * @brief Set max heap capacity.
+ */
+inline void
+set_max_heap__LilyInterpreterVM(LilyInterpreterVM *self, Usize max_heap)
+{
+    self->memory.capacity = max_heap == 0 ? __max_capacity__$Alloc() : max_heap;
+}
 
 /**
  *

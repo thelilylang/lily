@@ -29,6 +29,8 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <cli/lily/config.h>
+
 #include <core/lily/analysis/analysis.h>
 #include <core/lily/analysis/checked/operator.h>
 #include <core/lily/analysis/checked/operator_register.h>
@@ -36,6 +38,7 @@
 #include <core/lily/functions/sys.h>
 #include <core/lily/interpreter/vm/vm.h>
 #include <core/lily/mir/mir.h>
+#include <core/lily/package/interpreter/config.h>
 #include <core/lily/package/library.h>
 #include <core/lily/package/program.h>
 #include <core/lily/parser/parser.h>
@@ -45,44 +48,80 @@
 #include <core/lily/shared/visibility.h>
 
 typedef struct LilyPackage LilyPackage;
+enum LilyPackageStatus;
+
+#define INTERPRETER_SET_ROOT_PACKAGE_PROGRAM(root_package, p) \
+    root_package->program = p
+#define INTERPRETER_SET_ROOT_PACKAGE_USE_SWITCH(root_package) \
+    root_package->analysis.use_switch = true
 
 typedef struct LilyInterpreterAdapter
 {
+    const LilyPackageInterpreterConfig
+      *config;        // const LilyPackageInterpreterConfig* (&)
     LilyLibrary *lib; // LilyLibrary*? (&)
     LilyInterpreterVM vm;
+    bool is_root;
 } LilyInterpreterAdapter;
 
 /**
  *
- * @brief Construct LilyInterpreterAdapter type.
+ * @brief Construct LilyInterpreterAdapter type (root is true).
  */
 inline CONSTRUCTOR(LilyInterpreterAdapter,
                    LilyInterpreterAdapter,
-                   Usize heap_capacity,
-                   Usize statck_capacity,
-                   const LilyMirModule *module,
-                   LilyInterpreterVMResources resources,
-                   bool check_overflow)
+                   const LilyPackageInterpreterConfig *config,
+                   bool is_root)
 {
-    return (LilyInterpreterAdapter){ .lib = NULL,
-                                     .vm = NEW(LilyInterpreterVM,
-                                               heap_capacity,
-                                               statck_capacity,
-                                               module,
-                                               resources,
-                                               check_overflow) };
+    return (LilyInterpreterAdapter){ .config = config,
+                                     .lib = NULL,
+                                     .is_root = is_root };
 }
 
 /**
  *
  * @brief Free LilyInterpreterAdapter type.
  */
-inline DESTRUCTOR(LilyInterpreterAdapter, const LilyInterpreterAdapter *self)
-{
-    //    FREE(LilyInterpreterVM, &self->vm);
-}
+DESTRUCTOR(LilyInterpreterAdapter, const LilyInterpreterAdapter *self);
 
-// LilyPackage *
-// build__LilyPackage();
+/**
+ *
+ * @brief Build all packages.
+ * @param lib LilyLibrary*?
+ * @return LilyPackage*?
+ */
+LilyPackage *
+build__LilyInterpreterPackage(const LilyConfig *config,
+                              enum LilyVisibility visibility,
+                              enum LilyPackageStatus status,
+                              const char *default_path,
+                              const LilyProgram *program,
+                              LilyLibrary *lib);
+
+/**
+ *
+ * @brief Build all packages of the library.
+ * @return LilyLibrary*?
+ */
+LilyLibrary *
+build_lib__LilyInterpreterPackage(const LilyConfig *config,
+                                  enum LilyVisibility visibility,
+                                  enum LilyPackageStatus status,
+                                  const char *default_path,
+                                  const LilyProgram *program,
+                                  String *version,
+                                  String *url,
+                                  String *path);
+
+/**
+ *
+ * @brief Run the interpreter.
+ */
+void
+run__LilyInterpreterPackage(const LilyConfig *config,
+                            enum LilyVisibility visibility,
+                            enum LilyPackageStatus status,
+                            const char *default_path,
+                            const LilyProgram *program);
 
 #endif // LILY_CORE_LILY_INTERPRETER_PACKAGE_H

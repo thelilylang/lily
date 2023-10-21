@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <builtin/alloc.h>
+
 #include <core/lily/lily.h>
 #include <core/lily/package/package.h>
 
@@ -187,7 +189,8 @@ VARIANT_CONSTRUCTOR(LilyPackage *,
                     enum LilyPackageStatus status,
                     const char *default_path,
                     const char *default_package_access,
-                    LilyPackage *root)
+                    LilyPackage *root,
+                    Vec *args)
 {
     LilyPackage *self = NEW(LilyPackage,
                             name,
@@ -200,7 +203,7 @@ VARIANT_CONSTRUCTOR(LilyPackage *,
                             root);
 
     self->kind = LILY_PACKAGE_KIND_INTERPRETER;
-    //    self->interpreter = NEW(LilyInterpreterAdapter);
+    self->interpreter = NEW(LilyInterpreterAdapter, NULL, true);
 
     return self;
 }

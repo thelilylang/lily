@@ -48,6 +48,12 @@
 static threadlocal pthread_t *package_threads;
 static pthread_mutex_t package_thread_mutex;
 
+typedef struct LilyCompilerThreadWrapper
+{
+    LilyPackageDependencyTree *tree;
+    LilyPackage *root;
+} LilyCompilerThreadWrapper;
+
 #define LOG_VERBOSE_SUCCESSFUL_COMPILATION(package)        \
     if (package->compiler.config->verbose) {               \
         printf("\x1b[32msuccessful compilation\x1b[0m\n"); \
@@ -56,10 +62,10 @@ static pthread_mutex_t package_thread_mutex;
 /**
  *
  * @brief Run parser, analysis, mir, ir and compile output object (...).
- * @param self LilyPackageDependencyTree*
+ * @param self LilyCompilerThreadWrapper*
  */
 static void *
-run_threads__LilyPackage(void *self);
+run_threads__LilyCompilerPackage(void *self);
 
 DESTRUCTOR(LilyCompilerAdapter, const LilyCompilerAdapter *self)
 {
@@ -120,9 +126,9 @@ build__LilyCompilerPackage(const LilycConfig *config,
 #endif
 
     SET_ROOT_PACKAGE_NAME(self);
-    SET_ROOT_PACKAGE_IR(self->compiler.config, self);
-    SET_ROOT_PACKAGE_PROGRAM(self, program, lib);
-    SET_ROOT_PACKAGE_USE_SWITCH(self);
+    COMPILER_SET_ROOT_PACKAGE_IR(self->compiler.config, self);
+    COMPILER_SET_ROOT_PACKAGE_PROGRAM(self, program, lib);
+    COMPILER_SET_ROOT_PACKAGE_USE_SWITCH(self);
     LOAD_ROOT_PACKAGE_RESOURCES(self, program);
 
     init_module__LilyAnalysis(&self->analysis);
@@ -149,11 +155,15 @@ build__LilyCompilerPackage(const LilycConfig *config,
     ASSERT(!pthread_mutex_init(&package_thread_mutex, NULL));
 
     for (Usize i = 0; i < self->precompiler.dependency_trees->len; ++i) {
-        ASSERT(
-          !pthread_create(&package_threads[i],
-                          NULL,
-                          &run_threads__LilyPackage,
-                          get__Vec(self->precompiler.dependency_trees, i)));
+        LilyCompilerThreadWrapper wrapper = {
+            .tree = get__Vec(self->precompiler.dependency_trees, i),
+            .root = self
+        };
+
+        ASSERT(!pthread_create(&package_threads[i],
+                               NULL,
+                               &run_threads__LilyCompilerPackage,
+                               &wrapper));
     }
 
     for (Usize i = 0; i < self->precompiler.dependency_trees->len; ++i) {
@@ -184,11 +194,38 @@ build_lib__LilyCompilerPackage(const LilycConfig *config,
 }
 
 static void *
-run_threads__LilyPackage(void *self)
+run_threads__LilyCompilerPackage(void *self)
 {
+#define INIT_IR(pkg, root)                                               \
+    switch (root->compiler.ir.kind) {                                    \
+        case LILY_IR_KIND_CC:                                            \
+            /* TODO: add a linker for CC */                              \
+            pkg->compiler.ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));   \
+            pkg->compiler.linker = LILY_LINKER_KIND_CC;                  \
+            break;                                                       \
+        case LILY_IR_KIND_CPP:                                           \
+            /* TODO: add a linker for CPP */                             \
+            pkg->compiler.ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp)); \
+            pkg->compiler.linker = LILY_LINKER_KIND_CPP;                 \
+            break;                                                       \
+        case LILY_IR_KIND_JS:                                            \
+            pkg->compiler.ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));   \
+            break;                                                       \
+        case LILY_IR_KIND_LLVM:                                          \
+            pkg->compiler.ir = NEW_VARIANT(                              \
+              LilyIr, llvm, NEW(LilyIrLlvm, pkg->global_name->buffer));  \
+            pkg->compiler.linker = LILY_LINKER_KIND_LLVM;                \
+            break;                                                       \
+        default:                                                         \
+            UNREACHABLE("unknown variant");                              \
+    }
+
     pthread_mutex_lock(&package_thread_mutex);
 
-    LilyPackageDependencyTree *tree = self;
+    LilyCompilerThreadWrapper *wrapper = self;
+    LilyPackageDependencyTree *tree = wrapper->tree;
+
+    INIT_IR(tree->package, wrapper->root);
 
     if (tree->dependencies) {
         for (Usize i = 0; i < tree->dependencies->len; ++i) {
@@ -238,7 +275,7 @@ run_threads__LilyPackage(void *self)
         for (Usize i = 0; i < tree->children->len; ++i) {
             ASSERT(!pthread_create(&package_threads[i],
                                    NULL,
-                                   &run_threads__LilyPackage,
+                                   &run_threads__LilyCompilerPackage,
                                    get__Vec(tree->children, i)));
         }
 
@@ -373,8 +410,8 @@ run_precompiler__LilyCompilerPackage(const LilycConfig *config)
     run__LilyPreparser(&self->preparser, &self->preparser_info);
 
     SET_ROOT_PACKAGE_NAME(self);
-    SET_ROOT_PACKAGE_IR(self->compiler.config, self);
-    SET_ROOT_PACKAGE_PROGRAM(self, (&program), lib);
+    COMPILER_SET_ROOT_PACKAGE_IR(self->compiler.config, self);
+    COMPILER_SET_ROOT_PACKAGE_PROGRAM(self, (&program), lib);
     LOAD_ROOT_PACKAGE_RESOURCES(self, (&program));
 
     LOG_VERBOSE(self, "running precompiler");

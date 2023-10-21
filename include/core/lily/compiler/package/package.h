@@ -51,24 +51,7 @@
 typedef struct LilyPackage LilyPackage;
 enum LilyPackageStatus;
 
-#define LOG_VERBOSE(package, msg)                                  \
-    if (package->compiler.config->verbose) {                       \
-        printf("+ %s package %s\n",                                \
-               package->global_name ? package->global_name->buffer \
-                                    : "(not defined)",             \
-               msg);                                               \
-    }
-
-#define SET_ROOT_PACKAGE_NAME(root_package)                              \
-    if (root_package->preparser_info.package->name) {                    \
-        root_package->name = root_package->preparser_info.package->name; \
-        root_package->global_name = clone__String(root_package->name);   \
-    } else {                                                             \
-        root_package->name = from__String("main");                       \
-        root_package->global_name = from__String("main");                \
-    }
-
-#define SET_ROOT_PACKAGE_IR(config, root_package)                             \
+#define COMPILER_SET_ROOT_PACKAGE_IR(config, root_package)                    \
     if (config->cc_ir) {                                                      \
         /* TODO: add a linker for CC */                                       \
         root_package->compiler.ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));   \
@@ -85,7 +68,7 @@ enum LilyPackageStatus;
         root_package->compiler.linker = LILY_LINKER_KIND_LLVM;                \
     }
 
-#define SET_ROOT_PACKAGE_PROGRAM(root_package, p, lib)                \
+#define COMPILER_SET_ROOT_PACKAGE_PROGRAM(root_package, p, lib)       \
     /* Set the kind of program (static lib, dynamic lib, exe, ...) */ \
     root_package->program = p;                                        \
                                                                       \
@@ -126,23 +109,7 @@ enum LilyPackageStatus;
             UNREACHABLE("unknown variant");                           \
     }
 
-#define LOAD_ROOT_PACKAGE_RESOURCES(root_package, p)                          \
-    /* Load builtins and syss */                                              \
-    root_package->builtins = p->resources.builtins;                           \
-    root_package->syss = p->resources.syss;                                   \
-                                                                              \
-    /* Load default operators in operator register                            \
-    In a normal case where we wanted to add an operator to the register, we'd \
-    use `add_operator__LilyCheckedOperatorRegister`, but in this case it's    \
-    guaranteed that no operator repeats itself, so to increase loading speed  \
-    we'll add it directly to the vector without checking. */                  \
-    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {                     \
-        push__Vec(root_package->operator_register.operators,                  \
-                  ref__LilyCheckedOperator(                                   \
-                    root_package->program->resources.default_operators[i]));  \
-    }
-
-#define SET_ROOT_PACKAGE_USE_SWITCH(root_package)                       \
+#define COMPILER_SET_ROOT_PACKAGE_USE_SWITCH(root_package)              \
     /* Set `use_switch` on true for CC IR, CPP IR, JS IR or LLVM IR. */ \
     if (root_package->compiler.config->cc_ir ||                         \
         root_package->compiler.config->cpp_ir ||                        \

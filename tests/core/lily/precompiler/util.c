@@ -43,8 +43,8 @@
     run__LilyPreparser(&self->preparser, &self->preparser_info);           \
                                                                            \
     SET_ROOT_PACKAGE_NAME(self);                                           \
-    SET_ROOT_PACKAGE_IR(self->compiler.config, self);                      \
-    SET_ROOT_PACKAGE_PROGRAM(self, (&program), lib);                       \
+    COMPILER_SET_ROOT_PACKAGE_IR(self->compiler.config, self);             \
+    COMPILER_SET_ROOT_PACKAGE_PROGRAM(self, (&program), lib);              \
     LOAD_ROOT_PACKAGE_RESOURCES(self, (&program));                         \
                                                                            \
     run__LilyPrecompiler(&self->precompiler, self, false);

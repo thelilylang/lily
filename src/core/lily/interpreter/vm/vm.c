@@ -3274,6 +3274,13 @@ exit : {
 }
 
 void
+set_max_stack__LilyInterpreterVM(Usize max_stack)
+{
+    local_stack.max_capacity =
+      max_stack == 0 ? DEFAULT_MAX_STACK_CAPACITY : max_stack;
+}
+
+void
 run__LilyInterpreterVM(LilyInterpreterVM *self)
 {
 run_vm : {

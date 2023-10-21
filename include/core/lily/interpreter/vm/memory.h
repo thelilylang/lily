@@ -48,7 +48,9 @@ inline VARIANT_CONSTRUCTOR(LilyInterpreterMemory,
                            capacity,
                            Usize capacity)
 {
-    return (LilyInterpreterMemory){ .capacity = capacity,
+    return (LilyInterpreterMemory){ .capacity = capacity == 0
+                                                  ? __max_capacity__$Alloc()
+                                                  : capacity,
                                     .total_size = 0,
                                     .total_size_free = 0 };
 }

@@ -8375,9 +8375,19 @@ run__LilyParser(LilyParser *self, bool parse_for_macro_expand)
 
                 break;
             case LILY_PACKAGE_KIND_INTERPRETER:
-                TODO("interpreter: maybe dump parser");
+                // TODO: maybe add dump parser
+                if (false) {
+                    TODO("interpreter: maybe dump parser");
+                }
+
+                break;
             case LILY_PACKAGE_KIND_JIT:
-                TODO("interpreter: maybe dump jit");
+                // TODO: maybe add dump parser
+                if (false) {
+                    TODO("interpreter: maybe dump jit");
+                }
+
+                break;
             default:
                 UNREACHABLE("unknown variant");
         }

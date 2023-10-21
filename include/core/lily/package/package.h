@@ -34,6 +34,53 @@
 #include <core/lily/package/program.h>
 #include <core/lily/precompiler/precompiler.h>
 
+#define LOG_VERBOSE(package, msg)                                          \
+    switch (package->kind) {                                               \
+        case LILY_PACKAGE_KIND_COMPILER:                                   \
+            if (package->compiler.config->verbose) {                       \
+                printf("+ %s package %s\n",                                \
+                       package->global_name ? package->global_name->buffer \
+                                            : "(not defined)",             \
+                       msg);                                               \
+            }                                                              \
+            break;                                                         \
+        case LILY_PACKAGE_KIND_INTERPRETER:                                \
+            if (package->interpreter.config->verbose) {                    \
+                printf("+ %s package %s\n",                                \
+                       package->global_name ? package->global_name->buffer \
+                                            : "(not defined)",             \
+                       msg);                                               \
+            }                                                              \
+            break;                                                         \
+        case LILY_PACKAGE_KIND_JIT:                                        \
+            TODO("verbose: JIT");                                          \
+    }
+
+#define SET_ROOT_PACKAGE_NAME(root_package)                              \
+    if (root_package->preparser_info.package->name) {                    \
+        root_package->name = root_package->preparser_info.package->name; \
+        root_package->global_name = clone__String(root_package->name);   \
+    } else {                                                             \
+        root_package->name = from__String("main");                       \
+        root_package->global_name = from__String("main");                \
+    }
+
+#define LOAD_ROOT_PACKAGE_RESOURCES(root_package, p)                          \
+    /* Load builtins and syss */                                              \
+    root_package->builtins = p->resources.builtins;                           \
+    root_package->syss = p->resources.syss;                                   \
+                                                                              \
+    /* Load default operators in operator register                            \
+    In a normal case where we wanted to add an operator to the register, we'd \
+    use `add_operator__LilyCheckedOperatorRegister`, but in this case it's    \
+    guaranteed that no operator repeats itself, so to increase loading speed  \
+    we'll add it directly to the vector without checking. */                  \
+    for (Usize i = 0; i < DEFAULT_OPERATORS_COUNT; ++i) {                     \
+        push__Vec(root_package->operator_register.operators,                  \
+                  ref__LilyCheckedOperator(                                   \
+                    root_package->program->resources.default_operators[i]));  \
+    }
+
 enum LilyPackageStatus
 {
     LILY_PACKAGE_STATUS_LIB_MAIN,
@@ -143,7 +190,8 @@ VARIANT_CONSTRUCTOR(LilyPackage *,
                     enum LilyPackageStatus status,
                     const char *default_path,
                     const char *default_package_access,
-                    LilyPackage *root);
+                    LilyPackage *root,
+                    Vec *args);
 
 /**
  *

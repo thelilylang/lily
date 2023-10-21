@@ -179,11 +179,7 @@ inline CONSTRUCTOR(LilyInterpreterValueList,
  *
  * @brief Free LilyInterpreterValueList type.
  */
-inline DESTRUCTOR(LilyInterpreterValueList,
-                  const LilyInterpreterValueList *self)
-{
-    FREE(LilyInterpreterValueListNode, self->first);
-}
+DESTRUCTOR(LilyInterpreterValueList, const LilyInterpreterValueList *self);
 
 enum LilyInterpreterValueResultKind
 {

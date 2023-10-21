@@ -1175,28 +1175,6 @@ void
 configure_sub_package__LilyPrecompiler(
   LilyPrecompilerSubPackageWrapper *wrapper)
 {
-#define INIT_IR()                                                        \
-    switch (wrapper->root_package->compiler.ir.kind) {                   \
-        case LILY_IR_KIND_CC:                                            \
-            /* TODO: add a linker for CC */                              \
-            res->compiler.ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));   \
-            res->compiler.linker = LILY_LINKER_KIND_CC;                  \
-            break;                                                       \
-        case LILY_IR_KIND_CPP:                                           \
-            /* TODO: add a linker for CPP */                             \
-            res->compiler.ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp)); \
-            res->compiler.linker = LILY_LINKER_KIND_CPP;                 \
-            break;                                                       \
-        case LILY_IR_KIND_JS:                                            \
-            res->compiler.ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));   \
-            break;                                                       \
-        case LILY_IR_KIND_LLVM:                                          \
-            res->compiler.ir = NEW_VARIANT(                              \
-              LilyIr, llvm, NEW(LilyIrLlvm, res->global_name->buffer));  \
-            res->compiler.linker = LILY_LINKER_KIND_LLVM;                \
-            break;                                                       \
-    }
-
     Vec *split_pkg_name = split__String(wrapper->sub_package->name, '.');
 
 #ifdef LILY_WINDOWS_OS
@@ -1240,9 +1218,6 @@ configure_sub_package__LilyPrecompiler(
                                   default_path,
                                   wrapper->sub_package->global_name->buffer,
                                   wrapper->root_package);
-
-                INIT_IR();
-
                 break;
             case LILY_PACKAGE_KIND_INTERPRETER:
                 res = NEW_VARIANT(LilyPackage,
@@ -1282,9 +1257,6 @@ configure_sub_package__LilyPrecompiler(
                                   default_path,
                                   wrapper->sub_package->global_name->buffer,
                                   wrapper->root_package);
-
-                INIT_IR();
-
                 break;
             case LILY_PACKAGE_KIND_INTERPRETER:
                 res = NEW_VARIANT(LilyPackage,
@@ -1352,28 +1324,6 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
                                         const LilyPreparserSubPackage *sub_pkg,
                                         LilyPackage *root_package)
 {
-#define INIT_IR()                                                        \
-    switch (root_package->compiler.ir.kind) {                            \
-        case LILY_IR_KIND_CC:                                            \
-            /* TODO: add a linker for CC */                              \
-            res->compiler.ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));   \
-            res->compiler.linker = LILY_LINKER_KIND_CC;                  \
-            break;                                                       \
-        case LILY_IR_KIND_CPP:                                           \
-            /* TODO: add a linker for CPP */                             \
-            res->compiler.ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp)); \
-            res->compiler.linker = LILY_LINKER_KIND_CPP;                 \
-            break;                                                       \
-        case LILY_IR_KIND_JS:                                            \
-            res->compiler.ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));   \
-            break;                                                       \
-        case LILY_IR_KIND_LLVM:                                          \
-            res->compiler.ir = NEW_VARIANT(                              \
-              LilyIr, llvm, NEW(LilyIrLlvm, res->global_name->buffer));  \
-            res->compiler.linker = LILY_LINKER_KIND_LLVM;                \
-            break;                                                       \
-    }
-
     Vec *split_pkg_name = split__String(sub_pkg->name, '.');
 
 #ifdef LILY_WINDOWS_OS
@@ -1417,9 +1367,6 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
                             default_path,
                             sub_pkg->global_name->buffer,
                             root_package);
-
-                INIT_IR();
-
                 break;
             case LILY_PACKAGE_KIND_INTERPRETER:
                 NEW_VARIANT(LilyPackage,
@@ -1431,7 +1378,8 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
                             LILY_PACKAGE_STATUS_SUB_MAIN,
                             default_path,
                             sub_pkg->global_name->buffer,
-                            root_package);
+                            root_package,
+                            NULL);
 
                 break;
             case LILY_PACKAGE_KIND_JIT:
@@ -1471,9 +1419,6 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
                                   self->default_path,
                                   self->package->global_name->buffer,
                                   root_package);
-
-                INIT_IR();
-
                 break;
             case LILY_PACKAGE_KIND_INTERPRETER:
                 res = NEW_VARIANT(LilyPackage,
@@ -1485,7 +1430,10 @@ precompile_sub_package__LilyPrecompiler(const LilyPrecompiler *self,
                                   LILY_PACKAGE_STATUS_NORMAL,
                                   self->default_path,
                                   self->package->global_name->buffer,
-                                  root_package);
+                                  root_package,
+                                  NULL);
+
+                break;
             case LILY_PACKAGE_KIND_JIT:
                 TODO("JIT");
             default:

@@ -86,6 +86,11 @@ DESTRUCTOR(LilyInterpreterValueListNode, LilyInterpreterValueListNode *self)
     }
 }
 
+DESTRUCTOR(LilyInterpreterValueList, const LilyInterpreterValueList *self)
+{
+    FREE(LilyInterpreterValueListNode, self->first);
+}
+
 DESTRUCTOR(LilyInterpreterValueResult, const LilyInterpreterValueResult *self)
 {
     switch (self->kind) {
