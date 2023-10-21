@@ -70,7 +70,7 @@ impl<'a> Parser<'a> {
     fn parse_data_type(&mut self) -> DataType<'a> {
         let current = self.current();
         let res = match &current.kind {
-            keyword!(Char) => todo!("char"),
+            keyword!(Char) => DataType::new(DataTypeKind::Char, current.location.clone()),
             keyword!(Const) => {
                 self.cursor.next();
 
@@ -90,30 +90,47 @@ impl<'a> Parser<'a> {
             keyword!(Float) => DataType::new(DataTypeKind::Float, current.location.clone()),
             keyword!(Int) => DataType::new(DataTypeKind::Int, current.location.clone()),
             keyword!(Long) => {
-                self.cursor.next();
-
-                let current = self.current();
-                let mut long_data_type = match &current.kind {
-                    keyword!(Double) => {
-                        DataType::new(DataTypeKind::LongDouble, current.location.clone())
-                    }
-                    keyword!(Long) => {
-                        match &self.cursor.peek() {
-                            Some(token_ptr) => match &****token_ptr {
-                                Token {
-                                    kind: keyword!(Int),
-                                    ..
-                                } => self.cursor.next(),
-                                _ => (),
-                            },
-                            None => (),
+                let long_data_type_location = self.current().location.clone();
+                let current = self.cursor.peek();
+                let mut long_data_type = match &current {
+                    Some(token_ptr) => match &****token_ptr {
+                        Token {
+                            kind: keyword!(Double),
+                            ..
+                        } => {
+                            self.cursor.next();
+                            DataType::new(DataTypeKind::LongDouble, long_data_type_location)
                         }
+                        Token {
+                            kind: keyword!(Long),
+                            ..
+                        } => {
+                            self.cursor.next();
 
-                        DataType::new(DataTypeKind::LongLongInt, current.location.clone())
-                    }
-                    keyword!(Int) | _ => {
-                        DataType::new(DataTypeKind::LongInt, current.location.clone())
-                    }
+                            match &self.cursor.peek() {
+                                Some(token_ptr) => match &****token_ptr {
+                                    Token {
+                                        kind: keyword!(Int),
+                                        ..
+                                    } => self.cursor.next(),
+                                    _ => (),
+                                },
+                                None => (),
+                            }
+
+                            DataType::new(DataTypeKind::LongLongInt, long_data_type_location)
+                        }
+                        Token {
+                            kind: keyword!(Int),
+                            ..
+                        } => {
+                            self.cursor.next();
+
+                            DataType::new(DataTypeKind::LongInt, long_data_type_location)
+                        }
+                        _ => DataType::new(DataTypeKind::LongInt, long_data_type_location),
+                    },
+                    None => DataType::new(DataTypeKind::LongInt, long_data_type_location),
                 };
                 let current = self.current();
 
@@ -127,9 +144,107 @@ impl<'a> Parser<'a> {
             keyword!(Signed) => todo!("signed"),
             keyword!(Struct) => todo!("struct"),
             keyword!(Union) => todo!("union"),
-            keyword!(Unsigned) => todo!("unsigned"),
+            keyword!(Unsigned) => {
+                let unsigned_data_type_location = self.current().location.clone();
+                let current = self.cursor.peek();
+                let mut unsigned_data_type = match &current {
+                    Some(token_ptr) => match &****token_ptr {
+                        Token {
+                            kind: keyword!(Char),
+                            ..
+                        } => {
+                            self.cursor.next();
+                            DataType::new(DataTypeKind::UnsignedChar, unsigned_data_type_location)
+                        }
+                        Token {
+                            kind: keyword!(Short),
+                            ..
+                        } => {
+                            self.cursor.next();
+
+                            match &self.cursor.peek() {
+                                Some(token_ptr) => match &****token_ptr {
+                                    Token {
+                                        kind: keyword!(Int),
+                                        ..
+                                    } => self.cursor.next(),
+                                    _ => (),
+                                },
+                                None => (),
+                            }
+
+                            DataType::new(
+                                DataTypeKind::UnsignedShortInt,
+                                unsigned_data_type_location,
+                            )
+                        }
+                        Token {
+                            kind: keyword!(Long),
+                            ..
+                        } => {
+                            self.cursor.next();
+
+                            let mut data_type_kind = None;
+
+                            match &self.cursor.peek() {
+                                Some(token_ptr) => match &****token_ptr {
+                                    Token {
+                                        kind: keyword!(Int),
+                                        ..
+                                    } => self.cursor.next(),
+                                    Token {
+                                        kind: keyword!(Long),
+                                        ..
+                                    } => {
+                                        self.cursor.next();
+
+                                        match &self.cursor.peek() {
+                                            Some(token_ptr) => match &****token_ptr {
+                                                Token {
+                                                    kind: keyword!(Int),
+                                                    ..
+                                                } => self.cursor.next(),
+                                                _ => (),
+                                            },
+                                            None => (),
+                                        }
+
+                                        data_type_kind = Some(DataTypeKind::UnsignedLongLongInt);
+                                    }
+                                    _ => (),
+                                },
+                                None => (),
+                            }
+
+                            DataType::new(
+                                data_type_kind.unwrap_or(DataTypeKind::UnsignedLongInt),
+                                unsigned_data_type_location,
+                            )
+                        }
+                        Token {
+                            kind: keyword!(Int),
+                            ..
+                        } => {
+                            self.cursor.next();
+
+                            DataType::new(DataTypeKind::UnsignedInt, unsigned_data_type_location)
+                        }
+                        _ => DataType::new(DataTypeKind::UnsignedInt, unsigned_data_type_location),
+                    },
+                    None => DataType::new(DataTypeKind::UnsignedInt, unsigned_data_type_location),
+                };
+                let current = self.current();
+
+                unsigned_data_type
+                    .location
+                    .end(current.location.end_line, current.location.end_column);
+
+                unsigned_data_type
+            }
             keyword!(Void) => DataType::new(DataTypeKind::Void, current.location.clone()),
-            TokenKind::Identifier(_) => todo!("custom data type"),
+            TokenKind::Identifier(name) => {
+                DataType::new(DataTypeKind::Custom(name.clone()), current.location.clone())
+            }
             k => unreachable!("unexpected token: {:?}", k),
         };
 
