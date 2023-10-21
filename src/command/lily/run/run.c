@@ -25,8 +25,23 @@
 #include <command/lily/run/run.h>
 
 #include <core/lily/interpreter/package/package.h>
+#include <core/lily/package/default_path.h>
+#include <core/lily/package/package.h>
 
 void
 run__LilyRun(const LilyConfig *config)
 {
+    // Get the default path
+    char *default_path = generate_default_path((char *)config->run.filename);
+    LilyProgram program = NEW(LilyProgram, LILY_PROGRAM_KIND_EXE);
+
+    run__LilyInterpreterPackage(config,
+                                LILY_VISIBILITY_PUBLIC,
+                                LILY_PACKAGE_STATUS_MAIN,
+                                default_path,
+                                &program);
+
+    lily_free(default_path);
+
+    FREE(LilyProgram, &program);
 }
