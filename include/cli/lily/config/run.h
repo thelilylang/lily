@@ -26,11 +26,15 @@
 #define LILY_CLI_LILY_CONFIG_RUN_H
 
 #include <base/macros.h>
+#include <base/vec.h>
 
 typedef struct LilyConfigRun
 {
     const char *filename;
     bool verbose;
+    Vec *args; // Vec<char*>* (&)
+    Usize max_stack;
+    Usize max_heap;
 } LilyConfigRun;
 
 /**
@@ -40,9 +44,16 @@ typedef struct LilyConfigRun
 inline CONSTRUCTOR(LilyConfigRun,
                    LilyConfigRun,
                    const char *filename,
-                   bool verbose)
+                   bool verbose,
+                   Vec *args,
+                   Usize max_stack,
+                   Usize max_heap)
 {
-    return (LilyConfigRun){ .filename = filename, .verbose = verbose };
+    return (LilyConfigRun){ .filename = filename,
+                            .verbose = verbose,
+                            .args = args,
+                            .max_stack = max_stack,
+                            .max_heap = max_heap };
 }
 
 #endif // LILY_CLI_LILY_CONFIG_RUN_H

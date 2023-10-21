@@ -232,11 +232,27 @@ CliCommand *
 run_options__CliLily(CliCommand *cmd)
 {
     CliOption *verbose = NEW(CliOption, "--verbose");
+    CliOption *args = NEW(CliOption, "---");
+    CliOption *max_stack = NEW(CliOption, "--max-stack");
+    CliOption *max_heap = NEW(CliOption, "--max-heap");
 
     verbose->$short_name(verbose, "-v")
       ->$help(verbose, "Enable log step of the interpreter");
+    args->$value(args, NEW(CliValue, CLI_VALUE_KIND_MULTIPLE, "ARGS", false))
+      ->$help(args, "Pass argument(s) to the program");
+    max_stack
+      ->$value(max_stack,
+               NEW(CliValue, CLI_VALUE_KIND_SINGLE, "CAPACITY", false))
+      ->$help(max_stack, "Set a max stack capacity in BYTES");
+    max_heap
+      ->$value(max_heap,
+               NEW(CliValue, CLI_VALUE_KIND_SINGLE, "CAPACITY", false))
+      ->$help(max_heap, "Set a max heap capacity in BYTES");
 
-    return cmd->$option(cmd, verbose);
+    return cmd->$option(cmd, verbose)
+      ->$option(cmd, args)
+      ->$option(cmd, max_stack)
+      ->$option(cmd, max_heap);
 }
 
 CliCommand *

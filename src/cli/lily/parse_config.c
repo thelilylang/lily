@@ -23,6 +23,7 @@
  */
 
 #include <base/assert.h>
+#include <base/atoi.h>
 #include <base/cli/result.h>
 #include <base/macros.h>
 #include <base/new.h>
@@ -47,6 +48,9 @@
 
 #define RUN_V_OPTION 2
 #define RUN_VERBOSE_OPTION 3
+#define RUN_ARGS_OPTION 4
+#define RUN_MAX_STACK_OPTION 5
+#define RUN_MAX_HEAP_OPTION 6
 
 #define TO_CC_OPTION 2
 #define TO_CPP_OPTION 3
@@ -242,6 +246,8 @@ parse_run__LilyParseConfig(const Vec *results)
 {
     bool verbose = false;
     char *filename = NULL;
+    Vec *args = NULL;
+    char *max_stack = NULL, *max_heap = NULL;
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
 
@@ -261,6 +267,15 @@ parse_run__LilyParseConfig(const Vec *results)
                     case RUN_VERBOSE_OPTION:
                         verbose = true;
                         break;
+                    case RUN_ARGS_OPTION:
+                        args = current->option->value->multiple;
+                        break;
+                    case RUN_MAX_STACK_OPTION:
+                        max_stack = current->option->value->single;
+                        break;
+                    case RUN_MAX_HEAP_OPTION:
+                        max_heap = current->option->value->single;
+                        break;
                     default:
                         UNREACHABLE("unknown option");
                 }
@@ -271,7 +286,27 @@ parse_run__LilyParseConfig(const Vec *results)
         }
     }
 
-    return NEW_VARIANT(LilyConfig, run, NEW(LilyConfigRun, filename, verbose));
+    Usize max_stack_capacity = max_stack ? atoi__Usize(max_stack, 10) : 0;
+    Usize max_heap_capacity = max_heap ? atoi__Usize(max_heap, 10) : 0;
+
+    // TODO: maybe set a minimum max stack capacity
+    if ((max_stack_capacity == 0 && max_stack)) {
+        EMIT_ERROR("you cannot set the stack capacity to 0");
+    }
+
+    // TODO: maybe set a minimum max heap capacity
+    if ((max_heap_capacity == 0 && max_heap)) {
+        EMIT_ERROR("you cannot set the heap capacity to 0");
+    }
+
+    return NEW_VARIANT(LilyConfig,
+                       run,
+                       NEW(LilyConfigRun,
+                           filename,
+                           verbose,
+                           args,
+                           max_stack_capacity,
+                           max_heap_capacity));
 }
 
 LilyConfig
