@@ -339,7 +339,7 @@ set(COMMAND_LILY_SRC
     ${CMAKE_SOURCE_DIR}/src/command/lily/to/to.c)
 
 add_library(lily_command STATIC ${COMMAND_LILY_SRC})
-target_link_libraries(lily_command PUBLIC lily_base)
+target_link_libraries(lily_command PUBLIC lily_base lily_core_lily_package)
 target_include_directories(lily_command PRIVATE ${LILY_INCLUDE})
 
 # lilyc_command
@@ -472,8 +472,8 @@ add_library(lily_core_lily_interpreter_package STATIC
             ${LILY_CORE_LILY_INTERPRETER_PACKAGE_SRC})
 target_link_libraries(
   lily_core_lily_interpreter_package
-  PRIVATE lily_core_lily_mir lily_core_lily_parser lily_core_lily_precompiler
-          lily_core_lily_interpreter_vm)
+  PRIVATE lily_core_lily_mir lily_core_lily_analysis lily_core_lily_parser
+          lily_core_lily_precompiler lily_core_lily_interpreter_vm)
 target_include_directories(lily_core_lily_interpreter_package
                            PRIVATE ${LILY_INCLUDE})
 
