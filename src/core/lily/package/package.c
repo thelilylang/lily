@@ -323,6 +323,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
 
     switch (self->status) {
         case LILY_PACKAGE_STATUS_MAIN:
+        case LILY_PACKAGE_STATUS_LIB_MAIN:
             FREE(String, self->name);
             FREE(String, self->global_name);
 

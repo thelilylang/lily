@@ -1935,12 +1935,7 @@ IMPL_FOR_DEBUG(debug, LilyPreparserPackage, const LilyPreparserPackage *self)
 
 DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self)
 {
-    // NOTE: Normally the name is free into the package, except when
-    // RUN_UNTIL_PREPARSER (destroy_all is true) is defined.
-    if (self->name && destroy_all) {
-        FREE(String, self->name);
-    }
-
+    // NOTE: The name is free into the package.
     FREE_BUFFER_ITEMS(self->sub_packages->buffer,
                       self->sub_packages->len,
                       LilyPreparserSubPackage);
