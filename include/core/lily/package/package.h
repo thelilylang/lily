@@ -58,13 +58,14 @@
             UNREACHABLE("unknown variant");                                \
     }
 
-#define SET_ROOT_PACKAGE_NAME(root_package)                              \
-    if (root_package->preparser_info.package->name) {                    \
-        root_package->name = root_package->preparser_info.package->name; \
-        root_package->global_name = clone__String(root_package->name);   \
-    } else {                                                             \
-        root_package->name = from__String("main");                       \
-        root_package->global_name = from__String("main");                \
+#define SET_ROOT_PACKAGE_NAME(root_package)                            \
+    if (root_package->preparser_info.package->name) {                  \
+        root_package->name =                                           \
+          clone__String(root_package->preparser_info.package->name);   \
+        root_package->global_name = clone__String(root_package->name); \
+    } else {                                                           \
+        root_package->name = from__String("main");                     \
+        root_package->global_name = from__String("main");              \
     }
 
 #define LOAD_ROOT_PACKAGE_RESOURCES(root_package, p)                          \

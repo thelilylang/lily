@@ -330,7 +330,6 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
             break;
         case LILY_PACKAGE_STATUS_NORMAL:
         case LILY_PACKAGE_STATUS_SUB_MAIN:
-            FREE(String, self->name);
             lily_free(self->file.name);
 
             break;

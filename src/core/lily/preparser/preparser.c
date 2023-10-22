@@ -1887,6 +1887,7 @@ IMPL_FOR_DEBUG(debug,
 
 DESTRUCTOR(LilyPreparserSubPackage, LilyPreparserSubPackage *self)
 {
+    FREE(String, self->name);
     FREE(String, self->global_name);
 
     lily_free(self);
@@ -1935,7 +1936,6 @@ IMPL_FOR_DEBUG(debug, LilyPreparserPackage, const LilyPreparserPackage *self)
 
 DESTRUCTOR(LilyPreparserPackage, LilyPreparserPackage *self)
 {
-    // NOTE: The name is free into the package.
     FREE_BUFFER_ITEMS(self->sub_packages->buffer,
                       self->sub_packages->len,
                       LilyPreparserSubPackage);
