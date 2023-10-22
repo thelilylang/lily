@@ -362,4 +362,10 @@ set_max_heap__LilyInterpreterVM(LilyInterpreterVM *self, Usize max_heap)
 void
 run__LilyInterpreterVM(LilyInterpreterVM *self);
 
+/**
+ *
+ * @brief Free LilyInterpreterVM type.
+ */
+DESTRUCTOR(LilyInterpreterVM, const LilyInterpreterVM *self);
+
 #endif // LILY_CORE_LILY_INTERPRETER_VM_H

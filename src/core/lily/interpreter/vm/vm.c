@@ -3294,3 +3294,5 @@ exit_vm : {
     FREE(LilyInterpreterVMStack, &local_stack);
 }
 }
+
+DESTRUCTOR(LilyInterpreterVM, const LilyInterpreterVM *self) {}
