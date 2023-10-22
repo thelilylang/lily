@@ -43,7 +43,7 @@ run_threads__LilyInterpreterPackage(void *self);
 DESTRUCTOR(LilyInterpreterAdapter, const LilyInterpreterAdapter *self)
 {
     if (self->is_root) {
-        // FREE(LilyInterpreterVM, &self->vm);
+        FREE(LilyInterpreterVM, &self->vm);
     }
 
     if (self->lib) {
