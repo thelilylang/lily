@@ -38,10 +38,12 @@
 #define FILE_ERROR "./tests/core/lily/preparser/input/error.lily"
 
 LilyPreparserInfo
-run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)
+run_preparser(File *file,
+              LilyScanner *scanner,
+              LilyPreparser *preparser,
+              String *package_name)
 {
-    LilyPreparserInfo preparser_info =
-      NEW(LilyPreparserInfo, from__String("example"));
+    LilyPreparserInfo preparser_info = NEW(LilyPreparserInfo, package_name);
 
     run__LilyScanner(scanner, false);
     run__LilyPreparser(preparser, &preparser_info);
@@ -56,12 +58,14 @@ run_preparser(File *file, LilyScanner *scanner, LilyPreparser *preparser)
       NEW(LilyScanner, NEW(Source, NEW(Cursor, file.content), &file)); \
     LilyPreparser preparser =                                          \
       NEW(LilyPreparser, &file, scanner.tokens, "", true);             \
+    String *package_name = from__String("example");                    \
     LilyPreparserInfo preparser_info =                                 \
-      run_preparser(&file, &scanner, &preparser);
+      run_preparser(&file, &scanner, &preparser, package_name);
 
 #define FREE_PREPARSER()         \
     FREE(File, &file);           \
     FREE(LilyScanner, &scanner); \
+    FREE(String, package_name);  \
     FREE(LilyPreparserInfo, &preparser_info);
 
 #define GET_PUBLIC_IMPORT(idx) \
