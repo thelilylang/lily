@@ -54,6 +54,8 @@
             break;                                                         \
         case LILY_PACKAGE_KIND_JIT:                                        \
             TODO("verbose: JIT");                                          \
+        default:                                                           \
+            UNREACHABLE("unknown variant");                                \
     }
 
 #define SET_ROOT_PACKAGE_NAME(root_package)                              \
@@ -190,8 +192,7 @@ VARIANT_CONSTRUCTOR(LilyPackage *,
                     enum LilyPackageStatus status,
                     const char *default_path,
                     const char *default_package_access,
-                    LilyPackage *root,
-                    Vec *args);
+                    LilyPackage *root);
 
 /**
  *

@@ -48,12 +48,6 @@
 static threadlocal pthread_t *package_threads;
 static pthread_mutex_t package_thread_mutex;
 
-typedef struct LilyCompilerThreadWrapper
-{
-    LilyPackageDependencyTree *tree;
-    LilyPackage *root;
-} LilyCompilerThreadWrapper;
-
 #define LOG_VERBOSE_SUCCESSFUL_COMPILATION(package)        \
     if (package->compiler.config->verbose) {               \
         printf("\x1b[32msuccessful compilation\x1b[0m\n"); \
@@ -81,7 +75,8 @@ DESTRUCTOR(LilyCompilerAdapter, const LilyCompilerAdapter *self)
 }
 
 LilyPackage *
-build__LilyCompilerPackage(const LilycConfig *config,
+build__LilyCompilerPackage(const LilyPackageCompilerConfig *config,
+                           const char *filename,
                            enum LilyVisibility visibility,
                            enum LilyPackageStatus status,
                            const char *default_path,
@@ -93,16 +88,13 @@ build__LilyCompilerPackage(const LilycConfig *config,
                                     NULL,
                                     NULL,
                                     visibility,
-                                    (char *)config->filename,
+                                    (char *)filename,
                                     status,
                                     default_path,
                                     NULL,
                                     NULL);
 
-    LilyPackageCompilerConfig pkg_config =
-      from_CompileConfig__LilyPackageCompilerConfig(config);
-
-    self->compiler.config = &pkg_config;
+    self->compiler.config = config;
 
     LOG_VERBOSE(self, "running");
     LOG_VERBOSE(self, "running scanner");
@@ -155,15 +147,11 @@ build__LilyCompilerPackage(const LilycConfig *config,
     ASSERT(!pthread_mutex_init(&package_thread_mutex, NULL));
 
     for (Usize i = 0; i < self->precompiler.dependency_trees->len; ++i) {
-        LilyCompilerThreadWrapper wrapper = {
-            .tree = get__Vec(self->precompiler.dependency_trees, i),
-            .root = self
-        };
-
-        ASSERT(!pthread_create(&package_threads[i],
-                               NULL,
-                               &run_threads__LilyCompilerPackage,
-                               &wrapper));
+        ASSERT(
+          !pthread_create(&package_threads[i],
+                          NULL,
+                          &run_threads__LilyCompilerPackage,
+                          get__Vec(self->precompiler.dependency_trees, i)));
     }
 
     for (Usize i = 0; i < self->precompiler.dependency_trees->len; ++i) {
@@ -186,46 +174,26 @@ build_lib__LilyCompilerPackage(const LilycConfig *config,
                                String *url,
                                String *path)
 {
+    LilyPackageCompilerConfig compiler_config =
+      from_CompileConfig__LilyPackageCompilerConfig(config);
     LilyLibrary *lib = NEW(LilyLibrary, version, url, path, NULL);
 
-    return build__LilyCompilerPackage(
-             config, visibility, status, default_path, program, lib)
+    return build__LilyCompilerPackage(&compiler_config,
+                                      config->filename,
+                                      visibility,
+                                      status,
+                                      default_path,
+                                      program,
+                                      lib)
       ->compiler.lib;
 }
 
 static void *
 run_threads__LilyCompilerPackage(void *self)
 {
-#define INIT_IR(pkg, root)                                               \
-    switch (root->compiler.ir.kind) {                                    \
-        case LILY_IR_KIND_CC:                                            \
-            /* TODO: add a linker for CC */                              \
-            pkg->compiler.ir = NEW_VARIANT(LilyIr, cc, NEW(LilyIrCc));   \
-            pkg->compiler.linker = LILY_LINKER_KIND_CC;                  \
-            break;                                                       \
-        case LILY_IR_KIND_CPP:                                           \
-            /* TODO: add a linker for CPP */                             \
-            pkg->compiler.ir = NEW_VARIANT(LilyIr, cpp, NEW(LilyIrCpp)); \
-            pkg->compiler.linker = LILY_LINKER_KIND_CPP;                 \
-            break;                                                       \
-        case LILY_IR_KIND_JS:                                            \
-            pkg->compiler.ir = NEW_VARIANT(LilyIr, js, NEW(LilyIrJs));   \
-            break;                                                       \
-        case LILY_IR_KIND_LLVM:                                          \
-            pkg->compiler.ir = NEW_VARIANT(                              \
-              LilyIr, llvm, NEW(LilyIrLlvm, pkg->global_name->buffer));  \
-            pkg->compiler.linker = LILY_LINKER_KIND_LLVM;                \
-            break;                                                       \
-        default:                                                         \
-            UNREACHABLE("unknown variant");                              \
-    }
-
     pthread_mutex_lock(&package_thread_mutex);
 
-    LilyCompilerThreadWrapper *wrapper = self;
-    LilyPackageDependencyTree *tree = wrapper->tree;
-
-    INIT_IR(tree->package, wrapper->root);
+    LilyPackageDependencyTree *tree = self;
 
     if (tree->dependencies) {
         for (Usize i = 0; i < tree->dependencies->len; ++i) {
@@ -299,8 +267,15 @@ compile__LilyCompilerPackage(const LilycConfig *config,
                              const char *default_path,
                              const LilyProgram *program)
 {
-    LilyPackage *package = build__LilyCompilerPackage(
-      config, visibility, status, default_path, program, NULL);
+    LilyPackageCompilerConfig compiler_config =
+      from_CompileConfig__LilyPackageCompilerConfig(config);
+    LilyPackage *package = build__LilyCompilerPackage(&compiler_config,
+                                                      config->filename,
+                                                      visibility,
+                                                      status,
+                                                      default_path,
+                                                      program,
+                                                      NULL);
 
     ASSERT(package->status == LILY_PACKAGE_STATUS_MAIN && package->is_exe);
 

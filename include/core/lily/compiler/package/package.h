@@ -162,7 +162,8 @@ DESTRUCTOR(LilyCompilerAdapter, const LilyCompilerAdapter *self);
  * @return LilyPackage*?
  */
 LilyPackage *
-build__LilyCompilerPackage(const LilycConfig *config,
+build__LilyCompilerPackage(const LilyPackageCompilerConfig *config,
+                           const char *filename,
                            enum LilyVisibility visibility,
                            enum LilyPackageStatus status,
                            const char *default_path,

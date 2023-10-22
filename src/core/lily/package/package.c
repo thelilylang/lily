@@ -189,8 +189,7 @@ VARIANT_CONSTRUCTOR(LilyPackage *,
                     enum LilyPackageStatus status,
                     const char *default_path,
                     const char *default_package_access,
-                    LilyPackage *root,
-                    Vec *args)
+                    LilyPackage *root)
 {
     LilyPackage *self = NEW(LilyPackage,
                             name,
@@ -203,7 +202,8 @@ VARIANT_CONSTRUCTOR(LilyPackage *,
                             root);
 
     self->kind = LILY_PACKAGE_KIND_INTERPRETER;
-    self->interpreter = NEW(LilyInterpreterAdapter, NULL, true);
+    self->interpreter =
+      NEW(LilyInterpreterAdapter, root ? root->interpreter.config : NULL, root);
 
     return self;
 }
@@ -329,6 +329,7 @@ DESTRUCTOR(LilyPackage, LilyPackage *self)
             break;
         case LILY_PACKAGE_STATUS_NORMAL:
         case LILY_PACKAGE_STATUS_SUB_MAIN:
+            FREE(String, self->name);
             lily_free(self->file.name);
 
             break;

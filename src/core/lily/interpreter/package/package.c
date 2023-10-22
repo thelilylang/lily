@@ -52,7 +52,8 @@ DESTRUCTOR(LilyInterpreterAdapter, const LilyInterpreterAdapter *self)
 }
 
 LilyPackage *
-build__LilyInterpreterPackage(const LilyConfig *config,
+build__LilyInterpreterPackage(const LilyPackageInterpreterConfig *config,
+                              const char *filename,
                               enum LilyVisibility visibility,
                               enum LilyPackageStatus status,
                               const char *default_path,
@@ -64,17 +65,13 @@ build__LilyInterpreterPackage(const LilyConfig *config,
                                     NULL,
                                     NULL,
                                     visibility,
-                                    (char *)config->run.filename,
+                                    (char *)filename,
                                     status,
                                     default_path,
                                     NULL,
-                                    NULL,
-                                    config->run.args);
+                                    NULL);
 
-    LilyPackageInterpreterConfig pkg_config =
-      from_RunConfig__LilyPackageInterpreterConfig(config);
-
-    self->interpreter.config = &pkg_config;
+    self->interpreter.config = config;
 
     LOG_VERBOSE(self, "running");
     LOG_VERBOSE(self, "running scanner");
@@ -120,13 +117,12 @@ build__LilyInterpreterPackage(const LilyConfig *config,
     pthread_mutex_destroy(&package_thread_mutex);
 
     // TODO: set check overflow
-    self->interpreter.vm =
-      NEW(LilyInterpreterVM,
-          config->run.max_heap,
-          config->run.max_stack,
-          &self->mir_module,
-          NEW(LilyInterpreterVMResources, config->run.args),
-          false);
+    self->interpreter.vm = NEW(LilyInterpreterVM,
+                               config->max_heap,
+                               config->max_stack,
+                               &self->mir_module,
+                               NEW(LilyInterpreterVMResources, config->args),
+                               false);
 
     return self;
 }
@@ -215,8 +211,15 @@ run__LilyInterpreterPackage(const LilyConfig *config,
                             const char *default_path,
                             const LilyProgram *program)
 {
-    LilyPackage *package = build__LilyInterpreterPackage(
-      config, visibility, status, default_path, program, NULL);
+    LilyPackageInterpreterConfig interpreter_config =
+      from_RunConfig__LilyPackageInterpreterConfig(config);
+    LilyPackage *package = build__LilyInterpreterPackage(&interpreter_config,
+                                                         config->run.filename,
+                                                         visibility,
+                                                         status,
+                                                         default_path,
+                                                         program,
+                                                         NULL);
 
     if (!package) {
         return;

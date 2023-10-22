@@ -91,7 +91,8 @@ DESTRUCTOR(LilyInterpreterAdapter, const LilyInterpreterAdapter *self);
  * @return LilyPackage*?
  */
 LilyPackage *
-build__LilyInterpreterPackage(const LilyConfig *config,
+build__LilyInterpreterPackage(const LilyPackageInterpreterConfig *config,
+                              const char *filename,
                               enum LilyVisibility visibility,
                               enum LilyPackageStatus status,
                               const char *default_path,
