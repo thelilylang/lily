@@ -33,6 +33,8 @@
 #include <command/lily/compile.h>
 #include <command/lily/run.h>
 
+#include <llvm-c/Core.h>
+
 #include <stdio.h>
 
 int
@@ -76,6 +78,8 @@ main(int argc, char **argv)
     }
 
     FREE(Vec, args);
+
+    LLVMShutdown();
 
     return 0;
 }
