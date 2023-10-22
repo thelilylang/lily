@@ -227,6 +227,8 @@ run__LilyInterpreterPackage(const LilyConfig *config,
 
     // Run interpreter
 
+    run__LilyInterpreterVM(&package->interpreter.vm);
+
     // Clean up
 
     FREE(LilyPackage, package);
