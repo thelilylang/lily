@@ -32,7 +32,10 @@
 
 typedef struct LilyPackageInterpreterConfig
 {
+    Vec *args;
     bool verbose;
+    Usize max_heap;
+    Usize max_stack;
 } LilyPackageInterpreterConfig;
 
 /**
@@ -41,9 +44,15 @@ typedef struct LilyPackageInterpreterConfig
  */
 inline CONSTRUCTOR(LilyPackageInterpreterConfig,
                    LilyPackageInterpreterConfig,
-                   bool verbose)
+                   Vec *args,
+                   bool verbose,
+                   Usize max_heap,
+                   Usize max_stack)
 {
-    return (LilyPackageInterpreterConfig){ .verbose = verbose };
+    return (LilyPackageInterpreterConfig){ .args = args,
+                                           .verbose = verbose,
+                                           .max_heap = max_heap,
+                                           .max_stack = max_stack };
 }
 
 /**
@@ -53,7 +62,9 @@ inline CONSTRUCTOR(LilyPackageInterpreterConfig,
 inline LilyPackageInterpreterConfig
 default__LilyPackageInterpreterConfig()
 {
-    return (LilyPackageInterpreterConfig){ .verbose = false };
+    return (LilyPackageInterpreterConfig){
+        .args = NULL, .verbose = false, .max_heap = 0, .max_stack = 0
+    };
 }
 
 /**

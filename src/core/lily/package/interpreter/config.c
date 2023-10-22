@@ -34,5 +34,9 @@ from_RunConfig__LilyPackageInterpreterConfig(const LilyConfig *lily_config)
 {
     ASSERT(lily_config->kind == LILY_CONFIG_KIND_RUN);
 
-    return NEW(LilyPackageInterpreterConfig, lily_config->run.verbose);
+    return NEW(LilyPackageInterpreterConfig,
+               lily_config->run.args,
+               lily_config->run.verbose,
+               lily_config->run.max_heap,
+               lily_config->run.max_stack);
 }
