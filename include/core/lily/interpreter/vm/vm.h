@@ -101,6 +101,8 @@ typedef struct LilyInterpreterVMStackBlockFrame
     Usize begin;   // index of the begin of the stack frame on the stack buffer
     Usize end;     // index of the end of the stack frame on the stack buffer, 0
                    // mean no next block stack frame
+    struct LilyInterpreterVMStackBlockFrame
+      *parent; // LilyInterpreterVMStackBlockFrame*? (&)
 } LilyInterpreterVMStackBlockFrame;
 
 /**
@@ -146,7 +148,8 @@ search_reg__LilyInterpreterVMStackBlockFrame(
 
 /**
  *
- * @brief Search variable and return the associated value.
+ * @brief Search variable (in the block frame) and return the associated value.
+ * @note This function cannot find global variables, only local ones.
  */
 LilyInterpreterValue *
 search_variable__LilyInterpreterVMStackBlockFrame(

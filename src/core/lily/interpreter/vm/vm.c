@@ -130,6 +130,7 @@ CONSTRUCTOR(LilyInterpreterVMStackBlockFrame *,
     self->regs = NEW(HashMap);
     self->begin = begin;
     self->end = end;
+    self->parent = NULL;
 
     return self;
 }
@@ -173,11 +174,23 @@ search_variable__LilyInterpreterVMStackBlockFrame(
 {
     LilyInterpreterValue *var_value = get__HashMap(self->variables, name);
 
-#ifdef LILY_FULL_ASSERT_VM
-    ASSERT(var_value);
-#endif
+    if (var_value) {
+        return ref__LilyInterpreterValue(var_value);
+    }
 
-    return ref__LilyInterpreterValue(var_value);
+#ifdef LILY_FULL_ASSERT_VM
+    if (self->parent) {
+        return search_variable__LilyInterpreterVMStackBlockFrame(self->parent,
+                                                                 name);
+    }
+
+    UNREACHABLE("the parent is NULL, the variable is not found");
+#else
+    // NOTE: Technically, the function cannot return NULL.
+    return self->parent ? search_variable__LilyInterpreterVMStackBlockFrame(
+                            self->parent, name)
+                        : NULL;
+#endif
 }
 
 DESTRUCTOR(LilyInterpreterVMStackBlockFrame,
@@ -232,16 +245,10 @@ add_block_frame__LilyInterpreterVMStackFrame(LilyInterpreterVMStackFrame *self,
 {
     LilyInterpreterVMStackBlockFrame **current =
       &self->block_frames[current_block_frame_limit_id];
-
     // Set end value to the last current block frame.
-    {
-        LilyInterpreterVMStackBlockFrame *last =
-          self->block_frames[self->current_block_frame_limit_id];
-
-        if (last) {
-            last->end = begin;
-        }
-    }
+    // Set a parent (last) value to the current block frame.
+    LilyInterpreterVMStackBlockFrame *last =
+      self->block_frames[self->current_block_frame_limit_id];
 
     if (!(*current)) {
         // Set a new block frame.
@@ -250,6 +257,11 @@ add_block_frame__LilyInterpreterVMStackFrame(LilyInterpreterVMStackFrame *self,
         // Add name to the already created block frame.
         add_name__LilyInterpreterVMStackBlockFrame(*current, name);
         (*current)->end = 0;
+    }
+
+    if (last && last != *current) {
+        last->end = begin;
+        (*current)->parent = last;
     }
 
     self->current_block_frame_limit_id = current_block_frame_limit_id;
@@ -3269,9 +3281,30 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     {
         push_value__LilyInterpreterVM(self, current_block_inst->store.src);
 
-        LilyInterpreterValue *value = VM_POP(stack);
+        LilyInterpreterValue *src_value = VM_POP(stack);
+        LilyInterpreterValue *dest_value = NULL;
 
-        TODO("store: search variable");
+        switch (current_block_inst->store.dest->kind) {
+            case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
+                dest_value = search_variable__LilyInterpreterVMStackBlockFrame(
+                  current_block_frame,
+                  (char *)current_block_inst->store.dest->var);
+                break;
+            default:
+                UNREACHABLE("expected a valid destination value, like var");
+        }
+
+#ifdef LILY_FULL_ASSERT_VM
+        ASSERT(dest_value);
+#endif
+
+        store__LilyInterpreterValue(dest_value, src_value);
+
+        // NOTE: Decrement the ref_count of the destination value.
+        FREE(LilyInterpreterValue, &dest_value);
+        FREE(LilyInterpreterValue, &src_value);
+
+        EAT_NEXT_LABEL();
     }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_STRUCT) {}
