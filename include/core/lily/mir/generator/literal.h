@@ -44,7 +44,7 @@
                                v->literal.bytes);                          \
         case LILY_CHECKED_##name_u##_LITERAL_KIND_CHAR:                    \
             return NEW_VARIANT(LilyMirInstructionVal,                      \
-                               int,                                        \
+                               uint,                                       \
                                generate_dt__LilyMir(module, v->data_type), \
                                v->literal.char_);                          \
         case LILY_CHECKED_##name_u##_LITERAL_KIND_CSTR:                    \
