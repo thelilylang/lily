@@ -639,6 +639,15 @@ ref__LilyInterpreterValue(LilyInterpreterValue *self)
 
 /**
  *
+ * @brief Store src to self.
+ * @param self dest
+ */
+void
+store__LilyInterpreterValue(LilyInterpreterValue *self,
+                            LilyInterpreterValue *src);
+
+/**
+ *
  * @brief Free LilyInterpreterValue type.
  */
 DESTRUCTOR(LilyInterpreterValue, LilyInterpreterValue **self);

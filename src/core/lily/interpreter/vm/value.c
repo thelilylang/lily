@@ -349,6 +349,60 @@ CONSTRUCTOR(LilyInterpreterValue *,
     return self;
 }
 
+void
+store__LilyInterpreterValue(LilyInterpreterValue *self,
+                            LilyInterpreterValue *src)
+{
+    self->kind = src->kind;
+
+    switch (self->kind) {
+        case LILY_INTERPRETER_VALUE_KIND_FALSE:
+        case LILY_INTERPRETER_VALUE_KIND_TRUE:
+        case LILY_INTERPRETER_VALUE_KIND_NIL:
+        case LILY_INTERPRETER_VALUE_KIND_UNDEF:
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_INT8:
+            self->int8 = src->int8;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_INT16:
+            self->int16 = src->int16;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_INT32:
+            self->int32 = src->int32;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_INT64:
+            self->int64 = src->int64;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_ISIZE:
+            self->isize = src->isize;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_FLOAT:
+            self->float_ = src->float_;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_OBJECT:
+            TODO("object");
+        case LILY_INTERPRETER_VALUE_KIND_UINT8:
+            self->uint8 = src->uint8;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_UINT16:
+            self->uint16 = src->uint16;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_UINT32:
+            self->uint32 = src->uint32;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_UINT64:
+            self->uint64 = src->uint64;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_USIZE:
+            self->usize = src->usize;
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_UNIT:
+            UNREACHABLE("you cannot store a unit value");
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 DESTRUCTOR(LilyInterpreterValue, LilyInterpreterValue **self)
 {
     if ((*self)->ref_count > 0) {
