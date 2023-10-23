@@ -134,6 +134,21 @@ CONSTRUCTOR(LilyInterpreterVMStackBlockFrame *,
     return self;
 }
 
+void
+add_variable__LilyInterpreterVMStackBlockFrame(
+  const LilyInterpreterVMStackBlockFrame *self,
+  char *name,
+  LilyInterpreterValue *value)
+{
+#ifdef LILY_FULL_ASSERT_VM
+    LilyInterpreterValue *duplicate_value =
+      insert__HashMap(self->variables, name, value);
+    ASSERT(!duplicate_value);
+#else
+    insert__HashMap(self->variables, name, value);
+#endif
+}
+
 LilyInterpreterValue *
 search_reg__LilyInterpreterVMStackBlockFrame(
   const LilyInterpreterVMStackBlockFrame *self,
@@ -195,6 +210,7 @@ CONSTRUCTOR(LilyInterpreterVMStackFrame *,
     self->end = 0;
     self->current_block_frame_limit_id = current_block_frame_limit_id;
     self->block_frames = calloc(block_frames_len, PTR_SIZE);
+    self->block_frames_len = block_frames_len;
     self->next = NULL;
 
     return self;
@@ -214,22 +230,30 @@ add_block_frame__LilyInterpreterVMStackFrame(LilyInterpreterVMStackFrame *self,
                                              char *name,
                                              Usize begin)
 {
-    LilyInterpreterVMStackBlockFrame **block_frame =
+    LilyInterpreterVMStackBlockFrame **current =
       &self->block_frames[current_block_frame_limit_id];
 
     // Set end value to the last current block frame.
-    self->block_frames[self->current_block_frame_limit_id]->end = begin;
+    {
+        LilyInterpreterVMStackBlockFrame *last =
+          self->block_frames[self->current_block_frame_limit_id];
 
-    if (!(*block_frame)) {
+        if (last) {
+            last->end = begin;
+        }
+    }
+
+    if (!(*current)) {
         // Set a new block frame.
-        *block_frame = NEW(LilyInterpreterVMStackBlockFrame, name, begin, 0);
+        *current = NEW(LilyInterpreterVMStackBlockFrame, name, begin, 0);
     } else {
         // Add name to the already created block frame.
-        add_name__LilyInterpreterVMStackBlockFrame(*block_frame, name);
-        (*block_frame)->end = 0;
+        add_name__LilyInterpreterVMStackBlockFrame(*current, name);
+        (*current)->end = 0;
     }
 
     self->current_block_frame_limit_id = current_block_frame_limit_id;
+    current_block_frame = *current;
 }
 
 LilyInterpreterVMStackFrame *
@@ -336,6 +360,7 @@ set_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
 {
     ASSERT(!self->current_frame);
     self->current_frame = frame;
+    current_frame = self->current_frame;
 }
 
 void
@@ -346,13 +371,16 @@ clean_block_stack__LilyInterpreterVMStack(LilyInterpreterVMStack *self)
 
     // NOTE: No block frame in front of it is expected.
 #ifdef LILY_FULL_ASSERT_VM
+    ASSERT(current_block_frame);
     ASSERT(current_block_frame->end == 0);
 #endif
 
-    while (self->len >= current_block_frame->begin - 1) {
-        LilyInterpreterValue *value = VM_POP(self);
+    if (current_block_frame->begin > 0) {
+        while (self->len >= current_block_frame->begin - 1) {
+            LilyInterpreterValue *value = VM_POP(self);
 
-        FREE(LilyInterpreterValue, &value);
+            FREE(LilyInterpreterValue, &value);
+        }
     }
 }
 
@@ -418,9 +446,13 @@ CONSTRUCTOR(LilyInterpreterVM,
                                           local_stack.len,
                                           current_block->limit->id,
                                           entry_point->fun.insts->len));
+    add_block_frame__LilyInterpreterVMStackFrame(current_frame,
+                                                 current_block->limit->id,
+                                                 (char *)current_block->name,
+                                                 local_stack.len);
 
-    current_frame = local_stack.current_frame;
-
+    ASSERT(current_frame);
+    ASSERT(current_block_frame);
     ASSERT(current_block);
     ASSERT(current_block_inst);
 
@@ -3248,7 +3280,23 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         EAT_NEXT_LABEL();
     }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_VAR) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_VAR)
+    {
+        char *name = current_block_inst->var.name;
+
+        SET_NEXT_LABEL(var_finish);
+
+        VM_SET_CURRENT_BLOCK_INST(current_block_inst->var.inst);
+        VM_GOTO_INST(current_block_inst);
+
+    var_finish : {
+        LilyInterpreterValue *value = VM_POP(stack);
+
+        add_variable__LilyInterpreterVMStackBlockFrame(
+          current_block_frame, name, value);
+        EAT_NEXT_LABEL();
+    }
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_XOR) {}
 

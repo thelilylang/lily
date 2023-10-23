@@ -127,6 +127,16 @@ add_name__LilyInterpreterVMStackBlockFrame(
 
 /**
  *
+ * @brief Add variable.
+ */
+void
+add_variable__LilyInterpreterVMStackBlockFrame(
+  const LilyInterpreterVMStackBlockFrame *self,
+  char *name,
+  LilyInterpreterValue *value);
+
+/**
+ *
  * @brief Search reg and return the associated value.
  */
 LilyInterpreterValue *
