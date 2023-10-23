@@ -209,7 +209,7 @@ CONSTRUCTOR(LilyInterpreterVMStackFrame *,
     self->begin = begin;
     self->end = 0;
     self->current_block_frame_limit_id = current_block_frame_limit_id;
-    self->block_frames = calloc(block_frames_len, PTR_SIZE);
+    self->block_frames = lily_calloc(block_frames_len, PTR_SIZE);
     self->block_frames_len = block_frames_len;
     self->next = NULL;
 
@@ -966,7 +966,14 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_START(current_block_inst);
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ALLOC) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ALLOC)
+    {
+        // NOTE: The `alloc` instruction is not used when executing a basic
+        // interpreter. But if we add an option to calculate the stack usage for
+        // each function or something like that, in that case the alloc
+        // instruction could be used.
+        EAT_NEXT_LABEL();
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_ARG) {}
 
@@ -3258,7 +3265,14 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_SHR) {}
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_STORE) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_STORE)
+    {
+        push_value__LilyInterpreterVM(self, current_block_inst->store.src);
+
+        LilyInterpreterValue *value = VM_POP(stack);
+
+        TODO("store: search variable");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_STRUCT) {}
 
@@ -3290,10 +3304,10 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         VM_GOTO_INST(current_block_inst);
 
     var_finish : {
-        LilyInterpreterValue *value = VM_POP(stack);
-
         add_variable__LilyInterpreterVMStackBlockFrame(
-          current_block_frame, name, value);
+          current_block_frame,
+          name,
+          NEW(LilyInterpreterValue, LILY_INTERPRETER_VALUE_KIND_UNDEF));
         EAT_NEXT_LABEL();
     }
     }
