@@ -3349,7 +3349,27 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_SWITCH) {}
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_SYS_CALL) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_SYS_CALL)
+    {
+        for (Usize i = 0; i < current_block_inst->sys_call.params->len; ++i) {
+            push_value__LilyInterpreterVM(
+              self, get__Vec(current_block_inst->sys_call.params, i));
+        }
+
+        // TODO: maybe optimized that, replace sys call name by an id, or
+        // something like that
+        if (!strcmp(current_block_inst->sys_call.name, "__sys__$write")) {
+            LilyInterpreterValue *n = VM_POP(stack);
+            LilyInterpreterValue *buf = VM_POP(stack);
+            LilyInterpreterValue *fd = VM_POP(stack);
+
+            VM_PUSH(stack, write__LilyInterpreterVMRuntimeSys(fd, buf, n));
+        } else {
+            TODO("sys call");
+        }
+
+        EAT_NEXT_LABEL();
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_TRUNC) {}
 
