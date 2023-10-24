@@ -202,8 +202,8 @@ VARIANT_CONSTRUCTOR(LilyPackage *,
                             root);
 
     self->kind = LILY_PACKAGE_KIND_INTERPRETER;
-    self->interpreter =
-      NEW(LilyInterpreterAdapter, root ? root->interpreter.config : NULL, root);
+    self->interpreter = NEW(
+      LilyInterpreterAdapter, root ? root->interpreter.config : NULL, !root);
 
     return self;
 }
