@@ -489,7 +489,8 @@ set(LILY_CORE_LILY_INTERPRETER_VM_SRC
 
 add_library(lily_core_lily_interpreter_vm STATIC
             ${LILY_CORE_LILY_INTERPRETER_VM_SRC})
-target_link_libraries(lily_core_lily_interpreter_vm PUBLIC lily_base)
+target_link_libraries(lily_core_lily_interpreter_vm PUBLIC lily_base lily_sys
+                                                           lily_builtin)
 target_include_directories(lily_core_lily_interpreter_vm
                            PRIVATE ${LILY_INCLUDE})
 
