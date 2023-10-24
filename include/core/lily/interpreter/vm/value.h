@@ -40,7 +40,7 @@ typedef struct LilyInterpreterValue LilyInterpreterValue;
 
 typedef struct LilyInterpreterValueDynamicArray
 {
-    LilyInterpreterValue *buffer;
+    LilyInterpreterValue **buffer;
     Usize len;
 } LilyInterpreterValueDynamicArray;
 
@@ -57,9 +57,21 @@ inline CONSTRUCTOR(LilyInterpreterValueDynamicArray,
     };
 }
 
+/**
+ *
+ * @brief Get element at n from the dynamic array.
+ */
+inline LilyInterpreterValue *
+get__LilyInterpreterValueDynamicArray(
+  const LilyInterpreterValueDynamicArray *self,
+  Usize n)
+{
+    return self->buffer[n];
+}
+
 typedef struct LilyInterpreterValueMultiPointersArray
 {
-    LilyInterpreterValue *buffer;
+    LilyInterpreterValue **buffer;
     Usize len;
 } LilyInterpreterValueMultiPointersArray;
 
@@ -73,9 +85,21 @@ inline CONSTRUCTOR(LilyInterpreterValueMultiPointersArray,
     return (LilyInterpreterValueMultiPointersArray){ .buffer = NULL, .len = 0 };
 }
 
+/**
+ *
+ * @brief Get element at n from the multi pointers array.
+ */
+inline LilyInterpreterValue *
+get__LilyInterpreterValueMultiPointersArray(
+  const LilyInterpreterValueMultiPointersArray *self,
+  Usize n)
+{
+    return self->buffer[n];
+}
+
 typedef struct LilyInterpreterValueSizedArray
 {
-    const LilyInterpreterValue *buffer;
+    LilyInterpreterValue **buffer;
     Usize len;
 } LilyInterpreterValueSizedArray;
 
@@ -85,10 +109,21 @@ typedef struct LilyInterpreterValueSizedArray
  */
 inline CONSTRUCTOR(LilyInterpreterValueSizedArray,
                    LilyInterpreterValueSizedArray,
-                   const LilyInterpreterValue *buffer,
+                   LilyInterpreterValue **buffer,
                    Usize len)
 {
     return (LilyInterpreterValueSizedArray){ .buffer = buffer, .len = len };
+}
+
+/**
+ *
+ * @brief Get element at n from the sized array.
+ */
+inline LilyInterpreterValue *
+get__LilyInterpreterValueSizedArray(const LilyInterpreterValueSizedArray *self,
+                                    Usize n)
+{
+    return self->buffer[n];
 }
 
 typedef struct LilyInterpreterValueBytes
@@ -107,6 +142,16 @@ inline CONSTRUCTOR(LilyInterpreterValueBytes,
                    Usize len)
 {
     return (LilyInterpreterValueBytes){ .buffer = buffer, .len = len };
+}
+
+/**
+ *
+ * @brief Get element at n from the bytes.
+ */
+inline Uint8
+get__LilyInterpreterValueBytes(const LilyInterpreterValueBytes *self, Usize n)
+{
+    return self->buffer[n];
 }
 
 typedef struct LilyInterpreterValueInstance
@@ -251,6 +296,16 @@ inline CONSTRUCTOR(LilyInterpreterValueStr,
     return (LilyInterpreterValueStr){ .s = s, .len = len };
 }
 
+/**
+ *
+ * @brief Get element at n from the str.
+ */
+inline char
+get__LilyInterpreterValueStr(const LilyInterpreterValueStr *self, Usize n)
+{
+    return self->s[n];
+}
+
 typedef struct LilyInterpreterValueStruct
 {
     LilyInterpreterValue *values[MAX_RECORD_FIELDS];
@@ -265,6 +320,16 @@ CONSTRUCTOR(LilyInterpreterValueStruct,
             LilyInterpreterValueStruct,
             LilyInterpreterValue **values,
             Usize len);
+
+/**
+ *
+ * @brief Get field at n from the struct.
+ */
+inline LilyInterpreterValue *
+get__LilyInterpreterValueStruct(const LilyInterpreterValueStruct *self, Usize n)
+{
+    return self->values[n];
+}
 
 /**
  *
@@ -477,6 +542,7 @@ enum LilyInterpreterValueKind
     LILY_INTERPRETER_VALUE_KIND_FLOAT,
     LILY_INTERPRETER_VALUE_KIND_NIL,
     LILY_INTERPRETER_VALUE_KIND_OBJECT,
+    LILY_INTERPRETER_VALUE_KIND_PTR,
     LILY_INTERPRETER_VALUE_KIND_UNDEF,
     LILY_INTERPRETER_VALUE_KIND_UINT8,
     LILY_INTERPRETER_VALUE_KIND_UINT16,
@@ -499,6 +565,7 @@ struct LilyInterpreterValue
         Isize isize;
         Float64 float_;
         LilyInterpreterValueObject object;
+        void *ptr;
         Uint8 uint8;
         Uint16 uint16;
         Uint32 uint32;
@@ -569,6 +636,15 @@ VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
                     LilyInterpreterValue,
                     object,
                     LilyInterpreterValueObject object);
+
+/**
+ *
+ * @brief Construct LilyInterpreterValue (LILY_INTERPRETER_VALUE_KIND_PTR).
+ */
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
+                    ptr,
+                    void *ptr);
 
 /**
  *

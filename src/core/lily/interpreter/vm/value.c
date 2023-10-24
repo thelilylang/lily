@@ -269,6 +269,20 @@ VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
 
 VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
                     LilyInterpreterValue,
+                    ptr,
+                    void *ptr)
+{
+    LilyInterpreterValue *self = lily_malloc(sizeof(LilyInterpreterValue));
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_PTR;
+    self->ref_count = 0;
+    self->ptr = ptr;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(LilyInterpreterValue *,
+                    LilyInterpreterValue,
                     uint8,
                     Uint8 uint8)
 {
@@ -381,6 +395,9 @@ store__LilyInterpreterValue(LilyInterpreterValue *self,
             break;
         case LILY_INTERPRETER_VALUE_KIND_OBJECT:
             TODO("object");
+        case LILY_INTERPRETER_VALUE_KIND_PTR:
+            self->ptr = src->ptr;
+            break;
         case LILY_INTERPRETER_VALUE_KIND_UINT8:
             self->uint8 = src->uint8;
             break;
