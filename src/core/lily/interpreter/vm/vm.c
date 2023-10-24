@@ -952,7 +952,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
 #ifdef LILY_USE_COMPUTED_GOTOS
 #define INT_INST_LOOKUP(inst)                                            \
-    static void *inst##_lookup[17] = {                                   \
+    static void *inst##_lookup[18] = {                                   \
         [LILY_INTERPRETER_VALUE_KIND_TRUE] = &&label__unknown_i##inst,   \
         [LILY_INTERPRETER_VALUE_KIND_FALSE] = &&label__unknown_i##inst,  \
         [LILY_INTERPRETER_VALUE_KIND_INT8] =                             \
@@ -968,6 +968,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         [LILY_INTERPRETER_VALUE_KIND_FLOAT] = &&label__unknown_i##inst,  \
         [LILY_INTERPRETER_VALUE_KIND_NIL] = &&label__unknown_i##inst,    \
         [LILY_INTERPRETER_VALUE_KIND_OBJECT] = &&label__unknown_i##inst, \
+        [LILY_INTERPRETER_VALUE_KIND_PTR] = &&label__unknown_i##inst,    \
         [LILY_INTERPRETER_VALUE_KIND_UNDEF] = &&label__unknown_i##inst,  \
         [LILY_INTERPRETER_VALUE_KIND_UINT8] =                            \
           &&label__LILY_INTERPRETER_VALUE_KIND_UINT8_i##inst,            \
