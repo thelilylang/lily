@@ -129,6 +129,16 @@ add_name__LilyInterpreterVMStackBlockFrame(
 
 /**
  *
+ * @brief Add reg.
+ */
+void
+add_reg__LilyInterpreterVMStackBlockFrame(
+  const LilyInterpreterVMStackBlockFrame *self,
+  char *name,
+  LilyInterpreterValue *value);
+
+/**
+ *
  * @brief Add variable.
  */
 void

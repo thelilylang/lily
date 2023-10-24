@@ -35,6 +35,7 @@
 #define LILY_USE_COMPUTED_GOTOS
 #endif
 
+#define VM_PEEK(stack) peek__LilyInterpreterVMStack(stack)
 #define VM_PUSH(stack, value) push__LilyInterpreterVMStack(stack, value)
 #define VM_POP(stack) pop__LilyInterpreterVMStack(stack)
 
@@ -136,6 +137,21 @@ CONSTRUCTOR(LilyInterpreterVMStackBlockFrame *,
 }
 
 void
+add_reg__LilyInterpreterVMStackBlockFrame(
+  const LilyInterpreterVMStackBlockFrame *self,
+  char *name,
+  LilyInterpreterValue *value)
+{
+#ifdef LILY_FULL_ASSERT_VM
+    LilyInterpreterValue *duplicate_value =
+      insert__HashMap(self->regs, name, value);
+    ASSERT(!duplicate_value);
+#else
+    insert__HashMap(self->regs, name, value);
+#endif
+}
+
+void
 add_variable__LilyInterpreterVMStackBlockFrame(
   const LilyInterpreterVMStackBlockFrame *self,
   char *name,
@@ -156,15 +172,28 @@ search_reg__LilyInterpreterVMStackBlockFrame(
   char *name)
 {
     LilyInterpreterValue *reg_value = remove__HashMap(self->regs, name);
-    LilyInterpreterValue *poped_value = VM_POP(&local_stack);
+    [[maybe_unused]] LilyInterpreterValue *poped_value = VM_POP(&local_stack);
 
+    if (reg_value) {
 #ifdef LILY_FULL_ASSERT_VM
-    ASSERT(reg_value);
-    // Verify if the poped value on stack have the same address than reg_value
-    ASSERT(reg_value == poped_value);
+        ASSERT(reg_value == poped_value);
 #endif
 
-    return reg_value;
+        return reg_value;
+    }
+
+#ifdef LILY_FULL_ASSERT_VM
+    if (self->parent) {
+        return search_reg__LilyInterpreterVMStackBlockFrame(self->parent, name);
+    }
+
+    UNREACHABLE("the parent is NULL, the reg is not found");
+#else
+    // NOTE: Technically, the function cannot return NULL.
+    return self->parent
+             ? search_reg__LilyInterpreterVMStackBlockFrame(self->parent, name)
+             : NULL;
+#endif
 }
 
 LilyInterpreterValue *
@@ -3214,7 +3243,12 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_LEN) {}
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_LOAD) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_LOAD)
+    {
+        push_value__LilyInterpreterVM(self, current_block_inst->load.src.src);
+
+        EAT_NEXT_LABEL();
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_MAKEREF) {}
 
@@ -3243,12 +3277,16 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_REG)
     {
+        char *reg_name = (char *)current_block_inst->reg.name;
+
         SET_NEXT_LABEL(reg_finish);
 
         VM_SET_CURRENT_BLOCK_INST(current_block_inst->reg.inst);
         VM_GOTO_INST(current_block_inst);
 
     reg_finish : {
+        add_reg__LilyInterpreterVMStackBlockFrame(
+          current_block_frame, reg_name, VM_PEEK(stack));
         EAT_NEXT_LABEL();
     }
     }
