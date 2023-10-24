@@ -3359,14 +3359,83 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
         // TODO: maybe optimized that, replace sys call name by an id, or
         // something like that
-        if (!strcmp(current_block_inst->sys_call.name, "__sys__$write")) {
+        if (!strcmp(current_block_inst->sys_call.name, "__sys__$read")) {
+            LilyInterpreterValue *n = VM_POP(stack);
+            LilyInterpreterValue *buf = VM_POP(stack);
+            LilyInterpreterValue *fd = VM_POP(stack);
+
+            VM_PUSH(stack, read__LilyInterpreterVMRuntimeSys(fd, buf, n));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$write")) {
             LilyInterpreterValue *n = VM_POP(stack);
             LilyInterpreterValue *buf = VM_POP(stack);
             LilyInterpreterValue *fd = VM_POP(stack);
 
             VM_PUSH(stack, write__LilyInterpreterVMRuntimeSys(fd, buf, n));
+        } else if (!strcmp(current_block_inst->sys_call.name, "__sys__$open")) {
+            LilyInterpreterValue *mode = VM_POP(stack);
+            LilyInterpreterValue *flags = VM_POP(stack);
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack,
+                    open__LilyInterpreterVMRuntimeSys(pathname, flags, mode));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$close")) {
+            LilyInterpreterValue *fd = VM_POP(stack);
+
+            VM_PUSH(stack, close__LilyInterpreterVMRuntimeSys(fd));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$stat_mode")) {
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack, stat_mode__LilyInterpreterVMRuntimeSys(pathname));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$stat_ino")) {
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack, stat_ino__LilyInterpreterVMRuntimeSys(pathname));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$stat_dev")) {
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack, stat_dev__LilyInterpreterVMRuntimeSys(pathname));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$stat_nlink")) {
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack, stat_nlink__LilyInterpreterVMRuntimeSys(pathname));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$stat_uid")) {
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack, stat_uid__LilyInterpreterVMRuntimeSys(pathname));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$stat_gid")) {
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack, stat_gid__LilyInterpreterVMRuntimeSys(pathname));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$stat_size")) {
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack, stat_size__LilyInterpreterVMRuntimeSys(pathname));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$stat_atime")) {
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack, stat_atime__LilyInterpreterVMRuntimeSys(pathname));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$stat_mtime")) {
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack, stat_mtime__LilyInterpreterVMRuntimeSys(pathname));
+        } else if (!strcmp(current_block_inst->sys_call.name,
+                           "__sys__$stat_ctime")) {
+            LilyInterpreterValue *pathname = VM_POP(stack);
+
+            VM_PUSH(stack, stat_ctime__LilyInterpreterVMRuntimeSys(pathname));
         } else {
-            TODO("sys call");
+            UNREACHABLE("unknown sys call");
         }
 
         EAT_NEXT_LABEL();
