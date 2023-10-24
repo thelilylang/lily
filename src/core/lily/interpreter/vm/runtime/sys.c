@@ -27,6 +27,20 @@
 #include <sys/sys.h>
 
 LilyInterpreterValue *
+read__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *fd,
+                                  LilyInterpreterValue *buf,
+                                  LilyInterpreterValue *n)
+{
+    Usize res = __sys__$read(fd->int32, buf->ptr, n->usize);
+
+    FREE(LilyInterpreterValue, &fd);
+    FREE(LilyInterpreterValue, &buf);
+    FREE(LilyInterpreterValue, &n);
+
+    return NEW_VARIANT(LilyInterpreterValue, usize, res);
+}
+
+LilyInterpreterValue *
 write__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *fd,
                                    LilyInterpreterValue *buf,
                                    LilyInterpreterValue *n)

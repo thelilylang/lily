@@ -29,7 +29,16 @@
 
 /**
  *
- * @brief Run write system call to the runtime.
+ * @brief Call read system call with runtime values.
+ */
+LilyInterpreterValue *
+read__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *fd,
+                                  LilyInterpreterValue *buf,
+                                  LilyInterpreterValue *n);
+
+/**
+ *
+ * @brief Call write system call with runtime values.
  */
 LilyInterpreterValue *
 write__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *fd,
