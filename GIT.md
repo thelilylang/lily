@@ -55,7 +55,10 @@ cc/ci
 
 cpp
 
+lib/builtin
 lib/local
+lib/std
+lib/sys
 
 lily
 lily/analysis
