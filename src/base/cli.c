@@ -54,6 +54,9 @@ single_value__Cli(Cli *self, char *name, bool is_required);
 static Cli *
 multiple_value__Cli(Cli *self, char *name, bool is_required);
 
+static Cli *
+multiple_inf_value__Cli(Cli *self, char *name, bool is_required);
+
 /// @return Vec<CliResult*>*
 static Vec *
 parse__Cli(Cli *self);
@@ -103,6 +106,7 @@ CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name)
                       .$option = &option__Cli,
                       .$single_value = &single_value__Cli,
                       .$multiple_value = &multiple_value__Cli,
+                      .$multiple_inf_value = &multiple_inf_value__Cli,
                       .$parse = &parse__Cli };
 
     // Add default option
@@ -201,6 +205,15 @@ multiple_value__Cli(Cli *self, char *name, bool is_required)
     return self;
 }
 
+Cli *
+multiple_inf_value__Cli(Cli *self, char *name, bool is_required)
+{
+    ASSERT(!self->value && name);
+
+    self->value = NEW(CliValue, CLI_VALUE_KIND_MULTIPLE_INF, name, is_required);
+    return self;
+}
+
 Vec *
 parse__Cli(Cli *self)
 {
@@ -280,6 +293,10 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
                 res_cmd_value = NEW_VARIANT(
                   CliResultValue, multiple, cmd->value->name, NEW(Vec));
                 break;
+            case CLI_VALUE_KIND_MULTIPLE_INF:
+                res_cmd_value = NEW_VARIANT(
+                  CliResultValue, multiple_inf, cmd->value->name, NEW(Vec));
+                break;
             default:
                 UNREACHABLE("unknown variant");
         }
@@ -354,6 +371,10 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
                         push__Vec(res_cmd_value->multiple, current);
 
                         break;
+                    case CLI_RESULT_VALUE_KIND_MULTIPLE_INF:
+                        push__Vec(res_cmd_value->multiple_inf, current);
+
+                        break;
                     default:
                         UNREACHABLE("unknown variant");
                 }
@@ -373,6 +394,20 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
     }
 
     if (res_cmd_value) {
+#define PARSE_COMMAND_CHECK_MULTIPLE_VALUE(multiple)                         \
+    if (multiple->len == 0) {                                                \
+        char *msg = format(                                                  \
+          "expected one or more values for this command: `{s}`", cmd->name); \
+                                                                             \
+        CliDiagnostic err = NEW(CliDiagnostic,                               \
+                                CLI_DIAGNOSTIC_KIND_ERROR,                   \
+                                msg,                                         \
+                                self->args_iter.count - 1,                   \
+                                self->full_command);                         \
+                                                                             \
+        emit__CliDiagnostic(&err);                                           \
+    }
+
         switch (res_cmd_value->kind) {
             case CLI_VALUE_KIND_SINGLE:
                 if (!res_cmd_value->single) {
@@ -390,20 +425,10 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
 
                 break;
             case CLI_VALUE_KIND_MULTIPLE:
-                if (res_cmd_value->multiple->len == 0) {
-                    char *msg = format(
-                      "expected one or more values for this command: `{s}`",
-                      cmd->name);
-
-                    CliDiagnostic err = NEW(CliDiagnostic,
-                                            CLI_DIAGNOSTIC_KIND_ERROR,
-                                            msg,
-                                            self->args_iter.count - 1,
-                                            self->full_command);
-
-                    emit__CliDiagnostic(&err);
-                }
-
+                PARSE_COMMAND_CHECK_MULTIPLE_VALUE(res_cmd_value->multiple);
+                break;
+            case CLI_VALUE_KIND_MULTIPLE_INF:
+                PARSE_COMMAND_CHECK_MULTIPLE_VALUE(res_cmd_value->multiple_inf);
                 break;
             default:
                 UNREACHABLE("unknown variant");
@@ -416,6 +441,17 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
 CliResultValue *
 parse_value__Cli(Cli *self, const CliValue *value)
 {
+#define PARSE_VALUE_CHECK_MULTIPLE_VALUE(multiple)                        \
+    if (multiple->len == 0) {                                             \
+        CliDiagnostic err = NEW(CliDiagnostic,                            \
+                                CLI_DIAGNOSTIC_KIND_ERROR,                \
+                                "expected value after option or command", \
+                                self->args_iter.count,                    \
+                                self->full_command);                      \
+                                                                          \
+        emit__CliDiagnostic(&err);                                        \
+    }
+
     switch (value->kind) {
         case CLI_VALUE_KIND_SINGLE: {
             char *current = next__VecIter(&self->args_iter);
@@ -474,18 +510,27 @@ parse_value__Cli(Cli *self, const CliValue *value)
                 }
             }
 
-            if (multiple->len == 0) {
-                CliDiagnostic err =
-                  NEW(CliDiagnostic,
-                      CLI_DIAGNOSTIC_KIND_ERROR,
-                      "expected value after option or command",
-                      self->args_iter.count,
-                      self->full_command);
-
-                emit__CliDiagnostic(&err);
-            }
+            PARSE_VALUE_CHECK_MULTIPLE_VALUE(multiple);
 
             return NEW_VARIANT(CliResultValue, multiple, value->name, multiple);
+        }
+        case CLI_VALUE_KIND_MULTIPLE_INF: {
+            Vec *multiple_inf = NEW(Vec); // Vec<char*>*
+
+            while (1) {
+                char *current = next__VecIter(&self->args_iter);
+
+                if (current) {
+                    push__Vec(multiple_inf, current);
+                } else {
+                    break;
+                }
+            }
+
+            PARSE_VALUE_CHECK_MULTIPLE_VALUE(multiple_inf);
+
+            return NEW_VARIANT(
+              CliResultValue, multiple_inf, value->name, multiple_inf);
         }
         default:
             UNREACHABLE("unknown variant");
@@ -592,6 +637,7 @@ parse_option__Cli(Cli *self)
 
                 break;
             case CLI_VALUE_KIND_MULTIPLE:
+            case CLI_VALUE_KIND_MULTIPLE_INF:
                 if (self->value->is_required) {
                     if (count_value == 0) {
                         CliDiagnostic err = NEW(CliDiagnostic,

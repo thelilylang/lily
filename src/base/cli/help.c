@@ -46,8 +46,15 @@
             push_str__String(usage, (char *)cmd_value->name);                    \
             push__String(usage, ']');                                            \
                                                                                  \
-            if (cmd_value->kind == CLI_VALUE_KIND_MULTIPLE) {                    \
-                push_str__String(usage, "...");                                  \
+            switch (cmd_value->kind) {                                           \
+                case CLI_VALUE_KIND_MULTIPLE:                                    \
+                    push_str__String(usage, "... [-]");                          \
+                    break;                                                       \
+                case CLI_VALUE_KIND_MULTIPLE_INF:                                \
+                    push_str__String(usage, "...");                              \
+                    break;                                                       \
+                default:                                                         \
+                    break;                                                       \
             }                                                                    \
         }                                                                        \
                                                                                  \

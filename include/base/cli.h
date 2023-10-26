@@ -52,6 +52,7 @@ typedef struct Cli
     struct Cli *(*$option)(struct Cli *, CliOption *);
     struct Cli *(*$single_value)(struct Cli *, char *, bool);
     struct Cli *(*$multiple_value)(struct Cli *, char *, bool);
+    struct Cli *(*$multiple_inf_value)(struct Cli *, char *, bool);
     struct Vec *(*$parse)(struct Cli *);
 } Cli;
 

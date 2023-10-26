@@ -29,11 +29,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static VARIANT_DESTRUCTOR(CliResultValue, single, CliResultValue *self);
+static inline VARIANT_DESTRUCTOR(CliResultValue, single, CliResultValue *self);
 
-static inline VARIANT_DESTRUCTOR(CliResultValue,
-                                 multiple,
-                                 CliResultValue *self);
+static VARIANT_DESTRUCTOR(CliResultValue, multiple, CliResultValue *self);
+
+static VARIANT_DESTRUCTOR(CliResultValue, multiple_inf, CliResultValue *self);
 
 VARIANT_CONSTRUCTOR(CliResultValue *,
                     CliResultValue,
@@ -65,6 +65,21 @@ VARIANT_CONSTRUCTOR(CliResultValue *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CliResultValue *,
+                    CliResultValue,
+                    multiple_inf,
+                    const char *name,
+                    Vec *multiple_inf)
+{
+    CliResultValue *self = lily_malloc(sizeof(CliResultValue));
+
+    self->kind = CLI_RESULT_VALUE_KIND_MULTIPLE_INF;
+    self->name = name;
+    self->multiple_inf = multiple_inf;
+
+    return self;
+}
+
 VARIANT_DESTRUCTOR(CliResultValue, single, CliResultValue *self)
 {
     lily_free(self);
@@ -76,6 +91,12 @@ VARIANT_DESTRUCTOR(CliResultValue, multiple, CliResultValue *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CliResultValue, multiple_inf, CliResultValue *self)
+{
+    FREE(Vec, self->multiple_inf);
+    lily_free(self);
+}
+
 DESTRUCTOR(CliResultValue, CliResultValue *self)
 {
     switch (self->kind) {
@@ -84,6 +105,9 @@ DESTRUCTOR(CliResultValue, CliResultValue *self)
             break;
         case CLI_RESULT_VALUE_KIND_MULTIPLE:
             FREE_VARIANT(CliResultValue, multiple, self);
+            break;
+        case CLI_RESULT_VALUE_KIND_MULTIPLE_INF:
+            FREE_VARIANT(CliResultValue, multiple_inf, self);
             break;
         default:
             UNREACHABLE("unknown variant");
