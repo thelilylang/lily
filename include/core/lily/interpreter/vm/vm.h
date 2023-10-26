@@ -96,11 +96,10 @@ typedef struct LilyInterpreterVMStackBlockFrame
 {
     Vec *names;         // Vec<char* (&)>*
     HashMap *variables; // HashMap<char* (&), LilyInterpreterValue* (&)>*
-    // TODO: maybe use a Key-Value pair instead of HashMap for `regs`
-    HashMap *regs; // HashMap<char* (&), LilyInterpreterValue* (&)>*
-    Usize begin;   // index of the begin of the stack frame on the stack buffer
-    Usize end;     // index of the end of the stack frame on the stack buffer, 0
-                   // mean no next block stack frame
+    HashMap *regs;      // HashMap<char* (&), LilyInterpreterValue* (&)>*
+    Usize begin; // index of the begin of the stack frame on the stack buffer
+    Usize end;   // index of the end of the stack frame on the stack buffer, 0
+                 // mean no next block stack frame
     struct LilyInterpreterVMStackBlockFrame
       *parent; // LilyInterpreterVMStackBlockFrame*? (&)
 } LilyInterpreterVMStackBlockFrame;
@@ -318,7 +317,7 @@ load_const_value__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
  *
  * @brief Free LilyInterpreterVMStack type.
  */
-DESTRUCTOR(LilyInterpreterVMStack, const LilyInterpreterVMStack *self);
+DESTRUCTOR(LilyInterpreterVMStack, LilyInterpreterVMStack *self);
 
 typedef struct LilyInterpreterVMResources
 {

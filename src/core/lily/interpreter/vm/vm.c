@@ -171,15 +171,10 @@ search_reg__LilyInterpreterVMStackBlockFrame(
   const LilyInterpreterVMStackBlockFrame *self,
   char *name)
 {
-    LilyInterpreterValue *reg_value = remove__HashMap(self->regs, name);
-    [[maybe_unused]] LilyInterpreterValue *poped_value = VM_POP(&local_stack);
+    LilyInterpreterValue *reg_value = get__HashMap(self->regs, name);
 
     if (reg_value) {
-#ifdef LILY_FULL_ASSERT_VM
-        ASSERT(reg_value == poped_value);
-#endif
-
-        return reg_value;
+        return ref__LilyInterpreterValue(reg_value);
     }
 
 #ifdef LILY_FULL_ASSERT_VM
@@ -439,8 +434,14 @@ clean_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self)
     return return_;
 }
 
-DESTRUCTOR(LilyInterpreterVMStack, const LilyInterpreterVMStack *self)
+DESTRUCTOR(LilyInterpreterVMStack, LilyInterpreterVMStack *self)
 {
+    while (self->len > 0) {
+        LilyInterpreterValue *value = VM_POP(self);
+
+        FREE(LilyInterpreterValue, &value);
+    }
+
     lily_free(self->buffer);
 }
 
@@ -597,28 +598,26 @@ push_value__LilyInterpreterVM(LilyInterpreterVM *self,
         case LILY_MIR_INSTRUCTION_VAL_KIND_LIST:
             TODO("push list");
         case LILY_MIR_INSTRUCTION_VAL_KIND_NIL:
-            VM_PUSH(&local_stack,
-                    NEW(LilyInterpreterValue, LILY_INTERPRETER_VALUE_KIND_NIL));
-            return;
+            return VM_PUSH(
+              &local_stack,
+              NEW(LilyInterpreterValue, LILY_INTERPRETER_VALUE_KIND_NIL));
         case LILY_MIR_INSTRUCTION_VAL_KIND_PARAM:
             TODO("push param");
         case LILY_MIR_INSTRUCTION_VAL_KIND_REG:
-            VM_PUSH(&local_stack,
-                    search_reg__LilyInterpreterVMStackBlockFrame(
-                      current_block_frame, (char *)val->reg));
-            return;
+            return VM_PUSH(&local_stack,
+                           search_reg__LilyInterpreterVMStackBlockFrame(
+                             current_block_frame, (char *)val->reg));
         case LILY_MIR_INSTRUCTION_VAL_KIND_SLICE:
             TODO("push slice");
         case LILY_MIR_INSTRUCTION_VAL_KIND_STR:
-            VM_PUSH(&local_stack,
-                    NEW_VARIANT(LilyInterpreterValue,
-                                object,
-                                NEW_VARIANT(LilyInterpreterValueObject,
-                                            str,
-                                            NEW(LilyInterpreterValueStr,
-                                                val->str->buffer,
-                                                val->str->len))));
-            return;
+            return VM_PUSH(&local_stack,
+                           NEW_VARIANT(LilyInterpreterValue,
+                                       object,
+                                       NEW_VARIANT(LilyInterpreterValueObject,
+                                                   str,
+                                                   NEW(LilyInterpreterValueStr,
+                                                       val->str->buffer,
+                                                       val->str->len))));
         case LILY_MIR_INSTRUCTION_VAL_KIND_STRUCT:
             TODO("push struct");
         case LILY_MIR_INSTRUCTION_VAL_KIND_TRACE:
@@ -656,21 +655,18 @@ push_value__LilyInterpreterVM(LilyInterpreterVM *self,
                     UNREACHABLE("this situation is impossible");
             }
         case LILY_MIR_INSTRUCTION_VAL_KIND_UNDEF:
-            VM_PUSH(
+            return VM_PUSH(
               &local_stack,
               NEW(LilyInterpreterValue, LILY_INTERPRETER_VALUE_KIND_UNDEF));
-            return;
         case LILY_MIR_INSTRUCTION_VAL_KIND_UNIT:
-            VM_PUSH(
+            return VM_PUSH(
               &local_stack,
               NEW(LilyInterpreterValue, LILY_INTERPRETER_VALUE_KIND_UNIT));
-            return;
         case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
             // Bring and back to the front the var value.
-            VM_PUSH(&local_stack,
-                    search_variable__LilyInterpreterVMStackBlockFrame(
-                      current_block_frame, (char *)val->var));
-            return;
+            return VM_PUSH(&local_stack,
+                           search_variable__LilyInterpreterVMStackBlockFrame(
+                             current_block_frame, (char *)val->var));
         default:
             UNREACHABLE("unknown variant");
     }
@@ -1868,6 +1864,8 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 #endif
 
             VM_PUSH(stack, NEW(LilyInterpreterValue, lhs->int8 <= rhs->int8));
+
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -2931,7 +2929,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
               stack,
               NEW_VARIANT(LilyInterpreterValue, int8, lhs->int8 % rhs->int8));
 
-            FREE_UVAL();
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -2945,7 +2943,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
                     NEW_VARIANT(
                       LilyInterpreterValue, int16, lhs->int16 % rhs->int16));
 
-            FREE_UVAL();
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -2959,7 +2957,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
                     NEW_VARIANT(
                       LilyInterpreterValue, int32, lhs->int32 % rhs->int32));
 
-            FREE_UVAL();
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -2973,7 +2971,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
                     NEW_VARIANT(
                       LilyInterpreterValue, int64, lhs->int64 % rhs->int64));
 
-            FREE_UVAL();
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -2987,7 +2985,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
                     NEW_VARIANT(
                       LilyInterpreterValue, isize, lhs->isize % rhs->isize));
 
-            FREE_UVAL();
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -3001,7 +2999,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
                     NEW_VARIANT(
                       LilyInterpreterValue, uint8, lhs->uint8 % rhs->uint8));
 
-            FREE_UVAL();
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -3015,7 +3013,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
                     NEW_VARIANT(
                       LilyInterpreterValue, uint16, lhs->uint16 % rhs->uint16));
 
-            FREE_UVAL();
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -3029,7 +3027,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
                     NEW_VARIANT(
                       LilyInterpreterValue, uint32, lhs->uint32 % rhs->uint32));
 
-            FREE_UVAL();
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -3043,7 +3041,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
                     NEW_VARIANT(
                       LilyInterpreterValue, uint64, lhs->uint64 % rhs->uint64));
 
-            FREE_UVAL();
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -3057,7 +3055,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
                     NEW_VARIANT(
                       LilyInterpreterValue, usize, lhs->usize % rhs->usize));
 
-            FREE_UVAL();
+            FREE_BVAL();
             EAT_NEXT_LABEL();
         }
 
@@ -3292,6 +3290,8 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
               current_block_iter.ordered_hash_map,
               (char *)current_block_inst->jmpcond.else_block->name);
         }
+
+        FREE(LilyInterpreterValue, &cond);
 
         VM_SET_CURRENT_BLOCK(&block_inst->block);
         VM_SET_CURRENT_BLOCK_INST_ITER(NEW(VecIter, block_inst->block.insts));
@@ -3881,6 +3881,13 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     VM_INST(LILY_MIR_INSTRUCTION_KIND_VAL)
     {
         push_value__LilyInterpreterVM(self, current_block_inst->val);
+
+        if (!next_label) {
+            LilyInterpreterValue *value = VM_POP(stack);
+
+            FREE(LilyInterpreterValue, &value);
+        }
+
         EAT_NEXT_LABEL();
     }
 
@@ -4108,5 +4115,6 @@ exit_vm : {
 DESTRUCTOR(LilyInterpreterVM, const LilyInterpreterVM *self)
 {
     FREE(LilyInterpreterVMResources, &self->resources);
+    FREE(LilyInterpreterVMStackFrameReturn, &current_frame->return_);
     FREE(LilyInterpreterVMStackFrame, &current_frame);
 }
