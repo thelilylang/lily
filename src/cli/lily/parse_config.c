@@ -246,7 +246,7 @@ parse_run__LilyParseConfig(const Vec *results)
 {
     bool verbose = false;
     char *filename = NULL;
-    Vec *args = NULL;
+    Vec *args = init__Vec(1, "<app>");
     char *max_stack = NULL, *max_heap = NULL;
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
@@ -268,7 +268,7 @@ parse_run__LilyParseConfig(const Vec *results)
                         verbose = true;
                         break;
                     case RUN_ARGS_OPTION:
-                        args = current->option->value->multiple;
+                        append__Vec(args, current->option->value->multiple);
                         break;
                     case RUN_MAX_STACK_OPTION:
                         max_stack = current->option->value->single;
