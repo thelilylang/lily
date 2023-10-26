@@ -238,7 +238,8 @@ run_options__CliLily(CliCommand *cmd)
 
     verbose->$short_name(verbose, "-v")
       ->$help(verbose, "Enable log step of the interpreter");
-    args->$value(args, NEW(CliValue, CLI_VALUE_KIND_MULTIPLE, "ARGS", false))
+    args
+      ->$value(args, NEW(CliValue, CLI_VALUE_KIND_MULTIPLE_INF, "ARGS", false))
       ->$help(args, "Pass argument(s) to the program");
     max_stack
       ->$value(max_stack,
