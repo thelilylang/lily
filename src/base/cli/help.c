@@ -48,10 +48,10 @@
                                                                                  \
             switch (cmd_value->kind) {                                           \
                 case CLI_VALUE_KIND_MULTIPLE:                                    \
-                    push_str__String(usage, "... [-]");                          \
+                    push_str__String(usage, "...");                              \
                     break;                                                       \
                 case CLI_VALUE_KIND_MULTIPLE_INF:                                \
-                    push_str__String(usage, "...");                              \
+                    push_str__String(usage, "...$");                             \
                     break;                                                       \
                 default:                                                         \
                     break;                                                       \
