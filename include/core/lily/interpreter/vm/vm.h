@@ -176,7 +176,7 @@ DESTRUCTOR(LilyInterpreterVMStackBlockFrame,
 typedef struct LilyInterpreterVMStackFrame
 {
     const char *name; // const char* (&)
-    LilyInterpreterValue **params;
+    LilyInterpreterValue *params[MAX_FUN_PARAMS];
     Usize params_len;
     LilyInterpreterVMStackFrameReturn return_;
     Usize begin; // index of the begin of the stack frame on the stack buffer
@@ -322,7 +322,7 @@ DESTRUCTOR(LilyInterpreterVMStack, const LilyInterpreterVMStack *self);
 
 typedef struct LilyInterpreterVMResources
 {
-    Vec *args; // Vec<char*>* (&)
+    Vec *args; // Vec<char*>*
 } LilyInterpreterVMResources;
 
 /**
@@ -334,6 +334,16 @@ inline CONSTRUCTOR(LilyInterpreterVMResources,
                    Vec *args)
 {
     return (LilyInterpreterVMResources){ .args = args };
+}
+
+/**
+ *
+ * @brief Free LilyInterpreterVMResources type.
+ */
+inline DESTRUCTOR(LilyInterpreterVMResources,
+                  const LilyInterpreterVMResources *self)
+{
+    FREE(Vec, self->args);
 }
 
 typedef struct LilyInterpreterVM

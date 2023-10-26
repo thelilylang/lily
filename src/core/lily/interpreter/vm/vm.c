@@ -246,7 +246,6 @@ CONSTRUCTOR(LilyInterpreterVMStackFrame *,
       lily_malloc(sizeof(LilyInterpreterVMStackFrame));
 
     self->name = name;
-    self->params = params;
     self->params_len = params_len;
     self->begin = begin;
     self->end = 0;
@@ -254,6 +253,10 @@ CONSTRUCTOR(LilyInterpreterVMStackFrame *,
     self->block_frames = lily_calloc(block_frames_len, PTR_SIZE);
     self->block_frames_len = block_frames_len;
     self->next = NULL;
+
+    for (Usize i = 0; i < self->params_len; ++i) {
+        self->params[i] = params[i];
+    }
 
     return self;
 }
@@ -327,8 +330,6 @@ DESTRUCTOR(LilyInterpreterVMStackFrame, LilyInterpreterVMStackFrame **self)
     for (Usize i = 0; i < (*self)->params_len; ++i) {
         FREE(LilyInterpreterValue, &(*self)->params[i]);
     }
-
-    lily_free((*self)->params);
 
     for (Usize i = 0; i < (*self)->block_frames_len; ++i) {
         if ((*self)->block_frames[i]) {
@@ -459,6 +460,7 @@ CONSTRUCTOR(LilyInterpreterVM,
       get__OrderedHashMap(module->insts, "main");
 
     ASSERT(entry_point);
+    ASSERT(resources.args);
     ASSERT(entry_point->kind == LILY_MIR_INSTRUCTION_KIND_FUN);
     ASSERT(entry_point->fun.insts->len >= 1);
 
@@ -479,14 +481,17 @@ CONSTRUCTOR(LilyInterpreterVM,
                     ? NEW(LilyInterpreterVMStack, stack_capacity)
                     : NEW(LilyInterpreterVMStack, DEFAULT_MAX_STACK_CAPACITY);
 
-    set_frame__LilyInterpreterVMStack(&local_stack,
-                                      NEW(LilyInterpreterVMStackFrame,
-                                          entry_point->fun.name,
-                                          NULL,
-                                          2,
-                                          local_stack.len,
-                                          current_block->limit->id,
-                                          entry_point->fun.insts->len));
+    set_frame__LilyInterpreterVMStack(
+      &local_stack,
+      NEW(LilyInterpreterVMStackFrame,
+          entry_point->fun.name,
+          (LilyInterpreterValue *[MAX_FUN_PARAMS]){
+            NEW_VARIANT(LilyInterpreterValue, int32, resources.args->len),
+            NEW_VARIANT(LilyInterpreterValue, ptr, resources.args->buffer) },
+          2,
+          local_stack.len,
+          current_block->limit->id,
+          entry_point->fun.insts->len));
     add_block_frame__LilyInterpreterVMStackFrame(current_frame,
                                                  current_block->limit->id,
                                                  (char *)current_block->name,
@@ -1017,29 +1022,65 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         EAT_NEXT_LABEL();
     }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ARG) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ARG)
+    {
+        TODO("arg");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ASM) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ASM)
+    {
+        TODO("asm");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_BITCAST) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_BITCAST)
+    {
+        TODO("bitcast");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_BITAND) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_BITAND)
+    {
+        TODO("bitand");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_BITNOT) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_BITNOT)
+    {
+        TODO("bitnot");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_BITOR) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_BITOR)
+    {
+        TODO("bitor");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_BLOCK) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_BLOCK)
+    {
+        TODO("block");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_BUILTIN_CALL) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_BUILTIN_CALL)
+    {
+        TODO("builtin call");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_CALL) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_CALL)
+    {
+        TODO("call");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_CONST) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_CONST)
+    {
+        TODO("const");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_DROP) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_DROP)
+    {
+        TODO("drop");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_EXP) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_EXP)
+    {
+        TODO("exp");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_FADD)
     {
@@ -1283,21 +1324,45 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         EAT_NEXT_LABEL();
     }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_FUN) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_FUN)
+    {
+        TODO("fun");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_FUN_PROTOTYPE)
+    {
+        TODO("fun prototype");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETARG) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETARG)
+    {
+        TODO("getarg");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETARRAY) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETARRAY)
+    {
+        TODO("getarray");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETLIST) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETLIST)
+    {
+        TODO("getlist");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETSLICE) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETSLICE)
+    {
+        TODO("getslice");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETFIELD) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETFIELD)
+    {
+        TODO("getfield");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETPTR) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_GETPTR)
+    {
+        TODO("getptr");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_IADD)
     {
@@ -2752,7 +2817,10 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         INT_INST_END();
     }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_INCTRACE) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_INCTRACE)
+    {
+        TODO("inctrace");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_INEG)
     {
@@ -3001,9 +3069,15 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         INT_INST_END();
     }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ISOK) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ISOK)
+    {
+        TODO("isok");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_ISERR) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_ISERR)
+    {
+        TODO("iserr");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_ISUB)
     {
@@ -3242,7 +3316,10 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         return run_insts__LilyInterpreterVM(self);
     }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_LEN) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_LEN)
+    {
+        TODO("len");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_LOAD)
     {
@@ -3251,11 +3328,20 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         EAT_NEXT_LABEL();
     }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_MAKEREF) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_MAKEREF)
+    {
+        TODO("makeref");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_MAKEOPT) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_MAKEOPT)
+    {
+        TODO("makeopt");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_NON_NIL) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_NON_NIL)
+    {
+        TODO("non nil");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_NOT)
     {
@@ -3274,7 +3360,10 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         EAT_NEXT_LABEL();
     }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_REF_PTR) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_REF_PTR)
+    {
+        TODO("ref ptr");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_REG)
     {
@@ -3668,9 +3757,15 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         EAT_NEXT_LABEL();
     }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_STRUCT) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_STRUCT)
+    {
+        TODO("struct");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_SWITCH) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_SWITCH)
+    {
+        TODO("switch");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_SYS_CALL)
     {
@@ -3763,11 +3858,20 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         EAT_NEXT_LABEL();
     }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_TRUNC) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_TRUNC)
+    {
+        TODO("trunc");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_TRY) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_TRY)
+    {
+        TODO("try");
+    }
 
-    VM_INST(LILY_MIR_INSTRUCTION_KIND_TRY_PTR) {}
+    VM_INST(LILY_MIR_INSTRUCTION_KIND_TRY_PTR)
+    {
+        TODO("try ptr");
+    }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_UNREACHABLE)
     {
@@ -4001,4 +4105,8 @@ exit_vm : {
 }
 }
 
-DESTRUCTOR(LilyInterpreterVM, const LilyInterpreterVM *self) {}
+DESTRUCTOR(LilyInterpreterVM, const LilyInterpreterVM *self)
+{
+    FREE(LilyInterpreterVMResources, &self->resources);
+    FREE(LilyInterpreterVMStackFrame, &current_frame);
+}
