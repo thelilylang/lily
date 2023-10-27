@@ -1157,12 +1157,12 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     //   ; ...
 
     // If the previous block is empty, no condition block will be created.
+    LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
+
     LilyMirInstruction *cond_block =
       LilyMirEmptyBlock(Module)
         ? NULL
-        : LilyMirBuildBlock(
-            Module,
-            ref__LilyMirBlockLimit(LilyMirGetInsertBlock(Module)->limit));
+        : LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(block_limit));
 
     // 1. Add jmp cond
     // 2. Add cond block
@@ -1177,7 +1177,6 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
 
     ASSERT(cond);
 
-    LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
     LilyMirInstruction *if_block = LilyMirBuildBlock(Module, block_limit);
 
     // 3. Add conditional jmp
@@ -1337,13 +1336,11 @@ LilyMirBuildWhile(LilyMirModule *Module,
     // exit:
     //   ; ...
 
+    LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
     LilyMirInstruction *cond_block =
       LilyMirEmptyBlock(Module)
         ? NULL
-        : LilyMirBuildBlock(
-            Module,
-            ref__LilyMirBlockLimit(LilyMirGetInsertBlock(Module)->limit));
-    LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
+        : LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(block_limit));
     LilyMirInstruction *while_block = LilyMirBuildBlock(Module, block_limit);
     LilyMirInstruction *exit_block =
       LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(parent_block_limit));
