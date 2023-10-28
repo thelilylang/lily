@@ -100,6 +100,7 @@ typedef struct LilyInterpreterVMStackBlockFrame
     Usize begin; // index of the begin of the stack frame on the stack buffer
     Usize end;   // index of the end of the stack frame on the stack buffer, 0
                  // mean no next block stack frame
+    Usize limit_id;
     struct LilyInterpreterVMStackBlockFrame
       *parent; // LilyInterpreterVMStackBlockFrame*? (&)
 } LilyInterpreterVMStackBlockFrame;
@@ -112,19 +113,17 @@ CONSTRUCTOR(LilyInterpreterVMStackBlockFrame *,
             LilyInterpreterVMStackBlockFrame,
             char *name,
             Usize begin,
-            Usize end);
+            Usize end,
+            Usize limit_id);
 
 /**
  *
  * @brief Add name to names Vec.
  */
-inline void
+void
 add_name__LilyInterpreterVMStackBlockFrame(
   const LilyInterpreterVMStackBlockFrame *self,
-  char *name)
-{
-    return push__Vec(self->names, name);
-}
+  char *name);
 
 /**
  *
