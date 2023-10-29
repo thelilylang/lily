@@ -447,8 +447,6 @@ clean_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self)
     return return_;
 }
 
-#include <sys/mman.h>
-
 DESTRUCTOR(LilyInterpreterVMStack, LilyInterpreterVMStack *self)
 {
     while (self->len > 0) {
