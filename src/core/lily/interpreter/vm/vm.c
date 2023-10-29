@@ -52,7 +52,7 @@
 #define VM_DEFAULT() default:
 #endif
 
-#define VM_SET_CURRENT_BLOCK_ITER(iter) current_block_iter = iter;
+#define VM_SET_CURRENT_FUN_INSTS(insts) current_fun_insts = insts;
 #define VM_SET_CURRENT_BLOCK(block) current_block = block;
 #define VM_SET_CURRENT_BLOCK_INST_ITER(iter) current_block_inst_iter = iter;
 #define VM_SET_CURRENT_BLOCK_INST(new_inst) current_block_inst = new_inst;
@@ -108,7 +108,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self);
 static void
 run_insts__LilyInterpreterVM(LilyInterpreterVM *self);
 
-static threadlocal OrderedHashMapIter current_block_iter;
+static threadlocal OrderedHashMap *current_fun_insts = NULL;
 static threadlocal LilyMirInstructionBlock *current_block = NULL;
 static threadlocal VecIter current_block_inst_iter;
 static threadlocal LilyMirInstruction *current_block_inst = NULL;
@@ -506,11 +506,11 @@ CONSTRUCTOR(LilyInterpreterVM,
     ASSERT(entry_point->kind == LILY_MIR_INSTRUCTION_KIND_FUN);
     ASSERT(entry_point->fun.insts->len >= 1);
 
-    current_block_iter = NEW(OrderedHashMapIter, entry_point->fun.insts);
+    VM_SET_CURRENT_FUN_INSTS(entry_point->fun.insts);
 
     {
         LilyMirInstruction *inst =
-          next__OrderedHashMapIter(&current_block_iter);
+          get_from_id__OrderedHashMap(current_fun_insts, 0);
 
         ASSERT(inst);
 
@@ -1109,7 +1109,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_CALL)
     {
-        OrderedHashMapIter last_current_block_iter = current_block_iter;
+        OrderedHashMap *last_current_fun_insts = current_fun_insts;
         LilyMirInstructionBlock *last_current_block = current_block;
         VecIter last_current_block_inst_iter = current_block_inst_iter;
         LilyMirInstruction *last_current_block_inst = current_block_inst;
@@ -1124,11 +1124,11 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         ASSERT(fun_inst->kind == LILY_MIR_INSTRUCTION_KIND_FUN);
 #endif
 
-        VM_SET_CURRENT_BLOCK_ITER(NEW(OrderedHashMapIter, fun_inst->fun.insts));
+        VM_SET_CURRENT_FUN_INSTS(fun_inst->fun.insts);
 
         {
             LilyMirInstruction *block_inst =
-              next__OrderedHashMapIter(&current_block_iter);
+              get_from_id__OrderedHashMap(current_fun_insts, 0);
 
 #ifdef LILY_FULL_ASSERT_VM
             ASSERT(block_inst);
@@ -1210,7 +1210,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         VM_PUSH(stack, return_value);
 
         // Restore last values
-        VM_SET_CURRENT_BLOCK_ITER(last_current_block_iter);
+        VM_SET_CURRENT_FUN_INSTS(last_current_fun_insts);
         VM_SET_CURRENT_BLOCK(last_current_block);
         VM_SET_CURRENT_BLOCK_INST_ITER(last_current_block_inst_iter);
         VM_SET_CURRENT_BLOCK_INST(last_current_block_inst);
@@ -3397,9 +3397,8 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
     VM_INST(LILY_MIR_INSTRUCTION_KIND_JMP)
     {
         LilyMirInstructionBlock *last_block = current_block;
-        LilyMirInstruction *new_current_block_inst =
-          get__OrderedHashMap(current_block_iter.ordered_hash_map,
-                              (char *)current_block_inst->jmp->name);
+        LilyMirInstruction *new_current_block_inst = get__OrderedHashMap(
+          current_fun_insts, (char *)current_block_inst->jmp->name);
 
         VM_SET_CURRENT_BLOCK(&new_current_block_inst->block);
         VM_SET_CURRENT_BLOCK_INST_ITER(
@@ -3443,11 +3442,11 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
         if (cond->kind) {
             new_current_block_inst = get__OrderedHashMap(
-              current_block_iter.ordered_hash_map,
+              current_fun_insts,
               (char *)current_block_inst->jmpcond.then_block->name);
         } else {
             new_current_block_inst = get__OrderedHashMap(
-              current_block_iter.ordered_hash_map,
+              current_fun_insts,
               (char *)current_block_inst->jmpcond.else_block->name);
         }
 
