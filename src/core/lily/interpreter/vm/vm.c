@@ -1203,7 +1203,89 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_BITNOT)
     {
-        TODO("bitnot");
+        INT_INST_LOOKUP(bitnot);
+
+        push_value__LilyInterpreterVM(self, current_block_inst->bitnot.src);
+
+        LilyInterpreterValue rhs = VM_POP(stack);
+
+        INT_INST_START(bitnot, rhs.kind);
+
+        INT_INST_TYPE(LILY_INTERPRETER_VALUE_KIND_INT8, bitnot)
+        {
+            VM_PUSH(stack, NEW_VARIANT(LilyInterpreterValue, int8, ~rhs.int8));
+
+            FREE_UVAL();
+            EAT_NEXT_LABEL();
+        }
+
+        INT_INST_TYPE(LILY_INTERPRETER_VALUE_KIND_INT16, bitnot)
+        {
+            VM_PUSH(stack,
+                    NEW_VARIANT(LilyInterpreterValue, int16, ~rhs.int16));
+
+            FREE_UVAL();
+            EAT_NEXT_LABEL();
+        }
+
+        INT_INST_TYPE(LILY_INTERPRETER_VALUE_KIND_INT32, bitnot)
+        {
+            VM_PUSH(stack,
+                    NEW_VARIANT(LilyInterpreterValue, int32, ~rhs.int32));
+
+            FREE_UVAL();
+            EAT_NEXT_LABEL();
+        }
+
+        INT_INST_TYPE(LILY_INTERPRETER_VALUE_KIND_INT64, bitnot)
+        {
+            VM_PUSH(stack,
+                    NEW_VARIANT(LilyInterpreterValue, int64, ~rhs.int64));
+
+            FREE_UVAL();
+            EAT_NEXT_LABEL();
+        }
+
+        INT_INST_TYPE(LILY_INTERPRETER_VALUE_KIND_ISIZE, bitnot)
+        {
+            VM_PUSH(stack,
+                    NEW_VARIANT(LilyInterpreterValue, isize, ~rhs.isize));
+
+            FREE_UVAL();
+            EAT_NEXT_LABEL();
+        }
+
+        INT_INST_TYPE(LILY_INTERPRETER_VALUE_KIND_UINT8, bitnot)
+        {
+            RUNTIME_ERROR_UNREACHABLE("expected Int...");
+        }
+
+        INT_INST_TYPE(LILY_INTERPRETER_VALUE_KIND_UINT16, bitnot)
+        {
+            RUNTIME_ERROR_UNREACHABLE("expected Int...");
+        }
+
+        INT_INST_TYPE(LILY_INTERPRETER_VALUE_KIND_UINT32, bitnot)
+        {
+            RUNTIME_ERROR_UNREACHABLE("expected Int...");
+        }
+
+        INT_INST_TYPE(LILY_INTERPRETER_VALUE_KIND_UINT64, bitnot)
+        {
+            RUNTIME_ERROR_UNREACHABLE("expected Int...");
+        }
+
+        INT_INST_TYPE(LILY_INTERPRETER_VALUE_KIND_USIZE, bitnot)
+        {
+            RUNTIME_ERROR_UNREACHABLE("expected Int...");
+        }
+
+        INT_INST_DEFAULT(bitnot)
+        {
+            RUNTIME_ERROR_UNREACHABLE("expected Int...");
+        }
+
+        INT_INST_END();
     }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_BITOR)
