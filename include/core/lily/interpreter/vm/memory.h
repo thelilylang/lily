@@ -72,16 +72,16 @@ inline CONSTRUCTOR(LilyInterpreterMemory, LilyInterpreterMemory)
  *
  * @brief Alloc memory from VM memory controller.
  */
-LilyInterpreterValueObject *
+LilyInterpreterValue
 alloc__LilyInterpreterMemory(LilyInterpreterMemory *self, Usize size);
 
 /**
  *
  * @brief Resize memory allocated from VM memory controller.
  */
-LilyInterpreterValueObject *
+LilyInterpreterValue
 resize__LilyInterpreterMemory(LilyInterpreterMemory *self,
-                              LilyInterpreterValueObject *obj,
+                              LilyInterpreterValue *value,
                               Usize new_size);
 
 /**
@@ -90,6 +90,6 @@ resize__LilyInterpreterMemory(LilyInterpreterMemory *self,
  */
 void
 free__LilyInterpreterMemory(LilyInterpreterMemory *self,
-                            LilyInterpreterValueObject **obj);
+                            LilyInterpreterValue *value);
 
 #endif // LILY_CORE_LILY_INTERPRETER_MEMORY_H

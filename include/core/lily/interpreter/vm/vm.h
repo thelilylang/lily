@@ -30,13 +30,13 @@
 #include <base/new.h>
 #include <base/units.h>
 
+#include <builtin/alloc.h>
+
 #include <core/lily/interpreter/vm/memory.h>
 #include <core/lily/interpreter/vm/value.h>
 #include <core/lily/mir/mir.h>
 
 #define DEFAULT_MAX_STACK_CAPACITY MiB // ~1 MB
-#define DEFAULT_STACK_CAPACITY 8
-#define DEFAULT_STACK_COEFF_INC 2
 
 enum LilyInterpreterVMStackFrameReturnKind
 {
@@ -47,7 +47,7 @@ enum LilyInterpreterVMStackFrameReturnKind
 typedef struct LilyInterpreterVMStackFrameReturn
 {
     enum LilyInterpreterVMStackFrameReturnKind kind;
-    LilyInterpreterValue *value;
+    LilyInterpreterValue value;
 } LilyInterpreterVMStackFrameReturn;
 
 /**
@@ -58,7 +58,7 @@ typedef struct LilyInterpreterVMStackFrameReturn
 inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
                            LilyInterpreterVMStackFrameReturn,
                            normal,
-                           LilyInterpreterValue *value)
+                           LilyInterpreterValue value)
 {
     return (LilyInterpreterVMStackFrameReturn){
         .kind = LILY_INTERPRETER_VM_STACK_FRAME_RETURN_KIND_NORMAL,
@@ -74,7 +74,7 @@ inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
 inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
                            LilyInterpreterVMStackFrameReturn,
                            raise,
-                           LilyInterpreterValue *value)
+                           LilyInterpreterValue value)
 {
     return (LilyInterpreterVMStackFrameReturn){
         .kind = LILY_INTERPRETER_VM_STACK_FRAME_RETURN_KIND_RAISE,
@@ -175,7 +175,7 @@ typedef struct LilyInterpreterVMStackFrame
 {
     const char *name; // const char* (&)
     LilyInterpreterValue
-      *params[MAX_FUN_PARAMS]; // LilyInterpreterValue* (&)[MAX_FUN_PARAMS]
+      *params[MAX_FUN_PARAMS]; // LilyInterpreterValue* (&) [MAX_FUN_PARAMS]
     Usize params_len;
     LilyInterpreterVMStackFrameReturn return_;
     Usize begin; // index of the begin of the stack frame on the stack buffer
@@ -234,11 +234,9 @@ typedef struct LilyInterpreterVMStack
 {
     // The bottom of the stack (before the first call frame) is used to store
     // constant value.
-    LilyInterpreterValue *top; // LilyInterpreterValue*?
-    LilyInterpreterValue **buffer;
+    LilyInterpreterValue *buffer;
     LilyInterpreterVMStackFrame *current_frame; // LilyInterpreterVMStackFrame*?
     Usize len;
-    Usize capacity;
     Usize max_capacity;
 } LilyInterpreterVMStack;
 
@@ -246,20 +244,7 @@ typedef struct LilyInterpreterVMStack
  *
  * @brief Construct LilyInterpreterVMStack type.
  */
-inline CONSTRUCTOR(LilyInterpreterVMStack,
-                   LilyInterpreterVMStack,
-                   Usize max_capacity)
-{
-    return (LilyInterpreterVMStack){ .top = NULL,
-                                     .buffer = NULL,
-                                     .current_frame = NULL,
-                                     .capacity = DEFAULT_STACK_CAPACITY,
-                                     .max_capacity =
-                                       max_capacity == 0
-                                         ? DEFAULT_MAX_STACK_CAPACITY
-                                         : max_capacity,
-                                     .len = 0 };
-}
+CONSTRUCTOR(LilyInterpreterVMStack, LilyInterpreterVMStack, Usize max_capacity);
 
 /**
  *
@@ -267,13 +252,13 @@ inline CONSTRUCTOR(LilyInterpreterVMStack,
  */
 void
 push__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
-                             LilyInterpreterValue *value);
+                             LilyInterpreterValue value);
 
 /**
  *
  * @brief Remove and return the value on the top.
  */
-LilyInterpreterValue *
+LilyInterpreterValue
 pop__LilyInterpreterVMStack(LilyInterpreterVMStack *self);
 
 /**
@@ -304,14 +289,6 @@ clean_block_stack__LilyInterpreterVMStack(LilyInterpreterVMStack *self);
  */
 LilyInterpreterVMStackFrameReturn
 clean_frame__LilyInterpreterVMStack(LilyInterpreterVMStack *self);
-
-/**
- *
- * @brief Load const from the stack.
- */
-LilyInterpreterValue *
-load_const_value__LilyInterpreterVMStack(LilyInterpreterVMStack *self,
-                                         const char *name);
 
 /**
  *
