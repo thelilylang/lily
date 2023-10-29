@@ -176,7 +176,8 @@ __free__$Alloc(void **mem, Usize size, Usize align)
     }
 
     // Calculate the aligned starting address based on the alignment
-    void *aligned_mem = (void *)((uintptr_t)(*mem) & ~(align - 1));
+    void *aligned_mem =
+      align == 0 ? *mem : (void *)((uintptr_t)(*mem) & ~(align - 1));
 
     // Calculate the size to unmap, taking into account the alignment
     size_t aligned_size = size + ((uintptr_t)(*mem) - (uintptr_t)(aligned_mem));
