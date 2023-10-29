@@ -31,104 +31,104 @@
  *
  * @brief Call read system call with runtime values.
  */
-LilyInterpreterValue *
-read__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *fd,
-                                  LilyInterpreterValue *buf,
-                                  LilyInterpreterValue *n);
+LilyInterpreterValue
+read__LilyInterpreterVMRuntimeSys(LilyInterpreterValue fd,
+                                  LilyInterpreterValue buf,
+                                  LilyInterpreterValue n);
 
 /**
  *
  * @brief Call write system call with runtime values.
  */
-LilyInterpreterValue *
-write__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *fd,
-                                   LilyInterpreterValue *buf,
-                                   LilyInterpreterValue *n);
+LilyInterpreterValue
+write__LilyInterpreterVMRuntimeSys(LilyInterpreterValue fd,
+                                   LilyInterpreterValue buf,
+                                   LilyInterpreterValue n);
 
 /**
  *
  * @brief Call open system call with runtime values.
  */
-LilyInterpreterValue *
-open__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname,
-                                  LilyInterpreterValue *flags,
-                                  LilyInterpreterValue *mode);
+LilyInterpreterValue
+open__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname,
+                                  LilyInterpreterValue flags,
+                                  LilyInterpreterValue mode);
 
 /**
  *
  * @brief Call close system call with runtime values.
  */
-LilyInterpreterValue *
-close__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *fd);
+LilyInterpreterValue
+close__LilyInterpreterVMRuntimeSys(LilyInterpreterValue fd);
 
 /**
  *
  * @brief Call stat (mode) system call with runtime values.
  */
-LilyInterpreterValue *
-stat_mode__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname);
+LilyInterpreterValue
+stat_mode__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname);
 
 /**
  *
  * @brief Call stat (ino) system call with runtime values.
  */
-LilyInterpreterValue *
-stat_ino__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname);
+LilyInterpreterValue
+stat_ino__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname);
 
 /**
  *
  * @brief Call stat (dev) system call with runtime values.
  */
-LilyInterpreterValue *
-stat_dev__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname);
+LilyInterpreterValue
+stat_dev__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname);
 
 /**
  *
  * @brief Call stat (nlink) system call with runtime values.
  */
-LilyInterpreterValue *
-stat_nlink__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname);
+LilyInterpreterValue
+stat_nlink__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname);
 
 /**
  *
  * @brief Call stat (uid) system call with runtime values.
  */
-LilyInterpreterValue *
-stat_uid__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname);
+LilyInterpreterValue
+stat_uid__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname);
 
 /**
  *
  * @brief Call stat (gid) system call with runtime values.
  */
-LilyInterpreterValue *
-stat_gid__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname);
+LilyInterpreterValue
+stat_gid__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname);
 
 /**
  *
  * @brief Call stat (size) system call with runtime values.
  */
-LilyInterpreterValue *
-stat_size__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname);
+LilyInterpreterValue
+stat_size__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname);
 
 /**
  *
  * @brief Call stat (atime) system call with runtime values.
  */
-LilyInterpreterValue *
-stat_atime__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname);
+LilyInterpreterValue
+stat_atime__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname);
 
 /**
  *
  * @brief Call stat (mtime) system call with runtime values.
  */
-LilyInterpreterValue *
-stat_mtime__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname);
+LilyInterpreterValue
+stat_mtime__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname);
 
 /**
  *
  * @brief Call stat (ctime) system call with runtime values.
  */
-LilyInterpreterValue *
-stat_ctime__LilyInterpreterVMRuntimeSys(LilyInterpreterValue *pathname);
+LilyInterpreterValue
+stat_ctime__LilyInterpreterVMRuntimeSys(LilyInterpreterValue pathname);
 
 #endif // LILY_CORE_LILY_INTERPRETER_RUNTIME_SYS_H
