@@ -3408,10 +3408,9 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         ASSERT(new_current_block_inst->block.insts->len > 0);
 #endif
 
-        VM_SET_CURRENT_BLOCK_INST(next__VecIter(&current_block_inst_iter));
+        // VM_SET_CURRENT_BLOCK_INST(next__VecIter(&current_block_inst_iter));
 
 #ifdef LILY_FULL_ASSERT_VM
-        ASSERT(current_block_inst);
         ASSERT(current_frame);
 #endif
 
@@ -3424,7 +3423,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
           stack->len);
 
         // Run the block.
-        return run_insts__LilyInterpreterVM(self);
+        return;
     }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_JMP_COND)
@@ -3460,10 +3459,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         ASSERT(new_current_block_inst->block.insts->len > 0);
 #endif
 
-        VM_SET_CURRENT_BLOCK_INST(next__VecIter(&current_block_inst_iter));
-
 #ifdef LILY_FULL_ASSERT_VM
-        ASSERT(current_block_inst);
         ASSERT(current_frame);
 #endif
 
@@ -3476,7 +3472,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
           stack->len);
 
         // Run the block.
-        return run_insts__LilyInterpreterVM(self);
+        return;
     }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_LEN)
@@ -4267,6 +4263,8 @@ set_max_stack__LilyInterpreterVM(Usize max_stack)
 void
 run__LilyInterpreterVM(LilyInterpreterVM *self)
 {
+    // TODO: Instead of call `run_inst__*`, execute all instructions and the VM
+    // in one function.
 run_vm : {
     run_inst__LilyInterpreterVM(self);
     VM_NEXT_INST(run_vm, exit_vm);
