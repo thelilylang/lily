@@ -174,7 +174,8 @@ DESTRUCTOR(LilyInterpreterVMStackBlockFrame,
 typedef struct LilyInterpreterVMStackFrame
 {
     const char *name; // const char* (&)
-    LilyInterpreterValue *params[MAX_FUN_PARAMS];
+    LilyInterpreterValue
+      *params[MAX_FUN_PARAMS]; // LilyInterpreterValue* (&)[MAX_FUN_PARAMS]
     Usize params_len;
     LilyInterpreterVMStackFrameReturn return_;
     Usize begin; // index of the begin of the stack frame on the stack buffer
@@ -233,7 +234,7 @@ typedef struct LilyInterpreterVMStack
 {
     // The bottom of the stack (before the first call frame) is used to store
     // constant value.
-    LilyInterpreterValue *top; // LilyInterpreterValue* (&)
+    LilyInterpreterValue *top; // LilyInterpreterValue*?
     LilyInterpreterValue **buffer;
     LilyInterpreterVMStackFrame *current_frame; // LilyInterpreterVMStackFrame*?
     Usize len;
@@ -249,15 +250,15 @@ inline CONSTRUCTOR(LilyInterpreterVMStack,
                    LilyInterpreterVMStack,
                    Usize max_capacity)
 {
-    return (LilyInterpreterVMStack){
-        .top = NULL,
-        .buffer = lily_calloc(DEFAULT_STACK_CAPACITY, PTR_SIZE),
-        .current_frame = NULL,
-        .capacity = DEFAULT_STACK_CAPACITY,
-        .max_capacity =
-          max_capacity == 0 ? DEFAULT_MAX_STACK_CAPACITY : max_capacity,
-        .len = 0
-    };
+    return (LilyInterpreterVMStack){ .top = NULL,
+                                     .buffer = NULL,
+                                     .current_frame = NULL,
+                                     .capacity = DEFAULT_STACK_CAPACITY,
+                                     .max_capacity =
+                                       max_capacity == 0
+                                         ? DEFAULT_MAX_STACK_CAPACITY
+                                         : max_capacity,
+                                     .len = 0 };
 }
 
 /**
