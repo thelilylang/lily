@@ -29,18 +29,23 @@
 
 #include <stddef.h>
 
-LilyInterpreterValueObject *
+LilyInterpreterValue
 alloc__LilyInterpreterMemory(LilyInterpreterMemory *self, Usize size)
+{
+}
+
+LilyInterpreterValue
+resize__LilyInterpreterMemory(LilyInterpreterMemory *self,
+                              LilyInterpreterValue *value,
+                              Usize new_size)
 {
 }
 
 void
 free__LilyInterpreterMemory(LilyInterpreterMemory *self,
-                            LilyInterpreterValueObject **obj)
+                            LilyInterpreterValue *value)
 {
-    if (obj && *obj) {
-        lily_free(*obj);
-        *obj = NULL;
+    if (value) {
     } else {
         RUNTIME_ERROR_UNREACHABLE("bad free, the object is NULL");
     }
