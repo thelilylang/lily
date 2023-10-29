@@ -262,10 +262,7 @@ inline CONSTRUCTOR(VecIter, VecIter, const Vec *vec)
  *
  * @brief Get the next value.
  */
-inline void *
-next__VecIter(VecIter *self)
-{
-    return safe_get__Vec(self->vec, self->count++);
-}
+void *
+next__VecIter(VecIter *self);
 
 #endif // LILY_BASE_VEC_H

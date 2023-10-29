@@ -267,6 +267,12 @@ DESTRUCTOR(OrderedHashMap, OrderedHashMap *self)
     lily_free(self);
 }
 
+void *
+next__OrderedHashMapIter(OrderedHashMapIter *self)
+{
+    return get_from_id__OrderedHashMap(self->ordered_hash_map, self->count++);
+}
+
 CONSTRUCTOR(OrderedHashMapIter2,
             OrderedHashMapIter2,
             OrderedHashMap *ordered_hash_map,

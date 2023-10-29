@@ -273,3 +273,9 @@ DESTRUCTOR(Vec, Vec *self)
 
     lily_free(self);
 }
+
+void *
+next__VecIter(VecIter *self)
+{
+    return safe_get__Vec(self->vec, self->count++);
+}

@@ -250,11 +250,8 @@ inline CONSTRUCTOR(OrderedHashMapIter,
  *
  * @brief Get the next value.
  */
-inline void *
-next__OrderedHashMapIter(OrderedHashMapIter *self)
-{
-    return get_from_id__OrderedHashMap(self->ordered_hash_map, self->count++);
-}
+void *
+next__OrderedHashMapIter(OrderedHashMapIter *self);
 
 typedef struct OrderedHashMapIter2
 {
