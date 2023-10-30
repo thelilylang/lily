@@ -4186,11 +4186,10 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_STORE)
     {
-        push_value__LilyInterpreterVM(self, current_block_inst->store.dest);
         push_value__LilyInterpreterVM(self, current_block_inst->store.src);
 
         LilyInterpreterValue src_value = VM_POP(stack);
-        LilyInterpreterValue dest_value = VM_POP(stack);
+        LilyInterpreterValue *dest_value = NULL;
         bool raw_value = true;
 
         switch (current_block_inst->store.src->kind) {
@@ -4203,16 +4202,26 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
                 break;
         }
 
+        switch (current_block_inst->store.dest->kind) {
+            case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
+                dest_value = search_variable__LilyInterpreterVMStackBlockFrame(
+                  current_block_frame,
+                  (char *)current_block_inst->store.dest->var);
+                break;
+            default:
+                UNREACHABLE("expected a valid destination value, like var");
+        }
+
 #ifdef LILY_FULL_ASSERT_VM
         ASSERT(current_block_inst->store.dest->kind ==
                LILY_MIR_INSTRUCTION_VAL_KIND_VAR)
         ASSERT(dest_value);
 #endif
 
-        store__LilyInterpreterValue(&dest_value, &src_value, raw_value);
+        store__LilyInterpreterValue(dest_value, &src_value, raw_value);
 
         // NOTE: Decrement the ref_count of the destination value.
-        FREE(LilyInterpreterValue, &dest_value);
+        FREE(LilyInterpreterValue, dest_value);
         FREE(LilyInterpreterValue, &src_value);
 
         EAT_NEXT_LABEL();
