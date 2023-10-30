@@ -290,6 +290,9 @@ LilyMirPopBlock(LilyMirModule *Module);
 LilyMirInstructionBlock *
 LilyMirGetInsertBlock(LilyMirModule *Module);
 
+LilyMirInstruction *
+LilyMirGetInsertBlockInst(LilyMirModule *Module);
+
 bool
 LilyMirEmptyBlock(LilyMirModule *Module);
 
@@ -338,16 +341,22 @@ LilyMirInstruction *
 LilyMirBuildRet(LilyMirModule *Module);
 
 inline LilyMirInstruction *
-LilyMirBuildJmp(LilyMirModule *Module, LilyMirInstruction *block)
+LilyMirBuildJmp(LilyMirModule *Module, LilyMirInstructionBlock *block)
+{
+    return NEW_VARIANT(LilyMirInstruction, jmp, block);
+}
+
+inline LilyMirInstruction *
+LilyMirBuildJmpWithInst(LilyMirModule *Module, LilyMirInstruction *block)
 {
     return NEW_VARIANT(LilyMirInstruction, jmp, &block->block);
 }
 
 LilyMirInstruction *
-LilyMirBuildJmpCond(LilyMirModule *Module,
-                    LilyMirInstruction *Cond,
-                    LilyMirInstruction *ThenBlock,
-                    LilyMirInstruction *ElseBlock);
+LilyMirBuildJmpCondWithInst(LilyMirModule *Module,
+                            LilyMirInstruction *Cond,
+                            LilyMirInstruction *ThenBlock,
+                            LilyMirInstruction *ElseBlock);
 
 /**
  *
@@ -449,7 +458,11 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
 
 void
 LilyMirAddFinalInstruction(LilyMirModule *Module,
-                           LilyMirInstruction *exit_block);
+                           LilyMirInstructionBlock *exit_block);
+
+void
+LilyMirAddFinalInstructionWithInst(LilyMirModule *Module,
+                                   LilyMirInstruction *exit_block);
 
 bool
 LilyMirHasFinalInstruction(LilyMirModule *Module);

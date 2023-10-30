@@ -47,7 +47,8 @@ static threadlocal enum LilyCheckedExprBinaryKind last_cond_binary = -1;
                                   0))));                                    \
                                                                             \
     /* jmp exit_block */                                                    \
-    LilyMirAddInst(module, LilyMirBuildJmp(module, current_exit_block));    \
+    LilyMirAddInst(module,                                                  \
+                   LilyMirBuildJmpWithInst(module, current_exit_block));    \
                                                                             \
     LilyMirPopBlock(module);
 
@@ -71,7 +72,8 @@ static threadlocal enum LilyCheckedExprBinaryKind last_cond_binary = -1;
                                   1))));                                    \
                                                                             \
     /* jmp exit_block */                                                    \
-    LilyMirAddInst(module, LilyMirBuildJmp(module, current_exit_block));    \
+    LilyMirAddInst(module,                                                  \
+                   LilyMirBuildJmpWithInst(module, current_exit_block));    \
                                                                             \
     LilyMirPopBlock(module);
 
@@ -112,7 +114,7 @@ static threadlocal enum LilyCheckedExprBinaryKind last_cond_binary = -1;
         /* and */                                                              \
         /* jmpcond val(i1) %r.1, next_block/assign1, assign0 */                \
         LilyMirAddInst(module,                                                 \
-                       LilyMirBuildJmpCond(                                    \
+                       LilyMirBuildJmpCondWithInst(                            \
                          module,                                               \
                          cond,                                                 \
                          last_cond_binary == LILY_CHECKED_EXPR_BINARY_KIND_AND \
@@ -242,7 +244,8 @@ generate_cond__LilyMir(LilyMirModule *module,
                     if (!exit_block) {
                         // jmp first_cond
                         LilyMirAddInst(
-                          module, LilyMirBuildJmp(module, first_cond_block));
+                          module,
+                          LilyMirBuildJmpWithInst(module, first_cond_block));
                         LilyMirPopBlock(module);
 
                         GENERATE_ASSIGN0_BLOCK();
@@ -346,7 +349,8 @@ generate_cond__LilyMir(LilyMirModule *module,
                     if (!exit_block) {
                         // jmp first_cond
                         LilyMirAddInst(
-                          module, LilyMirBuildJmp(module, first_cond_block));
+                          module,
+                          LilyMirBuildJmpWithInst(module, first_cond_block));
                         LilyMirPopBlock(module);
 
                         GENERATE_ASSIGN0_BLOCK();

@@ -301,10 +301,10 @@ LilyMirBuildReg(LilyMirModule *Module, LilyMirInstruction *Inst)
 }
 
 LilyMirInstruction *
-LilyMirBuildJmpCond(LilyMirModule *Module,
-                    LilyMirInstruction *Cond,
-                    LilyMirInstruction *ThenBlock,
-                    LilyMirInstruction *ElseBlock)
+LilyMirBuildJmpCondWithInst(LilyMirModule *Module,
+                            LilyMirInstruction *Cond,
+                            LilyMirInstruction *ThenBlock,
+                            LilyMirInstruction *ElseBlock)
 {
     ASSERT(Cond->kind == LILY_MIR_INSTRUCTION_KIND_VAL);
 
@@ -957,6 +957,17 @@ LilyMirGetInsertBlock(LilyMirModule *Module)
     return current->inst->fun.block_stack->top;
 }
 
+LilyMirInstruction *
+LilyMirGetInsertBlockInst(LilyMirModule *Module)
+{
+    LilyMirCurrent *current = LilyMirGetCurrentOnTop(Module);
+
+    ASSERT(current->kind == LILY_MIR_CURRENT_KIND_FUN);
+    ASSERT(current->inst->fun.block_stack->len > 0);
+
+    return last__OrderedHashMap(current->inst->fun.insts);
+}
+
 bool
 LilyMirEmptyBlock(LilyMirModule *Module)
 {
@@ -1059,29 +1070,39 @@ LilyMirGetFunNameFromTypes(LilyMirModule *Module,
     UNREACHABLE("the analysis has a bug!!");
 }
 
+#define LILY_MIR_ADD_FINAL_INSTRUCTION(build_jmp)                             \
+    LilyMirCurrent *top = Module->current->top;                               \
+                                                                              \
+    ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);                           \
+    ASSERT(top->inst->fun.insts->len > 0);                                    \
+                                                                              \
+    LilyMirInstructionBlock *current_block = top->inst->fun.block_stack->top; \
+                                                                              \
+    if (current_block->insts->len == 0) {                                     \
+        return LilyMirAddInst(Module, build_jmp(Module, exit_block));         \
+    }                                                                         \
+                                                                              \
+    LilyMirInstruction *last_inst = last__Vec(current_block->insts);          \
+                                                                              \
+    if (last_inst->kind != LILY_MIR_INSTRUCTION_KIND_RET &&                   \
+        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMP &&                   \
+        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMPCOND &&               \
+        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_UNREACHABLE) {           \
+        return LilyMirAddInst(Module, build_jmp(Module, exit_block));         \
+    }
+
 void
 LilyMirAddFinalInstruction(LilyMirModule *Module,
-                           LilyMirInstruction *exit_block)
+                           LilyMirInstructionBlock *exit_block)
 {
-    LilyMirCurrent *top = Module->current->top;
+    LILY_MIR_ADD_FINAL_INSTRUCTION(LilyMirBuildJmp);
+}
 
-    ASSERT(top->kind == LILY_MIR_CURRENT_KIND_FUN);
-    ASSERT(top->inst->fun.insts->len > 0);
-
-    LilyMirInstructionBlock *current_block = top->inst->fun.block_stack->top;
-
-    if (current_block->insts->len == 0) {
-        return LilyMirAddInst(Module, LilyMirBuildJmp(Module, exit_block));
-    }
-
-    LilyMirInstruction *last_inst = last__Vec(current_block->insts);
-
-    if (last_inst->kind != LILY_MIR_INSTRUCTION_KIND_RET &&
-        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMP &&
-        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_JMPCOND &&
-        last_inst->kind != LILY_MIR_INSTRUCTION_KIND_UNREACHABLE) {
-        return LilyMirAddInst(Module, LilyMirBuildJmp(Module, exit_block));
-    }
+void
+LilyMirAddFinalInstructionWithInst(LilyMirModule *Module,
+                                   LilyMirInstruction *exit_block)
+{
+    LILY_MIR_ADD_FINAL_INSTRUCTION(LilyMirBuildJmpWithInst);
 }
 
 bool
@@ -1167,7 +1188,7 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     // 1. Add jmp cond
     // 2. Add cond block
     if (cond_block) {
-        LilyMirAddInst(Module, LilyMirBuildJmp(Module, cond_block));
+        LilyMirAddInst(Module, LilyMirBuildJmpWithInst(Module, cond_block));
         LilyMirPopBlock(Module);
         LilyMirAddBlock(Module, cond_block);
     }
@@ -1180,8 +1201,8 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
     LilyMirInstruction *if_block = LilyMirBuildBlock(Module, block_limit);
 
     // 3. Add conditional jmp
-    LilyMirAddInst(Module,
-                   LilyMirBuildJmpCond(Module, cond, if_block, next_block));
+    LilyMirAddInst(
+      Module, LilyMirBuildJmpCondWithInst(Module, cond, if_block, next_block));
 
     LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, if_block);
@@ -1192,7 +1213,7 @@ LilyMirBuildIfBranch(LilyMirModule *Module,
 
     // 5. Add final instruction
     LilyMirSetBlockLimit(block_limit, LilyMirGetInsertBlock(Module)->id);
-    LilyMirAddFinalInstruction(Module, exit_block);
+    LilyMirAddFinalInstructionWithInst(Module, exit_block);
 
     partial_free__LilyMirInstruction(cond);
 }
@@ -1218,8 +1239,9 @@ LilyMirBuildElifBranch(LilyMirModule *Module,
       Module, ref__LilyMirBlockLimit(current_block->block.limit));
 
     // 1. Add conditional jmp
-    LilyMirAddInst(Module,
-                   LilyMirBuildJmpCond(Module, cond, elif_block, next_block));
+    LilyMirAddInst(
+      Module,
+      LilyMirBuildJmpCondWithInst(Module, cond, elif_block, next_block));
 
     LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, elif_block);
@@ -1236,7 +1258,7 @@ LilyMirBuildElifBranch(LilyMirModule *Module,
     // 3. Add final instruction
     LilyMirSetBlockLimit(elif_block->block.limit,
                          LilyMirGetInsertBlock(Module)->id);
-    LilyMirAddFinalInstruction(Module, exit_block);
+    LilyMirAddFinalInstructionWithInst(Module, exit_block);
 
     partial_free__LilyMirInstruction(cond);
 }
@@ -1264,7 +1286,7 @@ LilyMirBuildElseBranch(LilyMirModule *Module,
     // 2. Add final instruction
     LilyMirSetBlockLimit(current_block->block.limit,
                          LilyMirGetInsertBlock(Module)->id);
-    LilyMirAddFinalInstruction(Module, exit_block);
+    LilyMirAddFinalInstructionWithInst(Module, exit_block);
 }
 
 void
@@ -1336,6 +1358,7 @@ LilyMirBuildWhile(LilyMirModule *Module,
     // exit:
     //   ; ...
 
+    LilyMirInstruction *last_block = LilyMirGetInsertBlockInst(Module);
     LilyMirBlockLimit *block_limit = NEW(LilyMirBlockLimit);
     LilyMirInstruction *cond_block =
       LilyMirEmptyBlock(Module)
@@ -1348,7 +1371,7 @@ LilyMirBuildWhile(LilyMirModule *Module,
     // 1. Add jmp cond
     // 2. Add cond block
     if (cond_block) {
-        LilyMirAddInst(Module, LilyMirBuildJmp(Module, cond_block));
+        LilyMirAddInst(Module, LilyMirBuildJmpWithInst(Module, cond_block));
         LilyMirPopBlock(Module);
         LilyMirAddBlock(Module, cond_block);
     }
@@ -1359,8 +1382,9 @@ LilyMirBuildWhile(LilyMirModule *Module,
     ASSERT(cond);
 
     // 3. Add conditional jmp
-    LilyMirAddInst(Module,
-                   LilyMirBuildJmpCond(Module, cond, while_block, exit_block));
+    LilyMirAddInst(
+      Module,
+      LilyMirBuildJmpCondWithInst(Module, cond, while_block, exit_block));
 
     LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, while_block);
@@ -1376,7 +1400,8 @@ LilyMirBuildWhile(LilyMirModule *Module,
 
     // 5. Add final instruction
     LilyMirSetBlockLimit(block_limit, LilyMirGetInsertBlock(Module)->id);
-    LilyMirAddFinalInstruction(Module, cond_block);
+    LilyMirAddFinalInstructionWithInst(Module,
+                                       cond_block ? cond_block : last_block);
 
     LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, exit_block);
@@ -1404,7 +1429,7 @@ LilyMirBuildBlockStmt(LilyMirModule *Module,
     LilyMirInstruction *exit_block =
       LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(parent_block_limit));
 
-    LilyMirAddInst(Module, LilyMirBuildJmp(Module, block));
+    LilyMirAddInst(Module, LilyMirBuildJmpWithInst(Module, block));
     LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, block);
 
@@ -1421,7 +1446,7 @@ LilyMirBuildBlockStmt(LilyMirModule *Module,
     if (LilyMirHasRetInstruction(Module)) {
         FREE(LilyMirInstruction, exit_block);
     } else {
-        LilyMirAddFinalInstruction(Module, exit_block);
+        LilyMirAddFinalInstructionWithInst(Module, exit_block);
         LilyMirPopBlock(Module);
         LilyMirAddBlock(Module, exit_block);
     }
@@ -1431,14 +1456,14 @@ void
 LilyMirBuildBreak(LilyMirModule *Module, LilyMirInstruction *exit_block)
 {
     ASSERT(exit_block);
-    LilyMirAddInst(Module, LilyMirBuildJmp(Module, exit_block));
+    LilyMirAddInst(Module, LilyMirBuildJmpWithInst(Module, exit_block));
 }
 
 void
 LilyMirBuildNext(LilyMirModule *Module, LilyMirInstruction *next_block)
 {
     ASSERT(next_block);
-    LilyMirAddInst(Module, LilyMirBuildJmp(Module, next_block));
+    LilyMirAddInst(Module, LilyMirBuildJmpWithInst(Module, next_block));
 }
 
 void
@@ -1461,7 +1486,7 @@ LilyMirBuildUnsafe(LilyMirModule *Module,
     LilyMirInstruction *exit_block =
       LilyMirBuildBlock(Module, ref__LilyMirBlockLimit(parent_block_limit));
 
-    LilyMirAddInst(Module, LilyMirBuildJmp(Module, block));
+    LilyMirAddInst(Module, LilyMirBuildJmpWithInst(Module, block));
     LilyMirPopBlock(Module);
     LilyMirAddBlock(Module, block);
 
@@ -1478,7 +1503,7 @@ LilyMirBuildUnsafe(LilyMirModule *Module,
     if (LilyMirHasRetInstruction(Module)) {
         FREE(LilyMirInstruction, exit_block);
     } else {
-        LilyMirAddFinalInstruction(Module, exit_block);
+        LilyMirAddFinalInstructionWithInst(Module, exit_block);
         LilyMirPopBlock(Module);
         LilyMirAddBlock(Module, exit_block);
     }
@@ -1552,7 +1577,7 @@ LilyMirBuildSwitch(LilyMirModule *Module,
                   Module, fun_signature, scope, sub_case->cond, NULL, false);
 
                 LilyMirAddInst(Module,
-                               LilyMirBuildJmpCond(
+                               LilyMirBuildJmpCondWithInst(
                                  Module, cond_inst, next_block, exit_block));
 
                 LilyMirPopBlock(Module);
@@ -1566,7 +1591,7 @@ LilyMirBuildSwitch(LilyMirModule *Module,
                                    NULL,
                                    sub_case->body_item);
 
-                LilyMirAddFinalInstruction(Module, exit_block);
+                LilyMirAddFinalInstructionWithInst(Module, exit_block);
                 LilyMirSetBlockLimit(next_block->block.limit,
                                      LilyMirGetInsertBlock(Module)->id);
             } else {
@@ -1578,7 +1603,7 @@ LilyMirBuildSwitch(LilyMirModule *Module,
                                    NULL,
                                    sub_case->body_item);
 
-                LilyMirAddFinalInstruction(Module, exit_block);
+                LilyMirAddFinalInstructionWithInst(Module, exit_block);
                 LilyMirSetBlockLimit(sub_case_block->block.limit,
                                      LilyMirGetInsertBlock(Module)->id);
             }
@@ -1672,7 +1697,7 @@ LilyMirBuildSwitch(LilyMirModule *Module,
 //
 //             LilyMirSetBlockLimit(block->block.limit,
 //                                  LilyMirGetInsertBlock(Module)->id);
-//             LilyMirAddFinalInstruction(Module, exit_block);
+//             LilyMirAddFinalInstructionWithInst(Module, exit_block);
 //
 //             push__Vec(
 //               cases,
@@ -1697,7 +1722,7 @@ LilyMirBuildSwitch(LilyMirModule *Module,
 //
 //             LilyMirSetBlockLimit(default_block->block.limit,
 //                                  LilyMirGetInsertBlock(Module)->id);
-//             LilyMirAddFinalInstruction(Module, exit_block);
+//             LilyMirAddFinalInstructionWithInst(Module, exit_block);
 //         } else {
 //             LilyMirAddInst(Module,
 //                            NEW_VARIANT(LilyMirInstruction, unreachable));
