@@ -4222,7 +4222,12 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
         // NOTE: Decrement the ref_count of the destination value.
         FREE(LilyInterpreterValue, dest_value);
-        FREE(LilyInterpreterValue, &src_value);
+
+        if (raw_value) {
+            minimal_free__LilyInterpreterValue(&src_value);
+        } else {
+            FREE(LilyInterpreterValue, &src_value);
+        }
 
         EAT_NEXT_LABEL();
     }
