@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_INTERPRETER_VM_H
-#define LILY_CORE_LILY_INTERPRETER_VM_H
+#ifndef LILY_CORE_LILY_INTERPRETER_VM_VM_H
+#define LILY_CORE_LILY_INTERPRETER_VM_VM_H
 
 #include <base/alloc.h>
 #include <base/macros.h>
@@ -377,4 +377,4 @@ run__LilyInterpreterVM(LilyInterpreterVM *self);
  */
 DESTRUCTOR(LilyInterpreterVM, const LilyInterpreterVM *self);
 
-#endif // LILY_CORE_LILY_INTERPRETER_VM_H
+#endif // LILY_CORE_LILY_INTERPRETER_VM_VM_H

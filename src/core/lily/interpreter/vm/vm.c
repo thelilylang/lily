@@ -22,14 +22,11 @@
  * SOFTWARE.
  */
 
+#include <core/lily/interpreter/vm.h>
 #include <core/lily/interpreter/vm/runtime.h>
 #include <core/lily/interpreter/vm/vm.h>
 
 // Stack-based VM
-
-#ifdef ENV_DEBUG
-#define LILY_FULL_ASSERT_VM
-#endif
 
 #if defined(CLANG_VERSION) || defined(GCC_VERSION)
 #define LILY_USE_COMPUTED_GOTOS
@@ -1450,7 +1447,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_BLOCK)
     {
-        TODO("block");
+        UNREACHABLE("block is not expected");
     }
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_BUILTIN_CALL)
@@ -4189,29 +4186,33 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_STORE)
     {
+        push_value__LilyInterpreterVM(self, current_block_inst->store.dest);
         push_value__LilyInterpreterVM(self, current_block_inst->store.src);
 
         LilyInterpreterValue src_value = VM_POP(stack);
-        LilyInterpreterValue *dest_value = NULL;
+        LilyInterpreterValue dest_value = VM_POP(stack);
+        bool raw_value = true;
 
-        switch (current_block_inst->store.dest->kind) {
+        switch (current_block_inst->store.src->kind) {
             case LILY_MIR_INSTRUCTION_VAL_KIND_VAR:
-                dest_value = search_variable__LilyInterpreterVMStackBlockFrame(
-                  current_block_frame,
-                  (char *)current_block_inst->store.dest->var);
+            case LILY_MIR_INSTRUCTION_VAL_KIND_CONST:
+            case LILY_MIR_INSTRUCTION_VAL_KIND_REG:
+                raw_value = false;
                 break;
             default:
-                UNREACHABLE("expected a valid destination value, like var");
+                break;
         }
 
 #ifdef LILY_FULL_ASSERT_VM
+        ASSERT(current_block_inst->store.dest->kind ==
+               LILY_MIR_INSTRUCTION_VAL_KIND_VAR)
         ASSERT(dest_value);
 #endif
 
-        store__LilyInterpreterValue(dest_value, &src_value);
+        store__LilyInterpreterValue(&dest_value, &src_value, raw_value);
 
         // NOTE: Decrement the ref_count of the destination value.
-        FREE(LilyInterpreterValue, dest_value);
+        FREE(LilyInterpreterValue, &dest_value);
         FREE(LilyInterpreterValue, &src_value);
 
         EAT_NEXT_LABEL();
