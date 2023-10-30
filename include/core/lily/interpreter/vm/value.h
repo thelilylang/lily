@@ -453,6 +453,13 @@ store__LilyInterpreterValue(LilyInterpreterValue *self,
 
 /**
  *
+ * @brief Minimal free (doesn't free union values).
+ */
+void
+minimal_free__LilyInterpreterValue(LilyInterpreterValue *self);
+
+/**
+ *
  * @brief Free LilyInterpreterValue type.
  */
 DESTRUCTOR(LilyInterpreterValue, LilyInterpreterValue *self);

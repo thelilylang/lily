@@ -164,6 +164,21 @@ store__LilyInterpreterValue(LilyInterpreterValue *self,
     }
 }
 
+void
+minimal_free__LilyInterpreterValue(LilyInterpreterValue *self)
+{
+    // NOTE: expected raw value
+#ifdef LILY_FULL_ASSERT_VM
+    ASSERT(self->ref_count == 0);
+#endif
+
+    if (self->kind == LILY_INTERPRETER_VALUE_KIND_DESTROYED) {
+        RUNTIME_ERROR_UNREACHABLE("value is already destroyed");
+    }
+
+    self->kind = LILY_INTERPRETER_VALUE_KIND_DESTROYED;
+}
+
 DESTRUCTOR(LilyInterpreterValue, LilyInterpreterValue *self)
 {
     if (self->kind == LILY_INTERPRETER_VALUE_KIND_DESTROYED) {
