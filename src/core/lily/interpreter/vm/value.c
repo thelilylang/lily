@@ -23,7 +23,9 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 
+#include <core/lily/interpreter/vm.h>
 #include <core/lily/interpreter/vm/runtime.h>
 #include <core/lily/interpreter/vm/value.h>
 
@@ -32,8 +34,40 @@
 
 void
 store__LilyInterpreterValue(LilyInterpreterValue *self,
-                            const LilyInterpreterValue *src)
+                            const LilyInterpreterValue *src,
+                            bool raw_value)
 {
+    // Free old values (values allocated by the runtime).
+    switch (self->kind) {
+        case LILY_INTERPRETER_VALUE_KIND_BYTES:
+            FREE(LilyInterpreterValueBytes, self->bytes);
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_DYNAMIC_ARRAY:
+            FREE(LilyInterpreterValueDynamicArray, self->dynamic_array);
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_LIST:
+            FREE(LilyInterpreterValueList, self->list);
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_MULTI_POINTERS_ARRAY:
+            FREE(LilyInterpreterValueMultiPointersArray,
+                 self->multi_pointers_array);
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_RESULT:
+            FREE(LilyInterpreterValueResult, self->result);
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_SIZED_ARRAY:
+            FREE(LilyInterpreterValueSizedArray, self->sized_array);
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_STR:
+            FREE(LilyInterpreterValueStr, self->str);
+            break;
+        case LILY_INTERPRETER_VALUE_KIND_STRUCT:
+            FREE(LilyInterpreterValueStruct, self->struct_);
+            break;
+        default:
+            break;
+    }
+
     self->kind = src->kind;
 
     switch (self->kind) {
@@ -43,14 +77,18 @@ store__LilyInterpreterValue(LilyInterpreterValue *self,
         case LILY_INTERPRETER_VALUE_KIND_UNDEF:
             break;
         case LILY_INTERPRETER_VALUE_KIND_BYTES:
-            self->bytes = ref__LilyInterpreterValueBytes(src->bytes);
+            self->bytes = raw_value
+                            ? src->bytes
+                            : ref__LilyInterpreterValueBytes(src->bytes);
             break;
         case LILY_INTERPRETER_VALUE_KIND_CSTR:
             self->cstr = src->cstr;
             break;
         case LILY_INTERPRETER_VALUE_KIND_DYNAMIC_ARRAY:
             self->dynamic_array =
-              ref__LilyInterpreterValueDynamicArray(src->dynamic_array);
+              raw_value
+                ? src->dynamic_array
+                : ref__LilyInterpreterValueDynamicArray(src->dynamic_array);
             break;
         case LILY_INTERPRETER_VALUE_KIND_INT8:
             self->int8 = src->int8;
@@ -71,28 +109,36 @@ store__LilyInterpreterValue(LilyInterpreterValue *self,
             self->float_ = src->float_;
             break;
         case LILY_INTERPRETER_VALUE_KIND_LIST:
-            self->list = ref__LilyInterpreterValueList(src->list);
+            self->list =
+              raw_value ? src->list : ref__LilyInterpreterValueList(src->list);
             break;
         case LILY_INTERPRETER_VALUE_KIND_MULTI_POINTERS_ARRAY:
             self->multi_pointers_array =
-              ref__LilyInterpreterValueMultiPointersArray(
-                src->multi_pointers_array);
+              raw_value ? src->multi_pointers_array
+                        : ref__LilyInterpreterValueMultiPointersArray(
+                            src->multi_pointers_array);
             break;
         case LILY_INTERPRETER_VALUE_KIND_PTR:
             self->ptr = src->ptr;
             break;
         case LILY_INTERPRETER_VALUE_KIND_RESULT:
-            self->result = ref__LilyInterpreterValueResult(src->result);
+            self->result = raw_value
+                             ? src->result
+                             : ref__LilyInterpreterValueResult(src->result);
             break;
         case LILY_INTERPRETER_VALUE_KIND_SIZED_ARRAY:
             self->sized_array =
-              ref__LilyInterpreterValueSizedArray(src->sized_array);
+              raw_value ? src->sized_array
+                        : ref__LilyInterpreterValueSizedArray(src->sized_array);
             break;
         case LILY_INTERPRETER_VALUE_KIND_STR:
-            self->str = ref__LilyInterpreterValueStr(src->str);
+            self->str =
+              raw_value ? src->str : ref__LilyInterpreterValueStr(src->str);
             break;
         case LILY_INTERPRETER_VALUE_KIND_STRUCT:
-            self->struct_ = ref__LilyInterpreterValueStruct(src->struct_);
+            self->struct_ = raw_value
+                              ? src->struct_
+                              : ref__LilyInterpreterValueStruct(src->struct_);
             break;
         case LILY_INTERPRETER_VALUE_KIND_UINT8:
             self->uint8 = src->uint8;
@@ -126,6 +172,7 @@ DESTRUCTOR(LilyInterpreterValue, LilyInterpreterValue *self)
 
     if (self->ref_count > 0) {
         --self->ref_count;
+
         return;
     }
 

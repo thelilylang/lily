@@ -448,7 +448,8 @@ ref__LilyInterpreterValue(LilyInterpreterValue *self)
  */
 void
 store__LilyInterpreterValue(LilyInterpreterValue *self,
-                            const LilyInterpreterValue *src);
+                            const LilyInterpreterValue *src,
+                            bool raw_value);
 
 /**
  *
