@@ -946,6 +946,8 @@ fun add(x trace *Int32) trace *Int32 = x;
 fun main =
     val x *Int32 := Ptr.new(100);
     val y := add(trace x);
+    // or
+    val y2 := add('x);
 
     drop x;
 end
