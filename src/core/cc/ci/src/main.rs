@@ -1,3 +1,4 @@
+mod analysis;
 mod ast;
 mod generator;
 mod help;
