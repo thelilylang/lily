@@ -461,6 +461,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/scope_stmt.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/signature.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/symbol.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/variant.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/virtual_scope.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/virtual_variable_manager.c
