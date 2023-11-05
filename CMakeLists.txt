@@ -437,6 +437,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/variable.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/while.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/access.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/case_verification.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/captured_variable.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/compiler_generic.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/data_type.c
