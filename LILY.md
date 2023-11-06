@@ -81,6 +81,8 @@ Philosophy:
 
 ## Function
 
+NOTE: You cannot overload function in local scope of a function (e.g. lambda).
+
 ```lily
 fun add(x, y) = x + y end
 fun sub(x, y) = x - y end
