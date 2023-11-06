@@ -27,8 +27,8 @@ Work in progress...
 
 - Scanner: 99% finished
 - Preparser: 97% finished
-- Precompiler: 80% finished
-- Parser: 90% finished
+- Precompiler: 95% finished
+- Parser: 95% finished
 - Analysis: 60% finished
 - MIR: 55% finished
 - Code generator (LLVM): 60% finished
