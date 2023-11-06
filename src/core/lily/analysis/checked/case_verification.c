@@ -52,3 +52,15 @@ valid_pascal_case__LilyCheckedCaseVerification(char *s)
 
     return true;
 }
+
+bool
+valid_upper_snake_case__LilyCheckedCaseVerification(char *s)
+{
+    for (char *current = s; *current; ++current) {
+        if (!((*current >= 'A' && *current <= 'Z') || *current == '_')) {
+            return false;
+        }
+    }
+
+    return true;
+}

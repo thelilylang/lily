@@ -41,4 +41,12 @@ valid_snake_case__LilyCheckedCaseVerification(char *s);
 bool
 valid_pascal_case__LilyCheckedCaseVerification(char *s);
 
+/**
+ *
+ * @brief Valid if the string is formated in a upper snake case.
+ * @return Return true if the verification is valid, otherwise return false.
+ */
+bool
+valid_upper_snake_case__LilyCheckedCaseVerification(char *s);
+
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_CASE_VERIFICATION_H
