@@ -5,7 +5,7 @@
 ![Build state](https://img.shields.io/github/actions/workflow/status/thelilylang/lily/cmake.yml?branch=main&style=for-the-badge)
 ![Issues](https://img.shields.io/github/issues/thelilylang/lily?style=for-the-badge)
 ![Pull requests](https://img.shields.io/github/issues-pr/thelilylang/lily?style=for-the-badge)
-![Lines of code](https://img.shields.io/tokei/lines/github/thelilylang/lily?style=for-the-badge&category=code)
+![Lines of code](https://tokei.rs/b1/github/thelilylang/lily?caterogy=code&style=for-the-badge)
 ![Commit activity](https://img.shields.io/github/commit-activity/w/thelilylang/lily?style=for-the-badge)
 ![Last commit](https://img.shields.io/github/last-commit/thelilylang/lily?style=for-the-badge)
 ![License](https://img.shields.io/github/license/thelilylang/lily?style=for-the-badge)
