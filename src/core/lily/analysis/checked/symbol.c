@@ -26,17 +26,15 @@
 
 CONSTRUCTOR(LilyCheckedSymbol *,
             LilyCheckedSymbol,
-            Usize id,
-            Usize scope_id,
             enum LilyCheckedSymbolKind kind,
-            enum LilyVisibility visibility)
+            enum LilyVisibility visibility,
+            LilyCheckedSymbolScope scope)
 {
     LilyCheckedSymbol *self = lily_malloc(sizeof(LilyCheckedSymbol));
 
-    self->id = id;
-    self->scope_id = scope_id;
     self->kind = kind;
     self->visibility = visibility;
+    self->scope = scope;
 
     return self;
 }

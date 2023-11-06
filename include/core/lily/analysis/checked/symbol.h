@@ -30,6 +30,127 @@
 
 #include <core/lily/shared/visibility.h>
 
+enum LilyCheckedSymbolScopeKind
+{
+    LILY_CHECKED_SYMBOL_SCOPE_KIND_LOCAL,
+    LILY_CHECKED_SYMBOL_SCOPE_KIND_MODULE,
+    LILY_CHECKED_SYMBOL_SCOPE_KIND_PACKAGE
+};
+
+typedef struct LilyCheckedSymbolScopeLocal
+{
+    Usize scope_id;
+    Usize id;
+} LilyCheckedSymbolScopeLocal;
+
+/**
+ *
+ * @brief Construct LilyCheckedSymbolScopeLocal type.
+ */
+inline CONSTRUCTOR(LilyCheckedSymbolScopeLocal,
+                   LilyCheckedSymbolScopeLocal,
+                   Usize scope_id,
+                   Usize id)
+{
+    return (LilyCheckedSymbolScopeLocal){ .scope_id = scope_id, .id = id };
+}
+
+typedef struct LilyCheckedSymbolScopeModule
+{
+    Usize module_id;
+    Usize id;
+} LilyCheckedSymbolScopeModule;
+
+/**
+ *
+ * @brief Construct LilyCheckedSymbolScopeModule type.
+ */
+inline CONSTRUCTOR(LilyCheckedSymbolScopeModule,
+                   LilyCheckedSymbolScopeModule,
+                   Usize module_id,
+                   Usize id)
+{
+    return (LilyCheckedSymbolScopeModule){ .module_id = module_id, .id = id };
+}
+
+typedef struct LilyCheckedSymbolScopePackage
+{
+    Usize package_id;
+    Usize module_id;
+    Usize id;
+} LilyCheckedSymbolScopePackage;
+
+/**
+ *
+ * @brief Construct LilyCheckedSymbolScopePackage type.
+ */
+inline CONSTRUCTOR(LilyCheckedSymbolScopePackage,
+                   LilyCheckedSymbolScopePackage,
+                   Usize package_id,
+                   Usize module_id,
+                   Usize id)
+{
+    return (LilyCheckedSymbolScopePackage){ .package_id = package_id,
+                                            .module_id = module_id,
+                                            .id = id };
+}
+
+typedef struct LilyCheckedSymbolScope
+{
+    enum LilyCheckedSymbolScopeKind kind;
+    union
+    {
+        LilyCheckedSymbolScopeLocal local;
+        LilyCheckedSymbolScopeModule module;
+        LilyCheckedSymbolScopePackage package;
+    };
+} LilyCheckedSymbolScope;
+
+/**
+ *
+ * @brief Construct LilyCheckedSymbolScope type
+ * (LILY_CHECKED_SYMBOL_SCOPE_KIND_LOCAL).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedSymbolScope,
+                           LilyCheckedSymbolScope,
+                           local,
+                           LilyCheckedSymbolScopeLocal local)
+{
+    return (LilyCheckedSymbolScope){ .kind =
+                                       LILY_CHECKED_SYMBOL_SCOPE_KIND_LOCAL,
+                                     .local = local };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedSymbolScope type
+ * (LILY_CHECKED_SYMBOL_SCOPE_KIND_MODULE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedSymbolScope,
+                           LilyCheckedSymbolScope,
+                           module,
+                           LilyCheckedSymbolScopeModule module)
+{
+    return (LilyCheckedSymbolScope){ .kind =
+                                       LILY_CHECKED_SYMBOL_SCOPE_KIND_MODULE,
+                                     .module = module };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedSymbolScope type
+ * (LILY_CHECKED_SYMBOL_SCOPE_KIND_PACKAGE).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedSymbolScope,
+                           LilyCheckedSymbolScope,
+                           package,
+                           LilyCheckedSymbolScopePackage package)
+{
+    return (LilyCheckedSymbolScope){ .kind =
+                                       LILY_CHECKED_SYMBOL_SCOPE_KIND_PACKAGE,
+                                     .package = package };
+}
+
 enum LilyCheckedSymbolKind
 {
     LILY_CHECKED_SYMBOL_KIND_ALIAS,
@@ -42,18 +163,20 @@ enum LilyCheckedSymbolKind
     LILY_CHECKED_SYMBOL_KIND_FUN,
     LILY_CHECKED_SYMBOL_KIND_LABEL,
     LILY_CHECKED_SYMBOL_KIND_METHOD,
+    LILY_CHECKED_SYMBOL_KIND_MODULE,
+    LILY_CHECKED_SYMBOL_KIND_PARAM,
     LILY_CHECKED_SYMBOL_KIND_RECORD,
     LILY_CHECKED_SYMBOL_KIND_RECORD_OBJECT,
     LILY_CHECKED_SYMBOL_KIND_TRAIT,
     LILY_CHECKED_SYMBOL_KIND_VARIABLE,
+    LILY_CHECKED_SYMBOL_KIND_VARIANT,
 };
 
 typedef struct LilyCheckedSymbol
 {
-    Usize scope_id;
-    Usize id;
     enum LilyCheckedSymbolKind kind;
     enum LilyVisibility visibility;
+    LilyCheckedSymbolScope scope;
 } LilyCheckedSymbol;
 
 /**
@@ -62,10 +185,9 @@ typedef struct LilyCheckedSymbol
  */
 CONSTRUCTOR(LilyCheckedSymbol *,
             LilyCheckedSymbol,
-            Usize id,
-            Usize scope_id,
             enum LilyCheckedSymbolKind kind,
-            enum LilyVisibility visibility);
+            enum LilyVisibility visibility,
+            LilyCheckedSymbolScope scope);
 
 /**
  *
