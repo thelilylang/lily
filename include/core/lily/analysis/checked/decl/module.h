@@ -30,15 +30,27 @@
 #include <base/vec.h>
 
 #include <core/lily/analysis/checked/access.h>
-#include <core/lily/analysis/checked/scope.h>
 #include <core/lily/shared/visibility.h>
+
+typedef struct LilyCheckedDecl LilyCheckedDecl;
+typedef struct LilyCheckedScopeModule LilyCheckedScopeModule;
 
 typedef struct LilyCheckedDeclModule
 {
     String *name; // String* (&)
     String *global_name;
-    Vec *decls; // Vec<LilyCheckedDecl*>*
-    LilyCheckedScope *scope;
+    Vec *constants;      // Vec<LilyCheckedDecl*>*?
+    Vec *enums;          // Vec<LilyCheckedDecl*>*?
+    Vec *records;        // Vec<LilyCheckedDecl*>*?
+    Vec *aliases;        // Vec<LilyCheckedDecl*>*?
+    Vec *errors;         // Vec<LilyCheckedDecl*>*?
+    Vec *enums_object;   // Vec<LilyCheckedDecl*>*?
+    Vec *modules;        // Vec<LilyCheckedDecl*>*?
+    Vec *records_object; // Vec<LilyCheckedDecl*>*?
+    Vec *classes;        // Vec<LilyCheckedDecl*>*?
+    Vec *traits;         // Vec<LilyCheckedDecl*>*?
+    Vec *funs;           // Vec<LilyCheckedDecl*>*?
+    LilyCheckedScopeModule *scope;
     enum LilyVisibility visibility;
     bool is_checked;
 } LilyCheckedDeclModule;
@@ -52,15 +64,114 @@ inline CONSTRUCTOR(LilyCheckedDeclModule,
                    String *name,
                    String *global_name,
                    Vec *decls,
-                   LilyCheckedScope *scope,
+                   LilyCheckedScopeModule *scope,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclModule){ .name = name,
                                     .global_name = global_name,
-                                    .decls = decls,
+                                    .constants = NULL,
+                                    .enums = NULL,
+                                    .records = NULL,
+                                    .aliases = NULL,
+                                    .errors = NULL,
+                                    .enums_object = NULL,
+                                    .modules = NULL,
+                                    .records_object = NULL,
+                                    .classes = NULL,
+                                    .traits = NULL,
+                                    .funs = NULL,
                                     .scope = scope,
-                                    .visibility = visibility };
+                                    .visibility = visibility,
+                                    .is_checked = false };
 }
+
+/**
+ *
+ * @brief Push a constant to the module.
+ */
+void
+push_constant__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                     LilyCheckedDecl *constant);
+
+/**
+ *
+ * @brief Push an enum to the module.
+ */
+void
+push_enum__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                 LilyCheckedDecl *enum_);
+
+/**
+ *
+ * @brief Push a record to the module.
+ */
+void
+push_record__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                   LilyCheckedDecl *record);
+
+/**
+ *
+ * @brief Push an alias to the module.
+ */
+void
+push_alias__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                  LilyCheckedDecl *alias);
+
+/**
+ *
+ * @brief Push an error to the module.
+ */
+void
+push_error__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                  LilyCheckedDecl *error);
+
+/**
+ *
+ * @brief Push an enum object to the module.
+ */
+void
+push_enum_object__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                        LilyCheckedDecl *enum_object);
+
+/**
+ *
+ * @brief Push a module to the module.
+ */
+void
+push_module__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                   LilyCheckedDecl *module);
+
+/**
+ *
+ * @brief Push a record object to the module.
+ */
+void
+push_record_object__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                          LilyCheckedDecl *record_object);
+
+/**
+ *
+ * @brief Push a class to the module.
+ */
+void
+push_class__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                  LilyCheckedDecl *class);
+
+/**
+ *
+ * @brief Push a trait to the module.
+ */
+void
+push_trait__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                  LilyCheckedDecl *trait);
+
+/**
+ *
+ * @brief Push a fun to the module.
+ */
+void
+push_fun__LilyCheckedDeclModule(LilyCheckedDeclModule *self,
+                                LilyCheckedDecl *fun);
 
 /**
  *
