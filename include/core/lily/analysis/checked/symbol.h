@@ -28,14 +28,31 @@
 #include <base/alloc.h>
 #include <base/types.h>
 
+#include <core/lily/analysis/checked/limits.h>
 #include <core/lily/shared/visibility.h>
 
 enum LilyCheckedSymbolScopeKind
 {
+    LILY_CHECKED_SYMBOL_SCOPE_KIND_GLOBAL,
     LILY_CHECKED_SYMBOL_SCOPE_KIND_LOCAL,
     LILY_CHECKED_SYMBOL_SCOPE_KIND_MODULE,
     LILY_CHECKED_SYMBOL_SCOPE_KIND_PACKAGE
 };
+
+typedef struct LilyCheckedSymbolScopeGlobal
+{
+    Usize ids[MAX_ADDR_ITEMS];
+    Usize ids_len;
+} LilyCheckedSymbolScopeGlobal;
+
+/**
+ *
+ * @brief Construct LilyCheckedSymbolScopeGlobal type.
+ */
+CONSTRUCTOR(LilyCheckedSymbolScopeGlobal,
+            LilyCheckedSymbolScopeGlobal,
+            Usize *ids,
+            Usize ids_len);
 
 typedef struct LilyCheckedSymbolScopeLocal
 {
@@ -100,11 +117,27 @@ typedef struct LilyCheckedSymbolScope
     enum LilyCheckedSymbolScopeKind kind;
     union
     {
+        LilyCheckedSymbolScopeGlobal global;
         LilyCheckedSymbolScopeLocal local;
         LilyCheckedSymbolScopeModule module;
         LilyCheckedSymbolScopePackage package;
     };
 } LilyCheckedSymbolScope;
+
+/**
+ *
+ * @brief Construct LilyCheckedSymbolScope type
+ * (LILY_CHECKED_SYMBOL_SCOPE_KIND_GLOBAL).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedSymbolScope,
+                           LilyCheckedSymbolScope,
+                           global,
+                           LilyCheckedSymbolScopeGlobal global)
+{
+    return (LilyCheckedSymbolScope){ .kind =
+                                       LILY_CHECKED_SYMBOL_SCOPE_KIND_GLOBAL,
+                                     .global = global };
+}
 
 /**
  *

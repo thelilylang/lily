@@ -24,6 +24,21 @@
 
 #include <core/lily/analysis/checked/symbol.h>
 
+CONSTRUCTOR(LilyCheckedSymbolScopeGlobal,
+            LilyCheckedSymbolScopeGlobal,
+            Usize *ids,
+            Usize ids_len)
+{
+    LilyCheckedSymbolScopeGlobal self =
+      (LilyCheckedSymbolScopeGlobal){ .ids_len = ids_len };
+
+    for (Usize i = 0; i < ids_len; ++i) {
+        self.ids[i] = ids[i];
+    }
+
+    return self;
+}
+
 CONSTRUCTOR(LilyCheckedSymbol *,
             LilyCheckedSymbol,
             enum LilyCheckedSymbolKind kind,
