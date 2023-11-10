@@ -31,5 +31,6 @@
 #define MAX_ENUM_VARIANTS 255
 #define MAX_TUPLE_ITEMS 255
 #define MAX_LAYERS 255
+#define MAX_ADDR_ITEMS 255 // e.g. a.b.c.d.e.f
 
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_LIMITS_H
