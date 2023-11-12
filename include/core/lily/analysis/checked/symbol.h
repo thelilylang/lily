@@ -33,26 +33,11 @@
 
 enum LilyCheckedSymbolScopeKind
 {
-    LILY_CHECKED_SYMBOL_SCOPE_KIND_GLOBAL,
-    LILY_CHECKED_SYMBOL_SCOPE_KIND_LOCAL,
-    LILY_CHECKED_SYMBOL_SCOPE_KIND_MODULE,
-    LILY_CHECKED_SYMBOL_SCOPE_KIND_PACKAGE
+    LILY_CHECKED_SYMBOL_SCOPE_KIND_LOCAL,  // local symbol (e.g. variable in a
+                                           // function)
+    LILY_CHECKED_SYMBOL_SCOPE_KIND_MODULE, // module symbol (e.g. record)
+    LILY_CHECKED_SYMBOL_SCOPE_KIND_PACKAGE // package symbol (using for import)
 };
-
-typedef struct LilyCheckedSymbolScopeGlobal
-{
-    Usize ids[MAX_ADDR_ITEMS];
-    Usize ids_len;
-} LilyCheckedSymbolScopeGlobal;
-
-/**
- *
- * @brief Construct LilyCheckedSymbolScopeGlobal type.
- */
-CONSTRUCTOR(LilyCheckedSymbolScopeGlobal,
-            LilyCheckedSymbolScopeGlobal,
-            Usize *ids,
-            Usize ids_len);
 
 typedef struct LilyCheckedSymbolScopeLocal
 {
@@ -74,7 +59,6 @@ inline CONSTRUCTOR(LilyCheckedSymbolScopeLocal,
 
 typedef struct LilyCheckedSymbolScopeModule
 {
-    Usize module_id;
     Usize id;
 } LilyCheckedSymbolScopeModule;
 
@@ -84,16 +68,13 @@ typedef struct LilyCheckedSymbolScopeModule
  */
 inline CONSTRUCTOR(LilyCheckedSymbolScopeModule,
                    LilyCheckedSymbolScopeModule,
-                   Usize module_id,
                    Usize id)
 {
-    return (LilyCheckedSymbolScopeModule){ .module_id = module_id, .id = id };
+    return (LilyCheckedSymbolScopeModule){ .id = id };
 }
 
 typedef struct LilyCheckedSymbolScopePackage
 {
-    Usize package_id;
-    Usize module_id;
     Usize id;
 } LilyCheckedSymbolScopePackage;
 
@@ -103,13 +84,9 @@ typedef struct LilyCheckedSymbolScopePackage
  */
 inline CONSTRUCTOR(LilyCheckedSymbolScopePackage,
                    LilyCheckedSymbolScopePackage,
-                   Usize package_id,
-                   Usize module_id,
                    Usize id)
 {
-    return (LilyCheckedSymbolScopePackage){ .package_id = package_id,
-                                            .module_id = module_id,
-                                            .id = id };
+    return (LilyCheckedSymbolScopePackage){ .id = id };
 }
 
 typedef struct LilyCheckedSymbolScope
@@ -117,27 +94,11 @@ typedef struct LilyCheckedSymbolScope
     enum LilyCheckedSymbolScopeKind kind;
     union
     {
-        LilyCheckedSymbolScopeGlobal global;
         LilyCheckedSymbolScopeLocal local;
         LilyCheckedSymbolScopeModule module;
         LilyCheckedSymbolScopePackage package;
     };
 } LilyCheckedSymbolScope;
-
-/**
- *
- * @brief Construct LilyCheckedSymbolScope type
- * (LILY_CHECKED_SYMBOL_SCOPE_KIND_GLOBAL).
- */
-inline VARIANT_CONSTRUCTOR(LilyCheckedSymbolScope,
-                           LilyCheckedSymbolScope,
-                           global,
-                           LilyCheckedSymbolScopeGlobal global)
-{
-    return (LilyCheckedSymbolScope){ .kind =
-                                       LILY_CHECKED_SYMBOL_SCOPE_KIND_GLOBAL,
-                                     .global = global };
-}
 
 /**
  *
@@ -197,9 +158,11 @@ enum LilyCheckedSymbolKind
     LILY_CHECKED_SYMBOL_KIND_LABEL,
     LILY_CHECKED_SYMBOL_KIND_METHOD,
     LILY_CHECKED_SYMBOL_KIND_MODULE,
+    LILY_CHECKED_SYMBOL_KIND_PACKAGE,
     LILY_CHECKED_SYMBOL_KIND_PARAM,
     LILY_CHECKED_SYMBOL_KIND_RECORD,
     LILY_CHECKED_SYMBOL_KIND_RECORD_OBJECT,
+    LILY_CHECKED_SYMBOL_KIND_SCOPE,
     LILY_CHECKED_SYMBOL_KIND_TRAIT,
     LILY_CHECKED_SYMBOL_KIND_VARIABLE,
     LILY_CHECKED_SYMBOL_KIND_VARIANT,
@@ -208,7 +171,6 @@ enum LilyCheckedSymbolKind
 typedef struct LilyCheckedSymbol
 {
     enum LilyCheckedSymbolKind kind;
-    enum LilyVisibility visibility;
     LilyCheckedSymbolScope scope;
 } LilyCheckedSymbol;
 
@@ -219,7 +181,6 @@ typedef struct LilyCheckedSymbol
 CONSTRUCTOR(LilyCheckedSymbol *,
             LilyCheckedSymbol,
             enum LilyCheckedSymbolKind kind,
-            enum LilyVisibility visibility,
             LilyCheckedSymbolScope scope);
 
 /**
