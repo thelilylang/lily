@@ -848,4 +848,13 @@ VARIANT_CONSTRUCTOR(LilyCheckedSymbol *,
                     variant_object,
                     LilyCheckedSymbolVariantObject variant_object);
 
+/**
+ *
+ * @brief Free LilyCheckedSymbol type.
+ */
+inline DESTRUCTOR(LilyCheckedSymbol, LilyCheckedSymbol *self)
+{
+    lily_free(self);
+}
+
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_SYMBOL_H
