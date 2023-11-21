@@ -477,13 +477,9 @@ typedef struct LilyCheckedSymbolParam
  *
  * @brief Construct LilyCheckedSymbolParam type.
  */
-inline CONSTRUCTOR(LilyCheckedSymbolParam,
-                   LilyCheckedSymbolParam,
-                   Usize scope_id,
-                   Usize id)
+inline CONSTRUCTOR(LilyCheckedSymbolParam, LilyCheckedSymbolParam, Usize id)
 {
-    return (LilyCheckedSymbolParam){ .scope =
-                                       NEW(LilyCheckedSymbolScope, scope_id),
+    return (LilyCheckedSymbolParam){ .scope = NEW(LilyCheckedSymbolScope, 0),
                                      .id = id };
 }
 
