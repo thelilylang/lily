@@ -25,468 +25,354 @@
 #ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_H
 #define LILY_CORE_LILY_ANALYSIS_CHECKED_SCOPE_H
 
-#include <base/alloc.h>
-#include <base/macros.h>
-#include <base/string.h>
+#include <base/hash_map.h>
 #include <base/types.h>
 #include <base/vec.h>
 
-#include <core/lily/analysis/checked/scope_container.h>
-#include <core/lily/analysis/checked/scope_decls.h>
-#include <core/lily/analysis/checked/scope_response.h>
+#include <core/lily/analysis/checked/symbol.h>
 #include <core/lily/shared/visibility.h>
 
-typedef struct LilyCheckedParent LilyCheckedParent;
-typedef struct LilyCheckedStmtVariable LilyCheckedStmtVariable;
-typedef struct LilyCheckedBodyFunItem LilyCheckedBodyFunItem;
+typedef struct LilyCheckedDeclModule LilyCheckedDeclModule;
 
-typedef struct LilyCheckedScopeCatch
+enum LilyCheckedScopeAddStatus
 {
-    String *name;             // String* (&)
-    const Location *location; // const Location* (&)
-    HashMap *raises;          // HashMap<LilyCheckedDataType*>* (&)
-} LilyCheckedScopeCatch;
+    LILY_CHECKED_SCOPE_ADD_STATUS_SUCCESS,
+    LILY_CHECKED_SCOPE_ADD_STATUS_EXPECTED_PASCAL_CASE,
+    LILY_CHECKED_SCOPE_ADD_STATUS_EXPECTED_SNAKE_CASE,
+    LILY_CHECKED_SCOPE_ADD_STATUS_EXPECTED_UPPER_SNAKE_CASE,
+    LILY_CHECKED_SCOPE_ADD_STATUS_DUPLICATE
+};
 
-/**
- *
- * @brief Construct LilyCheckedScopeCatch type.
- */
-CONSTRUCTOR(LilyCheckedScopeCatch *,
-            LilyCheckedScopeCatch,
-            String *name,
-            const Location *location,
-            HashMap *raises);
-
-/**
- *
- * @brief Convert LilyCheckedScopeCatch in String.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedScopeCatch,
-               const LilyCheckedScopeCatch *self);
-#endif
-
-/**
- *
- * @brief Free LilyCheckedScopeCatch type.
- */
-inline DESTRUCTOR(LilyCheckedScopeCatch, LilyCheckedScopeCatch *self)
+enum LilyCheckedSearchStatusKind
 {
-    lily_free(self);
+    LILY_CHECKED_MODULE_SEARCH_STATUS_KIND_PRIVATE_SYMBOL,
+    LILY_CHECKED_MODULE_SEARCH_STATUS_KIND_SYMBOL_NOT_FOUND,
+    LILY_CHECKED_MODULE_SEARCH_STATUS_KIND_SUCCESS
+};
+
+typedef struct LilyCheckedSearchStatus
+{
+    enum LilyCheckedSearchStatusKind kind;
+    LilyCheckedSymbol *symbol; // LilyCheckedSymbol*? (&)
+} LilyCheckedSearchStatus;
+
+/**
+ *
+ * @brief Construct LilyCheckedSearchStatus type
+ * (LILY_CHECKED_MODULE_SEARCH_STATUS_KIND_PRIVATE_SYMBOL).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedSearchStatus,
+                           LilyCheckedSearchStatus,
+                           private_symbol)
+{
+    return (LilyCheckedSearchStatus){
+        .kind = LILY_CHECKED_MODULE_SEARCH_STATUS_KIND_PRIVATE_SYMBOL,
+        .symbol = NULL
+    };
 }
 
+/**
+ *
+ * @brief Construct LilyCheckedSearchStatus type
+ * (LILY_CHECKED_MODULE_SEARCH_STATUS_KIND_SYMBOL_NOT_FOUND).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedSearchStatus,
+                           LilyCheckedSearchStatus,
+                           symbol_not_found)
+{
+    return (LilyCheckedSearchStatus){
+        .kind = LILY_CHECKED_MODULE_SEARCH_STATUS_KIND_PRIVATE_SYMBOL,
+        .symbol = NULL
+    };
+}
+
+/**
+ *
+ * @brief Construct LilyCheckedSearchStatus type
+ * (LILY_CHECKED_MODULE_SEARCH_STATUS_KIND_SUCCESS).
+ */
+inline VARIANT_CONSTRUCTOR(LilyCheckedSearchStatus,
+                           LilyCheckedSearchStatus,
+                           success,
+                           LilyCheckedSymbol *symbol)
+{
+    return (LilyCheckedSearchStatus){
+        .kind = LILY_CHECKED_MODULE_SEARCH_STATUS_KIND_SUCCESS, .symbol = symbol
+    };
+}
+
+typedef struct LilyCheckedScopeLocal
+{
+    const LilyCheckedDeclModule *module; // const LilyCheckedDeclModule* (&)
+    Usize id;
+    HashMap *variables;                   // HashMap<LilyCheckedSymbol*>*?
+    HashMap *params;                      // HashMap<LilyCheckedSymbol*>*?
+    HashMap *labels;                      // HashMap<LilyCheckedSymbol*>*?
+    HashMap *funs;                        // HashMap<LilyCheckedSymbol*>*?
+    struct LilyCheckedScopeLocal *parent; // struct LilyCheckedScopeLocal*? (&)
+} LilyCheckedScopeLocal;
+
+/**
+ *
+ * @brief Construct LilyCheckedScopeLocal type.
+ */
+CONSTRUCTOR(LilyCheckedScopeLocal *,
+            LilyCheckedScopeLocal,
+            const LilyCheckedDeclModule *module,
+            Usize id,
+            LilyCheckedScopeLocal *parent);
+
+/**
+ *
+ * @brief Add a variable to the scope.
+ */
+enum LilyCheckedScopeAddStatus
+add_variable__LilyCheckedScopeLocal(LilyCheckedScopeLocal *self,
+                                    char *name,
+                                    Usize scope_id,
+                                    Usize id);
+
+/**
+ *
+ * @brief Add a param to the scope.
+ */
+enum LilyCheckedScopeAddStatus
+add_param__LilyCheckedScopeLocal(LilyCheckedScopeLocal *self,
+                                 char *name,
+                                 Usize id);
+
+/**
+ *
+ * @brief Add a label to the scope.
+ */
+enum LilyCheckedScopeAddStatus
+add_label__LilyCheckedScopeLocal(LilyCheckedScopeLocal *self,
+                                 char *name,
+                                 Usize scope_id,
+                                 Usize id);
+
+/**
+ *
+ * @brief Add a fun to the scope.
+ */
+enum LilyCheckedScopeAddStatus
+add_fun__LilyCheckedScopeLocal(LilyCheckedScopeLocal *self,
+                               char *name,
+                               Usize package_id,
+                               Usize id);
+
+/**
+ *
+ * @brief Search variable from local scope.
+ * @return LilyCheckedSymbol*? (&)
+ */
+LilyCheckedSymbol *
+search_variable__LilyCheckedScopeLocal(const LilyCheckedScopeLocal *self,
+                                       char *name);
+
+/**
+ *
+ * @brief Search param from local scope.
+ * @return LilyCheckedSymbol*? (&)
+ */
+LilyCheckedSymbol *
+search_param__LilyCheckedScopeLocal(const LilyCheckedScopeLocal *self,
+                                    char *name);
+
+/**
+ *
+ * @brief Search label from local scope.
+ * @return LilyCheckedSymbol*? (&)
+ */
+LilyCheckedSymbol *
+search_label__LilyCheckedScopeLocal(const LilyCheckedScopeLocal *self,
+                                    char *name);
+
+/**
+ *
+ * @brief Search fun from local scope.
+ * @return LilyCheckedSymbol*? (&)
+ */
+LilyCheckedSymbol *
+search_fun__LilyCheckedScopeLocal(const LilyCheckedScopeLocal *self,
+                                  char *name);
+
+/**
+ *
+ * @brief Search identifier from local scope.
+ * @return LilyCheckedSymbol*? (&)
+ */
+LilyCheckedSymbol *
+search_identifier__LilyCheckedScopeLocal(const LilyCheckedScopeLocal *self,
+                                         char *name);
+
+/**
+ *
+ * @brief Free LilyCheckedScopeLocal type.
+ */
+DESTRUCTOR(LilyCheckedScopeLocal, LilyCheckedScopeLocal *self);
+
+// NOTE: LilyCheckedScope, represents all kind of scope, except the scope of the
+// function.
 typedef struct LilyCheckedScope
 {
-    Usize id;
-    HashMap *raises;              // HashMap<LilyCheckedDataType*>*?
-    LilyCheckedScopeCatch *catch; // LilyCheckedScopeCatch*?
-    HashMap *
-      captured_variables; // HashMap<LilyCheckedScopeContainerCapturedVariable*>*?
-    HashMap *modules;     // HashMap<LilyCheckedScopeContainerModule*>*?
-    HashMap *constants;   // HashMap<LilyCheckedScopeContainerConstant*>*?
-    HashMap *enums;       // HashMap<LilyCheckedScopeContainerEnum*>*?
-    HashMap *records;     // HashMap<LilyCheckedScopeContainerRecord*>*?
-    HashMap *aliases;     // HashMap<LilyCheckedScopeContainerAlias*>*?
-    HashMap *errors;      // HashMap<LilyCheckedScopeContainerError*>*?
-    HashMap *enums_object; // HashMap<LilyCheckedScopeContainerEnumObject*>*?
-    HashMap
-      *records_object;  // HashMap<LilyCheckedScopeContainerRecordObject*>*?
-    HashMap *classes;   // HashMap<LilyCheckedScopeContainerClass*>*?
-    HashMap *traits;    // HashMap<LilyCheckedScopeContainerTrait*>*?
-    Vec *funs;          // Vec<LilyCheckedScopeContainerFun*>*?
-    HashMap *labels;    // HashMap<LilyCheckedScopeContainerLabel*>*?
-    HashMap *variables; // HashMap<LilyCheckedScopeContainerVariable*>*?
-    HashMap *params;    // HashMap<LilyCheckedScopeContainerVariable*>*?
-    HashMap *generics;  // HashMap<LilyCheckedScopeContainerGeneric*>*?
-    Vec *methods;       // Vec<LilyCheckedScopeContainerMethod*>*?
-    LilyCheckedParent *parent; // LilyCheckedParent*?
-    LilyCheckedScopeDecls decls;
-    bool has_return;
+    HashMap *constants;        // HashMap<LilyCheckedSymbol*>*?
+    HashMap *enums;            // HashMap<LilyCheckedSymbol*>*?
+    HashMap *records;          // HashMap<LilyCheckedSymbol*>*?
+    HashMap *aliases;          // HashMap<LilyCheckedSymbol*>*?
+    HashMap *errors;           // HashMap<LilyCheckedSymbol*>*?
+    HashMap *enums_object;     // HashMap<LilyCheckedSymbol*>*?
+    HashMap *records_object;   // HashMap<LilyCheckedSymbol*>*?
+    HashMap *classes;          // HashMap<LilyCheckedSymbol*>*?
+    HashMap *traits;           // HashMap<LilyCheckedSymbol*>*?
+    HashMap *funs;             // HashMap<Vec<LilyCheckedSymbol*>*>*?
+    LilyCheckedSymbol *parent; // LilyCheckedSymbol*?
+    Vec *children;             // Vec<LilyCheckedSymbol*>*?
 } LilyCheckedScope;
 
 /**
  *
  * @brief Construct LilyCheckedScope type.
- * @param parent LilyCheckedAccessScope*?
  */
-CONSTRUCTOR(LilyCheckedScope *,
-            LilyCheckedScope,
-            LilyCheckedParent *parent,
-            LilyCheckedScopeDecls decls);
+CONSTRUCTOR(LilyCheckedScope *, LilyCheckedScope, LilyCheckedSymbol *parent);
 
 /**
  *
- * @brief Add a captured variable to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
+ * @brief Add constant to the scope.
  */
-int
-add_captured_variable__LilyCheckedScope(
-  LilyCheckedScope *self,
-  LilyCheckedScopeContainerCapturedVariable *captured_variable);
-
-/**
- *
- * @brief Add a module to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
- */
-int
-add_module__LilyCheckedScope(LilyCheckedScope *self,
-                             LilyCheckedScopeContainerModule *module);
-
-/**
- *
- * @brief Add a constant to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
- */
-int
+enum LilyCheckedScopeAddStatus
 add_constant__LilyCheckedScope(LilyCheckedScope *self,
-                               LilyCheckedScopeContainerConstant *constant);
+                               char *name,
+                               Usize package_id,
+                               Usize id,
+                               enum LilyVisibility visibility);
 
 /**
  *
- * @brief Add an enum to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
+ * @brief Add enum to the scope.
  */
-int
+enum LilyCheckedScopeAddStatus
 add_enum__LilyCheckedScope(LilyCheckedScope *self,
-                           LilyCheckedScopeContainerEnum *enum_);
+                           char *name,
+                           Usize id,
+                           enum LilyVisibility visibility);
 
 /**
  *
- * @brief Add a record to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
+ * @brief Add record to the scope.
  */
-int
+enum LilyCheckedScopeAddStatus
 add_record__LilyCheckedScope(LilyCheckedScope *self,
-                             LilyCheckedScopeContainerRecord *record);
+                             char *name,
+                             Usize id,
+                             enum LilyVisibility visibility);
 
 /**
  *
- *
- * @brief Add an alias to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
+ * @brief Add alias to the scope.
  */
-int
+enum LilyCheckedScopeAddStatus
 add_alias__LilyCheckedScope(LilyCheckedScope *self,
-                            LilyCheckedScopeContainerAlias *alias);
+                            char *name,
+                            Usize id,
+                            enum LilyVisibility visibility);
 
 /**
  *
- *
- * @brief Add an error to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
+ * @brief Add error to the scope.
  */
-int
+enum LilyCheckedScopeAddStatus
 add_error__LilyCheckedScope(LilyCheckedScope *self,
-                            LilyCheckedScopeContainerError *error);
+                            char *name,
+                            Usize id,
+                            enum LilyVisibility visibility);
 
 /**
  *
- * @brief Add an enum object to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
+ * @brief Add enum object to the scope.
  */
-int
-add_enum_object__LilyCheckedScope(
-  LilyCheckedScope *self,
-  LilyCheckedScopeContainerEnumObject *enum_object);
+enum LilyCheckedScopeAddStatus
+add_enum_object__LilyCheckedScope(LilyCheckedScope *self,
+                                  char *name,
+                                  Usize id,
+                                  enum LilyVisibility visibility);
 
 /**
  *
- * @brief Add a record object to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
+ * @brief Add module to the scope.
  */
-int
-add_record_object__LilyCheckedScope(
-  LilyCheckedScope *self,
-  LilyCheckedScopeContainerRecordObject *record_object);
+enum LilyCheckedScopeAddStatus
+add_module__LilyCheckedScope(LilyCheckedScope *self,
+                             char *name,
+                             Usize id,
+                             enum LilyVisibility visibility);
 
 /**
  *
- * @brief Add a class to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
+ * @brief Add record object to the scope.
  */
-int
+enum LilyCheckedScopeAddStatus
+add_record_object__LilyCheckedScope(LilyCheckedScope *self,
+                                    char *name,
+                                    Usize id,
+                                    enum LilyVisibility visibility);
+
+/**
+ *
+ * @brief Add class to the scope.
+ */
+enum LilyCheckedScopeAddStatus
 add_class__LilyCheckedScope(LilyCheckedScope *self,
-                            LilyCheckedScopeContainerClass *class);
+                            char *name,
+                            Usize id,
+                            enum LilyVisibility visibility);
 
 /**
  *
- * @brief Add a trait to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
+ * @brief Add trait to the scope.
  */
-int
+enum LilyCheckedScopeAddStatus
 add_trait__LilyCheckedScope(LilyCheckedScope *self,
-                            LilyCheckedScopeContainerTrait *trait);
+                            char *name,
+                            Usize id,
+                            enum LilyVisibility visibility);
 
 /**
  *
- * @brief Add a fun to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
+ * @brief Add fun to the scope.
  */
-int
+enum LilyCheckedScopeAddStatus
 add_fun__LilyCheckedScope(LilyCheckedScope *self,
-                          LilyCheckedScopeContainerFun *fun);
-
-/**
- *
- * @brief Add a label to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
- */
-int
-add_label__LilyCheckedScope(LilyCheckedScope *self,
-                            LilyCheckedScopeContainerLabel *label);
-
-/**
- *
- * @brief Add a variable to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
- */
-int
-add_variable__LilyCheckedScope(LilyCheckedScope *self,
-                               LilyCheckedScopeContainerVariable *variable);
-
-/**
- *
- * @brief Add a param to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
- */
-int
-add_param__LilyCheckedScope(LilyCheckedScope *self,
-                            LilyCheckedScopeContainerVariable *param);
-
-/**
- *
- * @brief Add a generic param to the scope.
- * @return Return the status 0 for success otherwise 1 for failure.
- */
-int
-add_generic__LilyCheckedScope(LilyCheckedScope *self,
-                              LilyCheckedScopeContainerGeneric *generic);
-
-/**
- *
- * @brief Search a pushed fun in the scope (using for the fun overload).
- * @return LilyCheckedScopeContainerFun*? (&)
- */
-LilyCheckedScopeContainerFun *
-get_fun_in_current_scope__LilyCheckedScope(LilyCheckedScope *self,
-                                           const String *name);
-
-/**
- *
- * @brief Get parent (fun, method or lambda).
- * @return const LilyCheckedScopeDecls*? (&)
- */
-const LilyCheckedScopeDecls *
-get_parent__LilyCheckedScope(const LilyCheckedScope *self);
-
-/**
- *
- * @brief Search a module in the scope.
- */
-LilyCheckedScopeResponse
-search_module__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search a variable in the scope.
- */
-LilyCheckedScopeResponse
-search_variable__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search a fun in the scope.
- */
-LilyCheckedScopeResponse
-search_fun__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+                          char *name,
+                          Usize id,
+                          enum LilyVisibility visibility);
 
 /**
  *
  * @brief Search a constant in the scope.
  */
-LilyCheckedScopeResponse
-search_constant__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+LilyCheckedSearchStatus
+search_constant__LilyCheckedScope(const LilyCheckedDeclModule *module,
+                                  char *name,
+                                  bool must_pub);
 
 /**
  *
- * @brief Search an error in the scope.
+ * @brief Search identifier from module scope.
  */
-LilyCheckedScopeResponse
-search_error__LilyCheckedScope(LilyCheckedScope *self, const String *name);
+LilyCheckedSearchStatus
+search_identifier__LilyCheckedScope(const LilyCheckedDeclModule *module,
+                                    char *name,
+                                    bool must_pub);
 
 /**
  *
- * @brief Search an alias in the scope.
+ * @brief Search data type from module scope.
  */
-LilyCheckedScopeResponse
-search_alias__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search a record in the scope.
- */
-LilyCheckedScopeResponse
-search_record__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search an enum in the scope.
- */
-LilyCheckedScopeResponse
-search_enum__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search a generic param in the scope.
- */
-LilyCheckedScopeResponse
-search_generic__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search a class in the scope.
- */
-LilyCheckedScopeResponse
-search_class__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search a record object in the scope.
- */
-LilyCheckedScopeResponse
-search_record_object__LilyCheckedScope(LilyCheckedScope *self,
-                                       const String *name);
-
-/**
- *
- * @brief Search an enum object in the scope.
- */
-LilyCheckedScopeResponse
-search_enum_object__LilyCheckedScope(LilyCheckedScope *self,
-                                     const String *name);
-
-/**
- *
- * @brief Search a trait in the scope.
- */
-LilyCheckedScopeResponse
-search_trait__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search a field in the scope.
- */
-LilyCheckedScopeResponse
-search_field__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search a variant in the scope.
- */
-LilyCheckedScopeResponse
-search_variant__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search an identifier in the scope.
- */
-LilyCheckedScopeResponse
-search_identifier__LilyCheckedScope(LilyCheckedScope *self, const String *name);
-
-/**
- *
- * @brief Search a custom type in the scope.
- */
-LilyCheckedScopeResponse
-search_custom_type__LilyCheckedScope(LilyCheckedScope *self,
-                                     const String *name);
-
-/**
- *
- * @brief Get scope from an id.
- */
-LilyCheckedScope *
-get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id);
-
-/**
- *
- * @brief Get scope from an id.
- * @return LilyCheckedScope*?
- */
-LilyCheckedScope *
-safe_get_scope_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id);
-
-/**
- *
- * @brief Get response from scope id and kind of response.
- */
-LilyCheckedScopeResponse
-search_from_scope_id__LilyCheckedScope(
-  LilyCheckedScope *self,
-  Usize id,
-  const String *name,
-  enum LilyCheckedScopeResponseKind res_kind);
-
-/**
- *
- * @brief Try to get the current fun declaration (include lambda) in the scope.
- */
-LilyCheckedScopeDecls *
-get_current_fun__LilyCheckedScope(LilyCheckedScope *self);
-
-/**
- *
- * @brief Try to get the current method declaration in the scope.
- */
-LilyCheckedDecl *
-get_current_method__LilyCheckedScope(LilyCheckedScope *self);
-
-/**
- *
- * @brief Try to get the current object declaration in the scope.
- */
-LilyCheckedDecl *
-get_current_object__LilyCheckedScope(LilyCheckedScope *self);
-
-/**
- *
- * @brief Get decl from id and position
- */
-LilyCheckedDecl *
-get_decl_from_id__LilyCheckedScope(LilyCheckedScope *self, Usize id, Usize pos);
-
-/**
- *
- * @brief Get fun item from id and position.
- */
-LilyCheckedBodyFunItem *
-get_variable_from_id__LilyCheckedScope(LilyCheckedScope *self,
-                                       Usize id,
-                                       String *name);
-
-/**
- *
- * @brief Set a catch name to the scope.
- */
-void
-set_catch_name__LilyCheckedScope(LilyCheckedScope *self,
-                                 String *catch_name,
-                                 const Location *location,
-                                 HashMap *raises);
-
-/**
- *
- * @brief Convert LilyCheckedScope in String.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string, LilyCheckedScope, const LilyCheckedScope *self);
-#endif
+LilyCheckedSearchStatus
+search_data_type__LilyCheckedScope(const LilyCheckedDeclModule *module,
+                                   char *name,
+                                   bool must_pub);
 
 /**
  *
