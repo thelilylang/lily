@@ -452,6 +452,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/inherit_param.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/operator.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/operator_register.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/package.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/parent.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/safety_mode.c
