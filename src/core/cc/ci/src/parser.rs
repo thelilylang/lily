@@ -406,7 +406,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_primary_expr(&mut self) -> Expr<'a> {
-        let location = self.current().location.clone();
+        let mut location = self.current().location.clone();
 
         self.cursor.next();
 
@@ -472,6 +472,61 @@ impl<'a> Parser<'a> {
                     Expr::new(ExprKind::Literal(Literal::String(s.clone())), location)
                 }
             },
+            TokenKind::Star
+            | TokenKind::Minus
+            | TokenKind::Bang
+            | TokenKind::Ampersand
+            | TokenKind::Wave => {
+                let unary_op = UnaryKind::from_token(&self.previous().kind);
+                let right = self.parse_primary_expr();
+
+                location.end(
+                    self.previous().location.end_line,
+                    self.previous().location.end_column,
+                );
+
+                Expr::new(ExprKind::Unary(Unary::new(unary_op, right)), location)
+            }
+            TokenKind::Keyword(Keyword::Sizeof) => {
+                let mut location_sizeof = location.clone();
+
+                self.cursor.next();
+
+                match &self.current().kind {
+                    TokenKind::LParen => {
+                        self.cursor.next();
+
+                        let data_type = self.parse_data_type();
+
+                        self.expect(TokenKind::RParen);
+
+                        location_sizeof.end(
+                            self.previous().location.end_line,
+                            self.previous().location.end_column,
+                        );
+
+                        Expr::new(ExprKind::Sizeof(data_type), location_sizeof)
+                    }
+                    _ => unreachable!("expected `(`"),
+                }
+            }
+            TokenKind::PlusPlus | TokenKind::MinusMinus => {
+                let op = &self.previous().kind;
+                let expr = self.parse_primary_expr();
+
+                location.end(
+                    self.previous().location.end_line,
+                    self.previous().location.end_column,
+                );
+
+                match op {
+                    TokenKind::PlusPlus => Expr::new(ExprKind::PrefixInc(Box::new(expr)), location),
+                    TokenKind::MinusMinus => {
+                        Expr::new(ExprKind::PrefixDec(Box::new(expr)), location)
+                    }
+                    _ => unreachable!("unexpected token"),
+                }
+            }
             _ => unreachable!("unexpected token"),
         }
     }
@@ -484,77 +539,46 @@ impl<'a> Parser<'a> {
         stack.push(StackedBinary::Expr(left));
 
         loop {
-            match &current {
-                TokenKind::Plus
-                | TokenKind::Minus
-                | TokenKind::Star
-                | TokenKind::Slash
-                | TokenKind::Percentage
-                | TokenKind::LShift
-                | TokenKind::RShift
-                | TokenKind::LShiftEq
-                | TokenKind::RShiftEq
-                | TokenKind::LShiftLShift
-                | TokenKind::RShiftRShift
-                | TokenKind::EqEq
-                | TokenKind::BangEq
-                | TokenKind::Hat
-                | TokenKind::Bar
-                | TokenKind::Ampersand
-                | TokenKind::Wave
-                | TokenKind::AmpersandAmpersand
-                | TokenKind::BarBar
-                | TokenKind::Eq
-                | TokenKind::PlusEq
-                | TokenKind::MinusEq
-                | TokenKind::StarEq
-                | TokenKind::SlashEq
-                | TokenKind::PercentageEq
-                | TokenKind::LShiftLShiftEq
-                | TokenKind::RShiftRShiftEq
-                | TokenKind::AmpersandEq
-                | TokenKind::HatEq
-                | TokenKind::BarEq
-                | TokenKind::WaveEq => {
-                    let op = BinaryKind::from_token(current);
-                    let precedence = op.to_precedence();
+            if BinaryKind::is_binary(current) {
+                let op = BinaryKind::from_token(current);
+                let precedence = op.to_precedence();
 
-                    self.cursor.next();
+                self.cursor.next();
 
-                    current = &self.current().kind;
+                current = &self.current().kind;
 
-                    let right = self.parse_primary_expr();
+                let right = self.parse_primary_expr();
 
-                    while precedence <= last_precedence && stack.len() > 1 {
-                        let top_right = stack.pop().unwrap().unwrap_expr();
-                        let top_op = stack.pop().unwrap().unwrap_binary();
+                while precedence <= last_precedence && stack.len() > 1 {
+                    let top_right = stack.pop().unwrap().unwrap_expr();
+                    let top_op = stack.pop().unwrap().unwrap_binary();
 
-                        last_precedence = top_op.to_precedence();
+                    last_precedence = top_op.to_precedence();
 
-                        if last_precedence < precedence {
-                            stack.push(StackedBinary::Binary(top_op));
-                            stack.push(StackedBinary::Expr(top_right));
+                    if last_precedence < precedence {
+                        stack.push(StackedBinary::Binary(top_op));
+                        stack.push(StackedBinary::Expr(top_right));
 
-                            break;
-                        }
-
-                        let top_left = stack.pop().unwrap().unwrap_expr();
-                        let mut expr_location = top_left.location.clone();
-
-                        expr_location.end(right.location.end_line, right.location.end_column);
-
-                        stack.push(StackedBinary::Expr(Expr::new(
-                            ExprKind::Binary(Binary::new(top_left, top_op, top_right)),
-                            expr_location,
-                        )));
+                        break;
                     }
 
-                    stack.push(StackedBinary::Binary(op));
-                    stack.push(StackedBinary::Expr(right));
+                    let top_left = stack.pop().unwrap().unwrap_expr();
+                    let mut expr_location = top_left.location.clone();
 
-                    last_precedence = precedence;
+                    expr_location.end(right.location.end_line, right.location.end_column);
+
+                    stack.push(StackedBinary::Expr(Expr::new(
+                        ExprKind::Binary(Binary::new(top_left, top_op, top_right)),
+                        expr_location,
+                    )));
                 }
-                _ => break,
+
+                stack.push(StackedBinary::Binary(op));
+                stack.push(StackedBinary::Expr(right));
+
+                last_precedence = precedence;
+            } else {
+                break;
             }
         }
 
@@ -576,41 +600,18 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expr(&mut self) -> Expr<'a> {
-        let left = self.parse_primary_expr();
+        let mut left = self.parse_primary_expr();
+
+        if BinaryKind::is_binary(&self.current().kind) {
+            left = self.parse_binary(left);
+        }
 
         match &self.current().kind {
-            TokenKind::Plus
-            | TokenKind::Minus
-            | TokenKind::Star
-            | TokenKind::Slash
-            | TokenKind::Percentage
-            | TokenKind::LShift
-            | TokenKind::RShift
-            | TokenKind::LShiftEq
-            | TokenKind::RShiftEq
-            | TokenKind::LShiftLShift
-            | TokenKind::RShiftRShift
-            | TokenKind::EqEq
-            | TokenKind::BangEq
-            | TokenKind::Hat
-            | TokenKind::Bar
-            | TokenKind::Ampersand
-            | TokenKind::Wave
-            | TokenKind::AmpersandAmpersand
-            | TokenKind::BarBar
-            | TokenKind::Eq
-            | TokenKind::PlusEq
-            | TokenKind::MinusEq
-            | TokenKind::StarEq
-            | TokenKind::SlashEq
-            | TokenKind::PercentageEq
-            | TokenKind::LShiftLShiftEq
-            | TokenKind::RShiftRShiftEq
-            | TokenKind::AmpersandEq
-            | TokenKind::HatEq
-            | TokenKind::BarEq
-            | TokenKind::WaveEq => self.parse_binary(left),
-            _ => left,
+            TokenKind::Semicolon => {
+                self.cursor.next();
+                left
+            }
+            _ => unreachable!("unexpected token"),
         }
     }
 

@@ -40,12 +40,40 @@ impl<'a> DataType<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Unary<'a> {
-    Dereference(Box<Expr<'a>>),
-    Neg(Box<Expr<'a>>),
-    Not(Box<Expr<'a>>),
-    Ref(Box<Expr<'a>>),
-    BitNot(Box<Expr<'a>>),
+pub enum UnaryKind {
+    Dereference,
+    Neg,
+    Not,
+    Ref,
+    BitNot,
+}
+
+impl UnaryKind {
+    pub fn from_token(token: &TokenKind) -> Self {
+        match token {
+            TokenKind::Star => Self::Dereference,
+            TokenKind::Minus => Self::Neg,
+            TokenKind::Bang => Self::Not,
+            TokenKind::Ampersand => Self::Ref,
+            TokenKind::Wave => Self::BitNot,
+            _ => unreachable!("Invalid token for unary operator"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Unary<'a> {
+    pub kind: UnaryKind,
+    pub right: Box<Expr<'a>>,
+}
+
+impl<'a> Unary<'a> {
+    pub fn new(kind: UnaryKind, right: Expr<'a>) -> Self {
+        Self {
+            kind,
+            right: Box::new(right),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -55,7 +83,6 @@ pub enum BinaryKind {
     Mul,
     Div,
     Mod,
-    Percentage,
     Less,
     Greater,
     LessEq,
@@ -67,7 +94,6 @@ pub enum BinaryKind {
     BitXor,
     BitOr,
     BitAnd,
-    BitNot,
     And,
     Or,
     Assign,
@@ -114,12 +140,10 @@ impl BinaryKind {
             TokenKind::RShift => Self::BitRShift,
             TokenKind::LShiftEq => Self::BitLShiftAssign,
             TokenKind::RShiftEq => Self::BitRShiftAssign,
+            TokenKind::LShiftLShift => Self::BitLShift,
+            TokenKind::RShiftRShift => Self::BitRShift,
             TokenKind::EqEq => Self::Eq,
             TokenKind::BangEq => Self::NotEq,
-            TokenKind::LShift => Self::Less,
-            TokenKind::RShift => Self::Greater,
-            TokenKind::LShiftEq => Self::LessEq,
-            TokenKind::RShiftEq => Self::GreaterEq,
             TokenKind::Hat => Self::BitXor,
             TokenKind::Bar => Self::BitOr,
             TokenKind::Ampersand => Self::BitAnd,
@@ -131,12 +155,49 @@ impl BinaryKind {
             TokenKind::StarEq => Self::MulAssign,
             TokenKind::SlashEq => Self::DivAssign,
             TokenKind::PercentageEq => Self::ModAssign,
+            TokenKind::LShiftLShiftEq => Self::BitLShiftAssign,
+            TokenKind::RShiftRShiftEq => Self::BitRShiftAssign,
             TokenKind::AmpersandEq => Self::BitAndAssign,
             TokenKind::HatEq => Self::BitXorAssign,
             TokenKind::BarEq => Self::BitOrAssign,
-            TokenKind::Wave => Self::BitNot,
             TokenKind::WaveEq => Self::BitNotAssign,
             _ => unreachable!("Invalid token for binary operator"),
+        }
+    }
+
+    pub fn is_binary(token: &TokenKind) -> bool {
+        match token {
+            TokenKind::Plus
+            | TokenKind::Minus
+            | TokenKind::Star
+            | TokenKind::Slash
+            | TokenKind::Percentage
+            | TokenKind::LShift
+            | TokenKind::RShift
+            | TokenKind::LShiftEq
+            | TokenKind::RShiftEq
+            | TokenKind::LShiftLShift
+            | TokenKind::RShiftRShift
+            | TokenKind::EqEq
+            | TokenKind::BangEq
+            | TokenKind::Hat
+            | TokenKind::Bar
+            | TokenKind::Ampersand
+            | TokenKind::AmpersandAmpersand
+            | TokenKind::BarBar
+            | TokenKind::Eq
+            | TokenKind::PlusEq
+            | TokenKind::MinusEq
+            | TokenKind::StarEq
+            | TokenKind::SlashEq
+            | TokenKind::PercentageEq
+            | TokenKind::LShiftLShiftEq
+            | TokenKind::RShiftRShiftEq
+            | TokenKind::AmpersandEq
+            | TokenKind::HatEq
+            | TokenKind::BarEq
+            | TokenKind::WaveEq => true,
+            _ => false,
         }
     }
 }
