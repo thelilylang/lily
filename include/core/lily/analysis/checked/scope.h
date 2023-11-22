@@ -29,6 +29,7 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/lily/analysis/checked/package.h>
 #include <core/lily/analysis/checked/symbol.h>
 #include <core/lily/shared/visibility.h>
 
@@ -212,6 +213,12 @@ search_identifier__LilyCheckedScopeLocal(const LilyCheckedScopeLocal *self,
  */
 DESTRUCTOR(LilyCheckedScopeLocal, LilyCheckedScopeLocal *self);
 
+typedef struct LilyCheckedScopeContext
+{
+    const LilyCheckedPackage *package; // const LilyCheckedPackage* (&)
+    Usize scope_id;
+} LilyCheckedScopeContext;
+
 // NOTE: LilyCheckedScope, represents all kind of scope, except the scope of the
 // function.
 typedef struct LilyCheckedScope
@@ -226,8 +233,9 @@ typedef struct LilyCheckedScope
     HashMap *classes;          // HashMap<LilyCheckedSymbol*>*?
     HashMap *traits;           // HashMap<LilyCheckedSymbol*>*?
     HashMap *funs;             // HashMap<Vec<LilyCheckedSymbol*>*>*?
-    LilyCheckedSymbol *parent; // LilyCheckedSymbol*?
+    HashMap *modules;          // HashMap<LilyCheckedSymbol*>*?
     Vec *children;             // Vec<LilyCheckedSymbol*>*?
+    LilyCheckedSymbol *parent; // LilyCheckedSymbol* (&)?
 } LilyCheckedScope;
 
 /**
@@ -244,8 +252,7 @@ enum LilyCheckedScopeAddStatus
 add_constant__LilyCheckedScope(LilyCheckedScope *self,
                                char *name,
                                Usize package_id,
-                               Usize id,
-                               enum LilyVisibility visibility);
+                               Usize id);
 
 /**
  *
@@ -254,8 +261,8 @@ add_constant__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_enum__LilyCheckedScope(LilyCheckedScope *self,
                            char *name,
-                           Usize id,
-                           enum LilyVisibility visibility);
+                           Usize package_id,
+                           Usize id);
 
 /**
  *
@@ -264,8 +271,8 @@ add_enum__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_record__LilyCheckedScope(LilyCheckedScope *self,
                              char *name,
-                             Usize id,
-                             enum LilyVisibility visibility);
+                             Usize package_id,
+                             Usize id);
 
 /**
  *
@@ -274,8 +281,8 @@ add_record__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_alias__LilyCheckedScope(LilyCheckedScope *self,
                             char *name,
-                            Usize id,
-                            enum LilyVisibility visibility);
+                            Usize package_id,
+                            Usize id);
 
 /**
  *
@@ -284,8 +291,8 @@ add_alias__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_error__LilyCheckedScope(LilyCheckedScope *self,
                             char *name,
-                            Usize id,
-                            enum LilyVisibility visibility);
+                            Usize package_id,
+                            Usize id);
 
 /**
  *
@@ -294,8 +301,8 @@ add_error__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_enum_object__LilyCheckedScope(LilyCheckedScope *self,
                                   char *name,
-                                  Usize id,
-                                  enum LilyVisibility visibility);
+                                  Usize package_id,
+                                  Usize id);
 
 /**
  *
@@ -304,8 +311,8 @@ add_enum_object__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_module__LilyCheckedScope(LilyCheckedScope *self,
                              char *name,
-                             Usize id,
-                             enum LilyVisibility visibility);
+                             Usize package_id,
+                             Usize id);
 
 /**
  *
@@ -314,8 +321,8 @@ add_module__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_record_object__LilyCheckedScope(LilyCheckedScope *self,
                                     char *name,
-                                    Usize id,
-                                    enum LilyVisibility visibility);
+                                    Usize package_id,
+                                    Usize id);
 
 /**
  *
@@ -324,8 +331,8 @@ add_record_object__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_class__LilyCheckedScope(LilyCheckedScope *self,
                             char *name,
-                            Usize id,
-                            enum LilyVisibility visibility);
+                            Usize package_id,
+                            Usize id);
 
 /**
  *
@@ -334,8 +341,8 @@ add_class__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_trait__LilyCheckedScope(LilyCheckedScope *self,
                             char *name,
-                            Usize id,
-                            enum LilyVisibility visibility);
+                            Usize package_id,
+                            Usize id);
 
 /**
  *
@@ -344,8 +351,9 @@ add_trait__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_fun__LilyCheckedScope(LilyCheckedScope *self,
                           char *name,
+                          Usize package_id,
                           Usize id,
-                          enum LilyVisibility visibility);
+                          Usize n);
 
 /**
  *

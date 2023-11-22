@@ -216,7 +216,7 @@ add_fun__LilyCheckedScopeLocal(LilyCheckedScopeLocal *self,
     HASH_MAP_CHECK_IF_EXISTS(self->params);
     HASH_MAP_CHECK_IF_EXISTS(self->labels);
     HASH_MAP_ADD_TO_SCOPE(
-      self->funs, fun, NEW(LilyCheckedSymbolFun, package_id, id));
+      self->funs, fun, NEW(LilyCheckedSymbolFun, package_id, id, 0));
 }
 
 LilyCheckedSymbol *
@@ -367,8 +367,9 @@ CONSTRUCTOR(LilyCheckedScope *, LilyCheckedScope, LilyCheckedSymbol *parent)
     self->classes = NULL;
     self->traits = NULL;
     self->funs = NULL;
-    self->parent = parent;
+    self->modules = NULL;
     self->children = NULL;
+    self->parent = parent;
 
     return self;
 }
@@ -377,8 +378,7 @@ enum LilyCheckedScopeAddStatus
 add_constant__LilyCheckedScope(LilyCheckedScope *self,
                                char *name,
                                Usize package_id,
-                               Usize id,
-                               enum LilyVisibility visibility)
+                               Usize id)
 {
     VALID_UPPER_SNAKE_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->funs);
@@ -390,8 +390,8 @@ add_constant__LilyCheckedScope(LilyCheckedScope *self,
 enum LilyCheckedScopeAddStatus
 add_enum__LilyCheckedScope(LilyCheckedScope *self,
                            char *name,
-                           Usize id,
-                           enum LilyVisibility visibility)
+                           Usize package_id,
+                           Usize id)
 {
     VALID_PASCAL_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->records);
@@ -403,19 +403,14 @@ add_enum__LilyCheckedScope(LilyCheckedScope *self,
     HASH_MAP_CHECK_IF_EXISTS(self->classes);
     HASH_MAP_CHECK_IF_EXISTS(self->traits);
     HASH_MAP_ADD_TO_SCOPE(
-      self->enums,
-      LILY_CHECKED_SYMBOL_KIND_ENUM,
-      visibility,
-      NEW_VARIANT(LilyCheckedSymbolScope,
-                  module,
-                  NEW(LilyCheckedSymbolScopeModule, self->id, id)));
+      self->enums, enum, NEW(LilyCheckedSymbolEnum, package_id, id));
 }
 
 enum LilyCheckedScopeAddStatus
 add_record__LilyCheckedScope(LilyCheckedScope *self,
                              char *name,
-                             Usize id,
-                             enum LilyVisibility visibility)
+                             Usize package_id,
+                             Usize id)
 {
     VALID_PASCAL_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->enums);
@@ -427,19 +422,14 @@ add_record__LilyCheckedScope(LilyCheckedScope *self,
     HASH_MAP_CHECK_IF_EXISTS(self->classes);
     HASH_MAP_CHECK_IF_EXISTS(self->traits);
     HASH_MAP_ADD_TO_SCOPE(
-      self->records,
-      LILY_CHECKED_SYMBOL_KIND_RECORD,
-      visibility,
-      NEW_VARIANT(LilyCheckedSymbolScope,
-                  module,
-                  NEW(LilyCheckedSymbolScopeModule, self->id, id)));
+      self->records, record, NEW(LilyCheckedSymbolRecord, package_id, id));
 }
 
 enum LilyCheckedScopeAddStatus
 add_alias__LilyCheckedScope(LilyCheckedScope *self,
                             char *name,
-                            Usize id,
-                            enum LilyVisibility visibility)
+                            Usize package_id,
+                            Usize id)
 {
     VALID_PASCAL_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->enums);
@@ -451,19 +441,14 @@ add_alias__LilyCheckedScope(LilyCheckedScope *self,
     HASH_MAP_CHECK_IF_EXISTS(self->classes);
     HASH_MAP_CHECK_IF_EXISTS(self->traits);
     HASH_MAP_ADD_TO_SCOPE(
-      self->aliases,
-      LILY_CHECKED_SYMBOL_KIND_ALIAS,
-      visibility,
-      NEW_VARIANT(LilyCheckedSymbolScope,
-                  module,
-                  NEW(LilyCheckedSymbolScopeModule, self->id, id)));
+      self->aliases, alias, NEW(LilyCheckedSymbolAlias, package_id, id));
 }
 
 enum LilyCheckedScopeAddStatus
 add_error__LilyCheckedScope(LilyCheckedScope *self,
                             char *name,
-                            Usize id,
-                            enum LilyVisibility visibility)
+                            Usize package_id,
+                            Usize id)
 {
     VALID_PASCAL_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->enums);
@@ -475,19 +460,14 @@ add_error__LilyCheckedScope(LilyCheckedScope *self,
     HASH_MAP_CHECK_IF_EXISTS(self->classes);
     HASH_MAP_CHECK_IF_EXISTS(self->traits);
     HASH_MAP_ADD_TO_SCOPE(
-      self->errors,
-      LILY_CHECKED_SYMBOL_KIND_ERROR,
-      visibility,
-      NEW_VARIANT(LilyCheckedSymbolScope,
-                  module,
-                  NEW(LilyCheckedSymbolScopeModule, self->id, id)));
+      self->errors, error, NEW(LilyCheckedSymbolError, package_id, id));
 }
 
 enum LilyCheckedScopeAddStatus
 add_enum_object__LilyCheckedScope(LilyCheckedScope *self,
                                   char *name,
-                                  Usize id,
-                                  enum LilyVisibility visibility)
+                                  Usize package_id,
+                                  Usize id)
 {
     VALID_PASCAL_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->enums);
@@ -498,20 +478,16 @@ add_enum_object__LilyCheckedScope(LilyCheckedScope *self,
     HASH_MAP_CHECK_IF_EXISTS(self->records_object);
     HASH_MAP_CHECK_IF_EXISTS(self->classes);
     HASH_MAP_CHECK_IF_EXISTS(self->traits);
-    HASH_MAP_ADD_TO_SCOPE(
-      self->enums_object,
-      LILY_CHECKED_SYMBOL_KIND_ENUM_OBJECT,
-      visibility,
-      NEW_VARIANT(LilyCheckedSymbolScope,
-                  module,
-                  NEW(LilyCheckedSymbolScopeModule, self->id, id)));
+    HASH_MAP_ADD_TO_SCOPE(self->enums_object,
+                          enum_object,
+                          NEW(LilyCheckedSymbolEnumObject, package_id, id));
 }
 
 enum LilyCheckedScopeAddStatus
 add_module__LilyCheckedScope(LilyCheckedScope *self,
                              char *name,
-                             Usize id,
-                             enum LilyVisibility visibility)
+                             Usize package_id,
+                             Usize id)
 {
     VALID_PASCAL_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->enums);
@@ -523,19 +499,14 @@ add_module__LilyCheckedScope(LilyCheckedScope *self,
     HASH_MAP_CHECK_IF_EXISTS(self->classes);
     HASH_MAP_CHECK_IF_EXISTS(self->traits);
     HASH_MAP_ADD_TO_SCOPE(
-      self->modules,
-      LILY_CHECKED_SYMBOL_KIND_MODULE,
-      visibility,
-      NEW_VARIANT(LilyCheckedSymbolScope,
-                  module,
-                  NEW(LilyCheckedSymbolScopeModule, self->id, id)));
+      self->modules, module, NEW(LilyCheckedSymbolModule, package_id, id));
 }
 
 enum LilyCheckedScopeAddStatus
 add_record_object__LilyCheckedScope(LilyCheckedScope *self,
                                     char *name,
-                                    Usize id,
-                                    enum LilyVisibility visibility)
+                                    Usize package_id,
+                                    Usize id)
 {
     VALID_PASCAL_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->enums);
@@ -546,20 +517,16 @@ add_record_object__LilyCheckedScope(LilyCheckedScope *self,
     HASH_MAP_CHECK_IF_EXISTS(self->modules);
     HASH_MAP_CHECK_IF_EXISTS(self->classes);
     HASH_MAP_CHECK_IF_EXISTS(self->traits);
-    HASH_MAP_ADD_TO_SCOPE(
-      self->records_object,
-      LILY_CHECKED_SYMBOL_KIND_RECORD_OBJECT,
-      visibility,
-      NEW_VARIANT(LilyCheckedSymbolScope,
-                  module,
-                  NEW(LilyCheckedSymbolScopeModule, self->id, id)));
+    HASH_MAP_ADD_TO_SCOPE(self->records_object,
+                          record_object,
+                          NEW(LilyCheckedSymbolRecordObject, package_id, id));
 }
 
 enum LilyCheckedScopeAddStatus
 add_class__LilyCheckedScope(LilyCheckedScope *self,
                             char *name,
-                            Usize id,
-                            enum LilyVisibility visibility)
+                            Usize package_id,
+                            Usize id)
 {
     VALID_PASCAL_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->enums);
@@ -571,19 +538,14 @@ add_class__LilyCheckedScope(LilyCheckedScope *self,
     HASH_MAP_CHECK_IF_EXISTS(self->records_object);
     HASH_MAP_CHECK_IF_EXISTS(self->traits);
     HASH_MAP_ADD_TO_SCOPE(
-      self->classes,
-      LILY_CHECKED_SYMBOL_KIND_CLASS,
-      visibility,
-      NEW_VARIANT(LilyCheckedSymbolScope,
-                  module,
-                  NEW(LilyCheckedSymbolScopeModule, self->id, id)));
+      self->classes, class, NEW(LilyCheckedSymbolClass, package_id, id));
 }
 
 enum LilyCheckedScopeAddStatus
 add_trait__LilyCheckedScope(LilyCheckedScope *self,
                             char *name,
-                            Usize id,
-                            enum LilyVisibility visibility)
+                            Usize package_id,
+                            Usize id)
 {
     VALID_PASCAL_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->enums);
@@ -595,29 +557,20 @@ add_trait__LilyCheckedScope(LilyCheckedScope *self,
     HASH_MAP_CHECK_IF_EXISTS(self->records_object);
     HASH_MAP_CHECK_IF_EXISTS(self->classes);
     HASH_MAP_ADD_TO_SCOPE(
-      self->traits,
-      LILY_CHECKED_SYMBOL_KIND_TRAIT,
-      visibility,
-      NEW_VARIANT(LilyCheckedSymbolScope,
-                  module,
-                  NEW(LilyCheckedSymbolScopeModule, self->id, id)));
+      self->traits, trait, NEW(LilyCheckedSymbolTrait, package_id, id));
 }
 
 enum LilyCheckedScopeAddStatus
 add_fun__LilyCheckedScope(LilyCheckedScope *self,
                           char *name,
+                          Usize package_id,
                           Usize id,
-                          enum LilyVisibility visibility)
+                          Usize n)
 {
     VALID_SNAKE_CASE();
     HASH_MAP_CHECK_IF_EXISTS(self->constants);
     HASH_MAP_ADD_TO_SCOPE(
-      self->funs,
-      LILY_CHECKED_SYMBOL_KIND_FUN,
-      visibility,
-      NEW_VARIANT(LilyCheckedSymbolScope,
-                  module,
-                  NEW(LilyCheckedSymbolScopeModule, self->id, id)));
+      self->funs, fun, NEW(LilyCheckedSymbolFun, package_id, id, n));
 }
 
 LilyCheckedSymbol *
@@ -798,6 +751,8 @@ DESTRUCTOR(LilyCheckedScope, LilyCheckedScope *self)
     }
 
     if (self->children) {
+        FREE_BUFFER_ITEMS(
+          self->children->buffer, self->children->len, LilyCheckedSymbol);
         FREE(Vec, self->children);
     }
 
