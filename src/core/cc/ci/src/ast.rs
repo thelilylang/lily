@@ -1,4 +1,4 @@
-use crate::location::Location;
+use crate::{location::Location, token::TokenKind};
 
 use std::rc::Rc;
 
@@ -6,16 +6,12 @@ use std::rc::Rc;
 pub enum DataTypeKind<'a> {
     UnsignedChar,
     Char,
-    SignedChar,
     Int,
     UnsignedInt,
-    SignedInt,
     ShortInt,
     UnsignedShortInt,
-    SignedShortInt,
     LongInt,
     LongLongInt,
-    SignedLongInt,
     UnsignedLongInt,
     UnsignedLongLongInt,
     Float,
@@ -71,6 +67,7 @@ pub enum BinaryKind {
     BitXor,
     BitOr,
     BitAnd,
+    BitNot,
     And,
     Or,
     Assign,
@@ -88,6 +85,8 @@ pub enum BinaryKind {
 }
 
 impl BinaryKind {
+    pub const MAX_PRECEDENCE: u8 = 100;
+
     pub fn to_precedence(&self) -> u8 {
         match &self {
             Self::Mul | Self::Div | Self::Mod => 100,
@@ -101,6 +100,43 @@ impl BinaryKind {
             Self::And => 60,
             Self::Or => 55,
             _ => 50,
+        }
+    }
+
+    pub fn from_token(token: &TokenKind) -> Self {
+        match token {
+            TokenKind::Plus => Self::Add,
+            TokenKind::Minus => Self::Sub,
+            TokenKind::Star => Self::Mul,
+            TokenKind::Slash => Self::Div,
+            TokenKind::Percentage => Self::Mod,
+            TokenKind::LShift => Self::BitLShift,
+            TokenKind::RShift => Self::BitRShift,
+            TokenKind::LShiftEq => Self::BitLShiftAssign,
+            TokenKind::RShiftEq => Self::BitRShiftAssign,
+            TokenKind::EqEq => Self::Eq,
+            TokenKind::BangEq => Self::NotEq,
+            TokenKind::LShift => Self::Less,
+            TokenKind::RShift => Self::Greater,
+            TokenKind::LShiftEq => Self::LessEq,
+            TokenKind::RShiftEq => Self::GreaterEq,
+            TokenKind::Hat => Self::BitXor,
+            TokenKind::Bar => Self::BitOr,
+            TokenKind::Ampersand => Self::BitAnd,
+            TokenKind::AmpersandAmpersand => Self::And,
+            TokenKind::BarBar => Self::Or,
+            TokenKind::Eq => Self::Assign,
+            TokenKind::PlusEq => Self::AddAssign,
+            TokenKind::MinusEq => Self::SubAssign,
+            TokenKind::StarEq => Self::MulAssign,
+            TokenKind::SlashEq => Self::DivAssign,
+            TokenKind::PercentageEq => Self::ModAssign,
+            TokenKind::AmpersandEq => Self::BitAndAssign,
+            TokenKind::HatEq => Self::BitXorAssign,
+            TokenKind::BarEq => Self::BitOrAssign,
+            TokenKind::Wave => Self::BitNot,
+            TokenKind::WaveEq => Self::BitNotAssign,
+            _ => unreachable!("Invalid token for binary operator"),
         }
     }
 }
@@ -160,8 +196,14 @@ pub enum ExprKind<'a> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Expr<'a> {
-    kind: ExprKind<'a>,
-    location: Location<'a>,
+    pub kind: ExprKind<'a>,
+    pub location: Location<'a>,
+}
+
+impl<'a> Expr<'a> {
+    pub fn new(kind: ExprKind<'a>, location: Location<'a>) -> Self {
+        Self { kind, location }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

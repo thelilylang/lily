@@ -1,2 +1,1 @@
-pub struct Analysis {
-}
+pub struct Analysis {}
