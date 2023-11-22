@@ -206,6 +206,14 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedPackage, const LilyCheckedPackage *self)
         push_str__String(res, " NULL");
     }
 
+    push_str__String(res, ", scopes =");
+
+    if (self->scopes) {
+        DEBUG_VEC_STRING(self->scopes, res, LilyCheckedScope);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     push_str__String(res, " }");
 
     return res;
@@ -276,7 +284,13 @@ DESTRUCTOR(LilyCheckedPackage, const LilyCheckedPackage *self)
 
     if (self->modules) {
         FREE_BUFFER_ITEMS(
-          self->modules->buffer, self->modules->len, LilyCheckedScope);
+          self->modules->buffer, self->modules->len, LilyCheckedDecl);
         FREE(Vec, self->modules);
+    }
+
+    if (self->scopes) {
+        FREE_BUFFER_ITEMS(
+          self->scopes->buffer, self->scopes->len, LilyCheckedScope);
+        FREE(Vec, self->scopes);
     }
 }

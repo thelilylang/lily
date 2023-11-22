@@ -50,6 +50,7 @@ typedef struct LilyCheckedPackage
     Vec *traits;         // Vec<LilyCheckedDecl*>*?
     Vec *funs;           // Vec<LilyCheckedDecl*>*?
     Vec *modules;        // Vec<LilyCheckedDecl*>*?
+    Vec *scopes;         // Vec<LilyCheckedScope*>*?
 } LilyCheckedPackage;
 
 /**
@@ -73,7 +74,8 @@ inline CONSTRUCTOR(LilyCheckedPackage,
                                  .traits = NULL,
                                  .funs = NULL,
                                  .modules =
-                                   module ? init__Vec(1, module) : NULL };
+                                   module ? init__Vec(1, module) : NULL,
+                                 .scopes = NULL };
 }
 
 /**
