@@ -260,6 +260,7 @@ typedef struct LilyCheckedSymbolFun
 {
     LilyCheckedSymbolPackage package;
     Usize id;
+    Usize n;
 } LilyCheckedSymbolFun;
 
 /**
@@ -270,11 +271,12 @@ typedef struct LilyCheckedSymbolFun
 inline CONSTRUCTOR(LilyCheckedSymbolFun,
                    LilyCheckedSymbolFun,
                    Usize package_id,
-                   Usize id)
+                   Usize id,
+                   Usize n)
 {
-    return (LilyCheckedSymbolFun){ .package =
-                                     NEW(LilyCheckedSymbolPackage, package_id),
-                                   .id = id };
+    return (LilyCheckedSymbolFun){
+        .package = NEW(LilyCheckedSymbolPackage, package_id), .id = id, .n = n
+    };
 }
 
 typedef struct LilyCheckedSymbolScope
