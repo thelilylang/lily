@@ -488,10 +488,6 @@ impl<'a> Parser<'a> {
                 Expr::new(ExprKind::Unary(Unary::new(unary_op, right)), location)
             }
             TokenKind::Keyword(Keyword::Sizeof) => {
-                let mut location_sizeof = location.clone();
-
-                self.cursor.next();
-
                 match &self.current().kind {
                     TokenKind::LParen => {
                         self.cursor.next();
@@ -500,12 +496,12 @@ impl<'a> Parser<'a> {
 
                         self.expect(TokenKind::RParen);
 
-                        location_sizeof.end(
+                        location.end(
                             self.previous().location.end_line,
                             self.previous().location.end_column,
                         );
 
-                        Expr::new(ExprKind::Sizeof(data_type), location_sizeof)
+                        Expr::new(ExprKind::Sizeof(data_type), location)
                     }
                     _ => unreachable!("expected `(`"),
                 }
