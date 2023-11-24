@@ -487,25 +487,23 @@ impl<'a> Parser<'a> {
 
                 Expr::new(ExprKind::Unary(Unary::new(unary_op, right)), location)
             }
-            TokenKind::Keyword(Keyword::Sizeof) => {
-                match &self.current().kind {
-                    TokenKind::LParen => {
-                        self.cursor.next();
+            TokenKind::Keyword(Keyword::Sizeof) => match &self.current().kind {
+                TokenKind::LParen => {
+                    self.cursor.next();
 
-                        let data_type = self.parse_data_type();
+                    let data_type = self.parse_data_type();
 
-                        self.expect(TokenKind::RParen);
+                    self.expect(TokenKind::RParen);
 
-                        location.end(
-                            self.previous().location.end_line,
-                            self.previous().location.end_column,
-                        );
+                    location.end(
+                        self.previous().location.end_line,
+                        self.previous().location.end_column,
+                    );
 
-                        Expr::new(ExprKind::Sizeof(data_type), location)
-                    }
-                    _ => unreachable!("expected `(`"),
+                    Expr::new(ExprKind::Sizeof(data_type), location)
                 }
-            }
+                _ => unreachable!("expected `(`"),
+            },
             TokenKind::PlusPlus | TokenKind::MinusMinus => {
                 let op = &self.previous().kind;
                 let expr = self.parse_primary_expr();
@@ -600,6 +598,32 @@ impl<'a> Parser<'a> {
 
         if BinaryKind::is_binary(&self.current().kind) {
             left = self.parse_binary(left);
+        }
+
+        match &self.current().kind {
+            TokenKind::PlusPlus | TokenKind::MinusMinus => {
+                let op = &self.current().kind;
+
+                self.cursor.next();
+
+                let mut location = left.location.clone();
+
+                location.end(
+                    self.previous().location.end_line,
+                    self.previous().location.end_column,
+                );
+
+                match op {
+                    TokenKind::PlusPlus => {
+                        left = Expr::new(ExprKind::PostfixInc(Box::new(left)), location)
+                    }
+                    TokenKind::MinusMinus => {
+                        left = Expr::new(ExprKind::PostfixDec(Box::new(left)), location)
+                    }
+                    _ => unreachable!("unexpected token"),
+                }
+            }
+            _ => {}
         }
 
         match &self.current().kind {
