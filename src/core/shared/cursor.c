@@ -22,7 +22,12 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
+
 #include <core/shared/cursor.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 void
 next_line__Cursor(Cursor *cursor, char current)
@@ -44,6 +49,8 @@ next__Cursor(Cursor *cursor, char current)
 void
 previous__Cursor(Cursor *cursor, char current)
 {
+    ASSERT(cursor->column > 1);
+
     --cursor->position;
     --cursor->column;
     cursor->current = current;
