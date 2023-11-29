@@ -867,6 +867,7 @@ set(LILY_CORE_SHARED
     ${CMAKE_SOURCE_DIR}/src/core/shared/cursor.c
     ${CMAKE_SOURCE_DIR}/src/core/shared/diagnostic.c
     ${CMAKE_SOURCE_DIR}/src/core/shared/location.c
+    ${CMAKE_SOURCE_DIR}/src/core/shared/scanner.c
     ${CMAKE_SOURCE_DIR}/src/core/shared/source.c)
 
 add_library(lily_core_shared STATIC ${LILY_CORE_SHARED})
