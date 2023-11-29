@@ -51,15 +51,17 @@ run_preparser(File *file,
     return preparser_info;
 }
 
-#define RUN_PREPARSER(filename)                                        \
-    char *content = read_file__File(filename);                         \
-    File file = NEW(File, filename, content);                          \
-    LilyScanner scanner =                                              \
-      NEW(LilyScanner, NEW(Source, NEW(Cursor, file.content), &file)); \
-    LilyPreparser preparser =                                          \
-      NEW(LilyPreparser, &file, scanner.tokens, "", true);             \
-    String *package_name = from__String("example");                    \
-    LilyPreparserInfo preparser_info =                                 \
+#define RUN_PREPARSER(filename)                                              \
+    char *content = read_file__File(filename);                               \
+    File file = NEW(File, filename, content);                                \
+    Usize count_error = 0;                                                   \
+    LilyScanner scanner = NEW(LilyScanner,                                   \
+                              NEW(Source, NEW(Cursor, file.content), &file), \
+                              &count_error);                                 \
+    LilyPreparser preparser =                                                \
+      NEW(LilyPreparser, &file, scanner.tokens, "", true);                   \
+    String *package_name = from__String("example");                          \
+    LilyPreparserInfo preparser_info =                                       \
       run_preparser(&file, &scanner, &preparser, package_name);
 
 #define FREE_PREPARSER()         \
