@@ -31,26 +31,22 @@
 
 #include <core/lily/scanner/token.h>
 #include <core/shared/diagnostic.h>
-#include <core/shared/source.h>
+#include <core/shared/scanner.h>
 
 typedef struct LilyScanner
 {
     Vec *tokens; // Vec<LilyToken*>*
-    Location location;
-    Source source;
-    Usize count_error;
+	Scanner base;
 } LilyScanner;
 
 /**
  *
  * @brief Construct LilyScanner type.
  */
-inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source)
+inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source, Usize *count_error)
 {
     return (LilyScanner){ .tokens = NEW(Vec),
-                          .location = default__Location(source.file->name),
-                          .source = source,
-                          .count_error = 0 };
+                          .base = NEW(Scanner, source, count_error) };
 }
 
 /**

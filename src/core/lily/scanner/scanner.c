@@ -102,17 +102,30 @@ Output: no errors
 static enum LilyTokenKind
 get_keyword__LilyScanner(char *id);
 
+/// @brief Move next one character.
+/// @see `include/core/shared/scanner.h`
+static inline void
+next_char__LilyScanner(LilyScanner *self);
+
+/// @brief Move back one character.
+/// @see `include/core/shared/scanner.h`
+static inline void
+previous_char__LilyScanner(LilyScanner *self);
+
 /// @brief Skip space (new line, tab, ...).
-static void
+/// @see `include/core/shared/scanner.h`
+static inline void
 skip_space__LilyScanner(LilyScanner *self);
 
 /// @brief Next char n times.
-static void
+/// @see `include/core/shared/scanner.h`
+static inline void
 jump__LilyScanner(LilyScanner *self, Usize n);
 
 /// @brief Assign to line and column to start_line and start_column Location's
 /// field.
-static void
+/// @see `include/core/shared/scanner.h`
+static inline void
 start_token__LilyScanner(LilyScanner *self,
                          Usize line,
                          Usize column,
@@ -120,14 +133,16 @@ start_token__LilyScanner(LilyScanner *self,
 
 /// @brief Assign to line and column to end_line and end_column Location's
 /// field.
-static void
+/// @see `include/core/shared/scanner.h`
+static inline void
 end_token__LilyScanner(LilyScanner *self,
                        Usize line,
                        Usize column,
                        Usize position);
 
 /// @brief Get character at position + n.
-static char *
+/// @see `include/core/shared/scanner.h`
+static inline char *
 peek_char__LilyScanner(const LilyScanner *self, Usize n);
 
 /// @brief Next char according the token.
@@ -318,13 +333,13 @@ get_token__LilyScanner(LilyScanner *self);
 
 /// @brief Scan literal suffix.
 /// @example 1I8, 1I16, 1I32, 1I64, 1Iz, 1U8, 1U16, 1U32, 1U64, 1Uz, 1F32, 1F64
-#define SCAN_LITERAL_SUFFIX(value, base, is_int)                               \
+#define SCAN_LITERAL_SUFFIX(value, b, is_int)                               \
     {                                                                          \
         LilyToken *token_res = NULL;                                           \
         end__Location(&location_error,                                         \
-                      self->source.cursor.line,                                \
-                      self->source.cursor.column,                              \
-                      self->source.cursor.position);                           \
+                      self->base.source.cursor.line,                                \
+                      self->base.source.cursor.column,                              \
+                      self->base.source.cursor.position);                           \
                                                                                \
         char *c1 = peek_char__LilyScanner(self, 1);                            \
                                                                                \
@@ -333,12 +348,12 @@ get_token__LilyScanner(LilyScanner *self);
         char *c3 = peek_char__LilyScanner(self, 3);                            \
                                                                                \
         if (c1 == (char *)'I' && c2 == (char *)'8' && is_int) {                \
-            if (!CHECK_INT8_OVERFLOW_FROM_STRING(value, base)) {               \
+            if (!CHECK_INT8_OVERFLOW_FROM_STRING(value, b)) {               \
                 emit__Diagnostic(                                              \
                   NEW_VARIANT(                                                 \
                     Diagnostic,                                                \
                     simple_lily_error,                                         \
-                    self->source.file,                                         \
+                    self->base.source.file,                                         \
                     &location_error,                                           \
                     NEW(LilyError, LILY_ERROR_KIND_INT8_OUT_OF_RANGE),         \
                     init__Vec(1,                                               \
@@ -346,7 +361,7 @@ get_token__LilyScanner(LilyScanner *self);
                                            "between -128 and 127")),           \
                     NULL,                                                      \
                     NULL),                                                     \
-                  &self->count_error);                                         \
+                  self->base.count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 3);                                    \
                                                                                \
@@ -355,16 +370,16 @@ get_token__LilyScanner(LilyScanner *self);
                                                                                \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_int8,                       \
-                                    clone__Location(&self->location),          \
-                                    atoi__Int8(value, base));                  \
+                                    clone__Location(&self->base.location),          \
+                                    atoi__Int8(value, b));                  \
         } else if (c1 == (char *)'I' && c2 == (char *)'1' &&                   \
                    c3 == (char *)'6' && is_int) {                              \
-            if (!CHECK_INT16_OVERFLOW_FROM_STRING(value, base)) {              \
+            if (!CHECK_INT16_OVERFLOW_FROM_STRING(value, b)) {              \
                 emit__Diagnostic(                                              \
                   NEW_VARIANT(                                                 \
                     Diagnostic,                                                \
                     simple_lily_error,                                         \
-                    self->source.file,                                         \
+                    self->base.source.file,                                         \
                     &location_error,                                           \
                     NEW(LilyError, LILY_ERROR_KIND_INT16_OUT_OF_RANGE),        \
                     init__Vec(1,                                               \
@@ -372,7 +387,7 @@ get_token__LilyScanner(LilyScanner *self);
                                            "between -32_768 and 32_767")),     \
                     NULL,                                                      \
                     NULL),                                                     \
-                  &self->count_error);                                         \
+                  self->base.count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
                                                                                \
@@ -381,16 +396,16 @@ get_token__LilyScanner(LilyScanner *self);
                                                                                \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_int16,                      \
-                                    clone__Location(&self->location),          \
-                                    atoi__Int16(value, base));                 \
+                                    clone__Location(&self->base.location),          \
+                                    atoi__Int16(value, b));                 \
         } else if (c1 == (char *)'I' && c2 == (char *)'3' &&                   \
                    c3 == (char *)'2' && is_int) {                              \
-            if (!CHECK_INT32_OVERFLOW_FROM_STRING(value, base)) {              \
+            if (!CHECK_INT32_OVERFLOW_FROM_STRING(value, b)) {              \
                 emit__Diagnostic(                                              \
                   NEW_VARIANT(                                                 \
                     Diagnostic,                                                \
                     simple_lily_error,                                         \
-                    self->source.file,                                         \
+                    self->base.source.file,                                         \
                     &location_error,                                           \
                     NEW(LilyError, LILY_ERROR_KIND_INT32_OUT_OF_RANGE),        \
                     init__Vec(1,                                               \
@@ -399,7 +414,7 @@ get_token__LilyScanner(LilyScanner *self);
                                 "between -2_147_483_648 and 2_147_483_647")),  \
                     NULL,                                                      \
                     NULL),                                                     \
-                  &self->count_error);                                         \
+                  self->base.count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
                                                                                \
@@ -408,16 +423,16 @@ get_token__LilyScanner(LilyScanner *self);
                                                                                \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_int32,                      \
-                                    clone__Location(&self->location),          \
-                                    atoi__Int32(value, base));                 \
+                                    clone__Location(&self->base.location),          \
+                                    atoi__Int32(value, b));                 \
         } else if (c1 == (char *)'I' && c2 == (char *)'6' &&                   \
                    c3 == (char *)'4' && is_int) {                              \
-            if (!CHECK_INT64_OVERFLOW_FROM_STRING(value, base)) {              \
+            if (!CHECK_INT64_OVERFLOW_FROM_STRING(value, b)) {              \
                 emit__Diagnostic(                                              \
                   NEW_VARIANT(                                                 \
                     Diagnostic,                                                \
                     simple_lily_error,                                         \
-                    self->source.file,                                         \
+                    self->base.source.file,                                         \
                     &location_error,                                           \
                     NEW(LilyError, LILY_ERROR_KIND_INT64_OUT_OF_RANGE),        \
                     init__Vec(                                                 \
@@ -427,7 +442,7 @@ get_token__LilyScanner(LilyScanner *self);
                                    "9_223_372_036_854_775_807")),              \
                     NULL,                                                      \
                     NULL),                                                     \
-                  &self->count_error);                                         \
+                  self->base.count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
                                                                                \
@@ -436,21 +451,21 @@ get_token__LilyScanner(LilyScanner *self);
                                                                                \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_int64,                      \
-                                    clone__Location(&self->location),          \
-                                    atoi__Int64(value, base));                 \
+                                    clone__Location(&self->base.location),          \
+                                    atoi__Int64(value, b));                 \
         } else if (c1 == (char *)'I' && c2 == (char *)'z' && is_int) {         \
-            if (!CHECK_ISIZE_OVERFLOW_FROM_STRING(value, base)) {              \
+            if (!CHECK_ISIZE_OVERFLOW_FROM_STRING(value, b)) {              \
                 emit__Diagnostic(                                              \
                   NEW_VARIANT(                                                 \
                     Diagnostic,                                                \
                     simple_lily_error,                                         \
-                    self->source.file,                                         \
+                    self->base.source.file,                                         \
                     &location_error,                                           \
                     NEW(LilyError, LILY_ERROR_KIND_INT64_OUT_OF_RANGE),        \
                     init__Vec(1, from__String(ISIZE_OUT_OF_RANGE_HELP)),       \
                     NULL,                                                      \
                     NULL),                                                     \
-                  &self->count_error);                                         \
+                  self->base.count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 3);                                    \
                                                                                \
@@ -459,15 +474,15 @@ get_token__LilyScanner(LilyScanner *self);
                                                                                \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_isize,                      \
-                                    clone__Location(&self->location),          \
-                                    atoi__Isize(value, base));                 \
+                                    clone__Location(&self->base.location),          \
+                                    atoi__Isize(value, b));                 \
         } else if (c1 == (char *)'U' && c2 == (char *)'8' && is_int) {         \
-            if (!CHECK_UINT8_OVERFLOW_FROM_STRING(value, base)) {              \
+            if (!CHECK_UINT8_OVERFLOW_FROM_STRING(value, b)) {              \
                 emit__Diagnostic(                                              \
                   NEW_VARIANT(                                                 \
                     Diagnostic,                                                \
                     simple_lily_error,                                         \
-                    self->source.file,                                         \
+                    self->base.source.file,                                         \
                     &location_error,                                           \
                     NEW(LilyError, LILY_ERROR_KIND_UINT8_OUT_OF_RANGE),        \
                     init__Vec(1,                                               \
@@ -475,7 +490,7 @@ get_token__LilyScanner(LilyScanner *self);
                                            "between 0 and 255")),              \
                     NULL,                                                      \
                     NULL),                                                     \
-                  &self->count_error);                                         \
+                  self->base.count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 3);                                    \
                                                                                \
@@ -484,16 +499,16 @@ get_token__LilyScanner(LilyScanner *self);
                                                                                \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_uint8,                      \
-                                    clone__Location(&self->location),          \
-                                    atoi__Uint8(value, base));                 \
+                                    clone__Location(&self->base.location),          \
+                                    atoi__Uint8(value, b));                 \
         } else if (c1 == (char *)'U' && c2 == (char *)'1' &&                   \
                    c3 == (char *)'6' && is_int) {                              \
-            if (!CHECK_UINT16_OVERFLOW_FROM_STRING(value, base)) {             \
+            if (!CHECK_UINT16_OVERFLOW_FROM_STRING(value, b)) {             \
                 emit__Diagnostic(                                              \
                   NEW_VARIANT(                                                 \
                     Diagnostic,                                                \
                     simple_lily_error,                                         \
-                    self->source.file,                                         \
+                    self->base.source.file,                                         \
                     &location_error,                                           \
                     NEW(LilyError, LILY_ERROR_KIND_UINT16_OUT_OF_RANGE),       \
                     init__Vec(1,                                               \
@@ -501,7 +516,7 @@ get_token__LilyScanner(LilyScanner *self);
                                            "between 0 and 65_535")),           \
                     NULL,                                                      \
                     NULL),                                                     \
-                  &self->count_error);                                         \
+                  self->base.count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
                                                                                \
@@ -510,16 +525,16 @@ get_token__LilyScanner(LilyScanner *self);
                                                                                \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_uint16,                     \
-                                    clone__Location(&self->location),          \
-                                    atoi__Uint16(value, base));                \
+                                    clone__Location(&self->base.location),          \
+                                    atoi__Uint16(value, b));                \
         } else if (c1 == (char *)'U' && c2 == (char *)'3' &&                   \
                    c3 == (char *)'2' && is_int) {                              \
-            if (!CHECK_UINT32_OVERFLOW_FROM_STRING(value, base)) {             \
+            if (!CHECK_UINT32_OVERFLOW_FROM_STRING(value, b)) {             \
                 emit__Diagnostic(                                              \
                   NEW_VARIANT(                                                 \
                     Diagnostic,                                                \
                     simple_lily_error,                                         \
-                    self->source.file,                                         \
+                    self->base.source.file,                                         \
                     &location_error,                                           \
                     NEW(LilyError, LILY_ERROR_KIND_UINT32_OUT_OF_RANGE),       \
                     init__Vec(1,                                               \
@@ -527,7 +542,7 @@ get_token__LilyScanner(LilyScanner *self);
                                            "between 0 and 4_294_967_295")),    \
                     NULL,                                                      \
                     NULL),                                                     \
-                  &self->count_error);                                         \
+                  self->base.count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
                                                                                \
@@ -536,16 +551,16 @@ get_token__LilyScanner(LilyScanner *self);
                                                                                \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_uint32,                     \
-                                    clone__Location(&self->location),          \
-                                    atoi__Uint32(value, base));                \
+                                    clone__Location(&self->base.location),          \
+                                    atoi__Uint32(value, b));                \
         } else if (c1 == (char *)'U' && c2 == (char *)'6' &&                   \
                    c3 == (char *)'4' && is_int) {                              \
-            if (!CHECK_UINT64_OVERFLOW_FROM_STRING(value, base)) {             \
+            if (!CHECK_UINT64_OVERFLOW_FROM_STRING(value, b)) {             \
                 emit__Diagnostic(                                              \
                   NEW_VARIANT(                                                 \
                     Diagnostic,                                                \
                     simple_lily_error,                                         \
-                    self->source.file,                                         \
+                    self->base.source.file,                                         \
                     &location_error,                                           \
                     NEW(LilyError, LILY_ERROR_KIND_UINT64_OUT_OF_RANGE),       \
                     init__Vec(1,                                               \
@@ -554,7 +569,7 @@ get_token__LilyScanner(LilyScanner *self);
                                 "between 0 and 18_446_744_073_709_551_615")),  \
                     NULL,                                                      \
                     NULL),                                                     \
-                  &self->count_error);                                         \
+                  self->base.count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 4);                                    \
                                                                                \
@@ -563,21 +578,21 @@ get_token__LilyScanner(LilyScanner *self);
                                                                                \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_uint64,                     \
-                                    clone__Location(&self->location),          \
-                                    atoi__Uint64(value, base));                \
+                                    clone__Location(&self->base.location),          \
+                                    atoi__Uint64(value, b));                \
         } else if (c1 == (char *)'U' && c2 == (char *)'z' && is_int) {         \
-            if (!CHECK_USIZE_OVERFLOW_FROM_STRING(value, base)) {              \
+            if (!CHECK_USIZE_OVERFLOW_FROM_STRING(value, b)) {              \
                 emit__Diagnostic(                                              \
                   NEW_VARIANT(                                                 \
                     Diagnostic,                                                \
                     simple_lily_error,                                         \
-                    self->source.file,                                         \
+                    self->base.source.file,                                         \
                     &location_error,                                           \
                     NEW(LilyError, LILY_ERROR_KIND_USIZE_OUT_OF_RANGE),        \
                     init__Vec(1, from__String(USIZE_OUT_OF_RANGE_HELP)),       \
                     NULL,                                                      \
                     NULL),                                                     \
-                  &self->count_error);                                         \
+                  self->base.count_error);                                         \
                 FREE(String, res);                                             \
                 jump__LilyScanner(self, 3);                                    \
                                                                                \
@@ -586,8 +601,8 @@ get_token__LilyScanner(LilyScanner *self);
                                                                                \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_usize,                      \
-                                    clone__Location(&self->location),          \
-                                    atoi__Usize(value, base));                 \
+                                    clone__Location(&self->base.location),          \
+                                    atoi__Usize(value, b));                 \
         } else if (c1 == (char *)'F' && c2 == (char *)'3' &&                   \
                    c3 == (char *)'2') {                                        \
             /*                                                                 \
@@ -595,7 +610,7 @@ get_token__LilyScanner(LilyScanner *self);
             */                                                                 \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_float32,                    \
-                                    clone__Location(&self->location),          \
+                                    clone__Location(&self->base.location),          \
                                     atof__Float32(value));                     \
         } else if (c1 == (char *)'F' && c2 == (char *)'6' &&                   \
                    c3 == (char *)'4') {                                        \
@@ -604,7 +619,7 @@ get_token__LilyScanner(LilyScanner *self);
             */                                                                 \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_float64,                    \
-                                    clone__Location(&self->location),          \
+                                    clone__Location(&self->base.location),          \
                                     atof__Float64(value));                     \
         } else if (c1 == (char *)'I' || c1 == (char *)'U' ||                   \
                    c1 == (char *)'F') {                                        \
@@ -612,7 +627,7 @@ get_token__LilyScanner(LilyScanner *self);
               NEW_VARIANT(                                                     \
                 Diagnostic,                                                    \
                 simple_lily_error,                                             \
-                self->source.file,                                             \
+                self->base.source.file,                                             \
                 &location_error,                                               \
                 NEW(LilyError, LILY_ERROR_KIND_INVALID_LITERAL_SUFFIX),        \
                 init__Vec(1,                                                   \
@@ -623,7 +638,7 @@ get_token__LilyScanner(LilyScanner *self);
                           from__String("it is not possible to use an integer " \
                                        "suffix on a float literal")),          \
                 NULL),                                                         \
-              &self->count_error);                                             \
+              self->base.count_error);                                             \
             FREE(String, res);                                                 \
                                                                                \
             return NULL;                                                       \
@@ -780,19 +795,27 @@ get_keyword__LilyScanner(char *id)
 }
 
 void
+next_char__LilyScanner(LilyScanner *self)
+{
+	return next_char__Scanner(&self->base);
+}
+
+void
+previous_char__LilyScanner(LilyScanner *self)
+{
+	return previous_char__Scanner(&self->base);
+}
+
+void
 skip_space__LilyScanner(LilyScanner *self)
 {
-    while (isspace(self->source.cursor.current) &&
-           self->source.cursor.position < self->source.file->len - 1) {
-        next_char__Source(&self->source);
-    }
+	return skip_space__Scanner(&self->base);
 }
 
 void
 jump__LilyScanner(LilyScanner *self, Usize n)
 {
-    for (Usize i = 0; i < n; ++i)
-        next_char__Source(&self->source);
+	return jump__Scanner(&self->base, n);
 }
 
 void
@@ -801,9 +824,7 @@ start_token__LilyScanner(LilyScanner *self,
                          Usize column,
                          Usize position)
 {
-    self->location.start_line = line;
-    self->location.start_column = column;
-    self->location.start_position = position;
+	return start_token__Scanner(&self->base, line, column, position);
 }
 
 void
@@ -812,23 +833,13 @@ end_token__LilyScanner(LilyScanner *self,
                        Usize column,
                        Usize position)
 {
-    ASSERT(self->location.start_line <= line);
-    ASSERT(self->location.start_column <= column || self->location.start_line != line);
-
-    self->location.end_line = line;
-    self->location.end_column = column;
-    self->location.end_position = position;
+	return end_token__Scanner(&self->base, line, column, position);
 }
 
 char *
 peek_char__LilyScanner(const LilyScanner *self, Usize n)
 {
-    if (self->source.cursor.position < self->source.file->len - 1) {
-        return (char *)(Uptr)
-          self->source.file->content[self->source.cursor.position + n];
-    }
-
-    return NULL;
+	return peek_char__Scanner(&self->base, n);
 }
 
 void
@@ -886,7 +897,7 @@ next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
         case LILY_TOKEN_KIND_STAR_EQ:
         case LILY_TOKEN_KIND_STAR_STAR:
         case LILY_TOKEN_KIND_WAVE_EQ:
-            next_char__Source(&self->source);
+            next_char__LilyScanner(self);
             return;
         case LILY_TOKEN_KIND_DOT_DOT_DOT:
         case LILY_TOKEN_KIND_L_SHIFT_L_SHIFT_EQ:
@@ -910,69 +921,69 @@ push_token__LilyScanner(LilyScanner *self, LilyToken *token)
 bool
 is_digit__LilyScanner(const LilyScanner *self)
 {
-    return isdigit(self->source.cursor.current);
+    return isdigit(self->base.source.cursor.current);
 }
 
 bool
 is_ident__LilyScanner(const LilyScanner *self)
 {
     return is_digit__LilyScanner(self) ||
-           isalpha(self->source.cursor.current) ||
-           self->source.cursor.current == '_';
+           isalpha(self->base.source.cursor.current) ||
+           self->base.source.cursor.current == '_';
 }
 
 bool
 is_hex__LilyScanner(const LilyScanner *self)
 {
     return is_digit__LilyScanner(self) ||
-           (self->source.cursor.current >= 'a' &&
-            self->source.cursor.current <= 'f') ||
-           (self->source.cursor.current >= 'A' &&
-            self->source.cursor.current <= 'F') ||
-           self->source.cursor.current == '_';
+           (self->base.source.cursor.current >= 'a' &&
+            self->base.source.cursor.current <= 'f') ||
+           (self->base.source.cursor.current >= 'A' &&
+            self->base.source.cursor.current <= 'F') ||
+           self->base.source.cursor.current == '_';
 }
 
 bool
 is_oct__LilyScanner(const LilyScanner *self)
 {
-    return (self->source.cursor.current >= '0' &&
-            self->source.cursor.current <= '7') ||
-           self->source.cursor.current == '_';
+    return (self->base.source.cursor.current >= '0' &&
+            self->base.source.cursor.current <= '7') ||
+           self->base.source.cursor.current == '_';
 }
 
 bool
 is_bin__LilyScanner(const LilyScanner *self)
 {
-    return (self->source.cursor.current >= '0' &&
-            self->source.cursor.current <= '1') ||
-           self->source.cursor.current == '_';
+    return (self->base.source.cursor.current >= '0' &&
+            self->base.source.cursor.current <= '1') ||
+           self->base.source.cursor.current == '_';
 }
 
 bool
 is_num__LilyScanner(const LilyScanner *self)
 {
     return is_digit__LilyScanner(self) ||
-           (self->source.cursor.current == '.' &&
+           (self->base.source.cursor.current == '.' &&
             peek_char__LilyScanner(self, 1) != (char *)'.') ||
-           self->source.cursor.current == 'e' ||
-           self->source.cursor.current == 'E' ||
-           self->source.cursor.current == '_';
+           self->base.source.cursor.current == 'e' ||
+           self->base.source.cursor.current == 'E' ||
+           self->base.source.cursor.current == '_';
 }
 
 String *
 get_character__LilyScanner(LilyScanner *self, char previous)
 {
     String *res = NULL;
-    Location location_error = default__Location(self->source.file->name);
+    Location location_error = default__Location(self->base.source.file->name);
 
     start__Location(&location_error,
-                    self->source.cursor.line,
-                    self->source.cursor.column,
-                    self->source.cursor.position);
+					self->base.source.cursor.line,
+					self->base.source.cursor.column,
+					self->base.source.cursor.position);
 
     switch (previous) {
         case '\\':
-            switch (self->source.cursor.current) {
+            switch (self->base.source.cursor.current) {
                 case 'n':
                     res = from__String("\n");
                     break;
@@ -996,38 +1007,38 @@ get_character__LilyScanner(LilyScanner *self, char previous)
                     break;
                 default:
                     end__Location(&location_error,
-                                  self->source.cursor.line,
-                                  self->source.cursor.column,
-                                  self->source.cursor.position);
+                                  self->base.source.cursor.line,
+                                  self->base.source.cursor.column,
+                                  self->base.source.cursor.position);
 
-                    if (self->source.cursor.position >=
-                        self->source.file->len - 1) {
+                    if (self->base.source.cursor.position >=
+                        self->base.source.file->len - 1) {
                         emit__Diagnostic(
                           NEW_VARIANT(
                             Diagnostic,
                             simple_lily_error,
-                            self->source.file,
+                            self->base.source.file,
                             &location_error,
                             NEW(LilyError,
                                 LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL),
                             NULL,
                             NULL,
                             NULL),
-                          &self->count_error);
+                          self->base.count_error);
                     } else {
                         emit__Diagnostic(
                           NEW_VARIANT(
                             Diagnostic,
                             simple_lily_error,
-                            self->source.file,
+                            self->base.source.file,
                             &location_error,
                             NEW(LilyError, LILY_ERROR_KIND_INVALID_ESCAPE),
                             NULL,
                             NULL,
                             NULL),
-                          &self->count_error);
+                          self->base.count_error);
 
-                        next_char__Source(&self->source);
+                        next_char__LilyScanner(self);
                     }
 
                     return NULL;
@@ -1039,7 +1050,7 @@ get_character__LilyScanner(LilyScanner *self, char previous)
     }
 
     if (previous == '\\') {
-        next_char__Source(&self->source);
+        next_char__LilyScanner(self);
     }
 
     return res;
@@ -1048,50 +1059,50 @@ get_character__LilyScanner(LilyScanner *self, char previous)
 void
 skip_comment_line__LilyScanner(LilyScanner *self)
 {
-    while (self->source.cursor.current != '\n') {
-        next_char__Source(&self->source);
+    while (self->base.source.cursor.current != '\n') {
+        next_char__LilyScanner(self);
     }
 }
 
 void
 skip_comment_block__LilyScanner(LilyScanner *self)
 {
-    Location location_error = default__Location(self->source.file->name);
+    Location location_error = default__Location(self->base.source.file->name);
 
     start__Location(&location_error,
-                    self->source.cursor.line,
-                    self->source.cursor.column,
-                    self->source.cursor.position);
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
 
     // Check if the comment block is closed. While the current character is not
     // a `*` or the next character is not a `/`, we continue to scan the comment
     // block.
-    while (self->source.cursor.current != '*' ||
+    while (self->base.source.cursor.current != '*' ||
            peek_char__LilyScanner(self, 1) != (char *)'/') {
         // Check if the comment block is not closed.
-        if (self->source.cursor.position >= self->source.file->len - 2) {
+        if (self->base.source.cursor.position >= self->base.source.file->len - 2) {
             end__Location(&location_error,
-                          self->source.cursor.line,
-                          self->source.cursor.column,
-                          self->source.cursor.position);
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
 
             {
                 emit__Diagnostic(
                   NEW_VARIANT(
                     Diagnostic,
                     simple_lily_error,
-                    self->source.file,
+                    self->base.source.file,
                     &location_error,
                     NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_COMMENT_BLOCK),
                     init__Vec(
                       1, from__String("close comment multi line with `*/`")),
                     NULL,
                     NULL),
-                  &self->count_error);
+                  self->base.count_error);
             }
         }
 
-        next_char__Source(&self->source);
+        next_char__LilyScanner(self);
     }
 
     jump__LilyScanner(self, 2);
@@ -1102,18 +1113,18 @@ scan_comment_doc__LilyScanner(LilyScanner *self)
 {
     String *doc = NEW(String);
 
-    while (self->source.cursor.current != '\n') {
-        next_char__Source(&self->source);
+    while (self->base.source.cursor.current != '\n') {
+        next_char__LilyScanner(self);
 
-        if (self->source.cursor.position >= self->source.file->len - 1) {
+        if (self->base.source.cursor.position >= self->base.source.file->len - 1) {
             break;
         }
 
         push__String(
-          doc, self->source.file->content[self->source.cursor.position - 1]);
+          doc, self->base.source.file->content[self->base.source.cursor.position - 1]);
     }
 
-    previous_char__Source(&self->source);
+    previous_char__Source(&self->base.source);
 
     return doc;
 }
@@ -1124,12 +1135,12 @@ scan_identifier__LilyScanner(LilyScanner *self)
     String *id = NEW(String);
 
     while (is_ident__LilyScanner(self)) {
-        next_char__Source(&self->source);
+        next_char__LilyScanner(self);
         push__String(
-          id, self->source.file->content[self->source.cursor.position - 1]);
+          id, self->base.source.file->content[self->base.source.cursor.position - 1]);
     }
 
-    previous_char__Source(&self->source);
+    previous_char__LilyScanner(self);
 
     return id;
 }
@@ -1137,41 +1148,41 @@ scan_identifier__LilyScanner(LilyScanner *self)
 char *
 scan_char__LilyScanner(LilyScanner *self)
 {
-    Location location_error = default__Location(self->source.file->name);
+    Location location_error = default__Location(self->base.source.file->name);
 
     start__Location(&location_error,
-                    self->source.cursor.line,
-                    self->source.cursor.column,
-                    self->source.cursor.position);
-    next_char__Source(&self->source);
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
+    next_char__LilyScanner(self);
 
     // Check if the char literal is not closed.
-    if (self->source.cursor.current != '\'') {
-        next_char__Source(&self->source);
+    if (self->base.source.cursor.current != '\'') {
+        next_char__LilyScanner(self);
 
-        char target = self->source.cursor.current;
+        char target = self->base.source.cursor.current;
         String *character = get_character__LilyScanner(
-          self, self->source.file->content[self->source.cursor.position - 1]);
+          self, self->base.source.file->content[self->base.source.cursor.position - 1]);
 
         end__Location(&location_error,
-                      self->source.cursor.line,
-                      self->source.cursor.column,
-                      self->source.cursor.position);
+                      self->base.source.cursor.line,
+                      self->base.source.cursor.column,
+                      self->base.source.cursor.position);
 
         // Check if the char literal is not closed.
-        if (target != '\'' && self->source.cursor.current != '\'') {
+        if (target != '\'' && self->base.source.cursor.current != '\'') {
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->source.file,
+                self->base.source.file,
                 &location_error,
                 NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL),
                 init__Vec(
                   1, from__String("please close this char literal with `\'`")),
                 NULL,
                 NULL),
-              &self->count_error);
+              self->base.count_error);
 
             if (character) {
                 FREE(String, character);
@@ -1192,21 +1203,21 @@ scan_char__LilyScanner(LilyScanner *self)
     }
 
     end__Location(&location_error,
-                  self->source.cursor.line,
-                  self->source.cursor.column,
-                  self->source.cursor.position);
+                  self->base.source.cursor.line,
+                  self->base.source.cursor.column,
+                  self->base.source.cursor.position);
 
     emit__Diagnostic(
       NEW_VARIANT(
         Diagnostic,
         simple_lily_error,
-        self->source.file,
+        self->base.source.file,
         &location_error,
         NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL),
         init__Vec(1, from__String("please close this char literal with `\"`")),
         NULL,
         from__String("unexpected token here: `'`")),
-      &self->count_error);
+      self->base.count_error);
 
     return NULL;
 }
@@ -1214,51 +1225,51 @@ scan_char__LilyScanner(LilyScanner *self)
 static String *
 scan_string__LilyScanner(LilyScanner *self)
 {
-    Location location_error = default__Location(self->source.file->name);
+    Location location_error = default__Location(self->base.source.file->name);
     String *res = NEW(String);
 
     start__Location(&location_error,
-                    self->source.cursor.line,
-                    self->source.cursor.column,
-                    self->source.cursor.position);
-    next_char__Source(&self->source);
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
+    next_char__LilyScanner(self);
 
     // Check if the string literal is not closed. While the current character is
     // not a `"` or the next character is not a `"`, we continue to scan the
     // string literal.
-    while (self->source.cursor.current != '\"') {
-        if (self->source.cursor.position > self->source.file->len - 2) {
+    while (self->base.source.cursor.current != '\"') {
+        if (self->base.source.cursor.position > self->base.source.file->len - 2) {
             end__Location(&location_error,
-                          self->source.cursor.line,
-                          self->source.cursor.column,
-                          self->source.cursor.position);
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
 
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->source.file,
+                self->base.source.file,
                 &location_error,
                 NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_STRING_LITERAL),
                 init__Vec(
                   1, from__String("add `\"` to the end of string literal")),
                 NULL,
                 NULL),
-              &self->count_error);
+              self->base.count_error);
 
             FREE(String, res);
 
             return NULL;
         }
 
-        next_char__Source(&self->source);
+        next_char__LilyScanner(self);
 
         // Scan the escape character. If the `get_character__LilyScanner` return
         // NULL that's mean the escape character is invalid.
         {
             String *c = get_character__LilyScanner(
               self,
-              self->source.file->content[self->source.cursor.position - 1]);
+              self->base.source.file->content[self->base.source.cursor.position - 1]);
 
             if (!c) {
                 FREE(String, res);
@@ -1284,11 +1295,11 @@ scan_line : {
     // Check if the multiline string literal is not closed. While the current
     // character is not a `\n`, we continue to scan the multiline string
     // literal.
-    while (self->source.cursor.current != '\n') {
-        next_char__Source(&self->source);
+    while (self->base.source.cursor.current != '\n') {
+        next_char__LilyScanner(self);
 
         String *c = get_character__LilyScanner(
-          self, self->source.file->content[self->source.cursor.position - 1]);
+          self, self->base.source.file->content[self->base.source.cursor.position - 1]);
 
         if (!c) {
             FREE(String, res);
@@ -1305,13 +1316,13 @@ scan_line : {
     // Check if the multiline string literal is not closed. If the current
     // character is equal to `\\` and the next character is equal to `\\`, we
     // continue to scan the multiline string literal.
-    if (self->source.cursor.current == '\\' &&
+    if (self->base.source.cursor.current == '\\' &&
         peek_char__LilyScanner(self, 1) == (char *)'\\') {
         push_str__String(res, "\\n");
         goto scan_line;
     } 
 
-    previous_char__Source(&self->source);
+    previous_char__LilyScanner(self);
 
     return res;
 }
@@ -1319,19 +1330,19 @@ scan_line : {
 LilyToken *
 scan_hex__LilyScanner(LilyScanner *self)
 {
-    Location location_error = default__Location(self->source.file->name);
+    Location location_error = default__Location(self->base.source.file->name);
     String *res = NEW(String);
 
     start__Location(&location_error,
-                    self->source.cursor.line,
-                    self->source.cursor.column,
-                    self->source.cursor.position);
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
 
     // If the hexadecimal literal lead by a `0` character we skip all `0`
     // leading a hexadecimal literal.
-    if (self->source.cursor.current == '0') {
-        while (self->source.cursor.current == '0') {
-            next_char__Source(&self->source);
+    if (self->base.source.cursor.current == '0') {
+        while (self->base.source.cursor.current == '0') {
+            next_char__LilyScanner(self);
         }
 
         // If the hexadecimal literal is not a hexadecimal literal we push a `0`
@@ -1342,60 +1353,60 @@ scan_hex__LilyScanner(LilyScanner *self)
     }
 
     while (is_hex__LilyScanner(self)) {
-        if (self->source.cursor.current != '_') {
-            push__String(res, self->source.cursor.current);
+        if (self->base.source.cursor.current != '_') {
+            push__String(res, self->base.source.cursor.current);
         }
 
-        next_char__Source(&self->source);
+        next_char__LilyScanner(self);
     }
 
     // If the hexadecimal literal is empty we emit an error. Because a valid a
     // hexadecimal literal must have a digit 0 to 9 or a letter a (A) to f (F).
     if (is_empty__String(res)) {
         end__Location(&location_error,
-                      self->source.cursor.line,
-                      self->source.cursor.column,
-                      self->source.cursor.position);
+                      self->base.source.cursor.line,
+                      self->base.source.cursor.column,
+                      self->base.source.cursor.position);
 
         emit__Diagnostic(
           NEW_VARIANT(
             Diagnostic,
             simple_lily_error,
-            self->source.file,
+            self->base.source.file,
             &location_error,
             NEW(LilyError, LILY_ERROR_KIND_INVALID_HEXADECIMAL_LITERAL),
             init__Vec(1, from__String("e.g. 0xff, 0xFF")),
             NULL,
             from__String("add a digit 0 to 9 or a letter a (A) to f (F)")),
-          &self->count_error);
+          self->base.count_error);
 
         FREE(String, res);
 
         return NULL;
     }
 
-    previous_char__Source(&self->source);
+    previous_char__LilyScanner(self);
 
     SCAN_LITERAL_SUFFIX(res->buffer, 16, true);
 
     return NEW_VARIANT(
-      LilyToken, literal_int_16, clone__Location(&self->location), res);
+      LilyToken, literal_int_16, clone__Location(&self->base.location), res);
 }
 
 LilyToken *
 scan_oct__LilyScanner(LilyScanner *self)
 {
-    Location location_error = default__Location(self->source.file->name);
+    Location location_error = default__Location(self->base.source.file->name);
     String *res = NEW(String);
 
     start__Location(&location_error,
-                    self->source.cursor.line,
-                    self->source.cursor.column,
-                    self->source.cursor.position);
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
 
-    if (self->source.cursor.current == '0') {
-        while (self->source.cursor.current == '0') {
-            next_char__Source(&self->source);
+    if (self->base.source.cursor.current == '0') {
+        while (self->base.source.cursor.current == '0') {
+            next_char__LilyScanner(self);
         }
 
         if (!is_oct__LilyScanner(self)) {
@@ -1404,57 +1415,57 @@ scan_oct__LilyScanner(LilyScanner *self)
     }
 
     while (is_oct__LilyScanner(self)) {
-        if (self->source.cursor.current != '_') {
-            push__String(res, self->source.cursor.current);
+        if (self->base.source.cursor.current != '_') {
+            push__String(res, self->base.source.cursor.current);
         }
 
-        next_char__Source(&self->source);
+        next_char__LilyScanner(self);
     }
 
     if (is_empty__String(res)) {
         end__Location(&location_error,
-                      self->source.cursor.line,
-                      self->source.cursor.column,
-                      self->source.cursor.position);
+                      self->base.source.cursor.line,
+                      self->base.source.cursor.column,
+                      self->base.source.cursor.position);
 
         emit__Diagnostic(
           NEW_VARIANT(Diagnostic,
                       simple_lily_error,
-                      self->source.file,
+                      self->base.source.file,
                       &location_error,
                       NEW(LilyError, LILY_ERROR_KIND_INVALID_OCTAL_LITERAL),
                       init__Vec(1, from__String("e.g. 0o22, 0o56")),
                       NULL,
                       from__String("add a digit 0 to 7")),
-          &self->count_error);
+          self->base.count_error);
 
         FREE(String, res);
 
         return NULL;
     }
 
-    previous_char__Source(&self->source);
+    previous_char__LilyScanner(self);
 
     SCAN_LITERAL_SUFFIX(res->buffer, 8, true);
 
     return NEW_VARIANT(
-      LilyToken, literal_int_8, clone__Location(&self->location), res);
+      LilyToken, literal_int_8, clone__Location(&self->base.location), res);
 }
 
 LilyToken *
 scan_bin__LilyScanner(LilyScanner *self)
 {
-    Location location_error = default__Location(self->source.file->name);
+    Location location_error = default__Location(self->base.source.file->name);
     String *res = NEW(String);
 
     start__Location(&location_error,
-                    self->source.cursor.line,
-                    self->source.cursor.column,
-                    self->source.cursor.position);
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
 
-    if (self->source.cursor.current == '0') {
-        while (self->source.cursor.current == '0') {
-            next_char__Source(&self->source);
+    if (self->base.source.cursor.current == '0') {
+        while (self->base.source.cursor.current == '0') {
+            next_char__LilyScanner(self);
         }
 
         if (!is_bin__LilyScanner(self)) {
@@ -1463,41 +1474,41 @@ scan_bin__LilyScanner(LilyScanner *self)
     }
 
     while (is_bin__LilyScanner(self)) {
-        if (self->source.cursor.current != '_') {
-            push__String(res, self->source.cursor.current);
+        if (self->base.source.cursor.current != '_') {
+            push__String(res, self->base.source.cursor.current);
         }
 
-        next_char__Source(&self->source);
+        next_char__LilyScanner(self);
     }
 
     if (is_empty__String(res)) {
         end__Location(&location_error,
-                      self->source.cursor.line,
-                      self->source.cursor.column,
-                      self->source.cursor.position);
+                      self->base.source.cursor.line,
+                      self->base.source.cursor.column,
+                      self->base.source.cursor.position);
 
         emit__Diagnostic(
           NEW_VARIANT(Diagnostic,
                       simple_lily_error,
-                      self->source.file,
+                      self->base.source.file,
                       &location_error,
                       NEW(LilyError, LILY_ERROR_KIND_INVALID_BIN_LITERAL),
                       init__Vec(1, from__String("e.g. 0b0101, 0b011011")),
                       NULL,
                       from__String("add a digit 0 to 1")),
-          &self->count_error);
+          self->base.count_error);
 
         FREE(String, res);
 
         return NULL;
     }
 
-    previous_char__Source(&self->source);
+    previous_char__LilyScanner(self);
 
     SCAN_LITERAL_SUFFIX(res->buffer, 2, true);
 
     return NEW_VARIANT(
-      LilyToken, literal_int_2, clone__Location(&self->location), res);
+      LilyToken, literal_int_2, clone__Location(&self->base.location), res);
 }
 
 LilyToken *
@@ -1506,42 +1517,42 @@ scan_num__LilyScanner(LilyScanner *self)
     String *res = NEW(String);
     bool is_float = false;
     bool is_scientific = false;
-    Location location_error = default__Location(self->source.file->name);
+    Location location_error = default__Location(self->base.source.file->name);
 
     start__Location(&location_error,
-                    self->source.cursor.line,
-                    self->source.cursor.column,
-                    self->source.cursor.position);
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
 
     while (is_num__LilyScanner(self)) {
         // Check if the float literal is valid. If the current character is `.`
         // and the number is not a float, we continue to scan the float,
         // otherwise we emit an error.
-        if (self->source.cursor.current == '.' && !is_float) {
+        if (self->base.source.cursor.current == '.' && !is_float) {
             is_float = true;
-        } else if (self->source.cursor.current == '.' && is_float) {
+        } else if (self->base.source.cursor.current == '.' && is_float) {
             start__Location(&location_error,
-                            self->source.cursor.line,
-                            self->source.cursor.column,
-                            self->source.cursor.position);
+                            self->base.source.cursor.line,
+                            self->base.source.cursor.column,
+                            self->base.source.cursor.position);
             end__Location(&location_error,
-                          self->source.cursor.line,
-                          self->source.cursor.column,
-                          self->source.cursor.position);
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
 
-            next_char__Source(&self->source);
+            next_char__LilyScanner(self);
 
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
-                          self->source.file,
+                          self->base.source.file,
                           &location_error,
                           NEW(LilyError, LILY_ERROR_KIND_INVALID_FLOAT_LITERAL),
                           NULL,
                           NULL,
                           from__String("in a float literal it is forbidden to "
                                        "add more than one `.`")),
-              &self->count_error);
+              self->base.count_error);
 
             FREE(String, res);
 
@@ -1551,79 +1562,79 @@ scan_num__LilyScanner(LilyScanner *self)
         // Check if the scientific notation is valid. If the current character
         // is `e` or `E` and the number is not a scientific notation, we
         // continue to scan the scientific notation, otherwise we emit an error.
-        if ((self->source.cursor.current == 'e' ||
-             self->source.cursor.current == 'E') &&
+        if ((self->base.source.cursor.current == 'e' ||
+             self->base.source.cursor.current == 'E') &&
             !is_scientific) {
-            push__String(res, self->source.cursor.current);
+            push__String(res, self->base.source.cursor.current);
             is_scientific = true;
-            next_char__Source(&self->source);
+            next_char__LilyScanner(self);
 
-            if (self->source.cursor.current == '-' ||
-                self->source.cursor.current == '+') {
-                push__String(res, self->source.cursor.current);
-                next_char__Source(&self->source);
+            if (self->base.source.cursor.current == '-' ||
+                self->base.source.cursor.current == '+') {
+                push__String(res, self->base.source.cursor.current);
+                next_char__LilyScanner(self);
             }
-        } else if ((self->source.cursor.current == 'e' ||
-                    self->source.cursor.current == 'E') &&
+        } else if ((self->base.source.cursor.current == 'e' ||
+                    self->base.source.cursor.current == 'E') &&
                    is_scientific) {
             start__Location(&location_error,
-                            self->source.cursor.line,
-                            self->source.cursor.column,
-                            self->source.cursor.position);
+                            self->base.source.cursor.line,
+                            self->base.source.cursor.column,
+                            self->base.source.cursor.position);
             end__Location(&location_error,
-                          self->source.cursor.line,
-                          self->source.cursor.column,
-                          self->source.cursor.position);
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
 
-            next_char__Source(&self->source);
+            next_char__LilyScanner(self);
 
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
-                          self->source.file,
+                          self->base.source.file,
                           &location_error,
                           NEW(LilyError, LILY_ERROR_KIND_INVALID_FLOAT_LITERAL),
                           NULL,
                           NULL,
                           from__String("in a float literal it is forbidden to "
                                        "add more than one `e` or `E`")),
-              &self->count_error);
+              self->base.count_error);
 
             FREE(String, res);
 
             return NULL;
         }
 
-        if (self->source.cursor.current != '_') {
-            push__String(res, self->source.cursor.current);
+        if (self->base.source.cursor.current != '_') {
+            push__String(res, self->base.source.cursor.current);
         }
 
-        next_char__Source(&self->source);
+        next_char__LilyScanner(self);
     }
 
-    previous_char__Source(&self->source);
+    previous_char__LilyScanner(self);
 
     if (is_float || is_scientific) {
         end__Location(&location_error,
-                      self->source.cursor.line,
-                      self->source.cursor.column,
-                      self->source.cursor.position);
+                      self->base.source.cursor.line,
+                      self->base.source.cursor.column,
+                      self->base.source.cursor.position);
         SCAN_LITERAL_SUFFIX(res->buffer, 10, false);
 
         return NEW_VARIANT(
-          LilyToken, literal_float, clone__Location(&self->location), res);
+          LilyToken, literal_float, clone__Location(&self->base.location), res);
     }
 
     SCAN_LITERAL_SUFFIX(res->buffer, 10, true);
 
     return NEW_VARIANT(
-      LilyToken, literal_int_10, clone__Location(&self->location), res);
+      LilyToken, literal_int_10, clone__Location(&self->base.location), res);
 }
 
 LilyToken *
 get_num__LilyScanner(LilyScanner *self)
 {
-    switch (self->source.cursor.current) {
+    switch (self->base.source.cursor.current) {
         // 0 0x 0o 0b
         case '0': {
             char *c1 = peek_char__LilyScanner(self, 1);
@@ -1651,31 +1662,31 @@ bool
 skip_and_verify__LilyScanner(LilyScanner *self, char target)
 {
     skip_space__LilyScanner(self);
-    return self->source.cursor.current != target;
+    return self->base.source.cursor.current != target;
 }
 
 LilyToken *
 get_closing__LilyScanner(LilyScanner *self, char target)
 {
-    Location location_error = clone__Location(&self->location);
+    Location location_error = clone__Location(&self->base.location);
 
     skip_space__LilyScanner(self);
 
     // Check if the closing delimiter is not closed.
     while (skip_and_verify__LilyScanner(self, target)) {
-        if (self->source.cursor.position >= self->source.file->len - 1) {
+        if (self->base.source.cursor.position >= self->base.source.file->len - 1) {
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->source.file,
+                self->base.source.file,
                 &location_error,
                 NEW(LilyError, LILY_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER),
                 NULL,
                 NULL,
                 from__String("expected closing delimiter after this token, "
                              "such as `)`, `}` or `]`")),
-              &self->count_error);
+              self->base.count_error);
 
             return NULL;
         }
@@ -1685,9 +1696,9 @@ get_closing__LilyScanner(LilyScanner *self, char target)
         if (token) {
             next_char_by_token__LilyScanner(self, token);
             end_token__LilyScanner(self,
-                                   self->source.cursor.line,
-                                   self->source.cursor.column,
-                                   self->source.cursor.position);
+                                   self->base.source.cursor.line,
+                                   self->base.source.cursor.column,
+                                   self->base.source.cursor.position);
 
             switch (token->kind) {
                 case LILY_TOKEN_KIND_L_PAREN:
@@ -1695,7 +1706,7 @@ get_closing__LilyScanner(LilyScanner *self, char target)
                 case LILY_TOKEN_KIND_L_HOOK:
                     break;
                 default:
-                    set_all__Location(&token->location, &self->location);
+                    set_all__Location(&token->location, &self->base.location);
             }
 
             switch (token->kind) {
@@ -1704,30 +1715,30 @@ get_closing__LilyScanner(LilyScanner *self, char target)
                     FREE(LilyToken, token);
                     break;
                 default:
-                    next_char__Source(&self->source);
+                    next_char__LilyScanner(self);
                     push_token__LilyScanner(self, token);
             }
         }
     }
 
     start_token__LilyScanner(self,
-                             self->source.cursor.line,
-                             self->source.cursor.column,
-                             self->source.cursor.position);
+                             self->base.source.cursor.line,
+                             self->base.source.cursor.column,
+                             self->base.source.cursor.position);
 
     switch (target) {
         case ')':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_R_PAREN,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
         case '}':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_R_BRACE,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
         case ']':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_R_HOOK,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
         default:
             UNREACHABLE("this way is not possible");
     }
@@ -1748,13 +1759,13 @@ verify_identifier_string__LilyScanner(LilyScanner *self, const Location *locatio
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->source.file,
+                self->base.source.file,
                 &location_error,
                 NEW(LilyError, LILY_ERROR_KIND_RESTRICTED_CHARACTER_ON_IDENTIFIER_STRING),
                 NULL,
                 NULL,
                 from__String("`.`, `$` and all non-ascii characters (more than 255) are forbidden")),
-              &self->count_error);
+              self->base.count_error);
 		}
 	}
 }
@@ -1766,32 +1777,32 @@ get_token__LilyScanner(LilyScanner *self)
     char *c2 = peek_char__LilyScanner(self, 2);
 
     start_token__LilyScanner(self,
-                             self->source.cursor.line,
-                             self->source.cursor.column,
-                             self->source.cursor.position);
+                             self->base.source.cursor.line,
+                             self->base.source.cursor.column,
+                             self->base.source.cursor.position);
 
-    switch (self->source.cursor.current) {
+    switch (self->base.source.cursor.current) {
         // &= &
         case '&':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_AMPERSAND_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_AMPERSAND,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // @
         case '@':
             if (c1 == (char *)'\"') {
-                next_char__Source(&self->source);
+                next_char__LilyScanner(self);
 
                 String *res = scan_string__LilyScanner(self);
 
                 if (res) {
-					Location location = clone__Location(&self->location);
+					Location location = clone__Location(&self->base.location);
 
 					verify_identifier_string__LilyScanner(self, &location, res);
 
@@ -1819,31 +1830,31 @@ get_token__LilyScanner(LilyScanner *self)
 
                     return NEW(LilyToken,
                                LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN,
-                               clone__Location(&self->location));
+                               clone__Location(&self->base.location));
                 } else if (!strcmp(at_keyword->buffer, "cc")) {
 					FREE(String, at_keyword);
 
 					jump__LilyScanner(self, 2);
 
-					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_CC, clone__Location(&self->location));
+					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_CC, clone__Location(&self->base.location));
 				} else if (!strcmp(at_keyword->buffer, "cpp")) {
 					FREE(String, at_keyword);
 
 					jump__LilyScanner(self, 3);
 
-					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_CPP, clone__Location(&self->location));
+					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_CPP, clone__Location(&self->base.location));
 				} else if (!strcmp(at_keyword->buffer, "hide")) {
 					FREE(String, at_keyword);
 
 					jump__LilyScanner(self, 4);
 
-					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_HIDE, clone__Location(&self->location));
+					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_HIDE, clone__Location(&self->base.location));
 				} else if (!strcmp(at_keyword->buffer, "hideout")) {
 					FREE(String, at_keyword);
 
 					jump__LilyScanner(self, 7);
 
-					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT, clone__Location(&self->location));
+					return NEW(LilyToken, LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT, clone__Location(&self->base.location));
 				} else if (!strcmp(at_keyword->buffer, "len")) {
                     FREE(String, at_keyword);
 
@@ -1851,7 +1862,7 @@ get_token__LilyScanner(LilyScanner *self)
 
                     return NEW(LilyToken,
                                LILY_TOKEN_KIND_KEYWORD_AT_LEN,
-                               clone__Location(&self->location));
+                               clone__Location(&self->base.location));
                 } else if (!strcmp(at_keyword->buffer, "sys")) {
                     FREE(String, at_keyword);
 
@@ -1859,154 +1870,154 @@ get_token__LilyScanner(LilyScanner *self)
 
                     return NEW(LilyToken,
                                LILY_TOKEN_KIND_KEYWORD_AT_SYS,
-                               clone__Location(&self->location));
+                               clone__Location(&self->base.location));
                 } else {
                     FREE(String, at_keyword);
                 }
             }
 
             return NEW(
-              LilyToken, LILY_TOKEN_KIND_AT, clone__Location(&self->location));
+              LilyToken, LILY_TOKEN_KIND_AT, clone__Location(&self->base.location));
 
         // !
         case '!':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_BANG,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
         // |= |> |
         case '|':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_BAR_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'>') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_BAR_R_SHIFT,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(
-              LilyToken, LILY_TOKEN_KIND_BAR, clone__Location(&self->location));
+              LilyToken, LILY_TOKEN_KIND_BAR, clone__Location(&self->base.location));
 
         // :: :$ := :> :
         case ':':
             if (c1 == (char *)':') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_COLON_COLON,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'$') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_COLON_DOLLAR,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_COLON_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char*)'>') {
 				return NEW(LilyToken,
                            LILY_TOKEN_KIND_COLON_R_SHIFT,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
 			}
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_COLON,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // ,
         case ',':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_COMMA,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // $<id>, $
         case '$':
             if ((c1 >= (char *)'a' && c1 <= (char *)'z') ||
                 (c1 >= (char *)'A' && c1 <= (char *)'Z') || c1 == (char *)'_') {
-                next_char__Source(&self->source);
+                next_char__LilyScanner(self);
 
                 String *id = scan_identifier__LilyScanner(self);
 
                 return NEW_VARIANT(LilyToken,
                                    identifier_dollar,
-                                   clone__Location(&self->location),
+                                   clone__Location(&self->base.location),
                                    id);
             }
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_DOLLAR,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // ... .. . .? .* .
         case '.':
             if (c1 == (char *)'.' && c2 == (char *)'.') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_DOT_DOT_DOT,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'.') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_DOT_DOT,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'?') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_DOT_INTERROGATION,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'*') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_DOT_STAR,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(
-              LilyToken, LILY_TOKEN_KIND_DOT, clone__Location(&self->location));
+              LilyToken, LILY_TOKEN_KIND_DOT, clone__Location(&self->base.location));
 
         // == => =
         case '=':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_EQ_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'>') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_FAT_ARROW,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(
-              LilyToken, LILY_TOKEN_KIND_EQ, clone__Location(&self->location));
+              LilyToken, LILY_TOKEN_KIND_EQ, clone__Location(&self->base.location));
 
         // #
         case '#':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_HASHTAG,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // ^= ^
         case '^':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_HAT_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(
-              LilyToken, LILY_TOKEN_KIND_HAT, clone__Location(&self->location));
+              LilyToken, LILY_TOKEN_KIND_HAT, clone__Location(&self->base.location));
 
         // ?
         case '?':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_INTERROGATION,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // {} [] ()
         case '{':
         case '[':
         case '(': {
-            char match = self->source.cursor.current;
+            char match = self->base.source.cursor.current;
 
             end_token__LilyScanner(self,
-                                   self->source.cursor.line,
-                                   self->source.cursor.column,
-                                   self->source.cursor.position);
+                                   self->base.source.cursor.line,
+                                   self->base.source.cursor.column,
+                                   self->base.source.cursor.position);
 
             LilyToken *token = NULL;
 
@@ -2018,31 +2029,31 @@ get_token__LilyScanner(LilyScanner *self)
 
                         String *id = scan_identifier__LilyScanner(self);
 
-                        next_char__Source(&self->source);
+                        next_char__LilyScanner(self);
                         skip_space__LilyScanner(self);
 
-                        if (self->source.cursor.current == '|' &&
+                        if (self->base.source.cursor.current == '|' &&
                             peek_char__LilyScanner(self, 1) == (char *)'}') {
-                            next_char__Source(&self->source);
+                            next_char__LilyScanner(self);
 
                             return NEW_VARIANT(LilyToken,
                                                identifier_macro,
-                                               clone__Location(&self->location),
+                                               clone__Location(&self->base.location),
                                                id);
                         } else {
                             Location location_error =
-                              clone__Location(&self->location);
+                              clone__Location(&self->base.location);
 
                             end__Location(&location_error,
-                                          self->source.cursor.line,
-                                          self->source.cursor.column,
-                                          self->source.cursor.position);
+                                          self->base.source.cursor.line,
+                                          self->base.source.cursor.column,
+                                          self->base.source.cursor.position);
 
                             emit__Diagnostic(
                               NEW_VARIANT(
                                 Diagnostic,
                                 simple_lily_error,
-                                self->source.file,
+                                self->base.source.file,
                                 &location_error,
                                 NEW(
                                   LilyError,
@@ -2050,7 +2061,7 @@ get_token__LilyScanner(LilyScanner *self)
                                 NULL,
                                 NULL,
                                 from__String("expected `}}`")),
-                              &self->count_error);
+                              self->base.count_error);
 
                             FREE(String, id);
 
@@ -2059,25 +2070,25 @@ get_token__LilyScanner(LilyScanner *self)
                     } else {
                         token = NEW(LilyToken,
                                     LILY_TOKEN_KIND_L_BRACE,
-                                    clone__Location(&self->location));
+                                    clone__Location(&self->base.location));
                     }
 
                     break;
                 case '[':
                     token = NEW(LilyToken,
                                 LILY_TOKEN_KIND_L_HOOK,
-                                clone__Location(&self->location));
+                                clone__Location(&self->base.location));
                     break;
                 case '(':
                     token = NEW(LilyToken,
                                 LILY_TOKEN_KIND_L_PAREN,
-                                clone__Location(&self->location));
+                                clone__Location(&self->base.location));
                     break;
                 default:
                     UNREACHABLE("this way is not possible");
             }
 
-            next_char__Source(&self->source);
+            next_char__LilyScanner(self);
             push_token__LilyScanner(self, token);
 
             switch (match) {
@@ -2097,105 +2108,105 @@ get_token__LilyScanner(LilyScanner *self)
             if (c1 == (char *)'<' && c2 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_L_SHIFT_L_SHIFT_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'<') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_L_SHIFT_L_SHIFT,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_L_SHIFT_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'-') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_INVERSE_ARROW,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_L_SHIFT,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // --= -= -- -> -
         case '-':
             if (c1 == (char *)'-' && c2 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_MINUS_MINUS_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_MINUS_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'-') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_MINUS_MINUS,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'>') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_ARROW,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_MINUS,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // %= %
         case '%':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_PERCENTAGE_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_PERCENTAGE,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // ++= += ++ +
         case '+':
             if (c1 == (char *)'+' && c2 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_PLUS_PLUS_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_PLUS_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'+') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_PLUS_PLUS,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_PLUS,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         case '}':
         case ']':
         case ')': {
-            char match = self->source.cursor.current;
+            char match = self->base.source.cursor.current;
 
             end_token__LilyScanner(self,
-                                   self->source.cursor.line,
-                                   self->source.cursor.column,
-                                   self->source.cursor.position);
-            next_char__Source(&self->source);
+                                   self->base.source.cursor.line,
+                                   self->base.source.cursor.column,
+                                   self->base.source.cursor.position);
+            next_char__LilyScanner(self);
 
-            Location location_error = clone__Location(&self->location);
+            Location location_error = clone__Location(&self->base.location);
 
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->source.file,
+                self->base.source.file,
                 &location_error,
                 NEW(LilyError, LILY_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER),
                 init__Vec(1, format__String("remove this `{c}`", match)),
                 NULL,
                 NULL),
-              &self->count_error);
+              self->base.count_error);
 
             return NULL;
         }
@@ -2205,26 +2216,26 @@ get_token__LilyScanner(LilyScanner *self)
             if (c1 == (char *)'>' && c2 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_R_SHIFT_R_SHIFT_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'>') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_R_SHIFT_R_SHIFT,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_R_SHIFT_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_R_SHIFT,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // ;
         case ';':
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_SEMICOLON,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // /= <COMMENT_DEBUG> <COMMENT_BLOCK> <COMMENT_DOC> <COMMENT_LINE> /
         case '/':
@@ -2236,7 +2247,7 @@ get_token__LilyScanner(LilyScanner *self)
 
                 return NEW_VARIANT(LilyToken,
                                    comment_debug,
-                                   clone__Location(&self->location),
+                                   clone__Location(&self->base.location),
                                    debug);
             }
 #endif
@@ -2248,63 +2259,63 @@ get_token__LilyScanner(LilyScanner *self)
 
                 return NEW_VARIANT(LilyToken,
                                    comment_doc,
-                                   clone__Location(&self->location),
+                                   clone__Location(&self->base.location),
                                    doc);
             } else if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_SLASH_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'*') {
                 jump__LilyScanner(self, 2);
                 skip_comment_block__LilyScanner(self);
 
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_COMMENT_BLOCK,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'/') {
                 skip_comment_line__LilyScanner(self);
 
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_COMMENT_LINE,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_SLASH,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // **= ** *= *
         case '*':
             if (c1 == (char *)'*' && c2 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_STAR_STAR_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
             if (c1 == (char *)'*') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_STAR_STAR,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             } else if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_STAR_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_STAR,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // ~= ~
         case '~':
             if (c1 == (char *)'=') {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_WAVE_EQ,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
             return NEW(LilyToken,
                        LILY_TOKEN_KIND_WAVE,
-                       clone__Location(&self->location));
+                       clone__Location(&self->base.location));
 
         // char literal
         case '\'': {
@@ -2313,7 +2324,7 @@ get_token__LilyScanner(LilyScanner *self)
             if (res) {
                 return NEW_VARIANT(LilyToken,
                                    literal_char,
-                                   clone__Location(&self->location),
+                                   clone__Location(&self->base.location),
                                    (char)(Uptr)res);
             }
 
@@ -2327,7 +2338,7 @@ get_token__LilyScanner(LilyScanner *self)
             if (res) {
                 return NEW_VARIANT(LilyToken,
                                    literal_str,
-                                   clone__Location(&self->location),
+                                   clone__Location(&self->base.location),
                                    res);
             }
 
@@ -2342,7 +2353,7 @@ get_token__LilyScanner(LilyScanner *self)
                 if (res) {
                     return NEW_VARIANT(LilyToken,
                                        literal_str,
-                                       clone__Location(&self->location),
+                                       clone__Location(&self->base.location),
                                        res);
                 }
 
@@ -2350,41 +2361,41 @@ get_token__LilyScanner(LilyScanner *self)
             } else {
                 return NEW(LilyToken,
                            LILY_TOKEN_KIND_BACKSLASH,
-                           clone__Location(&self->location));
+                           clone__Location(&self->base.location));
             }
 
         // identifier operator
         case '`': {
-            next_char__Source(&self->source);
+            next_char__LilyScanner(self);
 
             String *operator= NEW(String);
 
-            while (self->source.cursor.current != '`' &&
-                   !isspace(self->source.cursor.current)) {
-                push__String(operator, self->source.cursor.current);
-                next_char__Source(&self->source);
+            while (self->base.source.cursor.current != '`' &&
+                   !isspace(self->base.source.cursor.current)) {
+                push__String(operator, self->base.source.cursor.current);
+                next_char__LilyScanner(self);
             }
 
-            if (isspace(self->source.cursor.current)) {
-                Location location_error = clone__Location(&self->location);
+            if (isspace(self->base.source.cursor.current)) {
+                Location location_error = clone__Location(&self->base.location);
 
                 end__Location(&location_error,
-                              self->source.cursor.line,
-                              self->source.cursor.column,
-                              self->source.cursor.position);
+                              self->base.source.cursor.line,
+                              self->base.source.cursor.column,
+                              self->base.source.cursor.position);
 
                 emit__Diagnostic(
                   NEW_VARIANT(
                     Diagnostic,
                     simple_lily_error,
-                    self->source.file,
+                    self->base.source.file,
                     &location_error,
                     NEW(LilyError,
                         LILY_ERROR_KIND_EXPECTED_ONE_OR_MANY_CHARACTERS),
                     NULL,
                     NULL,
                     from__String("expected '`'")),
-                  &self->count_error);
+                  self->base.count_error);
 
                 FREE(String, operator);
 
@@ -2393,7 +2404,7 @@ get_token__LilyScanner(LilyScanner *self)
 
             return NEW_VARIANT(LilyToken,
                                identifier_operator,
-                               clone__Location(&self->location),
+                               clone__Location(&self->base.location),
                                operator);
         }
 
@@ -2405,17 +2416,17 @@ get_token__LilyScanner(LilyScanner *self)
                 return get_num__LilyScanner(self);
             }
 
-            while (self->source.cursor.current == '0') {
-                next_char__Source(&self->source);
+            while (self->base.source.cursor.current == '0') {
+                next_char__LilyScanner(self);
             }
 
-            if (self->source.cursor.current != '.' &&
-                !(self->source.cursor.current >= '1' &&
-                  self->source.cursor.current <= '9')) {
-                previous_char__Source(&self->source);
+            if (self->base.source.cursor.current != '.' &&
+                !(self->base.source.cursor.current >= '1' &&
+                  self->base.source.cursor.current <= '9')) {
+                previous_char__LilyScanner(self);
                 return NEW_VARIANT(LilyToken,
                                    literal_int_10,
-                                   clone__Location(&self->location),
+                                   clone__Location(&self->base.location),
                                    from__String("0"));
             }
 
@@ -2427,22 +2438,22 @@ get_token__LilyScanner(LilyScanner *self)
 
         // byte literal, bytes literal, cstr literal, <id> xor= not= <keyword>
         case IS_ID:
-            if (self->source.cursor.current == 'b' && c1 == (char *)'\'') {
-                next_char__Source(&self->source);
+            if (self->base.source.cursor.current == 'b' && c1 == (char *)'\'') {
+                next_char__LilyScanner(self);
 
                 char *res = scan_char__LilyScanner(self);
 
                 if (res) {
                     return NEW_VARIANT(LilyToken,
                                        literal_byte,
-                                       clone__Location(&self->location),
+                                       clone__Location(&self->base.location),
                                        (char)(Uptr)res);
                 }
 
                 return NULL;
-            } else if (self->source.cursor.current == 'b' &&
+            } else if (self->base.source.cursor.current == 'b' &&
                        c1 == (char *)'\"') {
-                next_char__Source(&self->source);
+                next_char__LilyScanner(self);
 
                 String *res = scan_string__LilyScanner(self);
 
@@ -2450,7 +2461,7 @@ get_token__LilyScanner(LilyScanner *self)
                     LilyToken *literal_bytes =
                       NEW_VARIANT(LilyToken,
                                   literal_bytes,
-                                  clone__Location(&self->location),
+                                  clone__Location(&self->base.location),
                                   (Uint8 *)res->buffer);
 
                     lily_free(res);
@@ -2459,9 +2470,9 @@ get_token__LilyScanner(LilyScanner *self)
                 }
 
                 return NULL;
-            } else if (self->source.cursor.current == 'c' &&
+            } else if (self->base.source.cursor.current == 'c' &&
                        c1 == (char *)'\"') {
-                next_char__Source(&self->source);
+                next_char__LilyScanner(self);
 
                 String *res = scan_string__LilyScanner(self);
 
@@ -2469,7 +2480,7 @@ get_token__LilyScanner(LilyScanner *self)
                     LilyToken *literal_cstr =
                       NEW_VARIANT(LilyToken,
                                   literal_cstr,
-                                  clone__Location(&self->location),
+                                  clone__Location(&self->base.location),
                                   res->buffer);
 
                     lily_free(res);
@@ -2486,29 +2497,29 @@ get_token__LilyScanner(LilyScanner *self)
                     case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
                         return NEW_VARIANT(LilyToken,
                                            identifier_normal,
-                                           clone__Location(&self->location),
+                                           clone__Location(&self->base.location),
                                            id);
                     case LILY_TOKEN_KIND_KEYWORD_NOT:
                         if (peek_char__LilyScanner(self, 1) == (char *)'=') {
-                            next_char__Source(&self->source);
+                            next_char__LilyScanner(self);
 
                             FREE(String, id);
 
                             return NEW(LilyToken,
                                        LILY_TOKEN_KIND_NOT_EQ,
-                                       clone__Location(&self->location));
+                                       clone__Location(&self->base.location));
                         }
 
                         goto keyword;
                     case LILY_TOKEN_KIND_KEYWORD_XOR:
                         if (peek_char__LilyScanner(self, 1) == (char *)'=') {
-                            next_char__Source(&self->source);
+                            next_char__LilyScanner(self);
 
                             FREE(String, id);
 
                             return NEW(LilyToken,
                                        LILY_TOKEN_KIND_XOR_EQ,
-                                       clone__Location(&self->location));
+                                       clone__Location(&self->base.location));
                         }
 
                         goto keyword;
@@ -2516,34 +2527,34 @@ get_token__LilyScanner(LilyScanner *self)
                     keyword : {
                         FREE(String, id);
                         return NEW(
-                          LilyToken, kind, clone__Location(&self->location));
+                          LilyToken, kind, clone__Location(&self->base.location));
                     }
                 }
             }
 
         default: {
-            Location location_error = clone__Location(&self->location);
+            Location location_error = clone__Location(&self->base.location);
 
             end__Location(&location_error,
-                          self->source.cursor.line,
-                          self->source.cursor.column,
-                          self->source.cursor.position);
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
 
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
                 simple_lily_error,
-                self->source.file,
+                self->base.source.file,
                 &location_error,
                 NEW(LilyError, LILY_ERROR_KIND_UNEXPECTED_CHARACTER),
                 init__Vec(1,
                           format__String("remove this character `{c}`",
-                                         self->source.cursor.current)),
+                                         self->base.source.cursor.current)),
                 NULL,
                 NULL),
-              &self->count_error);
+              self->base.count_error);
 
-            next_char__Source(&self->source);
+            next_char__LilyScanner(self);
 
             return NULL;
         }
@@ -2555,11 +2566,11 @@ get_token__LilyScanner(LilyScanner *self)
 void
 run__LilyScanner(LilyScanner *self, bool dump_scanner)
 {
-    if (self->source.file->len > 1) {
-        while (self->source.cursor.position < self->source.file->len - 1) {
+    if (self->base.source.file->len > 1) {
+        while (self->base.source.cursor.position < self->base.source.file->len - 1) {
             skip_space__LilyScanner(self);
 
-            if (self->source.cursor.position >= self->source.file->len - 1) {
+            if (self->base.source.cursor.position >= self->base.source.file->len - 1) {
                 break;
             }
 
@@ -2568,10 +2579,10 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
             if (token) {
                 next_char_by_token__LilyScanner(self, token);
                 end_token__LilyScanner(self,
-                                       self->source.cursor.line,
-                                       self->source.cursor.column,
-                                       self->source.cursor.position);
-                set_all__Location(&token->location, &self->location);
+                                       self->base.source.cursor.line,
+                                       self->base.source.cursor.column,
+                                       self->base.source.cursor.position);
+                set_all__Location(&token->location, &self->base.location);
 
                 switch (token->kind) {
                     case LILY_TOKEN_KIND_COMMENT_LINE:
@@ -2579,12 +2590,12 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
                         FREE(LilyToken, token);
                         break;
                     default:
-                        next_char__Source(&self->source);
+                        next_char__LilyScanner(self);
                         push_token__LilyScanner(self, token);
                 }
 
-                if (self->source.cursor.position >=
-                    self->source.file->len - 1) {
+                if (self->base.source.cursor.position >=
+                    self->base.source.file->len - 1) {
                     break;
                 }
             }
@@ -2592,34 +2603,34 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
     }
 
     start_token__LilyScanner(self,
-                             self->source.cursor.line,
-                             self->source.cursor.column,
-                             self->source.cursor.position);
+                             self->base.source.cursor.line,
+                             self->base.source.cursor.column,
+                             self->base.source.cursor.position);
     end_token__LilyScanner(self,
-                           self->source.cursor.line,
-                           self->source.cursor.column,
-                           self->source.cursor.position);
+                           self->base.source.cursor.line,
+                           self->base.source.cursor.column,
+                           self->base.source.cursor.position);
     push__Vec(
       self->tokens,
-      NEW(LilyToken, LILY_TOKEN_KIND_EOF, clone__Location(&self->location)));
+      NEW(LilyToken, LILY_TOKEN_KIND_EOF, clone__Location(&self->base.location)));
 
 #ifndef DEBUG_SCANNER
     if (dump_scanner) {
-        printf("====Scanner(%s)====\n", self->source.file->name);
+        printf("====Scanner(%s)====\n", self->base.source.file->name);
 
         for (Usize i = 0; i < self->tokens->len; ++i) {
             PRINTLN("{Sr}", to_string__LilyToken(get__Vec(self->tokens, i)));
         }
     }
 #else
-    printf("====Scanner(%s)====\n", self->source.file->name);
+    printf("====Scanner(%s)====\n", self->base.source.file->name);
 
     for (Usize i = 0; i < self->tokens->len; ++i) {
         CALL_DEBUG(LilyToken, get__Vec(self->tokens, i));
     }
 #endif
 
-    if (self->count_error > 0) {
+    if (*self->base.count_error > 0) {
         exit(1);
     }
 }
