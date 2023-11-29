@@ -84,9 +84,13 @@ CONSTRUCTOR(LilyPackage *,
     self->lib_dependencies = NULL;
 #endif
 
+    self->count_error = 0;
+    self->count_warning = 0;
+
     self->file = NEW(File, filename, content);
-    self->scanner =
-      NEW(LilyScanner, NEW(Source, NEW(Cursor, content), &self->file));
+    self->scanner = NEW(LilyScanner,
+                        NEW(Source, NEW(Cursor, content), &self->file),
+                        &self->count_error);
 #if defined(RUN_UNTIL_PREPARSER) || defined(RUN_UNTIL_PRECOMPILER)
     self->preparser = NEW(LilyPreparser,
                           &self->file,
@@ -103,8 +107,6 @@ CONSTRUCTOR(LilyPackage *,
     self->preparser_info = NEW(LilyPreparserInfo, self->name);
     self->visibility = visibility;
     self->status = status;
-    self->count_error = 0;
-    self->count_warning = 0;
 
 #ifndef RUN_UNTIL_PREPARSER
     self->precompiler = NEW(

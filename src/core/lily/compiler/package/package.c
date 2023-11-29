@@ -315,8 +315,9 @@ run_scanner__LilyCompilerPackage(const LilycConfig *config)
 {
     char *content = read_file__File(config->filename);
     File file = NEW(File, (char *)config->filename, content);
-    LilyScanner scanner =
-      NEW(LilyScanner, NEW(Source, NEW(Cursor, file.content), &file));
+    Usize count_error = 0;
+    LilyScanner scanner = NEW(
+      LilyScanner, NEW(Source, NEW(Cursor, file.content), &file), &count_error);
 
     run__LilyScanner(&scanner, config->dump_scanner);
 
@@ -331,8 +332,9 @@ run_preparser__LilyCompilerPackage(const LilycConfig *config)
 {
     char *content = read_file__File(config->filename);
     File file = NEW(File, (char *)config->filename, content);
-    LilyScanner scanner =
-      NEW(LilyScanner, NEW(Source, NEW(Cursor, file.content), &file));
+    Usize count_error = 0;
+    LilyScanner scanner = NEW(
+      LilyScanner, NEW(Source, NEW(Cursor, file.content), &file), &count_error);
     LilyPreparser preparser =
       NEW(LilyPreparser, &file, scanner.tokens, NULL, true);
     LilyPreparserInfo preparser_info = NEW(LilyPreparserInfo, NULL);
