@@ -100,7 +100,7 @@ Output: no errors
 
 /// @brief Get keyword from id.
 static enum LilyTokenKind
-get_keyword__LilyScanner(char *id);
+get_keyword__LilyScanner(const char *id);
 
 /// @brief Move next one character.
 /// @see `include/core/shared/scanner.h`
@@ -652,7 +652,7 @@ get_token__LilyScanner(LilyScanner *self);
     }
 
 enum LilyTokenKind
-get_keyword__LilyScanner(char *id)
+get_keyword__LilyScanner(const char *id)
 {
     if (!strcmp(id, "alias"))
         return LILY_TOKEN_KIND_KEYWORD_ALIAS;
@@ -2266,18 +2266,22 @@ get_token__LilyScanner(LilyScanner *self)
                            LILY_TOKEN_KIND_SLASH_EQ,
                            clone__Location(&self->base.location));
             } else if (c1 == (char *)'*') {
+				LilyToken *token = NEW(LilyToken,
+                           LILY_TOKEN_KIND_COMMENT_BLOCK,
+                           clone__Location(&self->base.location));
+
                 jump__LilyScanner(self, 2);
                 skip_comment_block__LilyScanner(self);
 
-                return NEW(LilyToken,
-                           LILY_TOKEN_KIND_COMMENT_BLOCK,
-                           clone__Location(&self->base.location));
+				return token;
             } else if (c1 == (char *)'/') {
-                skip_comment_line__LilyScanner(self);
-
-                return NEW(LilyToken,
+                LilyToken *token = NEW(LilyToken,
                            LILY_TOKEN_KIND_COMMENT_LINE,
                            clone__Location(&self->base.location));
+
+                skip_comment_line__LilyScanner(self);
+
+				return token;
             }
 
             return NEW(LilyToken,
