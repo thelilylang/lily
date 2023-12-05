@@ -342,20 +342,18 @@ skip_comment_block__CIScanner(CIScanner *self)
                           self->base.source.cursor.column,
                           self->base.source.cursor.position);
 
-            {
-                emit__Diagnostic(
-                  NEW_VARIANT(
-                    Diagnostic,
-                    simple_ci_error,
-                    self->base.source.file,
-                    &location_error,
-                    NEW(CIError, CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK),
-                    init__Vec(
-                      1, from__String("close comment multi line with `*/`")),
-                    NULL,
-                    NULL),
-                  self->base.count_error);
-            }
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_ci_error,
+                self->base.source.file,
+                &location_error,
+                NEW(CIError, CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK),
+                init__Vec(1,
+                          from__String("close comment multi line with `*/`")),
+                NULL,
+                NULL),
+              self->base.count_error);
         }
 
         next_char__CIScanner(self);
