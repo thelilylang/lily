@@ -8,3 +8,4 @@
 /src/core/cc/comptime_gen/target
 /target
 /out.lily
+/bin
