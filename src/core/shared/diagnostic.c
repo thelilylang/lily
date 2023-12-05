@@ -762,6 +762,81 @@ VARIANT_CONSTRUCTOR(Diagnostic,
 
 VARIANT_CONSTRUCTOR(Diagnostic,
                     Diagnostic,
+                    simple_ci_error,
+                    const File *file,
+                    const Location *location,
+                    const CIError err,
+                    Vec *helps,
+                    Vec *notes,
+                    String *detail_msg)
+{
+    LINES(location, file);
+
+    return (
+      Diagnostic){ .kind = DIAGNOSTIC_KIND_SIMPLE_CI_ERROR,
+                   .level_format = NEW_VARIANT(
+                     DiagnosticLevelFormat,
+                     simple,
+                     NEW(DiagnosticSimple,
+                         NEW(DiagnosticDetail, lines, detail_msg, location),
+                         NEW(DiagnosticLevelUtil, helps, notes, location))),
+                   .file = file,
+                   .location = location,
+                   .level = NEW_VARIANT(DiagnosticLevel, ci_error, err) };
+}
+
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    simple_ci_note,
+                    const File *file,
+                    const Location *location,
+                    String *note,
+                    Vec *helps,
+                    Vec *notes,
+                    String *detail_msg)
+{
+    LINES(location, file);
+
+    return (
+      Diagnostic){ .kind = DIAGNOSTIC_KIND_SIMPLE_CI_NOTE,
+                   .level_format = NEW_VARIANT(
+                     DiagnosticLevelFormat,
+                     simple,
+                     NEW(DiagnosticSimple,
+                         NEW(DiagnosticDetail, lines, detail_msg, location),
+                         NEW(DiagnosticLevelUtil, helps, notes, location))),
+                   .file = file,
+                   .location = location,
+                   .level = NEW_VARIANT(DiagnosticLevel, ci_note, note) };
+}
+
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    simple_ci_warning,
+                    const File *file,
+                    const Location *location,
+                    const CIWarning warning,
+                    Vec *helps,
+                    Vec *notes,
+                    String *detail_msg)
+{
+    LINES(location, file);
+
+    return (
+      Diagnostic){ .kind = DIAGNOSTIC_KIND_SIMPLE_CI_WARNING,
+                   .level_format = NEW_VARIANT(
+                     DiagnosticLevelFormat,
+                     simple,
+                     NEW(DiagnosticSimple,
+                         NEW(DiagnosticDetail, lines, detail_msg, location),
+                         NEW(DiagnosticLevelUtil, helps, notes, location))),
+                   .file = file,
+                   .location = location,
+                   .level = NEW_VARIANT(DiagnosticLevel, ci_warning, warning) };
+}
+
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
                     simple_cpp_error,
                     const File *file,
                     const Location *location,
@@ -980,6 +1055,75 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                    .file = file,
                    .location = location,
                    .level = NEW_VARIANT(DiagnosticLevel, cc_warning, warning) };
+}
+
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    referencing_ci_error,
+                    const File *file,
+                    const Location *location,
+                    const CIError err,
+                    Vec *items,
+                    Vec *notes,
+                    Vec *helps)
+{
+    return (
+      Diagnostic){ .kind = DIAGNOSTIC_KIND_REFERENCING_CI_ERROR,
+                   .level_format = NEW_VARIANT(
+                     DiagnosticLevelFormat,
+                     referencing,
+                     NEW(DiagnosticReferencing,
+                         items,
+                         NEW(DiagnosticLevelUtil, helps, notes, location))),
+                   .file = file,
+                   .location = location,
+                   .level = NEW_VARIANT(DiagnosticLevel, ci_error, err) };
+}
+
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    referencing_ci_note,
+                    const File *file,
+                    const Location *location,
+                    String *note,
+                    Vec *items,
+                    Vec *notes,
+                    Vec *helps)
+{
+    return (
+      Diagnostic){ .kind = DIAGNOSTIC_KIND_REFERENCING_CI_NOTE,
+                   .level_format = NEW_VARIANT(
+                     DiagnosticLevelFormat,
+                     referencing,
+                     NEW(DiagnosticReferencing,
+                         items,
+                         NEW(DiagnosticLevelUtil, helps, notes, location))),
+                   .file = file,
+                   .location = location,
+                   .level = NEW_VARIANT(DiagnosticLevel, ci_note, note) };
+}
+
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    referencing_ci_warning,
+                    const File *file,
+                    const Location *location,
+                    const CIWarning warning,
+                    Vec *items,
+                    Vec *notes,
+                    Vec *helps)
+{
+    return (
+      Diagnostic){ .kind = DIAGNOSTIC_KIND_REFERENCING_CI_WARNING,
+                   .level_format = NEW_VARIANT(
+                     DiagnosticLevelFormat,
+                     referencing,
+                     NEW(DiagnosticReferencing,
+                         items,
+                         NEW(DiagnosticLevelUtil, helps, notes, location))),
+                   .file = file,
+                   .location = location,
+                   .level = NEW_VARIANT(DiagnosticLevel, ci_warning, warning) };
 }
 
 VARIANT_CONSTRUCTOR(Diagnostic,

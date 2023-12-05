@@ -31,6 +31,8 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/cc/ci/diagnostic/error.h>
+#include <core/cc/ci/diagnostic/warning.h>
 #include <core/cc/diagnostic/error.h>
 #include <core/cc/diagnostic/warning.h>
 #include <core/cpp/diagnostic/error.h>
@@ -47,6 +49,9 @@ enum DiagnosticLevelKind
     DIAGNOSTIC_LEVEL_KIND_CC_ERROR,
     DIAGNOSTIC_LEVEL_KIND_CC_NOTE,
     DIAGNOSTIC_LEVEL_KIND_CC_WARNING,
+    DIAGNOSTIC_LEVEL_KIND_CI_ERROR,
+    DIAGNOSTIC_LEVEL_KIND_CI_NOTE,
+    DIAGNOSTIC_LEVEL_KIND_CI_WARNING,
     DIAGNOSTIC_LEVEL_KIND_CPP_ERROR,
     DIAGNOSTIC_LEVEL_KIND_CPP_NOTE,
     DIAGNOSTIC_LEVEL_KIND_CPP_WARNING,
@@ -63,6 +68,9 @@ typedef struct DiagnosticLevel
         CcError cc_error;
         String *cc_note;
         CcWarning cc_warning;
+        CIError ci_error;
+        String *ci_note;
+        CIWarning ci_warning;
         CppError cpp_error;
         String *cpp_note;
         CppWarning cpp_warning;
@@ -109,6 +117,45 @@ inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
 {
     return (DiagnosticLevel){ .kind = DIAGNOSTIC_LEVEL_KIND_CC_WARNING,
                               .cc_warning = cc_warning };
+}
+
+/**
+ *
+ * @brief Construct DiagnosticLevel type (DIAGNOSTIC_LEVEL_KIND_CI_ERROR).
+ */
+inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
+                           DiagnosticLevel,
+                           ci_error,
+                           CIError ci_error)
+{
+    return (DiagnosticLevel){ .kind = DIAGNOSTIC_LEVEL_KIND_CI_ERROR,
+                              .ci_error = ci_error };
+}
+
+/**
+ *
+ * @brief Construct DiagnosticLevel type (DIAGNOSTIC_LEVEL_KIND_CI_NOTE).
+ */
+inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
+                           DiagnosticLevel,
+                           ci_note,
+                           String *ci_note)
+{
+    return (DiagnosticLevel){ .kind = DIAGNOSTIC_LEVEL_KIND_CI_NOTE,
+                              .ci_note = ci_note };
+}
+
+/**
+ *
+ * @brief Construct DiagnosticLevel type (DIAGNOSTIC_LEVEL_KIND_CI_WARNING).
+ */
+inline VARIANT_CONSTRUCTOR(DiagnosticLevel,
+                           DiagnosticLevel,
+                           ci_warning,
+                           CIWarning ci_warning)
+{
+    return (DiagnosticLevel){ .kind = DIAGNOSTIC_LEVEL_KIND_CI_WARNING,
+                              .ci_warning = ci_warning };
 }
 
 /**
@@ -254,21 +301,27 @@ typedef struct DiagnosticLevelFormat
 enum DiagnosticKind
 {
     DIAGNOSTIC_KIND_SIMPLE_CC_ERROR,
+    DIAGNOSTIC_KIND_SIMPLE_CI_ERROR,
     DIAGNOSTIC_KIND_SIMPLE_CPP_ERROR,
     DIAGNOSTIC_KIND_SIMPLE_LILY_ERROR,
     DIAGNOSTIC_KIND_SIMPLE_CC_NOTE,
+    DIAGNOSTIC_KIND_SIMPLE_CI_NOTE,
     DIAGNOSTIC_KIND_SIMPLE_CPP_NOTE,
     DIAGNOSTIC_KIND_SIMPLE_LILY_NOTE,
     DIAGNOSTIC_KIND_SIMPLE_CC_WARNING,
+    DIAGNOSTIC_KIND_SIMPLE_CI_WARNING,
     DIAGNOSTIC_KIND_SIMPLE_CPP_WARNING,
     DIAGNOSTIC_KIND_SIMPLE_LILY_WARNING,
     DIAGNOSTIC_KIND_REFERENCING_CC_ERROR,
+    DIAGNOSTIC_KIND_REFERENCING_CI_ERROR,
     DIAGNOSTIC_KIND_REFERENCING_CPP_ERROR,
     DIAGNOSTIC_KIND_REFERENCING_LILY_ERROR,
     DIAGNOSTIC_KIND_REFERENCING_CC_NOTE,
+    DIAGNOSTIC_KIND_REFERENCING_CI_NOTE,
     DIAGNOSTIC_KIND_REFERENCING_CPP_NOTE,
     DIAGNOSTIC_KIND_REFERENCING_LILY_NOTE,
     DIAGNOSTIC_KIND_REFERENCING_CC_WARNING,
+    DIAGNOSTIC_KIND_REFERENCING_CI_WARNING,
     DIAGNOSTIC_KIND_REFERENCING_CPP_WARNING,
     DIAGNOSTIC_KIND_REFERENCING_LILY_WARNING
 };
@@ -320,6 +373,48 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const File *file,
                     const Location *location,
                     const CcWarning warning,
+                    Vec *helps,
+                    Vec *notes,
+                    String *detail_msg);
+
+/**
+ *
+ * @brief Construct Diagnostic (DIAGNOSTIC_KIND_SIMPLE_CI_ERROR).
+ */
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    simple_ci_error,
+                    const File *file,
+                    const Location *location,
+                    const CIError err,
+                    Vec *helps,
+                    Vec *notes,
+                    String *detail_msg);
+
+/**
+ *
+ * @brief Construct Diagnostic (DIAGNOSTIC_KIND_SIMPLE_CI_NOTE).
+ */
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    simple_ci_note,
+                    const File *file,
+                    const Location *location,
+                    String *note,
+                    Vec *helps,
+                    Vec *notes,
+                    String *detail_msg);
+
+/**
+ *
+ * @brief Construct Diagnostic (DIAGNOSTIC_KIND_SIMPLE_CI_WARNING).
+ */
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    simple_ci_warning,
+                    const File *file,
+                    const Location *location,
+                    const CIWarning warning,
                     Vec *helps,
                     Vec *notes,
                     String *detail_msg);
@@ -446,6 +541,48 @@ VARIANT_CONSTRUCTOR(Diagnostic,
                     const File *file,
                     const Location *location,
                     const CcWarning warning,
+                    Vec *items,
+                    Vec *notes,
+                    Vec *helps);
+
+/**
+ *
+ * @brief Construct Diagnostic (DIAGNOSTIC_KIND_REFERENCING_CI_ERROR).
+ */
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    referencing_ci_error,
+                    const File *file,
+                    const Location *location,
+                    const CIError err,
+                    Vec *items,
+                    Vec *notes,
+                    Vec *helps);
+
+/**
+ *
+ * @brief Construct Diagnostic (DIAGNOSTIC_KIND_REFERENCING_CI_NOTE).
+ */
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    referencing_ci_note,
+                    const File *file,
+                    const Location *location,
+                    String *note,
+                    Vec *items,
+                    Vec *notes,
+                    Vec *helps);
+
+/**
+ *
+ * @brief Construct Diagnostic (DIAGNOSTIC_KIND_REFERENCING_CI_WARNING).
+ */
+VARIANT_CONSTRUCTOR(Diagnostic,
+                    Diagnostic,
+                    referencing_ci_warning,
+                    const File *file,
+                    const Location *location,
+                    const CIWarning warning,
                     Vec *items,
                     Vec *notes,
                     Vec *helps);
