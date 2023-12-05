@@ -602,8 +602,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String(":$");
         case LILY_TOKEN_KIND_COLON_EQ:
             return from__String(":=");
-		case LILY_TOKEN_KIND_COLON_R_SHIFT:
-			return from__String(":>");
+        case LILY_TOKEN_KIND_COLON_R_SHIFT:
+            return from__String(":>");
         case LILY_TOKEN_KIND_COLON:
             return from__String(":");
         case LILY_TOKEN_KIND_COMMA:
@@ -688,14 +688,14 @@ to_string__LilyToken(LilyToken *self)
             return from__String("async");
         case LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN:
             return from__String("@builtin");
-		case LILY_TOKEN_KIND_KEYWORD_AT_CC:
-			return from__String("@cc");
-		case LILY_TOKEN_KIND_KEYWORD_AT_CPP:
-			return from__String("@cpp");
-		case LILY_TOKEN_KIND_KEYWORD_AT_HIDE:
-			return from__String("@hide");
-		case LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT:
-			return from__String("@hideout");
+        case LILY_TOKEN_KIND_KEYWORD_AT_CC:
+            return from__String("@cc");
+        case LILY_TOKEN_KIND_KEYWORD_AT_CPP:
+            return from__String("@cpp");
+        case LILY_TOKEN_KIND_KEYWORD_AT_HIDE:
+            return from__String("@hide");
+        case LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT:
+            return from__String("@hideout");
         case LILY_TOKEN_KIND_KEYWORD_AT_LEN:
             return from__String("@len");
         case LILY_TOKEN_KIND_KEYWORD_AT_SYS:
@@ -712,8 +712,8 @@ to_string__LilyToken(LilyToken *self)
             return from__String("catch");
         case LILY_TOKEN_KIND_KEYWORD_CLASS:
             return from__String("class");
-		case LILY_TOKEN_KIND_KEYWORD_CLOSE:
-			return from__String("close");
+        case LILY_TOKEN_KIND_KEYWORD_CLOSE:
+            return from__String("close");
         case LILY_TOKEN_KIND_KEYWORD_COMPTIME:
             return from__String("comptime");
         case LILY_TOKEN_KIND_KEYWORD_DEFER:
@@ -974,8 +974,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_COLON_DOLLAR";
         case LILY_TOKEN_KIND_COLON_EQ:
             return "LILY_TOKEN_KIND_COLON_EQ";
-		case LILY_TOKEN_KIND_COLON_R_SHIFT:
-			return "LILY_TOKEN_KIND_COLON_R_SHIFT";
+        case LILY_TOKEN_KIND_COLON_R_SHIFT:
+            return "LILY_TOKEN_KIND_COLON_R_SHIFT";
         case LILY_TOKEN_KIND_COLON:
             return "LILY_TOKEN_KIND_COLON";
         case LILY_TOKEN_KIND_COMMA:
@@ -1042,14 +1042,14 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_KEYWORD_ASYNC";
         case LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN:
             return "LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN";
-		case LILY_TOKEN_KIND_KEYWORD_AT_CC:
-			return "LILY_TOKEN_KIND_KEYWORD_AT_CC";
-		case LILY_TOKEN_KIND_KEYWORD_AT_CPP:
-			return "LILY_TOKEN_KIND_KEYWORD_AT_CPP";
-		case LILY_TOKEN_KIND_KEYWORD_AT_HIDE:
-			return "LILY_TOKEN_KIND_KEYWORD_AT_HIDE";
-		case LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT:
-			return "LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT";
+        case LILY_TOKEN_KIND_KEYWORD_AT_CC:
+            return "LILY_TOKEN_KIND_KEYWORD_AT_CC";
+        case LILY_TOKEN_KIND_KEYWORD_AT_CPP:
+            return "LILY_TOKEN_KIND_KEYWORD_AT_CPP";
+        case LILY_TOKEN_KIND_KEYWORD_AT_HIDE:
+            return "LILY_TOKEN_KIND_KEYWORD_AT_HIDE";
+        case LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT:
+            return "LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT";
         case LILY_TOKEN_KIND_KEYWORD_AT_LEN:
             return "LILY_TOKEN_KIND_KEYWORD_AT_LEN";
         case LILY_TOKEN_KIND_KEYWORD_AT_SYS:
@@ -1066,8 +1066,8 @@ IMPL_FOR_DEBUG(to_string, LilyTokenKind, enum LilyTokenKind self)
             return "LILY_TOKEN_KIND_KEYWORD_CATCH";
         case LILY_TOKEN_KIND_KEYWORD_CLASS:
             return "LILY_TOKEN_KIND_KEYWORD_CLASS";
-		case LILY_TOKEN_KIND_KEYWORD_CLOSE:
-			return "LILY_TOKEN_KIND_KEYWORD_CLOSE";
+        case LILY_TOKEN_KIND_KEYWORD_CLOSE:
+            return "LILY_TOKEN_KIND_KEYWORD_CLOSE";
         case LILY_TOKEN_KIND_KEYWORD_COMPTIME:
             return "LILY_TOKEN_KIND_KEYWORD_COMPTIME";
         case LILY_TOKEN_KIND_KEYWORD_DEFER:

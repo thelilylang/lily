@@ -36,7 +36,7 @@
 typedef struct LilyScanner
 {
     Vec *tokens; // Vec<LilyToken*>*
-	Scanner base;
+    Scanner base;
 } LilyScanner;
 
 /**
