@@ -24,34 +24,54 @@
 
 #include <base/assert.h>
 
-#include <core/shared/cursor.h>
+#include <core/shared/scanner.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 void
-next_line__Cursor(Cursor *cursor, char current)
+skip_space__Scanner(Scanner *self)
 {
-    ++cursor->position;
-    ++cursor->line;
-    cursor->column = 1;
-    cursor->current = current;
+    while (isspace(self->source.cursor.current) &&
+           self->source.cursor.position < self->source.file->len - 1) {
+        next_char__Scanner(self);
+    }
 }
 
 void
-next__Cursor(Cursor *cursor, char current)
+jump__Scanner(Scanner *self, Usize n)
 {
-    ++cursor->position;
-    ++cursor->column;
-    cursor->current = current;
+    for (Usize i = 0; i < n; ++i)
+        next_char__Scanner(self);
 }
 
 void
-previous__Cursor(Cursor *cursor, char current)
+start_token__Scanner(Scanner *self, Usize line, Usize column, Usize position)
 {
-    ASSERT(cursor->column > 1);
+    self->location.start_line = line;
+    self->location.start_column = column;
+    self->location.start_position = position;
+}
 
-    --cursor->position;
-    --cursor->column;
-    cursor->current = current;
+void
+end_token__Scanner(Scanner *self, Usize line, Usize column, Usize position)
+{
+    ASSERT(self->location.start_line <= line);
+    ASSERT(self->location.start_column <= column ||
+           self->location.start_line != line);
+
+    self->location.end_line = line;
+    self->location.end_column = column;
+    self->location.end_position = position;
+}
+
+char *
+peek_char__Scanner(const Scanner *self, Usize n)
+{
+    if (self->source.cursor.position < self->source.file->len - 1) {
+        return (char *)(Uptr)
+          self->source.file->content[self->source.cursor.position + n];
+    }
+
+    return NULL;
 }

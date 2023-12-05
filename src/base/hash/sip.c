@@ -119,15 +119,15 @@ hash_sip(const void *key, Usize key_len, const Usize k0, const Usize k1)
         key_bytes += sizeof(uint64_t);
     }
 
-    Uint64 lastBlock = 0;
+    Uint64 last_block = 0;
 
-    memcpy(&lastBlock, key_bytes, key_len % sizeof(uint64_t));
+    memcpy(&last_block, key_bytes, key_len % sizeof(uint64_t));
 
-    state.v3 ^= lastBlock;
+    state.v3 ^= last_block;
     for (int i = 0; i < 2; ++i) {
         mix__SipHashState(&state);
     }
-    state.v0 ^= lastBlock;
+    state.v0 ^= last_block;
 
     final__SipHashState(&state, key_len);
 

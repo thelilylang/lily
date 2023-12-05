@@ -55,14 +55,15 @@ next_line__Cursor(Cursor *cursor, char current);
 
 /**
  *
- * @brief Advance to the next column.
+ * @brief Advance to the next (line maybe, ) column, position and update the
+ * current.
  */
 void
 next__Cursor(Cursor *cursor, char current);
 
 /**
  *
- * @brief Back to the previous column.
+ * @brief Back to the previous column, position and update the current.
  */
 void
 previous__Cursor(Cursor *cursor, char current);

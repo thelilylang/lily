@@ -4,7 +4,7 @@ BASH_CONFIG="$HOME/.bashrc"
 ZSH_CONFIG="$HOME/.zshrc"
 FISH_CONFIG="$HOME/.config/config.fish"
 LATEST_VERSION="0.0.2"
-BUILD_DIR="./build"
+LOCAL_BIN_DIR="./bin"
 CURRENT_SHELL=""
 BASH_EXISTS=false
 ZSH_EXISTS=false
@@ -25,7 +25,7 @@ then
 	exit 1
 fi
 
-if [ ! -d $BUILD_DIR ]
+if [ ! -d $LOCAL_BIN_DIR ]
 then
 	echo "Is expected to build before install Lily"
 	exit 1
@@ -95,17 +95,17 @@ mkdir $INSTALL_LATEST_PM_LIB_DIR_PATH
 echo "$LATEST_VERSION" > $INSTALL_LATEST_DIR_PATH/.version
 
 # Copy `lily` and `lilyc` to $INSTALL_LATEST_BIN_DIR_PATH
-cp $BUILD_DIR/lily $INSTALL_LATEST_BIN_DIR_PATH
-cp $BUILD_DIR/lilyc $INSTALL_LATEST_BIN_DIR_PATH
+cp $LOCAL_BIN_DIR/lily $INSTALL_LATEST_BIN_DIR_PATH
+cp $LOCAL_BIN_DIR/lilyc $INSTALL_LATEST_BIN_DIR_PATH
 
 # Copy `liblily_sys.so/dylib` and `liblily_builtin.so/dylib` to $INSTALL_LATEST_LIB_DIR_PATH.
 if [[ $TARGET =~ darwin.* ]]
 then
-	cp $BUILD_DIR/liblily_sys.dylib $INSTALL_LATEST_LIB_DIR_PATH
-	cp $BUILD_DIR/liblily_builtin.dylib $INSTALL_LATEST_LIB_DIR_PATH
+	cp $LOCAL_BIN_DIR/liblily_sys.dylib $INSTALL_LATEST_LIB_DIR_PATH
+	cp $LOCAL_BIN_DIR/liblily_builtin.dylib $INSTALL_LATEST_LIB_DIR_PATH
 elif [[ $TARGET =~ linux.* ]]
-	cp $BUILD_DIR/liblily_sys.so $INSTALL_LATEST_LIB_DIR_PATH
-	cp $BUILD_DIR/liblily_builtin.so $INSTALL_LATEST_LIB_DIR_PATH
+	cp $LOCAL_BIN_DIR/liblily_sys.so $INSTALL_LATEST_LIB_DIR_PATH
+	cp $LOCAL_BIN_DIR/liblily_builtin.so $INSTALL_LATEST_LIB_DIR_PATH
 else
 	echo "unreachable: This target is not expected"
 	exit 1

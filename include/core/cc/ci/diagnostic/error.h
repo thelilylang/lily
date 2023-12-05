@@ -22,44 +22,49 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_SCANNER_H
-#define LILY_CORE_LILY_SCANNER_H
+#ifndef LILY_CORE_CC_CI_DIAGNOSTIC_ERROR_H
+#define LILY_CORE_CC_CI_DIAGNOSTIC_ERROR_H
 
-#include <base/format.h>
-#include <base/new.h>
-#include <base/vec.h>
+#include <base/macros.h>
 
-#include <core/lily/scanner/token.h>
-#include <core/shared/diagnostic.h>
-#include <core/shared/scanner.h>
+enum CIErrorKind {
+	CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK
+};
 
-typedef struct LilyScanner
+
+typedef struct CIError 
 {
-    Vec *tokens; // Vec<LilyToken*>*
-	Scanner base;
-} LilyScanner;
+    enum CIErrorKind kind;
+} CIError;
 
 /**
  *
- * @brief Construct LilyScanner type.
+ * @brief Construct CIError.
  */
-inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source, Usize *count_error)
+inline CONSTRUCTOR(CIError, CIError, enum CIErrorKind kind)
 {
-    return (LilyScanner){ .tokens = NEW(Vec),
-                          .base = NEW(Scanner, source, count_error) };
+    return (CIError){ .kind = kind };
 }
 
 /**
  *
- * @brief Run the scanner.
+ * @brief Convert CIError in msg.
  */
-void
-run__LilyScanner(LilyScanner *self, bool dump_scanner);
+char *
+to_msg__CIError(const CIError *self);
 
 /**
  *
- * @brief Free LilyScanner type.
+ * @brief Convert CIError in code.
  */
-DESTRUCTOR(LilyScanner, const LilyScanner *self);
+char *
+to_code__CIError(const CIError *self);
 
-#endif // LILY_CORE_LILY_SCANNER_H
+/**
+ *
+ * @brief Convert CIError in str.
+ */
+char *
+to_string__CIError(const CIError *self);
+
+#endif // LILY_CORE_CC_CI_DIAGNOSTIC_ERROR_H

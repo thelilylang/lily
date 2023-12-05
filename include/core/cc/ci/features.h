@@ -22,44 +22,25 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_SCANNER_H
-#define LILY_CORE_LILY_SCANNER_H
+#ifndef LILY_CORE_CC_CI_FEATURES_H
+#define LILY_CORE_CC_CI_FEATURES_H
 
-#include <base/format.h>
-#include <base/new.h>
-#include <base/vec.h>
-
-#include <core/lily/scanner/token.h>
-#include <core/shared/diagnostic.h>
-#include <core/shared/scanner.h>
-
-typedef struct LilyScanner
+enum CIStandard
 {
-    Vec *tokens; // Vec<LilyToken*>*
-	Scanner base;
-} LilyScanner;
+    CI_STANDARD_89,
+    CI_STANDARD_95,
+    CI_STANDARD_99,
+    CI_STANDARD_11,
+    CI_STANDARD_17,
+    CI_STANDARD_23,
+};
 
-/**
- *
- * @brief Construct LilyScanner type.
- */
-inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source, Usize *count_error)
+// TODO: When we move ci scanner dependencies in src/core/cc or include/core/cc
+// directories, rename CIEnable to CCCIEnable
+enum CIEnable
 {
-    return (LilyScanner){ .tokens = NEW(Vec),
-                          .base = NEW(Scanner, source, count_error) };
-}
+    CI_ENABLE_NO = 0,
+    CI_ENABLE_YES = 1,
+};
 
-/**
- *
- * @brief Run the scanner.
- */
-void
-run__LilyScanner(LilyScanner *self, bool dump_scanner);
-
-/**
- *
- * @brief Free LilyScanner type.
- */
-DESTRUCTOR(LilyScanner, const LilyScanner *self);
-
-#endif // LILY_CORE_LILY_SCANNER_H
+#endif // LILY_CORE_CC_CI_FEATURES_H

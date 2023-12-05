@@ -35,7 +35,7 @@ Launch `lilyc`:<br>
 NOTE: This is the command to use the Lily compiler.
 
 ```bash
-./build/lilyc -h # local version
+./bin/lilyc -h # local version
 lilyc -h # installed version
 ```
 
@@ -43,7 +43,7 @@ Launch `lily`:<br>
 NOTE: This is the command to use some utility tools for the Lily language (build, init, new, ...).
 
 ```bash
-./build/lily -h  # local version
+./bin/lily -h  # local version
 lily -h # installed version
 ```
 

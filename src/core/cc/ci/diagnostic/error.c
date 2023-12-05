@@ -22,44 +22,42 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_SCANNER_H
-#define LILY_CORE_LILY_SCANNER_H
-
 #include <base/format.h>
-#include <base/new.h>
-#include <base/vec.h>
+#include <base/color.h>
 
-#include <core/lily/scanner/token.h>
-#include <core/shared/diagnostic.h>
-#include <core/shared/scanner.h>
+#include <core/cc/ci/diagnostic/error.h>
 
-typedef struct LilyScanner
+#include <stdio.h>
+#include <stdlib.h>
+
+char *
+to_msg__CIError(const CIError *self)
 {
-    Vec *tokens; // Vec<LilyToken*>*
-	Scanner base;
-} LilyScanner;
-
-/**
- *
- * @brief Construct LilyScanner type.
- */
-inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source, Usize *count_error)
-{
-    return (LilyScanner){ .tokens = NEW(Vec),
-                          .base = NEW(Scanner, source, count_error) };
+	switch (self->kind) {
+		case CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
+			return "unclosed comment block";
+		default:
+			UNREACHABLE("unknown variant");
+	}
 }
 
-/**
- *
- * @brief Run the scanner.
- */
-void
-run__LilyScanner(LilyScanner *self, bool dump_scanner);
+char *
+to_code__CIError(const CIError *self)
+{
+	switch (self->kind) {
+		case CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
+			return "0001";
+		default:
+			UNREACHABLE("unknown variant");
+	}
+}
 
-/**
- *
- * @brief Free LilyScanner type.
- */
-DESTRUCTOR(LilyScanner, const LilyScanner *self);
+char *
+to_string__CIError(const CIError *self)
+{
+    char *msg = to_msg__CIError(self);
+    char *res =
+      format("{sa}[{s}]: {s}", RED("error"), to_code__CIError(self), msg);
 
-#endif // LILY_CORE_LILY_SCANNER_H
+    return res;
+}

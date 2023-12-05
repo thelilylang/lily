@@ -33,7 +33,7 @@
 typedef struct Source
 {
     Cursor cursor;
-    const File *file;
+    const File *file; // const File* (&)
 } Source;
 
 /**
@@ -47,14 +47,14 @@ inline CONSTRUCTOR(Source, Source, Cursor cursor, const File *file)
 
 /**
  *
- * @brief Advance to the next line.
+ * @brief Move next one character.
  */
 void
 next_char__Source(Source *self);
 
 /**
  *
- * @brief Advance to the next column.
+ * @brief Move back one character.
  */
 void
 previous_char__Source(Source *self);

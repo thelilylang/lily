@@ -22,44 +22,4 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_SCANNER_H
-#define LILY_CORE_LILY_SCANNER_H
-
-#include <base/format.h>
-#include <base/new.h>
-#include <base/vec.h>
-
-#include <core/lily/scanner/token.h>
-#include <core/shared/diagnostic.h>
-#include <core/shared/scanner.h>
-
-typedef struct LilyScanner
-{
-    Vec *tokens; // Vec<LilyToken*>*
-	Scanner base;
-} LilyScanner;
-
-/**
- *
- * @brief Construct LilyScanner type.
- */
-inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source, Usize *count_error)
-{
-    return (LilyScanner){ .tokens = NEW(Vec),
-                          .base = NEW(Scanner, source, count_error) };
-}
-
-/**
- *
- * @brief Run the scanner.
- */
-void
-run__LilyScanner(LilyScanner *self, bool dump_scanner);
-
-/**
- *
- * @brief Free LilyScanner type.
- */
-DESTRUCTOR(LilyScanner, const LilyScanner *self);
-
-#endif // LILY_CORE_LILY_SCANNER_H
+#include <core/cc/ci/file.h>

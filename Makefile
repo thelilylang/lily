@@ -1,6 +1,5 @@
 CLANG_FORMAT = @clang-format -i
 CMAKE_FORMAT = @cmake-format -i
-RUSTFMT = @rustfmt
 
 hooks:
 	./scripts/enable_local.sh
@@ -38,6 +37,7 @@ format:
 	${CLANG_FORMAT} ./include/command/lily/to/*.h
 	${CLANG_FORMAT} ./include/command/lilyc/*.h
 	${CLANG_FORMAT} ./include/core/cc/*.h
+	${CLANG_FORMAT} ./include/core/cc/ci/*.h
 	${CLANG_FORMAT} ./include/core/cc/diagnostic/*.h
 	${CLANG_FORMAT} ./include/core/cpp/diagnostic/*.h
 	${CLANG_FORMAT} ./include/core/lily/*.h
@@ -99,6 +99,7 @@ format:
 	${CLANG_FORMAT} ./src/base/cli/result/*.c
 	${CLANG_FORMAT} ./src/base/memory/*.c
 	${CLANG_FORMAT} ./src/base/hash/*.c
+	${CLANG_FORMAT} ./src/bin/ci/*.c
 	${CLANG_FORMAT} ./src/bin/lily/*.c
 	${CLANG_FORMAT} ./src/bin/lilyc/*.c
 	${CLANG_FORMAT} ./src/cli/lily/*.c
@@ -113,6 +114,7 @@ format:
 	${CLANG_FORMAT} ./src/command/lily/test/*.c
 	${CLANG_FORMAT} ./src/command/lily/to/*.c
 	${CLANG_FORMAT} ./src/command/lilyc/*.c
+	${CLANG_FORMAT} ./src/core/cc/ci/*.c
 	${CLANG_FORMAT} ./src/core/cc/diagnostic/*.c
 	${CLANG_FORMAT} ./src/core/cc/*.c
 	${CLANG_FORMAT} ./src/core/cpp/diagnostic/*.c
@@ -171,7 +173,6 @@ format:
 	${CLANG_FORMAT} ./tests/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/scanner/*.c
 	${CMAKE_FORMAT} ./CMakeLists.txt
-	${RUSTFMT} ./src/core/cc/ci/src/*.rs
 	
 
 # TODO: try to port -pg on CMake config

@@ -112,6 +112,10 @@ typedef struct LilyPackage
     Vec *package_dependencies; // Vec<LilyPackage* (&)>*
     Vec *lib_dependencies;     // Vec<LilyLibrary* (&)>*
 
+    // count all errors and warnings after the precompiler step
+    Usize count_error;
+    Usize count_warning;
+
     File file;
     LilyScanner scanner;
     LilyPreparser preparser;
@@ -125,10 +129,6 @@ typedef struct LilyPackage
     // not equal to LILY_PACKAGE_STATUS_MAIN
     LilyBuiltinFun *builtins; // LilyBuiltinFun*? (&)
     LilySysFun *syss;         // LilySysFun*? (&)
-
-    // count all errors and warnings after the precompiler step
-    Usize count_error;
-    Usize count_warning;
 
     enum LilyVisibility visibility;
     enum LilyPackageStatus status;

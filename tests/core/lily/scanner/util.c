@@ -56,10 +56,10 @@
 #define FILE_OPERATOR "./tests/core/lily/scanner/input/operator.lily"
 
 LilyScanner
-run_scanner(File *file)
+run_scanner(File *file, Usize *count_error)
 {
-    LilyScanner scanner =
-      NEW(LilyScanner, NEW(Source, NEW(Cursor, file->content), file));
+    LilyScanner scanner = NEW(
+      LilyScanner, NEW(Source, NEW(Cursor, file->content), file), count_error);
 
     run__LilyScanner(&scanner, false);
 
@@ -69,7 +69,8 @@ run_scanner(File *file)
 #define RUN_SCANNER(filename)                  \
     char *content = read_file__File(filename); \
     File file = NEW(File, filename, content);  \
-    LilyScanner scanner = run_scanner(&file);
+    Usize count_error = 0;                     \
+    LilyScanner scanner = run_scanner(&file, &count_error);
 
 #define FREE_SCANNER() \
     FREE(File, &file); \

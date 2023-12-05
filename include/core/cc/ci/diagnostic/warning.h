@@ -22,44 +22,48 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_SCANNER_H
-#define LILY_CORE_LILY_SCANNER_H
+#ifndef LILY_CORE_CC_CI_DIAGNOSTIC_WARNING_H
+#define LILY_CORE_CC_CI_DIAGNOSTIC_WARNING_H
 
-#include <base/format.h>
-#include <base/new.h>
-#include <base/vec.h>
+#include <base/macros.h>
 
-#include <core/lily/scanner/token.h>
-#include <core/shared/diagnostic.h>
-#include <core/shared/scanner.h>
+enum CIWarningKind {
+	CI_WARNING_KIND_UNUSED
+};
 
-typedef struct LilyScanner
-{
-    Vec *tokens; // Vec<LilyToken*>*
-	Scanner base;
-} LilyScanner;
+typedef struct CIWarning {
+	enum CIWarningKind kind;
+} CIWarning;
+
 
 /**
  *
- * @brief Construct LilyScanner type.
+ * @brief Construct CIWarning.
  */
-inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source, Usize *count_error)
+inline CONSTRUCTOR(CIWarning, CIWarning, enum CIWarningKind kind)
 {
-    return (LilyScanner){ .tokens = NEW(Vec),
-                          .base = NEW(Scanner, source, count_error) };
+    return (CIWarning){ .kind = kind };
 }
 
 /**
  *
- * @brief Run the scanner.
+ * @brief Convert CIWarning in msg.
  */
-void
-run__LilyScanner(LilyScanner *self, bool dump_scanner);
+char *
+to_msg__CIWarning(const CIWarning *self);
 
 /**
  *
- * @brief Free LilyScanner type.
+ * @brief Convert CIWarning in code.
  */
-DESTRUCTOR(LilyScanner, const LilyScanner *self);
+char *
+to_code__CIWarning(const CIWarning *self);
 
-#endif // LILY_CORE_LILY_SCANNER_H
+/**
+ *
+ * @brief Convert CIWarning in str.
+ */
+char *
+to_string__CIWarning(const CIWarning *self);
+
+#endif // LILY_CORE_CC_CI_DIAGNOSTIC_WARNING_H

@@ -22,31 +22,29 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_SCANNER_H
-#define LILY_CORE_LILY_SCANNER_H
+#ifndef LILY_CORE_CC_CI_SCANNER_H
+#define LILY_CORE_CC_CI_SCANNER_H
 
-#include <base/format.h>
-#include <base/new.h>
+#include <base/types.h>
 #include <base/vec.h>
 
-#include <core/lily/scanner/token.h>
-#include <core/shared/diagnostic.h>
+#include <core/cc/ci/token.h>
 #include <core/shared/scanner.h>
 
-typedef struct LilyScanner
+typedef struct CIScanner
 {
-    Vec *tokens; // Vec<LilyToken*>*
-	Scanner base;
-} LilyScanner;
+    Vec *tokens; // Vec<CIToken*>*
+    Scanner base;
+} CIScanner;
 
 /**
  *
- * @brief Construct LilyScanner type.
+ * @brief Construct CIScanner type.
  */
-inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source, Usize *count_error)
+inline CONSTRUCTOR(CIScanner, CIScanner, Source source, Usize *count_error)
 {
-    return (LilyScanner){ .tokens = NEW(Vec),
-                          .base = NEW(Scanner, source, count_error) };
+    return (CIScanner){ .tokens = NEW(Vec),
+                        .base = NEW(Scanner, source, count_error) };
 }
 
 /**
@@ -54,12 +52,12 @@ inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source, Usize *count_error)
  * @brief Run the scanner.
  */
 void
-run__LilyScanner(LilyScanner *self, bool dump_scanner);
+run__CIScanner(CIScanner *self, bool dump_scanner);
 
 /**
  *
- * @brief Free LilyScanner type.
+ * @brief Free CIScanner type.
  */
-DESTRUCTOR(LilyScanner, const LilyScanner *self);
+DESTRUCTOR(CIScanner, const CIScanner *self);
 
-#endif // LILY_CORE_LILY_SCANNER_H
+#endif // LILY_CORE_CC_CI_SCANNER_H
