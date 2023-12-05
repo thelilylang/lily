@@ -5,6 +5,7 @@ project(
   HOMEPAGE_URL "https://github.com/thelilylang/lily"
   LANGUAGES C CXX)
 
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
@@ -55,6 +56,8 @@ if(MSVC)
 else()
   set(LILY_LLD_COMPILE_FLAGS "-std=c++17")
 endif()
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/core/cc/ci)
 
 # lily_lld_common
 set(LLD_COMMON_SRC
