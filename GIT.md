@@ -41,6 +41,7 @@ global
 
 base
 
+bin/ci
 bin/lily
 bin/lilyc
 
@@ -76,6 +77,7 @@ lily/shared
 
 lsp
 
+scripts
 shared
 ...
 ```
