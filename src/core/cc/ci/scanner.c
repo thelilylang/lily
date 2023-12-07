@@ -125,6 +125,10 @@ scan_identifier__CIScanner(CIScanner *self);
 static char *
 scan_character__CIScanner(CIScanner *self);
 
+/// @brief Scan string constant literal.
+static String *
+scan_string__CIScanner(CIScanner *self);
+
 /// @brief Skip and verify if the next character is the target.
 static bool
 skip_and_verify__CIScanner(CIScanner *self, char target);
@@ -509,6 +513,7 @@ get_character__CIScanner(CIScanner *self, char previous)
                     self->base.source.cursor.position);
 
     switch (previous) {
+        // TODO: We're probably missing some escapes characters.
         case '\\':
             switch (self->base.source.cursor.current) {
                 // NOTE: For the moment we're using \\ for some escapes, because
@@ -680,6 +685,70 @@ scan_character__CIScanner(CIScanner *self)
       self->base.count_error);
 
     return NULL;
+}
+
+String *
+scan_string__CIScanner(CIScanner *self)
+{
+    Location location_error = default__Location(self->base.source.file->name);
+    String *res = NEW(String);
+
+    start__Location(&location_error,
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
+    next_char__CIScanner(self);
+
+    // Check if the string literal is not closed. While the current character is
+    // not a `"` or the next character is not a `"`, we continue to scan the
+    // string literal.
+    while (self->base.source.cursor.current != '\"') {
+        if (self->base.source.cursor.position >
+            self->base.source.file->len - 2) {
+            end__Location(&location_error,
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_ci_error,
+                self->base.source.file,
+                &location_error,
+                NEW(CIError, CI_ERROR_KIND_UNCLOSED_STRING_LITERAL),
+                init__Vec(
+                  1, from__String("add `\"` to the end of string literal")),
+                NULL,
+                NULL),
+              self->base.count_error);
+
+            FREE(String, res);
+
+            return NULL;
+        }
+
+        next_char__CIScanner(self);
+
+        // Scan the escape character. If the `get_character__CIScanner` return
+        // NULL that's mean the escape character is invalid.
+        {
+            String *c = get_character__CIScanner(
+              self,
+              self->base.source.file
+                ->content[self->base.source.cursor.position - 1]);
+
+            if (!c) {
+                FREE(String, res);
+
+                return NULL;
+            }
+
+            APPEND_AND_FREE(res, c);
+        }
+    }
+
+    return res;
 }
 
 bool
@@ -994,6 +1063,7 @@ get_token__CIScanner(CIScanner *self, bool check_match)
 
             return token;
         }
+        // <=, <<=, <<, <
         case '<':
             if (c1 == (char *)'=') {
                 return NEW(CIToken,
@@ -1028,8 +1098,18 @@ get_token__CIScanner(CIScanner *self, bool check_match)
 
             return NULL;
         }
-        case '\"':
-            break;
+        case '\"': {
+            String *res = scan_string__CIScanner(self);
+
+            if (res) {
+                return NEW_VARIANT(CIToken,
+                                   literal_constant_string,
+                                   clone__Location(&self->base.location),
+                                   res);
+            }
+
+            return NULL;
+        }
         default:
             TODO("error!!");
     }
