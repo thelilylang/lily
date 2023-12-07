@@ -546,6 +546,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
 
             switch (level->kind) {
                 case DIAGNOSTIC_LEVEL_KIND_CC_ERROR:
+                case DIAGNOSTIC_LEVEL_KIND_CI_ERROR:
                 case DIAGNOSTIC_LEVEL_KIND_CPP_ERROR:
                 case DIAGNOSTIC_LEVEL_KIND_LILY_ERROR: {
                     char *red = RED(repeat->buffer);
@@ -554,6 +555,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
                     break;
                 }
                 case DIAGNOSTIC_LEVEL_KIND_CC_NOTE:
+                case DIAGNOSTIC_LEVEL_KIND_CI_NOTE:
                 case DIAGNOSTIC_LEVEL_KIND_CPP_NOTE:
                 case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE: {
                     char *cyan = CYAN(repeat->buffer);
@@ -562,6 +564,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
                     break;
                 }
                 case DIAGNOSTIC_LEVEL_KIND_CC_WARNING:
+                case DIAGNOSTIC_LEVEL_KIND_CI_WARNING:
                 case DIAGNOSTIC_LEVEL_KIND_CPP_WARNING:
                 case DIAGNOSTIC_LEVEL_KIND_LILY_WARNING: {
                     char *yellow = YELLOW(repeat->buffer);
@@ -569,6 +572,8 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
 
                     break;
                 }
+                default:
+                    UNREACHABLE("unknown variant");
             }
 
             FREE(String, repeat);
@@ -615,6 +620,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
 
         switch (level->kind) {
             case DIAGNOSTIC_LEVEL_KIND_CC_ERROR:
+            case DIAGNOSTIC_LEVEL_KIND_CI_ERROR:
             case DIAGNOSTIC_LEVEL_KIND_CPP_ERROR:
             case DIAGNOSTIC_LEVEL_KIND_LILY_ERROR: {
                 char *red = RED("^");
@@ -623,6 +629,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
                 break;
             }
             case DIAGNOSTIC_LEVEL_KIND_CC_NOTE:
+            case DIAGNOSTIC_LEVEL_KIND_CI_NOTE:
             case DIAGNOSTIC_LEVEL_KIND_CPP_NOTE:
             case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE: {
                 char *cyan = CYAN("^");
@@ -631,6 +638,7 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
                 break;
             }
             case DIAGNOSTIC_LEVEL_KIND_CC_WARNING:
+            case DIAGNOSTIC_LEVEL_KIND_CI_WARNING:
             case DIAGNOSTIC_LEVEL_KIND_CPP_WARNING:
             case DIAGNOSTIC_LEVEL_KIND_LILY_WARNING: {
                 char *yellow = YELLOW("^");
@@ -638,6 +646,8 @@ to_string__DiagnosticDetail(const DiagnosticDetail *self,
 
                 break;
             }
+            default:
+                UNREACHABLE("unknown variant");
         }
 
         if (self->msg) {
