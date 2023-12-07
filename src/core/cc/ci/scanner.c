@@ -26,6 +26,9 @@
 #include <core/cc/ci/scanner.h>
 #include <core/shared/diagnostic.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 /// @brief Move next one character.
 /// @see `include/core/shared/scanner.h`
 static inline void
@@ -106,13 +109,91 @@ skip_comment_line__CIScanner(CIScanner *self);
 static void
 skip_comment_block__CIScanner(CIScanner *self);
 
+/// @brief Scan comment doc.
+static String *
+scan_comment_doc__CIScanner(CIScanner *self);
+
 /// @brief Scan identifier.
 static String *
 scan_identifier__CIScanner(CIScanner *self);
 
-/// @brief Scan token.
+/// @brief Skip and verify if the next character is the target.
+static bool
+skip_and_verify__CIScanner(CIScanner *self, char target);
+
+/// @brief Scan to the next closing character.
 static CIToken *
-get_token__CIScanner(CIScanner *self);
+get_closing__CIScanner(CIScanner *self, char target);
+
+/// @brief Get token from characters.
+static CIToken *
+get_token__CIScanner(CIScanner *self, bool check_match);
+
+#define IS_ZERO '0'
+
+#define IS_DIGIT_WITHOUT_ZERO \
+    '1' : case '2':           \
+    case '3':                 \
+    case '4':                 \
+    case '5':                 \
+    case '6':                 \
+    case '7':                 \
+    case '8':                 \
+    case '9'
+
+#define IS_ID       \
+    'a' : case 'b': \
+    case 'c':       \
+    case 'd':       \
+    case 'e':       \
+    case 'f':       \
+    case 'g':       \
+    case 'h':       \
+    case 'i':       \
+    case 'j':       \
+    case 'k':       \
+    case 'l':       \
+    case 'm':       \
+    case 'n':       \
+    case 'o':       \
+    case 'p':       \
+    case 'q':       \
+    case 'r':       \
+    case 's':       \
+    case 't':       \
+    case 'u':       \
+    case 'v':       \
+    case 'w':       \
+    case 'x':       \
+    case 'y':       \
+    case 'z':       \
+    case 'A':       \
+    case 'B':       \
+    case 'C':       \
+    case 'D':       \
+    case 'E':       \
+    case 'F':       \
+    case 'G':       \
+    case 'H':       \
+    case 'I':       \
+    case 'J':       \
+    case 'K':       \
+    case 'L':       \
+    case 'M':       \
+    case 'N':       \
+    case 'O':       \
+    case 'P':       \
+    case 'Q':       \
+    case 'R':       \
+    case 'S':       \
+    case 'T':       \
+    case 'U':       \
+    case 'V':       \
+    case 'W':       \
+    case 'X':       \
+    case 'Y':       \
+    case 'Z':       \
+    case '_'
 
 void
 next_char__CIScanner(CIScanner *self)
@@ -326,13 +407,13 @@ skip_comment_block__CIScanner(CIScanner *self)
 
     start__Location(&location_error,
                     self->base.source.cursor.line,
-                    self->base.source.cursor.column,
-                    self->base.source.cursor.position);
+                    self->base.source.cursor.column - 2,
+                    self->base.source.cursor.position - 2); // 2 = `/*`
 
     // Check if the comment block is closed. While the current character is not
-    // a `*` or the next character is not a `/`, we continue to scan the comment
-    // block.
-    while (self->base.source.cursor.current != '*' ||
+    // a `*` and the next character is not a `/`, we continue to scan the
+    // comment block.
+    while (self->base.source.cursor.current != '*' &&
            peek_char__CIScanner(self, 1) != (char *)'/') {
         // Check if the comment block is not closed.
         if (self->base.source.cursor.position >=
@@ -363,13 +444,146 @@ skip_comment_block__CIScanner(CIScanner *self)
 }
 
 String *
+scan_comment_doc__CIScanner(CIScanner *self)
+{
+    String *res = NEW(String);
+    Location location_error = default__Location(self->base.source.file->name);
+
+    start__Location(&location_error,
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column - 3,
+                    self->base.source.cursor.position - 3); // 3 = `/**`
+
+    // Check if the comment block is closed. While the current character is not
+    // a `*`,the next character one is not a `*` and the next second is not a
+    // `/`, we continue to scan the comment block.
+    while (self->base.source.cursor.current != '*' &&
+           peek_char__CIScanner(self, 1) != (char *)'*' &&
+           peek_char__CIScanner(self, 2) != (char *)'/') {
+        // Check if the comment block is not closed.
+        if (self->base.source.cursor.position >=
+            self->base.source.file->len - 2) {
+            end__Location(&location_error,
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
+
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_ci_error,
+                self->base.source.file,
+                &location_error,
+                NEW(CIError, CI_ERROR_KIND_UNCLOSED_COMMENT_DOC),
+                init__Vec(1, from__String("close comment bloc kwith `**/`")),
+                NULL,
+                NULL),
+              self->base.count_error);
+        }
+
+        next_char__CIScanner(self);
+    }
+
+    jump__CIScanner(self, 3);
+
+    return res;
+}
+
+String *
 scan_identifier__CIScanner(CIScanner *self)
 {
     return NULL;
 }
 
+bool
+skip_and_verify__CIScanner(CIScanner *self, char target)
+{
+    skip_space__CIScanner(self);
+    return self->base.source.cursor.current != target;
+}
+
 CIToken *
-get_token__CIScanner(CIScanner *self)
+get_closing__CIScanner(CIScanner *self, char target)
+{
+    Location location_error = clone__Location(&self->base.location);
+
+    skip_space__CIScanner(self);
+
+    // Check if the closing delimiter is not closed.
+    while (skip_and_verify__CIScanner(self, target)) {
+        if (self->base.source.cursor.position >=
+            self->base.source.file->len - 1) {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_ci_error,
+                self->base.source.file,
+                &location_error,
+                NEW(CIError, CI_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER),
+                NULL,
+                NULL,
+                from__String("expected closing delimiter after this token, "
+                             "such as `)`, `}` or `]`")),
+              self->base.count_error);
+
+            return NULL;
+        }
+
+        CIToken *token = get_token__CIScanner(self, true);
+
+        if (token) {
+            next_char_by_token__CIScanner(self, token);
+            end_token__CIScanner(self,
+                                 self->base.source.cursor.line,
+                                 self->base.source.cursor.column,
+                                 self->base.source.cursor.position);
+
+            switch (token->kind) {
+                case CI_TOKEN_KIND_LPAREN:
+                case CI_TOKEN_KIND_LBRACE:
+                case CI_TOKEN_KIND_LHOOK:
+                    break;
+                default:
+                    set_all__Location(&token->location, &self->base.location);
+            }
+
+            switch (token->kind) {
+                case CI_TOKEN_KIND_COMMENT_LINE:
+                case CI_TOKEN_KIND_COMMENT_BLOCK:
+                    FREE(CIToken, token);
+                    break;
+                default:
+                    next_char__CIScanner(self);
+                    push_token__CIScanner(self, token);
+            }
+        }
+    }
+
+    start_token__CIScanner(self,
+                           self->base.source.cursor.line,
+                           self->base.source.cursor.column,
+                           self->base.source.cursor.position);
+
+    switch (target) {
+        case ')':
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_RPAREN,
+                       clone__Location(&self->base.location));
+        case '}':
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_RBRACE,
+                       clone__Location(&self->base.location));
+        case ']':
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_RHOOK,
+                       clone__Location(&self->base.location));
+        default:
+            UNREACHABLE("this way is not possible");
+    }
+}
+
+CIToken *
+get_token__CIScanner(CIScanner *self, bool check_match)
 {
     char *c1 = peek_char__CIScanner(self, 1);
     char *c2 = peek_char__CIScanner(self, 2);
@@ -395,6 +609,7 @@ get_token__CIScanner(CIScanner *self)
             return NEW(CIToken,
                        CI_TOKEN_KIND_AMPERSAND,
                        clone__Location(&self->base.location));
+        // !=, !
         case '!':
             if (c1 == (char *)'=') {
                 return NEW(CIToken,
@@ -405,6 +620,7 @@ get_token__CIScanner(CIScanner *self)
             return NEW(CIToken,
                        CI_TOKEN_KIND_BANG,
                        clone__Location(&self->base.location));
+        // ||, |=, |
         case '|':
             if (c1 == (char *)'|') {
                 return NEW(CIToken,
@@ -419,14 +635,17 @@ get_token__CIScanner(CIScanner *self)
             return NEW(CIToken,
                        CI_TOKEN_KIND_BAR,
                        clone__Location(&self->base.location));
+        // :
         case ':':
             return NEW(CIToken,
                        CI_TOKEN_KIND_COLON,
                        clone__Location(&self->base.location));
+        // ,
         case ',':
             return NEW(CIToken,
                        CI_TOKEN_KIND_COMMA,
                        clone__Location(&self->base.location));
+        // COMMENT_LINE, /= COMMENT_BLOCK, COMMENT_DOC, /
         case '/':
             if (c1 == (char *)'/') {
                 CIToken *token = NEW(CIToken,
@@ -440,13 +659,14 @@ get_token__CIScanner(CIScanner *self)
                            CI_TOKEN_KIND_SLASH_EQ,
                            clone__Location(&self->base.location));
             } else if (c1 == (char *)'*' && c2 == (char *)'*') {
-                CIToken *token = NEW(CIToken,
-                                     CI_TOKEN_KIND_COMMENT_BLOCK,
-                                     clone__Location(&self->base.location));
+                Location location = clone__Location(&self->base.location);
 
                 jump__CIScanner(self, 3);
 
-                return token;
+                return NEW_VARIANT(CIToken,
+                                   comment_doc,
+                                   location,
+                                   scan_comment_doc__CIScanner(self));
             } else if (c1 == (char *)'*') {
                 CIToken *token = NEW(CIToken,
                                      CI_TOKEN_KIND_COMMENT_BLOCK,
@@ -461,6 +681,7 @@ get_token__CIScanner(CIScanner *self)
             return NEW(CIToken,
                        CI_TOKEN_KIND_SLASH,
                        clone__Location(&self->base.location));
+        // ->, -
         case '-':
             if (c1 == (char *)'>') {
                 return NEW(CIToken,
@@ -471,6 +692,123 @@ get_token__CIScanner(CIScanner *self)
             return NEW(CIToken,
                        CI_TOKEN_KIND_MINUS,
                        clone__Location(&self->base.location));
+        // ..., .
+        case '.':
+            if (c1 == (char *)'.' && c2 == (char *)'.') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_DOT_DOT_DOT,
+                           clone__Location(&self->base.location));
+            }
+
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_DOT,
+                       clone__Location(&self->base.location));
+        // ==, =
+        case '=':
+            if (c1 == (char *)'=') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_EQ_EQ,
+                           clone__Location(&self->base.location));
+            }
+
+            return NEW(
+              CIToken, CI_TOKEN_KIND_EQ, clone__Location(&self->base.location));
+        // #
+        case '#':
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_HASHTAG,
+                       clone__Location(&self->base.location));
+        // ^=, ^
+        case '^':
+            if (c1 == (char *)'=') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_HAT_EQ,
+                           clone__Location(&self->base.location));
+            }
+
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_HAT,
+                       clone__Location(&self->base.location));
+        // IDENTIFIER
+        case IS_ID: {
+            String *id = scan_identifier__CIScanner(self);
+            enum CITokenKind kind = get_keyword__CIScanner(id->buffer);
+
+            switch (kind) {
+                case CI_TOKEN_KIND_IDENTIFIER:
+                    return NEW_VARIANT(CIToken,
+                                       identifier,
+                                       clone__Location(&self->base.location),
+                                       id);
+                default:
+                    return NEW(
+                      CIToken, kind, clone__Location(&self->base.location));
+            }
+        }
+        // ?
+        case '?':
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_INTERROGATION,
+                       clone__Location(&self->base.location));
+        // {}, [], ()
+        case '{':
+        case '[':
+        case '(': {
+            char match = self->base.source.cursor.current;
+            CIToken *token = NULL;
+
+            switch (match) {
+                case '{':
+                    token = NEW(CIToken,
+                                CI_TOKEN_KIND_LBRACE,
+                                clone__Location(&self->base.location));
+
+                    break;
+                case '[':
+                    token = NEW(CIToken,
+                                CI_TOKEN_KIND_LHOOK,
+                                clone__Location(&self->base.location));
+
+                    break;
+                case '(':
+                    token = NEW(CIToken,
+                                CI_TOKEN_KIND_LPAREN,
+                                clone__Location(&self->base.location));
+
+                    break;
+                default:
+                    UNREACHABLE("this situation is impossible");
+            }
+
+            if (check_match) {
+                end_token__CIScanner(self,
+                                     self->base.source.cursor.line,
+                                     self->base.source.cursor.column,
+                                     self->base.source.cursor.position);
+                end__Location(&token->location,
+                              self->base.location.end_line,
+                              self->base.location.end_column,
+                              self->base.location.end_position);
+
+                next_char__CIScanner(self);
+                push_token__CIScanner(self, token);
+
+                switch (match) {
+                    case '{':
+                        return get_closing__CIScanner(self, '}');
+                    case '[':
+                        return get_closing__CIScanner(self, ']');
+                    case '(':
+                        return get_closing__CIScanner(self, ')');
+                    default:
+                        UNREACHABLE("this situation is impossible");
+                }
+            }
+
+            return token;
+        }
+        default:
+            TODO("error!!");
     }
 
     return NULL;
@@ -489,7 +827,7 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
                 break;
             }
 
-            CIToken *token = get_token__CIScanner(self);
+            CIToken *token = get_token__CIScanner(self, true);
 
             if (token) {
                 next_char_by_token__CIScanner(self, token);
