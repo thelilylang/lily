@@ -1075,13 +1075,13 @@ skip_comment_block__LilyScanner(LilyScanner *self)
 
     start__Location(&location_error,
                     self->base.source.cursor.line,
-                    self->base.source.cursor.column,
-                    self->base.source.cursor.position);
+                    self->base.source.cursor.column - 2,
+                    self->base.source.cursor.position - 2); // 2 = `/*`
 
     // Check if the comment block is closed. While the current character is not
-    // a `*` or the next character is not a `/`, we continue to scan the comment
-    // block.
-    while (self->base.source.cursor.current != '*' ||
+    // a `*` and the next character is not a `/`, we continue to scan the
+    // comment block.
+    while (self->base.source.cursor.current != '*' &&
            peek_char__LilyScanner(self, 1) != (char *)'/') {
         // Check if the comment block is not closed.
         if (self->base.source.cursor.position >=
