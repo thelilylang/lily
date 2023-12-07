@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include <base/format.h>
 #include <base/color.h>
+#include <base/format.h>
 
 #include <core/cc/ci/diagnostic/error.h>
 
@@ -33,37 +33,41 @@
 char *
 to_msg__CIError(const CIError *self)
 {
-	switch (self->kind) {
-		case CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
-			return "unclosed comment block";
-		case CI_ERROR_KIND_UNCLOSED_COMMENT_DOC:
-			return "unclosed comment doc";
-		case CI_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER:
-			return "mismatched closing delimiter";
-		case CI_ERROR_KIND_UNCLOSED_CHAR_LITERAL:
-			return "unclosed char literal";
-		case CI_ERROR_KIND_INVALID_ESCAPE:
-			return "invalid escape";
-		default:
-			UNREACHABLE("unknown variant");
-	}
+    switch (self->kind) {
+        case CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
+            return "unclosed comment block";
+        case CI_ERROR_KIND_UNCLOSED_COMMENT_DOC:
+            return "unclosed comment doc";
+        case CI_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER:
+            return "mismatched closing delimiter";
+        case CI_ERROR_KIND_UNCLOSED_CHAR_LITERAL:
+            return "unclosed char literal";
+        case CI_ERROR_KIND_INVALID_ESCAPE:
+            return "invalid escape";
+        case CI_ERROR_KIND_UNCLOSED_STRING_LITERAL:
+            return "unclosed string literal";
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 char *
 to_code__CIError(const CIError *self)
 {
-	switch (self->kind) {
-		case CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
-			return "0001";
-		case CI_ERROR_KIND_UNCLOSED_COMMENT_DOC:
-			return "0002";
-		case CI_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER:
-			return "0003";
-		case CI_ERROR_KIND_INVALID_ESCAPE:
-			return "0004";
-		default:
-			UNREACHABLE("unknown variant");
-	}
+    switch (self->kind) {
+        case CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
+            return "0001";
+        case CI_ERROR_KIND_UNCLOSED_COMMENT_DOC:
+            return "0002";
+        case CI_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER:
+            return "0003";
+        case CI_ERROR_KIND_INVALID_ESCAPE:
+            return "0004";
+        case CI_ERROR_KIND_UNCLOSED_STRING_LITERAL:
+            return "0005";
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 char *
