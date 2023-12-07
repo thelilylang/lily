@@ -36,6 +36,10 @@ to_msg__CIError(const CIError *self)
 	switch (self->kind) {
 		case CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
 			return "unclosed comment block";
+		case CI_ERROR_KIND_UNCLOSED_COMMENT_DOC:
+			return "unclosed comment doc";
+		case CI_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER:
+			return "mismatched closing delimiter";
 		default:
 			UNREACHABLE("unknown variant");
 	}
@@ -47,6 +51,10 @@ to_code__CIError(const CIError *self)
 	switch (self->kind) {
 		case CI_ERROR_KIND_UNCLOSED_COMMENT_BLOCK:
 			return "0001";
+		case CI_ERROR_KIND_UNCLOSED_COMMENT_DOC:
+			return "0002";
+		case CI_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER:
+			return "0003";
 		default:
 			UNREACHABLE("unknown variant");
 	}
