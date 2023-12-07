@@ -113,9 +113,17 @@ skip_comment_block__CIScanner(CIScanner *self);
 static String *
 scan_comment_doc__CIScanner(CIScanner *self);
 
+/// @brief Get escape character and other character.
+static String *
+get_character__CIScanner(CIScanner *self, char previous);
+
 /// @brief Scan identifier.
 static String *
 scan_identifier__CIScanner(CIScanner *self);
+
+/// @brief Scan character constant literal.
+static char *
+scan_character__CIScanner(CIScanner *self);
 
 /// @brief Skip and verify if the next character is the target.
 static bool
@@ -490,8 +498,187 @@ scan_comment_doc__CIScanner(CIScanner *self)
 }
 
 String *
+get_character__CIScanner(CIScanner *self, char previous)
+{
+    String *res = NULL;
+    Location location_error = default__Location(self->base.source.file->name);
+
+    start__Location(&location_error,
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
+
+    switch (previous) {
+        case '\\':
+            switch (self->base.source.cursor.current) {
+                // NOTE: For the moment we're using \\ for some escapes, because
+                // for the moment CI is only a transpiler to C.
+                case 'n':
+                    res = from__String("\\n");
+                    break;
+                case 't':
+                    res = from__String("\\t");
+                    break;
+                case 'r':
+                    res = from__String("\\r");
+                    break;
+                case 'b':
+                    res = from__String("\\b");
+                    break;
+                case '\\':
+                    res = from__String("\\");
+                    break;
+                case '\'':
+                    res = from__String("\'");
+                    break;
+                case '\"':
+                    res = from__String("\"");
+                    break;
+                default:
+                    end__Location(&location_error,
+                                  self->base.source.cursor.line,
+                                  self->base.source.cursor.column,
+                                  self->base.source.cursor.position);
+
+                    if (self->base.source.cursor.position >=
+                        self->base.source.file->len - 1) {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->base.source.file,
+                            &location_error,
+                            NEW(LilyError,
+                                LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL),
+                            NULL,
+                            NULL,
+                            NULL),
+                          self->base.count_error);
+                    } else {
+                        emit__Diagnostic(
+                          NEW_VARIANT(
+                            Diagnostic,
+                            simple_lily_error,
+                            self->base.source.file,
+                            &location_error,
+                            NEW(LilyError, LILY_ERROR_KIND_INVALID_ESCAPE),
+                            NULL,
+                            NULL,
+                            NULL),
+                          self->base.count_error);
+
+                        next_char__CIScanner(self);
+                    }
+
+                    return NULL;
+            }
+
+            break;
+        default:
+            res = format__String("{c}", previous);
+            break;
+    }
+
+    if (previous == '\\') {
+        next_char__CIScanner(self);
+    }
+
+    return res;
+}
+
+String *
 scan_identifier__CIScanner(CIScanner *self)
 {
+    String *id = NEW(String);
+
+    while (is_ident__CIScanner(self)) {
+        next_char__CIScanner(self);
+        push__String(id,
+                     self->base.source.file
+                       ->content[self->base.source.cursor.position - 1]);
+    }
+
+    previous_char__CIScanner(self);
+
+    return id;
+}
+
+char *
+scan_character__CIScanner(CIScanner *self)
+{
+    Location location_error = default__Location(self->base.source.file->name);
+
+    start__Location(&location_error,
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
+    next_char__CIScanner(self);
+
+    // Check if the char literal is not closed.
+    if (self->base.source.cursor.current != '\'') {
+        next_char__CIScanner(self);
+
+        char target = self->base.source.cursor.current;
+        String *character = get_character__CIScanner(
+          self,
+          self->base.source.file
+            ->content[self->base.source.cursor.position - 1]);
+
+        end__Location(&location_error,
+                      self->base.source.cursor.line,
+                      self->base.source.cursor.column,
+                      self->base.source.cursor.position);
+
+        // Check if the char literal is not closed.
+        if (target != '\'' && self->base.source.cursor.current != '\'') {
+            emit__Diagnostic(
+              NEW_VARIANT(
+                Diagnostic,
+                simple_lily_error,
+                self->base.source.file,
+                &location_error,
+                NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL),
+                init__Vec(
+                  1, from__String("please close this char literal with `\'`")),
+                NULL,
+                NULL),
+              self->base.count_error);
+
+            if (character) {
+                FREE(String, character);
+            }
+
+            return NULL;
+        }
+
+        if (character) {
+            char *res = (char *)(Uptr)character->buffer[0];
+
+            FREE(String, character);
+
+            return res;
+        }
+
+        return NULL;
+    }
+
+    end__Location(&location_error,
+                  self->base.source.cursor.line,
+                  self->base.source.cursor.column,
+                  self->base.source.cursor.position);
+
+    emit__Diagnostic(
+      NEW_VARIANT(
+        Diagnostic,
+        simple_lily_error,
+        self->base.source.file,
+        &location_error,
+        NEW(LilyError, LILY_ERROR_KIND_UNCLOSED_CHAR_LITERAL),
+        init__Vec(1, from__String("please close this char literal with `\"`")),
+        NULL,
+        from__String("unexpected token here: `'`")),
+      self->base.count_error);
+
     return NULL;
 }
 
@@ -807,6 +994,42 @@ get_token__CIScanner(CIScanner *self, bool check_match)
 
             return token;
         }
+        case '<':
+            if (c1 == (char *)'=') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_LSHIFT_EQ,
+                           clone__Location(&self->base.location));
+            } else if (c1 == (char *)'<' && c2 == (char *)'=') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_LSHIFT_LSHIFT_EQ,
+                           clone__Location(&self->base.location));
+            } else if (c1 == (char *)'<') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_LSHIFT_LSHIFT,
+                           clone__Location(&self->base.location));
+            }
+
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_LSHIFT,
+                       clone__Location(&self->base.location));
+        case IS_ZERO:
+            break;
+        case IS_DIGIT_WITHOUT_ZERO:
+            break;
+        case '\'': {
+            char *res = scan_character__CIScanner(self);
+
+            if (res) {
+                return NEW_VARIANT(CIToken,
+                                   literal_constant_character,
+                                   clone__Location(&self->base.location),
+                                   (char)(Uptr)res);
+            }
+
+            return NULL;
+        }
+        case '\"':
+            break;
         default:
             TODO("error!!");
     }
