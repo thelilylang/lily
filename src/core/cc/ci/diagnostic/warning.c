@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include <base/format.h>
 #include <base/color.h>
+#include <base/format.h>
 
 #include <core/cc/ci/diagnostic/warning.h>
 
@@ -33,23 +33,23 @@
 char *
 to_msg__CIWarning(const CIWarning *self)
 {
-	switch (self->kind) {
-		case CI_WARNING_KIND_UNUSED:
-			return "unused";
-		default:
-			UNREACHABLE("unknown variant");
-	}
+    switch (self->kind) {
+        case CI_WARNING_KIND_UNUSED:
+            return "unused";
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 char *
 to_code__CIWarning(const CIWarning *self)
 {
-	switch (self->kind) {
-		case CI_WARNING_KIND_UNUSED:
-			return "0001";
-		default:
-			UNREACHABLE("unknown variant");
-	}
+    switch (self->kind) {
+        case CI_WARNING_KIND_UNUSED:
+            return "0001";
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 char *

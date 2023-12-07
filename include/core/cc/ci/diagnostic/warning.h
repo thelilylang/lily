@@ -27,14 +27,15 @@
 
 #include <base/macros.h>
 
-enum CIWarningKind {
-	CI_WARNING_KIND_UNUSED
+enum CIWarningKind
+{
+    CI_WARNING_KIND_UNUSED
 };
 
-typedef struct CIWarning {
-	enum CIWarningKind kind;
+typedef struct CIWarning
+{
+    enum CIWarningKind kind;
 } CIWarning;
-
 
 /**
  *
