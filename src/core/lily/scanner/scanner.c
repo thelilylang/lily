@@ -1047,6 +1047,7 @@ get_character__LilyScanner(LilyScanner *self, char previous)
 
                     return NULL;
             }
+
             break;
         default:
             res = format__String("{c}", previous);
