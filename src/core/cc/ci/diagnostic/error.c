@@ -40,6 +40,10 @@ to_msg__CIError(const CIError *self)
 			return "unclosed comment doc";
 		case CI_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER:
 			return "mismatched closing delimiter";
+		case CI_ERROR_KIND_UNCLOSED_CHAR_LITERAL:
+			return "unclosed char literal";
+		case CI_ERROR_KIND_INVALID_ESCAPE:
+			return "invalid escape";
 		default:
 			UNREACHABLE("unknown variant");
 	}
@@ -55,6 +59,8 @@ to_code__CIError(const CIError *self)
 			return "0002";
 		case CI_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER:
 			return "0003";
+		case CI_ERROR_KIND_INVALID_ESCAPE:
+			return "0004";
 		default:
 			UNREACHABLE("unknown variant");
 	}
