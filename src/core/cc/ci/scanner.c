@@ -69,6 +69,12 @@ end_token__CIScanner(CIScanner *self, Usize line, Usize column, Usize position);
 static inline char *
 peek_char__CIScanner(const CIScanner *self, Usize n);
 
+/// @brief Scan and append characters to res while is_valid return true.
+static void
+scan_and_append_chars__CIScanner(CIScanner *self,
+                                 String *res,
+                                 bool (*is_valid)(const CIScanner *self));
+
 /// @brief Check if current is a digit.
 static inline bool
 is_digit__CIScanner(const CIScanner *self);
@@ -128,6 +134,15 @@ scan_character__CIScanner(CIScanner *self);
 /// @brief Scan string constant literal.
 static String *
 scan_string__CIScanner(CIScanner *self);
+
+/// @brief Scan octal constant literal.
+static CIToken *
+scan_hex__CIScanner(CIScanner *self);
+
+/// @brief Scan octal or binary constant literal.
+/// @example 00101, 00334
+static CIToken *
+scan_octal_or_binary__CIScanner(CIScanner *self);
 
 /// @brief Skip and verify if the next character is the target.
 static bool
@@ -252,6 +267,19 @@ peek_char__CIScanner(const CIScanner *self, Usize n)
     return peek_char__Scanner(&self->base, n);
 }
 
+void
+scan_and_append_chars__CIScanner(CIScanner *self,
+                                 String *res,
+                                 bool (*is_valid)(const CIScanner *self))
+{
+    while (is_valid(self)) {
+        next_char__CIScanner(self);
+        push__String(res,
+                     self->base.source.file
+                       ->content[self->base.source.cursor.position - 1]);
+    }
+}
+
 bool
 is_digit__CIScanner(const CIScanner *self)
 {
@@ -338,70 +366,70 @@ get_keyword__CIScanner(const char *id)
 {
     if (!strcmp(id, "auto"))
         return CI_TOKEN_KIND_KEYWORD_AUTO;
-    else if (!strcmp(id, "break"))
+    if (!strcmp(id, "break"))
         return CI_TOKEN_KIND_KEYWORD_BREAK;
-    else if (!strcmp(id, "case"))
+    if (!strcmp(id, "case"))
         return CI_TOKEN_KIND_KEYWORD_CASE;
-    else if (!strcmp(id, "const"))
+    if (!strcmp(id, "const"))
         return CI_TOKEN_KIND_KEYWORD_CONST;
-    else if (!strcmp(id, "continue"))
+    if (!strcmp(id, "continue"))
         return CI_TOKEN_KIND_KEYWORD_CONTINUE;
-    else if (!strcmp(id, "default"))
+    if (!strcmp(id, "default"))
         return CI_TOKEN_KIND_KEYWORD_DEFAULT;
-    else if (!strcmp(id, "do"))
+    if (!strcmp(id, "do"))
         return CI_TOKEN_KIND_KEYWORD_DO;
-    else if (!strcmp(id, "double"))
+    if (!strcmp(id, "double"))
         return CI_TOKEN_KIND_KEYWORD_DOUBLE;
-    else if (!strcmp(id, "else"))
+    if (!strcmp(id, "else"))
         return CI_TOKEN_KIND_KEYWORD_ELSE;
-    else if (!strcmp(id, "enum"))
+    if (!strcmp(id, "enum"))
         return CI_TOKEN_KIND_KEYWORD_ENUM;
-    else if (!strcmp(id, "extern"))
+    if (!strcmp(id, "extern"))
         return CI_TOKEN_KIND_KEYWORD_EXTERN;
-    else if (!strcmp(id, "float"))
+    if (!strcmp(id, "float"))
         return CI_TOKEN_KIND_KEYWORD_FLOAT;
-    else if (!strcmp(id, "for"))
+    if (!strcmp(id, "for"))
         return CI_TOKEN_KIND_KEYWORD_FOR;
-    else if (!strcmp(id, "goto"))
+    if (!strcmp(id, "goto"))
         return CI_TOKEN_KIND_KEYWORD_GOTO;
-    else if (!strcmp(id, "if"))
+    if (!strcmp(id, "if"))
         return CI_TOKEN_KIND_KEYWORD_IF;
-    else if (!strcmp(id, "int"))
+    if (!strcmp(id, "int"))
         return CI_TOKEN_KIND_KEYWORD_INT;
-    else if (!strcmp(id, "long"))
+    if (!strcmp(id, "long"))
         return CI_TOKEN_KIND_KEYWORD_LONG;
-    else if (!strcmp(id, "register"))
+    if (!strcmp(id, "register"))
         return CI_TOKEN_KIND_KEYWORD_REGISTER;
-    else if (!strcmp(id, "return"))
+    if (!strcmp(id, "return"))
         return CI_TOKEN_KIND_KEYWORD_RETURN;
-    else if (!strcmp(id, "short"))
+    if (!strcmp(id, "short"))
         return CI_TOKEN_KIND_KEYWORD_SHORT;
-    else if (!strcmp(id, "signed"))
+    if (!strcmp(id, "signed"))
         return CI_TOKEN_KIND_KEYWORD_SIGNED;
-    else if (!strcmp(id, "sizeof"))
+    if (!strcmp(id, "sizeof"))
         return CI_TOKEN_KIND_KEYWORD_SIZEOF;
-    else if (!strcmp(id, "static"))
+    if (!strcmp(id, "static"))
         return CI_TOKEN_KIND_KEYWORD_STATIC;
-    else if (!strcmp(id, "struct"))
+    if (!strcmp(id, "struct"))
         return CI_TOKEN_KIND_KEYWORD_STRUCT;
-    else if (!strcmp(id, "switch"))
+    if (!strcmp(id, "switch"))
         return CI_TOKEN_KIND_KEYWORD_SWITCH;
-    else if (!strcmp(id, "thread_local"))
+    if (!strcmp(id, "thread_local"))
         return CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL;
-    else if (!strcmp(id, "typedef"))
+    if (!strcmp(id, "typedef"))
         return CI_TOKEN_KIND_KEYWORD_TYPEDEF;
-    else if (!strcmp(id, "union"))
+    if (!strcmp(id, "union"))
         return CI_TOKEN_KIND_KEYWORD_UNION;
-    else if (!strcmp(id, "unsigned"))
+    if (!strcmp(id, "unsigned"))
         return CI_TOKEN_KIND_KEYWORD_UNSIGNED;
-    else if (!strcmp(id, "void"))
+    if (!strcmp(id, "void"))
         return CI_TOKEN_KIND_KEYWORD_VOID;
-    else if (!strcmp(id, "volatile"))
+    if (!strcmp(id, "volatile"))
         return CI_TOKEN_KIND_KEYWORD_VOLATILE;
-    else if (!strcmp(id, "while"))
+    if (!strcmp(id, "while"))
         return CI_TOKEN_KIND_KEYWORD_WHILE;
-    else
-        return CI_TOKEN_KIND_IDENTIFIER;
+
+    return CI_TOKEN_KIND_IDENTIFIER;
 }
 
 void
@@ -596,13 +624,7 @@ scan_identifier__CIScanner(CIScanner *self)
 {
     String *id = NEW(String);
 
-    while (is_ident__CIScanner(self)) {
-        next_char__CIScanner(self);
-        push__String(id,
-                     self->base.source.file
-                       ->content[self->base.source.cursor.position - 1]);
-    }
-
+    scan_and_append_chars__CIScanner(self, id, &is_ident__CIScanner);
     previous_char__CIScanner(self);
 
     return id;
@@ -749,6 +771,45 @@ scan_string__CIScanner(CIScanner *self)
     }
 
     return res;
+}
+
+CIToken *
+scan_hex__CIScanner(CIScanner *self)
+{
+    String *res = NEW(String);
+
+    scan_and_append_chars__CIScanner(self, res, &is_hex__CIScanner);
+    previous_char__CIScanner(self);
+
+    return NEW_VARIANT(CIToken,
+                       literal_constant_hex,
+                       clone__Location(&self->base.location),
+                       res);
+}
+
+CIToken *
+scan_octal_or_binary__CIScanner(CIScanner *self)
+{
+    String *res = NEW(String);
+
+    scan_and_append_chars__CIScanner(self, res, &is_bin__CIScanner);
+
+    if (is_oct__CIScanner(self)) {
+        scan_and_append_chars__CIScanner(self, res, &is_oct__CIScanner);
+        previous_char__CIScanner(self);
+
+        return NEW_VARIANT(CIToken,
+                           literal_constant_octal,
+                           clone__Location(&self->base.location),
+                           res);
+    }
+
+    previous_char__CIScanner(self);
+
+    return NEW_VARIANT(CIToken,
+                       literal_constant_bin,
+                       clone__Location(&self->base.location),
+                       res);
 }
 
 bool
@@ -1082,10 +1143,14 @@ get_token__CIScanner(CIScanner *self, bool check_match)
             return NEW(CIToken,
                        CI_TOKEN_KIND_LSHIFT,
                        clone__Location(&self->base.location));
+
         case IS_ZERO:
             break;
+
+            // number
         case IS_DIGIT_WITHOUT_ZERO:
             break;
+
         case '\'': {
             char *res = scan_character__CIScanner(self);
 
