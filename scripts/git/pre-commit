@@ -15,7 +15,7 @@ make format
 ./scripts/test_samples.sh
 
 # Revert to patch modification
-if [ patch_status == 0 ]
+if [ $patch_status -eq 0 ]
 then
 	cd patches && patch -r ../include/base/macros.h enable_debug.patch > /dev/null
 	cd ..
