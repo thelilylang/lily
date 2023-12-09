@@ -177,6 +177,12 @@ is_bin__LilyScanner(const LilyScanner *self);
 static inline bool
 is_num__LilyScanner(const LilyScanner *self);
 
+/// @brief Scan and append characters to res while is_valid return true.
+static void
+scan_and_append_chars__LilyScanner(LilyScanner *self,
+                                   String *res,
+                                   bool (*is_valid)(const LilyScanner *self));
+
 /// @brief Get escape character and other character.
 static String *
 get_character__LilyScanner(LilyScanner *self, char previous);
@@ -974,6 +980,19 @@ is_num__LilyScanner(const LilyScanner *self)
            self->base.source.cursor.current == '_';
 }
 
+void
+scan_and_append_chars__LilyScanner(LilyScanner *self,
+                                   String *res,
+                                   bool (*is_valid)(const LilyScanner *self))
+{
+    while (is_valid(self)) {
+        next_char__LilyScanner(self);
+        push__String(res,
+                     self->base.source.file
+                       ->content[self->base.source.cursor.position - 1]);
+    }
+}
+
 String *
 get_character__LilyScanner(LilyScanner *self, char previous)
 {
@@ -1140,13 +1159,7 @@ scan_identifier__LilyScanner(LilyScanner *self)
 {
     String *id = NEW(String);
 
-    while (is_ident__LilyScanner(self)) {
-        next_char__LilyScanner(self);
-        push__String(id,
-                     self->base.source.file
-                       ->content[self->base.source.cursor.position - 1]);
-    }
-
+    scan_and_append_chars__LilyScanner(self, id, is_ident__LilyScanner);
     previous_char__LilyScanner(self);
 
     return id;
@@ -1359,7 +1372,8 @@ scan_hex__LilyScanner(LilyScanner *self)
         }
 
         // If the hexadecimal literal is not a hexadecimal literal we push a `0`
-        // character to the hexadecimal literal buffer.
+        // character to the hexadecimal literal buffer, because to avoid an
+        // empty hexadecimal literal.
         if (!is_hex__LilyScanner(self)) {
             push__String(res, '0');
         }
