@@ -5,9 +5,18 @@
 Here's a template of what a commit message looks like:
 
 ```
-[action]<topic>: <short description>
+<action>(<topic>): <short description>
 
 [additional content]
+```
+
+> [!NOTE]
+> The `short description` must be less than 72 characters long.
+
+## Examples
+
+```
+style(core/lily): Beautify files.
 ```
 
 ### Actions
