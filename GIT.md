@@ -19,6 +19,10 @@ Here's a template of what a commit message looks like:
 style(core/lily): Beautify files.
 ```
 
+```
+refactor(core/lily): Improved formatting of diagnostic reports.
+```
+
 ### Actions
 
 - build: Changes that affects the building of the code.
