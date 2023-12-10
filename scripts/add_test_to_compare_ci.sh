@@ -18,8 +18,6 @@ BASE_CWD=$(pwd)
 BASE_STD_DIR="./tests/core/cc/compare/$STD"
 BASE_CI_STD_DIR="./tests/core/cc/compare/ci/$STD"
 
-cd $BASE_STD_DIR
-
 OLD_IFS=$IFS
 IFS="/"
 CURRENT_PATH="."
@@ -28,7 +26,8 @@ read -ra SPLIT_DIR <<< $DIR
 
 for SINGLE_DIR in "${SPLIT_DIR[@]}"
 do
-	mkdir -p $CURRENT_PATH/$SINGLE_DIR
+	mkdir -p "$BASE_STD_DIR/$CURRENT_PATH/$SINGLE_DIR"
+	mkdir -p "$BASE_CI_STD_DIR/$CURRENT_PATH/$SINGLE_DIR"
 	CURRENT_PATH="$CURRENT_PATH/$SINGLE_DIR"
 done
 
@@ -38,12 +37,22 @@ cd $BASE_CWD
 
 FULL_BASE_STD_DIR="$BASE_STD_DIR/$DIR"
 FULL_BASE_CI_STD_DIR="$BASE_CI_STD_DIR/$DIR"
-BACK_COUNT=$(echo -n $BASE_CI_STD_DIR/$DIR | grep -o "/" | wc -l)
+
+BACK_COUNT=$(echo -n $FULL_BASE_CI_STD_DIR | grep -o "/" | wc -l)
 TO_LINK_PATH=".."
 
-mkdir -p $FULL_BASE_STD_DIR && touch $FULL_BASE_STD_DIR/$TEST_NAME.c && mkdir -p $FULL_BASE_CI_STD_DIR && cd $FULL_BASE_CI_STD_DIR
+if [ "$(cd $BASE_CI_STD_DIR/$DIR && pwd && cd $BASE_CWD)" == "$(cd $BASE_CI_STD_DIR && pwd)" ]
+then
+	BACK_COUNT=$(($BACK_COUNT - 3))
+else
+	BACK_COUNT=$(($BACK_COUNT - 2))
+fi
 
-for i in $(seq 0 $(($BACK_COUNT - 2)))
+cd $BASE_CWD
+
+touch $FULL_BASE_STD_DIR/$TEST_NAME.c && cd $FULL_BASE_CI_STD_DIR
+
+for i in $(seq 0 $BACK_COUNT)
 do
 	TO_LINK_PATH="$TO_LINK_PATH/.."
 done
