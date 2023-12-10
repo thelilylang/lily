@@ -1381,6 +1381,9 @@ emit_warning__Diagnostic(Diagnostic self,
         case DIAGNOSTIC_LEVEL_KIND_CC_WARNING:
             code = to_code__CcWarning(&self.level.cc_warning);
             break;
+        case DIAGNOSTIC_LEVEL_KIND_CI_WARNING:
+            code = to_code__CIWarning(&self.level.ci_warning);
+            break;
         case DIAGNOSTIC_LEVEL_KIND_CPP_WARNING:
             code = to_code__CppWarning(&self.level.cpp_warning);
             break;
@@ -1388,7 +1391,7 @@ emit_warning__Diagnostic(Diagnostic self,
             code = to_code__LilyWarning(&self.level.lily_warning);
             break;
         default:
-            UNREACHABLE("expected warning diagnostic");
+            UNREACHABLE("expected warning diagnostic level");
     }
 
     // TODO: Remove the verification after adding the disabled codes in the
@@ -1411,16 +1414,35 @@ emit_warning__Diagnostic(Diagnostic self,
 }
 
 void
+emit_note__Diagnostic(Diagnostic self)
+{
+    switch (self.level.kind) {
+        case DIAGNOSTIC_LEVEL_KIND_CC_NOTE:
+        case DIAGNOSTIC_LEVEL_KIND_CI_NOTE:
+        case DIAGNOSTIC_LEVEL_KIND_CPP_NOTE:
+        case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE:
+            break;
+        default:
+            UNREACHABLE("expected note diagnostic level");
+    }
+
+    PRINTLN("{Sr}", to_string__Diagnostic(&self));
+
+    FREE(Diagnostic, &self);
+}
+
+void
 emit__Diagnostic(Diagnostic self, Usize *count_error)
 {
     switch (self.level.kind) {
         case DIAGNOSTIC_LEVEL_KIND_CC_ERROR:
+        case DIAGNOSTIC_LEVEL_KIND_CI_ERROR:
         case DIAGNOSTIC_LEVEL_KIND_CPP_ERROR:
         case DIAGNOSTIC_LEVEL_KIND_LILY_ERROR:
             *count_error += 1;
             break;
         default:
-            break;
+            UNREACHABLE("expected error diagnostic level");
     }
 
     PRINTLN("{Sr}", to_string__Diagnostic(&self));

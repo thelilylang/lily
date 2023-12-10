@@ -684,7 +684,14 @@ emit_warning__Diagnostic(Diagnostic self,
 
 /**
  *
- * @brief Emit error or note.
+ * @brief Emit note.
+ */
+void
+emit_note__Diagnostic(Diagnostic self);
+
+/**
+ *
+ * @brief Emit error.
  */
 void
 emit__Diagnostic(Diagnostic self, Usize *count_error);
