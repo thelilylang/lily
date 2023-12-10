@@ -28,6 +28,7 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/cc/ci/features.h>
 #include <core/cc/ci/token.h>
 #include <core/shared/scanner.h>
 
@@ -35,16 +36,22 @@ typedef struct CIScanner
 {
     Vec *tokens; // Vec<CIToken*>*
     Scanner base;
+    enum CIStandard standard;
 } CIScanner;
 
 /**
  *
  * @brief Construct CIScanner type.
  */
-inline CONSTRUCTOR(CIScanner, CIScanner, Source source, Usize *count_error)
+inline CONSTRUCTOR(CIScanner,
+                   CIScanner,
+                   Source source,
+                   Usize *count_error,
+                   enum CIStandard standard)
 {
     return (CIScanner){ .tokens = NEW(Vec),
-                        .base = NEW(Scanner, source, count_error) };
+                        .base = NEW(Scanner, source, count_error),
+                        .standard = standard };
 }
 
 /**

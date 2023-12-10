@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-#include <core/cc/ci/features.h>
 #include <core/cc/ci/scanner.h>
 #include <core/shared/diagnostic.h>
 
@@ -95,6 +94,10 @@ is_oct__CIScanner(const CIScanner *self);
 static inline bool
 is_bin__CIScanner(const CIScanner *self);
 
+/// @brief Check if current can be a binary.
+static inline bool
+is_num__CIScanner(const CIScanner *self);
+
 /// @brief Push token to tokens.
 static inline void
 push_token__CIScanner(CIScanner *self, CIToken *token);
@@ -143,6 +146,14 @@ scan_hex__CIScanner(CIScanner *self);
 /// @example 00101, 00334
 static CIToken *
 scan_octal_or_binary__CIScanner(CIScanner *self);
+
+/// @brief Scan number (decimal and float).
+static CIToken *
+scan_num__CIScanner(CIScanner *self);
+
+/// @brief Scan all numbers (hexadecimal, octal, binary, decimal and float).
+static CIToken *
+get_num__CIScanner(CIScanner *self);
 
 /// @brief Skip and verify if the next character is the target.
 static bool
@@ -321,6 +332,17 @@ is_bin__CIScanner(const CIScanner *self)
 {
     return self->base.source.cursor.current >= '0' &&
            self->base.source.cursor.current <= '1';
+}
+
+bool
+is_num__CIScanner(const CIScanner *self)
+{
+    return is_digit__CIScanner(self) ||
+           (self->base.source.cursor.current == '.' &&
+            peek_char__CIScanner(self, 1) != (char *)'.') ||
+           self->base.source.cursor.current == 'e' ||
+           self->base.source.cursor.current == 'E' ||
+           self->base.source.cursor.current == '_';
 }
 
 void
@@ -812,6 +834,150 @@ scan_octal_or_binary__CIScanner(CIScanner *self)
                        res);
 }
 
+CIToken *
+scan_num__CIScanner(CIScanner *self)
+{
+    String *res = NEW(String);
+    bool is_float = false;
+    bool is_scientific = false;
+    Location location_error = default__Location(self->base.source.file->name);
+
+    start__Location(&location_error,
+                    self->base.source.cursor.line,
+                    self->base.source.cursor.column,
+                    self->base.source.cursor.position);
+
+    while (is_num__CIScanner(self)) {
+        // Check if the float literal is valid. If the current character is `.`
+        // and the number is not a float, we continue to scan the float,
+        // otherwise we emit an error.
+        if (self->base.source.cursor.current == '.' && !is_float) {
+            is_float = true;
+        } else if (self->base.source.cursor.current == '.' && is_float) {
+            start__Location(&location_error,
+                            self->base.source.cursor.line,
+                            self->base.source.cursor.column,
+                            self->base.source.cursor.position);
+            end__Location(&location_error,
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
+
+            next_char__CIScanner(self);
+
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->base.source.file,
+                          &location_error,
+                          NEW(LilyError, LILY_ERROR_KIND_INVALID_FLOAT_LITERAL),
+                          NULL,
+                          NULL,
+                          from__String("in a float literal it is forbidden to "
+                                       "add more than one `.`")),
+              self->base.count_error);
+
+            FREE(String, res);
+
+            return NULL;
+        }
+
+        // Check if the scientific notation is valid. If the current character
+        // is `e` or `E` and the number is not a scientific notation, we
+        // continue to scan the scientific notation, otherwise we emit an error.
+        if ((self->base.source.cursor.current == 'e' ||
+             self->base.source.cursor.current == 'E') &&
+            !is_scientific) {
+            push__String(res, self->base.source.cursor.current);
+            is_scientific = true;
+            next_char__CIScanner(self);
+
+            if (self->base.source.cursor.current == '-' ||
+                self->base.source.cursor.current == '+') {
+                push__String(res, self->base.source.cursor.current);
+                next_char__CIScanner(self);
+            }
+        } else if ((self->base.source.cursor.current == 'e' ||
+                    self->base.source.cursor.current == 'E') &&
+                   is_scientific) {
+            start__Location(&location_error,
+                            self->base.source.cursor.line,
+                            self->base.source.cursor.column,
+                            self->base.source.cursor.position);
+            end__Location(&location_error,
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
+
+            next_char__CIScanner(self);
+
+            emit__Diagnostic(
+              NEW_VARIANT(Diagnostic,
+                          simple_lily_error,
+                          self->base.source.file,
+                          &location_error,
+                          NEW(LilyError, LILY_ERROR_KIND_INVALID_FLOAT_LITERAL),
+                          NULL,
+                          NULL,
+                          from__String("in a float literal it is forbidden to "
+                                       "add more than one `e` or `E`")),
+              self->base.count_error);
+
+            FREE(String, res);
+
+            return NULL;
+        }
+
+        if (self->base.source.cursor.current != '_') {
+            push__String(res, self->base.source.cursor.current);
+        }
+
+        next_char__CIScanner(self);
+    }
+
+    previous_char__CIScanner(self);
+
+    if (is_float || is_scientific) {
+        end__Location(&location_error,
+                      self->base.source.cursor.line,
+                      self->base.source.cursor.column,
+                      self->base.source.cursor.position);
+        return NEW_VARIANT(CIToken,
+                           literal_constant_float,
+                           clone__Location(&self->base.location),
+                           res);
+    }
+
+    return NEW_VARIANT(CIToken,
+                       literal_constant_int,
+                       clone__Location(&self->base.location),
+                       res);
+}
+
+CIToken *
+get_num__CIScanner(CIScanner *self)
+{
+    switch (self->base.source.cursor.current) {
+        // 00, 0x
+        case '0': {
+            char *c1 = peek_char__CIScanner(self, 1);
+
+            if (c1 == (char *)'x') {
+                jump__CIScanner(self, 2);
+                return scan_hex__CIScanner(self);
+            } else if (c1 == (char *)'0') {
+                jump__CIScanner(self, 2);
+                return scan_octal_or_binary__CIScanner(self);
+            } else {
+                return scan_num__CIScanner(self);
+            }
+        }
+        // 1-9
+        default:
+            return scan_num__CIScanner(self);
+    }
+}
+
 bool
 skip_and_verify__CIScanner(CIScanner *self, char target)
 {
@@ -965,6 +1131,33 @@ get_token__CIScanner(CIScanner *self, bool check_match)
         // COMMENT_LINE, /= COMMENT_BLOCK, COMMENT_DOC, /
         case '/':
             if (c1 == (char *)'/') {
+                if (self->standard >= CI_STANDARD_99) {
+                    Location location_error =
+                      clone__Location(&self->base.location);
+
+                    end__Location(&location_error,
+                                  self->base.source.cursor.line,
+                                  self->base.source.cursor.column,
+                                  self->base.source.cursor.position);
+                    emit__Diagnostic(
+                      NEW_VARIANT(
+                        Diagnostic,
+                        simple_ci_error,
+                        self->base.source.file,
+                        &location_error,
+                        NEW(CIError, CI_ERROR_KIND_REQUIRED_C99_OR_LATER),
+                        init__Vec(
+                          1,
+                          from__String(
+                            "use multi-block comment instead of comment line")),
+                        NULL,
+                        NULL),
+                      self->base.count_error);
+                    skip_comment_line__CIScanner(self);
+
+                    return NULL;
+                }
+
                 CIToken *token = NEW(CIToken,
                                      CI_TOKEN_KIND_COMMENT_LINE,
                                      clone__Location(&self->base.location));
@@ -1057,6 +1250,7 @@ get_token__CIScanner(CIScanner *self, bool check_match)
                                        identifier,
                                        clone__Location(&self->base.location),
                                        id);
+                // case CI_TOKEN_KIND_KEYWORD_
                 default:
                     return NEW(
                       CIToken, kind, clone__Location(&self->base.location));
@@ -1145,11 +1339,30 @@ get_token__CIScanner(CIScanner *self, bool check_match)
                        clone__Location(&self->base.location));
 
         case IS_ZERO:
-            break;
+            if (c1 == (char *)'x' || c1 == (char *)'0' || c1 == (char *)'.' ||
+                !(c1 >= (char *)'0' && c1 <= (char *)'9')) {
+                return get_num__CIScanner(self);
+            }
 
-            // number
+            while (self->base.source.cursor.current == '0') {
+                next_char__CIScanner(self);
+            }
+
+            if (self->base.source.cursor.current != '.' &&
+                !(self->base.source.cursor.current >= '0' &&
+                  self->base.source.cursor.current <= '9')) {
+                previous_char__CIScanner(self);
+                return NEW_VARIANT(CIToken,
+                                   literal_constant_int,
+                                   clone__Location(&self->base.location),
+                                   from__String("0"));
+            }
+
+            return get_num__CIScanner(self);
+
+        // number
         case IS_DIGIT_WITHOUT_ZERO:
-            break;
+            return get_num__CIScanner(self);
 
         case '\'': {
             char *res = scan_character__CIScanner(self);
