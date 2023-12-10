@@ -177,6 +177,7 @@ format:
 	${CLANG_FORMAT} ./tests/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/scanner/*.c
 	${CMAKE_FORMAT} ./CMakeLists.txt
+	${CMAKE_FORMAT} ./src/core/cc/ci/CMakeLists.txt
 	
 
 # TODO: try to port -pg on CMake config
