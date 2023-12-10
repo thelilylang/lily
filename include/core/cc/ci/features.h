@@ -27,12 +27,12 @@
 
 enum CIStandard
 {
-    CI_STANDARD_89,
-    CI_STANDARD_95,
-    CI_STANDARD_99,
-    CI_STANDARD_11,
-    CI_STANDARD_17,
-    CI_STANDARD_23,
+    CI_STANDARD_89 = 0,
+    CI_STANDARD_95 = 1,
+    CI_STANDARD_99 = 2,
+    CI_STANDARD_11 = 3,
+    CI_STANDARD_17 = 4,
+    CI_STANDARD_23 = 5,
 };
 
 // TODO: When we move ci scanner dependencies in src/core/cc or include/core/cc
