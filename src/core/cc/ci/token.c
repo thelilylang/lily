@@ -23,7 +23,13 @@
  */
 
 #include <base/alloc.h>
+#include <base/macros.h>
 #include <base/new.h>
+
+#ifdef ENV_DEBUG
+#include <base/format.h>
+#include <base/print.h>
+#endif
 
 #include <core/cc/ci/token.h>
 
@@ -256,8 +262,16 @@ to_string__LilyToken(CIToken *self)
             return format__String("IDENTIFIER({S})", self->identifier);
         case CI_TOKEN_KIND_INTERROGATION:
             return from__String("?");
+        case CI_TOKEN_KIND_KEYWORD_ALIGNOF:
+            return from__String("alignof");
+        case CI_TOKEN_KIND_KEYWORD_ALIGNAS:
+            return from__String("alignas");
+        case CI_TOKEN_KIND_KEYWORD_ASM:
+            return from__String("asm");
         case CI_TOKEN_KIND_KEYWORD_AUTO:
             return from__String("auto");
+        case CI_TOKEN_KIND_KEYWORD_BOOL:
+            return from__String("bool");
         case CI_TOKEN_KIND_KEYWORD_BREAK:
             return from__String("break");
         case CI_TOKEN_KIND_KEYWORD_CASE:
@@ -266,6 +280,8 @@ to_string__LilyToken(CIToken *self)
             return from__String("char");
         case CI_TOKEN_KIND_KEYWORD_CONST:
             return from__String("const");
+        case CI_TOKEN_KIND_KEYWORD_CONSTEXPR:
+            return from__String("constexpr");
         case CI_TOKEN_KIND_KEYWORD_CONTINUE:
             return from__String("continue");
         case CI_TOKEN_KIND_KEYWORD_DEFAULT:
@@ -280,6 +296,8 @@ to_string__LilyToken(CIToken *self)
             return from__String("enum");
         case CI_TOKEN_KIND_KEYWORD_EXTERN:
             return from__String("extern");
+        case CI_TOKEN_KIND_KEYWORD_FALSE:
+            return from__String("false");
         case CI_TOKEN_KIND_KEYWORD_FLOAT:
             return from__String("float");
         case CI_TOKEN_KIND_KEYWORD_FOR:
@@ -288,12 +306,18 @@ to_string__LilyToken(CIToken *self)
             return from__String("goto");
         case CI_TOKEN_KIND_KEYWORD_IF:
             return from__String("if");
+        case CI_TOKEN_KIND_KEYWORD_INLINE:
+            return from__String("inline");
         case CI_TOKEN_KIND_KEYWORD_INT:
             return from__String("int");
         case CI_TOKEN_KIND_KEYWORD_LONG:
             return from__String("long");
+        case CI_TOKEN_KIND_KEYWORD_NULLPTR:
+            return from__String("nullptr");
         case CI_TOKEN_KIND_KEYWORD_REGISTER:
             return from__String("register");
+        case CI_TOKEN_KIND_KEYWORD_RESTRICT:
+            return from__String("restrict");
         case CI_TOKEN_KIND_KEYWORD_RETURN:
             return from__String("return");
         case CI_TOKEN_KIND_KEYWORD_SHORT:
@@ -304,6 +328,8 @@ to_string__LilyToken(CIToken *self)
             return from__String("sizeof");
         case CI_TOKEN_KIND_KEYWORD_STATIC:
             return from__String("static");
+        case CI_TOKEN_KIND_KEYWORD_STATIC_ASSERT:
+            return from__String("static_assert");
         case CI_TOKEN_KIND_KEYWORD_STRUCT:
             return from__String("struct");
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
@@ -312,6 +338,10 @@ to_string__LilyToken(CIToken *self)
             return from__String("thread_local");
         case CI_TOKEN_KIND_KEYWORD_TYPEDEF:
             return from__String("typedef");
+        case CI_TOKEN_KIND_KEYWORD_TYPEOF:
+            return from__String("typeof");
+        case CI_TOKEN_KIND_KEYWORD_TYPEOF_UNQUAL:
+            return from__String("typeof_unqual");
         case CI_TOKEN_KIND_KEYWORD_UNION:
             return from__String("union");
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
@@ -322,6 +352,34 @@ to_string__LilyToken(CIToken *self)
             return from__String("volatile");
         case CI_TOKEN_KIND_KEYWORD_WHILE:
             return from__String("while");
+        case CI_TOKEN_KIND_KEYWORD__ALIGNAS:
+            return from__String("_Alignas");
+        case CI_TOKEN_KIND_KEYWORD__ALIGNOF:
+            return from__String("_Alignof");
+        case CI_TOKEN_KIND_KEYWORD__ATOMIC:
+            return from__String("_Atomic");
+        case CI_TOKEN_KIND_KEYWORD__BITINT:
+            return from__String("_BitInt");
+        case CI_TOKEN_KIND_KEYWORD__BOOL:
+            return from__String("_Bool");
+        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
+            return from__String("_Complex");
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
+            return from__String("_Decimal128");
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
+            return from__String("_Decimal32");
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
+            return from__String("_Decimal64");
+        case CI_TOKEN_KIND_KEYWORD__GENERIC:
+            return from__String("_Generic");
+        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
+            return from__String("_Imaginary");
+        case CI_TOKEN_KIND_KEYWORD__NORETURN:
+            return from__String("_Noreturn");
+        case CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT:
+            return from__String("_Static_assert");
+        case CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL:
+            return from__String("_Thread_local");
         case CI_TOKEN_KIND_LBRACE:
             return from__String("{");
         case CI_TOKEN_KIND_LHOOK:
@@ -401,6 +459,8 @@ to_string__LilyToken(CIToken *self)
             return from__String("~");
         case CI_TOKEN_KIND_WAVE_EQ:
             return from__String("~=");
+        case CI_TOKEN_KIND_MAX:
+            UNREACHABLE("this token is not used");
         default:
             UNREACHABLE("unknown variant");
     }
@@ -459,8 +519,16 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_IDENTIFIER";
         case CI_TOKEN_KIND_INTERROGATION:
             return "CI_TOKEN_KIND_INTERROGATION";
+        case CI_TOKEN_KIND_KEYWORD_ALIGNAS:
+            return "CI_TOKEN_KIND_KEYWORD_ALIGNAS";
+        case CI_TOKEN_KIND_KEYWORD_ALIGNOF:
+            return "CI_TOKEN_KIND_KEYWORD_ALIGNOF";
+        case CI_TOKEN_KIND_KEYWORD_ASM:
+            return "CI_TOKEN_KIND_KEYWORD_ASM";
         case CI_TOKEN_KIND_KEYWORD_AUTO:
             return "CI_TOKEN_KIND_KEYWORD_AUTO";
+        case CI_TOKEN_KIND_KEYWORD_BOOL:
+            return "CI_TOKEN_KIND_KEYWORD_BOOL";
         case CI_TOKEN_KIND_KEYWORD_BREAK:
             return "CI_TOKEN_KIND_KEYWORD_BREAK";
         case CI_TOKEN_KIND_KEYWORD_CASE:
@@ -469,6 +537,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_CHAR";
         case CI_TOKEN_KIND_KEYWORD_CONST:
             return "CI_TOKEN_KIND_KEYWORD_CONST";
+        case CI_TOKEN_KIND_KEYWORD_CONSTEXPR:
+            return "CI_TOKEN_KIND_KEYWORD_CONSTEXPR";
         case CI_TOKEN_KIND_KEYWORD_CONTINUE:
             return "CI_TOKEN_KIND_KEYWORD_CONTINUE";
         case CI_TOKEN_KIND_KEYWORD_DEFAULT:
@@ -483,6 +553,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_ENUM";
         case CI_TOKEN_KIND_KEYWORD_EXTERN:
             return "CI_TOKEN_KIND_KEYWORD_EXTERN";
+        case CI_TOKEN_KIND_KEYWORD_FALSE:
+            return "CI_TOKEN_KIND_KEYWORD_FALSE";
         case CI_TOKEN_KIND_KEYWORD_FLOAT:
             return "CI_TOKEN_KIND_KEYWORD_FLOAT";
         case CI_TOKEN_KIND_KEYWORD_FOR:
@@ -491,12 +563,18 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_GOTO";
         case CI_TOKEN_KIND_KEYWORD_IF:
             return "CI_TOKEN_KIND_KEYWORD_IF";
+        case CI_TOKEN_KIND_KEYWORD_INLINE:
+            return "CI_TOKEN_KIND_KEYWORD_INLINE";
         case CI_TOKEN_KIND_KEYWORD_INT:
             return "CI_TOKEN_KIND_KEYWORD_INT";
         case CI_TOKEN_KIND_KEYWORD_LONG:
             return "CI_TOKEN_KIND_KEYWORD_LONG";
+        case CI_TOKEN_KIND_KEYWORD_NULLPTR:
+            return "CI_TOKEN_KIND_KEYWORD_NULLPTR";
         case CI_TOKEN_KIND_KEYWORD_REGISTER:
             return "CI_TOKEN_KIND_KEYWORD_REGISTER";
+        case CI_TOKEN_KIND_KEYWORD_RESTRICT:
+            return "CI_TOKEN_KIND_KEYWORD_RESTRICT";
         case CI_TOKEN_KIND_KEYWORD_RETURN:
             return "CI_TOKEN_KIND_KEYWORD_RETURN";
         case CI_TOKEN_KIND_KEYWORD_SHORT:
@@ -507,6 +585,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_SIZEOF";
         case CI_TOKEN_KIND_KEYWORD_STATIC:
             return "CI_TOKEN_KIND_KEYWORD_STATIC";
+        case CI_TOKEN_KIND_KEYWORD_STATIC_ASSERT:
+            return "CI_TOKEN_KIND_KEYWORD_STATIC_ASSERT";
         case CI_TOKEN_KIND_KEYWORD_STRUCT:
             return "CI_TOKEN_KIND_KEYWORD_STRUCT";
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
@@ -515,6 +595,10 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL";
         case CI_TOKEN_KIND_KEYWORD_TYPEDEF:
             return "CI_TOKEN_KIND_KEYWORD_TYPEDEF";
+        case CI_TOKEN_KIND_KEYWORD_TYPEOF:
+            return "CI_TOKEN_KIND_KEYWORD_TYPEOF";
+        case CI_TOKEN_KIND_KEYWORD_TYPEOF_UNQUAL:
+            return "CI_TOKEN_KIND_KEYWORD_TYPEOF_UNQUAL";
         case CI_TOKEN_KIND_KEYWORD_UNION:
             return "CI_TOKEN_KIND_KEYWORD_UNION";
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
@@ -525,6 +609,34 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_VOLATILE";
         case CI_TOKEN_KIND_KEYWORD_WHILE:
             return "CI_TOKEN_KIND_KEYWORD_WHILE";
+        case CI_TOKEN_KIND_KEYWORD__ALIGNAS:
+            return "CI_TOKEN_KIND_KEYWORD__ALIGNAS";
+        case CI_TOKEN_KIND_KEYWORD__ALIGNOF:
+            return "CI_TOKEN_KIND_KEYWORD__ALIGNOF";
+        case CI_TOKEN_KIND_KEYWORD__ATOMIC:
+            return "CI_TOKEN_KIND_KEYWORD__ATOMIC";
+        case CI_TOKEN_KIND_KEYWORD__BITINT:
+            return "CI_TOKEN_KIND_KEYWORD__BITINT";
+        case CI_TOKEN_KIND_KEYWORD__BOOL:
+            return "CI_TOKEN_KIND_KEYWORD__BOOL";
+        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
+            return "CI_TOKEN_KIND_KEYWORD__COMPLEX";
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
+            return "CI_TOKEN_KIND_KEYWORD__DECIMAL128";
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
+            return "CI_TOKEN_KIND_KEYWORD__DECIMAL32";
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
+            return "CI_TOKEN_KIND_KEYWORD__DECIMAL64";
+        case CI_TOKEN_KIND_KEYWORD__GENERIC:
+            return "CI_TOKEN_KIND_KEYWORD__GENERIC";
+        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
+            return "CI_TOKEN_KIND_KEYWORD__IMAGINARY";
+        case CI_TOKEN_KIND_KEYWORD__NORETURN:
+            return "CI_TOKEN_KIND_KEYWORD__NORETURN";
+        case CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT:
+            return "CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT";
+        case CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL:
+            return "CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL";
         case CI_TOKEN_KIND_LBRACE:
             return "CI_TOKEN_KIND_LBRACE";
         case CI_TOKEN_KIND_LHOOK:
@@ -597,6 +709,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_WAVE";
         case CI_TOKEN_KIND_WAVE_EQ:
             return "CI_TOKEN_KIND_WAVE_EQ";
+        case CI_TOKEN_KIND_MAX:
+            UNREACHABLE("this token is not used");
         default:
             UNREACHABLE("unknown variant");
     }
@@ -611,61 +725,61 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
         case CI_TOKEN_KIND_COMMENT_DOC:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, comment_doc = {S} }",
-              CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+              CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->comment_doc);
         case CI_TOKEN_KIND_IDENTIFIER:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, identifier = {S} }",
-              CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+              CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->identifier);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_int = {S} }",
-                          CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_int);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_float = {S} }",
-                          CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_float);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_octal = {S} }",
-                          CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_octal);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_hex = {S} }",
-                          CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_hex);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_bin = {S} }",
-                          CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_bin);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_character = {c} }",
-                          CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_character);
-        case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING;
-          return format("LilyToken{{ kind = {s}, location = {sa}, "
-                        "literal_constant_string = {S} }",
-                        CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
-                        CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                        self->literal_constant_character);
-          default:
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "literal_constant_string = {S} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->literal_constant_character);
+        default:
             return format(
               "LilyToken{{ kind = {s}, location = {sa} }",
-              CALL_DEBUG_IMPL(to_string, LilyTokenKind, self->kind),
+              CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location));
     }
 }
