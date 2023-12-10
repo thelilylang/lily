@@ -875,8 +875,9 @@ set(LILY_CORE_SHARED
 
 add_library(lily_core_shared STATIC ${LILY_CORE_SHARED})
 target_link_libraries(
-  lily_core_shared PRIVATE lily_base lily_core_lily_diagnostic
-                           lily_core_cc_diagnostic lily_core_cpp_diagnostic)
+  lily_core_shared
+  PRIVATE lily_base lily_core_lily_diagnostic lily_core_cc_diagnostic
+          lily_core_cc_ci_diagnostic lily_core_cpp_diagnostic)
 target_include_directories(lily_core_shared PRIVATE ${LILY_INCLUDE})
 
 add_executable(lily ${CMAKE_SOURCE_DIR}/src/bin/lily/main.c)
