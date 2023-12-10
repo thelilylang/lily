@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
+
 #include <core/cc/ci/scanner.h>
 #include <core/shared/diagnostic.h>
 
@@ -163,9 +165,256 @@ skip_and_verify__CIScanner(CIScanner *self, char target);
 static CIToken *
 get_closing__CIScanner(CIScanner *self, char target);
 
+/// @brief Check that the token is available in accordance with the standard.
+/// @note This function can modify the token type.
+static void
+check_standard(CIScanner *self, CIToken *token);
+
 /// @brief Get token from characters.
 static CIToken *
 get_token__CIScanner(CIScanner *self, bool check_match);
+
+static CIFeature tokens_feature[] = {
+    [CI_TOKEN_KIND_AMPERSAND] = { .since = CI_STANDARD_NONE,
+                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_AMPERSAND_AMPERSAND] = { .since = CI_STANDARD_NONE,
+                                            .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_AMPERSAND_EQ] = { .since = CI_STANDARD_NONE,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_ARROW] = { .since = CI_STANDARD_NONE,
+                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_BANG] = { .since = CI_STANDARD_NONE,
+                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_BANG_EQ] = { .since = CI_STANDARD_NONE,
+                                .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_BAR] = { .since = CI_STANDARD_NONE,
+                            .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_BAR_BAR] = { .since = CI_STANDARD_NONE,
+                                .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_BAR_EQ] = { .since = CI_STANDARD_NONE,
+                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_COLON] = { .since = CI_STANDARD_NONE,
+                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_COMMA] = { .since = CI_STANDARD_NONE,
+                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_COMMENT_LINE] = { .since = CI_STANDARD_99,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_COMMENT_BLOCK] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_COMMENT_DOC] = { .since = CI_STANDARD_NONE,
+                                    .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_DOT] = { .since = CI_STANDARD_NONE,
+                            .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_DOT_DOT_DOT] = { .since = CI_STANDARD_NONE,
+                                    .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_EOF] = { .since = CI_STANDARD_NONE,
+                            .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_EQ] = { .since = CI_STANDARD_NONE,
+                           .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_EQ_EQ] = { .since = CI_STANDARD_NONE,
+                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_HASHTAG] = { .since = CI_STANDARD_NONE,
+                                .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_HAT] = { .since = CI_STANDARD_NONE,
+                            .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_HAT_EQ] = { .since = CI_STANDARD_NONE,
+                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_IDENTIFIER] = { .since = CI_STANDARD_NONE,
+                                   .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_INTERROGATION] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_ALIGNAS] = { .since = CI_STANDARD_23,
+                                        .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_ALIGNOF] = { .since = CI_STANDARD_23,
+                                        .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_ASM] = { .since =
+                                      CI_STANDARD_NONE, // NOTE: The asm keyword
+                                                        // is an extension, so
+                                                        // in some compilers it
+                                                        // may be potentially
+                                                        // incompatible.
+                                    .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_AUTO] = { .since = CI_STANDARD_NONE,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_BOOL] = { .since = CI_STANDARD_23,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_BREAK] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_CASE] = { .since = CI_STANDARD_NONE,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_CHAR] = { .since = CI_STANDARD_NONE,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_CONST] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_CONSTEXPR] = { .since = CI_STANDARD_23,
+                                          .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_CONTINUE] = { .since = CI_STANDARD_NONE,
+                                         .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_DEFAULT] = { .since = CI_STANDARD_NONE,
+                                        .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_DO] = { .since = CI_STANDARD_NONE,
+                                   .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_DOUBLE] = { .since = CI_STANDARD_NONE,
+                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_ELSE] = { .since = CI_STANDARD_NONE,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_ENUM] = { .since = CI_STANDARD_NONE,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_EXTERN] = { .since = CI_STANDARD_NONE,
+                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_FALSE] = { .since = CI_STANDARD_23,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_FLOAT] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_FOR] = { .since = CI_STANDARD_NONE,
+                                    .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_GOTO] = { .since = CI_STANDARD_NONE,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_IF] = { .since = CI_STANDARD_NONE,
+                                   .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_INLINE] = { .since = CI_STANDARD_99,
+                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_INT] = { .since = CI_STANDARD_NONE,
+                                    .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_LONG] = { .since = CI_STANDARD_NONE,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_NULLPTR] = { .since = CI_STANDARD_23,
+                                        .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_REGISTER] = { .since = CI_STANDARD_NONE,
+                                         .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_RESTRICT] = { .since = CI_STANDARD_99,
+                                         .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_RETURN] = { .since = CI_STANDARD_NONE,
+                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_SHORT] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_SIGNED] = { .since = CI_STANDARD_NONE,
+                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_SIZEOF] = { .since = CI_STANDARD_NONE,
+                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_STATIC] = { .since = CI_STANDARD_NONE,
+                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_STATIC_ASSERT] = { .since = CI_STANDARD_23,
+                                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_STRUCT] = { .since = CI_STANDARD_NONE,
+                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_SWITCH] = { .since = CI_STANDARD_NONE,
+                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL] = { .since = CI_STANDARD_23,
+                                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_TYPEDEF] = { .since = CI_STANDARD_NONE,
+                                        .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_TYPEOF] = { .since = CI_STANDARD_23,
+                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_TYPEOF_UNQUAL] = { .since = CI_STANDARD_23,
+                                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_UNION] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_UNSIGNED] = { .since = CI_STANDARD_NONE,
+                                         .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_VOID] = { .since = CI_STANDARD_NONE,
+                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_VOLATILE] = { .since = CI_STANDARD_NONE,
+                                         .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_WHILE] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__ALIGNAS] = { .since = CI_STANDARD_11,
+                                         .until = CI_STANDARD_23 },
+    [CI_TOKEN_KIND_KEYWORD__ALIGNOF] = { .since = CI_STANDARD_11,
+                                         .until = CI_STANDARD_23 },
+    [CI_TOKEN_KIND_KEYWORD__ATOMIC] = { .since = CI_STANDARD_11,
+                                        .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__BITINT] = { .since = CI_STANDARD_23,
+                                        .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__BOOL] = { .since = CI_STANDARD_99,
+                                      .until = CI_STANDARD_23 },
+    [CI_TOKEN_KIND_KEYWORD__COMPLEX] = { .since = CI_STANDARD_99,
+                                         .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__DECIMAL128] = { .since = CI_STANDARD_23,
+                                            .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__GENERIC] = { .since = CI_STANDARD_11,
+                                         .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__IMAGINARY] = { .since = CI_STANDARD_99,
+                                           .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__NORETURN] = { .since = CI_STANDARD_11,
+                                          .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT] = { .since = CI_STANDARD_11,
+                                               .until = CI_STANDARD_23 },
+    [CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL] = { .since = CI_STANDARD_11,
+                                              .until = CI_STANDARD_23 },
+    [CI_TOKEN_KIND_LBRACE] = { .since = CI_STANDARD_NONE,
+                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LHOOK] = { .since = CI_STANDARD_NONE,
+                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LPAREN] = { .since = CI_STANDARD_NONE,
+                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LSHIFT] = { .since = CI_STANDARD_NONE,
+                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LSHIFT_EQ] = { .since = CI_STANDARD_NONE,
+                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LSHIFT_LSHIFT] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LSHIFT_LSHIFT_EQ] = { .since = CI_STANDARD_NONE,
+                                         .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LITERAL_CONSTANT_INT] = { .since = CI_STANDARD_NONE,
+                                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT] = { .since = CI_STANDARD_NONE,
+                                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL] = { .since = CI_STANDARD_NONE,
+                                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LITERAL_CONSTANT_HEX] = { .since = CI_STANDARD_NONE,
+                                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LITERAL_CONSTANT_BIN] = { .since = CI_STANDARD_NONE,
+                                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER] = { .since = CI_STANDARD_NONE,
+                                                   .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_LITERAL_CONSTANT_STRING] = { .since = CI_STANDARD_NONE,
+                                                .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_MINUS] = { .since = CI_STANDARD_NONE,
+                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_MINUS_EQ] = { .since = CI_STANDARD_NONE,
+                                 .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_MINUS_MINUS] = { .since = CI_STANDARD_NONE,
+                                    .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_PERCENTAGE] = { .since = CI_STANDARD_NONE,
+                                   .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_PERCENTAGE_EQ] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_PLUS] = { .since = CI_STANDARD_NONE,
+                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_PLUS_EQ] = { .since = CI_STANDARD_NONE,
+                                .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_PLUS_PLUS] = { .since = CI_STANDARD_NONE,
+                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_RBRACE] = { .since = CI_STANDARD_NONE,
+                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_RHOOK] = { .since = CI_STANDARD_NONE,
+                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_RPAREN] = { .since = CI_STANDARD_NONE,
+                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_RSHIFT] = { .since = CI_STANDARD_NONE,
+                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_RSHIFT_EQ] = { .since = CI_STANDARD_NONE,
+                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_RSHIFT_RSHIFT] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_RSHIFT_RSHIFT_EQ] = { .since = CI_STANDARD_NONE,
+                                         .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_SEMICOLON] = { .since = CI_STANDARD_NONE,
+                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_SLASH] = { .since = CI_STANDARD_NONE,
+                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_SLASH_EQ] = { .since = CI_STANDARD_NONE,
+                                 .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STAR] = { .since = CI_STANDARD_NONE,
+                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STAR_EQ] = { .since = CI_STANDARD_NONE,
+                                .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_WAVE] = { .since = CI_STANDARD_NONE,
+                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_WAVE_EQ] = { .since = CI_STANDARD_NONE,
+                                .until = CI_STANDARD_NONE },
+};
 
 #define IS_ZERO '0'
 
@@ -386,14 +635,24 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token)
 enum CITokenKind
 get_keyword__CIScanner(const char *id)
 {
+    if (!strcmp(id, "alignas"))
+        return CI_TOKEN_KIND_KEYWORD_ALIGNAS;
+    if (!strcmp(id, "alignof"))
+        return CI_TOKEN_KIND_KEYWORD_ALIGNOF;
+    if (!strcmp(id, "asm"))
+        return CI_TOKEN_KIND_KEYWORD_ASM;
     if (!strcmp(id, "auto"))
         return CI_TOKEN_KIND_KEYWORD_AUTO;
+    if (!strcmp(id, "bool"))
+        return CI_TOKEN_KIND_KEYWORD_BOOL;
     if (!strcmp(id, "break"))
         return CI_TOKEN_KIND_KEYWORD_BREAK;
     if (!strcmp(id, "case"))
         return CI_TOKEN_KIND_KEYWORD_CASE;
     if (!strcmp(id, "const"))
         return CI_TOKEN_KIND_KEYWORD_CONST;
+    if (!strcmp(id, "constexpr"))
+        return CI_TOKEN_KIND_KEYWORD_CONSTEXPR;
     if (!strcmp(id, "continue"))
         return CI_TOKEN_KIND_KEYWORD_CONTINUE;
     if (!strcmp(id, "default"))
@@ -408,6 +667,8 @@ get_keyword__CIScanner(const char *id)
         return CI_TOKEN_KIND_KEYWORD_ENUM;
     if (!strcmp(id, "extern"))
         return CI_TOKEN_KIND_KEYWORD_EXTERN;
+    if (!strcmp(id, "false"))
+        return CI_TOKEN_KIND_KEYWORD_FALSE;
     if (!strcmp(id, "float"))
         return CI_TOKEN_KIND_KEYWORD_FLOAT;
     if (!strcmp(id, "for"))
@@ -416,12 +677,18 @@ get_keyword__CIScanner(const char *id)
         return CI_TOKEN_KIND_KEYWORD_GOTO;
     if (!strcmp(id, "if"))
         return CI_TOKEN_KIND_KEYWORD_IF;
+    if (!strcmp(id, "inline"))
+        return CI_TOKEN_KIND_KEYWORD_INLINE;
     if (!strcmp(id, "int"))
         return CI_TOKEN_KIND_KEYWORD_INT;
     if (!strcmp(id, "long"))
         return CI_TOKEN_KIND_KEYWORD_LONG;
+    if (!strcmp(id, "nullptr"))
+        return CI_TOKEN_KIND_KEYWORD_NULLPTR;
     if (!strcmp(id, "register"))
         return CI_TOKEN_KIND_KEYWORD_REGISTER;
+    if (!strcmp(id, "restrict"))
+        return CI_TOKEN_KIND_KEYWORD_RESTRICT;
     if (!strcmp(id, "return"))
         return CI_TOKEN_KIND_KEYWORD_RETURN;
     if (!strcmp(id, "short"))
@@ -432,6 +699,8 @@ get_keyword__CIScanner(const char *id)
         return CI_TOKEN_KIND_KEYWORD_SIZEOF;
     if (!strcmp(id, "static"))
         return CI_TOKEN_KIND_KEYWORD_STATIC;
+    if (!strcmp(id, "static_assert"))
+        return CI_TOKEN_KIND_KEYWORD_STATIC_ASSERT;
     if (!strcmp(id, "struct"))
         return CI_TOKEN_KIND_KEYWORD_STRUCT;
     if (!strcmp(id, "switch"))
@@ -440,6 +709,10 @@ get_keyword__CIScanner(const char *id)
         return CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL;
     if (!strcmp(id, "typedef"))
         return CI_TOKEN_KIND_KEYWORD_TYPEDEF;
+    if (!strcmp(id, "typeof"))
+        return CI_TOKEN_KIND_KEYWORD_TYPEOF;
+    if (!strcmp(id, "typeof_unqual"))
+        return CI_TOKEN_KIND_KEYWORD_TYPEOF_UNQUAL;
     if (!strcmp(id, "union"))
         return CI_TOKEN_KIND_KEYWORD_UNION;
     if (!strcmp(id, "unsigned"))
@@ -450,6 +723,34 @@ get_keyword__CIScanner(const char *id)
         return CI_TOKEN_KIND_KEYWORD_VOLATILE;
     if (!strcmp(id, "while"))
         return CI_TOKEN_KIND_KEYWORD_WHILE;
+    if (!strcmp(id, "_Alignas"))
+        return CI_TOKEN_KIND_KEYWORD__ALIGNAS;
+    if (!strcmp(id, "_Alignof"))
+        return CI_TOKEN_KIND_KEYWORD__ALIGNOF;
+    if (!strcmp(id, "_Atomic"))
+        return CI_TOKEN_KIND_KEYWORD__ATOMIC;
+    if (!strcmp(id, "_BitInt"))
+        return CI_TOKEN_KIND_KEYWORD__BITINT;
+    if (!strcmp(id, "_Bool"))
+        return CI_TOKEN_KIND_KEYWORD__BOOL;
+    if (!strcmp(id, "_Complex"))
+        return CI_TOKEN_KIND_KEYWORD__COMPLEX;
+    if (!strcmp(id, "_Decimal128"))
+        return CI_TOKEN_KIND_KEYWORD__DECIMAL128;
+    if (!strcmp(id, "_Decimal32"))
+        return CI_TOKEN_KIND_KEYWORD__DECIMAL32;
+    if (!strcmp(id, "_Decimal64"))
+        return CI_TOKEN_KIND_KEYWORD__DECIMAL64;
+    if (!strcmp(id, "_Generic"))
+        return CI_TOKEN_KIND_KEYWORD__GENERIC;
+    if (!strcmp(id, "_Imaginary"))
+        return CI_TOKEN_KIND_KEYWORD__IMAGINARY;
+    if (!strcmp(id, "_Noreturn"))
+        return CI_TOKEN_KIND_KEYWORD__NORETURN;
+    if (!strcmp(id, "_Static_assert"))
+        return CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT;
+    if (!strcmp(id, "_Thread_local"))
+        return CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL;
 
     return CI_TOKEN_KIND_IDENTIFIER;
 }
@@ -1030,6 +1331,8 @@ get_closing__CIScanner(CIScanner *self, char target)
                     set_all__Location(&token->location, &self->base.location);
             }
 
+            check_standard(self, token);
+
             switch (token->kind) {
                 case CI_TOKEN_KIND_COMMENT_LINE:
                 case CI_TOKEN_KIND_COMMENT_BLOCK:
@@ -1062,6 +1365,106 @@ get_closing__CIScanner(CIScanner *self, char target)
                        clone__Location(&self->base.location));
         default:
             UNREACHABLE("this way is not possible");
+    }
+}
+
+void
+check_standard(CIScanner *self, CIToken *token)
+{
+    ASSERT(token->kind < CI_TOKEN_KIND_MAX);
+
+    Location location_error = clone__Location(&token->location);
+    const CIFeature *feature = &tokens_feature[token->kind];
+
+    if (self->standard < feature->since) {
+        enum CIErrorKind error_kind;
+
+        switch (feature->since) {
+            case CI_STANDARD_NONE:
+                UNREACHABLE("since: no error with None standard");
+            case CI_STANDARD_KR:
+                UNREACHABLE("since: no error with K&R standard");
+            case CI_STANDARD_89:
+                error_kind = CI_ERROR_KIND_REQUIRED_C89_OR_LATER;
+
+                break;
+            case CI_STANDARD_95:
+                error_kind = CI_ERROR_KIND_REQUIRED_C95_OR_LATER;
+
+                break;
+            case CI_STANDARD_99:
+                error_kind = CI_ERROR_KIND_REQUIRED_C99_OR_LATER;
+
+                break;
+            case CI_STANDARD_11:
+                error_kind = CI_ERROR_KIND_REQUIRED_C11_OR_LATER;
+
+                break;
+            case CI_STANDARD_17:
+                error_kind = CI_ERROR_KIND_REQUIRED_C17_OR_LATER;
+
+                break;
+            case CI_STANDARD_23:
+                error_kind = CI_ERROR_KIND_REQUIRED_C23_OR_LATER;
+
+                break;
+            default:
+                UNREACHABLE("unknown standard");
+        }
+
+        emit__Diagnostic(NEW_VARIANT(Diagnostic,
+                                     simple_ci_error,
+                                     self->base.source.file,
+                                     &location_error,
+                                     NEW(CIError, error_kind),
+                                     NULL,
+                                     NULL,
+                                     NULL),
+                         self->base.count_error);
+    } else if (self->standard > feature->until) {
+        String *note = NULL;
+
+        switch (feature->until) {
+            case CI_STANDARD_NONE:
+                UNREACHABLE("since: no error with None standard");
+            case CI_STANDARD_KR:
+                UNREACHABLE("since: no error with K&R standard");
+            case CI_STANDARD_89:
+                note = from__String("this feature is only available up to C89");
+
+                break;
+            case CI_STANDARD_95:
+                note = from__String("this feature is only available up to C95");
+
+                break;
+            case CI_STANDARD_99:
+                note = from__String("this feature is only available up to C99");
+
+                break;
+            case CI_STANDARD_11:
+                note = from__String("this feature is only available up to C11");
+
+                break;
+            case CI_STANDARD_17:
+                note = from__String("this feature is only available up to C17");
+
+                break;
+            case CI_STANDARD_23:
+                note = from__String("this feature is only available up to C23");
+
+                break;
+            default:
+                UNREACHABLE("unknown standard");
+        }
+
+        emit_note__Diagnostic(NEW_VARIANT(Diagnostic,
+                                          simple_ci_note,
+                                          self->base.source.file,
+                                          &location_error,
+                                          note,
+                                          NULL,
+                                          NULL,
+                                          NULL));
     }
 }
 
@@ -1131,33 +1534,6 @@ get_token__CIScanner(CIScanner *self, bool check_match)
         // COMMENT_LINE, /= COMMENT_BLOCK, COMMENT_DOC, /
         case '/':
             if (c1 == (char *)'/') {
-                if (self->standard >= CI_STANDARD_99) {
-                    Location location_error =
-                      clone__Location(&self->base.location);
-
-                    end__Location(&location_error,
-                                  self->base.source.cursor.line,
-                                  self->base.source.cursor.column,
-                                  self->base.source.cursor.position);
-                    emit__Diagnostic(
-                      NEW_VARIANT(
-                        Diagnostic,
-                        simple_ci_error,
-                        self->base.source.file,
-                        &location_error,
-                        NEW(CIError, CI_ERROR_KIND_REQUIRED_C99_OR_LATER),
-                        init__Vec(
-                          1,
-                          from__String(
-                            "use multi-block comment instead of comment line")),
-                        NULL,
-                        NULL),
-                      self->base.count_error);
-                    skip_comment_line__CIScanner(self);
-
-                    return NULL;
-                }
-
                 CIToken *token = NEW(CIToken,
                                      CI_TOKEN_KIND_COMMENT_LINE,
                                      clone__Location(&self->base.location));
@@ -1417,6 +1793,7 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
                                      self->base.source.cursor.column,
                                      self->base.source.cursor.position);
                 set_all__Location(&token->location, &self->base.location);
+                check_standard(self, token);
 
                 switch (token->kind) {
                     case CI_TOKEN_KIND_COMMENT_LINE:
