@@ -666,142 +666,142 @@ get_keyword__LilyScanner(const char *id)
 {
     if (!strcmp(id, "alias"))
         return LILY_TOKEN_KIND_KEYWORD_ALIAS;
-    else if (!strcmp(id, "and"))
+    if (!strcmp(id, "and"))
         return LILY_TOKEN_KIND_KEYWORD_AND;
-    else if (!strcmp(id, "as"))
+    if (!strcmp(id, "as"))
         return LILY_TOKEN_KIND_KEYWORD_AS;
-    else if (!strcmp(id, "asm"))
+    if (!strcmp(id, "asm"))
         return LILY_TOKEN_KIND_KEYWORD_ASM;
-    else if (!strcmp(id, "async"))
+    if (!strcmp(id, "async"))
         return LILY_TOKEN_KIND_KEYWORD_ASYNC;
-    else if (!strcmp(id, "await"))
+    if (!strcmp(id, "await"))
         return LILY_TOKEN_KIND_KEYWORD_AWAIT;
-    else if (!strcmp(id, "begin"))
+    if (!strcmp(id, "begin"))
         return LILY_TOKEN_KIND_KEYWORD_BEGIN;
-    else if (!strcmp(id, "break"))
+    if (!strcmp(id, "break"))
         return LILY_TOKEN_KIND_KEYWORD_BREAK;
-    else if (!strcmp(id, "cast"))
+    if (!strcmp(id, "cast"))
         return LILY_TOKEN_KIND_KEYWORD_CAST;
-    else if (!strcmp(id, "catch"))
+    if (!strcmp(id, "catch"))
         return LILY_TOKEN_KIND_KEYWORD_CATCH;
-    else if (!strcmp(id, "class"))
+    if (!strcmp(id, "class"))
         return LILY_TOKEN_KIND_KEYWORD_CLASS;
-    else if (!strcmp(id, "close"))
+    if (!strcmp(id, "close"))
         return LILY_TOKEN_KIND_KEYWORD_CLOSE;
-    else if (!strcmp(id, "comptime"))
+    if (!strcmp(id, "comptime"))
         return LILY_TOKEN_KIND_KEYWORD_COMPTIME;
-    else if (!strcmp(id, "defer"))
+    if (!strcmp(id, "defer"))
         return LILY_TOKEN_KIND_KEYWORD_DEFER;
-    else if (!strcmp(id, "do"))
+    if (!strcmp(id, "do"))
         return LILY_TOKEN_KIND_KEYWORD_DO;
-    else if (!strcmp(id, "drop"))
+    if (!strcmp(id, "drop"))
         return LILY_TOKEN_KIND_KEYWORD_DROP;
-    else if (!strcmp(id, "elif"))
+    if (!strcmp(id, "elif"))
         return LILY_TOKEN_KIND_KEYWORD_ELIF;
-    else if (!strcmp(id, "else"))
+    if (!strcmp(id, "else"))
         return LILY_TOKEN_KIND_KEYWORD_ELSE;
-    else if (!strcmp(id, "end"))
+    if (!strcmp(id, "end"))
         return LILY_TOKEN_KIND_KEYWORD_END;
-    else if (!strcmp(id, "enum"))
+    if (!strcmp(id, "enum"))
         return LILY_TOKEN_KIND_KEYWORD_ENUM;
-    else if (!strcmp(id, "error"))
+    if (!strcmp(id, "error"))
         return LILY_TOKEN_KIND_KEYWORD_ERROR;
-    else if (!strcmp(id, "false"))
+    if (!strcmp(id, "false"))
         return LILY_TOKEN_KIND_KEYWORD_FALSE;
-    else if (!strcmp(id, "for"))
+    if (!strcmp(id, "for"))
         return LILY_TOKEN_KIND_KEYWORD_FOR;
-    else if (!strcmp(id, "fun"))
+    if (!strcmp(id, "fun"))
         return LILY_TOKEN_KIND_KEYWORD_FUN;
-    else if (!strcmp(id, "get"))
+    if (!strcmp(id, "get"))
         return LILY_TOKEN_KIND_KEYWORD_GET;
-    else if (!strcmp(id, "global"))
+    if (!strcmp(id, "global"))
         return LILY_TOKEN_KIND_KEYWORD_GLOBAL;
-    else if (!strcmp(id, "if"))
+    if (!strcmp(id, "if"))
         return LILY_TOKEN_KIND_KEYWORD_IF;
-    else if (!strcmp(id, "impl"))
+    if (!strcmp(id, "impl"))
         return LILY_TOKEN_KIND_KEYWORD_IMPL;
-    else if (!strcmp(id, "import"))
+    if (!strcmp(id, "import"))
         return LILY_TOKEN_KIND_KEYWORD_IMPORT;
-    else if (!strcmp(id, "in"))
+    if (!strcmp(id, "in"))
         return LILY_TOKEN_KIND_KEYWORD_IN;
-    else if (!strcmp(id, "include"))
+    if (!strcmp(id, "include"))
         return LILY_TOKEN_KIND_KEYWORD_INCLUDE;
-    else if (!strcmp(id, "inherit"))
+    if (!strcmp(id, "inherit"))
         return LILY_TOKEN_KIND_KEYWORD_INHERIT;
-    else if (!strcmp(id, "is"))
+    if (!strcmp(id, "is"))
         return LILY_TOKEN_KIND_KEYWORD_IS;
-    else if (!strcmp(id, "lib"))
+    if (!strcmp(id, "lib"))
         return LILY_TOKEN_KIND_KEYWORD_LIB;
-    else if (!strcmp(id, "macro"))
+    if (!strcmp(id, "macro"))
         return LILY_TOKEN_KIND_KEYWORD_MACRO;
-    else if (!strcmp(id, "match"))
+    if (!strcmp(id, "match"))
         return LILY_TOKEN_KIND_KEYWORD_MATCH;
-    else if (!strcmp(id, "module"))
+    if (!strcmp(id, "module"))
         return LILY_TOKEN_KIND_KEYWORD_MODULE;
-    else if (!strcmp(id, "mut"))
+    if (!strcmp(id, "mut"))
         return LILY_TOKEN_KIND_KEYWORD_MUT;
-    else if (!strcmp(id, "next"))
+    if (!strcmp(id, "next"))
         return LILY_TOKEN_KIND_KEYWORD_NEXT;
-    else if (!strcmp(id, "nil"))
+    if (!strcmp(id, "nil"))
         return LILY_TOKEN_KIND_KEYWORD_NIL;
-    else if (!strcmp(id, "none"))
+    if (!strcmp(id, "none"))
         return LILY_TOKEN_KIND_KEYWORD_NONE;
-    else if (!strcmp(id, "not"))
+    if (!strcmp(id, "not"))
         return LILY_TOKEN_KIND_KEYWORD_NOT;
-    else if (!strcmp(id, "object"))
+    if (!strcmp(id, "object"))
         return LILY_TOKEN_KIND_KEYWORD_object;
-    else if (!strcmp(id, "Object"))
+    if (!strcmp(id, "Object"))
         return LILY_TOKEN_KIND_KEYWORD_OBJECT;
-    else if (!strcmp(id, "or"))
+    if (!strcmp(id, "or"))
         return LILY_TOKEN_KIND_KEYWORD_OR;
-    else if (!strcmp(id, "package"))
+    if (!strcmp(id, "package"))
         return LILY_TOKEN_KIND_KEYWORD_PACKAGE;
-    else if (!strcmp(id, "pub"))
+    if (!strcmp(id, "pub"))
         return LILY_TOKEN_KIND_KEYWORD_PUB;
-    else if (!strcmp(id, "raise"))
+    if (!strcmp(id, "raise"))
         return LILY_TOKEN_KIND_KEYWORD_RAISE;
-    else if (!strcmp(id, "record"))
+    if (!strcmp(id, "record"))
         return LILY_TOKEN_KIND_KEYWORD_RECORD;
-    else if (!strcmp(id, "ref"))
+    if (!strcmp(id, "ref"))
         return LILY_TOKEN_KIND_KEYWORD_REF;
-    else if (!strcmp(id, "req"))
+    if (!strcmp(id, "req"))
         return LILY_TOKEN_KIND_KEYWORD_REQ;
-    else if (!strcmp(id, "return"))
+    if (!strcmp(id, "return"))
         return LILY_TOKEN_KIND_KEYWORD_RETURN;
-    else if (!strcmp(id, "self"))
+    if (!strcmp(id, "self"))
         return LILY_TOKEN_KIND_KEYWORD_self;
-    else if (!strcmp(id, "Self"))
+    if (!strcmp(id, "Self"))
         return LILY_TOKEN_KIND_KEYWORD_SELF;
-    else if (!strcmp(id, "set"))
+    if (!strcmp(id, "set"))
         return LILY_TOKEN_KIND_KEYWORD_SET;
-    else if (!strcmp(id, "test"))
+    if (!strcmp(id, "test"))
         return LILY_TOKEN_KIND_KEYWORD_TEST;
-    else if (!strcmp(id, "trace"))
+    if (!strcmp(id, "trace"))
         return LILY_TOKEN_KIND_KEYWORD_TRACE;
-    else if (!strcmp(id, "trait"))
+    if (!strcmp(id, "trait"))
         return LILY_TOKEN_KIND_KEYWORD_TRAIT;
-    else if (!strcmp(id, "true"))
+    if (!strcmp(id, "true"))
         return LILY_TOKEN_KIND_KEYWORD_TRUE;
-    else if (!strcmp(id, "try"))
+    if (!strcmp(id, "try"))
         return LILY_TOKEN_KIND_KEYWORD_TRY;
-    else if (!strcmp(id, "type"))
+    if (!strcmp(id, "type"))
         return LILY_TOKEN_KIND_KEYWORD_TYPE;
-    else if (!strcmp(id, "undef"))
+    if (!strcmp(id, "undef"))
         return LILY_TOKEN_KIND_KEYWORD_UNDEF;
-    else if (!strcmp(id, "unsafe"))
+    if (!strcmp(id, "unsafe"))
         return LILY_TOKEN_KIND_KEYWORD_UNSAFE;
-    else if (!strcmp(id, "use"))
+    if (!strcmp(id, "use"))
         return LILY_TOKEN_KIND_KEYWORD_USE;
-    else if (!strcmp(id, "val"))
+    if (!strcmp(id, "val"))
         return LILY_TOKEN_KIND_KEYWORD_VAL;
-    else if (!strcmp(id, "when"))
+    if (!strcmp(id, "when"))
         return LILY_TOKEN_KIND_KEYWORD_WHEN;
-    else if (!strcmp(id, "while"))
+    if (!strcmp(id, "while"))
         return LILY_TOKEN_KIND_KEYWORD_WHILE;
-    else if (!strcmp(id, "xor"))
+    if (!strcmp(id, "xor"))
         return LILY_TOKEN_KIND_KEYWORD_XOR;
-    else
-        return LILY_TOKEN_KIND_IDENTIFIER_NORMAL;
+
+    return LILY_TOKEN_KIND_IDENTIFIER_NORMAL;
 }
 
 void
