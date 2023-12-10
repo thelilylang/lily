@@ -19,10 +19,10 @@ function run_test {
 
 cmake --build build/Debug > /dev/null
 
-run_test ./build/Debug/test_core_scanner
-run_test ./build/Debug/test_core_preparser
-run_test ./build/Debug/test_core_precompiler
-run_test ./build/Debug/test_core_parser
+run_test ./bin/test_core_scanner
+run_test ./bin/test_core_preparser
+run_test ./bin/test_core_precompiler
+run_test ./bin/test_core_parser
 run_test python ./scripts/test_samples.py
 run_test ./scripts/run_bins.sh
 

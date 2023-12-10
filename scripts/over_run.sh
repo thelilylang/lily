@@ -12,7 +12,7 @@ read filename
 
 for _ in $( seq 0 $N )
 do
-	./build/Debug/lilyc --verbose $filename 2> /dev/null
+	./bin/lilyc --verbose $filename 2> /dev/null
 
 	let code_status=$?
 	

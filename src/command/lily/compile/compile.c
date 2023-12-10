@@ -40,7 +40,7 @@ void
 run__LilyCompile(Vec *args)
 {
 #ifdef ENV_LOCAL
-    String *command = from__String("./build/Debug/lilyc ");
+    String *command = from__String("./bin/lilyc ");
 #else
     String *command = from__String("lilyc ");
 #endif

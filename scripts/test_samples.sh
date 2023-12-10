@@ -1,6 +1,6 @@
 #!/bin/sh
 
-COMMAND="./build/Debug/lilyc"
+COMMAND="./bin/lilyc"
 FILES_EXCLUDED=("./tests/samples/package/a.lily" "./tests/samples/package/b.lily")
 SAMPLES_DIRS=./tests/samples/**
 SUCCESS=0

@@ -23,7 +23,7 @@
 # SOFTWARE.
 
 FILE="./tests/mypkg/main.lily"
-COMPILE="./build/Debug/lily compile $FILE"
+COMPILE="./bin/lily compile $FILE"
 
 function print_commands {
 	echo "Commands:"
@@ -57,7 +57,7 @@ function do_nothing {
 }
 
 function compile {
-	./build/Debug/lily compile "$FILE"
+	./bin/lily compile "$FILE"
 }
 
 echo "Welcome to the debug REPL."
@@ -119,7 +119,7 @@ do
 			echo -n "file> "
 			read file
 			FILE=$file
-			COMPILE="./build/Debug/lily compile $FILE"
+			COMPILE="./bin/lily compile $FILE"
 			echo "A new file has been successfully configured."
 			;;
 		"git")
