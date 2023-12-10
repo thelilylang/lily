@@ -27,12 +27,14 @@
 
 enum CIStandard
 {
-    CI_STANDARD_89 = 0,
-    CI_STANDARD_95 = 1,
-    CI_STANDARD_99 = 2,
-    CI_STANDARD_11 = 3,
-    CI_STANDARD_17 = 4,
-    CI_STANDARD_23 = 5,
+    CI_STANDARD_NONE = 0,
+    CI_STANDARD_KR = 1,
+    CI_STANDARD_89 = 2,
+    CI_STANDARD_95 = 3,
+    CI_STANDARD_99 = 4,
+    CI_STANDARD_11 = 5,
+    CI_STANDARD_17 = 6,
+    CI_STANDARD_23 = 7,
 };
 
 // TODO: When we move ci scanner dependencies in src/core/cc or include/core/cc
@@ -42,5 +44,11 @@ enum CIEnable
     CI_ENABLE_NO = 0,
     CI_ENABLE_YES = 1,
 };
+
+typedef struct CIFeature
+{
+    enum CIStandard since;
+    enum CIStandard until;
+} CIFeature;
 
 #endif // LILY_CORE_CC_CI_FEATURES_H
